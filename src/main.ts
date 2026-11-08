@@ -6,7 +6,6 @@ import { heraldPortrait } from './heraldArt';
 
 import { isAssaultBench, startAssaultBench } from './assaultBench';
 import { socketStrip } from './runeTray';
-import { mergesReady } from './sim/runes';
 import { checkAppUpdate, inApp } from './appUpdate';
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt } from './sim/board';
@@ -217,6 +216,9 @@ import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
 import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
 import { pickedFormation, pickedTactic, pickFormation, pickTactic } from './sim/tacticPick';
+import { RuneBench } from './runeBench';
+import { BenchSlide } from './benchSlide';
+import { gripShown, shownSide } from './benchSideRules';
 
 /** A toast for each quest a fight has just completed: back to the tavern to hand it in (QUESTS). */
 /** DEPTH-BUILD: the Watchtower's Far Sight names the next wave's foes on the card after a wave (`march.ts`). */
@@ -356,6 +358,11 @@ class Game {
   /** UNIT-INFO (docs/notes/unit-info.md): a press-and-hold on a unit in a deploy opens its info card; a move first lets it go as a drag. */
   private hold!: HoldPress;
   private info!: UnitInfoCard;
+  /** RUNE-BENCH (docs/notes/rune-bench.md): the bench's rune side and the pull bar that slides to it. */
+  private runeBench!: RuneBench;
+  private benchSlide!: BenchSlide;
+  /** The heroes the held or chosen rune can go on (their tiles lit), and the one under the finger. */
+  private runeLit: { kinds: readonly string[]; hot?: { kind: string; ok: boolean } } | null = null;
   private hover: [number, number] | null = null;
   /** The fight speed: kept from wave to wave and fight to fight, and the last choice is remembered in the settings. */
   private speed: 1 | 2 | 3 = settings().speed;
@@ -2148,6 +2155,7 @@ class Game {
     bindDecree($('mana'), () => this.b, () => this.refreshSpells());
     // (UNIT-INFO: the hold's ring and the info card, which covers the bottom panel: the deploy's bench and buttons wait under it)
     this.hold = new HoldPress();
+    this.setUpRuneBench();
     this.info = new UnitInfoCard();
     this.hud = new FightHud($('fightHud'), {
       equipmentStep: (kind) => awakenedOf(this.meta, kind),
@@ -2315,19 +2323,6 @@ class Game {
       if (this.run.over && !this.run.tower && !this.auto) return this.showRunRecap();
       this.afterResult();
     });
-    $('pack').addEventListener('click', () =>
-      this.events.openPack(
-        this.run,
-        this.b.phase === 'deploy',
-        () => {
-          // (the gear changes the placed heroes' stats: the stage starts again with the squad where it stood)
-          saveRun(this.run);
-          this.newBattle();
-        },
-        // (only the heroes on the field are listed)
-        this.fielded(),
-      ),
-    );
     $('bossCard').addEventListener('click', () => this.endIntro());
     $('speed').addEventListener('click', () => {
       this.setSpeed(this.speed >= this.fastest() ? 1 : ((this.speed + 1) as 2 | 3));
@@ -3210,6 +3205,11 @@ class Game {
       } else if (tile && this.canPut(d.id, tile)) this.put(d.id, tile);
       else if (overBench(e.clientX, e.clientY)) this.takeBack(d.id);
       this.chosen = null;
+    } else if (d.fromBoard && (e.target as HTMLElement) === this.app.canvas && document.body.dataset.bench === 'runes' && this.run.runes) {
+      // (RUNE-BENCH: on the rune side a tap on a hero sets the chosen rune there, or opens its sockets; anywhere else puts the rune down)
+      const kind = d.id ? heroOf(this.run, Number(d.id))?.kind : undefined;
+      if (kind && !heroOf(this.run, Number(d.id))?.guest) this.runeBench.tapHero(kind, e.clientX, e.clientY);
+      else this.runeBench.clearChoice();
     } else if (d.fromBoard && (e.target as HTMLElement) === this.app.canvas) {
       // a tap on the board: pick up a hero, put the chosen one down, or send the chosen one back to the bench
       const tile = this.tileAtScreen(e.clientX, e.clientY);
@@ -3424,9 +3424,8 @@ class Game {
   private buildBench(): void {
     const bench = $('bench');
     const ready = this.b.phase === 'deploy' ? mergeMatches(this.run) : new Set<number>();
-    // (SEVEN-SLOT GEAR batch 5: the Pack button says how many rune merges are ready)
-    const merges = this.run.runes && this.b.phase === 'deploy' ? mergesReady(this.run.runes) : 0;
-    $('pack').textContent = merges ? `Pack · ${merges} merge${merges === 1 ? '' : 's'}` : 'Pack';
+    // (RUNE-BENCH: the pull bar shows in a rune run's deploy, with the rune merges ready as its badge; the rune side draws itself)
+    this.syncRuneBench();
     const key = `${this.run.mode?.kind === 'quest' ? `q${this.run.seed};` : ''}${summonCost(this.run)};${[...ready].join('.')};${this.run.runes ? JSON.stringify(this.run.runes.worn) + this.b.phase : ''};` + this.run.roster.map((h) => `${h.id}:${h.grade}:${this.levelOf(h)}:${powerOf(h.kind, this.boostFor(h))}`).join();
     if (bench.dataset.key === key) return;
     bench.dataset.key = key;
@@ -3514,6 +3513,95 @@ class Game {
       });
       bench.append(card);
     }
+  }
+
+  /* -------------------------------------------------------------- the rune bench */
+
+  /** RUNE-BENCH: the pull bar and the rune side (docs/notes/rune-bench.md). It took the place of the deploy bar's Pack button. */
+  private setUpRuneBench(): void {
+    this.runeBench = new RuneBench($('runeBench'), {
+      runes: () => this.run.runes,
+      meta: () => this.meta,
+      canEdit: () => this.b.phase === 'deploy' && !this.auto,
+      kinds: () => this.runeKinds(),
+      heroAt: (x, y) => {
+        const id = this.heroAtScreen(x, y);
+        const h = id ? heroOf(this.run, Number(id)) : undefined;
+        return h && !h.guest ? h.kind : undefined;
+      },
+      light: (kinds, hot) => {
+        this.runeLit = kinds ? { kinds, hot } : null;
+        this.markTiles();
+      },
+      changed: (kinds) => this.refitRunes(kinds),
+      openSatchel: () => this.openSatchel(),
+    });
+    this.benchSlide = new BenchSlide($('benchView'), $('benchGrip') as HTMLButtonElement, (side) => {
+      document.body.dataset.bench = side;
+      const grip = $('benchGrip');
+      grip.querySelector('.gripWord')!.textContent = side === 'runes' ? 'Heroes' : 'Runes';
+      grip.querySelector('.gripArrow')!.textContent = side === 'runes' ? '›' : '‹';
+      grip.setAttribute('aria-label', side === 'runes' ? 'Pull the bar back for the heroes' : 'Pull the bar across for the runes');
+      if (side === 'heroes') this.runeBench.clearChoice();
+      this.chosen = null;
+      this.syncRuneBench();
+      this.markTiles();
+    });
+    document.body.dataset.bench = 'heroes';
+  }
+
+  /** The kinds a rune can go on: the heroes on the field, or (none placed yet) the whole company; never a guest. */
+  private runeKinds(): string[] {
+    const placed = this.fielded().map((id) => heroOf(this.run, id)).filter((h) => h && !h.guest);
+    const list = placed.length ? placed : this.run.roster.filter((h) => !h.guest);
+    return [...new Set(list.map((h) => h!.kind))];
+  }
+
+  /** The bar shows in a rune run's deploy (the rune side goes back to the heroes otherwise, and comes back with the next deploy only if
+   *  pulled again); its badge counts the rune merges ready. */
+  private syncRuneBench(): void {
+    if (!this.runeBench) return;
+    const deploy = this.b.phase === 'deploy' && !this.auto;
+    const has = !!this.run.runes;
+    document.body.classList.toggle('hasGrip', gripShown(has, deploy));
+    if (shownSide(this.benchSlide.side, has, deploy) !== this.benchSlide.side) this.benchSlide.land('heroes', true);
+    const merges = this.runeBench.merges();
+    const badge = $('gripBadge');
+    badge.hidden = !merges;
+    badge.textContent = String(merges);
+    $('benchGrip').title = merges ? `Runes · ${merges} merge${merges === 1 ? '' : 's'} ready` : 'Runes';
+    this.runeBench.sync();
+  }
+
+  /** Runes moved on the rune bench: the heroes of `kinds` on the field are set down again where they stand with their new runes (their
+   *  stats follow the sockets), and the run is saved. */
+  private refitRunes(kinds: readonly string[]): void {
+    for (const u of this.b.units.filter((x) => x.side === 'hero' && x.tag !== undefined && !x.owner)) {
+      const h = heroOf(this.run, u.tag!);
+      if (!h || !kinds.includes(h.kind)) continue;
+      const [cu, cv] = [u.u, u.v];
+      unplace(this.b, u.def, h.id);
+      place(this.b, h.kind, cu, cv, h.id, this.boostFor(h));
+    }
+    saveRun(this.run);
+    this.syncSprites();
+    this.refresh();
+    this.markTiles();
+  }
+
+  /** The satchel (once the Pack): the run's relics, remedies and every fielded hero's sockets, in a card. */
+  private openSatchel(): void {
+    this.events.openPack(
+      this.run,
+      this.b.phase === 'deploy',
+      () => {
+        // (the gear changes the placed heroes' stats: the stage starts again with the squad where it stood)
+        saveRun(this.run);
+        this.newBattle();
+      },
+      // (only the heroes on the field are listed)
+      this.fielded(),
+    );
   }
 
   /* -------------------------------------------------------------- the king's spells */
@@ -4091,6 +4179,17 @@ class Game {
         for (let dv = -1; dv <= 1; dv++) if (tileAt(b.board, this.hover[0] + du, this.hover[1] + dv)) this.boardView.mark(this.hover[0] + du, this.hover[1] + dv, HURTING.has(this.spell) ? 'bad' : 'chosen');
     }
     if (b.phase !== 'deploy') return;
+    // (RUNE-BENCH: a rune held or chosen on the rune side lights the heroes that can take it, the one under the finger gold or red)
+    if (this.runeLit && document.body.dataset.bench === 'runes') {
+      const lit = this.runeLit;
+      for (const x of b.units) {
+        const h = x.side === 'hero' && x.tag !== undefined && !x.owner ? heroOf(this.run, x.tag) : undefined;
+        if (!h) continue;
+        if (lit.hot?.kind === h.kind) this.boardView.mark(x.u, x.v, lit.hot.ok ? 'hover' : 'bad');
+        else if (lit.kinds.includes(h.kind)) this.boardView.mark(x.u, x.v, 'merge');
+      }
+      return;
+    }
     const who = this.chosen;
     // (a hero on the field with a match ready to merge stands on a gold tile; with a hero chosen, only its own matches do: MERGE-TWO)
     const matches = mergeMatches(this.run);

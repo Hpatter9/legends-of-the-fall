@@ -203,7 +203,7 @@ export class Events {
       this.root.hidden = true;
       this.root.replaceChildren();
     });
-    head.append(el('h2', '', run.runes ? 'Relics and runes' : 'Relics and gear'), close);
+    head.append(el('h2', '', run.runes ? 'Satchel · relics, runes and remedies' : 'Satchel · relics and gear'), close);
     card.append(head);
     // relics
     const relics = el('div', 'list');

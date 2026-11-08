@@ -185,7 +185,7 @@ export class SanctuaryView {
     offers.forEach((node,i)=>{const world=this.worlds[i], b=el('button','rsDestination');b.dataset.id=String(node.id);b.style.setProperty('--glow',WORLD_GLOW[world]);b.append(worldPicture(world),el('b','rsDestinationName',WORLDS[world].name));const kind=el('span','rsKind');kind.append(dungeonIcon(node.kind),el('span','',node.kind==='boss'?'Guardian':NODE_NAMES[node.kind]));b.append(kind);b.onclick=()=>{if(!this.cine)this.choose(i);};this.cards.append(b);});
     this.details=el('div','rsDetails');this.details.setAttribute('aria-live','polite');
     this.enter=el('button','primary rsEnter','Enter the Rift');this.enter.disabled=!offers.length||!!pendingAltar(run);this.enter.onclick=()=>{if(!this.cine)this.hooks.enter(this.selected);};
-    const menu=el('nav','rsMenu');for(const [name,action] of [['Altar',this.hooks.altar],['Pack',this.hooks.pack],['Company',this.hooks.company]] as const){const b=el('button','',name);b.onclick=action;menu.append(b);}
+    const menu=el('nav','rsMenu');for(const [name,action] of [['Altar',this.hooks.altar],['Satchel',this.hooks.pack],['Company',this.hooks.company]] as const){const b=el('button','',name);b.onclick=action;menu.append(b);}
     destinations.append(bar,this.cards,this.details,this.enter,menu);this.root.append(head,scene,destinations);
     if(offers.length)this.update(offers[this.sel]);
     if(back&&offers.length)this.walkOut(back);

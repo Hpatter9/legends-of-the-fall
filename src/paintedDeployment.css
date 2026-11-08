@@ -36,7 +36,6 @@ body[data-phase='deploy'] #buttons button::before {
 }
 body[data-phase='deploy'] #buttons #fight::before { background-image: url(ui/combat-icon-swords.png); width: 24px; height: 24px; }
 body[data-phase='deploy'] #buttons #summon::before { background-image: url(ui/combat-icon-helmet.png); }
-body[data-phase='deploy'] #buttons #pack::before { background-image: url(ui/combat-icon-bag.png); }
 body[data-phase='deploy'] #buttons #auto::before { background-image: url(ui/combat-icon-formation.png); }
 body[data-phase='deploy'] #buttons #homeBtn::before { background-image: url(ui/combat-icon-gate.png); }
 body[data-phase='deploy'] #buttons button:disabled { opacity: .5; }
