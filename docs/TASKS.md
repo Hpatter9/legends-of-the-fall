@@ -1,5 +1,24 @@
 # Shared task board
 
+### HERO-PAINTED-WEAPON-FIX — Redraw the confirmed painted illustration defects
+
+- **Owner / branch / worktree:** Codex; `audit/painted-hero-weapons`; `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner confirmed the painted-art findings and requested redraws/fixes.
+- **Allowed scope:** Peasant, Mercenary, Harpooner, Samurai Commander, Samurai and Ranger standard full/portrait illustrations; inspection evidence, credits and handoff. Preserve hero identity, scenes, battle sprites and simulation.
+- **Completion:** correct rigid weapon geometry, coherent grips/scabbard and connected bowstring; inspect replacements; typecheck/build and relevant artwork checks; review at three portrait sizes.
+- **Follow-up:** owner identified remaining Mercenary hilt and Peasant shaft bends. Both entire weapons redrawn again, with hands repositioned to follow their axes. Second-pass typecheck/build, all three phone sizes and offline decoding passed; updated screenshots and provenance retained.
+- **Status:** first pass: six scene redraws and two matching cutout repairs integrated. Typecheck/build, four relevant tests and artwork validation passed. Three-size browser review passed for five playable heroes, two cutouts and the unreleased Harpooner asset preview; offline cache/load passed at 393×852, with no page errors. No merge/deployment. [Handoff](notes/hero-weapon-fixes.md).
+
+
+### HERO-WEAPON-AUDIT — Check painted hero weapon construction
+
+- **Owner / branch / worktree:** Codex; `audit/painted-hero-weapons`; `/workspace/legends-of-the-fall`.
+- **Allowed scope:** read-only production art review; audit notes and inspection evidence only. Corrections require a visual proposal under the project rules.
+- **Completion:** inspect roster illustrations and representative battle poses, verify Mercenary/Lancer concerns, record exact frames and limitations.
+- **Continued review:** individually inspected the remaining 35 standard full paintings, completing all 65 standard scenes. No additional definite weapon-construction defect identified; no further production assets changed.
+- **Status:** audit complete within the recorded sampling scope. Mercenary front attack frame 2 has a bowed blade; Lancer front idle frame 3 has inconsistent shaft alignment. Painted-art follow-up: 30 weapon-user illustrations inspected individually; Peasant spear, Mercenary sword alignment, Harpooner shaft and unsupported Samurai Commander blade flagged, with secondary Samurai/Ranger concerns. No production assets changed. [Painted evidence](samples/hero-weapon-audit/painted-findings.jpg). [Handoff](notes/hero-weapon-audit.md), [enlarged source frames](samples/hero-weapon-audit/findings.png).
+
+
 ### HERO-SPRITE-REMAKES — Completely remake the ten automatic repaints
 
 - **Owner / branch / worktree:** Codex; `audit/hero-repaint-faces`; `/workspace/legends-of-the-fall`.
