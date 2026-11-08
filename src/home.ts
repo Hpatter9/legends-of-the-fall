@@ -4,6 +4,7 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
+import { heroesTabMark } from './heroesTabMark';
 import { openMuster, openAssaultResult } from './assaultView';
 import { runAssault } from './assaultScene';
 import { claimTribute } from './sim/assault/economy';
@@ -669,19 +670,19 @@ export class Home {
     this.tabBtns.get('castle')!.classList.toggle('new', affordable || canBuildChapel(m));
     // (EIDOLON-CHAINS: the Summoner has a chain to tell, or one to bind)
     this.tabBtns.get('recruit')!.classList.toggle('new', stonesOf(m) > 0 || summonerWaiting(m));
-    // (a rank earned, or an awakening paid for, waits for the player's tap on the Heroes tab)
-    // (a number, not a bare dot: how many heroes have an upgrade ready)
+    // (a rank earned, or an awakening paid for, waits for the player's tap on the Heroes tab; a quest waits at the tavern; Hester's
+    // stall has new stock or a trader. BENCH-MARKS: the tab wears one mark at most, the most pressing one: `heroesTabMark`)
     const readyN = readyKinds(m, m.unlocked).length;
-    this.tabBtns.get('heroes')!.classList.toggle('new', readyN > 0);
-    const heroBadge = this.tabBtns.get('heroes')!.querySelector('i.badge');
-    if (heroBadge) heroBadge.textContent = readyN > 0 ? String(Math.min(readyN, 99)) : '';
-    this.tabBtns.get('heroes')!.classList.toggle('quest', questsWaiting(m));
-    // (CLIFF-ROAM: Hester's stall is in the tavern now: her coin on the tab while the day's stock is unseen, a trader's colour while one visits)
     const shop = hesterNews(m, todayKey());
+    const mark = heroesTabMark({ ready: readyN, quest: questsWaiting(m), freshStock: shop.fresh, visitor: shop.visitor });
     const heroesTab = this.tabBtns.get('heroes')!;
-    heroesTab.classList.toggle('shop', shop.fresh || !!shop.visitor);
-    heroesTab.classList.toggle('dealer', shop.visitor === 'dealer');
-    heroesTab.classList.toggle('caravan', shop.visitor === 'caravan');
+    heroesTab.classList.toggle('new', mark?.kind === 'upgrade');
+    const heroBadge = heroesTab.querySelector('i.badge');
+    if (heroBadge) heroBadge.textContent = mark?.kind === 'upgrade' ? String(mark.count) : '';
+    heroesTab.classList.toggle('quest', mark?.kind === 'quest');
+    heroesTab.classList.toggle('shop', mark?.kind === 'shop');
+    heroesTab.classList.toggle('dealer', mark?.kind === 'shop' && mark.visitor === 'dealer');
+    heroesTab.classList.toggle('caravan', mark?.kind === 'shop' && mark.visitor === 'caravan');
     heroesTab.setAttribute('aria-label', `Heroes${readyN ? `, ${readyN} ready to upgrade` : ''}${shop.visitor ? `; ${shop.visitor === 'dealer' ? 'the Gloaming Dealer' : 'Rustam Saffar’s caravan'} is at Hester’s stall in the tavern` : shop.fresh ? '; new stock at Hester’s stall in the tavern' : ''}`);
     this.tabBtns.get('battle')!.classList.remove('new');
     // (UX-FIXES: the Spells tab is dimmed with a lock until the Chapel is built; a tap says why on its page)

@@ -32,6 +32,15 @@ Use docs/TASKS.md as the source of current ownership and reserved scope. The ear
 
 Separate worktrees prevent local overwrites, but do not prevent merge conflicts. Shared files and shared task-board edits should be coordinated through the manager. Do not reset, rebase, clean, or overwrite another chat's work.
 
+## Rules that are easy to break
+
+The full list is in [CLAUDE.md](CLAUDE.md) (the deterministic simulation, the asset packs, offline play, the ornate menu and the rest). The owner's standing rule on new art, the same in both files:
+
+- **New art gets a ChatGPT prompt.** Whenever a change needs art that the packs and `src/art/` don't have, write a ChatGPT image
+  prompt for it (in `docs/notes/<topic>-art-prompts.md`: one fenced prompt per image or sheet, naming the repo, an `art/<topic>`
+  branch, the file under `art-source/`, the canvas size, a transparent background and the game's style), and tell the director,
+  rather than spending time on code-drawn art. A plain stand-in until the art lands is fine.
+
 ## Validation and handoff
 
 Follow CLAUDE.md: run type checks and the web build for implementation work, and select tests for the changed behaviour and affected callers. Full test suites and unrelated balance sweeps are not required. Add regression coverage for new simulation rules and inspect the affected screens at the specified portrait sizes for visual changes. Preserve deterministic simulation, existing save keys, offline caching, and asset credits.
