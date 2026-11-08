@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.399.0',
+    date: '2026-11-08',
+    title: 'Assault engine test page',
+    notes: ['A test of the coming Assault mode: 55 against 200 on a 100x100 map. Open the game with ?bench=assault to see how smoothly your phone runs it.'],
+  },
+  {
     version: '0.398.0',
     date: '2026-11-08',
     title: 'Mythic heroes completed',
