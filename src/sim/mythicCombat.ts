@@ -100,6 +100,14 @@ export function rewriteFate(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (changed) burst(out, me); return changed;
 }
 
+/** What each trial aspect's passive does as a foe: the eclipse's sundering, starfire from afar, the saint's mending, the roots' thorns
+ *  and the unwritten future's slipped blows. */
+function trialEcho(kind: string): Partial<Kit['passive']> {
+  const echoes: Record<string, Partial<Kit['passive']>> = {
+    vael: { pierce: 12 }, astrax: { far: 0.2 }, ilyra: { mend: { every: 4000, share: 0.6 } }, orrun: { thorns: 0.15 }, nyxara: { dodge: 0.12 },
+  };
+  return echoes[kind] ?? {};
+}
 // Hoisted for the same abilities/battle initialisation cycle as the existing kits.
 var built: { kits: Record<string, Kit>; heroes: Record<string, HeroKit> } | undefined;
 function build() {
@@ -114,7 +122,8 @@ function build() {
       me.power = (power ?? 1) * 0.35;
       try { return ultimate.cast(b, me, out); } finally { me.power = power; }
     } };
-    kits[`trial_${kind}`] = { passive, skill: { ...skills[0], dealt: 10, taken: 12, perSec: 5 }, ultimate: trialUltimate };
+    // The recruit's passive is read by its own hooks above (they answer to the hero alone), so the trial aspect fights by a plain echo of it.
+    kits[`trial_${kind}`] = { passive: { ...passive, ...trialEcho(kind) }, skill: { ...skills[0], dealt: 10, taken: 12, perSec: 5 }, ultimate: trialUltimate };
     heroes[kind] = { pool, role: `Mythic · ${role} · one per squad`, slots, s1: slots[0], s2: slots[1], s3: slots[2] };
     kits[kind] = { passive, skill: skills[0], ultimate: { ...ultimate, unlock: 30, tuned: { rate: 1, power: 1 } } };
   };

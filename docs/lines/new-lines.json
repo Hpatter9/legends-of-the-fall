@@ -2267,6 +2267,216 @@
     "My leather gauntlet is not a tower shield!",
     "Need some space and a plaster over here!"
    ]
+  },
+  "vael": {
+   "hired": [
+    "I refused a throne once. I shall not refuse a worthy company.",
+    "My crown is heavy. Your cause had better be heavier.",
+    "Kneel? No. Stand beside me. That is the honour."
+   ],
+   "placed": [
+    "Here the sun stops. Here the line holds.",
+    "Let them come into my shadow. It is roomier than it looks.",
+    "A sovereign stands where the fighting is thickest."
+   ],
+   "won": [
+    "The field kneels. I did ask nicely, at first.",
+    "Another dawn earned. Mine can wait a little longer.",
+    "Well fought. You may keep the crowns. I have enough."
+   ],
+   "lost": [
+    "Even an eclipse must pass. We shall return.",
+    "A kingdom fell once around me. This is merely a battle.",
+    "Retreat in good order. Crowns do not run."
+   ],
+   "levelUp": [
+    "The black sun widens. Good.",
+    "My crown remembers more of its old weight.",
+    "Another age of strength, returned to me."
+   ],
+   "ultimate": [
+    "KNEEL BEFORE NIGHT!",
+    "THE SUN DOES NOT RISE TODAY!",
+    "BOW TO THE ECLIPSE!"
+   ],
+   "revived": [
+    "I have waited out longer nights than this.",
+    "A sovereign does not stay down. It is unseemly.",
+    "Back on my feet. Do not mention it to the court."
+   ],
+   "lowHp": [
+    "My armour is dented and my patience thinner.",
+    "Shield me, someone. A crown is a poor helmet.",
+    "The eclipse dims. Hold them off a moment."
+   ]
+  },
+  "astrax": {
+   "hired": [
+    "I was a star once. Now I am your star. Do try to keep up.",
+    "The sky sent me down. I chose to stay for you.",
+    "Mind the tail. It is older than most kingdoms."
+   ],
+   "placed": [
+    "High ground, clear sky. Perfect for a little starfire.",
+    "From here I can see every foe. And every constellation.",
+    "Point me at their shields. I am feeling peckish."
+   ],
+   "won": [
+    "A fine meal of shields and a warm evening glow.",
+    "The heavens approve. I asked them personally.",
+    "Burnt, scattered and humbled. Splendid."
+   ],
+   "lost": [
+    "Even stars fall. I simply prefer to do it upwards.",
+    "My core flickers. We shall burn brighter next time.",
+    "Retreat to the clouds! Well, the nearest hill."
+   ],
+   "levelUp": [
+    "Another star kindles in my chest!",
+    "My breath burns half a heaven hotter now.",
+    "The constellations whisper. They are impressed."
+   ],
+   "ultimate": [
+    "HEAVENFALL! LOOK UP!",
+    "LET THE SKY COME DOWN!",
+    "BURN, CONSTELLATIONS, BURN!"
+   ],
+   "revived": [
+    "A star never truly goes out. It merely sulks.",
+    "Rekindled! Where was I? Ah yes, burning things.",
+    "The last star rises again. Naturally."
+   ],
+   "lowHp": [
+    "My light is guttering! Someone fetch me a shield to eat!",
+    "Scales cracked and core dimming. Not ideal.",
+    "Even a dragon needs a moment. Cover me!"
+   ]
+  },
+  "ilyra": {
+   "hired": [
+    "I was buried with every name I failed. Not one more.",
+    "My vow is simple. This time, everyone comes home.",
+    "A spear in one hand, mercy in the other. Both are yours."
+   ],
+   "placed": [
+    "I shall stand where the wounded fall.",
+    "Stay close. My halo is broken, but it still shelters.",
+    "Fight bravely. I will see you all through it."
+   ],
+   "won": [
+    "Everyone is breathing. That is the only victory.",
+    "Count heads. All of them? Good. Then we have won.",
+    "A battle without a funeral. My favourite kind."
+   ],
+   "lost": [
+    "We fall back together, or not at all.",
+    "Carry the wounded first. I shall carry the rest.",
+    "Not today. But I do not leave my vows unfinished."
+   ],
+   "levelUp": [
+    "More mercy, earned the hard way.",
+    "My halo mends a little more with every battle.",
+    "Stronger hands to hold the living."
+   ],
+   "ultimate": [
+    "DEATH IS DENIED!",
+    "NOT ONE OF YOU FALLS TODAY!",
+    "BACK, GRAVE! THEY ARE MINE!"
+   ],
+   "revived": [
+    "I have climbed out of a grave before. This was easy.",
+    "Up again. The vow is not finished.",
+    "Unburied, once more. Who needs me?"
+   ],
+   "lowHp": [
+    "I am bleeding. Heal the others first.",
+    "My halo flickers. Hold the line for me!",
+    "Do not let them reach the wounded behind me!"
+   ]
+  },
+  "orrun": {
+   "hired": [
+    "The roots have chosen you. I shall stand with them.",
+    "I am old, slow and very difficult to knock over.",
+    "The first forest grew on my brow. I shall guard yours."
+   ],
+   "placed": [
+    "Here I take root. Let them break upon the bark.",
+    "Shelter behind me, little saplings.",
+    "This ground is good. It shall hold."
+   ],
+   "won": [
+    "The forest stands. As it always has.",
+    "Every wound they gave me, I returned as shelter.",
+    "Rest now. I shall keep watch through the night."
+   ],
+   "lost": [
+    "Even oaks bend in the storm. We shall grow back.",
+    "Fall back to the old roots. They remember us.",
+    "Slowly now. I do not retreat quickly."
+   ],
+   "levelUp": [
+    "Another ring around my heartwood.",
+    "My roots go deeper. The world feels steadier.",
+    "New leaves on old branches. Splendid."
+   ],
+   "ultimate": [
+    "THE WORLD STANDS!",
+    "ROOTS, HOLD THEM FAST!",
+    "SHELTER BENEATH THE FIRST FOREST!"
+   ],
+   "revived": [
+    "Cut down, and green again by spring.",
+    "A tree that falls may still put out shoots.",
+    "Up I grow. Slowly, but surely."
+   ],
+   "lowHp": [
+    "My bark is splintering. Shield the young ones!",
+    "Deep roots, shallow breath. Help me hold!",
+    "Even I can be felled. Quickly now!"
+   ]
+  },
+  "nyxara": {
+   "hired": [
+    "I have seen every way this ends. I prefer the one with you.",
+    "Your future was rather untidy. I shall sort it out.",
+    "A forgotten queen at your service. Do try to remember me."
+   ],
+   "placed": [
+    "I have stood here before, in a future you never saw.",
+    "Stay where I put you. I have plans for this spot.",
+    "Three moves ahead, and two of them are rather clever."
+   ],
+   "won": [
+    "Exactly as I foresaw. Well, the third version.",
+    "Victory, in this timeline at least.",
+    "I did warn them. Several futures ago."
+   ],
+   "lost": [
+    "That ending is unwritten. I shall write a better one.",
+    "A poor timeline. We shall not keep it.",
+    "Even fate stumbles. Fall back, and remember this."
+   ],
+   "levelUp": [
+    "Another future opens before me.",
+    "My hands hold more endings than before.",
+    "Clearer sight. The threads are lovely today."
+   ],
+   "ultimate": [
+    "REWRITE FATE!",
+    "THAT WOUND NEVER HAPPENED!",
+    "BACK THREE BREATHS, ALL OF YOU!"
+   ],
+   "revived": [
+    "I foresaw my fall. I also foresaw this.",
+    "A small detour through an ending. Nothing more.",
+    "Returned, with notes for next time."
+   ],
+   "lowHp": [
+    "This is not one of the futures I liked!",
+    "Guard me! My endings are running short!",
+    "Unravelling! Someone tie off this thread!"
+   ]
   }
  },
  "banter": {
@@ -3113,7 +3323,12 @@
   "warDrummer": "Raiden hauls a great oxhide taiko onto the ridge and beats a cadence that rattles enemy teeth loose. Every thunderous strike rolls a wave of sound across the grass and puts fresh wind into friendly lungs.",
   "geomancer": "Tenzin listens to the slow grumbling of the bedrock and turns its complaints into jagged granite spires. With a sharp stamp of her staff, whole enemy files are tossed skyward or fenced behind fresh stone.",
   "bellWarden": "Kavi marches into battle with a two-ton bronze temple bell upon his shoulders. One swing of the striker knocks the front rank flat and wraps his neighbours in a soothing golden chime.",
-  "falconer": "Aisling whistles from the heather, and her gyrfalcon drops out of the sun like a feathered thunderbolt. Between stoops, a gale from its wings blows encroaching swordsmen back down the slope."
+  "falconer": "Aisling whistles from the heather, and her gyrfalcon drops out of the sun like a feathered thunderbolt. Between stoops, a gale from its wings blows encroaching swordsmen back down the slope.",
+  "vael": "Vael ruled a kingdom whose last sunrise never ended. He carries its eclipse above his crown, and offers his sword only to those who can refuse a throne.",
+  "astrax": "Astrax swallowed the final spark of a dying constellation and taught it to burn again. The star within its chest answers no astronomer, but it recognises courage.",
+  "ilyra": "Ilyra was buried beneath the names of everyone she failed to save. She returned with a broken halo and an unfinished vow: this time, everyone comes home.",
+  "orrun": "The first forest grew in Orrun’s antlers, long before anyone thought to name a tree. Beneath his stone ribs, an emerald heart still remembers every root.",
+  "nyxara": "Nyxara once ruled a future that the world chose to forget. Each of her spectral hands holds another ending, and she is becoming remarkably selective."
  },
  "foe_lore": {
   "skeleton": "Bound to a long-dead king, he still hoists his rusted rim for an impact that never arrived.",
@@ -3183,7 +3398,12 @@
   "aurelanLion": "The Lion of Dawn himself, crowned and cross, testing the keep before he answers its horn. Lances of light fall on a column of heroes, his roar stuns the front rank, and a dome of sunrise shuts round him.",
   "voltaraGoddess": "The Copper Goddess herself, bright and impatient, testing the keep before she answers its horn. A chain of lightning leaps from hero to hero, a storm falls where she has marked, and a ring of copper turns shots aside.",
   "gormTitan": "The Quarry Titan himself, half hill and half stone, testing the keep he built before he answers its horn. A landslide clears the ground round him, pillars rise where he has marked, and nothing shoves him.",
-  "vaelkharKing": "The Dragon King himself, black-scaled and haloed in violet fire, testing the keep before he answers its horn. A torrent of black fire runs down a whole line, the void drags heroes in, and his scales drink what they stop."
+  "vaelkharKing": "The Dragon King himself, black-scaled and haloed in violet fire, testing the keep before he answers its horn. A torrent of black fire runs down a whole line, the void drags heroes in, and his scales drink what they stop.",
+  "trial_vael": "An empty throne casts a shadow towards dawn. Its keeper tests those who would refuse a crown.",
+  "trial_astrax": "A constellation has gathered itself into a living shape. Its light is an invitation and a warning.",
+  "trial_ilyra": "A broken halo guards an unfinished rite. The living must prove they can bring one another home.",
+  "trial_orrun": "Stone and roots protect a heart older than the oldest shrine. Stand firm until the forest recognises you.",
+  "trial_nyxara": "The reflection moves a moment before you do. Somewhere behind it, an unwritten ending waits."
  },
  "scenes": {
   "opening": {
@@ -7567,6 +7787,211 @@
     }
    ]
   },
+  "awaken:vael": {
+   "title": "Eclipse Sovereign: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:vael",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "An eclipse settles behind Vael’s crown. The torches bow towards him."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "At last. A throne with adequate legroom."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:astrax": {
+   "title": "Last Star: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:astrax",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The star in Astrax’s chest burns brighter than the dawn."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The heavens remember."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:ilyra": {
+   "title": "Unburied Saint: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:ilyra",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The pieces of Ilyra’s halo turn as one. The old wounds close."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Death may lodge a complaint. I shall be busy."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:orrun": {
+   "title": "Worldroot: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:orrun",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "A forest stirs in Orrun’s antlers. Roots clasp the oldest stones."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Stand beside me."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
+  "awaken:nyxara": {
+   "title": "Fateweaver: Awakening",
+   "blurb": "A hero awakens: radiant light, a heightened presence and a dry observation.",
+   "cast": {
+    "hero": "unit:nyxara",
+    "duchess": "duchess"
+   },
+   "shots": [
+    {
+     "caption": "Awakening",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Six futures shatter in Nyxara’s hands. She chooses a seventh."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "This ending will do. For now."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      },
+      {
+       "who": "narrator",
+       "text": "The light took a long moment to leave {hero}, as if it liked the company."
+      }
+     ]
+    }
+   ]
+  },
   "castle:treasury": {
    "title": "The Vault Arises",
    "blurb": "The master builders complete the Treasury and enter into an intricate debate concerning the rafters.",
@@ -9298,6 +9723,166 @@
       {
        "who": "c",
        "text": "One blood, one night, and a moon that answers us!"
+      }
+     ]
+    }
+   ]
+  },
+  "earned:vael": {
+   "title": "Vael, the Eclipse Sovereign",
+   "blurb": "An ancient sovereign chooses a company worthy of his crown.",
+   "cast": {
+    "figure": "unit:vael",
+    "hero": "unit:vael"
+   },
+   "shots": [
+    {
+     "caption": "A new hero",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The empty throne has an answer. Its keeper steps into the light."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The sun will rise when we are finished."
+      },
+      {
+       "who": "narrator",
+       "text": "{hero} joins you."
+      }
+     ]
+    }
+   ]
+  },
+  "earned:astrax": {
+   "title": "Astrax, the Last Star",
+   "blurb": "The fallen sky offers its last living light.",
+   "cast": {
+    "figure": "unit:astrax",
+    "hero": "unit:astrax"
+   },
+   "shots": [
+    {
+     "caption": "A new hero",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Above the broken observatory, a star opens its wings."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Let the heavens remember."
+      },
+      {
+       "who": "narrator",
+       "text": "{hero} joins you."
+      }
+     ]
+    }
+   ]
+  },
+  "earned:ilyra": {
+   "title": "Ilyra, the Unburied Saint",
+   "blurb": "A saint finishes her funeral and begins another vow.",
+   "cast": {
+    "figure": "unit:ilyra",
+    "hero": "unit:ilyra"
+   },
+   "shots": [
+    {
+     "caption": "A new hero",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The last flower opens. Someone who should be buried comes home."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "This time, everyone comes home."
+      },
+      {
+       "who": "narrator",
+       "text": "{hero} joins you."
+      }
+     ]
+    }
+   ]
+  },
+  "earned:orrun": {
+   "title": "Orrun, the Worldroot",
+   "blurb": "The forest beneath the world wakes to protect the keep.",
+   "cast": {
+    "figure": "unit:orrun",
+    "hero": "unit:orrun"
+   },
+   "shots": [
+    {
+     "caption": "A new hero",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The oldest roots part. Their guardian lowers his antlers in greeting."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Stand beside me."
+      },
+      {
+       "who": "narrator",
+       "text": "{hero} joins you."
+      }
+     ]
+    }
+   ]
+  },
+  "earned:nyxara": {
+   "title": "Nyxara, Queen of the Unwritten",
+   "blurb": "A forgotten queen chooses the future she will defend.",
+   "cast": {
+    "figure": "unit:nyxara",
+    "hero": "unit:nyxara"
+   },
+   "shots": [
+    {
+     "caption": "A new hero",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The reflections agree at last. One figure steps through the glass."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "I have seen your ending. We shall improve it."
+      },
+      {
+       "who": "narrator",
+       "text": "{hero} joins you."
       }
      ]
     }

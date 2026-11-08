@@ -64,14 +64,14 @@
 .ptTableFront { left: 66%; top: 102%; width: 62%; height: 38%; z-index: 6; }
 .ptTavern .ptKeeper { position: absolute; left: 2%; top: 26.5%; width: 25%; height: 21%; padding: 0; border: 0; background: none; cursor: pointer; z-index: 1; min-height: 44px; min-width: 44px; overflow: hidden; }
 .ptKeeper img { width: 200%; height: 260%; margin-left: -50%; object-fit: contain; object-position: top; transform-origin: center 65%; animation: ptWipe 7.9s ease-in-out infinite; }
-.ptWarmth { position: absolute; left: 50%; top: 26%; width: 47%; height: 26%; pointer-events: none; z-index: 0; background: radial-gradient(ellipse, #ffad3b33, transparent 70%); mix-blend-mode: screen; animation: ptFire 4.7s ease-in-out infinite; }
+.ptWarmth { position: absolute; left: 50%; top: 26%; width: 47%; height: 26%; pointer-events: none; z-index: 0; background: radial-gradient(ellipse, #ffad3b33, transparent 70%); mix-blend-mode: screen; opacity: .7; animation: ptFire 4.7s ease-in-out infinite; }
 .ptDice { display: none; position: absolute; left: 61%; top: 62%; width: 9%; height: 5%; z-index: 4; pointer-events: none; }
 .ptHasPlayers .ptDice { display: block; }
 .ptDice i { display: block; position: absolute; width: 7px; height: 7px; background: url(ui/tavern/living-die-3.webp) center / contain no-repeat; animation: ptRoll 8.3s ease-in-out infinite; }
 .ptDice i + i { left: 10px; background-image: url(ui/tavern/living-die-5.webp); animation-delay: .12s; }
 .ptSteam { display: none; position: absolute; left: 76%; top: 74%; width: 8%; height: 8%; z-index: 7; pointer-events: none; }
 .ptHasSupper .ptSteam { display: block; }
-.ptSteam i { position: absolute; width: 4px; height: 12px; border-left: 1px solid #efd2a377; border-radius: 50%; animation: ptSteam 5s ease-in-out infinite; }
+.ptSteam i { position: absolute; width: 4px; height: 12px; border-left: 1px solid #efd2a377; border-radius: 50%; opacity: .5; transform-origin: 50% 100%; animation: ptSteam 5s ease-in-out infinite; }
 .ptSteam i:nth-child(2) { left: 5px; animation-delay: -1.7s; }
 .ptSteam i:nth-child(3) { left: 10px; animation-delay: -3.3s; }
 .ptCaption { z-index: 8; }
@@ -79,9 +79,11 @@
 @keyframes ptConverse { 0%, 35%, 65%, 100% { transform: rotate(0deg) scaleY(1); } 44%, 54% { transform: rotate(1.1deg) scaleY(1.008); } 49% { transform: rotate(.4deg) scaleY(1.003); } }
 @keyframes ptListen { 0%, 30%, 70%, 100% { transform: rotate(0deg); } 45%, 57% { transform: rotate(-.7deg) scaleY(.995); } 51% { transform: rotate(-.25deg); } }
 @keyframes ptWipe { 0%, 30%, 65%, 100% { transform: rotate(0deg); } 40%, 54% { transform: rotate(1deg); } 47% { transform: rotate(-.8deg); } }
-@keyframes ptFire { 0%, 100% { opacity: .5; } 40% { opacity: .9; } 70% { opacity: .65; } }
+/* (the hearth's warmth swells and settles in size at a steady brightness: no looping light change, test/no-flicker.test.ts) */
+@keyframes ptFire { 0%, 100% { transform: scale(.94, .9); } 40% { transform: scale(1.04, 1.08); } 70% { transform: scale(.98, .97); } }
 @keyframes ptRoll { 0%, 43%, 66%, 100% { transform: translate(0, 0) rotate(0); } 48% { transform: translate(-5px, -5px) rotate(140deg); } 53% { transform: translate(3px, -2px) rotate(270deg); } 58% { transform: translate(0, 0) rotate(360deg); } }
-@keyframes ptSteam { 0% { transform: translateY(0) rotate(-10deg); opacity: 0; } 25%, 60% { opacity: .5; } 100% { transform: translate(3px, -12px) rotate(15deg); opacity: 0; } }
+/* (each wisp grows from the cup, rises and thins away by shape alone, at a steady opacity) */
+@keyframes ptSteam { 0% { transform: translateY(0) rotate(-10deg) scale(.2, 0); } 25% { transform: translate(1px, -3px) rotate(-3deg) scale(1, 1); } 60% { transform: translate(2px, -7px) rotate(6deg) scale(.8, .9); } 100% { transform: translate(3px, -12px) rotate(15deg) scale(.1, 0); } }
 .ptTavern:not(.ptAlive) .ptScene *, .ptTavern.ptSaver .ptScene * { animation-play-state: paused !important; }
 .ptTavern.ptSaver .ptSteam { display: none; }
 @media (prefers-reduced-motion: reduce) { .ptTavern .ptScene * { animation: none !important; } .ptSteam { display: none !important; } }

@@ -2,6 +2,7 @@ import { SKILL2_LEVEL } from '../src/sim/heroKits';
 import { acAgainst } from '../src/sim/blow';
 import { bareBoard } from './bare';
 import { test } from 'node:test';
+import { isMythic } from '../src/sim/mythicRules';
 import assert from 'node:assert/strict';
 import { addUnit, defOf, fight, place, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, KITS, onStrike, tickStatus, keyOf } from '../src/sim/abilities';
@@ -50,7 +51,8 @@ test('the eight class heroes are registered, drawn at a sensible size, with a fo
 
 test('the new traits have two to five heroes (owner call for the twenty), one origin and one class each', () => {
   for (const t of ['holy', 'wild', 'arcane', 'frontier', 'warden']) {
-    const n = membersOf(t).length;
+    // (a Mythic is one a squad, so it adds at most one to a trait and is left out of the count: docs/notes/mythic-heroes.md)
+    const n = membersOf(t).filter((k) => !isMythic(k)).length;
     assert.ok(TRAITS[t] && n >= 2 && n <= 5, `${t} ${n}`);
   }
   for (const id of CLASSES) assert.equal(TRAITS[HERO_TRAITS[id][0]].kind, 'origin');

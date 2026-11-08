@@ -58,4 +58,10 @@ export const HEIR_NAMES: Readonly<Record<string, readonly string[]>> = {
   geomancer: ['Tashi', 'Dolma', 'Pema', 'Norbu', 'Yangchen', 'Sonam'],
   bellWarden: ['Anand', 'Meera', 'Dev', 'Lakshmi', 'Ravi', 'Sita'],
   falconer: ['Fergus', 'Mairead', 'Callum', 'Eilidh', 'Ruaridh', 'Isla'],
+  // (the five Mythics: the eclipsed court's names, the stars', the saints', the deep wood's and the unwritten futures')
+  vael: ['Aurel', 'Seline', 'Corvane', 'Ysolde', 'Maelor', 'Noctua'],
+  astrax: ['Sirrah', 'Vega', 'Altair', 'Lyrion', 'Deneb', 'Mira'],
+  ilyra: ['Seraphine', 'Anselm', 'Clemence', 'Benedict', 'Elowen', 'Aldric'],
+  orrun: ['Rowan', 'Alder', 'Briar', 'Thorne', 'Hazel', 'Ashby'],
+  nyxara: ['Nyssa', 'Veyra', 'Oriel', 'Lysander', 'Selune', 'Thessaly'],
 };

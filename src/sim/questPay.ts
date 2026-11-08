@@ -5,6 +5,7 @@
 
 import { GIVERS, QUESTS, type QuestDef, type Reward } from './questData';
 import { lengthOf, partsOf, starsOf, storyParts, type QuestLength } from './questStars';
+import { isMythicQuest } from './mythicQuests';
 
 /** Stones by stars (index 1 to 5) and length: a Short or Long quest's, and the total of a Chain or a Campaign. */
 export const STONE_PAY: Readonly<Record<QuestLength, readonly number[]>> = {
@@ -34,6 +35,8 @@ export const shareOf = (total: number, part: number, parts: number): number => {
 export function rewardOf(q: QuestDef): Reward {
   // (the hero tales and the lost techniques keep the pay they were written with: a hero joins, a book is found; the design leaves them as they are)
   if (!q.slot && GIVERS[q.giver].slot === 'tale') return q.reward;
+  // (and so does a Mythic's hidden chain: its prize is the legend, docs/notes/mythic-heroes.md)
+  if (isMythicQuest(q)) return q.reward;
   const stars = starsOf(q);
   const len = lengthOf(q);
   // (a story is paid by its whole; a part is its share, the finale the most)

@@ -1,6 +1,7 @@
 // The stone cut (QUESTS-3, Q2): quest pay set by stars, the shop's smaller chests, stones only in the chests of a new best Last Stand
 // wave, the daily chest's and the Calamity's smaller shares, and quest chests that hold no stones for the easy quests.
 import { test } from 'node:test';
+import { isMythicQuest } from '../src/sim/mythicQuests';
 import assert from 'node:assert/strict';
 import { ARMIES } from '../src/sim/armies';
 import { chestStones } from '../src/sim/armyStars';
@@ -39,8 +40,9 @@ test("a story's total is shared across its parts, the finale taking the most", (
 test('every quest pays what its stars say: no stones at one or two stars (a Chain two-star excepted), and the table at three and up', () => {
   for (const q of QUESTS) {
     const r = rewardOf(q);
-    // (the tales and lost techniques pay as written)
-    if (!q.slot && GIVERS[q.giver].slot === 'tale') {
+    // (the tales and lost techniques pay as written, and so do the Mythics' hidden chains, earned by content like the tales'
+    // heroes: docs/notes/mythic-heroes.md)
+    if ((!q.slot && GIVERS[q.giver].slot === 'tale') || isMythicQuest(q)) {
       assert.deepEqual(r, q.reward, q.id);
       continue;
     }
@@ -50,7 +52,7 @@ test('every quest pays what its stars say: no stones at one or two stars (a Chai
     assert.ok((r.crowns ?? 0) >= (q.reward.crowns ?? 0), `${q.id}: crowns are never cut`);
   }
   // (a story's parts add to its total)
-  const last = QUESTS.filter((q) => (q.slot || GIVERS[q.giver].slot !== 'tale') && lengthOf(q) === 'chain' && !QUESTS.some((x) => x.after === q.id) && starsOf(q) >= 2);
+  const last = QUESTS.filter((q) => (q.slot || GIVERS[q.giver].slot !== 'tale') && !isMythicQuest(q) && lengthOf(q) === 'chain' && !QUESTS.some((x) => x.after === q.id) && starsOf(q) >= 2);
   assert.ok(last.length > 0);
   for (const q of last) {
     const parts: typeof q[] = [];

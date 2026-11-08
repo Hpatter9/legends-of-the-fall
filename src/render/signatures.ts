@@ -740,6 +740,57 @@ export const SIGNATURES: Record<string, Signature> = {
     [s('rain', 'wind-flame', { z: 2 }), s('spiral', 'wind-vortex', { n:5, r:40, z:2, t: 0x8fd8ff }), s('ripple', 'wind-wave', { n:3, z:4.4, t: 0xb8e8ff })],
     [s('pop', 'wind-hit', { z: 1.2 })],
   ),
+  // ---- the five Mythics (docs/notes/mythic-heroes.md): skill 1 and ultimate, each lead its own painting (atlas-11)
+  'Eclipse Cleave': sig(
+    [s('orbit', 'dark-sparkle', { n: 6, r: 20, t: 0xffdc87 })],
+    [s('sweep', 'dark-wave', { z: 2 }), s('ring', 'dark-hit', { z: 2.6, t: 0xffc85a, a: 0.8 })],
+    [s('pop', 'dark-hit', { z: 1.2 })],
+  ),
+  'Kneel Before Night': sig(
+    [s('inward', 'dark-gather', { n: 10, r: 60, t: 0xffdc87 }), s('dome', 'dark-aura', { z: 2.6, a: 0.6, t: 0x2a1a40 })],
+    [s('ring', 'dark-circle', { z: 2 }), s('ripple', 'dark-wave', { n: 3, z: 4.2, t: 0xffd77a }), s('pillars', 'dark-spikes', { n: 6, r: 72, z: 1.8, t: 0xe8c060 })],
+    [s('pop', 'dark-explosion', { z: 1.3 })],
+  ),
+  Starbreath: sig(
+    [s('orbit', 'fire-sparkle', { n: 6, r: 18, t: 0x9bc9ff })],
+    [s('cone', 'fire-vortex', { z: 2 }), s('spray', 'fire-sparkle', { n: 10, r: 90, t: 0xbfe0ff })],
+    [s('pop', 'fire-explosion', { z: 1.2 })],
+  ),
+  Heavenfall: sig(
+    [s('spiral', 'star-explosion', { n: 6, r: 22, z: 0.8, t: 0x9bc9ff }), s('dome', 'light-aura', { z: 2.4, a: 0.5, t: 0x9bc9ff })],
+    [s('rain', 'star-explosion', { z: 2 }), s('ripple', 'light-circle', { n: 3, z: 4.4, t: 0x8fb8ff }), s('pillars', 'light-pillar', { n: 3, r: 80, z: 2.2, t: 0xa8d0ff, a: 0.85 })],
+    [s('pop', 'light-explosion', { z: 1.3 })],
+  ),
+  'Saint’s Spear': sig(
+    [s('orbit', 'light-sparkle', { n: 6, r: 18, t: 0xfff0d6 })],
+    [s('beam', 'light-strike', { z: 2 }), s('pop', 'light-smoke', { z: 1.6, t: 0xfff0d6, d: 200 })],
+    [s('pop', 'light-hit', { z: 1.2 })],
+  ),
+  'Death Denied': sig(
+    [s('inward', 'light-gather', { n: 10, r: 60, t: 0xfff0d6 }), s('dome', 'light-aura', { z: 2.8, a: 0.6, t: 0xfff0d6 })],
+    [s('dome', 'light-aura', { z: 2 }), s('ripple', 'light-wave', { n: 3, z: 4.2, t: 0xfff2d8 }), s('spiral', 'light-sparkle', { n: 12, r: 26, t: 0xffe8b0 })],
+    [s('pop', 'light-hit', { z: 1.3 })],
+  ),
+  Rootquake: sig(
+    [s('orbit', 'forest-sparkle', { n: 6, r: 18, t: 0x94d998 })],
+    [s('spikes', 'forest-strike', { z: 2 }), s('ring', 'forest-wave', { z: 3, t: 0x7cc480 })],
+    [s('pop', 'forest-hit', { z: 1.2 })],
+  ),
+  'The World Stands': sig(
+    [s('inward', 'forest-gather', { n: 10, r: 60, t: 0x94d998 }), s('dome', 'forest-aura', { z: 2.6, a: 0.6, t: 0x94d998 })],
+    [s('pillar', 'forest-aura', { z: 2 }), s('ripple', 'forest-wave', { n: 3, z: 4.4, t: 0x9ee0a2 }), s('pillars', 'forest-strike', { n: 6, r: 76, z: 2, t: 0xb8f0a0 })],
+    [s('pop', 'forest-explosion', { z: 1.3 })],
+  ),
+  'Fate Shard': sig(
+    [s('orbit', 'moon-sparkle', { n: 6, r: 18, t: 0xbda2ff })],
+    [s('pop', 'moon-sparkle', { z: 2 }), s('shards', 'dark-sparkle', { n: 6, z: 0.9, t: 0xc8b0ff })],
+    [s('pop', 'moon-hit', { z: 1.2 })],
+  ),
+  'Rewrite Fate': sig(
+    [s('inward', 'lightning-gather', { n: 10, r: 60, t: 0xbda2ff }), s('ring', 'lightning-rune', { z: 2, loop: true, t: 0xbda2ff })],
+    [s('dome', 'lightning-vortex', { z: 2 }), s('ripple', 'lightning-wave', { n: 3, z: 4.2, t: 0xb59cff }), s('orbit', 'lightning-sparkle', { n: 10, r: 34, t: 0xd8c8ff })],
+    [s('pop', 'lightning-hit', { z: 1.3 })],
+  ),
 };
 
 // The original arrangements remain, but every release and corresponding hit has its own authored silhouette.

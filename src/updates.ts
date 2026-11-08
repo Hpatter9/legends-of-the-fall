@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.398.0',
+    date: '2026-11-08',
+    title: 'Mythic heroes completed',
+    notes: ['The five Mythic heroes get their own skill art, books, perks, lines and quest words. Mythics never come from summons, and the game publishes again.'],
+  },
+  {
     version: '0.397.0',
     date: '2026-11-08',
     title: 'Five legends beyond the veil',

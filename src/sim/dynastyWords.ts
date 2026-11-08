@@ -11,6 +11,8 @@ export const BASE_AGE: Readonly<Record<string, number>> = {
   mercenary: 32, mummy: 3000, buccaneer: 30, wolfBard: 26, beastmaster: 28, kraken: 9, lancer: 24, reaper: 1000, timeWitch: 35,
   arcBlade: 22, dreadPirate: 41, siegeBot: 11, priestess: 26, dragoon: 23, juggernaut: 36, sage: 50, demonSwordsman: 29, tyrant: 45,
   vampireLord: 400, hemomancer: 300, nightstalker: 150, bloodGargoyle: 600, dhampir: 27, warDrummer: 33, geomancer: 48, bellWarden: 200, falconer: 25,
+  // (the five Mythics are legends older than the Keep; each tells its seasons its own way, `AGELESS` below)
+  vael: 1200, astrax: 9000, ilyra: 700, orrun: 5000, nyxara: 3,
 };
 
 /** The ageless kinds: how a season served is told ("in its sixth year of service"), and the veteran's and the elder's touch in its own
@@ -34,6 +36,11 @@ export const AGELESS: Readonly<Record<string, AgelessWords>> = {
   mummy: { age: (s) => `${nth(s + 1)} season since the waking`, veteran: 'Seneb’s wraps have yellowed like old papyrus', elder: 'Seneb’s wraps are pale as desert bone' },
   rifleBot: { age: (s) => `service year ${7 + s}`, veteran: 'Rook-7’s brass has dulled to a soldier’s patina', elder: 'Rook-7’s plating wears the grey of long service' },
   siegeBot: { age: (s) => `service year ${11 + s}`, veteran: 'Bastion’s hull has dulled to a veteran’s patina', elder: 'Bastion’s hull wears the grey of long service' },
+  vael: { age: (s) => `${nth(s + 1)} dawn since the eclipse`, veteran: 'a dull bronze bloom creeps across Vael’s crown', elder: 'Vael’s gold has darkened to the bronze of old thrones' },
+  astrax: { age: (s) => `${nth(s + 1)} turning of its last star`, veteran: 'the star in Astrax’s chest burns a shade cooler', elder: 'Astrax’s scales have gone the silver of a waning star' },
+  ilyra: { age: (s) => `${nth(s + 1)} season since she rose`, veteran: 'a crack of grey runs through Ilyra’s broken halo', elder: 'Ilyra’s halo has paled to the grey of grave-light' },
+  orrun: { age: (s) => `${nth(s + 1)} ring since the waking`, veteran: 'grey lichen gathers in Orrun’s bark', elder: 'Orrun’s bark has silvered like an ancient oak' },
+  nyxara: { age: (s) => `${nth(s + 3)} future she has kept`, veteran: 'a thread of grey runs through Nyxara’s starlit veil', elder: 'Nyxara’s veil has faded to the grey of forgotten pages' },
   kraken: { age: (s) => `${nth(s + 1)} tide on land`, veteran: 'Skerry’s shell has dulled like a sea-worn stone', elder: 'Skerry’s shell is pale as old coral' },
 };
 
