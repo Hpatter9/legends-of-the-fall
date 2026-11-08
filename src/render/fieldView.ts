@@ -22,20 +22,21 @@ import { loadImage } from './loadImage';
 import { facesRight, FOOT, HH, rawAt, TH, TW } from './iso';
 import { facesRightOf, figureOf, framesOf, type Anim } from './sheets';
 import { detailFor, type Detail } from './fieldDetail';
+import { CHUNK, chunkHeights, chunksInView, focusOnScreen, viewRect, type PlayArea, type WorldRect } from './fieldCull';
 
 export { MID_AT, NEAR_AT, type Detail } from './fieldDetail';
 import gateUrl from '../art/camp/gate.png';
 import impactUrl from '../art/fx/impact.png';
 import arrowUrl from '../art/fx/arrow.png';
 
-/** A chunk's side, in tiles. */
-export const CHUNK = 10;
+export { CHUNK, type PlayArea } from './fieldCull';
 /** The chunks' bake resolution (of the world's pixels). */
 const BAKE_RES = 0.5;
 /** At most this many chunks are baked in one frame. */
 const BAKES_A_FRAME = 2;
-/** The chunk cache: this many kept (chunks in view are never let go while in view). */
-const CACHE = 36;
+/** The chunk cache: this many kept, the whole 10 x 10 of them (about 28 MB at half resolution; a tall phone at Mid wants 70 in view,
+ *  and chunks in view are never let go). */
+const CACHE = 100;
 /** The overview's width in pixels. */
 const OVERVIEW_W = 1024;
 /** Effects at once (sparks and arrows). */
@@ -118,6 +119,8 @@ export class FieldView {
   /** What the last frame drew (for the bench's readout). */
   drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0 };
   private brokenGates = new Set<number>();
+  /** Each chunk's highest and lowest ground, for culling. */
+  private heights: ReturnType<typeof chunkHeights>;
 
   constructor(private b: Battle, private renderer: { generateTexture: (o: Container | { target: Container }) => Texture }) {
     this.unitLayer.sortableChildren = true;
@@ -132,6 +135,8 @@ export class FieldView {
     };
     this.rings = { hero: ring(0x4a9cff), foe: ring(0xff4a4a) };
     this.bakeOverview();
+    const bd = this.b.board;
+    this.heights = chunkHeights(bd.w, bd.d, (u, v) => bd.tiles[v * bd.w + u].h);
   }
 
   private get f(): FieldState {
@@ -357,21 +362,21 @@ export class FieldView {
 
   // ----- each frame -----
 
-  /** Draw the field for a camera centred on world (x, y) at `zoom`, with a view `vw` x `vh` screen pixels. `simT` is the battle's
-   *  time to draw (between ticks, for smooth steps). */
-  update(cam: { x: number; y: number; zoom: number }, vw: number, vh: number, simT: number, events: readonly FieldEvent[]): void {
+  /** Draw the field for a camera looking at world (x, y) at `zoom`, on a screen `vw` x `vh` CSS pixels (Pixi's `app.screen`, not the
+   *  canvas's device pixels). The camera's point is drawn halfway down `play`, the screen between the info panel and the buttons
+   *  (`fieldCull.ts`). `simT` is the battle's time to draw (between ticks, for smooth steps). */
+  update(cam: { x: number; y: number; zoom: number }, vw: number, vh: number, simT: number, events: readonly FieldEvent[], play?: PlayArea): void {
     this.frame++;
     this.detail = detailFor(cam.zoom, this.detail);
+    const focus = focusOnScreen(vw, vh, play);
     this.root.scale.set(cam.zoom);
-    this.root.position.set(vw / 2 - cam.x * cam.zoom, vh / 2 - cam.y * cam.zoom);
+    this.root.position.set(focus[0] - cam.x * cam.zoom, focus[1] - cam.y * cam.zoom);
     const far = this.detail === 'far';
     this.chunkLayer.visible = !far;
     this.unitLayer.visible = !far;
     this.farLayer.visible = far;
     // the world rectangle in view, and a margin
-    const halfW = vw / 2 / cam.zoom;
-    const halfH = vh / 2 / cam.zoom;
-    const view = { x0: cam.x - halfW - TW, x1: cam.x + halfW + TW, y0: cam.y - halfH - 120, y1: cam.y + halfH + 160 };
+    const view = viewRect(cam, vw, vh, focus);
     this.drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0 };
     if (far) this.drawFar(simT, cam.zoom);
     else {
@@ -380,23 +385,12 @@ export class FieldView {
     }
   }
 
-  private drawChunks(view: { x0: number; x1: number; y0: number; y1: number }): void {
+  /** The chunks the last frame wanted in view (keys cy * 100 + cx), for the bench and the screenshots' check. */
+  wanted: number[] = [];
+
+  private drawChunks(view: WorldRect): void {
     const b = this.b.board;
-    const n = Math.ceil(b.w / CHUNK);
-    const want: number[] = [];
-    for (let cy = 0; cy < n; cy++)
-      for (let cx = 0; cx < n; cx++) {
-        // (a chunk's rough bounds: its four corners, with room for the tallest column)
-        const u0 = cx * CHUNK - 0.5;
-        const v0 = cy * CHUNK - 0.5;
-        const u1 = u0 + CHUNK;
-        const v1 = v0 + CHUNK;
-        const xs = [rawAt(u0, v1, 0)[0], rawAt(u1, v0, 0)[0]];
-        const y0 = rawAt(u0, v0, 12)[1];
-        const y1 = rawAt(u1, v1, -1)[1];
-        if (xs[1] < view.x0 || xs[0] > view.x1 || y1 < view.y0 || y0 > view.y1) continue;
-        want.push(cy * 100 + cx);
-      }
+    const want = chunksInView(view, b.w, b.d, this.heights);
     // (the nearest to the middle of the view first, so a pan fills in from the middle out)
     const mx = (view.x0 + view.x1) / 2;
     const my = (view.y0 + view.y1) / 2;
@@ -405,6 +399,7 @@ export class FieldView {
       return Math.abs(x - mx) + Math.abs(y - my);
     };
     want.sort((p, q) => mid(p) - mid(q));
+    this.wanted = want;
     let baked = 0;
     const showing = new Set(want);
     for (const key of want) {
@@ -438,7 +433,7 @@ export class FieldView {
     }
   }
 
-  private drawFighters(view: { x0: number; x1: number; y0: number; y1: number }, simT: number, events: readonly FieldEvent[]): void {
+  private drawFighters(view: WorldRect, simT: number, events: readonly FieldEvent[]): void {
     const f = this.f;
     const mid = this.detail === 'mid';
     const seen = new Set<number>();

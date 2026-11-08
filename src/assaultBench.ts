@@ -47,6 +47,8 @@ export interface BenchStats {
   zoom: number;
   fighters: number;
   chunks: number;
+  /** The chunks in view, baked or not (all of them drawn once baking catches up). */
+  wanted: number;
   alive: number;
 }
 
@@ -177,7 +179,7 @@ export async function startAssaultBench(): Promise<void> {
   let fpsAt = last;
   let fps = 0;
   let shown = 0;
-  const stats: BenchStats = { seed, run, ticks: 0, simMean: 0, simP95: 0, simWorst: 0, fps: 0, frameMean: 0, frameP95: 0, workMean: 0, detail: 'near', zoom: cam.zoom, fighters: 0, chunks: 0, alive: 0 };
+  const stats: BenchStats = { seed, run, ticks: 0, simMean: 0, simP95: 0, simWorst: 0, fps: 0, frameMean: 0, frameP95: 0, workMean: 0, detail: 'near', zoom: cam.zoom, fighters: 0, chunks: 0, wanted: 0, alive: 0 };
   (window as unknown as { __bench: BenchStats }).__bench = stats;
 
   const frame = (now: number) => {
@@ -247,7 +249,11 @@ export async function startAssaultBench(): Promise<void> {
         cam.y += dy * k;
       }
     }
-    view.update(cam, app.renderer.width / app.renderer.resolution, app.renderer.height / app.renderer.resolution, b.t + Math.min(acc, TICK_MS), events);
+    // (the screen in CSS pixels: `app.screen`, which the device pixel ratio does not touch; the focus is drawn halfway between the
+    // readout and the buttons)
+    const hostTop = host.getBoundingClientRect().top;
+    const play = { top: hud.getBoundingClientRect().bottom - hostTop, bottom: bar.getBoundingClientRect().top - hostTop };
+    view.update(cam, app.screen.width, app.screen.height, b.t + Math.min(acc, TICK_MS), events, play);
     app.render();
     workMs.push(performance.now() - w0);
     if (workMs.length > FRAME_WINDOW) workMs.shift();
@@ -257,7 +263,7 @@ export async function startAssaultBench(): Promise<void> {
       const alive = b.units.filter((x) => x.alive);
       Object.assign(stats, {
         seed, run, ticks: b.field!.stats.ticks, simMean: mean(simMs), simP95: p95(simMs), simWorst, fps, frameMean: mean(frameMs), frameP95: p95(frameMs), workMean: mean(workMs),
-        detail: view.detail, zoom: cam.zoom, fighters: view.drawn.fighters, chunks: view.drawn.chunks, alive: alive.length,
+        detail: view.detail, zoom: cam.zoom, fighters: view.drawn.fighters, chunks: view.drawn.chunks, wanted: view.wanted.length, alive: alive.length,
       });
       const ours = alive.filter((x) => x.side === 'hero').length;
       const clock = `${Math.floor(b.t / 60000)}:${String(Math.floor((b.t % 60000) / 1000)).padStart(2, '0')}`;
