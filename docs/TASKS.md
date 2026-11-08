@@ -29,6 +29,14 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### ROAD-ART — Eight painted road encounters
+
+- **Owner:** Codex. **Branch/worktree:** `art/road-encounters`, `/workspace/legends-of-the-fall` (retains completed trait art).
+- **Scope:** eight source paintings, importer, event-kind art mapping, compact art in existing encounter cards, credits, browser checks and handoff. Preserve event text, choices, costs, rules, saves and version.
+- **Direction:** owner approved the Pale Lady shrine, crossroads forge and refugee caravan proposal. Other encounters follow the same painted style.
+- **Completion:** eight distinct 768×432 paintings, matching event cards only, all choices reachable at three phone sizes, focused typecheck/build/tests and offline bundle validation.
+- **Status:** complete locally, ready for review. Eight paintings integrated; typecheck/build, event and menu tests and all three phone sizes passed. Options/text/costs preserved, choices reachable, leave/Continue and insufficient-gold states checked, no browser errors. [Handoff](notes/painted-road-encounters.md). No push, merge or deployment.
+
 ### NEMESIS-TRAIT-ART — Complete the twelve remaining trait symbols
 
 - **Owner:** Codex. **Branch/worktree:** `art/nemesis-traits-completion`, `/workspace/legends-of-the-fall` from main 0.393.0.

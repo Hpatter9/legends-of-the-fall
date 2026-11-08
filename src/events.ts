@@ -25,6 +25,7 @@ import fireTonic from './art/items/ember_ruby.png';
 import quicksilver from './art/items/cloud_treads.png';
 import coinHoard from './art/items/coin_hoard.png';
 import goldBand from './art/items/gold_band.png';
+import { ROAD_ART } from './roadArt';
 
 /** An option's picture on the road's cards and the passing cart (MID-EVENTS): what it gives, from the item and twist icons. */
 function optionIcon(o: EventOption): string {
@@ -100,7 +101,17 @@ export class Events {
       card.append(go);
       return;
     }
-    card.append(el('h2', '', ev.title), el('p', '', ev.text), el('div', 'gold', ev.buys !== undefined ? `${run.gold} gold · ${ev.buys ? `${ev.buys} ${ev.buys === 1 ? 'buy' : 'buys'} left` : 'the pedlar is packing up'}` : `${run.gold} gold`));
+    card.append(el('h2', '', ev.title));
+    const painting = ROAD_ART[ev.kind];
+    if (painting) {
+      card.classList.add('evIllustrated');
+      const img = el('img', 'evRoadArt');
+      img.src = painting;
+      img.alt = '';
+      img.draggable = false;
+      card.append(img);
+    }
+    card.append(el('p', '', ev.text), el('div', 'gold', ev.buys !== undefined ? `${run.gold} gold · ${ev.buys ? `${ev.buys} ${ev.buys === 1 ? 'buy' : 'buys'} left` : 'the pedlar is packing up'}` : `${run.gold} gold`));
     if (this.note) card.append(el('p', 'note', this.note));
     ev.options.forEach((o, i) => card.append(this.optionButton(o, i)));
   }

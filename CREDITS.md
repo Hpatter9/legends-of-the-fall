@@ -596,3 +596,7 @@ The cozy seated tavern extension adds 108 original OpenAI-generated resting hero
 ## Remaining Nemesis trait symbols
 
 - Twelve original OpenAI-generated gothic game symbols (`src/art/nemesis-traits/`) complete the modelled trait set: Fireproof, Rime-hardened, Venom-blooded, Thick-hided, Grounded, Fearless, four Banes, Elusive and Legend-slayer. The owner approved the three-symbol style proposal against the existing commissioned icons. Sources and the unused hazy take are retained in `art-source/nemesis-traits/`. `tools/nemesis-trait-art/import.py` normalises footprints, hard alpha and palette, with nearest-neighbour packing. Original trait artwork retains its existing credits.
+
+## Painted road encounter vignettes
+
+- Eight original paintings generated with OpenAI image generation in the owner-approved road-scene style: wounded scout, Pale Lady shrine, deserters at a fire, bone-dice countess, wandering healer, crossroads forge, crown in the reeds and refugee caravan (`src/art/road-encounters/`). Sources and approved proposal are retained in `art-source/road-encounters/`; `tools/road-art/import.py` crops and downsamples the panels. Images are bundled for offline play.
