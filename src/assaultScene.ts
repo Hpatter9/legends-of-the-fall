@@ -1,9 +1,11 @@
 // The Assault's battle on the page (phase 1, `docs/notes/assault-1.md`; the design's 2.4 and 8.3): the hold's field drawn in chunks at three
 // levels of detail (`render/fieldView.ts`), with the command bar over it, upright at 393 x 852:
 //
-// - the top bar: the clock (from 3:00 left), the foes left of the 200, the three drums (struck through when silenced), x1 / x2 and pause;
+// - the top bar: the clock (from 3:00 left), the foes left of the 200, the three drums (struck through when silenced), Slow (the battle
+//   slowed almost to a stop while orders are given: a tenth of its pace, not a pause, every order still tied to its tick), x1 / x2 and pause;
 // - the minimap, top right: the hold from its zones, our platoons blue, the foes red; a tap moves the camera, a long press sends the chosen;
-// - the order row, while a platoon is chosen: Hold, Charge (once), Fall back, the formation chip (a tap cycles) and Follow;
+// - the order row, while a platoon is chosen: Hold, Charge (once), Flank (then a tap on a foe), Fall back, the formation chip (a tap cycles:
+//   line, wedge, shield wall, loose) and Follow;
 // - the platoon bar: five portraits (health, the platoon's count, the ultimate's ring) and All; the ultimate is the gem on the chosen
 //   portrait's corner (a second tap on a chosen portrait with a full meter fires it too); a double tap flies the camera to the hero, a long
 //   press opens its platoon card;
@@ -59,6 +61,8 @@ const LONG_MS = 550;
 /** Sounds: a blow further than this from the camera's middle plays none, and at most this many a tick. */
 const SOUND_TILES = 18;
 const SOUND_MOST = 8;
+/** Slow time: the battle's pace while the Slow button is on. */
+const SLOW = 0.1;
 /** The Lite setting (the pause card's Battle detail): a 30 fps cap. (The scene stands under the ornate menus' veil, z-index 95, so its cards show over it.) */
 const LITE_KEY = 'legends.assaultLite';
 
@@ -73,7 +77,7 @@ const CSS = `
 .asMini{position:absolute;right:6px;top:50px;width:104px;height:104px;z-index:3;border:1px solid #c9a24acc;border-radius:6px;background:#0b0d12cc;overflow:hidden}
 .asMini canvas{position:absolute;inset:0;width:104px;height:104px}
 .asBottom{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;flex-direction:column;gap:4px;padding:4px 6px calc(6px + env(safe-area-inset-bottom));background:linear-gradient(#1b161000,#1b1610f0 18%)}
-.asOrders{display:flex;gap:4px;height:40px}.asOrders button{flex:1;padding:0 4px;font-size:12px}
+.asOrders{display:flex;gap:4px;height:40px}.asOrders button{flex:1;padding:0 2px;font-size:12px;min-width:0}
 .asOrders[hidden]{display:none}
 .asPlatoons{display:flex;gap:5px;justify-content:center;height:76px;align-items:flex-end}
 .asPort{position:relative;width:60px;height:72px;border-radius:8px;border:1px solid #c9a24a99;background:#211a12e6;padding:0;color:#f3e7c7}
@@ -96,6 +100,7 @@ const CSS = `
 .asSpells button span{overflow:hidden;text-overflow:ellipsis}
 @media (max-width:400px){.asSpells button span{display:none}}
 .asToast{position:absolute;left:50%;top:60px;transform:translateX(-50%);z-index:4;background:#1b1610e6;border:1px solid #c9a24a;border-radius:8px;padding:6px 12px;font:700 14px "Alegreya Sans";pointer-events:none;white-space:nowrap;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:400px){.asTop{gap:4px;padding:0 5px}.asTop b{font-size:12px}.asTop button{padding:0 6px;font-size:12px;min-height:32px}.asDrums i{width:10px;height:10px}}
 @media (max-width:370px){.asPort{width:54px}.asPort canvas{width:44px;height:44px}.asAll{width:40px;font-size:0}.asAll::after{content:"⚑";font-size:18px}}
 @media (prefers-reduced-motion:reduce){.asPort.on{transform:none}}
 `;
@@ -152,8 +157,10 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   const foes = el('b');
   const drums = el('span', 'asDrums');
   const speedBtn = el('button', '', 'x1');
+  const slowBtn = el('button', '', 'Slow');
+  slowBtn.setAttribute('aria-label', 'Slow time');
   const autoBtn = el('button', h.auto ? 'on' : '', 'Auto');
-  top.append(pauseBtn, clock, el('span', 'grow'), foes, drums, autoBtn, speedBtn);
+  top.append(pauseBtn, clock, el('span', 'grow'), foes, drums, slowBtn, autoBtn, speedBtn);
   const mini = el('div', 'asMini');
   const miniMap = el('canvas');
   const miniDots = el('canvas');
@@ -165,10 +172,12 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   orders.hidden = true;
   const holdBtn = el('button', '', 'Hold');
   const chargeBtn = el('button', '', 'Charge');
-  const backBtn = el('button', '', 'Fall back');
+  const backBtn = el('button', '', 'Back');
+  backBtn.setAttribute('aria-label', 'Fall back');
+  const flankBtn = el('button', '', 'Flank');
   const formBtn = el('button', '', 'Wall');
   const followBtn = el('button', '', 'Follow');
-  orders.append(holdBtn, chargeBtn, backBtn, formBtn, followBtn);
+  orders.append(holdBtn, chargeBtn, flankBtn, backBtn, formBtn, followBtn);
   const bar = el('div', 'asPlatoons');
   const spells = el('div', 'asSpells');
   const mana = el('span', 'mana');
@@ -302,6 +311,13 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     pl.formation = next;
     syncOrders();
     say(FORMATION_NAMES[next]);
+  });
+  // (Flank: the next tap on a foe sends the chosen platoon round it)
+  let flanking = false;
+  flankBtn.addEventListener('click', () => {
+    flanking = !flanking;
+    flankBtn.classList.toggle('on', flanking);
+    if (flanking) say('Flank: tap a foe');
   });
   followBtn.addEventListener('click', () => {
     follow = !follow;
@@ -467,6 +483,15 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
       if (k >= 0) choose(k);
       return;
     }
+    // (a Flank readied: a tap on a foe sends the platoons round it; anywhere else lets it go)
+    if (flanking) {
+      flanking = false;
+      flankBtn.classList.remove('on');
+      const target = near('foe');
+      if (target === undefined) return say('Flank: no foe there');
+      for (const k of list) orderPlatoon(b, k, { kind: 'flank', unit: target });
+      return say(`Flank: ${UNITS[f.byId[target].def].name}`);
+    }
     const fortIx = h.fortAt.get(t.v * f.w + t.u);
     const fort = fortIx !== undefined ? h.forts[fortIx] : undefined;
     const foe = near('foe');
@@ -523,6 +548,13 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   // ----- the top bar's buttons, and pause -----
   let speed = 1;
   let paused = false;
+  // (Slow: the battle runs at a tenth of its pace while the player gives orders, then a second tap resumes; a pause it is not)
+  let slow = false;
+  slowBtn.addEventListener('click', () => {
+    slow = !slow;
+    slowBtn.classList.toggle('on', slow);
+    say(slow ? 'Time slows: give your orders' : 'Time runs on');
+  });
   speedBtn.addEventListener('click', () => {
     speed = speed === 1 ? 2 : 1;
     speedBtn.textContent = `x${speed}`;
@@ -583,7 +615,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     const events: FieldEvent[] = [];
     const sound: BattleEvent[] = [];
     if (b.phase === 'fight' && !paused) {
-      acc += dt * speed;
+      acc += dt * (slow ? SLOW : speed);
       let n = 0;
       while (acc >= TICK_MS && n < 8 && b.phase === 'fight') {
         const ev = stepAssault(b);

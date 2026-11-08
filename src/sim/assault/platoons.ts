@@ -1,11 +1,11 @@
 // The platoons: their formations and their orders (phase 1, `docs/notes/assault-1.md`; the design's 3.4 and 3.5). The hero is the
 // platoon's anchor: each soldier has a slot in the platoon's formation, an offset from the hero turned to face the platoon's heading.
 //
-// The four formations are the party's own (`formations.ts`), scaled up to ten and read per platoon:
-//   - Shield Wall: a line two deep before the hero; harder to hurt.
-//   - Spearhead: a wedge with the hero at the tip; its blows land harder, it takes a little more.
-//   - Hollow Square: a ring round the hero; harder to hurt, and a hurt soldier's friends close round.
-//   - Skirmish: loose, a tile apart, so a blast takes fewer.
+// The four formations are the owner's (line, wedge, shield wall, loose), read per platoon with riders like the party's own (`formations.ts`):
+//   - Line: one rank abreast of the hero, the widest front for shooters and a plain fight.
+//   - Wedge: the hero at the tip and the rest opening behind; its blows land harder, it takes a little more.
+//   - Shield Wall: a line two deep before the hero; harder to hurt, its blows a little softer.
+//   - Loose: two loose ranks, a tile apart, so a blast takes fewer.
 //
 // The orders are five verbs and a tap: Move (attack-move), Hold, Charge (once a platoon), Fall back, Assault (a structure) and Focus (a
 // foe). Each is queued and applied at the start of the next tick, and kept in the hold's log, so an assault is its input, its seed and its
@@ -16,27 +16,27 @@ import type { Battle } from '../battle';
 import type { AssaultLogEntry, HoldState, PlatoonOrder, PlatoonState } from './holdTypes';
 import { TROOPS, type PlatoonFormation } from './troops';
 
-export const FORMATIONS: readonly PlatoonFormation[] = ['wall', 'spearhead', 'square', 'skirmish'];
-export const FORMATION_NAMES: Readonly<Record<PlatoonFormation, string>> = { wall: 'Shield Wall', spearhead: 'Spearhead', square: 'Hollow Square', skirmish: 'Skirmish' };
+export const FORMATIONS: readonly PlatoonFormation[] = ['line', 'wedge', 'wall', 'loose'];
+export const FORMATION_NAMES: Readonly<Record<PlatoonFormation, string>> = { line: 'Line', wedge: 'Wedge', wall: 'Shield Wall', loose: 'Loose' };
 
 /** Each formation's offsets for slots 1 to 10: [forward, across] from the hero, forward along the heading. */
 const SLOTS: Readonly<Record<PlatoonFormation, readonly [number, number][]>> = {
   // (a line of five a tile before the hero, and four beside him, the tenth behind)
   wall: [[1, -2], [1, -1], [1, 0], [1, 1], [1, 2], [0, -2], [0, -1], [0, 1], [0, 2], [-1, 0]],
+  // (one rank abreast of the hero)
+  line: [[0, -1], [0, 1], [0, -2], [0, 2], [0, -3], [0, 3], [0, -4], [0, 4], [0, -5], [0, 5]],
   // (the hero at the tip, the wedge opening behind)
-  spearhead: [[-1, -1], [-1, 1], [-2, -2], [-2, 2], [-2, 0], [-3, -3], [-3, 3], [-3, -1], [-3, 1], [-4, 0]],
-  // (a ring round the hero, two more at its sides)
-  square: [[1, -1], [1, 0], [1, 1], [0, -1], [0, 1], [-1, -1], [-1, 0], [-1, 1], [0, -2], [0, 2]],
+  wedge: [[-1, -1], [-1, 1], [-2, -2], [-2, 2], [-2, 0], [-3, -3], [-3, 3], [-3, -1], [-3, 1], [-4, 0]],
   // (two loose ranks behind, a tile apart)
-  skirmish: [[-1, -4], [-1, -2], [-1, 0], [-1, 2], [-1, 4], [-3, -4], [-3, -2], [-3, 0], [-3, 2], [-3, 4]],
+  loose: [[-1, -4], [-1, -2], [-1, 0], [-1, 2], [-1, 4], [-3, -4], [-3, -2], [-3, 0], [-3, 2], [-3, 4]],
 };
 
 /** A formation's riders on the field (the party's formations read per platoon): blows on its soldiers land for `guard`, its own for `punch`. */
 export const FORMATION_FX: Readonly<Record<PlatoonFormation, { guard: number; punch: number }>> = {
   wall: { guard: 0.88, punch: 0.95 },
-  spearhead: { guard: 1.05, punch: 1.12 },
-  square: { guard: 0.93, punch: 1 },
-  skirmish: { guard: 1, punch: 1 },
+  wedge: { guard: 1.05, punch: 1.12 },
+  line: { guard: 1, punch: 1 },
+  loose: { guard: 1, punch: 1 },
 };
 
 /** A soldier's slot (1 to 10) round its anchor, turned to the heading (an index into `DIRS`). Leaderless, the slots close up on the
@@ -103,10 +103,17 @@ export function applyQueued(b: Battle, h: HoldState): void {
   const due = h.queue.splice(0);
   for (const e of due) {
     h.log.push(e);
-    if (e.kind === 'auto') h.auto = e.on;
-    else if (e.kind === 'retreat') h.outcome = 'withdrawn';
+    if (e.kind === 'auto') {
+      h.auto = e.on;
+      // (Auto on hands every platoon back to its part in the plan)
+      if (e.on) for (const pl of h.platoons) pl.manual = false;
+    } else if (e.kind === 'retreat') h.outcome = 'withdrawn';
     else if (e.kind === 'formation') h.platoons[e.p].formation = e.to;
-    else givePlatoon(b, h, h.platoons[e.p], e.order);
+    else {
+      // (an order from the player: the platoon takes it, and plays its part on its own no more until Auto)
+      h.platoons[e.p].manual = true;
+      givePlatoon(b, h, h.platoons[e.p], e.order);
+    }
   }
 }
 

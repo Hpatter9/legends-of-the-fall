@@ -31,7 +31,7 @@ import { addFieldUnit, ASSAULT, archersOnly, buildGarrison, freeNear } from './g
 import { barrelOnForts, canStrikeFort, drumsBeating, landFortHits, makeForts, strikeFort } from './forts';
 import { anchorOf, DRUM_BLOW, holdTick, nearDrum } from './holdMind';
 import { applyQueued, CHARGE_MOVE, defaultFormation, ENGAGE, FORMATION_FX, givePlatoon, HERO_LEASH, LEADERLESS, LEASH, replayEntries, slotAt } from './platoons';
-import type { AssaultInput, AssaultLogEntry, AssaultOutcome, HoldState, PlatoonState, PostState } from './holdTypes';
+import type { AssaultInput, AssaultLogEntry, AssaultOutcome, HoldState, PlatoonRole, PlatoonState, PostState } from './holdTypes';
 import { ELITE_TRICK, kindOfUnit, rankOf, troopBoost, troopUnitOf, troopOf, TRICKS } from './troops';
 import { SPLASH_SHARE } from '../units';
 
@@ -50,6 +50,11 @@ const WAIT_MAX = 3000;
 const STUCK_MS = 2000;
 /** A waypoint of a route counts as reached this near. */
 const WAYPOINT = 5;
+
+/** The parts the platoons take when the plan names none: two on the main push, one in cover, one on the flank, one more on the push. */
+export const DEFAULT_ROLES: readonly PlatoonRole[] = ['main', 'main', 'cover', 'flank', 'main'];
+/** A flanking platoon goes this far beyond its foe, on the side away from where it started, before it strikes. */
+export const FLANK_REACH = 3;
 
 /** The holds built so far (a hold's field is the same every time, so it is built once and copied for each assault). */
 const BLUEPRINTS: Record<string, Blueprint> = { orcs: BLOODTUSK };
@@ -99,7 +104,8 @@ export function startAssault(input: AssaultInput): Battle {
     const unitId = troopUnitOf(hero.kind);
     const marks = (input.troops[hero.kind] ?? []).slice(0, PLATOON_MAX);
     const castle = input.castle ?? {};
-    const pl: PlatoonState = { group: g.id, hero: hero.kind, heroId: lead.id, troop, soldiers: [], route: [], order: { kind: 'hold', at: { ...g.home } }, formation: input.formations?.[hero.kind] ?? defaultFormation({ troop }) };
+    const role = input.roles?.[hero.kind] ?? DEFAULT_ROLES[k % DEFAULT_ROLES.length];
+    const pl: PlatoonState = { group: g.id, hero: hero.kind, heroId: lead.id, troop, soldiers: [], route: [], order: { kind: 'hold', at: { ...g.home } }, formation: input.formations?.[hero.kind] ?? defaultFormation({ troop }), role };
     marks.forEach((m, index) => {
       const tb = troopBoost(hero.level, m);
       // (the castle's boost is for heroes: a soldier's own numbers are its kind's, its hero's level and its rank, nothing else)
@@ -155,7 +161,8 @@ function tick(b: Battle, out: BattleEvent[]): void {
     }
     const hero = f.byId[pl.heroId];
     if (!hero.alive && !(pl.acting !== undefined && f.byId[pl.acting]?.alive)) pl.acting = pl.soldiers.find((s) => f.byId[s.id]?.alive)?.id;
-    if (h.auto && f.stats.ticks % 10 === (k * 2) % 10) bot(b, f, h, k);
+    // (a platoon plays its part in the plan on its own until the player orders it; Auto hands them all back to it)
+    if ((h.auto || !pl.manual) && f.stats.ticks % 10 === (k * 2) % 10) bot(b, f, h, k);
   });
 }
 
@@ -279,6 +286,22 @@ function orderGoal(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, me:
       }
       return { at: fort.spec.front, fights: true, fort: i };
     }
+    case 'flank': {
+      // (round to the far side of the foe, away from where the platoon stands, and strike it from there)
+      const x = f.byId[o.unit];
+      if (!x?.alive) {
+        pl.order = { kind: 'move', at: x ? { u: x.u, v: x.v } : { u: me.u, v: me.v } };
+        return { at: pl.order.at, fights: true };
+      }
+      const du = Math.sign(x.u - me.u);
+      const dv = Math.sign(x.v - me.v);
+      const at = { u: Math.max(0, Math.min(f.w - 1, x.u + du * FLANK_REACH)), v: Math.max(0, Math.min(f.d - 1, x.v + dv * FLANK_REACH)) };
+      if (dist(me, at) <= 2 || dist(me, x) <= 2) {
+        pl.order = { kind: 'focus', unit: o.unit };
+        return { at: { u: x.u, v: x.v }, fights: true };
+      }
+      return { at, fights: false };
+    }
     case 'charge': {
       const x = nearestFoe(b, f, me, 20, false);
       return { at: x ? { u: x.u, v: x.v } : null, fights: true };
@@ -306,10 +329,10 @@ function lead(b: Battle, me: Unit, _rng: Rng, out: BattleEvent[]): boolean {
   const def = strikeDef(b, me);
   const inReach = nearestFoe(b, f, me, def.range + 3, true);
   const goal = orderGoal(b, f, h, pl, me);
-  // (fall back: walk for the rally flag or a friend, no blows)
+  // (fall back: walk for the rally flag or a friend, no blows; a flank: walk round, no stopping for blows)
   if (!goal.fights) {
     if (goal.at && dist(me, goal.at) > 2) return leaderWalk(b, f, h, pl, me, goal.at, out);
-    pl.order = { kind: 'hold', at: { u: me.u, v: me.v } };
+    if (pl.order.kind === 'fallback') pl.order = { kind: 'hold', at: { u: me.u, v: me.v } };
     return false;
   }
   if (goal.fort !== undefined && !inReach) {
@@ -327,7 +350,7 @@ function lead(b: Battle, me: Unit, _rng: Rng, out: BattleEvent[]): boolean {
     return true;
   }
   if (!goal.at) return false;
-  const leash = pl.order.kind === 'charge' || pl.order.kind === 'focus' ? 0 : HERO_LEASH;
+  const leash = pl.order.kind === 'charge' || pl.order.kind === 'focus' || pl.order.kind === 'flank' ? 0 : HERO_LEASH;
   if (dist(me, goal.at) > leash) return leaderWalk(b, f, h, pl, me, goal.at, out);
   // (at its point: it fights what is near, within the leash, by its own mind; else it waits)
   if (nearestFoe(b, f, me, def.range + HERO_LEASH + 1, false)) return false;
@@ -516,7 +539,7 @@ function foeMind(b: Battle, f: FieldState, _h: HoldState, post: PostState, me: U
   const leashed = dist(me, anchor) > LEASH;
   const x = nearestFoe(b, f, me, def.range + ENGAGE, false);
   if (x && !leashed && steer(b, f, me, x, out)) return;
-  const at = slotAt(anchor, g.heading, def.shot ? 'skirmish' : 'wall', f.info[me.id].slot);
+  const at = slotAt(anchor, g.heading, def.shot ? 'loose' : 'wall', f.info[me.id].slot);
   if (dist(me, at) === 0 || !steer(b, f, me, at, out)) me.busyUntil = b.t + WAIT_MS;
 }
 
@@ -757,8 +780,10 @@ export function bot(b: Battle, f: FieldState, h: HoldState, k: number): void {
   const pl = h.platoons[k];
   const a = anchorOf(f, pl);
   if (!a) return;
-  if (pl.order.kind === 'fallback' || pl.order.kind === 'charge') return;
+  if (pl.order.kind === 'fallback' || pl.order.kind === 'charge' || pl.order.kind === 'flank') return;
   if (pl.route.length > 1) return;
+  // (the parts in the plan, unless the bot plays its Tactical style: cover keeps behind the main push; the flank goes round for the North Gate)
+  if (!h.input.tactical && roleMove(b, f, h, pl, a)) return;
   const w = b.board.w;
   const c = jumpClass(defOf(a).flies ? 9 : defOf(a).jump);
   const here = a.v * w + a.u;
@@ -808,6 +833,30 @@ export function bot(b: Battle, f: FieldState, h: HoldState, k: number): void {
   const gates = h.forts.filter((x) => !x.broken && !x.open && (x.spec.kind === 'southGate' || x.spec.kind === 'sallyPort' || x.spec.kind === 'northGate'));
   const pick = gates.sort((x, y) => dist(x.spec.front, a) - dist(y.spec.front, a))[0] ?? h.forts.filter((x) => x.spec.kind === 'palisade' && !x.broken).sort((x, y) => dist(x.spec.front, a) - dist(y.spec.front, a))[0];
   if (pick && !(pl.order.kind === 'assault' && pl.order.fort === pick.spec.id)) givePlatoon(b, h, pl, { kind: 'assault', fort: pick.spec.id });
+}
+
+/** A platoon's part in the plan, where it is not the main push: cover follows the main push a few tiles behind it (shooters on the ridges
+ *  behind the line); the flank goes round for the North Gate, and through it once it is open. True when it gave the platoon its order. */
+function roleMove(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, a: Unit): boolean {
+  if (pl.role === 'cover') {
+    const mains = h.platoons.filter((p) => p.role === 'main').map((p) => anchorOf(f, p)).filter((x): x is Unit => !!x);
+    if (!mains.length) return false;
+    const lead = mains.reduce((m, x) => (dist(x, h.bp.throne) < dist(m, h.bp.throne) ? x : m));
+    // (behind it, back towards the rally flag)
+    const du = Math.sign(h.bp.rally.u - lead.u);
+    const dv = Math.sign(h.bp.rally.v - lead.v);
+    const at = { u: Math.max(0, Math.min(f.w - 1, lead.u + du * 4)), v: Math.max(0, Math.min(f.d - 1, lead.v + dv * 4)) };
+    if (!(pl.order.kind === 'move' && dist(pl.order.at, at) <= 2)) givePlatoon(b, h, pl, { kind: 'move', at });
+    return true;
+  }
+  if (pl.role === 'flank') {
+    const gate = h.forts.find((x) => x.spec.kind === 'northGate');
+    if (!gate || gate.broken || gate.open) return false;
+    if (!(pl.order.kind === 'assault' && pl.order.fort === gate.spec.id)) givePlatoon(b, h, pl, { kind: 'assault', fort: gate.spec.id });
+    return true;
+  }
+  void a;
+  return false;
 }
 
 /** A few tiles in from a gate's tile, towards the middle of the hold (where a platoon goes through an open way). */

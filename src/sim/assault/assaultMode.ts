@@ -25,7 +25,8 @@ import { mixSeed } from '../rng';
 import { UNITS } from '../units';
 import { isBoss } from '../foes';
 import { FIRST_CLEAR_CHEST } from '../armyStars';
-import type { AssaultInput, ApproachId, HoldState } from './holdTypes';
+import type { AssaultInput, ApproachId, HoldState, PlatoonRole } from './holdTypes';
+import { DEFAULT_ROLES } from './assault';
 import { assaultOf, marksEarned, spoilsOf, TROPHY_MULT, troopsOf } from './economy';
 import { MARKS_MAX } from './economy';
 import { rankOf, type PlatoonFormation } from './troops';
@@ -41,6 +42,7 @@ const CONQUEST_SALT = 0xc0a9e5;
 /** The plan the muster screen sets: each platoon's approach and formation, by its hero's kind. */
 export interface AssaultPlan {
   approaches: Record<string, ApproachId>;
+  roles?: Record<string, PlatoonRole>;
   formations?: Record<string, PlatoonFormation>;
 }
 
@@ -56,7 +58,7 @@ export function assaultBoost(m: Meta, kind: string): ReturnType<typeof boostOf> 
 /** The opening plan's default: the first two platoons and the last over the Old Bridge, the third by the West Ford, the fourth by the East. */
 export function defaultPlan(party: readonly string[]): AssaultPlan {
   const ways: ApproachId[] = ['bridge', 'bridge', 'west', 'east', 'bridge'];
-  return { approaches: Object.fromEntries(party.map((k, i) => [k, ways[i % ways.length]])) };
+  return { approaches: Object.fromEntries(party.map((k, i) => [k, ways[i % ways.length]])), roles: Object.fromEntries(party.map((k, i) => [k, DEFAULT_ROLES[i % DEFAULT_ROLES.length]])) };
 }
 
 /** The assault's input from the save: the party with its boosts, each platoon's soldiers, the plan, and the Council at the hold. */
@@ -71,6 +73,7 @@ export function assaultInput(m: Meta, army: string, seed: number, plan: AssaultP
     heroes: party.map((kind) => ({ kind, boost: assaultBoost(m, kind), level: levelOfKind(m, kind), ...(sheets[kind] ? { sheet: sheets[kind] } : {}) })),
     troops: Object.fromEntries(party.map((k) => [k, troopsOf(m, k)])),
     approaches: plan.approaches,
+    ...(plan.roles ? { roles: plan.roles } : {}),
     ...(plan.formations ? { formations: plan.formations } : {}),
     castle: heroBoost(m.castle),
     council,
@@ -121,6 +124,11 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
   const won = h.outcome === 'won';
   const a = assaultOf(m);
   a.tries[army] = (a.tries[army] ?? 0) + 1;
+  // (the scouts' report is spent: the hold's posts change before the next)
+  if (a.scouted?.[army]) {
+    delete a.scouted[army];
+    if (!Object.keys(a.scouted).length) delete a.scouted;
+  }
   const fought = won || b.t >= FOUGHT_MS;
   // the platoons: the fallen struck (already, as they fell: here again in case), the survivors' marks
   const platoons = h.platoons.map((pl) => {

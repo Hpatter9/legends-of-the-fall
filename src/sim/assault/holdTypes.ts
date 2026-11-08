@@ -11,6 +11,9 @@ import type { PlatoonFormation, TroopKind } from './troops';
 
 /** One of the opening plan's ways over the Redwater. */
 export type ApproachId = 'west' | 'bridge' | 'east';
+/** A platoon's part in the War Plan (the owner's three): the main push for the gates and the throne, cover behind the main push (shooters on
+ *  the ridges), or the flank round to the North Gate and the Warpath. A platoon plays its part on its own until the player orders it. */
+export type PlatoonRole = 'main' | 'cover' | 'flank';
 
 /** What the page brings to an assault: the party with its boosts, each platoon's soldiers (their marks), the plan, and the Council's
  *  members at the hold. Built from the save by `assaultMode.ts`; the sim reads nothing else. */
@@ -21,8 +24,9 @@ export interface AssaultInput {
   heroes: { kind: string; boost: Boost; level: number; sheet?: string }[];
   /** Each platoon's soldiers by its hero's kind: one entry a soldier, its marks. */
   troops: Record<string, number[]>;
-  /** Each platoon's approach and formation, by its hero's kind. */
+  /** Each platoon's approach, part and formation, by its hero's kind. */
   approaches?: Record<string, ApproachId>;
+  roles?: Record<string, PlatoonRole>;
   formations?: Record<string, PlatoonFormation>;
   /** The castle's boost on every hero, and the king's mana rate. */
   castle?: Boost;
@@ -46,7 +50,9 @@ export type PlatoonOrder =
   | { kind: 'charge'; at: At }
   | { kind: 'fallback'; at: At }
   | { kind: 'assault'; fort: string }
-  | { kind: 'focus'; unit: number };
+  | { kind: 'focus'; unit: number }
+  /** Go round a foe to its far side, then strike it (the owner's Flank). */
+  | { kind: 'flank'; unit: number };
 
 /** An order as the log keeps it: the platoon (its index), the battle time it was asked for, and what. */
 export type AssaultLogEntry =
@@ -76,6 +82,9 @@ export interface PlatoonState {
   route: At[];
   order: PlatoonOrder;
   formation: PlatoonFormation;
+  /** Its part in the War Plan, played on its own until the player gives it an order (`manual`), or again once Auto is turned on. */
+  role: PlatoonRole;
+  manual?: boolean;
   /** Charge: used once a platoon, and its quickening runs until this battle time. */
   charged?: boolean;
   chargeUntil?: number;

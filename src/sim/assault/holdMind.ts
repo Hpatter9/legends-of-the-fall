@@ -7,8 +7,8 @@
 //   archers spread to the threatened side.
 // - SALLIES: once the ports are open, a platoon alone (no friendly platoon within eight) near one is set upon by the post with the most
 //   soldiers near that port. One sally at a time.
-// - MORALE belongs to the foes only. A post routs when it has lost 60% and its leader is down, or when its leader flees; never within eight
-//   tiles of a drum still beating. Everyone routs when the lord falls. The player's soldiers never rout.
+// - MORALE (off for phase 1, the owner's choice: `MORALE.on`) belongs to the foes only. A post routs when it has lost 60% and its leader is
+//   down, or when its leader flees; never within eight tiles of a drum still beating. Everyone routs when the lord falls.
 // - The DRUMS: while any beats, a band of five comes every 90 seconds from 1:30 (four at most); foes near one strike a tenth harder.
 // - A GATE whose crew has all fallen, with one of ours inside the wall near it, opens from inside after ten seconds.
 // - A downed hero RISES at the rally flag after 45 seconds, at half health, while three or more of its soldiers stand.
@@ -51,6 +51,9 @@ export const RISE_HP = 0.5;
 export const RISE_SOLDIERS = 3;
 
 const dist = (a: At, z: At) => Math.abs(a.u - z.u) + Math.abs(a.v - z.v);
+/** Morale and routing (the design's 4.5): off, by the owner's choice for phase 1. With it off no post routs, not even at the lord's fall; the
+ *  rules stay here for when it is wanted. */
+export const MORALE = { on: false };
 
 /** The hold's turn this tick: each post whose second it is, and the hold's own jobs on the first tick of each second. */
 export function holdTick(b: Battle, f: FieldState, h: HoldState, out: BattleEvent[]): void {
@@ -59,7 +62,7 @@ export function holdTick(b: Battle, f: FieldState, h: HoldState, out: BattleEven
   if (h.lordFell === undefined && !f.byId[h.lord]?.alive) {
     h.lordFell = b.t;
     h.events.push({ kind: 'lordFell' });
-    for (const p of h.posts) rout(f, h, p);
+    if (MORALE.on) for (const p of h.posts) rout(f, h, p);
   }
   for (const p of h.posts) if (p.group % 10 === slice) postSecond(b, f, h, p);
   if (slice !== 0) return;
@@ -95,7 +98,7 @@ function postSecond(b: Battle, f: FieldState, h: HoldState, p: PostState): void 
   const lead = f.byId[g.leader];
   const lost = 1 - living.length / Math.max(1, p.muster);
   const fled = !!lead.fled;
-  if ((fled || (lost >= ROUT_LOSS && !lead.alive)) && !nearDrum(b, h, g.home)) {
+  if (MORALE.on && (fled || (lost >= ROUT_LOSS && !lead.alive)) && !nearDrum(b, h, g.home)) {
     rout(f, h, p);
     return;
   }

@@ -1,5 +1,43 @@
 # The Assault, phase 1: the Orc assault, playable
 
+## Phase 1a and 1b (the owner's tactics direction)
+
+Mid-build, the owner set the tactics direction: plan plus key orders, siege tools and a reactive enemy, with morale and routing left out.
+Phase 1 is split.
+
+**1a (this branch)** is the playable loop, the War Plan, the orders and slow time. On top of everything below it adds:
+
+- **The War Plan.** Each platoon's row on the muster opens its orders (an ornate card):
+  - **the way over the Redwater**, each with its trade-off: the Old Bridge is the shortest, but narrow, and its fort shoots down it; the
+    West Ford's shallows slow every step and the reeds hide the village's ambush; the East Ford is a long march past the wolf pens;
+  - **its part:** Main push (the nearest gate, then the throne), Ridge and cover (a few tiles behind the main push), or Flank the Warpath
+    (round for the North Gate).
+  A platoon plays its part on its own until the player orders it (`PlatoonState.manual`); Auto hands them all back.
+- **Scouting.** The Council's posts are shown only once scouts are sent (100 crowns). Their report is spent by the next assault. The lord
+  is always known.
+- **The orders:**
+  - move (a tap), attack target (a tap on a foe: Focus), hold, charge, fall back;
+  - **Flank**: tap Flank, then a foe. The platoon goes round to the foe's far side without stopping for blows, then strikes it;
+  - the formations are now the owner's four: **line, wedge, shield wall and loose**.
+- **Slow time:** a Slow button on the top bar runs the battle at a tenth of its pace while orders are given, and a second tap resumes. It
+  is not a pause, and every order is still tied to its tick, so it stays deterministic.
+- **Morale and routing are off** (`MORALE.on = false`). No post routs, not even at the lord's fall; the rules stay in `holdMind.ts`. The
+  lord's fall still takes the hold after five seconds.
+
+**1b (next)** is the siege tools and the reactive enemy:
+
+- the ram for the gates;
+- ladders onto the stone wall;
+- fire arrows (burning huts: smoke and panic);
+- archers suppressing the wall-top shooters;
+- defenders reinforcing the threatened gate, so a feint can open another;
+- the warchief and captains sallying out;
+- wolf riders flanking;
+- reinforcements down the Warpath until it is held.
+
+Already in from the design, partly reactive: the great horn opens the sally ports and wakes the barracks, one sally at a time goes at a
+platoon alone, the bank's archers shift to the side struck, and reinforcements come while the drums beat.
+
 Phase 1 of `docs/design/assault-mode.md` (branch `claude/assault-design`, section 10). It builds on phase 0's engine
 (`docs/notes/assault-0.md`) and its render fix. With ten stars on the Orc Warband, the army card offers **Assault Bloodtusk Hold**. The
 player musters five platoons and storms the hold in one real-time battle: 55 of ours against the garrison's 200, the army's Dark
@@ -242,6 +280,10 @@ Every menu is built with the standard ornate menu (`ornateMenu`, `menuSection`, 
 The design's party (Knight, Samurai, Archer, Fire Wizard, Queen Dragoon), level 55 (the Orcs' Legendary level), a maxed castle, a full
 host of recruits, 16 seeds a cell:
 
+**With 1a's War Plan** (Auto plays the default parts: two on the main push, one in cover, one on the flank, one more on the push; Tactical
+keeps the host together), at 0.155, 16 seeds: **Auto wins 50%, losing 85% of the host; Tactical wins 81%, losing 57%.** Tactics are worth
+31 points. The flank costs Auto its host: a lone platoon at the North Gate is a trade-off, as the owner wants. Before the War Plan:
+
 | foeShare | Auto wins | Auto host lost | Tactical wins | Tactical host lost |
 | --- | --- | --- | --- | --- |
 | 0.14 | 83% | 59% | 100% | 43% |
@@ -273,8 +315,23 @@ host of recruits, 16 seeds a cell:
 - The heroes' whole minds and the battle's own step (statuses, pending blows, hazards) cost the difference.
 - Decisions peak at 71 to 91 in a big melee, over the design's 60. Single ticks of 8 to 20 ms are compiles and garbage collection.
 
-**The browser** (Chromium, 393 x 852, CPU x4, 40 s at each level): see the table in the report sent with this branch. This container's
-Chromium has no GPU, so frames are not a phone's. **The owner's phone is the real gate:** open `?bench=assault` after release.
+**The browser** (Chromium, 393 x 852, the bench's Bloodtusk assault, 40 s at each level):
+
+| Level | CPU | Sim ms a tick (mean / p95 / worst) | fps | Frame ms (mean / p95) | Work a frame | Drawn |
+| --- | --- | --- | --- | --- | --- | --- |
+| Near (0.5) | x4 | 4.17 / 9.4 / 27.0 | 28 | 37.7 / 50 | 8.3 ms | 65 fighters, 28 of 28 chunks |
+| Mid (0.22) | x4 | 4.49 / 11.4 / 34.2 | 28 | 32.8 / 50 | 8.9 ms | 146 fighters, 58 of 58 chunks |
+| Far (0.06) | x4 | 4.54 / 10.9 / 31.3 | 51 | 18.1 / 33 | 5.2 ms | 216 dots |
+| Near | x1 | 1.00 / 2.1 / 7.1 | 54 | 19.3 / 33 | 1.7 ms | 67, 28 of 28 |
+| Mid | x1 | 1.01 / 2.2 / 6.1 | 60 | 17.0 / 16.8 | 1.7 ms | 140, 58 of 58 |
+| Far | x1 | 0.96 / 2.2 / 7.1 | 60 | 16.7 / 16.7 | 1.2 ms | 215 |
+
+- **The x4 sim is 4.2 to 4.5 ms a tick**, over the design's 3 ms phone budget; the spike was 1.4 ms.
+- **On the owner's phone**, phase 0's sim measured 0.6 ms where this container's unthrottled Chromium showed 0.35 ms. At that ratio,
+  phase 1's 1.0 ms here would be about 1.7 ms on the phone, inside the budget. That is an estimate: the phone is the real gate. Open
+  `?bench=assault` after release.
+- If it is over, the design's fallback is the sim in a Web Worker.
+- This container's Chromium has no GPU, so its frame rates are not a phone's.
 
 ## Tests
 
@@ -287,10 +344,20 @@ Chromium has no GPU, so frames are not a phone's. **The owner's phone is the rea
 | `assault-end` | the lord's fall and the rout; all heroes down; night; the retreat; the rise with three soldiers and not two |
 | `assault-economy` | buying and filling; falls struck as they happen; the save round-trip and an older save; marks; tribute; the tenth star; settling a win, a loss and a withdrawal; a retreat at the start earns nothing |
 | `assault-replay` | the same input, seed and orders play the same assault; the log replays it; another seed plays another; the budget counted over three minutes |
+| `assault-plan` | the owner's four formations; the parts drive the platoons until an order; Auto hands them back; Flank goes round, then strikes; scouts |
 | `assault-isolation` | no other board takes the windowed walk; an ordinary fight has no field and plays the same; troops are never heroes |
 | `assault-render` (step 1) | every chunk in view is drawn |
 
 ## Art still needed
+
+**For 1b, to the art lead:**
+
+- the ram (two frames, pushed by a platoon);
+- a ladder against the stone wall (up, and pushed down);
+- a fire-arrow streak;
+- a burning hut with its smoke (a loop).
+
+Phase 1a needs none.
 
 **The playable gate needs no new art**, and phase 1 ships with existing art only:
 
@@ -320,7 +387,7 @@ style of the war camp land: a transparent background, a dark outline, and a ligh
 
 ## Questions for the owner
 
-1. **The host's losses** run above the design's targets (66% on Auto, 50% on Tactical). Should soldiers fall back on their own when badly
+1. **The host's losses** run above the design's targets: 85% on Auto with the War Plan's flank, and 57% on Tactical. Should soldiers fall back on their own when badly
    hurt? Should the Acolytes' mend be stronger? Or are the targets to be eased?
 2. **Storming a conquered hold again** waits for phase 2's weekly re-storm at Mythic. Phase 1 offers only the tribute. Is that right?
 3. **The tribute is claimed on the army card**, not from a cart at camp. The cart needs a camp spot and art. Keep it on the card for now?

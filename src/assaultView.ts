@@ -11,7 +11,7 @@ import { UNITS } from './sim/units';
 import { nemesisLines } from './sim/nemesis';
 import { openNemesisCard } from './nemesisView';
 import { blueprintOf, holdMapOf } from './sim/assault/assault';
-import { assaultOf, ASSAULT_PRICES, buyRecruit, fillCost, fillRanks, PLATOON_SIZE, troopsOf } from './sim/assault/economy';
+import { assaultOf, ASSAULT_PRICES, buyRecruit, fillCost, fillRanks, PLATOON_SIZE, scouted, scoutHold, troopsOf } from './sim/assault/economy';
 import { assaultParty, defaultPlan, lordLine, type AssaultPlan, type AssaultResult } from './sim/assault/assaultMode';
 import { rankOf, troopOf, troopStats, TROOPS, lookOf, troopUnitOf, type PlatoonFormation } from './sim/assault/troops';
 import { FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
@@ -19,7 +19,7 @@ import { levelOfKind } from './sim/levels';
 import { councilPlaces, lordOf } from './sim/assault/garrison';
 import { snapOf } from './sim/nemesis';
 import { warchiefOf } from './sim/muster';
-import type { ApproachId } from './sim/assault/holdTypes';
+import type { ApproachId, PlatoonRole } from './sim/assault/holdTypes';
 import { portrait, loadSomeSheets } from './render/sheets';
 
 export interface MusterHooks {
@@ -33,6 +33,19 @@ export interface MusterHooks {
 
 const APPROACHES: readonly ApproachId[] = ['bridge', 'west', 'east'];
 const APPROACH_NAME: Readonly<Record<ApproachId, string>> = { bridge: 'the Old Bridge', west: 'the West Ford', east: 'the East Ford' };
+/** Each way's trade-off, for the War Plan. */
+const APPROACH_COST: Readonly<Record<ApproachId, string>> = {
+  bridge: 'The road: shortest, but the bridge is narrow and its barricade fort shoots down it',
+  west: 'The shallows slow every step, and the reeds beyond hide the village’s ambush',
+  east: 'The far flank: a long march round, past the wolf pens and the east watchtower',
+};
+const ROLES: readonly PlatoonRole[] = ['main', 'cover', 'flank'];
+const ROLE_NAME: Readonly<Record<PlatoonRole, string>> = { main: 'Main push', cover: 'Ridge and cover', flank: 'Flank the Warpath' };
+const ROLE_TEXT: Readonly<Record<PlatoonRole, string>> = {
+  main: 'Straight for the nearest gate, then the throne',
+  cover: 'Keeps a few tiles behind the main push: shooters on the high ground',
+  flank: 'Goes round for the North Gate, where the Warpath comes in',
+};
 const pips = (marks: number) => '◆'.repeat(rankOf(marks).pips);
 /** A platoon's veterans in words (" · 1 Elite, 2 Blooded"; nothing for recruits alone). */
 const rankWords = (list: readonly number[]): string => {
@@ -114,7 +127,12 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
   const bp = blueprintOf(army)!;
   const party = assaultParty(m);
   const st = assaultOf(m);
-  const plan: AssaultPlan = { approaches: { ...defaultPlan(party).approaches, ...Object.fromEntries(party.filter((k) => st.plan?.[k]).map((k) => [k, st.plan![k]])) }, formations: { ...st.formations } };
+  const base = defaultPlan(party);
+  const plan: AssaultPlan = {
+    approaches: { ...base.approaches, ...Object.fromEntries(party.filter((k) => st.plan?.[k]).map((k) => [k, st.plan![k]])) },
+    roles: { ...base.roles, ...Object.fromEntries(party.filter((k) => st.roles?.[k]).map((k) => [k, st.roles![k]])) },
+    formations: { ...st.formations },
+  };
   let menu: OrnateMenu | null = null;
   const draw = () => {
     const short = party.filter((k) => troopsOf(m, k).length < PLATOON_SIZE).length;
@@ -149,7 +167,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
       });
     }
     // the plan
-    const planGrid = menuSection(menu.body, 'The plan', 'a tap moves a platoon to the next approach', 2);
+    const planGrid = menuSection(menu.body, 'The War Plan', 'a tap gives a platoon its way and its part', 2);
     const well = menuWell(planGrid.parentElement!);
     well.style.display = 'flex';
     well.style.justifyContent = 'center';
@@ -180,14 +198,8 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
       menuChoice(planGrid, {
         title: heroName(k),
         icon: ' ',
-        lines: [`Takes ${APPROACH_NAME[plan.approaches[k]]}`],
-        onPick: () => {
-          const at = APPROACHES.indexOf(plan.approaches[k]);
-          plan.approaches[k] = APPROACHES[(at + 1) % APPROACHES.length];
-          st.plan = { ...plan.approaches };
-          hooks.save();
-          redraw();
-        },
+        lines: [`By ${APPROACH_NAME[plan.approaches[k]]}`, ROLE_NAME[plan.roles![k]]],
+        onPick: () => openOrders(k),
       }) && face(planGrid.lastElementChild as HTMLElement, UNITS[k].sheet, 28);
     menuNote(planGrid.parentElement!, planLine(party, plan));
     // the hold
@@ -209,7 +221,22 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
     const lord = lordOf(army, council.map(snapOf), chief ? snapOf(chief) : undefined);
     const lordRow = menuChoice(hold, { title: lord.snap ? `${lord.snap.name} ${lord.snap.epithet}`.trim() : UNITS[lord.base].name, icon: ' ', lines: [chief ? 'Warchief of the Dark Council, on the throne' : 'The lord of the hold, on the throne'], onPick: chief ? () => openNemesisCard(m, chief) : undefined });
     face(lordRow, UNITS[lord.base].sheet);
-    for (const [post, s] of Object.entries(places)) {
+    // (the Council's posts are known only once scouted, until the next assault)
+    const known = scouted(m, army);
+    if (!known && Object.keys(places).length)
+      menuChoice(hold, {
+        title: `Send scouts · ${ASSAULT_PRICES.scouts}`,
+        icon: '👁',
+        lines: [`${Object.keys(places).length} of the Council stand somewhere in the hold`, m.crowns >= ASSAULT_PRICES.scouts ? ['Learn their posts', 'pay'] : ['Not enough crowns', 'lock']],
+        disabled: m.crowns < ASSAULT_PRICES.scouts,
+        onPick: () => {
+          if (scoutHold(m, army)) {
+            hooks.save();
+            redraw();
+          }
+        },
+      });
+    for (const [post, s] of known ? Object.entries(places) : []) {
       const n = council.find((x) => x.id === s.id)!;
       const where = bp.posts.find((p) => p.id === post.split(':')[0])?.name ?? post;
       const row = menuChoice(hold, { title: `${s.name} ${s.epithet}`.trim(), icon: ' ', lines: [`${s.rank === 'captain' ? 'Captain' : 'Lieutenant'} · ${where}`], onPick: () => openNemesisCard(m, n) });
@@ -219,8 +246,25 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
     for (const n of others) menuNote(hold.parentElement!, `${n.name} keeps to the ${armyById(n.army)?.name.replace(/^The /, '') ?? n.army}: this is not their war.`);
     menuFoot(menu, {
       back: { word: 'back', onClick: () => { menu?.close(); hooks.onBack(); } },
-      primary: { label: short ? `March · ${short} platoon${short === 1 ? '' : 's'} short` : 'March', onClick: () => { st.plan = { ...plan.approaches }; hooks.save(); menu?.close(); hooks.onMarch({ approaches: { ...plan.approaches }, formations: { ...st.formations } }); } },
+      primary: { label: short ? `March · ${short} platoon${short === 1 ? '' : 's'} short` : 'March', onClick: () => { st.plan = { ...plan.approaches }; st.roles = { ...plan.roles }; hooks.save(); menu?.close(); hooks.onMarch({ approaches: { ...plan.approaches }, roles: { ...plan.roles }, formations: { ...st.formations } }); } },
     });
+  };
+  // (a platoon's orders in the plan: its way over the river, with each way's cost, and its part)
+  const openOrders = (k: string) => {
+    const card = ornateMenu({ id: 'assaultOrders', eyebrow: 'The War Plan', title: `${heroName(k)}'s orders`, sub: `${TROOPS[troopOf(k)].name} · ${troopsOf(m, k).length} soldiers`, onClose: redraw });
+    const ways = menuSection(card.body, 'The way', 'over the Redwater', 2);
+    menuPick(ways, APPROACHES, plan.approaches[k], (w) => ({ title: APPROACH_NAME[w].replace(/^the /, 'The '), icon: w === 'bridge' ? '⌇' : '≈', lines: [APPROACH_COST[w]] }), (w) => {
+      plan.approaches[k] = w;
+      st.plan = { ...plan.approaches };
+      hooks.save();
+    });
+    const parts = menuSection(card.body, 'The part', 'played on its own until you order it', 2);
+    menuPick(parts, ROLES, plan.roles![k], (r) => ({ title: ROLE_NAME[r], icon: r === 'main' ? '⚔' : r === 'cover' ? '⛰' : '↪', lines: [ROLE_TEXT[r]] }), (r) => {
+      plan.roles![k] = r;
+      st.roles = { ...plan.roles };
+      hooks.save();
+    });
+    menuFoot(card, { back: { word: 'close' } });
   };
   const redraw = () => {
     const scroll = (menu?.body.scrollTop ?? 0);
@@ -277,7 +321,7 @@ export function openPlatoonCard(m: Meta, hero: string, o: { save(): void; onChan
     well.append(el('p', '', `Health ${s.hp} · attack ${s.atk} · reach ${s.reach} · ${s.speed} steps a second`), el('p', '', kind.text + (lookOf(hero) !== 'plain' ? ` (${lookOf(hero) === 'machine' ? 'Machine-built' : 'Risen dead'}, like their hero.)` : '')));
     battle.parentElement!.append(battle);
     const current: PlatoonFormation = st.formations?.[hero] ?? kind.formation;
-    menuPick(battle, FORMATIONS, current, (f) => ({ title: FORMATION_NAMES[f], icon: f === 'wall' ? '▬' : f === 'spearhead' ? '▲' : f === 'square' ? '◻' : '⁘', lines: f === kind.formation ? ['their own'] : [], disabled: o.readOnly }), (f) => {
+    menuPick(battle, FORMATIONS, current, (f) => ({ title: FORMATION_NAMES[f], icon: f === 'wall' ? '▬' : f === 'wedge' ? '▲' : f === 'line' ? '━' : '⁘', lines: f === kind.formation ? ['their own'] : [], disabled: o.readOnly }), (f) => {
       st.formations = { ...st.formations, [hero]: f };
       o.save();
     });

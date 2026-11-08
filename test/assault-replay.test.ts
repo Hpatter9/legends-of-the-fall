@@ -12,7 +12,7 @@ test('the same input, seed and orders play the same assault; the log replays it'
     const b = startAssault(input({ auto: true }));
     for (let i = 0; i < 1200 && b.phase === 'fight'; i++) {
       if (b.t === 20_000) orderPlatoon(b, 2, { kind: 'move', at: { u: 60, v: 92 } });
-      if (b.t === 30_000) setFormation(b, 0, 'square');
+      if (b.t === 30_000) setFormation(b, 0, 'line');
       stepAssault(b);
     }
     return b;

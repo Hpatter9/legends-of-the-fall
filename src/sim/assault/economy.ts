@@ -10,8 +10,8 @@ import { armyById, armyIndex, armyStars, ARMIES } from '../armies';
 
 /** The most marks a soldier keeps (6.3). */
 export const MARKS_MAX = 99;
-/** The prices (6.1): one table, easy to retune. */
-export const ASSAULT_PRICES = { recruit: 60 } as const;
+/** The prices (6.1): one table, easy to retune. Scouts reveal where the Council's members stand, until the next assault is fought. */
+export const ASSAULT_PRICES = { recruit: 60, scouts: 100 } as const;
 /** A platoon at most this many soldiers. */
 export const PLATOON_SIZE = 10;
 /** The stars an army needs before its hold can be stormed: its tenth, the Legendary star (1.2). */
@@ -32,7 +32,11 @@ export interface AssaultMeta {
   told?: true;
   /** The muster's last plan and each platoon's formation, by hero kind (kept so the next muster opens as the last one was left). */
   plan?: Record<string, 'west' | 'bridge' | 'east'>;
-  formations?: Record<string, 'wall' | 'spearhead' | 'square' | 'skirmish'>;
+  /** The War Plan's parts, by hero kind. */
+  roles?: Record<string, 'main' | 'cover' | 'flank'>;
+  /** The holds scouted since their last assault (the Council's posts shown on the War Plan). */
+  scouted?: Record<string, true>;
+  formations?: Record<string, 'line' | 'wedge' | 'wall' | 'loose'>;
 }
 
 export const newAssault = (): AssaultMeta => ({ v: 1, troops: {}, conquered: {}, tries: {} });
@@ -66,7 +70,13 @@ export function readAssault(raw: unknown): AssaultMeta | undefined {
   };
   const plan = pick(r.plan, ['west', 'bridge', 'east'] as const);
   if (plan) out.plan = plan;
-  const forms = pick(r.formations, ['wall', 'spearhead', 'square', 'skirmish'] as const);
+  const roles = pick(r.roles, ['main', 'cover', 'flank'] as const);
+  if (roles) out.roles = roles;
+  if (r.scouted && typeof r.scouted === 'object') {
+    const sc = Object.fromEntries(Object.keys(r.scouted).filter((a) => armyById(a)).map((a) => [a, true as const]));
+    if (Object.keys(sc).length) out.scouted = sc;
+  }
+  const forms = pick(r.formations, ['line', 'wedge', 'wall', 'loose'] as const);
   if (forms) out.formations = forms;
   return out;
 }
@@ -112,6 +122,17 @@ export function noteFallen(m: Meta, hero: string, index: number): void {
   const list = m.assault?.troops[hero];
   if (list && index >= 0 && index < list.length) list[index] = -1;
 }
+
+/** Send scouts to a hold (the War Plan): 100 crowns, and the Council's posts are shown until the hold's next assault is fought. */
+export function scoutHold(m: Meta, army: string): boolean {
+  const a = assaultOf(m);
+  if (a.scouted?.[army] || m.crowns < ASSAULT_PRICES.scouts) return false;
+  m.crowns -= ASSAULT_PRICES.scouts;
+  a.scouted = { ...a.scouted, [army]: true };
+  return true;
+}
+/** Whether a hold has been scouted since its last assault. */
+export const scouted = (m: Meta, army: string): boolean => !!m.assault?.scouted?.[army];
 
 /** Marks a surviving soldier earns from an assault (6.3): one for living through it, one for every three kills (a structure broken counts as
  *  one), two more for a conquest. */

@@ -4,18 +4,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ASSAULT_LIMIT_MS, ROUT_MS } from '../src/sim/assault/assault';
-import { RISE_MS } from '../src/sim/assault/holdMind';
+import { MORALE, RISE_MS } from '../src/sim/assault/holdMind';
 import { soundRetreat } from '../src/sim/assault/platoons';
 import { stepBattle } from '../src/sim/battle';
 import { fell, quiet, steps } from './assaultKit';
 
-test('the lord\'s fall: every post routs, and five seconds later the hold is conquered', () => {
+test('the lord\'s fall: five seconds later the hold is conquered (morale and routing are off, the owner\'s choice)', () => {
   const b = quiet();
   const h = b.field!.hold!;
   fell(b, h.lord);
   stepBattle(b);
   assert.ok(h.lordFell !== undefined);
-  assert.ok(h.posts.every((p) => p.mood === 'routed'));
+  assert.ok(!MORALE.on);
+  assert.ok(h.posts.every((p) => p.mood !== 'routed'), 'no post routs');
   steps(b, ROUT_MS / 100 - 5);
   assert.equal(b.phase, 'fight');
   steps(b, 10);
