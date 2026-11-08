@@ -40,6 +40,10 @@ Chronos later, so keep its conventions.
   `hpatter9/chronos-assets` (clone it next to this one). Copy only the sprites used into `src/art/`, credit them in
   `CREDITS.md`, and never change the assets repo. Chronos's cut sheets (`src/renderer/art/creatures/packs/` and
   `packs.json` there) can be copied as they are.
+- **New art gets a ChatGPT prompt.** Whenever a change needs art that the packs and `src/art/` don't have, write a ChatGPT image
+  prompt for it (in `docs/notes/<topic>-art-prompts.md`: one fenced prompt per image or sheet, naming the repo, an `art/<topic>`
+  branch, the file under `art-source/`, the canvas size, a transparent background and the game's style), and tell the director,
+  rather than spending time on code-drawn art. A plain stand-in until the art lands is fine.
 - **It must play offline** (the owner plays on planes). The service worker (`build.mjs` writes `out/web/sw.js`) caches
   every file the game needs on the first visit. A new file the page loads by URL (backdrops, music, anything not
   bundled into game.js as a data URL) must be added to its `FILES` list, or the game breaks offline.
