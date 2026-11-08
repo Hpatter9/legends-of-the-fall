@@ -24,7 +24,7 @@ import { benchInput } from './sim/assault/benchInput';
 import { TICK_MS, type Battle, type BattleEvent } from './sim/battle';
 import { UNITS } from './sim/units';
 import { BUCKET } from './sim/assault/field';
-import { FieldView, loadFieldArt, MID_AT, NEAR_AT, type Detail } from './render/fieldView';
+import { FieldView, FIELD_FOG, fieldGrade, loadFieldArt, MID_AT, NEAR_AT, type Detail } from './render/fieldView';
 import { loadSomeSheets } from './render/sheets';
 import { rawAt } from './render/iso';
 
@@ -96,9 +96,11 @@ export async function startAssaultBench(): Promise<void> {
   bar.style.cssText = 'position:absolute;left:8px;right:8px;bottom:12px;z-index:2;display:flex;gap:6px;justify-content:center;';
   host.appendChild(bar);
   const app = new Application();
-  await app.init({ resizeTo: host, background: '#10131a', antialias: false, autoStart: false, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
+  await app.init({ resizeTo: host, background: FIELD_FOG, antialias: false, autoStart: false, autoDensity: true, resolution: Math.min(3, devicePixelRatio || 1) });
   host.insertBefore(app.canvas, hud);
   app.canvas.style.cssText = 'display:block;width:100%;height:100%;';
+  // (the day's light over the field, under the buttons)
+  fieldGrade(host);
   hud.textContent = 'Loading the field…';
   const sheets = new Set<string>(['hk_orc_grunt', 'hk_orc_archer', 'hk_orc_brute', 'hk_orc_warlord', 'wolf_black']);
   for (const p of SPIKE_PLATOONS) {

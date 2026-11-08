@@ -96,6 +96,15 @@ export const BLOODTUSK: Blueprint = {
     { kind: 'solid', name: 'Log pile', rect: { u0: 14, v0: 70, u1: 15, v1: 70 }, burns: true },
     { kind: 'solid', name: 'Log pile', rect: { u0: 18, v0: 75, u1: 19, v1: 75 }, burns: true },
     { kind: 'solid', name: 'Log pile', rect: { u0: 13, v0: 74, u1: 13, v1: 75 }, burns: true },
+    // (phase 1b: the camps of the Killing Fields: the raiders' camp outside the palisade's east side, the drums' war tents, their fires)
+    { kind: 'solid', name: 'War tent', rect: { u0: 87, v0: 43, u1: 88, v1: 43 }, burns: true },
+    { kind: 'solid', name: 'War tent', rect: { u0: 90, v0: 46, u1: 90, v1: 47 }, burns: true },
+    { kind: 'solid', name: 'Bonfire', rect: { u0: 89, v0: 45, u1: 89, v1: 45 } },
+    { kind: 'solid', name: 'War tent', rect: { u0: 20, v0: 83, u1: 21, v1: 83 }, burns: true },
+    { kind: 'solid', name: 'Bonfire', rect: { u0: 22, v0: 88, u1: 22, v1: 88 } },
+    { kind: 'solid', name: 'War tent', rect: { u0: 83, v0: 20, u1: 83, v1: 21 }, burns: true },
+    { kind: 'solid', name: 'Bonfire', rect: { u0: 88, v0: 22, u1: 88, v1: 22 } },
+    { kind: 'solid', name: 'Bonfire', rect: { u0: 17, v0: 73, u1: 17, v1: 73 } },
     // (phase 1b: the Warpath's reserve camp, whose tents burn)
     { kind: 'solid', name: 'Reserve tent', rect: { u0: 8, v0: 10, u1: 9, v1: 10 }, burns: true },
     { kind: 'solid', name: 'Reserve tent', rect: { u0: 11, v0: 7, u1: 11, v1: 8 }, burns: true },

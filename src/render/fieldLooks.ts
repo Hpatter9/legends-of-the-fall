@@ -272,7 +272,7 @@ export function clutterOf(b: Board, zone: Uint8Array, mats: Uint8Array, u: numbe
   const r = hash(u, v, 21);
   const any = (names: readonly string[]) => names[Math.floor(hash(u, v, 22) * names.length)];
   if (mats[i] === MAT.shingle) return r < 0.25 ? any(['reeds1', 'reeds2', 'pebbles']) : null;
-  if (z === Z('K') || z === Z('T') || z === Z('L')) return r < (z === Z('T') ? 0.2 : 0.08) ? any(['flowers1', 'flowers2', 'pebbles', 'fern', 'bones1']) : null;
+  if (z === Z('K') || z === Z('T') || z === Z('L')) return r < (z === Z('T') ? 0.28 : 0.16) ? any(['flowers1', 'flowers2', 'pebbles', 'fern', 'bones1', 'stump1', 'stump2', 'shrub1']) : null;
   if (z === Z('V')) return r < 0.25 ? any(['bones1', 'pebbles', 'stump1']) : null;
   if (z === Z('N')) return r < 0.15 ? any(['bones1', 'bones2', 'pebbles']) : null;
   if (z === Z('B')) return r < 0.06 ? any(['bones1', 'pebbles']) : null;
@@ -333,9 +333,9 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       const tiles = rectTiles(w, s.rect);
       for (const t of tiles) taken.add(t);
       const m = mid(tiles);
-      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' ? 'warTent' : s.name.startsWith('The keep') ? 'keep' : 'stockpile';
+      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' ? 'warTent' : s.name === 'Bonfire' ? 'bonfire' : s.name.startsWith('The keep') ? 'keep' : 'stockpile';
       const flip = s.rect.u1 - s.rect.u0 < s.rect.v1 - s.rect.v0;
-      out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: name === 'keep' ? 0.62 : name === 'longhouse' ? 0.95 : 1, ...(s.burns ? { hut: hut++ } : {}) });
+      out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: name === 'keep' ? 0.62 : name === 'longhouse' ? 0.95 : name === 'bonfire' ? 0.7 : 1, ...(s.burns ? { hut: hut++ } : {}) });
     } else if (s.kind === 'perch') {
       const tiles = rectTiles(w, s.rect);
       const m = mid(tiles);
