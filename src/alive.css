@@ -1,0 +1,5 @@
+/* ALIVE: the canvases that bring a painting to life (`render/ambientLayer.ts`) lie exactly over the painting, under whatever stands in
+   it: the moving parts of the picture, then its light, screened over what is under it so it brightens as light does. */
+.ambLayer { position: absolute; inset: 0; pointer-events: none; }
+.ambLayer > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ambLayer > .ambLight { mix-blend-mode: screen; }

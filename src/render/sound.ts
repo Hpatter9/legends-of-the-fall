@@ -16,7 +16,8 @@ import type { Battle, BattleEvent } from '../sim/battle';
 import { onSettings, settings } from '../settings';
 import { BusMixer, CueSynth, MusicPlayer } from './audioProcessors';
 import { AmbientBeds } from './audioBeds';
-import { DuckCounter, panOfEvent, type PlannedCue, type Scene } from './audioRules';
+import { DUCK_HOLD_S, DuckCounter, WAKE_FADE_S, duckChange, duckOf, panOfEvent, sliderGain, type PlannedCue, type Scene } from './audioRules';
+import type { Area } from '../sim/board';
 import { TRACK_OF_PLACE, placeOf, type MapKind, type MusicId, type StingId } from './epicMusic';
 import { BOSS_TRACK, atPlace, crossfadeOf, endAt, musicOf, type BattleEnd, type MusicState } from './battleMusic';
 import { bakeTrack } from './musicBake';
@@ -45,6 +46,12 @@ const ducks = new DuckCounter();
 /** The act and scene asked for before the audio was unlocked. */
 let wantAct: number | null = null;
 let wantScene: Scene | null = null;
+let wantLand: Area | null = null;
+/** A lift of the ducker waiting out `DUCK_HOLD_S` (a dip comes at once; a lift waits, so a sheet closing as the next opens
+ *  never lets the music bob up between them). */
+let duckLift: ReturnType<typeof setTimeout> | null = null;
+/** The page is out of sight (the sound is faded and the clock suspended). */
+let hidden = false;
 /** Where the player is, as the music hears it (`placeOf`), the battle on (its one track), whether a fight is being fought and
  *  whether a won battle's victory music is up (`battleMusic.ts`); and whether a cinematic's own score is playing. */
 let music: MusicState = { place: 'camp', battle: null, fighting: false, victory: false };
@@ -72,12 +79,13 @@ function unlock(): void {
     });
     engine.mixer.params.master.value = muted ? 0 : 1;
     applyLevels();
-    if (ducks.ducked) engine.mixer.setDuck(true);
-    engine.music.setEnabled(musicLevel() > 0);
+    if (ducks.ducked) engine.mixer.setDuck(duckOf(ducks.reasons));
+    engine.music.setEnabled(settings().music > 0);
     engine.music.setAct(wantAct);
-    engine.beds.setScene(wantScene);
+    engine.beds.setScene(wantScene, wantLand);
   }
-  if (engine.core.context.state !== 'running') void engine.core.start();
+  // (a phone can hold the clock after the game was away, until a tap: the tap starts it again, and the sound fades back in)
+  if (engine.core.context.state !== 'running') void engine.core.start().then(() => fadeIn());
   warmSpells();
   if (!engine.music.current) {
     syncMusic();
@@ -117,23 +125,42 @@ function mixWithOtherApps(): void {
   }
 }
 
-/** Stop all sound while the game is out of sight: the music's element pauses and the effects' clock is suspended. */
+/** Stop all sound while the game is out of sight: the master fades out in a moment (no click) and the clock is suspended, which
+ *  holds every loop, bed and timer where it is. */
 function hush(): void {
   if (!engine) return;
+  hidden = true;
+  const ctx = engine.core.context;
+  const master = engine.mixer.params.master;
+  master.cancelScheduledValues(ctx.currentTime);
+  master.setTargetAtTime(0, ctx.currentTime, 0.015);
   engine.music.hush();
-  void engine.core.context.suspend();
+  void ctx.suspend();
 }
 
-/** The game is back in sight: the clock runs again and the track that was playing carries on. */
+/** The game is back in sight: the clock runs again, the track that was playing carries on, and the master comes back up from
+ *  silence over `WAKE_FADE_S` to exactly where it was (the mute's 0 or 1, never louder or quieter than before the game was left). */
 function wake(): void {
   if (!engine) return;
-  void engine.core.context.resume();
+  hidden = false;
+  const ctx = engine.core.context;
+  void ctx.resume().then(fadeIn, fadeIn);
   engine.music.wake();
 }
 
-/** The volumes from the settings page (0 to 1 each, on top of the levels above). */
-const effectsLevel = () => settings().effects / 100;
-const musicLevel = () => settings().music / 100;
+/** Brings the master up from silence to the mute's level (on wake, and on a tap that resumed a clock a phone had held). */
+function fadeIn(): void {
+  if (!engine || hidden) return;
+  const ctx = engine.core.context;
+  const master = engine.mixer.params.master;
+  master.cancelScheduledValues(ctx.currentTime);
+  master.setValueAtTime(0, ctx.currentTime);
+  master.setTargetAtTime(muted ? 0 : 1, ctx.currentTime, WAKE_FADE_S / 3);
+}
+
+/** The volumes from the settings page, as gains: each slider is heard on the perceptual curve (`sliderGain`, audioRules.ts). */
+const effectsLevel = () => sliderGain(settings().effects);
+const musicLevel = () => sliderGain(settings().music);
 
 /** The settings page changed a volume: the buses follow. Ambience goes with the music setting, ui and the show with effects. */
 function applyLevels(): void {
@@ -144,7 +171,7 @@ function applyLevels(): void {
   m.setLevel('music', MUSIC_LEVEL * musicLevel());
   m.setLevel('ambience', AMBIENCE_LEVEL * musicLevel());
   // (Music at Off: no track is baked or playing at all, the effects carry on)
-  engine.music.setEnabled(musicLevel() > 0);
+  engine.music.setEnabled(settings().music > 0);
 }
 
 /** The mute button: shows the speaker, toggles the sound and remembers the choice. */
@@ -338,10 +365,12 @@ export function setAct(act: number | null): void {
 }
 
 /** The place the player is in, for the ambience bed under the music (null for none): it crossfades over about 1.5 s, and
- *  the same bed again changes nothing. See `sceneOf` in `audioRules.ts` for what each screen asks for. */
-export function setScene(scene: Scene | null, map: MapKind = null): void {
+ *  the same bed again changes nothing. See `sceneOf` in `audioRules.ts` for what each screen asks for; `land` is the board's land,
+ *  which picks a field fight's bed (`bedOf`). */
+export function setScene(scene: Scene | null, map: MapKind = null, land: Area | null = null): void {
   wantScene = scene;
-  engine?.beds.setScene(scene);
+  wantLand = land;
+  engine?.beds.setScene(scene, land);
   // (the music follows too: the camp's or the tavern's, the tower's or the Calamity's map, or the deployment; off the board a
   //  battle that was on is over or left, and a victory's results are behind)
   music = atPlace(music, placeOf(scene, map));
@@ -349,12 +378,22 @@ export function setScene(scene: Scene | null, map: MapKind = null): void {
   syncMusic();
 }
 
-/** Holds the music and the ambience down, about -8 dB with a low-pass, or lets it up again. Counted by reason: the
- *  music comes back when every reason has been let go, and a reason raised twice needs two lets. */
+/** Holds the music and the ambience down, by as much as the deepest reason held asks (`DUCKS` in `audioRules.ts`: a little under
+ *  a sheet, a card or a cinematic, far and muffled under the shows), or lets it up again. Counted by reason: the music comes back
+ *  when every reason has been let go, and a reason raised twice needs two lets. A dip comes at once; a lift waits `DUCK_HOLD_S`. */
 export function duck(on: boolean, reason: string): void {
-  const was = ducks.ducked;
-  const now = ducks.set(reason, on);
-  if (now !== was) engine?.mixer.setDuck(now);
+  const before = ducks.reasons;
+  ducks.set(reason, on);
+  const change = duckChange(before, ducks.reasons);
+  if (!change) return;
+  if (duckLift) clearTimeout(duckLift);
+  duckLift = null;
+  const apply = () => engine?.mixer.setDuck(duckOf(ducks.reasons));
+  if (change === 'down') apply();
+  else duckLift = setTimeout(() => {
+    duckLift = null;
+    apply();
+  }, DUCK_HOLD_S * 1000);
 }
 
 /** Ducks while `el` is showing (not `hidden`), for `reason`: a screen's root element is enough. Checks it now and on every change. */

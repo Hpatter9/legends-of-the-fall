@@ -7,7 +7,8 @@
 // Not imported by the page's DOM code; `sound.ts` creates it, and the tests build it on the fake context.
 
 import { AudioProcessor } from '@audiorective/core';
-import { BEDS, BED_FADE_S, BED_LEVEL_MAX, BED_OF, ShotClock, pickShot, type BedId, type BedLayer, type BedSpec, type Scene, type ShotKind } from './audioRules';
+import { BEDS, BED_FADE_S, BED_LEVEL_MAX, ShotClock, bedOf, pickShot, type BedId, type BedLayer, type BedSpec, type Scene, type ShotKind } from './audioRules';
+import type { Area } from '../sim/board';
 
 /** How often the one-shot timer looks at the clock (ms). */
 const TICK_MS = 500;
@@ -57,10 +58,10 @@ export class AmbientBeds extends AudioProcessor {
     return (this.current ? 1 : 0) + (this.leaving ? 1 : 0);
   }
 
-  /** Crossfades to the bed for `scene` (null for silence). The same bed again, as when the castle gives way to the spells, changes nothing. */
-  setScene(scene: Scene | null): void {
+  /** Crossfades to the bed for `scene` (null for silence), a field fight's by its `land`. The same bed again changes nothing. */
+  setScene(scene: Scene | null, land: Area | null = null): void {
     this.scene = scene;
-    const id = scene ? BED_OF[scene] : null;
+    const id = scene ? bedOf(scene, land) : null;
     if (id === (this.current?.id ?? null)) return;
     // (a bed still fading from the last change goes at once, so no more than two ever sound together)
     if (this.leaving) this.release(this.leaving, 0.02, 80);
@@ -212,10 +213,11 @@ export class AmbientBeds extends AudioProcessor {
     const r = this.rand;
     const out = bed.bus;
     switch (kind) {
-      // the fire pops: a few small bright cracks scattered over half a second
+      // the fire crackles: a run of small bright cracks scattered over a second, now and then a bigger pop among them
       case 'pop': {
-        const n = 2 + Math.floor(r() * 3);
-        for (let i = 0; i < n; i++) this.burst(out, t + r() * 0.5, 0.02 + r() * 0.03, 1800 + r() * 2600, 'bandpass', 0.2 + r() * 0.2, 1.5);
+        const n = 3 + Math.floor(r() * 5);
+        for (let i = 0; i < n; i++) this.burst(out, t + r() * 1.1, 0.015 + r() * 0.03, 1800 + r() * 2600, 'bandpass', 0.15 + r() * 0.2, 1.5);
+        if (r() < 0.4) this.burst(out, t + r() * 0.8, 0.05, 900 + r() * 500, 'bandpass', 0.4, 1.2);
         break;
       }
       // a mug set down: two small bright rings
@@ -260,6 +262,35 @@ export class AmbientBeds extends AudioProcessor {
       // a gust down the hall: a slow rise and fall of wind
       case 'gust':
         this.burst(out, t, 2.4, 380, 'bandpass', 0.5, 0.8, 1100, 0.9);
+        break;
+      // a frog: two or three quick low croaks, each a few fast pulses
+      case 'frog': {
+        const f = 170 + r() * 60;
+        const n = 2 + Math.floor(r() * 2);
+        for (let i = 0; i < n; i++) for (let k = 0; k < 4; k++) this.tone(out, t + i * 0.32 + k * 0.03, f * (1 - k * 0.03), 0.04, 0.3);
+        break;
+      }
+      // a far crow: two harsh caws, dulled by distance
+      case 'crow': {
+        const far = new BiquadFilterNode(this.context, { type: 'lowpass', frequency: 3000 });
+        far.connect(out);
+        for (let i = 0; i < 2; i++) {
+          this.burst(far, t + i * 0.38, 0.24, 1150 + r() * 200, 'bandpass', 0.5, 5, 900);
+          this.tone(far, t + i * 0.38, 760 + r() * 60, 0.22, 0.12, 620);
+        }
+        break;
+      }
+      // a far hammer on an anvil: a bright ring of a few out-of-tune partials, struck twice
+      case 'anvil':
+        for (let i = 0; i < 2; i++) {
+          const at = t + i * (0.42 + r() * 0.08);
+          for (const [f, v] of [[1240, 0.12], [1870, 0.07], [2650, 0.05]] as const) this.tone(out, at, f * (1 + r() * 0.01), 0.8, v);
+        }
+        break;
+      // a page turning: a soft rustle of paper, and a smaller one as it settles
+      case 'page':
+        this.burst(out, t, 0.22, 3500, 'bandpass', 0.35, 0.8, 2400, 0.35);
+        this.burst(out, t + 0.24, 0.1, 2800, 'bandpass', 0.18, 0.9);
         break;
     }
   }

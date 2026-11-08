@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { fight, stepBattle, type BattleEvent } from '../src/sim/battle';
 import { D, W } from '../src/sim/board';
 import {
-  ACT_COLOURS, DUCK_GAIN, DuckCounter, OPEN_HZ, PAN_MAX, colourOf, eventSpot, musicColour, panFromScreen, panOfEvent, panOfTile,
+  ACT_COLOURS, DUCKS, DuckCounter, duckOf, OPEN_HZ, PAN_MAX, colourOf, eventSpot, musicColour, panFromScreen, panOfEvent, panOfTile,
 } from '../src/render/audioRules';
 import { readyBattle } from './helpers';
 
@@ -60,8 +60,16 @@ test('ducking is counted by reason: it stays down until every reason is let go',
   assert.equal(d.ducked, false);
 });
 
-test('the duck is about -8 dB', () => {
-  assert.ok(Math.abs(20 * Math.log10(DUCK_GAIN) + 8) < 1e-9);
+// (the sound pass, docs/notes/sound-pass.md: one -8 dB dip muffled to 1.4 kHz under every sheet made the music vanish on a phone)
+test('the duck is gentle under a sheet, deeper and muffled only under the shows', () => {
+  const db = (g: number) => 20 * Math.log10(g);
+  assert.deepEqual(duckOf([]), { gain: 1, hz: OPEN_HZ });
+  assert.ok(Math.abs(db(duckOf(['sheet']).gain) + 4) < 1e-9);
+  assert.equal(duckOf(['sheet']).hz, OPEN_HZ, 'a sheet does not muffle');
+  assert.ok(Math.abs(db(duckOf(['summon']).gain) + 9) < 1e-9);
+  assert.ok(duckOf(['summon']).hz < 2000);
+  assert.deepEqual(duckOf(['sheet', 'summon']), duckOf(['summon']), 'the deepest reason held wins');
+  for (const [r, d] of Object.entries(DUCKS)) assert.ok(d.db < 0 && d.db >= -9, `${r} dips between 0 and -9 dB`);
 });
 
 // (the owner changed the rule these replaced: the battle music once opened its low-pass, swelled and quickened with the fight's
@@ -112,12 +120,12 @@ test('the mixer sends the buses to a master that reaches the speakers, and ducki
     for (const name of ['music', 'sfx', 'ui', 'ambience', 'show'] as const) {
       assert.ok(reaches(mixer.bus(name) as unknown as FakeNode, ctx.destination), `${name} reaches the speakers`);
     }
-    mixer.setDuck(true);
+    mixer.setDuck(duckOf(['summon']));
     const duckGain = (mixer.params.duck.audioParam as unknown as { target?: number }).target;
     const duckHz = (mixer.params.duckHz.audioParam as unknown as { target?: number }).target;
-    assert.ok(Math.abs(duckGain! - DUCK_GAIN) < 1e-9);
+    assert.ok(Math.abs(duckGain! - duckOf(['summon']).gain) < 1e-9);
     assert.ok(duckHz! < OPEN_HZ);
-    mixer.setDuck(false);
+    mixer.setDuck(duckOf([]));
     assert.equal((mixer.params.duck.audioParam as unknown as { target?: number }).target, 1);
     assert.equal((mixer.params.duckHz.audioParam as unknown as { target?: number }).target, OPEN_HZ);
     mixer.setLevel('master', 0);

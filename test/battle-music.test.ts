@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES } from '../src/sim/armies';
 import { armyRun, newRun, waveArmyOf, type Run } from '../src/sim/run';
-import { BATTLE_TRACK, BOSS_IN_S, BOSS_OUT_S, BOSS_TRACK, CROSSFADE_S, VICTORY_BED, VICTORY_LOOP, atPlace, crossfadeOf, endAt, endOfFight, musicOf, standTrack, trackOfRun, type MusicState } from '../src/render/battleMusic';
+import { BATTLE_TRACK, BOSS_IN_S, BOSS_OUT_S, BOSS_TRACK, CROSSFADE_S, FIGHT_LEVEL, VICTORY_BED, VICTORY_LOOP, atPlace, crossfadeOf, endAt, endOfFight, musicOf, standTrack, trackOfRun, type MusicState } from '../src/render/battleMusic';
 import { standRoomTrack } from '../src/render/standMusic';
 import { TRACK_OF_PLACE } from '../src/render/epicMusic';
 import { EPIC_MANIFEST } from '../src/render/epicManifest';
@@ -104,7 +104,7 @@ test('through an army run: battle, the boss track for the boss wave, back to the
         assert.equal(end, 'next');
         assert.equal(after.sting, null);
         // (between waves, the result and the next deploy: the battle track, the boss's wave over)
-        assert.deepEqual(want(s), { track: BATTLE_TRACK, level: 1 }, `${army.id} after wave ${w}`);
+        assert.deepEqual(want(s), { track: BATTLE_TRACK, level: FIGHT_LEVEL }, `${army.id} after wave ${w}`);
       } else {
         assert.equal(end, 'victory');
         assert.equal(after.sting, 'victory');
@@ -140,10 +140,10 @@ test('the battle track plays through the breaks between waves, a victory holds t
   let s: MusicState = { place: 'deploy', battle: null, fighting: false, victory: false };
   assert.equal(want(s).track, 'deploy', 'the first deploy has its own music');
   s = { ...s, battle: 'battle', fighting: true };
-  assert.deepEqual(want(s), { track: 'battle', level: 1 });
+  assert.deepEqual(want(s), { track: 'battle', level: FIGHT_LEVEL });
   // (a wave won: the fight is over, the result screen and the next deploy are on the board, and the battle plays on)
   s = { ...s, fighting: false };
-  assert.deepEqual(want(atPlace(s, 'deploy')), { track: 'battle', level: 1 });
+  assert.deepEqual(want(atPlace(s, 'deploy')), { track: 'battle', level: FIGHT_LEVEL });
   // (the battle won: the triumph bed, lower than a track's full level)
   const won: MusicState = { ...s, battle: null, victory: true };
   assert.deepEqual(want(won), { track: VICTORY_LOOP, level: VICTORY_BED });
@@ -156,7 +156,7 @@ test('the battle track plays through the breaks between waves, a victory holds t
   const behind = atPlace({ ...s, fighting: true }, 'camp');
   assert.equal(want(behind).track, 'camp');
   assert.equal(behind.battle, 'battle');
-  assert.deepEqual(want(atPlace(behind, 'deploy')), { track: 'battle', level: 1 });
+  assert.deepEqual(want(atPlace(behind, 'deploy')), { track: 'battle', level: FIGHT_LEVEL });
 });
 
 test('off the board (the camp, any tab, a map) there is never battle or victory music, whatever happened before', () => {
@@ -235,12 +235,14 @@ test('the victory fanfare holds the music from the moment it is asked for, then 
     assert.deepEqual(music.sounding, ['triumph']);
     // (the bed level, on the triumph file's own trim: `TRACK_GAIN` in audioMix.ts)
     const trim = trackGain('triumph');
-    const fade = FakeContext.made.find((n) => n.gain?.target === VICTORY_BED * trim);
+    // (a fade's curve is 32-bit, so its end is matched to a millionth)
+    const near = (x: number | undefined, y: number) => x !== undefined && Math.abs(x - y) < 1e-6;
+    const fade = FakeContext.made.find((n) => near(n.gain?.target, VICTORY_BED * trim));
     assert.ok(fade, 'at the bed level');
     // (a victory cinematic asks for the same track at full level: it glides up and plays on, no restart)
     music.setTrack('triumph', 1);
     assert.equal(loops().length, 2);
-    assert.equal(fade!.gain.target, trim);
+    assert.ok(near(fade!.gain.target, trim));
     music.destroy();
   } finally {
     undo();
@@ -287,16 +289,17 @@ test('the boss track comes in over its own crossfade, and the battle track it ta
     music.setTrack(BOSS_TRACK, 1, crossfadeOf(BATTLE_TRACK, BOSS_TRACK));
     await new Promise((r) => setTimeout(r, 10));
     assert.deepEqual(music.sounding, [BOSS_TRACK]);
-    // (the time constant is a third of the crossfade: the fade is about 95 % done when it ends)
-    const taus = (from: number) => FakeContext.made.slice(from).flatMap((n) => (n.gain?.calls ?? []).filter((c) => c[0] === 'target').map((c) => c[3] as number));
-    assert.ok(taus(before).some((t) => Math.abs(t - BOSS_IN_S / 3) < 1e-9), 'the boss fades in over BOSS_IN_S');
-    const outs = FakeContext.made.flatMap((n) => (n.gain?.calls ?? []).filter((c) => c[0] === 'target' && c[1] === 0).map((c) => c[3] as number));
-    assert.ok(outs.some((t) => Math.abs(t - BOSS_IN_S / 3) < 1e-9), 'the battle track fades out over the same');
+    // (changed by the sound pass: each fade is an equal-power curve over the crossfade's whole length, `fadeCurve`, so the two
+    //  tracks together hold the music's loudness; it was two exponential glides, which dipped about 3 dB in the middle)
+    const taus = (from: number) => FakeContext.made.slice(from).flatMap((n) => (n.gain?.calls ?? []).filter((c) => c[0] === 'curve').map((c) => c[3] as number));
+    assert.ok(taus(before).some((t) => Math.abs(t - BOSS_IN_S) < 1e-9), 'the boss fades in over BOSS_IN_S');
+    const outs = FakeContext.made.flatMap((n) => (n.gain?.calls ?? []).filter((c) => c[0] === 'curve' && c[1] === 0).map((c) => c[3] as number));
+    assert.ok(outs.some((t) => Math.abs(t - BOSS_IN_S) < 1e-9), 'the battle track fades out over the same');
     const mark = FakeContext.made.length;
     music.setTrack(BATTLE_TRACK, 1, crossfadeOf(BOSS_TRACK, BATTLE_TRACK));
     await new Promise((r) => setTimeout(r, 10));
     assert.deepEqual(music.sounding, [BATTLE_TRACK]);
-    assert.ok(taus(mark).some((t) => Math.abs(t - BOSS_OUT_S / 3) < 1e-9), 'the battle track comes back over BOSS_OUT_S');
+    assert.ok(taus(mark).some((t) => Math.abs(t - BOSS_OUT_S) < 1e-9), 'the battle track comes back over BOSS_OUT_S');
     music.destroy();
   } finally {
     undo();

@@ -17,6 +17,7 @@ import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
 import { mixSeed } from '../sim/rng';
 import { fadeTall, loadZoneArt, noMotion, ZoneAir, zoneProps, type ZoneMotion } from './zoneLife';
+import { flicker, sway } from './ambient';
 import gateUrl from '../art/camp/gate.png';
 import towerUrl from '../art/camp/tower.png';
 
@@ -141,10 +142,31 @@ interface Built {
 /** The living land's moving parts on a section (looks only): each is a sprite made once and only moved or re-framed each frame. */
 interface Live {
   sway: { sp: Sprite; ph: number; amp: number }[];
-  lights: { sp: Sprite; ph: number; base: number }[];
+  lights: { sp: Sprite; ph: number; base: number; kind?: 'torch' | 'lava' | 'magic' }[];
   loops: { sp: Sprite; frames: Texture[]; ph: number; ms: number }[];
+  /** ALIVE: still water's light, drifting and shimmering over the tile (where it lies at rest, and its phase). */
+  ripples: { sp: Sprite; x: number; ph: number }[];
 }
-const noLive = (): Live => ({ sway: [], lights: [], loops: [] });
+const noLive = (): Live => ({ sway: [], lights: [], loops: [], ripples: [] });
+
+/** ALIVE: the light on still water: a few pale arcs inside the tile's diamond (one picture, made once, shared by every tile). */
+let rippleTex: Texture | null = null;
+function rippleOf(): Texture {
+  if (rippleTex) return rippleTex;
+  const c = document.createElement('canvas');
+  c.width = TW;
+  c.height = TH;
+  const g = c.getContext('2d')!;
+  g.strokeStyle = 'rgba(235,248,255,0.85)';
+  g.lineWidth = 1;
+  for (const [x, y, w] of [[0.3, 0.42, 6], [0.62, 0.32, 5], [0.5, 0.62, 7], [0.72, 0.56, 4], [0.36, 0.7, 4]] as const) {
+    g.beginPath();
+    g.moveTo(TW * x - w, TH * y);
+    g.quadraticCurveTo(TW * x, TH * y - 2, TW * x + w, TH * y);
+    g.stroke();
+  }
+  return (rippleTex = Texture.from(c));
+}
 /** A finished section baked into one texture, and where its top left lies against the section's own origin. */
 interface Baked {
   tex: Texture;
@@ -335,11 +357,16 @@ export class BoardView {
     const t = this.liveT / 1000;
     for (const live of [this.built?.live, this.old?.live]) {
       if (!live) continue;
-      for (const s of live.sway) s.sp.skew.x = Math.sin(t * 1.3 + s.ph) * s.amp + Math.sin(t * 2.9 + s.ph * 2) * s.amp * 0.3;
-      // (a flame's glow breathes and wavers, never going out)
+      // (ALIVE: the shared motion, `ambient.ts`: growth sways and gusts, a flame's glow breathes and gutters, never going out)
+      for (const s of live.sway) s.sp.skew.x = sway(t, Math.round(s.ph * 1000), 1.2) * s.amp;
       for (const l of live.lights) {
-        l.sp.alpha = l.base + Math.sin(t * 7.1 + l.ph) * 0.08 + Math.sin(t * 12.7 + l.ph * 3) * 0.05;
-        l.sp.scale.set(0.95 + Math.sin(t * 5.3 + l.ph) * 0.06);
+        const k = flicker(t, Math.round(l.ph * 1000), l.kind ?? 'torch');
+        l.sp.alpha = l.base * k;
+        l.sp.scale.set(l.kind === 'lava' ? 1 : 0.92 + 0.08 * k);
+      }
+      for (const r of live.ripples) {
+        r.sp.x = r.x + Math.sin(t * 0.9 + r.ph) * 2;
+        r.sp.alpha = 0.24 + 0.2 * Math.sin(t * 1.7 + r.ph * 2);
       }
       for (const lp of live.loops) lp.sp.texture = lp.frames[(Math.floor(this.liveT / lp.ms) + lp.ph) % lp.frames.length];
     }
@@ -540,6 +567,8 @@ export class BoardView {
           tile.addChild(sp);
           live.loops.push({ sp, frames, ph: (u * 3 + v * 5) % FLOW_FRAMES, ms: 110 });
         }
+        // (ALIVE: still water shimmers and drifts; lava and coals seethe with a breathing glow; a shrine's crystal pulses)
+        this.tileLife(tile, t, b.area, x, y, u, v, live, !!(depth && t.stream && b.flow));
         if (t.scene) {
           // (the scenery's own picture is set; nothing more on it)
         } else if (t.rock && set) {        } else if (t.rock && set) {
@@ -579,6 +608,8 @@ export class BoardView {
             const a = ((t.deco >> 2) + k * 2.1) % (Math.PI * 2);
             s.position.set(x + Math.cos(a) * (urls.tallCount > 2 ? 17 : 10), y + 6 + Math.sin(a) * 6);
             tile.addChild(s);
+            // (ALIVE: tall growth bends in the wind, about its foot)
+            live.sway.push({ sp: s, ph: (x * 0.071 + y * 0.113 + k * 0.9) % (Math.PI * 2), amp: 0.07 });
           }
         } else if (t.bush && b.area === 'highlands' && set) {
           // (a bush grows at the tile's back corner, behind whoever stands there)
@@ -586,6 +617,7 @@ export class BoardView {
           s.anchor.set(0.5, 0.9);
           s.position.set(x + ((t.deco >> 3) % 2 ? 12 : -12), y - 5);
           tile.addChild(s);
+          live.sway.push({ sp: s, ph: (x * 0.071 + y * 0.113) % (Math.PI * 2), amp: 0.03 });
         }
         // (an army's road: small things growing on it now and then)
         const flair = depth && !t.scene && !t.ground && !t.bridge && !t.rock && !t.wall && !t.barrel && !t.paved ? flairOf(b.area, t.deco) : null;
@@ -671,6 +703,42 @@ export class BoardView {
       }
     }
     return { tiles, marks, rings, grounds, tex, barrels, landmark, live, zone };
+  }
+
+  /** ALIVE: a tile's own life (looks only): light shimmering on still water, a breathing glow over lava or coals, a pulse over a
+   *  shrine. Made once with the tile; `step` moves them. */
+  private tileLife(tile: Container, t: Tile, area: Area, x: number, y: number, u: number, v: number, live: Live, streaked: boolean): void {
+    const lavaLike = t.ground === 'lava' || t.ground === 'coals' || (t.ground === 'deep' && LAVA_LANDS.includes(area));
+    const ph = ((u * 7 + v * 13) % 31) * 0.37;
+    if (lavaLike) {
+      const g = new Sprite(glow());
+      g.anchor.set(0.5);
+      g.tint = t.ground === 'coals' ? 0xff6a20 : 0xff8a30;
+      g.blendMode = 'add';
+      g.scale.set(TW / 40, TH / 40);
+      g.position.set(x, y);
+      g.alpha = 0.3;
+      tile.addChild(g);
+      live.lights.push({ sp: g, ph, base: 0.32, kind: 'lava' });
+    } else if (t.ground === 'water' || t.ground === 'deep') {
+      // (running water has its own streaks)
+      if (streaked) return;
+      const sp = new Sprite(rippleOf());
+      sp.position.set(x - TW / 2, y - TH / 2);
+      sp.alpha = 0.25;
+      tile.addChild(sp);
+      live.ripples.push({ sp, x: x - TW / 2, ph });
+    } else if (t.ground === 'shrine') {
+      const g = new Sprite(glow());
+      g.anchor.set(0.5);
+      g.tint = 0x90ffe0;
+      g.blendMode = 'add';
+      g.scale.set(TW / 36, TH / 30);
+      g.position.set(x, y - 6);
+      g.alpha = 0.35;
+      tile.addChild(g);
+      live.lights.push({ sp: g, ph, base: 0.4, kind: 'magic' });
+    }
   }
 
   /** Where the board's lit props stand (world px; a lantern, a torch, a forge fire), for night's glows (`weatherView.ts`). */

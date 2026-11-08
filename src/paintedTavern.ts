@@ -15,6 +15,8 @@ import { todayKey } from './modes';
 import { COMBAT_ART } from './combatArtAssets';
 import { TrophyWallModal } from './trophyWall';
 import { onSettings } from './settings';
+import { AmbientLayer } from './render/ambientLayer';
+import { SCENE_LIFE } from './render/ambientScenes';
 // (Dynasties, phase 7: the ghosts of bearers slain under the Oath: pale at their own seat with a candle while the House mourns, then by
 //  the hearth once the line has a bearer again)
 import { cornerGhosts, ghostOf, mourners } from './sim/oath';
@@ -97,7 +99,10 @@ export class PaintedTavern {
     barFront.alt = '';
     barFront.draggable = false;
     this.ghosts.setAttribute('aria-hidden', 'true');
-    this.scene.append(backdrop, warmth, gwenArt, barFront, this.ghosts, this.guests, rearTable, frontTable, dice, steam, caption);
+    // (ALIVE: the room's own life over its painting: the hearth licks and breathes, the candles and lanterns gutter, the herbs, ivy
+    //  and banner stir, embers and dust drift; `render/ambientLayer.ts`)
+    const life = new AmbientLayer(SCENE_LIFE.tavern, backdrop.src, { fit: 'fill' }, 'ptLife');
+    this.scene.append(backdrop, life.root, warmth, gwenArt, barFront, this.ghosts, this.guests, rearTable, frontTable, dice, steam, caption);
     document.addEventListener('visibilitychange', () => this.syncMotion());
     onSettings(({ saver }) => this.root.classList.toggle('ptSaver', saver));
     this.syncMotion();

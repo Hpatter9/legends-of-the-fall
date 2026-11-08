@@ -26,6 +26,21 @@ export function meter(file) {
   return { lufs, tp };
 }
 
+/** Where a phone's own speaker gives out (Hz): it plays little below this, so a track whose weight is in the bass sounds quieter
+ *  on a phone than its meter says (docs/notes/sound-pass.md). */
+export const PHONE_HZ = 250;
+
+/** A file's integrated loudness (LUFS) as a phone's speaker plays it: the same meter after a steep (fourth-order) high-pass at
+ *  `PHONE_HZ`. The page trims each file by this as well as by its plain loudness (`PHONE_LUFS` in `src/render/audioMix.ts`). */
+export function meterPhone(file) {
+  const hp = `highpass=f=${PHONE_HZ}:poles=2`;
+  const r = spawnSync('ffmpeg', ['-nostats', '-hide_banner', '-i', file, '-af', `${hp},${hp},ebur128`, '-f', 'null', '-'], { encoding: 'utf8', maxBuffer: 64 << 20 }).stderr ?? '';
+  const sum = r.slice(r.lastIndexOf('Summary:'));
+  const lufs = Number(/I:\s+(-?[\d.]+) LUFS/.exec(sum)?.[1]);
+  if (!Number.isFinite(lufs)) throw new Error(`${file}: no loudness`);
+  return lufs;
+}
+
 /** Encodes `src` (any file ffmpeg reads) to the Opus file `dest` at `kbps`, with the gain (dB) and, when `limit` is set, a
  *  limiter holding the samples under that level (dBFS). */
 export function encode(src, dest, kbps, gainDb, limit = null) {

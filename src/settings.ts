@@ -13,6 +13,7 @@ import { appUpdate } from './appUpdate';
 import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
 import { DEFAULT_EVERY, EVERY_CHOICES } from './ultShowRules';
 import { CUT_MODES, type CutMode } from './tauntCutRules';
+import { SLIDER_STEP, curvedVolume } from './render/audioRules';
 
 const KEY = 'legends.settings';
 
@@ -21,10 +22,13 @@ export interface Settings {
   ruler: RulerId;
   /** Set once the player picks a ruler in the picker (kept for old saves; the Iron Stag is the default again and stays whoever picked it). */
   rulerPicked?: boolean;
-  /** Music volume, 0 to 100. */
+  /** Music volume, 0 to 100, heard on the perceptual curve (`sliderGain` in `render/audioRules.ts`). */
   music: number;
-  /** Effects volume, 0 to 100. */
+  /** Effects volume, 0 to 100, on the same curve. */
   effects: number;
+  /** Set once the volumes are saved on the perceptual curve: a save without it has them on the old straight slider, and they are
+   *  moved to the curve as they load (`curvedVolume`), keeping the loudness the player chose. */
+  volCurve?: boolean;
   /** The fight speed a new fight starts at. */
   speed: 1 | 2;
   /** Whether the screen shakes (and flashes on a crit or a big kill). */
@@ -56,7 +60,7 @@ export interface Settings {
   nemesisCut: CutMode;
 }
 
-export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, ultShort: false, ultEvery: DEFAULT_EVERY, eidolonFull: true, duchessHat: 'none', nemesisCut: 'full' };
+export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, volCurve: true, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, ultShort: false, ultEvery: DEFAULT_EVERY, eidolonFull: true, duchessHat: 'none', nemesisCut: 'full' };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -67,7 +71,12 @@ export function parseSettings(raw: string | null): Settings {
   } catch {
     /* (not JSON: the defaults) */
   }
-  const volume = (x: unknown, d: number) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(100, Math.max(0, Math.round(x))) : d);
+  const volume0 = (x: unknown, d: number) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(100, Math.max(0, Math.round(x))) : d);
+  // (a volume saved on the old straight slider keeps its loudness on the new curve: docs/notes/sound-pass.md)
+  const volume = (x: unknown, d: number) => {
+    const v = volume0(x, d);
+    return saved.volCurve === true || typeof x !== 'number' ? v : curvedVolume(v);
+  };
   const flag = (x: unknown, d: boolean) => (typeof x === 'boolean' ? x : d);
   const validHat = (x: unknown): DuchessCosmeticId => (typeof x === 'string' && DUCHESS_COSMETICS.some((c) => c.id === x) ? (x as DuchessCosmeticId) : DEFAULTS.duchessHat);
   return {
@@ -76,6 +85,7 @@ export function parseSettings(raw: string | null): Settings {
     ...(saved.rulerPicked === true ? { rulerPicked: true } : {}),
     music: volume(saved.music, DEFAULTS.music),
     effects: volume(saved.effects, DEFAULTS.effects),
+    volCurve: true,
     speed: saved.speed === 2 ? 2 : 1,
     shake: flag(saved.shake, DEFAULTS.shake),
     numbers: flag(saved.numbers, DEFAULTS.numbers),
@@ -447,14 +457,15 @@ function volumeRow(title: string, key: 'music' | 'effects', value: number, offHi
   slider.type = 'range';
   slider.min = '0';
   slider.max = '100';
-  slider.step = '10';
+  slider.step = String(SLIDER_STEP);
   slider.value = String(value);
   slider.setAttribute('aria-label', `${title} volume`);
   const readout = r.querySelector('em')!;
+  // (the volume follows the slider as it moves, so it can be set by ear; the settings are not ducked under the music)
   slider.addEventListener('input', () => {
     readout.textContent = slider.value === '0' ? offHint : `${slider.value}%`;
+    setSetting(key, Number(slider.value));
   });
-  slider.addEventListener('change', () => setSetting(key, Number(slider.value)));
   r.append(slider);
   return r;
 }
