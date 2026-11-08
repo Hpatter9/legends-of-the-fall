@@ -10,8 +10,8 @@ const quiet = { ups: [], fell: [], hearts: 0, heartsLeft: 0, found: [] };
 
 describe('the wave card pack line', () => {
   it('says one find waits, or how many', () => {
-    assert.deepEqual(waveNotes({ ...quiet, waiting: 1 }).map((n) => n.text), ['A find waits in the pack']);
-    assert.deepEqual(waveNotes({ ...quiet, waiting: 3 })[0], { kind: 'pack', text: '3 finds wait in the pack' });
+    assert.deepEqual(waveNotes({ ...quiet, waiting: 1 }).map((n) => n.text), ['A find waits in the satchel']);
+    assert.deepEqual(waveNotes({ ...quiet, waiting: 3 })[0], { kind: 'pack', text: '3 finds wait in the satchel' });
   });
   it('says nothing when none wait', () => {
     assert.deepEqual(waveNotes({ ...quiet }), []);

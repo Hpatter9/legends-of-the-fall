@@ -1,6 +1,6 @@
 // The relic card (RELICS-2): what one relic is, as the run holds it now. Its icon, name and rarity; its line of the keep's history (always
 // shown, the owner's choice); what it does; its price in red; a growing relic's size now; and its Chapter: the four pieces (the held ones
-// lit), the two bonuses and the chapter's line of story. Opened by a tap on a relic on the wave-prep screen (`events.ts`), in the Pack, and
+// lit), the two bonuses and the chapter's line of story. Opened by a tap on a relic on the wave-prep screen (`events.ts`), in the Satchel, and
 // on the tower's map (`towerElites.ts`). It only reads the run.
 
 import { burntOut, grownBy, relicEffects, relicName, RELICS, PHOENIX_RISES, type RelicMarks } from './sim/relics';
