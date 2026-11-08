@@ -22,6 +22,13 @@ export const BATTLE_TRACK: MusicId = 'battle';
 /** The one boss track: the same theme, heavier and faster. It takes over while a boss is being fought. */
 export const BOSS_TRACK: MusicId = 'boss';
 
+/** How far a battle's track sits under the place's music (dB): every battle and boss track plays this much under the menus' and
+ *  the deployment's, the same through every wave, every break between waves and every deploy in a battle (so it never bobs up
+ *  and down), under the fight's own sounds (about 5 LU under them). The step comes as the deployment's track crossfades into the
+ *  battle's, so it is heard as the fight's music, not as the volume dropping. docs/notes/sound-pass.md. */
+export const FIGHT_MUSIC_DB = -3.5;
+/** The same as a gain on the track. */
+export const FIGHT_LEVEL = 10 ** (FIGHT_MUSIC_DB / 20);
 /** How loud the triumph loop sits under the results, against a track's full level (about -4.4 dB): a bed, not a fanfare. */
 export const VICTORY_BED = 0.6;
 
@@ -74,7 +81,7 @@ export interface MusicState {
   victory: boolean;
 }
 
-/** The track to play and its level (1 is a track's full level). Off the board (the camp, any of its tabs, a tower or Calamity
+/** The track to play and its level (1 is a track's full level; a battle's track at `FIGHT_LEVEL`). Off the board (the camp, any of its tabs, a tower or Calamity
  *  map) it is always the place's own: a fight still running behind the home screen keeps its battle (for the way back to the
  *  board) but is not heard there, and nor is a victory (the owner: "Music sounds like it runs from the fights into the main
  *  screen after"). On the board a victory holds the triumph bed, and a battle keeps its track while a fight runs and between
@@ -82,7 +89,7 @@ export interface MusicState {
 export function musicOf(s: MusicState, placeTrack: (p: Place) => MusicId): { track: MusicId; level: number } {
   if (s.place !== 'deploy') return { track: placeTrack(s.place), level: 1 };
   if (s.victory) return { track: VICTORY_LOOP, level: VICTORY_BED };
-  if (s.battle) return { track: s.battle, level: 1 };
+  if (s.battle) return { track: s.battle, level: FIGHT_LEVEL };
   return { track: placeTrack(s.place), level: 1 };
 }
 

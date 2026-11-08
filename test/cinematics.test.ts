@@ -473,7 +473,9 @@ test('an old saved settings object with the summoning-scene switch is read witho
   const { DEFAULTS, parseSettings } = await import('../src/settings');
   const s = parseSettings('{"summonScene":false,"cinematics":true,"music":40}');
   assert.equal('summonScene' in s, false, 'the retired switch is ignored');
-  assert.equal(s.music, 40);
+  // (an old save's volume is moved to the perceptual slider, keeping its loudness: 40 % straight is 60 % on the curve,
+  //  docs/notes/sound-pass.md)
+  assert.equal(s.music, 60);
   assert.equal(s.cinematics, true);
   assert.equal('summonScene' in DEFAULTS, false);
 });

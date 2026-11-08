@@ -9,7 +9,7 @@ import type { Cue } from './soundRules';
 import { CombatAudioBank, type CombatSample } from './combatAudioBank';
 import { EPIC_INFO, bakeTrack, type Baked } from './musicBake';
 import { SCENE_TRACKS, STEMS, stemLevels, type Stem } from './musicScore';
-import { DUCK_GAIN, DUCK_HZ, OPEN_HZ, colourOf, musicColour } from './audioRules';
+import { BED_HIGHPASS_HZ, BED_LIMIT_DB, MASTER_LIMIT_DB, OPEN_HZ, STING_FADE_S, colourOf, compressorMakeupDb, duckTc, fadeCurve, musicColour } from './audioRules';
 import { SYNTH_OF, epicOf, loadEpic, loadSting, type MusicId, type StingId } from './epicMusic';
 import { trackGain } from './audioMix';
 
@@ -23,27 +23,56 @@ export type BusName = 'music' | 'sfx' | 'ui' | 'ambience' | 'show';
 
 type BusParams = Record<'music' | 'sfx' | 'ui' | 'ambience' | 'show' | 'master', SchedulableParam>;
 
+/** Moves a gain to `to` over `seconds` on the equal-power curve (`fadeCurve`), from wherever it is now (so a fade cut short by
+ *  the next one carries on from where it got to, with no jump). A browser that refuses the curve gets a plain glide. */
+export function glide(p: AudioParam, to: number, t: number, seconds: number): void {
+  const from = p.value;
+  p.cancelScheduledValues(t);
+  p.setValueAtTime(from, t);
+  try {
+    p.setValueCurveAtTime(fadeCurve(from, to), t + 0.005, Math.max(0.02, seconds));
+  } catch {
+    p.setTargetAtTime(to, t, Math.max(0.01, seconds / 3));
+  }
+}
+
+/** A native compressor set as a brickwall-ish limiter at `limitDb`, with the gain the browser adds to everything it passes taken
+ *  off again after it (`compressorMakeupDb`), so it changes the level of nothing under the limit. */
+function nativeLimiter(ctx: BaseAudioContext, limitDb: number): { input: DynamicsCompressorNode; output: GainNode } {
+  const ratio = 20;
+  const input = new DynamicsCompressorNode(ctx, { threshold: limitDb, knee: 0, ratio, attack: 0.002, release: 0.2 });
+  const output = new GainNode(ctx, { gain: 10 ** (-compressorMakeupDb(limitDb, ratio) / 20) });
+  input.connect(output);
+  return { input, output };
+}
+
 /** The mixer: four buses (music, sfx, ui, ambience) and the summoning show's inside sfx, meeting at a master that runs
- *  through a limiter so a big fight never clips. Music and ambience pass a ducker: a gain dip and a low-pass that close
- *  smoothly under menus, cards and the show. The limiter is a worklet; until it has loaded (or if the browser has no
- *  AudioWorklet) a native compressor does its job, so the master never goes silent. */
+ *  through a limiter so a big fight never clips. Music and ambience (the bed) pass a gentle high-pass (the deep bass a phone's
+ *  speaker cannot play), a ducker (a gain dip and a low-pass that close smoothly under the shows, and dip a little under menus,
+ *  cards and cinematics) and a safety limiter of their own. The master's limiter is a worklet; until it has loaded (or if the
+ *  browser has no AudioWorklet) a native compressor does its job at the same level and loudness, so the master never goes
+ *  silent and the volume does not step when the worklet takes over. */
 export class BusMixer extends AudioProcessor<BusParams & { duck: SchedulableParam; duckHz: SchedulableParam }> {
   private readonly buses: Record<BusName, GainNode>;
   private readonly master: GainNode;
-  private readonly fallback: DynamicsCompressorNode;
+  private readonly fallback: { input: DynamicsCompressorNode; output: GainNode };
   private readonly limiter: Limiter | null;
   /** Whether the limiter has taken over from the native compressor. */
   limited = false;
+  /** Where the ducker was last sent. */
+  private duckTo = { gain: 1, hz: OPEN_HZ };
 
   constructor(ctx: BaseAudioContext) {
     const mk = () => new GainNode(ctx, { gain: 1 });
     const buses = { music: mk(), sfx: mk(), ui: mk(), ambience: mk(), show: mk() };
     const master = mk();
-    // (the bed, music and ambience together, passes one ducker: a low-pass and a gain moved together)
+    // (the bed, music and ambience together, passes a high-pass, one ducker (a low-pass and a gain moved together) and its limiter)
     const bed = mk();
+    const bedHp = new BiquadFilterNode(ctx, { type: 'highpass', frequency: BED_HIGHPASS_HZ, Q: 0.707 });
     const duckLp = new BiquadFilterNode(ctx, { type: 'lowpass', frequency: OPEN_HZ, Q: 0.5 });
     const duckGain = mk();
-    const fallback = new DynamicsCompressorNode(ctx, { threshold: -10, knee: 8, ratio: 12, attack: 0.003, release: 0.15 });
+    const bedLimit = nativeLimiter(ctx, BED_LIMIT_DB);
+    const fallback = nativeLimiter(ctx, MASTER_LIMIT_DB);
     super(ctx, ({ param }) => ({
       params: {
         music: param({ default: 1, bind: buses.music.gain }),
@@ -64,12 +93,14 @@ export class BusMixer extends AudioProcessor<BusParams & { duck: SchedulablePara
     buses.ui.connect(master);
     buses.music.connect(bed);
     buses.ambience.connect(bed);
-    bed.connect(duckLp).connect(duckGain).connect(master);
-    master.connect(fallback).connect(ctx.destination);
+    bed.connect(bedHp).connect(duckLp).connect(duckGain).connect(bedLimit.input);
+    bedLimit.output.connect(master);
+    master.connect(fallback.input);
+    fallback.output.connect(ctx.destination);
     // (the limiter, if the browser can load its worklet)
     let limiter: Limiter | null = null;
     try {
-      limiter = new Limiter(ctx, { threshold: -2, release: 0.12, lookahead: 0.005 });
+      limiter = new Limiter(ctx, { threshold: MASTER_LIMIT_DB, release: 0.12, lookahead: 0.005 });
     } catch {
       limiter = null;
     }
@@ -86,8 +117,8 @@ export class BusMixer extends AudioProcessor<BusParams & { duck: SchedulablePara
   private takeOver(): void {
     const limiter = this.limiter;
     if (!limiter || this.limited || !limiter.cells.isReady.value) return;
-    this.master.disconnect(this.fallback);
-    this.fallback.disconnect();
+    this.master.disconnect(this.fallback.input);
+    this.fallback.output.disconnect();
     this.master.connect(limiter.input);
     limiter.output.connect(this.context.destination);
     this.limited = true;
@@ -102,16 +133,16 @@ export class BusMixer extends AudioProcessor<BusParams & { duck: SchedulablePara
     return this.buses[name];
   }
 
-  /** Dips the music and ambience under something in front (menu, card, show), or lifts them again: a gain of `DUCK_GAIN`
-   *  and a low-pass of `DUCK_HZ`, glided to over about a quarter of a second. */
-  setDuck(on: boolean): void {
+  /** Dips the music and ambience to `to` (a gain and a low-pass: `duckOf` in `audioRules.ts`), or lifts them back (gain 1,
+   *  `OPEN_HZ`): down over about a third of a second, up over about a second (`duckTc`). */
+  setDuck(to: { gain: number; hz: number }): void {
     const t = this.context.currentTime;
-    const gain = on ? DUCK_GAIN : 1;
-    const hz = on ? DUCK_HZ : OPEN_HZ;
-    const tc = on ? 0.09 : 0.18;
+    const down = to.gain < this.duckTo.gain || to.hz < this.duckTo.hz;
+    this.duckTo = to;
+    const tc = duckTc(down);
     for (const p of [this.params.duck, this.params.duckHz]) p.cancelAndHoldAtTime(t);
-    this.params.duck.setTargetAtTime(gain, t, tc);
-    this.params.duckHz.setTargetAtTime(hz, t, tc);
+    this.params.duck.setTargetAtTime(to.gain, t, tc);
+    this.params.duckHz.setTargetAtTime(to.hz, t, tc);
   }
 
   /** A short fade of one bus to `level` (a hush for the show, a volume from the settings). */
@@ -1035,8 +1066,8 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
     const info = EPIC_INFO.get(baked);
     const trim = info ? trackGain(track) : 1;
     const fade = new GainNode(ac, { gain: 0 });
-    fade.gain.setValueAtTime(0, t);
-    fade.gain.setTargetAtTime(this.level * trim, t, fadeS / 3);
+    // (in on the equal-power curve, as the track it replaces goes out on its mirror: the music's loudness holds through the change)
+    glide(fade.gain, this.level * trim, t, fadeS);
     fade.connect(this.lowpass);
     const loop: Loop = { fade, trim, stems: {} };
     const rules = info ? 'town' : SYNTH_OF[track];
@@ -1066,8 +1097,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
     if (!loop) return;
     this.loops.delete(track);
     const t = this.ac.currentTime;
-    loop.fade.gain.cancelScheduledValues(t);
-    loop.fade.gain.setTargetAtTime(0, t, seconds / 3);
+    glide(loop.fade.gain, 0, t, seconds);
     setTimeout(() => {
       for (const { src } of Object.values(loop.stems)) {
         try {
@@ -1092,8 +1122,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
         const loop = this.loops.get(track);
         if (loop) {
           const t = this.ac.currentTime;
-          loop.fade.gain.cancelScheduledValues(t);
-          loop.fade.gain.setTargetAtTime(level * loop.trim, t, FADE_S / 3);
+          glide(loop.fade.gain, level * loop.trim, t, FADE_S);
         }
       }
       return;
@@ -1134,7 +1163,7 @@ export class MusicPlayer extends AudioProcessor<{ cutoff: SchedulableParam }> {
   sting(id: StingId, tailSeconds = 6): void {
     if (!this.enabled) return;
     this.stopSting(false);
-    for (const track of [...this.loops.keys()]) this.release(track, 0.5);
+    for (const track of [...this.loops.keys()]) this.release(track, STING_FADE_S);
     this.holding = true;
     const asked = ++this.stingAsks;
     void this.stingBuffer(id).then(
