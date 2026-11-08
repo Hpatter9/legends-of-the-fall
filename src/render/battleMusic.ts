@@ -22,11 +22,11 @@ export const BATTLE_TRACK: MusicId = 'battle';
 /** The one boss track: the same theme, heavier and faster. It takes over while a boss is being fought. */
 export const BOSS_TRACK: MusicId = 'boss';
 
-/** How far a battle's track sits under the place's music (dB): every battle and boss track plays this much under the menus' and
- *  the deployment's, the same through every wave, every break between waves and every deploy in a battle (so it never bobs up
- *  and down), under the fight's own sounds (about 5 LU under them). The step comes as the deployment's track crossfades into the
- *  battle's, so it is heard as the fight's music, not as the volume dropping. docs/notes/sound-pass.md. */
-export const FIGHT_MUSIC_DB = -3.5;
+/** How far a battle's track sits under the place's music (dB): the owner's "music is too quiet and muffled in battle", so a
+ *  battle's music is about as loud as the camp's, only a touch under it so the fight's blows (whose peaks stand 6 LU and more over
+ *  it) stay on top. The same through every wave, every break between waves and every deploy in a battle, so it never bobs.
+ *  docs/notes/sound-pass.md. */
+export const FIGHT_MUSIC_DB = -1.5;
 /** The same as a gain on the track. */
 export const FIGHT_LEVEL = 10 ** (FIGHT_MUSIC_DB / 20);
 /** How loud the triumph loop sits under the results, against a track's full level (about -4.4 dB): a bed, not a fanfare. */

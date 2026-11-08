@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   BED_LIMIT_DB, DUCKS, DUCK_DOWN_S, DUCK_HOLD_S, DUCK_UP_S, MASTER_LIMIT_DB, OPEN_HZ, SLIDER_STEP, STING_FADE_S, WAKE_FADE_S,
-  compressorMakeupDb, curvedVolume, duckChange, duckOf, duckTc, fadeCurve, sliderDb, sliderGain,
+  DuckCounter, FIGHT_DUCKS, compressorMakeupDb, curvedVolume, duckChange, duckOf, duckTc, fadeCurve, sliderDb, sliderGain,
 } from '../src/render/audioRules';
 import { BOSS_IN_S, BOSS_OUT_S, BOSS_TRACK, BATTLE_TRACK, CROSSFADE_S, FIGHT_LEVEL, FIGHT_MUSIC_DB, crossfadeOf, musicOf } from '../src/render/battleMusic';
 import { TRACK_OF_PLACE } from '../src/render/epicMusic';
@@ -56,12 +56,15 @@ test('the ducking amounts: a sheet, an event and a cinematic only lower the musi
   assert.ok(close(db(['sheet']), -4));
   assert.ok(close(db(['event']), -4));
   assert.ok(close(db(['cinematic']), -3));
-  assert.ok(close(db(['boss']), -6));
-  for (const r of ['summon', 'reveal', 'eidolon', 'binding']) {
+  // (in a fight, the owner's "muffled in battle": a boss's card and an eidolon's call only lower it, never muffle it)
+  assert.ok(close(db(['boss']), -2));
+  assert.ok(close(db(['eidolon']), -4));
+  for (const r of ['boss', 'eidolon']) assert.equal(duckOf([r]).hz, OPEN_HZ, `${r} does not muffle the battle music`);
+  for (const r of ['summon', 'reveal', 'binding']) {
     assert.ok(close(db([r]), -9), r);
     assert.ok(duckOf([r]).hz <= 2000, `${r} muffles`);
   }
-  for (const r of ['sheet', 'event', 'cinematic']) assert.equal(duckOf([r]).hz, OPEN_HZ, `${r} does not muffle`);
+  for (const r of ['sheet', 'event', 'cinematic', 'boss', 'eidolon']) assert.equal(duckOf([r]).hz, OPEN_HZ, `${r} does not muffle`);
   // (the old dip was -8 dB and 1.4 kHz under everything: nothing that is not a show is half as deep now)
   for (const [r, d] of Object.entries(DUCKS)) if (d.hz === OPEN_HZ) assert.ok(d.db >= -4, r);
   assert.ok(db(['someNewReason']) < 0, 'a reason not named still dips');
@@ -78,6 +81,17 @@ test('ducking timing: down at once and gently, up more gently still, and a lift 
   assert.equal(duckChange(['sheet'], ['sheet', 'summon']), 'down');
   assert.equal(duckChange(['sheet', 'summon'], ['sheet']), 'up', 'a show over lifts back to the sheet\'s dip, after the hold');
   assert.equal(duckChange(['cinematic'], ['cinematic']), null, 'a cinematic held for the scene never moves line by line');
+});
+
+test('a fight\'s own holds (an eidolon\'s call) are let go whatever their count, so the battle music is never left down', () => {
+  const d = new DuckCounter();
+  d.set('eidolon', true);
+  d.set('eidolon', true);
+  d.set('eidolon', false);
+  assert.deepEqual(d.reasons, ['eidolon'], 'begun twice, ended once: still held');
+  for (const r of FIGHT_DUCKS) d.drop(r);
+  assert.equal(d.ducked, false);
+  assert.ok(FIGHT_DUCKS.includes('eidolon') && !FIGHT_DUCKS.includes('sheet'));
 });
 
 /* ------------------------------------------------------------------ crossfades */
@@ -107,9 +121,9 @@ test('crossfade timing: the boss in quickly, back out gently, any other change a
   assert.ok(WAKE_FADE_S > 0.2 && WAKE_FADE_S <= 1, 'back from away without a jolt');
 });
 
-test('a battle\'s music sits a steady 3.5 dB under the place\'s, through every wave and every deploy between', () => {
-  assert.equal(FIGHT_MUSIC_DB, -3.5);
-  assert.ok(close(FIGHT_LEVEL, 10 ** (-3.5 / 20)));
+test('a battle\'s music sits a steady 1.5 dB under the place\'s (about as loud), through every wave and every deploy between', () => {
+  assert.equal(FIGHT_MUSIC_DB, -1.5);
+  assert.ok(close(FIGHT_LEVEL, 10 ** (-1.5 / 20)));
   const place = (p: keyof typeof TRACK_OF_PLACE) => TRACK_OF_PLACE[p];
   const s = { place: 'deploy' as const, battle: BATTLE_TRACK, fighting: true, victory: false };
   assert.equal(musicOf(s, place).level, FIGHT_LEVEL);
