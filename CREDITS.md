@@ -600,3 +600,7 @@ The cozy seated tavern extension adds 108 original OpenAI-generated resting hero
 ## Painted road encounter vignettes
 
 - Eight original paintings generated with OpenAI image generation in the owner-approved road-scene style: wounded scout, Pale Lady shrine, deserters at a fire, bone-dice countess, wandering healer, crossroads forge, crown in the reeds and refugee caravan (`src/art/road-encounters/`). Sources and approved proposal are retained in `art-source/road-encounters/`; `tools/road-art/import.py` crops and downsamples the panels. Images are bundled for offline play.
+
+## Calamity herald portraits
+
+- Six original OpenAI-generated painted herald portraits and face crops (`src/art/heralds/`) were made from the currently credited battle sprite references and owner-approved three-portrait proposal. Sources, reference crops and mapping are retained in `art-source/herald-portraits/`; `tools/herald-art/import.py` reproduces the exports. Original sprite and pack credits remain in force. No battle sprites were replaced. Paintings are bundled for offline play.

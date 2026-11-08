@@ -1,3 +1,4 @@
+import { heraldPortrait } from './heraldArt';
 // The codex page (from the Castle page's chips): a Bestiary of every foe and boss met and a gallery of the heroes, as tabs over a
 // grid of cards; a tap opens the detail sheet, with the sprite on its idle. Unmet foes and unowned heroes are dark silhouettes.
 // Only reads the meta and the codex rules (`sim/codex.ts`); the Claim buttons call back to the home screen, which pays and saves.
@@ -143,7 +144,9 @@ function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
   const def = UNITS[e.defs[0]];
   const met = isMet(m, e);
   const { box, close } = sheet(root);
-  const { pic, stop } = livePicture(def.sheet, !met);
+  const painting = met ? heraldPortrait(e.defs[0], 'cxHerald', true) : null;
+  const { pic, stop } = painting ? { pic: el('div', 'cxPic'), stop: () => {} } : livePicture(def.sheet, !met);
+  if (painting) pic.append(painting);
   closers.push(stop);
   const head = el('div', 'hhead');
   const title = el('div');
@@ -355,6 +358,8 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
         const met = isMet(m, e);
         const def = UNITS[e.defs[0]];
         const c = card(def.sheet, 1, e.name, met ? `Felled ${killsOf(m, e)}` : 'not met', met);
+        const painting = met ? heraldPortrait(e.defs[0], 'cxPort cxHerald', true) : null;
+        if (painting) c.querySelector('.cxPort')?.replaceWith(painting);
         c.classList.add(e.class);
         c.addEventListener('click', () => openFoe(root, m, e));
         grid.append(c);

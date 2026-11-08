@@ -1,6 +1,6 @@
-# Next original artwork plan
+# Original artwork plan — completed for 0.394.0
 
-This is a proposal after the 0.393.0 art release, not new implementation. Preserve the recently merged battle UI, ten portrait-led hero sprite remakes and 54 seated tavern heroes. The 48 painted relics, completed equipment, quest-givers, trophy wall and newly connected dynasty/Council art do not need regenerating.
+All three batches below have now been implemented and validated for the owner-authorised 0.394.0 release. The original brief is retained as the record of scope. Handoffs: [trait symbols](nemesis-traits-completion.md), [road encounters](painted-road-encounters.md), [herald portraits](calamity-herald-portraits.md). Preserve the recently merged battle UI, ten portrait-led hero sprite remakes and 54 seated tavern heroes. The 48 painted relics, completed equipment, quest-givers, trophy wall and newly connected dynasty/Council art do not need regenerating.
 
 | Order | Batch | Deliverables | Why |
 |---|---|---|---|

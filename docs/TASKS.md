@@ -29,6 +29,14 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### HERALD-PORTRAITS — Six Calamity herald paintings and final art release
+
+- **Owner:** Codex director. **Branch/worktree:** `art/calamity-herald-portraits`, `/workspace/legends-of-the-fall`; includes completed trait and road-art commits.
+- **Scope:** six portraits matching actual boss sprites, boss-intro/codex integration, source/packing tools, credits and checks; then integrate latest main, release metadata, PR and owner-authorised merge of all three batches.
+- **Direction:** owner approved sprite-matched Gorvak, Thorn Warden and Malphas proposal, then explicitly authorised finishing all six and merging.
+- **Completion:** six matching portraits, sprite fallbacks preserved for other bosses, undiscovered codex entries still concealed, focused tests/build/typecheck and portrait checks; final merge.
+- **Status:** 0.394.0 validated for owner-authorised merge of all three batches. All six paintings integrated; typecheck/build, 99 focused release tests, three-size intro/codex checks and reduced motion passed with no browser errors. Unknown entries concealed and ordinary boss sprite fallback preserved. [Release handoff](notes/art-release-394.md).
+
 ### ROAD-ART — Eight painted road encounters
 
 - **Owner:** Codex. **Branch/worktree:** `art/road-encounters`, `/workspace/legends-of-the-fall` (retains completed trait art).

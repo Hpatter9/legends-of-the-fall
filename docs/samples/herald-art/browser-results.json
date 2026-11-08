@@ -1,0 +1,33 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "busts": 6,
+      "codexFaces": 6,
+      "unknownConcealed": true,
+      "spriteFallback": true,
+      "closeWorks": true
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "busts": 6,
+      "codexFaces": 6,
+      "unknownConcealed": true,
+      "spriteFallback": true,
+      "closeWorks": true
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "busts": 6,
+      "codexFaces": 6,
+      "unknownConcealed": true,
+      "spriteFallback": true,
+      "closeWorks": true
+    }
+  ],
+  "reducedMotion": true,
+  "errors": []
+}
