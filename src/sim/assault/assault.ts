@@ -226,7 +226,7 @@ function cheapDecide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): boolean
     f.stats.tickDecided++;
     const pl = h.platoons.find((p) => p.group === g.id)!;
     if (me.def === RAM.id) {
-      ramMind(b, f, h, me, anchorOf(f, pl), out);
+      ramMind(b, f, h, me, anchorOf(f, pl), out, (to) => walkStep(b, f, me, to, out, false));
       return true;
     }
     soldierMind(b, f, h, pl, me, rng, out);

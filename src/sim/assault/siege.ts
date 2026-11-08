@@ -53,7 +53,7 @@ export const SUPPRESSED = 0.5;
 
 /** The ram's own numbers: slow (the Shieldguard's walk), hard to hurt, striking only walls (its blows are the siege's, not the battle's). */
 export const RAM: UnitDef = {
-  id: 'siegeRam', name: 'Battering Ram', side: 'hero', sheet: '', scale: 1, hp: 2600, atk: 0, def: 14, range: 1, moveMs: 800, atkMs: RAM_MS, jump: 1,
+  id: 'siegeRam', name: 'Battering Ram', side: 'hero', sheet: '', scale: 1, hp: 4000, atk: 0, def: 14, range: 1, moveMs: 800, atkMs: RAM_MS, jump: 2,
   role: 'Pushed by its platoon; batters the gates', summon: true,
 };
 // (added to `UNITS` once, as this module is first imported: an existing fight never meets it)
@@ -153,7 +153,7 @@ export function scaleGoal(b: Battle, f: FieldState, pl: PlatoonState, at: At): A
 // ---- the ram ----------------------------------------------------------------------------------------------------------------------
 
 /** The ram's mind: batter the structure its platoon assaults when beside it; else roll after its platoon, two tiles behind. */
-export function ramMind(b: Battle, f: FieldState, h: HoldState, me: Unit, anchor: Unit | undefined, out: BattleEvent[]): void {
+export function ramMind(b: Battle, f: FieldState, h: HoldState, me: Unit, anchor: Unit | undefined, out: BattleEvent[], walk: (to: At) => boolean): void {
   const r = h.siege.ram!;
   const pl = h.platoons[r.platoon];
   const w = b.board.w;
@@ -175,8 +175,8 @@ export function ramMind(b: Battle, f: FieldState, h: HoldState, me: Unit, anchor
       return;
     }
     const at = besideFort(b, me, fort.spec.tiles);
-    if (at && roll(b, f, me, at, out)) return;
-  } else if (anchor && dist(me, anchor) > 2 && roll(b, f, me, anchor, out)) return;
+    if (at && (walk(at) || roll(b, f, me, at, out))) return;
+  } else if (anchor && dist(me, anchor) > 2 && (walk({ u: anchor.u, v: anchor.v }) || roll(b, f, me, anchor, out))) return;
   me.busyUntil = b.t + WAIT_MS;
 }
 
@@ -199,7 +199,7 @@ function besideFort(b: Battle, me: Unit, tiles: readonly number[]): At | null {
   return best;
 }
 
-/** The ram rolls a tile towards a mark: the free neighbour nearest it, within its jump. */
+/** The ram rolls a tile towards a mark: the free neighbour nearer it, within its jump (else its walk, the field's own, finds the way round). */
 function roll(b: Battle, f: FieldState, me: Unit, mark: At, out: BattleEvent[]): boolean {
   const w = b.board.w;
   const here = b.board.tiles[me.v * w + me.u];
