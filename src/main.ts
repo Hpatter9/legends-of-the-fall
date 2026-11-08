@@ -1,3 +1,4 @@
+import { modeShown } from './sim/hiddenModes';
 import { heraldPortrait } from './heraldArt';
 // Legends of the Last Keep: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
@@ -1032,7 +1033,7 @@ class Game {
 
   /** Where an end card's button goes (REVEAL). */
   private revealGo(to: RevealGo): void {
-    if (to.to === 'calamity') return this.home.enterCalamity();
+    if (to.to === 'calamity') return modeShown('calamity') ? this.home.enterCalamity() : undefined;
     if (to.to === 'armies') return this.home.openArmies(to.army);
     if (to.to === 'heroes') return this.home.goTo({ to: 'heroes', hero: to.hero });
     this.home.show(to.to);
@@ -1398,6 +1399,7 @@ class Game {
 
   /** The Tower's place at the camp is the Last Stand: a saved run carries on, else a new one begins with the party. */
   private openStand(): void {
+    if (!modeShown('tower')) return;
     if (!modeOpen(this.meta, 'tower') && !loadStand()) return;
     void this.stand.open();
   }
@@ -2710,6 +2712,7 @@ class Game {
   /** The tower or the calamity from the home screen: its saved run carries on where it stood; with none, a new one begins (the calamity asks for its hero first). */
   private openMode(kind: 'calamity'): void {
     // (a shut mode has a disabled button; a run begun before it shut is still let in)
+    if (!modeShown(kind)) return;
     if (!modeOpen(this.meta, kind) && !loadSlot(kind)) return;
     // (the Calamity's reveal, if it has not played yet (cinematics were off as it opened, or the save opened it before the reveal existed), comes first)
     if (dueScene(this.meta, { kind: 'calOpen' }) && this.scenesOn()) return void this.queueScene({ kind: 'calOpen' }).then(() => this.openMode(kind));
@@ -3748,7 +3751,7 @@ class Game {
       // (the fight's cinematics, one after another: an army's last stand, a hero earned has its own reveal; the Calamity's end plays before its victory card)
       if (army && this.pay?.firstClear) void this.queueScene({ kind: 'armyClear', army: army.id });
       // (the stars this fight won may have opened the Calamity: its reveal, the portal, plays once, the moment it opens)
-      if (modeOpen(this.meta, 'calamity')) void this.queueScene({ kind: 'calOpen' });
+      if (modeShown('calamity') && modeOpen(this.meta, 'calamity')) void this.queueScene({ kind: 'calOpen' });
       this.earned.push(...joined);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;

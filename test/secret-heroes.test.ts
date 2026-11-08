@@ -24,6 +24,10 @@ import { armyRun } from '../src/sim/run';
 import { calamityRun } from '../src/sim/modes';
 import type { Scene } from '../src/sim/sceneKit';
 import { FOE_ENTRIES } from '../src/sim/codex';
+import { setModesHidden } from '../src/sim/hiddenModes';
+
+// (the Last Stand and the Calamity are hidden in the game for now; this file tests their own rules, which stay, so it shows them: docs/notes/hide-modes.md)
+setModesHidden(false);
 
 const DAY = 20261101;
 const clear = (m: Meta, ...ids: string[]) => ids.forEach((id) => (m.armies[id] = { ...recordOf(m, id), clears: 1 }));

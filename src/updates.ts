@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.400.0',
+    date: '2026-11-08',
+    title: 'The Last Stand and Calamity rest a while',
+    notes: ['Both modes are hidden while they are remade; your saves are kept. Six heroes\' quests now run through the armies, so every hero can still be earned.'],
+  },
+  {
     version: '0.399.0',
     date: '2026-11-08',
     title: 'Assault engine test page',

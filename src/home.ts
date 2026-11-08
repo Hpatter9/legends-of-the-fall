@@ -22,7 +22,7 @@ import { dailyTheme } from './sim/dailyThemes';
 import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
-import { ACHIEVEMENTS, claimAchievement, unclaimed } from './sim/achievements';
+import { claimAchievement, shownAchievements, unclaimed } from './sim/achievements';
 import { play } from './render/sound';
 import { playStandGate } from './standGate';
 import type { HomeSpot } from './render/audioRules';
@@ -38,6 +38,7 @@ import { drawCodex, stopCodex } from './codexView';
 import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
+import { modeShown } from './sim/hiddenModes';
 import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
 import { tips } from './tips';
 import { ICONS, icon } from './menuArt';
@@ -447,6 +448,7 @@ export class Home {
 
   /** Into the Calamity from the home screen, as its place on the Battle tab does (REVEAL: the end card's button). */
   enterCalamity(): void {
+    if (!modeShown('calamity')) return;
     this.go(this.hooks.onCalamity);
   }
 
@@ -584,9 +586,9 @@ export class Home {
         return this.go(this.hooks.onDaily);
       case 'stand':
         // (shut until the stars open it: the camp's own rule)
-        return towerOpen(this.meta) || this.hooks.slotInfo?.('tower') ? this.go(this.hooks.onTower) : this.openArmies();
+        return modeShown('tower') && (towerOpen(this.meta) || this.hooks.slotInfo?.('tower')) ? this.go(this.hooks.onTower) : this.openArmies();
       case 'calamity':
-        return modeOpen(this.meta, 'calamity') || this.hooks.slotInfo?.('calamity') ? this.enterCalamity() : this.openArmies();
+        return modeShown('calamity') && (modeOpen(this.meta, 'calamity') || this.hooks.slotInfo?.('calamity')) ? this.enterCalamity() : this.openArmies();
     }
   }
 
@@ -854,23 +856,41 @@ export class Home {
       tick.setAttribute('aria-label', 'Cleared today');
       daily.append(tick);
     } else if (!today?.plays) daily.append(el('i', 'badge'));
-    // (the Last Stand, on the Tower's old place: shut, dimmed and chained, until the stars open it; a run begun stays open whatever the unlock says)
-    const climbing = this.hooks.slotInfo?.('tower');
-    const towerUp = towerOpen(m) || !!climbing;
-    // (with the furthest room of the retreat reached: the throne room is the Last Stand's badge, STAND-RETREAT)
-    const room = m.standAct !== undefined ? ` · ${m.standAct >= 3 ? '♛ ' : ''}${ROOM_NAMES[ACT_HALLS[m.standAct]].short}` : '';
-    const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}${room}` : 'not tried yet') : opensAt(MODE_NEED.tower));
-    // (OVERLOOK-STAND: the Last Stand's place is the watchtower painted on the overlook's left, entered with its own moment)
-    const tower = place('hmTower', towerUp ? 'stand' : 'stand locked', 'Last Stand', towerLine2, `The Last Stand's watchtower: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => void this.enterStand(towerLine2));
-    tower.disabled = !towerUp;
-    this.camp.towerSlot.classList.toggle('shut', !towerUp);
-    // The distant Calamity citadel carries the saved map or the unlock requirement.
-    const going = this.hooks.slotInfo?.('calamity');
-    const calUp = modeOpen(m, 'calamity') || !!going;
-    const calLine = going ?? (!calUp ? opensAt(MODE_NEED.calamity) : m.calamity?.best ? `best ${m.calamity.best} regions` : 'one hero');
-    const calamity = place('hmCalamity', calUp ? '' : 'locked', 'The Calamity', calLine, `The distant Calamity citadel: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
-    calamity.disabled = !calUp;
-    this.camp.calamitySlot.classList.toggle('shut', !calUp);
+    // (the Last Stand's watchtower and the Calamity's citadel are hidden for now (`hiddenModes.ts`): their plates are not built and their slots
+    // are taken out, so nothing on the overlook can be tapped; the painted scene stays as it is. A run begun in either stays in its slot, untouched.)
+    const showTower = modeShown('tower');
+    const showCal = modeShown('calamity');
+    for (const [slot, shown] of [[this.camp.towerSlot, showTower], [this.camp.calamitySlot, showCal]] as const) {
+      slot.hidden = !shown;
+      slot.style.display = shown ? '' : 'none';
+      if (!shown) {
+        slot.classList.add('shut');
+        slot.querySelector('.cpPlace')?.remove();
+      }
+    }
+    let tower: HTMLButtonElement | undefined;
+    let calamity: HTMLButtonElement | undefined;
+    if (showTower) {
+      // (the Last Stand, on the Tower's old place: shut, dimmed and chained, until the stars open it; a run begun stays open whatever the unlock says)
+      const climbing = this.hooks.slotInfo?.('tower');
+      const towerUp = towerOpen(m) || !!climbing;
+      // (with the furthest room of the retreat reached: the throne room is the Last Stand's badge, STAND-RETREAT)
+      const room = m.standAct !== undefined ? ` · ${m.standAct >= 3 ? '♛ ' : ''}${ROOM_NAMES[ACT_HALLS[m.standAct]].short}` : '';
+      const towerLine2 = climbing ?? (towerOpen(m) ? (m.stand ? `best wave ${m.stand}${room}` : 'not tried yet') : opensAt(MODE_NEED.tower));
+      // (OVERLOOK-STAND: the Last Stand's place is the watchtower painted on the overlook's left, entered with its own moment)
+      tower = place('hmTower', towerUp ? 'stand' : 'stand locked', 'Last Stand', towerLine2, `The Last Stand's watchtower: ${towerLine2}${towerUp ? '' : `, ${progressLine(m, MODE_NEED.tower)}`}`, () => void this.enterStand(towerLine2));
+      tower.disabled = !towerUp;
+      this.camp.towerSlot.classList.toggle('shut', !towerUp);
+    }
+    if (showCal) {
+      // The distant Calamity citadel carries the saved map or the unlock requirement.
+      const going = this.hooks.slotInfo?.('calamity');
+      const calUp = modeOpen(m, 'calamity') || !!going;
+      const calLine = going ?? (!calUp ? opensAt(MODE_NEED.calamity) : m.calamity?.best ? `best ${m.calamity.best} regions` : 'one hero');
+      calamity = place('hmCalamity', calUp ? '' : 'locked', 'The Calamity', calLine, `The distant Calamity citadel: ${calLine}${calUp ? '' : `, ${progressLine(m, MODE_NEED.calamity)}`}`, () => this.go(this.hooks.onCalamity));
+      calamity.disabled = !calUp;
+      this.camp.calamitySlot.classList.toggle('shut', !calUp);
+    }
     // (the Nemesis War's Dark Council, over the Daily once the War is open: the warchief's face once there is one (the mightiest member's
     // until then), the seats filled on its plate, and the Muster's mark when it is open)
     const war = m.war;
@@ -893,8 +913,8 @@ export class Home {
     }
     // (each piece is put in only when it reads differently from the one showing: a redraw that changes nothing replaces no picture, so nothing blinks)
     swapIn(this.camp.dailySlot, this.camp.dailySlot.querySelector('.cpPlace'), daily);
-    swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
-    swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
+    if (tower) swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
+    if (calamity) swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
     // (CLIFF-ROAM: Hester's Stall left the cliff for a corner of the tavern's hearth hall; its marks moved to the Heroes tab and the tavern)
     this.camp.update(m, party, { army: next, boss: boss.name, sheet: boss.sheet });
     // Earned chests rest by the overlook's supplies.
@@ -913,7 +933,8 @@ export class Home {
   private drawCastle(): void {
     const m = this.meta;
     const bar = this.castleBar;
-    const got = ACHIEVEMENTS.filter((a) => m.achievements.includes(a.id)).length;
+    const shownAch = shownAchievements(m);
+    const got = shownAch.filter((a) => m.achievements.includes(a.id)).length;
     const up = modeOpen(m, 'castle');
     // (MENU-GLITCH: the chips are built again only when what they show has changed, so a refresh replaces none of their icons)
     const key = `${got}|${m.achievements.length > seenCount() || unclaimed(m).length > 0}|${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}|${codexWaiting(m).length > 0}|${up}|${up ? '' : progressLine(m, MODE_NEED.castle)}`;
@@ -922,7 +943,7 @@ export class Home {
     bar.replaceChildren();
     const row = el('div', 'ctChips');
     const ach = el('button', 'ctChip');
-    ach.append(icon(ICONS.trophy), el('b', '', 'Achievements'), el('small', '', `${got}/${ACHIEVEMENTS.length}`));
+    ach.append(icon(ICONS.trophy), el('b', '', 'Achievements'), el('small', '', `${got}/${shownAch.length}`));
     if (m.achievements.length > seenCount() || unclaimed(m).length) ach.append(el('i', 'badge'));
     ach.addEventListener('click', () => this.openAchievements());
     // (the codex sits by the achievements: both are the records of the castle's library of deeds; its badge shows a milestone to claim)

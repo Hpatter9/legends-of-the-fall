@@ -400,6 +400,10 @@ test('the preview frames name a real moment of each shot, for the screenshot str
 
 import { COMBOS } from '../src/sim/combos';
 import { OATH_SETS } from '../src/sim/sceneFamilies';
+import { setModesHidden } from '../src/sim/hiddenModes';
+
+// (the Last Stand and the Calamity are hidden in the game for now; this file tests their own rules, which stay, so it shows them: docs/notes/hide-modes.md)
+setModesHidden(false);
 
 test('every set of five has its Last Oath: the fuller scene the first time, the short one after, with a line from each of the five', () => {
   assert.deepEqual(OATH_SETS.map((o) => [o.set, o.name]), COMBOS.map((c) => [c.id, c.name]));
