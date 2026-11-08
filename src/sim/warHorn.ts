@@ -45,6 +45,8 @@ export interface EidolonMeta {
   confirmed?: boolean;
   /** VAELKHAR-HEART (`vaelkharHeart.ts`): his Storied relic has been held ('held'), and given back at his binding ('returned'). */
   heart?: 'held' | 'returned';
+  /** Dynasties, phase 7 (`oath.ts`): a Shade chosen to answer the horn in the Eidolon's place, as "kind:index" (the line and the bearer). */
+  shade?: string;
 }
 
 /** The slice of the Meta these rules read and change. */
@@ -67,6 +69,8 @@ export function readEidolons(raw: unknown): EidolonMeta | undefined {
   if (seen.length) out.seen = seen;
   if (r.confirmed) out.confirmed = true;
   if (r.heart === 'held' || r.heart === 'returned') out.heart = r.heart;
+  // (the Shade is checked against the Houses where it is used: `shadeChosen` in `oath.ts`)
+  if (typeof r.shade === 'string' && /^[A-Za-z0-9]{1,40}:\d{1,2}$/.test(r.shade)) out.shade = r.shade;
   return out;
 }
 
@@ -143,7 +147,10 @@ export function blowHorn(m: HornMeta): boolean {
 /** Choose the Eidolon that answers: one bound. The horn's fill is kept. */
 export function chooseEidolon(m: HornMeta, id: string): boolean {
   if (!boundOf(m).includes(id)) return false;
-  (m.eidolons ??= { horn: 0 }).chosen = id;
+  const e = (m.eidolons ??= { horn: 0 });
+  e.chosen = id;
+  // (Dynasties, phase 7: choosing an Eidolon sends a chosen Shade back to wait)
+  delete e.shade;
   return true;
 }
 

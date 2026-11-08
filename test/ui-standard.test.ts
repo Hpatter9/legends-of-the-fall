@@ -123,3 +123,14 @@ test('the heirs\' cards are standard menus that say Close (Dynasties, phase 6)',
     assert.match(own, /back: \{ word: 'close'/, `${fn} says Close`);
   }
 });
+
+test('the Shades\' card is a standard menu that says Close, and the Houses filter has "The fallen" (Dynasties, phase 7)', () => {
+  const src = readFileSync('src/shadeView.ts', 'utf8');
+  const body = src.slice(src.indexOf('export function openShades'));
+  const own = body.slice(0, body.indexOf('\n}\n'));
+  assert.match(own, /ornateMenu\(/, 'openShades builds its card with ornateMenu');
+  assert.match(own, /back: \{ word: 'close' \}/, 'openShades says Close');
+  assert.match(readFileSync('src/housesView.ts', 'utf8'), /fallen: 'The fallen'/);
+  // (the March orders carry the Legend Oath in their own standard section)
+  assert.match(readFileSync('src/marchCard.ts', 'utf8'), /menuSection\(body, 'The Legend Oath'/);
+});

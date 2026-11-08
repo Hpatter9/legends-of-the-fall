@@ -235,6 +235,12 @@ export interface Run {
   themeMet?: boolean;
   /** The road's memory for the events between waves (MID-EVENTS, `midEvents.ts`): the kinds seen this run, and debts and favours that come back later. Absent in an older save. */
   road?: RoadState;
+  /** Dynasties, phase 7 (`oath.ts`): the Legend Oath is sworn for this run; the roster ids slain under it (their kinds sit out the rest of
+   *  the run); each hero's falls this run; the heroes who fell in the wave being fought, before a heart burned. */
+  oath?: true;
+  slain?: number[];
+  oathFalls?: Record<string, number>;
+  oathWave?: number[];
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
@@ -641,6 +647,8 @@ export const squadUsed = (run: Run): number => run.squad.filter((id) => !heroOf(
  *  (ONE-OF-EACH). A guest always has room: its place is an extra one beyond the five (GUEST-HERO). */
 export function canJoin(run: Run, id: number): boolean {
   const h = heroOf(run, id);
+  // (Dynasties, phase 7: a kind slain under the Oath sits out the rest of the run)
+  if (h && run.slain?.some((x) => heroOf(run, x)?.kind === h.kind)) return false;
   return !!h && mythicFits(run.squad.map(id => heroOf(run, id)?.kind ?? ''), h.kind) && !run.squad.includes(id) && (h.guest || squadUsed(run) < squadLimit(run)) && !squadTwin(run, h.kind, id) && !sitsOut(run, id);
 }
 

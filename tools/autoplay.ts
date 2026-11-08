@@ -29,7 +29,7 @@ import { calamityRun, dailyBonus, dailyRun, towerRun } from '../src/sim/modes';
 import { chooseAltar, pendingAltar } from '../src/sim/rift';
 import { squadHealth } from '../src/sim/health';
 import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
-import { armEidolon } from '../src/sim/eidolons';
+import { armEidolon, armShade, SHADE_ID, type ShadeFight } from '../src/sim/eidolons';
 import { orderEidolon } from '../src/sim/orders';
 import { RANK_MAX, STARTER_SPELLS, type SpellId } from '../src/sim/spells';
 import { castList, DEFAULT_SCHOOL, fitSchool, schoolOf } from '../src/sim/schools';
@@ -83,9 +83,17 @@ export function maybeSpells(b: Battle, meta: Meta | undefined, castle: Castle = 
 /** EIDOLONS: the balance tool's `--eidolon <wave>[:<id>]` calls an Eidolon as the fight at that wave of every army attempt begins (0, the
  *  default, never: the greedy player, like Auto, never blows the horn, so every existing table stays as it is). */
 export const eidolonAt: { wave: number; id: string } = { wave: 0, id: 'askel' };
+// (`id` may be 'shade' or 'shade-<calling>': a Shade answers instead, `armShade`)
 /** Call the Eidolon in a fight just begun, when `eidolonAt` asks for this wave (a mid-boss wave counts its boss as a mid-boss). */
 export function maybeEidolon(b: Battle, wave: number, mid = false): void {
   if (!eidolonAt.wave || wave !== eidolonAt.wave) return;
+  // (Dynasties, phase 7: `--eidolon <wave>:shade[:<calling>]` calls a Shade instead, a martial one unless a calling is named)
+  if (eidolonAt.id.startsWith('shade')) {
+    const calling = (eidolonAt.id.split('-')[1] ?? 'martial') as ShadeFight['calling'];
+    armShade(b, { kind: 'knight', name: 'Kwame', calling }, { mid });
+    orderEidolon(b, SHADE_ID);
+    return;
+  }
   armEidolon(b, eidolonAt.id, { mid });
   orderEidolon(b, eidolonAt.id);
 }

@@ -8,6 +8,7 @@ import { ELIXIR_MAX, REMEDY_LIST, SATCHEL_MAX, pickSatchel, satchelFor } from '.
 import { REMEDY_ICON } from './gearUiArt';
 import { retired } from './sim/legacy';
 import { fieldedOf, fieldsElder } from './sim/dynasty';
+import { mourning, mourningLeft } from './sim/oath';
 import { bannerChoices, fieldName } from './sim/heirs';
 import { openBanner } from './housesView';
 import { ALL_HEROES, UNITS } from './sim/units';
@@ -358,7 +359,10 @@ export class Party {
       const number = el('span', 'ptSlotNumber', String(i + 1));
       number.dataset.number = String(i + 1);
       // (Dynasties, phase 6: the bearer who takes the field, the heir or an elder the banner chose)
-      b.append(number, el('small', '', fieldName(this.meta, kind)), remove);
+      // (phase 7: a House in mourning does not march with the armies: its slot is greyed and says so)
+      const mourns = mourning(this.meta, kind, todayKey());
+      if (mourns) b.classList.add('ptMourns');
+      b.append(number, el('small', '', mourns ? `${fieldName(this.meta, kind)} · mourning` : fieldName(this.meta, kind)), remove);
       if (locked) b.append(el('span', 'ptQuestRibbon', 'Quest'));
       b.addEventListener('click', () => (this.held ? (this.held = false) : this.toggle(kind)));
       this.holdTo(b, kind);
@@ -367,7 +371,8 @@ export class Party {
 
     // the hint, and the traits the party would wake (the same rule as a fight's team)
     const hint = $('ptHint');
-    hint.textContent = this.note || (this.quest ? `${this.quest.title} · ${this.quest.rule}` : full ? 'Tap a chosen hero to remove · hold for details' : 'Choose a reinforcement to fill your company');
+    const mourn = this.picked.filter((k) => mourning(m, k, todayKey()));
+    hint.textContent = this.note || (mourn.length && !this.quest ? `${mourn.map((k) => fieldName(m, k)).join(' and ')}: the House mourns, and does not march with the armies for ${Math.max(...mourn.map((k) => mourningLeft(m, k, todayKey())))} more days` : '') || (this.quest ? `${this.quest.title} · ${this.quest.rule}` : full ? 'Tap a chosen hero to remove · hold for details' : 'Choose a reinforcement to fill your company');
     hint.classList.toggle('full', !!this.note);
     const counts = countTraits(this.picked);
     const active = counts.filter((c) => c.active);
@@ -447,7 +452,9 @@ export class Party {
         });
         bannerChip = banner;
       }
-      if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
+      // (Dynasties, phase 7: a House in mourning after a bearer slain under the Oath cannot march with the armies for three days)
+      if (open && mourning(m, kind, todayKey())) card.append(el('span', 'ptPickedFlag ptMourning', `In mourning · ${mourningLeft(m, kind, todayKey())}d`));
+      else if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
       else if (open && retired(m, kind)) card.append(el('span', 'ptPickedFlag', 'In the Hall'));
       if (open) card.append(el('span', 'ptCardRole', ROLE_NAMES[roleOf(kind)]));
       const lock = lockInfo(m, kind);

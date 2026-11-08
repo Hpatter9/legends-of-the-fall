@@ -42,6 +42,8 @@ export interface UnitNem {
   blood?: readonly string[];
   /** Stitched (it cheated death): once, at 0 hp it stands again at 20% (the old Survivor's effect), spent when it does. */
   stitched?: true;
+  /** Dynasties, phase 7: the Shade of a bearer it slew has struck it: it cannot cheat death this fight. */
+  doomed?: true;
   /** The trophies it carries, for the page's name plate only (their +5% attack is in its stats already). */
   trophies?: readonly { base: string; rarity: number }[];
   /** Fleeing: the hash has been asked (once a fight), and when it broke off and ran, if it did. */
@@ -235,7 +237,7 @@ export function nemHurt(b: Battle, by: Unit, to: Unit, real: Unit, dmg: number, 
 
 /** A fatal blow on a Survivor (or a Stitched nemesis, phase 3): once a fight it stands again at 20%. Returns whether it was spared. */
 export function nemSpare(to: Unit, out: BattleEvent[]): boolean {
-  if (!to.nem || to.nem.stood || !(has(to, 'survivor') || to.nem.stitched)) return false;
+  if (!to.nem || to.nem.stood || to.nem.doomed || !(has(to, 'survivor') || to.nem.stitched)) return false;
   to.nem.stood = true;
   to.hp = Math.max(1, Math.round(to.maxHp * 0.2));
   out.push({ kind: 'heal', to: to.id, amount: to.hp });
