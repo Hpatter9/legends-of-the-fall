@@ -196,7 +196,7 @@ The balance bar is no army's mean tries rising by more than 1.
   (4 saves a cell, the same saves and seeds both times.) As designed (×1.5) it was over the design's bar of 1.3× everywhere. At ×1.3 it
   is 1.22× on Elite and Legendary, where the bot loses heroes (one and a half to two a day) and runs. On Hard at level 60, where the Oath
   first opens, the bot almost never loses a hero, so the Oath is its full pay: 1.31× (1.306), the bar itself: the extra is each wave’s crowns
-  rounded to a whole crown).
+  rounded to a whole crown.
 
 ## Art: placeholders and the images to make
 
@@ -280,6 +280,6 @@ Each would be credited in `CREDITS.md` when it is made.
     - no fight file reading the Oath.
   - `test/ui-standard.test.ts` gains a test that the Shades' card is a standard menu that says Close, the Houses filter has "The fallen",
     and the March orders carry the Oath in a standard section.
-- **The combat HUD probe** (`node tools/combat-hud/probe.mjs`): PROBE.
+- **The combat HUD probe** (`node tools/combat-hud/probe.mjs`): 100 cases at 393x852, 360x780, 412x915, 360x640 and 393x852 with a notch (an army's five and the Calamity's eight; start, mid-fight, boss waves with 2 to 4 spells and the War Horn, the tactic tap, an ultimate, the duel), **0 overlaps**. The Shade's short call is a passing overlay over the board, as the ultimate's words are.
 - **The balance:** above. The deep table is phase 6's digit for digit.
-- **The screenshots:** `docs/samples/dynasty-7/`, SHOTS shots at 393x852, 360x780 and 412x915, with no page scrolling sideways.
+- **The screenshots:** `docs/samples/dynasty-7/`, 57 shots at 393x852, 360x780 and 412x915, with no page scrolling sideways.
