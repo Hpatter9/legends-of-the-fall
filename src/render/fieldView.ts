@@ -33,7 +33,7 @@ import { facesRight, FOOT, HH, rawAt, TH, TW } from './iso';
 import { facesRightOf, figureOf, framesOf, type Anim } from './sheets';
 import { detailFor, type Detail } from './fieldDetail';
 import { CHUNK, chunkHeights, chunksInView, focusOnScreen, viewRect, type PlayArea, type WorldRect } from './fieldCull';
-import { clutterOf, decalOf, DEEP, faceOf, fortLook, fringesOf, materialsOf, placementsOf, type Placement } from './fieldLooks';
+import { clutterOf, decalOf, DEEP, MAT, faceOf, fortLook, fringesOf, materialsOf, placementsOf, type Placement } from './fieldLooks';
 import { DECALS, EDGES, FACES, SPRITES } from './assaultOrcAtlas';
 import { VFX, loadVfxArt } from './vfxArt';
 import { holdMapOf, blueprintOf } from '../sim/assault/assault';
@@ -51,6 +51,33 @@ const BAKES_A_FRAME = 2;
 /** The chunk cache: this many kept, the whole 10 x 10 of them (about 28 MB at half resolution; a tall phone at Mid wants 70 in view,
  *  and chunks in view are never let go). */
 const CACHE = 100;
+/** The haze past the hold's edge: the land beyond fades into it, and the page behind the field is this colour (phase 1b). */
+export const FIELD_FOG = '#2b3230';
+const FOG_RGB = [43, 50, 48];
+/** The land beyond the hold: this many tiles each side, baked at this resolution (it is all haze and trees). */
+const SKIRT = 10;
+const SKIRT_RES = 0.25;
+/** The shallows' place in the hold's ground textures. */
+const MAT_SHALLOWS = MAT.shallows;
+/** The pieces that give off firelight, and how high over their foot the flame is (world pixels). */
+const LIGHTS: Record<string, number> = {
+  bonfire: 18, bonefire: 22, brazier: 34, firepit: 8, forgeFire: 14, southGate: 40, ironGate: 46, northGate: 40, sallyPort: 30, keep: 40,
+  throne: 22, drumStruck: 30,
+};
+/** Steady light for those who ask for less motion. */
+const reducedMotion = (): boolean => (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) || false;
+
+/** The day's grade over the field (phase 1b): a warm light from the upper left, a cool shade towards the bottom. A layer of the page, over the
+ *  canvas and under its buttons; it takes no taps. */
+export function fieldGrade(host: HTMLElement): HTMLElement {
+  const d = document.createElement('div');
+  d.style.cssText =
+    'position:absolute;inset:0;pointer-events:none;z-index:1;' +
+    'background:radial-gradient(120% 80% at 18% 8%,rgba(255,200,130,.10),rgba(255,200,130,0) 60%),linear-gradient(rgba(0,0,0,0) 60%,rgba(30,36,70,.18));';
+  host.append(d);
+  return d;
+}
+
 /** The overview's width in pixels. */
 const OVERVIEW_W = 1024;
 /** Effects at once (sparks and arrows). */
@@ -90,6 +117,9 @@ interface HoldArt {
   tex: Map<string, Texture>;
   /** The kit's tall grass, dried to the highland's straw (it is drawn many times a chunk). */
   grass: HTMLCanvasElement | null;
+  /** The faces shaded for the two sides (the light from the left): darkened where they are painted, never over their clear parts, so a step
+   *  has no black outline. */
+  faceShade: { right: HTMLCanvasElement; left: HTMLCanvasElement };
 }
 let hold: HoldArt | null = null;
 /** The hold's art files, by URL (copied by `build.mjs` and kept by the service worker for offline play). */
@@ -131,7 +161,18 @@ export async function loadHoldArt(army = 'orcs'): Promise<void> {
       gg.fillStyle = 'rgba(150,128,64,0.55)';
       gg.fillRect(0, 0, gr[2], gr[3]);
     }
-    hold = { sprites, ground, edges: e, decals: d, faces, tex: new Map(), grass };
+    const shaded = (k: number) => {
+      const c = document.createElement('canvas');
+      c.width = faces.width;
+      c.height = faces.height;
+      const g = c.getContext('2d')!;
+      g.drawImage(faces, 0, 0);
+      g.globalCompositeOperation = 'source-atop';
+      g.fillStyle = `rgba(0,0,0,${k})`;
+      g.fillRect(0, 0, c.width, c.height);
+      return c;
+    };
+    hold = { sprites, ground, edges: e, decals: d, faces, tex: new Map(), grass, faceShade: { right: shaded(0.26), left: shaded(0.04) } };
   } catch {
     hold = null;
   }
@@ -153,6 +194,19 @@ function holdTex(name: string): Texture | null {
 
 /** Load the field's art (the land's ground, sides and boulders, the ruins, the gate, a spark and an arrow from the fx packs). */
 /** A hash of two numbers, 0 to 1 (looks only: the clutter's offsets). */
+const noiseOf = (u: number, v: number): number => {
+  const x = u / 6;
+  const y = v / 6;
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const fx = x - x0;
+  const fy = y - y0;
+  const a = hashOf(x0, y0);
+  const b = hashOf(x0 + 1, y0);
+  const c = hashOf(x0, y0 + 1);
+  const d = hashOf(x0 + 1, y0 + 1);
+  return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+};
 const hashOf = (a: number, b: number): number => (((Math.imul(a * 73856093 ^ b * 19349663, 0x9e3779b1) >>> 0) % 1000) / 1000);
 /** Whether a piece is one of the Chronos kits' (drawn at their scale), not the hold's sheets'. */
 const KIT_NAMES = new Set(['longhouse', 'boneHut', 'hideHut', 'forge', 'forgeFire', 'wargPen', 'pigPen', 'watchtower', 'lookout', 'warDrum', 'skullTotem', 'skullTorch', 'spearSign', 'bonfire', 'weaponStall', 'skullPile', 'warCart', 'granary', 'meatRacks', 'meatPile', 'barrels', 'chests', 'stockpile', 'woodpile', 'well', 'hides', 'logBridge', 'ruin1', 'ruin2', 'rubblePile', 'brazier', 'pine1', 'pine2', 'pineSmall', 'burntTree', 'gnarledTree', 'bareTree', 'thornBush', 'shrub1', 'shrub2', 'fern', 'stump1', 'stump2', 'fallenLog', 'boulders', 'rocks', 'darkRocks', 'darkRocksB', 'standingStone', 'reeds1', 'reeds2', 'bones1', 'bones2', 'bones3', 'flowers1', 'flowers2', 'pebbles', 'tallGrass', 'kitSpikedWall', 'kitSpikedCorner', 'kitSkullGate', 'kitStakeFence']);
@@ -208,6 +262,8 @@ interface FxLive {
 export class FieldView {
   readonly root = new Container();
   private chunkLayer = new Container();
+  private skirtLayer = new Container();
+  private skirt = new Map<number, Sprite>();
   private unitLayer = new Container();
   private farLayer = new Container();
   private dots = new Graphics();
@@ -218,7 +274,9 @@ export class FieldView {
   private banners: Text[] = [];
   private fxLive: FxLive[] = [];
   private fxPool: Sprite[] = [];
-  private rings: { hero: Texture; foe: Texture; chosen: Texture; elite: Texture };
+  private rings: { hero: Texture; foe: Texture; chosen: Texture; elite: Texture; heroMid: Texture; foeMid: Texture };
+  /** At Mid, a pennant over each platoon of ours with its count. */
+  private pennants: { c: Container; t: Text }[] = [];
   /** The platoon chosen on the command bar (its fighters' rings are gold), or -1. */
   chosen = -1;
   /** The tiles a set piece stands on (the hold's pieces: drums, tents, flags...), and each gate's first tile (its picture). */
@@ -237,11 +295,14 @@ export class FieldView {
   private live = new Map<number, Live[]>();
   private works = new Container();
   private fires: Sprite[] = [];
+  /** The firelight of each chunk's lights: a warm glow added over the scene, flickering. */
+  private glows = new Map<number, { sp: Sprite; base: number; seed: number; big: boolean }[]>();
+  private glowTex: Texture | null = null;
   private ladders: Sprite[] = [];
 
   constructor(private b: Battle, private renderer: { generateTexture: (o: Container | { target: Container }) => Texture }) {
     this.unitLayer.sortableChildren = true;
-    this.root.addChild(this.chunkLayer, this.unitLayer, this.farLayer);
+    this.root.addChild(this.skirtLayer, this.chunkLayer, this.unitLayer, this.farLayer);
     this.farLayer.addChild(this.dots);
     // (the team rings under the fighters' feet: a ring, as the selection ring is drawn, blue for ours and red for theirs)
     const ring = (c: number) => {
@@ -250,7 +311,14 @@ export class FieldView {
       g.destroy();
       return t;
     };
-    this.rings = { hero: ring(0x4a9cff), foe: ring(0xff4a4a), chosen: ring(0xffd76a), elite: ring(0xe0b84a) };
+    // (at Mid, a filled disc under each fighter: a team's colour reads at a glance)
+    const disc = (c: number) => {
+      const g = new Graphics().ellipse(0, 0, 20, 10).fill({ color: c, alpha: 0.45 }).stroke({ width: 4, color: c, alpha: 0.95 });
+      const t = this.renderer.generateTexture(g);
+      g.destroy();
+      return t;
+    };
+    this.rings = { hero: ring(0x4a9cff), foe: ring(0xff4a4a), chosen: ring(0xffd76a), elite: ring(0xe0b84a), heroMid: disc(0x4a9cff), foeMid: disc(0xff4a4a) };
     const w = this.b.board.w;
     for (const p of this.b.board.pieces ?? []) this.pieceAt.set(p.v * w + p.u, p.kind);
     // (the hold's gates: the camp's gate on each one's first tile; the drums are set pieces)
@@ -292,7 +360,9 @@ export class FieldView {
     const v0 = cy * CHUNK;
     const u1 = Math.min(b.w, u0 + CHUNK) - 1;
     const v1 = Math.min(b.d, v0 + CHUNK) - 1;
-    const hOf = (u: number, v: number) => (u < b.w && v < b.d ? b.tiles[v * b.w + u].h : -FOOT / HH);
+    // (past the field's edge: with the hold's art the land beyond carries the edge's height on, so the edge shows no wall; without it, a drop)
+    const hOf = (u: number, v: number) =>
+      u < b.w && v < b.d ? b.tiles[v * b.w + u].h : hold && this.mats ? b.tiles[Math.min(v, b.d - 1) * b.w + Math.min(u, b.w - 1)].h : -FOOT / HH;
     // the chunk's bounds in world pixels
     let x0 = Infinity;
     let x1 = -Infinity;
@@ -352,7 +422,7 @@ export class FieldView {
       for (let k = 0; k < steps; k++) {
         const part = k === 0 ? 0 : k === steps - 1 && steps >= 2 ? 100 : 20 + ((k - 1) % 4) * 20;
         g.setTransform(((z[0] - a[0]) / 64) * S, ((z[1] - a[1]) / 64) * S, 0, (HH / 20) * S, (a[0] + ox) * S, (a[1] + oy + k * HH) * S);
-        g.drawImage(H!.faces, sx, sy + part, 64, 20, 0, 0, 64, 20);
+        g.drawImage(shade > 0.1 ? H!.faceShade.right : H!.faceShade.left, sx, sy + part, 64, 20, 0, 0, 64, 20);
       }
       g.setTransform(S, 0, 0, S, ox * S, oy * S);
       const quad = (y0: number, y1: number, fill: string | CanvasGradient) => {
@@ -365,7 +435,6 @@ export class FieldView {
         g.closePath();
         g.fill();
       };
-      quad(0, steps * HH, `rgba(0,0,0,${shade})`);
       if (steps >= 3) {
         const yb = Math.max(a[1], z[1]) + steps * HH;
         const grad = g.createLinearGradient(0, yb - HH * 1.5, 0, yb);
@@ -493,6 +562,26 @@ export class FieldView {
         if (p.fort !== undefined || p.hut !== undefined) live.push({ sp, p, h });
       }
       this.live.set(cy * 100 + cx, live);
+      // (the firelight: a warm glow round each flame, above the scene, added)
+      const glows: { sp: Sprite; base: number; seed: number; big: boolean }[] = [];
+      for (const p of this.placed.get(cy * 100 + cx) ?? []) {
+        const up = LIGHTS[p.road ? (p.road === 'campfire' ? 'bonfire' : p.road) : p.name];
+        if (up === undefined || (p.road && p.road !== 'campfire')) continue;
+        const t = b.tiles[p.front];
+        const h = p.fort !== undefined ? this.floorOf(p) : t.h;
+        const [x, y] = rawAt(p.u, p.v, h);
+        const sp = new Sprite(this.glow());
+        sp.anchor.set(0.5);
+        sp.blendMode = 'add';
+        const big = p.name === 'bonefire' || p.name === 'bonfire' || p.name === 'keep' ? 1.6 : p.name === 'wallBrazier' || p.name === 'skullTorch' ? 0.8 : 1.1;
+        sp.scale.set(big, big * 0.7);
+        sp.position.set(x, y - up * (p.scale ?? 1));
+        sp.zIndex = 1e5;
+        this.unitLayer.addChild(sp);
+        props.push(sp);
+        glows.push({ sp, base: 0.55, seed: p.front * 0.37, big: big > 1 });
+      }
+      this.glows.set(cy * 100 + cx, glows);
       this.drawn.baked++;
       return { sprite, props, used: this.frame };
     }
@@ -660,15 +749,31 @@ export class FieldView {
   /** The whole field in one texture, for FAR: every tile's top, shaded by its height. */
   private bakeOverview(): void {
     const b = this.b.board;
-    const [left] = rawAt(-0.5, b.d - 0.5, 0);
-    const [right] = rawAt(b.w - 0.5, -0.5, 0);
-    const [, topY] = rawAt(-0.5, -0.5, 12);
-    const [, bottomY] = rawAt(b.w - 0.5, b.d - 0.5, -1);
+    // (with the hold's art the overview takes in the land beyond too, hazing out, so Far shows no hard edge)
+    const M = hold && this.mats ? SKIRT : 0;
+    const [left] = rawAt(-0.5 - M, b.d - 0.5 + M, 0);
+    const [right] = rawAt(b.w - 0.5 + M, -0.5 - M, 0);
+    const [, topY] = rawAt(-0.5 - M, -0.5 - M, 12);
+    const [, bottomY] = rawAt(b.w - 0.5 + M, b.d - 0.5 + M, -1);
     const S = OVERVIEW_W / (right - left);
     const canvas = document.createElement('canvas');
     canvas.width = OVERVIEW_W;
     canvas.height = Math.ceil((bottomY - topY) * S);
     const g = canvas.getContext('2d')!;
+    if (M) {
+      g.setTransform(S, 0, 0, S, -left * S, -topY * S);
+      for (let v = -M; v < b.d + M; v++)
+        for (let u = -M; u < b.w + M; u++) {
+          const d = this.outside(u, v);
+          if (!d) continue;
+          const k = Math.min(1, (d / SKIRT) ** 1.1);
+          const e = Math.max(0, Math.min(b.d - 1, v)) * b.w + Math.max(0, Math.min(b.w - 1, u));
+          const wet = this.mats![e] === DEEP || this.mats![e] === MAT_SHALLOWS;
+          const base = wet ? [40, 80, 150] : hashOf(u, v) < 0.12 + d * 0.05 ? [40, 58, 40] : [92, 104, 60];
+          const c = base.map((x, j) => Math.round(x + (FOG_RGB[j] - x) * k));
+          this.diamond(g, u, v, b.tiles[e].h, `rgb(${c.join(',')})`);
+        }
+    }
     for (let s = 0; s <= b.w + b.d - 2; s++)
       for (let u = Math.max(0, s - b.d + 1); u <= Math.min(b.w - 1, s); u++) {
         const v = s - u;
@@ -721,6 +826,7 @@ export class FieldView {
   private dropChunk(key: number): void {
     const c = this.chunks.get(key);
     this.live.delete(key);
+    this.glows.delete(key);
     if (!c) return;
     c.sprite.texture.destroy(true);
     c.sprite.destroy();
@@ -749,6 +855,7 @@ export class FieldView {
     this.simT = simT;
     if (far) this.drawFar(simT, cam.zoom);
     else {
+      this.drawSkirt(view);
       this.drawChunks(view);
       this.drawWorks(view);
       this.drawFighters(view, simT, events);
@@ -757,6 +864,126 @@ export class FieldView {
 
   /** The chunks the last frame wanted in view (keys cy * 100 + cx), for the bench and the screenshots' check. */
   wanted: number[] = [];
+
+  /** The land beyond the hold (phase 1b): a ring of chunks of rolling heath and pines round the field, fading into the haze. */
+  private drawSkirt(view: WorldRect): void {
+    if (!hold || !this.mats) return;
+    const b = this.b.board;
+    const n = Math.ceil(b.w / CHUNK);
+    let baked = 0;
+    for (let cy = -1; cy <= n; cy++)
+      for (let cx = -1; cx <= n; cx++) {
+        if (cx >= 0 && cy >= 0 && cx < n && cy < n) continue;
+        const key = (cy + 1) * 100 + cx + 1;
+        // (the chunk's corners on the screen, at the land's height)
+        const u0 = cx * CHUNK - 0.5;
+        const v0 = cy * CHUNK - 0.5;
+        const pts = [rawAt(u0, v0, 2), rawAt(u0 + CHUNK, v0, 2), rawAt(u0, v0 + CHUNK, 2), rawAt(u0 + CHUNK, v0 + CHUNK, 2)];
+        const x0 = Math.min(...pts.map((p) => p[0]));
+        const x1 = Math.max(...pts.map((p) => p[0]));
+        const y0 = Math.min(...pts.map((p) => p[1])) - 80;
+        const y1 = Math.max(...pts.map((p) => p[1]));
+        const seen = x1 >= view.x0 && x0 <= view.x1 && y1 >= view.y0 && y0 <= view.y1;
+        let sp = this.skirt.get(key);
+        if (!seen) {
+          if (sp) sp.visible = false;
+          continue;
+        }
+        if (!sp) {
+          if (baked >= 1) continue;
+          sp = this.bakeSkirt(cx, cy);
+          this.skirt.set(key, sp);
+          this.skirtLayer.addChild(sp);
+          baked++;
+        }
+        sp.visible = true;
+      }
+  }
+
+  /** A sprite of the hold's atlas hazed by the distance (eighths of the haze), made once. */
+  private haze = new Map<string, HTMLCanvasElement>();
+  private hazed(name: string, eighths: number): HTMLCanvasElement {
+    const key = `${name}:${eighths}`;
+    let c = this.haze.get(key);
+    if (c) return c;
+    const def = SPRITES[name];
+    c = document.createElement('canvas');
+    c.width = def.r[2];
+    c.height = def.r[3];
+    const g = c.getContext('2d')!;
+    g.drawImage(hold!.sprites, def.r[0], def.r[1], def.r[2], def.r[3], 0, 0, def.r[2], def.r[3]);
+    g.globalCompositeOperation = 'source-atop';
+    g.fillStyle = `rgba(${FOG_RGB.join(',')},${eighths / 8})`;
+    g.fillRect(0, 0, c.width, c.height);
+    this.haze.set(key, c);
+    return c;
+  }
+
+  /** How far outside the hold a tile lies, in tiles (0 inside). */
+  private outside(u: number, v: number): number {
+    const b = this.b.board;
+    return Math.max(0, -u, u - (b.w - 1), -v, v - (b.d - 1));
+  }
+
+  /** Bake one chunk of the land beyond: heath and grass, pines thickening outwards, all hazed by the distance from the hold. */
+  private bakeSkirt(cx: number, cy: number): Sprite {
+    const H = hold!;
+    const u0 = cx * CHUNK;
+    const v0 = cy * CHUNK;
+    const [left] = rawAt(u0 - 0.5, v0 + CHUNK - 0.5, 0);
+    const [right] = rawAt(u0 + CHUNK - 0.5, v0 - 0.5, 0);
+    const [, top] = rawAt(u0 - 0.5, v0 - 0.5, 2);
+    const [, bottom] = rawAt(u0 + CHUNK - 0.5, v0 + CHUNK - 0.5, 2);
+    const S = SKIRT_RES;
+    const pad = 90;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil((right - left) * S) + 2;
+    canvas.height = Math.ceil((bottom - top + pad) * S) + 2;
+    const g = canvas.getContext('2d')!;
+    const ox = -left;
+    const oy = -top + pad;
+    const fog = (d: number) => Math.min(1, (d / SKIRT) ** 1.1);
+    const pines = ['pine1', 'gnarledTree', 'pine1', 'burntTree'];
+    for (let s = u0 + v0; s <= u0 + v0 + 2 * (CHUNK - 1); s++)
+      for (let u = Math.max(u0, s - (v0 + CHUNK - 1)); u <= Math.min(u0 + CHUNK - 1, s - v0); u++) {
+        const v = s - u;
+        const d = this.outside(u, v);
+        if (d <= 0 || d > SKIRT) continue;
+        const k = fog(d);
+        // (the edge's tile carried on: its height, and its water, so the river runs on into the haze)
+        const b = this.b.board;
+        const e = Math.max(0, Math.min(b.d - 1, v)) * b.w + Math.max(0, Math.min(b.w - 1, u));
+        const h = b.tiles[e].h;
+        const wet = this.mats![e] === DEEP || this.mats![e] === MAT_SHALLOWS;
+        const n = noiseOf(u, v);
+        const m = wet ? MAT_SHALLOWS : n < 0.3 ? 2 : n < 0.55 ? 0 : 1;
+        const [x, y] = rawAt(u - 0.5, v - 0.5, h);
+        if (wet && this.mats![e] === DEEP) {
+          g.setTransform(((TW / 2) / art!.water.width) * S, ((TH / 2) / art!.water.width) * S, (-(TW / 2) / art!.water.height) * S, ((TH / 2) / art!.water.height) * S, (x + ox) * S, (y + oy) * S);
+          g.drawImage(art!.water, 0, 0);
+          g.setTransform(S, 0, 0, S, ox * S, oy * S);
+          this.diamond(g, u, v, h, 'rgba(20,50,120,0.45)');
+        } else {
+          g.setTransform(((TW / 2) / 64) * S, ((TH / 2) / 64) * S, (-(TW / 2) / 64) * S, ((TH / 2) / 64) * S, (x + ox) * S, (y + oy) * S);
+          g.drawImage(H.ground, (m % 4) * 256 + (((u % 4) + 4) % 4) * 64, Math.floor(m / 4) * 256 + (((v % 4) + 4) % 4) * 64, 64, 64, 0, 0, 64, 64);
+        }
+        g.setTransform(S, 0, 0, S, ox * S, oy * S);
+        this.diamond(g, u, v, h, `rgba(${FOG_RGB.join(',')},${k})`);
+        // (the trees: a few at the hold's edge, a forest further out; each as hazed as its tile)
+        if (!wet && hashOf(u * 7 + 3, v * 13 + 1) < 0.12 + d * 0.05 && k < 0.95) {
+          const name = pines[Math.floor(hashOf(v, u * 3) * pines.length)];
+          const def = SPRITES[name];
+          const [tx, ty] = rawAt(u + (hashOf(u, v) - 0.5) * 0.5, v + (hashOf(v, u) - 0.5) * 0.5, h);
+          const sc = KIT_SCALE * (0.8 + hashOf(u + 5, v) * 0.4);
+          g.setTransform(S * sc, 0, 0, S * sc, (tx + ox) * S - def.foot[0] * sc * S, (ty + oy) * S - def.foot[1] * sc * S);
+          g.drawImage(this.hazed(name, Math.round(k * 8)), 0, 0);
+        }
+      }
+    const sp = new Sprite(Texture.from(canvas));
+    sp.position.set(left - 1 / S, top - pad - 1 / S);
+    sp.scale.set(1 / S);
+    return sp;
+  }
 
   private drawChunks(view: WorldRect): void {
     const b = this.b.board;
@@ -783,6 +1010,15 @@ export class FieldView {
       c.used = this.frame;
       if (!c.sprite.parent) this.chunkLayer.addChild(c.sprite);
       for (const l of this.live.get(key) ?? []) this.liveLook(l);
+      // (the firelight flickers: two slow waves and a quick one, out of step light to light; steady for less motion)
+      const steady = reducedMotion();
+      for (const g of this.glows.get(key) ?? []) {
+        const t = this.simT;
+        const f = steady ? 0 : Math.sin(t * 0.011 + g.seed) * 0.5 + Math.sin(t * 0.027 + g.seed * 2.3) * 0.3 + Math.sin(t * 0.083 + g.seed * 5.1) * 0.2;
+        g.sp.alpha = g.base * (0.85 + 0.15 * f);
+        // (at Mid only the big fires glow: the many small lamps would only cost frames)
+        g.sp.visible = this.detail === 'near' || g.big;
+      }
       for (const p of c.props) {
         const gate = p.label?.startsWith('gate:') && this.brokenGates.has(Number(p.label.slice(5)));
         p.visible = !gate;
@@ -802,6 +1038,22 @@ export class FieldView {
       const idle = [...this.chunks].filter(([k]) => !showing.has(k)).sort((x, y) => x[1].used - y[1].used);
       for (const [key] of idle.slice(0, this.chunks.size - CACHE)) this.dropChunk(key);
     }
+  }
+
+  /** The firelight's texture: a warm radial glow, made once. */
+  private glow(): Texture {
+    if (this.glowTex) return this.glowTex;
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d')!;
+    const r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    r.addColorStop(0, 'rgba(255,190,110,0.85)');
+    r.addColorStop(0.35, 'rgba(255,140,60,0.35)');
+    r.addColorStop(1, 'rgba(255,110,40,0)');
+    g.fillStyle = r;
+    g.fillRect(0, 0, 128, 128);
+    this.glowTex = Texture.from(c);
+    return this.glowTex;
   }
 
   /** A piece that follows the battle: its state's picture, a drum's beat (a small squash), a hut's fire. */
@@ -925,7 +1177,8 @@ export class FieldView {
       const k = anim === 'dead' ? Math.min(frames.length - 1, Math.floor(ms / per)) : Math.floor(ms / per) % frames.length;
       s.body.texture = frames[k];
       // (heroes stand a head taller than their soldiers; the foes by their kind)
-      const tall = (info.role === 'leader' && x.side === 'hero' ? 66 : x.side === 'hero' ? 50 : info.def.id === 'orcBrute' || info.def.id === 'orcWarlord' ? 62 : 52) * (mid ? 0.85 : 1);
+      // (a little larger at Mid, so the fighters still read when the camera is out)
+      const tall = (info.role === 'leader' && x.side === 'hero' ? 66 : x.side === 'hero' ? 50 : info.def.id === 'orcBrute' || info.def.id === 'orcWarlord' ? 62 : 52) * (mid ? 1.2 : 1);
       const scale = tall / figureOf(info.sheet);
       const flip = facesRight(x.facing) !== facesRightOf(info.sheet);
       s.body.scale.set(flip ? -scale : scale, scale);
@@ -934,12 +1187,41 @@ export class FieldView {
       s.body.tint = x.alive && x.hurtAt !== undefined && simT - x.hurtAt < 120 ? 0xff9a9a : 0xffffff;
       s.body.alpha = x.alive ? 1 : Math.max(0, 1 - (simT - (x.diedAt ?? 0)) / 1200);
       // (the chosen platoon's rings are gold; an Elite soldier's a darker gold, its glint at Near)
-      s.ring.texture = x.side !== 'hero' ? this.rings.foe : info.group >= 0 && info.group === this.chosen ? this.rings.chosen : !mid && this.eliteOf(x.id) ? this.rings.elite : this.rings.hero;
+      s.ring.texture = x.side !== 'hero' ? (mid ? this.rings.foeMid : this.rings.foe) : info.group >= 0 && info.group === this.chosen ? this.rings.chosen : !mid && this.eliteOf(x.id) ? this.rings.elite : mid ? this.rings.heroMid : this.rings.hero;
       s.ring.position.set(px, py + 2);
       s.ring.zIndex = depth + 3;
       s.ring.visible = x.alive;
       this.drawn.fighters++;
     }
+    // (at Mid, our platoons' pennants: a blue flag over each hero, or its acting soldier, with the platoon's count)
+    let np = 0;
+    const h = this.f.hold;
+    if (mid && h)
+      for (const pl of h.platoons) {
+        const lead = [pl.heroId, ...pl.soldiers.map((x) => x.id)].map((id) => f.byId[id]).find((x) => x?.alive);
+        if (!lead) continue;
+        const [px, py] = this.placeOf(lead, simT);
+        if (px < view.x0 || px > view.x1 || py < view.y0 || py > view.y1) continue;
+        let pn = this.pennants[np];
+        if (!pn) {
+          const c = new Container();
+          const flag = new Graphics().rect(-2, -150, 4, 150).fill(0x2a2116).poly([2, -150, 74, -128, 2, -106]).fill(0x2f6fd0).stroke({ width: 4, color: 0xf2dc9f });
+          const t = new Text({ text: '', style: { fontFamily: 'Alegreya Sans, sans-serif', fontSize: 30, fontWeight: '700', fill: 0xffffff, stroke: { color: 0x000000, width: 6 } } });
+          t.anchor.set(0.5);
+          t.position.set(30, -128);
+          c.addChild(flag, t);
+          this.unitLayer.addChild(c);
+          pn = { c, t };
+          this.pennants.push(pn);
+        }
+        pn.c.visible = true;
+        pn.c.position.set(px, py - 40);
+        pn.c.scale.set(pl.group === this.chosen ? 0.75 : 0.6);
+        pn.c.zIndex = 1e6 - 1;
+        pn.t.text = String(pl.soldiers.filter((x) => f.byId[x.id]?.alive).length + (f.byId[pl.heroId]?.alive ? 1 : 0));
+        np++;
+      }
+    for (let i = np; i < this.pennants.length; i++) this.pennants[i].c.visible = false;
     for (const [id, s] of this.sprites) {
       if (seen.has(id)) continue;
       s.body.removeFromParent();
