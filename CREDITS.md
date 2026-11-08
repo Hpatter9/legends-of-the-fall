@@ -592,3 +592,15 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 The tavern background (`src/art/ui/tavern-hearth.png`) is original AI-generated artwork made with OpenAI image generation for this game. Sources: `art-source/tavern/hearth-source.png` (first study) and `art-source/tavern/cozy-room-source.png` (current seated scene). Heroes remain the existing credited character illustrations; panel, button, portrait and service icons reuse the shared painted combat UI assets.
 
 The cozy seated tavern extension adds 108 original OpenAI-generated resting hero illustrations (two poses for each of the 54 existing hero identities), an empty cozy room painting and two shared table props. Sources, approved studies and corrected transparency/identity variants are retained in `art-source/tavern/`. These paintings reference the existing credited hero designs; they do not replace the battle sprites or roster portraits. `tools/tavern/pack.py` imports padded transparent WebP cutouts into `src/art/tavern/guests/`; all are precached for offline use.
+
+## Remaining Nemesis trait symbols
+
+- Twelve original OpenAI-generated gothic game symbols (`src/art/nemesis-traits/`) complete the modelled trait set: Fireproof, Rime-hardened, Venom-blooded, Thick-hided, Grounded, Fearless, four Banes, Elusive and Legend-slayer. The owner approved the three-symbol style proposal against the existing commissioned icons. Sources and the unused hazy take are retained in `art-source/nemesis-traits/`. `tools/nemesis-trait-art/import.py` normalises footprints, hard alpha and palette, with nearest-neighbour packing. Original trait artwork retains its existing credits.
+
+## Painted road encounter vignettes
+
+- Eight original paintings generated with OpenAI image generation in the owner-approved road-scene style: wounded scout, Pale Lady shrine, deserters at a fire, bone-dice countess, wandering healer, crossroads forge, crown in the reeds and refugee caravan (`src/art/road-encounters/`). Sources and approved proposal are retained in `art-source/road-encounters/`; `tools/road-art/import.py` crops and downsamples the panels. Images are bundled for offline play.
+
+## Calamity herald portraits
+
+- Six original OpenAI-generated painted herald portraits and face crops (`src/art/heralds/`) were made from the currently credited battle sprite references and owner-approved three-portrait proposal. Sources, reference crops and mapping are retained in `art-source/herald-portraits/`; `tools/herald-art/import.py` reproduces the exports. Original sprite and pack credits remain in force. No battle sprites were replaced. Paintings are bundled for offline play.

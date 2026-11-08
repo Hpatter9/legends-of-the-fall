@@ -29,6 +29,30 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### HERALD-PORTRAITS — Six Calamity herald paintings and final art release
+
+- **Owner:** Codex director. **Branch/worktree:** `art/calamity-herald-portraits`, `/workspace/legends-of-the-fall`; includes completed trait and road-art commits.
+- **Scope:** six portraits matching actual boss sprites, boss-intro/codex integration, source/packing tools, credits and checks; then integrate latest main, release metadata, PR and owner-authorised merge of all three batches.
+- **Direction:** owner approved sprite-matched Gorvak, Thorn Warden and Malphas proposal, then explicitly authorised finishing all six and merging.
+- **Completion:** six matching portraits, sprite fallbacks preserved for other bosses, undiscovered codex entries still concealed, focused tests/build/typecheck and portrait checks; final merge.
+- **Status:** 0.394.0 validated for owner-authorised merge of all three batches. All six paintings integrated; typecheck/build, 99 focused release tests, three-size intro/codex checks and reduced motion passed with no browser errors. Unknown entries concealed and ordinary boss sprite fallback preserved. [Release handoff](notes/art-release-394.md).
+
+### ROAD-ART — Eight painted road encounters
+
+- **Owner:** Codex. **Branch/worktree:** `art/road-encounters`, `/workspace/legends-of-the-fall` (retains completed trait art).
+- **Scope:** eight source paintings, importer, event-kind art mapping, compact art in existing encounter cards, credits, browser checks and handoff. Preserve event text, choices, costs, rules, saves and version.
+- **Direction:** owner approved the Pale Lady shrine, crossroads forge and refugee caravan proposal. Other encounters follow the same painted style.
+- **Completion:** eight distinct 768×432 paintings, matching event cards only, all choices reachable at three phone sizes, focused typecheck/build/tests and offline bundle validation.
+- **Status:** complete locally, ready for review. Eight paintings integrated; typecheck/build, event and menu tests and all three phone sizes passed. Options/text/costs preserved, choices reachable, leave/Continue and insufficient-gold states checked, no browser errors. [Handoff](notes/painted-road-encounters.md). No push, merge or deployment.
+
+### NEMESIS-TRAIT-ART — Complete the twelve remaining trait symbols
+
+- **Owner:** Codex. **Branch/worktree:** `art/nemesis-traits-completion`, `/workspace/legends-of-the-fall` from main 0.393.0.
+- **Scope:** twelve original trait source symbols, importer/mapping, small-size previews, learned/unknown menu checks, credits and handoff. No simulation/save/version changes. Road encounters and herald portraits follow as separate batches.
+- **Direction:** Owner approved Fireproof, Bane of Mages and Elusive against the existing gothic pixel symbols, including the 28px comparison.
+- **Completion:** all remaining modelled trait icons integrated, distinct readable silhouettes at 28px, hidden secrets preserved, focused tests/typecheck/build and three phone sizes checked.
+- **Status:** complete locally, ready for review. All 24 modelled traits now have unique mappings. Typecheck/build, 42 focused tests and all learned/unknown groups at three phone sizes passed, with unchanged fixture meta and no browser errors. [Handoff](notes/nemesis-traits-completion.md). No push, merge or deployment.
+
 ### ART-393-RELEASE — Merge completed artwork and plan the next original paintings
 
 - **Owner:** Codex director. **Branch/worktree:** `art/dynasty-backdrops`, `/workspace/legends-of-the-fall`.

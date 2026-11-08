@@ -27,6 +27,16 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.394.0',
+    date: '2026-11-07',
+    title: 'Painted roads and the six heralds',
+    notes: [
+      'Eight road encounters now have painted scenes, from the Pale Lady’s shrine to the refugee caravan, with every choice and price kept clear.',
+      'The six Calamity heralds have painted portraits matching their battle appearances, shown on introduction cards and once discovered in the codex.',
+      'Twelve new Nemesis symbols complete all twenty-four traits. Unknown traits keep their symbols hidden until learned.',
+    ],
+  },
+  {
     version: '0.393.0',
     date: '2026-11-07',
     title: 'Painted faces, trophies and the Houses',
