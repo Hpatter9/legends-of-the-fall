@@ -20,7 +20,7 @@ import type { Battle, Unit } from '../battle';
 import type { At } from '../board';
 import { forNear, type FieldGroup, type FieldState } from './field';
 import { ringOf } from './fieldMap';
-import { addFieldUnit, archersOnly, ASSAULT, freeNear, garrisonBoosts, KIND } from './garrison';
+import { addFieldUnit, archersOnly, freeNear, holdBoosts, KIND } from './garrison';
 import { drumsBeating, isWall } from './forts';
 import type { HoldState, PostState } from './holdTypes';
 
@@ -285,7 +285,7 @@ function band(b: Battle, f: FieldState, h: HoldState): PostState {
   const def = { id: `band${h.bands + 1}`, name: 'A band from the Warpath', zone: 'warpath' as const, at: { ...bp.warpath }, roster: bp.reinforce.roster };
   const g: FieldGroup = { id: f.groups.length, side: 'foe', name: def.name, leader: 0, members: [], home: { ...bp.warpath }, awake: true, route: [], heading: 1 };
   f.groups.push(g);
-  const { foes } = garrisonBoosts(h.input.army, h.input.foeShare ?? ASSAULT.foeShare);
+  const { foes } = holdBoosts(h);
   for (const c of bp.reinforce.roster.replace(/ /g, '')) {
     const unit = addFieldUnit(b, f, KIND[c], freeNear(b, f, bp.warpath, false), foes, g.id, g.members.length);
     unit.busyUntil = b.t;

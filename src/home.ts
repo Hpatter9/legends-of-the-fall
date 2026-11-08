@@ -7,6 +7,8 @@
 import { openMuster, openAssaultResult } from './assaultView';
 import { runAssault } from './assaultScene';
 import { claimTribute } from './sim/assault/economy';
+import { abandonLive } from './sim/assault/snapshot';
+import { clearBattle, loadBattle } from './assaultSave';
 import { COUNCIL_BADGE } from './expansionArt';
 import { settleMourning } from './sim/oath';
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
@@ -1295,7 +1297,13 @@ export class Home {
           onFight: (id, tier, auto) => this.go(() => this.hooks.onArmy(id, tier, auto)),
           focus,
           onBack: () => this.closeSub(),
-          onAssault: (id) => this.openAssault(id),
+          onAssault: (id, restorm) => this.openAssault(id, restorm),
+          onResume: (id) => this.resumeAssault(id),
+          onAbandon: () => {
+            abandonLive(this.meta);
+            void clearBattle();
+            saveMeta(this.meta);
+          },
           onTribute: () => {
             const n = claimTribute(this.meta, todayKey());
             if (n) {
@@ -1314,17 +1322,36 @@ export class Home {
 
   /** The Assault (docs/notes/assault-1.md): the muster for an army's hold, then the battle over everything, then its result, and back to the
    *  army card. */
-  openAssault(army: string): void {
+  openAssault(army: string, restorm = false): void {
     const save = () => saveMeta(this.meta);
     openMuster(this.meta, army, {
       save,
+      restorm,
       onBack: () => this.openArmies(army),
       onMarch: (plan) => {
         void runAssault(this.meta, army, plan, {
           save,
-          onEnd: (result) => openAssaultResult(this.meta, result, { onBack: () => this.openArmies(army), onFill: () => this.openAssault(army) }),
+          onEnd: (result) => openAssaultResult(this.meta, result, { onBack: () => this.openArmies(army), onFill: () => this.openAssault(army, restorm) }),
         });
       },
+    });
+  }
+
+  /** Resume the assault under way (phase 2) from its last snapshot; with none to be had, it is abandoned (a withdrawal). */
+  private resumeAssault(army: string): void {
+    const save = () => saveMeta(this.meta);
+    void loadBattle().then((b) => {
+      if (!b || b.field?.hold?.input.army !== army || b.phase !== 'fight') {
+        abandonLive(this.meta);
+        void clearBattle();
+        save();
+        this.openArmies(army);
+        return;
+      }
+      void runAssault(this.meta, army, { approaches: {} }, {
+        save,
+        onEnd: (result) => openAssaultResult(this.meta, result, { onBack: () => this.openArmies(army), onFill: () => this.openAssault(army) }),
+      }, b.seed, b);
     });
   }
 

@@ -16,7 +16,7 @@
 // own layer over the game, with its own renderer, and gives the game back when the assault ends.
 
 import { Application } from 'pixi.js';
-import type { BattleEvent } from './sim/battle';
+import type { Battle, BattleEvent } from './sim/battle';
 import { TICK_MS } from './sim/battle';
 import type { Meta } from './sim/meta';
 import { formOf, UNITS } from './sim/units';
@@ -28,6 +28,8 @@ import { fightRanks } from './sim/spellRanks';
 import { assaultScore, startAssault, stepAssault, ASSAULT_LIMIT_MS, AROUND } from './sim/assault/assault';
 import { assaultInput, settleAssault, type AssaultPlan, type AssaultResult } from './sim/assault/assaultMode';
 import { noteFallen } from './sim/assault/economy';
+import { noteLive, snapshotDue } from './sim/assault/snapshot';
+import { clearBattle, saveBattle } from './assaultSave';
 import { hasShooters, scaleAim } from './sim/assault/siege';
 import { orderPlatoon, setFormation, soundRetreat, setAuto, FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
 import { anchorOf } from './sim/assault/holdMind';
@@ -114,7 +116,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 
 /** Run an assault on the page: the battle, its bar, and at its end the settling into the save. */
-export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks: SceneHooks, seed = (Date.now() ^ m.seed) >>> 0): Promise<void> {
+export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks: SceneHooks, seed = (Date.now() ^ m.seed) >>> 0, resume?: Battle): Promise<void> {
   if (!document.getElementById('assaultHudCss')) {
     const st = el('style');
     st.id = 'assaultHudCss';
@@ -126,9 +128,13 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   document.body.append(host);
   const loading = el('div', 'asToast', 'Mustering the host…');
   host.append(loading);
-  const input = assaultInput(m, army, seed, plan, Object.fromEntries(m.party.filter((k) => UNITS[k]).map((k) => [k, formOf(UNITS[k], 3)])));
-  const b = startAssault(input);
-  b.spells.ranks = fightRanks(m.spellbook);
+  // (a battle resumed from its snapshot, phase 2, or a new one; either way the save notes it is under way)
+  const input = resume?.field?.hold?.input ?? assaultInput(m, army, seed, plan, Object.fromEntries(m.party.filter((k) => UNITS[k]).map((k) => [k, formOf(UNITS[k], 3)])));
+  const b = resume ?? startAssault(input);
+  if (!resume) b.spells.ranks = fightRanks(m.spellbook);
+  noteLive(m, b, todayKey());
+  hooks.save();
+  if (!resume) void saveBattle(b);
   const h = b.field!.hold!;
   const sheets = new Set<string>(['hk_orc_grunt', 'hk_orc_archer', 'hk_orc_brute', 'hk_orc_warlord', 'wolf_black']);
   for (const x of b.units) sheets.add(b.field!.info[x.id]?.sheet ?? UNITS[x.def].sheet);
@@ -664,6 +670,12 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
       let n = 0;
       while (acc >= TICK_MS && n < 8 && b.phase === 'fight') {
         const ev = stepAssault(b);
+        // (every twenty seconds of battle time, the battle kept for a resume, and the save's note of it)
+        if (snapshotDue(b)) {
+          void saveBattle(b);
+          noteLive(m, b, todayKey());
+          hooks.save();
+        }
         for (const e of ev) {
           if (e.kind === 'swing' && e.to >= 0) {
             const by = b.field!.byId[e.by];
@@ -812,6 +824,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     endFight();
     const result = settleAssault(m, b, todayKey());
     hooks.save();
+    void clearBattle();
     view.destroy();
     app.destroy(true);
     host.remove();

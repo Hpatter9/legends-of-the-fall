@@ -292,7 +292,8 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   const daily = c.daily !== undefined;
   const roll = daily ? rollDailyChest(c.seed, c.bonus ?? 0) : rollChest(c.seed, armyById(c.army)!, c.at, c.tier);
   // (the Assault's Conquest chest: a gold chest's contents, half again its crowns and stones)
-  const crowns = c.conquest ? Math.round(roll.crowns * CONQUEST_SHARE) : roll.crowns;
+  // (the Warband regrouped pays half a Conquest chest: its crowns halved here, its stones by `chestStones`)
+  const crowns = c.conquest ? Math.round(roll.crowns * CONQUEST_SHARE * (c.half ? 0.5 : 1)) : roll.crowns;
   const items: LootItem[] = [{ type: 'crowns', text: `${crowns} crowns`, n: crowns }];
   if (apply) m.crowns += crowns;
   const stones = c.conquest ? Math.ceil(chestStones(c) * CONQUEST_SHARE) : chestStones(c);

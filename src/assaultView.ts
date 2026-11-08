@@ -29,6 +29,8 @@ export interface MusterHooks {
   onMarch(plan: AssaultPlan): void;
   /** ‹ Back to the army card. */
   onBack(): void;
+  /** The Warband regrouped (phase 2): a conquered hold stormed again at Mythic. */
+  restorm?: boolean;
 }
 
 const APPROACHES: readonly ApproachId[] = ['bridge', 'west', 'east'];
@@ -136,7 +138,14 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
   let menu: OrnateMenu | null = null;
   const draw = () => {
     const short = party.filter((k) => troopsOf(m, k).length < PLATOON_SIZE).length;
-    menu = ornateMenu({ id: 'assaultMuster', kind: 'sheet', eyebrow: `Conquest · ${a.name}`, title: bp.name, sub: `200 defenders · ${lordLine(m, army)} holds the throne`, label: `Muster for ${bp.name}` });
+    menu = ornateMenu({
+      id: 'assaultMuster',
+      kind: 'sheet',
+      eyebrow: hooks.restorm ? `The Warband regroups · ${a.name}` : `Conquest · ${a.name}`,
+      title: bp.name,
+      sub: hooks.restorm ? `Mythic · 200 defenders · half a Conquest chest for the win` : `200 defenders · ${lordLine(m, army)} holds the throne`,
+      label: `Muster for ${bp.name}`,
+    });
     // the host
     const host = menuSection(menu.body, 'Your host', `${m.crowns} crowns · ${ASSAULT_PRICES.recruit} a recruit`, 2);
     for (const k of party) {
@@ -257,7 +266,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
           const siege = buySiege(m, party, st.siege);
           hooks.save();
           menu?.close();
-          hooks.onMarch({ approaches: { ...plan.approaches }, roles: { ...plan.roles }, formations: { ...st.formations }, ...(siege.ram || siege.ladders.length ? { siege } : {}) });
+          hooks.onMarch({ approaches: { ...plan.approaches }, roles: { ...plan.roles }, formations: { ...st.formations }, ...(siege.ram || siege.ladders.length ? { siege } : {}), ...(hooks.restorm ? { restorm: true } : {}) });
         },
       },
     });
@@ -406,7 +415,7 @@ export function openAssaultResult(_m: Meta, r: AssaultResult, hooks: { onBack():
       w.append(el('p', '', `The Spoils of the Hold: ${r.spoils} crowns`));
       if (r.chest) w.append(el('p', '', 'The Conquest chest waits on the cart at camp'));
       w.append(el('p', '', 'A cart of tribute will come to camp each morning'));
-    } else w.append(el('p', '', 'The hold is taken again'));
+    } else w.append(el('p', '', r.regroup ? 'The Warband is broken again: half a Conquest chest waits on the cart at camp' : 'The hold is taken again'));
   }
   if (r.refund) {
     const sec = menuSection(menu.body, 'Siege works', undefined, 2);

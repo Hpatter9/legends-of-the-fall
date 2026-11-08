@@ -5,7 +5,7 @@
 // `tiers.ts`; this only draws them.
 
 import { blueprintOf } from './sim/assault/assault';
-import { assaultOpen, canAssault, conquered, tributeDue, tributeOf } from './sim/assault/economy';
+import { assaultOpen, canAssault, conquered, regrouped, tributeDue, tributeOf } from './sim/assault/economy';
 import { armyOreRow } from './oreView';
 import { progressLine } from './sim/modeUnlock';
 import { ARMIES, armyBefore, armyCleared, armyNeed, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, landsOf, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
@@ -39,7 +39,10 @@ export interface ArmiesHooks {
   /** The run saved and not over, if any: the army it fights (none for a daily, tower or older run), and the stage it is on. */
   running: { army?: string; stage: number; label: string } | null;
   /** The Assault (docs/notes/assault-1.md): open the muster for an army's hold (its ten stars won). */
-  onAssault?(id: string): void;
+  onAssault?(id: string, restorm?: boolean): void;
+  /** Resume the assault under way on this army (phase 2), or abandon it (a withdrawal). */
+  onResume?(id: string): void;
+  onAbandon?(id: string): void;
   /** Claim today's tribute from the holds conquered; returns the crowns paid. */
   onTribute?(): number;
 }
@@ -453,7 +456,19 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
     } else info.append(go);
     // (the Assault: at the tenth star the army's hold can be stormed; once the mode is open, a sealed plate until then)
     const bp = blueprintOf(a.id);
-    if (open && bp && hooks.onAssault && (assaultOpen(m) || canAssault(m, a.id))) {
+    const live = m.assault?.live;
+    if (open && bp && live?.army === a.id && hooks.onResume) {
+      // (an assault under way, phase 2: resume it from its last snapshot, or abandon it)
+      const t = Math.floor(live.t / 1000);
+      const go = el('button', 'primary asAssault', `Resume the assault · ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`);
+      go.addEventListener('click', () => hooks.onResume!(a.id));
+      const drop = el('button', 'small asTribute', 'Abandon it (a withdrawal)');
+      twoTap(drop, 'Abandon the assault? Tap again', () => {
+        hooks.onAbandon?.(a.id);
+        draw();
+      });
+      info.append(go, drop);
+    } else if (open && bp && hooks.onAssault && (assaultOpen(m) || canAssault(m, a.id))) {
       if (fallen) {
         const due = tributeDue(m, todayKey());
         info.append(el('p', 'asHint asSeal', `${bp.name} is conquered · ${tributeOf(a.id)} crowns of tribute a day`));
@@ -464,6 +479,12 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
             draw();
           });
           info.append(claim);
+        }
+        // (once a week the Warband regroups: the hold can be stormed again at Mythic, for half a Conquest chest)
+        if (regrouped(m, a.id, todayKey())) {
+          const again = el('button', 'primary asAssault', 'The Warband regroups · storm at Mythic');
+          again.addEventListener('click', () => hooks.onAssault!(a.id, true));
+          info.append(again);
         }
       } else if (canAssault(m, a.id)) {
         const storm = el('button', 'primary asAssault', `Assault ${bp.name}`);

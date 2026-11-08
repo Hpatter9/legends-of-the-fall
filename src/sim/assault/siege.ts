@@ -21,7 +21,7 @@ import { UNITS, type UnitDef } from '../units';
 import { forNear, type FieldState } from './field';
 import { LAND, ringOf, WALL_TOP } from './fieldMap';
 import { hitFort } from './forts';
-import { garrisonBoosts, ASSAULT, addFieldUnit, freeNear } from './garrison';
+import { holdBoosts, addFieldUnit, freeNear } from './garrison';
 import { rebuildSectors } from './sectors';
 import type { HoldState, HutState, PlatoonState, SiegeState } from './holdTypes';
 import type { Blueprint } from './blueprint';
@@ -165,7 +165,7 @@ export function ramMind(b: Battle, f: FieldState, h: HoldState, me: Unit, anchor
     const beside = fort.spec.tiles.some((t) => dist(atOf(t, w), me) <= 1 && Math.abs(b.board.tiles[t].h - here) <= 2);
     if (beside) {
       if (b.t >= r.next) {
-        const k = garrisonBoosts(h.input.army, h.input.foeShare ?? ASSAULT.foeShare).foes.hp ?? 1;
+        const k = holdBoosts(h).foes.hp ?? 1;
         r.next = b.t + RAM_MS;
         me.swing = { at: b.t, ms: 600, to: -1 };
         h.events.push({ kind: 'ram', fort: fort.spec.id });
