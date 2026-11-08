@@ -27,6 +27,42 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.414.0',
+    date: '2026-11-08',
+    title: 'Resume an assault; more scenes come alive',
+    notes: ['Leave an assault and resume it later, or storm a conquered hold at Mythic once a week. The summoning hall, spell study and throne now flicker and stir.'],
+  },
+  {
+    version: '0.413.0',
+    date: '2026-11-08',
+    title: 'Battle music as clear as the camp\'s',
+    notes: ['Battle music now plays nearly as loud as the camp\'s, clear and unmuffled, and dips only lightly for boss and Eidolon moments.'],
+  },
+  {
+    version: '0.412.0',
+    date: '2026-11-08',
+    title: 'Louder, clearer music and living scenes',
+    notes: ['Music is fuller and no longer buried or muffled; the volume slider feels natural. Fires flicker, water ripples, trees sway, with new ambient sound.'],
+  },
+  {
+    version: '0.411.0',
+    date: '2026-11-08',
+    title: 'The hold\'s river and grass, refined',
+    notes: ['The Redwater\'s banks curve with shingle, foam and reeds, the tall grass settles into the land, and embers rise off the hold\'s fires.'],
+  },
+  {
+    version: '0.410.0',
+    date: '2026-11-08',
+    title: 'Bloodtusk Hold, polished',
+    notes: ['The hold runs on into forest and haze at its edges, firelight flickers at braziers and gates, and your platoons carry blue pennants.'],
+  },
+  {
+    version: '0.409.0',
+    date: '2026-11-08',
+    title: 'Assault: siege works and a living hold',
+    notes: ['Bloodtusk Hold is painted in full. Buy ladders and rams, loose fire arrows, pin the walls; the hold answers feints, sallies and sends wolves.'],
+  },
+  {
     version: '0.408.0',
     date: '2026-11-08',
     title: 'Effects may pulse and flicker freely',

@@ -53,8 +53,8 @@ export type Stamp =
   | { kind: 'perch'; name: string; rect: Rect; h: number; ramp?: Spot; dir?: [number, number] }
   /** A stair: from `from`, a step a tile in `dir`, from `h0` by `dh` each tile, `n` tiles, `wide` across. */
   | { kind: 'stair'; from: Spot; dir: [number, number]; h0: number; dh: number; n: number; wide?: number }
-  /** Solid ground: a longhouse's walls or a log pile (boulders to the rules). */
-  | { kind: 'solid'; name: string; rect: Rect; wall?: boolean }
+  /** Solid ground: a longhouse's walls or a log pile (boulders to the rules). `burns`: fire arrows can set it alight (phase 1b). */
+  | { kind: 'solid'; name: string; rect: Rect; wall?: boolean; burns?: boolean }
   /** A ground laid on a rectangle (the forge's coals, the shrine, the reeds). */
   | { kind: 'ground'; rect: Rect; ground: 'coals' | 'shrine' | 'tall' | 'water' }
   /** A rectangle at a height (the training pit sunk a step, the shrine's knoll). */
@@ -104,8 +104,10 @@ export interface Blueprint {
   stencil: readonly string[];
   stamps: readonly Stamp[];
   posts: readonly PostDef[];
-  /** Where the reinforcements enter (inside the North Gate), and how many bands of which roster. */
+  /** Where the reinforcements enter (inside the North Gate), and how many bands of which roster at most. */
   reinforce: { at: Spot; roster: string; bands: number };
+  /** The Warpath's reserve camp, where the bands gather and set out (phase 1b): held by ours, it sends no more. */
+  warpath: Spot;
   approaches: readonly Approach[];
   /** The rally flag at the Landing, and the five platoons' muster places round it. */
   rally: Spot;

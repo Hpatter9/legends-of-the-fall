@@ -10,12 +10,13 @@ import '../../src/sim/run';
 import { BusMixer, CueSynth, MusicPlayer } from '../../src/render/audioProcessors';
 import { AmbientBeds } from '../../src/render/audioBeds';
 import { SpellBank } from '../../src/render/spellBank';
-import { MUSIC_LEVEL, SFX_LEVEL, TRACK_GAIN, UI_LEVEL, busOf } from '../../src/render/audioMix';
+import { AMBIENCE_LEVEL, MUSIC_LEVEL, SFX_LEVEL, TRACK_GAIN, UI_LEVEL, busOf } from '../../src/render/audioMix';
 import { CUES, Mixer, cuesFor, type Cue } from '../../src/render/soundRules';
 import { CAST_GAIN, EFFECT_DELAY, EFFECT_GAIN, SPELL_TRIM, STAR_GAIN } from '../../src/render/spellSfx';
-import { panOfEvent, type Scene } from '../../src/render/audioRules';
+import { panOfEvent, pickShot, type Scene } from '../../src/render/audioRules';
 import { EPIC_MANIFEST } from '../../src/render/epicManifest';
-import { VICTORY_BED } from '../../src/render/battleMusic';
+import { FIGHT_LEVEL, VICTORY_BED } from '../../src/render/battleMusic';
+import type { Area } from '../../src/sim/board';
 import { SPELLS, type SpellId } from '../../src/sim/spells';
 import type { MusicId, StingId } from '../../src/render/epicMusic';
 void BusMixer;
@@ -63,6 +64,15 @@ export interface Meter {
   peak: number;
   /** The share of 10 ms windows whose peak passes the master limiter's threshold (-2 dBFS): how often it would act. */
   overLimit: number;
+}
+
+/** A render's integrated loudness as a phone's speaker plays it: the same meter after a fourth-order high-pass at 250 Hz (as
+ *  `meterPhone` in tools/epic-music/loudness.mjs). */
+export function phoneLufs(chs: Float32Array[], fs = RATE): number {
+  const w0 = (2 * Math.PI * 250) / fs, al = Math.sin(w0) / (2 * Math.SQRT1_2), cw = Math.cos(w0);
+  const b = [(1 + cw) / 2, -(1 + cw), (1 + cw) / 2], a = [1 + al, -2 * cw, 1 - al];
+  const hp: [number[], number[]] = [b.map((v) => v / a[0]), a.map((v) => v / a[0])];
+  return meter(chs.map((x) => biquad(biquad(x, ...hp), ...hp)), fs).lufs;
 }
 
 const lufsOf = (ms: number) => -0.691 + 10 * Math.log10(Math.max(1e-12, ms));
@@ -126,10 +136,10 @@ function buses(oc: BaseAudioContext) {
     n.connect(oc.destination);
     return n;
   };
-  const sfx = mk(SFX_LEVEL), ui = mk(UI_LEVEL), music = mk(MUSIC_LEVEL);
+  const sfx = mk(SFX_LEVEL), ui = mk(UI_LEVEL), music = mk(MUSIC_LEVEL), ambience = mk(AMBIENCE_LEVEL);
   const show = new GainNode(oc, { gain: 1 });
   show.connect(sfx);
-  return { sfx, ui, music, show, ambience: music } as Record<'sfx' | 'ui' | 'music' | 'show' | 'ambience', GainNode>;
+  return { sfx, ui, music, show, ambience } as Record<'sfx' | 'ui' | 'music' | 'show' | 'ambience', GainNode>;
 }
 
 /** A CueSynth on `oc` with the recorded combat samples decoded. */
@@ -144,7 +154,7 @@ async function synthOn(oc: BaseAudioContext, bus: ReturnType<typeof buses>): Pro
 
 /** A music file at its playing level (through the real MusicPlayer, its trim and the music bus); `level` is the player's own (the
  *  triumph bed's is `VICTORY_BED`). The fade-in's first seconds are left out. */
-export async function music(id: MusicId, level = 1): Promise<Meter & { chs?: Float32Array[] }> {
+export async function music(id: MusicId, level = 1): Promise<Meter & { phone: number }> {
   const e = EPIC_MANIFEST[id as keyof typeof EPIC_MANIFEST];
   const secs = Math.min(e.seconds, 100) + 3;
   const oc = new OfflineAudioContext(2, Math.round(secs * RATE), RATE);
@@ -155,7 +165,8 @@ export async function music(id: MusicId, level = 1): Promise<Meter & { chs?: Flo
   if (!(await until(() => p.sounding.includes(id), 20000))) throw new Error(`${id} did not start`);
   const buf = await oc.startRendering();
   const from = Math.round(3 * RATE);
-  return meter(chans(buf).map((c) => c.subarray(from)));
+  const chs = chans(buf).map((c) => c.subarray(from));
+  return { ...meter(chs), phone: phoneLufs(chs) };
 }
 
 /** A sting (victory, defeat) once, as `MusicPlayer.sting` plays it. */
@@ -210,16 +221,36 @@ export async function spells(): Promise<Record<string, Meter>> {
   return out;
 }
 
-/** An ambience bed for a scene, 20 s, on the ambience bus (it shares the music's level). */
-export async function bed(scene: Scene): Promise<Meter> {
-  const oc = new OfflineAudioContext(2, Math.round(20 * RATE), RATE);
+/** An ambience bed for a scene (a field fight's by its land), 30 s, on the ambience bus, with its one-shots as they fall. Its
+ *  luck is a seeded stream (a constant one made the noise all zeros, so the old measures of the noise beds were silence). */
+export async function bed(scene: Scene, land: Area | null = null): Promise<Meter & { phone: number }> {
+  const secs = 30;
+  const oc = new OfflineAudioContext(2, Math.round(secs * RATE), RATE);
   const bus = buses(oc);
-  const beds = new AmbientBeds(oc, () => 0.5);
+  const beds = new AmbientBeds(oc, seeded(7));
   beds.output.connect(bus.ambience);
-  beds.setScene(scene);
+  beds.setScene(scene, land);
+  // (the one-shots: the page's timer would make them as the clock passes; here they are laid out in advance at the clock's times)
+  const live = (beds as unknown as { current: Parameters<AmbientBeds['shot']>[0] & { spec: { shots: { kind: string; weight: number }[] }; clock: { due(t: number): boolean; fired(t: number): void } } }).current;
+  for (let t = 0; t < secs; t += 0.5) {
+    if (!live.clock.due(t)) continue;
+    live.clock.fired(t);
+    beds.shot(live, pickShot(live.spec.shots as never, seeded(Math.round(t * 10))()), t + 0.02);
+  }
   const buf = await oc.startRendering();
   beds.setScene(null);
-  return meter(chans(buf).map((c) => c.subarray(3 * RATE)));
+  const chs = chans(buf).map((c) => c.subarray(3 * RATE));
+  return { ...meter(chs), phone: phoneLufs(chs) };
+}
+
+/** A field fight's bed on `land`, `secs` long, as channels (for the whole fight's mix). */
+async function bedChans(land: Area, secs: number): Promise<Float32Array[]> {
+  const oc = new OfflineAudioContext(2, Math.round(secs * RATE), RATE);
+  const bus = buses(oc);
+  const beds = new AmbientBeds(oc, seeded(11));
+  beds.output.connect(bus.ambience);
+  beds.setScene('field', land);
+  return chans(await oc.startRendering());
 }
 
 /** The families a fight's sounds are measured in. */
@@ -279,12 +310,18 @@ export async function fightMix(seed: number, band: string, heroes: string[], tra
   const bus = buses(oc);
   const p = new MusicPlayer(oc);
   p.output.connect(bus.music);
-  p.setTrack(track);
+  // (a battle's track plays at the fight's level, `FIGHT_LEVEL`, under the place's music)
+  p.setTrack(track, FIGHT_LEVEL);
   await until(() => p.sounding.includes(track), 20000);
   const m = chans(await oc.startRendering());
   const sum = all.map((c, i) => c.map((x, j) => x + m[i][j]));
   out.withMusic = meter(sum);
   out.musicAlone = meter(m.map((c) => c.subarray(3 * RATE)));
+  // (and the land's ambience under both: the whole of what a fight sounds like)
+  const amb = await bedChans(b.board.area, secs);
+  out.land = b.board.area;
+  out.bedAlone = meter(amb.map((c) => c.subarray(3 * RATE)));
+  out.withAll = meter(sum.map((c, i) => c.map((x, j) => x + amb[i][j])));
   return out;
 }
 

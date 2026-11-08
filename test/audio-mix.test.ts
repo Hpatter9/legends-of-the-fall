@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { addUnit, startBattle, type BattleEvent } from '../src/sim/battle';
 import { castSpell, SPELL_IDS } from '../src/sim/spells';
 import { EPIC_MANIFEST } from '../src/render/epicManifest';
-import { AMBIENCE_LEVEL, LOOP_GAIN, MUSIC_LEVEL, SFX_LEVEL, SHOW_CUES, STING_GAIN, TRACK_GAIN, UI_CUES, UI_LEVEL, busOf, trackGain } from '../src/render/audioMix';
+import { AMBIENCE_LEVEL, FILE_LOUDNESS, MUSIC_LEVEL, PLAYBACK_REF, SFX_LEVEL, SHOW_CUES, STING_LUFS, TRACK_GAIN, UI_CUES, UI_LEVEL, busOf, playbackLufs, trackGain, type MusicFile } from '../src/render/audioMix';
 import { CUES, type Cue } from '../src/render/soundRules';
 import { CAST_GAIN, SPELL_TRIM, spellParts } from '../src/render/spellSfx';
 import { EPIC_INFO, type Baked } from '../src/render/musicBake';
@@ -33,23 +33,33 @@ test('every cue has a gain in bounds, and every cue goes to a bus', () => {
   assert.equal(busOf('hitSword'), 'sfx');
 });
 
-test('the buses sit inside the master, and the music under the effects', () => {
-  for (const level of [MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL]) assert.ok(level > 0 && level <= 1);
-  assert.ok(MUSIC_LEVEL < SFX_LEVEL, 'the music bus is the quieter');
+// (the music's place under the effects is checked by loudness at the speakers in test/music-loudness.test.ts: the bus levels
+//  alone say nothing of it, as the files and the cues are at their own loudness before them)
+test('the buses sit inside the master', () => {
+  for (const level of [MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, AMBIENCE_LEVEL]) assert.ok(level > 0 && level <= 1);
 });
 
-test('every loop takes the one trim (the files are mastered to one loudness), the stings ring over it', () => {
-  // (changed for the owner's "level their volumes. It still feels off": the battle tracks were trimmed 2.5 LU under the menus'
-  //  music and the scenes 1 LU over it, from files 10 LU apart; now every file is at -18 LUFS and every loop plays at the one
-  //  level, docs/notes/battle-music-2.md; the levels at the speakers are checked in test/music-loudness.test.ts)
+// (changed by the sound pass, docs/notes/sound-pass.md: every file is mastered to one plain loudness, but a phone's speaker plays a
+//  bass-heavy track (the boss's, the heralds') 2 to 5 LU quieter than a bright one (the camp's); each loop is now trimmed to one
+//  playback loudness, its plain and its phone loudness together, instead of every loop taking the one trim)
+test('every loop is trimmed to the one playback loudness (its plain and its phone loudness together), the stings to their moments', () => {
+  const db = (g: number) => 20 * Math.log10(g);
   for (const [id, e] of Object.entries(EPIC_MANIFEST)) {
-    if (e.loop) assert.equal(TRACK_GAIN[id as keyof typeof TRACK_GAIN], LOOP_GAIN, id);
+    const f = id as MusicFile;
+    const m = FILE_LOUDNESS[f];
+    assert.ok(Number.isFinite(m.phone) && m.phone <= m.lufs + 0.5, `${id}: its phone loudness is measured`);
+    assert.ok(Math.abs(playbackLufs(f) - (m.lufs + m.phone) / 2) < 1e-9);
+    if (e.loop) {
+      assert.ok(Math.abs(playbackLufs(f) + db(TRACK_GAIN[f]) - PLAYBACK_REF) < 1e-9, `${id} plays at the one playback loudness`);
+      assert.ok(Math.abs(db(TRACK_GAIN[f])) <= 2, `${id}'s trim is small: ${db(TRACK_GAIN[f]).toFixed(2)} dB`);
+    }
   }
-  assert.equal(LOOP_GAIN, 1);
-  assert.equal(TRACK_GAIN.victory, STING_GAIN.victory);
-  assert.equal(TRACK_GAIN.defeat, STING_GAIN.defeat);
-  assert.ok(STING_GAIN.victory > STING_GAIN.defeat && STING_GAIN.defeat > 1, 'the fanfare over the fall\'s sting, both over the music');
-  assert.ok(AMBIENCE_LEVEL < MUSIC_LEVEL, 'the beds under the music');
+  // (the stings at their own loudness through the music bus)
+  for (const id of ['victory', 'defeat'] as const) {
+    assert.ok(Math.abs(FILE_LOUDNESS[id].lufs + db(MUSIC_LEVEL * TRACK_GAIN[id]) - STING_LUFS[id]) < 1e-9, id);
+  }
+  assert.ok(STING_LUFS.victory > STING_LUFS.defeat, 'the fanfare over the fall\'s sting');
+  assert.ok(AMBIENCE_LEVEL > 0 && AMBIENCE_LEVEL <= 1);
 });
 
 test('every king\'s spell has a trim, and the trim scales its cast and its effect alike', () => {
@@ -83,9 +93,11 @@ test('the music player plays a file at its trim, and a level on top of it (the v
     const music = new MusicPlayer(ctx as unknown as AudioContext, async () => baked(), async () => ({ duration: 1 }) as unknown as AudioBuffer);
     music.setTrack('boss');
     await new Promise((r) => setTimeout(r, 10));
-    assert.ok(FakeContext.made.some((n) => n.gain?.target === TRACK_GAIN.boss), 'the loop fades in to its trim');
+    // (a fade's curve is 32-bit, so its end is matched to a millionth)
+    const near = (x: number | undefined, y: number) => x !== undefined && Math.abs(x - y) < 1e-6;
+    assert.ok(FakeContext.made.some((n) => near(n.gain?.target, TRACK_GAIN.boss)), 'the loop fades in to its trim');
     music.setTrack('boss', 0.5);
-    assert.ok(FakeContext.made.some((n) => n.gain?.target === 0.5 * TRACK_GAIN.boss), 'a level glides on top of it');
+    assert.ok(FakeContext.made.some((n) => near(n.gain?.target, 0.5 * TRACK_GAIN.boss)), 'a level glides on top of it');
     music.destroy();
   } finally {
     undo();

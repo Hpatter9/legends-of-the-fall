@@ -126,6 +126,8 @@ export function givePlatoon(b: Battle, _h: HoldState, pl: PlatoonState, order: P
   }
   pl.order = order;
   pl.route = order.kind === 'move' ? [order.at] : [];
+  // (a new Scale looks for its wall again)
+  pl.aim = undefined;
 }
 
 /** Play an assault's log again: before each tick, the entries asked for at this battle time are asked for again (`replayAssault`'s step). */

@@ -18,7 +18,7 @@ import { TIER_PROFICIENCY } from '../stats';
 import { UNITS } from '../units';
 import type { FieldGroup, FieldState } from './field';
 import { occPut } from './field';
-import type { Blueprint, PostDef } from './blueprint';
+import type { PostDef } from './blueprint';
 import type { AssaultInput, HoldState, PostState } from './holdTypes';
 import { WAR_WOLF } from './troops';
 
@@ -38,17 +38,17 @@ export const ASSAULT = {
 export const GARRISON_SALT = 0x6a7715;
 
 /** The roster's letters. */
-const KIND: Record<string, string> = { G: 'orcGrunt', A: 'orcArcher', B: 'orcBrute', W: WAR_WOLF.id };
+export const KIND: Record<string, string> = { G: 'orcGrunt', A: 'orcArcher', B: 'orcBrute', W: WAR_WOLF.id };
 /** The order the Council's ranks take the posts' leaders' places (4.2). */
 export const LIEUTENANT_POSTS = ['bridge', 'drumW', 'drumE', 'drumS', 'westTower', 'eastTower'] as const;
 export const CAPTAIN_POSTS = ['southGate', 'ironGate', 'throne', 'throne'] as const;
 
 /** The garrison's boosts: the rank and file's, and an officer's or lord's for a base kind on a wall. */
-export function garrisonBoosts(army: string, share: number = ASSAULT.foeShare): { foes: Boost; wall: (base: string, which: 'mid' | 'last') => Boost } {
+export function garrisonBoosts(army: string, share: number = ASSAULT.foeShare, tier: number = ASSAULT.tier): { foes: Boost; wall: (base: string, which: 'mid' | 'last') => Boost } {
   const a = armyById(army)!;
-  const st = waveBoost(a, ASSAULT.wave, ASSAULT.tier);
+  const st = waveBoost(a, ASSAULT.wave, tier);
   const f = st.foes ?? {};
-  const prof = TIER_PROFICIENCY[ASSAULT.tier];
+  const prof = TIER_PROFICIENCY[tier];
   const foes: Boost = { hp: (f.hp ?? 1) * share, atk: (f.atk ?? 1) * share, ...(f.speed ? { speed: f.speed } : {}), prof };
   const wall = (base: string, which: 'mid' | 'last'): Boost => {
     const def = UNITS[base];
@@ -124,7 +124,7 @@ export function addFieldUnit(b: Battle, f: FieldState, defId: string, at: At, bo
 /** Stand the garrison at its posts (asleep, `posted`), the Council's members in their leaders' places and the lord on the throne. */
 export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: AssaultInput): void {
   const bp = h.bp;
-  const { foes, wall } = garrisonBoosts(input.army, input.foeShare ?? ASSAULT.foeShare);
+  const { foes, wall } = garrisonBoosts(input.army, input.foeShare ?? ASSAULT.foeShare, input.tier ?? ASSAULT.tier);
   b.foeBoost = foes;
   if (foes.speed && foes.speed !== 1) b.foeSpeed = foes.speed;
   const council = input.council ?? [];
@@ -152,7 +152,7 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
       if (c === 'K') {
         unit = addFieldUnit(b, f, lord.base, at, { ...wall(lord.base, 'last'), ...(lord.snap ? {} : { phase: PHASE_AT }) }, g.id, slot);
         if (lord.snap) {
-          const place = placeOf(lord.snap);
+          const place = placeOf(lord.snap, input.tier);
           if (place) makeNemesis(unit, place);
           post.council = lord.snap.id;
         }
@@ -163,7 +163,7 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
         const base = snap?.base ?? 'orcChieftain';
         unit = addFieldUnit(b, f, base, at, wall(base, 'mid'), g.id, slot);
         if (snap) {
-          const place = placeOf(snap);
+          const place = placeOf(snap, input.tier);
           if (place) makeNemesis(unit, place);
           if (slot === 0) post.council = snap.id;
         }
@@ -172,7 +172,7 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
         const snap = slot === 0 && !officers.length ? places[def.id] : undefined;
         unit = snap ? addFieldUnit(b, f, snap.base, at, wall(snap.base, 'mid'), g.id, slot) : addFieldUnit(b, f, KIND[c], at, foes, g.id, slot);
         if (snap) {
-          const place = placeOf(snap);
+          const place = placeOf(snap, input.tier);
           if (place) makeNemesis(unit, place);
           post.council = snap.id;
         }
@@ -187,40 +187,12 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
 }
 
 /** A member's nemesis place (its traits, its hp and attack on its wall): `nemesisBand`'s own, for a band of one. */
-function placeOf(s: NemSnap): ReturnType<typeof nemesisBand>['place'][number] | undefined {
-  return nemesisBand({ members: [s], waves: { '1': [s.id] } }, 1, [s.base], ASSAULT.tier).place[0];
-}
-
-/** A reinforcement band (4.4): five from the Warpath, in by the North Gate, joining the post that has lost the most. */
-export function reinforce(b: Battle, f: FieldState, h: HoldState, bp: Blueprint): PostState | undefined {
-  let best: PostState | undefined;
-  let lost = 0;
-  for (const p of h.posts) {
-    if (p.mood === 'routed') continue;
-    const g = f.groups[p.group];
-    const gone = p.muster - g.members.filter((id) => f.byId[id].alive).length;
-    if (gone > lost) {
-      lost = gone;
-      best = p;
-    }
-  }
-  const post = best ?? h.posts.find((p) => p.def.id === 'throne')!;
-  const g = f.groups[post.group];
-  const { foes } = garrisonBoosts(h.input.army, h.input.foeShare ?? ASSAULT.foeShare);
-  for (const c of bp.reinforce.roster.replace(/ /g, '')) {
-    const at = freeNear(b, f, bp.reinforce.at, false);
-    const unit = addFieldUnit(b, f, KIND[c], at, foes, g.id, g.members.length);
-    unit.busyUntil = b.t;
-    g.members.push(unit.id);
-    h.garrison.push(unit.id);
-  }
-  post.joined = (post.joined ?? 0) + 1;
-  post.muster += bp.reinforce.roster.replace(/ /g, '').length;
-  if (post.mood === 'posted') post.mood = 'alerted';
-  g.awake = true;
-  h.bands++;
-  return post;
+function placeOf(s: NemSnap, tier: number = ASSAULT.tier): ReturnType<typeof nemesisBand>['place'][number] | undefined {
+  return nemesisBand({ members: [s], waves: { '1': [s.id] } }, 1, [s.base], tier).place[0];
 }
 
 /** Whether a post is all archers (it keeps to its perch, its wall or its bank and shoots from there). */
 export const archersOnly = (p: PostDef): boolean => /^[A ]+$/.test(p.roster);
+
+/** The garrison's boosts for a hold under assault: its army, its share and its tier (Legendary, or Mythic for the Warband regrouped). */
+export const holdBoosts = (h: { input: AssaultInput }): ReturnType<typeof garrisonBoosts> => garrisonBoosts(h.input.army, h.input.foeShare ?? ASSAULT.foeShare, h.input.tier ?? ASSAULT.tier);

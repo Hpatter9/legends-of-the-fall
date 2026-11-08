@@ -144,6 +144,9 @@ export interface Tile {
   stream?: boolean;
   /** Deep ground drawn as a drop into the void, not water (a Calamity zone's chasm, `calZones.ts`; looks only: to the rules it is deep). */
   chasm?: boolean;
+  /** A siege ladder stands here (the Assault's, `assault/siege.ts`): the two tiles a ladder joins carry the same number, and a walker of
+   *  either side steps between them whatever the height. */
+  ladder?: number;
   /** A small number for picking the tile's tufts and flowers. */
   deco: number;
 }
@@ -284,6 +287,8 @@ export function canStep(from: Tile, to: Tile, jump: number, side?: 'hero' | 'foe
   // (`side` opens a raised wall that lets that side through, RPG-SPELLS; with none, it is `standable`)
   if (solidFor(to, side) || to.ground === 'deep' || to.scene) return null;
   const rise = to.h - from.h;
+  // (up or down a siege ladder: slow, a climb each step of it)
+  if (from.ladder && from.ladder === to.ladder) return 1 + Math.abs(rise) * CLIMB_COST;
   if (rise > jump || -rise > jump + DROP_EXTRA) return null;
   return 1 + (rise > 0 ? rise * CLIMB_COST : 0) + (to.ground ? GROUND_COST[to.ground] : 0);
 }

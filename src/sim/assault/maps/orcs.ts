@@ -93,9 +93,22 @@ export const BLOODTUSK: Blueprint = {
     { kind: 'perch', name: 'The East Watchtower', rect: { u0: 91, v0: 21, u1: 93, v1: 23 }, h: 8, ramp: { u: 94, v: 22 }, dir: [1, 0] },
     // the wolf pens under the east watchtower, the lumber camp's log piles, the shrine on its knoll
     { kind: 'fence', rect: { u0: 84, v0: 27, u1: 89, v1: 32 } },
-    { kind: 'solid', name: 'Log pile', rect: { u0: 14, v0: 70, u1: 15, v1: 70 } },
-    { kind: 'solid', name: 'Log pile', rect: { u0: 18, v0: 75, u1: 19, v1: 75 } },
-    { kind: 'solid', name: 'Log pile', rect: { u0: 13, v0: 74, u1: 13, v1: 75 } },
+    { kind: 'solid', name: 'Log pile', rect: { u0: 14, v0: 70, u1: 15, v1: 70 }, burns: true },
+    { kind: 'solid', name: 'Log pile', rect: { u0: 18, v0: 75, u1: 19, v1: 75 }, burns: true },
+    { kind: 'solid', name: 'Log pile', rect: { u0: 13, v0: 74, u1: 13, v1: 75 }, burns: true },
+    // (phase 1b: the camps of the Killing Fields: the raiders' camp outside the palisade's east side, the drums' war tents, their fires)
+    { kind: 'solid', name: 'War tent', rect: { u0: 87, v0: 43, u1: 88, v1: 43 }, burns: true },
+    { kind: 'solid', name: 'War tent', rect: { u0: 90, v0: 46, u1: 90, v1: 47 }, burns: true },
+    { kind: 'solid', name: 'Bonfire', rect: { u0: 89, v0: 45, u1: 89, v1: 45 } },
+    { kind: 'solid', name: 'War tent', rect: { u0: 20, v0: 83, u1: 21, v1: 83 }, burns: true },
+    { kind: 'solid', name: 'Bonfire', rect: { u0: 22, v0: 88, u1: 22, v1: 88 } },
+    { kind: 'solid', name: 'War tent', rect: { u0: 83, v0: 20, u1: 83, v1: 21 }, burns: true },
+    { kind: 'solid', name: 'Bonfire', rect: { u0: 88, v0: 22, u1: 88, v1: 22 } },
+    { kind: 'solid', name: 'Bonfire', rect: { u0: 17, v0: 73, u1: 17, v1: 73 } },
+    // (phase 1b: the Warpath's reserve camp, whose tents burn)
+    { kind: 'solid', name: 'Reserve tent', rect: { u0: 8, v0: 10, u1: 9, v1: 10 }, burns: true },
+    { kind: 'solid', name: 'Reserve tent', rect: { u0: 11, v0: 7, u1: 11, v1: 8 }, burns: true },
+    { kind: 'solid', name: 'Reserve tent', rect: { u0: 16, v0: 9, u1: 16, v1: 10 }, burns: true },
     { kind: 'height', rect: { u0: 65, v0: 85, u1: 67, v1: 87 }, h: 5 },
     { kind: 'ground', rect: { u0: 66, v0: 86, u1: 66, v1: 86 }, ground: 'shrine' },
     // the three war drums
@@ -111,9 +124,14 @@ export const BLOODTUSK: Blueprint = {
     { kind: 'perch', name: 'The South Gate’s north tower', rect: { u0: 70, v0: 55, u1: 71, v1: 56 }, h: 6 },
     { kind: 'perch', name: 'The South Gate’s south tower', rect: { u0: 70, v0: 61, u1: 71, v1: 62 }, h: 6 },
     // the outer bailey: three longhouses, the forge and its barrels, the training pit, the beast pens, the Bonefire
-    { kind: 'solid', name: 'Longhouse', rect: { u0: 63, v0: 31, u1: 65, v1: 32 } },
-    { kind: 'solid', name: 'Longhouse', rect: { u0: 66, v0: 35, u1: 68, v1: 36 } },
-    { kind: 'solid', name: 'Longhouse', rect: { u0: 31, v0: 63, u1: 32, v1: 65 } },
+    { kind: 'solid', name: 'Longhouse', rect: { u0: 63, v0: 31, u1: 65, v1: 32 }, burns: true },
+    { kind: 'solid', name: 'Longhouse', rect: { u0: 66, v0: 35, u1: 68, v1: 36 }, burns: true },
+    { kind: 'solid', name: 'Longhouse', rect: { u0: 31, v0: 63, u1: 32, v1: 65 }, burns: true },
+    // (phase 1b: the hide huts between them, for the fire arrows)
+    { kind: 'solid', name: 'Hide hut', rect: { u0: 45, v0: 65, u1: 45, v1: 65 }, burns: true },
+    { kind: 'solid', name: 'Hide hut', rect: { u0: 54, v0: 67, u1: 54, v1: 67 }, burns: true },
+    { kind: 'solid', name: 'Hide hut', rect: { u0: 66, v0: 45, u1: 66, v1: 45 }, burns: true },
+    { kind: 'solid', name: 'Hide hut', rect: { u0: 63, v0: 38, u1: 63, v1: 38 }, burns: true },
     { kind: 'ground', rect: { u0: 63, v0: 52, u1: 65, v1: 54 }, ground: 'coals' },
     { kind: 'barrel', at: { u: 66, v: 52 } },
     { kind: 'barrel', at: { u: 66, v: 55 } },
@@ -133,6 +151,8 @@ export const BLOODTUSK: Blueprint = {
     { kind: 'stair', from: { u: 58, v: 48 }, dir: [-1, 0], h0: 3, dh: 1, n: 7, wide: 3 },
     { kind: 'stair', from: { u: 41, v: 49 }, dir: [1, 0], h0: 3, dh: 1, n: 7 },
     // the throne's yard: the skull throne, braziers and the war banner
+    // (phase 1b: the keep's hall behind the throne, on the mound's back terraces)
+    { kind: 'solid', name: 'The keep’s hall', rect: { u0: 44, v0: 44, u1: 46, v1: 46 } },
     { kind: 'piece', at: { u: 48, v: 47 }, piece: 'skulls' },
     { kind: 'piece', at: { u: 47, v: 48 }, piece: 'brazier' },
     { kind: 'piece', at: { u: 51, v: 47 }, piece: 'brazier' },
@@ -186,6 +206,7 @@ export const BLOODTUSK: Blueprint = {
     { id: 'throne', name: 'The Throne Mound', zone: 'keep', at: { u: 49, v: 49 }, roster: 'K CC BBBBBBB' },
   ],
   reinforce: { at: { u: 31, v: 40 }, roster: 'GGG A B', bands: 4 },
+  warpath: { u: 13, v: 13 },
   approaches: [
     { id: 'west', name: 'the West Ford', way: [{ u: 80, v: 97 }, { u: 67, v: 98 }, { u: 62, v: 97 }, { u: 57, v: 92 }, { u: 50, v: 86 }] },
     { id: 'bridge', name: 'the Old Bridge', way: [{ u: 85, v: 84 }, { u: 81, v: 79 }, { u: 78, v: 76 }, { u: 78, v: 72 }, { u: 77, v: 64 }] },
