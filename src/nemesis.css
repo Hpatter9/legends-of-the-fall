@@ -166,3 +166,12 @@ body.inDuel #hudSpells, body.inDuel .ehHorn, body.inDuel #mana { visibility: hid
 .omChoice.nmSeat.nmBig .nmRankBadge { width: 28px; left: 3px; top: 3px; }
 .hm-battle .cpCouncilBadge { position: relative; z-index: 1; flex: none; width: 28px; height: 36px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 1px 2px #000); }
 .dcCrest { display: block; width: min(60%, 220px); height: auto; margin: 0 auto 4px; pointer-events: none; }
+
+/* Existing painted relics used for the named and muster News events retain smooth sampling. */
+.nmIcon.nmPainted { image-rendering: auto; }
+
+/* Learned trait symbols supplement the existing name and explanation; unknown traits stay anonymous. */
+.nmSecret.nmWithTrait { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 8px; }
+.nmTraitIcon { grid-row: 1 / span 2; width: 28px; height: 28px; image-rendering: pixelated; align-self: center; }
+.nmSecret.nmWithTrait b, .nmSecret.nmWithTrait small { grid-column: 2; }
+.nmBoard.paintedMenu .omHead { background: rgba(14, 10, 19, 0.28); }

@@ -66,3 +66,10 @@
 .ptBanner { align-self: center; max-width: calc(100% - 20px); padding: 1px 5px; border: 1px solid #bda16c; border-radius: 3px; font: 700 10px/1.3 var(--display, serif); color: #f3e2b0; background: #1a1208e6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
 .ptBanner.elder { border-color: #e8e4da; }
 .hsCard .omChoice { position: relative; }
+
+/* Painted dynasty symbols keep their smooth edges at menu sizes. */
+.hsPainted, #hmTop .hsSeasonChip .hsPainted { image-rendering: auto; }
+.hsHouseCrest { width: 100%; height: 100%; object-fit: contain; }
+.hsPage.paintedMenu .omCrest { background: none; width: 56px; height: 56px; }
+/* Let the tapestry read between the standard menu's opaque choice rows and wells. */
+.hsPage.paintedMenu .omHead { background: rgba(14, 12, 9, 0.28); }
