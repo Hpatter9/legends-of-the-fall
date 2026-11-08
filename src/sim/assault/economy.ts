@@ -30,6 +30,9 @@ export interface AssaultMeta {
   tribute?: number;
   /** The opening scene at the war table has played. */
   told?: true;
+  /** The muster's last plan and each platoon's formation, by hero kind (kept so the next muster opens as the last one was left). */
+  plan?: Record<string, 'west' | 'bridge' | 'east'>;
+  formations?: Record<string, 'wall' | 'spearhead' | 'square' | 'skirmish'>;
 }
 
 export const newAssault = (): AssaultMeta => ({ v: 1, troops: {}, conquered: {}, tries: {} });
@@ -56,6 +59,15 @@ export function readAssault(raw: unknown): AssaultMeta | undefined {
     for (const [a, n] of Object.entries(r.tries)) if (armyById(a) && typeof n === 'number' && n > 0) out.tries[a] = Math.floor(n);
   if (typeof r.tribute === 'number' && Number.isFinite(r.tribute)) out.tribute = r.tribute | 0;
   if (r.told === true) out.told = true;
+  const pick = <T extends string>(raw: unknown, ok: readonly T[]): Record<string, T> | undefined => {
+    if (!raw || typeof raw !== 'object') return undefined;
+    const o = Object.fromEntries(Object.entries(raw).filter(([, x]) => ok.includes(x as T))) as Record<string, T>;
+    return Object.keys(o).length ? o : undefined;
+  };
+  const plan = pick(r.plan, ['west', 'bridge', 'east'] as const);
+  if (plan) out.plan = plan;
+  const forms = pick(r.formations, ['wall', 'spearhead', 'square', 'skirmish'] as const);
+  if (forms) out.formations = forms;
   return out;
 }
 

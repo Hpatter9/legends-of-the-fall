@@ -18,6 +18,9 @@ import type { FieldEvent } from '../sim/assault/spike';
 import type { Tile } from '../sim/board';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 import { TERRAIN_URLS } from './terrainArt';
+import { loadRoadArt, piece, setPiece } from './roadArt';
+import { UNITS } from '../sim/units';
+import { rankOf } from '../sim/assault/troops';
 import { loadImage } from './loadImage';
 import { facesRight, FOOT, HH, rawAt, TH, TW } from './iso';
 import { facesRightOf, figureOf, framesOf, type Anim } from './sheets';
@@ -78,6 +81,8 @@ export async function loadFieldArt(): Promise<void> {
     land('highlands'), land('warcamp'), loadImage(GROUND_URLS.water), loadImage(TERRAIN_URLS.planks),
     Promise.all(BUSH_URLS.map(tex)), Promise.all(TERRAIN_URLS.walls.map(tex)), tex(gateUrl), tex(impactUrl), tex(arrowUrl),
   ]);
+  // (the set pieces' atlas: the drums, tents, flags, fires and braziers of the arenas)
+  await loadRoadArt();
   // (the impact strip: seven frames of 48 x 48)
   const sparks = Array.from({ length: 7 }, (_, i) => new Texture({ source: impact.source, frame: new Rectangle(i * 48, 0, 48, 48) }));
   art = { highlands, warcamp, water, planks, bushes, walls, gate, sparks, arrow };
@@ -113,7 +118,12 @@ export class FieldView {
   private banners: Text[] = [];
   private fxLive: FxLive[] = [];
   private fxPool: Sprite[] = [];
-  private rings: { hero: Texture; foe: Texture };
+  private rings: { hero: Texture; foe: Texture; chosen: Texture; elite: Texture };
+  /** The platoon chosen on the command bar (its fighters' rings are gold), or -1. */
+  chosen = -1;
+  /** The tiles a set piece stands on (the hold's pieces: drums, tents, flags...), and each gate's first tile (its picture). */
+  private pieceAt = new Map<number, string>();
+  private gateAt = new Set<number>();
   private frame = 0;
   detail: Detail = 'near';
   /** What the last frame drew (for the bench's readout). */
@@ -133,7 +143,11 @@ export class FieldView {
       g.destroy();
       return t;
     };
-    this.rings = { hero: ring(0x4a9cff), foe: ring(0xff4a4a) };
+    this.rings = { hero: ring(0x4a9cff), foe: ring(0xff4a4a), chosen: ring(0xffd76a), elite: ring(0xe0b84a) };
+    const w = this.b.board.w;
+    for (const p of this.b.board.pieces ?? []) this.pieceAt.set(p.v * w + p.u, p.kind);
+    // (the hold's gates: the camp's gate on each one's first tile; the drums are set pieces)
+    for (const f of this.b.field?.hold?.forts ?? []) if (f.spec.kind !== 'palisade' && f.spec.kind !== 'drum') this.gateAt.add(f.spec.tiles[0]);
     this.bakeOverview();
     const bd = this.b.board;
     this.heights = chunkHeights(bd.w, bd.d, (u, v) => bd.tiles[v * bd.w + u].h);
@@ -279,6 +293,25 @@ export class FieldView {
   /** The tall thing on a tile, if any: a boulder, a bush, a piece of palisade, a gate. */
   private propOf(t: Tile, i: number): Sprite | null {
     const a = art!;
+    // (a set piece of the hold: its picture from the arenas' atlas)
+    const pk = this.pieceAt.get(i);
+    if (pk) {
+      const pic = setPiece(pk as Parameters<typeof setPiece>[0], this.b.board.area);
+      const tex = piece(pic.name);
+      if (tex) {
+        const s = new Sprite(tex);
+        s.anchor.set(pic.ax ?? 0.5, pic.ay ?? 0.84);
+        s.scale.set(pic.scale);
+        return s;
+      }
+    }
+    if (this.gateAt.has(i)) {
+      const s = new Sprite(a.gate);
+      s.anchor.set(0.5, 0.85);
+      s.scale.set(0.8);
+      s.label = `gate:${i}`;
+      return s;
+    }
     if (t.rock) {
       const set = this.landOf(i).boulders;
       const tex = set[t.deco % set.length];
@@ -451,9 +484,18 @@ export class FieldView {
         this.unitLayer.addChild(s.ring, s.body);
         this.sprites.set(x.id, s);
       }
-      const info = f.info[x.id];
+      // (a fighter a skill called up has no place in the field's lists: its own kind's numbers and sheet)
+      const info = f.info[x.id] ?? { def: UNITS[x.def], sheet: UNITS[x.def].sheet, role: 'leader' as const, group: -1, slot: 0 };
       const [anim, ms] = this.animOf(x, simT);
       const frames = framesOf(info.sheet, anim);
+      // (a sheet not loaded: nothing to draw for it)
+      if (!frames?.length) {
+        seen.delete(x.id);
+        s.body.visible = false;
+        s.ring.visible = false;
+        continue;
+      }
+      s.body.visible = true;
       const per = anim === 'dead' ? 120 : anim === 'attack' ? Math.max(60, (x.swing?.ms ?? 500) / frames.length) : 110;
       const k = anim === 'dead' ? Math.min(frames.length - 1, Math.floor(ms / per)) : Math.floor(ms / per) % frames.length;
       s.body.texture = frames[k];
@@ -466,7 +508,8 @@ export class FieldView {
       s.body.zIndex = depth + 5;
       s.body.tint = x.alive && x.hurtAt !== undefined && simT - x.hurtAt < 120 ? 0xff9a9a : 0xffffff;
       s.body.alpha = x.alive ? 1 : Math.max(0, 1 - (simT - (x.diedAt ?? 0)) / 1200);
-      s.ring.texture = x.side === 'hero' ? this.rings.hero : this.rings.foe;
+      // (the chosen platoon's rings are gold; an Elite soldier's a darker gold, its glint at Near)
+      s.ring.texture = x.side !== 'hero' ? this.rings.foe : info.group >= 0 && info.group === this.chosen ? this.rings.chosen : !mid && this.eliteOf(x.id) ? this.rings.elite : this.rings.hero;
       s.ring.position.set(px, py + 2);
       s.ring.zIndex = depth + 3;
       s.ring.visible = x.alive;
@@ -515,6 +558,14 @@ export class FieldView {
       }
       this.drawn.fx++;
     }
+  }
+
+  /** Whether a soldier of ours is an Elite (6 marks or more). */
+  private eliteOf(id: number): boolean {
+    const h = this.b.field?.hold;
+    if (!h) return false;
+    for (const p of h.platoons) for (const x of p.soldiers) if (x.id === id) return rankOf(x.marks).rank === 'elite';
+    return false;
   }
 
   private addFx(kind: 'spark' | 'arrow', simT: number, ms: number, at: [number, number], to?: [number, number]): void {

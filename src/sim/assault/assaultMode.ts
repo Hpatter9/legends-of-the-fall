@@ -32,6 +32,9 @@ import { rankOf, type PlatoonFormation } from './troops';
 
 /** The grade the heroes fight at in the Assault: the late waves' merged third grade of an army run. */
 export const ASSAULT_GRADE = 3;
+/** An assault counts as fought (its survivors' mark for living through it, the heroes' XP) once it has lasted this long, or was won: a
+ *  retreat sounded at the start is not a battle survived. */
+export const FOUGHT_MS = 120_000;
 /** The salt of a Conquest chest's seed. */
 const CONQUEST_SALT = 0xc0a9e5;
 
@@ -118,6 +121,7 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
   const won = h.outcome === 'won';
   const a = assaultOf(m);
   a.tries[army] = (a.tries[army] ?? 0) + 1;
+  const fought = won || b.t >= FOUGHT_MS;
   // the platoons: the fallen struck (already, as they fell: here again in case), the survivors' marks
   const platoons = h.platoons.map((pl) => {
     const list = a.troops[pl.hero] ?? [];
@@ -136,7 +140,8 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
       }
       survivors++;
       const was = rankOf(s.marks).rank;
-      const marks = Math.min(MARKS_MAX, s.marks + marksEarned((kills[s.id] ?? 0) + (h.fortKills[s.id] ?? 0), won));
+      const k = (kills[s.id] ?? 0) + (h.fortKills[s.id] ?? 0);
+      const marks = Math.min(MARKS_MAX, s.marks + (fought ? marksEarned(k, won) : Math.floor(k / 3)));
       if (rankOf(marks).rank !== was) promoted++;
       if (s.index < list.length && list[s.index] >= 0) list[s.index] = marks;
     }
@@ -144,7 +149,7 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
     return { hero: pl.hero, survivors, fallen, fallenRanks, promoted };
   });
   // the heroes' XP
-  const xp = assaultXp(army, won);
+  const xp = fought ? assaultXp(army, won) : 0;
   const levelUps = gainXp(m, Object.fromEntries(h.platoons.map((pl) => [pl.hero, xp])));
   // the War: as an army run's settle, on the Legendary tier
   let war: NemNote | undefined;

@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ASSAULT_PRICES, assaultOpen, buyRecruit, canAssault, claimTribute, fillCost, fillRanks, marksEarned, noteFallen, readAssault, spoilsOf, troopsOf, tributeDue } from '../src/sim/assault/economy';
-import { settleAssault, assaultXp } from '../src/sim/assault/assaultMode';
+import { settleAssault, assaultXp, FOUGHT_MS } from '../src/sim/assault/assaultMode';
 import { startedMeta, loadMeta, saveMeta, type Meta } from '../src/sim/meta';
 import { recordOf } from '../src/sim/armies';
 import { soundRetreat } from '../src/sim/assault/platoons';
@@ -103,6 +103,8 @@ for (const how of ['won', 'lost', 'withdrawn'] as const)
     fell(b, h.platoons[1].soldiers[0].id);
     stepBattle(b);
     for (const e of h.events) if (e.kind === 'fell') noteFallen(m, h.platoons[e.platoon].hero, e.index);
+    // (an assault counts as fought after two minutes: the survivors' mark and the XP)
+    b.t = Math.max(b.t, FOUGHT_MS);
     if (how === 'won') {
       fell(b, h.lord);
       steps(b, 80);
@@ -133,3 +135,14 @@ for (const how of ['won', 'lost', 'withdrawn'] as const)
       assert.ok(!m.assault!.conquered.orcs);
     }
   });
+
+test('a retreat sounded at the start earns no marks for living and no XP', () => {
+  const m = saveWith(10000);
+  for (const k of PARTY) fillRanks(m, k);
+  const b = quiet({ troops: Object.fromEntries(PARTY.map((k) => [k, troopsOf(m, k)])) });
+  soundRetreat(b);
+  stepBattle(b);
+  const r = settleAssault(m, b, 20261108);
+  assert.equal(r.xp, 0);
+  assert.ok(troopsOf(m, 'archer').every((x) => x === 0));
+});

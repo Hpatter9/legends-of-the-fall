@@ -6,14 +6,20 @@
 // The camera starts close in and drifts to the fiercest fight (the most blows in the last three seconds, in an 8 x 8-tile square), as
 // the design's camera does; drag to pan, pinch or the wheel to zoom, and the buttons jump between the three levels of detail.
 //
+// Since phase 1 (`docs/notes/assault-1.md`) it plays a whole assault on Bloodtusk Hold: the five heroes with their full minds and their platoons,
+// the bot playing, against the garrison's 200 (`benchInput.ts`); `&spike=1` plays phase 0's engine spike.
+//
 //   ?bench=assault              Near, following the fight
+//   &spike=1                    phase 0's engine spike instead of the hold
 //   &lod=mid | far              start at Mid or Far
 //   &speed=2                    the battle at double speed (the sim runs twice a tick's work a frame-second)
 //   &seed=7                     the first fight's seed
 
 import { Application } from 'pixi.js';
 import { startSpike, stepSpike, SPIKE_PLATOONS, SPIKE_TROOPS, type FieldEvent } from './sim/assault/spike';
-import { TICK_MS, type Battle } from './sim/battle';
+import { startAssault, stepAssault } from './sim/assault/assault';
+import { benchInput } from './sim/assault/benchInput';
+import { TICK_MS, type Battle, type BattleEvent } from './sim/battle';
 import { UNITS } from './sim/units';
 import { BUCKET } from './sim/assault/field';
 import { FieldView, loadFieldArt, MID_AT, NEAR_AT, type Detail } from './render/fieldView';
@@ -59,10 +65,22 @@ const p95 = (xs: readonly number[]) => {
   return s[Math.min(s.length - 1, Math.floor(s.length * 0.95))];
 };
 
+/** The battle's events as the field's renderer reads them (a blow, a hit, a breach). */
+function fieldEvents(b: Battle, ev: readonly BattleEvent[]): FieldEvent[] {
+  const out: FieldEvent[] = [];
+  for (const e of ev) {
+    if (e.kind === 'swing' && e.to >= 0) out.push({ kind: 'blow', by: e.by, to: e.to, shot: !!UNITS[b.field!.byId[e.by]?.def ?? '']?.shot });
+    else if (e.kind === 'hit') out.push({ kind: 'hit', to: e.to, dmg: e.dmg });
+  }
+  for (const e of b.field?.hold?.events ?? []) if (e.kind === 'breach' || e.kind === 'open') out.push({ kind: 'breach', tiles: e.tiles });
+  return out;
+}
+
 export async function startAssaultBench(): Promise<void> {
   const query = new URLSearchParams(location.search);
   const speed = Math.max(1, Math.min(4, Number(query.get('speed')) || 1));
   let seed = Number(query.get('seed')) || 1;
+  const spike = query.get('spike') === '1';
   // (the page's own layer over the game's: the game is not started)
   document.getElementById('loading')?.setAttribute('hidden', '');
   const host = document.createElement('div');
@@ -85,6 +103,8 @@ export async function startAssaultBench(): Promise<void> {
     sheets.add(UNITS[p.hero].sheet);
     sheets.add(SPIKE_TROOPS[p.troop].sheet);
   }
+  // (the hold's fighters: every sheet its first assault stands)
+  if (!spike) for (const x of startAssault(benchInput(1)).units) sheets.add(UNITS[x.def].sheet);
   await Promise.all([loadSomeSheets([...sheets]), loadFieldArt(), document.fonts?.load('700 16px "Alegreya Sans"').catch(() => {})]);
 
   let b: Battle;
@@ -100,7 +120,7 @@ export async function startAssaultBench(): Promise<void> {
   let follow = true;
   const begin = () => {
     view?.destroy();
-    b = startSpike(seed);
+    b = spike ? startSpike(seed) : startAssault(benchInput(seed));
     view = new FieldView(b, app.renderer);
     app.stage.removeChildren();
     app.stage.addChild(view.root);
@@ -202,7 +222,7 @@ export async function startAssaultBench(): Promise<void> {
       let n = 0;
       while (acc >= TICK_MS && n < 8) {
         const a = performance.now();
-        const ev = stepSpike(b);
+        const ev = spike ? stepSpike(b) : fieldEvents(b, stepAssault(b));
         const ms = performance.now() - a;
         simMs.push(ms);
         if (simMs.length > TICK_WINDOW) simMs.shift();
