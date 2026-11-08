@@ -60,7 +60,7 @@ export const TUNE1: Readonly<Record<string, number>> = {
   shambler: 2.17, // (the joint rebalance: 2.713 to 2.17, level-10 parity, docs/notes/joint-rebalance.md) // (STATS batch 4: 2.087 to 2.713, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit) // (RPG-SPELLS batch 7: Contagion's rot; 0.78 was Rotting Touch's)
   rifleBot: 0.5, // (0.708 to 0.5 when nine heroes joined and the roster average moved, docs/notes/heroes-join.md)
   mercenary: 0.595,
-  mummy: 1.003, // (STATS batch 4: 0.59 to 1.003, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
+  mummy: 1.5, // (1.003 to 1.5 when the other eleven of the twenty joined and the roster average moved, docs/notes/heroes-join-2.md) (STATS batch 4: 0.59 to 1.003, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)
   buccaneer: 0.486,
   wolfBard: 0.272,
   beastmaster: 0.19, // (the joint rebalance: 0.154 to 0.19, level-1 parity, docs/notes/joint-rebalance.md) (STATS batch 4: 0.077 to 0.154, the owner's answer: the heroes who fell behind once armour and aim showed are lifted by their own kit)

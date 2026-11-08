@@ -28,6 +28,8 @@ export const EVERY_RANK = { title: 'Every rank', text: 'The same at every rank: 
 /** The one-word name a chip shows (the skills overhaul's batch 7): a chip has room for about 8 letters at 360 px. A name that is one short word
  *  stays whole; the rest are listed here, one word and unique within a hero's kit (a test checks both). The skill's full name is on its sheet. */
 export const CHIP_NAMES: Readonly<Record<string, string>> = {
+  // (the other eleven of the twenty, docs/notes/heroes-join-2.md: the names that are not one short word)
+  'Quarantine Line': 'Hedge', 'Concussion Mortar': 'Mortar', 'Retrograde Orbit': 'Orbit', 'Sanctuary Wings': 'Wings', 'Grappling Extraction': 'Extract', 'Whaler\'s Reel': 'Reel',
   // (the five Mythics, docs/notes/mythic-heroes.md)
   'Eclipse Cleave': 'Cleave', 'Solar Aegis': 'Aegis', Crownfall: 'Crown', Starbreath: 'Breath', 'Star Hunger': 'Hunger', 'Comet Lance': 'Comet',
   'Saint’s Spear': 'Spear', 'Unburied Mercy': 'Mercy', 'Broken Halo': 'Halo', Rootquake: 'Quake', 'Living Sanctuary': 'Haven', Heartwood: 'Heart',

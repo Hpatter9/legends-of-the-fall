@@ -83,10 +83,6 @@ export const DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: strin
   geomancer: { calling: 'archmage', skill: 'Tectonic Shove', ult: "Mountain's Embrace", plain: true },
   bellWarden: { calling: 'bulwark', skill: 'Bronze Peal', ult: 'Midnight Knell', plain: true },
   falconer: { calling: 'marksman', skill: 'Falcon Stoop', ult: 'Sky Hunt', plain: true },
-};
-
-/** The twenty coming heroes' callings and skill names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`); the test checks the names against their kits (`kits/coming.ts`). `plain`: their casts make no "one more" of anything (they do not read `extra`), so the deep rows give them strength instead. */
-export const COMING_DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: string; ult: string; plain: true }>> = {
   banneret: { calling: 'support', skill: 'Standard Charge', ult: 'Oriflamme of the Keep', plain: true },
   astralSphinx: { calling: 'duelist', skill: 'Rift Pounce', ult: 'The Last Riddle', plain: true },
   mirageDancer: { calling: 'duelist', skill: 'Whirling Veils', ult: 'Dance of Seven Mirages', plain: true },
@@ -98,6 +94,10 @@ export const COMING_DEEP_KITS: Readonly<Record<string, { calling: Calling; skill
   corsairSurgeon: { calling: 'healer', skill: 'Boarding Swing', ult: 'Rum Ration', plain: true },
   harpooner: { calling: 'marksman', skill: 'Barbed Harpoon', ult: 'Leviathan Line', plain: true },
   seaReaver: { calling: 'berserker', skill: 'Breaker Rush', ult: 'Wrath of the Reef', plain: true },
+};
+
+/** The twenty coming heroes' callings and skill names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`); the test checks the names against their kits (`kits/coming.ts`). `plain`: their casts make no "one more" of anything (they do not read `extra`), so the deep rows give them strength instead. */
+export const COMING_DEEP_KITS: Readonly<Record<string, { calling: Calling; skill: string; ult: string; plain: true }>> = {
 };
 
 type Stats = Partial<Record<StatKey, number>>;

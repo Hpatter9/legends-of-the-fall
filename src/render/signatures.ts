@@ -791,6 +791,117 @@ export const SIGNATURES: Record<string, Signature> = {
     [s('dome', 'lightning-vortex', { z: 2 }), s('ripple', 'lightning-wave', { n: 3, z: 4.2, t: 0xb59cff }), s('orbit', 'lightning-sparkle', { n: 10, r: 34, t: 0xd8c8ff })],
     [s('pop', 'lightning-hit', { z: 1.3 })],
   ),
+  // ---- the other eleven of the twenty: skill 1 and ultimate (docs/notes/heroes-join-2.md)
+  'Standard Charge': sig(
+    [s('orbit', 'light-sparkle', { n: 6, r: 18 })],
+    [s('dash', 'light-strike', { z: 2 }), s('spray', 'light-sparkle', { n:8, t: 0xffd060 })],
+    [s('pop', 'light-hit', { z: 1.2 })],
+  ),
+  'Oriflamme of the Keep': sig(
+    [s('orbit', 'fire-sparkle', { n: 6, r: 18 })],
+    [s('dome', 'fire-aura', { z: 2, a: 0.7 }), s('ring', 'fire-circle', { z:3.2, t: 0xffa040 }), s('pillars', 'fire-pillar', { n:6, r:80, z:1.6, t: 0xffd070 })],
+    [s('pop', 'fire-hit', { z: 1.2 })],
+  ),
+  'Rift Pounce': sig(
+    [s('orbit', 'dark-sparkle', { n: 6, r: 18 })],
+    [s('dash', 'dark-slash', { z: 2 }), s('spray', 'dark-sparkle', { n:8, t: 0xc0a0ff })],
+    [s('pop', 'dark-hit', { z: 1.2 })],
+  ),
+  'The Last Riddle': sig(
+    [s('orbit', 'dark-sparkle', { n: 6, r: 18 })],
+    [s('ring', 'dark-rune', { z: 2 }), s('ripple', 'dark-circle', { n:3, z:4.2, t: 0x8a60d0 }), s('inward', 'dark-gather', { n:10, r:60, on:'foes', t: 0xc0a0ff })],
+    [s('pop', 'dark-hit', { z: 1.2 })],
+  ),
+  'Whirling Veils': sig(
+    [s('orbit', 'wind-sparkle', { n: 6, r: 18 })],
+    [s('ring', 'wind-wave', { z: 2 }), s('spiral', 'wind-sparkle', { n:8, r:30, t: 0x80e8e0 })],
+    [s('pop', 'wind-hit', { z: 1.2 })],
+  ),
+  'Dance of Seven Mirages': sig(
+    [s('orbit', 'wind-sparkle', { n: 6, r: 18 })],
+    [s('spiral', 'wind-vortex', { z: 2 }), s('ripple', 'wind-circle', { n:3, z:4, t: 0xc8b0f0 }), s('spray', 'wind-sparkle', { n:12, r:90, t: 0xe8d8ff })],
+    [s('pop', 'wind-hit', { z: 1.2 })],
+  ),
+  'Censer Swing': sig(
+    [s('orbit', 'poison-sparkle', { n: 6, r: 18 })],
+    [s('sweep', 'poison-wave', { z: 2 }), s('spray', 'poison-puff', { n:8, t: 0x90e040 })],
+    [s('pop', 'poison-hit', { z: 1.2 })],
+  ),
+  'Black Miasma': sig(
+    [s('orbit', 'poison-sparkle', { n: 6, r: 18 })],
+    [s('dome', 'poison-aura', { z: 2 }), s('ring', 'poison-circle', { z:3.4, t: 0x60b030 }), s('spray', 'poison-puff', { n:12, r:100, t: 0xa0f060 })],
+    [s('pop', 'poison-hit', { z: 1.2 })],
+  ),
+  'Concussion Mortar': sig(
+    [s('orbit', 'fire-sparkle', { n: 6, r: 18 })],
+    [s('pop', 'fire-explosion', { z: 2 }), s('ripple', 'fire-nova', { n:2, z:3.2, t: 0xffc060 })],
+    [s('pop', 'fire-hit', { z: 1.2 })],
+  ),
+  'Shell Storm': sig(
+    [s('orbit', 'fire-sparkle', { n: 6, r: 18 })],
+    [s('rain', 'fire-explosion', { z: 2 }), s('ripple', 'fire-circle', { n:3, z:4, t: 0xff9030 }), s('pillars', 'fire-spikes', { n:6, r:70, z:1.6, t: 0xffd080 })],
+    [s('pop', 'fire-hit', { z: 1.2 })],
+  ),
+  'Gravity Well': sig(
+    [s('orbit', 'dark-sparkle', { n: 6, r: 18 })],
+    [s('inward', 'dark-vortex', { z: 2 }), s('ring', 'dark-circle', { z:3, t: 0x6a48b0 })],
+    [s('pop', 'dark-hit', { z: 1.2 })],
+  ),
+  'Supernova Alignment': sig(
+    [s('orbit', 'light-sparkle', { n: 6, r: 18 })],
+    [s('flare', 'light-explosion', { z: 2 }), s('ripple', 'light-nova', { n:3, z:4.4, t: 0xffe080 }), s('spray', 'light-sparkle', { n:14, r:100, t: 0xfff0b0 })],
+    [s('pop', 'light-hit', { z: 1.2 })],
+  ),
+  'Chains of Judgement': sig(
+    [s('orbit', 'light-sparkle', { n: 6, r: 18 })],
+    [s('beam', 'light-spikes', { z: 2 }), s('spray', 'light-sparkle', { n:8, t: 0xffe890 })],
+    [s('pop', 'light-hit', { z: 1.2 })],
+  ),
+  'Solar Tribunal': sig(
+    [s('orbit', 'light-sparkle', { n: 6, r: 18 })],
+    [s('ring', 'light-circle', { z: 2 }), s('ripple', 'light-nova', { n:3, z:4.4, t: 0xffd060 }), s('pillars', 'light-pillar', { n:6, r:72, z:1.8, t: 0xfff0b0 })],
+    [s('pop', 'light-hit', { z: 1.2 })],
+  ),
+  'Halo Dive': sig(
+    [s('orbit', 'light-sparkle', { n: 6, r: 18 })],
+    [s('meteor', 'light-flame', { z: 2 }), s('dash', 'light-puff', { n:6, r:80, a:0.7, t: 0xfff0c0 })],
+    [s('pop', 'light-hit', { z: 1.2 })],
+  ),
+  'Descent of the Host': sig(
+    [s('orbit', 'light-sparkle', { n: 6, r: 18 })],
+    [s('rain', 'light-flame', { z: 2 }), s('ripple', 'light-nova', { n:3, z:4.4, t: 0xffe8a0 }), s('spray', 'light-sparkle', { n:14, r:100, t: 0xfff8d0 })],
+    [s('pop', 'light-hit', { z: 1.2 })],
+  ),
+  'Boarding Swing': sig(
+    [s('orbit', 'fire-sparkle', { n: 6, r: 18 })],
+    [s('dash', 'fire-slash', { z: 2 }), s('spray', 'fire-sparkle', { n:8, t: 0xffd090 })],
+    [s('pop', 'fire-hit', { z: 1.2 })],
+  ),
+  'Rum Ration': sig(
+    [s('orbit', 'forest-sparkle', { n: 6, r: 18 })],
+    [s('dome', 'forest-aura', { z: 2, a: 0.7 }), s('ring', 'forest-circle', { z:3, t: 0xe05060 }), s('spray', 'forest-sparkle', { n:12, r:80, t: 0xff8090 })],
+    [s('pop', 'forest-hit', { z: 1.2 })],
+  ),
+  'Barbed Harpoon': sig(
+    [s('orbit', 'ice-sparkle', { n: 6, r: 18 })],
+    [s('beam', 'ice-spikes', { z: 2 }), s('spray', 'ice-puff', { n:8, t: 0xa0f0f0 })],
+    [s('pop', 'ice-hit', { z: 1.2 })],
+  ),
+  'Leviathan Line': sig(
+    [s('orbit', 'ice-sparkle', { n: 6, r: 18 })],
+    [s('beam', 'ice-wave', { z: 2 }), s('ripple', 'ice-circle', { n:3, z:4, t: 0x40c0c8 }), s('spray', 'ice-puff', { n:12, r:100, t: 0xb0f8f8 })],
+    [s('pop', 'ice-hit', { z: 1.2 })],
+  ),
+  'Breaker Rush': sig(
+    [s('orbit', 'ice-sparkle', { n: 6, r: 18 })],
+    [s('ripple', 'ice-wave', { z: 2 }), s('spray', 'ice-puff', { n:8, t: 0xd0fff8 })],
+    [s('pop', 'ice-hit', { z: 1.2 })],
+  ),
+  'Wrath of the Reef': sig(
+    [s('orbit', 'ice-sparkle', { n: 6, r: 18 })],
+    [s('ring', 'ice-vortex', { z: 2 }), s('ripple', 'ice-wave', { n:3, z:4.4, t: 0x40b0b8 }), s('spray', 'earth-puff', { n:10, r:100, t: 0xe86050 })],
+    [s('pop', 'ice-hit', { z: 1.2 })],
+  ),
 };
 
 // The original arrangements remain, but every release and corresponding hit has its own authored silhouette.
