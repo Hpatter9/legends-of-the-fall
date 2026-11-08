@@ -244,7 +244,7 @@ export interface Run {
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic' } | MusterMode | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number } | QuestMode;
+export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic'; /** The Assault on the army's hold (its War settles as an army run's, `assaultMode.ts`). */ assault?: true } | MusterMode | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number } | QuestMode;
 /** The Nemesis War's Warchief's Muster (`muster.ts`): three waves on the warchief's army's land; `chief` is the warchief's id and `base`
  *  his fighter, fixed as it began. */
 export type MusterMode = { kind: 'muster'; army: string; tier?: number; chief: number; base: string };

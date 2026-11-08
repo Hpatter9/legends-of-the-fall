@@ -291,9 +291,11 @@ export const gearItem = (g: GearDrop): LootItem => ({ type: 'gear', text: `${ite
 function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   const daily = c.daily !== undefined;
   const roll = daily ? rollDailyChest(c.seed, c.bonus ?? 0) : rollChest(c.seed, armyById(c.army)!, c.at, c.tier);
-  const items: LootItem[] = [{ type: 'crowns', text: `${roll.crowns} crowns`, n: roll.crowns }];
-  if (apply) m.crowns += roll.crowns;
-  const stones = chestStones(c);
+  // (the Assault's Conquest chest: a gold chest's contents, half again its crowns and stones)
+  const crowns = c.conquest ? Math.round(roll.crowns * CONQUEST_SHARE) : roll.crowns;
+  const items: LootItem[] = [{ type: 'crowns', text: `${crowns} crowns`, n: crowns }];
+  if (apply) m.crowns += crowns;
+  const stones = c.conquest ? Math.ceil(chestStones(c) * CONQUEST_SHARE) : chestStones(c);
   if (apply) m.stones = (m.stones ?? 0) + stones;
   items.push(...stoneItems(stones, 0));
   // (XP tomes: on top of the rest, from a side stream of the chest's seed, so the crowns and gear roll as they always did)
@@ -326,6 +328,9 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   }
   return { at: c.at, kind: daily ? 'daily' : chestKind(c.at), army: c.army, items };
 }
+
+/** The Conquest chest pays this many times a gold chest's crowns and stones (the Assault, docs/notes/assault-1.md). */
+export const CONQUEST_SHARE = 1.5;
 
 /** Open the stash's chest at `index`: it leaves the stash and its rewards go into the meta, once. Null when there is no such chest. */
 export function openChest(m: Meta, index: number): Loot | null {
@@ -391,13 +396,13 @@ export function readStash(raw: unknown, rawArmies: unknown, seed: number): Stash
   const out: StashChest[] = [];
   const add = (c: StashChest) => {
     // (a tower chest is one of several a run pays, told apart by its seed; an army's milestone is given once)
-    if (!out.some((x) => (c.daily || x.daily ? x.daily === c.daily : c.tower || x.tower || c.first || x.first ? !!x.tower === !!c.tower && !!x.first === !!c.first && x.seed === c.seed : x.army === c.army && x.at === c.at))) out.push(c);
+    if (!out.some((x) => (c.daily || x.daily ? x.daily === c.daily : c.tower || x.tower || c.first || x.first || c.conquest || x.conquest ? !!x.tower === !!c.tower && !!x.first === !!c.first && !!x.conquest === !!c.conquest && x.seed === c.seed : x.army === c.army && x.at === c.at))) out.push(c);
   };
   if (Array.isArray(raw))
     for (const c of raw as Partial<StashChest>[]) {
       // (a daily chest names its date and has no army)
       if (c && c.army === 'daily' && /^\d{8}$/.test(String(c.daily)) && typeof c.seed === 'number') add({ army: 'daily', at: 3, tier: 0, seed: c.seed >>> 0, daily: c.daily as number, bonus: Math.max(0, Math.min(dailyStarsMax(c.daily as number), (c.bonus ?? 0) | 0)) });
-      else if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0, ...(c.tower === true ? { tower: true } : {}), ...(c.first === true ? { first: true } : {}), ...(c.dry === true ? { dry: true } : {}), ...(c.half === true ? { half: true } : {}) });
+      else if (c && typeof c.army === 'string' && armyById(c.army) && MILESTONES.includes(c.at as number) && typeof c.seed === 'number') add({ army: c.army, at: c.at as number, tier: Math.max(0, Math.min(TIERS.length - 1, (c.tier ?? 0) | 0)), seed: c.seed >>> 0, ...(c.tower === true ? { tower: true } : {}), ...(c.first === true ? { first: true } : {}), ...(c.dry === true ? { dry: true } : {}), ...(c.half === true ? { half: true } : {}), ...(c.conquest === true ? { conquest: true } : {}) });
     }
   // (the earlier format: a record with its given chests and the opened ones)
   if (rawArmies && typeof rawArmies === 'object')

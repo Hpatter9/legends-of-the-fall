@@ -1,0 +1,205 @@
+// Bloodtusk Hold, the Orc Warband's hold (phase 1, `docs/notes/assault-1.md`; the design's 2.3): its blueprint, drawn by hand. Up the
+// phone from the Landing at the south corner: the Redwater with the West Ford, the Old Bridge and its barricade, and the East Ford; the
+// Killing Fields with the watchtowers, the burnt village, the stake field, the wolf pens, the lumber camp, the meadows, the shrine and the
+// three war drums; the ditch, the earth bank and the palisade with the South Gate, two sally ports and the North Gate; the outer bailey
+// with its longhouses, forge, Bonefire, training pit and beast pens; the stone wall six steps above it, its corner towers and the Iron
+// Gate; the stepped mound with the throne at the heart; and the Warpath behind.
+//
+// The rings, in tiles (u and v alike): the ditch 24-25 and 74-75, the palisade 26-27 and 72-73, the bank 28-29 and 70-71, the outer
+// bailey 30-37 and 62-69, the stone wall 38-39 and 60-61, the inner bailey 40-43 and 56-59, the mound 44-55.
+//
+// One change from the design's numbers: its river (depth 140 to 148) would run into the palisade's south corner (depth 146 to 150), so the
+// Redwater runs at depth 156 to 163, and its fords cross at across -34 and +34 rather than -50 and +45 (further out is off the map at that
+// depth). Everything else keeps the design's order and roster.
+
+import type { Blueprint } from '../blueprint';
+
+const STENCIL: readonly string[] = [
+  'NNNNNNNNNNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNNKKKDDDDDDDDDDDDDDDDDDDDDDDDDDKKKKKKKKKKKK',
+  'NNNNNNNNKKKKDPPPPPPPPPPPPPPPPPPPPPPPPDKKKKKKKKKKKK',
+  'NNNNNNNKKKKKDPEEEEEEEEEEEEEEEEEEEEEEPDKKKKKKKKKKKK',
+  'NNNNNNKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKKKKKKKKKK',
+  'NNNNNKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKKKKKKKKKK',
+  'NNNNKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKKKKKKKKKK',
+  'NNNKKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKKKKKKKKKK',
+  'NNKKKKKKKKKKDPEBBBBSSSSSSSSSSSSBBBBEPDKKKKKKKKKKKK',
+  'NKKKKKKKKKKKDPEBBBBSIIIIIIIIIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSIIIIIIIIIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSIIIIIIIIIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSIIIIIIIIIISBBBBEPDKKKTKKKKKKKR',
+  'KKKKKKKKKKKKDPEBBBBSSSSSSSSSSSSBBBBEPDKKTTTKKKKKFR',
+  'KKKKKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKTTTTTKKKRFF',
+  'KKKKKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKTTTKKKRRRF',
+  'KKKKKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKTKKKRRRRK',
+  'KKKKKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKKKKRRRRKK',
+  'KKKKKKKKKKKKDPEEEEEEEEEEEEEEEEEEEEEEPDKKKKKRRRRKKL',
+  'KKKKKKKKKKKKDPPPPPPPPPPPPPPPPPPPPPPPPDKKKKRRRRKKLL',
+  'KKKKKKKKKKKKDDDDDDDDDDDDDDDDDDDDDDDDDDKKKRRRRKKLLL',
+  'KKKKKKKKKKKKKKKKKKKKKKKKVKKKKKKKKKKKKKKKRRRRKKLLLL',
+  'KKKKKKKKKKKKKKKKKKKKKKKVVVKKKKKKKKKKKKKYYRRKKLLLLL',
+  'KKKKKKKKKKKKKKKKKKKKKKVVVVVKKKKKKKKKKKRRYYKKLLLLLL',
+  'KKKKKKKKKKKKTTKKKKKKKVVVVVVVKKKKKKKKKRRRRKKLLLLLLL',
+  'KKKKKKKKKKKTTTTKKKKKKKVVVVVKKKKKKKKKRRRRKKLLLLLLLL',
+  'KKKKKKKKKKTTTTTTKKKKKKKVVVKKKKKKKKKRRRRKKLLLLLLCCL',
+  'KKKKKKKKKKTTTTTTKKKKKKKKVKKKKKKKKKRRRRKKLLLLLLCCCC',
+  'KKKKKKKKKKKTTTTKKKKKKKKKKKKKKKKKKRRRRKKLLLLLLCCCCC',
+  'KKKKKKKKKKKKTTKKKKKKKKKKKKKKKKKKRRRRKKLLLLLLCCCCCC',
+  'KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKRRRRKKLLLLLLCCCCCCC',
+  'KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKFFRRKKLLLLLLLCCCCCCC',
+  'KKKKKKKKKKKKKKKKKKKKKKKKKKKKKRRFFKKLLLLLLLLLCCCCCC',
+];
+
+export const BLOODTUSK: Blueprint = {
+  army: 'orcs',
+  name: 'Bloodtusk Hold',
+  stencil: STENCIL,
+  stamps: [
+    // the Redwater's crossings: the Old Bridge's barricade fort at its north end (a U of timber with a gap a tile wide, open behind)
+    { kind: 'barricade', tiles: [{ u: 76, v: 75 }, { u: 77, v: 75 }, { u: 79, v: 75 }, { u: 80, v: 75 }, { u: 80, v: 74 }, { u: 80, v: 73 }, { u: 80, v: 72 }, { u: 80, v: 71 }, { u: 80, v: 70 }] },
+    { kind: 'barrel', at: { u: 77, v: 73 } },
+    { kind: 'barrel', at: { u: 79, v: 71 } },
+    // (the reeds on the West Ford's far bank hide the village's ambush)
+    { kind: 'ground', rect: { u0: 55, v0: 92, u1: 59, v1: 95 }, ground: 'tall' },
+    // the roads: from the Landing to the bridge, through the fort, and north beside the ditch to the South Gate
+    { kind: 'paved', rect: { u0: 84, v0: 82, u1: 85, v1: 85 } },
+    { kind: 'paved', rect: { u0: 86, v0: 85, u1: 87, v1: 88 } },
+    { kind: 'paved', rect: { u0: 88, v0: 88, u1: 89, v1: 91 } },
+    { kind: 'paved', rect: { u0: 90, v0: 91, u1: 91, v1: 94 } },
+    { kind: 'paved', rect: { u0: 78, v0: 76, u1: 79, v1: 77 } },
+    { kind: 'paved', rect: { u0: 77, v0: 70, u1: 78, v1: 74 } },
+    { kind: 'paved', rect: { u0: 76, v0: 58, u1: 77, v1: 69 } },
+    // the stake field across the road, and the ditch's stakes (slower)
+    { kind: 'stakes', rect: { u0: 76, v0: 63, u1: 81, v1: 65 }, period: 3000, offset: 0 },
+    // the watchtowers on their crags, each with a ramp down
+    { kind: 'perch', name: 'The West Watchtower', rect: { u0: 21, v0: 91, u1: 23, v1: 93 }, h: 8, ramp: { u: 22, v: 94 }, dir: [0, 1] },
+    { kind: 'perch', name: 'The East Watchtower', rect: { u0: 91, v0: 21, u1: 93, v1: 23 }, h: 8, ramp: { u: 94, v: 22 }, dir: [1, 0] },
+    // the wolf pens under the east watchtower, the lumber camp's log piles, the shrine on its knoll
+    { kind: 'fence', rect: { u0: 84, v0: 27, u1: 89, v1: 32 } },
+    { kind: 'solid', name: 'Log pile', rect: { u0: 14, v0: 70, u1: 15, v1: 70 } },
+    { kind: 'solid', name: 'Log pile', rect: { u0: 18, v0: 75, u1: 19, v1: 75 } },
+    { kind: 'solid', name: 'Log pile', rect: { u0: 13, v0: 74, u1: 13, v1: 75 } },
+    { kind: 'height', rect: { u0: 65, v0: 85, u1: 67, v1: 87 }, h: 5 },
+    { kind: 'ground', rect: { u0: 66, v0: 86, u1: 66, v1: 86 }, ground: 'shrine' },
+    // the three war drums
+    { kind: 'drum', name: 'The West Drum', at: { u: 24, v: 86 } },
+    { kind: 'drum', name: 'The East Drum', at: { u: 86, v: 24 } },
+    { kind: 'drum', name: 'The Gate Drum', at: { u: 80, v: 61 } },
+    // the palisade's gates, each with a causeway over the ditch
+    { kind: 'gate', fort: 'southGate', name: 'The South Gate', rect: { u0: 72, v0: 58, u1: 73, v1: 59 }, floor: 4, causeway: { u0: 74, v0: 58, u1: 75, v1: 59 }, causewayH: 3 },
+    { kind: 'gate', fort: 'sallyPort', name: 'The West Sally Port', rect: { u0: 41, v0: 72, u1: 41, v1: 73 }, floor: 4, causeway: { u0: 41, v0: 74, u1: 41, v1: 75 }, causewayH: 3 },
+    { kind: 'gate', fort: 'sallyPort', name: 'The East Sally Port', rect: { u0: 72, v0: 41, u1: 73, v1: 41 }, floor: 4, causeway: { u0: 74, v0: 41, u1: 75, v1: 41 }, causewayH: 3 },
+    { kind: 'gate', fort: 'northGate', name: 'The North Gate', rect: { u0: 26, v0: 40, u1: 27, v1: 41 }, floor: 4, causeway: { u0: 24, v0: 40, u1: 25, v1: 41 }, causewayH: 3 },
+    // the South Gate's two towers on the bank
+    { kind: 'perch', name: 'The South Gate’s north tower', rect: { u0: 70, v0: 55, u1: 71, v1: 56 }, h: 6 },
+    { kind: 'perch', name: 'The South Gate’s south tower', rect: { u0: 70, v0: 61, u1: 71, v1: 62 }, h: 6 },
+    // the outer bailey: three longhouses, the forge and its barrels, the training pit, the beast pens, the Bonefire
+    { kind: 'solid', name: 'Longhouse', rect: { u0: 63, v0: 31, u1: 65, v1: 32 } },
+    { kind: 'solid', name: 'Longhouse', rect: { u0: 66, v0: 35, u1: 68, v1: 36 } },
+    { kind: 'solid', name: 'Longhouse', rect: { u0: 31, v0: 63, u1: 32, v1: 65 } },
+    { kind: 'ground', rect: { u0: 63, v0: 52, u1: 65, v1: 54 }, ground: 'coals' },
+    { kind: 'barrel', at: { u: 66, v: 52 } },
+    { kind: 'barrel', at: { u: 66, v: 55 } },
+    { kind: 'height', rect: { u0: 32, v0: 56, u1: 35, v1: 59 }, h: 1 },
+    { kind: 'fence', rect: { u0: 49, v0: 31, u1: 54, v1: 35 } },
+    { kind: 'piece', at: { u: 34, v: 50 }, piece: 'campfire' },
+    { kind: 'piece', at: { u: 35, v: 52 }, piece: 'skulls' },
+    // the stone wall: the Iron Gate, the four corner towers, two stairs up its inner face to the wall-walk
+    { kind: 'gate', fort: 'ironGate', name: 'The Iron Gate', rect: { u0: 60, v0: 49, u1: 61, v1: 50 }, floor: 2 },
+    { kind: 'perch', name: 'The north corner tower', rect: { u0: 38, v0: 38, u1: 40, v1: 40 }, h: 10 },
+    { kind: 'perch', name: 'The east corner tower', rect: { u0: 59, v0: 38, u1: 61, v1: 40 }, h: 10 },
+    { kind: 'perch', name: 'The west corner tower', rect: { u0: 38, v0: 59, u1: 40, v1: 61 }, h: 10 },
+    { kind: 'perch', name: 'The south corner tower', rect: { u0: 59, v0: 59, u1: 61, v1: 61 }, h: 10 },
+    { kind: 'stair', from: { u: 50, v: 59 }, dir: [1, 0], h0: 3, dh: 1, n: 6 },
+    { kind: 'stair', from: { u: 49, v: 40 }, dir: [-1, 0], h0: 3, dh: 1, n: 6 },
+    // the mound's staircases: the broad one on its south face, the narrow one on its north
+    { kind: 'stair', from: { u: 58, v: 48 }, dir: [-1, 0], h0: 3, dh: 1, n: 7, wide: 3 },
+    { kind: 'stair', from: { u: 41, v: 49 }, dir: [1, 0], h0: 3, dh: 1, n: 7 },
+    // the throne's yard: the skull throne, braziers and the war banner
+    { kind: 'piece', at: { u: 48, v: 47 }, piece: 'skulls' },
+    { kind: 'piece', at: { u: 47, v: 48 }, piece: 'brazier' },
+    { kind: 'piece', at: { u: 51, v: 47 }, piece: 'brazier' },
+    { kind: 'piece', at: { u: 49, v: 46 }, piece: 'flag' },
+    // our camp at the Landing: tents, fires and the rally flag
+    { kind: 'piece', at: { u: 93, v: 93 }, piece: 'flag' },
+    { kind: 'piece', at: { u: 95, v: 97 }, piece: 'tent' },
+    { kind: 'piece', at: { u: 97, v: 95 }, piece: 'tent' },
+    { kind: 'piece', at: { u: 98, v: 91 }, piece: 'tent' },
+    { kind: 'piece', at: { u: 91, v: 98 }, piece: 'tent' },
+    { kind: 'piece', at: { u: 98, v: 98 }, piece: 'tent' },
+    { kind: 'piece', at: { u: 88, v: 99 }, piece: 'tent' },
+    { kind: 'piece', at: { u: 95, v: 94 }, piece: 'campfire' },
+    { kind: 'piece', at: { u: 92, v: 96 }, piece: 'campfire' },
+  ],
+  posts: [
+    // the Killing Fields
+    { id: 'bridge', name: 'The Old Bridge barricade', zone: 'fields', at: { u: 78, v: 72 }, roster: 'L GGGGG AAA' },
+    { id: 'westTower', name: 'The West Watchtower', zone: 'fields', at: { u: 22, v: 92 }, roster: 'G AAAA' },
+    { id: 'eastTower', name: 'The East Watchtower', zone: 'fields', at: { u: 92, v: 22 }, roster: 'G AAAA' },
+    { id: 'westPatrol', name: 'The west patrol', zone: 'fields', at: { u: 34, v: 88 }, roster: 'GGGG AA', loop: [{ u: 34, v: 88 }, { u: 48, v: 84 }, { u: 60, v: 82 }, { u: 48, v: 84 }] },
+    { id: 'eastPatrol', name: 'The east patrol', zone: 'fields', at: { u: 88, v: 34 }, roster: 'GGGG AA', loop: [{ u: 88, v: 34 }, { u: 84, v: 48 }, { u: 82, v: 60 }, { u: 84, v: 48 }] },
+    { id: 'wolves', name: 'The wolf pens', zone: 'fields', at: { u: 86, v: 30 }, roster: 'GG WWWWWWWW', horn: true },
+    { id: 'lumber', name: 'The lumber camp', zone: 'fields', at: { u: 16, v: 72 }, roster: 'GGGGGG' },
+    { id: 'village', name: 'The burnt village ambush', zone: 'fields', at: { u: 56, v: 90 }, roster: 'GGGGGG' },
+    { id: 'drumW', name: 'The West Drum', zone: 'fields', at: { u: 25, v: 84 }, roster: 'L GGGG BB', guards: 'drumW' },
+    { id: 'drumE', name: 'The East Drum', zone: 'fields', at: { u: 84, v: 25 }, roster: 'L GGGG BB', guards: 'drumE' },
+    { id: 'drumS', name: 'The Gate Drum', zone: 'fields', at: { u: 80, v: 59 }, roster: 'L GGGG BB', guards: 'drumS' },
+    // the palisade
+    { id: 'southGate', name: 'The South Gate', zone: 'palisade', at: { u: 70, v: 58 }, roster: 'C GGGG AAAA BB', guards: 'southGate' },
+    { id: 'westPort', name: 'The West Sally Port', zone: 'palisade', at: { u: 41, v: 69 }, roster: 'GGG AA B', horn: true, guards: 'westPort' },
+    { id: 'eastPort', name: 'The East Sally Port', zone: 'palisade', at: { u: 69, v: 41 }, roster: 'GGG AA B', horn: true, guards: 'eastPort' },
+    { id: 'northGate', name: 'The North Gate', zone: 'palisade', at: { u: 31, v: 41 }, roster: 'GGG A' },
+    { id: 'bankSE', name: 'The bank’s archers (east)', zone: 'palisade', at: { u: 70, v: 47 }, roster: 'AAA' },
+    { id: 'bankSW', name: 'The bank’s archers (west)', zone: 'palisade', at: { u: 47, v: 70 }, roster: 'AAA' },
+    { id: 'bankS1', name: 'The bank’s archers (south)', zone: 'palisade', at: { u: 70, v: 66 }, roster: 'AAA' },
+    { id: 'bankS2', name: 'The bank’s archers (south-west)', zone: 'palisade', at: { u: 66, v: 70 }, roster: 'AAA' },
+    // the outer bailey
+    { id: 'barracks', name: 'The longhouses', zone: 'bailey', at: { u: 65, v: 34 }, roster: 'GGGGGGGGG BBBBB', horn: true },
+    { id: 'forge', name: 'The forge', zone: 'bailey', at: { u: 64, v: 56 }, roster: 'BBBBBB' },
+    { id: 'bonefire', name: 'The Bonefire and the training pit', zone: 'bailey', at: { u: 34, v: 52 }, roster: 'GGGGGG BB' },
+    { id: 'beasts', name: 'The beast pens', zone: 'bailey', at: { u: 52, v: 33 }, roster: 'WWWWWW', horn: true },
+    // the stone wall
+    { id: 'towerN', name: 'The north corner tower', zone: 'wall', at: { u: 39, v: 39 }, roster: 'AAA' },
+    { id: 'towerE', name: 'The east corner tower', zone: 'wall', at: { u: 60, v: 39 }, roster: 'AAA' },
+    { id: 'towerW', name: 'The west corner tower', zone: 'wall', at: { u: 39, v: 60 }, roster: 'AAA' },
+    { id: 'towerS', name: 'The south corner tower', zone: 'wall', at: { u: 60, v: 60 }, roster: 'AAA' },
+    { id: 'ironGate', name: 'The Iron Gate', zone: 'wall', at: { u: 57, v: 46 }, roster: 'C BBB GG A', guards: 'ironGate' },
+    { id: 'wallWalk', name: 'The wall-walk', zone: 'wall', at: { u: 60, v: 52 }, roster: 'AAAA', guards: 'ironGate' },
+    // the keep
+    { id: 'throne', name: 'The Throne Mound', zone: 'keep', at: { u: 49, v: 49 }, roster: 'K CC BBBBBBB' },
+  ],
+  reinforce: { at: { u: 31, v: 40 }, roster: 'GGG A B', bands: 4 },
+  approaches: [
+    { id: 'west', name: 'the West Ford', way: [{ u: 80, v: 97 }, { u: 67, v: 98 }, { u: 62, v: 97 }, { u: 57, v: 92 }, { u: 50, v: 86 }] },
+    { id: 'bridge', name: 'the Old Bridge', way: [{ u: 85, v: 84 }, { u: 81, v: 79 }, { u: 78, v: 76 }, { u: 78, v: 72 }, { u: 77, v: 64 }] },
+    { id: 'east', name: 'the East Ford', way: [{ u: 97, v: 80 }, { u: 98, v: 67 }, { u: 97, v: 63 }, { u: 92, v: 58 }, { u: 86, v: 50 }] },
+  ],
+  rally: { u: 93, v: 93 },
+  muster: [
+    { u: 89, v: 95 },
+    { u: 92, v: 91 },
+    { u: 95, v: 88 },
+    { u: 86, v: 97 },
+    { u: 97, v: 85 },
+  ],
+  throne: { u: 49, v: 49 },
+  northGate: { u: 22, v: 40 },
+  lands: { outer: 'highlands', inner: 'warcamp' },
+};

@@ -5,6 +5,7 @@ import { oneMythic, validMythicSquad } from './mythicRules';
 // raise the kind's rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM;
 // every pull draws from a side stream of the meta seed and the pull counter, so it replays exactly.
 
+import { readAssault } from './assault/economy';
 import { newCastle, readCastle, readChapel, readWorks, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { DAILY_WAVES } from './daily';
@@ -191,6 +192,9 @@ export interface Meta {
   tomes?: TomeCounts;
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
   stash: StashChest[];
+  /** The Assault (`src/sim/assault/economy.ts`, docs/notes/assault-1.md): the platoons, the holds conquered, the tries, the tribute. Saves from
+   *  before have none: nothing bought, nothing conquered. */
+  assault?: import('./assault/economy').AssaultMeta;
   /** The cinematics seen (`sceneRules.ts`, by id): each plays once at its moment, and the codex's Scenes list plays a seen one again. Saves from before have none. */
   scenes?: string[];
   /** Number of times Duchess has been tapped (unlocks Tiny Tin Crown at 5). */
@@ -260,6 +264,8 @@ export interface StashChest {
   dry?: boolean;
   /** QUESTS-3: a chest that holds half its stones, rounded up (a Calamity clear's). */
   half?: boolean;
+  /** The Assault: the Conquest chest a hold's first fall pays (a gold chest's size, half again its crowns and stones; one a hold). */
+  conquest?: boolean;
 }
 
 export interface DailyEntry {
@@ -574,6 +580,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)
       m.stash = readStash(m.stash, rawArmies, m.seed);
+      // (saves from before the Assault have none)
+      m.assault = readAssault(m.assault);
+      if (!m.assault) delete m.assault;
       // (saves from before the XP tomes have none)
       m.tomes = readTomes(m.tomes);
       if (!m.tomes) delete m.tomes;

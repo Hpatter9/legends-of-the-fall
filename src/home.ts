@@ -4,6 +4,9 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
+import { openMuster, openAssaultResult } from './assaultView';
+import { runAssault } from './assaultScene';
+import { claimTribute } from './sim/assault/economy';
 import { COUNCIL_BADGE } from './expansionArt';
 import { settleMourning } from './sim/oath';
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
@@ -1292,12 +1295,37 @@ export class Home {
           onFight: (id, tier, auto) => this.go(() => this.hooks.onArmy(id, tier, auto)),
           focus,
           onBack: () => this.closeSub(),
+          onAssault: (id) => this.openAssault(id),
+          onTribute: () => {
+            const n = claimTribute(this.meta, todayKey());
+            if (n) {
+              saveMeta(this.meta);
+              play('coinClaim');
+            }
+            return n;
+          },
         }),
       false,
       true,
     );
     // (the cards a new army lit have been seen now: they glow no more the next time)
     if (markSeen(this.meta)) saveMeta(this.meta);
+  }
+
+  /** The Assault (docs/notes/assault-1.md): the muster for an army's hold, then the battle over everything, then its result, and back to the
+   *  army card. */
+  openAssault(army: string): void {
+    const save = () => saveMeta(this.meta);
+    openMuster(this.meta, army, {
+      save,
+      onBack: () => this.openArmies(army),
+      onMarch: (plan) => {
+        void runAssault(this.meta, army, plan, {
+          save,
+          onEnd: (result) => openAssaultResult(this.meta, result, { onBack: () => this.openArmies(army), onFill: () => this.openAssault(army) }),
+        });
+      },
+    });
   }
 
   /** The achievements page; a Claim takes the crowns and stones, saves, and draws the page again. */

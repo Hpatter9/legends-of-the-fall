@@ -590,7 +590,8 @@ function settle(war: War, m: Meta, run: Run, b: Battle, tally: NemesisTally, won
     const deeds = deedsOf(f, u, b, won);
     if (!deeds.length) continue;
     const home = cls === 'escort' ? army : homeArmy(u.def) ?? army;
-    if (!home) continue;
+    // (a conquered army births no nemeses: the Assault, docs/notes/assault-1.md)
+    if (!home || m.assault?.conquered[home]) continue;
     // (a boss already a nemesis of the War does not have a twin)
     if (cls === 'boss' && war.members.some((n) => n.boss && n.base === u.def)) continue;
     const deed = deeds.find((d) => rng.next() < BIRTH[d][cls]);
