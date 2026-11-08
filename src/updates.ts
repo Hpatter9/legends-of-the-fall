@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.417.0',
+    date: '2026-11-08',
+    title: 'Assault: trebuchets, kegs and breaches',
+    notes: ['Loose trebuchet volleys, send sappers with powder kegs, breach the stone walls to rubble, and burn the Warpath camp to stop its bands.'],
+  },
+  {
+    version: '0.416.0',
+    date: '2026-11-08',
+    title: 'Menus, cards and halls come alive',
+    notes: ['Ornate menus catch the light, hero cards drift with motes, halos turn, castle chambers glow, and the loading beacon gutters.'],
+  },
+  {
     version: '0.415.0',
     date: '2026-11-08',
     title: 'Assault battles run smoother',
