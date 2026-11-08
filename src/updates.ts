@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.409.0',
+    date: '2026-11-08',
+    title: 'Assault: siege works and a living hold',
+    notes: ['Bloodtusk Hold is painted in full. Buy ladders and rams, loose fire arrows, pin the walls; the hold answers feints, sallies and sends wolves.'],
+  },
+  {
     version: '0.408.0',
     date: '2026-11-08',
     title: 'Effects may pulse and flicker freely',
