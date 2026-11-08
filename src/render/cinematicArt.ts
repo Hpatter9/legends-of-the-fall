@@ -4,27 +4,30 @@ import { Rectangle, Sprite, Texture } from 'pixi.js';
 import { loadImage } from './loadImage';
 import atlasUrl from '../art/fx/cinematic/painted-atlas.png';
 import accentsUrl from '../art/fx/cinematic/accents-atlas.png';
+import motionUrl from '../art/finishing/spell-motion.webp';
+import { paintedFrame, paintedMotionRow } from './paintedAnimation';
 import { FORMS, PALETTE, formOf, paintedPose, type Form, type PaintedElement, type PaintedPose } from './cinematicRules';
 import type { Element, Family } from './fxRules';
 
-interface Material { family: Family; form?: Form }
+interface Material { family: Family; form?: Form; clip?: readonly Texture[] }
 const materials = new WeakMap<Texture, Material>();
 const sources = new Map<string, Texture>();
 const strips = new Map<string, Texture[]>();
 let atlas: HTMLImageElement;
 let accents: HTMLImageElement;
+let motion: HTMLImageElement;
 let loading: Promise<void> | undefined;
 
 export function loadPaintedArt(): Promise<void> {
-  return loading ??= Promise.all([loadImage(atlasUrl), loadImage(accentsUrl)]).then(([main, detail]) => { atlas = main; accents = detail; });
+  return loading ??= Promise.all([loadImage(atlasUrl), loadImage(accentsUrl), loadImage(motionUrl)]).then(([main, detail, frames]) => { atlas = main; accents = detail; motion = frames; });
 }
 
 const native: Partial<Record<Form, Element>> = { slash: 'wind', orb: 'fire', fire: 'fire', bolt: 'lightning', ice: 'ice', shield: 'light', rune: 'light', heal: 'forest', poison: 'poison', dark: 'dark', spark: 'light', stone: 'earth', wind: 'wind', blood: 'blood', pillar: 'light',
   arrow: 'wind', bone: 'earth', heart: 'light', cross: 'forest', ripple: 'ice', splash: 'ice', sparks: 'light', dust: 'earth', dash: 'wind', soul: 'dark', fireRing: 'fire', vines: 'forest', beam: 'light', snare: 'earth', nova: 'dark', electric: 'lightning' };
 
 /** Keep native painted colour; other elements receive a luminance-preserving palette, with pale hot cores. */
-function surface(form: Form, el: PaintedElement): Texture {
-  const key = `${form}/${el}`;
+function surface(form: Form, el: PaintedElement, frame = 0): Texture {
+  const key = `${form}/${el}/${frame}`;
   const existing = sources.get(key);
   if (existing) return existing;
   const size = 128;
@@ -32,11 +35,12 @@ function surface(form: Form, el: PaintedElement): Texture {
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d')!;
   const slot = FORMS.indexOf(form);
-  const image = slot < 16 ? atlas : accents;
-  const cell = image.width / 4;
+  const row = paintedMotionRow(form);
+  const image = row >= 0 ? motion : slot < 16 ? atlas : accents;
+  const cell = image.width / (row >= 0 ? 6 : 4);
   const index = slot % 16;
   // Insets prevent neighbouring cells from bleeding into a filtered texture.
-  ctx.drawImage(image, (index % 4) * cell + 2, Math.floor(index / 4) * cell + 2, cell - 4, cell - 4, 4, 4, size - 8, size - 8);
+  ctx.drawImage(image, (row >= 0 ? frame : index % 4) * cell + 2, (row >= 0 ? row : Math.floor(index / 4)) * cell + 2, cell - 4, cell - 4, 4, 4, size - 8, size - 8);
   {
     const pixels = ctx.getImageData(0, 0, size, size);
     const c = PALETTE[el];
@@ -67,15 +71,25 @@ export function paintedStrip(el: PaintedElement, family: Family, form = formOf(e
   const existing = strips.get(key);
   if (existing) return existing;
   const base = surface(form, el);
-  const frames = materialFrames(base, family, form);
+  const sequence = paintedMotionRow(form) >= 0 ? Array.from({ length: 6 }, (_, i) => surface(form, el, i)) : undefined;
+  const frames = materialFrames(base, family, form, sequence);
   strips.set(key, frames);
   return frames;
 }
 
 /** Register a shared source with a logical 32px frame and continuous material motion. */
-export function materialFrames(base: Texture, family: Family, form?: Form): Texture[] {
-  base.source.style.scaleMode = 'linear';
-  const texture = new Texture({ source: base.source, frame: new Rectangle(0, 0, base.source.width, base.source.height), orig: new Rectangle(0, 0, 32, 32) });
+export function materialFrames(base: Texture, family: Family, form?: Form, sequence?: readonly Texture[]): Texture[] {
+  const logical = (source: Texture): Texture => {
+    source.source.style.scaleMode = 'linear';
+    return new Texture({ source: source.source, frame: new Rectangle(0, 0, source.source.width, source.source.height), orig: new Rectangle(0, 0, 32, 32) });
+  };
+  if (sequence) {
+    const clip = sequence.map(logical);
+    const material = { family, form, clip };
+    for (const texture of clip) materials.set(texture, material);
+    return clip;
+  }
+  const texture = logical(base);
   materials.set(texture, { family, form });
   return Array<Texture>(6).fill(texture);
 }
@@ -86,6 +100,7 @@ export function materialFrames(base: Texture, family: Family, form?: Form): Text
 export function paintSprite(sp: Sprite, elapsed: number, life: number, scale: number, rotation: number, alpha: number, loop: boolean, calm: boolean, flat = false): PaintedPose | false {
   const material = materials.get(sp.texture);
   if (!material) return false;
+  if (material.clip) sp.texture = material.clip[paintedFrame(elapsed, life, loop, calm)];
   const pose = paintedPose(material.family, elapsed / Math.max(1, life), elapsed, loop, calm, material.form);
   if (flat) pose.turn = 0;
   sp.scale.set(scale * pose.x, scale * pose.y);

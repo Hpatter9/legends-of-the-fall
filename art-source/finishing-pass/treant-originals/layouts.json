@@ -1,0 +1,62 @@
+{
+  "cls_treant": {
+    "w": 100,
+    "h": 96,
+    "perRow": 5,
+    "rows": [
+      "walk",
+      "attack",
+      "idle",
+      "dead"
+    ],
+    "counts": {
+      "walk": 5,
+      "attack": 5,
+      "idle": 4,
+      "dead": 5
+    },
+    "figure": 96,
+    "facesRight": true,
+    "lies": true
+  },
+  "cls_treant_2": {
+    "w": 134,
+    "h": 127,
+    "perRow": 5,
+    "rows": [
+      "walk",
+      "attack",
+      "idle",
+      "dead"
+    ],
+    "counts": {
+      "walk": 5,
+      "attack": 5,
+      "idle": 4,
+      "dead": 5
+    },
+    "figure": 125,
+    "facesRight": true,
+    "lies": true
+  },
+  "cls_treant_3": {
+    "w": 126,
+    "h": 125,
+    "perRow": 5,
+    "rows": [
+      "walk",
+      "attack",
+      "idle",
+      "dead"
+    ],
+    "counts": {
+      "walk": 5,
+      "attack": 5,
+      "idle": 4,
+      "dead": 5
+    },
+    "figure": 122,
+    "facesRight": true,
+    "lies": true
+  }
+}

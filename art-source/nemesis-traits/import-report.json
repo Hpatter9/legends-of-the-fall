@@ -1,0 +1,170 @@
+[
+  {
+    "id": "fireproof",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      17,
+      12,
+      110,
+      116
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "bane-arcane",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      16,
+      12,
+      112,
+      116
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "elusive",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      12,
+      12,
+      116,
+      115
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "rime",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      12,
+      14,
+      116,
+      113
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "venom",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      24,
+      12,
+      104,
+      116
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "thick",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      12,
+      22,
+      116,
+      105
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "grounded",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      20,
+      12,
+      108,
+      116
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "fearless",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      12,
+      21,
+      116,
+      106
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "bane-martial",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      12,
+      14,
+      116,
+      113
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "bane-devout",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      12,
+      16,
+      116,
+      112
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "bane-wild",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      12,
+      20,
+      116,
+      107
+    ],
+    "binaryAlpha": true
+  },
+  {
+    "id": "legendSlayer",
+    "size": [
+      128,
+      128
+    ],
+    "bounds": [
+      12,
+      16,
+      116,
+      111
+    ],
+    "binaryAlpha": true
+  }
+]

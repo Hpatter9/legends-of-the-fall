@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { BUILDING_IDS, maxLevel } from '../src/sim/castle';
-import { BLURB, builtWords, FRONT_ROW, cellX, cellY, decorAt, effectText, footprint, inBlock, isPaved, pavingAt, TOP_GAP, viewFor, VIEW_W, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, PLOT_IDS, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, WALL_RISE, WALL_STEP, YARD } from '../src/render/castleSpots';
+import { BLURB, CARD_SPRITES, builtWords, FRONT_ROW, cellX, cellY, decorAt, effectText, footprint, inBlock, isPaved, pavingAt, TOP_GAP, viewFor, VIEW_W, LIGHTS, lookFor, LOOKS, lookBox, pickScale, PLACE_IDS, PLACE_LOOK, PLACES, PLOT_IDS, SPRITE_SIZE, spriteName, stageOf, STAGES, TILE_H, TILE_W, VENTS, walkTiles, WALL_RISE, WALL_STEP, YARD } from '../src/render/castleSpots';
 
 const LAYOUTS = { yard: YARD };
 const looksOf = (id: (typeof BUILDING_IDS)[number]) => LOOKS[id];
@@ -21,7 +21,8 @@ test('every picture the looks and props name exists, and its size in the table i
 });
 
 test('every picture is used (by a look, a prop or the ground), and the ground tiles are one lattice cell across', () => {
-  const used = new Set<string>(['grass_tile', 'cobble_tile']);
+  // (the room buildings' paintings are shown on their cards, not in the yard)
+  const used = new Set<string>(['grass_tile', 'cobble_tile', ...CARD_SPRITES]);
   for (const id of BUILDING_IDS) for (const look of looksOf(id)) for (const p of look.parts) used.add(p.sprite);
   for (const id of PLACE_IDS) for (const p of PLACE_LOOK[id].parts) used.add(p.sprite);
   for (const lay of Object.values(LAYOUTS)) for (const p of lay.props) used.add(p.sprite);

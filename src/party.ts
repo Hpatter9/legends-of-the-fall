@@ -4,7 +4,11 @@
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
 import { ELIXIR_MAX, REMEDY_LIST, SATCHEL_MAX, pickSatchel, satchelFor } from './sim/remedies';
+import { REMEDY_ICON } from './gearUiArt';
 import { retired } from './sim/legacy';
+import { fieldedOf, fieldsElder } from './sim/dynasty';
+import { bannerChoices, fieldName } from './sim/heirs';
+import { openBanner } from './housesView';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroRank, partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { heroClassLabel, heroName } from './sim/heroNames';
@@ -60,6 +64,8 @@ export class Party {
   /** A quest battle's party (batch 2 of the quests): its required cast, locked in their slots, its title and rule, and where the
    *  picks go (they are the battle's own: the saved party is not changed). Null for the ordinary party screen. */
   private quest: { cast: readonly string[]; title: string; rule: string; fits: (kind: string) => boolean; then: (picked: string[]) => void } | null = null;
+  /** UI-STANDARD: the March orders button (an army's start, once any order is open): its line, and what a tap opens with the picks so far. */
+  private orders: { line: () => string; open: (party: readonly string[], redraw: () => void) => void } | null = null;
 
   constructor(
     private meta: Meta,
@@ -89,6 +95,7 @@ export class Party {
     this.note = '';
     this.focus = undefined;
     this.onDone = then;
+    this.orders = null;
     this.filter = 'all';
     this.search = '';
     $<HTMLInputElement>('ptSearch').value = '';
@@ -107,6 +114,33 @@ export class Party {
     this.picked = [...cast, ...this.meta.party.filter((k) => !cast.includes(k) && fits(k))].slice(0, this.slots);
     $('ptGo').textContent = '⚔  To the quest';
     this.draw();
+  }
+
+  /** UI-STANDARD: show the March orders button above March (`null` takes it away). Set after `open`, which clears it. */
+  setOrders(o: { line: () => string; open: (party: readonly string[], redraw: () => void) => void } | null): void {
+    this.orders = o;
+    this.drawOrders();
+  }
+
+  /** The March orders button: a gilded row over the start button naming the orders set; a tap opens them in the standard menu. */
+  private drawOrders(): void {
+    let b = document.getElementById('ptOrders') as HTMLButtonElement | null;
+    if (!b) {
+      b = el('button', 'ptOrders');
+      b.id = 'ptOrders';
+      b.type = 'button';
+      $('ptGo').before(b);
+    }
+    const o = this.orders;
+    b.hidden = !o || !!this.quest;
+    if (!o || b.hidden) return;
+    const line = o.line();
+    if (b.dataset.line !== line) {
+      b.dataset.line = line;
+      b.replaceChildren(el('small', '', 'March orders'), el('b', '', line), el('i', 'ptOrdersGo', '›'));
+    }
+    b.setAttribute('aria-label', `March orders: ${line}. Change them`);
+    b.onclick = () => o.open([...this.picked], () => this.drawOrders());
   }
 
   private get slots(): number {
@@ -273,7 +307,10 @@ export class Party {
       };
       less.addEventListener('click', () => set(n - 1));
       more.addEventListener('click', () => set(n + 1));
-      row.append(el('span', '', `${r.name} · ${n} of ${m.satchel?.[r.id] ?? 0}`), less, more);
+      const pic = el('img', 'ptRemedyPic');
+      pic.src = REMEDY_ICON[r.id];
+      pic.alt = '';
+      row.append(pic, el('span', '', `${r.name} · ${n} of ${m.satchel?.[r.id] ?? 0}`), less, more);
       box.append(row);
     }
     const auto = el('button', 'ptAutoRemedy', `Auto may use remedies: ${m.autoRemedies ? 'On' : 'Off'}`);
@@ -315,7 +352,8 @@ export class Party {
       if (locked) remove.innerHTML = PADLOCK;
       const number = el('span', 'ptSlotNumber', String(i + 1));
       number.dataset.number = String(i + 1);
-      b.append(number, el('small', '', heroName(kind)), remove);
+      // (Dynasties, phase 6: the bearer who takes the field, the heir or an elder the banner chose)
+      b.append(number, el('small', '', fieldName(this.meta, kind)), remove);
       if (locked) b.append(el('span', 'ptQuestRibbon', 'Quest'));
       b.addEventListener('click', () => (this.held ? (this.held = false) : this.toggle(kind)));
       this.holdTo(b, kind);
@@ -337,6 +375,7 @@ export class Party {
     $('ptAvailable').textContent = `${m.unlocked.length} available`;
     this.drawWear();
     this.drawSatchel();
+    this.drawOrders();
     const key = this.picked.join('|');
     if (this.sceneKey !== key || !$('ptTableau').firstChild) {
       $('ptTableau').replaceChildren(partyTableau(this.picked, (k) => awakenedStep(this.meta, k)));
@@ -383,18 +422,32 @@ export class Party {
       if (this.filter !== 'all' && (secret || roleOf(kind) !== this.filter)) continue;
       // Unknown locked names stay unknown, including through search.
       const known = m.unlocked.includes(kind) || lockInfo(m, kind)?.named;
-      if (this.search.trim() && (!known || !`${heroName(kind)} ${def.name}`.toLocaleLowerCase().includes(this.search.trim().toLocaleLowerCase()))) continue;
+      if (this.search.trim() && (!known || !`${heroName(kind)} ${fieldName(m, kind)} ${def.name}`.toLocaleLowerCase().includes(this.search.trim().toLocaleLowerCase()))) continue;
       const open = m.unlocked.includes(kind);
       const on = this.picked.includes(kind);
       const hit = !!this.focus && traitsOf(kind).includes(this.focus);
       const card = el('button', `hcard ptCard${open ? '' : ' locked'}${on ? ' picked' : ''}${hit ? ' hit' : ''}${this.focus && !hit ? ' faded' : ''}`);
       card.setAttribute('aria-pressed', String(on));
       card.append(secret ? secretFigure(56) : portrait(lookSheet(kind, heroRank(this.meta, kind), 1), 56));
+      // (Dynasties, phase 6: a line with an honoured elder has a banner, the bearer who takes the field; a tap chooses, the heir by default)
+      let bannerChip: HTMLElement | null = null;
+      if (open && bannerChoices(m, kind).length > 1) {
+        const f = fieldedOf(m, kind);
+        const banner = el('span', `ptBanner${fieldsElder(m, kind) ? ' elder' : ''}`, `⚑ ${f?.name ?? heroName(kind)}`);
+        banner.setAttribute('role', 'button');
+        banner.setAttribute('aria-label', `${f?.name ?? heroName(kind)} takes the field. Choose who bears the banner`);
+        banner.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openBanner(m, kind, () => this.draw());
+        });
+        bannerChip = banner;
+      }
       if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
       else if (open && retired(m, kind)) card.append(el('span', 'ptPickedFlag', 'In the Hall'));
       if (open) card.append(el('span', 'ptCardRole', ROLE_NAMES[roleOf(kind)]));
       const lock = lockInfo(m, kind);
-      card.append(el('b', '', open || lock?.named ? heroName(kind) : '???'));
+      card.append(el('b', '', open ? fieldName(m, kind) : lock?.named ? heroName(kind) : '???'));
+      if (bannerChip) card.append(bannerChip);
       if (open) {
         const p = progressOf(xpOf(m, kind));
         const tags = el('span', 'ptTags');

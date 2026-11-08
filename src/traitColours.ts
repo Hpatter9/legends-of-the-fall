@@ -25,6 +25,7 @@ export const TRAIT_COLOURS: Record<string, BadgeColour> = {
   machine: c('s11', 's0'),
   royal: c('e2', 's15'),
   pirate: c('r6', 's0'),
+  vampire: c('r2', 's15'),
   // classes (shields)
   guardian: c('b1', 's15'),
   blade: c('r5', 's0'),

@@ -37,6 +37,10 @@ const MARK_COLOUR: Record<Exclude<Mark, null>, [number, number]> = {
   twin: [0xff8ad8, 0.55],
 };
 
+/** A duel's ring (phase 4): a light gilt on its tiles, a brass line round its edge's. */
+const RING_GILT = 0xe8c770;
+const RING_BRASS = 0xc9a24a;
+
 /** The colour of the lip at the edge of a tile's top: grass-like, then stony. */
 const LIP: Record<Area, [string, string]> = {
   highlands: ['#7e9a48', '#a39e94'],
@@ -121,6 +125,8 @@ interface Built {
   landmark: Container | null;
   tiles: Container[];
   marks: Graphics[];
+  /** The Nemesis War, phase 4: each tile's layer for a duel's ring (`ring`), over its mark. */
+  rings: Graphics[];
   /** Each tile's ground (FIXES-4): an empty layer just over its top and its mark, under its props and every fighter, where the effects lay
    *  their tile marks (a boss's windup, a hazard's tell, a burning ground), so a fighter standing in one shows over it. */
   grounds: Container[];
@@ -191,6 +197,7 @@ export class BoardView {
   private columns = new ColumnTextures<Texture>((texture) => texture.destroy(true));
   get columnStats() { return this.columns.stats; }
   private marks: Graphics[] = [];
+  private rings: Graphics[] = [];
   private board: Board | null = null;
   private built: Built | null = null;
   /** Layers that outlive a rebuild (the effects': `build` must not destroy them, or nothing in a fight would show). */
@@ -232,6 +239,7 @@ export class BoardView {
     this.freeBuilt();
     this.built = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
     this.marks = this.built.marks;
+    this.rings = this.built.rings;
     this.root.addChild(...this.built.tiles);
     // (a Calamity zone: its air over and under the field, `zoneLife.ts`; it goes with the board's other children on the next build)
     this.air = null;
@@ -285,6 +293,7 @@ export class BoardView {
     });
     this.old = { ...this.built, rot: this.rot, ou, ov, section };
     for (const g of this.old.marks) g.clear();
+    for (const g of this.old.rings) g.clear();
     this.built = null;
   }
 
@@ -452,6 +461,7 @@ export class BoardView {
   private section(b: Board, look: Look, f: Frame): Built {
     const tiles: Container[] = [];
     const marks: Graphics[] = [];
+    const rings: Graphics[] = [];
     const grounds: Container[] = [];
     const tex: ColumnLease<Texture>[] = [];
     const barrels = new Map<number, Sprite>();
@@ -471,9 +481,11 @@ export class BoardView {
         if (depth && far >= 3 && !held.has(v * b.w + u) && raw.scene !== 'water' && raw.scene !== 'lava' && edge < 1 + ((mixSeed(b.seed, 0xed9e, u, v) >>> 0) % 3)) {
           // (trimmed: nothing drawn, the tile is still there to the rules as land nobody stands on)
           const mark = new Graphics();
+          const ring = new Graphics();
           const ground = new Container();
-          tile.addChild(mark, ground);
+          tile.addChild(mark, ring, ground);
           marks.push(mark);
+          rings.push(ring);
           grounds.push(ground);
           tiles.push(tile);
           continue;
@@ -491,10 +503,13 @@ export class BoardView {
         }
         const mark = new Graphics();
         mark.position.set(x, y);
+        const ring = new Graphics();
+        ring.position.set(x, y);
         // (the ground layer is at the world's origin, so an effect lays a mark at its tile's world point as it would anywhere)
         const ground = new Container();
-        tile.addChild(mark, ground);
+        tile.addChild(mark, ring, ground);
         marks.push(mark);
+        rings.push(ring);
         grounds.push(ground);
         const set = art?.areas[b.area];
         if (t.scene === 'grave') {
@@ -655,7 +670,7 @@ export class BoardView {
         landmark.addChild(sp);
       }
     }
-    return { tiles, marks, grounds, tex, barrels, landmark, live, zone };
+    return { tiles, marks, rings, grounds, tex, barrels, landmark, live, zone };
   }
 
   /** Where the board's lit props stand (world px; a lantern, a torch, a forge fire), for night's glows (`weatherView.ts`). */
@@ -720,6 +735,24 @@ export class BoardView {
 
   clearMarks(): void {
     for (const g of this.marks) g.clear();
+  }
+
+  /** The Nemesis War, phase 4: a duel's ring, the middle 5x5 its two keep to (`duelRing.ts`): its edge's tiles outlined in brass over a light
+   *  gilt, the tiles inside it a fainter gilt. Steady, and kept through the fight (`clearMarks` leaves it); null takes it away. */
+  ring(d: { mid: { u: number; v: number }; r: number } | null): void {
+    for (const g of this.rings) g.clear();
+    const b = this.board;
+    if (!d || !b) return;
+    for (let dv = -d.r; dv <= d.r; dv++)
+      for (let du = -d.r; du <= d.r; du++) {
+        const u = d.mid.u + du;
+        const v = d.mid.v + dv;
+        const g = u >= 0 && v >= 0 && u < b.w && v < b.d ? this.rings[v * b.w + u] : undefined;
+        if (!g) continue;
+        const edge = Math.abs(du) === d.r || Math.abs(dv) === d.r;
+        g.poly([0, -TH / 2 + 3, TW / 2 - 4, 0, 0, TH / 2 - 3, -TW / 2 + 4, 0]).fill({ color: RING_GILT, alpha: edge ? 0.2 : 0.08 });
+        if (edge) g.stroke({ color: RING_BRASS, alpha: 0.85, width: 2 });
+      }
   }
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */

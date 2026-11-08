@@ -357,12 +357,16 @@ const css = `
 .tarotInfo .tarotBar { display: block; width: 92%; height: 5px; background: #06120d; border: 1px solid #6c7749; }
 .tarotInfo .tarotBar i { display: block; height: 100%; background: linear-gradient(#ceefab, #4f9e70); }
 .tarotInfo.rankShard .tarotBar i { background: linear-gradient(#ffe39a, #b8862f); }
-.tarotInfo .tarotBarLabel { color: #c9d4c4; font: 10px var(--body); }
+.tarotInfo .tarotBarLabel { color: #c9d4c4; font: 11px var(--body); }
 .tarotResult.joined .tarotName { color: #fff2c4; }
 .tarotResult.joined .tarotGain { color: #ffd76a; }
 .tarotFig { position: relative; width: 100%; height: 100%; display: grid; place-items: end center; overflow: hidden; background: radial-gradient(ellipse at 50% 70%, color-mix(in srgb, var(--cls) 45%, transparent), transparent 65%), linear-gradient(#15382a, #08170f); border: 2px solid #e8c56c; border-radius: 4px; box-shadow: 0 0 10px #e8c56c88; }
 .tarotFig canvas { width: 118%; image-rendering: pixelated; margin-bottom: 8%; }
 #gacha #reveal.tarotSpread { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 12px 6px; padding: 4px 0 8px; }
+/* UX-FIXES (#19): a new hero on a row of its own at 150 px; repeats turned to crowns are bare small cards, told as one line */
+#gacha #reveal.tarotSpread .tarotResult.joined { order: -1; grid-column: span 2; }
+#gacha #reveal.tarotSpread .tarotResult.dupe .tarotInfo { display: none; }
+#gacha #reveal .tarotDupes { order: 99; grid-column: 1 / -1; margin: 0; text-align: center; font: 400 14px var(--body); color: #ffd76a; }
 #gacha #reveal.tarotSingle { display: flex !important; justify-content: center; padding: 4px 0 8px; }
 #gacha #reveal.tarotSingle .tarotResult { width: min(230px, 62vw); }
 #gacha #reveal.tarotSingle .tarotName { font-size: 20px; min-height: 0; margin-top: 8px; }

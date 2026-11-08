@@ -63,7 +63,8 @@ for (const [w, h] of sizes) {
   } else if (scene === 'march' || scene === 'march-report') {
     await page.evaluate(() => {
       const m = window.__game.meta;
-      m.castle.watchtower = 2;
+      m.castle.watchtower = 3;
+      m.castle.smithy = 3;
       window.__game.home.hooks.onArmy('orcs', 0);
     });
     await page.waitForTimeout(800);

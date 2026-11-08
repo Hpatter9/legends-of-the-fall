@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { readdirSync, readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { ROOMS, roomOpen, roomReachable, roomsOf, roomsOpenedAt, roomToast } from '../src/sim/rooms';
 import { BUILDING_IDS, CHAPEL_COSTS, ROOM_BUILDING_IDS, buildMs, chapelLevel, newCastle, readCastle, readWorks, settleWorks, siteLevel, siteTop, startChapel, startSite, type WorksMeta } from '../src/sim/castle';
@@ -81,4 +82,11 @@ test('the builders raise a room building and the Chapel level by level', () => {
 test('a raised level names the rooms it opened', () => {
   assert.deepEqual(roomsOpenedAt('library', 2).map((r) => r.id), ['readingRoom']);
   assert.equal(roomToast(roomsOpenedAt('smithy', 1)[0]), "The Smithy's Field Anvil is open");
+});
+
+test('every room has its own icon picture in src/art/rooms, and every picture there is a room\'s icon (INT-330)', () => {
+  const files = readdirSync('src/art/rooms').filter((f) => f.endsWith('.webp')).map((f) => f.slice(0, -5));
+  assert.deepEqual([...new Set(ROOMS.map((r) => r.icon))].sort(), files.sort());
+  const src = readFileSync('src/roomIcons.ts', 'utf8');
+  for (const f of files) assert.ok(src.includes(`'./art/rooms/${f}.webp'`), `${f} is bundled by roomIcons.ts`);
 });

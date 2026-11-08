@@ -7,6 +7,7 @@
 import { EQUIP_BASES, describeAbility, hasAbility, EQUIP_SLOTS, SLOT_NAMES, callingOf, equipAll, equipBest, equipItem, equipStats, itemName, RARITY_NAMES, itemStats, spareEquipment, statLines, unequipItem, wornIn, STAT_KEYS, type EquipSlot, type EquipStats, type Equipment } from './sim/equipment';
 import { combineAll, combineGroup, combineGroups, combinePreview, COMBINE_COUNT } from './sim/equipment';
 import { GEAR_SETS, SET_OF_BASE, activeTiers, setCounts, type GearSet } from './sim/gearSets';
+import { GLYPH_STONE, SET_EMBLEM } from './gearUiArt';
 import { saveMeta, type Meta } from './sim/meta';
 import { heroRank } from './sim/awaken';
 import { heroStats } from './sim/talents';
@@ -15,11 +16,12 @@ import { ABILITIES } from './sim/stats';
 import { gearScores, scoreCompare, type HeroAt } from './sim/statLines';
 import { UNITS } from './sim/units';
 import { EQUIP_ICONS } from './equipArt';
-import { paintGearIcon } from './gearIcons';
+import { paintGearIcon, paintGradeFrame } from './gearIcons';
+import { EMPTY_SLOT_ART, DOLL_BACKING } from './finishingArt';
 import { shopArt } from './bookArt';
 import { durabilityOf, maxDurability, repairCost, wearState } from './sim/wear';
-import { sellAsks, sellPiece, stallRepair } from './sim/stall';
-import { sellPrice, stashCount, stashFull } from './sim/equipment';
+import { sellPiece, stallRepair } from './sim/stall';
+import { heirloomLine, keptForGood, sellPrice, stashCount, stashFull } from './sim/equipment';
 import { todayKey } from './modes';
 import { icon } from './menuArt';
 import { play } from './render/sound';
@@ -28,6 +30,7 @@ import { takeGearNote } from './sim/gearMigrate';
 import { GLYPHS, patchBlock, patchCost, patchItem } from './sim/enchant';
 import { SEASON_CAP, seasonNeed } from './sim/wear';
 import { claimLegends, nextVerseAt, takeLegendNews, versesOpen } from './sim/legends';
+import { reclaimed } from './sim/revenge';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -35,20 +38,35 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   if (text) e.textContent = text;
   return e;
 };
+/** A small painting set in a line of words (a set's emblem, a glyph's stone: `gearUiArt.ts`). */
+const paint = (src: string, cls: string): HTMLImageElement => {
+  const i = el('img', cls);
+  i.src = src;
+  i.alt = '';
+  i.draggable = false;
+  return i;
+};
 
 /** An item's icon: its painting in its grade's frame and glow (`gearIcons.ts`), or the old pixel icon on a rarity-coloured
  *  frame for a base the painted atlas does not hold. */
 export function itemIcon(it: Equipment | undefined, slot: EquipSlot, size: 'big' | 'small' = 'big'): HTMLElement {
   const frame = el('span', `eqIcon ${size}${it ? ` r${it.rarity}` : ' empty'}`);
-  const base = it ? it.base : SLOT_FACE[slot];
   const px = size === 'big' ? 64 : 44;
-  if (paintGearIcon(frame, base, it ? it.rarity : 0, px)) return wearMarks(frame, it);
+  if (!it) {
+    const outline = el('i', 'eqEmptyArt');
+    outline.style.backgroundImage = `url(${EMPTY_SLOT_ART[slot]})`;
+    outline.style.backgroundSize = 'contain';
+    outline.style.backgroundPosition = 'center';
+    paintGradeFrame(frame, 0, px, outline);
+    return frame;
+  }
+  const base = it.base;
+  if (paintGearIcon(frame, base, it.rarity, px)) return wearMarks(frame, it);
   const file = EQUIP_ICONS[EQUIP_BASES[base]?.icon ?? ''];
-  if (!file && it) {
+  if (!file) {
     // (SEVEN-SLOT GEAR: a new base still waiting for its painting shows its slot's outline and its name: docs/notes/gear-art-todo.md)
     frame.classList.add('ph');
-    const outline = el('span', 'eqIcon empty');
-    paintGearIcon(outline, SLOT_FACE[slot], 0, px);
+    const outline = itemIcon(undefined, slot, size);
     frame.append(outline, el('b', 'eqPh', EQUIP_BASES[base]?.name.split(' ').filter((w) => w.length > 2 && !/^(of|the)$/i.test(w)).pop() ?? ''));
     return wearMarks(frame, it);
   }
@@ -56,13 +74,10 @@ export function itemIcon(it: Equipment | undefined, slot: EquipSlot, size: 'big'
   img.alt = '';
   img.draggable = false;
   img.decoding = 'sync';
-  img.src = file ?? EQUIP_ICONS[EQUIP_BASES[SLOT_FACE[slot]].icon];
+  img.src = file;
   frame.append(img);
   return wearMarks(frame, it);
 }
-
-/** The painting an empty slot shows faintly (a base of that slot with a painting), and the slots' places on the paper doll. */
-const SLOT_FACE: Readonly<Record<EquipSlot, string>> = { head: 'circlet', torso: 'plateCuirass', main: 'ironSword', off: 'scryingOrb', feet: 'bootsOfHaste', belt: 'vialOfVigor', acc: 'ironRing' };
 
 /** A piece that has lost durability shows it (SHOP-BOOKS-GEAR, `wear.ts`): a slim bar along the foot (green, amber when worn, red
  *  when broken), the worn or broken badge, and a broken piece greyed under its cracks. A full piece shows nothing new. */
@@ -116,12 +131,13 @@ function compareRows(next: EquipStats, cur: EquipStats | undefined): HTMLElement
 }
 
 /** What the picker shows for one item: its icon and name, the stat rows (against `against` when given), the affixes. */
-function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt): HTMLElement {
+function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt, home = false): HTMLElement {
   const base = EQUIP_BASES[it.base];
   const card = el('div', 'eqCard');
   const head = el('div', 'eqHead');
   const title = el('div');
-  title.append(el('b', '', itemName(it)), el('small', '', `${RARITY_NAMES[it.rarity]} · Lv ${it.level}`));
+  // (the Nemesis War, phase 3: a piece a slain nemesis carried as a trophy, brought home)
+  title.append(el('b', '', itemName(it)), el('small', '', `${RARITY_NAMES[it.rarity]} · Lv ${it.level}${home ? ' · Reclaimed' : ''}`));
   head.append(itemIcon(it, base.slot, 'small'), title);
   card.append(head);
   const stats = itemStats(it, kind);
@@ -149,8 +165,14 @@ function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt)
     }
     card.append(line);
   }
+  // (Dynasties, phase 6: an heirloom's House and its generation marks)
+  if (it.heirloom) card.append(el('p', 'eqAffix eqHeirloom', heirloomLine(it)));
   if (it.scars) card.append(el('small', 'eqDim', `Patched: ${it.scars} durability lost for good (a reforge at Hester's clears it)`));
-  for (const g of it.glyphs ?? []) card.append(el('small', 'eqGlyph', `${GLYPHS[g].name} glyph: ${GLYPHS[g].text}`));
+  (it.glyphs ?? []).forEach((g, i) => {
+    const line = el('small', 'eqGlyph');
+    line.append(paint(GLYPH_STONE[i + 1], 'eqGlyphStone'), `${GLYPHS[g].name} glyph: ${GLYPHS[g].text}`);
+    card.append(line);
+  });
   const sig = stats.abilities[0];
   if (base.legend) {
     // (a named legend: its power at its renown, and how far its story has opened: `legends.ts`)
@@ -184,7 +206,10 @@ function setCard(set: GearSet, worn: ReadonlySet<string>): HTMLElement {
   const card = el('div', `eqSet${on ? ' on' : ''}`);
   card.style.setProperty('--sc', set.colour);
   const head = el('div', 'eqSetHead');
-  head.append(el('b', '', set.name), el('small', '', `${n} / ${set.pieces.length}`));
+  const name = el('b', '');
+  if (SET_EMBLEM[set.id]) name.append(paint(SET_EMBLEM[set.id], 'eqEmblem'));
+  name.append(set.name);
+  head.append(name, el('small', '', `${n} / ${set.pieces.length}`));
   card.append(head);
   const pieces = el('div', 'eqSetPieces');
   for (const p of set.pieces) pieces.append(el('span', worn.has(p) ? 'got' : '', EQUIP_BASES[p].name));
@@ -225,7 +250,10 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     const slots = el('div', 'eqSlots eqDoll');
     const face = portrait(UNITS[kind].sheet, 96);
     face.classList.add('eqDollHero');
-    slots.append(face);
+    const backing = el('div', 'eqDollPortrait');
+    backing.style.backgroundImage = `url(${DOLL_BACKING})`;
+    backing.append(face);
+    slots.append(backing);
     for (const slot of EQUIP_SLOTS) {
       const it = wornIn(meta, kind, slot);
       const b = el('button', `eqSlot at-${slot}`);
@@ -258,8 +286,11 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       overview();
       panel.append(el('small', 'eqUp', what));
     };
-    auto.append(best, all, toggle);
-    panel.append(auto, note);
+    // (UX-FIXES: "Equip best" is the one button in view; the rest of the choices are folded under "More")
+    const moreFold = el('details', 'eqMore');
+    moreFold.append(el('summary', '', 'More'), all, toggle, note);
+    auto.append(best, moreFold);
+    panel.append(auto);
     // the gear sets: the ones this hero wears a piece of, with how far each is
     const worn = new Set(wornBases(meta, kind));
     const mine = [...setCounts([...worn]).keys()];
@@ -275,7 +306,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     sets.addEventListener('click', allSets);
     comb.addEventListener('click', () => combineView());
     more.append(sets, comb);
-    panel.append(more);
+    moreFold.append(more);
     // (RUN-GEAR-2: the stash's count; red once it is full and finds wait on the cart)
     panel.append(el('small', `eqStash${stashFull(meta) ? ' full' : ''}`, `Stash ${stashCount(meta)}${stashFull(meta) ? ' · full' : ''}`));
   };
@@ -287,7 +318,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     const list = el('div', 'eqList');
     for (const set of GEAR_SETS) list.append(setCard(set, worn));
     panel.append(list);
-    const back = el('button', '', 'Back');
+    const back = el('button', '', '‹ Back');
     back.type = 'button';
     back.addEventListener('click', overview);
     panel.append(back);
@@ -331,7 +362,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       commit();
       combineView(made.length ? `Made ${made.length} piece(s)` : '');
     });
-    const back = el('button', '', 'Back');
+    const back = el('button', '', '‹ Back');
     back.type = 'button';
     back.addEventListener('click', overview);
     btns.append(everything, back);
@@ -376,7 +407,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     panel.replaceChildren(el('h4', '', `${SLOT_NAMES[slot]} · ${UNITS[kind].name}`));
     if (cur) {
       const worn = el('div', `eqRow worn r${cur.rarity}`);
-      worn.append(el('small', 'eqTag', 'Worn'), itemCard(cur, kind));
+      worn.append(el('small', 'eqTag', 'Worn'), itemCard(cur, kind, undefined, undefined, reclaimed(meta, cur.id)));
       const off = el('button', '', 'Unequip');
       off.type = 'button';
       off.addEventListener('click', () => {
@@ -393,12 +424,15 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     const list = el('div', 'eqList');
     for (const it of spare) {
       const row = el('div', `eqRow r${it.rarity}`);
-      row.append(itemCard(it, kind, cur, at));
+      row.append(itemCard(it, kind, cur, at, reclaimed(meta, it.id)));
       const set = SET_OF_BASE[it.base];
       if (set) {
         const before = set.pieces.filter((p) => wornBases(meta, kind).includes(p)).length;
         const after = set.pieces.filter((p) => wornBases(meta, kind, it).includes(p)).length;
-        row.append(el('small', `eqSetHint${after > before ? ' up' : after < before ? ' down' : ''}`, `${set.name} set: ${before} → ${after} of ${set.pieces.length}`));
+        const hint = el('small', `eqSetHint${after > before ? ' up' : after < before ? ' down' : ''}`);
+        if (SET_EMBLEM[set.id]) hint.append(paint(SET_EMBLEM[set.id], 'eqEmblem'));
+        hint.append(`${set.name} set: ${before} → ${after} of ${set.pieces.length}`);
+        row.append(hint);
       }
       const btns = el('div', 'eqBtns');
       const on = el('button', 'primary', cur ? 'Swap' : 'Equip');
@@ -412,7 +446,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       // second tap; the piece waits on the stall's Sold today shelf until midnight)
       const sell = el('button', 'eqSell', `Sell +${sellPrice(it)}`);
       sell.type = 'button';
-      let sure = !sellAsks(meta, it);
+      let sure = false; // (UX-FIXES: every Sell asks once; the sold piece also waits on the stall's Sold today shelf)
       sell.addEventListener('click', () => {
         if (!sure) {
           sure = true;
@@ -425,8 +459,8 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
         commit();
         picker(slot);
       });
-      // (a named legend is never sold: the save keeps its one copy)
-      btns.append(...(EQUIP_BASES[it.base].legend ? [on] : [on, sell]));
+      // (a named legend is never sold: the save keeps its one copy; nor is an heirloom, Dynasties phase 6)
+      btns.append(...(keptForGood(it) ? [on] : [on, sell]));
       if (it.wear) btns.append(repairButton(it, () => picker(slot)));
       row.append(btns);
       list.append(row);

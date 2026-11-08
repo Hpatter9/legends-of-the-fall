@@ -23,15 +23,20 @@ import { applyRules, endBy, joinGuest, ruleEnd, spareIds, type QuestRules } from
 import { FOE_BANDS, isBoss } from './foes';
 import { arenaSpots } from './arenaDeploy';
 import { killXp } from './levels';
-import { enterPhase, PHASE2 } from './bossPhases';
+import { enterPhase, PHASE2, PHASE_AT } from './bossPhases';
 import { tickWeakness, weakHurt } from './weakness';
+import { AVENGER_CHARGE, FLEE, nemFlees, nemHunt, nemHurt, nemJump, nemMove, nemPrey, nemSpare, nemStart, type UnitNem } from './nemesisTraits';
+import type { NemPlace } from './nemesis';
+import { VAIN_DUEL } from './nemesisTraits';
+import type { DuelRing } from './duelRing';
+import { duelEnd, fenceRing, inRing } from './duelRing';
 import { MARCH } from './march';
 import { ritesFall, tickRites } from './chapelRooms';
 import { bondCover, bondFall, startBonds, tickBonds, type BondPair } from './bonds';
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { chargeOf, noteStep, preyOrder, walkOrder, moveOf } from './foeStyles';
-import { afterBlow, gangOf, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
+import { afterBlow, gangOf, kitOf, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
@@ -167,6 +172,12 @@ export interface Unit {
   /** Its once-a-fight rising from death has been spent. */
   undyingUsed?: boolean;
   diedAt?: number;
+  /** The Nemesis War (`nemesis.ts`): this foe is a named nemesis, with its traits and weaknesses (fixed from the run's snapshot); none for every other fighter. */
+  nem?: UnitNem;
+  /** The Nemesis War, phase 3: a nemesis that fled the board (it is gone from the fight, not slain). */
+  fled?: true;
+  /** Phase 3: an Avenger's skills come round quicker while the nemesis that slew its partner stands (that nemesis's unit id, and the cut). */
+  avenge?: { of: number; cd: number };
   /** Multiplies the kind's attack (grade, stage); absent is x1. */
   power?: number;
   /** What a hero's six scores multiply (STATS batch 2, `statPower.ts`): its health and blows are already in `maxHp` and `power`; a skill's
@@ -513,9 +524,23 @@ export interface Battle {
   /** STATS batch 4 (`blow.ts`): how much the placed heroes' to hit and AC have grown since level 1, fixed when the fight starts; the foes
    *  answer it. */
   blowMatch?: BlowMatch;
+  /** The Nemesis War, phase 4 (`duel.ts`): a duel wave, one hero against one nemesis in the board's middle 5x5 (its ring): who, where, and
+   *  how it ended. Unset in every other fight, so every hook it adds is a no-op there. */
+  duel?: DuelRing;
 }
 
-export const defOf = (u: Unit): UnitDef => UNITS[u.def];
+export const defOf = (u: Unit): UnitDef => (u.nem ? nemDef(u) : UNITS[u.def]);
+/** A nemesis's own def: its kind's, with a Hill-king's extra jump (`nemesisTraits.ts`). */
+const nemDefs = new Map<string, UnitDef>();
+function nemDef(u: Unit): UnitDef {
+  const def = UNITS[u.def];
+  const jump = nemJump(u, def.jump);
+  if (jump === def.jump) return def;
+  const key = `${u.def}:${jump}`;
+  let d = nemDefs.get(key);
+  if (!d) nemDefs.set(key, (d = { ...def, jump }));
+  return d;
+}
 /** A fighter's attack: its kind's, times its own multiplier. */
 export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u) * (u.bondAtk ?? 1) * (u.bondFury ?? 1);
 /** A fighter's defence: its kind's, plus what its equipment adds. */
@@ -594,6 +619,8 @@ export interface Stage {
   featured?: string;
   /** QUESTS-3 (Q5): a quest battle's own rules (`questRules.ts`). */
   rules?: QuestRules;
+  /** The Nemesis War (`nemesis.ts`): the nemeses in this wave, by their place in the band, with their hp and attack on top of the wave's. */
+  nemesis?: readonly NemPlace[];
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
@@ -668,6 +695,13 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   const ids = typeof band === 'string' ? FOE_BANDS[band] : band;
   const mid = board.arenaMid && isBoss(ids[0] ?? '') ? board.arenaMid : null;
   let bossAt: At | null = null;
+  // (the Nemesis War: a nemesis's place in the band is made a nemesis as it is added; a band with none adds as it always did)
+  const named = stage.nemesis?.length ? stage.nemesis : undefined;
+  const put = (id: string, n: number, u: number, v: number, boost: Boost): void => {
+    const unit = addUnit(b, id, u, v, boost);
+    const p = named?.find((x) => x.at === n);
+    if (p) makeNemesis(unit, p);
+  };
   ids.forEach((id, n) => {
     const def = UNITS[id];
     const boss = n === 0 ? stage.boss : undefined;
@@ -678,7 +712,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
       if (near.length) {
         const at = rng.pick(near);
         if (n === 0) bossAt = at;
-        addUnit(b, id, at.u, at.v, boost());
+        put(id, n, at.u, at.v, boost());
         return;
       }
     }
@@ -697,12 +731,22 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
     const top = Math.max(...spots.map((x) => x.score));
     const at = rng.pick(spots.filter((x) => x.score === top));
     if (n === 0) bossAt = at;
-    addUnit(b, id, at.u, at.v, boost());
+    put(id, n, at.u, at.v, boost());
   });
   if (tw?.ambush) ambush(b);
   if (stage.duchess && duchessDue(seed, stage.duchess)) b.duchess = true;
   if (stage.rules) applyRules(b, stage.rules);
   return b;
+}
+
+/** Make a foe a nemesis (`nemesis.ts`): its hp and attack on top of the wave's, and what the fight knows of its traits. */
+function makeNemesis(unit: Unit, p: NemPlace): void {
+  unit.hp = unit.maxHp = Math.max(1, Math.round(unit.maxHp * p.hp));
+  unit.power = (unit.power ?? 1) * p.atk;
+  unit.nem = { ...p.nem, traits: [...p.nem.traits], weak: [...p.nem.weak] };
+  // (a warchief standing as the Muster's last boss changes form at half health, whatever his kind: `CHIEF_PHASE`)
+  if (p.chief && !unit.phase) unit.phase = { at: PHASE_AT, done: false };
+  nemStart(unit, kitOf(unit));
 }
 
 /** Note what the board holds that acts during the fight: the powder barrels standing, and ground that acts each second (a shrine, lava). Called when a fight starts; a test that changes the board's tiles calls it again. */
@@ -779,7 +823,7 @@ export function addUnit(b: Battle, defId: string, u: number, v: number, boost: B
  *  ONE-OF-EACH, `docs/notes/one-of-each.md`). */
 export type PlaceBlock = 'phase' | 'side' | 'tile' | 'taken' | 'twin';
 export function placeBlock(b: Battle, defId: string, u: number, v: number, tag?: number): PlaceBlock | null {
-  if (b.phase !== 'deploy') return 'phase';
+  if (b.phase !== 'deploy' || b.duel) return 'phase';
   if (UNITS[defId]?.side !== 'hero') return 'side';
   if (!isDeployTile(v, b.board.d) || !standable(tileAt(b.board, u, v))) return 'tile';
   const there = unitAt(b, u, v);
@@ -832,6 +876,8 @@ export function fight(b: Battle): boolean {
   applyTraits(b);
   // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot)
   startBonds(b, b.bondSnap);
+  // (the Nemesis War, phase 3: an Avenger on the field against its partner's slayer)
+  if (b.units.some((x) => x.nem?.avengers)) startAvengers(b);
   startCombo(b);
   startDuoCombos(b);
   startKits(b);
@@ -853,6 +899,18 @@ export function fight(b: Battle): boolean {
   return true;
 }
 
+/** Phase 3: each hero that is an Avenger of a nemesis on the field takes its quicker skills while that nemesis stands. */
+function startAvengers(b: Battle): void {
+  for (const n of b.units) {
+    if (!n.nem?.avengers) continue;
+    for (const h of b.units) if (h.side === 'hero' && h.owner === undefined && !h.avenge && n.nem.avengers.includes(h.def)) h.avenge = { of: n.id, cd: 1 / (1 + AVENGER_CHARGE) };
+  }
+}
+/** A nemesis has left the fight (slain or fled): its Avengers' skills come round as usual again. */
+function endAvengers(b: Battle, n: Unit): void {
+  for (const h of b.units) if (h.avenge?.of === n.id) h.avenge = undefined;
+}
+
 /** The hero kits' fight-long state: set when a hero with a kit is on the field (a fight without one reads as before). */
 function startKits(b: Battle): void {
   const kitted = b.units.filter((x) => heroKitOf(x));
@@ -872,7 +930,8 @@ function startKits(b: Battle): void {
 
 /** Raise the fallen party in the same fight. Enemies, charges and spent abilities stay as they were. */
 export function reviveParty(b: Battle): boolean {
-  if (b.phase !== 'lost' || !heroesPlaced(b)) return false;
+  // (a duel lost is not fought again: the champion falls, `duel.ts`)
+  if (b.phase !== 'lost' || !heroesPlaced(b) || b.duel) return false;
   for (const u of b.units) {
     if (u.side !== 'hero' || defOf(u).summon || u.alive) continue;
     u.alive = true;
@@ -983,6 +1042,11 @@ function stepOnce(b: Battle): BattleEvent[] {
       b.pending = [];
       out.push({ kind: 'end', won: false });
     }
+    return out;
+  }
+  // (the Nemesis War, phase 4: a duel ends with the champion's fall, the nemesis's, or its sixty seconds, `duelRing.ts`)
+  if (b.duel) {
+    if (duelEnd(b)) out.push({ kind: 'end', won: (b.phase as Phase) === 'won' });
     return out;
   }
   const heroes = b.units.some((x) => x.alive && realHero(x));
@@ -1098,6 +1162,13 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   dmg = left;
   // (DEPTH-BUILD: a boss whose guard cracks to one calling's blows, `weakness.ts`)
   if (to.side === 'foe' && by !== to) dmg = weakHurt(b, by, to, dmg, src === 'dot', out);
+  // (the Nemesis War: a nemesis's traits and weaknesses, on a blow it deals or takes, `nemesisTraits.ts`)
+  if ((to.nem || by.nem) && by !== to) {
+    dmg = nemHurt(b, by, to, creditOf(b, by), dmg, src, splash, out);
+    if (dmg <= 0) return false;
+    // (phase 4: a Vain nemesis takes a tenth more in a duel)
+    if (b.duel && to.nem?.weak.includes('vain')) dmg = Math.max(1, Math.round(dmg * (1 + VAIN_DUEL)));
+  }
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
   // (a formation takes splash differently, a skirmisher less, a square packed together more, and a skirmisher the foes' skills less, `formations.ts`)
@@ -1227,6 +1298,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (killed && powersOn(b) && powerSpare(b, to, out)) killed = false;
   // (a deathless pirate: the same, from its own passive)
   if (killed && undying(to, out)) killed = false;
+  // (a nemesis that is a Survivor stands again once a fight)
+  if (killed && to.nem && nemSpare(to, out)) killed = false;
   if (!killed && to.eq) fxHurt(b, to, out);
   if (killed) {
     // (DEPTH-BUILD: the Chapel's Last Rites marks the first hero to fall in the wave to rise)
@@ -1240,6 +1313,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     to.diedAt = b.t;
     to.step = undefined;
     to.swing = undefined;
+    if (to.nem?.avengers) endAvengers(b, to);
     // (RELICS-2: the run's tally, the Harness's haste and the Warden's Medal)
     relicFall(b, to, out, credit ? by : undefined);
     if (powersOn(b)) powerFell(b, to, out);
@@ -1332,6 +1406,7 @@ function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
   if (!higher) return -1;
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * board.w + x.u);
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(board, me, def.jump, blocked, me.side);
   const ht = tileOf(b, target).h;
   const wound = 1 - me.hp / me.maxHp;
@@ -1380,6 +1455,7 @@ export function flankStep(b: Battle, me: Unit, def: UnitDef, target: Unit, style
   if (me.flankAt !== undefined && b.t - me.flankAt < KITE_MS) return -1;
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   let goal = -1;
   let best = 0;
@@ -1409,6 +1485,7 @@ export function kiteStep(b: Battle, me: Unit, def: UnitDef, foes: readonly Unit[
   if (!brutes.length) return -1;
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   let goal = -1;
   let best = -Infinity;
@@ -1431,6 +1508,9 @@ export function kiteStep(b: Battle, me: Unit, def: UnitDef, foes: readonly Unit[
 }
 
 function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
+  // (the Nemesis War, phase 3: a nemesis under a fifth of its health may break off and run for its own back row, `nemFlees`)
+  // (never in a duel: its timeout is the nemesis's escape, phase 4)
+  if (me.nem && !b.duel && nemFlees(b, me)) return runOff(b, me, out);
   // (a feared fighter runs from the nearest foe and strikes nobody, STATUS-FX)
   if (isFeared(b, me)) return flee(b, me, out);
   // (BOSS-BIG: a boss's great attack is marked on the ground before it lands; a fighter standing in it steps out first, and walks round it)
@@ -1449,6 +1529,11 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   // (QUESTS-3, Q5: a foe the battle asks to be spared is not struck by the heroes' own mind: they go for the others)
   if (b.spared?.length && me.side === 'hero') {
     const rest = foes.filter((x) => !b.spared!.includes(x.id));
+    if (rest.length) foes = rest;
+  }
+  // (the Nemesis War, phase 3: a nemesis running for the edge is let go; the heroes turn to the foes still fighting, while any are)
+  if (me.side === 'hero' && foes.some((x) => x.nem?.fleeing !== undefined)) {
+    const rest = foes.filter((x) => x.nem?.fleeing === undefined);
     if (rest.length) foes = rest;
   }
   // (a hero wearing a foe's guise is picked last: the foes go for any other first)
@@ -1491,6 +1576,7 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   }
   if (inReach.length) {
     if (mv) inReach = preyOrder(b, me, mv, inReach);
+    if (me.nem) inReach = nemPrey(me, inReach);
     // (STATS batch 6: a quick shooter steps back from a brute beside it, when it can still shoot from there; FOE-STYLES: so does a kiting foe, a
     // spear too)
     const back = def.shot || mv === 'kite' ? kiteStep(b, me, def, foes, mv === 'kite') : -1;
@@ -1512,6 +1598,8 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
   // (round a boss's marked ground, BOSS-BIG)
   if (danger) for (const i of danger) blocked.add(i);
+  // (a duel's two keep to its ring, phase 4)
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   const wound = 1 - me.hp / me.maxHp;
   // a badly hurt fighter with nobody to strike makes for a shrine close by
@@ -1520,7 +1608,9 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     for (let i = 0; i < walk.cost.length; i++) if (b.board.tiles[i].ground === 'shrine' && walk.cost[i] > 0 && walk.cost[i] <= SHRINE_RUN && (shrine < 0 || walk.cost[i] < walk.cost[shrine])) shrine = i;
     if (shrine >= 0) return stepTo(b, me, firstStep(walk, shrine)!, out);
   }
-  const byDistance = walkOrder(b, me, mv, [...foes].sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id));
+  let byDistance = walkOrder(b, me, mv, [...foes].sort((x, y) => apart(me, x) - apart(me, y) || x.id - y.id));
+  // (a Vengeful nemesis closes on its hero first while that hero is within six tiles, phase 3)
+  if (me.nem?.veng) byDistance = nemHunt(me, byDistance);
   const menace = def.shot ? foes.filter((x) => !defOf(x).shot && defOf(x).range <= 2) : [];
   // (STATS batch 6: a quick melee hero, DEX +3 or more, goes round to a foe's side or back)
   const flank = !def.shot && ((REST.flank && quickHero(me)) || mv === 'flank');
@@ -1585,12 +1675,17 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
 export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void {
   const def = defOf(me);
   let next = { u: i % b.board.w, v: Math.floor(i / b.board.w) };
+  // (phase 4: no step leaves a duel's ring, whatever chose it)
+  if (b.duel && inRing(b.duel, me) && !inRing(b.duel, next)) {
+    me.busyUntil = b.t + WAIT_MS;
+    return;
+  }
   const from = tileOf(b, me);
   let to = tileOf(b, next);
   // (a sure-footed fighter climbs at no extra cost)
   let cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h) * CLIMB_COST) + (to.ground ? GROUND_COST[to.ground] : 0);
   // (ice: a walker who steps onto it may slide one tile on, if that tile is free and no higher, and not lava; a hash of the moment says, so no stream moves)
-  if (to.ground === 'ice' && !def.flies && !(b.stand && me.post) && (mixSeed(b.seed, 0x1ce, b.t, me.id) >>> 0) / 4294967296 < ICE_SLIDE) {
+  if (to.ground === 'ice' && !def.flies && !(b.stand && me.post) && !b.duel && (mixSeed(b.seed, 0x1ce, b.t, me.id) >>> 0) / 4294967296 < ICE_SLIDE) {
     const on = { u: next.u + next.u - me.u, v: next.v + next.v - me.v };
     const t2 = tileAt(b.board, on.u, on.v);
     if (standable(t2) && !unitAt(b, on.u, on.v) && t2.h <= to.h && t2.ground !== 'lava') {
@@ -1605,7 +1700,7 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
     me.kx.momentum = me.kx.lastWay === way ? Math.min(5, (me.kx.momentum ?? 0) + 1) : 1;
     me.kx.lastWay = way;
   }
-  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1) * (b.formation ? formationMove(b, me) : 1) * (b.tactic?.edgeAt !== undefined ? chargeMove(b, me) : 1)) * (b.walk ?? 1));
+  const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1) * (b.formation ? formationMove(b, me) : 1) * (b.tactic?.edgeAt !== undefined ? chargeMove(b, me) : 1) * (me.nem ? nemMove(me) : 1)) * (b.walk ?? 1));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
   me.u = next.u;
@@ -1625,6 +1720,7 @@ function flee(b: Battle, me: Unit, out: BattleEvent[]): void {
   const def = defOf(me);
   const blocked = new Set<number>();
   for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  if (b.duel) fenceRing(b, blocked);
   const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
   const steps: { i: number; u: number; v: number }[] = [];
   for (let i = 0; i < walk.cost.length; i++) {
@@ -1637,6 +1733,40 @@ function flee(b: Battle, me: Unit, out: BattleEvent[]): void {
   }
   const i = fleeTile(b, me, steps);
   if (i >= 0) return stepTo(b, me, i, out);
+  me.busyUntil = b.t + WAIT_MS;
+}
+
+/** A fleeing nemesis (phase 3, `nemFlees`): it walks for its own back row by the cheapest way round the others, and leaves the board when it
+ *  gets there (or once it has run `FLEE.ms`), with the summons' own `fade`. It is not slain: the War reads it as escaped (`Unit.fled`). */
+function runOff(b: Battle, me: Unit, out: BattleEvent[]): void {
+  me.step = undefined;
+  me.swing = undefined;
+  const since = me.nem!.fleeing!;
+  if (since === b.t) out.push({ kind: 'style', by: me.id, what: 'Flees!' });
+  if (me.v <= 0 || b.t - since >= FLEE.ms) {
+    me.alive = false;
+    me.fled = true;
+    me.diedAt = b.t;
+    if (me.nem?.avengers) endAvengers(b, me);
+    // (it left no body: nothing raises it or feeds on it)
+    (me.kx ??= {}).spent = true;
+    (b.spells.risen ??= []).push(me.id);
+    out.push({ kind: 'fade', to: me.id });
+    return;
+  }
+  const def = defOf(me);
+  const blocked = new Set<number>();
+  for (const x of b.units) if (x.alive && x !== me) blocked.add(x.v * b.board.w + x.u);
+  if (b.duel) fenceRing(b, blocked);
+  const walk = walkFrom(b.board, me, def.jump, blocked, me.side);
+  let goal = -1;
+  // (row 0's tiles are the first `w` of the board)
+  for (let i = 0; i < b.board.w; i++) {
+    if (walk.cost[i] === Infinity || walk.cost[i] === 0 || blocked.has(i)) continue;
+    if (goal < 0 || walk.cost[i] < walk.cost[goal]) goal = i;
+  }
+  const next = goal >= 0 ? firstStep(walk, goal) : null;
+  if (next !== null && !blocked.has(next)) return stepTo(b, me, next, out);
   me.busyUntil = b.t + WAIT_MS;
 }
 

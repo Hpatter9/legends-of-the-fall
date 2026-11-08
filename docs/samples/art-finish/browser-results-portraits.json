@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "width": 393,
+      "height": 852,
+      "portraits": 3,
+      "returnedPortrait": true
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "portraits": 3,
+      "returnedPortrait": true
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "portraits": 3,
+      "returnedPortrait": true
+    }
+  ],
+  "reducedMotion": true,
+  "errors": []
+}

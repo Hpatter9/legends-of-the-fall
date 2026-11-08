@@ -100,6 +100,8 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .eqDoll .at-head { grid-area: head; } .eqDoll .at-torso { grid-area: torso; } .eqDoll .at-main { grid-area: main; } .eqDoll .at-off { grid-area: off; }
 .eqDoll .at-feet { grid-area: feet; } .eqDoll .at-belt { grid-area: belt; } .eqDoll .at-acc { grid-area: acc; }
 .eqDoll .eqDollHero { grid-area: hero; justify-self: center; align-self: center; width: 88px; height: 88px; image-rendering: pixelated; opacity: 0.9; pointer-events: none; }
+.eqDoll .eqDollPortrait { grid-area: hero; justify-self: center; align-self: center; display: flex; align-items: center; justify-content: center; width: min(96px, 100%); height: 136px; background-size: 100% 100%; background-position: center; pointer-events: none; }
+.eqIcon.painted.empty .eqEmptyArt { opacity: 0.5; }
 .eqIcon.ph { position: relative; overflow: hidden; }
 .eqIcon.ph > .eqIcon { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: none; }
 .eqIcon.ph > .eqPh { position: relative; z-index: 2; max-width: 92%; padding: 1px 3px; font: 700 10px/1.1 var(--body); color: var(--white); text-align: center; overflow-wrap: anywhere; background: rgb(var(--black-rgb) / 0.6); border-radius: 3px; }
@@ -112,7 +114,11 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .eqSeason { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--gold-hi); }
 .eqSeasonBar { display: inline-block; flex: none; width: 48px; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; }
 .eqSeasonBar b { display: block; height: 100%; background: #d9b44a; }
-.eqGlyph { font-size: 10px; color: var(--b3); }
+.eqGlyph { font-size: 10px; color: var(--b3); display: flex; align-items: center; gap: 4px; }
+/* SEVEN-SLOT GEAR batch 7: the owner's painted set emblems and glyph stones, set in a line of words */
+.eqGlyphStone { width: 14px; height: 14px; flex: none; image-rendering: auto; }
+.eqEmblem { width: 18px; height: 18px; flex: none; vertical-align: -4px; margin-right: 4px; image-rendering: auto; }
+.eqSetHead b { display: inline-flex; align-items: center; }
 .eqMend { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; grid-column: 1 / -1; } .eqMend small { grid-column: 1 / -1; }
 
 /* SEVEN-SLOT GEAR batch 5: runes (`runeTray.ts`). A stone is its kind's colour (--rc) with its level as pips, until the painted stones
@@ -147,13 +153,13 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 /* SEVEN-SLOT GEAR batch 6: the party screen's satchel, the tray's remedies pocket, and a wounded hero's bench card */
 .ptSatchel { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; padding: 6px 8px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s5); font-size: 12px; }
 .ptSatchel > b { color: var(--gold-hi); font-size: 12px; }
-.ptRemedy { display: flex; align-items: center; gap: 6px; } .ptRemedy span { flex: 1; }
+.ptRemedy { display: flex; align-items: center; gap: 6px; } .ptRemedy span { flex: 1; } .ptRemedyPic { width: 26px; height: 26px; flex: none; }
 .ptRemedy button { min-height: 32px; min-width: 36px; padding: 0 8px; }
 .ptAutoRemedy { min-height: 34px; font-size: 12px; }
 .rmPocket { display: flex; flex-direction: column; gap: 4px; }
 .rmRow { display: flex; flex-wrap: wrap; gap: 4px; }
 .rmBtn { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; padding: 2px 8px; font-size: 12px; }
-.rmBtn img { width: 24px; height: 24px; image-rendering: pixelated; } .rmBtn.sel { border-color: #ffd24a; }
+.rmBtn img { width: 28px; height: 28px; } .rmBtn.sel { border-color: #ffd24a; }
 .rmHeroes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 .rmHero { display: flex; flex-direction: column; align-items: stretch; gap: 3px; min-height: 40px; padding: 3px 6px; font-size: 11px; } .rmHero.can { border-color: #ffd24a; }
 .rmBar { display: block; height: 4px; background: #0009; border-radius: 2px; overflow: hidden; } .rmBar b { display: block; height: 100%; background: #6fc46a; }
@@ -164,13 +170,27 @@ button.eqSure { border-color: #e3a43c; color: #ffd98a; }
 .eqBtns .eqSell { justify-self: end; min-height: 44px; min-width: 120px; padding: 0 12px; font-size: 13px; background: none; border: 1px solid #6b6454; color: #cfc6ad; box-shadow: none; }
 .eqBack { align-self: flex-start; min-height: 44px; min-width: 88px; margin-bottom: 4px; }
 
-/* SEVEN-SLOT GEAR batch 7: a rune is its pack disc (`runeArt.ts`), upright and pixel-sharp, its pips below; an empty socket keeps the diamond */
+/* SEVEN-SLOT GEAR batch 7: a rune is the owner's painted stone inside its level's painted frame, upright, its pips below; an empty socket
+   keeps the diamond. A merge's new rune plays the six-frame merge spark once over it (not at all with reduced motion). */
 .rnStone:not(.empty) { transform: none; background: none; border: 0; box-shadow: none; border-radius: 50%; }
-.rnStone:not(.empty) .rnPic { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
-.rnStone:not(.empty) .rnPips { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); gap: 2px; }
+.rnStone:not(.empty) .rnPic { position: absolute; inset: 16%; width: 68%; height: 68%; display: block; }
+.rnStone:not(.empty) .rnFrame { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.rnStone:not(.empty) .rnPips { position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); gap: 2px; z-index: 1; }
 .rnStone:not(.empty) .rnPip { background: #ffe9a8; box-shadow: 0 0 0 1px #000a; }
+.rnStone.rn-big:not(.empty) { width: 34px; height: 34px; margin: 4px; }
+.rnStone.rn-small:not(.empty) .rnPic { inset: 0; width: 100%; height: 100%; } .rnStone.rn-small:not(.empty) .rnFrame { display: none; }
 .rnStone.twin:not(.empty) { box-shadow: 0 0 0 2px #ffd24a, 0 0 8px #ffd24a; animation-name: rnTwinUp; }
 @keyframes rnTwinUp { 50% { transform: scale(1.1); } }
-.rnStone:not(.empty) .rnTwin { transform: none; top: -6px; right: -8px; }
+.rnStone:not(.empty) .rnTwin { transform: none; top: -6px; right: -8px; z-index: 2; }
 #bench .card .rnStrip .rnStone.rn-small:not(.empty) { width: 12px; height: 12px; }
 @media (prefers-reduced-motion: reduce) { .rnStone.twin:not(.empty) { animation: none; } }
+/* UX-FIXES: the equipment tab's "More" fold (Equip all heroes, the bag switch, All sets, Combine) */
+.eqMore > summary { min-height: 44px; display: flex; align-items: center; padding: 0 10px; cursor: pointer; font: 400 14px var(--body); color: var(--gold-hi); border: 1px solid #6b5a38; border-radius: 3px; background: #1b231d; list-style: none; }
+.eqMore > summary::-webkit-details-marker { display: none; }
+.eqMore[open] > * + * { margin-top: 6px; }
+.eqMore { grid-column: 1 / -1; }
+.eqAuto > button.primary { grid-column: 1 / -1; }
+.rnSpark { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; z-index: 3; pointer-events: none;
+  background-size: 600% 100%; background-repeat: no-repeat; animation: rnSpark 0.6s steps(6) 1 forwards; }
+@keyframes rnSpark { from { background-position: 0 0; } to { background-position: 120% 0; } }
+@media (prefers-reduced-motion: reduce) { .rnStone.twin:not(.empty) { animation: none; } .rnSpark { display: none; } }

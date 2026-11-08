@@ -14,6 +14,7 @@ import { mixSeed } from '../src/sim/rng';
 import { boostOf, type Owned } from '../src/sim/run';
 import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { playArmy, savedAt } from '../tools/autoplay';
+import { giveMastery } from '../tools/skills/mastery';
 
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 /** A castle of `n` levels spread over its buildings, the lowest first (the castle a climb has: 17 levels at about hero level 45, every one at 80, `tools/army-pace`). */
@@ -31,6 +32,9 @@ function castleOf(n: number): Castle {
 function clears(army: string, level: number, save: number, cap: number, built: number): boolean {
   const castle = castleOf(built);
   const meta = savedAt(level, party, save);
+  // (SKILLS-10, the owner's answer: the late armies are tuned for the skill levels a player of that level really has, every skill mastered
+  // from hero level 40, `tools/skills/mastery.ts`, docs/notes/skills-10.md)
+  giveMastery(meta, party, level);
   for (const k of party) {
     if (!meta.unlocked.includes(k)) meta.unlocked.push(k);
     for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const n of tierNodes(k, t)) learn(meta, k, n.id);

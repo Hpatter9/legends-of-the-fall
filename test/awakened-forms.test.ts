@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { ALL_HEROES, formOf, UNITS } from '../src/sim/units';
-import { awakenedSheet, battleSheet, combatAuraStep, lookSheet } from '../src/render/awakenLook';
+import { ALL_HEROES, TWENTY_HEROES, formOf, UNITS } from '../src/sim/units';
+import { AWAKENED_SHEETS_LATER, awakenedSheet, battleSheet, combatAuraStep, lookSheet } from '../src/render/awakenLook';
 import { heroLook, rearView } from '../src/render/heroFacing';
 import { auraParts } from '../src/render/auraStyles';
 import art from '../src/art/awakened/manifest.json';
@@ -14,7 +14,9 @@ test('permanent equipment and combat aura strength progress independently for ev
       const base = formOf(UNITS[kind], grade);
       assert.equal(lookSheet(kind, 4, grade), base, `${kind}: top rank is not awakening`);
       const upgraded = battleSheet(kind, 1, grade);
-      assert.notEqual(upgraded, base, `${kind}: awakened at tier ${grade}`);
+      // (a hero whose awakened sheets come later keeps its plain sprite, awakened: the owner's deferral)
+      if (AWAKENED_SHEETS_LATER.has(kind)) assert.equal(upgraded, base, `${kind}: keeps its plain sprite until its awakened sheets come`);
+      else assert.notEqual(upgraded, base, `${kind}: awakened at tier ${grade}`);
       assert.equal(battleSheet(kind, 2, grade), upgraded, `${kind}: second step keeps equipment`);
       const parts = auraParts(kind, combatAuraStep(grade));
       assert.equal(parts.length === 0, grade === 1, `${kind}: tier one has no combat aura`);
@@ -44,7 +46,7 @@ test('upgraded werewolf and druid transformations retain four facings without ch
 
 test('every upgraded animation has production assets, matched views and complete eight-frame walking', () => {
   const layouts = art.layouts as Record<string, { w: number; h: number; figure: number; perRow: number; rear?: string; rows: string[]; counts: Record<string, number>; aliases?: Record<string, string> }>;
-  assert.equal(Object.keys(art.forms).length, 49, '45 heroes and four supporting transformations');
+  assert.equal(Object.keys(art.forms).length, ALL_HEROES.length - AWAKENED_SHEETS_LATER.size + 4, 'every hero but those whose sheets come later, and four supporting transformations');
   for (const id of Object.values(art.forms)) {
     const front = layouts[id];
     assert.equal(front.rear, `${id}_back`);
@@ -60,11 +62,20 @@ test('every upgraded animation has production assets, matched views and complete
     }
   }
   const originals = originalArt as Record<string, { rows: string[] }>;
-  for (const kind of ALL_HEROES) {
+  for (const kind of ALL_HEROES.filter((k) => !AWAKENED_SHEETS_LATER.has(k))) {
     const upgraded = layouts[battleSheet(kind, 1, 1)];
     for (const row of originals[UNITS[kind].sheet].rows) {
       if (row === '_walk') continue;
       assert.ok(upgraded.rows.includes(row) || upgraded.rows.includes(upgraded.aliases?.[row] ?? ''), `${kind}: retains ${row}`);
     }
+  }
+});
+
+test('the heroes whose awakened sheets come later are new heroes with none yet, each with its awakened menu figure', () => {
+  const forms = art.forms as Record<string, string>;
+  for (const kind of AWAKENED_SHEETS_LATER) {
+    assert.ok(TWENTY_HEROES.includes(kind), `${kind}: only the twenty may wait`);
+    assert.equal(forms[UNITS[kind].sheet], undefined, `${kind}: its awakened sheets are in, so it leaves the list`);
+    assert.ok(existsSync(`src/art/heroes/awakened-${kind}.webp`), `${kind}: its awakened figure for the menus`);
   }
 });

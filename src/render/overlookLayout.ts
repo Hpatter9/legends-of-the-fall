@@ -1,4 +1,5 @@
-// Positions on the painted overlook, in the same scene pixels as the party rigs.
+// Positions on the painted overlook, in the same scene pixels as the party rigs. The five hero spots are where the party stands as the
+// camp opens (and stays, with motion reduced); from there they wander the ledge (`cliffRoam.ts`).
 // Relative positions keep the distant army and foreground feet on their own ground
 // when the portrait changes height. Mode buttons occupy a separate strip at the foot.
 import type { Camp, Place } from './campSpots';
@@ -22,13 +23,13 @@ export function overlookLayout(w: number, h: number): Camp {
     cart: { x: Math.round(w * 0.17), y: h - 65 },
     stash: { x: 8, y: h - 114, w: 58, h: 54 },
     places: {
-      // (the Daily is a small icon at the right edge, above the Battle bar, so it no longer takes a plaque's room across the scene)
-      daily: place(w - DAILY_ICON - 8, h - 68 - DAILY_ICON, DAILY_ICON, DAILY_ICON),
+      // (the Daily is a small icon at the right edge, so it no longer takes a plaque's room across the scene; DAILY-LOW: it sits down in
+      //  the scene's bottom corner, its foot level with the enemy banner's beside it, not floating over the cliff)
+      daily: place(w - DAILY_ICON - 8, h - DAILY_FOOT - DAILY_ICON, DAILY_ICON, DAILY_ICON),
       // (the Last Stand's place is the watchtower painted on the left of the overlook, as the Calamity's is the citadel on the right)
       tower: standPlace(h),
       calamity: place(w - 116, 4, 108, Math.max(112, Math.round(h * 0.23))),
-      // (Hester's Stall, SHOP-BOOKS-GEAR: on the ledge at the left, above the fire and the chests; its picture over a short plate)
-      stall: stallPlace(h, heroY),
+      // (CLIFF-ROAM: Hester's Stall has left the ledge for the tavern, so the heroes have its ground to wander; `cliffRoam.ts`)
     },
     buttonTop: h - 60,
   };
@@ -36,6 +37,8 @@ export function overlookLayout(w: number, h: number): Camp {
 
 /** The Daily's icon button at the scene's right edge: a thumb's width, square. */
 export const DAILY_ICON = 56;
+/** The gap under the Daily's icon to the scene's foot (DAILY-LOW: was 68, which left it floating halfway up the cliff). */
+export const DAILY_FOOT = 12;
 
 /** The watchtower in the overlook painting (`art/camp/overlook.png`, drawn over the whole scene), as fractions of the scene: its body,
  *  its lit window, its doorway and the lamp at its foot. The Last Stand's place sits over it; its life is drawn at these points. */
@@ -52,14 +55,6 @@ function standPlace(h: number): Place {
   const top = Math.round(h * (STAND_TOWER.top - 0.02));
   const foot = Math.round(h * STAND_TOWER.base) + 2;
   return { x: x + STAND.w / 2, foot, box: { x, y: top, w: STAND.w, h: foot + STAND.plate - top }, plate: { x, y: foot, w: STAND.w, h: STAND.plate } };
-}
-
-/** Hester's Stall's place on the overlook: the stall's picture on the ledge at the left edge, its plate under it, the tap box over both. */
-export const STALL = { w: 108, pic: 100, plate: 34 };
-function stallPlace(h: number, heroY: number): Place {
-  const foot = Math.round(heroY - h * 0.075);
-  const x = 2;
-  return { x: x + STALL.w / 2, foot, box: { x, y: foot - STALL.pic, w: STALL.w, h: STALL.pic + STALL.plate }, plate: { x, y: foot, w: STALL.w, h: STALL.plate } };
 }
 
 /** The actual army's field troops, excluding its bosses, in first-seen order. */

@@ -1,5 +1,37 @@
 # Shared task board
 
+### HERO-PAINTED-WEAPON-FIX — Redraw the confirmed painted illustration defects
+
+- **Owner / branch / worktree:** Codex; `audit/painted-hero-weapons`; `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner confirmed the painted-art findings and requested redraws/fixes.
+- **Allowed scope:** Peasant, Mercenary, Harpooner, Samurai Commander, Samurai and Ranger standard full/portrait illustrations; inspection evidence, credits and handoff. Preserve hero identity, scenes, battle sprites and simulation.
+- **Completion:** correct rigid weapon geometry, coherent grips/scabbard and connected bowstring; inspect replacements; typecheck/build and relevant artwork checks; review at three portrait sizes.
+- **Follow-up:** owner identified remaining Mercenary hilt and Peasant shaft bends. Both entire weapons redrawn again, with hands repositioned to follow their axes. Second-pass typecheck/build, all three phone sizes and offline decoding passed; updated screenshots and provenance retained.
+- **Status:** first pass: six scene redraws and two matching cutout repairs integrated. Typecheck/build, four relevant tests and artwork validation passed. Three-size browser review passed for five playable heroes, two cutouts and the unreleased Harpooner asset preview; offline cache/load passed at 393×852, with no page errors. Owner requested merge; main 0.394.0 integrated and release 0.395.0 validated (typecheck/build, eight tests, three-size gallery/offline and artwork hashes); PR merge authorised. [Handoff](notes/hero-weapon-fixes.md).
+
+
+### HERO-WEAPON-AUDIT — Check painted hero weapon construction
+
+- **Owner / branch / worktree:** Codex; `audit/painted-hero-weapons`; `/workspace/legends-of-the-fall`.
+- **Allowed scope:** read-only production art review; audit notes and inspection evidence only. Corrections require a visual proposal under the project rules.
+- **Completion:** inspect roster illustrations and representative battle poses, verify Mercenary/Lancer concerns, record exact frames and limitations.
+- **Continued review:** individually inspected the remaining 35 standard full paintings, completing all 65 standard scenes. No additional definite weapon-construction defect identified; no further production assets changed.
+- **Status:** audit complete within the recorded sampling scope. Mercenary front attack frame 2 has a bowed blade; Lancer front idle frame 3 has inconsistent shaft alignment. Painted-art follow-up: 30 weapon-user illustrations inspected individually; Peasant spear, Mercenary sword alignment, Harpooner shaft and unsupported Samurai Commander blade flagged, with secondary Samurai/Ranger concerns. No production assets changed. [Painted evidence](samples/hero-weapon-audit/painted-findings.jpg). [Handoff](notes/hero-weapon-audit.md), [enlarged source frames](samples/hero-weapon-audit/findings.png).
+
+
+### HERO-SPRITE-REMAKES — Completely remake the ten automatic repaints
+
+- **Owner / branch / worktree:** Codex; `audit/hero-repaint-faces`; `/workspace/legends-of-the-fall`.
+- **Scope:** full portrait-led sprite and animation remakes for Cleric, Buccaneer, Fire Wizard, Illusionist, Time Witch, Peasant, Ranger, Queen Dragoon, Lightning Mage and Great Sage; preserve identities, kits and intended skin tones.
+- **Completion:** visual direction approved, consistent front/rear animations, production asset/layout integration and affected tests, typecheck/build and portrait-size game review.
+- **Status:** owner approved the direction; all ten complete remakes implemented in 20 front/rear sheets (560 frames). Original skin colours retained, compatibility copies identical, and the legacy recolouring command skips all remakes. Typecheck/build, 45 affected tests and pixel validation passed. Browser review passed at all three phone sizes: 30 dossiers, 960 walk/facing checks, combat/reduced motion and offline reload at 393; no page errors. Owner requested merge; latest main integrated and release 0.391.0 validated: typecheck/build, 52 tests, frame validation and repeated three-size browser/offline checks passed. Owner-authorised merge: [PR #426](https://github.com/Hpatter9/legends-of-the-fall/pull/426). [Handoff](notes/hero-sprite-remakes.md), [production lineup](samples/hero-remakes/lineup.png).
+
+### HERO-REPAINT-AUDIT — Identify blotchy faces after skin repainting
+
+- **Owner / branch / worktree:** Codex; `audit/hero-repaint-faces`; `/workspace/legends-of-the-fall`.
+- **Scope / completion:** audit the twelve heritage heroes, inspect current source/repaint frames and show comparisons before repairs; no production sprite changes.
+- **Status:** audit complete. Highest priorities: Cleric, Buccaneer and Fire Wizard; Illusionist, Time Witch and Peasant need secondary review. All 24 source/repaint pairs preserve dimensions/alpha across 672 declared frames; seven relevant asset tests passed. Initial audit completed; the subsequently approved full remakes are implemented under HERO-SPRITE-REMAKES. [Handoff](notes/hero-repaint-audit.md), [comparisons](samples/hero-repaint-audit/comparisons.png), [Cleric walk](samples/hero-repaint-audit/cleric-walk.gif).
+
 Project: **Legend of the Last Keep**  
 Initial coordination snapshot: 2026-10-26
 
@@ -15,6 +47,171 @@ The manager maintains the integrated board. Workers propose their task updates i
 - Run tests for the changed behaviour and affected callers. Full suites and unrelated balance sweeps are not required; retain typecheck/build and affected portrait checks for implementation work. Documentation-only updates require diff, link and consistency review.
 
 ## Active work
+
+### TAVERN-NATURAL — Living painted tavern
+
+- **Release:** owner requested merging. Integrated main 0.395.0 and its hero weapon repairs; prepared 0.396.0 with matching Updates entry. Final typecheck/build, 34 focused tests and all 36 release browser/offline checks passed. Earlier three-size/reduced-motion coverage: 88 checks passed. Owner-authorised merge: [PR #430](https://github.com/Hpatter9/legends-of-the-fall/pull/430).
+
+- **Review follow-up:** owner reported Gwen covering Ayame and rectangular shadows around heroes. Same owner/branch/scope: correct keeper depth/counter masking and remove inherited scene-button shadows; completed with typecheck/build, 13 focused tests and all 88 browser checks passing. All three portrait screenshots visually reviewed; screenshots and recording replaced in PR #430.
+
+- **Owner / branch / worktree:** Codex; `design/living-tavern`; `/workspace/legends-of-the-fall`.
+- **Scope:** approved natural bar/table/hearth composition, varied relaxed hero poses and subtle ambient animation; preserve strongest-five selection, tappable heroes, services, saves and offline support.
+- **Completion:** new room and compatible character layers, reduced-motion/lifecycle support, focused tests, typecheck/build and three portrait-size browser/offline review.
+- **Status:** complete, ready for owner review. All 54 heroes have individual activity paintings; natural bar/table/hearth grouping, tappable Gwen and gentle motion are integrated. Typecheck/build, 30 focused tests, 54 export checks and all 82 browser checks passed across three portrait sizes, reduced motion and offline. [Handoff](notes/living-tavern.md), [activity gallery](samples/living-tavern-activities.jpg), [implemented motion](samples/living-tavern-motion.webm). Latest main 0.394.0 integrated into the feature branch; repeated validation passed, including Settings battery saver. Draft [PR #430](https://github.com/Hpatter9/legends-of-the-fall/pull/430). No merge into main, deployment or new release.
+
+### HERALD-PORTRAITS — Six Calamity herald paintings and final art release
+
+- **Owner:** Codex director. **Branch/worktree:** `art/calamity-herald-portraits`, `/workspace/legends-of-the-fall`; includes completed trait and road-art commits.
+- **Scope:** six portraits matching actual boss sprites, boss-intro/codex integration, source/packing tools, credits and checks; then integrate latest main, release metadata, PR and owner-authorised merge of all three batches.
+- **Direction:** owner approved sprite-matched Gorvak, Thorn Warden and Malphas proposal, then explicitly authorised finishing all six and merging.
+- **Completion:** six matching portraits, sprite fallbacks preserved for other bosses, undiscovered codex entries still concealed, focused tests/build/typecheck and portrait checks; final merge.
+- **Status:** 0.394.0 validated for owner-authorised merge of all three batches. All six paintings integrated; typecheck/build, 99 focused release tests, three-size intro/codex checks and reduced motion passed with no browser errors. Unknown entries concealed and ordinary boss sprite fallback preserved. [Release handoff](notes/art-release-394.md).
+
+### ROAD-ART — Eight painted road encounters
+
+- **Owner:** Codex. **Branch/worktree:** `art/road-encounters`, `/workspace/legends-of-the-fall` (retains completed trait art).
+- **Scope:** eight source paintings, importer, event-kind art mapping, compact art in existing encounter cards, credits, browser checks and handoff. Preserve event text, choices, costs, rules, saves and version.
+- **Direction:** owner approved the Pale Lady shrine, crossroads forge and refugee caravan proposal. Other encounters follow the same painted style.
+- **Completion:** eight distinct 768×432 paintings, matching event cards only, all choices reachable at three phone sizes, focused typecheck/build/tests and offline bundle validation.
+- **Status:** complete locally, ready for review. Eight paintings integrated; typecheck/build, event and menu tests and all three phone sizes passed. Options/text/costs preserved, choices reachable, leave/Continue and insufficient-gold states checked, no browser errors. [Handoff](notes/painted-road-encounters.md). No push, merge or deployment.
+
+### NEMESIS-TRAIT-ART — Complete the twelve remaining trait symbols
+
+- **Owner:** Codex. **Branch/worktree:** `art/nemesis-traits-completion`, `/workspace/legends-of-the-fall` from main 0.393.0.
+- **Scope:** twelve original trait source symbols, importer/mapping, small-size previews, learned/unknown menu checks, credits and handoff. No simulation/save/version changes. Road encounters and herald portraits follow as separate batches.
+- **Direction:** Owner approved Fireproof, Bane of Mages and Elusive against the existing gothic pixel symbols, including the 28px comparison.
+- **Completion:** all remaining modelled trait icons integrated, distinct readable silhouettes at 28px, hidden secrets preserved, focused tests/typecheck/build and three phone sizes checked.
+- **Status:** complete locally, ready for review. All 24 modelled traits now have unique mappings. Typecheck/build, 42 focused tests and all learned/unknown groups at three phone sizes passed, with unchanged fixture meta and no browser errors. [Handoff](notes/nemesis-traits-completion.md). No push, merge or deployment.
+
+### ART-393-RELEASE — Merge completed artwork and plan the next original paintings
+
+- **Owner:** Codex director. **Branch/worktree:** `art/dynasty-backdrops`, `/workspace/legends-of-the-fall`.
+- **Scope:** release all four completed art batches, integrate main through 0.392.0, release metadata/checks, create PR and owner-authorised merge; preserve a concrete next-artwork plan.
+- **Status:** 0.393.0 ready for owner-authorised merge. Integrated main; typecheck/build, 100 focused tests, all three release browser sizes and reduced motion passed with no browser errors. [Release handoff](notes/art-release-393.md).
+- **Plan:** [next original artwork](notes/new-artwork-plan.md): twelve remaining trait symbols, eight road encounters, six Calamity herald portraits. No new generation in this release.
+
+
+### DYNASTY-ART — Seasons, fates, backdrops, traits and dynasty symbols
+
+- **Owner:** Codex. **Branch/worktree:** `art/dynasty-backdrops`, `/workspace/legends-of-the-fall`; previous art batches preserved.
+- **Scope:** import nine existing season/fate symbols, two existing backdrops and twelve existing Nemesis trait symbols; approved House/heirloom paintings; menu integration, tools, credits and handoff. No game rules, saves or version changes.
+- **Direction:** owner approved the source artwork and House/heirloom proposal; subdued readable backdrops; only learned traits reveal icons.
+- **Completion:** required art displayed in existing menus, hidden secrets preserved, focused tests/typecheck/build and three phone viewport checks.
+- **Status:** complete locally, ready for review. Four season/four modelled fate icons, House/heirloom paintings, two backdrops and twelve learned-trait symbols integrated. Typecheck/build, 68 focused tests and all three phone viewport checks passed, with no browser errors. Legend artwork reserved: no corresponding fate state exists. [Handoff](notes/dynasty-art-finish.md). No push, merge or deployment.
+
+### COUNCIL-ART — Council event icons and Lost Techniques manuscript
+
+- **Owner:** Codex. **Branch/worktree:** `art/council-manuscript`, `/workspace/legends-of-the-fall` (preserves the completed quest portraits and trophies).
+- **Scope:** import existing Council event source art, replace remaining News/token placeholders with dedicated or existing painted artwork, add approved manuscript to shared quest portraits, tooling, credits and validation. No simulation/save/version changes.
+- **Direction:** owner approved the existing Council icon sheet and painted manuscript proposal.
+- **Completion:** all 19 News types mapped, dedicated War Trophy token and manuscript displayed, typecheck/build, focused tests and three portrait viewport checks.
+- **Status:** complete locally, ready for review. All 19 News types, dedicated trophy token and manuscript card/log passed at three phone sizes; typecheck/build and 42 focused tests passed, no browser errors. [Handoff](notes/council-manuscript-art.md). No push, merge or deployment.
+
+### TROPHY-PAINT — Eighteen painted boss trophies
+
+- **Owner:** Codex. **Branch/worktree:** `art/boss-trophy-paintings`, `/workspace/legends-of-the-fall` (retains completed quest portraits).
+- **Scope:** eighteen trophy paintings and a blank locked mount, source/import tooling, wall/detail art integration, credits and handoff. Existing unlock rules and saves preserved; no version change.
+- **Direction:** owner approved the wood-and-brass Thorn Warden, Karnok and Forge Titan proposal.
+- **Completion:** distinct trophy art for every boss, painted locked plaque, readable wall/detail views at three phone sizes, focused tests/typecheck/build and reduced-motion check.
+- **Status:** complete locally, ready for review. Eighteen paintings and empty mount imported; typecheck/build, 13 focused tests, all 54 detail checks across three phone sizes, filters, locked states and reduced motion passed with no browser errors. [Handoff](notes/painted-boss-trophies.md). No push, merge or deployment.
+
+### QUEST-PORTRAITS — Painted faces for fifteen quest-givers
+
+- **Owner:** Codex. **Branch/worktree:** `art/quest-giver-portraits`, `/workspace/legends-of-the-fall`.
+- **Scope:** fifteen source portraits, importer, quest face mapping, credits, browser previews and handoff. No simulation, save or version changes.
+- **Direction:** owner approved the Oswy, Mother Teal and Pim painted proposal on 2026-11-07.
+- **Completion:** fifteen distinct paintings integrated in shared quest cards/log, small-size visual review, typecheck/build and three portrait viewport checks.
+- **Status:** complete locally, ready for review. Fifteen portraits integrated; typecheck/build and 45 card captures plus three quest-log checks passed at all three portrait sizes, with no browser errors. [Handoff](notes/quest-giver-portraits.md). No push, merge or deployment.
+
+
+### TAVERN-POSES — Relaxed hero paintings for the tavern
+
+- **Release:** owner authorised merging. PR #426 reached main during preparation, so the tavern release is 0.392.0 under [PR #427](https://github.com/Hpatter9/legends-of-the-fall/pull/427), preserving the integrated ten hero remakes. Final typecheck/build, seven focused test files and all 21 repeated release browser/offline checks passed. Owner-authorised for merge.
+
+- **Owner:** Codex. **Branch/worktree:** `design/painted-tavern`, `/workspace/legends-of-the-fall`; preserves the completed uncommitted tavern implementation.
+- **Scope:** paint two relaxed variants for all 54 heroes, integrate compatible five-seat composition, validate and then refine the tavern UI. Preserve simulation, full roster and version.
+- **Direction:** owner requested new tavern-specific hero art, approximately two spots per hero, matching the cozy concept. Proposed two reusable inward-facing seated poses across five compatible positions to avoid seat conflicts for arbitrary strongest-five combinations.
+- **Completion:** reviewed two-pose samples and room proposal; then approved pose coverage, deterministic seating, three-size/offline validation and handoff.
+- **Status:** complete, ready for review. All 54 heroes have two seated paintings; layered cozy room and subsequent hero/services UI are integrated. Export validation, typecheck/build, five focused test files and all 55 final browser checks pass across three portrait sizes, reduced motion and offline. Sources retained in `art-source/tavern/`. [Handoff](notes/tavern-poses.md). No merge or deployment.
+
+### TAVERN-PAINT — Painted tavern with the five strongest heroes
+
+- **Owner:** Codex. **Branch/worktree:** `design/painted-tavern`, `/workspace/legends-of-the-fall` (from merged PR #425).
+- **Scope:** painted room artwork, dynamic hero presentation, existing tavern actions and shared painted UI materials; selection by existing dossier power. Preserve roster, saves and game rules.
+- **Direction:** owner approved painted tavern concept, shared PR #425 styling and the five strongest owned heroes at the time.
+- **Completion:** dynamic top-five updates, working hero/actions, focused tests/typecheck/build and three portrait previews including reduced motion/offline.
+- **Status:** complete, ready for review. Typecheck/web build and five focused test files pass; all 40 browser checks pass across three portrait sizes, reduced motion and offline. [Handoff](notes/painted-tavern.md). No merge or deployment.
+
+### PAINTED-DEPLOY-ICONS — Complete deployment chrome and battle icon coverage
+
+- **Release:** owner authorised main integration before tavern work; [PR #425](https://github.com/Hpatter9/legends-of-the-fall/pull/425), version 0.390.0. Integrated main 0.389.0; typecheck/build, 88 relevant tests and a fresh 40-check 393px interaction/reduced-motion/offline pass succeeded.
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Scope:** deployment header/panel/buttons, bench/selection/recycle indicators; painted icon coverage across current hero skills/ultimates/revives, king spells and wave-note marks. Reuse credited painted art where suitable and add missing motifs. Preserve roster layout, simulation, saves, labels, touch/drag and unlock behavior; no version change, merge or deployment.
+- **Completion:** explicit icon coverage checked against real kit/spell data; typecheck/build, affected tests; deployment/combat and icon-sheet browser checks at three portrait sizes, keyboard/touch states, reduced motion and offline new assets. Handoff and any exceptions recorded.
+- **Status:** complete and ready for owner review. Typecheck/build and 60 relevant tests passed. All 116 browser checks passed at 393×852, 360×780 and 412×915, with zero page errors/overflow; keyboard/touch, real deployment interactions, reduced motion, all 76 motifs and offline artwork passed. All 54 current hero kits and 35 king spells have painted coverage. [Handoff](notes/painted-deployment-icons.md). No merge or deployment.
+
+### PAINTED-BATTLE-REPORTS — Painted boss/cast announcements and result screens
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Scope:** boss signature and small hero cast banners, short victory/defeat cards, results/rewards and run recaps, replay/route/Last Stand end report surfaces; painted materials and focused review tools. Preserve existing animation timing, non-blocking boss announcements, live rewards, navigation, saves, simulation and version.
+- **Completion:** typecheck/build, relevant report/boss tests, browser interaction and visual checks at 393×852, 360×780 and 412×915, long reports, reduced motion and offline artwork verification. No merge or deployment.
+- **Status:** complete and ready for owner review. Typecheck/build and 35 relevant tests passed. All 146 browser checks passed at the three portrait sizes, with zero page errors/overflow, non-blocking boss warnings, onward navigation, report scrolling, reduced motion and offline crimson artwork. [Handoff](notes/painted-battle-reports.md). No merge or deployment.
+
+### PAINTED-BATTLE-POPUPS — Continue the accepted painted battle UI
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Scope:** skin existing skill details, formations, Last Stand pause, between-wave event/equipment choices, March orders and relic sheets using the approved combat paintings. Preserve their existing components and handlers; no new menu component, simulation, save or version changes.
+- **Completion:** typecheck/build, relevant UI tests, real popup interactions and screenshots at 393×852, 360×780 and 412×915; reduced motion and long-content scrolling. Handoff and remaining limitations recorded. No merge or deployment.
+- **Status:** complete and ready for owner review. Typecheck/build and 24 relevant tests passed. All 132 browser checks passed across the three portrait sizes, including real controls, disabled choices, scrolling, pause/resume and reduced motion; zero page errors or horizontal overflow. [Handoff](notes/painted-battle-popups.md). Earlier HUD work remains in this branch. Boss/cast banners and result materials are now covered by PAINTED-BATTLE-REPORTS; no merge or deployment.
+
+### PAINTED-COMBAT-HUD — Approved painted battle controls, first working pass
+
+- **Owner:** current Codex chat. **Branch/worktree:** `design/painted-combat-hud`, `/workspace/legends-of-the-fall`.
+- **Goal:** implement the owner-approved painted combat HUD concept with reusable textured frames and sockets while preserving battlefield space and live controls.
+- **Allowed scope:** combat HUD styles, necessary HUD art/build wiring, credits, focused browser evidence and handoff. Existing shared menu component retained. Roster, simulation, saves, version, result screens and broader popup redesign excluded from this first pass.
+- **Completion:** actual combat HUD reviewed at 393×852, 360×780 and 412×915, including larger parties, skills, spell states and reduced motion; typecheck/build, affected tests and offline asset check. No merge or deployment.
+- **Status:** first combat HUD pass ready for owner review. Typecheck/build, 21 affected tests and 63 browser checks passed across all three portrait sizes, including reduced motion, control interactions, ten-hero presentation fixture and real offline reload; zero page errors. [Handoff](notes/painted-combat-hud.md). Popup and report materials are covered by PAINTED-BATTLE-POPUPS and PAINTED-BATTLE-REPORTS; deployment and current skill icon coverage are completed by PAINTED-DEPLOY-ICONS. No merge or deployment.
+
+### ART-RELEASE — Release the completed art passes as 0.389.0
+
+- **Owner:** Codex director. **Branch/worktree:** `art/finishing-pass`, `/workspace/legends-of-the-fall`.
+- **Scope:** integrate current main, release version/Updates entry, relevant checks, PR and owner-authorised merge.
+- **Status:** 0.389.0 validated for release through owner-authorised [PR #424](https://github.com/Hpatter9/legends-of-the-fall/pull/424). Main 0.388.0 integrated cleanly; 77 focused tests, typecheck, web build and post-integration browser check passed. [Note](notes/art-release.md).
+
+
+### ART-FINISH — Travellers, expedition details, empty gear slots, treants and painted spell clips
+
+- **Owner:** Codex. **Branch/worktree:** `art/finishing-pass`, `/workspace/legends-of-the-fall` (includes the completed gear and enemy passes).
+- **Scope:** three traveller portraits and campfire presentation; four oath pennants and provisions icon; seven empty-slot paintings and paper-doll backing; hurt rows for three treant summons; animated flame, smoke and energy materials. Asset import/preview tools, focused validation, credits and handoff. Preserve game rules, saves, offline play and reduced motion; no version change.
+- **Direction:** owner approved the traveller portraits; other menu art retains the approved painted style and treant motion follows the approved enemy recoil direction.
+- **Completion:** all five groups implemented, checked at three portrait sizes and reduced motion where relevant, focused tests/typecheck/build pass, sources and handoff retained.
+- **Status:** in progress.
+
+
+### ENEMY-MOTION — Breathing idles and dedicated recoil for nine enemy sheets
+
+- **Owner:** Codex. **Branch/worktree:** `art/enemy-motion`, `/workspace/legends-of-the-fall`.
+- **Scope:** nine existing orc/demon/imp/ogre sheets and their layout entries; retained motion sources, packing/preview tools, focused asset validation, credits and handoff. Preserve existing walk/attack/dead pixels and simulation rules. No version change.
+- **Direction:** owner approved the Orc Grunt breathing/recoil proposal.
+- **Completion:** a four-frame idle loop and three readable hurt poses per sheet, no clipped frames or identity jumps at battle size, unchanged existing action rows, focused tests/typecheck/web build and portrait battle previews including reduced motion.
+- **Status:** complete, ready for review. Nine sheets packed; existing action pixels verified unchanged. All 12 focused tests, typecheck, web build, three portrait checks and reduced motion passed. [Handoff](notes/enemy-motion.md). No merge or deployment.
+
+### GEAR-PAINT — Complete the 69 missing equipment paintings
+
+- **Owner:** Codex. **Branch/worktree:** `art/gear-completion`, `/workspace/legends-of-the-fall`.
+- **Scope:** missing gear sources, gear atlases, backlog, credits and handoff. No simulation or version changes.
+- **Direction:** owner approved the four-item painted proposal.
+- **Completion:** all 69 missing bases painted and imported, contact sheets reviewed, equipment checks, typecheck, web build and portrait previews. Enemy animation and travellers follow as separate passes.
+- **Status:** complete, ready for review. All 69 bases painted and imported; 16 equipment tests, typecheck, web build and three portrait checks passed. [Handoff](notes/gear-paint-completion.md). No merge or deployment.
+
+
+### UI-POPUP-UNIFORM — Uniform Keep & Kingdom fortress aesthetic across all menus, popups, sheets, and dialogs
+
+- **Owner:** Claude worker / Antigravity. **Branch/worktree:** `uniform_menu_popup_ui` (from `origin/main` 0.368.0).
+- **Goal:** the owner's request to make every menu and popup uniform using the dark-fantasy fortress gothic theme (chiseled slate backdrops, double brass filigree borders, forged iron brackets with square pyramid castle bolts, tactile velvet buttons, min 44px tap targets, min 11px font size floor, standardized "‹ Back" on pages and "Close" on modals/popups/sheets).
+- **Scope:** `src/ornateMenus.css` (Section 24), `src/autoAsk.ts`, `src/talentView.ts`, `src/unitInfo.ts`, `docs/notes/uniform-menu-popup-ui.md`. No sim, save or version change.
+- **Status:** ready for review; [PR #386](https://github.com/Hpatter9/legends-of-the-fall/pull/386). [Note](notes/uniform-menu-popup-ui.md).
 
 ### RELICS-2 — The relics redone as the keep's lost artefacts (step 1: the six Chapters and the Storied relics)
 
@@ -970,3 +1167,49 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Scope: chamber artwork, separate summoner actor with idle/cast/eye-shield poses, new-recruit chamber reveal, relevant checks and credits. Shard tarot rewards, simulation and saves preserved.
 - Direction: owner approved current appearance with idle, summoning, and shielding eyes against the bright hero arrival.
 - Completion: three poses integrated with reveal timing and reduced motion. Typecheck/build, four affected test files and browser checks at all three portrait sizes plus reduced motion passed. Status: ready for owner review. [Handoff](notes/animated-summoner.md).
+
+## ART-EXPANSION-TAUNT — Taunt cut-in banners
+
+- Owner: Codex; branch `art/expansion`, worktree `/workspace/legends-of-the-fall`.
+- Scope: `art-source/expansion/taunt-banners.png` and task/handoff documentation.
+- Goal: one transparent 1280×384 source sheet; nemesis black/red banner above a mirrored green/brass hero banner, each in a 1280×192 row; no text or figures.
+- Status: ready for review. Inspected ribbon reference; generated and visually reviewed the source sheet; verified 1280×384 RGBA with transparent pixels. Runtime integration excluded. Handoff: [taunt banners](notes/expansion-taunt-banners.md).
+
+### EXPANSION-ART-SEASONS — Seasons and fates source sheet
+
+- Owner: Codex. Branch/worktree: `art/expansion`, `/workspace/legends-of-the-fall`.
+- Scope: `art-source/expansion/seasons-fates.png` and task/handoff documentation.
+- Goal: nine painted icons in the requested order, transparent 1152×256 sheet, each centred in the upper 128×128 of its 128×256 cell.
+- Status: complete; dimensions, alpha, per-cell centring, empty lower half and content checked. [Handoff](notes/expansion-art-seasons-fates.md). No runtime integration.
+## EXP-ART-006 — Duel ring of stones
+
+- Owner: Codex art chat. Branch/worktree: `art/expansion`, `/workspace/legends-of-the-fall`.
+- Scope: one transparent source image at `art-source/expansion/duel-ring.png`, task record and handoff.
+- Completion: 640×320 RGBA; low grey menhirs on a hollow 5×5 isometric square perimeter, brass bands and moss, no ground or text; submit to Expansion art PR.
+- Status: ready for review. Final image visually inspected; dimensions, RGBA and transparent centre/exterior checked with ImageMagick. Runtime checks not run: executable code unchanged.
+- Handoff: [duel ring source art](notes/expansion-duel-ring-art.md). Renderer integration is outside this task.
+### EXPANSION-BADGES — Nemesis badges and duel banner
+
+- **Owner:** Codex. **Branch/worktree:** `art/expansion`, `/workspace/legends-of-the-fall`.
+- **Scope:** two source PNGs under `art-source/expansion`, handoff and this task entry.
+- **Completion:** four centred badges in a 1024×256 transparent strip and one 512×256 transparent duel emblem; dimensions and alpha checked, visually reviewed. No runtime changes.
+- **Status:** ready for review. [Handoff](notes/expansion-art.md). Requested prior branch/PR were absent; branch recreated from main.
+
+### EXPANSION-HOUSES — Houses menu backdrop
+
+- **Owner:** Codex. **Target branch/PR:** `art/expansion`, #399. **Worktree:** `/workspace/houses-backdrop`.
+- **Allowed scope:** `art-source/expansion/houses-backdrop.png`, this entry and the expansion-art handoff.
+- **Completion:** one 1024×1536 upright painterly pixel-art tapestry backdrop, empty shields, amber sconces, dark centre and edges; no people or text.
+- **Status:** ready for review. PNG decode, exact dimensions and visual composition checked; no executable changes. [Handoff](notes/expansion-art.md).
+### EXPANSION-ICONS — Nemesis icon atlas
+
+- **Owner:** Codex. **Branch/worktree:** `art/expansion`, `/workspace/legends-of-the-fall`.
+- **Scope:** `art-source/expansion/nemesis-icons.png` and this handoff; existing badge/banner work preserved.
+- **Completion:** one 1536×640 transparent PNG, 12×5 cells of 128×128; 29 ordered icons and 31 empty cells. Dimensions, binary alpha, occupancy, padding and 24px preview checked.
+- **Status:** ready for review in [PR #399](https://github.com/Hpatter9/legends-of-the-fall/pull/399). [Handoff](notes/expansion-art.md). Source art only; no runtime checks required.
+
+### ART-EXPANSION-TABLES — Hester and Elders source props
+
+- **Owner:** Codex tavern art chat. **Branch/worktree:** `art/expansion`, `/workspace/expansion-art`.
+- **Scope:** Hester's merchant table and optional Elders' table source PNGs, plus handoff.
+- **Status:** complete; exact 384×256 and 320×112 dimensions, binary transparency, clear corners and visual inspection passed. Added to Expansion art PR #399. Runtime integration remains with director. [Handoff](notes/expansion-tavern-tables.md).

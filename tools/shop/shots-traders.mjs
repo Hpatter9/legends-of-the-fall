@@ -17,7 +17,7 @@ const click = async (page, sel, text) => {
 };
 const { page, errors } = await boot(browser, port, 393, 852, { seed, stall: { day: 0, sold: {}, spent: 4600, guardians: 1, dealerDue: true } });
 await page.screenshot({ path: 'docs/samples/shop-traders-camp.png' });
-await click(page, '#hmStall');
+await page.evaluate(() => window.__game.home.tavern.shop?.onStall());
 await click(page, '.hsTab', 'Caravan');
 await page.screenshot({ path: 'docs/samples/shop-caravan.png' });
 await click(page, '.hsTab', 'Gloaming');

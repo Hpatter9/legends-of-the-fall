@@ -13,7 +13,7 @@ import {
 } from '../src/sim/equipment';
 import { firedCount } from '../src/sim/equipFx';
 import { existsSync, readFileSync } from 'node:fs';
-import { BASE_SCORE, OLD_BASES } from '../src/sim/equipBases';
+import { BASE_SCORE, LEGEND_LIST, OLD_BASES } from '../src/sim/equipBases';
 import { readyBattle } from './helpers';
 
 const sword = (rarity: 1 | 2 | 3 | 4 | 5 = 1, level = 1): NewEquipment => ({ base: 'ironSword', rarity, level });
@@ -210,10 +210,13 @@ test('SEVEN-SLOT GEAR: 189 item types (the 21 legends come apart), 27 a slot, ea
     assert.equal(new Set(list.map((b) => JSON.stringify(b.main))).size, list.length, slot);
   }
   const todo = readFileSync('docs/notes/gear-art-todo.md', 'utf8');
+  // (batch 7: the owner's paintings are in the gear atlas, `src/art/gear/index.json`; a painted base is off the art list)
+  const painted = new Set(Object.keys(JSON.parse(readFileSync('src/art/gear/index.json', 'utf8')).items));
+  for (const l of LEGEND_LIST) assert.ok(painted.has(l.id), `${l.id} the legend is painted`);
   for (const b of EQUIP_LIST) {
-    // (the 60 from before keep their icons; a new base still to be painted is on the art list)
+    // (the 60 from before keep their icons; a new base still to be painted is on the art list, and one painted is not)
     if (OLD_BASES.has(b.id)) assert.ok(existsSync(`src/art/equip/${b.icon}.png`), `icon ${b.icon}`);
-    else assert.ok(existsSync(`src/art/equip/${b.icon}.png`) || todo.includes(`\`${b.id}\``), `${b.id} is painted or on the art list`);
+    else assert.ok(painted.has(b.id) !== todo.includes(`\`${b.id}\``), `${b.id} is painted or on the art list, not both`);
     assert.ok(Object.keys(b.main).length >= 1);
     assert.equal(ABILITIES[b.ability.id], b.ability);
     assert.ok(describeAbility(b.ability, 1).length > 10);

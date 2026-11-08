@@ -20,6 +20,7 @@ import { warmIcon } from './menuArt';
 for (const u of Object.values(TALENT_ICONS)) warmIcon(u);
 import { glyphOf } from './sim/talentGlyph';
 import { autoPlan, planCost } from './sim/talentAuto';
+import { menuFoot, menuNote, menuWell, ornateMenu } from './ornateMenu';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -110,90 +111,78 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     panel.append(open);
   };
 
-  /** The box over the page for a node: its picture, name, cost, what it does, and Learn or Back. */
+  /** The box over the page for a node: its picture, name, cost, what it does, and Learn or Close. A standard ornate menu (INT-386). */
   const ask = (n: TalentNode) => {
     const state = stateOf(meta, kind, n);
-    const back = el('div', 'tModal');
-    const box = el('div', 'tBox');
-    const close = () => {
-      back.remove();
-      sel = undefined;
-      view();
-    };
-    const title = el('div', 'tTitle');
+    const menu = ornateMenu({
+      id: 'talentAsk', eyebrow: `Tier ${n.tier} · ${costOf(n)} point${costOf(n) > 1 ? 's' : ''}`, title: n.name,
+      onClose: () => {
+        sel = undefined;
+        view();
+      },
+    });
+    const well = menuWell(menu.body);
+    well.classList.add('tAskWell');
     const pic = el('img', 'tBig');
     pic.decoding = 'sync';
     pic.src = TALENT_ICONS[glyphOf(n)];
     pic.alt = '';
     pic.draggable = false;
-    title.append(pic, el('b', '', n.name), el('small', '', `Tier ${n.tier} · ${costOf(n)} point${costOf(n) > 1 ? 's' : ''}`));
-    box.append(title, el('p', '', n.text));
+    well.append(pic, el('p', '', n.text));
     if (n.tier === 2 || n.tier === 4) {
       const skill = KITS[kind]?.skill;
-      if (skill) box.append(el('small', 'dim', `Changes ${skill.name}.`));
+      if (skill) menuNote(menu.body, `Changes ${skill.name}.`);
     }
     const free = pointsFree(meta, kind);
-    const row = el('div', 'tBtns');
-    if (state === 'taken') box.append(el('small', 'tGood', 'Learned.'));
-    else if (state === 'available') {
-      box.append(el('small', 'dim', `You have ${free} point${free === 1 ? '' : 's'}.`));
-      const go = button(`Learn (${costOf(n)} point${costOf(n) > 1 ? 's' : ''})`, 'primary');
-      go.addEventListener('click', () => {
-        if (learn(meta, kind, n.id)) popped = n.id;
-        back.remove();
-        sel = undefined;
-        commit();
-        view();
-      });
-      row.append(go);
-    } else box.append(el('small', 'tBad', whyNot(meta, kind, n.id) ?? ''));
-    const no = button('Back');
-    no.addEventListener('click', close);
-    row.append(no);
-    box.append(row);
-    back.append(box);
-    // (a tap outside the box is Back too)
-    back.addEventListener('click', (e) => {
-      if (e.target === back) close();
+    if (state === 'taken') menuNote(menu.body, 'Learned.').classList.add('tGood');
+    else if (state === 'available') menuNote(menu.body, `You have ${free} point${free === 1 ? '' : 's'}.`);
+    else menuNote(menu.body, whyNot(meta, kind, n.id) ?? '').classList.add('tBad');
+    menuFoot(menu, {
+      back: { word: 'close' },
+      primary: state === 'available' ? {
+        label: `Learn (${costOf(n)} point${costOf(n) > 1 ? 's' : ''})`,
+        onClick: () => {
+          if (learn(meta, kind, n.id)) popped = n.id;
+          commit();
+          menu.close();
+        },
+      } : undefined,
     });
-    document.body.append(back);
+    // (a tap outside the box is Close too)
+    menu.root.addEventListener('click', (e) => {
+      if (e.target === menu.root) menu.close();
+    });
   };
 
-  /** TALENT-AUTO: the box over the page with what Auto would learn, in order, and Confirm (learn them, as a tap on each would) or Cancel. */
+  /** TALENT-AUTO: the box over the page with what Auto would learn, in order, and Confirm (learn them, as a tap on each would) or Cancel.
+   *  A standard ornate menu (INT-386). */
   const autoAsk = (plan: string[]) => {
-    const back = el('div', 'tModal');
-    const box = el('div', 'tBox');
-    const close = () => back.remove();
     const free = pointsFree(meta, kind);
     const cost = planCost(kind, plan);
-    box.append(
-      el('b', 'tAutoHead', `Auto-spend · ${UNITS[kind].name}`),
-      el('p', '', `Learns ${plan.length} talent${plan.length === 1 ? '' : 's'} for ${cost} of your ${free} point${free === 1 ? '' : 's'}, chosen to suit the hero and taken down the tree, in this order:`),
-      planList(kind, plan),
-    );
-    if (free > cost) box.append(el('small', 'dim', `${free - cost} point${free - cost === 1 ? '' : 's'} kept for the next row.`));
-    const row = el('div', 'tBtns');
-    const go = button('Confirm', 'primary');
-    go.addEventListener('click', () => {
-      for (const id of plan) {
-        if (!learn(meta, kind, id)) break;
-        popped = id;
-      }
-      close();
-      sel = undefined;
-      commit();
-      view();
+    const menu = ornateMenu({ id: 'talentAuto', eyebrow: 'Auto-spend', title: UNITS[kind].name });
+    menuNote(menu.body, `Learns ${plan.length} talent${plan.length === 1 ? '' : 's'} for ${cost} of your ${free} point${free === 1 ? '' : 's'}, chosen to suit the hero and taken down the tree, in this order:`);
+    menuWell(menu.body).append(planList(kind, plan));
+    if (free > cost) menuNote(menu.body, `${free - cost} point${free - cost === 1 ? '' : 's'} kept for the next row.`);
+    const { primary } = menuFoot(menu, {
+      back: { word: 'Cancel' },
+      primary: {
+        label: 'Confirm',
+        onClick: () => {
+          for (const id of plan) {
+            if (!learn(meta, kind, id)) break;
+            popped = id;
+          }
+          menu.close();
+          sel = undefined;
+          commit();
+          view();
+        },
+      },
     });
-    const no = button('Cancel');
-    no.addEventListener('click', close);
-    row.append(go, no);
-    box.append(row);
-    back.append(box);
-    back.addEventListener('click', (e) => {
-      if (e.target === back) close();
+    menu.root.addEventListener('click', (e) => {
+      if (e.target === menu.root) menu.close();
     });
-    document.body.append(back);
-    go.focus();
+    primary!.focus();
   };
 
   const view = () => {
@@ -286,7 +275,7 @@ export function drawTalents(meta: Meta, kind: string, changed: () => void = () =
     });
     bar.append(buy, re);
     panel.append(bar, el('small', 'tSub', `${shardsToSpend(meta, kind)} spare shard${shardsToSpend(meta, kind) === 1 ? '' : 's'} · ${bought} of ${MAX_SHARD_POINTS} shard points bought. Spending shards never lowers a rank. You have ${meta.crowns} crowns.`));
-    const back = button('Back');
+    const back = button('‹ Back');
     back.addEventListener('click', () => {
       confirming = false;
       overview();

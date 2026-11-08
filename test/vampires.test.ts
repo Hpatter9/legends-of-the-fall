@@ -1,13 +1,13 @@
 // The Vampire origin and its Last Oath (docs/notes/twenty-heroes.md, batch 0): the trait's tiers at two, four and five, the leech it gives
-// every hero's blows, the bat swarm at five, and the Crimson Court. The five Vampires wait for their battle sheets, so they are fielded
-// here with `addUnit` and are not yet in `ALL_HEROES`, the roster's traits or `COMBOS`.
+// every hero's blows, the bat swarm at five, and their Last Oath, the Night Kin. The five Vampires have joined the roster (their battle sheets came first),
+// so they are in `ALL_HEROES`, the roster's traits and `COMBOS`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { addUnit, fight, hurt, startBattle, stepBattle, type Battle, type BattleEvent } from '../src/sim/battle';
 import { afterBlow } from '../src/sim/abilities';
-import { COMBO_NEED, COMBOS, COMING_COMBOS, comboById, comboOf, readCombosSeen } from '../src/sim/combos';
-import { COMING_HERO_TRAITS, COMING_TRAITS, countTraits, HERO_TRAITS, membersOf, TRAITS, traitById, traitEffects, traitsOf } from '../src/sim/traits';
-import { ALL_HEROES, COMING_HEROES, UNITS } from '../src/sim/units';
+import { COMBO_NEED, COMBOS, comboById, comboOf, readCombosSeen } from '../src/sim/combos';
+import { countTraits, HERO_TRAITS, membersOf, TRAITS, traitById, traitEffects, traitsOf } from '../src/sim/traits';
+import { ALL_HEROES, COMING_HEROES, TWENTY_HEROES, UNITS } from '../src/sim/units';
 import { gradeBoost } from '../src/sim/run';
 import { ailmentsOf } from '../src/sim/ailments';
 
@@ -22,24 +22,25 @@ function started(kinds: readonly string[], seed = 5): Battle {
 }
 const hero = (b: Battle, kind: string) => b.units.find((x) => x.def === kind)!;
 
-test('the five Vampires wait outside the roster: units and traits, but not ALL_HEROES, the roster traits or COMBOS', () => {
-  assert.deepEqual([...COMING_HEROES], FIVE);
+test('the five Vampires have joined the roster: units, traits, ALL_HEROES and COMBOS', () => {
+  assert.deepEqual(TWENTY_HEROES.slice(0, 5), FIVE);
   for (const k of FIVE) {
     assert.equal(UNITS[k].side, 'hero', k);
-    assert.ok(!ALL_HEROES.includes(k), `${k} is not yet in ALL_HEROES`);
-    assert.ok(!HERO_TRAITS[k], `${k} is not yet in HERO_TRAITS`);
+    assert.ok(ALL_HEROES.includes(k), `${k} is in ALL_HEROES`);
+    assert.ok(!COMING_HEROES.includes(k), `${k} is no longer coming`);
+    assert.equal(HERO_TRAITS[k][0], 'vampire');
     assert.equal(traitsOf(k)[0], 'vampire');
-    assert.equal(TRAITS[COMING_HERO_TRAITS[k][1]].kind, 'class', k);
+    assert.equal(TRAITS[HERO_TRAITS[k][1]].kind, 'class', k);
   }
   assert.equal(UNITS.dhampir.name, 'Dhampir');
-  assert.ok(!TRAITS.vampire && traitById('vampire') === COMING_TRAITS.vampire);
-  assert.equal(membersOf('vampire').length, 0);
-  assert.ok(!COMBOS.some((c) => c.id === 'bloodCourt'));
+  assert.ok(TRAITS.vampire && traitById('vampire') === TRAITS.vampire);
+  assert.equal(membersOf('vampire').length, 5);
+  assert.ok(COMBOS.some((c) => c.id === 'bloodCourt'));
 });
 
 test('the Vampire origin wakes at two, four and five Vampires', () => {
   const vampire = (kinds: string[]) => countTraits(kinds).find((c) => c.trait.id === 'vampire');
-  assert.deepEqual(COMING_TRAITS.vampire.tiers.map((t) => t.need), [2, 4, 5]);
+  assert.deepEqual(TRAITS.vampire.tiers.map((t) => t.need), [2, 4, 5]);
   assert.ok(!vampire(['vampireLord'])!.active);
   assert.equal(vampire(['vampireLord', 'vampireLord'])!.count, 1, 'only distinct kinds count');
   assert.equal(vampire(FIVE.slice(0, 2))!.tier, 0);
@@ -50,7 +51,7 @@ test('the Vampire origin wakes at two, four and five Vampires', () => {
   assert.equal(traitEffects(FIVE.slice(0, 4)).leech, 0.12);
   assert.ok(!traitEffects(FIVE.slice(0, 4)).vampireSwarm);
   const five = traitEffects(FIVE);
-  assert.equal(five.leech, 0.18);
+  assert.equal(five.leech, 0.15);
   assert.ok(five.vampireSwarm);
   // (a Vampire's class counts as its class does: two Blades with the Vampire Lord)
   assert.ok(countTraits(['vampireLord', 'samurai']).find((c) => c.trait.id === 'blade')!.active);
@@ -123,15 +124,15 @@ test('the swarm moves the Vampire to the free tile within 2 farthest from the fo
   if (a.blink) assert.ok(Math.abs(a.to.u - a.from.u) + Math.abs(a.to.v - a.from.v) <= 2);
 });
 
-test('the Crimson Court forms with all five Vampires, fills, and its Eternal Eclipse lands', () => {
-  const c = COMING_COMBOS.find((x) => x.id === 'bloodCourt')!;
+test('the Night Kin forms with all five Vampires, fills, and its Blood Moon lands', () => {
+  const c = COMBOS.find((x) => x.id === 'bloodCourt')!;
   assert.deepEqual([...c.heroes], FIVE);
   assert.equal(comboById('bloodCourt'), c);
   assert.equal(comboOf(FIVE)?.id, 'bloodCourt');
   assert.equal(comboOf(FIVE.slice(0, 4)), undefined);
   assert.deepEqual(readCombosSeen(['bloodCourt', 'nope']), ['bloodCourt']);
-  // (no hero of the court is in a roster combo)
-  for (const k of FIVE) assert.ok(!COMBOS.some((x) => x.heroes.includes(k)), k);
+  // (no hero of the court is in another combo)
+  for (const k of FIVE) assert.equal(COMBOS.filter((x) => x.heroes.includes(k)).length, 1, k);
 
   const b = startBattle(4, 'werewolves');
   // (living foes: the undead, golems and machines do not bleed)
@@ -147,7 +148,7 @@ test('the Crimson Court forms with all five Vampires, fills, and its Eternal Ecl
   b.combo!.charge = COMBO_NEED - 0.01;
   const events: BattleEvent[] = [];
   for (let i = 0; i < 40; i++) events.push(...stepBattle(b));
-  assert.ok(events.some((e) => e.kind === 'comboLand'), 'the Eternal Eclipse lands');
+  assert.ok(events.some((e) => e.kind === 'comboLand'), 'the Blood Moon lands');
   assert.ok(b.units.some((u) => u.side === 'foe' && ailmentsOf(u).some((a) => a.kind === 'bleed')), 'the foes bleed');
   const five = b.combo!.ids.map((id) => b.units.find((u) => u.id === id)!).filter((u) => u.alive);
   const land = events.findIndex((e) => e.kind === 'comboLand');

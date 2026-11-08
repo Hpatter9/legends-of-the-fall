@@ -18,7 +18,8 @@ import { goatHalfSheet } from './duchess';
 import { goatSays } from './quips';
 import { showQuip } from './quipView';
 import { chewBob, drawDuchessCosmetic, DUCHESS_COSMETICS, FRAME, goatFrame, hopLift, newGoat, stepGoat, tapGoat, type Goat } from './render/duchessRules';
-import { CEIL_H, DOORWAYS, figureHeight, FLOOR_PAD, GLOWS, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, RUGS, SCENE_W, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
+import { CEIL_H, DOORWAYS, figureHeight, FLOOR_PAD, GLOWS, HESTER, hesterNews, PROPS, ROOM_H, ROOM_NAMES, ROOM_W, ROOMS, RUGS, SCENE_W, SPOTS, WALL_H, type Spot } from './render/tavernSpots';
+import { todayKey } from './modes';
 import { TrophyWallModal } from './trophyWall';
 import wallUrl from './art/tavern/wall.png';
 import wallHearthUrl from './art/tavern/wall_hearth.png';
@@ -35,6 +36,11 @@ import longtableUrl from './art/tavern/longtable.png';
 import barrelsUrl from './art/tavern/barrels.png';
 import cratesUrl from './art/tavern/crates.png';
 import stageUrl from './art/tavern/stage.png';
+// (CLIFF-ROAM: Hester's corner, cut from the books-and-shop art by tools/cliff-roam/tavern-art.py at three screen pixels a room pixel)
+import hesterStallUrl from './art/tavern/hester-stall.webp';
+import hesterUrl from './art/tavern/hester.webp';
+import traderCaravanUrl from './art/tavern/trader-caravan.webp';
+import traderDealerUrl from './art/tavern/trader-dealer.webp';
 import { BOARD, GWEN } from './questArt';
 import { giverMark } from './questCard';
 import { questsWaiting } from './sim/quests';
@@ -64,6 +70,10 @@ const ART: Record<string, string> = {
   // (QUESTS: Gwen Tallow behind the bar, and the quest board on the wall: pack placeholders, `questArt.ts`)
   gwen: GWEN.url,
   board: BOARD,
+  hesterStall: hesterStallUrl,
+  hester: hesterUrl,
+  caravan: traderCaravanUrl,
+  dealer: traderDealerUrl,
 };
 let art: Record<string, HTMLImageElement> | null = null;
 async function loadArt(): Promise<Record<string, HTMLImageElement>> {
@@ -97,6 +107,8 @@ export const EMOTES: Record<string, { rows: string[]; ink: Record<string, string
 export const EMOTE_NAMES = ['mug', 'mug', 'note', 'note', 'zz', 'bang'];
 // (QUESTS: the gold "!" of a quest on offer and the gold tick of one to hand in, over Gwen and the board; never drawn at random)
 EMOTES.quest = { rows: ['..###..', '..###..', '..###..', '..###..', '.......', '..###..', '..###..'], ink: { '#': '#c08a10' } };
+// (CLIFF-ROAM: a gold coin over Hester while the day's stock is new and unseen)
+EMOTES.coin = { rows: ['..###..', '.#woo#.', '#wo#oo#', '#o###o#', '#oo#od#', '.#odd#.', '..###..'], ink: { '#': '#7a5410', w: '#fff0b0', o: '#f0c040', d: '#c08a10' } };
 EMOTES.ready = { rows: ['.......', '......#', '.....##', '#...##.', '##.##..', '.###...', '..#....'], ink: { '#': '#c08a10' } };
 
 /** Where Gwen stands behind the bar (her feet hidden by it) and where the quest board leans on the wall, left of the bar. */
@@ -110,6 +122,18 @@ export interface TavernQuests {
   onQuests(): void;
   /** A giver in the tavern tapped (QUESTS-1b: a hero with a quest of their own, `hero:<kind>`, or Duchess with one). */
   onGiver?(key: string): void;
+}
+
+/** What Hester's corner opens (CLIFF-ROAM): her stall's page. */
+export interface TavernShop {
+  onStall(): void;
+}
+
+/** Dynasties, phase 6: the Elders' table in the Hearth Hall (`housesView.ts`): its button shows while an elder sits there or a cadet
+ *  line exists. */
+export interface TavernElders {
+  onElders(): void;
+  shown(meta: Meta): boolean;
 }
 
 /** What the tavern's upgrade pieces open (TAVERN-RANKUP). */
@@ -206,13 +230,18 @@ export class Tavern {
   private rise = new Set<string>();
   private upBtn = el('button', 'tvUpgrades');
   private upCount = el('b', 'tvUpN');
+  private eldersBtn = el('button', 'tvRoster tvElders', 'Elders’ table');
   private riseHits = new Map<string, { x: number; y: number }>();
+  /** CLIFF-ROAM: what Hester's corner shows (worked out on each update): new stock, and a visiting trader. */
+  private news: ReturnType<typeof hesterNews> = { fresh: false, visitor: null };
 
   constructor(
     private onPick: (kind: string) => void,
     onRoster: () => void,
     private quests?: TavernQuests,
     private upgrades?: TavernUpgrades,
+    private shop?: TavernShop,
+    private elders?: TavernElders,
   ) {
     const roster = el('button', 'tvRoster', 'All heroes');
     roster.addEventListener('click', onRoster);
@@ -226,6 +255,8 @@ export class Tavern {
     ROOM_NAMES.forEach((r, i) => {
       if (i) this.nav.append(el('span', 'tvDot', '·'));
       const b = el('button', 'tvRoom1', r.name);
+      // (CLIFF-ROAM: the hearth hall's name wears a gold dot while Hester has new stock or a trader visits, so it is seen from the bar)
+      if (r.id === 'hearth') b.append(el('i', 'tvShopDot'));
       b.addEventListener('click', () => this.goTo(r.focus));
       this.roomBtns.push(b);
       this.nav.append(b);
@@ -236,7 +267,10 @@ export class Tavern {
     this.upBtn.append(upMark('tvUpMark'), 'Upgrades', this.upCount);
     this.upBtn.hidden = true;
     this.upBtn.addEventListener('click', () => this.upgrades?.onUpgrades());
-    btns.append(this.questBtn, this.upBtn, trophies, roster);
+    // (Dynasties, phase 6: the Elders' table, while anyone sits at it)
+    this.eldersBtn.hidden = true;
+    this.eldersBtn.addEventListener('click', () => this.elders?.onElders());
+    btns.append(this.questBtn, this.upBtn, this.eldersBtn, trophies, roster);
     if (!this.quests) this.questBtn.hidden = true;
     this.root.append(this.canvas, this.count, btns, this.edgeL, this.edgeR, this.nav, this.trophyModal.root);
     this.ctx.imageSmoothingEnabled = false;
@@ -315,8 +349,14 @@ export class Tavern {
     // (TALENT-ARROWS: talent points to spend mark a hero too)
     this.rise = new Set(have.filter((k) => markReady(meta, k)));
     this.upBtn.hidden = !this.upgrades || !this.rise.size;
+    this.eldersBtn.hidden = !this.elders?.shown(meta);
     this.upCount.textContent = String(this.rise.size);
     this.upBtn.setAttribute('aria-label', `Upgrades: ${this.rise.size} ${this.rise.size === 1 ? 'hero has' : 'heroes have'} a rank, an awakening or talent points ready`);
+    this.news = hesterNews(meta, todayKey());
+    const hall = this.roomBtns[ROOM_NAMES.findIndex((r) => r.id === 'hearth')];
+    hall?.classList.toggle('shop', !!this.shop && (this.news.fresh || !!this.news.visitor));
+    hall?.classList.toggle('dealer', this.news.visitor === 'dealer');
+    hall?.setAttribute('aria-label', this.shop && (this.news.fresh || this.news.visitor) ? `Hearth: Hester's stall${this.news.visitor ? `, ${this.news.visitor === 'dealer' ? 'the Gloaming Dealer' : 'the caravan'} visiting` : ''}${this.news.fresh ? ', new stock' : ''}` : 'Hearth');
     this.count.replaceChildren(`${have.length} of ${ALL_HEROES.length} heroes`, el('small', '', `${meta.equipment?.length ?? 0} equipment`), el('small', '', 'tap a hero · swipe to look'));
     for (const k of [...this.actors.keys()]) if (!have.includes(k)) this.actors.delete(k);
     for (const kind of have) {
@@ -715,6 +755,14 @@ export class Tavern {
       const bar = PROPS.find((p) => p.sprite === 'bar')!;
       list.push({ depth: bar.y + 0.5, paint: () => drawGwenWipe(this.lifeCtx(), GWEN_SPOT.x, bar.y - a.bar.height + 2, this.now - this.gwenTalk < 1600) });
     }
+    // (CLIFF-ROAM: Hester's corner: her stall against the wall, Hester at its left behind her crate, a visiting trader at its right)
+    const hb = HESTER.box;
+    if (this.shop && hb.x0 - 20 < right && hb.x1 + 20 > left) {
+      list.push({ depth: HESTER.stall.foot, paint: () => this.painted(a.hesterStall, HESTER.stall.x, HESTER.stall.foot) });
+      list.push({ depth: HESTER.hester.foot, paint: () => this.hester(a) });
+      const v = this.news.visitor;
+      if (v) list.push({ depth: HESTER.visitor.foot, paint: () => this.painted(a[v], HESTER.visitor.x, HESTER.visitor.foot, -1) });
+    }
     list.sort((p, q) => p.depth - q.depth);
     for (const e of list) e.paint();
     // (the fire and the lamps burn steadily: no flicker)
@@ -729,6 +777,31 @@ export class Tavern {
     g.globalCompositeOperation = 'source-over';
     g.globalAlpha = 1;
     g.setTransform(1, 0, 0, 1, 0, 0);
+  }
+
+  /** (CLIFF-ROAM) a painted piece of Hester's corner, cut at three screen pixels a room pixel: drawn smoothly at the room's scale (they
+   *  are paintings, not pixel art), centred on `x` with its foot at `foot`, mirrored when `face` is -1. */
+  private painted(im: HTMLImageElement, x: number, foot: number, face: 1 | -1 = 1, lift = 0): void {
+    const g = this.ctx;
+    const w = im.width / 3;
+    const h = im.height / 3;
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    if (face === -1) {
+      g.transform(-1, 0, 0, 1, x * 2, 0);
+      g.drawImage(im, x - w / 2, foot - h - lift, w, h);
+      this.reset(this.scale);
+    } else g.drawImage(im, x - w / 2, foot - h - lift, w, h);
+    g.imageSmoothingEnabled = false;
+  }
+
+  /** (CLIFF-ROAM) Hester at her stall, breathing a pixel now and then (still when motion is reduced), with a gold coin over her while the
+   *  day's stock is new. Her picture is cut at the knee: her crate, drawn after her, stands in front of that. */
+  private hester(a: Record<string, HTMLImageElement>): void {
+    const { x, foot } = HESTER.hester;
+    const lift = !this.reduced && Math.sin(this.now / 700 + 1) > 0.5 ? 1 : 0;
+    this.painted(a.hester, x, foot, 1, lift);
+    if (this.news.fresh) this.bubbleAt('coin', x, foot - a.hester.height / 3 - 15);
   }
 
   /** The quest board, with a gold "!" over it while anything is on offer. */
@@ -991,6 +1064,12 @@ export class Tavern {
     }
     if (this.quests && Math.abs(rx - BOARD_SPOT.x) < 34 && ry > BOARD_SPOT.foot - 70 && ry < BOARD_SPOT.foot + 4) {
       this.quests.onBoard();
+      return;
+    }
+    // (CLIFF-ROAM: Hester's corner opens her stall, as the stall on the cliff did)
+    const hb = HESTER.box;
+    if (this.shop && rx >= hb.x0 && rx <= hb.x1 && ry >= hb.y0 && ry <= hb.y1) {
+      this.shop.onStall();
       return;
     }
     // (decorative trophy wall plaque in the hearth hall)

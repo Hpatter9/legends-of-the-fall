@@ -7,7 +7,8 @@ import { fight, place, startBattle, stepBattle, type Battle, type Boost, type St
 import { FIELD_BANDS } from '../src/sim/foes';
 import { gradeBoost, stageBoost } from '../src/sim/run';
 import { mixSeed, Rng } from '../src/sim/rng';
-import { ALL_HEROES, UNITS } from '../src/sim/units';
+import { ALL_HEROES, COMING_HEROES, UNITS } from '../src/sim/units';
+import { masteryAt, MASTERY_AUTO } from './skills/mastery';
 
 export const TEAM = 5;
 
@@ -17,15 +18,23 @@ const argLevel = process.argv.includes('--skill-level') ? process.argv[process.a
 export const SWEEP_SKILL_LEVEL = Math.max(1, Math.min(5, Math.floor(Number(argLevel ?? 1)) || 1));
 if (SWEEP_SKILL_LEVEL > 1) process.env.SKILL_LEVEL = String(SWEEP_SKILL_LEVEL);
 
-/** A sweep hero's boost: its grade and level, and its skills at `SWEEP_SKILL_LEVEL`. */
-export const sweepBoost = (grade: number, level: number): Boost => ({ ...gradeBoost(grade, 0, level), ...(SWEEP_SKILL_LEVEL > 1 ? { skillLv: [SWEEP_SKILL_LEVEL, SWEEP_SKILL_LEVEL, SWEEP_SKILL_LEVEL] } : {}) });
+/** A sweep hero's boost: its grade and level, and its skills at `SWEEP_SKILL_LEVEL` (or, with `--mastery auto`, at the levels a player of that
+ *  hero level has, `tools/skills/mastery.ts`). */
+export function sweepBoost(grade: number, level: number): Boost {
+  const lv = MASTERY_AUTO ? masteryAt(level) : [SWEEP_SKILL_LEVEL, SWEEP_SKILL_LEVEL, SWEEP_SKILL_LEVEL];
+  return { ...gradeBoost(grade, 0, level), ...(lv.some((x) => x > 1) ? { skillLv: lv } : {}) };
+}
 
 /** The boost of a field band at stage s: a field band has no boss, even on a boss stage. */
 export const fieldBoost = (s: number): Stage => ({ ...stageBoost(s), boss: undefined });
 
+/** The heroes the sweep draws teams from: the roster, and with `COMING=1` in the environment (which the tools' forked children inherit)
+ *  the coming heroes too (docs/notes/twenty-heroes.md), so the tuner can tune them against the roster before they join. */
+export const SWEEP_POOL: readonly string[] = process.env.COMING === '1' ? [...ALL_HEROES, ...COMING_HEROES] : ALL_HEROES;
+
 /** A random team of `TEAM` different hero kinds (from every hero there is). */
 export function pickTeam(rng: Rng): string[] {
-  const pool = [...ALL_HEROES];
+  const pool = [...SWEEP_POOL];
   const team: string[] = [];
   for (let i = 0; i < TEAM; i++) team.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
   return team;

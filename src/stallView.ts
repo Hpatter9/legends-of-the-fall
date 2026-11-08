@@ -1,6 +1,6 @@
-// Hester's Stall on the page (SHOP-BOOKS-GEAR, docs/notes/shop-books-gear.md): a full-screen view that opens from the stall at the
-// camp. At the top the close-up, Hester at her shelf with her line of the day; under it the tabs (Books, Gear, Tomes, Chests, Sell,
-// Repair) and the shelf of the tab chosen. A tap on a ware brings its page up from the bottom, with Buy. The rules are in
+// Hester's Stall on the page (SHOP-BOOKS-GEAR, docs/notes/shop-books-gear.md): a full-screen view that opens from Hester's corner in
+// the tavern's hearth hall (CLIFF-ROAM: it stood on the cliff at the camp before) and the summoning hall's Chest shop. At the top the
+// close-up, Hester at her shelf with her line of the day; under it the tabs (Books, Gear, Tomes, Chests, Sell, Repair) and the shelf of the tab chosen. A tap on a ware brings its page up from the bottom, with Buy. The rules are in
 // `src/sim/stall.ts`, `books.ts` and `wear.ts`; this only reads and changes the meta through them.
 
 import { bookIcon, shopArt } from './bookArt';
@@ -26,9 +26,10 @@ import { TOMES } from './sim/tomes';
 import { TRADER_NAMES, buyFromTrader, caravanHere, gloamingHere, oreWareName, stockOfTrader, tradeLeft, traderLine, whyNotBuyFrom, type TradeWare, type Trader } from './sim/traders';
 import { durabilityOf, maxDurability, needingRepair, repairAllCost, repairCost, wearState } from './sim/wear';
 import { REMEDIES } from './sim/remedies';
-import { REMEDY_ICON } from './remedyArt';
+import { GLYPH_STONE, REMEDY_ICON } from './gearUiArt';
 import { GLYPHS, REFORGE_STANDING, clearGlyphs, enchantOffers, glyphPrice, patchBlock, patchCost, patchItem, reforgeCost } from './sim/enchant';
 
+import { menuFoot, menuNote, menuWell, ornateMenu } from './ornateMenu';
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -54,8 +55,8 @@ const TAB_ICON: Record<AnyTab, () => string> = {
   chests: () => shopArt('coin-purse'),
   sell: () => shopArt('sell'),
   repair: () => shopArt('repair'),
-  // (until the glyph stones are painted: docs/notes/gear-art-todo.md)
-  enchant: () => shopArt('book-universal-rare'),
+  // (the gold glyph stone, the owner's painting: `gearUiArt.ts`)
+  enchant: () => GLYPH_STONE[3],
 };
 /** Repair all asks first above this many crowns. */
 const ASK_OVER = 500;
@@ -100,8 +101,8 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     const standing = standingOf(m);
     // (the head: back, the name, the standing's seal, the purse)
     const head = el('div', 'hsHead');
-    const back = el('button', 'hsBack', '‹');
-    back.setAttribute('aria-label', 'Back to the camp');
+    const back = el('button', 'hsBack', '‹ Back');
+    back.setAttribute('aria-label', 'Back');
     back.addEventListener('click', () => {
       root.remove();
       onChange();
@@ -172,7 +173,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       return i;
     }
     const box = el('span', 'hsTome');
-    box.append(img(w.type === 'remedy' ? REMEDY_ICON[w.remedy] : TOME_ICON[w.size]));
+    box.append(w.type === 'remedy' ? img(REMEDY_ICON[w.remedy], 'hsPainted') : img(TOME_ICON[w.size]));
     box.style.width = box.style.height = `${px}px`;
     return box;
   };
@@ -229,34 +230,32 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     body.append(el('p', 'hsNote', trader === 'caravan' ? 'The caravan comes one day a week, with one of each and no more. Hester’s regulars may buy the better wares (her standing).' : 'The Dealer stands here for the rest of the day a Calamity guardian falls. What he sells is dear, and what is bought here does not count towards Hester’s standing.'));
   };
 
-  /** A ware's page, up from the bottom: the art large, what it is, and Buy. */
+  /** A ware's page, up from the bottom: the art large, what it is, and Buy. A standard ornate drawer (INT-386, MENU-POLISH): Hester and
+   *  her shelf stay in sight above it. */
   const warePage = (w: Ware | TradeWare, trader?: Trader): void => {
     play('tap');
-    document.getElementById('stallSheet')?.remove();
-    const veil = el('div', 'hsVeil');
-    veil.id = 'stallSheet';
-    const sheet = el('div', 'hsSheet');
-    sheet.setAttribute('role', 'dialog');
-    const close = (): void => veil.remove();
-    veil.addEventListener('click', (e) => e.target === veil && close());
-    const top = el('div', 'hsSheetTop');
-    const words = el('div');
-    words.append(el('h3', '', wareName(w)));
+    let kindLine = '';
     if (w.type === 'book') {
       const b = bookById(w.book)!;
-      words.append(el('small', '', `${RARITY_WORDS[b.rarity]} ${KIND_NAMES[b.kind]}`));
-    } else if (w.type === 'gear') words.append(el('small', '', `${RARITY_NAMES[w.item.rarity]} ${EQUIP_BASES[w.item.base].slot} · Lv ${w.item.level}`));
-    top.append(wareArt(w, 112), words);
-    sheet.append(top);
+      kindLine = `${RARITY_WORDS[b.rarity]} ${KIND_NAMES[b.kind]}`;
+    } else if (w.type === 'gear') kindLine = `${RARITY_NAMES[w.item.rarity]} ${EQUIP_BASES[w.item.base].slot} · Lv ${w.item.level}`;
+    const menu = ornateMenu({ id: 'stallSheet', kind: 'drawer', eyebrow: trader ? 'A trader’s ware' : 'Hester’s Stall', title: wareName(w), sub: kindLine || undefined });
+    const close = (): void => menu.close();
+    menu.root.addEventListener('click', (e) => e.target === menu.root && close());
+    const sheet = menu.body;
+    const art = el('div', 'hsSheetArt');
+    art.append(wareArt(w, 112));
+    sheet.append(art);
     if (w.type === 'ore') sheet.append(el('p', 'hsLine', `${w.n} ${ORES[w.trait]?.name ?? w.trait}, the awakening ore of ${classWord(w.trait)}s, for any hero of that class on its awakening panel.`));
     else if (w.type === 'book') bookDetail(sheet, bookById(w.book)!);
     else if (w.type === 'gear') {
       const it: Equipment = { id: 0, ...w.item };
       const stats = itemStats(it);
+      const well = menuWell(sheet);
       for (const l of statLines(stats)) {
         const row = el('div', 'hsStat');
         row.append(el('span', '', l.label), el('b', '', l.text));
-        sheet.append(row);
+        well.append(row);
       }
       const base = EQUIP_BASES[it.base];
       sheet.append(el('p', 'hsLine', hasAbility(it.rarity) ? `${stats.abilities[0]?.name}: ${describeAbility(base.ability, stats.abilities[0]?.s ?? 1)}` : `Epic and up: ${base.ability.name}`));
@@ -264,29 +263,30 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     } else if (w.type === 'tome') sheet.append(el('p', 'hsLine', `${TOMES[w.size].xp.toLocaleString('en-GB')} XP for one hero, read from its page.`));
     else if (w.type === 'remedy') sheet.append(el('p', 'hsLine', `A remedy: ${REMEDIES[w.remedy].text}, used between waves from the run's pack. You own ${m.satchel?.[w.remedy] ?? 0}; a run takes up to five (one Elixir), chosen on the party screen.`));
     const why = trader ? whyNotBuyFrom(m, trader, w as TradeWare, todayKey()) : whyNotBuy(m, w as Ware, todayKey());
-    const buy = el('button', 'hsBuy');
-    buy.append(icon(ICONS.crowns, ''), `Buy · ${w.price}`);
-    if (why) buy.append(el('small', '', ` · ${why}`));
-    buy.disabled = !!why;
-    buy.addEventListener('click', () => {
-      if (trader) {
-        if (!buyFromTrader(m, trader, w.key, todayKey())) return;
-        play('coin');
-        close();
-        after(traderLine(m, trader, todayKey(), true));
-        return;
-      }
-      const got = buyWare(m, w.key, todayKey());
-      if (!got) return;
-      play('coin');
-      close();
-      after(got.type === 'book' ? 'Mind the spine. It bites.' : got.type === 'gear' ? 'Sharp end goes at the enemy. You’d be amazed.' : got.type === 'remedy' ? 'Tastes awful. Works, though.' : 'Don’t read it all at once.');
+    if (why) menuNote(sheet, why).classList.add('hsWhy');
+    const { primary: buy } = menuFoot(menu, {
+      back: { word: 'close' },
+      primary: {
+        label: '',
+        disabled: !!why,
+        onClick: () => {
+          if (trader) {
+            if (!buyFromTrader(m, trader, w.key, todayKey())) return;
+            play('coin');
+            close();
+            after(traderLine(m, trader, todayKey(), true));
+            return;
+          }
+          const got = buyWare(m, w.key, todayKey());
+          if (!got) return;
+          play('coin');
+          close();
+          after(got.type === 'book' ? 'Mind the spine. It bites.' : got.type === 'gear' ? 'Sharp end goes at the enemy. You’d be amazed.' : got.type === 'remedy' ? 'Tastes awful. Works, though.' : 'Don’t read it all at once.');
+        },
+      },
     });
-    const shut = el('button', 'hsShut', 'Close');
-    shut.addEventListener('click', close);
-    sheet.append(buy, shut);
-    veil.append(sheet);
-    root.append(veil);
+    buy!.classList.add('hsBuy');
+    buy!.append(icon(ICONS.crowns, ''), `Buy · ${w.price}`);
   };
 
   /** A book's page: its history, the skill it teaches, the study, and the owned heroes who could read it. */
@@ -325,7 +325,8 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       pills.append(p);
     }
     body.append(pills);
-    const spare = spareEquipment(m).sort((a, b) => a.rarity - b.rarity || a.level - b.level || a.id - b.id);
+    // (Dynasties, phase 6: an heirloom is never sold, so it is never offered)
+    const spare = spareEquipment(m).filter((x) => !x.heirloom).sort((a, b) => a.rarity - b.rarity || a.level - b.level || a.id - b.id);
     // (RUN-GEAR: the stash holds STASH_MAX; pieces brought home to a full one wait on the cart, and move in as room is made)
     body.append(el('p', 'hsNote', `Spare gear: ${spare.length} / ${STASH_MAX}. What a hero wears is never offered.`));
     if (m.cart?.length) body.append(el('p', 'hsNote hsFull', `Your stash is full: ${m.cart.length} piece${m.cart.length === 1 ? ' waits' : 's wait'} on the cart.`));
@@ -514,7 +515,11 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       const row = el('div', `hsRow hsEnchant r${it.rarity}`);
       const words = el('div', 'hsRowWords');
       words.append(el('b', '', itemName(it)), el('small', '', `${who ? `${heroName(who)} · ` : 'spare · '}${RARITY_NAMES[it.rarity]} Lv ${it.level}`));
-      for (const g of it.glyphs ?? []) words.append(el('small', 'hsGlyph', `${GLYPHS[g].name}: ${GLYPHS[g].text}`));
+      (it.glyphs ?? []).forEach((g, i) => {
+        const line = el('small', 'hsGlyph');
+        line.append(img(GLYPH_STONE[i + 1], 'hsGlyphStone'), `${GLYPHS[g].name}: ${GLYPHS[g].text}`);
+        words.append(line);
+      });
       const btns = el('div', 'hsBtns');
       const price = glyphPrice(it);
       if (price !== null)

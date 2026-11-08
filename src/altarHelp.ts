@@ -2,6 +2,7 @@
 // once by itself the first time the altar is met), consecrate against corrupt side by side, and the "Your altar" summary.
 // The words come from `sim/altarWords.ts`, which works them out from the rules' own numbers.
 import { HOW_ALTAR_WORKS, starterLine, type AltarSummary, type Seal } from './sim/altarWords';
+import { menuFoot, menuWell, ornateMenu } from './ornateMenu';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -19,21 +20,14 @@ function markSeen(): void {
   try { localStorage.setItem(KEY, '1'); } catch { /* (no storage: it may show again) */ }
 }
 
-/** "How the altar works": five lines over the card, and a button to carry on. */
-export function showAltarHelp(host: HTMLElement): void {
-  host.querySelector('.altarHelp')?.remove();
-  const veil = el('div', 'altarHelp');
-  veil.setAttribute('role', 'dialog');
-  veil.setAttribute('aria-label', 'How the altar works');
-  const box = el('div', 'altarHelpBox');
-  const list = el('ul');
+/** "How the altar works": five lines in a standard ornate menu (INT-386), and a button to carry on. `host` was the altar card the old
+ *  panel sat in; the menu now covers the page, as every standard card does. */
+export function showAltarHelp(_host?: HTMLElement): void {
+  const menu = ornateMenu({ id: 'altarHelp', eyebrow: 'The Rift Altar', title: 'How the altar works', onClose: markSeen });
+  const list = el('ul', 'altarHelpList');
   for (const line of HOW_ALTAR_WORKS) list.append(el('li', '', line));
-  const ok = el('button', 'primary', 'Got it');
-  ok.addEventListener('click', () => { markSeen(); veil.remove(); });
-  box.append(el('h3', '', 'How the altar works'), list, ok);
-  veil.append(box);
-  host.append(veil);
-  ok.focus();
+  menuWell(menu.body).append(list);
+  menuFoot(menu, { primary: { label: 'Got it', onClick: () => menu.close() } }).primary!.focus();
 }
 
 /** The ⓘ button that opens it. */

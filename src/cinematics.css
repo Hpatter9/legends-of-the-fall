@@ -34,3 +34,10 @@
 .scRow button { flex: none; min-width: 72px; min-height: 40px; margin: 0; font: 400 12px var(--display); font-weight: 400; }
 /* (the heroes' and Duchess's passing remarks wait while a scene is up: they would float over the film) */
 body:has(#cutscene:not([hidden])) #quip { display: none !important; }
+/* UX-FIXES (the audit's #7): the film's words are 15-16 px, in a foot tied to the bottom of the picture */
+.csText { font-size: 15px; line-height: 1.5; }
+.csWho { font-size: 14px; }
+.csCaption { font-size: 15px; line-height: 1.5; }
+.csTitle small { font-size: 13px; }
+.csTitle b { font-size: 28px; }
+.csSkip { font-size: 14px; }

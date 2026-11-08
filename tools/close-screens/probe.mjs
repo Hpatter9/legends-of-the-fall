@@ -91,7 +91,7 @@ const nodes = () => page.evaluate(() => document.body.querySelectorAll('*').leng
 const back = async () => { await page.evaluate(() => window.__game.home.open()); await page.waitForTimeout(900); };
 const steps = [
   ['open all', async () => { await page.evaluate(() => { const g = window.__game; g.meta.stash.push({ army: 'orcs', at: 1, tier: 0 }, { army: 'orcs', at: 2, tier: 0 }); g.home.show('battle'); }); await page.waitForTimeout(600); await page.evaluate(() => document.querySelector('.csAll')?.click()); await page.waitForTimeout(2000); await page.evaluate(() => document.querySelector('.chestShow .chestGo')?.click()); }],
-  ['stall', async () => { await page.evaluate(() => document.getElementById('hmStall')?.click()); await page.waitForTimeout(1500); await page.evaluate(() => document.querySelector('.hsBack')?.click()); }],
+  ['stall', async () => { await page.evaluate(() => window.__game.home.tavern.shop?.onStall()); await page.waitForTimeout(1500); await page.evaluate(() => document.querySelector('.hsBack')?.click()); }],
   ['codex', async () => { await page.evaluate(() => window.__game.home.openCodex()); await page.waitForTimeout(1500); }],
   ['settings', async () => { await page.evaluate(() => document.getElementById('hmGear').click()); await page.waitForTimeout(800); await page.evaluate(() => document.getElementById('settingsClose').click()); }],
   ['hero sheet', async () => { await page.evaluate(() => { const h = window.__game.home; h.openSheet(h.meta.unlocked[0]); }); await page.waitForTimeout(1500); await page.evaluate(() => window.__game.home.closeSheet()); }],

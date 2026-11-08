@@ -194,6 +194,10 @@ def main():
     bases = base_ids()
     keys, pairs, missing, report = [], [], [], []
     for bid, folder, needs_mythic in bases:
+        # (the owner's paintings of the new bases came in the old folders, armour/ and weapons/, so a new base is looked for in its slot's
+        # folder first, then in those)
+        if not needs_mythic and folder != 'legends' and not (SRC / folder / f'{bid}.png').exists():
+            folder = next((f for f in OLD_FOLDERS if (SRC / f / f'{bid}.png').exists()), folder)
         std = SRC / folder / f'{bid}.png'
         myth = SRC / folder / f'{bid}-mythic.png'
         have = [p for p in (std, myth) if p.exists()]

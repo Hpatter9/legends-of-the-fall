@@ -18,7 +18,8 @@ export const CAL_MAPS = CAL_ROWS.length;
 // the foes fought at their depth's proficiency and the bosses with their blocks, docs/notes/joint-rebalance.md)
 // (KING-SPELLS batch 6: `start` 0.66 to 0.7, the default ruler's player with his school, Decree and ranks back to about the runs that reached
 // map 2 before, 21 of 30 against 19, docs/notes/king-spells-b6.md)
-export const CAL_SCALE = { start: 0.7, growth: 0.05, perHero: 0.06, step: 0.64, bossHp: 0.75, bossStep: 0.12, atkBias: 0.45, final: 1 };
+// (SKILLS-10: `start` 0.7 to 0.71, its heroes' skill 3 stronger, so a climb clears the maps main 0.357's does: 1.57 maps against 1.53, docs/notes/skills-10.md)
+export const CAL_SCALE = { start: 0.71, growth: 0.05, perHero: 0.06, step: 0.64, bossHp: 0.75, bossStep: 0.12, atkBias: 0.45, final: 1 };
 /** A built castle makes a Calamity's foes answer it by this much more power than the spire's (`CASTLE_ANSWER`): the castle's hp and attack boost, to the power `CASTLE_ANSWER.share` + this. A Calamity's heroes also gain tiers, so with the same answer a built castle would carry them through the middle maps. */
 export const CAL_CASTLE_EXTRA = 0.3;
 

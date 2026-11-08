@@ -54,6 +54,15 @@ export const HUD_FACES: Readonly<Record<string, { art: FaceBox; awakened: FaceBo
   sage: { art: [0.45, 0.17, 0.28], awakened: [0.42, 0.42, 0.4] },
   demonSwordsman: { art: [0.61, 0.21, 0.42], awakened: [0.534, 0.307, 0.344] },
   tyrant: { art: [0.5, 0.2, 0.28], awakened: [0.53, 0.42, 0.35] },
+  vampireLord: { art: [0.44, 0.11, 0.2], awakened: [0.41, 0.44, 0.28] },
+  hemomancer: { art: [0.48, 0.15, 0.2], awakened: [0.52, 0.43, 0.28] },
+  nightstalker: { art: [0.51, 0.1, 0.22], awakened: [0.5, 0.45, 0.28] },
+  bloodGargoyle: { art: [0.5, 0.13, 0.24], awakened: [0.57, 0.4, 0.28] },
+  dhampir: { art: [0.48, 0.12, 0.22], awakened: [0.5, 0.44, 0.26] },
+  warDrummer: { art: [0.4, 0.19, 0.22], awakened: [0.7, 0.43, 0.28] },
+  geomancer: { art: [0.49, 0.1, 0.18], awakened: [0.53, 0.43, 0.28] },
+  bellWarden: { art: [0.4, 0.18, 0.24], awakened: [0.52, 0.37, 0.26] },
+  falconer: { art: [0.53, 0.1, 0.2], awakened: [0.63, 0.43, 0.28] },
 };
 
 /** The painting a hero's face is cut from: the awakened form's once it has awakened, else the plain art's half-length portrait. */

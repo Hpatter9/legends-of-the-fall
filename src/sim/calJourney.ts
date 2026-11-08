@@ -37,6 +37,34 @@ export interface Journey {
   /** A crossroads waiting for the player: after map 2 (lands) or map 4 (boons), and what it offers. */
   cross?: { after: 1; lands: number[] } | { after: 2; boons: BoonId[] };
   boon?: BoonId;
+  /** Provisions carried (`PROVISIONS`): a campfire's rest eats one; missing is the start's three (a run saved before has them). */
+  provisions?: number;
+  /** The oaths sworn (three at most) and the scars taken, by roster id (each −10% health). */
+  oaths?: OathId[];
+  scars?: Record<number, number>;
+  /** The traveller met in Act I, whether helped, and whether it has come back. */
+  met?: { who: TravellerId; help: boolean; back?: boolean };
+}
+
+/** Provisions: a run starts with three and carries six at most; a campfire's rest costs one, and with none the party rests at half. A shop
+ *  sells them (`PROVISIONS.COST` gold). */
+export const PROVISIONS = { START: 3, MAX: 6, COST: 25, HUNGRY: 0.5, /** the switch (tools measure without them) */ on: true };
+export const provisionsOf = (j: Journey | undefined): number => j?.provisions ?? PROVISIONS.START;
+/** A rest: eats a provision if there is one; returns the share of the usual healing it gives (1, or half when none were left). */
+export function eatProvision(j: Journey): number {
+  if (!PROVISIONS.on) return 1;
+  const n = provisionsOf(j);
+  if (n <= 0) return PROVISIONS.HUNGRY;
+  j.provisions = n - 1;
+  return 1;
+}
+/** Buy a provision at a shop: false when the sack is full or the gold is short. */
+export function buyProvision(run: { gold: number }, j: Journey): boolean {
+  const n = provisionsOf(j);
+  if (n >= PROVISIONS.MAX || run.gold < PROVISIONS.COST) return false;
+  run.gold -= PROVISIONS.COST;
+  j.provisions = n + 1;
+  return true;
 }
 
 /** The fixed order: the guardian at each act when nothing is chosen. */
@@ -74,3 +102,88 @@ export const boonFoes = (j: Journey | undefined, act: number): number => (act < 
 
 /** The board line: "Act II of III". */
 export const actLine = (act: number): string => `Act ${['I', 'II', 'III'][act - 1] ?? act} of III`;
+
+/* ------------------------------------------------------------------ oaths and scars (carried to the end of the run) */
+
+export type OathId = 'iron' | 'ember' | 'coin' | 'vigil';
+/** An oath: a lasting rule with a gift and a cost, sworn at a campfire. */
+export const OATHS: Readonly<Record<OathId, { name: string; gift: string; cost: string; heroHp?: number; heroAtk?: number; foeHp?: number; gold?: number; rest?: number }>> = {
+  iron: { name: 'Oath of Iron', gift: 'Heroes +8% health.', cost: 'Foes +5% health.', heroHp: 1.08, foeHp: 1.05 },
+  ember: { name: 'Oath of the Ember', gift: 'Heroes +6% attack.', cost: 'Rests heal a quarter less.', heroAtk: 1.06, rest: 0.75 },
+  coin: { name: 'Oath of the Coin', gift: 'Fights pay 30% more gold.', cost: 'Foes +6% health.', gold: 1.3, foeHp: 1.06 },
+  vigil: { name: 'Oath of the Vigil', gift: 'Rests heal a third more.', cost: 'Heroes −4% attack.', rest: 1.33, heroAtk: 0.96 },
+};
+export const OATH_MAX = 3;
+/** A scar: −10% health on one hero for the rest of the run, taken for gold at a campfire. */
+export const SCAR = { HP: 0.9, GOLD: 60 };
+
+/** The oath a campfire offers, if any: about one campfire in two, drawn from the run's seed and the spot (its own side stream). */
+export function oathOffer(seed: number, act: number, node: number, j: Journey | undefined): OathId | undefined {
+  const rng = new Rng(mixSeed(seed, 0x0a7b, act, node));
+  if (!rng.chance(0.5)) return undefined;
+  const open = (Object.keys(OATHS) as OathId[]).filter((o) => !j?.oaths?.includes(o));
+  return open.length ? open[rng.int(0, open.length - 1)] : undefined;
+}
+/** Swear an oath: at most three; a fourth replaces the oldest. */
+export function swearOath(j: Journey, o: OathId): OathId | undefined {
+  const list = (j.oaths ??= []);
+  if (list.includes(o)) return undefined;
+  const dropped = list.length >= OATH_MAX ? list.shift() : undefined;
+  list.push(o);
+  return dropped;
+}
+/** Take a scar on a hero (by its roster id) for gold. */
+export function takeScar(run: { gold: number }, j: Journey, heroId: number): boolean {
+  (j.scars ??= {})[heroId] = (j.scars[heroId] ?? 0) + 1;
+  run.gold += SCAR.GOLD;
+  return true;
+}
+const oathsOf = (j: Journey | undefined) => (j?.oaths ?? []).map((o) => OATHS[o]);
+/** The oaths' product of one number (1 when none). */
+const prod = (j: Journey | undefined, k: 'heroHp' | 'heroAtk' | 'foeHp' | 'gold' | 'rest') => oathsOf(j).reduce((n, o) => n * (o[k] ?? 1), 1);
+export const oathFoeHp = (j: Journey | undefined): number => prod(j, 'foeHp');
+export const oathGold = (j: Journey | undefined): number => prod(j, 'gold');
+export const oathRest = (j: Journey | undefined): number => prod(j, 'rest');
+/** A hero's boost with its oaths and its scars laid on. */
+export function journeyBoost<B extends { hp?: number; atk?: number }>(j: Journey | undefined, heroId: number, base: B): B {
+  if (!j?.oaths?.length && !j?.scars?.[heroId]) return base;
+  const scar = SCAR.HP ** (j.scars?.[heroId] ?? 0);
+  return { ...base, hp: (base.hp ?? 1) * prod(j, 'heroHp') * scar, atk: (base.atk ?? 1) * prod(j, 'heroAtk') };
+}
+
+/* ------------------------------------------------------------------ travellers (a small story through the run) */
+
+export type TravellerId = 'pilgrim' | 'deserter' | 'cartographer';
+export const TRAVELLERS: Readonly<Record<TravellerId, { name: string; meet: string; help: string; wrong: string; thanks: string; trap: string }>> = {
+  pilgrim: { name: 'The Pilgrim', meet: 'A pilgrim sits by the fire, her feet bleeding through her sandals.', help: 'Share bandages and bread (40 gold)', wrong: 'Take her alms bowl (+40 gold)', thanks: 'The pilgrim prays over the party: every hero is mended to full.', trap: 'The pilgrim\'s curse finds you: every hero loses 15% of their health.' },
+  deserter: { name: 'The Deserter', meet: 'A deserter from the Calamity\'s host begs a place by the fire.', help: 'Hide him and feed him (40 gold)', wrong: 'Turn him in for the bounty (+40 gold)', thanks: 'The deserter returns with a stolen paymaster\'s purse: +100 gold.', trap: 'The deserter\'s old company remembers you: every hero loses 15% of their health.' },
+  cartographer: { name: 'The Cartographer', meet: 'A cartographer has lost her maps to the wind and her mule to wolves.', help: 'Buy her a new mule (40 gold)', wrong: 'Sell her a lame one (+40 gold)', thanks: 'The cartographer leaves two sacks of provisions and a sketch of the road ahead.', trap: 'The cartographer\'s map was false: every hero loses 15% of their health.' },
+};
+export const TRAVEL = { GOLD: 40, THANKS_GOLD: 100, PROVISIONS: 2, TRAP: 0.15 };
+
+/** The traveller a campfire of Act I meets, if any: one at the first such campfire, chosen by the run's seed (its own side stream). */
+export function travellerAt(seed: number, act: number, j: Journey | undefined): TravellerId | undefined {
+  if (act !== 1 || j?.met) return undefined;
+  const ids = Object.keys(TRAVELLERS) as TravellerId[];
+  return ids[new Rng(mixSeed(seed, 0x7a7e)).int(0, ids.length - 1)];
+}
+/** Help or wrong the traveller met (the gold moves now). */
+export function meetTraveller(run: { gold: number }, j: Journey, who: TravellerId, help: boolean): boolean {
+  if (j.met || (help && run.gold < TRAVEL.GOLD)) return false;
+  j.met = { who, help };
+  run.gold += help ? -TRAVEL.GOLD : TRAVEL.GOLD;
+  return true;
+}
+/** Whether the traveller returns at this campfire: once, at the first campfire of Act II or III after the meeting. */
+export const travellerReturns = (j: Journey | undefined, act: number): boolean => !!j?.met && !j.met.back && act >= 2;
+/** The return: a thanks for a helped traveller (a mend, gold or provisions), a trap for a wronged one. Marks it back. */
+export function travellerBack(j: Journey): { line: string; gold: number; mend: boolean; provisions: number; hurt: number } {
+  const m = j.met!;
+  m.back = true;
+  const t = TRAVELLERS[m.who];
+  if (!m.help) return { line: t.trap, gold: 0, mend: false, provisions: 0, hurt: TRAVEL.TRAP };
+  if (m.who === 'pilgrim') return { line: t.thanks, gold: 0, mend: true, provisions: 0, hurt: 0 };
+  if (m.who === 'deserter') return { line: t.thanks, gold: TRAVEL.THANKS_GOLD, mend: false, provisions: 0, hurt: 0 };
+  j.provisions = Math.min(PROVISIONS.MAX, provisionsOf(j) + TRAVEL.PROVISIONS);
+  return { line: t.thanks, gold: 0, mend: false, provisions: TRAVEL.PROVISIONS, hurt: 0 };
+}

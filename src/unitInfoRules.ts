@@ -10,7 +10,7 @@ import { timerOf } from './sim/carry';
 import { addUnit, atkOf, defenceOf, type Battle, type Boost, type Unit } from './sim/battle';
 import { hasSkill, kitOf, KITS, type Kit, type Passive, type Skill } from './sim/abilities';
 import { heroKitOf, resOf, topOf, ULT_FILL } from './sim/heroKits';
-import { PHASE2, PHASE_AT, type PhaseKit } from './sim/bossPhases';
+import { phaseKitOf, PHASE_AT, type PhaseKit } from './sim/bossPhases';
 import { BOSS_IDS } from './sim/foes';
 import { entryOfDef, tipsOf, type FoeClass } from './sim/codex';
 import { FOE_LORE } from './sim/codexLore';
@@ -294,7 +294,7 @@ export function infoOf(b: Battle, u: Unit, opts: InfoOpts = {}): UnitInfo {
   const cls: FoeClass = e?.class ?? (BOSS_IDS.includes(u.def) ? 'boss' : 'common');
   const kind: InfoKind = cls === 'elite' ? 'elite' : cls === 'boss' || cls === 'calamity' || (u.size ?? 1) > 1 || !!u.phase ? 'boss' : 'foe';
   const label = kind === 'boss' ? (cls === 'calamity' ? 'Calamity herald' : 'Boss') : kind === 'elite' ? 'Calamity elite' : 'Foe';
-  const pk = u.phase && !u.phase.done ? PHASE2[u.def] : undefined;
+  const pk = u.phase && !u.phase.done ? phaseKitOf(u) : undefined;
   return {
     ...base,
     kind,

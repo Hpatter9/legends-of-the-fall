@@ -1,3 +1,4 @@
+import { battleNoteSource } from './battleNoteArt';
 // The JRPG results screen (JRPG-RECAP, `sim/jrpgRecap.ts` for its rules): a VICTORY (or DEFEAT) banner with the fight's time and
 // foes felled; a row for each hero with its face, level and an XP bar that fills live as the XP counts up, a "LEVEL UP!" burst, the
 // stats that rose (old → new, the gain in green) and any skill it opened; the MVP; the gold and crowns counted up; every item found
@@ -108,8 +109,6 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 const num = (n: number) => Math.round(n).toLocaleString('en-GB');
-
-const MARKS: Record<ResultLine['kind'], string> = { level: '▲', ult: '✦', drop: '✧', found: '◆', fell: '✝', heart: '♥', horn: '♪', quest: '❖', bench: '▲', learned: '✦', skill: '✦', study: '✎', wear: '⚒', guest: '⚑', pack: '◈' };
 
 /** The clock's beats, in ms. */
 const T = { ROWS: 450, FILL: 1300, COUNT: 900, ITEM: 70, LINE: 90, GAP: 150 };
@@ -352,7 +351,10 @@ export function playResults(parts: { head: HTMLElement; body: HTMLElement }, d: 
     const box = el('div', 'jrLines');
     d.lines.forEach((l, i) => {
       const p = el('p', `jrLine jrIn ${l.kind}`);
-      const mark = el('span', '', MARKS[l.kind]);
+      const mark = el('img', 'battleNoteIcon');
+      mark.src = battleNoteSource(l.kind);
+      mark.alt = '';
+      mark.draggable = false;
       mark.setAttribute('aria-hidden', 'true');
       p.append(mark, document.createTextNode(l.text));
       box.append(p);

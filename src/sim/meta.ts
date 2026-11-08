@@ -27,7 +27,9 @@ import { readCaches, readOres } from './awakenMats';
 import { readCodex, readCodexClaimed, type CodexRecord } from './codex';
 import { readWeak, type WeakRecord } from './weakness';
 import { readBonds } from './bonds';
+import { openWar, readGrudges, readWar, type Grudges, type War } from './nemesis';
 import { readMentors } from './legacy';
+import { readDynasty, type Dynasty } from './dynasty';
 import type { Calling } from './weakness';
 import { readCombosSeen } from './combos';
 import { readHeroesSeen } from './heroesSeen';
@@ -44,7 +46,7 @@ import { readSkillUse } from './skillLevels';
 import { readCards, readScenes } from './sceneRules';
 import { readQuests, type QuestState } from './quests';
 import { readEidolons, type EidolonMeta } from './warHorn';
-import { readTactics } from './tacticPick';
+import { readFormations, readTactics } from './tacticPick';
 
 export { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS };
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
@@ -165,8 +167,17 @@ export interface Meta {
   bonds?: Record<string, number>;
   bondSettled?: string[];
   bondScenes?: string[];
+  /** DEPTH-BUILD: the Barracks' Sparring Yard: the pair sparring and when they are done (`bonds.ts`). */
+  sparring?: { a: string; b: string; doneAt: number };
+  /** The Nemesis War (`nemesis.ts`): the named foes, the fallen, and the next id; missing until the War opens (the Undead Legion's first Normal clear). */
+  war?: War;
+  /** The Nemesis War, phase 3: each hero's Grudges, by the nemeses that slew it (`revenge.ts`). */
+  grudges?: Grudges;
+  /** Dynasties (`dynasty.ts`): the seasons' start, each owned kind's line of bearers, and this season's waves; missing until the page first
+   *  opens them (a save from before is seeded then, with nobody made old). */
+  dynasty?: Dynasty;
   /** DEPTH-BUILD: the Hall of Legends' mentors by calling, and when each recalled calling's seat opens again (`legacy.ts`). */
-  mentors?: Partial<Record<Calling, { kind: string; since: number }>>;
+  mentors?: Partial<Record<Calling, { kind: string; since: number; heir?: true }>>;
   recalled?: Partial<Record<Calling, number>>;
   codexClaimed?: string[];
   /** The five-hero combos seen in a fight (`combos.ts`; the codex lists a combo once it has been seen). Saves from before have none. */
@@ -196,6 +207,8 @@ export interface Meta {
   ultSeen?: Record<string, number>;
   /** The party's tactic picked, by mode and by army (`tacticPick.ts`, docs/notes/tactics.md); Advance together where none is. Saves from before have none. */
   tactics?: Record<string, string>;
+  /** The formation picked on the prep screen, by mode and by army (`tacticPick.ts`), which Auto place sets the heroes out in; none: Auto places as before. */
+  formations?: Record<string, string>;
   /** The bosses whose card (the slam-down ribbon as the fight begins) has been shown, by boss or `elite:<id>` (`sceneRules.ts` `cardKey`): once a save. Saves from before have none. */
   bossCards?: string[];
   /** The deploy bar's earned helpers whose unlocking has been told (`featureUnlocks.ts`): once a save. Saves from before have none. */
@@ -511,6 +524,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       const tactics = readTactics(m.tactics);
       if (tactics) m.tactics = tactics;
       else delete m.tactics;
+      const formations = readFormations(m.formations);
+      if (formations) m.formations = formations;
+      else delete m.formations;
       m.bosses = Array.isArray(m.bosses) ? m.bosses.filter((b) => BOSS_IDS.includes(b)) : [];
       // (saves from before the armies have their furthest stage mapped onto them, and the armies it opens are not new)
       const fresh = !m.armies || typeof m.armies !== 'object';
@@ -570,6 +586,15 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (!Array.isArray(m.bondScenes)) delete m.bondScenes;
       m.mentors = readMentors(m.mentors);
       if (!m.mentors) delete m.mentors;
+      // (the Nemesis War: read as saved; a save already past the Undead Legion's first Normal clear opens it now, its Council empty)
+      m.war = readWar(m.war);
+      if (!m.war) delete m.war;
+      openWar(m);
+      m.grudges = readGrudges(m.grudges);
+      if (!m.grudges) delete m.grudges;
+      // (Dynasties: read as saved; a save from before has none until the page opens them, seasons counting from that day)
+      m.dynasty = readDynasty(m.dynasty);
+      if (!m.dynasty) delete m.dynasty;
       if (!m.recalled || typeof m.recalled !== 'object') delete m.recalled;
       m.codexClaimed = readCodexClaimed(m.codexClaimed) ?? [];
       // (the per-entry stones are gone: a save's old record of them is dropped, and the stones it took stay)

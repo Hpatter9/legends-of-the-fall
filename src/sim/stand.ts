@@ -35,6 +35,8 @@ import { boostOf, FOE_START } from './run';
 import { heroBoost, manaRate, moveRate, type Castle } from './castle';
 import { heroRank, type Meta, type StashChest } from './meta';
 import { heroStats } from './talents';
+import { legacyBoost } from './legacy';
+import { birthrightSnapshot } from './heirs';
 import { awakenedOf } from './awaken';
 import { chestsFor, gearChance, settleTower } from './tower';
 import type { Run } from './run';
@@ -370,10 +372,12 @@ export const standContinueLine = (run: StandRun): string => `Wave ${run.wave} ·
 /** The setup of a save: the kinds' boosts as the armies would give them. */
 export function setupFromMeta(m: Meta): StandSetup {
   return {
-    boost: (kind) => ({
-      ...boostOf({ id: 0, kind, grade: 1 }, heroRank(m, kind), levelOfKind(m, kind), heroStats(m, kind)),
-      ...(awakenedOf(m, kind) ? { awaken: awakenedOf(m, kind) } : {}),
-    }),
+    // (Dynasties, phase 6: a fielded bearer's birthright counts where talents do, the Last Stand among them; a save with no heir has none)
+    boost: (kind) =>
+      legacyBoost(birthrightSnapshot(m, [kind]), kind, {
+        ...boostOf({ id: 0, kind, grade: 1 }, heroRank(m, kind), levelOfKind(m, kind), heroStats(m, kind)),
+        ...(awakenedOf(m, kind) ? { awaken: awakenedOf(m, kind) } : {}),
+      }),
     castle: m.castle,
   };
 }

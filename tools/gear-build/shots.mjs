@@ -86,7 +86,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
       await page.waitForTimeout(300);
       await page.screenshot({ path: `docs/samples/gear-build-upkeep-card-${tag}.png` });
       for (let i = 0; i < 3; i++) await page.locator('#hmSheet').getByRole('button', { name: 'Back', exact: true }).first().click({ timeout: 1500 }).catch(() => {});
-      await page.evaluate(() => document.getElementById('hmStall')?.click());
+      await page.evaluate(() => window.__game.home.tavern.shop?.onStall());
       await page.waitForTimeout(1200);
       for (const t of ['Repair', 'Enchant']) {
         await page.getByRole('tab', { name: t }).click();

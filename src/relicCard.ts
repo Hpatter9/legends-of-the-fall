@@ -6,6 +6,7 @@
 import { burntOut, grownBy, relicEffects, relicName, RELICS, PHOENIX_RISES, type RelicMarks } from './sim/relics';
 import { setCount, setOf, tiersOn } from './sim/relicSets';
 import { iconImg, relicIcon } from './render/items';
+import { menuFoot, ornateMenu } from './ornateMenu';
 
 /** What the card reads: the run's relics, its tally and its purse. */
 export interface RelicHolder {
@@ -79,16 +80,15 @@ export function relicCard(h: RelicHolder, id: string): HTMLElement {
   return card;
 }
 
-/** The card over the screen, with a Close button; a tap anywhere closes it. */
-export function openRelicCard(h: RelicHolder, id: string, root: HTMLElement = document.body, onClose?: () => void): void {
-  root.querySelector(':scope > .rlWrap')?.remove();
-  const wrap = el('div', 'rlWrap');
+/** The card over the screen, a standard ornate menu (INT-386): "Relic" over the relic's name, the card's body (its icon and rarity, the
+ *  lines and the Chapter), and Close; a tap anywhere closes it, as before. (`_root` was the layer it sat in: the menu covers the page.) */
+export function openRelicCard(h: RelicHolder, id: string, _root: HTMLElement = document.body, onClose?: () => void): void {
+  const ctx = { marks: h.relicMarks, gold: h.gold };
+  const menu = ornateMenu({ id: 'relicCard', eyebrow: 'Relic', title: RELICS[id] ? relicName(id, ctx) : 'Relic', onClose });
   const card = relicCard(h, id);
-  card.append(el('button', 'rlClose', 'Close'));
-  wrap.append(card);
-  wrap.addEventListener('click', () => {
-    wrap.remove();
-    onClose?.();
-  });
-  root.append(wrap);
+  // (the name is the menu's title now: the card's head keeps the icon and the rarity)
+  card.querySelector('.rlHead b')?.remove();
+  menu.body.append(card);
+  menuFoot(menu, { back: { word: 'close' } });
+  menu.root.addEventListener('click', () => menu.close());
 }

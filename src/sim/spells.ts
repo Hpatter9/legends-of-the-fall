@@ -360,6 +360,8 @@ export const kingStrike = (b: Battle, x: Unit, power: number, heavy: boolean, ou
 /** Cast a spell on the 3x3 around tile (u, v) (the tile is ignored by spells that go everywhere). False (and nothing changed) if the fight isn't on, the tile isn't on the board, the mana or cooldown isn't there, or Resurrect has nobody to lift. */
 export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean {
   const spell = SPELLS[id];
+  // (the Nemesis War, phase 4: the king's spells stay out of a duel)
+  if (b.duel) return false;
   if (!spell || (spell.target === 'tile' && !tileAt(b.board, u, v)) || !canAfford(b, id)) return false;
   const fallen = id === 'resurrect' ? fallenIn(b, u, v) : undefined;
   if (id === 'resurrect' && !fallen) return false;
