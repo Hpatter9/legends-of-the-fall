@@ -63,6 +63,8 @@ import { BRICKS, buildBackdrop, Layout, torchEl } from './towerBack';
 import { confirmBox } from './calamityView';
 import { playTwist, twistBadge, twistLine } from './twistView';
 import { openScreen } from './screens';
+import { AmbientLayer } from './render/ambientLayer';
+import { SCENE_LIFE } from './render/ambientScenes';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -911,7 +913,8 @@ export class TowerView {
     const background = el('img');
     background.src = altarBackdrop;
     background.alt = '';
-    scenery.append(background);
+    // (ALIVE: the chamber's torches lick, its banners stir, its gems and the shaft of light breathe, dust turns in the light)
+    scenery.append(background, new AmbientLayer(SCENE_LIFE.altar, altarBackdrop, { fit: 'fill' }).root);
     card.prepend(scenery);
     const heading = card.querySelector('h2')!;
     const eyebrow = el('p', 'altarEyebrow', slot && !reforge ? stepLabel(slot) : 'The Calamity · Altar of Ascension');

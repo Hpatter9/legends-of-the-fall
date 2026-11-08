@@ -7,8 +7,8 @@
 //
 // Used by the camp's own canvas (`camp.ts`) and by the overlay that brings a painted page to life (`ambientLayer.ts`).
 
-import { birdAt, emberAt, flashAt, flameRise, fallRun, flicker, floatLift, glintAt, inPoly, moteAt, polyBox, puffAt, rowShift, type MotionPlan, type Pt } from './ambient';
-import type { Light, Region, SceneLife, Spout } from './ambientScenes';
+import { birdAt, emberAt, flashAt, flameRise, fallRun, flicker, floatLift, glintAt, hotSpots, inPoly, moteAt, polyBox, puffAt, rowShift, type MotionPlan, type Pt } from './ambient';
+import type { FindLights, Light, Region, SceneLife, Spout } from './ambientScenes';
 
 const canvasOf = (w: number, h: number): HTMLCanvasElement => {
   const c = document.createElement('canvas');
@@ -103,11 +103,38 @@ function streaksOf(w: number, h: number, seed: number): HTMLCanvasElement {
   return c;
 }
 
+/** The flames of a painting too full of them to place by hand: its bright spots, looked for once in a small copy of it. */
+function findLights(src: CanvasImageSource, sw: number, sh: number, f: FindLights): Light[] {
+  const w = 256;
+  const h = Math.max(1, Math.round((sh / sw) * w));
+  const c = canvasOf(w, h);
+  const g = c.getContext('2d', { willReadFrequently: true })!;
+  g.drawImage(src, 0, 0, w, h);
+  let data: Uint8ClampedArray;
+  try {
+    data = g.getImageData(0, 0, w, h).data;
+  } catch {
+    return [];
+  }
+  const hot =
+    f.hot === 'bright'
+      ? (r: number, gg: number, b: number, a: number) => a > 128 && r > 235 && gg > 195 && b < 190 && r - b > 70
+      : (r: number, gg: number, b: number, a: number) => a > 128 && r > 210 && gg > 110 && r - b > 110;
+  const [l, t, r, b] = f.box;
+  return hotSpots(data, w, h, { cell: 4, least: 2, most: f.most * 3, hot })
+    .filter((s) => s.at[0] >= l && s.at[0] <= r && s.at[1] >= t && s.at[1] <= b)
+    .slice(0, f.most)
+    .map((s) => ({ at: s.at, r: f.r, kind: f.kind, colour: f.colour, power: f.power }));
+}
+
 export class LifePainter {
   private cuts: Cut[] = [];
   private place: Place = { x: 0, y: 0, w: 1, h: 1 };
   /** Fires found in the picture itself (the enemy's camps): each glows and sends up a little smoke. */
   private found: { at: Pt; n: number }[] = [];
+  /** Lights the scene asks to be found in its painting (`SceneLife.find`), found once per picture. */
+  private spots: Light[] = [];
+  private spotsOf: CanvasImageSource | null = null;
 
   constructor(
     readonly life: SceneLife,
@@ -125,6 +152,10 @@ export class LifePainter {
   layout(src: CanvasImageSource, sw: number, sh: number, place: Place, found: { at: Pt; n: number }[] = []): void {
     this.place = place;
     this.found = found;
+    if (this.life.find && this.spotsOf !== src) {
+      this.spotsOf = src;
+      this.spots = findLights(src, sw, sh, this.life.find);
+    }
     const kx = sw / place.w;
     const ky = sh / place.h;
     this.cuts = (this.lightsOnly ? [] : this.life.regions).map((r, i) => {
@@ -243,7 +274,7 @@ export class LifePainter {
     g.save();
     g.globalCompositeOperation = 'lighter';
     const pw = this.place.w;
-    const all: Light[] = [...this.life.lights];
+    const all: Light[] = [...this.life.lights, ...this.spots];
     for (const [i, f] of this.found.entries()) all.push({ at: f.at, r: Math.min(0.05, 0.018 + f.n * 0.0006), kind: i % 2 ? 'torch' : 'fire', colour: 0xff8a30, power: 0.5 });
     for (const [i, l] of all.entries()) {
       let k = still ? 1 : flicker(t, i * 13 + 5, l.kind);

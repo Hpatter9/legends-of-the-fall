@@ -6,6 +6,8 @@ import { menuWell } from './ornateMenu';
 import type { Meta } from './sim/meta';
 import { spellsOpen } from './sim/castle';
 import { schoolOf } from './sim/schools';
+import { AmbientLayer } from './render/ambientLayer';
+import { SCENE_LIFE } from './render/ambientScenes';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -35,7 +37,9 @@ export class Library {
     const magic = el('div', 'lbMagic');
     magic.setAttribute('aria-hidden', 'true');
     for (let i = 0; i < 5; i++) magic.append(el('i'));
-    this.scene.append(painting, title, magic);
+    // (ALIVE: the study's own life over the painting: the candles gutter, the book's magic winds up and glows, moonlight, ivy, dust)
+    const life = new AmbientLayer(SCENE_LIFE.study, painting.src, { fit: 'cover' }, 'lbLife');
+    this.scene.append(painting, life.root, title, magic);
     this.lock.classList.add('lbLock');
     const go = el('button', 'omPrimary lbGo', 'To the Castle');
     go.addEventListener('click', onCastle);

@@ -651,6 +651,10 @@ class Game {
     });
     // (battery saver caps the frame rate at 30)
     onSettings((s) => (this.app.ticker.maxFPS = s.saver ? 30 : 0));
+    // (ALIVE: the page's own CSS life, the menus' sheen and glints, rests on a battery saver too)
+    const lowPower = (on: boolean) => document.documentElement.classList.toggle('lowPower', on);
+    lowPower(settings().saver);
+    onSettings((s) => lowPower(s.saver));
     // (the developer grant in Settings: crowns, or shards of every hero, for testing; saved and shown at once)
     onDevGrant((what, n) => {
       const said = devGrant(this.meta, what, n);

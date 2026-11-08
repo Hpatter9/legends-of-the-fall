@@ -60,16 +60,32 @@ What was painted still and should move, screen by screen. Done means it moves in
 | | lights on the road (lanterns, braziers) | already flickered; now by the shared `flicker` |
 | | night's glows at the lit props (`weatherView.ts`) | done: they gutter (they were steady) |
 | | running water, falls, swaying growth, birds on the road, Calamity zones | already alive |
-| Summoning Sanctum (Recruit) | candles, the green crystal flames, the brazier fires, the stained glass light | batch 2 |
-| Spellbook study | candles, the glowing book, moonlight through the window, dust | batch 2 |
-| Castle (throne room card) | braziers and candles, the banners, light through the glass | batch 2 |
-| The chapel and the altar | candles, the altar's glow, motes | batch 2 |
-| Hester's stall | lanterns, cloth awning | batch 2 |
-| The castle's rooms (great hall, forge, barracks, stable ...) | forge fire, braziers, banners | batch 2 |
-| Hero sheets and backdrops | motes or embers by land, a slow light | batch 3 |
-| Cut-ins and showcases | embers and a glow behind the hero | batch 3 |
-| Ornate menu frames | a gentle sheen on the gilt, a few embers where it suits | batch 3 |
-| Loading and title screens | already alive (embers, a beacon, mist in CSS) | check in batch 3 |
+| Summoning Sanctum (Recruit, `hall.ts`) | some thirty candles | done: found in the painting (`SceneLife.find`), each gutters |
+| | the four green banners | done: stir |
+| | the shards floating over the altar | done: float |
+| | the rose window's and the altar's green light | done: breathe |
+| | the circle's glow (steady at rest) and the braziers' and crystals' glow (steady) | done: breathe and gutter |
+| | green wisps over the altar, dust over the floor | done |
+| Spellbook study (`library.ts`) | seven candles | done: gutter |
+| | the book's blue magic winding up | done: wavers, glows and sends up wisps (the CSS wisps stay) |
+| | moonlight through the window | done: breathes slowly |
+| | the ivy, the lectern's cloth | done: stir |
+| | dust in the candlelight | done |
+| Castle (the throne card, `castle.ts`) | four red banners, the curtain behind the throne | done: stir |
+| | light through the two windows, the four sconces | done: breathe and gutter, dust in the windows' light |
+| | the braziers, the dais's glow, the king | already alive |
+| The altar (`towerView.ts`, the Calamity's Altar of Ascension) | the two torches | done: lick, gutter, embers |
+| | the banners | done: stir |
+| | the green gems, the shaft of light from above | done: breathe; dust turns in the shaft |
+| Hester's stall (`stallView.ts`) | her shelf is plain wood: nothing painted moves | done: her lamp's light breathes over it, dust drifts |
+| The castle's rooms (the small building pictures on the chamber cards) | forge fire, braziers, banners | batch 3 |
+| Hero cards (the roster) | the motes round each hero (only the casters' moved) | done: every class's drift, out of step card to card |
+| A hero's sheet | the halo behind the hero, its motes | done: the halo's rays turn slowly, the motes rise |
+| The Houses' and the Dark Council's painted menus (`menuBackdrops.ts`) | candelabras; braziers and violet light | done: light only (the paintings lie under the card's veil): they gutter, embers and wisps rise |
+| The nemesis's taunt cut-in | the foe's band, the frame round its face | done: embers drift up the band, the frame smoulders |
+| The ultimate's showcase, the boss's arrival, the duel's challenge | already alive (staged effects, flashes, shakes) | — |
+| Ornate menu frames (every `ornateMenu`) | the gilt | done: a light sweeps the header now and then, the corner studs glint in turn, the rule's gem glows |
+| Loading screen | its beacon swelled at a steady brightness | done: it gutters as it swells (embers, mist and the slow push were already there) |
 | Rift Sanctuary | already alive (`sanctuaryView.ts`, `hubMotion.ts`) | — |
 | Cinematics | already alive (weather, rays, motes; `sceneView.ts`) | — |
 
@@ -83,6 +99,11 @@ Measured with `node tools/alive/perf.mjs <scene ...>` (a copy of `tools/audit/pe
 | tavern | 463, 17.2 | 440, 18.1 |
 | camp (Battle tab) | 442, 18.1 | 436, 18.2 |
 | fight (software GL: only the comparison means anything) | 9, 648 | 9, 657 |
+| recruit (Summoning Sanctum) | 432, 18.5 | 421, 19.0 |
+| spells (study) | 459 to 467, 17.1 to 17.3 | 417 to 442, 18.0 to 19.1 |
+| castle | 424 to 465, 17.2 to 18.9 | 443, 17.9 |
+
+(Runs differ by a few per cent from one to the next.)
 
 The first tavern layer redrew its whole painting every frame and halved the frame rate on that slowed CPU; it now leaves the
 `<img>` alone and draws only what moves (the regions on a transparent canvas, the light on a second canvas at one css pixel a
@@ -96,3 +117,25 @@ is drawn by an `AmbientLayer` laid just over its `<img>`, under Gwen, the guests
 still-water, lava or shrine tile and moves a few properties a frame (no new textures beyond one shared ripple picture).
 
 Samples: `docs/samples/alive/` (three frames each, before and after, at 393x852).
+
+## Batch 2 (the Sanctum, the study, the throne room, the altar, the stall)
+
+The Sanctum and the throne card draw their life on their own canvases (crisp, as the camp's); the study, the altar and the stall
+use an `AmbientLayer` each. The Sanctum is lit by dozens of candles, too many to place by hand: its scene asks the painter to find
+them (`SceneLife.find`: the painting's bright spots, looked for once in a 256 px copy as it is laid out).
+
+The home's pages are all on the screen at once, the ones not on show hidden by `visibility`, which an `IntersectionObserver`
+does not see: so a layer also asks its page whether it can be seen (`checkVisibility`, every 300 ms), and while none can be the
+loop only looks again every 300 ms. (Before this the tavern's and the study's layers drew on every tab, and cost the castle a
+third of its frames on the slowed CPU.) A layer made with a card (the altar's, the stall's) goes when its card is thrown away.
+
+Samples: `sanctum`, `study`, `throne` and `stall` in `docs/samples/alive/`.
+
+## Batch 3 (menus, hero cards, cut-ins, loading)
+
+CSS only, transform, opacity, background and box-shadow animations on small elements: the ornate menu's sheen, glints and gem;
+the hero cards' motes and the sheet's halo (its rays turned by a registered `--haloTurn` angle, as the halo is arched and cannot
+spin); the taunt's embers and smouldering frame; the loading beacon's gutter. All are stilled for reduced motion and on a battery
+saver (`main.ts` sets `html.lowPower` from the setting). The Houses' and the Council's painted menus take an `AmbientLayer` of
+light alone, under the card's content (`.paintedMenu` is isolated, the layer at `z-index: -1`). The altar is not sampled: it is reached only in a
+Calamity run; its masks were placed with `tools/alive/masks.mjs`.
