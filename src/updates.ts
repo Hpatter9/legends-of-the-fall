@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.402.0',
+    date: '2026-11-08',
+    title: 'The Legend Oath and the Shades',
+    notes: ['Swear the Legend Oath on Hard or above for 1.3x pay: a hero may truly fall, but nothing is lost. The fallen return as Shades on the War Horn.'],
+  },
+  {
     version: '0.401.0',
     date: '2026-11-08',
     title: 'All twenty new heroes join',

@@ -25,6 +25,7 @@ import { chillFor, cleanse, freezeFor, stunFor } from './ailments';
 import { MANA_MAX } from './spells';
 import { riderLong } from './relicFight';
 import { heraldOf } from './statRest';
+import type { Calling } from './weakness';
 
 /** An Eidolon's element (the names the page's effects use: `fxRules.ts` `Element`). */
 export type EidolonElement = 'fire' | 'ice' | 'light' | 'lightning' | 'earth' | 'dark';
@@ -178,6 +179,100 @@ export interface EidolonFight {
   dealt?: Record<number, number>;
   /** VAELKHAR-HEART: extra share his drain heals (the gift for returning his Heart, `vaelkharHeart.ts`). */
   drainBonus?: number;
+  /** Dynasties, phase 7: a Shade answers the horn instead (its `id` is `SHADE_ID`): a lesser strike and its calling's rider. */
+  shade?: ShadeFight;
+  /** The Shade's martial rider: the party's attack until this time. */
+  shadeAtkUntil?: number;
+}
+
+// ---- the Shades (Dynasties, phase 7: docs/design/legends-expansion.md section 3.6; docs/notes/dynasty-7.md) -------------------------
+
+/** The id a fight's call carries when a Shade answers the horn (never an Eidolon's). */
+export const SHADE_ID = 'shade';
+/** What a fight knows of the Shade that answers: whose it is (the kind and the bearer's name), its calling (the rider), and the nemesis
+ *  that slew it, if one did and still lives. Fixed as the fight is armed. */
+export interface ShadeFight {
+  kind: string;
+  name: string;
+  calling: Calling;
+  slayer?: number;
+}
+/** A Shade is a lesser Eidolon: its strike's shares of full health (every one under an Eidolon's), its slayer's, and the riders' numbers. */
+export const SHADE = {
+  FIELD: 0.6,
+  ELITE: 0.35,
+  BOSS: 0.2,
+  /** The nemesis that slew it takes this much, and cannot cheat death that fight. */
+  SLAYER: 0.6,
+  /** Martial: the party's attack, and for how long. */
+  ATK: 1.2,
+  ATK_MS: 8000,
+  /** Arcane: every ultimate meter gains this share. */
+  CHARGE: 0.25,
+  /** Devout: every hero healed this share of its health, and cleansed. */
+  HEAL: 0.3,
+  /** Wild: the party hasted this long. */
+  HASTE_MS: 6000,
+};
+export const SHADE_SHARE: Record<Struck, number> = { field: SHADE.FIELD, elite: SHADE.ELITE, boss: SHADE.BOSS, guardian: SHADE.BOSS, being: SHADE.BOSS };
+/** Each calling's rider, in one line. */
+export const SHADE_RIDER: Readonly<Record<Calling, string>> = {
+  martial: 'Your heroes: +20% attack for 8s',
+  arcane: "Every hero's ultimate meter: +25%",
+  devout: 'Every hero healed 30% and cleansed',
+  wild: 'Your heroes hasted for 6s',
+};
+
+/** Put a Shade on a fight in place of the Eidolon (the page does, when the horn is full and a Shade is chosen to answer it). */
+export function armShade(b: Battle, shade: ShadeFight, opts: { mid?: boolean; trial?: boolean } = {}): boolean {
+  if (b.eidolon?.called !== undefined) return false;
+  b.eidolon = { id: SHADE_ID, shade: { ...shade }, ...(opts.mid ? { mid: true } : {}), ...(opts.trial ? { trial: true } : {}) };
+  return true;
+}
+
+/** The Shade's call: its strike (its slayer marked so it cannot cheat death), then its calling's rider. */
+function strikeShade(b: Battle, out: BattleEvent[]): boolean {
+  const st = b.eidolon!;
+  const s = st.shade!;
+  st.called = b.t;
+  out.push({ kind: 'eidolon', id: SHADE_ID, phase: 'call' });
+  const foes = b.units.filter((x) => x.alive && x.side === 'foe').sort((x, y) => x.id - y.id);
+  for (const f of foes) {
+    const slayer = s.slayer !== undefined && f.nem?.id === s.slayer;
+    if (slayer) f.nem!.doomed = true;
+    const share = slayer ? SHADE.SLAYER : SHADE_SHARE[struckAs(b, f)];
+    rend(b, f, Math.max(1, Math.round(f.maxHp * (f.nem ? nemStrike(f, share) : share))), out);
+  }
+  const long = riderLong(b);
+  const herald = heraldOf(b.units);
+  const ms = (n: number): number => Math.round(n * long * herald);
+  switch (s.calling) {
+    case 'martial':
+      for (const h of heroesOf(b)) h.power = (h.power ?? 1) * SHADE.ATK;
+      st.shadeAtkUntil = b.t + ms(SHADE.ATK_MS);
+      for (const h of heroesOf(b)) out.push({ kind: 'mark', to: h.id, by: EIDOLON_BY, what: 'eidolonWarm', ms: ms(SHADE.ATK_MS) });
+      break;
+    case 'arcane':
+      for (const h of heroesOf(b)) {
+        if (!heroKitOf(h)) continue;
+        if (ultimateOf(h)) h.charge2 = Math.min(CHARGE_MAX, (h.charge2 ?? 0) + CHARGE_MAX * SHADE.CHARGE * long);
+        else h.charge = Math.min(CHARGE_MAX, h.charge + CHARGE_MAX * SHADE.CHARGE * long);
+      }
+      break;
+    case 'devout':
+      for (const h of heroesOf(b)) {
+        const amount = Math.min(h.maxHp - h.hp, Math.round(h.maxHp * SHADE.HEAL));
+        h.hp += amount;
+        cleanse(b, h);
+        out.push({ kind: 'heal', to: h.id, amount, by: EIDOLON_BY });
+      }
+      break;
+    case 'wild':
+      for (const h of heroesOf(b)) h.hasteUntil = Math.max(h.hasteUntil ?? 0, b.t + ms(SHADE.HASTE_MS));
+      break;
+  }
+  out.push({ kind: 'eidolon', id: SHADE_ID, phase: 'done' });
+  return true;
 }
 
 /** A pseudo-fighter for the strike's events (`by: 0`, as the king's spells are). Never in `b.units`. */
@@ -209,6 +304,8 @@ export function struckAs(b: Battle, u: Unit): Struck {
 /** Resolve the call (from `applyOrders`, at the start of a tick): the strike, then the rider. Returns false (nothing changes) when it
  *  cannot be called. */
 export function strikeEidolon(b: Battle, out: BattleEvent[]): boolean {
+  // (Dynasties, phase 7: a Shade answers instead)
+  if (b.eidolon?.shade && b.eidolon.id === SHADE_ID) return b.phase === 'fight' && b.eidolon.called === undefined && strikeShade(b, out);
   const e = b.eidolon && eidolonById(b.eidolon.id);
   if (!e || b.phase !== 'fight' || b.eidolon!.called !== undefined) return false;
   b.eidolon!.called = b.t;
@@ -337,6 +434,10 @@ function rider(b: Battle, e: Eidolon, struck: readonly Unit[], out: BattleEvent[
 export function tickEidolon(b: Battle, out: BattleEvent[]): void {
   const st = b.eidolon;
   if (!st || st.called === undefined) return;
+  if (st.shadeAtkUntil !== undefined && b.t >= st.shadeAtkUntil) {
+    for (const h of b.units) if (h.side === 'hero' && h.id !== b.stand?.king && h.def !== 'decoy') h.power = (h.power ?? 1) / SHADE.ATK;
+    st.shadeAtkUntil = undefined;
+  }
   if (st.warmUntil !== undefined && b.t >= st.warmUntil) {
     for (const h of b.units) if (h.side === 'hero' && h.id !== b.stand?.king && h.def !== 'decoy') h.power = (h.power ?? 1) / RIDER.WARM_MULT;
     st.warmUntil = undefined;

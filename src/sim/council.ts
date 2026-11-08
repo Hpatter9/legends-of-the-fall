@@ -100,7 +100,7 @@ export function swear(war: War): void {
   }
 }
 
-function news(war: War, kind: NewsKind, text: string): void {
+export function news(war: War, kind: NewsKind, text: string): void {
   war.news.unshift({ turn: war.turn, kind, text });
   war.news.length = Math.min(war.news.length, NEWS_MAX);
 }
@@ -478,6 +478,9 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   // (phase 4: a nemesis slain in a duel cannot cheat death either, and a warchief beaten in one is humiliated instead and flees to his Muster)
   const duel = duelSettle(war, m, note, was, b);
   if (duel.won !== undefined) avenged.add(duel.won);
+  // (Dynasties, phase 7: the Shade of a bearer it slew struck it this fight: it cannot cheat death either)
+  const doomed = b.eidolon?.called !== undefined ? b.eidolon.shade?.slayer : undefined;
+  if (doomed !== undefined) avenged.add(doomed);
   const cheated = new Map<number, string>();
   if (CHEAT_DEATH.on && !muster) lines.push(...cheatDeath(war, m, run, wave, note, was, avenged, cheated));
   // (phase 3: the Grudges, the humiliated, trophies brought home and Vengeance, `revenge.ts`; phase 4: a duel won pays double)

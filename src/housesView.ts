@@ -28,7 +28,11 @@ import {
 import { todayKey } from './modes';
 import { SEASON_ICON, FATE_ICON, HOUSE_ICON, HEIRLOOM_ICON } from './dynastyArt';
 import { menuBackdrop } from './menuBackdrops';
-export { SEASON_ICON, FATE_ICON, HOUSE_ICON, HEIRLOOM_ICON } from './dynastyArt';
+export { SEASON_ICON, FATE_ICON, HOUSE_ICON, HEIRLOOM_ICON, LEGEND_ICON } from './dynastyArt';
+import { hasFallen, isLegend, mourningLeft, OATH, whyShadeHonour } from './sim/oath';
+import { openNemesisCard } from './nemesisView';
+/** Phase 7: the fallen's candle (the painted fate icon). */
+const fallenIcon = FATE_ICON.fallen;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -109,9 +113,11 @@ const faceOf = (kind: string, b: Bearer, size: number): HTMLElement => bearerFac
 /** The kinds with a line, in the roster's order. */
 const lineKinds = (m: Meta): string[] => m.unlocked.filter((k) => !!lineOf(m, k));
 
-type Filter = 'all' | 'heirs' | 'veteran' | 'elder';
-const FILTERS: readonly Filter[] = ['all', 'heirs', 'veteran', 'elder'];
-const FILTER_WORD: Readonly<Record<Filter, string>> = { all: 'All', heirs: 'With heirs', veteran: 'Veterans', elder: 'Elders' };
+type Filter = 'all' | 'heirs' | 'veteran' | 'elder' | 'fallen';
+const FILTERS: readonly Filter[] = ['all', 'heirs', 'veteran', 'elder', 'fallen'];
+const FILTER_WORD: Readonly<Record<Filter, string>> = { all: 'All', heirs: 'With heirs', veteran: 'Veterans', elder: 'Elders', fallen: 'The fallen' };
+/** Whether a line is shown under a filter. */
+const shownUnder = (m: Meta, k: string, f: Filter): boolean => f === 'all' || (f === 'heirs' ? hasHeirs(lineOf(m, k)) : f === 'fallen' ? hasFallen(lineOf(m, k)) : stageOf(bearerOf(m, k)!.served) === f);
 
 /** The camp's top-bar chip: the season's icon and name. */
 export function seasonChip(m: Meta, day: number, onOpen: () => void): HTMLButtonElement | null {
@@ -172,7 +178,7 @@ export function openHouses(m: Meta, day: number, focus?: string): OrnateMenu | n
   menuBackdrop(menu.card, 'houses');
   const crest = menu.card.querySelector('.omCrest');
   crest?.replaceChildren(icon(HOUSE_ICON, 'hsHouseCrest'));
-  const tabs = menuSection(menu.body, undefined, undefined, 4);
+  const tabs = menuSection(menu.body, undefined, undefined, 3);
   tabs.classList.add('hsTabs');
   const pane = el('div', 'hsPane');
   menu.body.append(pane);
@@ -180,16 +186,19 @@ export function openHouses(m: Meta, day: number, focus?: string): OrnateMenu | n
   const now = Date.now();
   const draw = () => {
     pane.replaceChildren();
-    const kinds = lineKinds(m).filter((k) => shown === 'all' || (shown === 'heirs' ? hasHeirs(lineOf(m, k)) : stageOf(bearerOf(m, k)!.served) === shown));
+    const kinds = lineKinds(m).filter((k) => shownUnder(m, k, shown));
     const grid = menuSection(pane, shown === 'all' ? 'The lines' : FILTER_WORD[shown], `${kinds.length} ${kinds.length === 1 ? 'House' : 'Houses'}`, 4);
     grid.classList.add('hsLines');
     for (const k of kinds) {
       const b = bearerOf(m, k)!;
       const st = stageOf(b.served);
       const ready = heirState(m, k, now).state === 'ready';
-      const row = menuChoice(grid, { title: b.name, lines: [ready ? 'Heir ready' : STAGE_WORDS[st]], onPick: () => openLine(m, k, day) });
+      const mourn = mourningLeft(m, k, day);
+      const row = menuChoice(grid, { title: b.name, lines: [mourn ? 'In mourning' : b.fate === 'fallen' ? 'Fallen' : ready ? 'Heir ready' : STAGE_WORDS[st]], onPick: () => openLine(m, k, day) });
       row.classList.add('hsLine', st);
       if (ready) row.classList.add('hsReady');
+      if (b.fate === 'fallen') row.classList.add('hsFallen');
+      if (isLegend(b)) row.classList.add('hsLegend');
       row.prepend(faceOf(k, b, 48));
       if (b.fate && FATE_ICON[b.fate]) row.append(icon(FATE_ICON[b.fate], 'hsFate'));
       row.setAttribute('aria-label', `${b.name}, ${kindName(k)}, generation ${b.gen}, ${stageAge(k, b.served)}${b.fate === 'mentor' ? ', mentoring in the Hall of Legends' : ''}${ready ? ', an heir is ready' : ''}. Open the House`);
@@ -199,6 +208,8 @@ export function openHouses(m: Meta, day: number, focus?: string): OrnateMenu | n
         pane,
         shown === 'heirs'
           ? `No heir yet. ${heirStageNote} It needs level ${HEIRS.LEVEL} and a kindred partner at Sworn.`
+          : shown === 'fallen'
+            ? 'No bearer has fallen. Under the Legend Oath (Hard or harder, from the first Passing of the Mantle) a hero who falls twice in a run, or in a wave that is lost, is slain: the progress stays, the person does not.'
           : shown === 'elder'
             ? `No Elder yet. A hero is an Elder after ${STAGE_FROM.elder} seasons served.`
             : `No Veteran yet. A hero is a Veteran after ${STAGE_FROM.veteran} seasons served.`,
@@ -274,13 +285,21 @@ export function openLine(m: Meta, kind: string, day: number): OrnateMenu | null 
       }
       const lines: (string | [string, 'pay' | 'lock'])[] = [stageAge(kind, b.served), `${b.served} ${b.served === 1 ? 'season' : 'seasons'} served`];
       if (b.fate) lines.push(fateWords(b));
+      if (isLegend(b)) lines.push(['A Legend of the Oath', 'pay']);
+      else if (b.legend) lines.push(`Legend renown: ${b.legend} of ${OATH.LEGEND} Oath clears`);
+      if (b.foundling) lines.push('A foundling heir');
+      if (i === line.current && line.mourning) lines.push([`The House mourns: ${mourningLeft(m, kind, day)} more ${mourningLeft(m, kind, day) === 1 ? 'day' : 'days'}`, 'lock']);
       if (i === line.current && b.fate !== 'mentor' && st === 'elder') lines.push(['Elder’s Counsel: +5% XP to the party', 'pay']);
       if (b.birthright) lines.push(['Birthright · ' + birthrightWords(b), 'pay']);
       if (i !== line.current && line.field === i) lines.push(['Fielded in the heir’s place', 'pay']);
       const row = menuChoice(grid, { title: b.name, lines, onPick: () => openBearer(m, kind, i, day) });
       row.classList.add('hsBearer', st);
+      if (b.fate === 'fallen') row.classList.add('hsFallen');
+      if (isLegend(b)) row.classList.add('hsLegend');
       row.prepend(faceOf(kind, b, 64));
       if (b.fate && FATE_ICON[b.fate]) row.append(icon(FATE_ICON[b.fate], 'hsFate'));
+      // (the fallen: the slayer's chip; a tap opens its card while it lives)
+      if (b.fate === 'fallen') slayerChip(m, b, row);
       if (b.heirloom !== undefined) {
         const it = (m.equipment ?? []).find((x) => x.id === b.heirloom);
         if (it) {
@@ -335,8 +354,23 @@ function fateWords(b: Bearer): string {
   if (b.fate === 'mentor') return 'Mentoring in the Hall of Legends';
   if (b.fate === 'regular') return 'A regular at the Elders’ table';
   if (b.fate === 'shade') return 'A Shade, waiting on the War Horn';
-  if (b.fate === 'fallen') return 'Fallen';
+  if (b.fate === 'fallen') return 'Fallen under the Oath: a Shade on the War Horn';
   return '';
+}
+
+/** The slayer's chip on a fallen bearer's row: "Slain by Gash, Ravi-Killer · still living" (a tap opens the nemesis's card), or gone. */
+function slayerChip(m: Meta, b: Bearer, row: HTMLElement): void {
+  const n = b.slainBy !== undefined ? m.war?.members.find((x) => x.id === b.slainBy) : undefined;
+  const chip = el('small', 'omLine hsSlayerChip');
+  chip.append(icon(fallenIcon, 'hsChipIco'), b.slayer ? `Slain by ${b.slayer} · ${n ? 'still living' : 'gone from the War'}` : 'Slain under the Oath');
+  if (n) {
+    chip.classList.add('hsTap');
+    chip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openNemesisCard(m, n);
+    });
+  }
+  row.append(chip);
 }
 
 /** A bearer's card: the face in its look, the years, its birthright, heirloom, Blood Grudge and honour, its memory, and what it can do:
@@ -358,6 +392,8 @@ export function openBearer(m: Meta, kind: string, index: number, day: number): O
   };
   const top = menuWell(menu.body);
   top.classList.add('hsBearerWell');
+  if (b.fate === 'fallen') top.classList.add('hsFallen');
+  if (isLegend(b)) top.classList.add('hsLegend');
   top.append(faceOf(kind, b, 96));
   const words = el('div', 'hsWords');
   const look = lookWords(kind, st);
@@ -389,14 +425,28 @@ export function openBearer(m: Meta, kind: string, index: number, day: number): O
     const n = m.war?.members.find((x) => x.id === b.grudge);
     fact(gifts, 'Blood Grudge', n ? [[`+${Math.round(HEIRS.GRUDGE * 100)}% against ${n.name} ${n.epithet}`, 'pay'], 'who slew a parent of this House'] : [['The one who slew a parent is gone', 'lock']]);
   }
+  if (b.foundling) fact(gifts, 'A foundling', ['taken up after a mourning, with no birthright']);
   const promise = promiseLeft(b, day);
   if (isCur && promise > 0) fact(gifts, 'The Heir’s Promise', [[`+${Math.round(HEIRS.PROMISE_XP * 100)}% XP for ${promise} more ${promise === 1 ? 'day' : 'days'}`, 'pay'], 'the heir’s first season']);
   if (!gifts.children.length) gifts.parentElement!.remove();
   // (its honours)
-  if ((st === 'elder' && !b.cadet) || b.fate) {
+  if ((st === 'elder' && !b.cadet && isCur) || (b.fate && b.fate !== 'fallen')) {
     const h = menuSection(menu.body, 'Honours', undefined, 2);
     if (st === 'elder' && isCur) fact(h, 'Elder’s Counsel', [['+5% XP to the rest of the party while fielded', 'pay']]);
     if (b.fate && b.fate !== 'fallen') fact(h, HONOUR_WORDS[b.fate as Honour], [HONOUR_LINES[b.fate as Honour]]);
+  }
+  // (phase 7: the Oath: renown, the Legend, and the fall)
+  if (b.legend || b.fate === 'fallen') {
+    const o = menuSection(menu.body, 'The Legend Oath', undefined, 2);
+    if (b.legend) fact(o, isLegend(b) ? 'A Legend' : 'Legend renown', [isLegend(b) ? ['A Legend of the Oath: a gold frame on the tree', 'pay'] : `${b.legend} of ${OATH.LEGEND} Oath clears`]);
+    if (b.fate === 'fallen') {
+      const n = b.slainBy !== undefined ? m.war?.members.find((x) => x.id === b.slainBy) : undefined;
+      fact(o, 'Slain under the Oath', [b.slayer ? `by ${b.slayer}` : 'in a fight with no name to it', ...(n ? [['still living: the House’s Blood Grudge is on it', 'lock'] as [string, 'lock']] : [])]);
+      // (greyed until it can answer: the War Horn must be held)
+      const grey = whyShadeHonour(m);
+      fact(o, 'A Shade', [grey ? [grey, 'lock'] : ['Waits on the War Horn: chosen on the horn’s card, it answers in the Eidolon’s place', 'pay']]);
+      if (isCur && line.mourning) fact(o, 'Mourning', [[`${mourningLeft(m, kind, day)} more ${mourningLeft(m, kind, day) === 1 ? 'day' : 'days'}: the House cannot march`, 'lock'], 'then a foundling heir takes up the mantle']);
+    }
   }
   // (what it can do)
   const acts = menuSection(menu.body, 'The line', undefined, 2);
@@ -615,7 +665,7 @@ export function openFarewell(m: Meta, r: Mantle, done: () => void): OrnateMenu {
     if (n) fact('Blood Grudge', [[`+${Math.round(HEIRS.GRUDGE * 100)}% against ${n.name} ${n.epithet}`, 'pay']]);
   }
   fact('The Heir’s Promise', [[`+${Math.round(HEIRS.PROMISE_XP * 100)}% XP for the first season`, 'pay']]);
-  fact(HONOUR_WORDS[r.honour], [`${r.elder.name}: ${HONOUR_LINES[r.honour]}`]);
+  if (r.honour !== 'fallen') fact(HONOUR_WORDS[r.honour], [`${r.elder.name}: ${HONOUR_LINES[r.honour]}`]);
   fact(`${r.cadet.name}, passed over`, ['the cadet line: visits the tavern now and then']);
   menuFoot(menu, { back: { word: 'close', onClick: () => done() } });
   return menu;
@@ -630,7 +680,8 @@ export function openHonour(m: Meta, kind: string, index: number, day: number, do
   menu.card.classList.add('hsCard');
   const g = menuSection(menu.body, 'Honours', b.fate ? `now: ${HONOUR_WORDS[b.fate as Honour]}` : undefined, 2);
   for (const h of HONOURS) {
-    const why = b.fate === h ? 'Holds it now' : whyNotHonour(m, kind, h, now, index);
+    // (phase 7: the Shade's horn call is wired; until a Shade can answer the horn (it is held), the honour shows greyed)
+    const why = b.fate === h ? 'Holds it now' : (whyNotHonour(m, kind, h, now, index) ?? (h === 'shade' ? whyShadeHonour(m) : null));
     const row = menuChoice(g, {
       title: HONOUR_WORDS[h],
       lines: [why ? [why, 'lock'] : HONOUR_LINES[h]],

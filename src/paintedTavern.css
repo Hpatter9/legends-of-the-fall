@@ -105,3 +105,13 @@
 .ptTavern .ptGuest:active { transform: translate(-50%, -100%); }
 .ptTavern .ptKeeper:active { transform: none; }
 .ptBarFront { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; pointer-events: none; clip-path: polygon(0 46%, 43% 40%, 43% 54%, 0 76%); }
+
+/* Dynasties, phase 7: the ghosts of bearers slain under the Oath. A steady pale translucence (never a flicker): a guest whose House mourns
+   sits so at its seat with a candle; the fallen stand by the hearth. */
+.ptGuest.ptGhost .ptGuestArt { opacity: 0.45; filter: grayscale(0.85) brightness(1.25) drop-shadow(0 0 6px #b9d4ff66); }
+.ptGuest .ptCandle { position: absolute; right: 2%; bottom: 22px; width: 26px; height: 26px; z-index: 1; object-fit: contain; pointer-events: none; }
+.ptGhosts { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.ptHearthGhost { position: absolute; width: 15%; height: 21%; object-fit: contain; object-position: center bottom; transform: translate(-50%, -100%); opacity: 0.38; filter: grayscale(0.9) brightness(1.3) drop-shadow(0 0 6px #b9d4ff55); }
+.ptHearthGhost[data-at='0'] { left: 47%; top: 46%; }
+.ptHearthGhost[data-at='1'] { left: 58%; top: 45%; }
+.ptHearthGhost[data-at='2'] { left: 39%; top: 47%; }

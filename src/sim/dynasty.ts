@@ -81,6 +81,14 @@ export interface Bearer {
   promise?: number;
   /** When its honour may next be changed (ms; a 7-day cooldown, as recall works). */
   honourAt?: number;
+  // (phase 7, `oath.ts`: the Legend Oath)
+  /** Slain under the Oath by this nemesis (its id), and its name as it was then ("Gash Ravi-Killer"), for the tree's chip. */
+  slainBy?: number;
+  slayer?: string;
+  /** Legend renown: the Oath runs it has cleared. Three make it a Legend (a gold frame on the tree). */
+  legend?: number;
+  /** A foundling heir: taken up after a mourning, when the line had no heir trained (no birthright). */
+  foundling?: true;
 }
 /** A kind's House: its bearers, oldest first, and which of them holds the slot. */
 export interface Line {
@@ -90,6 +98,9 @@ export interface Line {
   heir?: { doneAt: number; partner: string; picks?: HeirPick[] };
   /** Phase 6: the bearer fielded in the heir's place (an honoured elder: the party picker's banner); missing is the current bearer. */
   field?: number;
+  /** Phase 7 (`oath.ts`): its bearer was slain under the Oath with no heir trained: the line mourns until this day (a day number,
+   *  `dayNumber`), and the kind cannot be fielded in the armies until then. Then a foundling heir takes up the mantle. */
+  mourning?: number;
 }
 /** One of an heir's two candidates. */
 export interface HeirPick {
@@ -370,6 +381,11 @@ export function readDynasty(raw: unknown): Dynasty | undefined {
       if (y.cadet === true) b.cadet = true;
       if (typeof y.promise === 'number' && Number.isFinite(y.promise) && y.promise > 0) b.promise = Math.floor(y.promise);
       if (typeof y.honourAt === 'number' && Number.isFinite(y.honourAt) && y.honourAt > 0) b.honourAt = y.honourAt;
+      // (phase 7: the Oath's fallen, Legend renown and foundlings)
+      if (typeof y.slainBy === 'number' && Number.isInteger(y.slainBy) && y.slainBy >= 0) b.slainBy = y.slainBy;
+      if (typeof y.slayer === 'string' && y.slayer.trim()) b.slayer = y.slayer.slice(0, 60);
+      if (typeof y.legend === 'number' && Number.isFinite(y.legend) && y.legend >= 1) b.legend = int(y.legend, 1, 999, 1);
+      if (y.foundling === true) b.foundling = true;
       bearers.push(b);
     }
     if (!bearers.length) continue;
@@ -388,6 +404,7 @@ export function readDynasty(raw: unknown): Dynasty | undefined {
       // (only an honoured elder before the current bearer can be fielded in its place, never a cadet or one fallen)
       if (f < line.current && fb && !fb.cadet && fb.fate && fb.fate !== 'fallen') line.field = f;
     }
+    if (typeof x.mourning === 'number' && Number.isInteger(x.mourning) && x.mourning > 0 && line.bearers[line.current].fate === 'fallen') line.mourning = int(x.mourning, 1, 1e7, 1);
     d.lines[kind] = line;
   }
   for (const [kind, s] of Object.entries(r.served && typeof r.served === 'object' ? r.served : {})) {

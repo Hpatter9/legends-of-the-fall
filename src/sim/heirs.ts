@@ -68,7 +68,7 @@ export const HONOUR_WORDS: Readonly<Record<Honour, string>> = { mentor: 'Mentor'
 export const HONOUR_LINES: Readonly<Record<Honour, string>> = {
   mentor: 'A seat in the Hall of Legends: catch-up XP and the legacy perk to the calling. The kind stays in the party through the heir.',
   regular: 'A seat at the Elders’ table in the tavern: a story and 50 crowns a day, and a free ride as the guest once a day.',
-  shade: 'Waits on the War Horn beside the Eidolons. Its horn call comes with the Legend Oath.',
+  shade: 'Waits on the War Horn beside the Eidolons: chosen on the horn’s card, it answers in their place, a lesser strike and its calling’s gift.',
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -103,6 +103,8 @@ export function whyNoHeir(m: Meta, kind: string): string | null {
   if (!line || !b || !m.unlocked.includes(kind)) return 'No House yet';
   if (line.heir) return 'An heir is named already';
   // (a mentor of the Hall from before cannot serve seasons there, so its honour stands for them)
+  // (phase 7: a bearer slain under the Oath names no heir; the line mourns, and a foundling takes up the mantle)
+  if (b.fate === 'fallen') return 'The House is in mourning';
   const mentor = b.fate === 'mentor';
   if (!mentor && b.served < STAGE_FROM.veteran) {
     const n = STAGE_FROM.veteran - b.served;
@@ -182,8 +184,9 @@ export function whyNotHonour(m: Meta, kind: string, honour: Honour, now: number,
   return null;
 }
 
-/** The elder of `kind` at `index` takes `honour` (no cooldown is asked here: the Mantle's own, or `changeHonour`'s). */
-function giveHonour(m: Meta, kind: string, index: number, honour: Honour, now: number): void {
+/** The elder of `kind` at `index` takes `honour` (no cooldown is asked here: the Mantle's own, or `changeHonour`'s). Phase 7: or falls
+ *  under the Oath ('fallen'): it leaves the Hall or the table as it would for another honour. */
+export function giveHonour(m: Meta, kind: string, index: number, honour: Honour | 'fallen', now: number): void {
   const line = lineOf(m, kind)!;
   const b = line.bearers[index];
   const d = m.dynasty!;
@@ -248,19 +251,20 @@ export interface Mantle {
   elder: Bearer;
   heir: Bearer;
   cadet: Bearer;
-  honour: Honour;
+  /** Phase 7: 'fallen' when the elder was slain under the Oath and its trained heir took up the mantle at once. */
+  honour: Honour | 'fallen';
   heirloom?: Equipment;
   /** The nemesis the heir bears its Blood Grudge against. */
   grudge?: number;
 }
 
 /** Why the mantle cannot pass now with these choices (null when it can). */
-export function whyNoMantle(m: Meta, kind: string, opts: { pick: number; honour: Honour; heirloom?: number }, now: number): string | null {
+export function whyNoMantle(m: Meta, kind: string, opts: { pick: number; honour: Honour | 'fallen'; heirloom?: number }, now: number): string | null {
   const st = heirState(m, kind, now);
   if (st.state === 'none') return 'No heir is named';
   if (st.state === 'training') return `The heir is still training: ${trainWords(st.left)}`;
   if (opts.pick !== 0 && opts.pick !== 1) return 'Choose a candidate';
-  const why = whyNotHonour(m, kind, opts.honour, now);
+  const why = opts.honour === 'fallen' ? null : whyNotHonour(m, kind, opts.honour, now);
   if (why) return why;
   if (opts.heirloom !== undefined && !heirloomChoices(m, kind).some((x) => x.id === opts.heirloom)) return 'The heirloom must be one of the elder’s worn pieces';
   return null;
@@ -271,7 +275,7 @@ export function whyNoMantle(m: Meta, kind: string, opts: { pick: number; honour:
  * lasting is touched: the kind's XP, ranks, awakening, talents, books, gear and skills are the kind's, and the heir is the kind now. The
  * one piece handed down gains a generation mark. Returns what happened (for the farewell), or null (nothing changes) when it cannot.
  */
-export function passMantle(m: Meta, kind: string, opts: { pick: number; honour: Honour; heirloom?: number }, now: number, day: number): Mantle | null {
+export function passMantle(m: Meta, kind: string, opts: { pick: number; honour: Honour | 'fallen'; heirloom?: number }, now: number, day: number): Mantle | null {
   if (whyNoMantle(m, kind, opts, now)) return null;
   const line = lineOf(m, kind)!;
   const picks = heirPicks(m, kind, now)!;
@@ -299,10 +303,16 @@ export function passMantle(m: Meta, kind: string, opts: { pick: number; honour: 
   // (the elder's honour; a mentor of the Hall from before keeps its seat, now with its line going on)
   if (opts.honour === 'mentor' && elder.fate === 'mentor') seatMentor(m, kind, now);
   else giveHonour(m, kind, elderAt, opts.honour, now);
-  elder.honourAt = now + HEIRS.HONOUR_MS;
   const tag = seasonTag(m, day);
-  remember(elder, `Passed the mantle to ${heir.name} · ${tag}`);
-  remember(heir, `Took up the mantle of ${elder.name} · ${tag}`);
+  if (opts.honour === 'fallen') {
+    // (phase 7: slain under the Oath, its trained heir takes up the mantle at once; the fall's own line is the Oath's, `oath.ts`)
+    delete elder.honourAt;
+    remember(heir, `Took up the mantle of ${elder.name}, fallen · ${tag}`);
+  } else {
+    elder.honourAt = now + HEIRS.HONOUR_MS;
+    remember(elder, `Passed the mantle to ${heir.name} · ${tag}`);
+    remember(heir, `Took up the mantle of ${elder.name} · ${tag}`);
+  }
   remember(cadet, `Passed over for ${heir.name}: the cadet line · ${tag}`);
   // (a mentor from before had left the party: with an heir its kind comes back to it, while there is room)
   if (wasOut && !m.party.includes(kind) && m.party.length < Math.min(PARTY_SIZE, m.unlocked.length)) m.party.push(kind);
@@ -520,7 +530,8 @@ export const heirStageNote = `A Veteran (${STAGE_FROM.veteran} seasons served) o
 /** The farewell and arrival: the elder hands over the heirloom, in the backdrop of its honour. Lines for the page's card: [who, words]. */
 export function farewellLines(r: Mantle): ['elder' | 'heir', string][] {
   const piece = r.heirloom ? 'this' : 'the House';
-  const where: Record<Honour, string> = {
+  const where: Record<Honour | 'fallen', string> = {
+    fallen: 'Do not mourn me long. Carry the House on, and make them pay for it.',
     mentor: 'The Hall of Legends has a seat for me. Come and ask me anything, when the road is hard.',
     regular: 'I will be at the long table in the tavern, telling the same stories badly. Come and correct me.',
     shade: 'I go where the horn can find me. When it sounds, I will come.',
