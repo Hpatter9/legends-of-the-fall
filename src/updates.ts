@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.401.0',
+    date: '2026-11-08',
+    title: 'All twenty new heroes join',
+    notes: ['Isolde, Nenet, Zahara, Corvus, Soren, Cyra, Soraya, Gabriela, Tariq, Siku and Nakoa join: 65 heroes to collect, plus the Mythics.'],
+  },
+  {
     version: '0.400.0',
     date: '2026-11-08',
     title: 'The Last Stand and Calamity rest a while',

@@ -352,5 +352,71 @@
     "motion": "read",
     "label": "Reading threads of fate",
     "facing": "left"
+  },
+  "banneret": {
+    "place": "hearth",
+    "motion": "breathe",
+    "label": "Planting the standard",
+    "facing": "right"
+  },
+  "astralSphinx": {
+    "place": "dice-right",
+    "motion": "tend",
+    "label": "Tracing a star chart",
+    "facing": "left"
+  },
+  "mirageDancer": {
+    "place": "bar",
+    "motion": "drink",
+    "label": "Sipping mint tea",
+    "facing": "left"
+  },
+  "plagueDoctor": {
+    "place": "supper",
+    "motion": "tend",
+    "label": "Grinding herbs in a mortar",
+    "facing": "right"
+  },
+  "bombardier": {
+    "place": "dice-left",
+    "motion": "tend",
+    "label": "Packing a firework shell",
+    "facing": "right"
+  },
+  "astrologer": {
+    "place": "dice-right",
+    "motion": "play",
+    "label": "Casting a horoscope",
+    "facing": "left"
+  },
+  "inquisitor": {
+    "place": "hearth",
+    "motion": "breathe",
+    "label": "Weighing the evidence",
+    "facing": "right"
+  },
+  "seraph": {
+    "place": "bar",
+    "motion": "drink",
+    "label": "Sipping spring water",
+    "facing": "right"
+  },
+  "corsairSurgeon": {
+    "place": "bar",
+    "motion": "drink",
+    "label": "Toasting with rum",
+    "facing": "left"
+  },
+  "harpooner": {
+    "place": "supper",
+    "motion": "eat",
+    "label": "Chewing dried fish",
+    "facing": "right"
+  },
+  "seaReaver": {
+    "place": "dice-left",
+    "motion": "tend",
+    "label": "Polishing an anchor",
+    "facing": "left"
   }
 }

@@ -75,10 +75,6 @@ export const HERO_NAMES: Record<string, HeroName> = {
   geomancer: { name: 'Tenzin', title: 'Shaper of Crags', heritage: 'Tibetan' },
   bellWarden: { name: 'Kavi', title: 'Keeper of the Toll', heritage: 'a yokai temple-bell guardian' },
   falconer: { name: 'Aisling', title: 'Wing of the Glen', heritage: 'Scottish Gaelic' },
-};
-
-/** The twenty coming heroes' names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). The canon: docs/notes/twenty-heroes-audit.md. */
-export const COMING_NAMES: Record<string, HeroName> = {
   banneret: { name: 'Isolde', title: 'Voice of the Rampart', heritage: 'Norman French' },
   astralSphinx: { name: 'Nenet', title: 'Riddle of the Stars', heritage: 'Egyptian myth' },
   mirageDancer: { name: 'Zahara', title: 'Veil of the Dunes', heritage: 'Nubian (Sudanese-Egyptian)' },
@@ -90,6 +86,10 @@ export const COMING_NAMES: Record<string, HeroName> = {
   corsairSurgeon: { name: 'Tariq', title: 'Sawbones of the Reef', heritage: 'Moroccan' },
   harpooner: { name: 'Siku', title: 'Whaler of the Floes', heritage: 'Inuit (Greenlandic)' },
   seaReaver: { name: 'Nakoa', title: 'Breaker of Hulls', heritage: 'Hawaiian (Polynesian)' },
+};
+
+/** The twenty coming heroes' names (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). The canon: docs/notes/twenty-heroes-audit.md. */
+export const COMING_NAMES: Record<string, HeroName> = {
 };
 
 /** A fighter's own name: a hero's personal name, or the unit's name for anything else (foes, summons). */

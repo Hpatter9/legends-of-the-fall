@@ -10,7 +10,10 @@ import { fork } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { FIELD_BANDS } from '../../src/sim/foes';
 import { mixSeed, Rng } from '../../src/sim/rng';
-import { ALL_HEROES, COMING_HEROES } from '../../src/sim/units';
+import { ALL_HEROES as EVERY_HERO, COMING_HEROES } from '../../src/sim/units';
+import { isMythic } from '../../src/sim/mythicRules';
+// (the five Mythics are never in the sweep's teams, so they are not in its average either: docs/notes/heroes-join-2.md)
+const ALL_HEROES = EVERY_HERO.filter((h) => !isMythic(h));
 import { KITS } from '../../src/sim/abilities';
 import { HERO_KITS } from '../../src/sim/heroKits';
 import { twentyHeroKits as comingHeroKits, twentyKits as comingKits, COMING_PASSIVE } from '../../src/sim/kits/coming';

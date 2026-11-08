@@ -252,7 +252,8 @@ test('chests pay better by milestone, by army and by tier', () => {
 test('the 10-star chest always holds a hero, and every hero is as likely as any other in a chest', () => {
   const roll = (seed: number, a: (typeof ARMIES)[number], at: number) => rollChest(chestSeed(seed, a, at), a, at);
   const seen = new Map<string, number>();
-  const runs = 4500;
+  // (a hundred runs a hero, so each hero's band stays the same as the roster grows: 4500 for 45 heroes, 6500 for 65, docs/notes/heroes-join-2.md)
+  const runs = ALL_HEROES.length * 100;
   for (let seed = 1; seed <= runs; seed++) {
     for (const a of [ARMIES[0], ARMIES[8]]) {
       const r = roll(seed, a, 10);

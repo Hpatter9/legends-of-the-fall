@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { ALL_HEROES, UNITS, formOf } from '../src/sim/units';
+import { ALL_HEROES, TWENTY_HEROES, UNITS, formOf } from '../src/sim/units';
 import { HAIRS, HERO_LOOKS, NOT_HUMAN, TONES } from '../src/sim/heroLooks';
 import { HERO_NAMES, heroClassLabel, heroName } from '../src/sim/heroNames';
 import layout from '../src/art/units/sheets.json';
@@ -28,7 +28,8 @@ test('every re-toned hero is a real human hero, with a known tone and hair', () 
   }
   for (const k of NOT_HUMAN) assert.ok(ALL_HEROES.includes(k), k);
   // (roughly half the people among the heroes are drawn in a re-toned look, so the cast a new player meets is varied)
-  const people = ALL_HEROES.filter((k) => !NOT_HUMAN.includes(k));
+  // (the twenty new heroes were painted in their own heritage tones from the start, so the share is judged over the heroes drawn before them: docs/notes/heroes-join-2.md)
+  const people = ALL_HEROES.filter((k) => !NOT_HUMAN.includes(k) && !TWENTY_HEROES.includes(k));
   assert.ok(Object.keys(HERO_LOOKS).length >= people.length / 3, 'a good share of the cast re-toned');
 });
 

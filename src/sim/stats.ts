@@ -114,18 +114,6 @@ const ROWS: Readonly<Record<string, Row>> = {
   geomancer: [12, 8, 15, 13, 17, 10, 'wis', 'wis', 'medium', 'con', 'wis', 'Druid (stone)'],
   bellWarden: [17, 8, 15, 10, 13, 12, 'str', 'wis', 'heavy', 'str', 'con', 'Fighter (bell guardian)'],
   falconer: [10, 17, 13, 8, 15, 12, 'dex', 'wis', 'light', 'str', 'dex', 'Ranger (falconer)'],
-};
-
-const toScores = (r: readonly number[]): Scores => ({ str: r[0], dex: r[1], con: r[2], int: r[3], wis: r[4], cha: r[5] });
-
-/** Every hero's profile, by kind. */
-export const STAT_PROFILES: Readonly<Record<string, StatProfile>> = Object.fromEntries(
-  Object.entries(ROWS).map(([kind, r]) => [kind, { base: toScores(r.slice(0, 6) as number[]), blow: r[6], cast: r[7], armour: r[8], saves: [r[9], r[10]], calling: r[11] }]),
-);
-
-/** The heroes still to join the roster (`COMING_HEROES`, docs/notes/twenty-heroes.md): their rows, in the same array, until they join and move
- *  into the table above. */
-const COMING_ROWS: Readonly<Record<string, Row>> = {
   banneret: [15, 8, 13, 10, 12, 17, 'str', 'cha', 'heavy', 'str', 'cha', 'Fighter (standard-bearer)'],
   astralSphinx: [13, 15, 12, 10, 17, 8, 'dex', 'wis', 'light', 'int', 'wis', 'Sphinx (riddler)'],
   mirageDancer: [8, 17, 12, 10, 13, 15, 'dex', 'dex', 'light', 'dex', 'cha', 'Rogue (dancer)'],
@@ -138,6 +126,18 @@ const COMING_ROWS: Readonly<Record<string, Row>> = {
   // (the Harpooner fights from range on STR: his harpoons are thrown, as a javelin is)
   harpooner: [17, 13, 15, 8, 12, 10, 'str', 'str', 'medium', 'str', 'con', 'Fighter (whaler)'],
   seaReaver: [17, 12, 15, 8, 10, 13, 'str', 'str', 'brute', 'str', 'con', 'Barbarian (reaver)'],
+};
+
+const toScores = (r: readonly number[]): Scores => ({ str: r[0], dex: r[1], con: r[2], int: r[3], wis: r[4], cha: r[5] });
+
+/** Every hero's profile, by kind. */
+export const STAT_PROFILES: Readonly<Record<string, StatProfile>> = Object.fromEntries(
+  Object.entries(ROWS).map(([kind, r]) => [kind, { base: toScores(r.slice(0, 6) as number[]), blow: r[6], cast: r[7], armour: r[8], saves: [r[9], r[10]], calling: r[11] }]),
+);
+
+/** The heroes still to join the roster (`COMING_HEROES`, docs/notes/twenty-heroes.md): their rows, in the same array, until they join and move
+ *  into the table above. */
+const COMING_ROWS: Readonly<Record<string, Row>> = {
 };
 const COMING_PROFILES: Readonly<Record<string, StatProfile>> = Object.fromEntries(
   Object.entries(COMING_ROWS).map(([kind, r]) => [kind, { base: toScores(r.slice(0, 6) as number[]), blow: r[6], cast: r[7], armour: r[8], saves: [r[9], r[10]], calling: r[11] }]),

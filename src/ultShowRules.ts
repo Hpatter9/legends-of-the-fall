@@ -110,6 +110,17 @@ export const SHOWCASES: Record<string, Showcase> = {
   geomancer: { style: 'bless', el: 'earth', line: 'Crags rise from the ground like a closing hand and a wall of stone goes up across the foes\' way; a stone shell closes over each friend in turn' },
   bellWarden: { style: 'burst', el: 'dark', hit: 'stone', line: 'The great bell tolls midnight; the foes near him stop where they stand, one after another, their colour drained' },
   falconer: { style: 'sky', el: 'wind', line: 'She sends the flock up; the falcons mark each crowd and spiral down on it out of the sky' },
+  banneret: { style: 'bless', el: 'fire', line: 'The Oriflamme unfurls over her friends in a sheet of flame-red silk, and a ring of light rises round her shield' },
+  astralSphinx: { style: 'burst', el: 'dark', hit: 'smite', line: 'She asks the last riddle; glyphs of starlight seal the mouth of every foe near her and silence falls over them all' },
+  mirageDancer: { style: 'blinks', el: 'wind', line: 'Seven shimmering dancers spin out of the sand; she cuts through each foe in turn and leaves her mirages standing behind' },
+  plagueDoctor: { style: 'burst', el: 'poison', hit: 'smite', line: 'A black plague cloud towers up round him; each foe within it is struck and sickened as the censer smoke rolls out' },
+  bombardier: { style: 'sky', el: 'fire', line: 'He rocket-jumps clear of the fray and calls down the salvos; shells rain across the field in a storm of fire' },
+  astrologer: { style: 'sky', el: 'light', line: 'The planets align over the crowd, drag the foes together and fall as two supernovas that scatter golden light' },
+  inquisitor: { style: 'shots', el: 'light', draw: 600, line: 'The Tribunal sits in a ring of sun discs; a bolt of judgement is loosed at each of the three strongest foes in turn' },
+  seraph: { style: 'sky', el: 'light', line: 'A host of golden wings descends from the sky on the thickest crowd, throwing the foes back from her friends' },
+  corsairSurgeon: { style: 'bless', el: 'forest', line: 'He raises a ship\'s rum cask and passes the tin cups round; every friend is cleansed and mended in a healing spray' },
+  harpooner: { style: 'hooks', el: 'ice', line: 'He hurls his harpoons out into the water\'s shadow and hauls the three farthest foes in along the taut line, one by one' },
+  seaReaver: { style: 'line', el: 'ice', run: 600, wind: 800, line: 'He rides a towering wave through the line of foes, and the surf bursts round his anchor as they are thrown aside' },
 };
 
 export const hasShowcase = (kind: string): boolean => kind in SHOWCASES;

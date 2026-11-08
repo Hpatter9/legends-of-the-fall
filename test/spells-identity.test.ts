@@ -88,6 +88,8 @@
 // fourteen. No other scenario moved.)
 // (KING-SPELLS batch 6, docs/notes/king-spells-b6.md, re-recorded `daily` and `stand` alone: `DAILY_START` 0.785 to 0.83 and `HALL_EASE` 1.2 to
 // 1.36, constants, retuned for the default ruler's player. The armies' raised strengths are put back by value above, so no other scenario moved.)
+// (HEROES-JOIN 2, docs/notes/heroes-join-2.md, re-recorded every scenario again from the tests' own output: eleven more heroes in the roster move the
+// pool means, and the new heroes join the pool the fights draw on; the Knight's, Wanderer's, Priestess's and Tyrant's ultimates and the Mummy's skill 1 were retuned.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

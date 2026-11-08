@@ -62,6 +62,8 @@ function scene(kind: string, close: boolean): { b: Battle; me: Unit } {
   if (kind === 'astrax') a.shield = { hp: 100, until: b.t + 3000 };
   if (kind === 'orrun') me.mythic = { wounds: 100 };
   if (kind === 'nyxara') me.mythic = { memories: [{ at: b.t - 3500, allies: [{ id: ally.id, hp: ally.maxHp, u: 4, v: 8 }] }] };
+  // (a skill with an emergency trigger, the Astrologer's Retrograde Orbit, needs its caster under the health it asks for: docs/notes/heroes-join-2.md)
+  if (HERO_KITS()[kind].slots.some((x) => x.emergency)) me.hp = Math.round(me.maxHp * 0.3);
   me.kx = { stored: 1000 };
   me.charge = CHARGE_MAX;
   me.charge2 = CHARGE_MAX;

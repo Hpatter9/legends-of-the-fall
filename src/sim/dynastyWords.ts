@@ -11,6 +11,7 @@ export const BASE_AGE: Readonly<Record<string, number>> = {
   mercenary: 32, mummy: 3000, buccaneer: 30, wolfBard: 26, beastmaster: 28, kraken: 9, lancer: 24, reaper: 1000, timeWitch: 35,
   arcBlade: 22, dreadPirate: 41, siegeBot: 11, priestess: 26, dragoon: 23, juggernaut: 36, sage: 50, demonSwordsman: 29, tyrant: 45,
   vampireLord: 400, hemomancer: 300, nightstalker: 150, bloodGargoyle: 600, dhampir: 27, warDrummer: 33, geomancer: 48, bellWarden: 200, falconer: 25,
+  banneret: 27, astralSphinx: 2000, mirageDancer: 24, plagueDoctor: 47, bombardier: 34, astrologer: 31, inquisitor: 36, seraph: 400, corsairSurgeon: 38, harpooner: 33, seaReaver: 35,
   // (the five Mythics are legends older than the Keep; each tells its seasons its own way, `AGELESS` below)
   vael: 1200, astrax: 9000, ilyra: 700, orrun: 5000, nyxara: 3,
 };

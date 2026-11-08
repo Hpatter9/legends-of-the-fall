@@ -198,6 +198,18 @@ export const SPOTS: Record<string, Spot> = {
   warDrummer: S(1068, 230, -1),
   falconer: S(990, 274, 1),
   bellWarden: S(800, 270, 1),
+  // ---- the other eleven of the twenty (docs/notes/heroes-join-2.md): four more in the bar room, three in the hearth hall, four in the games room, standing
+  banneret: S(208, 176, 1),
+  astralSphinx: S(294, 296, -1),
+  mirageDancer: S(88, 224, 1),
+  plagueDoctor: S(274, 172, -1),
+  bombardier: S(518, 296, -1),
+  astrologer: S(464, 224, 1),
+  inquisitor: S(454, 172, 1),
+  seraph: S(1030, 176, -1),
+  corsairSurgeon: S(928, 220, 1),
+  harpooner: S(848, 296, 1),
+  seaReaver: S(978, 224, -1),
 };
 
 /** The look a hero has in the tavern from their rank: rank 2 wears the second form, the top rank the third. */

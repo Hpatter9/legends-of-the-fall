@@ -51,7 +51,7 @@ test('the five beast and commander heroes are registered, with two traits each, 
 });
 
 test('the Beast trait unlocks at two and four of its members, and holds four', () => {
-  assert.deepEqual(membersOf('beast').sort(), ['gorgon', 'minotaur', 'satyr', 'werewolf']);
+  assert.deepEqual(membersOf('beast').sort(), ['astralSphinx', 'gorgon', 'minotaur', 'satyr', 'werewolf']);
   assert.equal(TRAITS.beast.tiers[0].need, 2);
   assert.equal(traitEffects(['werewolf', 'satyr']).atk, TRAITS.beast.tiers[0].effects.atk);
   assert.equal(traitEffects(['werewolf', 'satyr', 'gorgon', 'minotaur']).atk, TRAITS.beast.tiers[1].effects.atk);
