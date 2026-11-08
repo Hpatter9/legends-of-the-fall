@@ -24,19 +24,8 @@ Phase 1 is split.
 - **Morale and routing are off** (`MORALE.on = false`). No post routs, not even at the lord's fall; the rules stay in `holdMind.ts`. The
   lord's fall still takes the hold after five seconds.
 
-**1b (next)** is the siege tools and the reactive enemy:
-
-- the ram for the gates;
-- ladders onto the stone wall;
-- fire arrows (burning huts: smoke and panic);
-- archers suppressing the wall-top shooters;
-- defenders reinforcing the threatened gate, so a feint can open another;
-- the warchief and captains sallying out;
-- wolf riders flanking;
-- reinforcements down the Warpath until it is held.
-
-Already in from the design, partly reactive: the great horn opens the sally ports and wakes the barracks, one sally at a time goes at a
-platoon alone, the bank's archers shift to the side struck, and reinforcements come while the drums beat.
+**1b (this push)** is the siege tools, the reactive enemy and the hold drawn in the owner's Orc art: see
+[Phase 1b](#phase-1b-the-siege-works-the-reactive-hold-and-the-orc-art) below.
 
 Phase 1 of `docs/design/assault-mode.md` (branch `claude/assault-design`, section 10). It builds on phase 0's engine
 (`docs/notes/assault-0.md`) and its render fix. With ten stars on the Orc Warband, the army card offers **Assault Bloodtusk Hold**. The
@@ -51,6 +40,143 @@ grid, provinces and rival realms. Two habits were borrowed:
 - siege crews striking walls harder (the design's Shieldguard and Gunners rider).
 
 Its counters table was not taken: the design has none.
+
+## Phase 1b: the siege works, the reactive hold and the Orc art
+
+### The siege works (`src/sim/assault/siege.ts`)
+
+Bought on the muster (each platoon's orders card, **Siege works**) and paid at the march as far as the crowns go, the ram first. What is not
+used is paid back after the assault (a ladder never put up, the ram if it still stands; the result page says so). The choice is kept in the
+save (`AssaultMeta.siege`); `buySiege`, `siegeCost` and `SIEGE_PRICES` are in `economy.ts`.
+
+- **Ladders (100 a platoon).** The **Ladder** order, then a tap on the stone wall: the platoon walks to the wall's foot (the outer bailey
+  below the nearest wall-walk tile, `scaleAim`), and four seconds after it stands there the ladder goes up. The foot and the wall-walk above
+  it carry the same `Tile.ladder` number, and `canStep` lets a walker of either side step between them whatever the height (a climb each
+  step). The sector graph is rebuilt for the two tiles. Defenders beside the ladder's top push it down: 600 hp, 60 a second for each foe
+  there. From the wall-walk the stairs lead down into the inner bailey, so a ladder goes round the Iron Gate.
+- **The ram (400).** A unit of ours (`siegeRam`, a summon, so nothing counts it as a hero), with its platoon's group. It follows its platoon
+  at the Shieldguard's walk (the field's own walk, so it finds the bridge). With its platoon ordered to Assault a gate or a segment, it rolls
+  up to it and strikes it for 600 (at the garrison's toughness, as the gates' hp are) every two seconds. It never fights the garrison; the
+  garrison strikes it like one of ours, and shots strike it twice as hard (the archers burn it). 4,000 hp, defence 14.
+- **Fire arrows.** A platoon with shooters (its hero's shot or its soldiers') ordered to **Fire**, then a tap on a hut, walks until the hut
+  is within six tiles and looses at it, before any foe. Six arrows burn it: for thirty seconds every foe within three tiles chokes (3% of its
+  health a second, which also wakes a post asleep there) and panics (its blows at three quarters). Then it has burnt out and stays a heap.
+  The huts are the blueprint's `solid` stamps with `burns`: the three longhouses (the barracks sleep beside one), four new hide huts in the
+  outer bailey, the lumber camp's log piles and three reserve tents at the Warpath's camp.
+- **Suppression.** A platoon with shooters ordered to **Suppress**, then a tap: while any of its shooters stands within eight tiles of the
+  spot, the foes within two of it strike at half, and its shooters take those foes first.
+
+The bot uses them too: a platoon with a ladder scales the wall where it stands rather than assault the Iron Gate, and a cover platoon with
+shooters suppresses the nearest awake archers within ten tiles of the main push.
+
+On the battle's command bar a second row appears over the orders for a chosen platoon that can give them: **Ladder** (a kit carried),
+**Fire** and **Suppress** (shooters). Each readies the next tap, as Flank does.
+
+### The reactive hold (`src/sim/assault/react.ts`)
+
+Run on the hold's second, in post order, no random numbers; a post's errand (`PostState.errand`) sets its mark before its own hunting.
+
+- **Feints.** The wall struck last (within eight seconds) draws the nearest awake gate crew or bailey post whose own gate has not been struck
+  for fifteen seconds and that has none of ours within eight of its home: it goes three tiles inside the threatened wall (two posts at most
+  a threat; forty seconds, then home). The moment its own gate is struck it turns for home, and the walk back is the window.
+- **Captains sally.** A captain's post (the South Gate's, the Iron Gate's) charges a platoon of ours within twelve tiles that has lost half
+  its soldiers or whose hero is down or under half health, for twenty seconds.
+- **The lord sallies once**, when ours first stand in the inner bailey: he and the throne's guard come down at the nearest platoon for
+  twenty-five seconds, then climb back.
+- **Wolf riders.** On the great horn the wolves leave their pens and ride for the rearmost platoon (the cover first) wherever it is, for a
+  minute. (The garrison's wolves are war-wolves; there is no rider sprite.)
+- **The Warpath.** The bands now gather at the reserve camp (`Blueprint.warpath`, 13, 13), each a post of its own, and march down to the
+  North Gate's causeway, where they are let in while it stands (or walk through it once broken) and join the post that has lost the most.
+  A band sets out every ninety seconds while a drum beats and every two and a half minutes once all three are silent, four at most (the
+  design's twenty), until the Warpath is **held**: ours at the camp for ten seconds with no foe within six. The drums no longer stop the
+  bands, holding the Warpath does. The **Flank the Warpath** part now goes to hold the camp first, then for the North Gate.
+
+The old rule (bands only while a drum beats) and its test are replaced: `assault-siege` lost its band test, and `assault-react` has the new
+one.
+
+### The Orc art (`tools/assault/cut-sheets.py`, `src/render/fieldLooks.ts`, `src/render/fieldView.ts`)
+
+`art/assault-orc` (the owner's 13 sheets, PR #442) is merged in. All 13 were there by the time 1b started, so nothing falls back.
+
+- **The cutter** (`npm` has no script: `python3 tools/assault/cut-sheets.py orc`, `--report` to check only) cuts each sheet by its template's
+  grid, clears the sheets' soft alpha (opaque from 128), trims and halves the standing pieces by a 2 x 2 box average keeping each foot point,
+  and packs them with about sixty Chronos kit pieces (`KITS` points at `hpatter9/little-town/src/renderer/art/iso/kits/`) into
+  `src/art/assault/orc/sprites.webp` (2048 x 918, 153 pieces), listed with their rects, feet and footprints in `src/render/assaultOrcAtlas.ts`.
+  The ground textures are made seamless (offset by half, a 16 px band blended over the seam) and kept at 256 px (`ground.webp`); the
+  transitions go to 64 px, the decals to 128 px, the faces to 64 x 120 columns. About 900 KB in all, loaded by URL and listed in the service
+  worker (`build.mjs`, `ASSAULT_ART_FILES`).
+- **The looks** (`fieldLooks.ts`, pure and tested): each tile's material from its zone, ground, height and a smooth noise (fourteen in use:
+  grass, heath on the crags and the Warpath, trampled ground by the posts, mud on the bank, wet mud in the ditch and the bailey's patches,
+  camp dirt, ash and scorch in the village, cobbles on the roads, flagstones inside, the wall-walk's stone, shingle by the water, planks on
+  the bridge, the shallows); the fringes (the higher-ranked material's edge laid over its neighbour at the same height, turned to face it, a
+  corner for a diagonal, the foam line on the water, grass creeping back over some mud); the face of each column by zone and height; the
+  decals and the low clutter by zone; and every standing piece.
+- **The bake** samples each tile's quarter of its 256 px texture (no 64 px repeat shows), lays the fringes, draws each face as a lip, a body
+  of four steps and a foot with a dark band at the foot of the tall ones, then the decals (flat tiles only, away from the chunk's edge), the
+  low clutter, the dried tall grass and the low pieces (the pens).
+- **The standing pieces**: the palisade's runs (inner faces on the ring's back sides), the gates, the sally ports, the drums, the
+  longhouses, huts and tents (the outer bailey's solid tiles are the camp's tents in rows), the keep's hall behind the throne (on new solid
+  tiles at the mound's back), the throne and great banner, the corner towers', gate towers' and watchtowers' tops (sorted with their back
+  tile, so their crew shows on them), the wall's crenels and braziers, the bridge fort's barricade, the barrels, trees and boulders on the
+  solid tiles, a banner at each post outside the walls, and the plan's new landmarks (Gallows Hill's poles, the cairns' totems, the
+  Warpath's pennant). Nothing taller than half a tile stands on open ground except a pole or one of the camp's set pieces phase 1 already
+  drew there (`assault-looks` checks it).
+- **States**: a structure's picture follows its hp each frame (whole, battered under 60%, the palisade broken under 25%, the breach or the
+  broken gate), a drum beats with a small squash until it is silenced, a burning hut shows fire and smoke from the fx art and becomes a burnt
+  heap, the ladders lean on the wall, and the ram rolls.
+- **Far** bakes the materials and the big landmarks into its overview.
+
+**The sheets, for the art lead (footprints and anchors):** most cells stand as the templates say. The cutter stood eleven on their own
+pictures instead (`--report` lists them):
+
+- ORC-03: the Iron Gate's three pictures sit about 27 px lower than a 2 x 2 footprint (they are painted larger than it); the postern and
+  the corner tower top are 50 to 60 px high and 7 to 19 px left of their foot points.
+- ORC-07: the throne and the great banner are painted about 75 px left of their cells' foot point (256, 440), at about x 180.
+- ORC-08: the downward stair sits 48 px above its foot point.
+- ORC-11: the ram and the trebuchet are 46 px high and 12 and 29 px left.
+- The one-tile pieces of ORC-01, 08 and 10 stand on their foot point itself, not the footprint's bottom tip (27 px above it). For a thin wall
+  that is right, and it is kept.
+- ORC-09: the two drums are on a large 2 x 2 platform, unlike the kit's war drum, so the struck picture serves as the beating drum (with a
+  squash) rather than alternating with the kit's.
+- ORC-13: cell 9 (boot tracks) is painted as paw prints, like cell 10.
+- Not used yet: the postern, the trebuchet, the catapult, the bolt thrower, the bridge's modular deck and the river debris (the blueprint has
+  no place for them), and the stairs as sprites (the terrain's steps show them).
+
+### 1b's numbers
+
+Balance (`npm run balance -- --assault orcs --levels 55 --seeds 16`: the design party at level 55, a maxed castle, full platoons of
+recruits; Siege is the Tactical bot with the ram and two ladders):
+
+| Style | Wins | Host lost | Time (won) |
+| --- | --- | --- | --- |
+| Auto | 50% | 86% | 4:32 |
+| Tactical | 88% | 46% | 3:07 |
+| Siege | 100% | 39% | 3:03 |
+
+Against 1a (Auto 50% / 85% lost, Tactical 81% / 57%), the reactive hold has not made Auto harder in wins, and the siege works pay: the ram
+and ladders take Tactical from 88% to every one of sixteen, losing a third fewer of the host. The losses stay brutal on Auto, as the owner
+asked; nothing was softened.
+
+Performance: the headless bench (`npm run assault-bench`, the Bloodtusk bench fight, Auto) runs at a mean of 0.42 ms a tick, p95 1.05 ms,
+worst 8.2 ms (the phase's budget is a mean of 0.75 here: met). In Chromium (headless, software drawing, x1) the art costs some frame rate:
+about 30 to 50 fps at Near and 48 to 58 at Mid, against 54 to 60 before; the chunk bake is the cost and stays at two a frame.
+
+### 1b's tests
+
+- `assault-works`: a ladder up after four seconds joins the foot to the wall-walk and is pushed down; the ram's blows every two seconds at
+  600 and the archers burning it; six fire arrows, the smoke and the burning out; suppression and its end; the refund; the same seed, the
+  same assault with the works.
+- `assault-react`: the bands from the Warpath (ninety seconds, two and a half minutes with the drums silent, none once held); a feint and the
+  post going home; a captain's sally and the lord's; the wolves riding for the cover.
+- `assault-looks`: every tile's material, the fringes, faces, decals and clutter naming the sheets' cells, the standing pieces and the rule
+  that looks never hide a fighter, and the structures' states.
+- `assault-economy`: the siege works' cost, buying and saving. `assault-plan`: the flank part holds the Warpath first.
+
+### 1b's screenshots
+
+`docs/samples/assault-1b/`: the field at Near, Mid and Far (the Landing, the South Gate, the stone wall, the throne, the village, the Warpath,
+a ladder up, the structures whole, struck and broken), at 393 x 852 and the main views at 360 x 780 and 412 x 915; the muster, the orders
+card's siege works and the battle's works row at the three sizes. The bench takes `&siege=1`, `&skip=n`, `&at=u,v` and `&zoom=z` for them.
 
 ## What was built
 

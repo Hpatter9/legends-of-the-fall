@@ -44,7 +44,7 @@ const ROLE_NAME: Readonly<Record<PlatoonRole, string>> = { main: 'Main push', co
 const ROLE_TEXT: Readonly<Record<PlatoonRole, string>> = {
   main: 'Straight for the nearest gate, then the throne',
   cover: 'Keeps a few tiles behind the main push: shooters on the high ground',
-  flank: 'Goes round for the North Gate, where the Warpath comes in',
+  flank: 'Holds the Warpath’s camp so no more bands come down it, then breaks the North Gate',
 };
 const pips = (marks: number) => '◆'.repeat(rankOf(marks).pips);
 /** A platoon's veterans in words (" · 1 Elite, 2 Blooded"; nothing for recruits alone). */
