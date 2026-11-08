@@ -31,6 +31,7 @@ import { noteFallen } from './sim/assault/economy';
 import { noteLive } from './sim/assault/snapshot';
 import { clearBattle, saveBattle } from './assaultSave';
 import { hasShooters, scaleAim } from './sim/assault/siege';
+import { canVolley, isWallWalk } from './sim/assault/works';
 import { FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
 import { anchorOf } from './sim/assault/holdMind';
 import { BUCKET } from './sim/assault/field';
@@ -98,7 +99,7 @@ const CSS = `
 .asSpells{display:flex;gap:4px;align-items:center;height:40px}
 .asSpells .mana{flex:0 0 64px;height:10px;background:#000a;border:1px solid #c9a24a88;border-radius:5px;overflow:hidden}.asSpells .mana i{display:block;height:100%;background:#4a8cff}
 .asSpells button{flex:1;display:flex;align-items:center;justify-content:center;gap:3px;font-size:12px;padding:0 3px;overflow:hidden;white-space:nowrap}
-.asSpells button.armed{background:#3a5a8a;border-color:#9ad0ff}.asSpells button:disabled{opacity:.45}
+.asSpells button.armed{background:#3a5a8a;border-color:#9ad0ff}.asSpells button.volley{flex:0 0 auto;padding:0 7px;background:#3a2416e6}.asSpells button.volley.armed{background:#7a3a1a;border-color:#ffb04a}.asSpells button:disabled{opacity:.45}
 .asSpells .spIcon{transform:scale(.36);margin:-20px -20px;flex:none}
 .asSpells button span{overflow:hidden;text-overflow:ellipsis}
 @media (max-width:400px){.asSpells button span{display:none}}
@@ -201,13 +202,18 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   const fireBtn = el('button', '', 'Fire');
   fireBtn.setAttribute('aria-label', 'Fire arrows at a hut');
   const suppressBtn = el('button', '', 'Suppress');
-  works.append(ladderBtn, fireBtn, suppressBtn);
+  const kegBtn = el('button', '', 'Keg');
+  kegBtn.setAttribute('aria-label', 'Plant a powder keg at the wall');
+  works.append(ladderBtn, fireBtn, suppressBtn, kegBtn);
   const bar = el('div', 'asPlatoons');
   const spells = el('div', 'asSpells');
   const mana = el('span', 'mana');
   const manaFill = el('i');
   mana.append(manaFill);
-  spells.append(mana);
+  // (the trebuchet's volley: the king's call, like a spell, every forty-five seconds)
+  const volleyBtn = el('button', 'volley', 'Volley');
+  volleyBtn.setAttribute('aria-label', 'Call the trebuchet\'s volley');
+  spells.append(mana, volleyBtn);
   bottom.append(works, orders, bar, spells);
   host.append(top, mini, bottom);
   const toast = el('div', 'asToast');
@@ -297,11 +303,15 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     const bows = list.some((k) => hasShooters(b, b.field!, h.platoons[k]));
     ladderBtn.hidden = !kit;
     fireBtn.hidden = suppressBtn.hidden = !bows;
-    works.hidden = orders.hidden || (!kit && !bows);
+    // (a keg: one platoon chosen, and no keg already carried or set by another)
+    const keg = h.siege.keg;
+    kegBtn.hidden = list.length !== 1 || (!!keg && keg.platoon !== list[0]) || !(b.barrels?.length || keg);
+    works.hidden = orders.hidden || (!kit && !bows && kegBtn.hidden);
     flankBtn.classList.toggle('on', readied === 'flank');
     ladderBtn.classList.toggle('on', readied === 'scale');
     fireBtn.classList.toggle('on', readied === 'fire');
     suppressBtn.classList.toggle('on', readied === 'suppress');
+    kegBtn.classList.toggle('on', readied === 'plant' || h.platoons[list[0]]?.order.kind === 'plant');
   };
   holdBtn.addEventListener('click', () => {
     for (const k of chosenList()) {
@@ -348,8 +358,8 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     say(FORMATION_NAMES[next]);
   });
   // (Flank, Ladder, Fire, Suppress: the next tap on the field gives the order there)
-  let readied: 'flank' | 'scale' | 'fire' | 'suppress' | null = null;
-  const READY_SAY = { flank: 'Flank: tap a foe', scale: 'Ladder: tap the stone wall', fire: 'Fire arrows: tap a hut', suppress: 'Suppress: tap the archers' } as const;
+  let readied: 'flank' | 'scale' | 'fire' | 'suppress' | 'plant' | null = null;
+  const READY_SAY = { flank: 'Flank: tap a foe', scale: 'Ladder: tap the stone wall', fire: 'Fire arrows: tap a hut', suppress: 'Suppress: tap the archers', plant: 'Keg: tap the stone wall or a gate' } as const;
   const ready = (what: NonNullable<typeof readied>) => {
     readied = readied === what ? null : what;
     syncOrders();
@@ -359,6 +369,14 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   ladderBtn.addEventListener('click', () => ready('scale'));
   fireBtn.addEventListener('click', () => ready('fire'));
   suppressBtn.addEventListener('click', () => ready('suppress'));
+  kegBtn.addEventListener('click', () => ready('plant'));
+  let volleyArmed = false;
+  volleyBtn.addEventListener('click', () => {
+    if (h.siege.volley || b.t < h.siege.trebReady) return;
+    volleyArmed = !volleyArmed;
+    volleyBtn.classList.toggle('armed', volleyArmed);
+    if (volleyArmed) say('Volley: tap where the stone falls');
+  });
   followBtn.addEventListener('click', () => {
     follow = !follow;
     syncOrders();
@@ -504,6 +522,13 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     const t = tileAtScreen(px, py);
     if (!t) return;
     if (armed) return castNear(armed, t.u, t.v);
+    if (volleyArmed) {
+      volleyArmed = false;
+      volleyBtn.classList.remove('armed');
+      if (!canVolley(b, t.u, t.v)) return say('Volley: out of the trebuchet\'s reach');
+      sim.call('callVolley', t.u, t.v);
+      return say('Loose!');
+    }
     const f = b.field!;
     const near = (side: 'hero' | 'foe') => {
       let best: { id: number; d: number } | null = null;
@@ -538,6 +563,17 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
         if (!scaleAim(b, f, t)) return say('Ladder: no stone wall there');
         for (const k of list) if (h.platoons[k].ladder) sim.call('orderPlatoon', k, { kind: 'scale', at: { u: t.u, v: t.v } });
         return say('Ladder: to the wall!');
+      }
+      if (what === 'plant') {
+        // (the stone wall's walk within a tile of the tap, or a gate standing)
+        let at: { u: number; v: number } | null = null;
+        for (let dv = -1; dv <= 1 && !at; dv++) for (let du = -1; du <= 1 && !at; du++) if (isWallWalk(b, (t.v + dv) * f.w + t.u + du)) at = { u: t.u + du, v: t.v + dv };
+        const fi = h.fortAt.get(t.v * f.w + t.u);
+        const gate = fi !== undefined ? h.forts[fi] : undefined;
+        if (!at && gate && !gate.broken && !gate.open && gate.spec.kind !== 'drum') at = { u: t.u, v: t.v };
+        if (!at) return say('Keg: tap the stone wall or a gate');
+        sim.call('orderPlatoon', list[0], { kind: 'plant', at });
+        return say(h.siege.keg ? 'Keg: to the wall!' : 'Keg: fetch a powder barrel');
       }
       const bows = list.filter((k) => hasShooters(b, f, h.platoons[k]));
       if (what === 'fire') {
@@ -688,6 +724,20 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
         }
         for (const e of tk.hold) {
           if (e.kind === 'breach' || e.kind === 'open') view.breach(e.tiles);
+          else if (e.kind === 'volleyTold') say('The trebuchet looses!');
+          else if (e.kind === 'volley') {
+            // (the middle of the nine, or of those within the field at its edge)
+            const w = b.board.w;
+            const n = Math.max(1, e.tiles.length);
+            view.blast(Math.round(e.tiles.reduce((x, i) => x + (i % w), 0) / n), Math.round(e.tiles.reduce((x, i) => x + Math.floor(i / w), 0) / n), true);
+          } else if (e.kind === 'keg') {
+            if (e.state === 'carried') {
+              view.retile([e.tile]);
+              say(`${heroName(h.platoons[e.platoon].hero)}'s platoon lifts a powder keg`);
+            } else if (e.state === 'lit') say('The keg is set and lit. Run!');
+            else view.blast(e.tile % b.board.w, Math.floor(e.tile / b.board.w), true);
+            syncOrders();
+          } else if (e.kind === 'campBurnt') say('The reserve camp burns: no more bands will come');
           else if (e.kind === 'fell') {
             noteFallen(m, h.platoons[e.platoon].hero, e.index);
             hooks.save();
@@ -704,7 +754,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
           else if (e.kind === 'wolves') say(`The wolves ride round for ${heroName(h.platoons[e.platoon].hero)}`);
           else if (e.kind === 'lordFell') say('The lord of the hold falls!');
           else if (e.kind === 'rise') say(`${heroName(h.platoons[e.platoon].hero)} rises at the rally flag`);
-          if (e.kind === 'breach') say('The way is open!');
+          if (e.kind === 'breach') say(e.fort === 'wall' ? 'The stone wall is breached!' : 'The way is open!');
         }
         acc -= TICK_MS;
         n++;
@@ -798,6 +848,9 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     });
     manaFill.style.width = `${Math.round((100 * b.spells.mana) / MANA_MAX)}%`;
     spellBtns.forEach((x, i) => (x.disabled = !canAfford(b, loadout[i])));
+    const reload = Math.ceil((h.siege.trebReady - b.t) / 1000);
+    volleyBtn.textContent = h.siege.volley ? 'Volley…' : reload > 0 ? `Volley ${reload}s` : 'Volley';
+    volleyBtn.disabled = !!h.siege.volley || reload > 0;
     syncOrders();
     // the minimap's dots
     const g = miniDots.getContext('2d')!;

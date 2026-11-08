@@ -12,7 +12,7 @@
 // - THE WARPATH. Reinforcements gather at the Warpath's reserve camp and march down it to the North Gate (let in through it while it
 //   stands) to join the post that has lost the most: a band every ninety seconds while a war drum beats, every two and a half minutes once
 //   all are silenced, four bands at most (the design's twenty), until the Warpath is HELD (ours have stood at its camp ten seconds with no foe within six). A band
-//   already marching still comes.
+//   already marching still comes. Burning every tent of its reserve camp (fire arrows, phase 2) stops them too.
 //
 // Every rule is the hold's own second, in post order, with no random numbers. Pure rules: no Pixi, no DOM.
 
@@ -224,6 +224,14 @@ function warpath(b: Battle, f: FieldState, h: HoldState): void {
       }
     } else wp.since = undefined;
   }
+  // (its camp burnt: every reserve tent fire-arrowed to the ground, phase 2; no more bands set out)
+  if (!wp.burnt) {
+    const tents = h.siege.huts.filter((x) => x.name === 'Reserve tent');
+    if (tents.length && tents.every((x) => x.burnt || x.burning !== undefined)) {
+      wp.burnt = true;
+      h.events.push({ kind: 'campBurnt' });
+    }
+  }
   // (the bands on the march: let in through the North Gate at its causeway while it stands; then they join the post that has lost the most)
   const gate = h.forts.find((x) => x.spec.kind === 'northGate');
   const shut = !!gate && !gate.broken && !gate.open;
@@ -255,7 +263,7 @@ function warpath(b: Battle, f: FieldState, h: HoldState): void {
     p.mark = { ...f.groups[p.group].home };
   }
   // (a band sets out, while the Warpath is not held)
-  if (wp.held || h.bands >= h.bp.reinforce.bands) return;
+  if (wp.held || wp.burnt || h.bands >= h.bp.reinforce.bands) return;
   const every = drumsBeating(h).length ? BAND_MS : BAND_SLOW_MS;
   if (b.t < every * (h.bands + 1)) return;
   const post = band(b, f, h);

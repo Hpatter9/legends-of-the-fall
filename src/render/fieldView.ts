@@ -38,6 +38,8 @@ import { DECALS, EDGES, FACES, SPRITES } from './assaultOrcAtlas';
 import { VFX, loadVfxArt } from './vfxArt';
 import { holdMapOf, blueprintOf } from '../sim/assault/assault';
 import { FieldLife } from './fieldLife';
+import { WALL_TOP } from '../sim/assault/fieldMap';
+import { VOLLEY_TELL_MS } from '../sim/assault/works';
 
 export { MID_AT, NEAR_AT, type Detail } from './fieldDetail';
 import gateUrl from '../art/camp/gate.png';
@@ -304,6 +306,12 @@ export class FieldView {
   /** The small life: embers off the fires, rings on the river (`fieldLife.ts`, a stand-in for the shared ambient module). */
   private life: FieldLife | null = null;
   private ladders: Sprite[] = [];
+  /** The heavy works (phase 2): the volley's ground marks, its stone in flight, the keg carried or set, the blasts. */
+  private marks = new Graphics();
+  private stone: Sprite | null = null;
+  private keg: Sprite | null = null;
+  private fuse: Sprite | null = null;
+  private blasts: { u: number; v: number; h: number; start: number; big: boolean; sp: Sprite[] }[] = [];
 
   constructor(private b: Battle, private renderer: { generateTexture: (o: Container | { target: Container }) => Texture }) {
     this.unitLayer.sortableChildren = true;
@@ -347,6 +355,7 @@ export class FieldView {
       this.unitLayer.addChild(this.life.layer);
     }
     this.unitLayer.addChild(this.works);
+    this.works.addChild(this.marks);
     this.works.zIndex = 0;
     this.works.sortableChildren = false;
     this.bakeOverview();
@@ -692,6 +701,10 @@ export class FieldView {
       return look;
     }
     if (p.hut !== undefined && h?.siege.huts[p.hut]?.burnt) return 'burntHeap';
+    // (the stone wall broken: its crenels fallen to rubble, its braziers gone; a barrel a sapper lifted, gone)
+    const t = this.b.board.tiles[p.front];
+    if ((p.name === 'crenel' || p.name === 'wallBrazier') && t.h < WALL_TOP) return p.name === 'crenel' ? 'rubblePile' : '';
+    if (p.name === 'barrels' && !t.barrel) return '';
     return p.name;
   }
 
@@ -845,11 +858,25 @@ export class FieldView {
   /** A gate broken: its picture comes down, and its chunk will be baked again. */
   breach(tiles: readonly number[]): void {
     for (const i of tiles) this.brokenGates.add(i);
+    this.retile(tiles);
+  }
+
+  /** Tiles changed (a breach, a barrel lifted): their chunks will be baked again. */
+  retile(tiles: readonly number[]): void {
     const w = this.b.board.w;
     for (const i of tiles) {
       const key = Math.floor(Math.floor(i / w) / CHUNK) * 100 + Math.floor((i % w) / CHUNK);
       this.dropChunk(key);
     }
+  }
+
+  /** A blast on a tile (a volley's stone, a keg going off): fire and dust thrown up, then smoke. */
+  blast(u: number, v: number, big: boolean): void {
+    u = Math.round(u);
+    v = Math.round(v);
+    const h = this.b.board.tiles[v * this.b.board.w + u]?.h ?? 2;
+    if (this.blasts.length > 12) this.blasts.shift()!.sp.forEach((x) => x.destroy());
+    this.blasts.push({ u, v, h, start: this.simT, big, sp: [] });
   }
 
   private dropChunk(key: number): void {
@@ -1179,6 +1206,120 @@ export class FieldView {
     }
     for (let i = nf; i < this.fires.length; i++) this.fires[i].visible = false;
     for (let i = nl; i < this.ladders.length; i++) this.ladders[i].visible = false;
+    this.drawHeavy(view);
+  }
+
+  /** The heavy works (phase 2): the volley told (its nine tiles marked, pulsing, and the stone in the air from the trebuchet), the keg
+   *  carried over its sapper's head or set and fizzing, and the blasts. */
+  private drawHeavy(view: WorldRect): void {
+    const h = this.f.hold;
+    const b = this.b.board;
+    const g = this.marks;
+    g.clear();
+    const steady = reducedMotion();
+    const vol = h?.siege.volley;
+    if (vol) {
+      const left = Math.max(0, vol.lands - this.simT);
+      const p = 1 - left / VOLLEY_TELL_MS;
+      const pulse = steady ? 0.7 : 0.55 + 0.45 * Math.abs(Math.sin(this.simT / (120 - 70 * p)));
+      for (let dv = -1; dv <= 1; dv++)
+        for (let du = -1; du <= 1; du++) {
+          const u = vol.u + du;
+          const v = vol.v + dv;
+          if (u < 0 || v < 0 || u >= b.w || v >= b.d) continue;
+          const [x, y] = rawAt(u, v, b.tiles[v * b.w + u].h);
+          const k = du || dv ? 0.92 : 0.8;
+          g.poly([x, y - (TH / 2) * k, x + (TW / 2) * k, y, x, y + (TH / 2) * k, x - (TW / 2) * k, y]);
+          g.fill({ color: 0xc8361e, alpha: 0.3 + 0.25 * p * pulse }).stroke({ width: 3, color: 0xffc060, alpha: pulse });
+        }
+      // (the stone: from the trebuchet at the park, high over the field, down on the middle tile)
+      const park = h!.bp.park;
+      const [x0, y0] = rawAt(park.u, park.v, b.tiles[park.v * b.w + park.u].h);
+      const [x1, y1] = rawAt(vol.u, vol.v, b.tiles[vol.v * b.w + vol.u].h);
+      const tex = holdTex('boulders');
+      if (tex) {
+        const st = (this.stone ??= this.works.addChild(new Sprite(tex)));
+        st.anchor.set(0.5, 0.5);
+        st.scale.set(0.35);
+        const arc = Math.min(900, Math.hypot(x1 - x0, y1 - y0) * 0.6);
+        st.position.set(x0 + (x1 - x0) * p, y0 - 60 + (y1 - y0 + 60) * p - arc * 4 * p * (1 - p));
+        st.rotation = steady ? 0 : this.simT / 160;
+        st.visible = true;
+        st.zIndex = 99999;
+        this.unitLayer.addChild(st);
+      }
+    } else if (this.stone) this.stone.visible = false;
+    // (the keg: over the carrier's head, or set at the foot of the wall with its fuse burning)
+    const k = h?.siege.keg;
+    const ktex = holdTex('barrels');
+    let showKeg = false;
+    let showFuse = false;
+    if (k && ktex) {
+      const ks = (this.keg ??= new Sprite(ktex));
+      let at: [number, number, number] | null = null;
+      if (k.at !== undefined) {
+        const u = k.at % b.w;
+        const v = Math.floor(k.at / b.w);
+        const [x, y] = rawAt(u, v, b.tiles[k.at].h);
+        at = [x, y, (u + v) * 10 + 7];
+      } else {
+        const pl = h!.platoons[k.platoon];
+        const lead = [this.f.byId[pl.heroId], ...pl.soldiers.map((x) => this.f.byId[x.id])].find((x) => x?.alive);
+        if (lead) {
+          const [x, y, depth] = this.placeOf(lead, this.simT);
+          at = [x, y - 40, depth + 1];
+        }
+      }
+      if (at && at[0] >= view.x0 && at[0] <= view.x1 && at[1] >= view.y0 && at[1] <= view.y1) {
+        this.footOn(ks, 'barrels', { name: 'barrels', u: 0, v: 0, front: 0, scale: k.at !== undefined ? 0.5 : 0.38 });
+        ks.position.set(at[0], at[1]);
+        ks.zIndex = at[2];
+        this.unitLayer.addChild(ks);
+        showKeg = true;
+        if (k.lit !== undefined && VFX.sparkleFire?.length) {
+          const fs = (this.fuse ??= new Sprite());
+          fs.anchor.set(0.5, 1);
+          fs.texture = VFX.sparkleFire[Math.floor(this.simT / 70) % VFX.sparkleFire.length];
+          // (the fuse burns faster as it runs out)
+          const left = Math.max(0, k.lit - this.simT);
+          fs.scale.set(1.1 + (steady ? 0 : 0.4 * Math.abs(Math.sin(this.simT / (60 + left / 40)))));
+          fs.position.set(at[0] + 6, at[1] - 24);
+          fs.zIndex = at[2] + 1;
+          this.unitLayer.addChild(fs);
+          showFuse = true;
+        }
+      }
+    }
+    if (this.keg) this.keg.visible = showKeg;
+    if (this.fuse) this.fuse.visible = showFuse;
+    // (the blasts: fire thrown up, dust round it, smoke rising after)
+    for (let i = this.blasts.length - 1; i >= 0; i--) {
+      const e = this.blasts[i];
+      const age = this.simT - e.start;
+      const life = e.big ? 1600 : 1100;
+      if (age > life || age < 0) {
+        e.sp.forEach((x) => x.destroy());
+        this.blasts.splice(i, 1);
+        continue;
+      }
+      const [x, y] = rawAt(e.u, e.v, e.h);
+      const sets = [VFX.puffFire, VFX.puffSand, VFX.smokeDark] as const;
+      sets.forEach((set, n) => {
+        if (!set?.length) return;
+        const sp = (e.sp[n] ??= new Sprite());
+        const p = Math.min(1, age / (life * (n === 2 ? 1 : 0.55)));
+        sp.visible = p < 1;
+        if (!sp.visible) return;
+        sp.anchor.set(0.5, 0.8);
+        sp.texture = set[Math.min(set.length - 1, Math.floor(p * set.length))];
+        const k = (e.big ? 1.4 : 1) * (n === 0 ? 3.2 : n === 1 ? 4.4 : 3) * (0.7 + 0.5 * p);
+        sp.scale.set(k);
+        sp.alpha = n === 2 ? 0.75 * (1 - p) : 1 - p * 0.6;
+        sp.position.set(x, y - (n === 2 ? 30 + 50 * p : 0));
+        sp.zIndex = (e.u + e.v) * 10 + 9 + n;
+        this.unitLayer.addChild(sp);
+      });
+    }
   }
 
   private simT = 0;

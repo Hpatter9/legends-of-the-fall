@@ -62,7 +62,9 @@ export type PlatoonOrder =
   /** Loose fire arrows at a hut of the hold until it burns (phase 1b). */
   | { kind: 'fire'; hut: string }
   /** Keep the shooters on the wall-top foes round this tile: their blows land half as hard while the volleys fall (phase 1b). */
-  | { kind: 'suppress'; at: At };
+  | { kind: 'suppress'; at: At }
+  /** Fetch a powder keg and set it at the foot of the wall (or the structure) by this tile (phase 2's sappers). */
+  | { kind: 'plant'; at: At };
 
 /** An order as the log keeps it: the platoon (its index), the battle time it was asked for, and what. */
 export type AssaultLogEntry =
@@ -142,11 +144,19 @@ export interface SiegeState {
   arrows: { at: number; hut: number }[];
   /** The suppressed spots this tick: each platoon's suppress order with a shooter near enough to keep it. */
   zones: At[];
+  /** Phase 2's heavy works: the trebuchet loaded again at this battle time, its volley told and falling; the hits on each stretch of the
+   *  stone wall; the one keg (the platoon carrying it, where it is set and when it goes off). */
+  trebReady: number;
+  volley?: { u: number; v: number; lands: number };
+  wallHits: Record<string, number>;
+  keg?: { platoon: number; at?: number; target?: number; lit?: number };
 }
 
 /** The Warpath (phase 1b): reinforcements march down it until it is held; ours have stood at its camp unopposed since `since`. */
 export interface WarpathState {
   held: boolean;
+  /** Its reserve camp's tents all burnt (phase 2): no more bands set out either. */
+  burnt?: boolean;
   since?: number;
   /** The bands on the march (their post and when they set out). */
   marching: { post: number; ids: number[] }[];
@@ -219,7 +229,11 @@ export type HoldEvent =
   | { kind: 'captain'; post: number; platoon: number }
   | { kind: 'wolves'; post: number; platoon: number }
   | { kind: 'march'; post: number }
-  | { kind: 'held' };
+  | { kind: 'held' }
+  | { kind: 'campBurnt' }
+  | { kind: 'volleyTold'; tiles: number[] }
+  | { kind: 'volley'; tiles: number[] }
+  | { kind: 'keg'; platoon: number; state: 'carried' | 'lit' | 'boom'; tile: number };
 
 export type AssaultOutcome = 'won' | 'lost' | 'night' | 'withdrawn';
 

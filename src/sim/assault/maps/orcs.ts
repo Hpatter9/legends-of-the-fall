@@ -207,6 +207,7 @@ export const BLOODTUSK: Blueprint = {
   ],
   reinforce: { at: { u: 31, v: 40 }, roster: 'GGG A B', bands: 4 },
   warpath: { u: 13, v: 13 },
+  park: { u: 98, v: 91 },
   approaches: [
     { id: 'west', name: 'the West Ford', way: [{ u: 80, v: 97 }, { u: 67, v: 98 }, { u: 62, v: 97 }, { u: 57, v: 92 }, { u: 50, v: 86 }] },
     { id: 'bridge', name: 'the Old Bridge', way: [{ u: 85, v: 84 }, { u: 81, v: 79 }, { u: 78, v: 76 }, { u: 78, v: 72 }, { u: 77, v: 64 }] },
