@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.403.0',
+    date: '2026-11-08',
+    title: 'Assault test map draws in full',
+    notes: ['The Assault test page now draws the whole map at every zoom on high-density phones, with the fight centred on screen.'],
+  },
+  {
     version: '0.402.0',
     date: '2026-11-08',
     title: 'The Legend Oath and the Shades',
