@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.413.0',
+    date: '2026-11-08',
+    title: 'Battle music as clear as the camp\'s',
+    notes: ['Battle music now plays nearly as loud as the camp\'s, clear and unmuffled, and dips only lightly for boss and Eidolon moments.'],
+  },
+  {
     version: '0.412.0',
     date: '2026-11-08',
     title: 'Louder, clearer music and living scenes',
