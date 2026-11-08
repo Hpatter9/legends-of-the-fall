@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.415.0',
+    date: '2026-11-08',
+    title: 'Assault battles run smoother',
+    notes: ['The Assault\'s battle now thinks in a background thread, so the screen stays smooth in the biggest fights.'],
+  },
+  {
     version: '0.414.0',
     date: '2026-11-08',
     title: 'Resume an assault; more scenes come alive',
