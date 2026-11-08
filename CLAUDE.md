@@ -64,7 +64,8 @@ Chronos later, so keep its conventions.
 - `src/sim/ultimates.ts`: every hero's ultimate (the eight old ones are in `abilities.ts`, the other 37 here; each unlocks at `ULT_LEVEL`, level 30; `docs/notes/ultimates.md`).
 - `src/sim/battle.ts`: deploying (`canPlace`, `place`, `unplace`), `fight`, `stepBattle` (100 ms ticks), the AI,
   `blowMult`, `shotReach`, `canStrike`.
-- `src/sim/path.ts`: `walkFrom` (cheapest walks round the others), `firstStep`.
+- `src/sim/path.ts`: `walkFrom` (cheapest walks round the others), `firstStep`; `walkNear` (the same walk in a 16 x 16 window, with a heap: the Assault's field only).
+- `src/sim/assault/`: the Assault's engine (phase 0 of `docs/design/assault-mode.md` on `claude/assault-design`): `field.ts` (`Battle.field`: the occupancy grid and 8 x 8 buckets), `sectors.ts` (the 25 x 25 sector graph, split into regions, for long walks), `stencil.ts` (the zone stencil and the 100 x 100 field it lays), `spike.ts` (the 55 against 200 bench fight). `src/render/fieldView.ts` draws the field in chunks at three levels of detail; `?bench=assault` (`src/assaultBench.ts`) and `npm run assault-bench` measure it (`docs/notes/assault-0.md`).
 - `src/render/`: `iso.ts` (projection), `boardView.ts` (columns, tile marks), `unitView.ts` (animated fighters),
   `fx.ts` (shots, sparks, numbers, shake), `sheets.ts` (frames and portraits).
 - `src/render/sound.ts`: the page's sound (the API: `play`, `playEvents`, `duck`, `setAct`); `audioProcessors.ts` (the audiorective
