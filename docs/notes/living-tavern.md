@@ -17,3 +17,11 @@ Limitations: one bespoke activity illustration per hero, animated through subtle
 ## Review preparation
 
 User requested continuing after implementation. Committed the revision and integrated main through `dd312e0c` (0.394.0) into the feature branch, retaining both sides of the credits and task-board additions. No production code conflicts. Typecheck/build and the 30 focused tests pass on the integrated build. All 82 repeated three-size browser checks pass, including the added Settings battery-saver checks. Draft review: [PR #430](https://github.com/Hpatter9/legends-of-the-fall/pull/430); merge into main and deployment remain unrequested.
+
+## Keeper placement and shadow correction
+
+Owner's preview review found Gwen covering Ayame and rectangular shadows around the heroes. The character hit buttons inherited the global menu button box-shadow. Scene guest/keeper targets now explicitly clear button backgrounds, border images, shadows and filters in normal, hover and pressed states; intentional illustration silhouette shadows remain. Pressing a character also preserves its placement transform.
+
+Gwen is positioned farther behind the counter, below the guest drawing order. A noninteractive clipped copy of the existing room image puts the actual bar in front of her lower body, while Ayame and other bar guests remain in front. No generated art or extra download is needed for the counter layer. Screenshots and the recording are refreshed.
+
+Typecheck, production build and 13 focused tavern/menu tests passed. All 88 browser follow-up checks passed at all three portrait sizes, including offline, reduced motion, every guest/Gwen tap and Settings battery saver. All three refreshed screenshots were visually reviewed. New checks cover unframed/shadow-free character targets and keeper/counter/guest depth ordering at each phone size. One first-run reload waited past the default load-event timeout; reload now uses the same DOM-ready/app-ready approach as initial navigation and still requires every offline scene image to decode.

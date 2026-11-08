@@ -81,7 +81,13 @@ export class PaintedTavern {
     const steam = el('div', 'ptSteam');
     steam.setAttribute('aria-hidden', 'true');
     steam.append(el('i'), el('i'), el('i'));
-    this.scene.append(backdrop, warmth, gwenArt, this.guests, rearTable, frontTable, dice, steam, caption);
+    // Reuse the room's own counter as a foreground layer, hiding Gwen's lower
+    // body behind the bar while the guests remain in front of both layers.
+    const barFront = el('img', 'ptBarFront');
+    barFront.src = backdrop.src;
+    barFront.alt = '';
+    barFront.draggable = false;
+    this.scene.append(backdrop, warmth, gwenArt, barFront, this.guests, rearTable, frontTable, dice, steam, caption);
     document.addEventListener('visibilitychange', () => this.syncMotion());
     onSettings(({ saver }) => this.root.classList.toggle('ptSaver', saver));
     this.syncMotion();

@@ -31,6 +31,8 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### TAVERN-NATURAL — Living painted tavern
 
+- **Review follow-up:** owner reported Gwen covering Ayame and rectangular shadows around heroes. Same owner/branch/scope: correct keeper depth/counter masking and remove inherited scene-button shadows; completed with typecheck/build, 13 focused tests and all 88 browser checks passing. All three portrait screenshots visually reviewed; screenshots and recording replaced in PR #430.
+
 - **Owner / branch / worktree:** Codex; `design/living-tavern`; `/workspace/legends-of-the-fall`.
 - **Scope:** approved natural bar/table/hearth composition, varied relaxed hero poses and subtle ambient animation; preserve strongest-five selection, tappable heroes, services, saves and offline support.
 - **Completion:** new room and compatible character layers, reduced-motion/lifecycle support, focused tests, typecheck/build and three portrait-size browser/offline review.

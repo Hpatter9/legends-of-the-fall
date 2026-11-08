@@ -45,6 +45,13 @@ try {
     check(`five live guests match roster rows ${width}`, guests.length === 5 && JSON.stringify(guests) === JSON.stringify(rows));
     check(`unique compatible seats ${width}`, await page.locator('.ptGuest').evaluateAll(nodes => new Set(nodes.map(node => node.dataset.seat)).size === nodes.length));
     check(`guests use activity paintings ${width}`, await page.locator('.ptGuestArt').evaluateAll(images => images.every(image => /ui\/tavern\/.+-activity\.webp$/.test(image.src))));
+    check(`character buttons have no rectangular shadows ${width}`, await page.locator('.ptGuest, .ptKeeper').evaluateAll(nodes => nodes.every(node => getComputedStyle(node).boxShadow === 'none' && getComputedStyle(node).borderImageSource === 'none')));
+    check(`keeper stays behind the bar and guests ${width}`, await page.locator('.ptScene').evaluate(scene => {
+      const keeper = getComputedStyle(scene.querySelector('.ptKeeper'));
+      const bar = getComputedStyle(scene.querySelector('.ptBarFront'));
+      const guest = getComputedStyle(scene.querySelector('.ptGuest[data-place="0"]'));
+      return Number(keeper.zIndex) < Number(bar.zIndex) && Number(bar.zIndex) < Number(guest.zIndex);
+    }));
     check(`room and characters decoded ${width}`, await page.locator('.ptScene img').evaluateAll(images => images.every(image => image.complete && image.naturalWidth > 0)));
     check(`no horizontal overflow ${width}`, await page.locator('.ptTavern').evaluate(node => node.scrollWidth <= node.clientWidth + 1));
     check(`hero targets fit ${width}`, await page.locator('.ptGuest').evaluateAll(nodes => nodes.every(node => { const r = node.getBoundingClientRect(); return r.width >= 44 && r.height >= 44 && r.x >= 0 && r.right <= innerWidth; })));
@@ -125,10 +132,10 @@ try {
       await page.evaluate(async () => { await navigator.serviceWorker.register('sw.js'); });
       await page.waitForFunction(async () => { const registration = await navigator.serviceWorker.getRegistration(); return !!registration?.active; }, null, { timeout: 60000 });
       await page.waitForTimeout(1200);
-      await page.reload();
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
       await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 120000 });
       await context.setOffline(true);
-      await page.reload();
+      await page.reload({ waitUntil: 'domcontentloaded', timeout: 120000 });
       await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 120000 });
       await page.evaluate(() => { window.__game.home.open(); window.__game.home.show('heroes'); });
       await page.locator('.ptScene img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
