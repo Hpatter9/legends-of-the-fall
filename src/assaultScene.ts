@@ -22,16 +22,16 @@ import type { Meta } from './sim/meta';
 import { formOf, UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { ultimateOf } from './sim/abilities';
-import { orderUltimate } from './sim/orders';
-import { castSpell, canAfford, SPELLS, MANA_MAX, type SpellId } from './sim/spells';
+import { canAfford, SPELLS, MANA_MAX, type SpellId } from './sim/spells';
 import { fightRanks } from './sim/spellRanks';
-import { assaultScore, startAssault, stepAssault, ASSAULT_LIMIT_MS, AROUND } from './sim/assault/assault';
+import { assaultScore, ASSAULT_LIMIT_MS, AROUND } from './sim/assault/assault';
+import { AssaultSim } from './assaultSim';
 import { assaultInput, settleAssault, type AssaultPlan, type AssaultResult } from './sim/assault/assaultMode';
 import { noteFallen } from './sim/assault/economy';
-import { noteLive, snapshotDue } from './sim/assault/snapshot';
+import { noteLive } from './sim/assault/snapshot';
 import { clearBattle, saveBattle } from './assaultSave';
 import { hasShooters, scaleAim } from './sim/assault/siege';
-import { orderPlatoon, setFormation, soundRetreat, setAuto, FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
+import { FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
 import { anchorOf } from './sim/assault/holdMind';
 import { BUCKET } from './sim/assault/field';
 import { troopUnitOf } from './sim/assault/troops';
@@ -130,11 +130,17 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   host.append(loading);
   // (a battle resumed from its snapshot, phase 2, or a new one; either way the save notes it is under way)
   const input = resume?.field?.hold?.input ?? assaultInput(m, army, seed, plan, Object.fromEntries(m.party.filter((k) => UNITS[k]).map((k) => [k, formOf(UNITS[k], 3)])));
-  const b = resume ?? startAssault(input);
-  if (!resume) b.spells.ranks = fightRanks(m.spellbook);
+  // (the simulation in a Web Worker where it can be, so a slow tick never holds up a frame; `b` is the battle to draw)
+  const sim = await AssaultSim.start({ input, ranks: fightRanks(m.spellbook), resume });
+  const b = sim.b;
   noteLive(m, b, todayKey());
   hooks.save();
   if (!resume) void saveBattle(b);
+  // (every twenty seconds of battle time the battle is kept for a resume; the save notes it)
+  sim.onSnapshot = () => {
+    noteLive(m, b, todayKey());
+    hooks.save();
+  };
   const h = b.field!.hold!;
   const sheets = new Set<string>(['hk_orc_grunt', 'hk_orc_archer', 'hk_orc_brute', 'hk_orc_warlord', 'wolf_black']);
   for (const x of b.units) sheets.add(b.field!.info[x.id]?.sheet ?? UNITS[x.def].sheet);
@@ -233,7 +239,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     gem.addEventListener('pointerdown', (e) => e.stopPropagation());
     gem.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (orderUltimate(b, pl.heroId)) say(`${heroName(pl.hero)}: ${ultimateOf(b.field!.byId[pl.heroId])?.name ?? 'Ultimate'}!`);
+      if (sim.call('orderUltimate', pl.heroId)) say(`${heroName(pl.hero)}: ${ultimateOf(b.field!.byId[pl.heroId])?.name ?? 'Ultimate'}!`);
     });
     p.append(hp, ult, n, rise, gem);
     p.setAttribute('aria-label', `${heroName(pl.hero)}'s platoon`);
@@ -255,7 +261,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
       if (now - lastTap < 320) {
         const a = anchorOf(b.field!, pl);
         if (a) aimAt(a.u, a.v);
-      } else if (chosen === k && b.field!.byId[pl.heroId].alive && orderUltimate(b, pl.heroId)) say(`${heroName(pl.hero)}: ${ultimateOf(b.field!.byId[pl.heroId])?.name ?? 'Ultimate'}!`);
+      } else if (chosen === k && b.field!.byId[pl.heroId].alive && sim.call('orderUltimate', pl.heroId)) say(`${heroName(pl.hero)}: ${ultimateOf(b.field!.byId[pl.heroId])?.name ?? 'Ultimate'}!`);
       else choose(k);
       lastTap = now;
     });
@@ -300,7 +306,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   holdBtn.addEventListener('click', () => {
     for (const k of chosenList()) {
       const a = anchorOf(b.field!, h.platoons[k]);
-      if (a) orderPlatoon(b, k, { kind: 'hold', at: { u: a.u, v: a.v } });
+      if (a) sim.call('orderPlatoon', k, { kind: 'hold', at: { u: a.u, v: a.v } });
     }
     say('Hold!');
   });
@@ -308,7 +314,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     let any = false;
     for (const k of chosenList()) {
       const a = anchorOf(b.field!, h.platoons[k]);
-      if (a && orderPlatoon(b, k, { kind: 'charge', at: { u: a.u, v: a.v } })) any = true;
+      if (a && sim.call('orderPlatoon', k, { kind: 'charge', at: { u: a.u, v: a.v } })) any = true;
     }
     if (any) say('Charge!');
   });
@@ -328,7 +334,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
           at = { u: x.u, v: x.v };
         }
       });
-      orderPlatoon(b, k, { kind: 'fallback', at: { ...at } });
+      sim.call('orderPlatoon', k, { kind: 'fallback', at: { ...at } });
     }
     say('Fall back!');
   });
@@ -336,7 +342,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     if (chosen < 0 || chosen >= 5) return;
     const pl = h.platoons[chosen];
     const next = FORMATIONS[(FORMATIONS.indexOf(pl.formation) + 1) % FORMATIONS.length];
-    setFormation(b, chosen, next);
+    sim.call('setFormation', chosen, next);
     pl.formation = next;
     syncOrders();
     say(FORMATION_NAMES[next]);
@@ -384,7 +390,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     const n = b.units.length;
     let ok = false;
     try {
-      ok = castSpell(b, id, u, v);
+      ok = sim.call('castSpell', id, u, v);
     } finally {
       const added = b.units.slice(n).filter((x) => !all.includes(x));
       b.units = all;
@@ -525,32 +531,32 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
       if (what === 'flank') {
         const target = near('foe');
         if (target === undefined) return say('Flank: no foe there');
-        for (const k of list) orderPlatoon(b, k, { kind: 'flank', unit: target });
+        for (const k of list) sim.call('orderPlatoon', k, { kind: 'flank', unit: target });
         return say(`Flank: ${UNITS[f.byId[target].def].name}`);
       }
       if (what === 'scale') {
         if (!scaleAim(b, f, t)) return say('Ladder: no stone wall there');
-        for (const k of list) if (h.platoons[k].ladder) orderPlatoon(b, k, { kind: 'scale', at: { u: t.u, v: t.v } });
+        for (const k of list) if (h.platoons[k].ladder) sim.call('orderPlatoon', k, { kind: 'scale', at: { u: t.u, v: t.v } });
         return say('Ladder: to the wall!');
       }
       const bows = list.filter((k) => hasShooters(b, f, h.platoons[k]));
       if (what === 'fire') {
         const hut = h.siege.huts.find((x) => x.burning === undefined && !x.burnt && x.tiles.some((i) => Math.abs((i % f.w) - t.u) + Math.abs(Math.floor(i / f.w) - t.v) <= 1));
         if (!hut) return say('Fire: tap a hut that stands');
-        for (const k of bows) orderPlatoon(b, k, { kind: 'fire', hut: hut.id });
+        for (const k of bows) sim.call('orderPlatoon', k, { kind: 'fire', hut: hut.id });
         return say(`Fire arrows: ${hut.name}`);
       }
-      for (const k of bows) orderPlatoon(b, k, { kind: 'suppress', at: { u: t.u, v: t.v } });
+      for (const k of bows) sim.call('orderPlatoon', k, { kind: 'suppress', at: { u: t.u, v: t.v } });
       return say('Suppress!');
     }
     const fortIx = h.fortAt.get(t.v * f.w + t.u);
     const fort = fortIx !== undefined ? h.forts[fortIx] : undefined;
     const foe = near('foe');
     if (fort && !fort.broken && !fort.open) {
-      for (const k of list) orderPlatoon(b, k, { kind: 'assault', fort: fort.spec.id });
+      for (const k of list) sim.call('orderPlatoon', k, { kind: 'assault', fort: fort.spec.id });
       say(`Assault: ${fort.spec.name}`);
     } else if (foe !== undefined) {
-      for (const k of list) orderPlatoon(b, k, { kind: 'focus', unit: foe });
+      for (const k of list) sim.call('orderPlatoon', k, { kind: 'focus', unit: foe });
       say(`Focus: ${UNITS[f.byId[foe].def].name}`);
     } else {
       // (All: each platoon keeps its place round the point, fanned out)
@@ -562,7 +568,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
         const a = anchors[i];
         const du = list.length > 1 && a ? Math.max(-4, Math.min(4, Math.round(a.u - mu))) : 0;
         const dv = list.length > 1 && a ? Math.max(-4, Math.min(4, Math.round(a.v - mv))) : 0;
-        orderPlatoon(b, k, { kind: 'move', at: { u: Math.max(0, Math.min(99, t.u + du)), v: Math.max(0, Math.min(99, t.v + dv)) } });
+        sim.call('orderPlatoon', k, { kind: 'move', at: { u: Math.max(0, Math.min(99, t.u + du)), v: Math.max(0, Math.min(99, t.v + dv)) } });
       });
       ring = { u: t.u, v: t.v, until: performance.now() + 900 };
     }
@@ -585,7 +591,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     const at = miniTile(e);
     miniTimer = window.setTimeout(() => {
       miniDown = 0;
-      for (const k of chosenList()) orderPlatoon(b, k, { kind: 'move', at });
+      for (const k of chosenList()) sim.call('orderPlatoon', k, { kind: 'move', at });
       if (chosenList().length) say('Sent');
     }, LONG_MS);
   });
@@ -611,7 +617,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     speedBtn.textContent = `x${speed}`;
   });
   autoBtn.addEventListener('click', () => {
-    setAuto(b, !h.auto);
+    sim.call('setAuto', !h.auto);
     autoBtn.classList.toggle('on', !h.auto);
     say(h.auto ? 'You take the platoons' : 'Auto: the platoons follow the plan');
   });
@@ -640,7 +646,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
         retreat[0].querySelector('b')!.textContent = 'Sound it? Tap again';
         return;
       }
-      soundRetreat(b);
+      sim.call('soundRetreat');
       menu.close();
     });
     menuNote(menu.body, 'Choose a platoon on the bar and tap the field to send it: a gate or a drum to assault it, a foe to strike it first. The lord\'s fall takes the hold.');
@@ -668,14 +674,10 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     if (b.phase === 'fight' && !paused) {
       acc += dt * (slow ? SLOW : speed);
       let n = 0;
-      while (acc >= TICK_MS && n < 8 && b.phase === 'fight') {
-        const ev = stepAssault(b);
-        // (every twenty seconds of battle time, the battle kept for a resume, and the save's note of it)
-        if (snapshotDue(b)) {
-          void saveBattle(b);
-          noteLive(m, b, todayKey());
-          hooks.save();
-        }
+      // (the ticks the time asks for, eight at most a frame: stepped now on the page, or a frame later from the worker)
+      const got = sim.pump(Math.min(8, Math.floor(acc / TICK_MS)));
+      for (const tk of got) {
+        const ev = tk.ev;
         for (const e of ev) {
           if (e.kind === 'swing' && e.to >= 0) {
             const by = b.field!.byId[e.by];
@@ -684,7 +686,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
           } else if (e.kind === 'hit') events.push({ kind: 'hit', to: e.to, dmg: e.dmg });
           sound.push(e);
         }
-        for (const e of h.events) {
+        for (const e of tk.hold) {
           if (e.kind === 'breach' || e.kind === 'open') view.breach(e.tiles);
           else if (e.kind === 'fell') {
             noteFallen(m, h.platoons[e.platoon].hero, e.index);
@@ -707,7 +709,8 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
         acc -= TICK_MS;
         n++;
       }
-      if (n === 8) acc = 0;
+      // (fallen behind by more than a batch: let the time go, not the frames)
+      if (acc > TICK_MS * 16) acc = TICK_MS * 8;
     } else if (b.phase !== 'fight' && !endedAt) endedAt = now;
     else if (endedAt && now - endedAt > 1800) return finish();
     // (the sounds of the blows near the camera's middle)
@@ -822,13 +825,17 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     if (gone) return;
     gone = true;
     endFight();
-    const result = settleAssault(m, b, todayKey());
-    hooks.save();
-    void clearBattle();
-    view.destroy();
-    app.destroy(true);
-    host.remove();
-    hooks.onEnd(result);
+    // (settled from the worker's own battle, the truth, not the page's copy)
+    void sim.final().then((fin) => {
+      sim.destroy();
+      const result = settleAssault(m, fin, todayKey());
+      hooks.save();
+      void clearBattle();
+      view.destroy();
+      app.destroy(true);
+      host.remove();
+      hooks.onEnd(result);
+    });
   };
   drawBar();
   requestAnimationFrame(frame);

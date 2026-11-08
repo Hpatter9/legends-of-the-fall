@@ -63,3 +63,40 @@ spent). Screenshots: `docs/samples/assault-2/regroups-393.jpg`, `resume-393.jpg`
 Not done of the design's phase 2: the trebuchet volley, the sappers' kegs and stone walls that breach (the director asked for the resume
 and the re-storm), and the Warpath camp's burning as an objective (its tents burn, but burning them does not yet stop the bands; holding
 the camp does).
+
+## The simulation's cost, and the Web Worker
+
+The owner's phone (0.410.0, Mid): 60 fps, but the simulation at 2.56 ms a tick (p95 6.40, worst 18.2) against its 3 ms budget.
+
+**What grew.** A profile of the bench fight (`--cpu-prof`, Node) shows the reactive mind and the siege works do not appear in it: `react.ts`,
+the smoke, the suppression and the ladders together are under 1%. A tick's time is the walking (the field's bounded walks, 20 to 25%; the
+whole minds' own window walks, a quarter of theirs), the foes' and soldiers' cheap minds, and the battle's own per-fighter upkeep
+(statuses, kits). Per tick, Node measures the same as 1a (about 0.5 ms a tick over whole fights, 0.62 against 0.69 over the first two
+minutes); the growth the phone sees is the fights being busier earlier (the horn's wolves, the sallies, the bands marching) and longer.
+
+**The cuts** (`assault.ts`, `path.ts`):
+
+- a walk keeps the next four steps of its search and takes them without searching again while they stay free (`PATH_STEPS`);
+- a cheap mind in its place with nothing near looks again after 700 ms, not every 300 (`IDLE_MS`);
+- the big field's window walk clears only the tiles its last walk wrote, not all 10,000 twice.
+
+**The Web Worker** (`src/assaultWorker.ts`, `src/assaultSim.ts`, `src/sim/assault/mirror.ts`, `src/sim/assault/calls.ts`). The design's
+fallback: the assault's simulation runs in a worker (its own bundle, `assault-worker.js`, built beside `game.js` and kept by the service
+worker), so a slow tick never holds up a frame. The page keeps a copy of the battle to draw and read, merged after each batch (the fighters
+by id and the platoons item by item, so every reference the page holds stays good; the tiles a breach or a ladder touched replaced). The
+player's orders are made on the copy (for the answer shown at once) and sent to the worker, whose battle is the truth; the result is
+settled from the worker's own battle; the worker keeps the snapshots for a resume itself. With no worker (or one that does not start in
+eight seconds) it all runs on the page as before. `assault-mirror` checks that the copy, brought up batch by batch, stands exactly where
+the worker's battle does.
+
+**The numbers** (the bench fight, Mid, 393 x 852, Chromium headless with the CPU throttled 4x, the first two minutes at x2; two runs each):
+
+| | page's share of the simulation | p95 | worst |
+| --- | --- | --- | --- |
+| before (0.411.0, on the page) | 5.35 ms a tick | 10.3 | 42.6 |
+| the cuts, on the page (`&worker=0`) | 3.5 ms a tick | 6.5 | 26 |
+| the cuts, in the worker | 1.27 ms a batch (the copy) | 2.2 | about 10 |
+
+In the worker a tick takes about 0.8 ms (p95 1.4); the throttle does not reach the worker, so that is its own thread's time, not the page's.
+The page's share is now within the asked 1.5 ms mean and 3 ms p95 at 4x. The bench's readout shows both (`Sim (worker)` and `Page's copy`),
+and `&worker=0` runs it on the page for comparison. The owner's phone should be re-tested.

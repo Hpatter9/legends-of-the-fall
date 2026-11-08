@@ -19,6 +19,8 @@
 import { Application } from 'pixi.js';
 import { startSpike, stepSpike, SPIKE_PLATOONS, SPIKE_TROOPS, type FieldEvent } from './sim/assault/spike';
 import { startAssault, stepAssault } from './sim/assault/assault';
+import { AssaultSim } from './assaultSim';
+import type { HoldEvent } from './sim/assault/holdTypes';
 import { breakFort } from './sim/assault/forts';
 import { benchInput } from './sim/assault/benchInput';
 import { TICK_MS, type Battle, type BattleEvent } from './sim/battle';
@@ -53,6 +55,10 @@ export interface BenchStats {
   workMean: number;
   /** The longest a frame spent baking chunks so far (ms). */
   bakeWorst?: number;
+  /** With the worker: each batch's copy on the page (mean, p95, ms), and whether the worker runs it. */
+  copyMean?: number;
+  copyP95?: number;
+  worker?: boolean;
   detail: Detail;
   zoom: number;
   fighters: number;
@@ -70,13 +76,13 @@ const p95 = (xs: readonly number[]) => {
 };
 
 /** The battle's events as the field's renderer reads them (a blow, a hit, a breach). */
-function fieldEvents(b: Battle, ev: readonly BattleEvent[]): FieldEvent[] {
+function fieldEvents(b: Battle, ev: readonly BattleEvent[], hold: readonly HoldEvent[] = b.field?.hold?.events ?? []): FieldEvent[] {
   const out: FieldEvent[] = [];
   for (const e of ev) {
     if (e.kind === 'swing' && e.to >= 0) out.push({ kind: 'blow', by: e.by, to: e.to, shot: !!UNITS[b.field!.byId[e.by]?.def ?? '']?.shot });
     else if (e.kind === 'hit') out.push({ kind: 'hit', to: e.to, dmg: e.dmg });
   }
-  for (const e of b.field?.hold?.events ?? []) if (e.kind === 'breach' || e.kind === 'open') out.push({ kind: 'breach', tiles: e.tiles });
+  for (const e of hold) if (e.kind === 'breach' || e.kind === 'open') out.push({ kind: 'breach', tiles: e.tiles });
   return out;
 }
 
@@ -115,8 +121,12 @@ export async function startAssaultBench(): Promise<void> {
 
   let b: Battle;
   let view: FieldView;
+  // (the hold's fight runs in a Web Worker unless `&worker=0`, as the game's does; the spike runs here)
+  let sim: AssaultSim | null = null;
+  const useWorker = query.get('worker') !== '0';
   let run = 0;
   const simMs: number[] = [];
+  const copyMs: number[] = [];
   const frameMs: number[] = [];
   const workMs: number[] = [];
   let simWorst = 0;
@@ -125,25 +135,40 @@ export async function startAssaultBench(): Promise<void> {
   let heat: { t: number; k: number }[] = [];
   const cam = { x: 0, y: 0, zoom: Number(query.get('zoom')) || ZOOM[(query.get('lod') as Detail) in ZOOM ? (query.get('lod') as Detail) : 'near'] };
   let follow = true;
-  const begin = () => {
+  let ready = false;
+  const begin = async () => {
+    ready = false;
     view?.destroy();
+    sim?.destroy();
+    sim = null;
     // (`&siege=1`: the siege works of phase 1b, the ram with the knight and ladders with the samurai and the archer, the bot's Tactical style)
-    b = spike ? startSpike(seed) : startAssault(query.get('siege') ? { ...benchInput(seed), siege: { ram: 'knight', ladders: ['samurai', 'archer'] }, tactical: true } : benchInput(seed));
+    const input = query.get('siege') ? { ...benchInput(seed), siege: { ram: 'knight', ladders: ['samurai', 'archer'] }, tactical: true } : benchInput(seed);
+    // (`&skip=n`: the first n ticks played at once, for a look at a fight under way, before the worker takes it)
+    const skip = Number(query.get('skip')) || 0;
+    if (spike) b = startSpike(seed);
+    else if (skip) {
+      const first = startAssault(input);
+      for (let i = skip; i > 0 && first.phase === 'fight'; i--) stepAssault(first);
+      sim = await AssaultSim.start({ resume: first, worker: useWorker });
+      b = sim.b;
+    } else {
+      sim = await AssaultSim.start({ input, worker: useWorker });
+      b = sim.b;
+    }
     view = new FieldView(b, app.renderer);
     app.stage.removeChildren();
     app.stage.addChild(view.root);
     run++;
     heat = [];
-    // (`&skip=n`: the first n ticks played at once, for a look at a fight under way)
-    for (let i = Number(query.get('skip')) || 0; i > 0 && b.phase === 'fight'; i--) stepAssault(b);
     // (the camera starts over our Landing, or over `&at=u,v` and stays there: the screenshots' views)
     const at = query.get('at')?.split(',').map(Number);
     const [x, y] = at?.length === 2 ? rawAt(at[0], at[1], 3) : rawAt(90, 90, 1);
     if (at?.length === 2) follow = false;
     cam.x = x;
     cam.y = y;
+    ready = true;
   };
-  begin();
+  await begin();
 
   // the buttons: the three levels, follow, and the next fight
   const button = (label: string, on: () => void) => {
@@ -163,7 +188,7 @@ export async function startAssaultBench(): Promise<void> {
   });
   button('Next', () => {
     seed++;
-    begin();
+    void begin();
   });
 
   // pan with a finger, pinch or the wheel to zoom (any drag stops Follow)
@@ -213,7 +238,8 @@ export async function startAssaultBench(): Promise<void> {
   let shown = 0;
   const stats: BenchStats = { seed, run, ticks: 0, simMean: 0, simP95: 0, simWorst: 0, fps: 0, frameMean: 0, frameP95: 0, workMean: 0, detail: 'near', zoom: cam.zoom, fighters: 0, chunks: 0, wanted: 0, alive: 0 };
   (window as unknown as { __bench: BenchStats }).__bench = stats;
-  // (for the screenshots of the structures' states: strike one to a share of its hp, or break it, as a blow would)
+  // (for the screenshots of the structures' states: strike one to a share of its hp, or break it, as a blow would; with `&worker=0`, so it
+  //  is the battle itself that is struck, not the page's copy of the worker's)
   (window as unknown as { __benchStrike: (id: string, share: number) => void }).__benchStrike = (id, share) => {
     const h = b.field?.hold;
     const i = h?.forts.findIndex((x) => x.spec.id === id) ?? -1;
@@ -241,16 +267,36 @@ export async function startAssaultBench(): Promise<void> {
     const w0 = performance.now();
     // the battle, ten ticks a second (times the speed), each tick timed
     const events: FieldEvent[] = [];
+    if (!ready) return;
     if (b.phase === 'fight') {
       acc += dt * speed;
       let n = 0;
-      while (acc >= TICK_MS && n < 8) {
-        const a = performance.now();
-        const ev = spike ? stepSpike(b) : fieldEvents(b, stepAssault(b));
-        const ms = performance.now() - a;
-        simMs.push(ms);
-        if (simMs.length > TICK_WINDOW) simMs.shift();
-        simWorst = Math.max(simWorst, ms);
+      // (the ticks the time asks for: the spike stepped here; the hold's in the worker, or here with `&worker=0`, each tick timed where it ran)
+      const batches: FieldEvent[][] = [];
+      if (spike)
+        while (acc - n * TICK_MS >= TICK_MS && n < 8) {
+          const a = performance.now();
+          batches.push(stepSpike(b));
+          const ms = performance.now() - a;
+          simMs.push(ms);
+          if (simMs.length > TICK_WINDOW) simMs.shift();
+          simWorst = Math.max(simWorst, ms);
+          n++;
+        }
+      else if (sim) {
+        for (const tk of sim.pump(Math.min(8, Math.floor(acc / TICK_MS)))) batches.push(fieldEvents(b, tk.ev, tk.hold));
+        for (const ms of sim.copyMs.splice(0)) {
+          copyMs.push(ms);
+          if (copyMs.length > TICK_WINDOW) copyMs.shift();
+        }
+        for (const ms of sim.ms.splice(0)) {
+          simMs.push(ms);
+          if (simMs.length > TICK_WINDOW) simMs.shift();
+          simWorst = Math.max(simWorst, ms);
+        }
+      }
+      n = 0;
+      for (const ev of batches) {
         for (const e of ev) {
           events.push(e);
           if (e.kind === 'blow') {
@@ -261,12 +307,12 @@ export async function startAssaultBench(): Promise<void> {
         acc -= TICK_MS;
         n++;
       }
-      if (n === 8) acc = 0;
+      if (acc > TICK_MS * 16) acc = TICK_MS * 8;
     } else if (!endedAt) endedAt = now;
     else if (now - endedAt > 4000) {
       endedAt = 0;
       seed++;
-      begin();
+      void begin();
     }
     // the camera drifts to the fiercest fight (the most blows of the last three seconds in one bucket)
     heat = heat.filter((h) => b.t - h.t <= 3000);
@@ -307,14 +353,15 @@ export async function startAssaultBench(): Promise<void> {
       shown = now;
       const alive = b.units.filter((x) => x.alive);
       Object.assign(stats, {
-        seed, run, ticks: b.field!.stats.ticks, simMean: mean(simMs), simP95: p95(simMs), simWorst, fps, frameMean: mean(frameMs), frameP95: p95(frameMs), workMean: mean(workMs), bakeWorst,
+        seed, run, ticks: b.field!.stats.ticks, simMean: mean(simMs), simP95: p95(simMs), simWorst, fps, frameMean: mean(frameMs), frameP95: p95(frameMs), workMean: mean(workMs), bakeWorst, copyMean: mean(copyMs), copyP95: p95(copyMs), worker: !!sim?.inWorker,
         detail: view.detail, zoom: cam.zoom, fighters: view.drawn.fighters, chunks: view.drawn.chunks, wanted: view.wanted.length, alive: alive.length,
       });
       const ours = alive.filter((x) => x.side === 'hero').length;
       const clock = `${Math.floor(b.t / 60000)}:${String(Math.floor((b.t % 60000) / 1000)).padStart(2, '0')}`;
       hud.textContent =
         `Assault bench · fight ${run} (seed ${seed}) · ${clock}${speed > 1 ? ` · x${speed}` : ''}${b.phase !== 'fight' ? ` · ${b.phase === 'won' ? 'won' : 'over'}` : ''}\n` +
-        `Sim: ${stats.simMean.toFixed(2)} ms a tick (p95 ${stats.simP95.toFixed(2)}, worst ${simWorst.toFixed(1)})  budget 3 ms\n` +
+        `Sim${sim?.inWorker ? ' (worker)' : ''}: ${stats.simMean.toFixed(2)} ms a tick (p95 ${stats.simP95.toFixed(2)}, worst ${simWorst.toFixed(1)})  budget 3 ms\n` +
+        (sim?.inWorker ? `Page's copy: ${(stats.copyMean ?? 0).toFixed(2)} ms a batch (p95 ${(stats.copyP95 ?? 0).toFixed(2)})\n` : '') +
         `Frames: ${fps.toFixed(0)} fps · ${stats.frameMean.toFixed(1)} ms (p95 ${stats.frameP95.toFixed(1)}) · work ${stats.workMean.toFixed(1)} ms · bake worst ${bakeWorst.toFixed(1)} ms\n` +
         `${view.detail[0].toUpperCase()}${view.detail.slice(1)} (zoom ${cam.zoom.toFixed(2)}; Near ≥ ${NEAR_AT}, Far < ${MID_AT}) · ${view.drawn.fighters} drawn · ${view.drawn.chunks} chunks\n` +
         `Ours ${ours}/55 · theirs ${alive.length - ours}/200`;
