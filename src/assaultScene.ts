@@ -34,7 +34,7 @@ import { anchorOf } from './sim/assault/holdMind';
 import { BUCKET } from './sim/assault/field';
 import { troopUnitOf } from './sim/assault/troops';
 import type { FieldEvent } from './sim/assault/spike';
-import { FieldView, loadFieldArt } from './render/fieldView';
+import { FieldView, FIELD_FOG, fieldGrade, loadFieldArt } from './render/fieldView';
 import { loadSomeSheets, portrait } from './render/sheets';
 import { rawAt, TH, TW, HH } from './render/iso';
 import { menuFoot, menuNote, menuPick, menuSection, ornateMenu } from './ornateMenu';
@@ -68,7 +68,7 @@ const SLOW = 0.1;
 const LITE_KEY = 'legends.assaultLite';
 
 const CSS = `
-#assaultScene{position:fixed;inset:0;z-index:90;background:#10131a;touch-action:none;overflow:hidden;font-family:"Alegreya Sans",sans-serif;color:#f3e7c7;user-select:none;-webkit-user-select:none}
+#assaultScene{position:fixed;inset:0;z-index:90;background:#2b3230;touch-action:none;overflow:hidden;font-family:"Alegreya Sans",sans-serif;color:#f3e7c7;user-select:none;-webkit-user-select:none}
 #assaultScene canvas.field{position:absolute;inset:0;display:block;width:100%;height:100%}
 .asTop{position:absolute;left:0;right:0;top:0;height:44px;display:flex;align-items:center;gap:6px;padding:0 8px;background:linear-gradient(#1b1610f2,#1b1610c8);border-bottom:1px solid #c9a24a99;z-index:3;box-sizing:border-box}
 .asTop b{font-weight:700;font-size:14px;white-space:nowrap}.asTop .grow{flex:1}
@@ -141,9 +141,11 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
       return false;
     }
   })();
-  await app.init({ resizeTo: host, background: '#10131a', antialias: false, autoStart: false, autoDensity: true, resolution: Math.min(lite ? 2 : 3, devicePixelRatio || 1) });
+  await app.init({ resizeTo: host, background: FIELD_FOG, antialias: false, autoStart: false, autoDensity: true, resolution: Math.min(lite ? 2 : 3, devicePixelRatio || 1) });
   app.canvas.className = 'field';
   host.prepend(app.canvas);
+  // (the day's light over the field, under the buttons)
+  fieldGrade(host);
   await Promise.all([loadSomeSheets([...sheets]), loadFieldArt()]);
   loading.remove();
   const view = new FieldView(b, app.renderer);

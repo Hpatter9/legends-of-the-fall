@@ -142,6 +142,31 @@ pictures instead (`--report` lists them):
 - Not used yet: the postern, the trebuchet, the catapult, the bolt thrower, the bridge's modular deck and the river debris (the blueprint has
   no place for them), and the stairs as sprites (the terrain's steps show them).
 
+### The owner's look notes (after "runs well but still looks bad")
+
+That verdict was on the phase 1a renderer (one striped grass, black step lines, flat slabs, a black void). 1b answers it point by point:
+
+1. **Ground**: the orc-05 materials sampled by world position over 4 x 4 tiles, the orc-06 transitions between them, laid by zone (above).
+2. **Height edges**: no outline. The faces are shaded only where they are painted (pre-shaded copies of the face sheet), so a step's clear
+   lip no longer darkens the ground below it; one-step faces show only the lip's grass and earth, tall ones the full lip, body and foot.
+3. **The fortress**: the orc-01 palisade, the orc-04 stone and tower faces, the orc-08 crenels and braziers, the gates and towers, the
+   keep, the throne and banner, and stone terraces on the mound.
+4. **Life and density**: more clutter in the fields (flowers, ferns, stumps, shrubs, pebbles, bones), reeds and shingle at the river, the
+   bailey's tents in rows, and new camps in the Killing Fields (blueprint solids, so nothing hides a fighter): the raiders' camp east of the
+   palisade, a war tent and a bonfire by each outer drum, a fire at the lumber camp. Their tents burn too.
+5. **The map edge**: the land runs on past it for ten tiles (`drawSkirt`): the edge's own height and its river carried on, heath and grass
+   under a forest that thickens outwards, all fading into a haze (`FIELD_FOG`), which is also the page's colour behind the field. Far's
+   overview takes in the same haze.
+6. **Readability**: at Mid the fighters are drawn a fifth larger, stand on filled team discs (blue ours, red theirs), and each platoon of
+   ours flies a blue pennant with its count (larger for the chosen one).
+7. **Lighting**: a light day grade over the field (warm from the upper left, a cool shade towards the bottom; a plain overlay, as a blended
+   one cost a fifth of the frame rate), and a warm firelight added round the bonfires, braziers, the gates' torches, the drums and the keep,
+   flickering (two slow waves and a quick one, out of step light to light; steady under reduced motion, now that the no-flashing rule is
+   withdrawn). At Mid only the big fires glow.
+
+Before and after at Near, Mid and Far on 411 x 915: `docs/samples/assault-1b/before-after-*-411.jpg` (the before is main's 0.408.0 bench,
+which has no camera parameters, so its three shots are its opening view at Near).
+
 ### 1b's numbers
 
 Balance (`npm run balance -- --assault orcs --levels 55 --seeds 16`: the design party at level 55, a maxed castle, full platoons of
@@ -157,9 +182,11 @@ Against 1a (Auto 50% / 85% lost, Tactical 81% / 57%), the reactive hold has not 
 and ladders take Tactical from 88% to every one of sixteen, losing a third fewer of the host. The losses stay brutal on Auto, as the owner
 asked; nothing was softened.
 
-Performance: the headless bench (`npm run assault-bench`, the Bloodtusk bench fight, Auto) runs at a mean of 0.42 ms a tick, p95 1.05 ms,
-worst 8.2 ms (the phase's budget is a mean of 0.75 here: met). In Chromium (headless, software drawing, x1) the art costs some frame rate:
-about 30 to 50 fps at Near and 48 to 58 at Mid, against 54 to 60 before; the chunk bake is the cost and stays at two a frame.
+Performance: the headless bench (`npm run assault-bench`, the Bloodtusk bench fight, Auto, with the new camps) runs at a mean of 0.59 ms a
+tick, p95 1.17 ms, worst 3.6 ms (the phase's budget is a mean of 0.75 here: met). In Chromium (headless, software drawing, x1, 411 x 915)
+the field draws at about 41 to 45 fps at Near, 49 to 50 at Mid and 60 at Far once its chunks are baked, against 59 to 60 for the old flat
+field: the many more standing pieces and the firelight are the cost (the blended grade, at another fifth, was replaced by a plain one). The
+owner's phone measured 60 at Mid on the old field; it should be checked again on this one.
 
 ### 1b's tests
 
