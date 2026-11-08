@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.406.0',
+    date: '2026-11-08',
+    title: 'Assault: storm Bloodtusk Hold',
+    notes: ['At ten stars on the Orcs, lead five platoons of ten against 200 at Bloodtusk Hold. Plan your crossing, give orders, slow time, take the throne.'],
+  },
+  {
     version: '0.405.0',
     date: '2026-11-08',
     title: 'Awakened Mythic paintings',

@@ -4,6 +4,8 @@
 // button. A locked army shows its scene as a silhouette. The rules are in `src/sim/armies.ts`, `armyStars.ts` and
 // `tiers.ts`; this only draws them.
 
+import { blueprintOf } from './sim/assault/assault';
+import { assaultOpen, canAssault, conquered, tributeDue, tributeOf } from './sim/assault/economy';
 import { armyOreRow } from './oreView';
 import { progressLine } from './sim/modeUnlock';
 import { ARMIES, armyBefore, armyCleared, armyNeed, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, landsOf, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
@@ -36,6 +38,10 @@ export interface ArmiesHooks {
   focus?: string;
   /** The run saved and not over, if any: the army it fights (none for a daily, tower or older run), and the stage it is on. */
   running: { army?: string; stage: number; label: string } | null;
+  /** The Assault (docs/notes/assault-1.md): open the muster for an army's hold (its ten stars won). */
+  onAssault?(id: string): void;
+  /** Claim today's tribute from the holds conquered; returns the crowns paid. */
+  onTribute?(): number;
 }
 
 /** The locked card's line: the army to beat first (named once it is open, else "the army before") and the stars it opens at. */
@@ -327,7 +333,10 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
   root.dataset.army = a.id;
   const { root: scene, figures } = buildScene(a, !open);
   const rib = el('div', 'asRib');
-  rib.append(el('b', '', open ? a.name : '???'));
+  // (the Assault: a conquered army's card turns to our colours, its waves the "Remnants" still to farm)
+  const fallen = conquered(m, a.id);
+  rib.append(el('b', '', open ? (fallen ? `${a.name} · Conquered` : a.name) : '???'));
+  if (fallen) root.classList.add('conquered');
   scene.append(rib);
   if (fresh) scene.append(el('i', 'armyNew', 'NEW'));
   if (!open) {
@@ -345,7 +354,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
   const draw = (): void => {
     info.replaceChildren();
     const bosses = bossesOf(a);
-    info.append(el('p', 'asBlurb', a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ''}`), el('p', 'asMeta', `Recommended: Lv ${a.level} (Normal)`));
+    info.append(el('p', 'asBlurb', fallen ? `Remnants of the ${a.name.replace(/^The /, '')}: its waves still march, and its hold pays tribute.` : a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ''}`), el('p', 'asMeta', `Recommended: Lv ${a.level} (Normal)`));
     // the tier picks
     const picks = el('div', 'asTiers');
     TIERS.forEach((t, ti) => {
@@ -442,6 +451,26 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
       }
       info.append(row);
     } else info.append(go);
+    // (the Assault: at the tenth star the army's hold can be stormed; once the mode is open, a sealed plate until then)
+    const bp = blueprintOf(a.id);
+    if (open && bp && hooks.onAssault && (assaultOpen(m) || canAssault(m, a.id))) {
+      if (fallen) {
+        const due = tributeDue(m, todayKey());
+        info.append(el('p', 'asHint asSeal', `${bp.name} is conquered · ${tributeOf(a.id)} crowns of tribute a day`));
+        if (due && hooks.onTribute) {
+          const claim = el('button', 'small asTribute', `Claim tribute · ${due}`);
+          claim.addEventListener('click', () => {
+            hooks.onTribute!();
+            draw();
+          });
+          info.append(claim);
+        }
+      } else if (canAssault(m, a.id)) {
+        const storm = el('button', 'primary asAssault', `Assault ${bp.name}`);
+        storm.addEventListener('click', () => hooks.onAssault!(a.id));
+        info.append(storm);
+      } else info.append(el('p', 'asHint asSeal', `Win all ten stars · Assault ${bp.name}`));
+    }
     if (running) {
       const again = el('button', 'small armyAgain', 'Restart from wave 1');
       twoTap(again, 'Lose this run and restart?', () => hooks.onFight(a.id, tier));

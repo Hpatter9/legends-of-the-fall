@@ -42,8 +42,10 @@ import campfireUrl from './art/castle/campfire.png';
 import warCampUrl from './art/camp/camp-war.png';
 import wildCampUrl from './art/camp/camp-wild.png';
 import arcaneCampUrl from './art/camp/camp-arcane.png';
+import bannerUrl from './art/castle/banner.png';
+import { conquered } from './sim/assault/economy';
 
-const ART: Record<string, string> = { overlook: overlookUrl, campfire: campfireUrl, war: warCampUrl, wild: wildCampUrl, arcane: arcaneCampUrl };
+const ART: Record<string, string> = { overlook: overlookUrl, campfire: campfireUrl, war: warCampUrl, wild: wildCampUrl, arcane: arcaneCampUrl, banner: bannerUrl };
 type Art = Record<string, HTMLImageElement>;
 let art: Art | null = null;
 let artLoading: Promise<Art> | null = null;
@@ -461,11 +463,21 @@ export class CampScene {
       g.fillRect(x - size / 3, y - 1, size * 0.66, 2);
       g.drawImage(rig.c, frame * rig.fw, 0, rig.fw, rig.fh, Math.round(x - w / 2), y - h, w, h);
     };
+    const [bx, by] = scoutCamp(this.next?.army.id ?? 'orcs').boss;
+    // (the Assault: a conquered army's camp is ours: its patrols gone, the castle's banner where its boss stood)
+    if (this.meta && this.next && conquered(this.meta, this.next.army.id)) {
+      const flag = art?.banner;
+      if (flag) {
+        const h = 26;
+        const w = Math.round((flag.width / flag.height) * h);
+        g.drawImage(flag, Math.round(camp.w * bx - w / 2), Math.round(camp.h * (CAMP_PAINT.y + by * CAMP_PAINT.h)) - h, w, h);
+      }
+      return;
+    }
     for (const [i, rank] of this.ranks.entries()) {
       const rig = this.armyRigs.get(this.crew[rank.kind % this.crew.length]);
       if (rig) draw(rig, rank.x, rank.y, rank.size, i * 1.7);
     }
-    const [bx, by] = scoutCamp(this.next?.army.id ?? 'orcs').boss;
     if (this.bossRig) draw(this.bossRig, Math.round(camp.w * bx), Math.round(camp.h * (CAMP_PAINT.y + by * CAMP_PAINT.h)), 17, 0);
   }
 

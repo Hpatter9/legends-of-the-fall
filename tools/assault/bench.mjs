@@ -1,11 +1,12 @@
-// The Assault's headless bench (phase 0, docs/notes/assault-0.md): plays the engine spike's fight (55 of ours against the garrison's
-// 200 on the 100 x 100 field) and prints the simulation's milliseconds a tick (mean, p95, worst), the bounded walks and decisions a
+// The Assault's headless bench (docs/notes/assault-0.md, assault-1.md): plays a whole assault on Bloodtusk Hold (phase 1: five heroes with
+// their full minds and their platoons, the bot playing, against the garrison's 200; `--spike` plays phase 0's engine spike instead) and prints the simulation's milliseconds a tick (mean, p95, worst), the bounded walks and decisions a
 // tick, and the sector rebuilds. The design's budget (its section 7.2) is 3 ms a tick on a mid-range phone, about 0.75 ms here (a 4x
 // phone factor).
 //
 //   npm run assault-bench                 one fight on seed 1
 //   npm run assault-bench -- --seeds 3    three fights, seeds 1 to 3
 //   npm run assault-bench -- --seed 7
+//   npm run assault-bench -- --spike      phase 0's engine spike
 import * as esbuild from 'esbuild';
 import { mkdirSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -15,12 +16,13 @@ const arg = (name, dflt) => {
   return i >= 0 ? Number(process.argv[i + 1]) : dflt;
 };
 const seeds = arg('seeds', 1);
+const spike = process.argv.includes('--spike');
 const first = arg('seed', 1);
 
 mkdirSync('out/tools', { recursive: true });
 const outfile = 'out/tools/assault-bench.mjs';
 await esbuild.build({
-  stdin: { contents: "export * from './src/sim/assault/spike'; export { startBattle, stepBattle, place, fight } from './src/sim/battle'; export { HEROES } from './src/sim/units';", resolveDir: process.cwd(), loader: 'ts' },
+  stdin: { contents: "export * from './src/sim/assault/spike'; export { startAssault, stepAssault, assaultChecksum } from './src/sim/assault/assault'; export { benchInput } from './src/sim/assault/benchInput'; export { startBattle, stepBattle, place, fight } from './src/sim/battle'; export { HEROES } from './src/sim/units';", resolveDir: process.cwd(), loader: 'ts' },
   outfile,
   bundle: true,
   platform: 'node',
@@ -39,15 +41,17 @@ const pct = (xs, p) => {
 };
 
 // (warm the engine first, as a page would have by its first frames: a short fight thrown away)
+const start = (s) => (spike ? sim.startSpike(s) : sim.startAssault(sim.benchInput(s)));
+const step = (b) => (spike ? sim.stepSpike(b) : sim.stepAssault(b));
 {
-  const b = sim.startSpike(999);
-  for (let i = 0; i < 600 && b.phase === 'fight'; i++) sim.stepSpike(b);
+  const b = start(999);
+  for (let i = 0; i < 600 && b.phase === 'fight'; i++) step(b);
 }
 
 const all = [];
 for (let s = first; s < first + seeds; s++) {
   const t0 = performance.now();
-  const b = sim.startSpike(s);
+  const b = start(s);
   const build = performance.now() - t0;
   const ms = [];
   const walks = [];
@@ -55,7 +59,7 @@ for (let s = first; s < first + seeds; s++) {
   let alive0 = 0;
   while (b.phase === 'fight') {
     const a = performance.now();
-    sim.stepSpike(b);
+    step(b);
     ms.push(performance.now() - a);
     walks.push(b.field.stats.tickWalks);
     decided.push(b.field.stats.tickDecided);
@@ -82,10 +86,10 @@ for (let s = first; s < first + seeds; s++) {
     searches: b.field.sectors.searches,
     buildMs: build,
     aliveAt60s: alive0,
-    checksum: sim.spikeChecksum(b),
+    checksum: spike ? sim.spikeChecksum(b) : sim.assaultChecksum(b),
   };
   all.push(line);
-  console.log(`seed ${s}: ${line.result} after ${line.battleS.toFixed(1)} s (${line.ticks} ticks); ours ${line.oursLeft}, foes ${line.foesLeft}`);
+  console.log(`seed ${s}${spike ? ' (spike)' : ` (Bloodtusk Hold: ${b.field.hold.outcome})`}: ${line.result} after ${line.battleS.toFixed(1)} s (${line.ticks} ticks); ours ${line.oursLeft}, foes ${line.foesLeft}`);
   console.log(`  sim ms a tick: mean ${fmt(line.meanMs)}, p95 ${fmt(line.p95Ms)}, worst ${fmt(line.worstMs)}   (build ${line.buildMs.toFixed(1)} ms)`);
   console.log(`  a tick: ${line.walksPerTick.toFixed(2)} bounded walks (most ${line.mostWalks}), ${line.decidedPerTick.toFixed(1)} decisions (most ${line.mostDecided}); sector rebuilds ${line.rebuilds}, A* searches ${line.searches}; checksum ${line.checksum}`);
 }

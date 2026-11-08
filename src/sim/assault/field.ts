@@ -87,6 +87,8 @@ export interface FieldState {
   info: FieldInfo[];
   groups: FieldGroup[];
   stats: FieldStats;
+  /** The Assault's own state (phase 1, `holdTypes.ts`); absent on the engine spike's fight. */
+  hold?: import('./holdTypes').HoldState;
 }
 
 /** A fresh field state for a board. */

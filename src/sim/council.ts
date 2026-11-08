@@ -176,7 +176,8 @@ const knownHeroes = (m: Meta): string[] => (m.party.length ? [...m.party] : m.un
  */
 export function recruit(war: War, m: Meta, rng: Rng): Nemesis | undefined {
   if (ofRank(war, 'lieutenant').length >= SEATS.lieutenant) return undefined;
-  const opened = ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id);
+  // (a conquered army sends the Council no one: the Assault, docs/notes/assault-1.md)
+  const opened = ARMIES.filter((a) => armyUnlocked(m, a.id) && !m.assault?.conquered[a.id]).map((a) => a.id);
   if (!opened.length) return undefined;
   const taken = new Set(war.members.map((n) => n.base));
   const elites = Object.keys(ELITE_FOES).filter((k) => !taken.has(k) && opened.includes(homeArmy(k) ?? ''));
@@ -482,7 +483,9 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   const doomed = b.eidolon?.called !== undefined ? b.eidolon.shade?.slayer : undefined;
   if (doomed !== undefined) avenged.add(doomed);
   const cheated = new Map<number, string>();
-  if (CHEAT_DEATH.on && !muster) lines.push(...cheatDeath(war, m, run, wave, note, was, avenged, cheated));
+  // (the Assault: a member slain on the attempt that conquers its hold dies for good)
+  const conquest = won && run.mode?.kind === 'army' && !!run.mode.assault;
+  if (CHEAT_DEATH.on && !muster && !conquest) lines.push(...cheatDeath(war, m, run, wave, note, was, avenged, cheated));
   // (phase 3: the Grudges, the humiliated, trophies brought home and Vengeance, `revenge.ts`; phase 4: a duel won pays double)
   const rev = settleRevenge(m, run, b, tally, note, was, cheated, avengers, wave, duel.won);
   lines.push(...rev.lines);
