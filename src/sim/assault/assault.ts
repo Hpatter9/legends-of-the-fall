@@ -19,7 +19,7 @@ import { canStep, DIRS, type At } from '../board';
 import { flankStep } from '../battle';
 import { isBoss } from '../foes';
 import { hidden } from '../equipFx';
-import { nearFirstStep, nearIndex, walkNear } from '../path';
+import { nearFirstStep, nearIndex, nearPath, walkNear } from '../path';
 import { Rng } from '../rng';
 import { UNITS } from '../units';
 import { forNear, newField, occClear, rebuildBuckets, type FieldGroup, type FieldState } from './field';
@@ -49,6 +49,10 @@ export const SIGHT = 10;
 const WAIT_MAX = 3000;
 /** A soldier that finds no step for this long asks for a bounded walk. */
 const STUCK_MS = 2000;
+/** A cheap mind in its place with nothing near looks again after this long (not every `WAIT_MS`). */
+const IDLE_MS = 700;
+/** A walk keeps this many steps of its search for the decisions after (searching again once they are walked, or one is blocked). */
+const PATH_STEPS = 4;
 /** A waypoint of a route counts as reached this near. */
 const WAYPOINT = 5;
 
@@ -518,7 +522,8 @@ function soldierMind(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, m
     if (target && canStrike(b.board, def, me, target)) return strike(b, me, target, rng, out);
     if (target && !leashed && !(pl.order.kind === 'hold' && def.shot) && steer(b, f, me, target, out)) return;
   }
-  if (dist(me, slot) === 0 || !steer(b, f, me, slot, out)) me.busyUntil = b.t + WAIT_MS;
+  if (dist(me, slot) === 0) me.busyUntil = b.t + (goal.fights && nearestFoe(b, f, me, def.range + ENGAGE + 2, false) ? WAIT_MS : IDLE_MS);
+  else if (!steer(b, f, me, slot, out)) me.busyUntil = b.t + WAIT_MS;
   else if (pl.order.kind === 'fallback' || (pl.order.kind === 'charge' && b.t < (pl.chargeUntil ?? 0))) pace(b, h, pl, me);
 }
 
@@ -573,7 +578,7 @@ function foeMind(b: Battle, f: FieldState, _h: HoldState, post: PostState, me: U
   }
   if (near) return swing(b, me, near, rng, out);
   if (archersOnly(post.def)) {
-    me.busyUntil = b.t + WAIT_MS;
+    me.busyUntil = b.t + IDLE_MS;
     return;
   }
   if (isLead) {
@@ -589,7 +594,9 @@ function foeMind(b: Battle, f: FieldState, _h: HoldState, post: PostState, me: U
   const x = nearestFoe(b, f, me, def.range + ENGAGE, false);
   if (x && !leashed && steer(b, f, me, x, out)) return;
   const at = slotAt(anchor, g.heading, def.shot ? 'loose' : 'wall', f.info[me.id].slot);
-  if (dist(me, at) === 0 || !steer(b, f, me, at, out)) me.busyUntil = b.t + WAIT_MS;
+  // (in its place with nothing near: it rests a little longer before looking again)
+  if (dist(me, at) === 0) me.busyUntil = b.t + (x ? WAIT_MS : IDLE_MS);
+  else if (!steer(b, f, me, at, out)) me.busyUntil = b.t + WAIT_MS;
 }
 
 // ---- walking -------------------------------------------------------------------------------------------------------------------
@@ -637,6 +644,20 @@ function walkStep(b: Battle, f: FieldState, me: Unit, mark: At, out: BattleEvent
   const def = defOf(me);
   const jump = def.flies ? 9 : def.jump;
   const c = jumpClass(jump);
+  // (the walk's next steps kept from the last search, while it walks for the same mark and the next tile is free and steppable)
+  const info = f.info[me.id];
+  const markAt = mark.v * w + mark.u;
+  if (info?.path?.length && info.pathTo === markAt) {
+    const here = me.v * w + me.u;
+    const nx = info.path[0];
+    const near = Math.abs((nx % w) - me.u) + Math.abs(Math.floor(nx / w) - me.v) === 1;
+    if (near && f.occ[nx] < 0 && canStep(b.board.tiles[here], b.board.tiles[nx], jump, me.side) !== null) {
+      info.path.shift();
+      stepTo(b, me, nx, out);
+      return true;
+    }
+    info.path = undefined;
+  }
   const mine = (j: number) => {
     const o = f.occ[j];
     return o >= 0 && f.byId[o].side === me.side && f.info[o]?.role === 'soldier';
@@ -684,6 +705,11 @@ function walkStep(b: Battle, f: FieldState, me: Unit, mark: At, out: BattleEvent
   if (best < 0 || best === here) return false;
   const first = nearFirstStep(walk, w, best);
   if (first === null) return false;
+  // (the steps after this one, kept for the next few decisions)
+  if (info) {
+    info.path = nearPath(walk, w, best, PATH_STEPS + 1).slice(1);
+    info.pathTo = markAt;
+  }
   const other = f.occ[first];
   if (other >= 0 && other !== me.id) {
     // (its own soldier there: they change places, the soldier stepping back onto the leader's tile)
