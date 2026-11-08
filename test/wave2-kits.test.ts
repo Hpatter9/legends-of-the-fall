@@ -11,9 +11,9 @@ comingKitTests('batch 2', ['warDrummer', 'banneret', 'geomancer', 'bellWarden', 
 
 const BATCH = { warDrummer: ['samurai', 'support'], banneret: ['knightly', 'warden'], geomancer: ['mystic', 'bulwark'], bellWarden: ['yokai', 'bulwark'], falconer: ['wild', 'marksman'] } as const;
 
-test('batch 2: four have joined the roster and the Banneret still waits; units, traits and scores for all five', () => {
+test('batch 2: all five have joined the roster (the Banneret with the other eleven, docs/notes/heroes-join-2.md); units, traits and scores for all five', () => {
   for (const [k, traits] of Object.entries(BATCH)) {
-    const joined = k !== 'banneret';
+    const joined = true;
     assert.equal(ALL_HEROES.includes(k), joined, k);
     assert.equal(COMING_HEROES.includes(k), !joined, k);
     assert.equal(UNITS[k].side, 'hero');

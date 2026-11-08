@@ -566,60 +566,6 @@ export const HERO_QUIPS: Record<string, HeroQuips> = {
     revived: ['Heard my hawk whistling overhead and couldn\'t stay down!', 'Back in the heather! Glove up, bird ready!', 'A quick gust of wind and I am on my feet!'],
     lowHp: ['They are crowding the falconer! Shoo! Off with you!', 'My leather gauntlet is not a tower shield!', 'Need some space and a plaster over here!'],
   },  // ---- the five Mythics (docs/notes/mythic-heroes.md)
-  vael: {
-    hired: ['I refused a throne once. I shall not refuse a worthy company.', 'My crown is heavy. Your cause had better be heavier.', 'Kneel? No. Stand beside me. That is the honour.'],
-    placed: ['Here the sun stops. Here the line holds.', 'Let them come into my shadow. It is roomier than it looks.', 'A sovereign stands where the fighting is thickest.'],
-    won: ['The field kneels. I did ask nicely, at first.', 'Another dawn earned. Mine can wait a little longer.', 'Well fought. You may keep the crowns. I have enough.'],
-    lost: ['Even an eclipse must pass. We shall return.', 'A kingdom fell once around me. This is merely a battle.', 'Retreat in good order. Crowns do not run.'],
-    levelUp: ['The black sun widens. Good.', 'My crown remembers more of its old weight.', 'Another age of strength, returned to me.'],
-    ultimate: ['KNEEL BEFORE NIGHT!', 'THE SUN DOES NOT RISE TODAY!', 'BOW TO THE ECLIPSE!'],
-    revived: ['I have waited out longer nights than this.', 'A sovereign does not stay down. It is unseemly.', 'Back on my feet. Do not mention it to the court.'],
-    lowHp: ['My armour is dented and my patience thinner.', 'Shield me, someone. A crown is a poor helmet.', 'The eclipse dims. Hold them off a moment.'],
-  },
-  astrax: {
-    hired: ['I was a star once. Now I am your star. Do try to keep up.', 'The sky sent me down. I chose to stay for you.', 'Mind the tail. It is older than most kingdoms.'],
-    placed: ['High ground, clear sky. Perfect for a little starfire.', 'From here I can see every foe. And every constellation.', 'Point me at their shields. I am feeling peckish.'],
-    won: ['A fine meal of shields and a warm evening glow.', 'The heavens approve. I asked them personally.', 'Burnt, scattered and humbled. Splendid.'],
-    lost: ['Even stars fall. I simply prefer to do it upwards.', 'My core flickers. We shall burn brighter next time.', 'Retreat to the clouds! Well, the nearest hill.'],
-    levelUp: ['Another star kindles in my chest!', 'My breath burns half a heaven hotter now.', 'The constellations whisper. They are impressed.'],
-    ultimate: ['HEAVENFALL! LOOK UP!', 'LET THE SKY COME DOWN!', 'BURN, CONSTELLATIONS, BURN!'],
-    revived: ['A star never truly goes out. It merely sulks.', 'Rekindled! Where was I? Ah yes, burning things.', 'The last star rises again. Naturally.'],
-    lowHp: ['My light is guttering! Someone fetch me a shield to eat!', 'Scales cracked and core dimming. Not ideal.', 'Even a dragon needs a moment. Cover me!'],
-  },
-  ilyra: {
-    hired: ['I was buried with every name I failed. Not one more.', 'My vow is simple. This time, everyone comes home.', 'A spear in one hand, mercy in the other. Both are yours.'],
-    placed: ['I shall stand where the wounded fall.', 'Stay close. My halo is broken, but it still shelters.', 'Fight bravely. I will see you all through it.'],
-    won: ['Everyone is breathing. That is the only victory.', 'Count heads. All of them? Good. Then we have won.', 'A battle without a funeral. My favourite kind.'],
-    lost: ['We fall back together, or not at all.', 'Carry the wounded first. I shall carry the rest.', 'Not today. But I do not leave my vows unfinished.'],
-    levelUp: ['More mercy, earned the hard way.', 'My halo mends a little more with every battle.', 'Stronger hands to hold the living.'],
-    ultimate: ['DEATH IS DENIED!', 'NOT ONE OF YOU FALLS TODAY!', 'BACK, GRAVE! THEY ARE MINE!'],
-    revived: ['I have climbed out of a grave before. This was easy.', 'Up again. The vow is not finished.', 'Unburied, once more. Who needs me?'],
-    lowHp: ['I am bleeding. Heal the others first.', 'My halo flickers. Hold the line for me!', 'Do not let them reach the wounded behind me!'],
-  },
-  orrun: {
-    hired: ['The roots have chosen you. I shall stand with them.', 'I am old, slow and very difficult to knock over.', 'The first forest grew on my brow. I shall guard yours.'],
-    placed: ['Here I take root. Let them break upon the bark.', 'Shelter behind me, little saplings.', 'This ground is good. It shall hold.'],
-    won: ['The forest stands. As it always has.', 'Every wound they gave me, I returned as shelter.', 'Rest now. I shall keep watch through the night.'],
-    lost: ['Even oaks bend in the storm. We shall grow back.', 'Fall back to the old roots. They remember us.', 'Slowly now. I do not retreat quickly.'],
-    levelUp: ['Another ring around my heartwood.', 'My roots go deeper. The world feels steadier.', 'New leaves on old branches. Splendid.'],
-    ultimate: ['THE WORLD STANDS!', 'ROOTS, HOLD THEM FAST!', 'SHELTER BENEATH THE FIRST FOREST!'],
-    revived: ['Cut down, and green again by spring.', 'A tree that falls may still put out shoots.', 'Up I grow. Slowly, but surely.'],
-    lowHp: ['My bark is splintering. Shield the young ones!', 'Deep roots, shallow breath. Help me hold!', 'Even I can be felled. Quickly now!'],
-  },
-  nyxara: {
-    hired: ['I have seen every way this ends. I prefer the one with you.', 'Your future was rather untidy. I shall sort it out.', 'A forgotten queen at your service. Do try to remember me.'],
-    placed: ['I have stood here before, in a future you never saw.', 'Stay where I put you. I have plans for this spot.', 'Three moves ahead, and two of them are rather clever.'],
-    won: ['Exactly as I foresaw. Well, the third version.', 'Victory, in this timeline at least.', 'I did warn them. Several futures ago.'],
-    lost: ['That ending is unwritten. I shall write a better one.', 'A poor timeline. We shall not keep it.', 'Even fate stumbles. Fall back, and remember this.'],
-    levelUp: ['Another future opens before me.', 'My hands hold more endings than before.', 'Clearer sight. The threads are lovely today.'],
-    ultimate: ['REWRITE FATE!', 'THAT WOUND NEVER HAPPENED!', 'BACK THREE BREATHS, ALL OF YOU!'],
-    revived: ['I foresaw my fall. I also foresaw this.', 'A small detour through an ending. Nothing more.', 'Returned, with notes for next time.'],
-    lowHp: ['This is not one of the futures I liked!', 'Guard me! My endings are running short!', 'Unravelling! Someone tie off this thread!'],
-  },
-};
-
-/** The twenty coming heroes' lines (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
-export const COMING_QUIPS: Record<string, HeroQuips> = {
   banneret: {
     hired: ['The keep\'s colours never touch the mud while I draw breath.', 'Lance couched, guidon ironed, horse brushed. Ready for duty.', 'Follow the silk standard and try to look heroic, everyone.'],
     placed: ['Planting the colours right here! Form up around me!', 'A brisk canter first, then we plant the pole in their toes.', 'Eyes on the pennant! Backs straight!'],
@@ -730,6 +676,60 @@ export const COMING_QUIPS: Record<string, HeroQuips> = {
     revived: ['Breached from the deep! Still swinging the chain!', 'Tide brought me back, and I am twice as salty!', 'Haul up the iron! We are not sunk yet!'],
     lowHp: ['Taking on water fast here, shipmates!', 'My barnacle plate is cracked right through!', 'Need a patch on the hull before I go under!'],
   },
+  vael: {
+    hired: ['I refused a throne once. I shall not refuse a worthy company.', 'My crown is heavy. Your cause had better be heavier.', 'Kneel? No. Stand beside me. That is the honour.'],
+    placed: ['Here the sun stops. Here the line holds.', 'Let them come into my shadow. It is roomier than it looks.', 'A sovereign stands where the fighting is thickest.'],
+    won: ['The field kneels. I did ask nicely, at first.', 'Another dawn earned. Mine can wait a little longer.', 'Well fought. You may keep the crowns. I have enough.'],
+    lost: ['Even an eclipse must pass. We shall return.', 'A kingdom fell once around me. This is merely a battle.', 'Retreat in good order. Crowns do not run.'],
+    levelUp: ['The black sun widens. Good.', 'My crown remembers more of its old weight.', 'Another age of strength, returned to me.'],
+    ultimate: ['KNEEL BEFORE NIGHT!', 'THE SUN DOES NOT RISE TODAY!', 'BOW TO THE ECLIPSE!'],
+    revived: ['I have waited out longer nights than this.', 'A sovereign does not stay down. It is unseemly.', 'Back on my feet. Do not mention it to the court.'],
+    lowHp: ['My armour is dented and my patience thinner.', 'Shield me, someone. A crown is a poor helmet.', 'The eclipse dims. Hold them off a moment.'],
+  },
+  astrax: {
+    hired: ['I was a star once. Now I am your star. Do try to keep up.', 'The sky sent me down. I chose to stay for you.', 'Mind the tail. It is older than most kingdoms.'],
+    placed: ['High ground, clear sky. Perfect for a little starfire.', 'From here I can see every foe. And every constellation.', 'Point me at their shields. I am feeling peckish.'],
+    won: ['A fine meal of shields and a warm evening glow.', 'The heavens approve. I asked them personally.', 'Burnt, scattered and humbled. Splendid.'],
+    lost: ['Even stars fall. I simply prefer to do it upwards.', 'My core flickers. We shall burn brighter next time.', 'Retreat to the clouds! Well, the nearest hill.'],
+    levelUp: ['Another star kindles in my chest!', 'My breath burns half a heaven hotter now.', 'The constellations whisper. They are impressed.'],
+    ultimate: ['HEAVENFALL! LOOK UP!', 'LET THE SKY COME DOWN!', 'BURN, CONSTELLATIONS, BURN!'],
+    revived: ['A star never truly goes out. It merely sulks.', 'Rekindled! Where was I? Ah yes, burning things.', 'The last star rises again. Naturally.'],
+    lowHp: ['My light is guttering! Someone fetch me a shield to eat!', 'Scales cracked and core dimming. Not ideal.', 'Even a dragon needs a moment. Cover me!'],
+  },
+  ilyra: {
+    hired: ['I was buried with every name I failed. Not one more.', 'My vow is simple. This time, everyone comes home.', 'A spear in one hand, mercy in the other. Both are yours.'],
+    placed: ['I shall stand where the wounded fall.', 'Stay close. My halo is broken, but it still shelters.', 'Fight bravely. I will see you all through it.'],
+    won: ['Everyone is breathing. That is the only victory.', 'Count heads. All of them? Good. Then we have won.', 'A battle without a funeral. My favourite kind.'],
+    lost: ['We fall back together, or not at all.', 'Carry the wounded first. I shall carry the rest.', 'Not today. But I do not leave my vows unfinished.'],
+    levelUp: ['More mercy, earned the hard way.', 'My halo mends a little more with every battle.', 'Stronger hands to hold the living.'],
+    ultimate: ['DEATH IS DENIED!', 'NOT ONE OF YOU FALLS TODAY!', 'BACK, GRAVE! THEY ARE MINE!'],
+    revived: ['I have climbed out of a grave before. This was easy.', 'Up again. The vow is not finished.', 'Unburied, once more. Who needs me?'],
+    lowHp: ['I am bleeding. Heal the others first.', 'My halo flickers. Hold the line for me!', 'Do not let them reach the wounded behind me!'],
+  },
+  orrun: {
+    hired: ['The roots have chosen you. I shall stand with them.', 'I am old, slow and very difficult to knock over.', 'The first forest grew on my brow. I shall guard yours.'],
+    placed: ['Here I take root. Let them break upon the bark.', 'Shelter behind me, little saplings.', 'This ground is good. It shall hold.'],
+    won: ['The forest stands. As it always has.', 'Every wound they gave me, I returned as shelter.', 'Rest now. I shall keep watch through the night.'],
+    lost: ['Even oaks bend in the storm. We shall grow back.', 'Fall back to the old roots. They remember us.', 'Slowly now. I do not retreat quickly.'],
+    levelUp: ['Another ring around my heartwood.', 'My roots go deeper. The world feels steadier.', 'New leaves on old branches. Splendid.'],
+    ultimate: ['THE WORLD STANDS!', 'ROOTS, HOLD THEM FAST!', 'SHELTER BENEATH THE FIRST FOREST!'],
+    revived: ['Cut down, and green again by spring.', 'A tree that falls may still put out shoots.', 'Up I grow. Slowly, but surely.'],
+    lowHp: ['My bark is splintering. Shield the young ones!', 'Deep roots, shallow breath. Help me hold!', 'Even I can be felled. Quickly now!'],
+  },
+  nyxara: {
+    hired: ['I have seen every way this ends. I prefer the one with you.', 'Your future was rather untidy. I shall sort it out.', 'A forgotten queen at your service. Do try to remember me.'],
+    placed: ['I have stood here before, in a future you never saw.', 'Stay where I put you. I have plans for this spot.', 'Three moves ahead, and two of them are rather clever.'],
+    won: ['Exactly as I foresaw. Well, the third version.', 'Victory, in this timeline at least.', 'I did warn them. Several futures ago.'],
+    lost: ['That ending is unwritten. I shall write a better one.', 'A poor timeline. We shall not keep it.', 'Even fate stumbles. Fall back, and remember this.'],
+    levelUp: ['Another future opens before me.', 'My hands hold more endings than before.', 'Clearer sight. The threads are lovely today.'],
+    ultimate: ['REWRITE FATE!', 'THAT WOUND NEVER HAPPENED!', 'BACK THREE BREATHS, ALL OF YOU!'],
+    revived: ['I foresaw my fall. I also foresaw this.', 'A small detour through an ending. Nothing more.', 'Returned, with notes for next time.'],
+    lowHp: ['This is not one of the futures I liked!', 'Guard me! My endings are running short!', 'Unravelling! Someone tie off this thread!'],
+  },
+};
+
+/** The twenty coming heroes' lines (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
+export const COMING_QUIPS: Record<string, HeroQuips> = {
 };
 
 /** Banter between two heroes sharing a trait: the first line is said by one, the second by the other. Keyed by trait id; the pair is picked at random. */

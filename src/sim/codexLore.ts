@@ -139,10 +139,6 @@ export const HERO_STORY: Record<string, string> = {
   geomancer: 'Tenzin listens to the slow grumbling of the bedrock and turns its complaints into jagged granite spires. With a sharp stamp of her staff, whole enemy files are tossed skyward or fenced behind fresh stone.',
   bellWarden: 'Kavi marches into battle with a two-ton bronze temple bell upon his shoulders. One swing of the striker knocks the front rank flat and wraps his neighbours in a soothing golden chime.',
   falconer: 'Aisling whistles from the heather, and her gyrfalcon drops out of the sun like a feathered thunderbolt. Between stoops, a gale from its wings blows encroaching swordsmen back down the slope.',
-};
-
-/** The twenty coming heroes' stories (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
-export const COMING_STORY: Record<string, string> = {
   banneret: 'Isolde carries the keep\'s silk guidon at the tip of her couched lance. When she plants the standard in the thick of the press, even the most bruised footmen straighten their backs and swing harder.',
   astralSphinx: 'Nenet is older than the desert pyramids and twice as fond of riddles. She lounges in starlight until a foe steps too close, and a wrong answer sends the asker flying.',
   mirageDancer: 'Zahara spins across the dunes in a haze of shimmering silk and twin scimitars. Foes who swing at her find only a laughing sand-mirage while she cuts from behind.',
@@ -154,4 +150,8 @@ export const COMING_STORY: Record<string, string> = {
   corsairSurgeon: 'Tariq learned his anatomy during pitch-black boarding actions and sees no reason to slow down on dry land. A splash of spiced rum and a brisk stitch put the wounded right back into the scrap.',
   harpooner: 'Siku spent twenty winters hauling leviathans from the icy main and treats enemy warlords much the same. Once his barbed iron bites, a sharp haul on the line drags the quarry straight to his boots.',
   seaReaver: 'Nakoa swings a barnacle-crusted ship\'s anchor as though it were a willow switch. Each sweeping haul drags clustered foes into the surf before his crushing overhead slam splits the deck.',
+};
+
+/** The twenty coming heroes' stories (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table above when its hero joins `ALL_HEROES`). */
+export const COMING_STORY: Record<string, string> = {
 };

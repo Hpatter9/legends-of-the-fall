@@ -85,11 +85,6 @@ export const PASSIVES: Readonly<Record<string, AwakenPassive>> = {
   geomancer: { name: 'Shale Ripple', ability: 'mithrilRipple', text: 'Blows taken now and then stun the attacker' },
   bellWarden: { name: 'Sanctuary Counter', ability: 'ironPalm', text: 'Blows taken now and then are answered at once' },
   falconer: { name: 'Stooping Talons', ability: 'pinpoint', text: 'Shots now and then make the foe bleed' },
-};
-
-/** The twenty coming heroes' awakened passives (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table
- *  above when its hero joins `ALL_HEROES`). Each takes an ability no roster hero has. */
-export const COMING_PASSIVES: Readonly<Record<string, AwakenPassive>> = {
   banneret: { name: 'Royal Spoils', ability: 'spoilsOfWar', text: 'A kill mends the weakest friend' },
   astralSphinx: { name: 'Starlit Aegis', ability: 'secondWind', text: 'Below a third hp a great shield forms round her' },
   mirageDancer: { name: 'Desert Rush', ability: 'adrenaline', text: 'Below a third hp she is hastened for a while' },
@@ -101,6 +96,11 @@ export const COMING_PASSIVES: Readonly<Record<string, AwakenPassive>> = {
   corsairSurgeon: { name: 'Boarders\' Sprint', ability: 'sprint', text: 'Starts each fight in haste for a longer stretch' },
   harpooner: { name: 'Whaler\'s Focus', ability: 'sapphireFocus', text: 'Every sixth throw adds to his skill charge' },
   seaReaver: { name: 'Barnacle Wall', ability: 'boneWall', text: 'A kill wraps him in a shield' },
+};
+
+/** The twenty coming heroes' awakened passives (docs/notes/twenty-heroes.md: they wait for their battle sheets; each row moves into the table
+ *  above when its hero joins `ALL_HEROES`). Each takes an ability no roster hero has. */
+export const COMING_PASSIVES: Readonly<Record<string, AwakenPassive>> = {
 };
 
 /** The strength of a passive at each step (the equipment's Mythic is 0.7): the first step switches it on, the second makes it stronger. */

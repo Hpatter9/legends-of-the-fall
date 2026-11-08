@@ -500,14 +500,14 @@ const FIRST_EIGHT = ['kitsune', 'karasu', 'yamabushi', 'gorgon', 'samuraiCommand
  *  and a few heroes whose kits fall behind against the stronger foes a level-30 team now meets (the Samurai, Ninja Monk, Buccaneer, Demon Swordsman)
  *  fire theirs more than twice in a long fight. `test/hero-balance-ultimates.test.ts` holds every hero within the band of the roster average with them. */
 const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
-  knight: { rate: 1.46, power: 0.512 }, // (SKILLS-10, on main 0.357: 0.722 to 0.57, he stood +6.8 at level 30 with the merged tactics)
+  knight: { rate: 1.46, power: 0.36 }, // (SKILLS-10, on main 0.357: 0.722 to 0.57, he stood +6.8 at level 30 with the merged tactics; 0.512 to 0.36 when the other eleven of the twenty joined and the roster average moved, docs/notes/heroes-join-2.md)
   samurai: { rate: 2.33, power: 3.109 },
   kunoichi: { rate: 1.65, power: 2.64 },
   archer: { rate: 0.65, power: 1.544 }, // (SKILLS-10, on main 0.357: 1.288 to 1.61, she stood -6.4 at level 30, stage 92)
   wizard: { rate: 0.51, power: 1.666 }, // (RPG-SPELLS batch 6: 1.44 before; it carries the Wall of Fire's lighter skill 2 at level 30)
   peasant: { rate: 1.11, power: 0.723 },
   ninjaMonk: { rate: 2.41, power: 3.314 },
-  wanderer: { rate: 0.37, power: 1.244 },
+  wanderer: { rate: 0.55, power: 1.244 }, // (the meter's rate 0.37 to 0.55 when the other eleven of the twenty joined, docs/notes/heroes-join-2.md)
   lightningMage: { rate: 0.92, power: 1.373 },
   kitsune: { rate: 0.8, power: 1.953 }, // (the joint rebalance: 2.953 to 2.169, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 7: Mass Polymorph; 0.6 and 0.71 were the Nine-Tailed Dream's charm, far stronger a hold)
   karasu: { rate: 0.77, power: 5.069 }, // (RPG-SPELLS batch 7: the Cloud of Daggers cuts a second at a time; 3.07 was Feather Storm's one blow)
@@ -541,12 +541,12 @@ const TUNE: Record<string, NonNullable<Skill['tuned']>> = {
   arcBlade: { rate: 0.59, power: 2.04 }, // (the joint rebalance: 1.878 to 2.403, level-30 parity, docs/notes/joint-rebalance.md) // (RPG-SPELLS batch 4: Lightning Storm, a teleport slash with its stuns; 2.42 for Thunder Cascade)
   dreadPirate: { rate: 1.06, power: 1.699 }, // (the joint rebalance: 1.376 to 1.86, level-30 parity, docs/notes/joint-rebalance.md)
   siegeBot: { rate: 0.5, power: 2.341 },
-  priestess: { rate: 0.38, power: 0.371 },
+  priestess: { rate: 0.38, power: 0.5 }, // (0.371 to 0.5 when the other eleven of the twenty joined, docs/notes/heroes-join-2.md)
   dragoon: { rate: 1.1, power: 2.838 },
   juggernaut: { rate: 1.55, power: 1.55 },
   sage: { rate: 2.1, power: 1.677 }, // (TACTICS, merged over FOE-STYLES: rate 1.7 to 2.1, level-30 parity; his Arcane Surge fills pools and shields, so its power is no lever, docs/notes/tactics.md)
   demonSwordsman: { rate: 1.8, power: 2.704 }, // (RPG-SPELLS batch 4: Metamorphosis drags three foes in first; 2.06 before)
-  tyrant: { rate: 0.88, power: 1.187 },
+  tyrant: { rate: 0.88, power: 1.05 }, // (1.187 to 1.05 when the other eleven of the twenty joined, docs/notes/heroes-join-2.md)
 };
 
 /** Every hero's ultimate: the first eight's (as `first` gives them) and the rest's, which unlock at `ULT_LEVEL`; `abilities.ts` puts them in its kits. */

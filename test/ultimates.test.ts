@@ -42,7 +42,7 @@ const cast = (b: Battle, me: Unit): BattleEvent[] => {
 };
 
 test('every hero has an ultimate, and it charges slower than the skill', () => {
-  assert.equal(ALL_HEROES.length, 59);
+  assert.equal(ALL_HEROES.length, 70);
   for (const k of ALL_HEROES) assert.ok(KITS[k].ultimate, `${k} has an ultimate`);
   // (no two heroes share one)
   const names = ALL_HEROES.map((k) => keyOf(KITS[k].ultimate!));

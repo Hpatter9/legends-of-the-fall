@@ -56,8 +56,8 @@ test('twenty heroes join, each with a kit, a tree, traits, a tavern spot and a s
     assert.ok(d.role.length > 10, id);
   }
   assert.equal(new Set(NEW).size, NEW.length);
-  assert.equal(ALL_HEROES.length, 59);
-  assert.equal(new Set(ALL_HEROES).size, 59);
+  assert.equal(ALL_HEROES.length, 70);
+  assert.equal(new Set(ALL_HEROES).size, 70);
 });
 
 test('every new hero has art: a sheet for each grade with walk, attack, idle, hurt and death rows, drawn at a sensible size', () => {

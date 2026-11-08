@@ -40,8 +40,9 @@ test('every hero has one pool: 19 mana and 35 stamina, and summons and foes have
   for (const h of ALL_HEROES) assert.ok(kits[h], h);
   const mana = ALL_HEROES.filter((h) => kits[h].pool === 'mana');
   // (19 mana and 35 stamina among the 54; the five Mythics add two of mana, Astrax and Nyxara, and three of stamina, docs/notes/mythic-heroes.md)
-  assert.equal(mana.length, 21, mana.join());
-  assert.equal(ALL_HEROES.length - mana.length, 38);
+  // (and the twenty's other eleven add six of mana, Nenet, Corvus, Cyra, Soraya, Gabriela and Tariq, and five of stamina, docs/notes/heroes-join-2.md)
+  assert.equal(mana.length, 27, mana.join());
+  assert.equal(ALL_HEROES.length - mana.length, 43);
   const b = arena();
   assert.equal(poolOf(spawn(b, 'wolf', 1, 1)), undefined);
   assert.equal(poolOf(spawn(b, 'skeleton', 2, 2)), undefined);

@@ -1195,5 +1195,159 @@
     "motif": "a violet dome of frozen time marked with clock hands",
     "atlas": 11,
     "cell": 9
+  },
+  {
+    "id": "skill:Standard Charge",
+    "name": "Standard Charge",
+    "motif": "a blue fleur-de-lis guidon streaming from a gold lance point",
+    "atlas": 11,
+    "cell": 10
+  },
+  {
+    "id": "skill:Oriflamme of the Keep",
+    "name": "Oriflamme of the Keep",
+    "motif": "a great flame-red banner with a gold castle on a gilded pole",
+    "atlas": 11,
+    "cell": 11
+  },
+  {
+    "id": "skill:Rift Pounce",
+    "name": "Rift Pounce",
+    "motif": "a golden lion paw with long claws tearing through a violet star rift",
+    "atlas": 11,
+    "cell": 12
+  },
+  {
+    "id": "skill:The Last Riddle",
+    "name": "The Last Riddle",
+    "motif": "a violet constellation of glyph-lines bursting from one bright core",
+    "atlas": 11,
+    "cell": 13
+  },
+  {
+    "id": "skill:Whirling Veils",
+    "name": "Whirling Veils",
+    "motif": "teal silk veils spinning round two crescent blades",
+    "atlas": 11,
+    "cell": 14
+  },
+  {
+    "id": "skill:Dance of Seven Mirages",
+    "name": "Dance of Seven Mirages",
+    "motif": "a ring of seven pale shimmering dancer silhouettes in violet haze",
+    "atlas": 11,
+    "cell": 15
+  },
+  {
+    "id": "skill:Censer Swing",
+    "name": "Censer Swing",
+    "motif": "a swinging bronze censer on a chain trailing green smoke",
+    "atlas": 12,
+    "cell": 0
+  },
+  {
+    "id": "skill:Black Miasma",
+    "name": "Black Miasma",
+    "motif": "a towering black and green plague cloud flowering from one core",
+    "atlas": 12,
+    "cell": 1
+  },
+  {
+    "id": "skill:Concussion Mortar",
+    "name": "Concussion Mortar",
+    "motif": "a mortar shell rising from a fiery blast and shock ring",
+    "atlas": 12,
+    "cell": 2
+  },
+  {
+    "id": "skill:Shell Storm",
+    "name": "Shell Storm",
+    "motif": "a rain of burning shells falling over a row of fiery bursts",
+    "atlas": 12,
+    "cell": 3
+  },
+  {
+    "id": "skill:Gravity Well",
+    "name": "Gravity Well",
+    "motif": "a collapsing violet star whirlpool pulling inward",
+    "atlas": 12,
+    "cell": 4
+  },
+  {
+    "id": "skill:Supernova Alignment",
+    "name": "Supernova Alignment",
+    "motif": "planets aligned on a rod flaring into a golden supernova",
+    "atlas": 12,
+    "cell": 5
+  },
+  {
+    "id": "skill:Chains of Judgement",
+    "name": "Chains of Judgement",
+    "motif": "two crossed solar chains glowing gold-white",
+    "atlas": 12,
+    "cell": 6
+  },
+  {
+    "id": "skill:Solar Tribunal",
+    "name": "Solar Tribunal",
+    "motif": "a ring of sun discs round a shaft of golden light",
+    "atlas": 12,
+    "cell": 7
+  },
+  {
+    "id": "skill:Halo Dive",
+    "name": "Halo Dive",
+    "motif": "a golden halo diving in a streak of light",
+    "atlas": 12,
+    "cell": 8
+  },
+  {
+    "id": "skill:Descent of the Host",
+    "name": "Descent of the Host",
+    "motif": "three tiers of golden wings falling from the sky",
+    "atlas": 12,
+    "cell": 9
+  },
+  {
+    "id": "skill:Boarding Swing",
+    "name": "Boarding Swing",
+    "motif": "a flintlock pistol flashing over a coil of rigging rope",
+    "atlas": 12,
+    "cell": 10
+  },
+  {
+    "id": "skill:Rum Ration",
+    "name": "Rum Ration",
+    "motif": "a ring of red healing flasks round a bright core, splashing",
+    "atlas": 12,
+    "cell": 11
+  },
+  {
+    "id": "skill:Barbed Harpoon",
+    "name": "Barbed Harpoon",
+    "motif": "a barbed harpoon on a trailing teal line",
+    "atlas": 12,
+    "cell": 12
+  },
+  {
+    "id": "skill:Leviathan Line",
+    "name": "Leviathan Line",
+    "motif": "a sea serpent as a taut teal line with a harpoon barb",
+    "atlas": 12,
+    "cell": 13
+  },
+  {
+    "id": "skill:Breaker Rush",
+    "name": "Breaker Rush",
+    "motif": "a cresting teal wave breaking in white foam",
+    "atlas": 12,
+    "cell": 14
+  },
+  {
+    "id": "skill:Wrath of the Reef",
+    "name": "Wrath of the Reef",
+    "motif": "an iron anchor framed by red coral in surf",
+    "atlas": 12,
+    "cell": 15
   }
 ]
