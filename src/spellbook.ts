@@ -1,161 +1,200 @@
-// The Spellbook: the king's loadout under the Schools of the Crown (KING-SPELLS batch 2, `sim/schools.ts`): the ruler's school and its
-// Decree, three school slots and the open slot, and every spell with its mana cost, cooldown, text and schools; one not yet known says where it comes from (the Mage Tower, a milestone, or a chest's scroll: spells
-// are not bought; `sim/spellSources.ts`). Tap a spell to equip or unequip it. Self-contained:
-// `spellbookView()` builds the book's body (the Spells tab's library puts it on a lectern) and `openSpellbook()` still shows it as an overlay. `bindSpellbook` gives it the Meta once (and
-// a callback for when something changed, to save and refresh the page). All the rules are in `sim/spells.ts`.
-
+// The king's spell loadout and collection, shared by the painted study and the
+// standard overlay. Rules and saves stay in the simulation; this is presentation.
 import { spellIconHtml } from './spellIcons';
+import { menuChoice, menuFoot, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
 import type { Meta } from './sim/meta';
 import { spellLock } from './sim/spellSources';
-import { SPELLS, SPELL_IDS, type SpellId } from './sim/spells';
+import { SPELLS, SPELL_IDS, RANK_MAX, RIDERS, type SpellId } from './sim/spells';
 import { castList, equipBlock, equipSpell, fitSchool, schoolOf, schoolsOfSpell, SCHOOL_SLOTS, unequipSpell } from './sim/schools';
 import { DECREES } from './sim/decrees';
 import { marksEarned, marksFree, rankBlock, rankIn, rankUp } from './sim/spellRanks';
-import { RANK_MAX, RIDERS } from './sim/spells';
-
-const CSS = `
-#spellbook { position: fixed; inset: 0; z-index: 8; display: flex; flex-direction: column; gap: 10px; padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 10px); background: rgb(var(--s1-rgb) / 0.97); overflow-y: auto; touch-action: pan-y; color: var(--text); }
-#spellbook[hidden] { display: none; }
-#spellbook header { display: flex; align-items: center; gap: 10px; }
-#spellbook h2 { margin: 0; flex: 1; font-size: 20px; color: var(--gold, var(--e7)); }
-.sbBody { display: flex; flex-direction: column; gap: 8px; max-width: 480px; width: 100%; margin: 0 auto; }
-.sbSchool { display: flex; flex-direction: column; gap: 2px; padding: 8px; border: 1px solid var(--gold, var(--e7)); border-radius: 6px; background: var(--s3); font-size: 12px; }
-.sbSchool b { font-size: 14px; color: var(--gold, var(--e7)); }
-.sbSchool span { color: var(--text-dim); }
-.sbSlots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.sbSlot.open { border-color: var(--b4); }
-.sbSlot small { display: block; font-size: 10px; color: var(--text-dim); letter-spacing: 0.04em; }
-.sbCard .tags { color: var(--e8); font-size: 11px; }
-.sbMarks { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); }
-.sbMarks b { color: var(--gold, var(--e7)); font-size: 14px; }
-.sbCard .rank { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--b4); }
-.sbCard .rank i { font-style: normal; letter-spacing: 2px; color: var(--gold, var(--e7)); }
-.sbCard .rider { font-size: 11px; color: var(--text-dim); }
-.sbCard .rider.on { color: var(--e8); }
-.sbCard .acts { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
-.sbSlot { min-height: 44px; padding: 6px; border: 1px dashed var(--s7); border-radius: 6px; background: var(--s3); color: inherit; font: inherit; font-size: 12px; }
-.sbSlot.on { border-style: solid; border-color: var(--gold, var(--e7)); }
-.sbSlot em { display: block; font-style: normal; color: var(--b4); font-size: 11px; }
-.sbCard { display: flex; flex-direction: column; gap: 3px; padding: 8px; border: 1px solid var(--s7); border-radius: 6px; background: var(--s3); font-size: 12px; }
-.sbCard.on { border-color: var(--gold, var(--e7)); }
-.sbCard.locked { opacity: 0.8; }
-.sbCard .top { display: flex; align-items: baseline; gap: 8px; }
-.sbCard .top b { flex: 1; font-size: 14px; }
-.sbCard .stats { color: var(--b4); font-size: 11px; }
-.sbCard .text { color: var(--text-dim); }
-.sbCard button { align-self: flex-end; min-height: 36px; }
-.sbCard .how { color: var(--e8); font-size: 11px; }
-.sbCard .how i { display: block; height: 6px; margin-top: 3px; background: var(--s1); border: 1px solid var(--s7); border-radius: 3px; overflow: hidden; }
-.sbCard .how i span { display: block; height: 100%; background: linear-gradient(var(--e8), var(--e5)); }
-.sbHint { font-size: 11px; color: var(--text-dim); text-align: center; }
-.sbNote { min-height: 15px; font-size: 12px; text-align: center; color: var(--e8); }
-`;
 
 let meta: Meta | null = null;
 let changed: () => void = () => {};
-/** The chosen ruler's id (a page setting: the school follows it). */
 let rulerId: () => string = () => '';
-let root: HTMLElement | null = null;
-let styled = false;
+let overlay: OrnateMenu | null = null;
 
-/** Give the spellbook the Meta to read and change, what to call after a change (save, redraw the page), and the chosen ruler. */
 export function bindSpellbook(m: Meta, onChange: () => void, ruler: () => string = () => ''): void {
   meta = m;
   changed = onChange;
   rulerId = ruler;
 }
 
-function addStyle(): void {
-  if (styled) return;
-  styled = true;
-  const style = document.createElement('style');
-  style.textContent = CSS;
-  document.head.append(style);
-}
-
-const el = (tag: string, cls = '', html = '') => {
+const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
-  e.innerHTML = html;
+  if (text) e.textContent = text;
   return e;
 };
 
-/** The book's body: the power meter, the three slots and a card for every spell. `redraw()` rebuilds it from the Meta (after a change anywhere). */
+type Filter = 'known' | 'school' | 'locked';
+
 export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElement; redraw(): void; known(): string } {
-  addStyle();
   const body = el('div', 'sbBody');
+  let filter: Filter = 'known';
   let note = '';
-  const act = (fn: () => boolean, refusal: string): void => {
-    note = fn() ? '' : refusal;
-    if (!note) changed();
+  let schoolExpanded = false;
+  const expanded = new Set<SpellId>();
+  const act = (fn: () => boolean, refusal: string, success: string): void => {
+    const focused = document.activeElement instanceof HTMLElement ? document.activeElement.dataset.sbFocus : undefined;
+    const ok = fn();
+    note = ok ? success : refusal;
+    if (ok) changed();
     redraw();
+    if (focused) {
+      const target = body.querySelector<HTMLElement>(`[data-sb-focus="${focused}"]`)
+        ?? (focused.startsWith('rank-') ? body.querySelector<HTMLElement>(`[data-spell="${focused.slice(5)}"] .sbEquip`) : null);
+      target?.focus({ preventScroll: true });
+    }
   };
+
   function redraw(): void {
     if (!meta) return;
     const m = meta;
     const l = m.spellbook;
-    body.replaceChildren();
     const sc = schoolOf(rulerId());
     fitSchool(l, sc.id);
     const dc = DECREES[sc.decree];
-    body.append(el('div', 'sbSchool', `<b>School of ${sc.name}</b><span>Your ruler's school: three slots take its spells, the open slot any spell you know. Change ruler in Settings to change school.</span><span><b>Decree: ${dc.name}</b> · ${dc.text}. Once a fight, when its meter (under the mana) is full: tap the mana.</span>`));
+    body.replaceChildren();
 
-    const slots = el('div', 'sbSlots');
-    const slot = (id: SpellId | undefined, label: string, open: boolean) => {
-      const b = el('button', `sbSlot${id ? ' on' : ''}${open ? ' open' : ''}`, `<small>${label}</small>${id ? `${spellIconHtml(id)}<b>${SPELLS[id].name}</b><em>${SPELLS[id].cost} mana</em>` : '<span>Empty</span>'}`);
-      if (id) b.addEventListener('click', () => act(() => unequipSpell(l, id), ''));
-      slots.append(b);
+    const loadout = menuWell(body);
+    loadout.classList.add('sbLoadout');
+    const slots = menuSection(loadout, 'Battle loadout', '3 school slots + 1 open', 4);
+    slots.classList.add('sbSlots');
+    const slot = (id: SpellId | undefined, label: string, open: boolean, index: number) => {
+      const b = menuChoice(slots, { title: id ? SPELLS[id].name : 'Empty', on: !!id });
+      b.classList.add('sbSlot');
+      b.classList.toggle('open', open);
+      b.dataset.sbFocus = `slot-${index}`;
+      b.innerHTML = `<small>${label}</small>${id ? spellIconHtml(id) : '<span class="sbEmpty" aria-hidden="true">+</span>'}<b>${id ? SPELLS[id].name : 'Empty slot'}</b><em>${id ? `${SPELLS[id].cost} mana` : open ? 'Any school' : sc.name}</em>`;
+      b.setAttribute('aria-label', id ? `${label}: ${SPELLS[id].name}. Tap to unequip` : `${label}: empty. Choose a spell below`);
+      b.addEventListener('click', () => {
+        if (id) act(() => unequipSpell(l, id), '', `${SPELLS[id].name} unequipped.`);
+        else {
+          filter = open ? 'known' : 'school';
+          redraw();
+          body.querySelector<HTMLButtonElement>('.sbFilters button[aria-pressed="true"]')?.focus({ preventScroll: true });
+          body.querySelector('.sbFilters')?.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+        }
+      });
     };
-    for (let i = 0; i < SCHOOL_SLOTS; i++) slot(l.equipped[i], sc.name, false);
-    slot(l.open, 'Open', true);
-    body.append(slots, el('div', 'sbNote', note));
-    body.append(el('div', 'sbMarks', `<b>${marksFree(m)}</b><span>school marks free of ${marksEarned(m)} earned: one for each Mage Tower level and each army cleared. A mark raises a spell a rank (to ${RANK_MAX}).</span>`));
-    if (l.owned.length < SPELL_IDS.length) body.append(el('div', 'sbHint', 'Spells are not bought: the Mage Tower teaches them as it rises, the grand ones are earned in battle, and a gold chest may hold a scroll of any you lack.'));
+    for (let i = 0; i < SCHOOL_SLOTS; i++) slot(l.equipped[i], `School ${i + 1}`, false, i);
+    slot(l.open, 'Open', true, SCHOOL_SLOTS);
+    loadout.append(el('p', 'sbHint', 'Tap an equipped spell to free its slot.'));
 
-    // equipped first, then this school's known, the other known, then the ones not yet known (the Mage Tower's by level, then the milestones)
+    const school = el('details', 'sbSchool');
+    school.open = schoolExpanded;
+    school.append(el('summary', '', `School of ${sc.name} · ${dc.name}`));
+    school.append(el('p', '', `Your ruler grants three ${sc.name} slots and one open slot for any known spell. Change ruler in Settings to change school.`));
+    school.append(el('p', '', `Decree: ${dc.text}. Once a fight, tap the mana when the Decree meter is full.`));
+    school.addEventListener('toggle', () => { schoolExpanded = school.open; });
+    body.append(school);
+
+    const filters = el('div', 'sbFilters');
+    filters.setAttribute('role', 'group');
+    filters.setAttribute('aria-label', 'Browse spells');
+    const counts = {
+      known: l.owned.length,
+      school: sc.spells.length,
+      locked: SPELL_IDS.filter(id => !l.owned.includes(id)).length,
+    };
+    for (const [key, label] of [['known', 'Known'], ['school', 'Your school'], ['locked', 'Locked']] as const) {
+      const b = el('button', `sbFilter${filter === key ? ' on' : ''}`, `${label} · ${counts[key]}`);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(filter === key));
+      b.dataset.sbFocus = `filter-${key}`;
+      b.addEventListener('click', () => { filter = key; redraw(); body.querySelector<HTMLElement>(`[data-sb-focus="filter-${key}"]`)?.focus({ preventScroll: true }); });
+      filters.append(b);
+    }
+    body.append(filters);
+    const marks = el('details', 'sbMarks');
+    marks.append(el('summary', '', `✦ ${marksFree(m)} school ${marksFree(m) === 1 ? 'mark' : 'marks'} available`));
+    marks.append(el('p', '', `${marksEarned(m)} earned. Raise the Mage Tower or clear an army to earn marks. Each mark raises a spell one rank, up to rank ${RANK_MAX}.`));
+    body.append(marks);
+    const status = el('div', 'sbNote', note);
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    body.append(status);
+
     const on = castList(l);
-    const rank = (id: SpellId) => (on.includes(id) ? 0 : l.owned.includes(id) ? (sc.spells.includes(id) ? 1 : 2) : 3);
-    const order = [...SPELL_IDS].sort((a, b) => rank(a) - rank(b) || (spellLock(m, a)?.rank ?? 0) - (spellLock(m, b)?.rank ?? 0));
+    const priority = (id: SpellId) => on.includes(id) ? 0 : l.owned.includes(id) ? (sc.spells.includes(id) ? 1 : 2) : 3;
+    const order = [...SPELL_IDS].filter(id => filter === 'known' ? l.owned.includes(id) : filter === 'school' ? sc.spells.includes(id) : !l.owned.includes(id))
+      .sort((a, b) => priority(a) - priority(b) || (spellLock(m, a)?.rank ?? 0) - (spellLock(m, b)?.rank ?? 0));
+    const list = el('div', 'sbCollection');
+    list.setAttribute('aria-label', `${filter === 'school' ? sc.name : filter === 'known' ? 'Known' : 'Locked'} spells`);
+    body.append(list);
+    if (!order.length) list.append(el('p', 'sbHint sbComplete', 'Every spell has been learnt. Your collection is complete.'));
+    if (filter === 'locked' && order.length) list.append(el('p', 'sbHint', 'Learn spells from the Mage Tower, battle milestones or scrolls in gold and Mythic chests.'));
     for (const id of order) {
       const sp = SPELLS[id];
       const owned = l.owned.includes(id);
       const isOn = on.includes(id);
-      const card = el('div', `sbCard${isOn ? ' on' : ''}${owned ? '' : ' locked'}`);
-      card.append(el('div', 'top', `${spellIconHtml(id)}<b>${sp.name}</b>`));
-      card.append(el('div', 'stats', `${sp.cost} mana · ${sp.cooldownMs / 1000}s cooldown`));
-      card.append(el('div', 'text', sp.text));
       const rk = rankIn(l, id);
-      card.append(el('div', 'rank', `<span>Rank ${rk} of ${RANK_MAX}</span><i>${'◆'.repeat(rk)}${'◇'.repeat(RANK_MAX - rk)}</i>${rk > 1 ? `<span>${rk === 2 ? '20' : '40'}% stronger, ${rk === 2 ? '15' : '30'}% quicker to cool</span>` : ''}`));
-      card.append(el('div', `rider${rk >= RANK_MAX ? ' on' : ''}`, `Rank ${RANK_MAX}: ${RIDERS[id]}`));
-      const schools = schoolsOfSpell(id).map((x) => x.name);
-      card.append(el('div', 'tags', schools.length ? `School of ${schools.join(', ')}${sc.spells.includes(id) ? ' (yours)' : ''}` : 'No school yet: the open slot'));
+      const card = menuWell(list);
+      card.classList.add('sbCard');
+      card.classList.toggle('on', isOn);
+      card.classList.toggle('locked', !owned);
+      card.dataset.spell = id;
+      const icon = el('div', 'sbArt');
+      icon.innerHTML = spellIconHtml(id);
+      icon.setAttribute('aria-hidden', 'true');
+      const content = el('div', 'sbCopy');
+      const top = el('div', 'sbTop');
+      top.append(el('h3', '', sp.name));
+      if (isOn) top.append(el('span', 'sbEquipped', 'Equipped'));
+      else if (!owned) top.append(el('span', 'sbLocked', 'Locked'));
+      content.append(top, el('div', 'stats', `${sp.cost} mana · ${sp.cooldownMs / 1000}s cooldown`), el('p', 'text', sp.text));
+      const rank = el('div', 'rank');
+      rank.append(el('span', '', `Rank ${rk} / ${RANK_MAX}`));
+      const pips = el('i', '', `${'◆'.repeat(rk)}${'◇'.repeat(RANK_MAX - rk)}`);
+      pips.setAttribute('aria-hidden', 'true');
+      rank.append(pips);
+      content.append(rank);
+      card.append(icon, content);
+      const details = el('details', 'sbDetails');
+      details.open = expanded.has(id);
+      details.append(el('summary', '', 'School & rank details'));
+      const schools = schoolsOfSpell(id).map(x => x.name);
+      details.append(el('p', 'tags', schools.length ? `School of ${schools.join(', ')}${sc.spells.includes(id) ? ' · Your school' : ''}` : 'Any school · Open slot only'));
+      if (rk > 1) details.append(el('p', '', `${rk === 2 ? '20' : '40'}% stronger · ${rk === 2 ? '15' : '30'}% quicker to cool`));
+      details.append(el('p', `rider${rk >= RANK_MAX ? ' on' : ''}`, `Rank ${RANK_MAX}: ${RIDERS[id]}`));
+      details.addEventListener('toggle', () => { if (details.open) expanded.add(id); else expanded.delete(id); });
+      card.append(details);
       const lock = owned ? undefined : spellLock(m, id);
-      if (lock) {
-        card.append(el('div', 'how', `${lock.line}${lock.need > 1 ? ` · ${lock.now}/${lock.need}` : ''}${lock.need > 1 ? `<i><span style="width:${(lock.now / lock.need) * 100}%"></span></i>` : ''}`));
-        body.append(card);
+      if (!owned) {
+        const how = el('div', 'how', lock ? `${lock.line}${lock.need > 1 ? ` · ${lock.now}/${lock.need}` : ''}` : 'Find a spell scroll in a gold or Mythic chest.');
+        if (lock && lock.need > 1) {
+          const progress = el('progress');
+          progress.max = lock.need;
+          progress.value = lock.now;
+          progress.setAttribute('aria-label', `${sp.name} unlock progress`);
+          how.append(progress);
+        }
+        card.append(how);
         continue;
-      }
-      const btn = el('button') as HTMLButtonElement;
-      if (isOn) {
-        btn.textContent = 'Unequip';
-        btn.addEventListener('click', () => act(() => unequipSpell(l, id), ''));
-      } else {
-        const block = equipBlock(l, id, sc.id);
-        btn.textContent = sc.spells.includes(id) && l.equipped.length < SCHOOL_SLOTS ? 'Equip' : 'Equip in the open slot';
-        btn.addEventListener('click', () => act(() => equipSpell(l, id, sc.id), block ?? ''));
       }
       const acts = el('div', 'acts');
       if (rk < RANK_MAX) {
-        const up = el('button', 'rankUp', 'Rank up · 1 mark') as HTMLButtonElement;
+        const up = el('button', 'rankUp', 'Rank up · 1 mark');
         const why = rankBlock(m, id);
         up.disabled = !!why;
+        up.dataset.sbFocus = `rank-${id}`;
+        up.setAttribute('aria-label', `Rank up ${sp.name} for 1 mark${why ? `. ${why}` : ''}`);
         if (why) up.title = why;
-        up.addEventListener('click', () => act(() => rankUp(m, id), why ?? ''));
+        up.addEventListener('click', () => act(() => rankUp(m, id), why ?? '', `${sp.name} raised to rank ${rk + 1}.`));
         acts.append(up);
       }
+      const block = isOn ? null : equipBlock(l, id, sc.id);
+      const btn = el('button', 'sbEquip', isOn ? 'Unequip' : sc.spells.includes(id) && l.equipped.length < SCHOOL_SLOTS ? 'Equip' : 'Equip · Open slot');
+      btn.dataset.sbFocus = `equip-${id}`;
+      btn.disabled = !!block;
+      btn.setAttribute('aria-label', `${btn.textContent}: ${sp.name}${block ? `. ${block}` : ''}`);
+      btn.addEventListener('click', () => isOn
+        ? act(() => unequipSpell(l, id), '', `${sp.name} unequipped.`)
+        : act(() => equipSpell(l, id, sc.id), block ?? '', `${sp.name} equipped.`));
       acts.append(btn);
       card.append(acts);
-      body.append(card);
+      if (block) card.append(el('p', 'sbBlocked', block));
     }
     onDraw();
   }
@@ -163,24 +202,18 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
   return { root: body, redraw, known };
 }
 
-/** The header's count: the spells known of all there are (spells are not bought, so the crowns are not shown here). */
-const known = (): string => `${meta?.spellbook.owned.length ?? 0} of ${SPELL_IDS.length} spells known`;
+const known = (): string => `${meta?.spellbook.owned.length ?? 0} / ${SPELL_IDS.length} spells known`;
 
-/** Show the spellbook over whatever is on screen. */
 export function openSpellbook(): void {
   if (!meta) return;
-  addStyle();
-  root?.remove();
-  root = el('div');
-  root.id = 'spellbook';
-  root.innerHTML = '<header><h2>Spellbook</h2><span id="sbCrowns"></span><button id="sbClose">Close</button></header>';
+  overlay?.close();
+  const menu = ornateMenu({ id: 'spellbook', title: 'Spellbook', eyebrow: 'The royal library', sub: known(), kind: 'sheet' });
+  overlay = menu;
+  menu.root.classList.add('sbOverlay');
   const view = spellbookView(() => {
-    const c = root?.querySelector('#sbCrowns');
-    if (c) c.textContent = known();
+    const count = menu.card.querySelector('.omSub');
+    if (count) count.textContent = known();
   });
-  view.root.id = 'sbBody';
-  root.append(view.root);
-  view.redraw();
-  document.body.append(root);
-  root.querySelector('#sbClose')!.addEventListener('click', () => root!.remove());
+  menu.body.append(view.root);
+  menuFoot(menu, { back: { word: 'close' } });
 }

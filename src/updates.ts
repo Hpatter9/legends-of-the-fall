@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.407.0',
+    date: '2026-11-08',
+    title: 'A painted Spells screen',
+    notes: ['The Spells tab is now a candlelit arcane study: a clear four-slot loadout, filters for known, school and locked spells, and readable spell cards.'],
+  },
+  {
     version: '0.406.0',
     date: '2026-11-08',
     title: 'Assault: storm Bloodtusk Hold',
