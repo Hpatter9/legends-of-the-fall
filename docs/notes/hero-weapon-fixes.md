@@ -19,7 +19,7 @@ Typecheck and web build passed again. Both replacement paintings were inspected 
 - Samurai: one guard and a continuous wrapped handle gripped by both hands, in both scene and menu cutout. Intentional katana curvature retained.
 - Ranger: connected upper and lower drawn bowstring segments meeting at the arrow nock.
 
-Character identities, outfits, scene settings and poses retained. The other four menu cutouts were separately inspected and already had coherent weapons, so were preserved. No battle sprites, awakened artwork, simulation, saves, version or deployment changed.
+Character identities, outfits, scene settings and poses retained. The other four menu cutouts were separately inspected and already had coherent weapons, so were preserved. No battle sprites, awakened artwork, simulation or saves changed. The owner-authorised merge adds release 0.395.0 and its update note.
 
 All edits used the original individual assets as image-generation references. Generated PNG originals remain in `/workspace/generated_images/`; source mapping is retained in `/workspace/art-audit/redraw-provenance.json`. The complete source mapping is also retained in [redraw-provenance.json](../samples/hero-weapon-audit/redraw-provenance.json). The two additional cutout originals are `exec-e825a1d8-b7b1-4e1b-91dc-10c089c06623.png` (Samurai) and `exec-c937c937-3e08-432a-9faa-81b760bb30bd.png` (Samurai Commander). Pre-edit assets remain in Git and in `/workspace/art-audit/before/`.
 
@@ -36,4 +36,4 @@ Packed WebP files retain their exact original dimensions and paths. Scenes use q
 
 Browser evidence: [Peasant](../samples/hero-weapon-audit/fixed-peasant-393.png), [Mercenary](../samples/hero-weapon-audit/fixed-mercenary-393.png), [Commander cutout](../samples/hero-weapon-audit/fixed-commander-cutout-393.png).
 
-No merge or deployment. See the [initial painted-art evidence](../samples/hero-weapon-audit/painted-findings.jpg) and [audit](hero-weapon-audit.md).
+Owner requested merge. Integrated main through 0.394.0 without conflicts; release 0.395.0 passes typecheck/build, eight focused release/artwork tests, source-hash validation and repeated three-size gallery/offline checks after integration; submitting through a pull request. The normal main-branch workflow publishes the merged release. See the [initial painted-art evidence](../samples/hero-weapon-audit/painted-findings.jpg) and [audit](hero-weapon-audit.md).

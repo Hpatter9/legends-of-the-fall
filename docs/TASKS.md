@@ -7,7 +7,7 @@
 - **Allowed scope:** Peasant, Mercenary, Harpooner, Samurai Commander, Samurai and Ranger standard full/portrait illustrations; inspection evidence, credits and handoff. Preserve hero identity, scenes, battle sprites and simulation.
 - **Completion:** correct rigid weapon geometry, coherent grips/scabbard and connected bowstring; inspect replacements; typecheck/build and relevant artwork checks; review at three portrait sizes.
 - **Follow-up:** owner identified remaining Mercenary hilt and Peasant shaft bends. Both entire weapons redrawn again, with hands repositioned to follow their axes. Second-pass typecheck/build, all three phone sizes and offline decoding passed; updated screenshots and provenance retained.
-- **Status:** first pass: six scene redraws and two matching cutout repairs integrated. Typecheck/build, four relevant tests and artwork validation passed. Three-size browser review passed for five playable heroes, two cutouts and the unreleased Harpooner asset preview; offline cache/load passed at 393×852, with no page errors. No merge/deployment. [Handoff](notes/hero-weapon-fixes.md).
+- **Status:** first pass: six scene redraws and two matching cutout repairs integrated. Typecheck/build, four relevant tests and artwork validation passed. Three-size browser review passed for five playable heroes, two cutouts and the unreleased Harpooner asset preview; offline cache/load passed at 393×852, with no page errors. Owner requested merge; main 0.394.0 integrated and release 0.395.0 validated (typecheck/build, eight tests, three-size gallery/offline and artwork hashes); PR merge authorised. [Handoff](notes/hero-weapon-fixes.md).
 
 
 ### HERO-WEAPON-AUDIT — Check painted hero weapon construction
