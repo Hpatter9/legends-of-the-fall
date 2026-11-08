@@ -50,8 +50,8 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.evaluate(() => document.getElementById('auto')?.click());
   await wait(page, 900);
   await page.screenshot({ path: `docs/samples/gear-build-runes-bench-${w}x${h}.png` });
-  const label = await page.evaluate(() => document.getElementById('pack').textContent);
-  await page.evaluate(() => document.getElementById('pack').click());
+  const label = await page.evaluate(() => document.getElementById('benchGrip').title);
+  await page.evaluate(() => document.querySelector('#runeBench .rbSatchel').click());
   await wait(page, 600);
   await page.screenshot({ path: `docs/samples/gear-build-runes-tray-${w}x${h}.png` });
   await page.evaluate(() => document.querySelector('.rnBag .rnCell .k-ember')?.closest('button')?.click());
@@ -78,7 +78,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await wait(page, 200);
   await page.screenshot({ path: `docs/samples/gear-build-satchel-${w}x${h}.png` });
   const wide = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-  console.log(`${w}x${h}`, 'pack button:', label, '· side scroll', wide);
+  console.log(`${w}x${h}`, 'pull bar:', label, '· side scroll', wide);
   errors += errs.length;
   for (const e of errs) console.log('page error:', e);
   await ctx.close();

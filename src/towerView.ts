@@ -286,7 +286,7 @@ export class TowerView {
     const gold = el('span', 'rtGold');
     gold.append(icon(ICONS.gold), el('b', '', String(run.gold)));
     top.append(gold);
-    const pack = el('button', 'small', 'Pack');
+    const pack = el('button', 'small', 'Satchel');
     pack.addEventListener('click', () => this.hooks.onPack());
     const home = el('button', 'small', 'Home');
     home.addEventListener('click', () => {
@@ -677,7 +677,7 @@ export class TowerView {
       altar.addEventListener('click', () => this.altarCard());
       bar.append(altar);
     }
-    const pack = el('button', '', 'Pack');
+    const pack = el('button', '', 'Satchel');
     pack.addEventListener('click', () => this.hooks.onPack());
     const company = el('button', '', `Company · ${this.run.roster.length}`);
     company.addEventListener('click', () => this.companyCard());

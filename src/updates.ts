@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.419.0',
+    date: '2026-11-08',
+    title: 'The rune bench: pull, merge, drop',
+    notes: ['Pull the bench\'s Runes bar to swap to your runes: merge twins and drop runes on heroes. Pack is now the Satchel; rune Auto opens at 6 stars.'],
+  },
+  {
     version: '0.418.0',
     date: '2026-11-08',
     title: 'Tidier bench stars and Heroes tab',

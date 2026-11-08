@@ -1,0 +1,76 @@
+/* RUNE-BENCH (docs/notes/rune-bench.md): the pull bar and the bench's rune side. The bench's window holds a track two benches wide: the
+   heroes on the left half, the runes on the right; `--p` (0 heroes, 1 runes) slides the track and carries the bar from the right edge to
+   the left. The bar, the rune side's backing and the tiles' frames are plain stand-ins over the combat skin's own frames until their
+   paintings come (docs/notes/rune-bench-art-prompts.md). */
+#benchView { position: relative; overflow: hidden; --p: 0; --grip: 28px; }
+#benchTrack { display: flex; width: 200%; transform: translateX(calc(-50% * var(--p))); will-change: transform; }
+#benchTrack > #bench, #benchTrack > #runeBench { flex: 0 0 50%; box-sizing: border-box; min-width: 0; }
+body.hasGrip #benchTrack > #bench { padding-right: calc(var(--grip) + 4px); }
+#runeBench { padding-left: calc(var(--grip) + 4px); display: flex; flex-direction: column; gap: 4px; max-height: 172px; }
+body:not(.hasGrip) #runeBench, body:not(.hasGrip) #benchGrip { display: none; }
+/* (the spring: it overshoots a touch and settles, as a weighted slider would; while the finger has it, it follows at once) */
+#benchView.springing #benchTrack { transition: transform .38s cubic-bezier(.3, 1.32, .5, 1); }
+#benchView.springing #benchGrip { transition: left .38s cubic-bezier(.3, 1.32, .5, 1), box-shadow .2s; }
+@media (prefers-reduced-motion: reduce) { #benchView.springing #benchTrack, #benchView.springing #benchGrip { transition: none; } }
+
+/* the bar: a grip with ridges, the word of the side it takes you to, and the merges ready */
+#benchGrip {
+  position: absolute; z-index: 4; top: 50%; left: calc((100% - var(--grip)) * (1 - var(--p))); transform: translateY(-50%);
+  width: var(--grip); height: 96px; min-height: 0; padding: 18px 0 4px; box-sizing: border-box; touch-action: none; cursor: grab;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  color: #f5e6c7; background: linear-gradient(90deg, #3a2614, #24170f 45%, #3a2614); border: 2px solid #8a6a32; border-radius: 9px;
+  box-shadow: 0 2px 0 #000, inset 0 0 0 1px #0008, -2px 0 8px rgb(0 0 0 / 0.55); font: 700 10px/1 var(--body); letter-spacing: .06em;
+}
+/* (a wider touch area than it looks, for one thumb at 360 wide) */
+#benchGrip::before { content: ''; position: absolute; inset: -8px -12px; }
+#benchGrip .gripRidges { width: 10px; height: 16px; flex: none; background: repeating-linear-gradient(#c9a35a 0 2px, transparent 2px 5px); opacity: .8; }
+#benchGrip .gripWord { writing-mode: vertical-rl; transform: rotate(180deg); text-transform: uppercase; }
+#benchGrip .gripArrow { font-size: 12px; color: #ffe08a; }
+#benchGrip #gripBadge { position: absolute; top: 3px; left: 50%; transform: translateX(-50%); min-width: 16px; height: 16px; padding: 0 3px; box-sizing: border-box; border-radius: 8px; font: 700 10px/16px var(--body); font-style: normal; color: #1b1408; background: #ffd24a; box-shadow: 0 0 8px #ffd24a; }
+#benchGrip #gripBadge[hidden] { display: none; }
+#benchView.pulling #benchGrip { cursor: grabbing; border-color: #ffe08a; box-shadow: 0 0 12px rgb(255 214 110 / .7), inset 0 0 0 1px #0008; }
+#benchGrip:focus-visible { outline: 2px solid #ffe4a5; outline-offset: 2px; }
+body[data-bench='runes'] #mergeAll { display: none !important; }
+
+/* the rune side */
+#runeBench .rbHead { display: flex; align-items: center; gap: 3px; min-width: 0; padding-right: 2px; }
+#runeBench .rbHead b { flex: 1; min-width: 0; font: 700 12px/1.1 var(--body); color: #f5e6c7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#runeBench .rbBtn {
+  min-height: 30px; padding: 2px 6px; font: 400 11px/1.1 var(--body); white-space: nowrap; color: #f5e6c7; flex: none;
+  border: 2px solid transparent; border-image: url(ui/combat-skill.png) 28 fill / 5px / 0 stretch; border-radius: 0; background: #24170f;
+}
+#runeBench .rbBtn:disabled { opacity: .5; }
+#runeBench .rbMerge:not(:disabled) { color: #1b1408; background: linear-gradient(var(--e8), var(--e5)); border-image: none; border: 2px solid var(--e9); border-radius: 6px; box-shadow: 0 0 8px rgb(var(--e7-rgb) / .7); }
+#runeBench .rbAuto.locked { color: #c7b89a; }
+#runeBench .rbLock { margin-right: 3px; font-size: 10px; }
+#runeBench .rbGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; }
+#runeBench .rbTile {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 0; height: 56px;
+  padding: 2px; box-sizing: border-box; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  border: 2px solid transparent; border-image: url(ui/combat-skill.png) 28 fill / 4px / 0 stretch; border-radius: 0; background: #24170f; color: #f5e6c7;
+}
+#runeBench .rbTile small { font: 400 10px/1 var(--body); white-space: nowrap; }
+#runeBench .rbTile.empty { opacity: .55; }
+#runeBench .rbTile.empty .rnStone.rn-big { width: 22px; height: 22px; margin: 6px; }
+#runeBench .rbTile.ready { outline: 2px solid var(--e7); outline-offset: -1px; }
+#runeBench .rbTile.sel { outline: 2px solid #ffe4a5; outline-offset: -1px; box-shadow: 0 0 10px #d8b657aa; }
+#runeBench .rbTile.mergeCan { outline: 2px dashed var(--e8); outline-offset: -1px; }
+#runeBench .rbTile.mergeHot { outline: 3px solid var(--e8); transform: scale(1.06); box-shadow: 0 0 14px rgb(var(--e8-rgb) / .95); }
+#runeBench .rbTile.dragging .rnStone { opacity: .25; }
+#runeBench .rbTile.evolve { animation: evolve .9s ease-out; }
+#runeBench .rbHint { margin: 0; font: 400 10px/1.2 var(--body); color: var(--dim); text-align: center; }
+@media (prefers-reduced-motion: reduce) { #runeBench .rbTile.evolve { animation: none; } }
+
+/* the stone held over the finger: it flies home if let go short, after a shake when the drop is refused */
+.rbGhost { position: fixed; left: 0; top: 0; z-index: 60; pointer-events: none; filter: drop-shadow(0 4px 6px rgb(0 0 0 / .6)); }
+.rbGhost .rnStone.rn-big { width: 44px; height: 44px; }
+.rbGhost.bad .rnStone { filter: grayscale(.6) brightness(.8) drop-shadow(0 0 6px #e0473b); }
+.rbGhost.home { transition: transform .22s cubic-bezier(.3, 1.3, .6, 1); }
+.rbGhost.refused > * { animation: rbShake .26s ease-in-out; }
+@keyframes rbShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { .rbGhost.home { transition: none; } .rbGhost.refused > * { animation: none; } }
+
+/* the rune's card */
+.omWell.rbInfo { display: flex; align-items: center; gap: 12px; }
+.omWell.rbInfo p { margin: 0; }
+.omChoice > .rnStone.rn-small { float: left; margin: 2px 8px 0 0; width: 22px; height: 22px; }
