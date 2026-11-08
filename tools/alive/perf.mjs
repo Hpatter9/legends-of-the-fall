@@ -66,6 +66,8 @@ await scene('deploy', async (page) => {
 });
 await scene('tavern', async (page) => { await page.locator('.hmTab').nth(1).click({ force: true }); });
 await scene('camp', async (page) => { await page.locator('.hmTab').nth(2).click({ force: true }); });
+await scene('recruit', async (page) => { await page.locator('.hmTab').nth(0).click({ force: true }); });
+await scene('spells', async (page) => { await page.locator('.hmTab').nth(4).click({ force: true }); });
 await scene('castle', async (page) => { await page.locator('.hmTab').nth(3).click({ force: true }); });
 await scene('home', async () => {});
 await browser.close(); srv.close();

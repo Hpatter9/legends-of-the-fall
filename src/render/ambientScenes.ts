@@ -57,10 +57,25 @@ export interface Drift {
   colour: number;
 }
 
+/** Lights to find in the painting itself, where it is too full of small flames to place each by hand (a hall of candles): the
+ *  painter looks for its bright spots once, as it lays the painting out (`hotSpots`), and lights each one found in `box`. */
+export interface FindLights {
+  box: Box;
+  /** At most this many. */
+  most: number;
+  /** What counts as a flame: a warm bright pixel (a fire, a torch) or a near-white one (a candle's tip). */
+  hot: 'warm' | 'bright';
+  kind: LightKind;
+  colour: number;
+  r: number;
+  power: number;
+}
+
 export interface SceneLife {
   /** The painting's size in its own pixels (only its shape matters). */
   size: readonly [number, number];
   lights: readonly Light[];
+  find?: FindLights;
   regions: readonly Region[];
   spouts: readonly Spout[];
   drifts: readonly Drift[];
@@ -133,6 +148,148 @@ export const SCENE_LIFE = {
     spouts: [{ kind: 'embers', at: [0.675, 0.33], count: 10, spread: 0.07, rise: 0.09, life: 1.6, colour: 0xffb050 }],
     drifts: [{ kind: 'motes', box: [0.38, 0.22, 0.98, 0.62], count: 16, colour: 0xffd9a0 }],
   },
+
+  /** The Summoning Sanctum (Recruit; `art/hall/sanctum.png`, stretched over the hall's canvas): a hall of candles, found in the
+   *  painting; its banners stir, the shards over the altar float, green light breathes in the rose window and over the altar. */
+  sanctum: {
+    size: [1024, 1536],
+    lights: [
+      { at: [0.54, 0.2], r: 0.22, kind: 'magic', colour: 0x40e0a0, power: 0.28 },
+      { at: [0.54, 0.47], r: 0.26, kind: 'magic', colour: 0x40ffb0, power: 0.35 },
+    ],
+    find: { box: [0, 0.08, 1, 0.8], most: 36, hot: 'bright', kind: 'candle', colour: 0xffc060, r: 0.03, power: 0.45 },
+    regions: [
+      { kind: 'cloth', poly: [[0.06, 0.012], [0.155, 0.012], [0.155, 0.225], [0.06, 0.225]], amp: 0.003, anchor: 'top' },
+      { kind: 'cloth', poly: [[0.895, 0.012], [0.985, 0.012], [0.985, 0.225], [0.895, 0.225]], amp: 0.003, anchor: 'top', pace: 0.9 },
+      { kind: 'cloth', poly: [[0.13, 0.27], [0.225, 0.27], [0.225, 0.45], [0.13, 0.45]], amp: 0.003, anchor: 'top', pace: 1.1 },
+      { kind: 'cloth', poly: [[0.825, 0.27], [0.92, 0.27], [0.92, 0.45], [0.825, 0.45]], amp: 0.003, anchor: 'top', pace: 0.8 },
+      { kind: 'float', poly: [[0.36, 0.39], [0.72, 0.39], [0.72, 0.52], [0.36, 0.52]], amp: 0.002 },
+    ],
+    spouts: [],
+    drifts: [
+      { kind: 'wisps', box: [0.36, 0.36, 0.72, 0.56], count: 12, colour: 0x7dffc0 },
+      { kind: 'motes', box: [0.1, 0.55, 0.9, 0.95], count: 14, colour: 0xffd890 },
+    ],
+  },
+
+  /** The Spellbook's study (`ui/spells-study.png`, covering a 16:9 box): candles, the book's blue magic winding up, moonlight
+   *  through the window, ivy, the lectern's cloth. */
+  study: {
+    size: [1024, 683],
+    lights: [
+      ...candles([[0.073, 0.52], [0.203, 0.6], [0.232, 0.555], [0.258, 0.61], [0.966, 0.395], [0.922, 0.465], [0.905, 0.545]], 0.045, 0.55),
+      { at: [0.48, 0.47], r: 0.2, kind: 'magic', colour: 0x5ab8ff, power: 0.45 },
+      { at: [0.49, 0.3], r: 0.12, kind: 'magic', colour: 0x7ad0ff, power: 0.3 },
+      { at: [0.855, 0.14], r: 0.11, kind: 'window', colour: 0xc8e4ff, power: 0.3 },
+    ],
+    regions: [
+      { kind: 'heat', poly: [[0.4, 0.15], [0.58, 0.15], [0.58, 0.4], [0.4, 0.4]], amp: 0.004, pace: 0.5 },
+      { kind: 'foliage', poly: [[0, 0], [0.35, 0], [0.35, 0.15], [0.1, 0.3], [0.06, 0.45], [0, 0.45]], amp: 0.0025, anchor: 'top', pace: 0.6 },
+      { kind: 'foliage', poly: [[0.875, 0.58], [0.99, 0.58], [0.99, 0.88], [0.875, 0.88]], amp: 0.002, anchor: 'bottom', pace: 0.7 },
+      { kind: 'cloth', poly: [[0.445, 0.585], [0.625, 0.585], [0.625, 0.86], [0.445, 0.86]], amp: 0.0015, anchor: 'top', pace: 0.6 },
+    ],
+    spouts: [],
+    drifts: [
+      { kind: 'wisps', box: [0.38, 0.18, 0.6, 0.48], count: 8, colour: 0x79cfff },
+      { kind: 'motes', box: [0.25, 0.3, 0.8, 0.95], count: 14, colour: 0xffe2b0 },
+    ],
+  },
+
+  /** The throne room behind the High Throne card (`art/throne/throne_room.png`, pixel art drawn at twice its size): the red
+   *  banners and the curtain stir, light falls through the stained glass, the sconces gutter, dust in the light. */
+  throne: {
+    size: [400, 210],
+    lights: [
+      { at: [0.205, 0.27], r: 0.13, kind: 'window', colour: 0x9ad8ff, power: 0.3 },
+      { at: [0.795, 0.27], r: 0.13, kind: 'window', colour: 0x9ad8ff, power: 0.3 },
+      { at: [0.035, 0.07], r: 0.045, kind: 'torch', colour: 0xffb050, power: 0.45 },
+      { at: [0.315, 0.085], r: 0.045, kind: 'torch', colour: 0xffb050, power: 0.45 },
+      { at: [0.665, 0.085], r: 0.045, kind: 'torch', colour: 0xffb050, power: 0.45 },
+      { at: [0.935, 0.07], r: 0.045, kind: 'torch', colour: 0xffb050, power: 0.45 },
+    ],
+    regions: [
+      { kind: 'cloth', poly: [[0.022, 0.1], [0.058, 0.1], [0.058, 0.47], [0.022, 0.47]], amp: 0.002, anchor: 'top' },
+      { kind: 'cloth', poly: [[0.302, 0.15], [0.338, 0.15], [0.338, 0.5], [0.302, 0.5]], amp: 0.002, anchor: 'top', pace: 1.1 },
+      { kind: 'cloth', poly: [[0.652, 0.15], [0.688, 0.15], [0.688, 0.5], [0.652, 0.5]], amp: 0.002, anchor: 'top', pace: 0.9 },
+      { kind: 'cloth', poly: [[0.922, 0.1], [0.958, 0.1], [0.958, 0.47], [0.922, 0.47]], amp: 0.002, anchor: 'top', pace: 1.2 },
+      { kind: 'cloth', poly: [[0.37, 0.1], [0.63, 0.1], [0.63, 0.45], [0.37, 0.45]], amp: 0.0012, anchor: 'top', pace: 0.5 },
+    ],
+    spouts: [],
+    drifts: [
+      { kind: 'motes', box: [0.12, 0.3, 0.3, 0.85], count: 6, colour: 0xd8f0ff },
+      { kind: 'motes', box: [0.7, 0.3, 0.88, 0.85], count: 6, colour: 0xd8f0ff },
+    ],
+  },
+
+  /** The Altar of Ascension's chamber (`art/altar/sanctuary.webp`, filling the altar's card under its veil): the two torches lick,
+   *  the banners stir, the green gems and the shaft of light from above breathe, dust turns in the light. */
+  altar: {
+    size: [1024, 1536],
+    lights: [
+      { at: [0.085, 0.265], r: 0.12, kind: 'torch', colour: 0xffa040, power: 0.6 },
+      { at: [0.915, 0.265], r: 0.12, kind: 'torch', colour: 0xffa040, power: 0.6 },
+      { at: [0.5, 0.12], r: 0.25, kind: 'window', colour: 0xffe2a0, power: 0.25 },
+      { at: [0.5, 0.02], r: 0.05, kind: 'magic', colour: 0x40ffa0, power: 0.5 },
+      { at: [0.035, 0.47], r: 0.04, kind: 'magic', colour: 0x40ffa0, power: 0.45 },
+      { at: [0.965, 0.47], r: 0.04, kind: 'magic', colour: 0x40ffa0, power: 0.45 },
+      { at: [0.035, 0.67], r: 0.045, kind: 'magic', colour: 0x40ffa0, power: 0.45 },
+      { at: [0.965, 0.67], r: 0.045, kind: 'magic', colour: 0x40ffa0, power: 0.45 },
+    ],
+    regions: [
+      { kind: 'flame', poly: [[0.06, 0.29], [0.07, 0.25], [0.085, 0.235], [0.1, 0.25], [0.11, 0.29]], amp: 0.004, anchor: 'bottom' },
+      { kind: 'flame', poly: [[0.89, 0.29], [0.9, 0.25], [0.915, 0.235], [0.93, 0.25], [0.94, 0.29]], amp: 0.004, anchor: 'bottom' },
+      { kind: 'cloth', poly: [[0.185, 0.14], [0.265, 0.14], [0.265, 0.32], [0.185, 0.32]], amp: 0.003, anchor: 'top', pace: 0.6 },
+      { kind: 'cloth', poly: [[0.735, 0.14], [0.815, 0.14], [0.815, 0.32], [0.735, 0.32]], amp: 0.003, anchor: 'top', pace: 0.7 },
+    ],
+    spouts: [
+      { kind: 'embers', at: [0.085, 0.25], count: 6, spread: 0.03, rise: 0.08, life: 1.6, colour: 0xffa040 },
+      { kind: 'embers', at: [0.915, 0.25], count: 6, spread: 0.03, rise: 0.08, life: 1.6, colour: 0xffa040 },
+    ],
+    drifts: [{ kind: 'motes', box: [0.36, 0.05, 0.64, 0.75], count: 18, colour: 0xffe6a8 }],
+  },
+
+  /** Hester's stall, her shelf (`shop/shelf.webp`, covering the scene from its foot): plain wood, so only her lamp's warm light
+   *  breathing over it and dust drifting in it. */
+  stall: {
+    size: [800, 400],
+    lights: [{ at: [0.42, 0.18], r: 0.42, kind: 'lantern', colour: 0xffb060, power: 0.18 }],
+    regions: [],
+    spouts: [],
+    drifts: [{ kind: 'motes', box: [0.05, 0.05, 0.95, 0.7], count: 12, colour: 0xffd8a0 }],
+  },
+
+  /** The Houses' menus (`art/dynasty/houses-backdrop.webp`, under the card's dark veil, so light only): the candelabras either side
+   *  of the great tapestry gutter, dust drifts before it. */
+  houses: {
+    size: [768, 1152],
+    lights: [
+      ...candles([[0.02, 0.33], [0.035, 0.35], [0.965, 0.33], [0.98, 0.35]], 0.06, 0.5),
+      { at: [0.03, 0.36], r: 0.16, kind: 'candle', colour: 0xffa850, power: 0.3 },
+      { at: [0.97, 0.36], r: 0.16, kind: 'candle', colour: 0xffa850, power: 0.3 },
+    ],
+    regions: [],
+    spouts: [],
+    drifts: [{ kind: 'motes', box: [0.08, 0.1, 0.92, 0.9], count: 14, colour: 0xffd8a0 }],
+  },
+
+  /** The Dark Council's chamber (`art/dynasty/council-backdrop.webp`, under the card's dark veil, so light only): its braziers
+   *  burn and send up embers, violet light breathes over the warchief's seat. */
+  council: {
+    size: [768, 1152],
+    lights: [
+      { at: [0.07, 0.265], r: 0.12, kind: 'fire', colour: 0xff8a30, power: 0.55 },
+      { at: [0.955, 0.25], r: 0.12, kind: 'fire', colour: 0xff8a30, power: 0.55 },
+      { at: [0.15, 0.32], r: 0.06, kind: 'torch', colour: 0xff9a40, power: 0.45 },
+      { at: [0.86, 0.32], r: 0.06, kind: 'torch', colour: 0xff9a40, power: 0.45 },
+      { at: [0.5, 0.25], r: 0.3, kind: 'magic', colour: 0x9a50ff, power: 0.3 },
+    ],
+    regions: [],
+    spouts: [
+      { kind: 'embers', at: [0.07, 0.25], count: 8, spread: 0.04, rise: 0.12, life: 1.8, colour: 0xff9a40 },
+      { kind: 'embers', at: [0.955, 0.235], count: 8, spread: 0.04, rise: 0.12, life: 1.8, colour: 0xff9a40 },
+    ],
+    drifts: [{ kind: 'wisps', box: [0.3, 0.1, 0.7, 0.45], count: 8, colour: 0xb080ff }],
+  },
 } satisfies Record<string, SceneLife>;
 
 export type SceneName = keyof typeof SCENE_LIFE;
@@ -142,4 +299,11 @@ export const sceneLife = (name: SceneName): SceneLife => SCENE_LIFE[name];
 export const SCENE_ART: Record<SceneName, string> = {
   overlook: 'src/art/camp/overlook.png',
   tavern: 'src/art/ui/tavern-hearth.png',
+  sanctum: 'src/art/hall/sanctum.png',
+  study: 'src/art/ui/spells-study.png',
+  throne: 'src/art/throne/throne_room.png',
+  altar: 'src/art/altar/sanctuary.webp',
+  stall: 'src/art/shop/shelf.webp',
+  houses: 'src/art/dynasty/houses-backdrop.webp',
+  council: 'src/art/dynasty/council-backdrop.webp',
 };
