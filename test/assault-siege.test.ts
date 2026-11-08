@@ -65,6 +65,8 @@ test('the Iron Gate opens from inside ten seconds after its crew falls, with one
   hero.u = 58;
   hero.v = 47;
   orderPlatoon(b, 1, { kind: 'hold', at: { u: 58, v: 47 } });
+  // (the lord's one sally, phase 1b's reactive hold, would come down at him: it is `assault-react`'s to test, not this)
+  h.lordSallied = true;
   const gate = h.forts.find((x) => x.spec.kind === 'ironGate')!;
   steps(b, 20);
   assert.ok(!gate.broken, 'not yet');

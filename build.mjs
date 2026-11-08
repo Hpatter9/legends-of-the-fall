@@ -44,6 +44,9 @@ const options = {
   define: { __GAME_VERSION__: JSON.stringify(version), __TACTIC_ART__: JSON.stringify(TACTIC_ART), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
 };
 
+// (the Assault's simulation in a Web Worker, phase 2: its own small bundle beside game.js, `src/assaultWorker.ts`)
+const workerOptions = { ...options, entryPoints: ['src/assaultWorker.ts'], outfile: `${out}/assault-worker.js` };
+
 copyFileSync('src/art/icon-192.png', `${out}/icon-192.png`);
 copyFileSync('src/art/icon-512.png', `${out}/icon-512.png`);
 for (let k = 1; k <= 5; k++) copyFileSync(`src/art/backdrop/m1_${k}.png`, `${out}/bg${k}.png`);
@@ -239,7 +242,7 @@ writeFileSync(
 writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ASSAULT_ART_FILES.map((f) => `'${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'assault-worker.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ASSAULT_ART_FILES.map((f) => `'${f}'`).join(', ')}];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
 // (network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used;
@@ -260,9 +263,11 @@ self.addEventListener('fetch', (e) => {
 if (serve) {
   const ctx = await esbuild.context(options);
   await ctx.watch();
+  await (await esbuild.context(workerOptions)).watch();
   const { port } = await ctx.serve({ servedir: out, port: 8000 });
   console.log(`Serving ${out} at http://localhost:${port}`);
 } else {
   await esbuild.build(options);
+  await esbuild.build(workerOptions);
   console.log(`Built ${out} (version ${version})`);
 }

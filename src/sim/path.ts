@@ -208,6 +208,21 @@ export function nearFirstStep(w: NearWalk, boardW: number, goal: number): number
   }
 }
 
+/** The tiles (board indexes) of a near walk to `goal`, its first step first, at most `max` of them (empty if it isn't reached). */
+export function nearPath(w: NearWalk, boardW: number, goal: number, max: number): number[] {
+  const back: number[] = [];
+  let k = nearIndex(w, boardW, goal);
+  if (k < 0 || w.cost[k] === Infinity) return back;
+  let j = goal;
+  while (j !== w.start && k >= 0 && back.length < 64) {
+    back.push(j);
+    j = w.from[k];
+    if (j < 0) return [];
+    k = nearIndex(w, boardW, j);
+  }
+  return back.reverse().slice(0, max);
+}
+
 /** A board bigger than this many tiles (only the Assault's 100 x 100 field: the biggest other board is 252) is walked by `walkWindow`. */
 export const BIG_WALK = 2500;
 /** How far either way the big field's `walkFrom` looks (a 25 x 25 window). */
@@ -215,6 +230,8 @@ export const WINDOW_HALF = 12;
 /** The big field's walks are written into these, four in turn (a caller holds at most two at once, as `decide` does), so a walk on a
  *  10,000-tile field makes no garbage. They hold until the fourth `walkFrom` after. */
 const windowPool: Walk[] = [];
+/** The tiles each pooled walk wrote (cleared before it is used again, not all 10,000). */
+const windowDirty: number[][] = [];
 let windowNext = 0;
 
 /** `walkFrom` on the Assault's big field (phase 1, `docs/notes/assault-1.md`): the same walk inside a window of `WINDOW_HALF` tiles round
@@ -224,16 +241,25 @@ let windowNext = 0;
 function walkWindow(b: Board, start: At, jump: number, blocked: ReadonlySet<number>, side?: 'hero' | 'foe'): Walk {
   const n = b.w * b.d;
   let walk = windowPool[windowNext];
-  if (!walk || walk.cost.length !== n) walk = windowPool[windowNext] = { cost: new Array<number>(n).fill(Infinity), from: new Array<number>(n).fill(-1) };
+  let dirty = windowDirty[windowNext];
+  if (!walk || walk.cost.length !== n) {
+    walk = windowPool[windowNext] = { cost: new Array<number>(n).fill(Infinity), from: new Array<number>(n).fill(-1) };
+    dirty = windowDirty[windowNext] = [];
+  }
   windowNext = (windowNext + 1) % 4;
-  walk.cost.fill(Infinity);
-  walk.from.fill(-1);
+  // (only the tiles its last walk wrote are cleared: the rest of the 10,000 still hold Infinity and -1)
+  for (const i of dirty) {
+    walk.cost[i] = Infinity;
+    walk.from[i] = -1;
+  }
+  dirty.length = 0;
   const near = walkNear(b, start, jump, (i) => blocked.has(i), WINDOW_HALF, side);
   for (let k = 0; k < near.cost.length; k++) {
     if (near.cost[k] === Infinity) continue;
     const i = (near.v0 + Math.floor(k / near.w)) * b.w + near.u0 + (k % near.w);
     walk.cost[i] = near.cost[k];
     walk.from[i] = near.from[k];
+    dirty.push(i);
   }
   return walk;
 }

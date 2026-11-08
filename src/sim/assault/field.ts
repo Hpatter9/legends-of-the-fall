@@ -31,6 +31,9 @@ export interface FieldInfo {
   slot: number;
   /** When it last found no step towards where it wants to be (a soldier asks for a bounded walk after `STUCK_MS`). */
   stuck?: number;
+  /** Its walk's next steps (board indexes) towards `pathTo`, kept from its last bounded walk so the next few steps need none. */
+  path?: number[];
+  pathTo?: number;
 }
 
 /** A group of fighters: one of our platoons (a hero and its soldiers) or one of the garrison's posts. */
