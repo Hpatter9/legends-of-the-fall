@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "backdrops": 2,
+      "seasons": 4,
+      "fates": 4,
+      "house": true,
+      "heirloom": true,
+      "learnedTraits": 12,
+      "unknownTraitsHidden": true
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "backdrops": 2,
+      "seasons": 4,
+      "fates": 4,
+      "house": true,
+      "heirloom": true,
+      "learnedTraits": 12,
+      "unknownTraitsHidden": true
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "backdrops": 2,
+      "seasons": 4,
+      "fates": 4,
+      "house": true,
+      "heirloom": true,
+      "learnedTraits": 12,
+      "unknownTraitsHidden": true
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "newsTypes": 19,
+      "paintedNews": 2,
+      "trophy": true,
+      "manuscriptCardAndLog": true
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "newsTypes": 19,
+      "paintedNews": 2,
+      "trophy": true,
+      "manuscriptCardAndLog": true
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "newsTypes": 19,
+      "paintedNews": 2,
+      "trophy": true,
+      "manuscriptCardAndLog": true
+    }
+  ],
+  "errors": []
+}
