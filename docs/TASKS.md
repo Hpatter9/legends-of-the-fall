@@ -50,6 +50,8 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ### TAVERN-NATURAL — Living painted tavern
 
+- **Release:** owner requested merging. Integrated main 0.395.0 and its hero weapon repairs; prepared 0.396.0 with matching Updates entry. Final typecheck/build, 34 focused tests and all 36 release browser/offline checks passed. Earlier three-size/reduced-motion coverage: 88 checks passed. Owner-authorised merge: [PR #430](https://github.com/Hpatter9/legends-of-the-fall/pull/430).
+
 - **Review follow-up:** owner reported Gwen covering Ayame and rectangular shadows around heroes. Same owner/branch/scope: correct keeper depth/counter masking and remove inherited scene-button shadows; completed with typecheck/build, 13 focused tests and all 88 browser checks passing. All three portrait screenshots visually reviewed; screenshots and recording replaced in PR #430.
 
 - **Owner / branch / worktree:** Codex; `design/living-tavern`; `/workspace/legends-of-the-fall`.
