@@ -29,6 +29,14 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### NEMESIS-TRAIT-ART — Complete the twelve remaining trait symbols
+
+- **Owner:** Codex. **Branch/worktree:** `art/nemesis-traits-completion`, `/workspace/legends-of-the-fall` from main 0.393.0.
+- **Scope:** twelve original trait source symbols, importer/mapping, small-size previews, learned/unknown menu checks, credits and handoff. No simulation/save/version changes. Road encounters and herald portraits follow as separate batches.
+- **Direction:** Owner approved Fireproof, Bane of Mages and Elusive against the existing gothic pixel symbols, including the 28px comparison.
+- **Completion:** all remaining modelled trait icons integrated, distinct readable silhouettes at 28px, hidden secrets preserved, focused tests/typecheck/build and three phone sizes checked.
+- **Status:** complete locally, ready for review. All 24 modelled traits now have unique mappings. Typecheck/build, 42 focused tests and all learned/unknown groups at three phone sizes passed, with unchanged fixture meta and no browser errors. [Handoff](notes/nemesis-traits-completion.md). No push, merge or deployment.
+
 ### ART-393-RELEASE — Merge completed artwork and plan the next original paintings
 
 - **Owner:** Codex director. **Branch/worktree:** `art/dynasty-backdrops`, `/workspace/legends-of-the-fall`.
