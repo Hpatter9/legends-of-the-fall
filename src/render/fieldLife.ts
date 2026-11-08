@@ -1,38 +1,32 @@
-// The hold's small life (phase 2 polish, `docs/notes/assault-2.md`): embers rising off the fires and rings spreading on the river, at Near only,
-// pooled, and none at all for those who ask for less motion. A light local stand-in for the shared ambient module another builder is making
-// (`claude/alive`): the field's view calls only `update`, so it can be swapped for that module's emitters when it lands on main.
+// The hold's small life (phase 2 polish, `docs/notes/assault-2.md`): embers rising off the fires and rings spreading on the river, at Near only.
+// The motion is the shared ambient module's (`ambient.ts`): each ember and each ring is a pure function of the clock and its index, so a
+// fixed pool of sprites is set in place each frame, the same at any moment and steady across a pause. How much moves is `motionPlan`'s:
+// none for those who ask for less motion (read live), half for the battery saver.
 //
-// Looks only: it reads where the fires and the deep water are, and never the battle. It draws with `Math.random`, which the renderer may.
+// Looks only: it reads where the fires and the deep water are, and never the battle.
 
 import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
 import { VFX } from './vfxArt';
 import { rawAt } from './iso';
+import { emberAt, hash01, motionPlan } from './ambient';
+import { settings } from '../settings';
 import type { WorldRect } from './fieldCull';
 
-/** At most this many embers and ripples at once; an ember lives this long; a fire sends one about this often. */
+/** Embers a fire sends at once, and at most in all; an ember's life (s), how far it rises and spreads (world pixels). */
+const PER_FIRE = 4;
 const EMBERS = 60;
-const RIPPLES = 8;
-const EMBER_MS = 1400;
-const EMBER_EVERY = 520;
-const RIPPLE_MS = 1100;
-const RIPPLE_EVERY = 260;
+const EMBER = { life: 1.4, rise: 44, spread: 7, drift: 6 };
+/** The rings: slots over the whole river (those in view drawn), each ring's life (s). */
+const RINGS = 32;
+const RING_LIFE = 1.1;
 
-interface Mote {
-  sp: Sprite;
-  born: number;
-  ms: number;
-  x: number;
-  y: number;
-  drift: number;
-}
+const reducedQuery = typeof window !== 'undefined' ? window.matchMedia?.('(prefers-reduced-motion: reduce)') : undefined;
 
 export class FieldLife {
   readonly layer = new Container();
-  private embers: Mote[] = [];
-  private ripples: Mote[] = [];
+  private embers: Sprite[] = [];
+  private rings: Sprite[] = [];
   private ember: Texture;
-  private lastRipple = 0;
-  private reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   /** `water`: the deep tiles (u, v, h) the rings may spread on. */
   constructor(renderer: Renderer | { generateTexture: (g: Graphics) => Texture }, private water: readonly [number, number, number][]) {
@@ -42,61 +36,64 @@ export class FieldLife {
     this.layer.zIndex = 1e6 - 2;
   }
 
-  /** One frame: `fires` are the flames in view (world x, y), `t` the page's milliseconds; `near` false hides it all. */
+  /** One frame: `fires` are the flames in view (world x, y), `t` the battle's milliseconds; `near` false hides it all. */
   update(t: number, view: WorldRect, fires: readonly [number, number][], near: boolean): void {
-    const on = near && !this.reduced;
+    const plan = motionPlan({ reduced: !!reducedQuery?.matches, saver: !!settings().saver, hidden: false });
+    const on = near && plan.run && plan.particles > 0;
     this.layer.visible = on;
     if (!on) return;
-    // (an ember now and then off each fire, rising and drifting, fading)
+    const s = t / 1000;
+    // (the embers: a few off each fire, each lifting, swaying and fading on its own clock; the fire's place is its seed, so they hold)
+    const per = Math.max(1, Math.round(PER_FIRE * plan.particles));
+    const most = Math.round(EMBERS * plan.particles);
+    let n = 0;
     for (const [x, y] of fires) {
-      if (Math.random() > 16 / EMBER_EVERY || this.embers.length >= EMBERS) continue;
-      const sp = new Sprite(this.ember);
-      sp.anchor.set(0.5);
-      sp.blendMode = 'add';
-      this.layer.addChild(sp);
-      this.embers.push({ sp, born: t, ms: EMBER_MS * (0.7 + Math.random() * 0.6), x: x + (Math.random() - 0.5) * 14, y, drift: (Math.random() - 0.5) * 18 });
-    }
-    for (let i = this.embers.length - 1; i >= 0; i--) {
-      const e = this.embers[i];
-      const p = (t - e.born) / e.ms;
-      if (p >= 1) {
-        e.sp.destroy();
-        this.embers.splice(i, 1);
-        continue;
+      const seed = Math.round(x) * 7 + Math.round(y) * 13;
+      for (let i = 0; i < per && n < most; i++, n++) {
+        const e = emberAt(i, s, [x, y], { ...EMBER, seed });
+        const sp = (this.embers[n] ??= this.mote());
+        sp.visible = true;
+        sp.position.set(e.x, e.y);
+        sp.alpha = e.a * 0.9;
+        sp.scale.set(e.size * 1.5);
       }
-      e.sp.position.set(e.x + e.drift * p + Math.sin(p * 9 + e.drift) * 2, e.y - 44 * p);
-      e.sp.alpha = (1 - p) * 0.9;
-      e.sp.scale.set(1 - p * 0.5);
     }
-    // (a ring spreading on the deep water in view, now and then)
+    for (let i = n; i < this.embers.length; i++) this.embers[i].visible = false;
+    // (the rings: each slot a ring on one deep tile for its life, then on another; only those in view drawn)
     const frames = VFX.rippleWater;
-    if (frames?.length && this.water.length && t - this.lastRipple > RIPPLE_EVERY && this.ripples.length < RIPPLES) {
-      this.lastRipple = t;
-      for (let k = 0; k < 6; k++) {
-        const [u, v, h] = this.water[Math.floor(Math.random() * this.water.length)];
-        const [x, y] = rawAt(u + (Math.random() - 0.5) * 0.6, v + (Math.random() - 0.5) * 0.6, h);
-        if (x < view.x0 || x > view.x1 || y < view.y0 || y > view.y1) continue;
-        const sp = new Sprite(frames[0]);
-        sp.anchor.set(0.5);
-        sp.scale.set(1.2, 0.6);
-        sp.alpha = 0.5;
-        this.layer.addChild(sp);
-        this.ripples.push({ sp, born: t, ms: RIPPLE_MS, x, y, drift: 0 });
-        break;
-      }
+    const slots = frames?.length && this.water.length ? Math.round(RINGS * plan.particles) : 0;
+    let r = 0;
+    for (let i = 0; i < slots; i++) {
+      const off = hash01(i, 1) * RING_LIFE;
+      const cycle = Math.floor((s + off) / RING_LIFE);
+      const k = ((s + off) % RING_LIFE) / RING_LIFE;
+      const [u, v, h] = this.water[Math.floor(hash01(i, cycle, 2) * this.water.length)];
+      const [x, y] = rawAt(u + (hash01(i, cycle, 3) - 0.5) * 0.6, v + (hash01(i, cycle, 4) - 0.5) * 0.6, h);
+      if (x < view.x0 || x > view.x1 || y < view.y0 || y > view.y1) continue;
+      const sp = (this.rings[r] ??= this.ring(frames[0]));
+      sp.visible = true;
+      sp.texture = frames[Math.min(frames.length - 1, Math.floor(k * frames.length))];
+      sp.position.set(x, y);
+      sp.alpha = 0.5 * (1 - k);
+      r++;
     }
-    for (let i = this.ripples.length - 1; i >= 0; i--) {
-      const r = this.ripples[i];
-      const p = (t - r.born) / r.ms;
-      if (p >= 1 || !frames?.length) {
-        r.sp.destroy();
-        this.ripples.splice(i, 1);
-        continue;
-      }
-      r.sp.texture = frames[Math.min(frames.length - 1, Math.floor(p * frames.length))];
-      r.sp.position.set(r.x, r.y);
-      r.sp.alpha = 0.5 * (1 - p);
-    }
+    for (let i = r; i < this.rings.length; i++) this.rings[i].visible = false;
+  }
+
+  private mote(): Sprite {
+    const sp = new Sprite(this.ember);
+    sp.anchor.set(0.5);
+    sp.blendMode = 'add';
+    this.layer.addChild(sp);
+    return sp;
+  }
+
+  private ring(tex: Texture): Sprite {
+    const sp = new Sprite(tex);
+    sp.anchor.set(0.5);
+    sp.scale.set(1.2, 0.6);
+    this.layer.addChild(sp);
+    return sp;
   }
 
   destroy(): void {

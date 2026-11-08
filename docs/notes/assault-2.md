@@ -19,8 +19,10 @@ Built on 1b (`docs/notes/assault-1.md`), on `claude/assault-2`. The director's n
   not the bake. A fresh phone bench is asked for.
 - **Liveliness** (`src/render/fieldLife.ts`, new). Embers rise and drift off the fires (the bonfires, the braziers, the gates' torches, the
   drums), and rings spread now and then on the deep water, at Near only, pooled (sixty embers, eight rings at most), and none for reduced
-  motion. The firelight already flickers (1b). `claude/alive`'s shared ambient module is not on the remote yet, so this is a light local
-  stand-in: the field's view calls only its `update`, so it swaps for that module's emitters when it lands.
+  motion. The firelight already flickers (1b). The motion is now the shared ambient module's (`ambient.ts`): each ember is `emberAt` and
+  each ring a slot hashed by `hash01` over the river, pure functions of the battle's clock, so a fixed pool of sprites is set in place
+  each frame and holds still across a pause; `motionPlan` gives the amount (none for reduced motion, read live; half for the battery
+  saver).
 
 ## Checks
 

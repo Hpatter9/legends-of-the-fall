@@ -303,7 +303,7 @@ export class FieldView {
   /** The firelight of each chunk's lights: a warm glow added over the scene, flickering. */
   private glows = new Map<number, { sp: Sprite; base: number; seed: number; big: boolean }[]>();
   private glowTex: Texture | null = null;
-  /** The small life: embers off the fires, rings on the river (`fieldLife.ts`, a stand-in for the shared ambient module). */
+  /** The small life: embers off the fires, rings on the river (`fieldLife.ts`, moved by the shared `ambient.ts`). */
   private life: FieldLife | null = null;
   private ladders: Sprite[] = [];
   /** The heavy works (phase 2): the volley's ground marks, its stone in flight, the keg carried or set, the blasts. */
