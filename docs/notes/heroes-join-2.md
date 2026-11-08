@@ -58,3 +58,9 @@ Judgement calls, each for the owner to overrule:
 Baselines re-recorded from the tests' own output: the `ailment-logs.json` and `spells-identity.json` hashes, `nemesis-regression`'s pins and
 `stats-power`'s mean power by level (the mean over the ordinary heroes ran 1.4% over the old one at level 1). No test was deleted or loosened beyond
 these.
+
+## Checked
+
+`npm run typecheck`, the full `npm test` (2714 of 2714), `npm run web`, and `node tools/heroes-join-2/shots.mjs` (the collection holds all 65 ordinary heroes
+with the eleven in it, no name overflows a tile or the hero bar, no page error) at 393x852, 360x780 and 412x915: `docs/samples/heroes-join-2/`, the
+collection and a fight with the Seraph, Bombardier and Sea Reaver (in the fight they stand at the scale of the Knight beside them).
