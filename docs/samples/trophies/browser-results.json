@@ -1,0 +1,33 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "uniqueTrophies": 18,
+      "details": 18,
+      "locked": true,
+      "filters": true,
+      "close": true
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "uniqueTrophies": 18,
+      "details": 18,
+      "locked": true,
+      "filters": true,
+      "close": true
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "uniqueTrophies": 18,
+      "details": 18,
+      "locked": true,
+      "filters": true,
+      "close": true
+    }
+  ],
+  "reducedMotion": true,
+  "errors": []
+}
