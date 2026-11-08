@@ -651,6 +651,10 @@ class Game {
     });
     // (battery saver caps the frame rate at 30)
     onSettings((s) => (this.app.ticker.maxFPS = s.saver ? 30 : 0));
+    // (ALIVE: the page's own CSS life, the menus' sheen and glints, rests on a battery saver too)
+    const lowPower = (on: boolean) => document.documentElement.classList.toggle('lowPower', on);
+    lowPower(settings().saver);
+    onSettings((s) => lowPower(s.saver));
     // (the developer grant in Settings: crowns, or shards of every hero, for testing; saved and shown at once)
     onDevGrant((what, n) => {
       const said = devGrant(this.meta, what, n);
@@ -2264,7 +2268,9 @@ class Game {
     startAwake();
     bindMute($('mute'));
     // (the music dips under menus, sheets, the boss card and the event cards while they show)
-    for (const id of ['settings', 'hmSheet', 'hmSub', 'ptSheet', 'autoSum']) bindDuck($(id), 'sheet');
+    // (sheets over the game lower the music a little; the settings and the Armies screen do not, so the music's own volume can be
+    //  judged while it is set, and a full screen is not a muffled one: docs/notes/sound-pass.md)
+    for (const id of ['hmSheet', 'ptSheet', 'autoSum']) bindDuck($(id), 'sheet');
     bindDuck($('bossCard'), 'boss');
     bindDuck($('events'), 'event');
     $('fight').addEventListener('click', () => this.begin());
@@ -3637,7 +3643,8 @@ class Game {
   private syncScene(): void {
     // (an open map is the tower's or the Calamity's: the music takes its tune from that)
     const map: MapKind = this.towerView?.isOpen ? (this.run?.mode?.kind === 'calamity' ? 'calamity' : 'tower') : null;
-    setScene(sceneOf(this.home?.spot ?? null, this.run?.tower?.act ?? null), map);
+    // (a fight's ambience is its land's: the board's own `area`)
+    setScene(sceneOf(this.home?.spot ?? null, this.run?.tower?.act ?? null), map, this.b?.board?.area ?? null);
   }
 
   private refresh(): void {

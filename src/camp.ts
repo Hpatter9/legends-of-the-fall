@@ -44,6 +44,9 @@ import wildCampUrl from './art/camp/camp-wild.png';
 import arcaneCampUrl from './art/camp/camp-arcane.png';
 import bannerUrl from './art/castle/banner.png';
 import { conquered } from './sim/assault/economy';
+import { flameRise, flicker, hotSpots, motionPlan, type MotionPlan } from './render/ambient';
+import { LifePainter } from './render/ambientPaint';
+import { SCENE_LIFE } from './render/ambientScenes';
 
 const ART: Record<string, string> = { overlook: overlookUrl, campfire: campfireUrl, war: warCampUrl, wild: wildCampUrl, arcane: arcaneCampUrl, banner: bannerUrl };
 type Art = Record<string, HTMLImageElement>;
@@ -131,6 +134,8 @@ export class CampScene {
   readonly councilSlot = el('div', 'cpSlot cpCouncilSlot');
   /** The watchtower's lights, embers and crows (OVERLOOK-STAND). */
   private towerLife = new TowerLife();
+  /** ALIVE: the painting's own life: its clouds, lake, river and falls, its pines and banners, its lights and birds (`ambientPaint.ts`). */
+  private life = new LifePainter(SCENE_LIFE.overlook, true);
   readonly calamitySlot = el('div', 'cpSlot cpPortalSlot');
   private heading = el('div', 'cpHeading');
   private armyRigs = new Map<string, Small>();
@@ -425,6 +430,18 @@ export class CampScene {
     g.drawImage(patch, 0, Math.round(camp.h * CAMP_PAINT.y));
     this.root.dataset.camp = `${plan.atlas}:${plan.row}`;
     this.back = c;
+    // (ALIVE: the enemy camp's own fires are found in its picture, where it lies in the scene, to flicker and smoke)
+    const top = Math.round(camp.h * CAMP_PAINT.y);
+    const found = hotSpots(g.getImageData(0, top, camp.w, patch.height).data, camp.w, patch.height, { cell: 6, least: 2, most: 10 }).map(({ at, n }) => ({
+      at: [at[0], CAMP_PAINT.y + at[1] * CAMP_PAINT.h] as const,
+      n,
+    }));
+    this.life.layout(c, camp.w, camp.h, { x: 0, y: 0, w: camp.w, h: camp.h }, found);
+  }
+
+  /** How the scene's life plays now (held still under reduced motion; half as busy on a battery saver). */
+  private plan(): MotionPlan {
+    return motionPlan({ reduced: this.reduced, saver: this.saver, hidden: false });
   }
 
   /** Cache small sheets once per army; never resize/read sprite pixels in a frame. */
@@ -519,7 +536,7 @@ export class CampScene {
     }
   }
 
-  /** The firelight: warm orange over the ground and the faces, drawn additively at a steady opacity (no flicker). */
+  /** The firelight: warm orange over the ground and the faces, drawn additively (it flickers as it is drawn: ALIVE). */
   private paintGlow(camp: Camp): HTMLCanvasElement {
     const c = canvasOf(camp.w, camp.h);
     const g = c.getContext('2d')!;
@@ -711,8 +728,12 @@ export class CampScene {
     g.globalAlpha = 1;
     g.globalCompositeOperation = 'source-over';
     g.drawImage(this.back, 0, 0);
+    const plan = this.plan();
+    const t = this.now / 1000;
+    this.life.regions(g, t, plan);
     this.army(g, camp);
     this.mist(g, camp);
+    this.life.smoke(g, t, plan);
     this.towerLife.draw(g, camp.w, camp.h, this.now, !this.towerSlot.classList.contains('shut'), this.reduced);
     const list: { depth: number; paint: (c: CanvasRenderingContext2D) => void }[] = [];
     list.push({ depth: camp.fire.y, paint: (c) => this.fire(c, camp) });
@@ -723,9 +744,13 @@ export class CampScene {
     for (const e of list) e.paint(g);
     g.globalCompositeOperation = 'lighter';
     if (this.glow) {
-      g.globalAlpha = 0.8;
+      // (ALIVE: the firelight breathes and gutters with the flame)
+      g.globalAlpha = 0.8 * (plan.run ? flicker(t, 1, 'fire') : 1);
       g.drawImage(this.glow, 0, 0);
     }
+    g.globalCompositeOperation = 'source-over';
+    g.globalAlpha = 1;
+    this.life.lights(g, t, plan);
     g.globalCompositeOperation = 'source-over';
     g.globalAlpha = 1;
     this.sparksDraw(g);
@@ -733,7 +758,7 @@ export class CampScene {
     for (const actor of this.actors.values()) if (actor.emote) this.bubble(g, actor);
   }
 
-  /** The campfire: its logs, then its flame leaning slowly side to side (no flicker: the height holds still). */
+  /** The campfire: its logs, then its flame licking side to side and standing taller and shorter (ALIVE; still under reduced motion). */
   private fire(g: CanvasRenderingContext2D, camp: Camp): void {
     const f = this.flame;
     if (!f) return;
@@ -741,10 +766,12 @@ export class CampScene {
     const y = Math.round(camp.fire.y - f.h);
     g.drawImage(f.base, x, y);
     const t = this.reduced ? 0 : this.now;
+    const rise = this.reduced ? 1 : flameRise(t / 1000, 3);
     for (let row = 0; row < f.h; row++) {
       const lean = (f.h - row) / f.h;
-      const dx = this.reduced ? 0 : Math.round(Math.sin(t / 700 + row * 0.2) * 1.5 * lean);
-      g.drawImage(f.layer, 0, row, f.w, 1, x + dx, y + row, f.w, 1);
+      const dx = this.reduced ? 0 : Math.round((Math.sin(t / 700 + row * 0.2) * 1.5 + Math.sin(t / 130 + row * 0.6) * 0.8) * lean);
+      const top = Math.round(f.h - (f.h - row) * rise);
+      g.drawImage(f.layer, 0, row, f.w, 1, x + dx, y + top, f.w, Math.max(1, Math.round(rise)));
     }
   }
 

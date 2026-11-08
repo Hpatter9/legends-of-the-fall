@@ -1,11 +1,12 @@
 // Levels the music: `node tools/epic-music/level.mjs [id ...]` brings each file in src/audio/ (all of them with no ids) to the one
 // loudness target (`loudness.mjs`: -18 LUFS integrated, true peaks under -1 dBTP) and records the measures in `loudness.json`.
 // A track just rendered is levelled from its WAV in the scratch folder (`--out DIR`, as `render.mjs`), so it is encoded once;
-// any other file is decoded and encoded again at its own bitrate. `--check` only meters the files and prints the table.
+// any other file is decoded and encoded again at its own bitrate. `--check` only meters the files, prints the table and keeps
+// each file's loudness on a phone's speaker (`phone`) in it.
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, renameSync, statSync } from 'node:fs';
-import { level, meter, readTable, writeTable, TARGET, TOLERANCE } from './loudness.mjs';
+import { level, meter, meterPhone, readTable, writeTable, TARGET, TOLERANCE } from './loudness.mjs';
 
 const args = process.argv.slice(2);
 const optIdx = args.indexOf('--out');
@@ -27,8 +28,11 @@ for (const id of ids) {
   const dest = `${root}src/audio/${id}.opus`;
   if (args.includes('--check')) {
     const m = meter(dest);
+    const phone = meterPhone(dest);
     const off = m.lufs - TARGET;
-    console.log(`${id.padEnd(10)} ${m.lufs.toFixed(1)} LUFS  ${m.tp.toFixed(1)} dBTP  ${Math.abs(off) <= TOLERANCE ? 'ok' : `OFF by ${off.toFixed(1)} LU`}`);
+    console.log(`${id.padEnd(10)} ${m.lufs.toFixed(1)} LUFS  ${m.tp.toFixed(1)} dBTP  phone ${phone.toFixed(1)} LUFS  ${Math.abs(off) <= TOLERANCE ? 'ok' : `OFF by ${off.toFixed(1)} LU`}`);
+    // (the phone's figure is kept in the table whenever the files are checked: the page's trims are built from it)
+    if (table.files[id]) table.files[id].phone = +phone.toFixed(1);
     continue;
   }
   const wav = `${scratch}/${id}.wav`;
@@ -43,7 +47,7 @@ for (const id of ids) {
   }
   const before = table.files[id]?.before ?? meter(fresh ? dest : src);
   const r = level(src, dest, kbps);
-  table.files[id] = { lufs: r.after.lufs, tp: r.after.tp, before: { lufs: before.lufs, tp: before.tp } };
+  table.files[id] = { lufs: r.after.lufs, tp: r.after.tp, phone: +meterPhone(dest).toFixed(1), before: { lufs: before.lufs, tp: before.tp } };
   console.log(`${id.padEnd(10)} ${before.lufs.toFixed(1)} -> ${r.after.lufs.toFixed(1)} LUFS  (gain ${r.gain} dB${r.limited ? ', limited' : ''})  peak ${before.tp.toFixed(1)} -> ${r.after.tp.toFixed(1)} dBTP  ${(statSync(dest).size / 1024).toFixed(0)} KB${fresh ? '  (from the render)' : ''}`);
 }
-if (!args.includes('--check')) writeTable(table);
+writeTable(table);

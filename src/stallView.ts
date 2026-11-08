@@ -30,6 +30,8 @@ import { GLYPH_STONE, REMEDY_ICON } from './gearUiArt';
 import { GLYPHS, REFORGE_STANDING, clearGlyphs, enchantOffers, glyphPrice, patchBlock, patchCost, patchItem, reforgeCost } from './sim/enchant';
 
 import { menuFoot, menuNote, menuWell, ornateMenu } from './ornateMenu';
+import { AmbientLayer } from './render/ambientLayer';
+import { SCENE_LIFE } from './render/ambientScenes';
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -118,7 +120,10 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     // (the close-up: her shelf, the better one from standing 2; Hester leaning in; her line)
     const trader: Trader | null = tab === 'caravan' || tab === 'gloaming' ? tab : null;
     const scene = el('div', `hsScene${standing >= 2 ? ' rare' : ''}${trader ? ` ${trader}` : ''}`);
-    scene.style.backgroundImage = `url(${shopArt(standing >= 2 || trader === 'gloaming' ? 'shelf-rare' : 'shelf')})`;
+    const shelf = shopArt(standing >= 2 || trader === 'gloaming' ? 'shelf-rare' : 'shelf');
+    scene.style.backgroundImage = `url(${shelf})`;
+    // (ALIVE: her lamp's light breathes over the shelf, dust drifts in it)
+    scene.append(new AmbientLayer(SCENE_LIFE.stall, shelf, { fit: 'cover', pos: [0.5, 1] }).root);
     scene.append(img(shopArt(trader === 'caravan' ? 'caravan-master' : trader === 'gloaming' ? 'gloaming-dealer' : 'hester'), 'hsHester', trader ? TRADER_NAMES[trader].name : 'Hester Vane'));
     const say = el('p', 'hsSay');
     say.append(el('b', '', trader ? TRADER_NAMES[trader].name : 'Hester'), el('span', '', said));

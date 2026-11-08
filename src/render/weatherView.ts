@@ -7,6 +7,7 @@ import { Container, Sprite, Texture } from 'pixi.js';
 import type { Area } from '../sim/board';
 import type { Weather } from '../sim/weather';
 import { settings } from '../settings';
+import { flicker } from './ambient';
 import { ambientOf, countFor, fogFor, lookOf, tintAt, vignetteAt, type WeatherLook } from './weatherRules';
 
 interface Mote {
@@ -164,7 +165,7 @@ export class WeatherView {
         this.banks.push({ sp, x, vx: this.calm ? 0 : (i % 2 ? -1 : 1) * (5 + this.rand() * 8) });
       }
     }
-    // (night: a steady warm glow at each lit prop)
+    // (night: a warm glow at each lit prop, guttering like the flame it is: ALIVE)
     if (look.glow) {
       this.glowTex ??= soft(64, 64);
       for (const [x, y] of spots) {
@@ -204,6 +205,14 @@ export class WeatherView {
       else if (m.x < -12) m.x = this.w + 12;
       m.sp.position.set(Math.round(m.x), Math.round(m.y));
       if (look.flow === 'fall' && !look.streak && look.size[0] >= 3) m.sp.rotation += m.spin * s;
+    }
+    if (!this.calm) {
+      const t = this.age / 1000;
+      this.lights.children.forEach((g, i) => {
+        const k = flicker(t, i * 13 + 7, 'torch');
+        g.alpha = 0.6 * k;
+        g.scale.set(2 * (0.94 + 0.06 * k));
+      });
     }
     for (const b of this.banks) {
       b.x += b.vx * s;

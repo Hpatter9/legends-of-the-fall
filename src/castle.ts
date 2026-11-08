@@ -84,6 +84,9 @@ import sapphireUrl from './art/items/frost_sapphire.png';
 import bootsUrl from './art/items/cloud_treads.png';
 import tomeUrl from './art/items/hourglass.png';
 import chaliceUrl from './art/items/holy_chalice.png';
+import { motionPlan } from './render/ambient';
+import { LifePainter } from './render/ambientPaint';
+import { SCENE_LIFE } from './render/ambientScenes';
 
 const SCENE_ART_URLS = {
   throneRoom: throneRoomUrl,
@@ -347,6 +350,9 @@ export class CastleScene {
   private kingDecreeUntil = 0;
   private kingDecreeStarted = 0;
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /** ALIVE: the throne room's own life: banners and curtain stir, light through the glass, sconces gutter, dust (`ambientPaint.ts`). */
+  private life = new LifePainter(SCENE_LIFE.throne, true);
+  private lifeOf: HTMLImageElement | null = null;
   private trophyModal = new TrophyWallModal();
 
   // Duchess the goat wandering the Throne Room floor
@@ -958,8 +964,15 @@ export class CastleScene {
     const castle = this.meta?.castle;
 
     // 1. ARCHITECTURAL BACKDROP: Bespoke Castle Throne Room (400x210 pixel art drawn at 2x)
+    const life = motionPlan({ reduced: this.reduced, saver: settings().saver, hidden: false });
+    const lt = this.now / 1000;
     if (a?.throneRoom) {
       g.drawImage(a.throneRoom, 0, 0, 400, 210, 0, 0, W, H);
+      if (this.lifeOf !== a.throneRoom) {
+        this.lifeOf = a.throneRoom;
+        this.life.layout(a.throneRoom, 400, 210, { x: 0, y: 0, w: W, h: H });
+      }
+      this.life.regions(g, lt, life);
     } else {
       const fallbackBg = g.createLinearGradient(0, 0, 0, H);
       fallbackBg.addColorStop(0, '#221b28');
@@ -1112,6 +1125,12 @@ export class CastleScene {
         this.drawVfx('sparkleLight', spot.x, spot.y - spot.height * 0.6, 90, i);
       }
     });
+
+    if (this.lifeOf) {
+      this.life.lights(g, lt, life);
+      g.globalCompositeOperation = 'source-over';
+      g.globalAlpha = 1;
+    }
 
     // 6. DUCHESS THE GOAT WANDERING THE THRONE ROOM FLOOR
     drawHaystack(g, 210, 370, 2);

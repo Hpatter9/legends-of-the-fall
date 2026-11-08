@@ -1,5 +1,7 @@
 # Audio beds and new cues (phase 2)
 
+**Changed by [sound-pass.md](sound-pass.md):** the camp is the overlook (fire, far falls, wind, insects), the Spells study has its own bed, a field fight's bed is its land's, and every bed was measured and levelled to about 14 LU under the music.
+
 Phase 1 put the sound on audiorective (`audio-engine.md`). Phase 2 adds a synthesised ambience bed for each place, a dozen
 new cues, and replaces the battle drum beat with a rumble. No new files or URLs, so the service worker's `FILES` list is
 unchanged and the game still plays offline.

@@ -900,11 +900,11 @@ class Run {
       if (blipsBetween(plain, this.typed, n, v.every)) play(v.cue);
     }
     this.typed = n;
-    // (the score is held down while a line is being said, and let up between)
-    const saying = !!text && n < plain.length;
-    if (saying !== this.ducked) {
-      this.ducked = saying;
-      duck(saying, 'cinematic');
+    // (the score is held down a little from the first line said to the scene's end: never dipped and lifted line by line, which
+    //  pumped the music up and down through every conversation; docs/notes/sound-pass.md)
+    if (!!text && !this.ducked) {
+      this.ducked = true;
+      duck(true, 'cinematic');
     }
     const name = who && who !== 'narrator' ? (this.cast[who]?.kind === 'standKing' ? rulerOf(settings().ruler).name : rulerWords(this.names[who] ?? who, settings().ruler)) : null;
     this.hud.line(name, text, n, tone ?? (text && !name ? 'narrator' : ''), n >= plain.length);

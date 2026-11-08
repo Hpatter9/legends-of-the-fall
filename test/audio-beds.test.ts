@@ -1,12 +1,13 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BEDS, BED_FADE_S, BED_LEVEL_MAX, BED_OF, MIN_SHOT_GAP_S, ShotClock, pickShot, sceneOf, setChime, shotGap, twistCues,
+  BEDS, BED_FADE_S, BED_LEVEL_MAX, BED_OF, LAND_BED, MIN_SHOT_GAP_S, ShotClock, bedOf, pickShot, sceneOf, setChime, shotGap, twistCues,
   type BedId, type HomeSpot, type Scene,
 } from '../src/render/audioRules';
 import { AmbientBeds } from '../src/render/audioBeds';
 import { CUES } from '../src/render/soundRules';
 import { FakeContext, FakeNode, installFakeAudio } from './audioFake';
+import { AREAS } from '../src/sim/board';
 
 const SCENES = Object.keys(BED_OF) as Scene[];
 const BED_IDS = Object.keys(BEDS) as BedId[];
@@ -35,11 +36,26 @@ test('each home tab and the armies pick their place, and off the home screen the
   assert.equal(sceneOf(null, 0), 'tower1');
 });
 
-test('every scene maps to a bed, the castle and the spells share one, the three tower acts have their own', () => {
+// (changed by the sound pass, docs/notes/sound-pass.md: the Spells study has its own bed, candles and a magic hum, no longer the
+//  castle's wind; and a field fight's bed is its land's)
+test('every scene maps to a bed, the Spells study has its own, the three tower acts have their own', () => {
   for (const scene of SCENES) assert.ok(BEDS[BED_OF[scene]], `${scene} has a bed`);
-  assert.equal(BED_OF.castle, BED_OF.spells);
+  assert.equal(BED_OF.spells, 'library');
+  assert.notEqual(BED_OF.castle, BED_OF.spells);
   assert.deepEqual([BED_OF.tower1, BED_OF.tower2, BED_OF.tower3], ['crypt', 'halls', 'storm']);
-  assert.equal(new Set(Object.values(BED_OF)).size, BED_IDS.length, 'no bed goes unused');
+  const used = new Set([...Object.values(BED_OF), ...Object.values(LAND_BED)]);
+  assert.equal(used.size, BED_IDS.length, 'no bed goes unused');
+});
+
+test('a battle board\'s bed is its land\'s; the land counts only in a field fight', () => {
+  for (const land of AREAS) assert.ok(BEDS[bedOf('field', land)], `${land} has a bed`);
+  assert.equal(bedOf('field', 'snow'), 'snow');
+  assert.equal(bedOf('field', 'swamp'), 'swamp');
+  assert.equal(bedOf('field', 'volcano'), 'volcano');
+  assert.equal(bedOf('field', 'dungeon'), 'cave');
+  assert.equal(bedOf('field'), 'field', 'no land known: the plain field');
+  assert.equal(bedOf('tower1', 'snow'), 'crypt', 'the tower keeps its acts');
+  assert.equal(bedOf('camp', 'desert'), 'camp', 'the home screen keeps its places');
 });
 
 test('each bed is quiet, has something playing and spaces its one-shots out', () => {
@@ -136,6 +152,7 @@ test('every bed builds on the fake context, plays from its start, and is silent 
       beds.setScene(scene);
       const nodes = fresh(before, made());
       assert.ok(nodes.length > 4, `${scene} made nodes`);
+      // (the fade in is the equal-power curve or a glide: either way it starts from silence and ends at 1)
       assert.equal(beds.bed, BED_OF[scene]);
       assert.equal(beds.live, 1);
       assert.ok(nodes.some((n) => n.started), `${scene} started something`);
@@ -176,13 +193,13 @@ test('a change of scene crossfades over about 1.5 s, then the old bed is stopped
       if (n.started) assert.ok(n.stopped, 'and every old source stopped');
     }
     assert.ok(tavern.some((n) => n.started && !n.stopped), 'the new bed plays on');
-    // (the same bed again, castle to spells, changes nothing)
-    beds.setScene('castle');
+    // (the same bed again, one grassland to another, changes nothing)
+    beds.setScene('field', 'plains');
     mock.timers.tick(3000);
     const n0 = FakeContext.made.length;
-    beds.setScene('spells');
+    beds.setScene('field', 'highlands');
     assert.equal(FakeContext.made.length, n0);
-    assert.equal(beds.bed, 'castle');
+    assert.equal(beds.bed, 'meadow');
     // (scenes flicking by faster than the fade: the one fading is cut at once, so two beds at most)
     for (const s of ['armies', 'hall', 'field', 'tower1', 'tower2', 'tower3'] as Scene[]) {
       beds.setScene(s);
@@ -245,7 +262,7 @@ test('every one-shot kind can be made', () => {
     const beds = new AmbientBeds(ctx as unknown as AudioContext, walker([0.3, 0.7, 0.1]));
     beds.setScene('camp');
     const kinds = new Set(BED_IDS.flatMap((id) => BEDS[id].shots.map((s) => s.kind)));
-    assert.equal(kinds.size, 8);
+    assert.equal(kinds.size, 12);
     const bus = new FakeNode(ctx as unknown as FakeContext);
     for (const kind of kinds) {
       const before = FakeContext.made.length;
