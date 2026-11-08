@@ -216,13 +216,7 @@ export const SKILL_ELEMENT: Record<string, Element> = {
   'Sky Hunt': 'wind',
 };
 
-/** The Mythics' skills 2 and 3 (kit skills, not in `KITS`), which left `KIT_LOOKS` for looks of their own (docs/notes/mythics-finish.md):
- *  their elements, as they were. */
-export const MYTHIC_KIT_ELEMENT: Readonly<Record<string, Element>> = {
-  'Solar Aegis': 'light', Crownfall: 'earth', 'Star Hunger': 'dark', 'Comet Lance': 'light', 'Unburied Mercy': 'light', 'Broken Halo': 'light',
-  'Living Sanctuary': 'forest', Heartwood: 'forest', 'Stolen Tomorrow': 'lightning', Unmake: 'lightning',
-};
-export const skillElement = (name: string): Element => SKILL_ELEMENT[name] ?? MYTHIC_KIT_ELEMENT[name] ?? kitElement(name) ?? 'light';
+export const skillElement = (name: string): Element => SKILL_ELEMENT[name] ?? kitElement(name) ?? 'light';
 
 /** The element of each king's spell. */
 export const SPELL_ELEMENT: Record<SpellId, Element> = {

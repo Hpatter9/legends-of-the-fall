@@ -19,6 +19,8 @@ const OUT = process.env.OUT ?? 'docs/samples/mythics-finish';
 const [W, H] = opt('--size', '393x852').split('x').map(Number);
 const PICKS = opt('--picks', 'vael,astrax,ilyra,orrun,nyxara').split(',');
 const REDUCED = args.includes('--reduced');
+// (--ult-only: the ultimate alone, its cut-in measured, as the sizes check runs it)
+const ULT_ONLY = args.includes('--ult-only');
 mkdirSync(OUT, { recursive: true });
 
 const root = 'out/web';
@@ -143,7 +145,7 @@ async function shot(page, path) {
 for (const pick of PICKS) {
   const { ctx, page } = await open(pick);
   try {
-    for (const n of [1, 2, 3]) {
+    for (const n of ULT_ONLY ? [] : [1, 2, 3]) {
       const r = await skill(page, pick, n);
       console.log(pick, `s${n}`, JSON.stringify(r));
       // (its wind-up is the cast's 750 ms; the picture is a beat after the release)
@@ -176,6 +178,24 @@ for (const pick of PICKS) {
     // (our clock runs ahead of real time: the cut-in's pictures are given the moment they need to decode)
     await page.waitForFunction(() => [...document.querySelectorAll('.umMythic img')].every((i) => i.complete && i.naturalWidth > 0), null, { timeout: 5000 }).catch(() => console.log(pick, 'cut-in pictures not ready'));
     await page.evaluate(() => window.__game.app.render());
+    // (the cut-in's words and frame measured against the fight screen's top bar, spell row, Auto, tactic button and hero rows: none may cross
+    // them, and all must be on the screen; a text is measured by its text, as tools/combat-hud/probe.mjs does)
+    const fit = await page.evaluate(() => {
+      const box = (r) => ({ l: r.left, t: r.top, r: r.right, b: r.bottom });
+      const textBox = (el) => { const g = document.createRange(); g.selectNodeContents(el); return box(g.getBoundingClientRect()); };
+      const mine = [...document.querySelectorAll('.umLegend em, .umLegend small, .umLegend b, .umLegend i')].map((e) => [e.tagName, textBox(e)]);
+      const frame = document.querySelector('.umFrame');
+      if (frame) mine.push(['frame', box(frame.getBoundingClientRect())]);
+      const hud = [...document.querySelectorAll('#top, .fhRow, #tacticBtn, .spellOrb, #autoBtn, #mana')].filter((e) => e.offsetParent).map((e) => [e.id || e.className, box(e.getBoundingClientRect())]);
+      const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+      const out = [];
+      for (const [n, a] of mine) {
+        if (a.l < 0 || a.t < 0 || a.r > innerWidth || a.b > innerHeight) out.push(`${n} off the screen`);
+        for (const [m, b] of hud) if (hit(a, b)) out.push(`${n} / ${m}`);
+      }
+      return { parts: mine.length, hud: hud.length, out };
+    });
+    console.log(pick, `${W}x${H}`, 'cut-in', `${fit.parts} parts against ${fit.hud}`, fit.out.length ? `OVERLAPS ${fit.out.join('; ')}` : '0 overlaps');
     await shot(page, `${OUT}/${pick}-ult-cut.png`);
     await page.evaluate((show) => window.__step(370 + Math.round(show * 0.45)), ult.show);
     await shot(page, `${OUT}/${pick}-ult-show.png`);

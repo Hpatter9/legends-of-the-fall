@@ -127,6 +127,15 @@ the ten has its own cell), which is stricter. No test was loosened or removed.
 
 ## Checks
 
-See the hand-off for the counts: `npm run typecheck`, the full `npm test`, `npm run web`, the combat-HUD probe with Vael fielded
-(`PARTY=vael,knight,cleric,wizard,archer node tools/combat-hud/probe.mjs`), and `node tools/mythics/finish-shots.mjs`, which writes
-[the pictures](../samples/mythics-finish/) of each Mythic's three skills and its ultimate (cut-in and showcase) mid-cast at 393x852.
+- `npm run typecheck`: clean. `npm run web`: builds; `heroes/*.webp` (the paintings) are already in the service worker's list, and the new
+  atlas and props are bundled into game.js, so the cut-ins and looks play offline.
+- The full `npm test`: 2,720 tests, all pass (one combat-fx and one skill-keys failure along the way were fixed by moving the ten elements
+  into `kitLooks.ts`, `MYTHIC_KIT_ELEMENT`, where `kitElement` reads them; no test was changed for them).
+- The combat-HUD probe with each Mythic fielded first (`PARTY=<mythic>,knight,cleric,wizard,archer SCENES=ult,mid SIZES=393,360,412 node
+  tools/combat-hud/probe.mjs`): 0 overlaps in every case, five Mythics, three sizes, army and Calamity. Its single tap caught a Mythic's
+  cut-in only for Orrun (57 parts), so `tools/mythics/finish-shots.mjs --ult-only --size <w>x<h>` measures every Mythic's cut-in words and
+  frame against the top bar, spell row, Auto, mana, tactic button and hero rows: 0 overlaps and all on screen, all five at 393x852, 360x780
+  and 412x915, and with reduced motion at 393x852.
+- `node tools/mythics/finish-shots.mjs`: [the pictures](../samples/mythics-finish/) of each Mythic's three skills and its ultimate (cut-in
+  and showcase) mid-cast at 393x852 ([contact sheet](../samples/mythics-finish/contact.jpg)); 0 page errors, 0 missing files. The software
+  renderer stalled on one heavy frame now and then; the tool takes the picture a frame later.

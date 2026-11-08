@@ -139,5 +139,11 @@ export function kitSignature(name: string): Signature | undefined {
   return made.get(name) ?? undefined;
 }
 
+/** The Mythics' skills 2 and 3 (kit skills, not in `KITS`), which left `KIT_LOOKS` for looks of their own (docs/notes/mythics-finish.md):
+ *  their elements, as they were. */
+export const MYTHIC_KIT_ELEMENT: Readonly<Record<string, Element>> = {
+  'Solar Aegis': 'light', Crownfall: 'earth', 'Star Hunger': 'dark', 'Comet Lance': 'light', 'Unburied Mercy': 'light', 'Broken Halo': 'light',
+  'Living Sanctuary': 'forest', Heartwood: 'forest', 'Stolen Tomorrow': 'lightning', Unmake: 'lightning',
+};
 /** A kit skill's element, when it is one of the new skills (`skillElement` falls back to it). */
-export const kitElement = (name: string): Element | undefined => KIT_LOOKS[name]?.el;
+export const kitElement = (name: string): Element | undefined => KIT_LOOKS[name]?.el ?? MYTHIC_KIT_ELEMENT[name];
