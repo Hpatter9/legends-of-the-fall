@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.441.0',
+    date: '2026-11-09',
+    title: 'Art prompts cope with any image size',
+    notes: ['The Assault\'s art prompts now resize the image tool\'s paintings to each sheet\'s canvas, so a sheet no longer stops on a size.'],
+  },
+  {
     version: '0.440.0',
     date: '2026-11-09',
     title: 'Painted Drill Yard and two holds\' gates',
