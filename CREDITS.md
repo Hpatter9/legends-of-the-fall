@@ -545,6 +545,10 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 
 - The showcases' painted poses and props (ULT-SHOW: the Samurai's iaido crouch and sheathe, the Barbarian in mid-air, the Beastmaster's horn, Ayame's kneeling finish, the Lancer's gallop, the Minotaur's charge, the Ninja Monk's flurry, the Arc Blade's six lightning frames; the Buccaneer's die (rolling and its six faces) and grappling hook, the Dread Pirate's ghost ship, the Gunslinger's noon clock, the Time Witch's ground clock, the Siege Bot's reticle, the Wizard's meteor, the Werewolf's moon, the Satyr's music notes, the Kitsune's little fox, the Demon Swordsman's hellfire chains and the Priestess's holy light): original artwork generated for this game with OpenAI image generation (branch `art/ult-showcase`, PR #332). The sources are in `art-source/ult-showcase/`; `tools/ult-show/cut_art.py` trims them and brings them down to the game's size as webp, bundled into game.js for offline play. See `docs/notes/ult-showcase-design.md`.
 - **Castle room buildings and room icons** (`src/art/castle/smithy.png`, `watchtower_grand.png`, `hall_of_legends.png`, and `src/art/rooms/*.webp`, from `art-source/castle/`, PR #330): original art made for this game with an image model: the Smithy, the grand Watchtower and the Hall of Legends, and the icons of the castle's rooms. Halved and cut by `tools/castle/import-room-art.py`. See `docs/notes/int-330.md`.
+- **The Drill Yard and its room icons** (`src/art/castle/drill_yard.png`, `src/art/rooms/drill-blooded.webp`, `drill-veteran.webp`, from
+  `art-source/drill-yard/`, PR #477): the owner's paintings, original art generated with OpenAI image generation from the prompts in
+  `docs/notes/assault-3-art-prompts.md`: the Drill Yard's building, and the Blooded Drill's and Veteran Drill's icons. Trimmed and cut by
+  `tools/castle/import-room-art.py`.
 - **Relic icons** (`src/art/relics/*.webp`, from the paintings in `art-source/relics/raw/`, PR #341): original art made for this game with an image model: one painting for each of the 48 relics. Trimmed and sized by `tools/relics/import-relic-icons.py`; loaded by URL and cached for offline play (`build.mjs`). See `docs/notes/int-341.md` and `docs/notes/relics-redesign.md`.
 
 ## Nemesis War and tactic art (`src/art/expansion/`, `src/art/ui/tactics/`, from `art-source/expansion/` and `art-source/ui/tactics/`, PRs #399 and #400)
@@ -649,7 +653,10 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## The Assault's Barrow Necropolis (`src/art/assault/undead/`)
 
-- Until its own painted sheets land (the prompts: `docs/notes/assault-4-barrow-necropolis-art-prompts.md`), the Necropolis is drawn with the owner's
+- The owner's painted sheets, from the prompts in `docs/notes/assault-4-barrow-necropolis-art-prompts.md` (PR #476: original art generated with
+  OpenAI image generation): `art-source/assault/undead/und-01-railings.png` (the iron railings and the barrow wall), `und-02-gates.png` (the
+  gates and towers) and `und-03-bone-gate.png` (the Bone Gate and its towers), cut by `tools/assault/cut-sheets.py undead`.
+- Until the rest of its painted sheets land, the Necropolis is drawn with the owner's
   Orc sheets above, cut again by `tools/assault/cut-sheets.py undead` and recoloured cold (fire to witch fire, red cloth to ash grey); our siege works
   keep their own colours.
 - Beside them, single pieces of Chronos Settlement's isometric kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/`), above all the Liches and
@@ -670,7 +677,10 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## The Assault's Elder Root (`src/art/assault/wildwood/`)
 
-- Until its own painted sheets land (the prompts: `docs/notes/assault-4-elder-root-art-prompts.md`), Elder Root is drawn with the owner's Orc sheets
+- The owner's painted sheets, from the prompts in `docs/notes/assault-4-elder-root-art-prompts.md` (PR #475: original art generated with OpenAI
+  image generation): `art-source/assault/wildwood/wld-01-thorn-hedge.png` (the thorn hedge), `wld-02-gates.png` (the gates and towers) and
+  `wld-03-heartwood-gate.png` (the Heartwood Gate and its towers), cut by `tools/assault/cut-sheets.py wildwood`.
+- Until the rest of its painted sheets land, Elder Root is drawn with the owner's Orc sheets
   above, cut again by `tools/assault/cut-sheets.py wildwood` and recoloured to the deep forest (the grass deepened, stone and timber mossed, red cloth
   to leaf green); our siege works keep their own colours.
 - Beside them, single pieces of Chronos Settlement's Druids and Fae kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/druids/` and `fae/`:

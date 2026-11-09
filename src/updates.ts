@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.440.0',
+    date: '2026-11-09',
+    title: 'Painted Drill Yard and two holds\' gates',
+    notes: ['The Drill Yard and its two rooms are painted. The Barrow Necropolis and Elder Root now have painted walls, gates and great gates.'],
+  },
+  {
     version: '0.439.0',
     date: '2026-11-09',
     title: 'A royal hall for the Keep',

@@ -66,6 +66,7 @@ import hallUrl from './art/castle/hall_of_legends.png';
 // Hall props & treasures that appear as you upgrade your kingdom
 import chestsUrl from './art/castle/chests.png';
 import rackUrl from './art/castle/rack.png';
+import drillYardUrl from './art/castle/drill_yard.png';
 import anvilUrl from './art/castle/anvil_stall.png';
 import bannerUrl from './art/castle/banner.png';
 import crystalsUrl from './art/castle/crystals.png';
@@ -247,12 +248,11 @@ export const CHAMBERS: ChamberDef[] = [
     lore: 'Where retired heroes stand and teach the young of their calling.',
   },
   {
-    // (the Assault's Drill Yard, phase 3: the weapon rack stands in for its picture until the painting in
-    //  docs/notes/assault-3-art-prompts.md lands)
+    // (the Assault's Drill Yard, phase 3: the owner's painting, art-source/drill-yard/, cut by tools/castle/import-room-art.py)
     id: 'drillYard',
     name: 'Drill Yard',
     relicName: 'Sergeant\'s Baton',
-    edificeUrl: rackUrl,
+    edificeUrl: drillYardUrl,
     icon: shieldUrl,
     glow: '#fca5a5',
     statName: 'Recruits\' rank',

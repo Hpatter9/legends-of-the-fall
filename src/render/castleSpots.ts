@@ -53,6 +53,7 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   great: [136, 153],
   great_hall: [146, 147],
   hall_of_legends: [119, 112],
+  drill_yard: [120, 113],
   hay: [48, 51],
   hedge: [112, 95],
   herb: [94, 59],
@@ -86,8 +87,8 @@ export const SPRITE_SIZE: Record<string, readonly [number, number]> = {
   workshop: [95, 110],
 };
 
-/** The pictures only a building card shows (the three room buildings' own paintings, not in the yard's looks: `lookPicture` in src/castle.ts). */
-export const CARD_SPRITES: readonly string[] = ['smithy', 'watchtower_grand', 'hall_of_legends'];
+/** The pictures only a building card shows (the four room buildings' own paintings, not in the yard's looks: `lookPicture` in src/castle.ts). */
+export const CARD_SPRITES: readonly string[] = ['smithy', 'watchtower_grand', 'hall_of_legends', 'drill_yard'];
 
 /** One picture in a look: its centre across and where its bottom edge sits, from the building's plot (y down, 0 = the foot line). */
 export interface Part {

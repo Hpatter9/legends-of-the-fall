@@ -9,6 +9,8 @@ The owner's rule: new art is painted from ChatGPT image prompts, never drawn in 
 
 ## Where each goes, and the stand-ins until then
 
+All three landed in PR #477 and are wired in: `docs/notes/art-wire-6.md`.
+
 | Picture | Saved as | Stand-in now | Wired in |
 | --- | --- | --- | --- |
 | The Drill Yard, the castle card's painting | `src/art/castle/drill_yard.png` | the castle's weapon rack (`src/art/castle/rack.png`) | `CHAMBERS` in `src/castle.ts` (`edificeUrl`) |
