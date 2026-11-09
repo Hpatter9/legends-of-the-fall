@@ -26,11 +26,12 @@ test('a page for every army\'s hold, in order: the holds built so far, the other
   assert.ok(orcs.facts.some((f) => /^3 war drums$/.test(f)));
   assert.ok(orcs.tips.length >= 4);
   assert.ok(orcs.facts[0].includes('Orc Warlord'), 'no warchief sits: the Warlord');
-  // (phase 4 builds the holds one at a time: the Barrow Necropolis and the Howling Den are built, the rest are locked lines)
+  // (phase 4 builds the holds one at a time: the Barrow Necropolis, the Howling Den and Elder Root are built, the rest are locked lines)
   assert.ok(pages[1].built && pages[1].name === 'Barrow Necropolis');
   assert.ok(pages[1].facts.some((f) => /^3 bone-bell belfries$/.test(f)));
   assert.ok(pages[2].built && pages[2].name === 'Howling Den');
-  for (const p of pages.slice(3)) assert.ok(!p.built && p.facts.length === 0 && !p.record.includes('undefined'));
+  assert.ok(pages[3].built && pages[3].name === 'Elder Root');
+  for (const p of pages.slice(4)) assert.ok(!p.built && p.facts.length === 0 && !p.record.includes('undefined'));
   // (no fighter of the Assault is loaded for the page)
   assert.equal(UNITS.warWolf, undefined);
 });

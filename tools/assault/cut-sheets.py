@@ -17,7 +17,7 @@ Out: src/art/assault/<army>/{sprites,ground,edges,decals,faces}.webp and src/ren
 The report lists any cell whose picture strays from its footprint (its bottom too far above or below the diamond's bottom tip, or its
 middle off the foot point), for the art's notes.
 
-Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts] [--report]
+Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood] [--report]
 """
 import json
 import os
@@ -303,6 +303,70 @@ def den_tint(a, sheet, slot=None):
     else:
         how = 'frost' if sheet in DEN_FROST else 'autumn'
     return {'autumn': autumn, 'snow': snow, 'frost': frost, 'cool': cool, None: lambda x: x}[how](a)
+
+
+
+# ----- Elder Root (phase 4): the Wildwood's deep forest -----
+#
+# As for the others: the Orc profile's slots and names, its own sheets (docs/notes/assault-4-elder-root-art-prompts.md) and the Druids and
+# Fae kits. A sheet not painted yet falls back to the Orc sheet in the same slot, recoloured by `forest`: the grass deepened to forest green,
+# the stone and the timber mossed, the red cloth turned to leaf green, the fire kept.
+WILDWOOD_FILES = {
+    'orc-01-palisade.png': 'wld-01-thorn-hedge.png', 'orc-02-gates.png': 'wld-02-gates.png', 'orc-03-iron-gate.png': 'wld-03-heartwood-gate.png',
+    'orc-04-faces.png': 'wld-04-faces.png', 'orc-05-ground.png': 'wld-05-ground.png', 'orc-06-transitions.png': 'wld-06-transitions.png',
+    'orc-07-keep.png': 'wld-07-keep.png', 'orc-08-wall-dressing.png': 'wld-08-wall-dressing.png', 'orc-09-camp.png': 'wld-09-landmarks.png',
+    'orc-10-camp-props.png': 'wld-10-props.png', 'orc-11-siege-ruins.png': 'wld-11-ruins.png', 'orc-12-river.png': 'wld-12-mire.png',
+    'orc-13-decals.png': 'wld-13-decals.png',
+}
+SHEETS['wildwood'] = {
+    'sprites': {WILDWOOD_FILES[k]: v for k, v in _orc['sprites'].items()},
+    'ground': (WILDWOOD_FILES[_orc['ground'][0]], _orc['ground'][1]),
+    'edges': (WILDWOOD_FILES[_orc['edges'][0]], _orc['edges'][1]),
+    'decals': (WILDWOOD_FILES[_orc['decals'][0]], _orc['decals'][1]),
+    'faces': (WILDWOOD_FILES[_orc['faces'][0]], _orc['faces'][1]),
+    'fallback': ('orc', {v: k for k, v in WILDWOOD_FILES.items()}),
+    'shared': {'ladder', 'ram', 'trebuchet'},
+    'tint': lambda a, sheet, slot=None: forest(a),
+    'kits': {
+        **_orc['kits'],
+        'kitSpikedWall': 'druids/hedge_wall_run', 'kitSpikedCorner': 'druids/hedge_wall_corner', 'kitSkullGate': 'druids/tree_gate',
+        'kitStakeFence': 'druids/wattle_fence', 'longhouse': 'druids/longhouse', 'boneHut': 'druids/cottage', 'hideHut': 'druids/tavern',
+        'forge': 'druids/workshop', 'wargPen': 'druids/animal_pen', 'pigPen': 'druids/herb_garden_tile', 'watchtower': 'druids/watch_platform',
+        'lookout': 'fae/spiral_watchtower', 'warDrum': 'druids/stone_circle', 'skullTotem': 'druids/shrine', 'skullTorch': 'druids/mushroom_lantern',
+        'spearSign': 'druids/totem_signpost', 'bonfire': 'druids/campfire', 'weaponStall': 'druids/market_stall', 'warCart': 'druids/cart',
+        'granary': 'druids/granary', 'meatRacks': 'druids/clay_pots', 'meatPile': 'druids/hay_bales', 'barrels': 'fae/honey_jars',
+        'stockpile': 'druids/stockpile', 'woodpile': 'druids/log_pile', 'well': 'druids/well', 'hides': 'druids/baskets',
+        'logBridge': 'fae/root_bridge', 'brazier': 'fae/light_lantern_post', 'pine2': 'druids/birch_tree', 'gnarledTree': 'druids/great_oak',
+        'bareTree': 'fae/silver_birch', 'thornBush': 'druids/berry_bush', 'boulders': 'druids/mossy_rocks', 'rocks': 'druids/mossy_rocks',
+        'darkRocks': 'druids/mossy_rocks', 'darkRocksB': 'fae/crystal_rocks', 'standingStone': 'druids/shrine',
+        # (Elder Root's own dressing, which the Orc hold has no slot for)
+        'greatOak': 'druids/great_oak', 'weepingWillow': 'fae/weeping_willow', 'glowBush': 'fae/glow_bush', 'stoneCircle': 'druids/stone_circle',
+    },
+}
+
+
+def forest(a):
+    """The deep forest's stand-in: yellow-greens deepened to forest green, the grey stone and the pale timber mossed, the red cloth to leaf
+    green, the fire kept."""
+    rgb = a[..., :3].astype(float) / 255
+    mx = rgb.max(-1)
+    mn = rgb.min(-1)
+    c = mx - mn
+    sat = c / np.maximum(mx, 1e-6)
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    h = np.where(c == 0, 0, np.where(mx == r, ((g - b) / np.maximum(c, 1e-6)) % 6, np.where(mx == g, (b - r) / np.maximum(c, 1e-6) + 2, (r - g) / np.maximum(c, 1e-6) + 4))) / 6
+    fire = (mx > 0.72) & (h < 0.17) & (sat > 0.45)
+    leafy = (h > 0.12) & (h < 0.45) & (c > 0.04) & ~fire
+    red = ((h < 0.035) | (h > 0.94)) & (sat > 0.45) & (mx > 0.25)
+    grey = rgb.mean(-1, keepdims=True)
+    # (the leaves deeper and greener; the cloth to a leaf green; the rest a touch of moss, darker under the canopy)
+    deep = np.stack([r * 0.55, g * 0.92, b * 0.55 + g * 0.08], -1)
+    cloth = mx[..., None] * np.array([0.36, 0.62, 0.3])
+    moss = rgb * 0.82 + grey * np.array([-0.04, 0.06, -0.04])
+    out = np.where(leafy[..., None], deep, np.where(red[..., None], cloth, np.where(fire[..., None], rgb, moss * 0.94)))
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
 
 
 # (how far above a kit piece's bottom edge it stands, as a share of its width: a one-tile piece's diamond is half as tall as wide, and

@@ -40,9 +40,17 @@ export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
     'The Antler Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
     'Hold the hunters\' camp on the trail behind, or burn every tent of it, and no more of the pack runs down to the hold.',
   ],
+  wildwood: [
+    'A black mire runs from edge to edge: two deep channels with a slow marsh between. Cross by the root bridge (its log barricade holds the far end) or by the two fords.',
+    'Break the three pipers\' rings: while the satyrs pipe in one, the grove near it strikes harder.',
+    'The Wildwood draws no bows: its watch trees and its bank are held by snare-laying satyrs, who come down on whoever nears them.',
+    'The satyrs hunt your shooters first, going round the line to reach them: keep a wall of blades between them and your archers and mages.',
+    'The Heartwood Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
+    'Hold the satyrs\' camp on the Grove Trail, or burn every tent of it, and no more of the grove comes down to the hold.',
+  ],
 };
 /** What each hold's drums are, in the page's words. */
-const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones' };
+const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones', wildwood: 'pipers’ rings' };
 
 export interface HoldPage {
   army: string;
