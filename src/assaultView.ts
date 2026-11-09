@@ -404,7 +404,8 @@ export function openAssaultResult(_m: Meta, r: AssaultResult, hooks: { onBack():
   }
   well.append(el('p', '', `Each hero takes ${r.xp} XP${r.levelUps.length ? ` · ${r.levelUps.map((u) => `${heroName(u.kind)} reaches level ${u.to}`).join(', ')}` : ''}`));
   host.parentElement!.append(host);
-  const lines = nemesisLines(r.war);
+  // (the Council's fates, then the War News this assault wrote: the warchief's flight, a duel won, the hold's fall)
+  const lines = [...nemesisLines(r.war), ...(r.news ?? [])];
   if (lines.length) {
     const sec = menuSection(menu.body, 'The Council', undefined, 2);
     const w = menuWell(sec.parentElement!);

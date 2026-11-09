@@ -72,7 +72,7 @@ export const SCOUT_PRICE = 2;
 /** The traits a recruit may come with (what a fighter brings to the Council, not what it learned from the heroes: no immunity). */
 export const RECRUIT_TRAITS: readonly string[] = ['bane:martial', 'bane:arcane', 'bane:devout', 'bane:wild', 'ambusher', 'loneWolf', 'hillKing', 'scarred', 'arrowCatcher', 'executioner', 'healerHunter', 'elusive'];
 
-const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster', fled: 'Fled', humiliated: 'Humiliated', vengeance: 'Vengeance', reclaimed: 'Reclaimed', duel: 'Single combat' };
+const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster', fled: 'Fled', humiliated: 'Humiliated', vengeance: 'Vengeance', reclaimed: 'Reclaimed', duel: 'Single combat', conquest: 'Conquest' };
 /** A News kind's word ("Feud"). */
 export const newsWord = (k: NewsKind): string => EVENT_WORD[k];
 

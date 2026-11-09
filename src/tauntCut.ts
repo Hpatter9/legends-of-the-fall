@@ -26,7 +26,8 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 
 /** The parts of the screen a cut-in must stay clear of: the top bar, the spell row, the boss's bar and the banners above; the bench, the
  *  hero rows and the tactic button below (each counted above or below by where its middle is). */
-const HUD = ['#top', '#hudSpells', '#bossBar', '#twistBanner', '#comboBar', '#phaseBanner', '#synCol', '#tacticBtn', '.ehHorn', '#panel', '.fhRow', '#autoBar', '#benchWrap', '#quip'];
+// (and the Assault's bar, minimap and command rows, phase 3: its opening cut-in sits between them)
+const HUD = ['#top', '#hudSpells', '#bossBar', '#twistBanner', '#comboBar', '#phaseBanner', '#synCol', '#tacticBtn', '.ehHorn', '#panel', '.fhRow', '#autoBar', '#benchWrap', '#quip', '.asTop', '.asMini', '.asBottom'];
 
 /** The free band of the screen between the top parts and the bottom ones (px from the top), for a cut-in `h` tall. */
 function freeBand(h: number): number {

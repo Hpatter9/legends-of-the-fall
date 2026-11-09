@@ -43,10 +43,15 @@ const CAL_TITLES: Record<string, string> = {
   calBoss6: 'The End of All Roads',
 };
 
+/** Whether a fighter of `UNITS` has a bestiary entry: a foe, not a summoned one. The Assault's own pieces (its troops, the War-wolf, the
+ *  ram) are marked `summon` and join `UNITS` only when its module is first imported, so without this guard the order the modules load in
+ *  could slip them into the bestiary. */
+export const inBestiary = (u: { side: string; summon?: boolean }): boolean => u.side === 'foe' && !u.summon;
+
 function buildEntries(): FoeEntry[] {
   const out: FoeEntry[] = [];
   const byName = new Map<string, FoeEntry>();
-  const plain = [...Object.values(UNITS).filter((u) => u.side === 'foe' && !ELITE_FOES[u.id] && !CAL_BOSS_FOES[u.id])];
+  const plain = [...Object.values(UNITS).filter((u) => inBestiary(u) && !ELITE_FOES[u.id] && !CAL_BOSS_FOES[u.id])];
   for (const d of plain) {
     const have = byName.get(d.name);
     if (have) {

@@ -2,8 +2,8 @@
 
 Built on phase 2 (`docs/notes/assault-2.md`), on `claude/assault-2`. The director scoped this round to three of the design's phase-3 items
 (`docs/design/assault-mode.md` on `claude/assault-design`, sections 4.2, 6.3 and 10): the Elite tricks, the design's "Barracks", and the
-Vain captain's duel at the Iron Gate. The warchief's flight, the taunts as heroes approach, the News's conquest lines and the holds' codex
-pages are still to come.
+Vain captain's duel at the Iron Gate. The second round (released after 0.420.0) finished the phase: the warchief's flight, the taunts as
+heroes approach, the News's conquest lines and the holds' codex pages, with the codex's guard against the Assault's fighters (below).
 
 ## Veterans: every kind's Elite trick (`assault.ts`, `troops.ts`, `battle.ts`)
 
@@ -87,3 +87,77 @@ and 55% attack: 39 of 40 won, so no contest), as were harder blows (x1.2 or x1.4
 - the challenge card (360, 393, 412);
 - the Drill Yard's card (360, 393, 412);
 - the muster's host line (393).
+
+## The second round: the War's answer (`src/sim/assault/warAnswer.ts`, `holdCodex.ts`)
+
+### The warchief's flight
+
+- The warchief holds the throne of whichever hold is stormed (Q1). Under a fifth of his health, while another hold still stands, he is
+  asked once whether he flees: one chance in two, by a hash of the moment (`FLIGHT_SALT`), never `b.rng`.
+- Fled, he is gone from the field at once (no body, a puff of smoke). The hold falls as if he had, and the War reads him as escaped: he
+  learns Elusive as any nemesis that fled the board.
+- He rides for **the strongest hold still standing**: the unconquered army the player has opened whose Council's Might is greatest (a
+  later army first on a tie). That army becomes his home, so he meets the heroes in its runs.
+- The muster works the hold out before the march (`AssaultInput.flightTo`). At the last hold standing there is none, so he never flees
+  there, which is phase 5's last stand.
+
+### The taunts
+
+- As the assault opens, the cut-in plays for the most notable Council member present: the warchief, else the mightiest. It is the run's
+  own cut-in (`TauntCuts`, `tauntFor`), with the battle held while it plays and the Settings' Nemesis cut-ins honoured.
+  - It sits between the assault's bar and minimap and its command rows (`tauntCut.ts`'s HUD list now names them), and above the scene.
+  - A resumed assault does not play it again.
+- In battle, a Council member at his post taunts a hero once, as it comes within ten tiles, when he has a score with it. A score is a
+  trophy taken from it, a humiliation, a hero it slew (a Grudge) or maimed, the hero it dreads, or one whose friend it killed (`hasScore`,
+  the personal triggers of `triggerOf`).
+- The page shows his line and the hero's answer beside the minimap for four seconds.
+
+### The War News
+
+The War News writes:
+
+- the warchief's flight: "Vorga the Skullsplitter flees Bloodtusk Hold and rides for the Undead Legion";
+- a duel won before the Iron Gate;
+- the hold's fall: "Bloodtusk Hold falls. The Orc Warband is broken, and the Council's seat there stands empty", or the Warband regrouped
+  and broken again.
+
+There is a new News kind, `conquest`, wearing the warchief's crown. The result card lists these lines under the Council's.
+
+### The holds' codex pages
+
+The codex has a **Holds** tab once the Assault is open. Its seven tabs wrap to two rows (four and three), so no word breaks. It has a page
+for each army in order:
+
+- **Bloodtusk Hold**:
+  - its record ("Stormed 2 times; it still stands", "Conquered, and taken 2 times in 4 assaults");
+  - its lord (the warchief by name while one sits, else the Orc Warlord);
+  - 200 defenders (180 at 30 posts, and 20 down the Warpath);
+  - its five gates and three war drums;
+  - five tips on how it is won.
+- **The eight holds not built yet** (phase 4) are locked lines that name their army.
+
+The page reads the blueprint itself, not the engine, so opening the codex loads none of the Assault's fighters.
+
+### The codex's guard
+
+`inBestiary` (in `codex.ts`): a foe, not a summon. The bestiary skips the Assault's own pieces (its troops, the War-wolf, the ram), which
+join `UNITS` when its modules are first imported. Module order can no longer slip them in: `codex-order` loads the Assault before the
+codex and checks it.
+
+### Tests
+
+- `assault-war`:
+  - the strongest hold: opened, unconquered, the mightiest Council, a later army on a tie; none at the last;
+  - the flight asked once under a fifth, both ways over twelve seeds, and fled means the hold falls; never at the last hold;
+  - the fled warchief's new home and the News lines;
+  - a captain with a score taunts once within ten tiles, and one without does not.
+- `assault-holds`: nine pages in order, the built one's counts, the record following the save, the warchief named.
+- `codex-order`: the Assault's pieces loaded before the codex stay out of the bestiary.
+
+### Screenshots
+
+`docs/samples/assault-3/`:
+
+- the opening cut-in (360, 393, 412);
+- a taunt in battle (360, 393);
+- the codex's Holds tab (360, 393, 412).

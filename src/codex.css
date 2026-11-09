@@ -12,6 +12,9 @@
 .cxTabs { display: flex; gap: 4px; margin-top: 8px; position: sticky; top: 0; z-index: 1; background: rgb(var(--s1-rgb) / 0.97); padding: 2px 0; }
 .cxTab { flex: 1; min-height: 0; padding: 6px 4px; font: 700 13px var(--display); color: var(--dim); background: var(--s3); border: 2px solid var(--s6); border-radius: 6px 6px 0 0; }
 .cxTab.on { color: var(--gold-hi); background: var(--s6); border-color: var(--gold); }
+/* (with the Assault's Holds tab, seven tabs: two rows, four and three, so no word breaks) */
+.cxTabs.many { flex-wrap: wrap; row-gap: 4px; }
+.cxTabs.many .cxTab { flex: 1 0 calc(25% - 4px); overflow-wrap: normal; }
 .cxGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding-bottom: 16px; }
 .cxCard { position: relative; min-height: 0; min-width: 0; letter-spacing: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px 5px; background: linear-gradient(var(--s5), var(--s3)); border: 2px solid var(--edge); border-radius: 8px; color: var(--ink); }
 .cxCard.boss, .cxCard.calamity { border-color: var(--gold); }

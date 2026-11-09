@@ -20,12 +20,12 @@ import token from './art/council/token.png';
 import named from './art/relics/bookOfNames.webp';
 import muster from './art/relics/warDrum.webp';
 
-/** All nineteen News events have an explicit symbol. Existing commissioned crowns and painted relics
+/** All twenty News events have an explicit symbol (the Assault's Conquest wears the warchief's crown: a hold's seat burnt). Existing commissioned crowns and painted relics
  * fill the four events without a separate News cel; the other fifteen use the Council source sheet. */
 export const NEWS_ICON: Readonly<Record<NewsKind, string>> = {
   cheated, recruit, promotion, feud, betrayal, feast, trial, oath, desertion,
   claim: RANK_BADGE.warchief, crowned: RANK_BADGE.warchief, named, slain, muster,
-  fled, humiliated, vengeance, reclaimed, duel,
+  fled, humiliated, vengeance, reclaimed, duel, conquest: RANK_BADGE.warchief,
 };
 export const TROPHY_ICON = token;
 export const SMOOTH_COUNCIL_ART = new Set([named, muster]);

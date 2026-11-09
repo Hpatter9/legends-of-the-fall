@@ -36,6 +36,7 @@ import { ELITE_TRICK, kindOfUnit, rankOf, troopBoost, troopUnitOf, troopOf, TRIC
 import { SPLASH_SHARE } from '../units';
 import { callVolley, carrying, KEG_SLOW, plantGoal, worksTick } from './works';
 import { duelBlow, duelSight, duelTick, inDuel } from './gateDuel';
+import { flightTick, tauntTick } from './warAnswer';
 import { FIRE_RANGE, hasShooters, hutNear, looseFire, ramMind, RAM, scaleAim, scaleGoal, siegeBlow, siegeTick, startSiege, SUPPRESS_R, SUPPRESS_RANGE } from './siege';
 
 /** The assault's longest: twelve minutes of battle time (5.5); the rout runs this long after the lord falls before the hold is taken. */
@@ -166,6 +167,8 @@ function tick(b: Battle, out: BattleEvent[]): void {
   siegeTick(b, f, h, (pl) => anchorOf(f, pl), out);
   worksTick(b, h, (pl) => anchorOf(f, pl), out);
   duelTick(b, f, h, out);
+  flightTick(b, f, h, out);
+  tauntTick(f, h);
   // (the platoons' own upkeep: a charge runs out, a soldier walks for a downed hero)
   h.platoons.forEach((pl, k) => {
     if (pl.order.kind === 'charge' && b.t >= (pl.chargeUntil ?? 0)) {

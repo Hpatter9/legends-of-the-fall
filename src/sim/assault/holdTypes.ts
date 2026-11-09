@@ -36,6 +36,8 @@ export interface AssaultInput {
    *  sits (he rides to defend whichever hold is stormed, Q1). */
   council?: NemSnap[];
   warchief?: NemSnap;
+  /** Phase 3: the strongest hold still standing besides this one, where the warchief rides if he flees it (none: he never flees). */
+  flightTo?: string;
   /** The garrison's share of a wave foe's hp and attack (`ASSAULT.foeShare` unless a tool tries another). */
   foeShare?: number;
   /** Auto from the first tick: the bot plays the platoons. */
@@ -237,7 +239,9 @@ export type HoldEvent =
   | { kind: 'keg'; platoon: number; state: 'carried' | 'lit' | 'boom'; tile: number }
   | { kind: 'duelCalled'; post: number; captain: number }
   | { kind: 'duelRing'; up: boolean; tiles: number[]; hero: number; captain: number }
-  | { kind: 'duelOver'; out: GateDuelOut; captain: number; hero?: number };
+  | { kind: 'duelOver'; out: GateDuelOut; captain: number; hero?: number }
+  | { kind: 'chiefFled'; to: string; at: number }
+  | { kind: 'taunt'; member: number; hero: string; unit: number };
 
 export type AssaultOutcome = 'won' | 'lost' | 'night' | 'withdrawn';
 
@@ -293,6 +297,10 @@ export interface HoldState {
   siege: SiegeState;
   /** The Vain captain's duel at the Iron Gate (phase 3), once called. */
   duel?: GateDuel;
+  /** The warchief was asked whether he flees (phase 3), and whether he did. */
+  flight?: { asked: number; fled?: true };
+  /** The taunts already made: a Council member's id and the hero's kind (`id:kind`), once each. */
+  taunted?: string[];
   warpath: WarpathState;
   /** The lord has sallied from the throne once (phase 1b). */
   lordSallied?: boolean;
