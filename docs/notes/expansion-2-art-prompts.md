@@ -47,6 +47,12 @@ padding and all parts visible. One image only.
 ```
 
 
+## Cavern council backdrop
+
+```text
+Repository hpatter9/legends-of-the-fall; branch art/expansion-2; output art-source/expansion/council-backdrop.png. Paint ONE opaque 1024x1536 upright 2:3 menu backdrop in textured painterly pixel art, dark medieval fantasy. An empty war council in a monumental torchlit cavern hall: a long black table in perspective with a subdued war map, a tall imposing horned throne at the far head, and exactly thirteen other high-backed chairs (six down each side and one at the near foot). Banners on cavern walls bear pictorial orc tusk, undead skull, and beast claw emblems, no writing. Violet ambient light and restrained ember-orange torchlight, black iron, charcoal stone, muted brass. Strong readable silhouettes, deliberate pixel clusters and painterly texture. Deeply darkened edges AND a broad quiet dark middle for legible overlaid menu text; map low contrast with no bright central hotspot. Architectural framing, depth, atmospheric smoke, restrained highlights along sides. No people, no figures, no lettering, no text, no UI. Full scene background, opaque rather than transparent as explicitly required for this backdrop.
+```
+
 ## Houses tapestry backdrop
 
 ```text

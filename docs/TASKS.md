@@ -1258,6 +1258,14 @@ EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. O
 - Completion: one 384×256 transparent side-view merchant table matching tavern prop pixels, palette, outlines and lighting; requested goods, canopy, lantern and book sign; no people/text; add to PR #464.
 - Status: in progress; runtime integration excluded.
 - Result: ready for review in [Expansion art 2 #464](https://github.com/Hpatter9/legends-of-the-fall/pull/464). One 384×256 source PNG, 32 colours, binary alpha and 2×2 pixel grid verified; visually reviewed. [Handoff](notes/expansion-2-hester.md). Runtime tests/build not run (source art only).
+### EXPANSION-2-COUNCIL — Cavern council backdrop
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`; PR #464.
+- Scope: one `art-source/expansion/council-backdrop.png` plus required prompt/task/handoff records.
+- Direction: owner's specified empty cavern war council, violet and ember light, dark centre and edges for menu text.
+- Completion: 1024×1536 upright painterly pixel art, black map table, horned throne, thirteen high-backed chairs, orc/undead/beast banners; no people or text; visually inspect and push to existing PR.
+- Status: in progress; source art only.
+- Result: ready for review in Expansion art 2 PR #464. Painted and visually reviewed; exact 1024×1536 RGB PNG verified. No people or text; subdued map/centre and dark outer edges. [Handoff](notes/expansion-2-art.md). Runtime tests/build not run: source artwork only.
 
 ### EXPANSION-2-HOUSES — Tapestry menu backdrop
 
