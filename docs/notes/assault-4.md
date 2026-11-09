@@ -18,6 +18,7 @@ Iron Foundry. Each hold is written up below as it lands.
   the Council has no one) in `garrison.ts`. The lord is the army's last boss, as before.
 - **Each hold's share** (`HOLD_SHARE`, `shareOf`): the garrison's share of a wave foe, set by the balance tool so the bot does about as
   well at each army's Legendary level as it does at the Orcs'.
+- **Auto keeps the host together where the hold draws no bows** (`huddle` in `assault.ts`, the director's lever; see "The Auto lever" below).
 - **The art**: `tools/assault/cut-sheets.py <hold>` cuts a hold's sheets into `src/art/assault/<hold>/` with the Orc profile's piece names
   (so the field draws every hold by the same rules), and `fieldView.ts` loads the hold's atlas by army (`ATLASES`, `loadFieldArt(army)`).
   - A sheet not painted yet falls back to the Orc sheet in the same slot, recoloured for the hold: the hold is drawn on stand-ins until
@@ -166,7 +167,7 @@ Then, at level 75:
 | | **0.14** | **32** | **41%** | **84%** | **75%** |
 | | 0.1475 | 32 | 31% | 78% | 63% |
 
-So its share is **0.14** (`HOLD_SHARE.beasts`). Tactical is still the Den's easiest way (a massed host cuts down melee wolves as they come),
+So its share was **0.14** (`HOLD_SHARE.beasts`; **0.1475** since the Auto lever, below). Tactical is still the Den's easiest way (a massed host cuts down melee wolves as they come),
 and Siege sits under it here, the other way round from Bloodtusk Hold: the ram's and the ladders' crews stand still where the pack can reach
 the shooters behind them. A harder share brings Tactical to 75% but sinks Auto and Siege with it, so 0.14 is the closest these levers reach.
 
@@ -240,7 +241,7 @@ ten levels above the Den's:
 | | 0.115 | 9% | 84% | 75% |
 | (tried: a marsh one cell wide, not three) | 0.11 | 25% | 75% | 88% |
 
-So its share is **0.105** (`HOLD_SHARE.wildwood`). Its spread is the Den's, wider: with no bows on its walls a careful advance (Tactical,
+So its share was **0.105** (`HOLD_SHARE.wildwood`; **0.11** since the Auto lever, below). Its spread is the Den's, wider: with no bows on its walls a careful advance (Tactical,
 Siege) wins most fights, while Auto, which splits over the three crossings, falls fast as the share rises. 0.105 is the closest these
 levers reach to the other holds overall. The narrower marsh was no kinder to Auto, so the mire keeps its width.
 
@@ -268,3 +269,38 @@ levers reach to the other holds overall. The narrower marsh was no kinder to Aut
 `assault-holds` now expects Elder Root's page built too, and the rest locked.
 
 **Screenshots**: `docs/samples/assault-4/elder-*.png`: Mid and the Elder Root at 360, 393 and 412; the root bridge.
+
+## The Auto lever (the director's ask, after Elder Root)
+
+At the two holds with no bows (the Den, Elder Root), Auto, which plays the default plan's split over three crossings, fell far behind a
+careful advance: a platoon alone on a ford is run down by the garrison's hunters before the others arrive. The director asked for the fix
+in the bot's plan, not in the fight's rules, and for any hold:
+
+- **`bowless(army)`** (`garrison.ts`): the army's archers do not shoot (its `A` kind reaches one tile). True for the Beast Packs and the
+  Wildwood today, and for any army added later that has no bows.
+- **`huddle(h)`** (`assault.ts`): the bot keeps the host together at a bowless hold, unless it plays its Tactical style (which already sends
+  every platoon over the bridge). When it holds:
+  - each platoon still on the opening plan's road, if its crossing is not the host's, takes the host's crossing from the nearest point of its
+    road (`regrouped`, once each). The host's crossing is the one most platoons chose (the bridge between equals);
+  - the parts change: a platoon with shooters is cover (behind the main push, as the cover part has always played), the rest are the main
+    push, and none goes round alone on the flank.
+- The bot plays a platoon only while it is the bot's (Auto on, or a platoon the player has not ordered), so a player who orders a platoon keeps
+  it; turning Auto on hands it back, huddled.
+
+Measured (32 seeds) after the lever:
+
+| | Den, level 75 | | | Elder Root, level 85 | | |
+| --- | --- | --- | --- | --- | --- | --- |
+| share | 0.14 | **0.1475** | 0.155 | 0.105 | **0.11** | |
+| Auto | 84% | **56%** | 56% | 56% | **50%** | |
+| Tactical | 84% | **78%** | 69% | 88% | **94%** | |
+| Siege | 75% | **63%** | 78% | 97% | **88%** | |
+
+So the Den's share is now **0.1475** and Elder Root's **0.11**: Auto wins about half at both, and Tactical stays between 75 and 95%. (Before
+the lever, at their old shares, Auto won 41% at the Den and 28% at Elder Root.)
+
+The holds with bows did not move: Bloodtusk Hold at 0.155, level 55, 16 seeds, gave the same 44%, 88% and 94% before and after the lever, and
+the Necropolis at 0.1175, level 65, 32 seeds, the same 50%, 97% and 72% as its measure before it.
+
+Tests: `assault-plan` checks that the Beast Packs and the Wildwood are bowless and the Orcs and the Undead are not, that Auto brings the plan's
+two fords platoons onto the bridge's road at the Den and Elder Root, and that Tactical and Bloodtusk Hold keep the plan as it was.
