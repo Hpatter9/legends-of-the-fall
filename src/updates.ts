@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.423.0',
+    date: '2026-11-09',
+    title: 'Assault: the Howling Den',
+    notes: ['The Beasts\' hold: cross the gorge by rope bridge or ford, climb the autumn moor to the snowbound den, and guard your shooters from the hunting pack.'],
+  },
+  {
     version: '0.422.0',
     date: '2026-11-09',
     title: 'Assault: the Barrow Necropolis',
