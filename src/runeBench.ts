@@ -46,6 +46,12 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
 /** A tile's short name, "Ember II". */
 const shortName = (r: Rune): string => `${RUNE_NAMES[r.kind]} ${ROMAN[r.lv]}`;
+/** RUNE-BENCH-ART: the chosen rune's name at the head of the hint (the one-row bench's tiles are too narrow for a word; the stone's colour and
+ *  its pips are on the tile, and a hold opens its card). */
+const chosenName = (s: RuneState, id: number): string => {
+  const r = s.bag.find((x) => x.id === id);
+  return r ? `${shortName(r)}: ` : '';
+};
 /** A rest this long (ms) on a tile opens its card. */
 const HOLD_MS = 450;
 
@@ -164,7 +170,7 @@ export class RuneBench {
     }
     root.append(grid);
     this.fresh = new Set();
-    root.append(el('p', 'rbHint', !edit ? 'Runes change between waves.' : this.sel !== undefined ? 'Now tap its twin to merge, or a lit hero to set it. Tap it again to put it down.' : s.bag.length ? 'Drag a rune onto its twin to merge, or onto a hero to set it. Hold one to read it.' : 'The bag is empty: won waves and finds bring runes.'));
+    root.append(el('p', 'rbHint', !edit ? 'Runes change between waves.' : this.sel !== undefined ? `${chosenName(s, this.sel)}Now tap its twin to merge, or a lit hero to set it. Tap it again to put it down.` : s.bag.length ? 'Drag a rune onto its twin to merge, or onto a hero to set it. Hold one to read it.' : 'The bag is empty: won waves and finds bring runes.'));
   }
 
   private wornKey(s: RuneState): Record<string, string> {

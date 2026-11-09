@@ -1,2 +1,10 @@
 /* RUNE-BENCH-LOOK: written by tools/rune-bench/import-art.py; do not edit by hand. The owner's rune bench paintings, one rule
-   a piece painted (none yet: the bench wears the painted plates of paintedButtons.css, section 12). */
+   a piece painted (a piece not painted keeps the painted plates of paintedButtons.css, section 12). */
+html body #benchGrip, html body #benchGrip:active:not(:disabled) { border-image: url(ui/rune-bench/grip.webp) 46 14 46 14 fill / 23px 7px 23px 7px / 0 stretch; }
+html body #benchView.pulling #benchGrip { border-image: url(ui/rune-bench/grip-lit.webp) 46 14 46 14 fill / 23px 7px 23px 7px / 0 stretch; }
+html body #runeBench .rbGrid { border-image: url(ui/rune-bench/tray.webp) 38 44 38 44 fill / 10px 11px 10px 11px / 0 stretch; }
+html body #runeBench .rbTile { border-image: url(ui/rune-bench/tile.webp) 26 26 26 26 fill / 6px 6px 6px 6px / 0 stretch; }
+html body #runeBench .rbTile:is(.sel, .mergeCan, .mergeHot) { border-image: url(ui/rune-bench/tile-lit.webp) 26 26 26 26 fill / 6px 6px 6px 6px / 0 stretch; }
+html body #runeBench .rbTile.empty { border-image: url(ui/rune-bench/tile-empty.webp) 26 26 26 26 fill / 6px 6px 6px 6px / 0 stretch; }
+html body #runeBench .rbAuto.locked::before { content: ''; background-image: url(ui/rune-bench/rune-auto-locked.webp); }
+html body #runeBench .rbAuto .rbLock { display: none; }
