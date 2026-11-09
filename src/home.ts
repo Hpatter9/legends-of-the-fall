@@ -6,6 +6,7 @@
 
 import { heroesTabMark } from './heroesTabMark';
 import { glyphWord, medal, pbUrl } from './paintedButton';
+import { menuFoot, menuNote, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
 import { openMuster, openAssaultResult } from './assaultView';
 import { runAssault } from './assaultScene';
 import { claimTribute } from './sim/assault/economy';
@@ -464,7 +465,7 @@ export class Home {
   }
 
   show(tab: Tab): void {
-    if (!$('hmSheet').hidden) this.closeSheet();
+    if (!$('hmSheet').hidden || this.castleMenu) this.closeSheet();
     this.tab = tab;
     // (the tab bar stays under the armies: a tap on it leaves them)
     if ($('hmSub').classList.contains('armies')) this.closeSub();
@@ -962,11 +963,12 @@ export class Home {
     ach.addEventListener('click', () => this.openAchievements());
     // (the codex sits by the achievements: both are the records of the castle's library of deeds; its badge shows a milestone to claim)
     const cdx = el('button', 'ctChip');
-    cdx.append(icon(ICONS.spells), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
+    cdx.append(medal('stall-books'), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
     if (codexWaiting(m).length > 0) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
     const levelBtn = el('button', 'ctChip');
-    levelBtn.append(el('b', '', '🏰 Build Town'));
+    // (CASTLE-REMAKE: the painted rising arrow in place of the emoji castle)
+    levelBtn.append(medal('g-up'), el('b', '', 'Build Town'));
     levelBtn.title = 'Upgrade all buildings to showcase their grand looks';
     levelBtn.addEventListener('click', () => {
       for (const id of BUILDING_IDS) {
@@ -981,7 +983,7 @@ export class Home {
     // (UX-FIXES: Achievements is the trophy in the top bar and Reset tips is in Settings: one door each)
     void ach;
     row.append(cdx, levelBtn);
-    bar.append(row, el('div', 'ctHelp', 'tap heroes to salute · tap any chamber to upgrade or inspect'));
+    bar.append(row, el('div', 'ctHelp', 'tap a building to build or upgrade it · tap the guards to salute'));
     // (the buildings open at 10 army stars: until then the courtyard is a locked gate, with the stars still to win)
     this.castle.root.hidden = !up;
     this.castleShut.hidden = up;
@@ -1015,115 +1017,122 @@ export class Home {
     }
   }
 
+  /** The castle card up now (CASTLE-REMAKE: the standard ornate menu over the courtyard), if any. */
+  private castleMenu: OrnateMenu | null = null;
+
+  /** A castle card's shell: the standard ornate card, "The Keep" over the building's name. Opening another, or the same one drawn
+   *  afresh (a build started, the builders done), replaces it in the one step. */
+  private castleCard(id: BuildSite, title: string, sub: string): OrnateMenu {
+    this.closeSheet();
+    const menu: OrnateMenu = ornateMenu({
+      id: 'castleCard',
+      eyebrow: 'The Keep',
+      title,
+      sub,
+      onClose: () => {
+        if (this.castleMenu !== menu) return;
+        this.castleMenu = null;
+        this.cardOpen = false;
+        this.cardFor = null;
+        if (this.isOpen && this.tab === 'castle') this.castle.start();
+      },
+    });
+    this.castleMenu = menu;
+    this.cardOpen = true;
+    this.cardFor = id;
+    this.castle.stop();
+    return menu;
+  }
+
+  /** The head of a castle card's body: the building as it stands (greyed while unbuilt) over its level in painted stars. */
+  private cardArt(body: HTMLElement, id: SiteId, level: number): void {
+    const top = siteTop(id);
+    const art = el('div', `crCardArt${level === 0 ? ' unbuilt' : ''}`);
+    const pic = el('img', 'crCardPic');
+    pic.src = lookPicture(id, Math.max(1, level));
+    pic.alt = '';
+    pic.draggable = false;
+    const stars = el('div', 'crStars');
+    stars.setAttribute('role', 'img');
+    stars.setAttribute('aria-label', `level ${level} of ${top}`);
+    for (let i = 0; i < top; i++) stars.append(medal(i < level ? 'g-star' : 'g-star-empty'));
+    art.append(pic, stars);
+    body.append(art);
+  }
+
+  /** The line under a card's title: building, not built, or the level. */
+  private cardSub(id: BuildSite, level: number, top: number): string {
+    const m = this.meta;
+    return m.works?.id === id ? `building level ${m.works.level}` : level === 0 ? 'not built yet' : `level ${level} of ${top}`;
+  }
+
+  /** A section of a card holding its own content (the rooms, the plinths, the sparring yard) under a brass heading. */
+  private cardSection(body: HTMLElement, title: string, content: HTMLElement, line?: string): void {
+    const grid = menuSection(body, title, line);
+    grid.replaceWith(content);
+  }
+
   /** A building's upgrade card (over the courtyard): what it gives now and next, its cost, and the Build button. */
   private openBuilding(id: SiteId): void {
-    this.closeSheet();
-    this.cardOpen = true;
-    this.castle.stop();
-    this.sheetUp();
-    const box = $('hmSheetBox');
-    box.className = 'hsheet bcard';
-    this.drawBuildingCard(box, id);
+    this.drawBuildingCard(id);
   }
 
   /** The Chapel's card (over the courtyard): what it opens, its one price and the Build button. */
   private openChapel(): void {
-    this.closeSheet();
-    this.cardOpen = true;
-    this.castle.stop();
-    this.sheetUp();
-    const box = $('hmSheetBox');
-    box.className = 'hsheet bcard';
     const m = this.meta;
-    box.replaceChildren();
-    const head = el('div', 'bhead');
-    const pic = el('img', 'bpic');
-    pic.src = lookPicture('chapel', 0);
-    pic.alt = '';
-    pic.draggable = false;
-    const title = el('div');
-    title.append(el('h3', '', 'Chapel'), el('em', '', m.works?.id === 'chapel' ? 'being built' : 'not built yet'));
-    head.append(pic, title);
-    box.append(head, el('p', 'hint', 'A place to study the ruler\'s spells: opens the spellbook.'), el('p', 'hint', 'One purchase, no levels. Your starting spells still work in fights until then.'));
-    this.cardFor = 'chapel';
-    const buy = this.buildButton('chapel', CHAPEL_COST, CHAPEL_MS, canBuildChapel(m), () => startChapel(m, Date.now()));
-    const done = el('button', '', 'Close');
-    done.addEventListener('click', () => this.closeSheet());
-    const row = el('div', 'brow2');
-    row.append(buy, done);
-    box.append(row);
+    const menu = this.castleCard('chapel', 'Chapel', m.works?.id === 'chapel' ? 'being built' : 'not built yet');
+    this.cardArt(menu.body, 'chapel', 0);
+    menuNote(menu.body, 'A place to study the ruler\'s spells: opens the spellbook.');
+    menuNote(menu.body, 'One purchase, no levels. Your starting spells still work in fights until then.');
+    this.buildButton(menu, 'chapel', CHAPEL_COST, CHAPEL_MS, canBuildChapel(m), () => startChapel(m, Date.now()));
   }
 
-  private drawBuildingCard(box: HTMLElement, id: SiteId): void {
+  private drawBuildingCard(id: SiteId): void {
     const m = this.meta;
     // (DEPTH-BUILD: the card also serves the levelled Chapel and the three room buildings, which give rooms, not numbers)
-    if (id === 'chapel' || isRoomBuilding(id)) return this.drawRoomsCard(box, id);
+    if (id === 'chapel' || isRoomBuilding(id)) return this.drawRoomsCard(id);
     const b = BUILDINGS[id];
     const level = m.castle[id];
     const top = maxLevel(id);
-    box.replaceChildren();
-    const head = el('div', 'bhead');
-    const pic = el('img', 'bpic');
-    pic.src = lookPicture(id, level);
-    pic.alt = '';
-    pic.draggable = false;
-    const title = el('div');
-    title.append(el('h3', '', b.name), el('span', 'pips', '◆'.repeat(level) + '◇'.repeat(top - level)), el('em', '', m.works?.id === id ? `building level ${m.works.level}` : level === 0 ? 'not built yet' : `level ${level} of ${top}`));
-    head.append(pic, title);
-    box.append(head, el('p', 'hint', BLURB[id]));
+    const menu = this.castleCard(id, b.name, this.cardSub(id, level, top));
+    this.cardArt(menu.body, id, level);
+    menuNote(menu.body, BLURB[id]);
+    const gives = menuWell(menu.body);
+    gives.classList.add('crGives');
     const now = el('p');
     now.append(el('i', '', 'Now: '), level === 0 ? 'nothing yet' : effectText(id, level));
-    box.append(now);
+    gives.append(now);
     const cost = nextCost(m.castle, id);
     if (cost !== null) {
       const next = el('p');
       next.append(el('i', '', `Level ${level + 1}: `), effectText(id, level + 1));
-      box.append(next);
-    } else box.append(el('p', 'hint', 'Fully built.'));
-    box.append(el('p', 'hint', `Each level: ${b.perLevel}. Upgrades last for every run you start from now on.`));
+      gives.append(next);
+    } else gives.append(el('p', '', 'Fully built.'));
+    menuNote(menu.body, `Each level: ${b.perLevel}. Upgrades last for every run you start from now on.`);
     const strip = roomsStrip(id, level);
-    if (strip) box.append(strip);
+    if (strip) this.cardSection(menu.body, 'Rooms', strip);
     // (DEPTH-BUILD: the Barracks' Sparring Yard: two heroes spar while you are away, for bond points)
-    if (id === 'barracks' && roomOpen(m.castle, 'sparringYard')) box.append(this.sparringYard());
-    this.cardFor = id;
-    const buy = this.buildButton(id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startBuild(m, id, Date.now()));
-    const done = el('button', '', 'Close');
-    done.addEventListener('click', () => this.closeSheet());
-    const row = el('div', 'brow2');
-    row.append(buy, done);
-    box.append(row);
+    if (id === 'barracks' && roomOpen(m.castle, 'sparringYard')) this.cardSection(menu.body, 'Sparring Yard', this.sparringYard());
+    this.buildButton(menu, id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startBuild(m, id, Date.now()));
   }
 
   /** The card of a building that gives rooms rather than numbers (the Smithy, the Watchtower, the Hall of Legends, the Chapel past level 1). */
-  private drawRoomsCard(box: HTMLElement, id: SiteId): void {
+  private drawRoomsCard(id: SiteId): void {
     const m = this.meta;
     const level = siteLevel(m.castle, id, chapelBuilt(m));
     const top = siteTop(id);
-    box.replaceChildren();
-    const head = el('div', 'bhead');
-    const pic = el('img', 'bpic');
-    pic.src = lookPicture(id, level);
-    pic.alt = '';
-    pic.draggable = false;
-    const title = el('div');
-    title.append(el('h3', '', siteName(id)), el('span', 'pips', '◆'.repeat(level) + '◇'.repeat(top - level)), el('em', '', m.works?.id === id ? `building level ${m.works.level}` : level === 0 ? 'not built yet' : `level ${level} of ${top}`));
-    head.append(pic, title);
+    const menu = this.castleCard(id, siteName(id), this.cardSub(id, level, top));
+    this.cardArt(menu.body, id, level);
     const blurb = id === 'chapel' ? 'A place to study the ruler\'s spells; its higher levels watch over the party when a heart burns.' : ROOM_BUILDINGS[id as keyof typeof ROOM_BUILDINGS].blurb;
-    box.append(head, el('p', 'hint', blurb));
+    menuNote(menu.body, blurb);
     const strip = roomsStrip(id, level);
-    if (strip) box.append(strip);
+    if (strip) this.cardSection(menu.body, 'Rooms', strip);
     // (DEPTH-BUILD: the Hall of Legends' four plinths, one a calling: its mentor and perk, or what an empty one needs; Recall from here)
-    if (id === 'hall') box.append(this.hallPlinths(level));
+    if (id === 'hall') this.cardSection(menu.body, 'The plinths', this.hallPlinths(level), 'one mentor a calling');
     const cost = siteNextCost(m.castle, id, chapelBuilt(m));
     const next = roomsOf(id).filter((r) => r.level === level + 1);
-    if (cost !== null && next.length) box.append(el('p', 'hint', `Level ${level + 1} opens the ${next.map((r) => r.name).join(' and ')}.`));
-    this.cardFor = id;
-    const buy = this.buildButton(id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startSite(m, id, Date.now()));
-    const done = el('button', '', 'Close');
-    done.addEventListener('click', () => this.closeSheet());
-    const row = el('div', 'brow2');
-    row.append(buy, done);
-    box.append(row);
+    if (cost !== null && next.length) menuNote(menu.body, `Level ${level + 1} opens the ${next.map((r) => r.name).join(' and ')}.`);
+    this.buildButton(menu, id, cost, cost === null ? 0 : buildMs(id, level + 1), cost !== null && m.crowns >= cost, () => startSite(m, id, Date.now()));
   }
 
   private sparringYard(): HTMLElement {
@@ -1193,38 +1202,47 @@ export class Home {
     return wrap;
   }
 
-  /** A card's Build button: the price and how long it takes; "Building · 4:05" while it goes up; greyed while the builders are busy
-   *  elsewhere (a hint says where); "Full" at the top. A tap pays and starts the works, and the card shows the countdown. */
-  private buildButton(site: BuildSite, cost: number | null, ms: number, affordable: boolean, start: () => boolean): HTMLElement {
-    const wrap = el('div', 'buildBtn');
-    const buy = el('button', '');
+  /** A card's Build button, the card's primary (a painted plate): the price and how long it takes; "Building · 4:05" while it goes up;
+   *  greyed while the builders are busy elsewhere (a note says where); "Full" at the top. A tap pays and starts the works, and the card
+   *  shows the countdown. */
+  private buildButton(menu: OrnateMenu, site: BuildSite, cost: number | null, ms: number, affordable: boolean, start: () => boolean): void {
     const on = this.worksOn(site);
+    const words = el('span', 'crPrimaryWords');
+    let disabled = false;
     if (on === 'here') {
-      buy.append('Building · ', el('span', 'worksLeft', clockText(worksLeft(this.meta, Date.now()))));
-      buy.disabled = true;
+      words.append('Building · ', el('span', 'worksLeft', clockText(worksLeft(this.meta, Date.now()))));
+      disabled = true;
     } else if (cost === null) {
-      buy.textContent = 'Full';
-      buy.disabled = true;
+      words.append('Full');
+      disabled = true;
     } else {
-      buy.textContent = `Build · ${cost} · ${clockText(ms)}`;
-      buy.disabled = on === 'elsewhere' || !affordable;
-      if (!buy.disabled) buy.classList.add('primary');
+      const time = el('span', 'crTime');
+      time.append(medal('clock'), clockText(ms));
+      words.append('Build · ', medal('crowns'), String(cost), time);
+      disabled = on === 'elsewhere' || !affordable;
     }
-    buy.addEventListener('click', () => {
-      if (!start()) return;
-      saveMeta(this.meta);
-      this.refresh();
-      site === 'chapel' && !chapelBuilt(this.meta) ? this.openChapel() : this.openBuilding(site);
+    const { primary } = menuFoot(menu, {
+      back: { word: 'close' },
+      primary: {
+        label: 'Build',
+        disabled,
+        onClick: () => {
+          if (!start()) return;
+          saveMeta(this.meta);
+          this.refresh();
+          site === 'chapel' && !chapelBuilt(this.meta) ? this.openChapel() : this.openBuilding(site);
+        },
+      },
     });
-    wrap.append(buy);
+    if (primary) {
+      primary.replaceChildren(words);
+      primary.setAttribute('aria-label', cost === null ? 'Full' : on === 'here' ? 'Building' : `Build for ${cost} crowns, ${clockText(ms)}`);
+    }
     if (on === 'elsewhere') {
       const w = this.meta.works!;
-      const name = siteName(w.id);
-      const hint = el('p', 'hint', `The builders are at the ${name}: `);
+      const hint = menuNote(menu.body, `The builders are at the ${siteName(w.id)}: `);
       hint.append(el('span', 'worksLeft', clockText(worksLeft(this.meta, Date.now()))), ' left.');
-      wrap.append(hint);
     }
-    return wrap;
   }
 
   /** The roster page: every hero, the locked ones with how to get them. */
@@ -1263,6 +1281,10 @@ export class Home {
   private sheetWasUp = false;
 
   private closeSheet(): void {
+    // (CASTLE-REMAKE: a castle card is a standard ornate menu, not the sheet: it goes too)
+    const castleMenu = this.castleMenu;
+    this.castleMenu = null;
+    castleMenu?.close();
     this.stopSheet?.();
     this.stopSheet = null;
     // (a redraw shuts the sheet and puts it straight back: remembered until the page next draws, so it is not taken for a fresh one)

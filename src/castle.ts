@@ -9,10 +9,10 @@ import {
   clockText,
   maxLevel,
   siteLevel,
+  siteName,
   siteNextCost,
   siteTop,
   worksLeft,
-  type BuildingId,
   type SiteId,
 } from './sim/castle';
 import { roomsOf } from './sim/rooms';
@@ -23,7 +23,7 @@ import { loadImage } from './render/loadImage';
 import { VFX, type VfxKey } from './render/vfxArt';
 import { UNITS } from './sim/units';
 import { play } from './render/sound';
-import { effectText, type PlotId } from './render/castleSpots';
+import type { PlotId } from './render/castleSpots';
 import { goatSheet } from './duchess';
 import { goatSays } from './quips';
 import { showQuip } from './quipView';
@@ -85,6 +85,9 @@ import bootsUrl from './art/items/cloud_treads.png';
 import tomeUrl from './art/items/hourglass.png';
 import chaliceUrl from './art/items/holy_chalice.png';
 import { motionPlan } from './render/ambient';
+import { AmbientLayer } from './render/ambientLayer';
+import { medal, plaque, plateButton, type PbIcon } from './paintedButton';
+import { castleArtUrl, isPainted, KEEP_SPOT, PLOTS, plaqueState, buildingArt } from './castleArt';
 import { LifePainter } from './render/ambientPaint';
 import { SCENE_LIFE } from './render/ambientScenes';
 
@@ -286,9 +289,10 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 
 export function lookPicture(id: PlotId | SiteId, level: number): string {
   // (the Watchtower stands grander at its top level, 3)
-  if (id === 'watchtower' && level >= siteTop('watchtower')) return watchtowerGrandUrl;
+  if (id === 'watchtower' && level >= siteTop('watchtower') && !isPainted('watchtower')) return watchtowerGrandUrl;
+  // (CASTLE-REMAKE: the owner's painting of the building once it lands, else the old sprite)
   const match = CHAMBERS.find((c) => c.id === id);
-  return match ? match.edificeUrl : crownUrl;
+  return match ? buildingArt(match.id, match.edificeUrl) : crownUrl;
 }
 
 interface HallParticle {
@@ -329,27 +333,29 @@ const GUARD_SPOTS = [
 const KING_SPOT = { x: 400, y: 258, w: 160, h: 210, frameW: 160, frameH: 210 };
 
 export class CastleScene {
-  readonly root = el('div', 'ctWrap ctCitadelWrap');
-  private scroll = el('div', 'ctScroll ctCitadelScroll');
-  private stage = el('div', 'ctCitadelStage');
+  readonly root = el('div', 'ctWrap crPage');
+  private scroll = el('div', 'ctScroll crScroll');
+  private stage = el('div', 'crStage');
 
-  // Scenic Upper Royal Citadel Frame
-  private scenicFrame = el('figure', 'ctScenicFrame');
+  // (CASTLE-REMAKE: the courtyard: the painting, its life, and a place for each building)
+  private yard = el('figure', 'crYard');
+  private yardArt = el('img', 'crYardArt');
+  private spots = el('div', 'crSpots');
+  private spotEls = new Map<SiteId, { btn: HTMLButtonElement; pic: HTMLImageElement; site: HTMLImageElement; plaque: HTMLElement; title: HTMLElement; line: HTMLElement; key: string }>();
+  private yardLife: AmbientLayer | null = null;
+  private yardSub = el('p', 'crSub');
+
+  // The throne hall (the old scene: the ruler, the guards, Duchess, the trophy rack), in the ornate frame
+  private scenicFrame = el('figure', 'ctScenicFrame crHall');
   private scenicViewport = el('div', 'ctThroneScenic');
   private canvas = el('canvas', 'ctHonorCanvas');
   private ctx = this.canvas.getContext('2d')!;
-  private crestTitle = el('div', 'ctCrestTitle', 'ROYAL CITADEL');
-  private crestSub = el('div', 'ctCrestSub', 'Realm Power · Lv. 0');
   private guardPlaque = el('figcaption', 'ctGuardPlaque');
   private guardTitle = el('span', '', 'HIGH THRONE OF THE KING');
   private guardNames = el('b', '', 'Royal Honor Guard & Duchess');
 
-  // Kingdom Power Summary Strip
-  private powerBanner = el('div', 'ctPowerBanner');
-
-  // Chamber Grid
-  private grid = el('div', 'ctChamberGrid');
-  private chamberEls = new Map<SiteId, HTMLElement>();
+  // What the castle gives, on painted chips
+  private powerBanner = el('div', 'crBoons');
 
   private raf = 0;
   private running = false;
@@ -365,8 +371,14 @@ export class CastleScene {
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** ALIVE: the throne room's own life: banners and curtain stir, light through the glass, sconces gutter, dust (`ambientPaint.ts`). */
   private life = new LifePainter(SCENE_LIFE.throne, true);
+  /** (CASTLE-REMAKE: the painted hall's life, once the owner's painting lands) */
+  private hallLife = new LifePainter(SCENE_LIFE.throneHall, true);
+  private hallArt: HTMLImageElement | null = null;
   private lifeOf: HTMLImageElement | null = null;
   private trophyModal = new TrophyWallModal();
+  /** The works seen at the last update: a new one starting plays the builders' flourish over its plot. */
+  private worksSeen = '';
+  private worksSeenInit = false;
 
   // Duchess the goat wandering the Throne Room floor
   private goat: Goat | null = null;
@@ -375,7 +387,8 @@ export class CastleScene {
 
   constructor(
     private onPick: (id: PlotId | SiteId) => void,
-    private onDirectUpgrade?: (id: SiteId) => boolean,
+    /** (kept for the home screen's wiring: the courtyard opens a card, whose Build button starts the works) */
+    _onDirectUpgrade?: (id: SiteId) => boolean,
   ) {
     this.buildLayout();
     this.canvas.width = 800;
@@ -386,75 +399,78 @@ export class CastleScene {
     void ensureSceneArt().then(() => {
       if (this.meta) this.paintGreatHall();
     });
+    if (isPainted('throne-hall'))
+      void loadImage(castleArtUrl('throne-hall')).then((im) => {
+        this.hallArt = im;
+        if (this.meta) this.paintGreatHall();
+      }).catch(() => undefined);
   }
 
   private buildLayout(): void {
-    // 1. Ceremonial Top Crest + Brass Frame Scene
-    const crest = el('div', 'ctRoyalCrest');
-    crest.append(this.crestTitle, this.crestSub);
+    // 1. The page's head, as the tavern's: the name, a line, and the boss trophies (the castle's own door; the other places are tabs)
+    const head = el('header', 'crHead');
+    const words = el('div');
+    words.append(el('h2', '', 'The Keep'), this.yardSub);
+    const trophies = plateButton({ label: 'Trophies', icon: 'tav-trophies', cls: 'crTrophies', onClick: () => this.meta && this.trophyModal.open(this.meta) });
+    trophies.title = 'Defeated Boss Trophy Wall';
+    head.append(words, trophies);
 
-    const rays = el('div', 'ctRays');
-    const embers = el('div', 'ctEmbers');
-    for (let i = 0; i < 8; i++) embers.append(el('i'));
+    // 2. The courtyard: the painting (a stand-in until the owner's lands), its life over it, then the buildings on their plots
+    this.yardArt.src = castleArtUrl('courtyard');
+    this.yardArt.alt = 'The castle courtyard at dusk: the keep at the top, the buildings on their plots, the gate below.';
+    this.yardArt.draggable = false;
+    this.yardArt.decoding = 'async';
+    this.yard.classList.toggle('crStandIn', !isPainted('courtyard'));
+    this.yardLife = new AmbientLayer(SCENE_LIFE.courtyard, castleArtUrl('courtyard'), { fit: 'fill' }, 'crYardLife');
+    const keep = el('button', 'crKeep');
+    keep.type = 'button';
+    keep.setAttribute('aria-label', 'The keep: go in to the throne hall');
+    keep.style.cssText = `left:${KEEP_SPOT.x * 100}%;top:${KEEP_SPOT.y * 100}%;width:${KEEP_SPOT.w * 100}%;height:${KEEP_SPOT.h * 100}%`;
+    keep.append(plaque('The Keep', 'throne hall'));
+    keep.addEventListener('click', () => {
+      play('sparkle');
+      this.scenicFrame.scrollIntoView({ behavior: this.reduced ? 'auto' : 'smooth', block: 'center' });
+    });
+    this.spots.append(keep);
+    for (const p of PLOTS) {
+      const btn = el('button', 'crSpot');
+      btn.type = 'button';
+      btn.dataset.site = p.id;
+      btn.style.cssText = `left:${p.x * 100}%;top:${p.y * 100}%;width:${p.w * 100}%`;
+      const art = el('span', 'crArt');
+      const pic = el('img', 'crPic');
+      pic.alt = '';
+      pic.draggable = false;
+      pic.decoding = 'async';
+      const site = el('img', 'crSite');
+      site.alt = '';
+      site.draggable = false;
+      site.hidden = true;
+      if (isPainted('site')) site.src = castleArtUrl('site');
+      art.append(pic, site);
+      const pq = plaque('', '');
+      const title = pq.querySelector('b')!;
+      const line = pq.querySelector('small') ?? pq.appendChild(el('small'));
+      btn.append(art, pq);
+      btn.addEventListener('click', () => this.onPick(p.id));
+      this.spots.append(btn);
+      this.spotEls.set(p.id, { btn, pic, site, plaque: pq, title, line, key: '' });
+    }
+    this.yard.append(this.yardArt, this.yardLife.root, this.spots, el('figcaption', 'crCaption', 'Tap a building to build or upgrade it'));
 
-    const pennantL = el('span', 'ctPennant left', '👑');
-    const pennantR = el('span', 'ctPennant right', '⚔️');
-
-    const tapHint = el('div', 'ctTapSaluteHint', '✨ Tap heroes to salute');
-
-    this.scenicViewport.append(rays, this.canvas, embers, tapHint);
+    // 3. The throne hall: the old scene, now in the ornate frame under a section heading (no emoji pennants or code-drawn crest)
+    const hallHead = el('div', 'crSectionHead');
+    hallHead.append(el('h3', '', 'The Throne Hall'), el('small', '', 'tap the guards to salute'));
+    this.scenicViewport.append(this.canvas);
     this.guardPlaque.append(this.guardTitle, this.guardNames);
-    this.scenicFrame.append(crest, pennantL, pennantR, this.scenicViewport, this.guardPlaque);
-
+    this.scenicFrame.append(this.scenicViewport, this.guardPlaque);
     // Interactive tap on the Throne Room canvas: heroes salute with golden light pillars!
     this.scenicViewport.addEventListener('pointerdown', (e) => this.handleSceneTap(e));
 
-    // 2. Section Divider with Quick-access Portals (Tavern, Armies, Spellbook)
-    const sectionHeader = el('div', 'ctSectionHeader');
-    const sectionTitle = el('h3', '', 'SACRED CHAMBERS OF THE KEEP');
-    const quickNav = el('div', 'ctQuickPortals');
+    const boonsHead = el('div', 'crSectionHead');
+    boonsHead.append(el('h3', '', 'What the castle gives'), el('small', '', 'every run, from the start'));
 
-    const toTavern = el('button', 'ctPortalChip', '🍺 Tavern');
-    toTavern.title = 'Visit the Heroes Tavern';
-    toTavern.addEventListener('click', () => this.onPick('tavern'));
-
-    const toSpells = el('button', 'ctPortalChip', '📖 Spells');
-    toSpells.title = 'Open the Royal Spellbook';
-    toSpells.addEventListener('click', () => this.onPick('chapel'));
-
-    const toArmies = el('button', 'ctPortalChip', '⚔️ March');
-    toArmies.title = 'March to the Armies';
-    toArmies.addEventListener('click', () => this.onPick('armies'));
-
-    const toTrophies = el('button', 'ctPortalChip', '🏆 Trophies');
-    toTrophies.title = 'Defeated Boss Trophy Wall';
-    toTrophies.addEventListener('click', () => {
-      if (this.meta) this.trophyModal.open(this.meta);
-    });
-
-    // (UX-FIXES: one door per place: the Tavern, Spells and March are the bottom tabs; only the boss trophy wall, which has no tab, stays)
-    void toTavern, toSpells, toArmies;
-    quickNav.append(toTrophies);
-    sectionHeader.append(sectionTitle, quickNav);
-
-    // 3. Chamber Grid (6 Sacred Chambers + High Chapel)
-    for (const c of CHAMBERS) {
-      const card = el('div', 'ctChamberCard');
-      card.setAttribute('role', 'button');
-      card.setAttribute('tabindex', '0');
-      card.dataset.id = c.id;
-      card.addEventListener('click', () => this.onPick(c.id));
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          this.onPick(c.id);
-        }
-      });
-      this.grid.append(card);
-      this.chamberEls.set(c.id, card);
-    }
-
-    this.stage.append(this.scenicFrame, this.powerBanner, sectionHeader, this.grid);
+    this.stage.append(head, this.yard, boonsHead, this.powerBanner, hallHead, this.scenicFrame);
     this.scroll.append(this.stage);
     this.root.append(this.scroll, this.trophyModal.root);
   }
@@ -566,7 +582,7 @@ export class CastleScene {
     }
   }
 
-  /** Update the Citadel scene with current meta (levels, crowns, works, unlocked heroes). */
+  /** Update the courtyard with the current meta (levels, crowns, works, unlocked heroes). */
   update(meta: Meta): void {
     this.meta = meta;
 
@@ -582,45 +598,79 @@ export class CastleScene {
     const names = this.heroKinds.map((k) => UNITS[k]?.name ?? k).join(' · ');
     this.guardNames.textContent = `${names} · Duchess`;
 
-    // 2. Compute total Citadel Tier & Kingdom Bonuses for the Royal Crest and Power Banner
+    // 2. The castle's rank, under the page's title
     const totalLevels = [...BUILDING_IDS, ...ROOM_BUILDING_IDS].reduce((sum, id) => sum + siteLevel(meta.castle, id), 0) + chapelLevel(meta);
     const maxTotalLevels = [...BUILDING_IDS, ...ROOM_BUILDING_IDS, 'chapel' as const].reduce((sum, id) => sum + maxLevel(id), 0);
-    this.crestSub.textContent = `Citadel Rank ${totalLevels} / ${maxTotalLevels} · ${meta.crowns.toLocaleString()} Crowns`;
+    const sub = `Castle rank ${totalLevels} of ${maxTotalLevels}`;
+    if (this.yardSub.textContent !== sub) this.yardSub.textContent = sub;
 
     this.renderPowerBanner(meta);
 
-    // 3. Render each ornate chamber card
-    // (MENU-GLITCH: a card is built again only when what it shows has changed, so a home refresh, or the builders' clock each second,
+    // 3. Each building on its plot, with its plaque
+    // (MENU-GLITCH: a place is drawn again only when what it shows has changed, so a home refresh, or the builders' clock each second,
     //  replaces none of its pictures; the countdown's own text is ticked by the home screen)
-    const works = meta.works ? `${meta.works.id}:${meta.works.level}` : '';
-    for (const c of CHAMBERS) {
-      const card = this.chamberEls.get(c.id);
-      if (!card) continue;
-      const lv = siteLevel(meta.castle, c.id, chapelBuilt(meta));
-      const cost = siteNextCost(meta.castle, c.id, chapelBuilt(meta));
-      const key = `${lv}|${cost}|${meta.crowns >= (cost ?? Infinity)}|${works}`;
-      if (card.dataset.key === key) continue;
-      card.dataset.key = key;
-
-      if (c.id === 'chapel' && !chapelBuilt(meta)) {
-        this.renderChapelCard(card, c, meta);
-      } else {
-        this.renderBuildingCard(card, c, meta);
-      }
+    const clock = meta.works ? clockText(worksLeft(meta, Date.now())) : '';
+    for (const p of PLOTS) {
+      const s = this.spotEls.get(p.id);
+      if (!s) continue;
+      const lv = siteLevel(meta.castle, p.id, chapelBuilt(meta));
+      const cost = siteNextCost(meta.castle, p.id, chapelBuilt(meta));
+      const here = meta.works?.id === p.id;
+      const st = plaqueState(lv, siteTop(p.id), cost, meta.crowns, here, !!meta.works && !here, clock);
+      const key = `${lv}|${cost}|${st.ready}|${here}|${!!meta.works}`;
+      if (s.key === key) continue;
+      s.key = key;
+      const def = CHAMBERS.find((c) => c.id === p.id)!;
+      const name = p.id === 'chapel' ? 'Chapel' : siteName(p.id);
+      s.btn.className = `crSpot${st.ready ? ' ready' : ''}${st.site ? ' unbuilt' : ''}${st.working ? ' working' : ''}${st.full ? ' full' : ''}`;
+      s.btn.style.setProperty('--glow', def.glow);
+      s.btn.setAttribute('aria-label', `${name}: ${st.working ? 'being built' : lv === 0 ? 'not built' : `level ${lv} of ${siteTop(p.id)}`}`);
+      const url = lookPicture(p.id, Math.max(1, lv));
+      if (s.pic.getAttribute('src') !== url) s.pic.src = url;
+      // (an empty plot shows the building site once it is painted; until then the building stands greyed as a ghost of itself)
+      const sitePainted = isPainted('site');
+      s.site.hidden = !(sitePainted && st.site);
+      s.pic.hidden = sitePainted && st.site && !st.working;
+      s.plaque.className = `pbPlaque${st.ready ? ' ready' : lv === 0 && !st.working ? ' locked' : ''}`;
+      s.title.textContent = name;
+      if (st.working) s.line.replaceChildren('Building ', el('span', 'worksLeft', clock));
+      else s.line.textContent = st.line;
     }
+
+    // (a build that has just started: the builders' flourish over its plot, and the hall cheers)
+    const works = meta.works ? `${meta.works.id}:${meta.works.level}` : '';
+    if (this.worksSeenInit && works && works !== this.worksSeen) this.cheer(meta.works!.id);
+    this.worksSeen = works;
+    this.worksSeenInit = true;
 
     this.paintGreatHall();
   }
 
+  /** A build has started: dust and a flash over its plot, and the throne hall's guards salute. */
+  private cheer(id: SiteId): void {
+    const s = this.spotEls.get(id);
+    if (s && !this.reduced) {
+      s.btn.classList.remove('raise');
+      void s.btn.offsetWidth;
+      s.btn.classList.add('raise');
+    }
+    const c = CHAMBERS.find((x) => x.id === id);
+    play('levelUp');
+    this.triggerHallBurst(400, 230, c?.glow ?? '#ffd700', `${c?.name ?? 'The castle'} rising!`);
+    this.kingDecreeStarted = this.now;
+    this.kingDecreeUntil = this.now + 1500;
+    for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 850;
+  }
+
   private renderPowerBanner(meta: Meta): void {
     const c = meta.castle;
-    const pills: { icon: string; label: string; val: string; active: boolean }[] = [
-      { icon: '🪙', label: 'Gold', val: `+${c.treasury * 10}`, active: c.treasury > 0 },
-      { icon: '⚔️', label: 'ATK', val: `+${c.armoury * 5}%`, active: c.armoury > 0 },
-      { icon: '❤️', label: 'HP', val: `+${c.barracks * 6}%`, active: c.barracks > 0 },
-      { icon: '💧', label: 'Mana', val: `+${c.mageTower * 12}%`, active: c.mageTower > 0 },
-      { icon: '🐎', label: 'Speed', val: `+${c.stable * 4}%`, active: c.stable > 0 },
-      { icon: '📜', label: 'XP', val: `+${c.library * 6}%`, active: c.library > 0 },
+    const pills: { icon: PbIcon; label: string; val: string; active: boolean }[] = [
+      { icon: 'gold', label: 'Gold', val: `+${c.treasury * 10}`, active: c.treasury > 0 },
+      { icon: 'sword', label: 'Attack', val: `+${c.armoury * 5}%`, active: c.armoury > 0 },
+      { icon: 'heart', label: 'Health', val: `+${c.barracks * 6}%`, active: c.barracks > 0 },
+      { icon: 'mana', label: 'Mana', val: `+${c.mageTower * 12}%`, active: c.mageTower > 0 },
+      { icon: 'speed-2', label: 'Speed', val: `+${c.stable * 4}%`, active: c.stable > 0 },
+      { icon: 'g-star', label: 'XP', val: `+${c.library * 6}%`, active: c.library > 0 },
     ];
 
     // (MENU-GLITCH: drawn again only when a figure changes)
@@ -629,161 +679,12 @@ export class CastleScene {
     this.powerBanner.dataset.key = key;
     this.powerBanner.replaceChildren();
     for (const p of pills) {
-      const badge = el('div', `ctPowerPill${p.active ? ' active' : ''}`);
-      badge.append(el('span', 'ctPillIco', p.icon), el('b', '', p.val), el('small', '', p.label));
+      const badge = el('div', `crBoon${p.active ? ' on' : ''}`);
+      badge.setAttribute('role', 'img');
+      badge.setAttribute('aria-label', `${p.label} ${p.val}`);
+      badge.append(medal(p.icon), el('b', '', p.val), el('small', '', p.label));
       this.powerBanner.append(badge);
     }
-  }
-
-  private renderBuildingCard(card: HTMLElement, c: ChamberDef, meta: Meta): void {
-    // (DEPTH-BUILD: the same card serves the six buildings, the levelled Chapel and the three room buildings)
-    const id = c.id;
-    const level = siteLevel(meta.castle, id, chapelBuilt(meta));
-    const max = siteTop(id);
-    const cost = siteNextCost(meta.castle, id, chapelBuilt(meta));
-    const going = meta.works?.id === id ? clockText(worksLeft(meta, Date.now())) : null;
-    const buildersBusyElsewhere = !!meta.works && meta.works.id !== id;
-    const ready = !going && !meta.works && cost !== null && meta.crowns >= cost;
-    const isMax = cost === null;
-
-    card.className = `ctChamberCard${ready ? ' ready' : ''}${isMax ? ' maxed' : ''}${going ? ' working' : ''}`;
-    card.style.setProperty('--chamber-glow', c.glow);
-
-    // Top Diorama Banner: Architectural Edifice + Level Badge (the corner relic medallion was removed at the owner's ask)
-    const diorama = el('div', 'ctCardDiorama');
-    const edificeImg = el('img', 'ctEdificeImg');
-    edificeImg.src = c.edificeUrl;
-    edificeImg.alt = c.name;
-    edificeImg.draggable = false;
-
-    const lvPill = el('span', `ctLvPill${isMax ? ' max' : level > 0 ? ' built' : ''}`, isMax ? `MAX · Lv.${level}` : `Lv. ${level} / ${max}`);
-    diorama.append(edificeImg, lvPill);
-
-    // Title & Relic Name
-    const head = el('div', 'ctCardHead');
-    const titleBox = el('div', 'ctTitleBox');
-    const title = el('h4', 'ctCardTitle', c.name);
-    const relic = el('small', 'ctRelicSub', `◆ ${c.relicName}`);
-    titleBox.append(title, relic);
-    head.append(titleBox);
-
-    // Stat & Progress Pips
-    const body = el('div', 'ctCardBody');
-    const stat = el(
-      'div',
-      'ctStatLine',
-      id === 'chapel'
-        ? 'Active: the Royal Spellbook is open'
-        : (BUILDING_IDS as string[]).includes(id)
-          ? level > 0 ? effectText(id as BuildingId, level) : `Unbuilt · Next: ${c.perLevelShort}`
-          : level > 0 ? `${c.statName} · ${roomsOf(id).filter((r) => r.level <= level).length} of ${roomsOf(id).length} rooms open` : `Unbuilt · ${c.lore}`,
-    );
-    const pips = el('div', 'ctPips');
-    for (let i = 1; i <= max; i++) {
-      const pip = el('span', i <= level ? 'star on' : 'star off', i <= level ? '◆' : '◇');
-      pips.append(pip);
-    }
-    body.append(stat, pips);
-
-    // Ornate Action Button
-    const foot = el('div', 'ctCardFoot');
-    if (going) {
-      const tag = el('span', 'ctActionTag working');
-      tag.append('⚒️ Raising · ', el('span', 'worksLeft', going));
-      foot.append(tag);
-    } else if (isMax) {
-      const tag = el('span', 'ctActionTag maxed', '♛ GRAND MASTERWORK');
-      foot.append(tag);
-    } else {
-      const btn = el('button', `ctUpgradeBtn${ready ? ' canAfford' : ''}`);
-      const labelSpan = el('span', 'ctBtnLabel', buildersBusyElsewhere ? `Lv. ${level + 1} (Busy)` : `▲ Upgrade Lv. ${level + 1}`);
-      const costSpan = el('b', 'ctBtnCost', `${cost} 👑`);
-      btn.append(labelSpan, costSpan);
-
-      // Direct 1-tap upgrade when ready & handler provided; otherwise opens detailed dossier sheet
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (ready && this.onDirectUpgrade) {
-          const ok = this.onDirectUpgrade(id);
-          if (ok) {
-            play('levelUp');
-            this.triggerHallBurst(400, 230, c.glow, `${c.name} Upgrading!`);
-            this.kingDecreeStarted = this.now;
-            this.kingDecreeUntil = this.now + 1500;
-            for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 850;
-            return;
-          }
-        }
-        this.onPick(id);
-      });
-      foot.append(btn);
-    }
-
-    const rooms = roomsStrip(id, level);
-    card.replaceChildren(diorama, head, body, ...(rooms ? [rooms] : []), foot);
-  }
-
-  private renderChapelCard(card: HTMLElement, c: ChamberDef, meta: Meta): void {
-    const built = chapelBuilt(meta);
-    const going = meta.works?.id === 'chapel' ? clockText(worksLeft(meta, Date.now())) : null;
-    const ready = !going && !meta.works && meta.crowns >= (siteNextCost(meta.castle, 'chapel', built) ?? Infinity);
-
-    card.className = `ctChamberCard chapel${built ? ' built maxed' : ''}${ready ? ' ready' : ''}${going ? ' working' : ''}`;
-    card.style.setProperty('--chamber-glow', c.glow);
-
-    const diorama = el('div', 'ctCardDiorama chapelDiorama');
-    const edificeImg = el('img', 'ctEdificeImg');
-    edificeImg.src = c.edificeUrl;
-    edificeImg.alt = c.name;
-    edificeImg.draggable = false;
-
-    const lvPill = el('span', `ctLvPill${built ? ' max' : ''}`, built ? 'SANCTIFIED' : 'LOCKED SANCTUM');
-    diorama.append(edificeImg, lvPill);
-
-    const contentCol = el('div', 'ctChapelCol');
-    const head = el('div', 'ctCardHead');
-    const titleBox = el('div', 'ctTitleBox');
-    const title = el('h4', 'ctCardTitle', c.name);
-    const relic = el('small', 'ctRelicSub', `◆ ${c.relicName}`);
-    titleBox.append(title, relic);
-    head.append(titleBox);
-
-    const body = el('div', 'ctCardBody');
-    const stat = el(
-      'div',
-      'ctStatLine',
-      built
-        ? 'Active: Unlocks the Royal Spellbook & Divine Battle Cards'
-        : 'Consecrate the High Chapel to unlock the Spells tab and customize your battle spellbook.',
-    );
-    body.append(stat);
-
-    const foot = el('div', 'ctCardFoot');
-    if (going) {
-      const tag = el('span', 'ctActionTag working');
-      tag.append('⚒️ Sanctifying · ', el('span', 'worksLeft', going));
-      foot.append(tag);
-    } else {
-      const btn = el('button', `ctUpgradeBtn${ready ? ' canAfford' : ''}`);
-      btn.append(el('span', 'ctBtnLabel', '⛪ Consecrate Sanctum'), el('b', 'ctBtnCost', `${siteNextCost(meta.castle, 'chapel', built)} 👑`));
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (ready && this.onDirectUpgrade) {
-          const ok = this.onDirectUpgrade('chapel');
-          if (ok) {
-            play('levelUp');
-            this.triggerHallBurst(400, 210, '#fef08a', 'High Chapel Sanctified!');
-            return;
-          }
-        }
-        this.onPick('chapel');
-      });
-      foot.append(btn);
-    }
-
-    const rooms = roomsStrip('chapel', 0);
-    contentCol.append(head, body, ...(rooms ? [rooms] : []), foot);
-    card.replaceChildren(diorama, contentCol);
   }
 
   start(): void {
@@ -979,7 +880,20 @@ export class CastleScene {
     // 1. ARCHITECTURAL BACKDROP: Bespoke Castle Throne Room (400x210 pixel art drawn at 2x)
     const life = motionPlan({ reduced: this.reduced, saver: settings().saver, hidden: false });
     const lt = this.now / 1000;
-    if (a?.throneRoom) {
+    // (CASTLE-REMAKE: the owner's painted hall, once it lands, covers the canvas with its own life; until then the old pixel room)
+    const hall = this.hallArt;
+    if (hall) {
+      const k = Math.max(W / hall.naturalWidth, H / hall.naturalHeight);
+      const place = { x: (W - hall.naturalWidth * k) / 2, y: (H - hall.naturalHeight * k) / 2, w: hall.naturalWidth * k, h: hall.naturalHeight * k };
+      g.imageSmoothingEnabled = true;
+      g.drawImage(hall, place.x, place.y, place.w, place.h);
+      g.imageSmoothingEnabled = false;
+      if (this.lifeOf !== hall) {
+        this.lifeOf = hall;
+        this.hallLife.layout(hall, hall.naturalWidth, hall.naturalHeight, place);
+      }
+      this.hallLife.regions(g, lt, life);
+    } else if (a?.throneRoom) {
       g.drawImage(a.throneRoom, 0, 0, 400, 210, 0, 0, W, H);
       if (this.lifeOf !== a.throneRoom) {
         this.lifeOf = a.throneRoom;
@@ -1140,7 +1054,7 @@ export class CastleScene {
     });
 
     if (this.lifeOf) {
-      this.life.lights(g, lt, life);
+      (this.hallArt ? this.hallLife : this.life).lights(g, lt, life);
       g.globalCompositeOperation = 'source-over';
       g.globalAlpha = 1;
     }

@@ -7,7 +7,8 @@ import type { EndCard } from './sim/sceneReveal';
 import { UNITS } from './sim/units';
 import { portrait } from './render/sheets';
 import { heroArtUrl } from './ultMoment';
-import { CHAMBERS } from './castle';
+import { lookPicture } from './castle';
+import type { SiteId } from './sim/castle';
 import portalUrl from './art/calmap/portal.png';
 import { openScreen } from './screens';
 
@@ -34,7 +35,7 @@ function artOf(card: EndCard): HTMLElement {
     const img = el('img');
     img.alt = '';
     img.draggable = false;
-    img.src = a.kind === 'hero' ? heroArtUrl(a.hero, a.step) : a.kind === 'eidolon' ? `eidolons/${a.id}-card.webp` : a.kind === 'horn' ? 'eidolons/horn-ready.webp' : CHAMBERS.find((c) => c.id === a.site)?.edificeUrl ?? '';
+    img.src = a.kind === 'hero' ? heroArtUrl(a.hero, a.step) : a.kind === 'eidolon' ? `eidolons/${a.id}-card.webp` : a.kind === 'horn' ? 'eidolons/horn-ready.webp' : lookPicture(a.site as SiteId, 1);
     frame.append(img);
   }
   return frame;

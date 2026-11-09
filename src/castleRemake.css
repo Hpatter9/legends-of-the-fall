@@ -1,0 +1,115 @@
+/* CASTLE-REMAKE (docs/notes/castle-remake.md): the Castle tab as one painted courtyard with its buildings on their plots, in the hand of the
+   tavern and the camp. The head is the tavern's; each building is a place with a painted plaque; what the castle gives is on painted
+   chips; the throne hall keeps its brass frame. Built after keepKingdom.css, whose old castle rules it overrides where they still apply. */
+
+.crPage .crScroll { display: block; background: #09170f; }
+.crStage { display: flex; flex-direction: column; width: 100%; min-height: 100%; padding: 0 0 14px; background: #09170f; color: #f4e1b8; }
+.crStage > * { flex: none; }
+
+/* The head: the tavern's panel, the name, the castle's rank, and the trophy wall */
+.crHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border: 0; border-image: url(ui/combat-panel.png) 24 fill / 6px / 0 stretch; background: #0b1b12; }
+.crHead h2 { margin: 0; font: 700 23px/1.2 var(--display); color: #f4d795; }
+.crHead .crSub { margin: 3px 0 0; font: 13px/1.3 var(--body); color: #d4c5a2; }
+.crHead .crTrophies { flex: none; white-space: nowrap; padding: 6px 12px 6px 8px; font: 600 13px/1.2 var(--body); }
+
+/* The courtyard: the painting fills the width at its own 2:3, its life over it, the places over that */
+.crYard { position: relative; width: 100%; aspect-ratio: 2 / 3; margin: 0; overflow: hidden; isolation: isolate; background: #1d2420; }
+.crYardArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; }
+.crYardLife { z-index: 1; }
+.crSpots { position: absolute; inset: 0; z-index: 2; }
+.crCaption { position: absolute; z-index: 3; bottom: 0; left: 0; right: 0; margin: 0; padding: 8px 4px; text-align: center; background: linear-gradient(transparent, #100c08e8); color: #f5e6c7; font: 12px/1.4 var(--body); pointer-events: none; }
+
+/* A place: the building (its foot on the plot's centre), its plaque just under it. The whole place is the button. */
+.crPage .crSpot, .crPage .crKeep { position: absolute; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 0; min-width: 44px; min-height: 44px; border: 0; border-radius: 0; background: none; box-shadow: none; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.crPage .crSpot { transform: translate(-50%, calc(-100% + 24px)); }
+.crPage .crSpot:active, .crPage .crKeep:active { transform: translate(-50%, calc(-100% + 25px)); background: none; }
+.crArt { position: relative; display: block; width: 100%; aspect-ratio: 10 / 8; pointer-events: none; }
+.crPic, .crSite { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 3px 2px #000a); }
+.crSpot .pbPlaque { position: relative; z-index: 1; margin-top: -10px; --pbw: 8px 9px; padding: 5px 12px 6px; max-width: 140%; white-space: nowrap; line-height: 1.1; gap: 1px; }
+.crSpot .pbPlaque b, .crKeep .pbPlaque b { font: 700 12px/1.15 var(--display); color: #f6dfa4; }
+.crSpot .pbPlaque small, .crKeep .pbPlaque small { font: 600 10.5px/1.15 var(--body); color: #e2d4b0; }
+.crSpot .pbPlaque.ready small { color: #c9f2a4; }
+.crSpot.full .pbPlaque small { color: #ffe08a; }
+/* (an empty plot: the building site once it is painted; until then the old sprite as a grey ghost of what will stand there) */
+.crSpot.unbuilt .crPic { filter: grayscale(0.9) brightness(0.55) drop-shadow(0 3px 2px #000a); opacity: 0.8; }
+.crSpot.working .crPic { filter: brightness(0.8) drop-shadow(0 3px 2px #000a); opacity: 1; }
+.crSpot.working .crSite { opacity: 0.92; }
+/* (an affordable build: the building glows in its own colour and the plaque lights) */
+.crSpot.ready .crPic { filter: drop-shadow(0 0 5px var(--glow, #ffd76a)) drop-shadow(0 3px 2px #000a); animation: crReady 2.6s ease-in-out infinite; }
+.crSpot.ready.unbuilt .crPic { filter: grayscale(0.5) brightness(0.8) drop-shadow(0 0 5px var(--glow, #ffd76a)); opacity: 0.95; }
+@keyframes crReady { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+/* (the builders' clock over a site while the works go on, swinging gently) */
+.crSpot.working .crArt::after { content: ''; position: absolute; left: 50%; top: 14%; width: 28px; height: 28px; margin-left: -14px; background: url(ui/buttons/clock.webp) center / contain no-repeat; animation: crSwing 1.8s ease-in-out infinite; filter: drop-shadow(0 2px 2px #000c); }
+@keyframes crSwing { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg) translateY(1px); } }
+/* (a build has just started: the place rises with a warm flash) */
+.crSpot.raise .crArt { animation: crRaise 1.2s ease-out 1; }
+@keyframes crRaise { 0% { transform: translateY(4px) scale(0.96); filter: brightness(1); } 45% { transform: translateY(-3px) scale(1.04); filter: brightness(1.8) drop-shadow(0 0 12px #ffd76a); } 100% { transform: none; filter: none; } }
+
+/* The keep: its doors lead down to the throne hall */
+.crPage .crKeep { transform: translate(-50%, -50%); justify-content: center; }
+.crPage .crKeep:active { transform: translate(-50%, -50%) translateY(1px); }
+.crKeep .pbPlaque { --pbw: 8px 9px; padding: 5px 13px 6px; white-space: nowrap; line-height: 1.1; gap: 1px; }
+
+/* The section heads: the tavern's ledger heading on the page's green */
+.crSectionHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 14px 14px 7px; }
+.crSectionHead h3 { margin: 0; color: #f4d795; font: 700 19px/1.3 var(--display); }
+.crSectionHead small { font: 12px/1.3 var(--body); color: #d4c5a2; text-align: right; }
+
+/* What the castle gives: six painted chips, three a row */
+.crBoons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 0 10px; }
+.crBoon { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 6px; min-height: 50px; padding: 7px 12px 7px 8px; border: 1px solid transparent; border-image: url(ui/buttons/chip.webp) var(--chip-slice) / var(--chip-width) / 0 stretch; }
+.crBoon .pbIco { grid-row: 1 / 3; width: 28px; height: 28px; }
+.crBoon b { font: 700 14px/1.1 var(--body); color: #f4e1b8; }
+.crBoon small { font: 11px/1.1 var(--body); color: #c9bb98; }
+.crBoon.on { border-image: url(ui/buttons/chip-lit.webp) var(--chip-slice) / var(--chip-width) / 0 stretch; }
+.crBoon.on b { color: #ffe59e; }
+.crBoon:not(.on) .pbIco { filter: grayscale(0.7) brightness(0.75); }
+
+/* The throne hall: the old scene in its brass frame, full width under its heading (its crest and emoji pennants are gone) */
+.crPage .crHall { margin: 0 6px; height: auto; aspect-ratio: 800 / 470; min-height: 0; padding: 4.2% 4.6% 7.5%; }
+.crPage .crHall .ctThroneScenic { height: 100%; }
+.crPage .crHall .ctHonorCanvas { width: 100%; height: 100%; object-fit: cover; }
+
+@media (max-width: 374px) {
+  .crSpot .pbPlaque { padding: 4px 10px 5px; }
+  .crSpot .pbPlaque b { font-size: 11px; }
+  .crSpot .pbPlaque small { font-size: 10px; }
+  .crBoon { padding: 4px 6px 4px 4px; column-gap: 4px; }
+  .crBoon .pbIco { width: 24px; height: 24px; }
+  .crBoon b { font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crSpot .crPic, .crSpot .crArt, .crSpot .crArt::after { animation: none !important; }
+}
+
+/* The building cards (the standard ornate menu): the building at the head of the body, its level in painted stars */
+.crCardArt { display: grid; justify-items: center; gap: 4px; margin: 0 0 6px; }
+.crCardArt img.crCardPic { width: min(46vw, 170px); aspect-ratio: 10 / 9; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 4px 4px #000b); }
+.crCardArt.unbuilt img.crCardPic { filter: grayscale(0.85) brightness(0.6) drop-shadow(0 4px 4px #000b); }
+.crStars { display: flex; justify-content: center; gap: 2px; }
+.crStars .pbIco { width: 20px; height: 20px; }
+.om .crGives { margin: 0; display: grid; gap: 4px; }
+.om .crGives p { margin: 0; font: var(--om-text, 14.5px)/1.35 var(--body); }
+.om .crGives i { font-style: normal; color: #f2dc9f; }
+.om .crTime { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; font-weight: 400; opacity: 0.9; }
+.om .crTime .pbIco { width: 18px; height: 18px; }
+.om .crPrimaryWords { display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
+.om .crPrimaryWords .pbIco { width: 22px; height: 22px; }
+.om .ctRooms { margin: 0; }
+.om .hallPlinths { display: grid; gap: 6px; }
+.om .hallPlinth { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font: var(--om-small, 13px)/1.35 var(--body); }
+.om .hallPlinth select { min-height: 44px; flex: 1 1 40%; min-width: 0; padding: 0 8px; color: #f4ead2; background: #1b221a; border: 1px solid #8d713f; border-radius: 0; font: 600 14px var(--body); }
+.om .hallPlinth button { min-height: 44px; }
+
+/* The chips over the castle (Codex, Build Town): the painted medallions, smooth, at a size they read */
+.ctBar .ctChip .pbIco { width: 26px; height: 26px; image-rendering: auto; flex: none; }
+/* (a tall card scrolls its body rather than squashing its notes and sections into one another) */
+#castleCard .omBody > * { flex: none; }
+/* (a long build time on a narrow phone: the Build plate's words close up so "Build · 850 · 8:00:00" fits whole) */
+@media (max-width: 374px) {
+  .om .crPrimaryWords { gap: 2px; font-size: 14px; letter-spacing: -0.01em; }
+  .om .crPrimaryWords .pbIco { width: 18px; height: 18px; }
+  .om .crTime { margin-left: 2px; }
+  .om .crTime .pbIco { display: none; }
+  #castleCard .omFoot .omPrimary { padding-left: 8px; padding-right: 8px; }
+}
