@@ -4,6 +4,7 @@ import { mythicFits, MYTHIC_LIMIT_WORDS } from './sim/mythicRules';
 // long press, or the small i, opens the hero's role and skill), and the locked heroes shaded at the end. A draft is kept
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
 
+import { glyphWord } from './paintedButton';
 import { ELIXIR_MAX, REMEDY_LIST, SATCHEL_MAX, pickSatchel, satchelFor } from './sim/remedies';
 import { REMEDY_ICON } from './gearUiArt';
 import { retired } from './sim/legacy';
@@ -74,6 +75,7 @@ export class Party {
     private onBack: () => void,
   ) {
     $('ptBack').addEventListener('click', () => this.close(this.onBack));
+    glyphWord($('ptBack'));
     $('ptGo').addEventListener('click', () => this.confirm());
     $('ptSuggest').addEventListener('click', () => this.suggest());
     $('ptSearch').addEventListener('input', () => {

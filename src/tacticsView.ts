@@ -10,6 +10,7 @@
 //
 // It never changes the battle except through `setTactic` (before the fight, from the page), `orderTactic` and the page's Arrange.
 
+import { glyphWord } from './paintedButton';
 import type { Battle } from './sim/battle';
 import { canChangeTactic, fightTactic, nextTactic, orderTactic, type Tactic } from './sim/tactics';
 import { FORMATION_WORDS, TACTIC_WORDS } from './sim/tacticPick';
@@ -155,6 +156,8 @@ export class TacticsView {
       const w = FORMATION_WORDS[f];
       const b = el('button', `tacForm${f === picked ? ' on' : ''}`);
       b.type = 'button';
+      // (PAINTED-BUTTONS: the shape's painted medallion, by the CSS from this)
+      b.dataset.form = f;
       b.append(el('b', '', w.name), el('span', '', w.line));
       b.addEventListener('click', () => {
         this.opts.arrange(f);
@@ -165,6 +168,7 @@ export class TacticsView {
     // (Loose: forget the pick, so Auto place sets the heroes out by their roles again; nobody moves)
     const loose = el('button', `tacForm${!picked ? ' on' : ''}`);
     loose.type = 'button';
+    loose.dataset.form = 'loose';
     loose.append(el('b', '', 'Loose'), el('span', '', 'No shape: Auto place sets them out by their roles.'));
     loose.addEventListener('click', () => {
       this.opts.arrange(undefined);
@@ -173,6 +177,7 @@ export class TacticsView {
     grid.append(loose);
     card.append(grid);
     const shut = el('button', 'tacClose', 'Close');
+    glyphWord(shut);
     shut.type = 'button';
     shut.addEventListener('click', () => this.close());
     card.append(shut);

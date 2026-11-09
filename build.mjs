@@ -78,6 +78,12 @@ for (const f of readdirSync('src/art/ui').filter((f) => f.endsWith('.png') && !f
   copyFileSync(`src/art/ui/${f}`, `${out}/ui/${f}`);
   UI_FILES.push(`ui/${f}`);
 }
+// (PAINTED-BUTTONS: the owner's painted medallions and plates, cut by tools/painted-buttons/cut.py: ui/buttons/<name>.webp, cached for offline)
+mkdirSync(`${out}/ui/buttons`, { recursive: true });
+for (const f of readdirSync('src/art/ui/buttons').filter((f) => f.endsWith('.webp'))) {
+  copyFileSync(`src/art/ui/buttons/${f}`, `${out}/ui/buttons/${f}`);
+  UI_FILES.push(`ui/buttons/${f}`);
+}
 if (TACTIC_ART.length) mkdirSync(`${out}/ui/tactics`, { recursive: true });
 // Tavern activity paintings are separate from battle/roster illustrations.
 mkdirSync(`${out}/ui/tavern`, { recursive: true });
@@ -212,7 +218,7 @@ const writeIndexHtml = () => {
             readFileSync('src/eidolonChains.css', 'utf8') +
             readFileSync('src/stall.css', 'utf8'),
         )
-        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/jrpgRecap.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8') + readFileSync('src/oneEach.css', 'utf8') + readFileSync('src/guest.css', 'utf8') + readFileSync('src/secret.css', 'utf8') + readFileSync('src/relicCard.css', 'utf8') + readFileSync('src/stats.css', 'utf8') + readFileSync('src/tactics.css', 'utf8') + readFileSync('src/ornateMenus.css', 'utf8') + readFileSync('src/nemesis.css', 'utf8') + readFileSync('src/houses.css', 'utf8') + readFileSync('src/paintedCombat.css', 'utf8') + readFileSync('src/paintedBattlePopups.css', 'utf8') + readFileSync('src/paintedBattleReports.css', 'utf8') + readFileSync('src/paintedDeployment.css', 'utf8') + readFileSync('src/runeBench.css', 'utf8') + readFileSync('src/paintedTavern.css', 'utf8') + readFileSync('src/paintedSpells.css', 'utf8') + readFileSync('src/alive.css', 'utf8'))
+        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/jrpgRecap.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8') + readFileSync('src/oneEach.css', 'utf8') + readFileSync('src/guest.css', 'utf8') + readFileSync('src/secret.css', 'utf8') + readFileSync('src/relicCard.css', 'utf8') + readFileSync('src/stats.css', 'utf8') + readFileSync('src/tactics.css', 'utf8') + readFileSync('src/ornateMenus.css', 'utf8') + readFileSync('src/nemesis.css', 'utf8') + readFileSync('src/houses.css', 'utf8') + readFileSync('src/paintedCombat.css', 'utf8') + readFileSync('src/paintedBattlePopups.css', 'utf8') + readFileSync('src/paintedBattleReports.css', 'utf8') + readFileSync('src/paintedDeployment.css', 'utf8') + readFileSync('src/runeBench.css', 'utf8') + readFileSync('src/paintedTavern.css', 'utf8') + readFileSync('src/paintedSpells.css', 'utf8') + readFileSync('src/alive.css', 'utf8') + readFileSync('src/paintedButtonsSlices.css', 'utf8') + readFileSync('src/paintedButtons.css', 'utf8'))
         .replace('__VERSION__', version),
     ),
   );

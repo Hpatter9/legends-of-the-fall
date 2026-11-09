@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.435.0',
+    date: '2026-11-09',
+    title: 'The Last Hold and the War\'s end',
+    notes: ['The last hold standing is the warchief\'s last stand, defended by the whole Council. Its fall ends the War with a scene of its own.'],
+  },
+  {
+    version: '0.434.0',
+    date: '2026-11-09',
+    title: 'Painted buttons everywhere',
+    notes: ['Every button is now painted brass and enamel: the top bars, tabs, camp, deploy bar, fight screen, tavern, stall, menus and Settings\' switches.'],
+  },
+  {
+    version: '0.433.0',
+    date: '2026-11-09',
+    title: 'A ring of standing stones for duels',
+    notes: ['Nemesis duels are fought inside a painted ring of standing stones, and the Elders\' table card opens on its own painting.'],
+  },
+  {
     version: '0.432.0',
     date: '2026-11-09',
     title: 'Assault: the Iron Foundry',

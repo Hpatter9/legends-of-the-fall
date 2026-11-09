@@ -2356,6 +2356,9 @@ class Game {
   private setSpeed(n: 1 | 2 | 3): void {
     this.speed = Math.min(n, this.fastest()) as 1 | 2 | 3;
     $('speed').textContent = `×${this.speed}`;
+    // (PAINTED-BUTTONS: the painted chevrons, one, two or three, by the CSS from this; the words for a reader)
+    $('speed').dataset.speed = String(this.speed);
+    $('speed').setAttribute('aria-label', `Fight speed ×${this.speed}`);
   }
 
   /* -------------------------------------------------------------- auto-deploy and auto-replay */

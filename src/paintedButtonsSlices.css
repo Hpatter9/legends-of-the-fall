@@ -1,0 +1,18 @@
+/* PAINTED-BUTTONS: written by tools/painted-buttons/cut.py; do not edit by hand. The nine-slice lines of each plate, in the
+   halved files' own pixels (border-image-slice), and the --pb-* widths the plates are drawn with (half the slice again). */
+:root {
+  --plate-primary-slice: 28 32 28 32 fill;
+  --plate-primary-width: 14px 16px 14px 16px;
+  --plate-secondary-slice: 28 32 28 32 fill;
+  --plate-secondary-width: 14px 16px 14px 16px;
+  --plate-danger-slice: 28 32 28 32 fill;
+  --plate-danger-width: 14px 16px 14px 16px;
+  --plate-choice-slice: 28 32 28 32 fill;
+  --plate-choice-width: 14px 16px 14px 16px;
+  --chip-slice: 24 28 24 28 fill;
+  --chip-width: 12px 14px 12px 14px;
+  --tabplate-slice: 28 24 15 24 fill;
+  --tabplate-width: 14px 12px 7px 12px;
+  --plaque-slice: 28 32 28 32 fill;
+  --plaque-width: 14px 16px 14px 16px;
+}

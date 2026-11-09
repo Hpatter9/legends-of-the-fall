@@ -27,11 +27,14 @@ import {
 } from './sim/heirs';
 import { todayKey } from './modes';
 import { SEASON_ICON, FATE_ICON, HOUSE_ICON } from './dynastyArt';
+import { pbUrl, SEASON_MEDAL } from './paintedButton';
 import { HEIRLOOM_CHIP } from './expansionArt';
 import { menuBackdrop } from './menuBackdrops';
 export { SEASON_ICON, FATE_ICON, HOUSE_ICON, HEIRLOOM_ICON, LEGEND_ICON } from './dynastyArt';
 import { hasFallen, isLegend, mourningLeft, OATH, whyShadeHonour } from './sim/oath';
 import { openNemesisCard } from './nemesisView';
+// (TAVERN-25: the Elders' table, cut by tools/expansion/tavern-tables.py)
+import eldersTableUrl from './art/tavern/elders-table.png';
 /** Phase 7: the fallen's candle (the painted fate icon). */
 const fallenIcon = FATE_ICON.fallen;
 
@@ -127,7 +130,8 @@ export function seasonChip(m: Meta, day: number, onOpen: () => void): HTMLButton
   const b = el('button', 'chip hsSeasonChip');
   b.id = 'hmSeason';
   b.type = 'button';
-  b.append(icon(SEASON_ICON[s.name], 'hsSeasonIco'), el('b', '', SEASON_WORDS[s.name]));
+  // (PAINTED-BUTTONS: the season's painted medallion on the chip)
+  b.append(icon(pbUrl(SEASON_MEDAL[s.name]), 'hsSeasonIco'), el('b', '', SEASON_WORDS[s.name]));
   b.setAttribute('aria-label', `${seasonLine(m.dynasty, day)}, ${s.daysLeft} ${s.daysLeft === 1 ? 'day' : 'days'} left. Open the season`);
   b.addEventListener('click', onOpen);
   return b;
@@ -739,6 +743,13 @@ export function openEldersTable(m: Meta, day = todayKey(), changed?: () => void)
   const seated = seatedToday(m, day);
   const menu = ornateMenu({ id: 'eldersTable', eyebrow: 'The tavern · The Hearth Hall', title: 'The Elders’ table', sub: seated.length ? `${seated.length} of ${HEIRS.SEATS} seats taken today` : 'the chairs wait' });
   menu.card.classList.add('hsCard');
+  // (TAVERN-25: the table itself over the card, PR #464's pixel art: six high-backed chairs, three candles and a clay pipe)
+  const art = document.createElement('img');
+  art.className = 'hsEldersArt';
+  art.src = eldersTableUrl;
+  art.alt = 'A long oak table with six high-backed chairs, three lit candles and a clay pipe.';
+  art.draggable = false;
+  menu.body.prepend(art);
   const reopen = () => {
     changed?.();
     menu.close();

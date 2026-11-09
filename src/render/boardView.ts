@@ -3,7 +3,7 @@
 // Fields tileset's own. The column sprite is drawn as in Chronos's raid board (tacticsView.ts
 // `column`).
 
-import { Container, Graphics, Sprite, Texture, type Renderer } from 'pixi.js';
+import { Container, Graphics, Rectangle, Sprite, Texture, type Renderer } from 'pixi.js';
 import { LAVA_LANDS, tileAt, type Area, type Board, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
 import { ColumnTextures, columnKey, type ColumnLease } from './columnTextures';
@@ -20,6 +20,9 @@ import { fadeTall, loadZoneArt, noMotion, ZoneAir, zoneProps, type ZoneMotion } 
 import { flicker, sway } from './ambient';
 import gateUrl from '../art/camp/gate.png';
 import towerUrl from '../art/camp/tower.png';
+// (the duel's ring of standing stones, cut from art-source/expansion/duel-ring.png by tools/expansion/duel-ring.py)
+import ringStonesUrl from '../art/duel/ring-stones.png';
+import RING_STONES from '../art/duel/ring-stones.json';
 
 /** From this height up, a tile's top is stony. */
 const STONY = 3;
@@ -97,6 +100,8 @@ interface Art {
   planks: HTMLImageElement;
   gate: Texture;
   tower: Texture;
+  /** The duel ring's standing stones, each with where its foot stands from the ring's middle (in tiles). */
+  stones: { tex: Texture; fx: number; fy: number; du: number; dv: number }[];
 }
 let art: Art | null = null;
 let artEpoch = 0;
@@ -115,10 +120,12 @@ export async function loadBoardArt(): Promise<void> {
   const bushes = (await all(BUSH_URLS)).map((i) => Texture.from(i));
   const [barrel, crystal, planks] = await Promise.all([loadImage(TERRAIN_URLS.barrel), loadImage(TERRAIN_URLS.crystal), loadImage(TERRAIN_URLS.planks)]);
   const walls = (await all(TERRAIN_URLS.walls)).map((i) => Texture.from(i));
-  const [gate, tower] = await all([gateUrl, towerUrl]);
+  const [gate, tower, ringStones] = await all([gateUrl, towerUrl, ringStonesUrl]);
+  const stoneSheet = Texture.from(ringStones);
+  const stones = RING_STONES.map((s) => ({ tex: new Texture({ source: stoneSheet.source, frame: new Rectangle(s.x, s.y, s.w, s.h) }), fx: s.fx, fy: s.fy, du: s.du, dv: s.dv }));
   await Promise.all([loadRoadArt(), loadZoneArt()]);
   artEpoch++;
-  art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks, gate: Texture.from(gate), tower: Texture.from(tower) };
+  art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks, gate: Texture.from(gate), tower: Texture.from(tower), stones };
 }
 
 /** One section's tiles, built: a container for each tile (in row order), the marks over them, and the column textures made for them. */
@@ -254,6 +261,7 @@ export class BoardView {
     this.rot = rot;
     if (!keepOld) {
       for (const c of this.root.removeChildren()) if (!this.keep.includes(c)) c.destroy({ children: true });
+      this.ringStones = [];
       this.dropOld();
       this.rows.clear();
       this.root.addChild(...this.keep);
@@ -805,12 +813,50 @@ export class BoardView {
     for (const g of this.marks) g.clear();
   }
 
-  /** The Nemesis War, phase 4: a duel's ring, the middle 5x5 its two keep to (`duelRing.ts`): its edge's tiles outlined in brass over a light
-   *  gilt, the tiles inside it a fainter gilt. Steady, and kept through the fight (`clearMarks` leaves it); null takes it away. */
+  /** The Nemesis War, phase 4: a duel's ring, the middle 5x5 its two keep to (`duelRing.ts`): a ring of standing stones round it (PR #464's
+   *  painting), a stone at each corner and four along each side, over a faint gilt on its floor, between the edge's tiles so none stands in a fighter's way. Each stands on
+   *  the highest ground it touches (the board is not flat) and is drawn in the fighters' order, so one on the near side stands in front of
+   *  the edge's fighters and one on the far side behind them. Until the art has loaded, the edge's tiles are outlined in brass as before.
+   *  Kept through the fight (`clearMarks` leaves it; a rebuild takes it away); null takes it away. */
   ring(d: { mid: { u: number; v: number }; r: number } | null): void {
     for (const g of this.rings) g.clear();
+    for (const s of this.ringStones) s.destroy();
+    this.ringStones = [];
     const b = this.board;
     if (!d || !b) return;
+    if (art?.stones.length) {
+      const f = { rot: this.rot, ou: 0, ov: 0, w: b.w, d: b.d };
+      // (the painting's ring is the 5x5's; a wider ring spreads the same stones out)
+      const k = (d.r + 0.5) / 2.5;
+      for (const st of art.stones) {
+        const fu = d.mid.u + st.du * k;
+        const fv = d.mid.v + st.dv * k;
+        // (the highest of the tiles round the stone's foot)
+        let h = -Infinity;
+        for (const u of [Math.floor(fu), Math.ceil(fu)])
+          for (const v of [Math.floor(fv), Math.ceil(fv)]) {
+            const t = tileAt(b, u, v);
+            if (t && !t.chasm) h = Math.max(h, t.h);
+          }
+        if (h === -Infinity) continue;
+        const sp = new Sprite(st.tex);
+        sp.anchor.set(st.fx / st.tex.width, st.fy / st.tex.height);
+        const [x, y] = project(f, fu, fv, h);
+        sp.position.set(Math.round(x), Math.round(y));
+        sp.zIndex = depthIn(f, fu, fv) + 4;
+        this.root.addChild(sp);
+        this.ringStones.push(sp);
+      }
+      // (and the ring's floor a faint gilt, so the ground the two keep to reads among the land's own stones)
+      for (let dv = -d.r; dv <= d.r; dv++)
+        for (let du = -d.r; du <= d.r; du++) {
+          const u = d.mid.u + du;
+          const v = d.mid.v + dv;
+          const g = u >= 0 && v >= 0 && u < b.w && v < b.d ? this.rings[v * b.w + u] : undefined;
+          g?.poly([0, -TH / 2, TW / 2, 0, 0, TH / 2, -TW / 2, 0]).fill({ color: RING_GILT, alpha: 0.18 });
+        }
+      return;
+    }
     for (let dv = -d.r; dv <= d.r; dv++)
       for (let du = -d.r; du <= d.r; du++) {
         const u = d.mid.u + du;
@@ -822,6 +868,8 @@ export class BoardView {
         if (edge) g.stroke({ color: RING_BRASS, alpha: 0.85, width: 2 });
       }
   }
+  /** The duel ring's stones on the board now. */
+  private ringStones: Sprite[] = [];
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */
   private column(t: Tile, u: number, v: number, area: Area, boss = false, road = false): ColumnLease<Texture> {

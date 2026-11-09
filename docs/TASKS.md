@@ -17,6 +17,12 @@
 
 # Shared task board
 
+### TAVERN-25 — Wire the duel ring and the Elders' table (PR #464's art)
+
+- **Owner / branch:** worker for the director; `claude/tavern-25`.
+- **Scope:** the duel's ring of standing stones on the board; the Elders' table as the header of its card. The director dropped the 25 tavern-life prompts and the tables in the painted room (the painted tavern already covers the heroes; pixel props don't suit the painting). Hester's table left unwired. No version bump, no PR.
+- **Status:** done, ready for the director. Typecheck, web build, 66 focused tests and three-size screenshots (`samples/tavern-25/`) with no page errors. [Handoff](notes/tavern-25.md).
+
 ### HERO-PAINTED-WEAPON-FIX — Redraw the confirmed painted illustration defects
 
 - **Owner / branch / worktree:** Codex; `audit/painted-hero-weapons`; `/workspace/legends-of-the-fall`.
