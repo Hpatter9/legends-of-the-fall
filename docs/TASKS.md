@@ -1230,3 +1230,12 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - **Owner:** Codex tavern art chat. **Branch/worktree:** `art/expansion`, `/workspace/expansion-art`.
 - **Scope:** Hester's merchant table and optional Elders' table source PNGs, plus handoff.
 - **Status:** complete; exact 384×256 and 320×112 dimensions, binary transparency, clear corners and visual inspection passed. Added to Expansion art PR #399. Runtime integration remains with director. [Handoff](notes/expansion-tavern-tables.md).
+
+### EXPANSION-ART-2 — Nemesis icon source sheet
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`.
+- Scope: one `art-source/expansion/nemesis-icons.png` and required task/prompt/handoff records.
+- Direction: owner's explicit 29-icon specification; dark fantasy pixel art, muted gothic palette, crisp dark outline.
+- Completion: 1536×640 transparent PNG; 12×5 cells, ordered 12/10/7 icons, all other cells empty; inspect source and 24px readability; commit, push, open/update Expansion art 2 PR.
+- Status: in progress. Runtime integration excluded.
+- Result: ready for review. Fresh sheet validated: exact dimensions, RGBA/binary alpha, 29 occupied / 31 empty cells, minimum 13px padding; atlas and 24px preview inspected. Source art only; no runtime checks. Handoff: [Expansion art 2](notes/expansion-2.md).
