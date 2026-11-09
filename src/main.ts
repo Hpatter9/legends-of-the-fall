@@ -52,6 +52,7 @@ import { awakenedOf } from './sim/awaken';
 import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
+import { WAR_END_SCENE, warEndScene } from './sim/warEndScene';
 import { direct } from './sim/cineDirector';
 import { actScene, ACT_LOOKS, arrivalScene } from './sim/cineMoments';
 import { revealCard, revealOf, type RevealGo } from './sim/sceneReveal';
@@ -576,6 +577,8 @@ class Game {
           saveMeta(this.meta);
           void this.queueScene({ kind: 'vengeance', pair });
         }
+        // (the Assault, phase 5: the War is over, and its end plays once, the next time the camp opens)
+        if (this.meta.war?.end) void this.queueScene({ kind: 'warEnd' });
         // (Dynasties, phase 6: a pair that named an heir plays its heir scene, once)
         const heirPair = this.meta.dynasty?.scenes?.[0];
         if (heirPair && !pair) {
@@ -997,7 +1000,7 @@ class Game {
     // (with the Cinematics setting off it is still marked seen, so the Scenes list can play it; it just does not start by itself)
     markSeen(this.meta, id);
     saveMeta(this.meta);
-    if (settings().cinematics) await this.scenes.play(id, players);
+    if (settings().cinematics) await this.scenes.play(this.filmFor(id), players);
     // (REVEAL: a film that revealed something ends on its card, played through or skipped; with cinematics off the card comes alone,
     // UNLOCK-ONCE: it is the only thing that tells the player)
     await this.endCard(id);
@@ -1066,6 +1069,12 @@ class Game {
     return sc ? previewFrames(direct(sc, { calm: matchMedia('(prefers-reduced-motion: reduce)').matches })) : [];
   }
 
+  /** A scene by id as it plays: the War's end is built from the save's own ending (its warchief, its hold's land); any other is as written. */
+  private filmFor(id: string): string | Scene {
+    const end = this.meta.war?.end;
+    return id === WAR_END_SCENE ? warEndScene(end, end ? armyById(end.army)?.area : undefined) : id;
+  }
+
   /** A film made on the spot, by a preview key (CINE-001; for the Scenes previews and the screenshots): `quest:<battle>` and
    *  `questAfter:<battle>` (its story before and after, with its first cast), `chain:<id>` (an Eidolon chain's prologue), `arrive:<boss>` (a boss's entrance), `act:<n>` (the
    *  Last Stand's act card of act n, 1 to 3, with a line of the ruler's). */
@@ -1110,7 +1119,7 @@ class Game {
     const five = mo && (mo.kind === 'combo' || mo.kind === 'comboCut') ? comboById(mo.set)?.heroes : undefined;
     const film = SCENES[id] ? id : this.filmOf(id);
     if (!film) return Promise.resolve('skipped');
-    return this.scenes.play(film, five ? { ...this.players(), party: [...five] } : this.players()).then(async (e) => {
+    return this.scenes.play(typeof film === 'string' ? this.filmFor(film) : film, five ? { ...this.players(), party: [...five] } : this.players()).then(async (e) => {
       // (REVEAL: a replay ends on its card too, with Continue only)
       if (SCENES[id]) await this.endCard(id, false);
       return e;

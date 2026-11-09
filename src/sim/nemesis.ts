@@ -189,6 +189,26 @@ export interface War {
   reclaimed?: number[];
   /** Vengeance scenes waiting to play at the camp: "avenger>fallen" pairs. */
   vengeance?: string[];
+  /** Phase 5 of the Assault: the War is over. The last hold standing fell, and the Dark Council with it (`lastHold.ts`). */
+  end?: WarEnd;
+}
+
+/** How the War ended (the Assault's phase 5, `docs/notes/assault-5.md`): the Last Hold that fell, the lord who made his last stand there,
+ *  the Council slain on its walls and the few who lived and were scattered. */
+export interface WarEnd {
+  /** The page's day key (yyyymmdd) and the war turn it ended on. */
+  day: number;
+  turn: number;
+  /** The army whose hold stood last. */
+  army: string;
+  /** The lord who held its throne: his full name, his fighter, and whether he sat as warchief (else the army's own lord held it). */
+  chief: { name: string; base: string; warchief: boolean };
+  /** The Council's members slain at the Last Hold, by full name, mightiest first. */
+  slain: string[];
+  /** Those who lived through it, scattered to the wilds as the seats burned, by full name. */
+  scattered: string[];
+  /** The assaults the Last Hold took. */
+  tries: number;
 }
 
 /** The War News keeps this many lines, and the War this many Warchief's Heads. */
@@ -590,8 +610,8 @@ function settle(war: War, m: Meta, run: Run, b: Battle, tally: NemesisTally, won
     const deeds = deedsOf(f, u, b, won);
     if (!deeds.length) continue;
     const home = cls === 'escort' ? army : homeArmy(u.def) ?? army;
-    // (a conquered army births no nemeses: the Assault, docs/notes/assault-1.md)
-    if (!home || m.assault?.conquered[home]) continue;
+    // (a conquered army births no nemeses: the Assault, docs/notes/assault-1.md; and none at all once the War is over, phase 5)
+    if (!home || m.assault?.conquered[home] || war.end) continue;
     // (a boss already a nemesis of the War does not have a twin)
     if (cls === 'boss' && war.members.some((n) => n.boss && n.base === u.def)) continue;
     const deed = deeds.find((d) => rng.next() < BIRTH[d][cls]);
@@ -778,9 +798,24 @@ export function readWar(raw: unknown): War | undefined {
   if (rec.length) war.reclaimed = rec;
   const vg = (Array.isArray(r.vengeance) ? r.vengeance : []).filter((x): x is string => typeof x === 'string' && /^\w+>\w+$/.test(x) && x.split('>').every((k) => !!UNITS[k])).slice(0, 8);
   if (vg.length) war.vengeance = vg;
+  const end = readEnd(r.end);
+  if (end) war.end = end;
   const top = Math.max(0, ...war.members.map((n) => n.id), ...war.fallen.map((n) => n.id));
   war.nextId = Math.max(top + 1, int(r.nextId, 1, 1e9, 1));
   return war;
+}
+
+/** Read the War's end from the save: a known army and a named lord, or none. */
+function readEnd(raw: unknown): WarEnd | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const e = raw as Partial<WarEnd>;
+  const army = str(e.army);
+  const c = (e.chief ?? {}) as Partial<WarEnd['chief']>;
+  const name = str(c.name);
+  const base = str(c.base);
+  if (!army || !armyById(army) || !name || !base || !UNITS[base]) return undefined;
+  const names = (x: unknown): string[] => (Array.isArray(x) ? x : []).filter((n): n is string => !!str(n, 120)).slice(0, 20);
+  return { day: int(e.day, 0, 1e9, 0), turn: int(e.turn, 0, 1e9, 0), army, chief: { name, base, warchief: c.warchief === true }, slain: names(e.slain), scattered: names(e.scattered), tries: int(e.tries, 1, 1e6, 1) };
 }
 
 /** The Grudges (phase 3, `Meta.grudges`): hero kind -> nemesis id -> steps (1 to 3, +10% each against it). */

@@ -13,10 +13,11 @@ import { openNemesisCard } from './nemesisView';
 import { blueprintOf, holdMapOf } from './sim/assault/assault';
 import { assaultOf, ASSAULT_PRICES, buyRecruit, buySiege, fillCost, fillRanks, PLATOON_SIZE, recruitMarks, scouted, scoutHold, siegeCost, SIEGE_PRICES, troopsOf } from './sim/assault/economy';
 import { assaultParty, defaultPlan, lordLine, type AssaultPlan, type AssaultResult } from './sim/assault/assaultMode';
+import { isLastHold, lastCouncil } from './sim/assault/lastHold';
 import { rankOf, troopOf, troopStats, TROOPS, lookOf, troopUnitOf, type PlatoonFormation } from './sim/assault/troops';
 import { FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
 import { levelOfKind } from './sim/levels';
-import { councilPlaces, lordOf } from './sim/assault/garrison';
+import { councilPlaces, lordOf, sparesOf } from './sim/assault/garrison';
 import { snapOf } from './sim/nemesis';
 import { warchiefOf } from './sim/muster';
 import type { ApproachId, PlatoonRole } from './sim/assault/holdTypes';
@@ -186,12 +187,15 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
   let menu: OrnateMenu | null = null;
   const draw = () => {
     const short = party.filter((k) => troopsOf(m, k).length < PLATOON_SIZE).length;
+    // (phase 5: the Last Hold, the whole Council left on its walls)
+    const last = !hooks.restorm && isLastHold(m, army) && !!m.war && !m.war.end;
+    const standing = last ? m.war!.members.length : 0;
     menu = ornateMenu({
       id: 'assaultMuster',
       kind: 'sheet',
-      eyebrow: hooks.restorm ? `The Warband regroups · ${a.name}` : `Conquest · ${a.name}`,
+      eyebrow: hooks.restorm ? `The Warband regroups · ${a.name}` : last ? `The Last Hold · ${a.name}` : `Conquest · ${a.name}`,
       title: bp.name,
-      sub: hooks.restorm ? `Mythic · 200 defenders · half a Conquest chest for the win` : `200 defenders · ${lordLine(m, army)} holds the throne`,
+      sub: hooks.restorm ? `Mythic · 200 defenders · half a Conquest chest for the win` : last ? `${lordLine(m, army)} makes his last stand · ${standing ? `the whole Council, ${standing} strong, defends` : 'the Council is empty'} · its fall ends the War` : `200 defenders · ${lordLine(m, army)} holds the throne`,
       label: `Muster for ${bp.name}`,
     });
     // the host
@@ -277,8 +281,11 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
     hold.parentElement!.append(hold);
     const war = m.war;
     const chief = warchiefOf(war);
-    const council = (war?.members ?? []).filter((n) => n.army === army && n.rank !== 'warchief');
+    const council = last ? lastCouncil(war) : (war?.members ?? []).filter((n) => n.army === army && n.rank !== 'warchief');
     const places = councilPlaces(council.map(snapOf), chief ? snapOf(chief) : undefined);
+    // (phase 5: at the Last Hold the members no post's officer's place takes stand at the throne)
+    const lordSnap = lordOf(army, council.map(snapOf), chief ? snapOf(chief) : undefined).snap;
+    for (const [i, s] of (last ? sparesOf(bp.posts, council.map(snapOf), places, lordSnap) : []).entries()) places[`throne:guard${i}`] = s;
     const lord = lordOf(army, council.map(snapOf), chief ? snapOf(chief) : undefined);
     const lordRow = menuChoice(hold, { title: lord.snap ? `${lord.snap.name} ${lord.snap.epithet}`.trim() : UNITS[lord.base].name, icon: ' ', lines: [chief ? 'Warchief of the Dark Council, on the throne' : 'The lord of the hold, on the throne'], onPick: chief ? () => openNemesisCard(m, chief) : undefined });
     face(lordRow, UNITS[lord.base].sheet);
@@ -303,7 +310,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
       const row = menuChoice(hold, { title: `${s.name} ${s.epithet}`.trim(), icon: ' ', lines: [`${s.rank === 'captain' ? 'Captain' : 'Lieutenant'} · ${where}`], onPick: () => openNemesisCard(m, n) });
       face(row, UNITS[s.base].sheet);
     }
-    const others = (war?.members ?? []).filter((n) => n.army !== army && n.rank !== 'warchief').slice(0, 2);
+    const others = last ? [] : (war?.members ?? []).filter((n) => n.army !== army && n.rank !== 'warchief').slice(0, 2);
     for (const n of others) menuNote(hold.parentElement!, `${n.name} keeps to the ${armyById(n.army)?.name.replace(/^The /, '') ?? n.army}: this is not their war.`);
     menuFoot(menu, {
       back: { word: 'back', onClick: () => { menu?.close(); hooks.onBack(); } },
@@ -442,8 +449,8 @@ export function openPlatoonCard(m: Meta, hero: string, o: { save(): void; onChan
 /** The result (8.3): a full page. */
 export function openAssaultResult(_m: Meta, r: AssaultResult, hooks: { onBack(): void; onFill?(): void }): void {
   const bp = blueprintOf(r.army)!;
-  const title = r.won ? `${bp.name} is conquered` : r.outcome === 'night' ? 'Night falls on the assault' : r.outcome === 'withdrawn' ? 'The retreat is sounded' : 'The host falls back';
-  const menu = ornateMenu({ id: 'assaultResult', kind: 'sheet', eyebrow: `Conquest · Assault ${r.attempt}`, title, sub: r.won ? `The ${armyById(r.army)!.name.replace(/^The /, '')} is broken` : 'The hold stands at full strength for the next attempt', label: title });
+  const title = r.warEnded ? 'The War is won' : r.won ? `${bp.name} is conquered` : r.outcome === 'night' ? 'Night falls on the assault' : r.outcome === 'withdrawn' ? 'The retreat is sounded' : 'The host falls back';
+  const menu = ornateMenu({ id: 'assaultResult', kind: 'sheet', eyebrow: `${r.last ? 'The Last Hold' : 'Conquest'} · Assault ${r.attempt}`, title, sub: r.warEnded ? `${bp.name} falls, and the Dark Council with it` : r.won ? `The ${armyById(r.army)!.name.replace(/^The /, '')} is broken` : 'The hold stands at full strength for the next attempt', label: title });
   const host = menuSection(menu.body, 'The host', undefined, 2);
   const well = menuWell(host.parentElement!);
   for (const p of r.platoons) {

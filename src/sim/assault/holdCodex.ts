@@ -12,6 +12,7 @@ import { fullName } from '../nemesis';
 import { UNITS } from '../units';
 import type { Blueprint } from './blueprint';
 import { HOLDS } from './holds';
+import { endLine, isLastHold } from './lastHold';
 
 /** The holds built so far, by army. */
 const BUILT: Readonly<Record<string, Blueprint>> = HOLDS;
@@ -116,10 +117,14 @@ export function holdPages(m: Meta): HoldPage[] {
     if (!bp) return { army: army.id, armyName, built: false, name: 'A hold not yet found', record: `The ${armyName.replace(/^The /, '')} keep their stronghold hidden for now.`, facts: [], tips: [] };
     const tries = a?.tries[army.id] ?? 0;
     const won = a?.conquered[army.id];
-    const record = won ? `Conquered${won.wins > 1 ? `, and taken ${won.wins} times` : ''} in ${tries} assault${tries === 1 ? '' : 's'}` : tries ? `Stormed ${tries} time${tries === 1 ? '' : 's'}; it still stands` : 'Not yet stormed';
+    let record = won ? `Conquered${won.wins > 1 ? `, and taken ${won.wins} times` : ''} in ${tries} assault${tries === 1 ? '' : 's'}` : tries ? `Stormed ${tries} time${tries === 1 ? '' : 's'}; it still stands` : 'Not yet stormed';
+    // (phase 5: the Last Hold, while it stands, and where the War ended, once it has fallen)
+    const end = m.war?.end;
+    if (end?.army === army.id) record += `. ${endLine(end)}`;
+    else if (isLastHold(m, army.id) && m.war && !end) record += `. It is the Last Hold: the whole Dark Council stands here, and its fall ends the War`;
     const gates = bp.stamps.filter((s) => s.kind === 'gate').map((s) => (s as { name: string }).name);
     const drums = bp.stamps.filter((s) => s.kind === 'drum').length;
-    const lord = chief ? `${fullName(chief)}, Warchief of the Dark Council, holds its throne` : `Its own lord, the ${UNITS[bossOf(army)]?.name ?? 'army\'s last boss'}, holds its throne while no warchief sits`;
+    const lord = end?.army === army.id ? `${end.chief.name}${end.chief.warchief ? ', the last Warchief of the Dark Council,' : ''} held its throne to the end` : chief ? `${fullName(chief)}, Warchief of the Dark Council, holds its throne` : `Its own lord, the ${UNITS[bossOf(army)]?.name ?? 'army\'s last boss'}, holds its throne while no warchief sits`;
     const d = defendersOf(bp);
     return {
       army: army.id,

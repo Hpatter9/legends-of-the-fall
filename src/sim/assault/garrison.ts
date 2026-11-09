@@ -45,7 +45,11 @@ export const HOLD_MARK: Readonly<Record<string, number>> = { orcs: 55, undead: 6
  *  others, by the balance tool (docs/notes/assault-4.md). */
 export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.1175, beasts: 0.14, wildwood: 0.095, labyrinth: 0.125, ogres: 0.095, infernal: 0.075, yokai: 0.07, golems: 0.0775 };
 /** The share a hold's garrison stands at: a tool's own, else the hold's. */
-export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare'>): number => input.foeShare ?? HOLD_SHARE[input.army] ?? ASSAULT.foeShare;
+/** Phase 5: the Last Hold's garrison stands at this share of its hold's own, by army, against the whole Council's weight on its walls
+ *  (`lastHold.ts`; tuned by `npm run balance -- --assault <army> --last`). The Council's members are elites and escorts with plainer kits
+ *  than a hold's own nameless officers (an Ogre Shaman King, a Devil Leader), so at some holds they weaken it and at others strengthen it. */
+export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 1, undead: 1, beasts: 1, wildwood: 1, labyrinth: 1, ogres: 1, infernal: 1, yokai: 1, golems: 1 };
+export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare' | 'last'>): number => input.foeShare ?? (HOLD_SHARE[input.army] ?? ASSAULT.foeShare) * (input.last ? LAST_SHARE[input.army] ?? 1 : 1);
 
 /** The salt of the garrison's own small draws (which grunt stands where), a side stream of the assault's seed. */
 export const GARRISON_SALT = 0x6a7715;
@@ -169,6 +173,8 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
   const council = input.council ?? [];
   const places = councilPlaces(council, input.warchief);
   const lord = lordOf(input.army, council, input.warchief);
+  // (phase 5: at the Last Hold the members no officer's place takes stand at the throne beside the lord, in the rank and file's places)
+  const spares = input.last ? sparesOf(bp.posts, council, places, lord.snap) : [];
   // (the garrison's own stream: nothing here draws from the fight's)
   const rng = new Rng(mixSeed(input.seed, GARRISON_SALT));
   for (const def of bp.posts) {
@@ -184,7 +190,10 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
       [rank[i], rank[j]] = [rank[j], rank[i]];
     }
     let captains = 0;
-    for (const c of [...officers, ...rank]) {
+    // (the spares take the throne's first places of the rank and file, after the draw, so the stream is as in any hold)
+    const guard = def.id === 'throne' ? spares.slice(0, rank.length) : [];
+    for (const [i, c] of [...officers, ...rank].entries()) {
+      const spare = guard[i - officers.length];
       const at = freeNear(b, f, g.home);
       const slot = g.members.length;
       let unit: Unit;
@@ -196,6 +205,10 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
           post.council = lord.snap.id;
         }
         h.lord = unit.id;
+      } else if (spare) {
+        unit = addFieldUnit(b, f, spare.base, at, wall(spare.base, 'mid'), g.id, slot);
+        const place = placeOf(spare, input.tier);
+        if (place) makeNemesis(unit, place);
       } else if (c === 'L' || c === 'C') {
         const key = c === 'C' && def.id === 'throne' ? (captains++ === 0 ? 'throne' : 'throne:1') : def.id;
         const snap = places[key];
@@ -223,6 +236,20 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
     post.muster = g.members.length;
     h.posts.push(post);
   }
+}
+
+/** The members no officer's place in the hold takes (phase 5's Last Hold: they stand at the throne), mightiest first: not the lord, not one
+ *  `councilPlaces` put at a post the hold has an officer's place for. */
+export function sparesOf(posts: readonly PostDef[], council: readonly NemSnap[], places: Readonly<Record<string, NemSnap>>, lord?: NemSnap): NemSnap[] {
+  const keys = new Set<string>();
+  for (const p of posts) {
+    const n = p.roster.replace(/[^LC]/g, '').length;
+    if (p.id === 'throne') ['throne', 'throne:1'].slice(0, n).forEach((k) => keys.add(k));
+    else keys.add(p.id);
+  }
+  const placed = new Set(Object.entries(places).filter(([k]) => keys.has(k)).map(([, s]) => s.id));
+  if (lord) placed.add(lord.id);
+  return council.filter((s) => !placed.has(s.id) && s.rank !== 'warchief').sort((a, b) => b.might - a.might || a.id - b.id);
 }
 
 /** A member's nemesis place (its traits, its hp and attack on its wall): `nemesisBand`'s own, for a band of one. */
