@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.445.0',
+    date: '2026-11-09',
+    title: 'The painted rune bench',
+    notes: ['The rune side has its painted grip, tray, tiles and lock. Tiles show the stone without a name, and the hint names the chosen rune.'],
+  },
+  {
     version: '0.444.0',
     date: '2026-11-09',
     title: 'Four holds fully painted',

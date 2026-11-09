@@ -9,6 +9,10 @@ For each piece that is there: trimmed to its paint, resized with Pillow (LANCZOS
 (alpha kept) to src/art/ui/rune-bench/<name>.webp, which build.mjs serves as ui/rune-bench/<name>.webp and the service worker caches for
 offline play. Then src/runeBenchArt.css is written again with the rules for the pieces present (`html body ...`, so they win over section
 12 of paintedButtons.css). Prints what it wrote. Credit the paintings in CREDITS.md when they land.
+
+The names are those of the newer prompt (docs/notes/rune-bench-art-prompts.md, ten pieces). The seven pieces painted from the earlier
+prompt (PR #474) stand in for them while those are not there (`FALLBACKS`, each with its own size and slice, since their shapes differ:
+square tiles, a wide backing); a piece under the newer name always wins.
 """
 import os
 from PIL import Image
@@ -32,6 +36,18 @@ PIECES = {
     'rune-auto-locked': (96, 96, None, 1),
 }
 
+# The earlier prompt's pieces (PR #474), each used for a newer piece that is not painted: its file, and its own (width, height, slice, k)
+# (the shapes kept: a square tile is not squashed to the newer tile's 4:3).
+FALLBACKS = {
+    'grip': ('grip', 64, 262, (46, 14, 46, 14), 2),
+    'grip-lit': ('grip-held', 64, 262, (46, 14, 46, 14), 2),
+    'tray': ('rune-bench-backing', 384, 151, (38, 44, 38, 44), 4),
+    'tile': ('rune-tile', 120, 120, (26, 26, 26, 26), 4),
+    'tile-lit': ('rune-tile-lit', 120, 120, (26, 26, 26, 26), 4),
+    'tile-empty': ('rune-tile-empty', 120, 120, (26, 26, 26, 26), 4),
+    'rune-auto-locked': ('rune-auto-lock', 96, 96, None, 1),
+}
+
 # The rules each piece brings (the slice and the drawn widths are filled in from PIECES).
 RULES = {
     'grip': "html body #benchGrip, html body #benchGrip:active:not(:disabled) {{ border-image: url(ui/rune-bench/grip.webp) {s} fill / {w} / 0 stretch; }}",
@@ -47,6 +63,18 @@ RULES = {
 }
 
 
+# The earlier grip shares the newer one's file name; the two are told apart by the canvas (the earlier is 64 x 224, the newer 64 x 208).
+EARLIER_CANVAS = {'grip': (64, 224)}
+
+
+def newer(name: str) -> bool:
+    """Whether the newer prompt's piece of this name is there."""
+    src = f'{SRC}/{name}.png'
+    if not os.path.exists(src):
+        return False
+    return Image.open(src).size != EARLIER_CANVAS.get(name)
+
+
 def trim(im: Image.Image) -> Image.Image:
     box = im.getchannel('A').point(lambda a: 255 if a > 8 else 0).getbbox()
     return im.crop(box) if box else im
@@ -57,6 +85,10 @@ def main() -> None:
     total = 0
     for name, (w, h, slice_, k) in PIECES.items():
         src = f'{SRC}/{name}.png'
+        # (the newer piece first; else the earlier prompt's, at its own size; else none)
+        if not newer(name) and name in FALLBACKS:
+            fb, w, h, slice_, k = FALLBACKS[name]
+            src = f'{SRC}/{fb}.png'
         if not os.path.exists(src):
             continue
         os.makedirs(OUT, exist_ok=True)
@@ -67,10 +99,10 @@ def main() -> None:
         s = ' '.join(str(v) for v in slice_) if slice_ else ''
         wd = ' '.join(f'{round(v / k)}px' for v in slice_) if slice_ else ''
         rules.append(RULES[name].format(s=s, w=wd))
-        print(f'{name}: {w} x {h} -> {dst}')
+        print(f'{name}: {os.path.basename(src)} {w} x {h} -> {dst}')
     with open(CSS, 'w') as f:
         f.write('/* RUNE-BENCH-LOOK: written by tools/rune-bench/import-art.py; do not edit by hand. The owner\'s rune bench paintings, one rule\n'
-                '   a piece painted (none yet: the bench wears the painted plates of paintedButtons.css, section 12). */\n')
+                '   a piece painted (a piece not painted keeps the painted plates of paintedButtons.css, section 12). */\n')
         for r in rules:
             f.write(r + '\n')
     print(f'{len(rules)} piece(s), {total} bytes; wrote {CSS}')
