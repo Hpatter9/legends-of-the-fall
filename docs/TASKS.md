@@ -1259,3 +1259,10 @@ EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. O
 - Completion: 1024×1536 upright painterly pixel art, black map table, horned throne, thirteen high-backed chairs, orc/undead/beast banners; no people or text; visually inspect and push to existing PR.
 - Status: in progress; source art only.
 - Result: ready for review in Expansion art 2 PR #464. Painted and visually reviewed; exact 1024×1536 RGB PNG verified. No people or text; subdued map/centre and dark outer edges. [Handoff](notes/expansion-2-art.md). Runtime tests/build not run: source artwork only.
+
+### EXPANSION-2-DUEL-RING — Repaint duel perimeter
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`.
+- Scope: one source image `art-source/expansion/duel-ring.png`, prompt and handoff records.
+- Completion: 640×320 transparent PNG; hollow 5×5 square at 2:1 isometric angle, low grey menhirs, occasional brass bands and moss, no ground/text; added to PR #464.
+- Status: complete; final image visually inspected, 640×320 RGBA and transparent centre/exterior verified. Source art only; no runtime checks. [Handoff](notes/expansion-2-duel-ring.md).
