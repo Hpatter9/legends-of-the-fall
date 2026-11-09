@@ -17,6 +17,12 @@
 
 # Shared task board
 
+### RUNE-BENCH-LOOK — Paint the pull bar and the rune bench
+
+- **Owner / branch:** worker for the director; `claude/rune-bench-look`.
+- **Scope:** restyle the pull bar and the rune bench with the painted plates, medallions and rune art the game has; one combined ChatGPT prompt for the art still missing, and an import script to drop it in. Behaviour and tests unchanged. No version bump, no PR.
+- **Status:** done, ready for the director. Typecheck, web build, 52 focused tests and before/after screenshots at three sizes (`samples/rune-bench-look/`) with no page errors. [Handoff](notes/rune-bench-look.md), [art prompt](notes/rune-bench-art-prompts.md).
+
 ### TAVERN-25 — Wire the duel ring and the Elders' table (PR #464's art)
 
 - **Owner / branch:** worker for the director; `claude/tavern-25`.

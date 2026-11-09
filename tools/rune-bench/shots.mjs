@@ -1,13 +1,15 @@
 // RUNE-BENCH screenshots (docs/notes/rune-bench.md) at the three upright phone sizes: the heroes' bench with the pull bar, the bar
 // mid-slide, the rune bench, a rune dragged onto its twin and the merge, a rune dragged onto a hero and set, and a refused drop.
-// Writes docs/samples/rune-bench/*.png.   npm run web && node tools/rune-bench/shots.mjs
+// Writes docs/samples/rune-bench/*.png.   npm run web && node tools/rune-bench/shots.mjs [out dir]
 import { serve, boot, launch } from '../battle-ui/lib.mjs';
 
 const PORT = 8663;
 const server = serve('out/web', PORT);
 const browser = await launch();
 const wait = (page, ms) => page.waitForTimeout(ms);
-const dir = 'docs/samples/rune-bench';
+const dir = process.argv[2] ?? 'docs/samples/rune-bench';
+import { mkdirSync } from 'node:fs';
+mkdirSync(dir, { recursive: true });
 let bad = 0;
 
 async function setUp(page) {

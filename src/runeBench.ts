@@ -15,6 +15,7 @@ import { MERGE_SPARK } from './gearUiArt';
 import { menuFoot, menuNote, menuSection, menuWell, menuChoice, ornateMenu } from './ornateMenu';
 import { twinNote } from './oneEachNote';
 import { play } from './render/sound';
+import { medal } from './paintedButton';
 import type { Meta } from './sim/meta';
 
 export interface RuneBenchHooks {
@@ -103,7 +104,8 @@ export class RuneBench {
     if (!s) return;
     const edit = this.hooks.canEdit();
     const head = el('div', 'rbHead');
-    head.append(el('b', '', `Runes · ${s.bag.length} / ${BAG_MAX}`));
+    // (the bench's name on a lit tab plate, paintedButtons.css)
+    head.append(el('b', 'rbTitle', `Runes · ${s.bag.length} / ${BAG_MAX}`));
     const merges = mergesReady(s);
     const all = el('button', 'rbBtn rbMerge', merges ? `Merge all · ${merges}` : 'Merge all');
     all.type = 'button';
@@ -118,7 +120,8 @@ export class RuneBench {
     const auto = el('button', `rbBtn rbAuto${open ? '' : ' locked'}`);
     auto.type = 'button';
     auto.dataset.feature = 'autoRunes';
-    if (!open) auto.append(el('span', 'rbLock', '🔒'));
+    // (locked: the painted lock medallion takes the place of Auto's own)
+    if (!open) auto.append(medal('lock', 'rbLock'));
     auto.append(document.createTextNode(runeAutoLabel(open, featureStarsToGo(this.hooks.meta(), 'autoRunes'))));
     auto.title = open ? 'Set the runes in the bag on the heroes on the field, the best for each' : `Opens at ${AUTO_RUNES_STARS} stars won across the armies`;
     auto.disabled = open && (!edit || !this.hooks.kinds().length);
