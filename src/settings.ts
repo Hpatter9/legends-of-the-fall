@@ -3,6 +3,7 @@
 // and the gear in the top bar. The choices are kept in localStorage (legends.settings, the same keys as before the
 // submenus); `settings()` is what the rest of the page reads, and `onSettings` tells a module when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
+import { glyphWord } from './paintedButton';
 import { tips } from './tips';
 import { DEFAULT_RULER, RULERS, rulerOf, type RulerId } from './rulerRules';
 import { RULER_URLS } from './rulerUrls';
@@ -162,6 +163,7 @@ export function openSettings(): void {
   if (!wired) {
     wired = true;
     $('settingsClose').addEventListener('click', closeSettings);
+    glyphWord($('settingsClose'));
   }
   page = null;
   draw();
@@ -273,6 +275,7 @@ function backRow(): HTMLElement {
   b.type = 'button';
   b.className = 'setBack';
   b.textContent = '‹ Back';
+  glyphWord(b);
   b.setAttribute('aria-label', 'Back to Settings');
   b.addEventListener('click', () => {
     const from = page;

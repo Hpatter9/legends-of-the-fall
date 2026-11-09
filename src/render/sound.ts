@@ -182,6 +182,7 @@ export function bindMute(button: HTMLElement): void {
     if (muted) button.dataset.off = '1';
     else delete button.dataset.off;
     button.title = muted ? 'Sound off' : 'Sound on';
+    button.setAttribute('aria-label', button.title);
   };
   show();
   button.addEventListener('click', () => {

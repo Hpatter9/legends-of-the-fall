@@ -1,0 +1,388 @@
+/* ==========================================================================
+   PAINTED-BUTTONS (docs/notes/painted-buttons.md): the owner's painted buttons, in place of the code-drawn ones. Loaded last, after every
+   other sheet, so it wins over the gradients and the old pixel frames. The pictures are ui/buttons/<name>.webp (tools/painted-buttons/
+   cut.py); the plates' nine-slice lines are the --*-slice and --*-width values in paintedButtonsSlices.css, written by the same cutter.
+   Each button keeps its own handler, label and size (44 px or more for a thumb); only its face changes.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. PLATES: the word on brass. Secondary (slate-green) is any plain text button; primary (amber) the call to act; danger (oxblood).
+      The border stays 1px (no layout moves); the painted rim is drawn inward over the padding.
+   -------------------------------------------------------------------------- */
+button:not([class]):not(#mute):not(#gear):not(#speed),
+button.small, button.pbPlate, button.pbSecondary,
+.omFoot button, button.omBack,
+#hmSubBack, #settingsClose, #ptBack, #ptSuggest, #askNo, #tipSkip, #revealAll, #pull1, #qbLeave, #autoStop, #gachaClose:not(.primary),
+:is(.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .twDetailClose, .tacClose, .qlDrop, .stLeave, .stPause, .asCont, .armyAgain, .ptOrders, .tvRoster, .tvQuests, .tvTrophies, .tvUpgrades, .ulGo, .tomeUse, .eqRepair):not(.primary) {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/plate-secondary.webp) var(--plate-secondary-slice) / var(--plate-secondary-width) / 0 stretch;
+  padding: 6px 15px; color: #f4ead2; text-shadow: 0 1px 2px #000, 0 0 3px #000a;
+}
+button:not([class]):not(#mute):not(#gear):not(#speed):active:not(:disabled),
+button.small:active:not(:disabled), button.pbPlate:active:not(:disabled), button.pbSecondary:active:not(:disabled),
+.omFoot button:active:not(:disabled), button.omBack:active:not(:disabled),
+:is(#hmSubBack, #settingsClose, #ptBack, #ptSuggest, #askNo, #tipSkip, #revealAll, #pull1, #qbLeave, #autoStop):active:not(:disabled),
+:is(.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .twDetailClose, .tacClose, .qlDrop, .stLeave, .stPause, .asCont, .armyAgain, .ptOrders, .tvRoster, .tvQuests, .tvTrophies, .tvUpgrades, .ulGo, .tomeUse, .eqRepair):not(.primary):active:not(:disabled) {
+  border-image: url(ui/buttons/plate-secondary-down.webp) var(--plate-secondary-slice) / var(--pbw, var(--plate-secondary-width)) / 0 stretch; background: none; box-shadow: none; transform: translateY(1px);
+}
+button:not([class]):not(#mute):not(#gear):not(#speed):disabled, button.small:disabled, button.pbPlate:disabled, .omFoot button:disabled,
+:is(#hmSubBack, #settingsClose, #ptBack, #ptSuggest, #askNo, #tipSkip, #revealAll, #pull1, #qbLeave, #autoStop):disabled,
+:is(.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .twDetailClose, .tacClose, .qlDrop, .stLeave, .stPause, .asCont, .armyAgain, .ptOrders, .tvRoster, .tvQuests, .tvTrophies, .tvUpgrades, .ulGo, .tomeUse, .eqRepair):not(.primary):disabled {
+  border-image: url(ui/buttons/plate-secondary-off.webp) var(--plate-secondary-slice) / var(--pbw, var(--plate-secondary-width)) / 0 stretch; opacity: 1; color: #b9b3a4;
+}
+button.primary, button.pbPrimary, .omFoot button.omPrimary, .omFoot button.primary {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/plate-primary.webp) var(--plate-primary-slice) / var(--plate-primary-width) / 0 stretch;
+  padding: 6px 15px; color: #fff7e2; text-shadow: 0 1px 2px #2a1600, 0 0 4px #2a1600cc, 0 0 1px #000;
+}
+button.primary:active:not(:disabled), button.pbPrimary:active:not(:disabled), .omFoot button.primary:active:not(:disabled) {
+  border-image: url(ui/buttons/plate-primary-down.webp) var(--plate-primary-slice) / var(--pbw, var(--plate-primary-width)) / 0 stretch; background: none; box-shadow: none; transform: translateY(1px);
+}
+button.primary:disabled, button.pbPrimary:disabled, .omFoot button.primary:disabled {
+  border-image: url(ui/buttons/plate-primary-off.webp) var(--plate-primary-slice) / var(--pbw, var(--plate-primary-width)) / 0 stretch; opacity: 1; color: #c4bdab; text-shadow: 0 1px 2px #000;
+}
+button.danger, button.primary.danger, button.btnDanger, button.pbDanger, #askYes {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/plate-danger.webp) var(--plate-danger-slice) / var(--plate-danger-width) / 0 stretch;
+  padding: 6px 15px; color: #ffefe9; text-shadow: 0 1px 2px #000, 0 0 3px #000a;
+}
+:is(button.danger, button.btnDanger, button.pbDanger, #askYes):active:not(:disabled) { border-image: url(ui/buttons/plate-danger-down.webp) var(--plate-danger-slice) / var(--pbw, var(--plate-danger-width)) / 0 stretch; background: none; transform: translateY(1px); }
+:is(button.danger, button.btnDanger, button.pbDanger, #askYes):disabled { border-image: url(ui/buttons/plate-danger-off.webp) var(--plate-danger-slice) / var(--pbw, var(--plate-danger-width)) / 0 stretch; opacity: 1; }
+/* (the old sweep of light over the gold buttons belonged to the drawn frame: the painted plate has its own shine) */
+button.primary::after, button.pbPrimary::after { content: none; }
+.pbPlate { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; }
+.pbPlate .pbIco, .pbTab .pbIco { width: 28px; height: 28px; flex: none; }
+.pbWord { min-width: 0; }
+
+/* the standard ornate menu: its choice rows on the choice plates (dim, chosen in gilt green, locked dark) */
+.omChoice, .pbChoice {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/plate-choice.webp) var(--plate-choice-slice) / var(--plate-choice-width) / 0 stretch;
+}
+.omChoice.on, .pbChoice.on { border-image: url(ui/buttons/plate-choice-on.webp) var(--plate-choice-slice) / var(--pbw, var(--plate-choice-width)) / 0 stretch; background: none; box-shadow: none; }
+.omChoice:disabled, .pbChoice.locked, .pbChoice:disabled { border-image: url(ui/buttons/plate-choice-locked.webp) var(--plate-choice-slice) / var(--pbw, var(--plate-choice-width)) / 0 stretch; background: none; opacity: 1; }
+.omChoice:active:not(:disabled), .pbChoice:active:not(:disabled) { background: none; transform: translateY(1px); filter: brightness(1.1); }
+.omChoice, .pbChoice { padding: 9px 14px; }
+.pbChoice { display: grid; gap: 2px; text-align: left; min-height: 48px; color: #f4ead2; }
+.pbChoice small { color: #cfc6ad; font-weight: 400; }
+
+/* --------------------------------------------------------------------------
+   2. MEDALLIONS: a round painted button, the picture its whole face (the words are its aria-label). Lit shows the lit picture.
+   -------------------------------------------------------------------------- */
+.pbMedal, #hmTrophy, #hmGear, #top #mute, #top #gear, #top #speed {
+  position: relative; display: grid; place-items: center; width: 48px; height: 48px; min-width: 44px; min-height: 44px; padding: 0;
+  border: 0; border-image: none; border-radius: 50%; background: center / contain no-repeat; box-shadow: none; font-size: 0; color: transparent; text-shadow: none;
+  filter: drop-shadow(0 2px 3px #000b);
+}
+.pbMedal > .pbIco { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pbMedal > .pbIco.lit { opacity: 0; }
+.pbMedal.lit > .pbIco.lit { opacity: 1; }
+.pbMedal.lit > .pbIco:not(.lit):has(+ .pbIco.lit) { opacity: 0; }
+.pbMedal:active:not(:disabled), #hmTrophy:active, #hmGear:active, #top #mute:active, #top #gear:active, #top #speed:active {
+  background-color: transparent; border-image: none; transform: scale(0.93); filter: drop-shadow(0 1px 1px #000b) brightness(0.9); box-shadow: none;
+}
+.pbMedal:disabled { filter: grayscale(0.8) brightness(0.6); }
+#hmTrophy::before, #hmGear::before, #top #mute::before, #top #gear::before { content: none; display: none; }
+#hmTrophy { background-image: url(ui/buttons/achievements.webp); }
+#hmGear, #top #gear { background-image: url(ui/buttons/settings.webp); }
+#top #mute { background-image: url(ui/buttons/sound-on.webp); }
+#top #mute[data-off] { background-image: url(ui/buttons/sound-off.webp); }
+#top #speed { background-image: url(ui/buttons/speed-1.webp); }
+#top #speed[data-speed='2'] { background-image: url(ui/buttons/speed-2.webp); }
+#top #speed[data-speed='3'] { background-image: url(ui/buttons/speed-3.webp); }
+/* (the fight's top bar: its three medallions in 44 px columns, so each is a thumb's width) */
+#top { grid-template-columns: auto minmax(0, 1fr) auto repeat(3, 44px); }
+#top #mute, #top #gear, #top #speed { width: 44px; height: 44px; }
+/* the badge on a medallion: the painted red pip for news, the dark seal with a count, the quest seal, Hester's coin */
+#hmTrophy.new::after, .round.new::after, #hmGear.new::after, .pbBadge, .pbBadge[data-kind='new'] {
+  content: ''; position: absolute; top: -2px; right: -2px; width: 18px; height: 18px; border: 0; border-radius: 50%; clip-path: none; box-shadow: none;
+  background: url(ui/buttons/badge-new.webp) center / contain no-repeat; animation: none;
+}
+.pbBadge { display: grid; place-items: center; font: 700 11px/1 var(--body); font-style: normal; color: #fff; text-shadow: 0 1px 1px #000; }
+.pbBadge[data-kind='count'] { width: 22px; height: 22px; background-image: url(ui/buttons/badge-count.webp); }
+.pbBadge[data-kind='quest'] { width: 22px; height: 22px; background-image: url(ui/buttons/badge-quest.webp); }
+.pbBadge[data-kind='shop'] { width: 20px; height: 20px; background-image: url(ui/buttons/badge-shop.webp); }
+
+/* --------------------------------------------------------------------------
+   3. CHIPS: the camp's counts (crowns, stones) and the season, on the brass well with the medallion at the left end.
+   -------------------------------------------------------------------------- */
+#hmTop .chip, .pbChip, #hmSeason.chip, .hsSeasonChip {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 2px 12px 2px 4px;
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/chip.webp) var(--chip-slice) / var(--chip-width) / 0 stretch;
+  color: #f6e6bf; text-shadow: 0 1px 2px #000;
+}
+#hmTop .chip img, .pbChip .pbIco, .hsSeasonChip img { width: 32px; height: 32px; margin: -2px 0 -2px -4px; image-rendering: auto; filter: drop-shadow(0 1px 2px #000a); }
+.pbChip.lit { border-image: url(ui/buttons/chip-lit.webp) var(--chip-slice) / var(--pbw, var(--chip-width)) / 0 stretch; }
+.pbChip.warn { border-image: url(ui/buttons/chip-warn.webp) var(--chip-slice) / var(--pbw, var(--chip-width)) / 0 stretch; }
+/* (the season's chip is a button: a thumb's height, the lit chip while pressed) */
+#hmSeason.chip, .hsSeasonChip { min-height: 44px; padding-right: 12px; cursor: pointer; }
+#hmSeason.chip:active, .hsSeasonChip:active { border-image: url(ui/buttons/chip-lit.webp) var(--chip-slice) / var(--pbw, var(--chip-width)) / 0 stretch; background: none; transform: translateY(1px); }
+.hsSeasonChip img { width: 30px; height: 30px; }
+
+/* --------------------------------------------------------------------------
+   4. THE BOTTOM TABS: the tab plates (lit when chosen), each tab's painted medallion (its lit picture when chosen) and the painted marks.
+      Which mark shows is still home.ts's (heroesTabMark: one at most on the Heroes tab); only their faces are painted here.
+   -------------------------------------------------------------------------- */
+.hmTab, .hmTab.hero, .hmTab.hero.on, .pbTab {
+  position: relative; border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; filter: none;
+  border-image: url(ui/buttons/tabplate.webp) var(--tabplate-slice) / var(--tabplate-width) / 0 stretch;
+  color: #cbbf9f; text-shadow: 0 1px 2px #000; padding: 6px 1px 4px; margin: 0;
+}
+.hmTab.on, .hmTab.hero.on, .pbTab.on { border-image: url(ui/buttons/tabplate-lit.webp) var(--tabplate-slice) / var(--pbw, var(--tabplate-width)) / 0 stretch; color: #ffe7a8; background: none; box-shadow: none; }
+.hmTab:active, .hmTab.hero:active, .pbTab:active { border-image: url(ui/buttons/tabplate-down.webp) var(--tabplate-slice) / var(--pbw, var(--tabplate-width)) / 0 stretch; transform: none; }
+.hmTab img.pbIco, .hmTab.hero img.pbIco { width: 34px; height: 34px; filter: none; transform: none; image-rendering: auto; }
+.hmTab img.pbIco.lit, .hmTab.on img.pbIco:not(.lit) { display: none; }
+.hmTab.on img.pbIco.lit { display: inline-block; }
+.hmTab.hero img.pbIco { width: 38px; height: 38px; margin-top: -4px; }
+.hmTab.locked img.pbIco { filter: grayscale(0.7) brightness(0.7); }
+.hmTab.locked span::after { content: ''; display: inline-block; width: 13px; height: 13px; margin-left: 2px; vertical-align: -2px; background: url(ui/buttons/g-lock.webp) center / contain no-repeat; }
+.hmTab i.badge { top: 0; right: 10%; left: auto; width: 18px; height: 18px; min-width: 0; padding: 0; border: 0; border-radius: 50%; clip-path: none; box-shadow: none; background: url(ui/buttons/badge-new.webp) center / contain no-repeat; }
+.hmTab i.badge:not(:empty) { width: 24px; height: 24px; min-width: 24px; padding: 0; border-radius: 50%; background-image: url(ui/buttons/badge-count.webp); color: #fff; font: 700 11px/24px var(--body); text-shadow: 0 1px 1px #000; }
+.hmTab i.qbadge { top: 0; left: auto; right: 10%; width: 24px; height: 24px; border: 0; border-radius: 0; background: url(ui/buttons/badge-quest.webp) center / contain no-repeat; font-size: 0; color: transparent; }
+.hmTab i.sbadge { border: 0; border-radius: 0; box-shadow: none; background: url(ui/buttons/badge-shop.webp) center / contain no-repeat; }
+
+/* --------------------------------------------------------------------------
+   5. THE CAMP: Choose your battle on the amber plate with its crossed swords, Continue, the tracked quest, the places and their plaques.
+   -------------------------------------------------------------------------- */
+.hmBattle, .hmBattle:active, button.hmBattle, .hm-battle button.hmBattle, #hmBattle {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; overflow: visible;
+  --pbw: 19px 22px; border-image: url(ui/buttons/plate-primary.webp) var(--plate-primary-slice) / var(--pbw) / 0 stretch;
+  display: flex; align-items: center; justify-content: center; gap: 8px; color: #fff7e2; text-shadow: 0 2px 2px #2a1600, 0 0 6px #2a1600;
+}
+#hmBattle:active, .hm-battle .hmBattle:active, .hmBattle:active { border-image: url(ui/buttons/plate-primary-down.webp) var(--plate-primary-slice) / var(--pbw, var(--plate-primary-width)) / 0 stretch; transform: translateY(1px); }
+.hmBattle::after { content: none; }
+.hmBattle::before { content: ''; flex: none; width: 40px; height: 40px; background: url(ui/buttons/choose-battle.webp) center / contain no-repeat; filter: drop-shadow(0 1px 2px #0009); }
+.hmCont, .hmLink.hmCont {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/plate-secondary.webp) var(--plate-secondary-slice) / var(--plate-secondary-width) / 0 stretch;
+  padding-left: 40px; position: relative; min-height: 44px;
+}
+.hmCont::before { content: ''; position: absolute; left: 6px; top: 50%; width: 30px; height: 30px; transform: translateY(-50%); background: url(ui/buttons/continue.webp) center / contain no-repeat; }
+.hmCont:active { border-image: url(ui/buttons/plate-secondary-down.webp) var(--plate-secondary-slice) / var(--pbw, var(--plate-secondary-width)) / 0 stretch; background: none; }
+#hmQuest, .hmQuest {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; min-height: 44px; padding-left: 40px; position: relative;
+  border-image: url(ui/buttons/chip.webp) var(--chip-slice) / var(--chip-width) / 0 stretch;
+}
+#hmQuest.done, .hmQuest.done { border-image: url(ui/buttons/chip-lit.webp) var(--chip-slice) / var(--pbw, var(--chip-width)) / 0 stretch; }
+#hmQuest::before, .hmQuest::before { content: ''; position: absolute; left: 5px; top: 50%; width: 30px; height: 30px; transform: translateY(-50%); background: url(ui/buttons/quest.webp) center / contain no-repeat; }
+/* the Daily's place: the plaque frame round it, the painted medallion whole (no drawn socket behind it), its word on the plaque */
+.hm-battle .cpDailySlot .cpPlace, .hm-battle .cpCouncilSlot .cpPlace.council {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: 0 3px 8px #0008;
+  --pbw: 10px 11px; border-image: url(ui/buttons/plaque.webp) var(--plaque-slice) / var(--pbw) / 0 stretch;
+}
+.hm-battle .cpDailySlot .cpPlace.done { border-image: url(ui/buttons/plaque-ready.webp) var(--plaque-slice) / var(--pbw) / 0 stretch; }
+.hm-battle .cpDailySlot .cpPlace:active { filter: brightness(1.15); }
+.hm-battle .cpDailySlot .cpPlace::before { content: none; }
+.hm-battle .cpDailySlot .cpDailyIcon, .hm-battle .cpCouncilBadge { width: 38px; height: 38px; margin-top: 0; image-rendering: auto; }
+.hm-battle .cpSlot.cpDailySlot .cpTag { border: 0; border-image: none; }
+/* the camp's places: the Daily's painted medallion (the cleared tick and the new pip painted too), the Council's, and their plaques */
+.hm-battle .cpPlace .dailyDone { background: url(ui/buttons/g-tick.webp) center / contain no-repeat; border: 0; box-shadow: none; }
+.hm-battle .cpPlace i.badge { border: 0; border-radius: 50%; clip-path: none; box-shadow: none; background: url(ui/buttons/badge-new.webp) center / contain no-repeat; width: 18px; height: 18px; }
+.hm-battle .cpPlace .cpTag, .pbPlaque {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  --pbw: 12px 13px; border-image: url(ui/buttons/plaque.webp) var(--plaque-slice) / var(--pbw) / 0 stretch;
+}
+.hm-battle .cpPlace.done .cpTag, .pbPlaque.ready { border-image: url(ui/buttons/plaque-ready.webp) var(--plaque-slice) / var(--pbw, var(--plaque-width)) / 0 stretch; }
+.hm-battle .cpPlace.locked .cpTag, .hm-battle .cpPlace:disabled .cpTag, .pbPlaque.locked { border-image: url(ui/buttons/plaque-locked.webp) var(--plaque-slice) / var(--pbw, var(--plaque-width)) / 0 stretch; }
+.pbPlaque { display: inline-grid; justify-items: center; padding: 6px 14px; color: #f3e3b8; text-shadow: 0 1px 2px #000; }
+.hm-battle .cpPlate {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  --pbw: 14px 16px; border-image: url(ui/buttons/plaque.webp) var(--plaque-slice) / var(--pbw) / 0 stretch;
+}
+.hm-battle .cpPlate:active { border-image: url(ui/buttons/plaque-ready.webp) var(--plaque-slice) / var(--pbw, var(--plaque-width)) / 0 stretch; }
+
+/* --------------------------------------------------------------------------
+   6. DEPLOY: Fight on the amber plate with its crossed swords; Hire, Auto, Home and the rest on the slate plates with their medallions.
+   -------------------------------------------------------------------------- */
+body[data-phase='deploy'] #top button:not(#mute):not(#gear):not(#speed),
+body[data-phase='deploy'] #buttons button,
+body[data-phase='deploy'] #buttons button:not(#fight),
+body[data-phase='deploy'] #benchWrap #mergeAll,
+body[data-phase='deploy'] #formBtn,
+#runeBench .rbBtn {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  --pbw: 12px 14px; border-image: url(ui/buttons/plate-secondary.webp) var(--plate-secondary-slice) / var(--pbw) / 0 stretch;
+  color: #f4ead2; text-shadow: 0 1px 2px #000;
+}
+:is(body[data-phase='deploy'] #buttons button, body[data-phase='deploy'] #benchWrap #mergeAll, body[data-phase='deploy'] #formBtn, #runeBench .rbBtn):active:not(:disabled) {
+  border-image: url(ui/buttons/plate-secondary-down.webp) var(--plate-secondary-slice) / var(--pbw, var(--plate-secondary-width)) / 0 stretch; filter: none; transform: translateY(1px);
+}
+:is(body[data-phase='deploy'] #buttons button, body[data-phase='deploy'] #formBtn, #runeBench .rbBtn):disabled,
+#runeBench .rbBtn.locked { border-image: url(ui/buttons/plate-secondary-off.webp) var(--plate-secondary-slice) / var(--pbw, var(--plate-secondary-width)) / 0 stretch; opacity: 1; color: #b9b3a4; }
+body[data-phase='deploy'] #buttons #fight, #buttons #fight {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; min-height: 52px;
+  --pbw: 16px 18px; border-image: url(ui/buttons/plate-primary.webp) var(--plate-primary-slice) / var(--pbw) / 0 stretch;
+  color: #fff7e2; text-shadow: 0 2px 2px #2a1600, 0 0 5px #2a1600;
+}
+body[data-phase='deploy'] #buttons #fight:active:not(:disabled) { border-image: url(ui/buttons/plate-primary-down.webp) var(--plate-primary-slice) / var(--pbw, var(--plate-primary-width)) / 0 stretch; }
+body[data-phase='deploy'] #buttons #fight:disabled { border-image: url(ui/buttons/plate-primary-off.webp) var(--plate-primary-slice) / var(--pbw, var(--plate-primary-width)) / 0 stretch; color: #c4bdab; }
+body[data-phase='deploy'] #buttons button::before { width: 28px; height: 28px; image-rendering: auto; }
+body[data-phase='deploy'] #buttons #fight::before { background-image: url(ui/buttons/fight.webp); width: 34px; height: 34px; }
+body[data-phase='deploy'] #buttons #summon::before { background-image: url(ui/buttons/hire.webp); }
+body[data-phase='deploy'] #buttons #auto::before { background-image: url(ui/buttons/auto-place.webp); }
+body[data-phase='deploy'] #buttons #homeBtn::before { background-image: url(ui/buttons/home.webp); }
+#benchWrap #mergeAll::before, #runeBench .rbBtn::before, #formBtn::before {
+  content: ''; display: inline-block; flex: none; width: 24px; height: 24px; margin-right: 4px; vertical-align: middle; background: center / contain no-repeat;
+}
+#benchWrap #mergeAll::before, #runeBench .rbMerge::before { background-image: url(ui/buttons/auto-merge.webp); }
+#runeBench .rbAuto::before { background-image: url(ui/buttons/auto-place.webp); }
+#runeBench .rbSatchel::before { background-image: url(ui/buttons/satchel.webp); }
+#formBtn::before { background-image: url(ui/buttons/formations.webp); }
+#ptSuggest::before { content: ''; display: inline-block; width: 24px; height: 24px; margin-right: 4px; vertical-align: middle; background: url(ui/buttons/auto-pick.webp) center / contain no-repeat; }
+#ptGo::before { content: ''; display: inline-block; width: 30px; height: 30px; margin-right: 6px; vertical-align: middle; background: url(ui/buttons/march.webp) center / contain no-repeat; }
+
+/* --------------------------------------------------------------------------
+   Reduced motion: no press nudge or scale (the plates still change).
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  button:active, .pbMedal:active, #hmTrophy:active, #hmGear:active, #top #mute:active, #top #gear:active, #top #speed:active, .hmBattle:active, .omChoice:active, .pbChoice:active { transform: none; }
+}
+
+/* --------------------------------------------------------------------------
+   7. THE CASTLE'S CHIPS, AND THE ARMIES' PAGE: its tiers on the choice plates, its arrows the painted chevrons, Assault and Fight with
+      their medallions, Auto on the painted switch's plates.
+   -------------------------------------------------------------------------- */
+.ctChip {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; min-height: 44px;
+  border-image: url(ui/buttons/chip.webp) var(--chip-slice) / var(--chip-width) / 0 stretch;
+}
+.ctChip:active { border-image: url(ui/buttons/chip-lit.webp) var(--chip-slice) / var(--chip-width) / 0 stretch; background: none; }
+.asTier {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  --pbw: 9px 10px; border-image: url(ui/buttons/plate-choice.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch;
+}
+.asTier.on { border-image: url(ui/buttons/plate-choice-on.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch; background: none; box-shadow: none; }
+.asTier.shut { border-image: url(ui/buttons/plate-choice-locked.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch; }
+.asArrow { border: 0; border-image: none; background: url(ui/buttons/g-back.webp) center / 36px 36px no-repeat; box-shadow: none; font-size: 0; color: transparent; min-width: 44px; min-height: 44px; }
+.asArrow.right { background-image: url(ui/buttons/g-right.webp); }
+.asArrow:active { transform: scale(0.92); background-color: transparent; }
+button.asFight.primary::before, button.asAssault::before {
+  content: ''; display: inline-block; width: 30px; height: 30px; margin-right: 6px; vertical-align: middle; background: url(ui/buttons/fight.webp) center / contain no-repeat;
+}
+button.asAssault::before { background-image: url(ui/buttons/assault.webp); }
+.asCont::before { content: ''; display: inline-block; width: 24px; height: 24px; margin-right: 4px; vertical-align: middle; background: url(ui/buttons/continue.webp) center / contain no-repeat; }
+.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut { white-space: nowrap; }
+
+/* --------------------------------------------------------------------------
+   8. THE FIGHT HUD: the spell orbs in the painted rings (gold, lit while armed, bronze while it cannot be paid), the mana's drop, the
+      auto-cast medallion (lit when on), the ultimate's mark on a ready row, the formation shapes, Stop.
+   -------------------------------------------------------------------------- */
+body[data-phase='fight'] #hudSpells #spellCards .spell,
+#stand .stOrbs .stSpell {
+  background: url(ui/buttons/orb-gold.webp) center / 100% 100% no-repeat, url(ui/combat-orb.png) center / 84% 84% no-repeat;
+}
+body[data-phase='fight'] #hudSpells #spellCards .spell.armed,
+#stand .stOrbs .stSpell.armed {
+  background: url(ui/buttons/orb-lit.webp) center / 100% 100% no-repeat, url(ui/combat-orb.png) center / 84% 84% no-repeat;
+  box-shadow: none; filter: drop-shadow(0 0 6px #f5cf6a);
+}
+body[data-phase='fight'] #hudSpells #spellCards .spell.dim,
+#stand .stOrbs .stSpell.dim {
+  background: url(ui/buttons/orb-bronze.webp) center / 100% 100% no-repeat, url(ui/combat-orb.png) center / 84% 84% no-repeat;
+}
+#hudSpells #mana::before, #mana::before {
+  content: ''; flex: none; width: 26px; height: 26px; background: url(ui/buttons/mana.webp) center / contain no-repeat; font-size: 0;
+}
+#hudSpells .fhAuto, .fhAuto {
+  width: 48px; height: 48px; min-width: 44px; min-height: 44px; padding: 0; border: 0; border-image: none; border-radius: 50%; box-shadow: none;
+  background: url(ui/buttons/autocast.webp) center / contain no-repeat; filter: drop-shadow(0 2px 3px #000b);
+}
+#hudSpells .fhAuto.on, .fhAuto.on { background: url(ui/buttons/autocast-lit.webp) center / contain no-repeat; border: 0; }
+.fhAuto span, .fhAuto .sw { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+#hudSpells .fhAuto:active { transform: scale(0.93); filter: drop-shadow(0 1px 1px #000b) brightness(0.9); }
+/* (an ultimate ready to fire: the painted ultimate medallion over the row's portrait corner) */
+.fightHud .fhRow.ready .fhPic::before {
+  content: ''; position: absolute; right: -6px; bottom: -4px; z-index: 3; width: 22px; height: 22px; pointer-events: none;
+  background: url(ui/buttons/ultimate.webp) center / contain no-repeat; filter: drop-shadow(0 0 4px #ffd27a);
+}
+.fightHud .fhPic { position: relative; }
+.tacForm {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; position: relative; padding-left: 54px;
+  border-image: url(ui/buttons/plate-choice.webp) var(--plate-choice-slice) / var(--plate-choice-width) / 0 stretch;
+}
+.tacForm.on { border-image: url(ui/buttons/plate-choice-on.webp) var(--plate-choice-slice) / var(--plate-choice-width) / 0 stretch; background: none; }
+.tacForm::before { content: ''; position: absolute; left: 8px; top: 50%; width: 38px; height: 38px; transform: translateY(-50%); background: url(ui/buttons/formations.webp) center / contain no-repeat; }
+.tacForm[data-form='wall']::before { background-image: url(ui/buttons/form-wall.webp); }
+.tacForm[data-form='spear']::before { background-image: url(ui/buttons/form-wedge.webp); }
+.tacForm[data-form='square']::before { background-image: url(ui/buttons/form-square.webp); }
+.tacForm[data-form='skirmish']::before { background-image: url(ui/buttons/form-spread.webp); }
+#autoStop::before { content: ''; display: inline-block; width: 24px; height: 24px; margin-right: 4px; vertical-align: middle; background: url(ui/buttons/stop.webp) center / contain no-repeat; }
+
+/* --------------------------------------------------------------------------
+   9. THE TAVERN AND HESTER'S STALL: the services' painted medallions on the slate plates, the two section tabs on the tab plates, the
+      stall's tabs on the tab plates with their painted medallions.
+   -------------------------------------------------------------------------- */
+.ptTavern .ptButton {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  --pbw: 11px 13px; border-image: url(ui/buttons/plate-secondary.webp) var(--plate-secondary-slice) / var(--pbw) / 0 stretch;
+  color: #f4ead2; text-shadow: 0 1px 2px #000;
+}
+.ptTavern .ptButton:active { border-image: url(ui/buttons/plate-secondary-down.webp) var(--plate-secondary-slice) / var(--pbw) / 0 stretch; filter: none; }
+.ptTavern .ptButton.ptReady { border-image: url(ui/buttons/plate-choice-on.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch; }
+.ptTavern .ptButton img.pbIco { width: 32px; height: 32px; image-rendering: auto; }
+.ptTavern .ptActions .ptButton img.pbIco { width: 30px; height: 30px; }
+.ptTavern .ptActions .ptButton { padding-top: 6px; padding-bottom: 6px; gap: 3px; }
+.ptTavern .ptRise { border-image: none; border: 0; padding: 0; background: none; }
+.ptTavern .ptRise img.pbIco { width: 40px; height: 40px; }
+.ptTavern .ptSectionTab {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; color: #d4c5a2;
+  border-image: url(ui/buttons/tabplate.webp) var(--tabplate-slice) / var(--tabplate-width) / 0 stretch;
+}
+.ptTavern .ptSectionTab[aria-selected='true'] { border-image: url(ui/buttons/tabplate-lit.webp) var(--tabplate-slice) / var(--tabplate-width) / 0 stretch; box-shadow: none; color: #ffe7a8; }
+.hsTab {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/tabplate.webp) var(--tabplate-slice) / 10px 8px 5px 8px / 0 stretch;
+}
+.hsTab.on { border-image: url(ui/buttons/tabplate-lit.webp) var(--tabplate-slice) / 10px 8px 5px 8px / 0 stretch; background: none; }
+.hsTabIco.pb { width: 32px; height: 32px; background-size: contain; background-position: center; border-radius: 0; }
+.hsHead .hsBack, #settingsBody .setBack {
+  border: 1px solid transparent; font: 700 15px var(--body); padding: 6px 14px; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/plate-secondary.webp) var(--plate-secondary-slice) / var(--plate-secondary-width) / 0 stretch;
+}
+.hsHead .hsBack:active, #settingsBody .setBack:active { border-image: url(ui/buttons/plate-secondary-down.webp) var(--plate-secondary-slice) / var(--plate-secondary-width) / 0 stretch; }
+
+/* --------------------------------------------------------------------------
+   10. SETTINGS: its menu rows on the choice plates with the painted chevron, its On/Off toggles the painted switch, its pairs the choice
+       plates (the chosen one gilt). The words stay for a reader; the switch shows the picture.
+   -------------------------------------------------------------------------- */
+#settingsBody button.setMenu {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/plate-choice.webp) var(--plate-choice-slice) / var(--plate-choice-width) / 0 stretch;
+  padding: 10px 16px;
+}
+#settingsBody button.setMenu:active:not(:disabled) { border-image: url(ui/buttons/plate-choice-on.webp) var(--plate-choice-slice) / var(--plate-choice-width) / 0 stretch; background: none; padding: 10px 16px; }
+#settingsBody .setChevron { width: 26px; height: 26px; font-size: 0; color: transparent; background: url(ui/buttons/g-right.webp) center / contain no-repeat; }
+.setting .toggle, .setting .toggle.on, .pbSwitch {
+  width: 68px; min-width: 68px; min-height: 44px; height: 44px; padding: 0; border: 0; border-image: none; border-radius: 0; box-shadow: none;
+  background: url(ui/buttons/switch-off.webp) center / 64px 32px no-repeat; font-size: 0; color: transparent; text-shadow: none; overflow: hidden;
+}
+.setting .toggle.on, .pbSwitch.on, .pbSwitch[aria-checked='true'] { background-image: url(ui/buttons/switch-on.webp); }
+.setting .toggle:disabled, .pbSwitch:disabled { background-image: url(ui/buttons/switch-off-dim.webp); }
+.setting .toggle::after, .setting .toggle.on::after { content: none; }
+.setting .toggle:active:not(:disabled), .pbSwitch:active:not(:disabled) { background-color: transparent; transform: none; filter: brightness(1.12); }
+.setting .pair button, .setting .pair button.on {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; color: #e9dfc4;
+  --pbw: 9px 10px; border-image: url(ui/buttons/plate-choice.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch;
+}
+.setting .pair button.on { border-image: url(ui/buttons/plate-choice-on.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch; color: #fff4d0; }
+.setting .pair button::after { content: none; }
+
+/* --------------------------------------------------------------------------
+   11. GLYPHS: a way out's painted chevron or close mark before its word.
+   -------------------------------------------------------------------------- */
+.pbGlyphed { display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
+.pbGlyph { width: 22px; height: 22px; flex: none; margin-left: -4px; filter: drop-shadow(0 1px 1px #000a); }
+/* (the tavern's header keeps its old height: All heroes' medallion a little smaller than the services') */
+.ptHead .ptRoster { padding-top: 4px; padding-bottom: 4px; }
+.ptTavern .ptHead .ptRoster img.pbIco { width: 26px; height: 26px; }
+.ptTavern .ptActions .ptButton { min-height: 60px; }
+/* the gear's news (the Updates page has something new): the painted alert bell on its corner */
+#top #gear.hasNews::after, #hmGear.hasNews::after {
+  content: ''; position: absolute; top: -3px; right: -3px; width: 20px; height: 20px; border-radius: 50%; box-shadow: none;
+  background: url(ui/buttons/g-alert.webp) center / contain no-repeat;
+}
+/* the War Council's hero search: the painted magnifying glass in the box */
+#party #ptSearch { padding-left: 38px; background: #0d1914 url(ui/buttons/g-search.webp) 7px center / 24px 24px no-repeat; }
+/* the War Council's March orders: its map and pin */
+#party .ptOrders::before { content: ''; display: inline-block; width: 26px; height: 26px; margin-right: 5px; vertical-align: middle; background: url(ui/buttons/march-orders.webp) center / contain no-repeat; }
