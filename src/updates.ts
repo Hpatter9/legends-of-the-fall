@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.428.0',
+    date: '2026-11-09',
+    title: 'Assault: holds tuned to when they open',
+    notes: ['Each hold is now tuned for the hero level you have when it opens, capped at 100. The Den, Elder Root, the Maze and Bonefire Crag are retuned.'],
+  },
+  {
     version: '0.427.0',
     date: '2026-11-09',
     title: 'Assault: Bonefire Crag',
