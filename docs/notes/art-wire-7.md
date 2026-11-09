@@ -1,5 +1,8 @@
 # Art wire 7: four holds painted in full, and the Moonlit Shrine's walls
 
+**Superseded in part by `docs/notes/art-wire-8.md`:** sheets 08 to 12 were cut here by the Orc slots, which mislabelled several pieces;
+the ladder fix below was a symptom of that, and is gone.
+
 The owner's Assault sheets from five art branches are merged into this branch and cut into the game:
 
 | Hold | Branch (PR) | Sheets |

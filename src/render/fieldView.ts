@@ -729,6 +729,8 @@ export class FieldView {
     const t = this.b.board.tiles[p.front];
     if ((p.name === 'crenel' || p.name === 'wallBrazier') && t.h < WALL_TOP) return p.name === 'crenel' ? 'rubblePile' : '';
     if (p.name === 'barrels' && !t.barrel) return '';
+    // (a hold whose ruins sheet is not painted yet has no ruins of its own: the Orc sheet's burnt shells, recoloured, stand in)
+    if (!SPRITES[p.name] && (p.name === 'ruinA' || p.name === 'ruinB')) return p.name === 'ruinA' ? 'burntShell' : 'burntHeap';
     return p.name;
   }
 
