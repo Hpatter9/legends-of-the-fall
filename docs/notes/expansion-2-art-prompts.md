@@ -25,3 +25,18 @@ small gold laurel wreath. Distinct whole silhouettes with transparent padding.
 ```text
 Repository hpatter9/legends-of-the-fall; branch art/expansion-2; output art-source/expansion/frames.png. Paint ONE 1280x256 transparent PNG, five equal 256x256 cells in one row, no text. Match the existing dark fantasy painted pixel-art UI: aged brass and gold, dark outlines, restrained highlights and dark crimson accents. Cells 1–3: matching thin square brass portrait frames, fully transparent centres, bearing exactly ONE, TWO, THREE deep diagonal claw scars respectively, dark red beneath torn brass. Cell 4: aged gold filigree square heirloom frame, transparent centre, small family crest at top, exactly three empty notches along bottom. Cell 5: one gold signet ring with red stone, centred and filling about 60% of its cell. Transparent background and padding; no lettering, no extra objects.
 ```
+
+## Duel ring
+
+```text
+Repository hpatter9/legends-of-the-fall; branch art/expansion-2;
+output art-source/expansion/duel-ring.png. Paint ONE 640×320 transparent
+image in the game's dark medieval fantasy painterly pixel-art style.
+Use docs/samples/nemesis-4/duel-fight-412.png for the board angle.
+A square ring of low weathered grey menhirs on a 2:1 isometric tactics
+board, outlining a 5×5-tile square (each conceptual tile 128×64).
+Four straight diagonal sides, hollow transparent centre and exterior.
+Stones about a quarter tile high, occasional aged brass bands and moss
+at their feet. Stones only on the perimeter; no ground, tiles or text.
+Muted steel grey, aged brass and moss green, upper-left lighting.
+```
