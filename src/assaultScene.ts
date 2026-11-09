@@ -33,6 +33,9 @@ import { clearBattle, saveBattle } from './assaultSave';
 import { hasShooters, scaleAim } from './sim/assault/siege';
 import { canVolley, isWallWalk } from './sim/assault/works';
 import { openGateDuelCard } from './gateDuelView';
+import { TauntCuts } from './tauntCut';
+import { tauntFor } from './tauntCutRules';
+import { settings } from './settings';
 import { FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
 import { anchorOf } from './sim/assault/holdMind';
 import { BUCKET } from './sim/assault/field';
@@ -105,6 +108,8 @@ const CSS = `
 .asSpells button span{overflow:hidden;text-overflow:ellipsis}
 @media (max-width:400px){.asSpells button span{display:none}}
 .asDuel{position:absolute;left:50%;top:50px;transform:translateX(-50%);z-index:3;background:#2a1410e6;border:1px solid #e0603a;border-radius:8px;padding:4px 10px;font:700 13px "Alegreya Sans";color:#ffe0c0;pointer-events:none;white-space:nowrap;max-width:86vw;overflow:hidden;text-overflow:ellipsis}.asDuel[hidden]{display:none}
+.asTaunt{position:absolute;left:8px;right:118px;top:84px;z-index:4;background:#1b1610ee;border:1px solid #b03a2a;border-radius:8px;padding:6px 10px;font:14px/1.3 "Alegreya Sans";color:#f3e7c7;pointer-events:none}.asTaunt[hidden]{display:none}.asTaunt b{color:#ff9a7a}.asTaunt i{display:block;color:#bcd6ff;font-style:normal;margin-top:2px}
+#assaultScene~.tcLayer{z-index:92}
 .asToast{position:absolute;left:50%;top:60px;transform:translateX(-50%);z-index:4;background:#1b1610e6;border:1px solid #c9a24a;border-radius:8px;padding:6px 12px;font:700 14px "Alegreya Sans";pointer-events:none;white-space:nowrap;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:400px){.asTop{gap:4px;padding:0 5px}.asTop b{font-size:12px}.asTop button{padding:0 6px;font-size:12px;min-height:32px}.asDrums i{width:10px;height:10px}}
 @media (max-width:370px){.asPort{width:54px}.asPort canvas{width:44px;height:44px}.asAll{width:40px;font-size:0}.asAll::after{content:"⚑";font-size:18px}}
@@ -223,6 +228,18 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   duelTag.hidden = true;
   host.append(duelTag);
   let duelCard = false;
+  // (a captain's taunt as a hero comes near: his words, and the hero's answer; and the cut-in as the assault opens)
+  const tauntBox = el('div', 'asTaunt');
+  tauntBox.hidden = true;
+  host.append(tauntBox);
+  let tauntUntil = 0;
+  const cuts = new TauntCuts();
+  {
+    const council = [...(h.input.council ?? []), ...(h.input.warchief ? [h.input.warchief] : [])];
+    // (the most notable member present: the warchief, else the mightiest)
+    const top = h.input.warchief ?? [...council].sort((a, z) => z.might - a.might || a.id - z.id)[0];
+    if (top && b.t < 1000) cuts.add([tauntFor(top, h.platoons.map((p) => p.hero), seed)], settings().nemesisCut);
+  }
   const toast = el('div', 'asToast');
   toast.hidden = true;
   host.append(toast);
@@ -714,7 +731,8 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     last = now;
     const events: FieldEvent[] = [];
     const sound: BattleEvent[] = [];
-    if (b.phase === 'fight' && !paused && !duelCard) {
+    cuts.frame(dt, false);
+    if (b.phase === 'fight' && !paused && !duelCard && !cuts.busy) {
       acc += dt * (slow ? SLOW : speed);
       let n = 0;
       // (the ticks the time asks for, eight at most a frame: stepped now on the page, or a frame later from the worker)
@@ -760,6 +778,19 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
               });
             }
           } else if (e.kind === 'duelRing' && e.up) say('The ring is staked before the Iron Gate');
+          else if (e.kind === 'taunt') {
+            const s = [...(h.input.council ?? []), ...(h.input.warchief ? [h.input.warchief] : [])].find((n) => n.id === e.member);
+            if (s) {
+              const t = tauntFor(s, [e.hero], seed + e.member);
+              tauntBox.replaceChildren(el('b', '', `${s.name}: `), `“${t.line}”`, ...(t.reply ? [el('i', '', `${heroName(e.hero)}: “${t.reply}”`)] : []));
+              tauntBox.hidden = false;
+              tauntUntil = performance.now() + 4200;
+            }
+          } else if (e.kind === 'chiefFled') {
+            const s = h.input.warchief;
+            say(`${s?.name ?? 'The warchief'} flees the throne!`);
+            view.blast(e.at % b.board.w, Math.floor(e.at / b.board.w), false);
+          }
           else if (e.kind === 'duelOver') {
             if (e.out === 'won') say('The champion wins! His band breaks and runs');
             else if (e.out === 'lost') say('The champion falls in the ring');
@@ -846,6 +877,10 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
       shown = now;
       drawBar();
     }
+    if (tauntUntil && now > tauntUntil) {
+      tauntBox.hidden = true;
+      tauntUntil = 0;
+    }
     if (toastUntil && now > toastUntil) {
       toast.hidden = true;
       toastUntil = 0;
@@ -910,6 +945,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   const finish = () => {
     if (gone) return;
     gone = true;
+    cuts.clear();
     endFight();
     // (settled from the worker's own battle, the truth, not the page's copy)
     void sim.final().then((fin) => {

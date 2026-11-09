@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.421.0',
+    date: '2026-11-09',
+    title: 'Assault: the warchief flees, holds in codex',
+    notes: ['A beaten warchief may flee to the strongest hold, the Council taunts your heroes, the News tells each conquest, and the codex gains a Holds tab.'],
+  },
+  {
     version: '0.420.0',
     date: '2026-11-08',
     title: 'Assault: the Drill Yard and the gate duel',

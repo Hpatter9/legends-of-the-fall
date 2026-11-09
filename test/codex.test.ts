@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { startBattle } from '../src/sim/battle';
-import { CODEX_STONES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, stonesClaimed, stonesTotal, stonesWaiting, claimCodex, codexWaiting, entryOfDef, gotOf, isMet, killsOf, milestonesOf, noteFoes, progressLine, readCodex, tipsOf, totalOf, whereMet, kitOfEntry } from '../src/sim/codex';
+import { inBestiary, CODEX_STONES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, stonesClaimed, stonesTotal, stonesWaiting, claimCodex, codexWaiting, entryOfDef, gotOf, isMet, killsOf, milestonesOf, noteFoes, progressLine, readCodex, tipsOf, totalOf, whereMet, kitOfEntry } from '../src/sim/codex';
 import { FOE_LORE, HERO_STORY } from '../src/sim/codexLore';
 import { loadMeta, saveMeta, startedMeta } from '../src/sim/meta';
 import { settleRun } from '../src/sim/modes';
@@ -25,7 +25,7 @@ test('every foe look is in exactly one entry, and every entry has lore, a place 
     assert.ok(whereMet(e).length > 0, `where ${e.id} is met`);
     assert.ok(tipsOf(UNITS[e.defs[0]], kitOfEntry(e)).length > 0, e.id);
   }
-  for (const d of Object.values(UNITS).filter((u) => u.side === 'foe')) assert.ok(seen.has(d.id), `${d.id} has an entry`);
+  for (const d of Object.values(UNITS).filter(inBestiary)) assert.ok(seen.has(d.id), `${d.id} has an entry`);
   assert.deepEqual(Object.keys(FOE_LORE).filter((k) => !FOE_ENTRIES.some((e) => e.id === k)), []);
 });
 

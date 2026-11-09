@@ -144,7 +144,7 @@ export interface FallenNemesis {
 }
 
 /** A line of the War News (`council.ts`): the turn, what happened and its words. */
-export type NewsKind = 'cheated' | 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion' | 'claim' | 'crowned' | 'named' | 'slain' | 'muster' | 'fled' | 'humiliated' | 'vengeance' | 'reclaimed' | 'duel';
+export type NewsKind = 'cheated' | 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion' | 'claim' | 'crowned' | 'named' | 'slain' | 'muster' | 'fled' | 'humiliated' | 'vengeance' | 'reclaimed' | 'duel' | 'conquest';
 export interface WarNews {
   turn: number;
   kind: NewsKind;
@@ -669,7 +669,7 @@ export function readTrophy(x: unknown): NemTrophy | undefined {
   return { kind, slot, item: Math.round(t.item), base, rarity: int(t.rarity, 1, 5, 1) };
 }
 const kinds = (x: unknown, max: number): string[] => (Array.isArray(x) ? [...new Set(x.filter((k): k is string => typeof k === 'string' && !!UNITS[k]))].slice(0, max) : []);
-const NEWS_KINDS: readonly NewsKind[] = ['cheated', 'recruit', 'promotion', 'feud', 'betrayal', 'feast', 'trial', 'oath', 'desertion', 'claim', 'crowned', 'named', 'slain', 'muster', 'fled', 'humiliated', 'vengeance', 'reclaimed', 'duel'];
+const NEWS_KINDS: readonly NewsKind[] = ['cheated', 'recruit', 'promotion', 'feud', 'betrayal', 'feast', 'trial', 'oath', 'desertion', 'claim', 'crowned', 'named', 'slain', 'muster', 'fled', 'humiliated', 'vengeance', 'reclaimed', 'duel', 'conquest'];
 const dayRec = <T extends object>(x: unknown, extra: (r: Record<string, unknown>) => T): ({ key: number } & T) | undefined => {
   if (!x || typeof x !== 'object') return undefined;
   const r = x as Record<string, unknown>;
