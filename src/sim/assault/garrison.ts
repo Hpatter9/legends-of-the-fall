@@ -1,7 +1,7 @@
 // The garrison (phase 1, `docs/notes/assault-1.md`; the design's section 4): 200 defenders as posts, not waves. 180 stand at their posts
 // as the assault opens and 20 come as reinforcements while a war drum beats. Every post's leader's place is filled from the army's members of
 // the Dark Council by rank, mightiest first (lieutenants the outer posts, captains the gates and the throne); a place the Council cannot fill
-// takes a nameless Orc Chieftain at the officer's strength. The warchief, if one sits, holds the throne himself (Q1); if not, the hold's own
+// takes a nameless officer (an Orc Chieftain, a Bone Captain) at the officer's strength. The warchief, if one sits, holds the throne himself (Q1); if not, the hold's own
 // lord, the army's last boss.
 //
 // Strength: every defender takes the army's Legendary tier (`TIERS[3]`, its `tierStart`) at the wave-8 multiplier, then `ASSAULT.foeShare`
@@ -20,7 +20,7 @@ import type { FieldGroup, FieldState } from './field';
 import { occPut } from './field';
 import type { PostDef } from './blueprint';
 import type { AssaultInput, HoldState, PostState } from './holdTypes';
-import { WAR_WOLF } from './troops';
+import { GRAVE_WRAITH, WAR_WOLF } from './troops';
 
 /** The mode's dials (the balance tool tunes them, `npm run balance -- --assault orcs`). */
 export const ASSAULT = {
@@ -34,11 +34,24 @@ export const ASSAULT = {
   wave: 8,
 } as const;
 
+/** Each hold's own share (`ASSAULT.foeShare`'s part, by army): set so the bot does about as well at each army's Legendary level, by the
+ *  balance tool. The Barrow Necropolis: 0.12, at level 65 Auto wins half and Tactical three in four (docs/notes/assault-4.md). */
+export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.12 };
+/** The share a hold's garrison stands at: a tool's own, else the hold's. */
+export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare'>): number => input.foeShare ?? HOLD_SHARE[input.army] ?? ASSAULT.foeShare;
+
 /** The salt of the garrison's own small draws (which grunt stands where), a side stream of the assault's seed. */
 export const GARRISON_SALT = 0x6a7715;
 
-/** The roster's letters. */
-export const KIND: Record<string, string> = { G: 'orcGrunt', A: 'orcArcher', B: 'orcBrute', W: WAR_WOLF.id };
+/** The roster's letters, by army: its rank and file (G), its archers (A), its heavies (B) and the pens' fast pack (W). */
+export const KINDS: Readonly<Record<string, Record<string, string>>> = {
+  orcs: { G: 'orcGrunt', A: 'orcArcher', B: 'orcBrute', W: WAR_WOLF.id },
+  undead: { G: 'skeleton', A: 'boneVolley', B: 'spearman', W: GRAVE_WRAITH.id },
+};
+/** The Orcs' roster's letters (the first hold's, kept for the tools). */
+export const KIND = KINDS.orcs;
+/** An officer's place the Council cannot fill takes this nameless officer, by army. */
+export const OFFICER: Readonly<Record<string, string>> = { orcs: 'orcChieftain', undead: 'boneCaptain' };
 /** The order the Council's ranks take the posts' leaders' places (4.2). */
 export const LIEUTENANT_POSTS = ['bridge', 'drumW', 'drumE', 'drumS', 'westTower', 'eastTower'] as const;
 export const CAPTAIN_POSTS = ['southGate', 'ironGate', 'throne', 'throne'] as const;
@@ -124,7 +137,7 @@ export function addFieldUnit(b: Battle, f: FieldState, defId: string, at: At, bo
 /** Stand the garrison at its posts (asleep, `posted`), the Council's members in their leaders' places and the lord on the throne. */
 export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: AssaultInput): void {
   const bp = h.bp;
-  const { foes, wall } = garrisonBoosts(input.army, input.foeShare ?? ASSAULT.foeShare, input.tier ?? ASSAULT.tier);
+  const { foes, wall } = garrisonBoosts(input.army, shareOf(input), input.tier ?? ASSAULT.tier);
   b.foeBoost = foes;
   if (foes.speed && foes.speed !== 1) b.foeSpeed = foes.speed;
   const council = input.council ?? [];
@@ -160,7 +173,7 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
       } else if (c === 'L' || c === 'C') {
         const key = c === 'C' && def.id === 'throne' ? (captains++ === 0 ? 'throne' : 'throne:1') : def.id;
         const snap = places[key];
-        const base = snap?.base ?? 'orcChieftain';
+        const base = snap?.base ?? OFFICER[input.army] ?? 'orcChieftain';
         unit = addFieldUnit(b, f, base, at, wall(base, 'mid'), g.id, slot);
         if (snap) {
           const place = placeOf(snap, input.tier);
@@ -170,7 +183,7 @@ export function buildGarrison(b: Battle, f: FieldState, h: HoldState, input: Ass
       } else {
         // (an officer's place the roster has none for: the watchtowers take a lieutenant if the Council has one to spare)
         const snap = slot === 0 && !officers.length ? places[def.id] : undefined;
-        unit = snap ? addFieldUnit(b, f, snap.base, at, wall(snap.base, 'mid'), g.id, slot) : addFieldUnit(b, f, KIND[c], at, foes, g.id, slot);
+        unit = snap ? addFieldUnit(b, f, snap.base, at, wall(snap.base, 'mid'), g.id, slot) : addFieldUnit(b, f, (KINDS[input.army] ?? KIND)[c], at, foes, g.id, slot);
         if (snap) {
           const place = placeOf(snap, input.tier);
           if (place) makeNemesis(unit, place);
@@ -195,4 +208,4 @@ function placeOf(s: NemSnap, tier: number = ASSAULT.tier): ReturnType<typeof nem
 export const archersOnly = (p: PostDef): boolean => /^[A ]+$/.test(p.roster);
 
 /** The garrison's boosts for a hold under assault: its army, its share and its tier (Legendary, or Mythic for the Warband regrouped). */
-export const holdBoosts = (h: { input: AssaultInput }): ReturnType<typeof garrisonBoosts> => garrisonBoosts(h.input.army, h.input.foeShare ?? ASSAULT.foeShare, h.input.tier ?? ASSAULT.tier);
+export const holdBoosts = (h: { input: AssaultInput }): ReturnType<typeof garrisonBoosts> => garrisonBoosts(h.input.army, shareOf(h.input), h.input.tier ?? ASSAULT.tier);

@@ -111,7 +111,7 @@ export async function startAssaultBench(): Promise<void> {
   host.insertBefore(app.canvas, hud);
   app.canvas.style.cssText = 'display:block;width:100%;height:100%;';
   // (the day's light over the field, under the buttons)
-  fieldGrade(host);
+  fieldGrade(host, query.get('army') ?? 'orcs');
   hud.textContent = 'Loading the field…';
   const sheets = new Set<string>(['hk_orc_grunt', 'hk_orc_archer', 'hk_orc_brute', 'hk_orc_warlord', 'wolf_black']);
   for (const p of SPIKE_PLATOONS) {
@@ -119,8 +119,11 @@ export async function startAssaultBench(): Promise<void> {
     sheets.add(SPIKE_TROOPS[p.troop].sheet);
   }
   // (the hold's fighters: every sheet its first assault stands)
-  if (!spike) for (const x of startAssault(benchInput(1)).units) sheets.add(UNITS[x.def].sheet);
-  await Promise.all([loadSomeSheets([...sheets]), loadFieldArt(), document.fonts?.load('700 16px "Alegreya Sans"').catch(() => {})]);
+  // (`&army=undead`: the Barrow Necropolis instead of Bloodtusk Hold, at its own level, `&level=`)
+  const army = query.get('army') ?? 'orcs';
+  const level = Number(query.get('level')) || 55;
+  if (!spike) for (const x of startAssault(benchInput(1, level, army)).units) sheets.add(UNITS[x.def].sheet);
+  await Promise.all([loadSomeSheets([...sheets]), loadFieldArt(army), document.fonts?.load('700 16px "Alegreya Sans"').catch(() => {})]);
 
   let b: Battle;
   let view: FieldView;
@@ -145,7 +148,7 @@ export async function startAssaultBench(): Promise<void> {
     sim?.destroy();
     sim = null;
     // (`&siege=1`: the siege works of phase 1b, the ram with the knight and ladders with the samurai and the archer, the bot's Tactical style)
-    const input = query.get('siege') ? { ...benchInput(seed), siege: { ram: 'knight', ladders: ['samurai', 'archer'] }, tactical: true } : benchInput(seed);
+    const input = query.get('siege') ? { ...benchInput(seed, level, army), siege: { ram: 'knight', ladders: ['samurai', 'archer'] }, tactical: true } : benchInput(seed, level, army);
     // (`&skip=n`: the first n ticks played at once, for a look at a fight under way, before the worker takes it)
     const skip = Number(query.get('skip')) || 0;
     if (spike) b = startSpike(seed);

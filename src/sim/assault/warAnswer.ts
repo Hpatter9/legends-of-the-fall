@@ -22,15 +22,15 @@ import { dreadOf } from '../nemesisTraits';
 import { mixSeed } from '../rng';
 import { occClear, type FieldState } from './field';
 import type { HoldState } from './holdTypes';
-import { BLOODTUSK } from './maps/orcs';
+import { HOLDS } from './holds';
 
 /** The warchief is asked once, the first time he stands under this share of his health, whether he flees, at this chance. */
 export const CHIEF_FLIGHT = { at: 0.2, chance: 0.5 } as const;
 export const FLIGHT_SALT = 0xf1a7;
 /** A captain taunts a hero he has a score with as it comes this near. */
 export const TAUNT_NEAR = 10;
-/** Each army's hold, by its blueprint's name (only the Orcs' is built yet; the others are phase 4's). */
-export const HOLD_NAMES: Readonly<Record<string, string>> = { [BLOODTUSK.army]: BLOODTUSK.name };
+/** Each army's hold, by its blueprint's name (the holds not built yet are named by their army). */
+export const HOLD_NAMES: Readonly<Record<string, string>> = Object.fromEntries(Object.values(HOLDS).map((b) => [b.army, b.name]));
 export const holdName = (army: string): string => HOLD_NAMES[army] ?? `the ${armyById(army)?.name ?? army}'s hold`;
 
 /** The strongest hold still standing other than `except`: the unconquered army the player has opened whose Council's Might is greatest, a

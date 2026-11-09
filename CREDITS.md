@@ -632,6 +632,16 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   Liches, Moonpack, Knights and the wild flair), halved the same way and packed into the same atlas (`sprites.webp`, listed in
   `src/render/assaultOrcAtlas.ts`). Chronos credits the kits as drawn with ChatGPT's image generation from prompts written for that game.
 
+## The Assault's Barrow Necropolis (`src/art/assault/undead/`)
+
+- Until its own painted sheets land (the prompts: `docs/notes/assault-4-barrow-necropolis-art-prompts.md`), the Necropolis is drawn with the owner's
+  Orc sheets above, cut again by `tools/assault/cut-sheets.py undead` and recoloured cold (fire to witch fire, red cloth to ash grey); our siege works
+  keep their own colours.
+- Beside them, single pieces of Chronos Settlement's isometric kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/`), above all the Liches and
+  Blood Court kits (the bone wall, iron fence, gatehouse, chapel, mausoleum, crypt, watchtowers, coffins, gravestones, bone pit, skull pile, witch fire,
+  lantern posts, braziers, dead oaks and pines, the stone bridge), and the wild flair, halved the same way and packed into its atlas (listed in
+  `src/render/assaultUndeadAtlas.ts`). The Grave Wraith of its crypt pens is the Reaper's wraith's sheet (`hk_ghost`), credited above.
+
 ### Painted Spells study
 
 - `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.

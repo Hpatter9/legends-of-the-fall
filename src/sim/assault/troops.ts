@@ -144,9 +144,14 @@ export const TROOP_UNITS: Readonly<Record<string, UnitDef>> = Object.fromEntries
  *  army's bands, so it is marked `summon` too: nothing births a nemesis from it, and the foes' kit rules do not ask it for a kit. */
 export const WAR_WOLF: UnitDef = { id: 'warWolf', name: 'War-wolf', side: 'foe', sheet: 'wolf_black', scale: 0.6, hp: 180, atk: 20, def: 3, range: 1, moveMs: 380, atkMs: 800, jump: 3, role: 'Loosed from the pens on the alarm', summon: true };
 
+/** A grave wraith of the Barrow Necropolis (phase 4): its crypt pens' pack, the war-wolf's part, on the ghost's sheet. It walks the field
+ *  as the wolves do (it does not fly over the walls). A `summon` too, for the same reasons. */
+export const GRAVE_WRAITH: UnitDef = { id: 'graveWraith', name: 'Grave Wraith', side: 'foe', sheet: 'hk_ghost', scale: 0.61, hp: 170, atk: 21, def: 2, range: 1, moveMs: 400, atkMs: 820, jump: 3, role: 'Loosed from the crypts on the alarm', summon: true };
+
 // (added to `UNITS` once, as this module is first imported: an existing fight never meets them)
 for (const [id, def] of Object.entries(TROOP_UNITS)) if (!UNITS[id]) UNITS[id] = def;
 if (!UNITS[WAR_WOLF.id]) UNITS[WAR_WOLF.id] = WAR_WOLF;
+if (!UNITS[GRAVE_WRAITH.id]) UNITS[GRAVE_WRAITH.id] = GRAVE_WRAITH;
 
 // ---- veterancy (the design's 6.3) -----------------------------------------------------------------------------------------------
 

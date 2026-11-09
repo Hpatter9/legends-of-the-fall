@@ -165,8 +165,8 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   app.canvas.className = 'field';
   host.prepend(app.canvas);
   // (the day's light over the field, under the buttons)
-  fieldGrade(host);
-  await Promise.all([loadSomeSheets([...sheets]), loadFieldArt()]);
+  fieldGrade(host, input.army);
+  await Promise.all([loadSomeSheets([...sheets]), loadFieldArt(input.army)]);
   loading.remove();
   const view = new FieldView(b, app.renderer);
   app.stage.addChild(view.root);

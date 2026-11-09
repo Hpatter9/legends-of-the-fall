@@ -17,7 +17,7 @@ Out: src/art/assault/<army>/{sprites,ground,edges,decals,faces}.webp and src/ren
 The report lists any cell whose picture strays from its footprint (its bottom too far above or below the diamond's bottom tip, or its
 middle off the foot point), for the art's notes.
 
-Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc] [--report]
+Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead] [--report]
 """
 import json
 import os
@@ -123,6 +123,72 @@ SHEETS = {
     },
 }
 
+# ----- the Barrow Necropolis (phase 4): the Orc profile's slots and names, its own sheets, its own kit pieces -----
+#
+# Every slot keeps the Orc profile's piece name, so the field's renderer draws the Necropolis with the same rules; only the pictures differ.
+# A sheet not painted yet (docs/notes/assault-4-barrow-necropolis-art-prompts.md) falls back to the Orc sheet in the same slot, recoloured
+# cold (`cold`), so the hold is drawn on stand-ins until its art lands; run this again when it does.
+UNDEAD_FILES = {
+    'orc-01-palisade.png': 'und-01-railings.png', 'orc-02-gates.png': 'und-02-gates.png', 'orc-03-iron-gate.png': 'und-03-bone-gate.png',
+    'orc-04-faces.png': 'und-04-faces.png', 'orc-05-ground.png': 'und-05-ground.png', 'orc-06-transitions.png': 'und-06-transitions.png',
+    'orc-07-keep.png': 'und-07-keep.png', 'orc-08-wall-dressing.png': 'und-08-wall-dressing.png', 'orc-09-camp.png': 'und-09-landmarks.png',
+    'orc-10-camp-props.png': 'und-10-props.png', 'orc-11-siege-ruins.png': 'und-11-ruins.png', 'orc-12-river.png': 'und-12-lake.png',
+    'orc-13-decals.png': 'und-13-decals.png',
+}
+_orc = SHEETS['orc']
+SHEETS['undead'] = {
+    'sprites': {UNDEAD_FILES[k]: v for k, v in _orc['sprites'].items()},
+    'ground': (UNDEAD_FILES[_orc['ground'][0]], _orc['ground'][1]),
+    'edges': (UNDEAD_FILES[_orc['edges'][0]], _orc['edges'][1]),
+    'decals': (UNDEAD_FILES[_orc['decals'][0]], _orc['decals'][1]),
+    'faces': (UNDEAD_FILES[_orc['faces'][0]], _orc['faces'][1]),
+    'fallback': ('orc', {v: k for k, v in UNDEAD_FILES.items()}),
+    # (our own siege works serve every hold: always the Orc sheet's, never recoloured)
+    'shared': {'ladder', 'ram', 'trebuchet'},
+    'kits': {
+        **_orc['kits'],
+        'kitSpikedWall': 'liches/bone_wall_run', 'kitSpikedCorner': 'liches/bone_wall_corner', 'kitSkullGate': 'liches/gatehouse',
+        'kitStakeFence': 'liches/iron_fence', 'longhouse': 'liches/longhouse', 'boneHut': 'liches/cottage', 'hideHut': 'liches/tavern',
+        'forge': 'liches/workshop', 'forgeFire': 'liches/witch_fire', 'wargPen': 'liches/bone_pit', 'pigPen': 'liches/grave_plot_tile',
+        'watchtower': 'liches/watchtower', 'lookout': 'bloodcourt/watchtower', 'warDrum': 'liches/witch_fire', 'skullTotem': 'liches/signpost',
+        'skullTorch': 'liches/lantern_post', 'spearSign': 'liches/signpost', 'bonfire': 'liches/witch_fire', 'weaponStall': 'liches/market_stall',
+        'skullPile': 'liches/skull_pile', 'warCart': 'liches/hearse', 'granary': 'liches/granary', 'meatRacks': 'liches/bone_crates',
+        'meatPile': 'liches/coffin_stack', 'barrels': 'liches/barrels', 'chests': 'bloodcourt/coffins', 'stockpile': 'liches/stockpile',
+        'woodpile': 'bloodcourt/dead_woodpile', 'well': 'liches/well', 'hides': 'bloodcourt/coffin', 'logBridge': 'liches/stone_bridge',
+        'brazier': 'bloodcourt/brazier', 'pine1': 'liches/dead_pine', 'pine2': 'liches/dead_pine', 'pineSmall': 'liches/dead_pine',
+        'burntTree': 'liches/dead_oak', 'gnarledTree': 'bloodcourt/dead_oak', 'bareTree': 'liches/dead_oak', 'thornBush': 'liches/thorn_bush',
+        'shrub1': 'bloodcourt/thorn_bush', 'boulders': 'liches/rocks', 'rocks': 'bloodcourt/rocks', 'darkRocks': 'liches/rocks',
+        'darkRocksB': 'bloodcourt/rocks',
+        # (the Necropolis's own dressing, which the Orc hold has no slot for)
+        'mausoleum': 'liches/mausoleum', 'gravestones': 'bloodcourt/gravestones', 'crypt': 'bloodcourt/crypt', 'chapel': 'liches/chapel',
+        'coffinStack': 'liches/coffin_stack', 'gatehouse': 'liches/gatehouse',
+    },
+}
+
+
+def cold(a):
+    """Recolour an Orc sheet's RGBA array for the Necropolis's stand-in: most of its colour drained to a cold slate, its fire turned to
+    the Liches' teal witch fire and its blood-red cloth to ash grey, so a borrowed picture reads as the dead's, not the orcs'."""
+    rgb = a[..., :3].astype(float) / 255
+    mx = rgb.max(-1)
+    mn = rgb.min(-1)
+    sat = np.where(mx > 0, (mx - mn) / np.maximum(mx, 1e-6), 0)
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    hot = (r >= g) & (r >= b) & (sat > 0.45) & (mx > 0.35)
+    # (fire: bright, orange to yellow; the rest of the hot hues are the orcs' red cloth)
+    fire = hot & (mx > 0.72) & (g > b * 1.3)
+    grey = rgb.mean(-1, keepdims=True)
+    slate = np.array([0.82, 0.9, 1.08])
+    out = grey * slate * 0.92 + (rgb - grey) * 0.25
+    # (the fire turned to teal witch fire, its brightness kept; the red cloth to an ash grey with a little violet)
+    teal = np.stack([mx * 0.35, mx * 0.95, mx * 0.85], -1)
+    ash = grey * np.array([0.78, 0.74, 0.86])
+    out = np.where(fire[..., None], teal * 0.85 + out * 0.15, np.where(hot[..., None], ash, out))
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
 # (how far above a kit piece's bottom edge it stands, as a share of its width: a one-tile piece's diamond is half as tall as wide, and
 #  its foot point is the diamond's middle; flat pieces and the small flair stand on their bottom)
 KIT_LIFT = 0.2
@@ -204,14 +270,36 @@ def cut(army, report_only=False):
     feet = {}
     feet_of = {}
     report = []
-    for sheet, cells in spec['sprites'].items():
+    # (a hold's sheet not painted yet borrows another hold's in the same slot, recoloured: `fallback` names the hold and the files)
+    fb_army, fb_files = spec.get('fallback', (None, {}))
+
+    def sheet_path(sheet):
         path = os.path.join(src, sheet)
+        if os.path.exists(path) or not fb_army:
+            return path, False
+        report.append(f'{sheet}: not painted yet; the stand-in is {fb_files[sheet]}, recoloured')
+        return os.path.join(ROOT, 'art-source', 'assault', fb_army, fb_files[sheet]), True
+
+    def load(sheet, mode):
+        path, borrowed = sheet_path(sheet)
+        im = Image.open(path)
+        if not borrowed:
+            return im.convert(mode)
+        return Image.fromarray(cold(np.array(im.convert('RGBA')))).convert(mode)
+
+    for sheet, cells in spec['sprites'].items():
+        path, borrowed = sheet_path(sheet)
         if not os.path.exists(path):
             report.append(f'{sheet}: not painted yet (the field falls back to existing art)')
             continue
         a = clean(Image.open(path))
+        if borrowed:
+            plain = a
+            a = cold(a)
         for name, (cx, cy, cw, ch, fx, fy, fu, fv) in cells.items():
-            cell = a[cy:cy + ch, cx:cx + cw]
+            # (the shared pieces, our own siege works, keep their own colours)
+            src_a = plain if borrowed and name in spec.get('shared', ()) else a
+            cell = src_a[cy:cy + ch, cx:cx + cw]
             bb = bbox(cell)
             if bb is None:
                 report.append(f'{sheet} {name}: empty cell')
@@ -268,28 +356,28 @@ def cut(army, report_only=False):
     atlas.save(os.path.join(out, 'sprites.webp'), lossless=False, quality=90, method=6)
     # the flat art
     sheet, names = spec['ground']
-    g = Image.open(os.path.join(src, sheet)).convert('RGB')
+    g = load(sheet, 'RGB')
     ground = Image.new('RGB', (1024, 1024))
     for i, n in enumerate(names):
         tile = g.crop((i % 4 * 256, i // 4 * 256, i % 4 * 256 + 256, i // 4 * 256 + 256))
         ground.paste(seamless(tile), (i % 4 * 256, i // 4 * 256))
     ground.save(os.path.join(out, 'ground.webp'), quality=88, method=6)
     sheet, names = spec['edges']
-    e = Image.fromarray(soft(Image.open(os.path.join(src, sheet))))
+    e = Image.fromarray(soft(load(sheet, 'RGBA')))
     edges = Image.new('RGBA', (256, 256))
     for i, n in enumerate(names):
         tile = e.crop((i % 4 * 256, i // 4 * 256, i % 4 * 256 + 256, i // 4 * 256 + 256))
         edges.paste(shrink(tile, (64, 64)), (i % 4 * 64, i // 4 * 64))
     edges.save(os.path.join(out, 'edges.webp'), quality=90, method=6)
     sheet, names = spec['decals']
-    d = Image.fromarray(soft(Image.open(os.path.join(src, sheet))))
+    d = Image.fromarray(soft(load(sheet, 'RGBA')))
     decals = Image.new('RGBA', (512, 512))
     for i, n in enumerate(names):
         tile = d.crop((i % 4 * 256, i // 4 * 256, i % 4 * 256 + 256, i // 4 * 256 + 256))
         decals.paste(shrink(tile, (128, 128)), (i % 4 * 128, i // 4 * 128))
     decals.save(os.path.join(out, 'decals.webp'), quality=90, method=6)
     sheet, names = spec['faces']
-    f = Image.open(os.path.join(src, sheet)).convert('RGBA')
+    f = load(sheet, 'RGBA')
     faces = Image.new('RGBA', (384, 240))
     for i, n in enumerate(names):
         col = f.crop((i % 6 * 256, i // 6 * 512, i % 6 * 256 + 256, i // 6 * 512 + 480))

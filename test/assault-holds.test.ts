@@ -10,7 +10,7 @@ import { newWar, type Nemesis } from '../src/sim/nemesis';
 import { startedMeta } from '../src/sim/meta';
 import { UNITS } from '../src/sim/units';
 
-test('a page for every army\'s hold, in order: Bloodtusk Hold built, the others locked', () => {
+test('a page for every army\'s hold, in order: the holds built so far, the others locked', () => {
   const m = startedMeta(2);
   const pages = holdPages(m);
   assert.deepEqual(pages.map((p) => p.army), ARMIES.map((a) => a.id));
@@ -26,7 +26,10 @@ test('a page for every army\'s hold, in order: Bloodtusk Hold built, the others 
   assert.ok(orcs.facts.some((f) => /^3 war drums$/.test(f)));
   assert.ok(orcs.tips.length >= 4);
   assert.ok(orcs.facts[0].includes('Orc Warlord'), 'no warchief sits: the Warlord');
-  for (const p of pages.slice(1)) assert.ok(!p.built && p.facts.length === 0 && !p.record.includes('undefined'));
+  // (phase 4 builds the holds one at a time: the Barrow Necropolis is built, the rest are locked lines)
+  assert.ok(pages[1].built && pages[1].name === 'Barrow Necropolis');
+  assert.ok(pages[1].facts.some((f) => /^3 bone-bell belfries$/.test(f)));
+  for (const p of pages.slice(2)) assert.ok(!p.built && p.facts.length === 0 && !p.record.includes('undefined'));
   // (no fighter of the Assault is loaded for the page)
   assert.equal(UNITS.warWolf, undefined);
 });
