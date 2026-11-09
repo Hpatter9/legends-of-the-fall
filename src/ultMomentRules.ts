@@ -22,13 +22,17 @@ export const fullScene = (setting: boolean, auto: boolean): boolean => setting &
 export type UltShape = 'instant' | 'delayed' | 'lingering';
 
 export const ULT_MOMENT = {
-  /** The opening: the slash, the name, the dim (the battle held). */
-  OPEN_MS: 1150,
-  /** An instant ultimate's effects playing out while the battle stays held (ULT-EPIC: with the hit-stop's freeze before it, about the same
-   *  length as before). */
-  IMPACT_MS: 700,
-  /** The dim fading as the battle runs again. */
-  FADE_MS: 450,
+  /** The opening: the slash, the name, the dim (the battle held). BATTLE-POLISH (docs/notes/battle-polish.md): 1150 to 1450 ms, a longer
+   *  build-up on the caster (the owner found the whole moment too quick). */
+  OPEN_MS: 1450,
+  /** An instant ultimate's effects playing out while the battle stays held (ULT-EPIC: 700 ms; BATTLE-POLISH: 650 ms, the slow beat at its
+   *  start), so with the freeze and the fade an instant ultimate's whole moment is about 3 s. */
+  IMPACT_MS: 650,
+  /** The dim fading (and the camera easing back) as the battle runs again (450 ms before BATTLE-POLISH). */
+  FADE_MS: 650,
+  /** BATTLE-POLISH: the slow-motion beat after the freeze on the blow (real ms), and how fast the effects and the fight run through it. */
+  SLOW_MS: 500,
+  SLOW_RATE: 0.3,
   /** A delayed ultimate's salvo: the longest it is waited for under the dim, and the beat after it lands. */
   MAX_DELAY_MS: 1500,
   TAIL_MS: 300,
@@ -113,6 +117,8 @@ export class UltQueue {
    *  left (real ms), and the ms since the moment's blow landed (null: not yet; the dim eases off from then). */
   strikes = 0;
   stopLeft = 0;
+  /** BATTLE-POLISH: the slow-motion beat left after the freeze (real ms): everything moves at `SLOW_RATE` (`rate`). */
+  slowLeft = 0;
   since: number | null = null;
   /** The screen kept still (reduced motion, or shake off): no freeze. */
   calm = false;
@@ -130,6 +136,7 @@ export class UltQueue {
     this.left = ULT_MOMENT.OPEN_MS;
     this.since = null;
     this.stopLeft = 0;
+    this.slowLeft = 0;
   }
 
   /** ULT-EPIC: the blow lands (an instant or lingering ultimate as its opening ends; a delayed one when its salvo arrives, `land`): the
@@ -139,6 +146,8 @@ export class UltQueue {
     this.strikes++;
     this.since = 0;
     this.stopLeft = this.calm ? 0 : ULT_EPIC.HIT_STOP_MS;
+    // (and the slow-motion beat after it; none with the screen kept still)
+    this.slowLeft = this.calm ? 0 : ULT_MOMENT.SLOW_MS;
   }
 
   /** A delayed ultimate's salvo has landed (the page saw its blows): its impact now. */
@@ -159,6 +168,8 @@ export class UltQueue {
         continue;
       }
       if (this.since !== null) this.since += Math.min(t, this.left);
+      // (the slow beat spends real time alongside the phase's own)
+      if (this.slowLeft > 0) this.slowLeft = Math.max(0, this.slowLeft - Math.min(t, this.left));
       if (t < this.left) {
         this.left -= t;
         break;
@@ -205,6 +216,7 @@ export class UltQueue {
   skip(): void {
     if (this.current && this.phase !== 'fade') this.to('fade', ULT_MOMENT.FADE_MS);
     this.stopLeft = 0;
+    this.slowLeft = 0;
   }
 
   /** Everything dropped (the fight ended, the screen was left). */
@@ -214,7 +226,19 @@ export class UltQueue {
     this.phase = 'idle';
     this.left = 0;
     this.stopLeft = 0;
+    this.slowLeft = 0;
     this.since = null;
+  }
+
+  /** BATTLE-POLISH: how fast the fight and the effects move now, as a share of x1: slowed through the beat after the blow, else 1 (the
+   *  freeze itself is `holdsBattle` and `runsEffects`). */
+  get rate(): number {
+    return this.stopLeft <= 0 && this.slowLeft > 0 ? ULT_MOMENT.SLOW_RATE : 1;
+  }
+
+  /** BATTLE-POLISH: how far through the opening it is, 0 to 1 (0 outside it): the camera's lean builds with it. */
+  get openT(): number {
+    return this.phase === 'open' ? 1 - this.left / ULT_MOMENT.OPEN_MS : 0;
   }
 
   /** Whether the battle is held now (the opening, a showcase, an instant one's effects playing, and the freeze on any blow). */

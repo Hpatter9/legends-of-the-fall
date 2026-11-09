@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import { MYTHIC_KINDS, isMythic } from '../src/sim/mythicRules';
 import assert from 'node:assert/strict';
 import { loadMeta, newMeta, pickStarter, pullOnce, useStones, startedMeta, saveMeta, type Meta } from '../src/sim/meta';
-import { closest, giveShards, haveOf, needOf, ownedCount, toCollect } from '../src/sim/unlock';
+import { closest, giveShards, haveOf, nearestBegun, needOf, ownedCount, toCollect } from '../src/sim/unlock';
 import { CONTENT_KINDS, isContent, NEED_FIRST, NEED_LAST, PITY_PULLS, PULL_HEROES, unlockNeed, WELCOME } from '../src/sim/unlockRules';
 import { CONTENT_HEROES, contentOf, grantContent, lockInfo } from '../src/sim/contentHeroes';
 import { ARMIES, armyById } from '../src/sim/armies';
@@ -368,4 +368,16 @@ test('a stale unlock count for a hero already owned is dropped on load and never
   saveMeta(m, s);
   const back = loadMeta(1, { getItem: (k: string) => s.data[k] ?? null } as Storage);
   assert.equal(back.unlock?.[kind], undefined);
+});
+
+test('BATTLE-POLISH: the Summoning row lists the heroes begun, the nearest to joining first, at most five, none owned', () => {
+  const m = newMeta(5);
+  assert.deepEqual(nearestBegun(m), [], 'nothing begun: no row');
+  const [a, b, c, d, e, f, g] = toCollect(m);
+  m.unlock = { [a]: 1, [b]: 4, [c]: 4, [d]: 2, [e]: 3, [f]: 1, [g]: 0 };
+  assert.deepEqual(nearestBegun(m), [b, c, e, d, a], 'most shards first, equals in roster order, five at most');
+  assert.deepEqual(nearestBegun(m, 2), [b, c]);
+  m.unlocked.push(b);
+  assert.ok(!nearestBegun(m).includes(b), 'a hero who joined leaves the row');
+  assert.equal(nearestBegun(m)[0], closest(m), 'its first is the one the line above names');
 });

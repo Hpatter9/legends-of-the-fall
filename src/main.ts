@@ -151,7 +151,7 @@ import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
-import { autoSpellsFor } from './sim/autoCast';
+import { autoSpellsFor, spellAutoSaved } from './sim/autoCast';
 import { bindSpellbook } from './spellbook';
 import { snapSpell } from './sim/spellAim';
 import { castList, fitSchool, schoolOf } from './sim/schools';
@@ -176,7 +176,9 @@ import { burnHeart, reducedMotion, reviveLine } from './reviveView';
 import { Fx, loadFx } from './render/fx';
 import { lookSheet } from './render/awakenLook';
 import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
-import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, framing, PAUSE_MS, settle, viewFor, type View } from './render/cameraRules';
+import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS, settle, type View } from './render/cameraRules';
+import { engagedAt, followView, heatOf, manualHeld, returnEase, tileKey, type HotSpot } from './render/followCamRules';
+import { whichCast } from './fightHudRules';
 import { deployBox, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
@@ -1336,7 +1338,7 @@ class Game {
     this.b.spells.ranks = fightRanks(this.meta.spellbook);
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
     this.setAutoOn(this.b);
-    this.hud.setAuto(this.ultAutoOn());
+    this.showAuto();
     this.hud.build(this.b);
     this.ultm.clear();
     this.ultm.warm(this.b);
@@ -1355,9 +1357,12 @@ class Game {
     this.chosen = null;
     this.boardView.clearMarks();
     this.refreshBossBar();
-    // (the fight's opening framing; from here a drag or a pinch makes the camera the player's until the next wave. The follow eases out from
-    // the deploy's close view rather than jumping, unless motion is reduced: DEPLOY-ZOOM)
+    // (the fight's opening framing; from here a drag or a pinch makes the camera the player's for a few seconds after the last touch
+    // (BATTLE-POLISH). The follow eases out from the deploy's close view rather than jumping, unless motion is reduced: DEPLOY-ZOOM)
     this.manualCam = false;
+    this.camTouchAt = this.camFreedAt = null;
+    this.lastBlow.clear();
+    this.lastUlt.clear();
     const was = { cx: this.cx, cy: this.cy, zoom: this.zoom };
     this.layout();
     if (!reducedMotion()) {
@@ -1462,12 +1467,12 @@ class Game {
       // (an ultimate's moment holds the fight: through its opening nothing moves; then its effects play out on the held board)
       this.acc = 0;
       // (a boss's cut-in holds the board still too, so its marks fill with the windup's own time)
-      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
+      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250) * this.ultm.queue.rate);
       this.hud.refresh(b);
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
       // (ULT-SHOW: an ultimate's full moment and an Eidolon's full call run at x1 whatever the speed; the short versions keep it)
-      this.acc += Math.min(dt, 250) * momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.fx.timeScale();
+      this.acc += Math.min(dt, 250) * momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.ultm.queue.rate * this.fx.timeScale();
       // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
       this.setAutoOn(b);
@@ -1487,6 +1492,7 @@ class Game {
         tallyNemesis(this.nemTally, events, b.units, b.t);
         this.ultsFired.push(...ultsIn(events, b.units));
         this.fx.show(b, events);
+        this.noteHeat(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
@@ -1524,7 +1530,8 @@ class Game {
       }
       if (b.units.length !== this.sprites.size) this.hud.build(b);
       this.hud.refresh(b);
-      this.fx.step(Math.min(dt, 250) * this.speed);
+      // (BATTLE-POLISH: at x1 while an ultimate's full moment plays, and slowed through its slow beat)
+      this.fx.step(Math.min(dt, 250) * momentSpeed(this.speed, !!this.ultm.queue.current) * this.ultm.queue.rate);
       $('clock').textContent = clock(b.t);
       this.refreshSpells();
     } else if (b.phase !== 'deploy') {
@@ -1569,6 +1576,12 @@ class Game {
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();
     if (b.phase === 'deploy') this.deployEase(dt);
+    // (BATTLE-POLISH: in a fight, a camera the player moved is let go a few seconds after their last touch, and the follow glides it back)
+    if (b.phase === 'fight' && this.manualCam && this.camTouchAt !== null && !manualHeld(this.camTouchAt, performance.now(), !!this.drag?.pan || !!this.pinch || this.touches.size > 0)) {
+      this.manualCam = false;
+      this.camTouchAt = null;
+      this.camFreedAt = performance.now();
+    }
     if (b.phase === 'fight' && !this.intro && !this.destinationReveal) this.phaseBoss ? this.pushOnPhase() : (this.follow(), this.leanIn(dt));
     // (ULT-EPIC: the camera leans in on the hero through an ultimate's opening, and the follow takes it back to the view it held as it fires;
     // a camera the player has moved is left alone)
@@ -1581,9 +1594,11 @@ class Game {
     }
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
-      this.cx = f ? easeTo(this.cx, this.tx, dt, EASE_MOVE_MS) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
-      this.cy = f ? easeTo(this.cy, this.ty, dt, EASE_MOVE_MS) : this.cy + (this.ty - this.cy) * Math.min(1, dt / 220);
-      if (f) this.zoom = easeTo(this.zoom, this.tzoom, dt, EASE_ZOOM_MS);
+      // (BATTLE-POLISH: gentler for a moment after a held camera is let go, so it glides back to the fight)
+      const ease = returnEase(this.camFreedAt, performance.now(), { move: EASE_MOVE_MS, zoom: EASE_ZOOM_MS });
+      this.cx = f ? easeTo(this.cx, this.tx, dt, ease.move) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
+      this.cy = f ? easeTo(this.cy, this.ty, dt, ease.move) : this.cy + (this.ty - this.cy) * Math.min(1, dt / 220);
+      if (f) this.zoom = easeTo(this.zoom, this.tzoom, dt, ease.zoom);
       this.clampCam();
     }
     this.place();
@@ -1751,9 +1766,16 @@ class Game {
   private tzoom = 1;
   private held: View | null = null;
   private pausedUntil = 0;
-  /** The player has panned or zoomed the camera this wave (FIGHT-FIXES, `fightCam.ts`): the follow, the effects' pushes and a resize leave it
-   *  where they put it until the next wave's deploy (or the fight's start) frames the board afresh. */
+  /** The player has panned or zoomed the camera (FIGHT-FIXES, `fightCam.ts`): the follow, the effects' pushes and a resize leave it where
+   *  they put it; in a deploy until the fight's start frames the board afresh, in a fight for `HOLD_MS` after the last touch (BATTLE-POLISH). */
   private manualCam = false;
+  /** BATTLE-POLISH (`followCamRules.ts`): in a fight, a moved camera is the player's for a few seconds after their last touch (`camTouchAt`,
+   *  real ms), then the follow glides it back (`camFreedAt`); and when each fighter was last in a blow and last cast its ultimate (battle ms),
+   *  for its heat. */
+  private camTouchAt: number | null = null;
+  private camFreedAt: number | null = null;
+  private lastBlow = new Map<number, number>();
+  private lastUlt = new Map<number, number>();
   /** The fingers down on the board, and a pinch under way: the fingers' spread and the zoom it began at. */
   private touches = new Map<number, { x: number; y: number }>();
   private pinch: { d0: number; z0: number; mx: number; my: number } | null = null;
@@ -1762,16 +1784,41 @@ class Game {
   /** The fight camera: frame the living fighters, zoomed in as far as fits, holding still for small moves. A manual pan pauses it for a few seconds. */
   private follow(): void {
     if (this.manualCam || performance.now() < this.pausedUntil) return;
-    const spots = this.b.units.filter((u) => u.alive).flatMap((u) => this.sprites.get(u.id) ?? []);
-    const box = framing(spots);
-    if (!box) return;
+    // (BATTLE-POLISH: the heat-weighted middle of the fighters in combat, zoomed out to keep every fight in view; `followCamRules.ts`)
+    const b = this.b;
+    const alive = b.units.filter((u) => u.alive);
+    const foesOf = { hero: new Set<number>(), foe: new Set<number>() };
+    for (const u of alive) (u.side === 'hero' ? foesOf.foe : foesOf.hero).add(tileKey(Math.round(u.u), Math.round(u.v)));
+    const spots: HotSpot[] = [];
+    for (const u of alive) {
+      const s = this.sprites.get(u.id);
+      if (!s) continue;
+      const engaged = engagedAt(u.u, u.v, u.side === 'hero' ? foesOf.hero : foesOf.foe);
+      const blow = this.lastBlow.get(u.id);
+      const ult = this.lastUlt.get(u.id);
+      spots.push({ x: s.x, y: s.y, tall: s.tall, engaged, heat: heatOf({ engaged, sinceBlow: blow === undefined ? undefined : b.t - blow, sinceUlt: ult === undefined ? undefined : b.t - ult }) });
+    }
     // (never wider than the board's own width, never closer than a little over the layout's scale, so pixels stay a sensible size)
     const lo = this.minZoom();
-    const want = viewFor(box, this.area.w, this.area.h, this.scale, lo, Math.max(lo, Math.min(FOLLOW_IN, 3 / this.scale)));
+    const want = followView(spots, this.area.w, this.area.h, this.scale, lo, Math.max(lo, Math.min(FOLLOW_IN, 3 / this.scale)));
+    if (!want) return;
     this.held = this.held ? settle(this.held, want) : want;
     this.tx = this.held.cx;
     this.ty = this.held.cy;
     this.tzoom = this.held.zoom;
+  }
+
+  /** BATTLE-POLISH: a tick's blows and ultimates warm the fighters in them, for the follow. */
+  private noteHeat(b: Battle, events: readonly BattleEvent[]): void {
+    for (const e of events) {
+      if (e.kind === 'hit' && !e.eidolon) {
+        this.lastBlow.set(e.by, b.t);
+        this.lastBlow.set(e.to, b.t);
+      } else if (e.kind === 'skill') {
+        const u = b.units.find((x) => x.id === e.by);
+        if (u && whichCast(u, e.name) === 'ult') this.lastUlt.set(u.id, b.t);
+      }
+    }
   }
 
   /** The least zoom of the fight camera: the whole board across the room (the layout's scale upright is zoomed in past that). */
@@ -1781,8 +1828,8 @@ class Game {
   }
 
   /** The fight's top parts, each under the measured bottom of the ones above it (COMBAT-HUD, docs/notes/combat-hud.md): a twist's banner
-   *  under the top bar, the spell row under that, then the boss's bar under the whole spell row as it is drawn now (one line: since
-   *  AUTO-RIGHT the row never wraps, Auto staying right of the last orb), and the synergies under the lowest. Run by `layout` and
+   *  under the top bar, the spell row under that, then the boss's bar under the whole spell row as it is drawn now (one line, or two when
+   *  a full row wraps the Auto pair: BATTLE-POLISH), and the synergies under the lowest. Run by `layout` and
    *  again whenever the spell row or the boss's bar changes size or shows (`watchTopHud`). Returns the bottom of the parts over the board
    *  before the boss's bar, and the boss's bar's bottom (with its gap). */
   private placeTopHud(): { below: number; barBottom: number } {
@@ -1887,10 +1934,13 @@ class Game {
     this.place();
   }
 
-  /** The player has moved the camera: the follow and the pushes let it be until the next wave (an intro or a reveal in progress ends). */
+  /** The player has moved the camera: the follow and the pushes let it be (in a fight for a few seconds after the last touch; an intro or a
+   *  reveal in progress ends). */
   private takeCam(): void {
     if (this.intro) this.endIntro();
     this.manualCam = true;
+    this.camTouchAt = performance.now();
+    this.camFreedAt = null;
     this.held = null;
     this.push = null;
     this.destinationReveal = null;
@@ -2152,11 +2202,21 @@ class Game {
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
   }
-  /** Tell the battle what Auto covers (AUTO-CAST): the heroes' ultimates and the king's equipped spells, both on their own while it is on. */
+  /** BATTLE-POLISH: whether the ruler's equipped spells are cast on their own: the player's Auto spells button, and always under auto-replay. */
+  private spellAutoOn(): boolean {
+    return !!this.auto || spellAutoSaved(this.meta);
+  }
+  /** Tell the battle what the two Auto buttons cover (AUTO-CAST, split by BATTLE-POLISH): the heroes' ultimates, and the king's equipped
+   *  spells, each on its own while its button is on. */
   private setAutoOn(b: Battle): void {
-    const on = this.ultAutoOn();
-    b.autoUlt = on;
-    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, castList(this.meta.spellbook));
+    b.autoUlt = this.ultAutoOn();
+    const spells = this.spellAutoOn();
+    if (spells !== !!b.autoSpells) b.autoSpells = autoSpellsFor(spells, castList(this.meta.spellbook));
+  }
+  /** Both Auto buttons as the save and the replay have them; the spells' shows only while spells are equipped. */
+  private showAuto(): void {
+    this.hud.setAuto(this.ultAutoOn());
+    this.hud.setSpellAuto(this.spellAutoOn(), castList(this.meta.spellbook).length > 0);
   }
 
   private wire(): void {
@@ -2169,7 +2229,14 @@ class Game {
     this.hud = new FightHud($('fightHud'), {
       equipmentStep: (kind) => awakenedOf(this.meta, kind),
       onAuto: (on) => {
+        // (BATTLE-POLISH: the spells' setting is its own from now on: an unset one keeps what it read before, the old one switch)
+        this.meta.spellAuto = spellAutoSaved(this.meta);
         this.meta.ultAuto = on;
+        saveMeta(this.meta);
+        this.setAutoOn(this.b);
+      },
+      onSpellAuto: (on) => {
+        this.meta.spellAuto = on;
         saveMeta(this.meta);
         this.setAutoOn(this.b);
       },
@@ -2205,7 +2272,7 @@ class Game {
       },
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
-    $('hudSpells').append(this.hud.autoEl);
+    $('hudSpells').append(this.hud.autosEl);
     // (the party's tactic: the button under Auto in the fight, which cycles the tactic mid-fight, and the prep screen's Formation button;
     // docs/notes/tactics.md, docs/notes/tactics-overview.md)
     this.tactics = new TacticsView({

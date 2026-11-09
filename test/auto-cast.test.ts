@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, fight, startBattle, stepBattle, type Battle, type BattleEvent } from '../src/sim/battle';
-import { AUTO_GAP_MS, autoCast, chooseSpell } from '../src/sim/autoCast';
+import { AUTO_GAP_MS, autoCast, chooseSpell, spellAutoSaved } from '../src/sim/autoCast';
 import { castSpell, MANA_MAX, SPELLS, type SpellId } from '../src/sim/spells';
 import { replayLog } from '../src/sim/orders';
 import { armyRun, startStage } from '../src/sim/run';
@@ -160,4 +160,12 @@ test('autoCast casts through castSpell (mana, cooldown and the gap), and the War
   const ev: BattleEvent[] = [];
   for (let i = 0; i < 70 && b.phase === 'fight'; i++) ev.push(...stepBattle(b));
   assert.ok(!ev.some((x) => x.kind === 'eidolon'));
+});
+
+test('BATTLE-POLISH: Auto spells has its own saved setting; a save from the one-switch days starts with it as that switch was', () => {
+  assert.equal(spellAutoSaved({}), false);
+  assert.equal(spellAutoSaved({ ultAuto: true }), true, 'the old switch on: both on');
+  assert.equal(spellAutoSaved({ ultAuto: false }), false);
+  assert.equal(spellAutoSaved({ ultAuto: true, spellAuto: false }), false, 'once set, its own');
+  assert.equal(spellAutoSaved({ ultAuto: false, spellAuto: true }), true);
 });
