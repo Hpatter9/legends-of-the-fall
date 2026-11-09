@@ -17,7 +17,7 @@ Out: src/art/assault/<army>/{sprites,ground,edges,decals,faces}.webp and src/ren
 The report lists any cell whose picture strays from its footprint (its bottom too far above or below the diamond's bottom tip, or its
 middle off the foot point), for the art's notes.
 
-Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood|labyrinth] [--report]
+Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood|labyrinth|ogres] [--report]
 """
 import json
 import os
@@ -432,6 +432,63 @@ def sandstone(a):
     dry = np.stack([g * 0.98 + r * 0.1, g * 0.84, b * 0.5], -1)
     warm = grey * np.array([1.12, 0.98, 0.78]) + (rgb - grey) * 0.5 + np.array([0.03, 0.01, -0.02])
     out = np.where(leafy[..., None], dry, np.where((red | fire)[..., None], rgb, warm))
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+
+# ----- Bonefire Crag (phase 4): the Ogre Clans' cold highland camp -----
+#
+# As for the others: the Orc profile's slots and names, its own sheets (docs/notes/assault-4-bonefire-crag-art-prompts.md), and the Orcs and
+# Dwarves kits (Bloodtusk Hold has the Orcs kit too, so the Dwarves' stone carries this hold's look). A borrowed Orc sheet is recoloured by
+# `highland`: the grass cooled, the timber and stone greyed towards the crags' frost, the red cloth and the fire kept.
+OGRES_FILES = {
+    'orc-01-palisade.png': 'ogr-01-tusk-wall.png', 'orc-02-gates.png': 'ogr-02-gates.png', 'orc-03-iron-gate.png': 'ogr-03-skull-gate.png',
+    'orc-04-faces.png': 'ogr-04-faces.png', 'orc-05-ground.png': 'ogr-05-ground.png', 'orc-06-transitions.png': 'ogr-06-transitions.png',
+    'orc-07-keep.png': 'ogr-07-keep.png', 'orc-08-wall-dressing.png': 'ogr-08-wall-dressing.png', 'orc-09-camp.png': 'ogr-09-landmarks.png',
+    'orc-10-camp-props.png': 'ogr-10-props.png', 'orc-11-siege-ruins.png': 'ogr-11-ruins.png', 'orc-12-river.png': 'ogr-12-torrent.png',
+    'orc-13-decals.png': 'ogr-13-decals.png',
+}
+SHEETS['ogres'] = {
+    'sprites': {OGRES_FILES[k]: v for k, v in _orc['sprites'].items()},
+    'ground': (OGRES_FILES[_orc['ground'][0]], _orc['ground'][1]),
+    'edges': (OGRES_FILES[_orc['edges'][0]], _orc['edges'][1]),
+    'decals': (OGRES_FILES[_orc['decals'][0]], _orc['decals'][1]),
+    'faces': (OGRES_FILES[_orc['faces'][0]], _orc['faces'][1]),
+    'fallback': ('orc', {v: k for k, v in OGRES_FILES.items()}),
+    'shared': {'ladder', 'ram', 'trebuchet'},
+    'tint': lambda a, sheet, slot=None: highland(a),
+    'kits': {
+        **_orc['kits'],
+        'kitSpikedWall': 'dwarves/stone_wall_run', 'kitSpikedCorner': 'dwarves/stone_wall_corner', 'kitSkullGate': 'dwarves/cliff_gate',
+        'kitStakeFence': 'dwarves/chain_fence', 'longhouse': 'dwarves/great_hall', 'boneHut': 'dwarves/cottage', 'hideHut': 'orcs/tavern',
+        'forge': 'dwarves/forge', 'forgeFire': 'dwarves/forge_fire', 'watchtower': 'dwarves/watchtower', 'lookout': 'orcs/siege_tower',
+        'skullTotem': 'dwarves/shrine', 'brazier': 'dwarves/brazier', 'granary': 'dwarves/granary', 'stockpile': 'dwarves/stockpile',
+        'logBridge': 'dwarves/stone_bridge', 'pine1': 'dwarves/dead_pine', 'pine2': 'moonpack/snowy_pine', 'pineSmall': 'moonpack/small_pine',
+        'boulders': 'dwarves/boulders', 'rocks': 'dwarves/rocks_a', 'darkRocks': 'dwarves/rocks_b', 'darkRocksB': 'orcs/dark_rocks_b',
+        'rubblePile': 'dwarves/rubble', 'chests': 'dwarves/crates',
+    },
+}
+
+
+def highland(a):
+    """The Ogre Clans' stand-in: the grass cooled towards a cold green, the timber and stone greyed and lifted towards frost, the red cloth
+    and the fire kept."""
+    rgb = a[..., :3].astype(float) / 255
+    mx = rgb.max(-1)
+    mn = rgb.min(-1)
+    c = mx - mn
+    sat = c / np.maximum(mx, 1e-6)
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    h = np.where(c == 0, 0, np.where(mx == r, ((g - b) / np.maximum(c, 1e-6)) % 6, np.where(mx == g, (b - r) / np.maximum(c, 1e-6) + 2, (r - g) / np.maximum(c, 1e-6) + 4))) / 6
+    fire = (mx > 0.72) & (h < 0.17) & (sat > 0.45)
+    red = ((h < 0.035) | (h > 0.94)) & (sat > 0.45)
+    leafy = (h > 0.12) & (h < 0.45) & (c > 0.04) & ~fire
+    grey = rgb.mean(-1, keepdims=True)
+    cold = np.stack([r * 0.6 + grey[..., 0] * 0.15, g * 0.82, b * 0.7 + g * 0.12], -1)
+    stone = grey * np.array([0.92, 0.96, 1.04]) + (rgb - grey) * 0.45 + 0.03
+    out = np.where(leafy[..., None], cold, np.where((red | fire)[..., None], rgb, stone))
     res = a.copy()
     res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
     return res
