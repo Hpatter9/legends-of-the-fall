@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.443.0',
+    date: '2026-11-09',
+    title: 'Epic ultimates, split Auto, better camera',
+    notes: ['A hand-cast ultimate takes about 3 s at x1, with a slow-motion beat. Auto spells and Auto ultimates are two buttons. Shorter bench cards.', 'The camera follows the fighting and holds your own pan for 4 s. The Summoning tab\'s collection starts closed under a Nearest to joining row.'],
+  },
+  {
     version: '0.442.0',
     date: '2026-11-09',
     title: 'The Keep comes alive',
