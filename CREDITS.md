@@ -698,6 +698,18 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   flair, halved the same way and packed into its atlas (listed in `src/render/assaultOgresAtlas.ts`). Its fighters are the Ogre Clans' ogres, brutes
   and bosses and the Orc hold's war-wolves, credited above.
 
+## The Assault's Brimstone Gate (`src/art/assault/infernal/`)
+
+- Until its own painted sheets land (the prompts: `docs/notes/assault-4-brimstone-gate-art-prompts.md`), Brimstone Gate is drawn with the owner's
+  Orc sheets above, cut again by `tools/assault/cut-sheets.py infernal` and recoloured to the pit (darkened to ash with a red cast; the river's water
+  repainted as lava and its shingle as cooling crust); our siege works keep their own colours.
+- Beside them, single pieces of Chronos Settlement's Blood Court and Dwarves kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/bloodcourt/`
+  and `dwarves/`: the stone walls, iron fence, gatehouse, longhouse, cottage, workshop, blood farm, watchtower, crypt, lantern post, banner, market
+  stall, carriage, granary, barrels, coffins, stockpile, dead woodpile, well, stone bridge, brazier, dead oak, thorn bush and rocks; the Dwarves'
+  forge, forge fire, watchtower, dead pine, boulders, rocks, coal heap and ore pile), and the wild flair, halved the same way and packed into its
+  atlas (listed in `src/render/assaultInfernalAtlas.ts`). Its fighters are the Infernal Host's imps, demons and bosses and the Orc hold's war-wolves,
+  credited above.
+
 ### Painted Spells study
 
 - `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.
