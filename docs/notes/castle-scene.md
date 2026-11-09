@@ -1,5 +1,7 @@
 # The castle courtyard (Castle tab)
 
+> **Superseded for the Castle tab by the castle remake (`docs/notes/castle-remake.md`):** one painted courtyard with its buildings on plots, and standard ornate cards.
+
 ## What it is
 - The Castle tab is a castle courtyard seen in the isometric (2:1, lit from the upper left) view of Chronos's building kits
   (`src/castle.ts`, data in `src/render/castleSpots.ts`). The owner's ask was "use some of the nicer sprites": the earlier 3/4 village yard

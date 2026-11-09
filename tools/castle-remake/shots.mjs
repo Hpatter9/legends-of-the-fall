@@ -44,7 +44,7 @@ async function open(w, h, scene) {
     : { treasury: 2, barracks: 1, armoury: 3, mageTower: 0, stable: 1, library: 0, smithy: 1, watchtower: 0, hall: 1, drillYard: 0 };
   const chapel = scene !== 'chapel';
   if (chapel && scene !== 'built') castle.chapel = 1;
-  const works = scene === 'works' ? { id: 'armoury', level: 4, doneAt: 4102444800000 } : undefined;
+  const works = scene === 'works' ? { id: 'armoury', level: 4, doneAt: Date.now() + 2 * 3600_000 + 14 * 60_000 } : undefined;
   await page.addInitScript(([owned, party, xp, castle, chapel, works]) => {
     let z = 0x2545f491;
     Math.random = () => ((z = (Math.imul(z ^ (z >>> 15), 0x2c1b3c6d) + 0x6d2b79f5) | 0) >>> 0) / 4294967296;
@@ -95,7 +95,7 @@ for (const [w, h] of SIZES) {
       if (CASTLE.includes(scene)) {
         await tap(page, '.hmTab', 3);
         await page.waitForTimeout(1200);
-        if (scene === 'chambers') await page.evaluate(() => (document.querySelector('.crPlaces') ?? document.querySelector('.ctChamberGrid'))?.scrollIntoView({ block: 'start' }));
+        if (scene === 'chambers') await page.evaluate(() => (document.querySelector('.crBoons') ?? document.querySelector('.ctChamberGrid'))?.scrollIntoView({ block: 'start' }));
         if (scene === 'card' || scene === 'works' || scene === 'built') await openSite(page, scene === 'card' ? 'treasury' : scene === 'works' ? 'armoury' : 'barracks');
         if (scene === 'rooms') await openSite(page, 'hall');
         if (scene === 'chapel') await openSite(page, 'chapel');
