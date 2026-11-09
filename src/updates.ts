@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.437.0',
+    date: '2026-11-09',
+    title: 'The castle remade',
+    notes: ['The Castle tab is now a painted courtyard: tap a building on its plot to open its card, with painted plaques, chips and buttons.'],
+  },
+  {
     version: '0.436.0',
     date: '2026-11-09',
     title: 'A painted rune bench and pull bar',
