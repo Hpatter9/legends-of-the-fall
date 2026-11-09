@@ -1239,3 +1239,11 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Completion: 1536×640 transparent PNG; 12×5 cells, ordered 12/10/7 icons, all other cells empty; inspect source and 24px readability; commit, push, open/update Expansion art 2 PR.
 - Status: in progress. Runtime integration excluded.
 - Result: ready for review. Fresh sheet validated: exact dimensions, RGBA/binary alpha, 29 occupied / 31 empty cells, minimum 13px padding; atlas and 24px preview inspected. Source art only; no runtime checks. Handoff: [Expansion art 2](notes/expansion-2.md).
+
+### EXPANSION-2-SEASONS — Warm seasons and fates repaint
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`.
+- Scope: `art-source/expansion/seasons-fates.png`, prompt and handoff documentation.
+- Direction: owner's exact nine-icon brief; existing painted sheet as reference, warmer muted gold and parchment.
+- Completion: one 1152×256 transparent sheet; nine centred icons confined to the upper 128×128 of each 128×256 cell; no text; add to Expansion art 2 PR.
+- Status: ready for review in [Expansion art 2 #464](https://github.com/Hpatter9/legends-of-the-fall/pull/464). Exact dimensions, RGBA, all nine centred bounds and transparent lower half passed; visually reviewed. Source art only; runtime tests/build not run. [Handoff](notes/expansion-2-seasons-fates.md).
