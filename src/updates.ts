@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.436.0',
+    date: '2026-11-09',
+    title: 'A painted rune bench and pull bar',
+    notes: ['The Runes bar is a painted brass plaque, and the rune bench a framed tray with painted sockets, plates and a painted lock on Auto.'],
+  },
+  {
     version: '0.435.0',
     date: '2026-11-09',
     title: 'The Last Hold and the War\'s end',
