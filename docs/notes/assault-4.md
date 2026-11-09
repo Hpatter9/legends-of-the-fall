@@ -382,3 +382,74 @@ the director's marks. (With bows on its walls, it plays like Bloodtusk Hold and 
 `assault-holds` now expects the Heart of the Maze's page built too, and the rest locked.
 
 **Screenshots**: `docs/samples/assault-4/maze-*.png`: Mid and the Bull Temple at 360, 393 and 412; the maze by the West Ford.
+
+## 5. Bonefire Crag (the Ogre Clans)
+
+`src/sim/assault/maps/ogres.ts` (`BONEFIRE_CRAG`). The owner named it but gave no look, so it follows the camp overlook, which already paints
+the Ogre Clans' "Bonefire clan camp" (`src/art/camp/camp-wild.png`, its bottom row): a war camp on a cold highland plateau at night, a great
+hall framed by mammoth tusks, hide domes, bone heaps and fires.
+
+**The layout.** Up the phone from the Landing at the south corner:
+
+- **A torrent in a rocky ravine** from edge to edge, narrow and bending, further south than the other holds' water. It is crossed by:
+  - the bone bridge, with its barricade (the bridge fort) holding the far end, and the track north from it to the Tusk Gate;
+  - the West Ford and the East Ford.
+- **The highland plateau**:
+  - the West and East Lookouts on their crags;
+  - the giants' ring to the east (ruins), and the heather (long grass);
+  - the stake pits across the track (the stake field's slowing ground);
+  - the warg pens under the east lookout;
+  - the clans' meat heaps (they burn), hide tents and fires;
+  - the champions' knoll by the ravine;
+  - the three great bonefires (the war drums' part): while one burns high, the clans near it strike harder, until it is put out.
+- **The rings**:
+  - the ditch, the bank and the ring wall of boulders and tusks, with the Tusk Gate, two sally ports and the North Gate;
+  - the outer bailey's longhouses, hide huts (the fire arrows' targets), the smithy and its oil, and the bear pens;
+  - the basalt wall, its four corner towers and the Skull Gate;
+  - the Hall of Tusks and the Giant's Seat at the top.
+- **Behind**: the Mountain Track, whose clans' camp sends the bands.
+
+**The garrison.** 200: 180 at 30 posts and 20 down the track.
+
+- The rank and file are the clans' Orc Brutes (they charge), its heavies the Ogres (they sweep with their clubs and shove heroes back), and
+  its pens loose wargs (the war-wolves).
+- **The clans draw no bows** (`bowless`): the brutes in the archers' places charge from them, and Auto keeps the host together here, by the
+  lever.
+- A Shaman King takes an officer's place the Council cannot fill; the Horned Ogre (the army's last boss) holds the seat while no warchief
+  sits.
+
+**The balance** (32 seeds, the design party, a maxed castle, a full host). The ten-a-step ladder of marks the earlier holds took (55, 65, 75,
+85, 95) would put the Ogres at 105, past the level cap, so the level the remaining holds are measured at is put to the director. Until then,
+**at level 100**:
+
+| share | 0.08 | **0.10** | 0.12 | 0.14 |
+| --- | --- | --- | --- | --- |
+| Auto | 84% | **56%** | 16% | 6% |
+| Tactical | 91% | **69%** | 34% | 9% |
+| Siege | 94% | **78%** | 38% | 13% |
+
+So its share is **0.10** for now (`HOLD_SHARE.ogres`): even at the level cap the clans are the hardest hold yet, and the share falls fast.
+
+**The look.**
+
+- Until its sheets are painted ([the prompts](assault-4-bonefire-crag-art-prompts.md)), it is drawn with:
+  - the Orc sheets recoloured by `highland` in the cutter: the grass cooled, the timber and stone greyed towards frost, the red cloth and
+    the fire kept;
+  - the Orcs and Dwarves kits (and a few Moonpack pines): the stone walls, cliff gate, great hall, cottage, forge, watchtower, shrine,
+    braziers, granary, stockpile, stone bridge, boulders, rocks, dead pines and rubble beside the Orcs kit's own pieces.
+- A cold night over the field (`fieldGrade`), lit warm from the upper left; the minimap wears the cold highland's greens and greys.
+- `docs/samples/assault-art/ogres-kit.jpg` is the two kits' labelled contact sheet.
+
+**Tests.** `assault-bonefire`:
+
+- registered and named, the same each build, its own field, and sound (`fieldProblems`);
+- the torrent a barrier but for the bridge and the fords;
+- the baileys opened only by the Tusk Gate and the Skull Gate;
+- 200 of the Ogre Clans' own, with none of Bloodtusk Hold's orcs among them and the Horned Ogre on the seat;
+- Auto plays an assault to its end, the same way twice;
+- the Warpath's bands are its own army;
+- the clans draw no bows, and their archers' places hunt.
+
+`assault-holds` now expects Bonefire Crag's page built too, and the rest locked.
+
+**Screenshots**: `docs/samples/assault-4/crag-*.png`: Mid and the Hall of Tusks at 360, 393 and 412; the bone bridge.
