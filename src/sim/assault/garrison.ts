@@ -36,7 +36,7 @@ export const ASSAULT = {
 
 /** Each hold's own share (`ASSAULT.foeShare`'s part, by army): set so the bot does about as well at each army's Legendary level, by the
  *  balance tool. The Barrow Necropolis: 0.12, at level 65 Auto wins half and Tactical three in four (docs/notes/assault-4.md). */
-export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.12 };
+export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.12, beasts: 0.14 };
 /** The share a hold's garrison stands at: a tool's own, else the hold's. */
 export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare'>): number => input.foeShare ?? HOLD_SHARE[input.army] ?? ASSAULT.foeShare;
 
@@ -47,11 +47,14 @@ export const GARRISON_SALT = 0x6a7715;
 export const KINDS: Readonly<Record<string, Record<string, string>>> = {
   orcs: { G: 'orcGrunt', A: 'orcArcher', B: 'orcBrute', W: WAR_WOLF.id },
   undead: { G: 'skeleton', A: 'boneVolley', B: 'spearman', W: GRAVE_WRAITH.id },
+  // (the Beast Packs draw no bows: the Den's archers' places are held by the Red Werewolves, who hunt the shooters; its pens loose the
+  //  war-wolves, as Bloodtusk Hold's do)
+  beasts: { G: 'packBlack', A: 'packRed', B: 'packWhite', W: WAR_WOLF.id },
 };
 /** The Orcs' roster's letters (the first hold's, kept for the tools). */
 export const KIND = KINDS.orcs;
 /** An officer's place the Council cannot fill takes this nameless officer, by army. */
-export const OFFICER: Readonly<Record<string, string>> = { orcs: 'orcChieftain', undead: 'boneCaptain' };
+export const OFFICER: Readonly<Record<string, string>> = { orcs: 'orcChieftain', undead: 'boneCaptain', beasts: 'alphaWolf' };
 /** The order the Council's ranks take the posts' leaders' places (4.2). */
 export const LIEUTENANT_POSTS = ['bridge', 'drumW', 'drumE', 'drumS', 'westTower', 'eastTower'] as const;
 export const CAPTAIN_POSTS = ['southGate', 'ironGate', 'throne', 'throne'] as const;
@@ -205,7 +208,9 @@ function placeOf(s: NemSnap, tier: number = ASSAULT.tier): ReturnType<typeof nem
 }
 
 /** Whether a post is all archers (it keeps to its perch, its wall or its bank and shoots from there). */
-export const archersOnly = (p: PostDef): boolean => /^[A ]+$/.test(p.roster);
+/** A post of shooters only: its roster all archers, and the army's archers shoot. They keep to their perch, their wall or their bank. The
+ *  Beast Packs draw no bows: the Howling Den's archers' places are held by Red Werewolves, who hunt from them as any post does. */
+export const archersOnly = (p: PostDef, army = 'orcs'): boolean => /^[A ]+$/.test(p.roster) && (UNITS[(KINDS[army] ?? KIND).A]?.range ?? 1) > 1;
 
 /** The garrison's boosts for a hold under assault: its army, its share and its tier (Legendary, or Mythic for the Warband regrouped). */
 export const holdBoosts = (h: { input: AssaultInput }): ReturnType<typeof garrisonBoosts> => garrisonBoosts(h.input.army, shareOf(h.input), h.input.tier ?? ASSAULT.tier);

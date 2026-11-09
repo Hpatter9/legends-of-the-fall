@@ -5,5 +5,6 @@
 import type { Blueprint } from './blueprint';
 import { BLOODTUSK } from './maps/orcs';
 import { BARROW } from './maps/undead';
+import { DEN } from './maps/beasts';
 
-export const HOLDS: Readonly<Record<string, Blueprint>> = { [BLOODTUSK.army]: BLOODTUSK, [BARROW.army]: BARROW };
+export const HOLDS: Readonly<Record<string, Blueprint>> = { [BLOODTUSK.army]: BLOODTUSK, [BARROW.army]: BARROW, [DEN.army]: DEN };

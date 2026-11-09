@@ -86,6 +86,12 @@ export function drawHoldMap(canvas: HTMLCanvasElement, army: string, size: numbe
       L: [120, 124, 110], C: [130, 128, 112], K: [86, 98, 84], T: [98, 110, 84], V: [92, 90, 86], R: [52, 70, 104], F: [80, 104, 140], Y: [120, 118, 120],
       D: [56, 54, 58], E: [96, 94, 100], P: [44, 44, 52], B: [104, 102, 110], S: [82, 86, 104], I: [100, 100, 108], M: [128, 126, 134], N: [72, 80, 72],
     });
+  // (the Howling Den's: the russet moor and its bracken, the cold river in the gorge, the log ring, and the snow within it)
+  if (army === 'beasts')
+    Object.assign(zoneCol, {
+      L: [150, 130, 90], C: [140, 118, 84], K: [138, 110, 62], T: [150, 92, 50], V: [112, 96, 80], R: [40, 74, 112], F: [80, 120, 160], Y: [130, 96, 60],
+      D: [76, 62, 50], E: [120, 104, 86], P: [70, 50, 34], B: [196, 200, 206], S: [130, 134, 146], I: [206, 210, 218], M: [222, 226, 232], N: [104, 92, 64],
+    });
   for (let i = 0; i < b.w * b.d; i++) {
     const t = b.tiles[i];
     const c = zoneCol[String.fromCharCode(map.zone[i])] ?? [100, 100, 100];

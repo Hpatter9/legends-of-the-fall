@@ -17,7 +17,7 @@ Out: src/art/assault/<army>/{sprites,ground,edges,decals,faces}.webp and src/ren
 The report lists any cell whose picture strays from its footprint (its bottom too far above or below the diamond's bottom tip, or its
 middle off the foot point), for the art's notes.
 
-Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead] [--report]
+Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts] [--report]
 """
 import json
 import os
@@ -189,6 +189,122 @@ def cold(a):
     return res
 
 
+# ----- the Howling Den (phase 4): an autumn moor outside the ring, snow within it -----
+#
+# As for the Necropolis: the Orc profile's slots and names, its own sheets (docs/notes/assault-4-howling-den-art-prompts.md) and the Moonpack
+# kit. A sheet not painted yet falls back to the Orc sheet in the same slot, recoloured by `den_tint`: the moor's pieces turned to autumn,
+# the crag wall's and the den's frosted, and on the ground sheet `campDirt` repainted as trodden snow (the field lays it inside the ring).
+BEASTS_FILES = {
+    'orc-01-palisade.png': 'bst-01-log-walls.png', 'orc-02-gates.png': 'bst-02-gates.png', 'orc-03-iron-gate.png': 'bst-03-antler-gate.png',
+    'orc-04-faces.png': 'bst-04-faces.png', 'orc-05-ground.png': 'bst-05-ground.png', 'orc-06-transitions.png': 'bst-06-transitions.png',
+    'orc-07-keep.png': 'bst-07-keep.png', 'orc-08-wall-dressing.png': 'bst-08-wall-dressing.png', 'orc-09-camp.png': 'bst-09-landmarks.png',
+    'orc-10-camp-props.png': 'bst-10-props.png', 'orc-11-siege-ruins.png': 'bst-11-ruins.png', 'orc-12-river.png': 'bst-12-gorge.png',
+    'orc-13-decals.png': 'bst-13-decals.png',
+}
+SHEETS['beasts'] = {
+    'sprites': {BEASTS_FILES[k]: v for k, v in _orc['sprites'].items()},
+    'ground': (BEASTS_FILES[_orc['ground'][0]], _orc['ground'][1]),
+    'edges': (BEASTS_FILES[_orc['edges'][0]], _orc['edges'][1]),
+    'decals': (BEASTS_FILES[_orc['decals'][0]], _orc['decals'][1]),
+    'faces': (BEASTS_FILES[_orc['faces'][0]], _orc['faces'][1]),
+    'fallback': ('orc', {v: k for k, v in BEASTS_FILES.items()}),
+    'shared': {'ladder', 'ram', 'trebuchet'},
+    'tint': lambda a, sheet, slot=None: den_tint(a, sheet, slot),
+    'kits': {
+        **_orc['kits'],
+        'kitSpikedWall': 'moonpack/log_wall_run', 'kitSpikedCorner': 'moonpack/log_wall_corner', 'kitSkullGate': 'moonpack/bone_gate',
+        'kitStakeFence': 'moonpack/bone_fence', 'longhouse': 'moonpack/longhouse', 'boneHut': 'moonpack/cottage', 'hideHut': 'moonpack/tavern',
+        'watchtower': 'moonpack/lookout_tower', 'warDrum': 'moonpack/howling_stone', 'skullTotem': 'moonpack/shrine',
+        'skullTorch': 'moonpack/torch_post', 'spearSign': 'moonpack/skull_signpost', 'bonfire': 'moonpack/bonfire',
+        'weaponStall': 'moonpack/pelt_stall', 'warCart': 'moonpack/sled', 'granary': 'moonpack/granary', 'meatPile': 'moonpack/hide_bundles',
+        'barrels': 'moonpack/barrels', 'stockpile': 'moonpack/stockpile', 'woodpile': 'moonpack/woodpile', 'well': 'moonpack/well',
+        'logBridge': 'moonpack/rope_bridge', 'pine2': 'moonpack/berry_pine', 'gnarledTree': 'moonpack/bare_tree', 'darkRocks': 'moonpack/rocks_b',
+        'darkRocksB': 'moonpack/rocks_c',
+        # (the Den's own dressing, which the Orc hold has no slot for)
+        'caveDen': 'moonpack/cave_den', 'snowyPine': 'moonpack/snowy_pine', 'snowyBush': 'moonpack/snowy_bush', 'peltStall': 'moonpack/pelt_stall',
+    },
+}
+# (the Orc sheets that stand in the crags, frosted; the rest stand on the moor, in autumn)
+DEN_FROST = {'bst-03-antler-gate.png', 'bst-07-keep.png', 'bst-08-wall-dressing.png'}
+DEN_GROUND = {'campDirt': 'snow', 'flagstones': 'frost', 'wallWalk': 'frost', 'cobbles': 'frost', 'shingle': 'cool', 'shallows': 'cool',
+              'scorched': None, 'ash': None}
+DEN_FACES = {'stoneWall': 'frost', 'stoneWallDamaged': 'frost', 'tower': 'frost', 'terrace': 'frost', 'moundEarth': 'snow',
+             'riverBank': 'cool', 'basalt': 'cool'}
+
+
+def autumn(a):
+    """The moor's stand-in: greens turned to russet and gold, the rest a little warmer; fire and the dark kept."""
+    rgb = a[..., :3].astype(float) / 255
+    mx = rgb.max(-1)
+    mn = rgb.min(-1)
+    c = mx - mn
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    # (the hue in turns, 0 to 1)
+    h = np.where(c == 0, 0, np.where(mx == r, ((g - b) / np.maximum(c, 1e-6)) % 6, np.where(mx == g, (b - r) / np.maximum(c, 1e-6) + 2, (r - g) / np.maximum(c, 1e-6) + 4))) / 6
+    # (yellow to green, 0.1 to 0.45, is pulled to russet and gold, 0.06 to 0.11; the further green, the redder)
+    sat = c / np.maximum(mx, 1e-6)
+    fire = (mx > 0.72) & (h < 0.17) & (sat > 0.45)
+    leafy = (h > 0.1) & (h < 0.45) & (c > 0.04) & ~fire
+    # (the orcs' red cloth, to tanned hide)
+    red = ((h < 0.035) | (h > 0.94)) & (sat > 0.45) & (mx > 0.25)
+    h2 = np.where(leafy, 0.06 + (0.45 - h) / 0.35 * 0.05, h)
+    s2 = np.where(leafy, np.minimum(1, c / np.maximum(mx, 1e-6) * 1.15), c / np.maximum(mx, 1e-6))
+    v2 = mx * np.where(leafy, 0.95, 1.0)
+    # (back from hue, saturation and value)
+    k6 = h2 * 6
+    i = np.floor(k6).astype(int) % 6
+    f = k6 - np.floor(k6)
+    p_, q, t = v2 * (1 - s2), v2 * (1 - s2 * f), v2 * (1 - s2 * (1 - f))
+    sel = [np.stack(x, -1) for x in ((v2, t, p_), (q, v2, p_), (p_, v2, t), (p_, q, v2), (t, p_, v2), (v2, p_, q))]
+    out = np.choose(i[..., None], sel)
+    hide = mx[..., None] * np.array([0.78, 0.6, 0.42])
+    out = np.where(red[..., None], hide, out)
+    out = out * np.array([1.03, 0.99, 0.92])
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+def snow(a):
+    """Trodden snow: the picture's light and shade kept as the snow's, in a blue-white."""
+    rgb = a[..., :3].astype(float) / 255
+    grey = rgb.mean(-1, keepdims=True)
+    lo, hi = grey.min(), grey.max()
+    k = (grey - lo) / max(hi - lo, 1e-6)
+    out = np.array([0.6, 0.66, 0.78]) + k * np.array([0.38, 0.33, 0.22])
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+def frost(a):
+    """Stone and timber in the crags: drained to a cold grey and lifted towards white, as if rimed."""
+    rgb = a[..., :3].astype(float) / 255
+    grey = rgb.mean(-1, keepdims=True)
+    out = grey * np.array([0.92, 0.97, 1.06]) * 0.8 + (rgb - grey) * 0.3 + 0.16
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+def cool(a):
+    """The gorge's water and wet stone: a little colder."""
+    rgb = a[..., :3].astype(float) / 255
+    grey = rgb.mean(-1, keepdims=True)
+    out = grey * np.array([0.82, 0.94, 1.1]) + (rgb - grey) * 0.4
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+def den_tint(a, sheet, slot=None):
+    if slot is not None:
+        how = (DEN_GROUND if sheet.startswith('bst-05') else DEN_FACES).get(slot, 'autumn')
+    else:
+        how = 'frost' if sheet in DEN_FROST else 'autumn'
+    return {'autumn': autumn, 'snow': snow, 'frost': frost, 'cool': cool, None: lambda x: x}[how](a)
+
+
 # (how far above a kit piece's bottom edge it stands, as a share of its width: a one-tile piece's diamond is half as tall as wide, and
 #  its foot point is the diamond's middle; flat pieces and the small flair stand on their bottom)
 KIT_LIFT = 0.2
@@ -272,6 +388,8 @@ def cut(army, report_only=False):
     report = []
     # (a hold's sheet not painted yet borrows another hold's in the same slot, recoloured: `fallback` names the hold and the files)
     fb_army, fb_files = spec.get('fallback', (None, {}))
+    # (how a borrowed sheet is recoloured: the Necropolis's cold, unless the profile has its own, which may tint the flat sheets by slot)
+    tint = spec.get('tint', lambda a, sheet, slot=None: cold(a))
 
     def sheet_path(sheet):
         path = os.path.join(src, sheet)
@@ -280,12 +398,19 @@ def cut(army, report_only=False):
         report.append(f'{sheet}: not painted yet; the stand-in is {fb_files[sheet]}, recoloured')
         return os.path.join(ROOT, 'art-source', 'assault', fb_army, fb_files[sheet]), True
 
-    def load(sheet, mode):
+    def load(sheet, mode, slots=None, cell=None):
+        """A flat sheet, recoloured if borrowed: as a whole, or each slot's cell (`cell(i)`, its box) by its own tint."""
         path, borrowed = sheet_path(sheet)
         im = Image.open(path)
         if not borrowed:
             return im.convert(mode)
-        return Image.fromarray(cold(np.array(im.convert('RGBA')))).convert(mode)
+        a = np.array(im.convert('RGBA'))
+        if slots is None or 'tint' not in spec:
+            return Image.fromarray(tint(a, sheet)).convert(mode)
+        for i, n in enumerate(slots):
+            x0, y0, x1, y1 = cell(i)
+            a[y0:y1, x0:x1] = tint(a[y0:y1, x0:x1], sheet, n)
+        return Image.fromarray(a).convert(mode)
 
     for sheet, cells in spec['sprites'].items():
         path, borrowed = sheet_path(sheet)
@@ -295,7 +420,7 @@ def cut(army, report_only=False):
         a = clean(Image.open(path))
         if borrowed:
             plain = a
-            a = cold(a)
+            a = tint(a, sheet)
         for name, (cx, cy, cw, ch, fx, fy, fu, fv) in cells.items():
             # (the shared pieces, our own siege works, keep their own colours)
             src_a = plain if borrowed and name in spec.get('shared', ()) else a
@@ -356,7 +481,7 @@ def cut(army, report_only=False):
     atlas.save(os.path.join(out, 'sprites.webp'), lossless=False, quality=90, method=6)
     # the flat art
     sheet, names = spec['ground']
-    g = load(sheet, 'RGB')
+    g = load(sheet, 'RGB', names, lambda i: (i % 4 * 256, i // 4 * 256, i % 4 * 256 + 256, i // 4 * 256 + 256))
     ground = Image.new('RGB', (1024, 1024))
     for i, n in enumerate(names):
         tile = g.crop((i % 4 * 256, i // 4 * 256, i % 4 * 256 + 256, i // 4 * 256 + 256))
@@ -377,7 +502,7 @@ def cut(army, report_only=False):
         decals.paste(shrink(tile, (128, 128)), (i % 4 * 128, i // 4 * 128))
     decals.save(os.path.join(out, 'decals.webp'), quality=90, method=6)
     sheet, names = spec['faces']
-    f = load(sheet, 'RGBA')
+    f = load(sheet, 'RGBA', names, lambda i: (i % 6 * 256, i // 6 * 512, i % 6 * 256 + 256, i // 6 * 512 + 512))
     faces = Image.new('RGBA', (384, 240))
     for i, n in enumerate(names):
         col = f.crop((i % 6 * 256, i // 6 * 512, i % 6 * 256 + 256, i // 6 * 512 + 480))

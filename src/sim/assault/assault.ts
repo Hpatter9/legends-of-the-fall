@@ -605,7 +605,7 @@ function foeMind(b: Battle, f: FieldState, _h: HoldState, post: PostState, me: U
     return;
   }
   if (near) return swing(b, me, near, rng, out);
-  if (archersOnly(post.def)) {
+  if (archersOnly(post.def, _h.input.army)) {
     me.busyUntil = b.t + IDLE_MS;
     return;
   }
@@ -970,7 +970,7 @@ function roleMove(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, a: U
       let spot: At | null = null;
       let sd = Infinity;
       for (const p of h.posts) {
-        if (p.mood === 'posted' || !archersOnly(p.def)) continue;
+        if (p.mood === 'posted' || !archersOnly(p.def, h.input.army)) continue;
         const g = f.groups[p.group];
         if (!g.members.some((id) => f.byId[id].alive)) continue;
         const d = dist(g.home, lead);

@@ -20,7 +20,7 @@ import type { Battle, Unit } from '../battle';
 import type { At } from '../board';
 import { forNear, type FieldGroup, type FieldState } from './field';
 import { ringOf } from './fieldMap';
-import { addFieldUnit, archersOnly, freeNear, holdBoosts, KIND } from './garrison';
+import { addFieldUnit, archersOnly, freeNear, holdBoosts, KIND, KINDS } from './garrison';
 import { drumsBeating, isWall } from './forts';
 import type { HoldState, PostState } from './holdTypes';
 
@@ -114,7 +114,7 @@ function feints(b: Battle, f: FieldState, h: HoldState): void {
   let best: PostState | undefined;
   let bd = Infinity;
   for (const p of h.posts) {
-    if (p.errand || p.mood === 'posted' || p.mood === 'routed' || p.mood === 'sally' || archersOnly(p.def) || p.def.id === 'throne') continue;
+    if (p.errand || p.mood === 'posted' || p.mood === 'routed' || p.mood === 'sally' || archersOnly(p.def, h.input.army) || p.def.id === 'throne') continue;
     if (p.def.zone !== 'palisade' && p.def.zone !== 'bailey') continue;
     if (p.def.guards === id) continue;
     const g = f.groups[p.group];
@@ -295,7 +295,8 @@ function band(b: Battle, f: FieldState, h: HoldState): PostState {
   f.groups.push(g);
   const { foes } = holdBoosts(h);
   for (const c of bp.reinforce.roster.replace(/ /g, '')) {
-    const unit = addFieldUnit(b, f, KIND[c], freeNear(b, f, bp.warpath, false), foes, g.id, g.members.length);
+    // (the hold's own army's fighters, not always the Orcs')
+    const unit = addFieldUnit(b, f, (KINDS[h.input.army] ?? KIND)[c], freeNear(b, f, bp.warpath, false), foes, g.id, g.members.length);
     unit.busyUntil = b.t;
     if (!g.members.length) g.leader = unit.id;
     g.members.push(unit.id);
@@ -306,3 +307,4 @@ function band(b: Battle, f: FieldState, h: HoldState): PostState {
   h.bands++;
   return post;
 }
+

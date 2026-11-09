@@ -119,4 +119,7 @@ export interface Blueprint {
   northGate: Spot;
   /** The two land skins (outside the palisade and inside it). */
   lands: { outer: string; inner: string };
+  /** The garrison hunts our shooters first (phase 4, the Howling Den's pack): a post marks the nearest of ours who shoots within its reach,
+   *  going round the line to them, and only else the nearest of ours. */
+  huntShooters?: boolean;
 }

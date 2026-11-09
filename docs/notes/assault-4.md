@@ -98,3 +98,82 @@ and Tactical three in four, as Bloodtusk Hold does at 55.
 - the Undead army card with "Assault Barrow Necropolis";
 - its muster;
 - the opening, with an Undead lieutenant's cut-in by the lake.
+
+## 2. The Howling Den (the Beast Packs)
+
+`src/sim/assault/maps/beasts.ts` (`DEN`). The owner's look: an autumn moor that climbs to a snowbound den.
+
+**The layout.** Up the phone from the Landing at the south corner:
+
+- **A cold river in a rocky gorge** winds from edge to edge where the Necropolis has its lake: narrower (two to three cells), and bending,
+  so its banks wander. It is crossed by:
+  - the rope bridge, with its barricade of logs and sleds (the bridge fort) holding the far end;
+  - the West Ford and the East Ford.
+- **The autumn moor**:
+  - the West and East Lookouts on their crags;
+  - the old hall's ruins to the east, and the bracken (long grass);
+  - the trap line across the road (the stake field's slowing ground);
+  - the wolf runs under the east lookout;
+  - the hunters' drying racks (they burn), hide tents and bonfires;
+  - the knoll of the old stones by the gorge;
+  - the three howling stones (the war drums' part).
+- **The rings, under snow**:
+  - the ditch, the bank and the ring of log walls, with the Fang Gate, two sally ports and the North Gate;
+  - the outer bailey's longhouses, hide huts (the fire arrows' targets), the smoking pits and their oil, and the kennels;
+  - the crag wall, its four corner towers and the Antler Gate;
+  - the great den and the Seat of the Pack at the top.
+- **Behind**: the Hunters' Trail, whose camp sends the bands.
+
+**The garrison.** 200: 180 at 30 posts and 20 down the trail.
+
+- The rank and file are Black Werewolves, its heavies White Werewolves, and its pens loose Bloodtusk Hold's war-wolves.
+- **The Beast Packs draw no bows** (the director's call: no new archer; a beast hold with no arrows is its identity). Their archers' places (the
+  lookouts, the bank, the corner towers, the wall-walk) are held by **Red Werewolves**. A post is a shooters' post only if its army's archers
+  shoot (`archersOnly(post, army)`): the Den's are not, so they leap down and hunt as any post does instead of standing on their perches.
+- **The pack hunts our shooters first** (`Blueprint.huntShooters`, set on the Den alone): a post marks the nearest of ours who shoots within
+  its reach, going round the line to them, and only else the nearest of ours. It is the answer to a careful advance with its archers and
+  mages behind a wall of blades, which no bows on the walls would otherwise punish.
+- An Alpha Werewolf takes an officer's place the Council cannot fill; the Boar King (the army's last boss) holds the Seat while no warchief
+  sits.
+- (A fix on the way: the Warpath's bands were always built from the Orcs' roster, so the Necropolis's bands were orcs. They are the hold's own
+  army now, which makes the Necropolis's twenty bands skeletons; its share was measured before this.)
+
+**The balance** (`npm run balance -- --assault beasts --seeds 32`, the design party, a maxed castle, a full host). Its mark is level 75,
+ten levels above the Undead's, as the Necropolis's was above Bloodtusk Hold's. The director asked for it to sit where the other holds do
+(about Auto 50%, Tactical 75%, Siege 85 to 90%) and to be brutal, with 16 seeds or more.
+
+First built (the archers' places standing still, 8 seeds), it was soft for careful play: at 0.135, Auto 63%, Tactical 100%, Siege 100%.
+Then, at level 75:
+
+| what the pack does | share | seeds | Auto | Tactical | Siege |
+| --- | --- | --- | --- | --- | --- |
+| the archers' places hunt | 0.145 | 16 | 50% | 94% | 81% |
+| | 0.15 | 16 | 25% | 81% | 88% |
+| | 0.1475 | 32 | 31% | 97% | 66% |
+| and they hunt our shooters first | 0.135 | 32 | 53% | 94% | 88% |
+| | **0.14** | **32** | **41%** | **84%** | **75%** |
+| | 0.1475 | 32 | 31% | 78% | 63% |
+
+So its share is **0.14** (`HOLD_SHARE.beasts`). Tactical is still the Den's easiest way (a massed host cuts down melee wolves as they come),
+and Siege sits under it here, the other way round from Bloodtusk Hold: the ram's and the ladders' crews stand still where the pack can reach
+the shooters behind them. A harder share brings Tactical to 75% but sinks Auto and Siege with it, so 0.14 is the closest these levers reach.
+
+Tried and dropped: **the howl**, the howling stones calling out a pack of war-wolves every forty seconds until silenced (eight packs, and a
+smaller four of three; at the nearest platoon, then at the main push). In every form it cost Auto (which never silences the stones) and
+Siege most and Tactical (which silences them first) least, so it widened the gap it was meant to close, and it was taken out.
+
+**Tests.** `assault-den`:
+
+- registered and named, the same each build, its own field, and sound (`fieldProblems`);
+- the river a barrier but for the bridge and the fords;
+- the baileys opened only by the Fang Gate and the Antler Gate;
+- 200 of the Beast Packs' own, with no orc among them and the Boar King on the Seat;
+- Auto plays an assault to its end, the same way twice;
+- the Warpath's bands are the hold's own army;
+- its archers' places are not shooters' posts (Bloodtusk Hold's and the Necropolis's are);
+- a Den post goes round a nearer swordsman of ours for an archer within its reach, where Bloodtusk Hold's takes the nearer.
+
+`assault-holds` now expects the Den's page built too, and the rest locked.
+
+**Screenshots**: `docs/samples/assault-4/den-*.png`: Mid and the den at 360, 393 and 412; the rope bridge, the Fang Gate's road and the East
+Ford.
