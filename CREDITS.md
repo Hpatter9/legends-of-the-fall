@@ -722,6 +722,17 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   stack), and the wild flair, halved the same way and packed into its atlas (listed in `src/render/assaultYokaiAtlas.ts`). Its fighters are the Yokai
   Night Parade's foxes, witches, tengu and bosses, credited above.
 
+## The Assault's Iron Foundry (`src/art/assault/golems/`)
+
+- Until its own painted sheets land (the prompts: `docs/notes/assault-4-iron-foundry-art-prompts.md`), the Iron Foundry is drawn with the owner's
+  Orc sheets above, cut again by `tools/assault/cut-sheets.py golems` and recoloured to the foundry (grass sooted, stone and timber to slate and iron,
+  red cloth to iron grey); our siege works keep their own colours.
+- Beside them, single pieces of Chronos Settlement's Dwarves and Machines kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/dwarves/` and
+  `machines/`: the Dwarves' chain fence, great hall, cottage, forge, forge fire, quarry, watchtower, shrine, brazier, signpost, anvil stall, ore cart,
+  granary, coal heap, stockpile, well, crates, dead pine, boulders, rocks, crystals and rubble; the Machines' iron walls, piston gate, workshop, coil
+  stack, oil drums, metal crates, scrap pile, girder bridge, iron tree, dead tree, cable bush and ore rocks), and the wild flair, halved the same way
+  and packed into its atlas (listed in `src/render/assaultGolemsAtlas.ts`). Its fighters are the Golem Forge's golems and bosses, credited above.
+
 ### Painted Spells study
 
 - `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.
