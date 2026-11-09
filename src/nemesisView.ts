@@ -15,7 +15,7 @@ import { buyScout, buyShard, musterCount, newsWord, SCOUT_PRICE, scoutable, SHAR
 import { heroName } from './sim/heroNames';
 import type { Meta } from './sim/meta';
 import { musterLine, musterOpen, warchiefOf } from './sim/muster';
-import { fullName, MIGHT_MAX, payOf, rankWord, SEATS, type FallenNemesis, type Nemesis, type War } from './sim/nemesis';
+import { fullName, MIGHT_MAX, payOf, rankWord, SEATS, type FallenNemesis, type Nemesis, type War, type WarEnd } from './sim/nemesis';
 import { TRAITS, weakWords } from './sim/nemesisTraits';
 import { avengersOf, awayRuns, grudgesOn, trophyWords } from './sim/revenge';
 import { paintGearIcon } from './gearIcons';
@@ -24,6 +24,8 @@ import { menuBackdrop } from './menuBackdrops';
 import { NEMESIS_TRAIT_ICON } from './nemesisTraitArt';
 import { RANK_BADGE, SCAR_FRAME } from './expansionArt';
 import { NEWS_ICON, TROPHY_ICON, SMOOTH_COUNCIL_ART } from './councilArt';
+import { endLine } from './sim/assault/lastHold';
+import { holdName } from './sim/assault/warAnswer';
 export { NEWS_ICON, TROPHY_ICON } from './councilArt';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -81,9 +83,9 @@ function sectionWell(parent: HTMLElement, title: string, line: string): HTMLElem
 export const seatsFilled = (war: War | undefined): number => war?.members.length ?? 0;
 const SEAT_COUNT = SEATS.warchief + SEATS.captain + SEATS.lieutenant;
 /** The line under the board's title: the war turn and the seats filled. */
-export const councilLine = (m: Meta): string => (m.war ? `War turn ${m.war.turn} · ${seatsFilled(m.war)} of ${SEAT_COUNT} seats filled` : 'The War has not begun');
+export const councilLine = (m: Meta): string => (m.war?.end ? `The War is over · it ended on war turn ${m.war.end.turn}` : m.war ? `War turn ${m.war.turn} · ${seatsFilled(m.war)} of ${SEAT_COUNT} seats filled` : 'The War has not begun');
 /** The camp place's plate ("The Dark Council · 9 seats filled"). */
-export const councilPlate = (m: Meta): string => `The Dark Council · ${seatsFilled(m.war)} ${seatsFilled(m.war) === 1 ? 'seat' : 'seats'} filled`;
+export const councilPlate = (m: Meta): string => (m.war?.end ? 'The Dark Council · broken' : `The Dark Council · ${seatsFilled(m.war)} ${seatsFilled(m.war) === 1 ? 'seat' : 'seats'} filled`);
 
 /** What the board can do beyond showing: hunt a nemesis's army, call the Muster, and save after a purchase. */
 export interface BoardHooks {
@@ -164,6 +166,8 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
 /** The Council tab: the pyramid, then how the Muster stands. */
 function drawCouncil(m: Meta, pane: HTMLElement, menu: OrnateMenu, hooks: BoardHooks): void {
   const war = m.war;
+  // (the Assault, phase 5: the Last Hold has fallen, and the Council with it: its record in place of the seats)
+  if (war?.end) return drawEnd(war.end, pane);
   if (!war || !war.members.length) {
     const well = menuWell(pane);
     well.append(el('p', 'nmEmpty', war ? 'No foe remembers you yet.' : 'The War has not begun.'));
@@ -208,6 +212,27 @@ function drawCouncil(m: Meta, pane: HTMLElement, menu: OrnateMenu, hooks: BoardH
   }
   const mw = sectionWell(pane, 'The Warchief’s Muster', musterCount(war));
   mw.append(el('p', musterOpen(war) ? 'nmMusterOpen' : 'nmMemory', musterLine(war)));
+}
+
+/** The War's end, in the Council's place: the lord who fell on the Last Hold's throne, the members slain there, those scattered. */
+function drawEnd(end: WarEnd, pane: HTMLElement): void {
+  const top = sectionWell(pane, 'The War is over', `ended on war turn ${end.turn}`);
+  const p = el('p', 'nmFallen');
+  p.append(face({ base: end.chief.base, rank: end.chief.warchief ? 'warchief' : 'captain', scars: 0 }, 48));
+  const w = el('span', 'nmNewsWords');
+  w.append(el('b', '', end.chief.name), el('small', '', end.chief.warchief ? 'the last Warchief of the Dark Council' : `lord of ${holdName(end.army)}`));
+  p.append(w);
+  top.append(p, el('p', 'nmMemory', endLine(end)));
+  const slain = end.slain.filter((n) => n !== end.chief.name);
+  if (slain.length) {
+    const well = sectionWell(pane, 'Slain at the Last Hold', `${slain.length} of the Council`);
+    for (const n of slain) well.append(el('p', 'nmMemory', n));
+  }
+  if (end.scattered.length) {
+    const well = sectionWell(pane, 'Scattered', 'they lived, and fled as the seats burned');
+    for (const n of end.scattered) well.append(el('p', 'nmMemory', n));
+  }
+  menuNote(pane, 'The Council takes no more turns and names no new foes. The War Trophies you hold can still be spent in the Spoils, and the Fallen and the News keep the War’s story.');
 }
 
 /** The News tab: the last forty lines of the War, newest first, each with its event's icon. */
