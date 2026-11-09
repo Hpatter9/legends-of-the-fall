@@ -181,7 +181,9 @@ export type Moment =
   /** The Nemesis War, phase 3: an Avenger's Vengeance (`vengeanceScenes.ts`), "avenger>avenged", played at the camp. */
   | { kind: 'vengeance'; pair: string }
   /** Dynasties, phase 6: a kindred pair names an heir (`heirScenes.ts`), played at the camp. */
-  | { kind: 'heir'; pair: string };
+  | { kind: 'heir'; pair: string }
+  /** The Assault, phase 5: the Last Hold has fallen and the War is over (`warEndScene.ts`), played at the camp. */
+  | { kind: 'warEnd' };
 
 /** What a film can reveal at its end (REVEAL): a mode opening (the Calamity), the army after this one, the Calamity's Ascension levels, a
  *  castle building (the chapel: the spellbook), a hero's awakening, an Eidolon bound (for the quest chains' films). */

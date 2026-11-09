@@ -175,7 +175,7 @@ const knownHeroes = (m: Meta): string[] => (m.party.length ? [...m.party] : m.un
  * the player knows yet. Undefined when no seat is free or no army is open.
  */
 export function recruit(war: War, m: Meta, rng: Rng): Nemesis | undefined {
-  if (ofRank(war, 'lieutenant').length >= SEATS.lieutenant) return undefined;
+  if (war.end || ofRank(war, 'lieutenant').length >= SEATS.lieutenant) return undefined;
   // (a conquered army sends the Council no one: the Assault, docs/notes/assault-1.md)
   const opened = ARMIES.filter((a) => armyUnlocked(m, a.id) && !m.assault?.conquered[a.id]).map((a) => a.id);
   if (!opened.length) return undefined;
@@ -429,11 +429,12 @@ export function takeTurn(war: War, m: Meta): WarNews[] {
 
 /**
  * A turn of the Council, if the day still counts one: `run` after an army run has ended (at most four a day), `visit` on the day's first
- * visit (one a day). `day` is the page's day key (yyyymmdd). Null when there is no War or the day's turns are spent.
+ * visit (one a day). `day` is the page's day key (yyyymmdd). Null when there is no War, it is over, or the day's turns are spent.
  */
 export function councilTurn(m: Meta, why: 'run' | 'visit', day: number): WarNews[] | null {
   const war = m.war;
-  if (!war) return null;
+  // (the Council is no more once its Last Hold has fallen: the Assault's phase 5)
+  if (!war || war.end) return null;
   if (!war.day || war.day.key !== day) war.day = { key: day, turns: 0 };
   if (why === 'run') {
     if (war.day.turns >= RUN_TURNS) return null;

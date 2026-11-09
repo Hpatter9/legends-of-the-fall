@@ -29,6 +29,7 @@ import type { AssaultInput, ApproachId, HoldState, PlatoonRole } from './holdTyp
 import { DEFAULT_ROLES } from './assault';
 import { assaultOf, marksEarned, spoilsOf, TROPHY_MULT, troopsOf } from './economy';
 import { conquestNews, strongestHold } from './warAnswer';
+import { endWar, isLastHold, lastCouncil } from './lastHold';
 import { MARKS_MAX, RESTORM_TIER } from './economy';
 import { rankOf, type PlatoonFormation } from './troops';
 import { siegeRefund } from './siege';
@@ -71,7 +72,9 @@ export function defaultPlan(party: readonly string[]): AssaultPlan {
 export function assaultInput(m: Meta, army: string, seed: number, plan: AssaultPlan = defaultPlan(assaultParty(m)), sheets: Record<string, string> = {}): AssaultInput {
   const party = assaultParty(m);
   const war = m.war;
-  const council = (war?.members ?? []).filter((n) => n.army === army && n.rank !== 'warchief' && !war?.away?.[String(n.id)]).map((n) => decorate(m, snapOf(n), n));
+  // (phase 5: at the Last Hold every member left defends, of any army, away or not)
+  const last = !plan.restorm && isLastHold(m, army) && !!war && !war.end;
+  const council = (last ? lastCouncil(war) : (war?.members ?? []).filter((n) => n.army === army && n.rank !== 'warchief' && !war?.away?.[String(n.id)])).map((n) => decorate(m, snapOf(n), n));
   const chief = warchiefOf(war);
   const flightTo = chief ? strongestHold(m, army) : undefined;
   return {
@@ -89,6 +92,7 @@ export function assaultInput(m: Meta, army: string, seed: number, plan: AssaultP
     ...(chief ? { warchief: decorate(m, snapOf(chief), chief) } : {}),
     // (phase 3: where the warchief rides if he flees this hold; none at the last hold standing)
     ...(flightTo ? { flightTo } : {}),
+    ...(last ? { last: true } : {}),
   };
 }
 
@@ -131,6 +135,9 @@ export interface AssaultResult {
   regroup: boolean;
   /** The War News's lines this assault wrote (phase 3). */
   news: string[];
+  /** Phase 5: it was the Last Hold, and (on its fall) the War ended. */
+  last?: boolean;
+  warEnded?: boolean;
 }
 
 /** Settle an assault into the save (its soldiers' kills as `stepAssault` counted them). */
@@ -215,7 +222,10 @@ export function settleAssault(m: Meta, b: Battle, day: number): AssaultResult {
   }
   // the War News: the warchief's flight, a duel won, the hold's fall (phase 3)
   const news = conquestNews(m, h, first, regroup);
-  return { army, outcome: h.outcome, won, attempt: a.tries[army], platoons, xp, levelUps, spoils, chest, war, first, refund, regroup: tier >= RESTORM_TIER, news };
+  // (phase 5: the Last Hold has fallen, and the War with it)
+  const ended = won && first && !!h.input.last && !!m.war && !m.war.end;
+  if (ended) news.push(...endWar(m, b, h, war?.slain.map((x) => x.id) ?? [], day, a.tries[army]));
+  return { army, outcome: h.outcome, won, attempt: a.tries[army], platoons, xp, levelUps, spoils, chest, war, first, refund, regroup: tier >= RESTORM_TIER, news, ...(h.input.last ? { last: true } : {}), ...(ended ? { warEnded: true } : {}) };
 }
 
 /** The name of the army's lord for the muster's line: the warchief's, if one sits, else the army's last boss's. */

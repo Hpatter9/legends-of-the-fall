@@ -8,6 +8,7 @@
 // 20 points of win rate.
 //
 //   npm run balance -- --assault orcs [--levels 65,75 (default: the hold's mark)] [--seeds 8] [--share 0.2] [--party recruits|starters] [--talents] [--tier 4]
+//     [--last]   (phase 5: as the Last Hold, the whole Council defending: a warchief at Might 8, four captains and eight lieutenants)
 import { savedAt } from '../autoplay';
 import { BUILDINGS, maxLevel, newCastle, type BuildingId } from '../../src/sim/castle';
 import { mixSeed } from '../../src/sim/rng';
@@ -15,7 +16,9 @@ import { HEROES, UNITS } from '../../src/sim/units';
 import { learn, tierNodes } from '../../src/sim/talents';
 import { assaultInput, defaultPlan } from '../../src/sim/assault/assaultMode';
 import { playAssault, assaultScore, startAssault } from '../../src/sim/assault/assault';
-import { ASSAULT, HOLD_MARK, HOLD_SHARE } from '../../src/sim/assault/garrison';
+import { ASSAULT, HOLD_MARK, HOLD_SHARE, LAST_SHARE } from '../../src/sim/assault/garrison';
+import { ELITE_FOES } from '../../src/sim/eliteFoes';
+import type { NemSnap } from '../../src/sim/nemesis';
 
 const flag = (name: string): string | undefined => (process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : undefined);
 const army = flag('--assault') ?? 'orcs';
@@ -28,10 +31,19 @@ const talents = process.argv.includes('--talents');
 const tier = flag('--tier') ? Number(flag('--tier')) : undefined;
 const PARTIES: Record<string, readonly string[]> = { starters: HEROES, recruits: ['knight', 'paladin', 'archer', 'warlock', 'cleric'], design: ['knight', 'samurai', 'archer', 'wizard', 'dragoon'] };
 const party = PARTIES[flag('--party') ?? 'design'];
+// (`--last`: the Last Hold, phase 5. A full Council: the seats all taken, at the Might a Council has grown to by the War's end, born of the
+// elites of every army; no traits, so the table measures the Council's weight and not its luck)
+const lastHold = process.argv.includes('--last');
+const MIGHTS = { warchief: [8], captain: [6, 5, 5, 4], lieutenant: [4, 3, 3, 3, 2, 2, 2, 1] } as const;
+const elites = Object.keys(ELITE_FOES);
+let nid = 0;
+const member = (rank: NemSnap['rank'], might: number, base = elites[nid % elites.length]): NemSnap => ({ id: ++nid, base, name: `Member ${nid}`, epithet: 'the Last', rank, might, scars: 0, traits: [], weak: [] });
+const chief = member('warchief', MIGHTS.warchief[0], 'orcWarlord');
+const council = [...MIGHTS.captain.map((x) => member('captain', x)), ...MIGHTS.lieutenant.map((x) => member('lieutenant', x))];
 const maxed = newCastle();
 for (const id of Object.keys(BUILDINGS) as BuildingId[]) maxed[id] = maxLevel(id);
 
-console.log(`\nTHE ASSAULT: ${army}  (${party.map((k) => UNITS[k].name).join(', ')}; a full host, a maxed castle${talents ? ', talents learned' : ''}; foeShare ${share ?? HOLD_SHARE[army] ?? ASSAULT.foeShare}, officerShare ${ASSAULT.officerShare}; ${seeds} seeds a cell)\n`);
+console.log(`\nTHE ASSAULT: ${army}  (${party.map((k) => UNITS[k].name).join(', ')}; a full host, a maxed castle${talents ? ', talents learned' : ''}; foeShare ${share ?? (HOLD_SHARE[army] ?? ASSAULT.foeShare) * (lastHold ? LAST_SHARE[army] ?? 1 : 1)}${lastHold ? `, the Last Hold (x${LAST_SHARE[army] ?? 1}, a full Council)` : ''}, officerShare ${ASSAULT.officerShare}; ${seeds} seeds a cell)\n`);
 console.log('level  style      wins   host lost   time (won)   sim ms/tick (mean, worst)');
 for (const L of levels)
   for (const style of ['Auto', 'Tactical', 'Siege'] as const) {
@@ -58,6 +70,7 @@ for (const L of levels)
       if (style === 'Siege') input.siege = { ram: party[0], ladders: [party[1], party[2]] };
       if (share !== undefined) input.foeShare = share;
       if (tier !== undefined) input.tier = tier;
+      if (lastHold) Object.assign(input, { last: true, council, warchief: chief });
       const b = startAssault(input);
       let last = performance.now();
       playAssault(b, [], () => {

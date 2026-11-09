@@ -38,6 +38,8 @@ export interface AssaultInput {
   warchief?: NemSnap;
   /** Phase 3: the strongest hold still standing besides this one, where the warchief rides if he flees it (none: he never flees). */
   flightTo?: string;
+  /** Phase 5: the Last Hold, the one hold still standing: the whole Council left defends it, and its fall ends the War. */
+  last?: boolean;
   /** The garrison's share of a wave foe's hp and attack (`ASSAULT.foeShare` unless a tool tries another). */
   foeShare?: number;
   /** Auto from the first tick: the bot plays the platoons. */
