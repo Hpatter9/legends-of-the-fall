@@ -1250,3 +1250,12 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 
 EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. Owner requests one five-cell 1280x256 transparent source sheet at art-source/expansion/frames.png, matching existing style, added to Expansion art 2 PR #464. Scope: that source image plus required prompt/task/handoff records. Completion: visual review, exact size and transparent centres/background, commit and push to existing PR. No runtime changes.
 - **EXPANSION-2-FRAMES result:** five-cell source sheet painted and visually reviewed; dimensions, RGBA, binary alpha, padding and empty portrait centres verified. Ready for review in PR #464. See [handoff](notes/expansion-2-art.md). Runtime checks not run (source art only).
+
+### EXPANSION-2-COUNCIL — Cavern council backdrop
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`; PR #464.
+- Scope: one `art-source/expansion/council-backdrop.png` plus required prompt/task/handoff records.
+- Direction: owner's specified empty cavern war council, violet and ember light, dark centre and edges for menu text.
+- Completion: 1024×1536 upright painterly pixel art, black map table, horned throne, thirteen high-backed chairs, orc/undead/beast banners; no people or text; visually inspect and push to existing PR.
+- Status: in progress; source art only.
+- Result: ready for review in Expansion art 2 PR #464. Painted and visually reviewed; exact 1024×1536 RGB PNG verified. No people or text; subdued map/centre and dark outer edges. [Handoff](notes/expansion-2-art.md). Runtime tests/build not run: source artwork only.
