@@ -1,0 +1,53 @@
+[
+  {
+    "width": 393,
+    "height": 852,
+    "hall": 1536,
+    "goat": 288,
+    "guards": 4,
+    "reduced": false,
+    "decree": true,
+    "guard": true,
+    "duchess": true,
+    "treat": true,
+    "trophies": true,
+    "buildingCard": true,
+    "fits": true,
+    "offline": true,
+    "errors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "hall": 1536,
+    "goat": 288,
+    "guards": 4,
+    "reduced": false,
+    "decree": true,
+    "guard": true,
+    "duchess": true,
+    "treat": true,
+    "trophies": true,
+    "buildingCard": true,
+    "fits": true,
+    "offline": false,
+    "errors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "hall": 1536,
+    "goat": 288,
+    "guards": 4,
+    "reduced": true,
+    "decree": true,
+    "guard": true,
+    "duchess": true,
+    "treat": true,
+    "trophies": true,
+    "buildingCard": true,
+    "fits": true,
+    "offline": false,
+    "errors": []
+  }
+]

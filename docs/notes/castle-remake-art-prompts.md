@@ -1,5 +1,7 @@
 # The castle remake: art prompts
 
+**2026-11-09:** the approved royal hall is now supplied as image 4 by [the royal hall follow-up](castle-royal-hall.md). Retain that source when painting the courtyard and building sheets; images 1–3 remain pending.
+
 The castle remake (`docs/notes/castle-remake.md`) needs four new paintings. They come from **one** ChatGPT task: one prompt, one branch
 (`art/castle-remake`), one pull request ("Castle remake art"). If that turns out to be too much for one task, run the same prompt twice,
 adding the line "Do images 1 and 2 only" to the first run and "Do images 3 and 4 only" to the second; both runs use the same branch and

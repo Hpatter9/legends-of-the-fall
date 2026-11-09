@@ -83,14 +83,18 @@ under a panel head, painted plate buttons and medallions, and the standard ornat
 - `build.mjs`: copies `src/art/castle-remake/*.webp` to `ui/castle/` and lists each in the service worker's `FILES`.
 - `tools/castle-remake/cut.py`: the cutter (below). `tools/castle-remake/shots.mjs`: the shots and checks.
 
-## Waiting on art (`docs/notes/castle-remake-art-prompts.md`, one prompt)
+## Royal hall follow-up
+
+Release 0.439.0 completes the previously approved stone throne hall inside this layout. The `throne-hall` painting is now packed and active; live ruler, guard, Duchess and trophy interactions remain. See [royal hall handoff](castle-royal-hall.md). The courtyard and two building sheets below are still pending.
+
+## Original art handoff (`docs/notes/castle-remake-art-prompts.md`, one prompt)
 
 Four files under `art-source/castle-remake/`: `courtyard.png`, `buildings-a.png`, `buildings-b.png` and `throne-hall.png`. Until they
 land:
 
 - the courtyard is a **plain stand-in** made by the cutter (dusk, stone, kerbed plots where the painting's will be);
 - the buildings are the old pixel sprites (greyed when unbuilt), and there is no building-site picture;
-- the hall is the old pixel throne room.
+- the hall originally used the old pixel throne room; the royal hall follow-up now supplies its painting.
 
 When the pull request is merged, run `python3 tools/castle-remake/cut.py`. It writes the paintings and the twelve trimmed cut-outs to
 `src/art/castle-remake/` and lists them in `manifest.json`, and the page then uses each painting by name with no code change. Add the
