@@ -83,3 +83,31 @@ test('scouts cost 100 crowns, show the Council\'s posts, and their report is spe
   settleAssault(m, b, 20261108);
   assert.ok(!scouted(m, 'orcs'));
 });
+
+test('the Auto lever: at a hold that draws no bows the bot brings the split host onto one crossing, its shooters behind its blades', async () => {
+  const { bowless } = await import('../src/sim/assault/garrison');
+  const { huddle } = await import('../src/sim/assault/assault');
+  assert.deepEqual(['orcs', 'undead', 'beasts', 'wildwood'].map(bowless), [false, false, true, true]);
+  const plan = defaultPlan(PARTY);
+  for (const army of ['beasts', 'wildwood']) {
+    const b = startAssault(input({ army, auto: true, approaches: plan.approaches, roles: plan.roles }));
+    const h = b.field!.hold!;
+    assert.ok(huddle(h));
+    steps(b, 20);
+    // (the plan sent two platoons by the fords: they are on the bridge's road now, the host's crossing (three of the five chose it))
+    const bridge = h.bp.approaches.find((a) => a.id === 'bridge')!.way;
+    const end = bridge[bridge.length - 1];
+    for (const pl of h.platoons) {
+      assert.ok(pl.regrouped, `${army}: ${pl.hero} regrouped`);
+      assert.deepEqual(pl.order, { kind: 'move', at: end }, `${army}: ${pl.hero} on the bridge's road`);
+    }
+  }
+  // (the Tactical style and the holds with bows keep the plan as it was)
+  const t = startAssault(input({ army: 'beasts', auto: true, tactical: true, approaches: plan.approaches, roles: plan.roles }));
+  assert.ok(!huddle(t.field!.hold!));
+  const o = startAssault(input({ auto: true, approaches: plan.approaches, roles: plan.roles }));
+  steps(o, 20);
+  assert.ok(!huddle(o.field!.hold!));
+  assert.ok(o.field!.hold!.platoons.every((pl) => !pl.regrouped));
+  assert.notDeepEqual(o.field!.hold!.platoons[2].order, o.field!.hold!.platoons[0].order, 'Bloodtusk Hold\'s split stays split');
+});
