@@ -361,15 +361,16 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       for (const t of tiles) taken.add(t);
       const m = mid(tiles);
       // (the Barrow Necropolis's own buildings by their names: its mausoleums, charnel houses, coffin heaps and witch fires; the Howling
-      //  Den's hide tents, drying racks and great den)
-      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' || s.name === 'Hide tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name === 'Drying rack' ? 'meatRacks' : s.name.startsWith('The keep') || / (keep|den)$/.test(s.name) ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile';
+      //  Den's hide tents, drying racks and great den; Elder Root's leaf tents, and the Elder Root drawn as the kit's great oak, grown huge,
+      //  until its own painting lands)
+      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' || s.name === 'Hide tent' || s.name === 'Leaf tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name === 'Drying rack' ? 'meatRacks' : s.name === 'The Elder Root' ? 'greatOak' : s.name.startsWith('The keep') || / (keep|den)$/.test(s.name) ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile';
       const flip = s.rect.u1 - s.rect.u0 < s.rect.v1 - s.rect.v0;
-      out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: name === 'keep' ? 0.62 : name === 'longhouse' || name === 'mausoleum' ? 0.95 : name === 'bonfire' ? 0.7 : 1, ...(s.burns ? { hut: hut++ } : {}) });
+      out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: name === 'keep' ? 0.62 : name === 'greatOak' ? 2.4 : name === 'longhouse' || name === 'mausoleum' ? 0.95 : name === 'bonfire' ? 0.7 : 1, ...(s.burns ? { hut: hut++ } : {}) });
     } else if (s.kind === 'perch') {
       const tiles = rectTiles(w, s.rect);
       const m = mid(tiles);
       // (the corner towers' crenellated tops, the gate towers' perches, the watchtowers on their crags)
-      const name = /corner tower/.test(s.name) ? 'cornerTower' : /Watchtower|Ossuary Tower|Lookout/.test(s.name) ? 'watchtower' : 'gateTower';
+      const name = /corner tower/.test(s.name) ? 'cornerTower' : /Watchtower|Ossuary Tower|Lookout|Watch Tree/.test(s.name) ? 'watchtower' : 'gateTower';
       for (const t of tiles) taken.add(t);
       // (sorted with the perch's back tile: its crew stand on it and are drawn over it, never hidden under its floor)
       out.push({ name, u: m.u, v: m.v, front: m.front, depth: tiles[0], scale: name === 'watchtower' ? 0.9 : name === 'gateTower' ? 0.8 : 1 });

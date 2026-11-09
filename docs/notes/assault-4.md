@@ -72,6 +72,18 @@ it is far harder than Bloodtusk Hold:
 So its share is **0.12** (`HOLD_SHARE.undead`): at level 65, a little above the Orcs' 55 as the Undead's Legendary level is, Auto wins half
 and Tactical three in four, as Bloodtusk Hold does at 55.
 
+**Measured again with its own bands** (the director's ask, once the Warpath's bands were made the hold's own army: before, they were orcs).
+32 seeds at level 65:
+
+| | 0.115 | **0.1175** | 0.12 |
+| --- | --- | --- | --- |
+| Auto | 72% | **50%** | 38% |
+| Tactical | 84% | **97%** | 72% |
+| Siege | 84% | **72%** | 81% |
+
+Auto moves cleanly with the share; Tactical and Siege jump from one share to the next as single seeds tip. So its share is now **0.1175**,
+where Auto wins half, as at the other holds; across the three, Tactical wins about 84% and Siege about 79%.
+
 **The look.**
 
 - Until its sheets are painted ([the prompts](assault-4-barrow-necropolis-art-prompts.md)), it is drawn with:
@@ -177,3 +189,82 @@ Siege most and Tactical (which silences them first) least, so it widened the gap
 
 **Screenshots**: `docs/samples/assault-4/den-*.png`: Mid and the den at 360, 393 and 412; the rope bridge, the Fang Gate's road and the East
 Ford.
+
+## 3. Elder Root (the Wildwood)
+
+`src/sim/assault/maps/wildwood.ts` (`ELDER_ROOT`). The owner named it but gave no look, so it follows the camp overlook, which already
+paints the Wildwood's "Elder-root stronghold" (`src/art/camp/camp-wild.png`, its top row): an ancient forest grown into a fortress at
+dusk, its heart a vast hollow tree with a lit door.
+
+**The layout.** Up the phone from the Landing at the south corner:
+
+- **A black mire** from edge to edge, wider than the others' water (nine cells): two deep black channels with a slow marsh between them,
+  shallow water a walker wades. It is crossed by:
+  - the root bridge, over the whole mire, with its log barricade (the bridge fort) holding the far end by the ditch;
+  - the West Ford and the East Ford, where the channels can be waded.
+- **The forest**:
+  - the West and East Watch Trees on their knolls;
+  - the old shrine's ruins to the east, and the ferns (long grass);
+  - the snares across the road (the stake field's slowing ground);
+  - the boar runs under the east watch tree;
+  - the woodcutters' log piles (they burn), leaf tents and campfires;
+  - the old stones' knoll by the mire;
+  - the three pipers' rings (the war drums' part): stone circles where the satyrs pipe the grove into a frenzy.
+- **The rings**:
+  - the ditch, the bank and the ring of thorn hedge, with the Bramble Gate, two sally ports and the North Gate;
+  - the outer bailey's longhouses, bark huts (the fire arrows' targets), the brewers' fire and its oil, and the wolf pens;
+  - the root wall, its four corner towers and the Heartwood Gate;
+  - the Elder Root and the Throne of Roots at the top.
+- **Behind**: the Grove Trail, whose satyrs' camp sends the bands.
+
+**The garrison.** 200: 180 at 30 posts and 20 down the trail.
+
+- The rank and file are Grove Satyrs (the flankers); its heavies the revellers who heal their friends; its pens loose wolves (the Wildwood's
+  Wood Raider runs with them).
+- **The Wildwood draws no bows either.** Its archers' places are held by the snare-laying satyrs, who hunt the shooters: they come down from
+  their posts (`archersOnly` is false for it, as for the Den), and the grove hunts our shooters first (`huntShooters`, as the Den's pack).
+- A Thorn Warden takes an officer's place the Council cannot fill; the Grove Spearlord (the army's last boss) holds the throne while no
+  warchief sits.
+
+**The balance** (`npm run balance -- --assault wildwood --seeds 32`, the design party, a maxed castle, a full host). Its mark is level 85,
+ten levels above the Den's:
+
+| | share | Auto | Tactical | Siege |
+| --- | --- | --- | --- | --- |
+| first build | 0.14 | 0% | 47% | 50% |
+| | 0.12 | 16% | 78% | 69% |
+| | 0.11 | 16% | 97% | 91% |
+| and the grove hunts our shooters first | 0.10 | 38% | 100% | 97% |
+| | **0.105** | **28%** | **88%** | **97%** |
+| | 0.11 | 19% | 94% | 88% |
+| | 0.115 | 9% | 84% | 75% |
+| (tried: a marsh one cell wide, not three) | 0.11 | 25% | 75% | 88% |
+
+So its share is **0.105** (`HOLD_SHARE.wildwood`). Its spread is the Den's, wider: with no bows on its walls a careful advance (Tactical,
+Siege) wins most fights, while Auto, which splits over the three crossings, falls fast as the share rises. 0.105 is the closest these
+levers reach to the other holds overall. The narrower marsh was no kinder to Auto, so the mire keeps its width.
+
+**The look.**
+
+- Until its sheets are painted ([the prompts](assault-4-elder-root-art-prompts.md)), it is drawn with:
+  - the Orc sheets recoloured by `forest` in the cutter: the grass deepened to forest green, the stone and timber mossed, the red cloth to
+    leaf green, the fire kept;
+  - the Druids and Fae kits: the hedges, wattle fences, tree gate, longhouses, cottages, watch platforms, stone circles, shrines, mushroom
+    lanterns, carts, log piles, root bridge, oaks, birches, willows and mossy rocks;
+  - the Elder Root itself as the kit's great oak, grown huge, until its painting lands.
+- A green dusk over the field (`fieldGrade`), deeper at the foot; the minimap wears the forest's greens and the mire's black.
+- `docs/samples/assault-art/wildwood-kit.jpg` is the two kits' labelled contact sheet.
+
+**Tests.** `assault-elder-root`:
+
+- registered and named, the same each build, its own field, and sound (`fieldProblems`);
+- the mire a barrier but for the bridge and the fords;
+- the baileys opened only by the Bramble Gate and the Heartwood Gate;
+- 200 of the Wildwood's own, with no orc among them and the Grove Spearlord on the throne;
+- Auto plays an assault to its end, the same way twice;
+- the Warpath's bands are its own army;
+- no bows, and the grove hunts our shooters first.
+
+`assault-holds` now expects Elder Root's page built too, and the rest locked.
+
+**Screenshots**: `docs/samples/assault-4/elder-*.png`: Mid and the Elder Root at 360, 393 and 412; the root bridge.

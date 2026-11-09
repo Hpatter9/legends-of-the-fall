@@ -92,6 +92,12 @@ export function drawHoldMap(canvas: HTMLCanvasElement, army: string, size: numbe
       L: [150, 130, 90], C: [140, 118, 84], K: [138, 110, 62], T: [150, 92, 50], V: [112, 96, 80], R: [40, 74, 112], F: [80, 120, 160], Y: [130, 96, 60],
       D: [76, 62, 50], E: [120, 104, 86], P: [70, 50, 34], B: [196, 200, 206], S: [130, 134, 146], I: [206, 210, 218], M: [222, 226, 232], N: [104, 92, 64],
     });
+  // (Elder Root's: the deep forest, the black mire and its marsh, the hedge ring and the mossy grove within)
+  if (army === 'wildwood')
+    Object.assign(zoneCol, {
+      L: [120, 140, 96], C: [124, 120, 90], K: [56, 96, 52], T: [70, 116, 56], V: [96, 96, 80], R: [30, 44, 40], F: [62, 84, 70], Y: [110, 84, 52],
+      D: [52, 46, 36], E: [92, 96, 64], P: [40, 64, 34], B: [96, 108, 70], S: [90, 98, 86], I: [104, 120, 80], M: [124, 138, 96], N: [64, 84, 56],
+    });
   for (let i = 0; i < b.w * b.d; i++) {
     const t = b.tiles[i];
     const c = zoneCol[String.fromCharCode(map.zone[i])] ?? [100, 100, 100];
