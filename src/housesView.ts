@@ -32,6 +32,8 @@ import { menuBackdrop } from './menuBackdrops';
 export { SEASON_ICON, FATE_ICON, HOUSE_ICON, HEIRLOOM_ICON, LEGEND_ICON } from './dynastyArt';
 import { hasFallen, isLegend, mourningLeft, OATH, whyShadeHonour } from './sim/oath';
 import { openNemesisCard } from './nemesisView';
+// (TAVERN-25: the Elders' table, cut by tools/expansion/tavern-tables.py)
+import eldersTableUrl from './art/tavern/elders-table.png';
 /** Phase 7: the fallen's candle (the painted fate icon). */
 const fallenIcon = FATE_ICON.fallen;
 
@@ -739,6 +741,13 @@ export function openEldersTable(m: Meta, day = todayKey(), changed?: () => void)
   const seated = seatedToday(m, day);
   const menu = ornateMenu({ id: 'eldersTable', eyebrow: 'The tavern · The Hearth Hall', title: 'The Elders’ table', sub: seated.length ? `${seated.length} of ${HEIRS.SEATS} seats taken today` : 'the chairs wait' });
   menu.card.classList.add('hsCard');
+  // (TAVERN-25: the table itself over the card, PR #464's pixel art: six high-backed chairs, three candles and a clay pipe)
+  const art = document.createElement('img');
+  art.className = 'hsEldersArt';
+  art.src = eldersTableUrl;
+  art.alt = 'A long oak table with six high-backed chairs, three lit candles and a clay pipe.';
+  art.draggable = false;
+  menu.body.prepend(art);
   const reopen = () => {
     changed?.();
     menu.close();
