@@ -110,6 +110,12 @@ export function drawHoldMap(canvas: HTMLCanvasElement, army: string, size: numbe
       L: [120, 132, 100], C: [126, 120, 96], K: [80, 104, 70], T: [104, 90, 92], V: [100, 98, 96], R: [36, 66, 96], F: [80, 118, 150], Y: [180, 170, 150],
       D: [60, 54, 50], E: [96, 92, 90], P: [90, 84, 80], B: [150, 150, 156], S: [64, 64, 72], I: [170, 172, 180], M: [190, 192, 200], N: [86, 90, 76],
     });
+  // (Brimstone Gate's: the cinder waste, the lava, the obsidian ring and the black yards within)
+  if (army === 'infernal')
+    Object.assign(zoneCol, {
+      L: [110, 100, 92], C: [116, 100, 90], K: [72, 66, 64], T: [90, 70, 60], V: [84, 76, 72], R: [220, 90, 30], F: [170, 80, 40], Y: [60, 56, 60],
+      D: [44, 36, 34], E: [70, 60, 58], P: [40, 30, 32], B: [86, 72, 70], S: [50, 44, 50], I: [100, 84, 80], M: [120, 96, 88], N: [80, 64, 56],
+    });
   for (let i = 0; i < b.w * b.d; i++) {
     const t = b.tiles[i];
     const c = zoneCol[String.fromCharCode(map.zone[i])] ?? [100, 100, 100];

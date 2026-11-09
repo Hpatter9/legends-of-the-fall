@@ -9,5 +9,6 @@ import { DEN } from './maps/beasts';
 import { ELDER_ROOT } from './maps/wildwood';
 import { MAZE_HEART } from './maps/labyrinth';
 import { BONEFIRE_CRAG } from './maps/ogres';
+import { BRIMSTONE_GATE } from './maps/infernal';
 
-export const HOLDS: Readonly<Record<string, Blueprint>> = { [BLOODTUSK.army]: BLOODTUSK, [BARROW.army]: BARROW, [DEN.army]: DEN, [ELDER_ROOT.army]: ELDER_ROOT, [MAZE_HEART.army]: MAZE_HEART, [BONEFIRE_CRAG.army]: BONEFIRE_CRAG };
+export const HOLDS: Readonly<Record<string, Blueprint>> = { [BLOODTUSK.army]: BLOODTUSK, [BARROW.army]: BARROW, [DEN.army]: DEN, [ELDER_ROOT.army]: ELDER_ROOT, [MAZE_HEART.army]: MAZE_HEART, [BONEFIRE_CRAG.army]: BONEFIRE_CRAG, [BRIMSTONE_GATE.army]: BRIMSTONE_GATE };
