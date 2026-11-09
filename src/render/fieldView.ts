@@ -42,6 +42,7 @@ import * as LABYRINTH_ATLAS from './assaultLabyrinthAtlas';
 import * as OGRES_ATLAS from './assaultOgresAtlas';
 import * as INFERNAL_ATLAS from './assaultInfernalAtlas';
 import * as YOKAI_ATLAS from './assaultYokaiAtlas';
+import * as GOLEMS_ATLAS from './assaultGolemsAtlas';
 import { VFX, loadVfxArt } from './vfxArt';
 import { holdMapOf, blueprintOf } from '../sim/assault/assault';
 import { FieldLife } from './fieldLife';
@@ -84,9 +85,9 @@ const reducedMotion = (): boolean => (typeof window !== 'undefined' && window.ma
 export function fieldGrade(host: HTMLElement, army = 'orcs'): HTMLElement {
   const d = document.createElement('div');
   // (the Barrow Necropolis is moonlit: a cold light from the upper left, a deeper blue at the foot; the Howling Den has a low autumn sun
-  //  and the snow's cold blue at the foot; Elder Root is a green dusk under the canopy; the Heart of the Maze a warm evening; Bonefire Crag a cold night lit by fire; Brimstone Gate lit red from below; the Moonlit Shrine under a full moon)
-  const light = army === 'undead' ? 'rgba(160,200,255,.12)' : army === 'beasts' ? 'rgba(255,184,110,.13)' : army === 'wildwood' ? 'rgba(200,255,170,.10)' : army === 'labyrinth' ? 'rgba(255,170,90,.14)' : army === 'ogres' ? 'rgba(255,140,70,.12)' : army === 'infernal' ? 'rgba(255,90,40,.16)' : army === 'yokai' ? 'rgba(190,200,255,.12)' : 'rgba(255,200,130,.10)';
-  const foot = army === 'undead' ? 'rgba(18,26,60,.26)' : army === 'beasts' ? 'rgba(40,60,96,.22)' : army === 'wildwood' ? 'rgba(10,36,24,.3)' : army === 'labyrinth' ? 'rgba(60,30,40,.24)' : army === 'ogres' ? 'rgba(12,18,40,.34)' : army === 'infernal' ? 'rgba(50,8,8,.34)' : army === 'yokai' ? 'rgba(24,18,60,.3)' : 'rgba(30,36,70,.18)';
+  //  and the snow's cold blue at the foot; Elder Root is a green dusk under the canopy; the Heart of the Maze a warm evening; Bonefire Crag a cold night lit by fire; Brimstone Gate lit red from below; the Moonlit Shrine under a full moon; the Iron Foundry under smoke, furnace-lit)
+  const light = army === 'undead' ? 'rgba(160,200,255,.12)' : army === 'beasts' ? 'rgba(255,184,110,.13)' : army === 'wildwood' ? 'rgba(200,255,170,.10)' : army === 'labyrinth' ? 'rgba(255,170,90,.14)' : army === 'ogres' ? 'rgba(255,140,70,.12)' : army === 'infernal' ? 'rgba(255,90,40,.16)' : army === 'yokai' ? 'rgba(190,200,255,.12)' : army === 'golems' ? 'rgba(255,160,80,.12)' : 'rgba(255,200,130,.10)';
+  const foot = army === 'undead' ? 'rgba(18,26,60,.26)' : army === 'beasts' ? 'rgba(40,60,96,.22)' : army === 'wildwood' ? 'rgba(10,36,24,.3)' : army === 'labyrinth' ? 'rgba(60,30,40,.24)' : army === 'ogres' ? 'rgba(12,18,40,.34)' : army === 'infernal' ? 'rgba(50,8,8,.34)' : army === 'yokai' ? 'rgba(24,18,60,.3)' : army === 'golems' ? 'rgba(10,30,36,.32)' : 'rgba(30,36,70,.18)';
   d.style.cssText =
     'position:absolute;inset:0;pointer-events:none;z-index:1;' +
     `background:radial-gradient(120% 80% at 18% 8%,${light},rgba(0,0,0,0) 60%),linear-gradient(rgba(0,0,0,0) 60%,${foot});`;
@@ -139,7 +140,7 @@ interface HoldArt {
 }
 let hold: HoldArt | null = null;
 /** Each hold's atlas (`tools/assault/cut-sheets.py`): the same piece names in every one, so the field draws every hold by the same rules. */
-const ATLASES = { orcs: ORC_ATLAS, undead: UNDEAD_ATLAS, beasts: BEASTS_ATLAS, wildwood: WILDWOOD_ATLAS, labyrinth: LABYRINTH_ATLAS, ogres: OGRES_ATLAS, infernal: INFERNAL_ATLAS, yokai: YOKAI_ATLAS } as const;
+const ATLASES = { orcs: ORC_ATLAS, undead: UNDEAD_ATLAS, beasts: BEASTS_ATLAS, wildwood: WILDWOOD_ATLAS, labyrinth: LABYRINTH_ATLAS, ogres: OGRES_ATLAS, infernal: INFERNAL_ATLAS, yokai: YOKAI_ATLAS, golems: GOLEMS_ATLAS } as const;
 /** The hold whose art is loaded, and its atlas's pieces. */
 let holdArmy = '';
 let { SPRITES, DECALS, EDGES, FACES } = ORC_ATLAS as { SPRITES: typeof ORC_ATLAS.SPRITES; DECALS: readonly string[]; EDGES: readonly string[]; FACES: readonly string[] };

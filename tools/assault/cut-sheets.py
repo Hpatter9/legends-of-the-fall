@@ -17,7 +17,7 @@ Out: src/art/assault/<army>/{sprites,ground,edges,decals,faces}.webp and src/ren
 The report lists any cell whose picture strays from its footprint (its bottom too far above or below the diamond's bottom tip, or its
 middle off the foot point), for the art's notes.
 
-Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood|labyrinth|ogres|infernal|yokai] [--report]
+Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood|labyrinth|ogres|infernal|yokai|golems] [--report]
 """
 import json
 import os
@@ -632,6 +632,63 @@ def moonlit(a):
     silver = grey * np.array([0.84, 0.9, 1.04]) + (rgb - grey) * 0.35
     vermilion = mx[..., None] * np.array([1.0, 0.28, 0.16])
     out = np.where(leafy[..., None], night, np.where(red[..., None], vermilion, np.where(fire[..., None], rgb, silver)))
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+
+# ----- the Iron Foundry (phase 4): the Golem Forge's war foundry -----
+#
+# As for the others: the Orc profile's slots and names, its own sheets (docs/notes/assault-4-iron-foundry-art-prompts.md) and the Dwarves and
+# Machines kits. A borrowed Orc sheet is recoloured by `foundry`: the grass sooted to a dark green-grey, the stone and timber to slate and iron,
+# the red cloth to iron grey, the fire kept.
+GOLEMS_FILES = {
+    'orc-01-palisade.png': 'gol-01-iron-wall.png', 'orc-02-gates.png': 'gol-02-gates.png', 'orc-03-iron-gate.png': 'gol-03-furnace-gate.png',
+    'orc-04-faces.png': 'gol-04-faces.png', 'orc-05-ground.png': 'gol-05-ground.png', 'orc-06-transitions.png': 'gol-06-transitions.png',
+    'orc-07-keep.png': 'gol-07-keep.png', 'orc-08-wall-dressing.png': 'gol-08-wall-dressing.png', 'orc-09-camp.png': 'gol-09-landmarks.png',
+    'orc-10-camp-props.png': 'gol-10-props.png', 'orc-11-siege-ruins.png': 'gol-11-ruins.png', 'orc-12-river.png': 'gol-12-sluice.png',
+    'orc-13-decals.png': 'gol-13-decals.png',
+}
+SHEETS['golems'] = {
+    'sprites': {GOLEMS_FILES[k]: v for k, v in _orc['sprites'].items()},
+    'ground': (GOLEMS_FILES[_orc['ground'][0]], _orc['ground'][1]),
+    'edges': (GOLEMS_FILES[_orc['edges'][0]], _orc['edges'][1]),
+    'decals': (GOLEMS_FILES[_orc['decals'][0]], _orc['decals'][1]),
+    'faces': (GOLEMS_FILES[_orc['faces'][0]], _orc['faces'][1]),
+    'fallback': ('orc', {v: k for k, v in GOLEMS_FILES.items()}),
+    'shared': {'ladder', 'ram', 'trebuchet'},
+    'tint': lambda a, sheet, slot=None: foundry(a),
+    'kits': {
+        **_orc['kits'],
+        'kitSpikedWall': 'machines/iron_wall_run', 'kitSpikedCorner': 'machines/iron_wall_corner', 'kitSkullGate': 'machines/piston_gate',
+        'kitStakeFence': 'dwarves/chain_fence', 'longhouse': 'dwarves/great_hall', 'boneHut': 'dwarves/cottage', 'hideHut': 'machines/workshop',
+        'forge': 'dwarves/forge', 'forgeFire': 'dwarves/forge_fire', 'wargPen': 'dwarves/quarry', 'watchtower': 'dwarves/watchtower',
+        'lookout': 'dwarves/watchtower', 'warDrum': 'dwarves/forge_fire', 'skullTotem': 'dwarves/shrine', 'skullTorch': 'dwarves/brazier',
+        'spearSign': 'dwarves/signpost', 'bonfire': 'dwarves/forge_fire', 'weaponStall': 'dwarves/anvil_stall', 'warCart': 'dwarves/ore_cart',
+        'granary': 'dwarves/granary', 'meatRacks': 'machines/coil_stack', 'meatPile': 'dwarves/coal_heap', 'barrels': 'machines/oil_drums',
+        'chests': 'machines/metal_crates', 'stockpile': 'dwarves/stockpile', 'woodpile': 'machines/scrap_pile', 'well': 'dwarves/well',
+        'hides': 'dwarves/crates', 'logBridge': 'machines/girder_bridge', 'brazier': 'dwarves/brazier', 'pine1': 'dwarves/dead_pine',
+        'pine2': 'machines/iron_tree', 'gnarledTree': 'machines/dead_tree', 'bareTree': 'dwarves/dead_pine', 'thornBush': 'machines/cable_bush',
+        'boulders': 'dwarves/boulders', 'rocks': 'dwarves/rocks_a', 'darkRocks': 'machines/ore_rocks', 'darkRocksB': 'dwarves/crystals',
+        'rubblePile': 'dwarves/rubble',
+    },
+}
+
+
+def foundry(a):
+    """The Iron Foundry's stand-in: the grass sooted to a dark green-grey, the stone and timber to slate and iron, the red cloth to iron grey,
+    the fire kept."""
+    rgb = a[..., :3].astype(float) / 255
+    h, mx, sat = _hue(rgb)
+    fire = (mx > 0.72) & (h < 0.17) & (sat > 0.45)
+    red = ((h < 0.035) | (h > 0.94)) & (sat > 0.45)
+    leafy = (h > 0.12) & (h < 0.45) & (sat > 0.15) & ~fire
+    grey = rgb.mean(-1, keepdims=True)
+    soot = grey * np.array([0.82, 0.92, 0.84]) + (rgb - grey) * 0.35
+    slate = grey * np.array([0.86, 0.9, 0.96]) + (rgb - grey) * 0.3
+    iron = grey * np.array([0.72, 0.74, 0.8])
+    out = np.where(leafy[..., None], soot, np.where(red[..., None], iron, np.where(fire[..., None], rgb, slate)))
     res = a.copy()
     res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
     return res

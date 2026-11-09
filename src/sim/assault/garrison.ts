@@ -43,7 +43,7 @@ export const HOLD_MARK: Readonly<Record<string, number>> = { orcs: 55, undead: 6
 
 /** Each hold's own share (`ASSAULT.foeShare`'s part, by army): set so the bot does about as well at each hold's mark (`HOLD_MARK`) as at the
  *  others, by the balance tool (docs/notes/assault-4.md). */
-export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.1175, beasts: 0.14, wildwood: 0.095, labyrinth: 0.125, ogres: 0.095, infernal: 0.075, yokai: 0.07 };
+export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.1175, beasts: 0.14, wildwood: 0.095, labyrinth: 0.125, ogres: 0.095, infernal: 0.075, yokai: 0.07, golems: 0.0775 };
 /** The share a hold's garrison stands at: a tool's own, else the hold's. */
 export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare'>): number => input.foeShare ?? HOLD_SHARE[input.army] ?? ASSAULT.foeShare;
 
@@ -70,11 +70,14 @@ export const KINDS: Readonly<Record<string, Record<string, string>>> = {
   infernal: { G: 'hellImp', A: 'hellImp', B: 'hellDemon', W: WAR_WOLF.id },
   // (the Yokai's fox witches curse from afar: its archers; the tengu monks are its heavies; its pens loose the crow tengu, who fly)
   yokai: { G: 'yokaiFox', A: 'yokaiWitch', B: 'yokaiMonk', W: 'yokaiCrow' },
+  // (the Golem Forge draws no bows: its crystal golems hold the archers' places and stride down from them, its iron golems are its heavies,
+  //  and its bays loose the magma golems)
+  golems: { G: 'stoneGolem', A: 'crystalGolem', B: 'ironGolem', W: 'magmaGolem' },
 };
 /** The Orcs' roster's letters (the first hold's, kept for the tools). */
 export const KIND = KINDS.orcs;
 /** An officer's place the Council cannot fill takes this nameless officer, by army. */
-export const OFFICER: Readonly<Record<string, string>> = { orcs: 'orcChieftain', undead: 'boneCaptain', beasts: 'alphaWolf', wildwood: 'forestBoss1', labyrinth: 'gorgonQueen', ogres: 'shamanKing', infernal: 'devilLeader', yokai: 'nineTails' };
+export const OFFICER: Readonly<Record<string, string>> = { orcs: 'orcChieftain', undead: 'boneCaptain', beasts: 'alphaWolf', wildwood: 'forestBoss1', labyrinth: 'gorgonQueen', ogres: 'shamanKing', infernal: 'devilLeader', yokai: 'nineTails', golems: 'sapphireColossus' };
 /** The order the Council's ranks take the posts' leaders' places (4.2). */
 export const LIEUTENANT_POSTS = ['bridge', 'drumW', 'drumE', 'drumS', 'westTower', 'eastTower'] as const;
 export const CAPTAIN_POSTS = ['southGate', 'ironGate', 'throne', 'throne'] as const;

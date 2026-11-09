@@ -77,9 +77,16 @@ export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
     'The Moon Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
     'Hold the parade\'s camp on the Mountain Path, or burn every tent of it, and no more of the night parade comes down to the hold.',
   ],
+  golems: [
+    'A stone sluice runs from edge to edge: cross by the girder bridge (its barricade holds the far end) or by the two fords.',
+    'Break the three great steam hammers: while one pounds, the golems near it strike harder.',
+    'The forge draws no bows: its crystal golems hold the watchtowers and the bank, and stride down on whoever nears them. Golems are slow: let your shooters work.',
+    'The Furnace Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
+    'Hold the foundry\'s camp on the Ore Road, or burn every shed of it, and no more golems come down to the hold.',
+  ],
 };
 /** What each hold's drums are, in the page's words. */
-const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones', wildwood: 'pipers’ rings', labyrinth: 'horned altars', ogres: 'great bonefires', infernal: 'fire circles', yokai: 'great war drums' };
+const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones', wildwood: 'pipers’ rings', labyrinth: 'horned altars', ogres: 'great bonefires', infernal: 'fire circles', yokai: 'great war drums', golems: 'great steam hammers' };
 
 export interface HoldPage {
   army: string;

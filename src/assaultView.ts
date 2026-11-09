@@ -122,6 +122,12 @@ export function drawHoldMap(canvas: HTMLCanvasElement, army: string, size: numbe
       L: [96, 112, 120], C: [100, 104, 112], K: [52, 78, 80], T: [70, 96, 92], V: [86, 88, 96], R: [30, 50, 90], F: [70, 100, 140], Y: [190, 60, 50],
       D: [46, 50, 58], E: [90, 96, 106], P: [210, 210, 214], B: [130, 136, 146], S: [150, 154, 162], I: [168, 172, 180], M: [186, 190, 198], N: [64, 82, 82],
     });
+  // (the Iron Foundry's: the sooty cliff tops, the sluice, the iron ring and the foundry floors within)
+  if (army === 'golems')
+    Object.assign(zoneCol, {
+      L: [100, 104, 100], C: [104, 100, 96], K: [70, 82, 70], T: [84, 92, 84], V: [90, 86, 84], R: [34, 56, 70], F: [70, 100, 116], Y: [120, 110, 100],
+      D: [48, 46, 46], E: [86, 86, 90], P: [70, 72, 80], B: [110, 106, 104], S: [80, 82, 90], I: [130, 124, 118], M: [150, 142, 132], N: [76, 80, 72],
+    });
   for (let i = 0; i < b.w * b.d; i++) {
     const t = b.tiles[i];
     const c = zoneCol[String.fromCharCode(map.zone[i])] ?? [100, 100, 100];
