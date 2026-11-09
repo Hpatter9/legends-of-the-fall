@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.433.0',
+    date: '2026-11-09',
+    title: 'A ring of standing stones for duels',
+    notes: ['Nemesis duels are fought inside a painted ring of standing stones, and the Elders\' table card opens on its own painting.'],
+  },
+  {
     version: '0.432.0',
     date: '2026-11-09',
     title: 'Assault: the Iron Foundry',
