@@ -45,3 +45,35 @@ No building, floor, backdrop, fine texture or soft glow. Crisp square pixels,
 restrained palette, logical 192×128 grid doubled to 384×256, transparent
 padding and all parts visible. One image only.
 ```
+
+
+## Houses tapestry backdrop
+
+```text
+Repository hpatter9/legends-of-the-fall. Branch art/expansion-2.
+Paint ONE image: art-source/expansion/houses-backdrop.png, exact 1024x1536
+upright 2:3 PNG. Opaque full scene (this menu backdrop requires no transparency).
+Painterly pixel art in the game's muted medieval dark fantasy style.
+A great woven tapestry of a family tree hung in a stone hall: gold-thread
+branches spread from one root to many small empty shield-shaped frames.
+Candles in iron sconces either side cast warm amber light. Visible woven
+cloth texture, aged gold, deep umber and muted burgundy. Darken the edges
+and the middle so menu text reads over it. Keep the central vertical area
+quiet, low contrast and deeply shadowed, while the branching design remains
+legible around it. No people, no text, no letters or numbers, no shield emblems.
+```
+
+## Duel ring
+
+```text
+Repository hpatter9/legends-of-the-fall; branch art/expansion-2;
+output art-source/expansion/duel-ring.png. Paint ONE 640×320 transparent
+image in the game's dark medieval fantasy painterly pixel-art style.
+Use docs/samples/nemesis-4/duel-fight-412.png for the board angle.
+A square ring of low weathered grey menhirs on a 2:1 isometric tactics
+board, outlining a 5×5-tile square (each conceptual tile 128×64).
+Four straight diagonal sides, hollow transparent centre and exterior.
+Stones about a quarter tile high, occasional aged brass bands and moss
+at their feet. Stones only on the perimeter; no ground, tiles or text.
+Muted steel grey, aged brass and moss green, upper-left lighting.
+```

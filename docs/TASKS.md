@@ -1258,3 +1258,18 @@ EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. O
 - Completion: one 384×256 transparent side-view merchant table matching tavern prop pixels, palette, outlines and lighting; requested goods, canopy, lantern and book sign; no people/text; add to PR #464.
 - Status: in progress; runtime integration excluded.
 - Result: ready for review in [Expansion art 2 #464](https://github.com/Hpatter9/legends-of-the-fall/pull/464). One 384×256 source PNG, 32 colours, binary alpha and 2×2 pixel grid verified; visually reviewed. [Handoff](notes/expansion-2-hester.md). Runtime tests/build not run (source art only).
+
+### EXPANSION-2-HOUSES — Tapestry menu backdrop
+
+- Owner: Codex art chat. Branch/worktree: `art/expansion-2`, `/workspace/legends-of-the-fall`; PR #464.
+- Scope: one `art-source/expansion/houses-backdrop.png`, prompt and handoff documentation.
+- Direction: owner's supplied tapestry brief; opaque 1024×1536 painterly pixel art, branching gold family tree and empty shields, stone hall and amber sconces, dark centre/edges, no people or text.
+- Completion: exact PNG dimensions, visual review, commit and push to Expansion art 2.
+- Status: ready for review. PNG decode, 1024×1536 dimensions and opacity passed; finished art visually reviewed. Source art only; no runtime checks. [Handoff](notes/expansion-2-houses-backdrop.md).
+
+### EXPANSION-2-DUEL-RING — Repaint duel perimeter
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`.
+- Scope: one source image `art-source/expansion/duel-ring.png`, prompt and handoff records.
+- Completion: 640×320 transparent PNG; hollow 5×5 square at 2:1 isometric angle, low grey menhirs, occasional brass bands and moss, no ground/text; added to PR #464.
+- Status: complete; final image visually inspected, 640×320 RGBA and transparent centre/exterior verified. Source art only; no runtime checks. [Handoff](notes/expansion-2-duel-ring.md).
