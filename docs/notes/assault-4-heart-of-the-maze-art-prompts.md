@@ -81,6 +81,10 @@ This task paints ONE sheet: the ring of bronze-capped sandstone walls, in every 
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-01-ring-wall.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -158,6 +162,10 @@ This task paints ONE sheet: the ring's two great gates, in their siege states, a
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-02-gates.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -218,6 +226,10 @@ This task paints ONE sheet: the inner wall's great Bronze Gate, the postern and 
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-03-bronze-gate.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -282,6 +294,10 @@ This task paints ONE sheet: the flat face textures the game shears onto every cl
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-04-faces.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered column.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -346,6 +362,10 @@ This task paints ONE sheet: sixteen seamless ground textures, from the dry hills
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-05-ground.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -401,6 +421,10 @@ This task paints ONE sheet: the overlays the game lays where two grounds meet.
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-06-transitions.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -452,6 +476,10 @@ This task paints ONE sheet: the Bull Temple, the champion's throne and the great
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-07-keep.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -510,6 +538,10 @@ This task paints ONE sheet: the inner wall's dressing, the stairs and small stru
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-08-wall-dressing.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -575,6 +607,10 @@ This task paints ONE sheet: the horned altars (the hold's war drums) and its gre
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-09-landmarks.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -633,6 +669,10 @@ This task paints ONE sheet: the labyrinth's small props the kits do not have.
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-10-props.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -698,6 +738,10 @@ This task paints ONE sheet: ruins, and the burnt states of the herders' camp.
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-11-ruins.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -754,6 +798,10 @@ This task paints ONE sheet: the canal, its stone bridge, fords and banks.
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-12-canal.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -823,6 +871,10 @@ This task paints ONE sheet: sixteen ground decals.
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-13-decals.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -867,6 +919,10 @@ This task paints ONE sheet: the maze walls of the approaches.
 Rules for this task:
 - Branch: art/assault-labyrinth. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/labyrinth/lab-14-maze-walls.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Heart of the Maze". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.

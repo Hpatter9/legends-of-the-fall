@@ -79,6 +79,10 @@ This task paints ONE sheet: the ring of riveted iron walls, in every state of th
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-01-iron-wall.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -156,6 +160,10 @@ This task paints ONE sheet: the ring's two great gates, in their siege states, a
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-02-gates.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -217,6 +225,10 @@ This task paints ONE sheet: the inner wall's great Furnace Gate, the postern and
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-03-furnace-gate.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -281,6 +293,10 @@ This task paints ONE sheet: the flat face textures the game shears onto every cl
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-04-faces.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered column.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -344,6 +360,10 @@ This task paints ONE sheet: sixteen seamless ground textures, from the cliff top
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-05-ground.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -399,6 +419,10 @@ This task paints ONE sheet: the overlays the game lays where two grounds meet.
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-06-transitions.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -450,6 +474,10 @@ This task paints ONE sheet: the Great Foundry, the Titan's anvil and the great b
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-07-keep.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -509,6 +537,10 @@ This task paints ONE sheet: the inner wall's dressing, the stairs and small stru
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-08-wall-dressing.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -575,6 +607,10 @@ This task paints ONE sheet: the great steam hammers (the hold's war drums) and i
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-09-landmarks.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -634,6 +670,10 @@ This task paints ONE sheet: the foundry's small props the kits do not have.
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-10-props.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -700,6 +740,10 @@ This task paints ONE sheet: ruins, and the burnt states of the foundry's camp.
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-11-ruins.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -756,6 +800,10 @@ This task paints ONE sheet: the sluice, its girder bridge, fords and banks.
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-12-sluice.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -826,6 +874,10 @@ This task paints ONE sheet: sixteen ground decals.
 Rules for this task:
 - Branch: art/assault-golems. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/golems/gol-13-decals.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Iron Foundry". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
