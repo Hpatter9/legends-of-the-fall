@@ -17,7 +17,7 @@ Out: src/art/assault/<army>/{sprites,ground,edges,decals,faces}.webp and src/ren
 The report lists any cell whose picture strays from its footprint (its bottom too far above or below the diamond's bottom tip, or its
 middle off the foot point), for the art's notes.
 
-Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood|labyrinth|ogres] [--report]
+Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood|labyrinth|ogres|infernal] [--report]
 """
 import json
 import os
@@ -489,6 +489,92 @@ def highland(a):
     cold = np.stack([r * 0.6 + grey[..., 0] * 0.15, g * 0.82, b * 0.7 + g * 0.12], -1)
     stone = grey * np.array([0.92, 0.96, 1.04]) + (rgb - grey) * 0.45 + 0.03
     out = np.where(leafy[..., None], cold, np.where((red | fire)[..., None], rgb, stone))
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+
+# ----- Brimstone Gate (phase 4): the Infernal Host's pit -----
+#
+# As for the others: the Orc profile's slots and names, its own sheets (docs/notes/assault-4-brimstone-gate-art-prompts.md) and the Blood Court
+# and Dwarves kits. A borrowed Orc sheet is recoloured by `pit` (by slot on the ground sheet): everything darkened to ash and black stone with
+# a red cast, the fire kept; and the water slot (`shallows`, which the field also lays under deep water) painted as lava, the shingle at its
+# edge as cooling crust.
+INFERNAL_FILES = {
+    'orc-01-palisade.png': 'inf-01-spike-wall.png', 'orc-02-gates.png': 'inf-02-gates.png', 'orc-03-iron-gate.png': 'inf-03-infernal-gate.png',
+    'orc-04-faces.png': 'inf-04-faces.png', 'orc-05-ground.png': 'inf-05-ground.png', 'orc-06-transitions.png': 'inf-06-transitions.png',
+    'orc-07-keep.png': 'inf-07-keep.png', 'orc-08-wall-dressing.png': 'inf-08-wall-dressing.png', 'orc-09-camp.png': 'inf-09-landmarks.png',
+    'orc-10-camp-props.png': 'inf-10-props.png', 'orc-11-siege-ruins.png': 'inf-11-ruins.png', 'orc-12-river.png': 'inf-12-lava.png',
+    'orc-13-decals.png': 'inf-13-decals.png',
+}
+SHEETS['infernal'] = {
+    'sprites': {INFERNAL_FILES[k]: v for k, v in _orc['sprites'].items()},
+    'ground': (INFERNAL_FILES[_orc['ground'][0]], _orc['ground'][1]),
+    'edges': (INFERNAL_FILES[_orc['edges'][0]], _orc['edges'][1]),
+    'decals': (INFERNAL_FILES[_orc['decals'][0]], _orc['decals'][1]),
+    'faces': (INFERNAL_FILES[_orc['faces'][0]], _orc['faces'][1]),
+    'fallback': ('orc', {v: k for k, v in INFERNAL_FILES.items()}),
+    'shared': {'ladder', 'ram', 'trebuchet'},
+    'tint': lambda a, sheet, slot=None: lava(a) if slot == 'shallows' else crust(a) if slot == 'shingle' else pit(a),
+    'kits': {
+        **_orc['kits'],
+        'kitSpikedWall': 'bloodcourt/stone_wall_run', 'kitSpikedCorner': 'bloodcourt/stone_wall_corner', 'kitSkullGate': 'bloodcourt/gatehouse',
+        'kitStakeFence': 'bloodcourt/iron_fence', 'longhouse': 'bloodcourt/longhouse', 'boneHut': 'bloodcourt/cottage', 'hideHut': 'bloodcourt/workshop',
+        'forge': 'dwarves/forge', 'forgeFire': 'dwarves/forge_fire', 'wargPen': 'bloodcourt/blood_farm', 'watchtower': 'bloodcourt/watchtower',
+        'lookout': 'dwarves/watchtower', 'skullTotem': 'bloodcourt/crypt', 'skullTorch': 'bloodcourt/lantern_post', 'spearSign': 'bloodcourt/banner',
+        'weaponStall': 'bloodcourt/market_stall', 'warCart': 'bloodcourt/carriage', 'granary': 'bloodcourt/granary', 'barrels': 'bloodcourt/barrels',
+        'chests': 'bloodcourt/coffins', 'stockpile': 'bloodcourt/stockpile', 'woodpile': 'bloodcourt/dead_woodpile', 'well': 'bloodcourt/well',
+        'logBridge': 'bloodcourt/stone_bridge', 'brazier': 'bloodcourt/brazier', 'pine1': 'bloodcourt/dead_oak', 'pine2': 'dwarves/dead_pine',
+        'gnarledTree': 'bloodcourt/dead_oak', 'bareTree': 'dwarves/dead_pine', 'thornBush': 'bloodcourt/thorn_bush', 'boulders': 'dwarves/boulders',
+        'rocks': 'bloodcourt/rocks', 'darkRocks': 'dwarves/rocks_b', 'darkRocksB': 'dwarves/coal_heap', 'meatPile': 'dwarves/ore_pile',
+    },
+}
+
+
+def _hue(rgb):
+    mx = rgb.max(-1)
+    mn = rgb.min(-1)
+    c = mx - mn
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    h = np.where(c == 0, 0, np.where(mx == r, ((g - b) / np.maximum(c, 1e-6)) % 6, np.where(mx == g, (b - r) / np.maximum(c, 1e-6) + 2, (r - g) / np.maximum(c, 1e-6) + 4))) / 6
+    return h, mx, c / np.maximum(mx, 1e-6)
+
+
+def pit(a):
+    """The pit's stand-in: everything darkened towards ash and black stone with a red cast, the red cloth and the fire kept."""
+    rgb = a[..., :3].astype(float) / 255
+    h, mx, sat = _hue(rgb)
+    fire = (mx > 0.72) & (h < 0.17) & (sat > 0.45)
+    red = ((h < 0.035) | (h > 0.94)) & (sat > 0.45)
+    grey = rgb.mean(-1, keepdims=True)
+    ash = grey * np.array([0.78, 0.66, 0.64]) + (rgb - grey) * 0.2
+    out = np.where((red | fire)[..., None], rgb, ash)
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+def lava(a):
+    """Lava, from the water's ripples: their light and shade kept as the flow's, in molten orange to yellow, dark crust in the shade."""
+    rgb = a[..., :3].astype(float) / 255
+    grey = rgb.mean(-1, keepdims=True)
+    lo, hi = grey.min(), grey.max()
+    k = (grey - lo) / max(hi - lo, 1e-6)
+    out = np.array([0.55, 0.12, 0.02]) + k * np.array([0.45, 0.62, 0.2])
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+def crust(a):
+    """Cooling crust: the stones dark, their gaps glowing."""
+    rgb = a[..., :3].astype(float) / 255
+    grey = rgb.mean(-1, keepdims=True)
+    lo, hi = grey.min(), grey.max()
+    k = (grey - lo) / max(hi - lo, 1e-6)
+    glow = np.array([0.85, 0.28, 0.05]) * (1 - k) ** 8 * 0.8
+    out = grey * np.array([0.5, 0.42, 0.4]) + glow
     res = a.copy()
     res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
     return res

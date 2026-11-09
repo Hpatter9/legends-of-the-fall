@@ -498,3 +498,75 @@ So the shares are now: the Necropolis 0.1175 (it did not need to move), the Den 
 four neighbouring shares, as single seeds tip), so 0.14 is the middle of them: over 0.135 to 0.1475 together it wins about 70%, 74% and 79%.
 Auto does better there than at the other holds, as the lever keeps the host together against a garrison of melee wolves at a lower level.
 (The share tables in sections 2 to 5 above were measured at the old marks.)
+
+## 6. Brimstone Gate (the Infernal Host)
+
+`src/sim/assault/maps/infernal.ts` (`BRIMSTONE_GATE`). The owner named it but gave no look, so it follows the camp overlook, which already
+paints the Infernal Host's "Infernal mustering grounds" (`src/art/camp/camp-arcane.png`, its top row): a fortress of the pit among volcanic
+crags, rivers of lava, spiked black walls and towers, a glowing horned gate and circles of fire.
+
+**The layout.** Up the phone from the Landing at the south corner:
+
+- **A river of lava** from edge to edge, bending slowly. In the sim it is the engine's deep water (a barrier but for the crossings), drawn as
+  lava: the cutter paints the water slot as molten lava and the shingle beside it as cooling crust, and the field washes the deep tiles a
+  dark red (`fieldView.ts`, by army). It is crossed by:
+  - the chain bridge, with its barricade (the bridge fort) holding the far end;
+  - the West and East crust fords, where the lava has crusted over enough to wade.
+- **The cinder waste**:
+  - the West and East Watchtowers on their crags;
+  - the old temple's ruins to the east, and the cinder scrub (long grass);
+  - the spike pits across the road (the stake field's slowing ground);
+  - the hound pits under the east watchtower;
+  - the slag heaps (they burn), war tents and fires;
+  - the obsidian knoll by the lava;
+  - the three fire circles (the war drums' part), where imps chant up the host's fury.
+- **The rings**:
+  - the ditch, the bank and the ring of spiked obsidian walls, whose south gate is the Brimstone Gate itself, with two sally ports and the
+    North Gate;
+  - the outer bailey's barracks, armouries (the fire arrows' targets), the pit forge and its pitch, and the imp pens;
+  - the basalt wall, its four corner towers and the Infernal Gate;
+  - the Demon Spire and the Burning Throne at the top.
+- **Behind**: the Ash Road, whose camp sends the bands.
+
+**The garrison.** 200: 180 at 30 posts and 20 down the road.
+
+- The rank and file are Imps (they flurry and set alight), its heavies the Demons, who fly (the walls do not keep them in), and its pits
+  loose hellhounds (the war-wolves).
+- **The host draws no bows** (`bowless`): the imps in the archers' places charge from them, and Auto keeps the host together here.
+- A Devil Leader takes an officer's place the Council cannot fill; the Demon Lord (the army's last boss) holds the throne while no warchief
+  sits.
+
+**The balance** (32 seeds, at its mark, 100):
+
+| share | 0.065 | 0.07 | **0.075** | 0.08 | 0.10 |
+| --- | --- | --- | --- | --- | --- |
+| Auto | 69% | 84% | **41%** | 28% | 13% |
+| Tactical | 97% | 94% | **88%** | 69% | 19% |
+| Siege | 91% | 97% | **91%** | 78% | 34% |
+
+So its share is **0.075** (`HOLD_SHARE.infernal`), the lowest yet: even at the level cap the Infernal Host is the hardest of the holds, its
+flying demons over every wall.
+
+**The look.**
+
+- Until its sheets are painted ([the prompts](assault-4-brimstone-gate-art-prompts.md)), it is drawn with:
+  - the Orc sheets recoloured by `pit` in the cutter: everything darkened to ash and black stone with a red cast, the red cloth and the fire
+    kept; the water slot as `lava`, the shingle as `crust`;
+  - the Blood Court and Dwarves kits: the black stone walls, iron fences, gatehouse, longhouse, cottage, workshop, crypt, watchtowers,
+    braziers, lantern posts, banners, carriage, coffins, forge and forge fire, stone bridge, dead oaks and pines, rocks and coal heaps.
+- A red light from below over the field (`fieldGrade`); the minimap wears ash and black, the lava orange.
+- `docs/samples/assault-art/infernal-kit.jpg` is the two kits' labelled contact sheet.
+
+**Tests.** `assault-brimstone`:
+
+- registered and named, the same each build, its own field, and sound (`fieldProblems`);
+- the lava a barrier but for the bridge and the fords;
+- the baileys opened only by the Brimstone Gate and the Infernal Gate;
+- 200 of the Infernal Host's own, with no orc among them and the Demon Lord on the throne;
+- Auto plays an assault to its end, the same way twice;
+- the Warpath's bands are its own army;
+- the host draws no bows, its archers' places hunt, and its demons fly.
+
+`assault-holds` now expects Brimstone Gate's page built too, and the rest locked.
+
+**Screenshots**: `docs/samples/assault-4/brim-*.png`: Mid and the Demon Spire at 360, 393 and 412; the chain bridge over the lava.

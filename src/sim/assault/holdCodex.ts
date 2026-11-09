@@ -63,9 +63,16 @@ export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
     'The Skull Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
     'Hold the clans\' camp on the Mountain Track, or burn every tent of it, and no more of the clans come down to the hold.',
   ],
+  infernal: [
+    'A river of lava runs from edge to edge: cross by the chain bridge (its barricade holds the far end) or by the two crust fords.',
+    'Break the three fire circles: while the imps chant in one, the host near it strikes harder.',
+    'The demons fly: walls do not keep them in, and they come over the ring at whoever is weakest.',
+    'The Infernal Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
+    'Hold the host\'s camp on the Ash Road, or burn every tent of it, and no more of the pit comes down to the hold.',
+  ],
 };
 /** What each hold's drums are, in the page's words. */
-const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones', wildwood: 'pipers’ rings', labyrinth: 'horned altars', ogres: 'great bonefires' };
+const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones', wildwood: 'pipers’ rings', labyrinth: 'horned altars', ogres: 'great bonefires', infernal: 'fire circles' };
 
 export interface HoldPage {
   army: string;
