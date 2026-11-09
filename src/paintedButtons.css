@@ -386,3 +386,80 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.dim,
 #party #ptSearch { padding-left: 38px; background: #0d1914 url(ui/buttons/g-search.webp) 7px center / 24px 24px no-repeat; }
 /* the War Council's March orders: its map and pin */
 #party .ptOrders::before { content: ''; display: inline-block; width: 26px; height: 26px; margin-right: 5px; vertical-align: middle; background: url(ui/buttons/march-orders.webp) center / contain no-repeat; }
+
+/* --------------------------------------------------------------------------
+   12. THE RUNE BENCH AND ITS PULL BAR (RUNE-BENCH-LOOK, docs/notes/rune-bench-look.md): the owner's ask, "Change the look of the pull bar
+       and the rune bench. They seem lacking and too code drawn." The bar is a painted plaque standing on end, the painted chevron the way
+       it goes, its merges ready on the painted count seal (the plaque warms and shimmers while there are any); the rune side is a tray in
+       the plaque's wood and brass, its tiles the choice plates with each stone in a painted ring socket (bronze, gold when its twin is in
+       the bag), its name on the lit tab plate, Merge all on the amber plate, the locked Auto with the painted lock medallion. The tray's
+       own paintings (docs/notes/rune-bench-art-prompts.md) drop in over these by file name when they come (tools/rune-bench/import-art.py).
+   -------------------------------------------------------------------------- */
+#benchGrip, #benchGrip:active:not(:disabled) {
+  border: 1px solid transparent; border-radius: 0; background: none; padding: 20px 0 6px; min-height: 0; color: #f3e3b8; text-shadow: 0 1px 2px #000;
+  --pbw: 8px 7px; border-image: url(ui/buttons/plaque.webp) var(--plaque-slice) / var(--pbw) / 0 stretch;
+  box-shadow: none; filter: drop-shadow(-2px 0 5px rgb(0 0 0 / .6)); transform: translateY(-50%);
+}
+#benchView.pulling #benchGrip { border-image: url(ui/buttons/plaque-ready.webp) var(--plaque-slice) / var(--pbw) / 0 stretch; box-shadow: none; filter: drop-shadow(0 0 8px rgb(255 214 110 / .75)); }
+#benchGrip .gripRidges { display: none; }
+#benchGrip .gripArrow { width: 20px; height: 20px; flex: none; font-size: 0; color: transparent; background: url(ui/buttons/g-back.webp) center / contain no-repeat; filter: drop-shadow(0 1px 1px #000a); }
+#benchGrip[aria-pressed='true'] .gripArrow { background-image: url(ui/buttons/g-right.webp); }
+#benchGrip .gripWord { font: 700 10px/1 var(--body); letter-spacing: .08em; color: #f5e4ba; }
+#benchGrip #gripBadge {
+  top: -9px; width: 24px; min-width: 24px; height: 24px; padding: 0; border-radius: 50%; box-shadow: none; text-align: center;
+  background: url(ui/buttons/badge-count.webp) center / contain no-repeat; color: #fff; font: 700 11px/24px var(--body); text-shadow: 0 1px 1px #000;
+}
+/* (merges ready: the plaque breathes a warm glow and a glint runs down it, as the painted scenes' embers do) */
+#benchGrip:has(#gripBadge:not([hidden])) { animation: rbGripGlow 2.4s ease-in-out infinite; }
+#benchGrip:has(#gripBadge:not([hidden]))::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 30%; pointer-events: none; mix-blend-mode: screen;
+  background: linear-gradient(180deg, transparent, rgb(255 226 150 / .45), transparent); animation: rbGlint 2.4s ease-in-out infinite;
+}
+@keyframes rbGripGlow { 50% { filter: drop-shadow(-2px 0 5px rgb(0 0 0 / .6)) drop-shadow(0 0 7px rgb(255 205 110 / .7)); } }
+@keyframes rbGlint { 0% { transform: translateY(-40%); opacity: 0; } 30% { opacity: 1; } 60%, 100% { transform: translateY(260%); opacity: 0; } }
+
+/* the tray: the plaque's wood and brass round the tiles, over the ornate menu's well */
+#runeBench .rbGrid {
+  border: 1px solid transparent; --pbw: 9px 10px; border-image: url(ui/buttons/plaque.webp) var(--plaque-slice) / var(--pbw) / 0 stretch;
+  padding: 5px 6px; gap: 4px; box-shadow: var(--ornate-well), 0 3px 6px #0008;
+}
+#runeBench .rbHead { gap: 4px; }
+#runeBench .rbTitle {
+  flex: 1 1 auto !important; min-width: 0; padding: 7px 6px 4px; text-align: center; border: 1px solid transparent; color: #ffe7a8 !important; font: 700 12px/1.1 var(--body);
+  --pbw: 9px 8px 5px 8px; border-image: url(ui/buttons/tabplate-lit.webp) var(--tabplate-slice) / var(--pbw) / 0 stretch; text-shadow: 0 1px 2px #000;
+}
+#runeBench .rbHead .rbBtn { --pbw: 10px 10px; padding: 2px 4px; }
+/* (Satchel is its painted satchel alone, the word kept for a reader, so the bench's name has the room at 360 wide) */
+#runeBench .rbHead .rbSatchel { font-size: 0; padding: 2px 6px; }
+#runeBench .rbHead .rbSatchel::before { margin-right: 0; }
+#runeBench .rbMerge:not(:disabled) {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; color: #fff7e2; text-shadow: 0 1px 2px #2a1600, 0 0 5px #2a1600; border-image: url(ui/buttons/plate-primary.webp) var(--plate-primary-slice) / var(--pbw) / 0 stretch;
+}
+#runeBench .rbMerge:active:not(:disabled) { border-image: url(ui/buttons/plate-primary-down.webp) var(--plate-primary-slice) / var(--pbw) / 0 stretch; }
+#runeBench .rbAuto.locked::before { content: none; }
+#runeBench .rbAuto .rbLock { width: 24px; height: 24px; margin-right: 3px; vertical-align: middle; filter: saturate(.7) drop-shadow(0 1px 1px #000a); }
+
+/* the tiles: a choice plate each, the stone in a painted ring socket */
+#runeBench .rbTile {
+  isolation: isolate; height: 52px; border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none; outline: none; padding: 1px 2px 3px;
+  --pbw: 7px 8px; border-image: url(ui/buttons/plate-choice.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch;
+}
+#runeBench .rbTile .rnStone.rn-big::before {
+  content: ''; position: absolute; inset: -5px; z-index: -1; border-radius: 50%; background: url(ui/buttons/orb-bronze.webp) center / contain no-repeat;
+}
+#runeBench .rbTile.ready .rnStone.rn-big::before { background-image: url(ui/buttons/orb-gold.webp); }
+#runeBench .rbTile small { color: #e9dcbc; text-shadow: 0 1px 1px #000; }
+#runeBench .rbTile .rnStone.twin:not(.empty) { box-shadow: none; filter: drop-shadow(0 0 5px #ffd24a); }
+#runeBench .rbTile .rnStone .rnTwin { width: 18px; height: 18px; padding: 0; top: -7px; right: -11px; border-radius: 50%; background: url(ui/buttons/badge-count.webp) center / contain no-repeat; color: #fff; font: 700 9px/18px var(--body); text-align: center; text-shadow: 0 1px 1px #000; }
+#runeBench .rbTile.empty { opacity: 1; border-image: url(ui/buttons/plate-choice-locked.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch; }
+#runeBench .rbTile.empty .rnStone.rn-big { width: 30px; height: 30px; margin: 6px; transform: none; border: 0; border-radius: 50%; box-shadow: none; background: url(ui/buttons/orb-bronze.webp) center / contain no-repeat; opacity: .5; filter: grayscale(.5); }
+#runeBench .rbTile.sel { outline: none; border-image: url(ui/buttons/plate-choice-on.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch; box-shadow: none; filter: drop-shadow(0 0 6px #e8c66acc); }
+#runeBench .rbTile.ready { outline: none; }
+#runeBench .rbTile.mergeCan { outline: none; border-image: url(ui/buttons/plate-choice-on.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch; animation: rbCan 1.4s ease-in-out infinite; }
+#runeBench .rbTile.mergeHot { outline: none; border-image: url(ui/buttons/plate-choice-on.webp) var(--plate-choice-slice) / var(--pbw) / 0 stretch; transform: scale(1.06); box-shadow: none; filter: drop-shadow(0 0 9px rgb(var(--e8-rgb) / .95)) brightness(1.12); animation: none; }
+@keyframes rbCan { 50% { filter: drop-shadow(0 0 7px rgb(255 214 110 / .85)) brightness(1.1); } }
+@media (prefers-reduced-motion: reduce) {
+  #benchGrip:has(#gripBadge:not([hidden])), #runeBench .rbTile.mergeCan { animation: none; }
+  #benchGrip:has(#gripBadge:not([hidden]))::after { content: none; }
+  #runeBench .rbTile.mergeHot { transform: none; }
+}

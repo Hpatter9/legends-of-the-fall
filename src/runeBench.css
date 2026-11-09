@@ -1,7 +1,7 @@
 /* RUNE-BENCH (docs/notes/rune-bench.md): the pull bar and the bench's rune side. The bench's window holds a track two benches wide: the
    heroes on the left half, the runes on the right; `--p` (0 heroes, 1 runes) slides the track and carries the bar from the right edge to
-   the left. The bar, the rune side's backing and the tiles' frames are plain stand-ins over the combat skin's own frames until their
-   paintings come (docs/notes/rune-bench-art-prompts.md). */
+   the left. The painted look (the bar a plaque on end, the tray, the tiles' plates and ring sockets) is in paintedButtons.css, section 12,
+   loaded last; the bench's own paintings drop in over it from runeBenchArt.css (docs/notes/rune-bench-look.md). These are the shapes. */
 #benchView { position: relative; overflow: hidden; --p: 0; --grip: 28px; }
 #benchTrack { display: flex; width: 200%; transform: translateX(calc(-50% * var(--p))); will-change: transform; }
 #benchTrack > #bench, #benchTrack > #runeBench { flex: 0 0 50%; box-sizing: border-box; min-width: 0; }

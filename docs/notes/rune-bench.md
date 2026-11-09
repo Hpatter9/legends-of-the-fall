@@ -36,9 +36,9 @@ only written outside the armies now, so it is not what is counted.)
 
 ## Art
 
-New pieces are stand-ins until painted (the owner's new rule): the bar, the rune side's backing, the tiles' frames and the lock. The
-prompts are in [rune-bench-art-prompts.md](rune-bench-art-prompts.md) (branch `art/rune-bench`, files under
-`art-source/rune-bench/`). The tiles use the combat skin's own `ui/combat-skill.png` frame and the painted rune stones meanwhile.
+The bar and the bench now wear the game's painted plates, medallions and ring sockets ([rune-bench-look.md](rune-bench-look.md));
+the art made for the bench itself is one prompt in [rune-bench-art-prompts.md](rune-bench-art-prompts.md) (branch `art/rune-bench`,
+files under `art-source/rune-bench/`), dropped in by `tools/rune-bench/import-art.py`.
 
 ## Checks
 
