@@ -13,6 +13,8 @@ import compassUrl from './art/rooms/compass.webp';
 import crossedSwordsUrl from './art/rooms/crossed-swords.webp';
 import plinthUrl from './art/rooms/plinth.webp';
 import lecternUrl from './art/rooms/lectern.webp';
+import drillBloodedUrl from './art/rooms/drill-blooded.webp';
+import drillVeteranUrl from './art/rooms/drill-veteran.webp';
 
 const ICONS: Record<string, string> = {
   'anvil': anvilUrl,
@@ -29,6 +31,8 @@ const ICONS: Record<string, string> = {
   'crossed-swords': crossedSwordsUrl,
   'plinth': plinthUrl,
   'lectern': lecternUrl,
+  'drill-blooded': drillBloodedUrl,
+  'drill-veteran': drillVeteranUrl,
 };
 
 /** The picture of a room's icon, for a card's Rooms strip (greyed by CSS until the room is open). */
