@@ -271,5 +271,68 @@
    "speed:40x40"
   ],
   "errors": []
+ },
+ "switches-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "gameplay-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "season-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "switches-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "gameplay-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "season-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "switches-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "gameplay-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "season-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
  }
 }

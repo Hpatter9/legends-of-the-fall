@@ -5,7 +5,7 @@
 // sim's own functions.
 
 import { heroesTabMark } from './heroesTabMark';
-import { medal, pbUrl } from './paintedButton';
+import { glyphWord, medal, pbUrl } from './paintedButton';
 import { openMuster, openAssaultResult } from './assaultView';
 import { runAssault } from './assaultScene';
 import { claimTribute } from './sim/assault/economy';
@@ -285,6 +285,7 @@ export class Home {
     $('hmTrophy').addEventListener('click', () => this.openAchievements());
     $('hmGear').addEventListener('click', () => openSettings());
     $('hmSubBack').addEventListener('click', () => this.closeSub());
+    glyphWord($('hmSubBack'));
     $('hmSheet').addEventListener('click', (e) => e.target === $('hmSheet') && this.closeSheet());
     // (the builders' clock: once a second while something is going up, the countdowns tick and a finished build is raised)
     setInterval(() => this.tickWorks(), 1000);

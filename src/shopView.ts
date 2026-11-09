@@ -2,6 +2,7 @@
 // what is left of today's stock and the price; a tap on Buy pays and plays the usual chest opening (`showChest`). The rules are in
 // `src/sim/chestShop.ts`; this only reads and changes the meta through them.
 
+import { glyphWord } from './paintedButton';
 import { chestPicture, showChest } from './chestStash';
 import { ICONS, icon } from './menuArt';
 import { todayKey } from './modes';
@@ -114,6 +115,7 @@ export function openShop(m: Meta, onChange: () => void): void {
     purse.append(crowns, stones);
     head.append(purse);
     const close = el('button', 'shopClose', '‹ Back');
+    glyphWord(close);
     close.addEventListener('click', () => {
       root.remove();
       onChange();

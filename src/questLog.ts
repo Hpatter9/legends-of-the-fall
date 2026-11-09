@@ -6,6 +6,7 @@
 // The Eidolons tab (EIDOLON-CHAINS): the six Eidolons' chains, their pieces and the part going (`eidolonChainView.ts`); it shows once
 // the first chain has been offered.
 
+import { glyphWord } from './paintedButton';
 import { autoButton } from './autoAsk';
 import { canAutoQuest } from './sim/autoReplay';
 import { heroName } from './sim/heroNames';
@@ -65,6 +66,7 @@ export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogH
   const head = el('div', 'qlHead');
   head.append(el('h3', '', 'Quests'));
   const shut = el('button', 'qlShut', '‹ Back');
+  glyphWord(shut);
   shut.setAttribute('aria-label', 'Close the quest log');
   shut.addEventListener('click', hooks.close);
   head.append(shut);

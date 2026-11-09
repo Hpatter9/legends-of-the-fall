@@ -12,7 +12,7 @@ const PORT = Number(process.env.PORT ?? 8651);
 const root = 'out/web';
 const args = process.argv.slice(2);
 const prefix = args.shift() ?? 'after';
-const ALL_SCENES = ['camp', 'tavern', 'services', 'recruit', 'castle', 'spells', 'armies', 'achievements', 'settings', 'stall', 'deploy', 'fight'];
+const ALL_SCENES = ['camp', 'tavern', 'services', 'recruit', 'castle', 'spells', 'armies', 'achievements', 'settings', 'switches', 'gameplay', 'season', 'stall', 'deploy', 'fight'];
 const want = args.length ? args : ALL_SCENES;
 const SIZES = (process.env.SIZES ?? '393,360,412').split(',').map((w) => ({ 393: [393, 852], 360: [360, 780], 412: [412, 915] })[w]);
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css' };
@@ -56,7 +56,7 @@ async function open(w, h) {
 }
 
 const tap = (page, sel, i = 0) => page.evaluate(([sel, i]) => document.querySelectorAll(sel)[i]?.dispatchEvent(new MouseEvent('click', { bubbles: true })), [sel, i]);
-const tapText = (page, sel, text) => page.evaluate(([sel, text]) => [...document.querySelectorAll(sel)].find((b) => b.textContent.includes(text))?.click(), [sel, text]);
+const tapText = (page, sel, text) => page.evaluate(([sel, text]) => [...document.querySelectorAll(sel)].find((b) => b.textContent.toLowerCase().includes(text.toLowerCase()))?.click(), [sel, text]);
 
 async function army(page, go) {
   await page.evaluate(() => {
@@ -105,7 +105,20 @@ for (const [w, h] of SIZES) {
       else if (scene === 'armies') { await tap(page, '#hmBattle'); await page.waitForTimeout(900); }
       else if (scene === 'achievements') { await tap(page, '#hmTrophy'); await page.waitForTimeout(900); }
       else if (scene === 'settings') { await tap(page, '#hmGear'); await page.waitForTimeout(900); }
-      else if (scene === 'stall') {
+      else if (scene === 'switches' || scene === 'gameplay') {
+        await tap(page, '#hmGear');
+        await page.waitForTimeout(600);
+        await tap(page, `.setMenu[data-page="${scene === 'switches' ? 'display' : 'gameplay'}"]`);
+        await page.waitForTimeout(600);
+        // (the gameplay page: down to its paired choices, the widest row)
+        if (scene === 'gameplay') await page.evaluate(() => [...document.querySelectorAll('.setting')].find((x) => x.textContent.includes('Showcase again'))?.scrollIntoView({ block: 'center' }));
+        await page.waitForTimeout(200);
+      } else if (scene === 'season') { await tap(page, '#hmSeason'); await page.waitForTimeout(900); }
+      else if (scene === 'forms') {
+        await army(page, false);
+        await page.evaluate(() => { const f = document.getElementById('formBtn'); if (f) { f.hidden = false; f.click(); } });
+        await page.waitForTimeout(700);
+      } else if (scene === 'stall') {
         await tap(page, '.hmTab', 1);
         await page.waitForTimeout(700);
         await tap(page, '.ptSectionTab', 1);

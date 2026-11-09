@@ -26,7 +26,7 @@ export type PbIcon = (typeof PB_ICONS)[keyof typeof PB_ICONS][number];
 export const PB_PLATES = ['plate-primary', 'plate-primary-down', 'plate-primary-off', 'plate-secondary', 'plate-secondary-down', 'plate-secondary-off', 'plate-danger', 'plate-danger-down', 'plate-danger-off', 'plate-choice', 'plate-choice-on', 'plate-choice-locked', 'chip', 'chip-lit', 'chip-warn', 'tabplate', 'tabplate-lit', 'tabplate-down', 'plaque', 'plaque-ready', 'plaque-locked', 'switch-off', 'switch-on', 'switch-off-dim'] as const;
 
 /** Every class this module puts on the page: each is styled in `paintedButtons.css` (test/painted-buttons.test.ts checks it). */
-export const PB_CLASSES = ['pbMedal', 'pbIco', 'pbBadge', 'pbPlate', 'pbPrimary', 'pbSecondary', 'pbDanger', 'pbChip', 'pbTab', 'pbPlaque', 'pbSwitch', 'pbChoice', 'pbWord', 'pbGlyph', 'lit', 'on', 'locked', 'warn', 'ready'] as const;
+export const PB_CLASSES = ['pbMedal', 'pbIco', 'pbBadge', 'pbPlate', 'pbPrimary', 'pbSecondary', 'pbDanger', 'pbChip', 'pbTab', 'pbPlaque', 'pbSwitch', 'pbChoice', 'pbWord', 'pbGlyph', 'pbGlyphed', 'lit', 'on', 'locked', 'warn', 'ready'] as const;
 
 /** The file of a painted picture or plate. */
 export const pbUrl = (name: PbIcon | (typeof PB_PLATES)[number]): string => `ui/buttons/${name}.webp`;
@@ -70,6 +70,16 @@ export interface MedallionOptions {
   lit?: boolean;
   cls?: string;
   onClick?: () => void;
+}
+
+/** A text button's way out in paint: "‹ Back" becomes the painted back chevron and "Back", "Close" the close glyph and "Close" (the
+ *  glyph is a picture with no words of its own, so the button's name is unchanged but for the "‹"). Anything else is left as it is. */
+export function glyphWord(b: HTMLElement): void {
+  const text = b.textContent ?? '';
+  const g: PbIcon | null = text.startsWith('‹ ') ? 'g-back' : text === 'Close' ? 'g-close' : null;
+  if (!g) return;
+  b.classList.add('pbGlyphed');
+  b.replaceChildren(medal(g, 'pbGlyph'), el('span', 'pbWord', g === 'g-back' ? text.slice(2) : text));
 }
 
 /** A round painted button: the medallion, a lit picture if it has one, and a badge slot (`setBadge`). At least 44 px, by the CSS. */
