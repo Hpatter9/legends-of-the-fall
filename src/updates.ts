@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.426.0',
+    date: '2026-11-09',
+    title: 'Assault: the Heart of the Maze',
+    notes: ['The labyrinth\'s hold: cross the dark canal, find a way through the sandstone maze under the gorgons\' bows, and break into the Bull Temple.'],
+  },
+  {
     version: '0.425.0',
     date: '2026-11-09',
     title: 'Assault: Auto keeps the host together',
