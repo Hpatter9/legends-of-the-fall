@@ -83,8 +83,10 @@ body[data-bench='runes'] #mergeAll { display: none !important; }
 #benchTrack > #runeBench::-webkit-scrollbar { display: none; }
 #benchTrack > #runeBench .rbGrid { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; padding: 2px 4px; }
 #benchTrack > #runeBench .rbTile { height: 40px; padding: 1px 1px 2px; --pbw: 5px 6px; }
-#benchTrack > #runeBench .rbTile small { font-size: 9px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-#benchTrack > #runeBench .rbTile .rnStone.rn-big { width: 24px; height: 24px; }
+/* (RUNE-BENCH-ART: a tile is 35 to 40 px wide at 360 to 412, too narrow for a rune's name, which was clipped ("Bulwa…"): the word is left
+   out; the stone's colour and its pips say which rune and what level, the hint names the one chosen, and a hold opens its card) */
+#benchTrack > #runeBench .rbTile small { display: none; }
+#benchTrack > #runeBench .rbTile .rnStone.rn-big { width: 26px; height: 26px; }
 #benchTrack > #runeBench .rbHint { flex: none; font-size: 9px; line-height: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #benchTrack > #runeBench .rbTile.empty .rnStone.rn-big { width: 22px; height: 22px; margin: 3px; }
 #benchView > #benchGrip { height: min(96px, calc(100% - 4px)); }
