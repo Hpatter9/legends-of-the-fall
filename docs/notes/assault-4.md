@@ -98,3 +98,78 @@ and Tactical three in four, as Bloodtusk Hold does at 55.
 - the Undead army card with "Assault Barrow Necropolis";
 - its muster;
 - the opening, with an Undead lieutenant's cut-in by the lake.
+
+## 2. The Howling Den (the Beast Packs)
+
+`src/sim/assault/maps/beasts.ts` (`DEN`). The owner's look: an autumn moor that climbs to a snowbound den.
+
+**The layout.** Up the phone from the Landing at the south corner:
+
+- **A cold river in a rocky gorge** winds from edge to edge where the Necropolis has its lake: narrower (two to three cells), and bending,
+  so its banks wander. It is crossed by:
+  - the rope bridge, with its barricade of logs and sleds (the bridge fort) holding the far end;
+  - the West Ford and the East Ford.
+- **The autumn moor**:
+  - the West and East Lookouts on their crags;
+  - the old hall's ruins to the east, and the bracken (long grass);
+  - the trap line across the road (the stake field's slowing ground);
+  - the wolf runs under the east lookout;
+  - the hunters' drying racks (they burn), hide tents and bonfires;
+  - the knoll of the old stones by the gorge;
+  - the three howling stones (the war drums' part).
+- **The rings, under snow**:
+  - the ditch, the bank and the ring of log walls, with the Fang Gate, two sally ports and the North Gate;
+  - the outer bailey's longhouses, hide huts (the fire arrows' targets), the smoking pits and their oil, and the kennels;
+  - the crag wall, its four corner towers and the Antler Gate;
+  - the great den and the Seat of the Pack at the top.
+- **Behind**: the Hunters' Trail, whose camp sends the bands.
+
+**The garrison.** 200: 180 at 30 posts and 20 down the trail.
+
+- The rank and file are Black Werewolves, its heavies White Werewolves, and its pens loose Bloodtusk Hold's war-wolves.
+- **The Beast Packs draw no bows.** Their archers' places (the lookouts, the bank, the corner towers) are held by **Red Werewolves**, who hunt
+  the shooters: they leap down on whoever comes near instead of loosing from the walls. So the Den has no arrows on its walls: a different
+  fight from the other two holds, and the codex says so.
+- An Alpha Werewolf takes an officer's place the Council cannot fill; the Boar King (the army's last boss) holds the Seat while no warchief
+  sits.
+
+**The balance** (`npm run balance -- --assault beasts`, the design party, a maxed castle, a full host, 8 seeds). Its mark is level 75, ten
+levels above the Undead's, as the Necropolis's was above Bloodtusk Hold's:
+
+| level 75 | 0.12 | 0.13 | 0.135 | 0.14 | 0.15 | 0.155 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Auto | 50% | 88% | **63%** | 25% | 25% | 0% |
+| Tactical | 100% | 88% | **100%** | 88% | 100% | 75% |
+| Siege | 100% | 100% | **100%** | 100% | 88% | 63% |
+
+Eight seeds are noisy (0.13 came out easier than 0.12). With no bows on its walls, the Den is kind to a careful advance: Tactical and Siege win
+nearly every time until the Orcs' share, where Auto wins none. So its share is **0.135** (`HOLD_SHARE.beasts`): Auto wins about half, as at
+the other holds, and a player who orders the platoons is rewarded more than elsewhere.
+
+**The look.**
+
+- Until its sheets are painted ([the prompts](assault-4-howling-den-art-prompts.md)), it is drawn with:
+  - the Orc sheets recoloured by `den_tint` in the cutter: autumn on the moor (greens to russet and gold, the red cloth to tanned hide, the
+    fire kept), frost on the crag wall's and the den's pieces, and the ground sheet's `campDirt` repainted as trodden snow;
+  - the Moonpack kit: the log walls, bone gate and fence, longhouses, cottages, lookouts, howling stones, shrine, torches, sleds, racks, rope
+    bridge, pines and rocks.
+- The field lays the snow by zone (`snowOf` in `fieldLooks.ts`): the ring and all within it, and patches on the moor's last climb to the ditch;
+  our camp at the Landing stays trodden moor.
+- A low autumn sun over the field (`fieldGrade`), the snow's blue at the foot; the minimap wears russet outside and white within.
+- `docs/samples/assault-art/beasts-kit.jpg` is the kit's labelled contact sheet.
+- The cutter takes a profile's own `tint` (by sheet, and by slot on the ground and faces sheets); the Necropolis's `cold` is the default, and
+  its art cuts byte for byte as before.
+- The barricade's mirrored run is now found from its tiles (a run sharing a u), not from Bloodtusk Hold's column.
+
+**Tests.** `assault-den`:
+
+- registered and named, the same each build, its own field, and sound (`fieldProblems`);
+- the river a barrier but for the bridge and the fords;
+- the baileys opened only by the Fang Gate and the Antler Gate;
+- 200 of the Beast Packs' own, with no orc among them and the Boar King on the Seat;
+- Auto plays an assault to its end, the same way twice.
+
+`assault-holds` now expects the Den's page built too, and the rest locked.
+
+**Screenshots**: `docs/samples/assault-4/den-*.png`: Mid and the den at 360, 393 and 412; the rope bridge, the Fang Gate's road and the East
+Ford.

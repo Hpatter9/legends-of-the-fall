@@ -68,6 +68,7 @@ export function noise(u: number, v: number, cell: number, salt = 0): number {
 /** Every tile's ground material (`MAT`, or `DEEP`). */
 export function materialsOf(b: Board, zone: Uint8Array, bp: Blueprint): Uint8Array {
   const { w, d } = b;
+  const snowy = bp.army === 'beasts';
   const out = new Uint8Array(w * d);
   const posts = bp.posts.map((p) => p.at);
   const nearPost = (u: number, v: number, r: number) => posts.some((p) => Math.abs(p.u - u) + Math.abs(p.v - v) <= r);
@@ -108,9 +109,21 @@ export function materialsOf(b: Board, zone: Uint8Array, bp: Blueprint): Uint8Arr
       else if (t.h >= 6) m = MAT.heath;
       else if (nearPost(u, v, 2)) m = MAT.trampled;
       else m = n < 0.18 ? MAT.heath : noise(u, v, 11, 2) < 0.5 ? MAT.grass1 : MAT.grass2;
-      out[i] = m;
+      out[i] = snowy ? snowOf(m, z, u, v) : m;
     }
   return out;
+}
+
+/** The Howling Den's ground (phase 4): its sheet keeps the Orc slots, but `campDirt` is painted as trodden snow (`tools/assault/cut-sheets.py
+ *  beasts`). The ring and all within it lie under snow; the moor's last climb to the ditch is patched with it; our camp at the Landing is
+ *  trodden moor, not snow. */
+function snowOf(m: number, z: number, u: number, v: number): number {
+  const r = Math.max(Math.abs(u - 49.5), Math.abs(v - 49.5));
+  if (z === Z('C')) return m === MAT.campDirt ? MAT.trampled : m;
+  if (z === Z('B') || z === Z('P') || z === Z('E')) return m === MAT.flagstones || m === MAT.cobbles ? m : MAT.campDirt;
+  if (z === Z('I') || z === Z('M')) return m === MAT.flagstones ? m : MAT.campDirt;
+  if ((z === Z('K') || z === Z('T')) && r < 32 && noise(u, v, 5, 7) + (32 - r) * 0.08 > 0.75 && m !== MAT.shingle) return MAT.campDirt;
+  return m;
 }
 
 /** One overlay laid on a tile: the edge or corner (`EDGES` name) turned `turn` quarter turns clockwise (0 faces the -v neighbour). */
@@ -347,15 +360,16 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       const tiles = rectTiles(w, s.rect);
       for (const t of tiles) taken.add(t);
       const m = mid(tiles);
-      // (the Barrow Necropolis's own buildings by their names: its mausoleums, charnel houses, coffin heaps and witch fires)
-      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name.startsWith('The keep') || / keep$/.test(s.name) ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile';
+      // (the Barrow Necropolis's own buildings by their names: its mausoleums, charnel houses, coffin heaps and witch fires; the Howling
+      //  Den's hide tents, drying racks and great den)
+      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' || s.name === 'Hide tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name === 'Drying rack' ? 'meatRacks' : s.name.startsWith('The keep') || / (keep|den)$/.test(s.name) ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile';
       const flip = s.rect.u1 - s.rect.u0 < s.rect.v1 - s.rect.v0;
       out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: name === 'keep' ? 0.62 : name === 'longhouse' || name === 'mausoleum' ? 0.95 : name === 'bonfire' ? 0.7 : 1, ...(s.burns ? { hut: hut++ } : {}) });
     } else if (s.kind === 'perch') {
       const tiles = rectTiles(w, s.rect);
       const m = mid(tiles);
       // (the corner towers' crenellated tops, the gate towers' perches, the watchtowers on their crags)
-      const name = /corner tower/.test(s.name) ? 'cornerTower' : /Watchtower|Ossuary Tower/.test(s.name) ? 'watchtower' : 'gateTower';
+      const name = /corner tower/.test(s.name) ? 'cornerTower' : /Watchtower|Ossuary Tower|Lookout/.test(s.name) ? 'watchtower' : 'gateTower';
       for (const t of tiles) taken.add(t);
       // (sorted with the perch's back tile: its crew stand on it and are drawn over it, never hidden under its floor)
       out.push({ name, u: m.u, v: m.v, front: m.front, depth: tiles[0], scale: name === 'watchtower' ? 0.9 : name === 'gateTower' ? 0.8 : 1 });
@@ -363,7 +377,8 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       for (const p of s.tiles) {
         const t = p.v * w + p.u;
         taken.add(t);
-        out.push({ name: 'barricade', u: p.u, v: p.v, front: t, flip: p.u === 80 });
+        // (the tiles of a run along v, sharing a u with the rest of it, are mirrored)
+        out.push({ name: 'barricade', u: p.u, v: p.v, front: t, flip: s.tiles.filter((q) => q.u === p.u).length > 2 });
       }
     } else if (s.kind === 'fence') {
       const m = mid(rectTiles(w, s.rect));

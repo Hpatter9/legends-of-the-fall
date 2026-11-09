@@ -32,9 +32,16 @@ export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
     'The crypt pens loose grave wraiths when the alarm sounds: keep a platoon ready for them.',
     'Hold the Dead Road\'s charnel camp, or burn every tent of it, and no more of the dead march down to the hold.',
   ],
+  beasts: [
+    'A cold river winds through the gorge from edge to edge: cross by the rope bridge (its barricade of logs holds the far end) or by the two fords.',
+    'Silence the three howling stones: while one howls, the pack near it strikes harder.',
+    'The Den draws no bows: its lookouts and its bank are held by Red Werewolves, who leap down on whoever comes near. Your archers shoot freely.',
+    'The Antler Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
+    'Hold the hunters\' camp on the trail behind, or burn every tent of it, and no more of the pack runs down to the hold.',
+  ],
 };
 /** What each hold's drums are, in the page's words. */
-const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries' };
+const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones' };
 
 export interface HoldPage {
   army: string;

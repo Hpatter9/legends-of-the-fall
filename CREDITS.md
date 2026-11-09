@@ -642,6 +642,17 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   lantern posts, braziers, dead oaks and pines, the stone bridge), and the wild flair, halved the same way and packed into its atlas (listed in
   `src/render/assaultUndeadAtlas.ts`). The Grave Wraith of its crypt pens is the Reaper's wraith's sheet (`hk_ghost`), credited above.
 
+## The Assault's Howling Den (`src/art/assault/beasts/`)
+
+- Until its own painted sheets land (the prompts: `docs/notes/assault-4-howling-den-art-prompts.md`), the Den is drawn with the owner's Orc sheets
+  above, cut again by `tools/assault/cut-sheets.py beasts`: the moor's pieces recoloured to autumn (red cloth to tanned hide), the crag wall's and the
+  den's frosted, and one ground texture repainted as snow; our siege works keep their own colours.
+- Beside them, single pieces of Chronos Settlement's Moonpack kit (`hpatter9/little-town`, `src/renderer/art/iso/kits/moonpack/`: the log walls, bone
+  fence and gate, longhouse, cottage, tavern, lookout tower, howling stone, shrine, torch post, skull signpost, bonfire, pelt stall, sled, granary,
+  hide bundles, barrels, stockpile, woodpile, well, rope bridge, cave den, pines, bushes and rocks), and the wild flair, halved the same way and packed
+  into its atlas (listed in `src/render/assaultBeastsAtlas.ts`). Its fighters are the Beast Packs' werewolves and the Orc hold's war-wolves, credited
+  above.
+
 ### Painted Spells study
 
 - `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.
