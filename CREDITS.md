@@ -677,6 +677,17 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   (listed in `src/render/assaultLabyrinthAtlas.ts`). Its fighters are the Labyrinth's minotaurs and gorgons and the Orc hold's war-wolves, credited
   above.
 
+## The Assault's Bonefire Crag (`src/art/assault/ogres/`)
+
+- Until its own painted sheets land (the prompts: `docs/notes/assault-4-bonefire-crag-art-prompts.md`), Bonefire Crag is drawn with the owner's Orc
+  sheets above, cut again by `tools/assault/cut-sheets.py ogres` and recoloured to the cold highlands (the grass cooled, timber and stone greyed);
+  our siege works keep their own colours.
+- Beside them, single pieces of Chronos Settlement's Orcs and Dwarves kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/orcs/` and `dwarves/`:
+  the Orcs kit's pieces as Bloodtusk Hold has them, and the Dwarves' stone walls, cliff gate, chain fence, great hall, cottage, forge, forge fire,
+  watchtower, shrine, brazier, granary, stockpile, stone bridge, boulders, rocks, dead pine, rubble and crates), two Moonpack pines, and the wild
+  flair, halved the same way and packed into its atlas (listed in `src/render/assaultOgresAtlas.ts`). Its fighters are the Ogre Clans' ogres, brutes
+  and bosses and the Orc hold's war-wolves, credited above.
+
 ### Painted Spells study
 
 - `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.

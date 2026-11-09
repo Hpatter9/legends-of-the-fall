@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.427.0',
+    date: '2026-11-09',
+    title: 'Assault: Bonefire Crag',
+    notes: ['The Ogre Clans\' hold: cross the ravine by the bone bridge, douse the great bonefires, and break through the giant\'s jaws to the Hall of Tusks.'],
+  },
+  {
     version: '0.426.0',
     date: '2026-11-09',
     title: 'Assault: the Heart of the Maze',
