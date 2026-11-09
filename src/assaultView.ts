@@ -116,6 +116,12 @@ export function drawHoldMap(canvas: HTMLCanvasElement, army: string, size: numbe
       L: [110, 100, 92], C: [116, 100, 90], K: [72, 66, 64], T: [90, 70, 60], V: [84, 76, 72], R: [220, 90, 30], F: [170, 80, 40], Y: [60, 56, 60],
       D: [44, 36, 34], E: [70, 60, 58], P: [40, 30, 32], B: [86, 72, 70], S: [50, 44, 50], I: [100, 84, 80], M: [120, 96, 88], N: [80, 64, 56],
     });
+  // (the Moonlit Shrine's: the night wood, the moon pond, the white walls and the gravel yards within)
+  if (army === 'yokai')
+    Object.assign(zoneCol, {
+      L: [96, 112, 120], C: [100, 104, 112], K: [52, 78, 80], T: [70, 96, 92], V: [86, 88, 96], R: [30, 50, 90], F: [70, 100, 140], Y: [190, 60, 50],
+      D: [46, 50, 58], E: [90, 96, 106], P: [210, 210, 214], B: [130, 136, 146], S: [150, 154, 162], I: [168, 172, 180], M: [186, 190, 198], N: [64, 82, 82],
+    });
   for (let i = 0; i < b.w * b.d; i++) {
     const t = b.tiles[i];
     const c = zoneCol[String.fromCharCode(map.zone[i])] ?? [100, 100, 100];

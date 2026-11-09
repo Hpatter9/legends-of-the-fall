@@ -70,9 +70,16 @@ export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
     'The Infernal Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
     'Hold the host\'s camp on the Ash Road, or burn every tent of it, and no more of the pit comes down to the hold.',
   ],
+  yokai: [
+    'A stream runs from edge to edge, widening to the moon pond in the middle: cross by the vermilion bridge (its barricade holds the far end) or by the two fords of stepping stones.',
+    'Break the three great war drums: while the parade beats one, the yokai near it strike harder.',
+    'The fox witches on the walls curse from afar, and the crow tengu fly over every wall when the alarm sounds: keep your shooters busy.',
+    'The Moon Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
+    'Hold the parade\'s camp on the Mountain Path, or burn every tent of it, and no more of the night parade comes down to the hold.',
+  ],
 };
 /** What each hold's drums are, in the page's words. */
-const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones', wildwood: 'pipers’ rings', labyrinth: 'horned altars', ogres: 'great bonefires', infernal: 'fire circles' };
+const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones', wildwood: 'pipers’ rings', labyrinth: 'horned altars', ogres: 'great bonefires', infernal: 'fire circles', yokai: 'great war drums' };
 
 export interface HoldPage {
   army: string;

@@ -710,6 +710,18 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   atlas (listed in `src/render/assaultInfernalAtlas.ts`). Its fighters are the Infernal Host's imps, demons and bosses and the Orc hold's war-wolves,
   credited above.
 
+## The Assault's Moonlit Shrine (`src/art/assault/yokai/`)
+
+- Until its own painted sheets land (the prompts: `docs/notes/assault-4-moonlit-shrine-art-prompts.md`), the Moonlit Shrine is drawn with the owner's
+  Orc sheets above, cut again by `tools/assault/cut-sheets.py yokai` and recoloured to a moonlit night (grass and timber cooled, stone silvered, red
+  cloth to vermilion); our siege works keep their own colours.
+- Beside them, single pieces of Chronos Settlement's Fae and Liches kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/fae/` and `liches/`: the
+  rose hedges, twig fence, flower arch gate, longhouse, cottage, tavern, workshop, firefly pen, mushroom patch, spiral watchtower, fairy ring, shrine,
+  light lantern post, ribbon signpost, blue campfire, silk stall, shell cart, granary, honey jars, flower bales, stockpile, woodpile, well, baskets,
+  root bridge, silver birch, weeping willow, glow bush and crystal rocks; the Liches' watchtower, barrels, lantern post, dead pine, rocks and coffin
+  stack), and the wild flair, halved the same way and packed into its atlas (listed in `src/render/assaultYokaiAtlas.ts`). Its fighters are the Yokai
+  Night Parade's foxes, witches, tengu and bosses, credited above.
+
 ### Painted Spells study
 
 - `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.

@@ -17,7 +17,7 @@ Out: src/art/assault/<army>/{sprites,ground,edges,decals,faces}.webp and src/ren
 The report lists any cell whose picture strays from its footprint (its bottom too far above or below the diamond's bottom tip, or its
 middle off the foot point), for the art's notes.
 
-Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood|labyrinth|ogres|infernal] [--report]
+Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood|labyrinth|ogres|infernal|yokai] [--report]
 """
 import json
 import os
@@ -575,6 +575,63 @@ def crust(a):
     k = (grey - lo) / max(hi - lo, 1e-6)
     glow = np.array([0.85, 0.28, 0.05]) * (1 - k) ** 8 * 0.8
     out = grey * np.array([0.5, 0.42, 0.4]) + glow
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+
+# ----- the Moonlit Shrine (phase 4): the Yokai Night Parade's moonlit mountain shrine -----
+#
+# As for the others: the Orc profile's slots and names, its own sheets (docs/notes/assault-4-moonlit-shrine-art-prompts.md) and the Fae and
+# Liches kits. A borrowed Orc sheet is recoloured by `moonlit`: the grass and timber cooled to a moonlit blue-green, the stone silvered, the
+# red cloth turned vermilion and the fire kept.
+YOKAI_FILES = {
+    'orc-01-palisade.png': 'yok-01-tiled-wall.png', 'orc-02-gates.png': 'yok-02-gates.png', 'orc-03-iron-gate.png': 'yok-03-moon-gate.png',
+    'orc-04-faces.png': 'yok-04-faces.png', 'orc-05-ground.png': 'yok-05-ground.png', 'orc-06-transitions.png': 'yok-06-transitions.png',
+    'orc-07-keep.png': 'yok-07-keep.png', 'orc-08-wall-dressing.png': 'yok-08-wall-dressing.png', 'orc-09-camp.png': 'yok-09-landmarks.png',
+    'orc-10-camp-props.png': 'yok-10-props.png', 'orc-11-siege-ruins.png': 'yok-11-ruins.png', 'orc-12-river.png': 'yok-12-pond.png',
+    'orc-13-decals.png': 'yok-13-decals.png',
+}
+SHEETS['yokai'] = {
+    'sprites': {YOKAI_FILES[k]: v for k, v in _orc['sprites'].items()},
+    'ground': (YOKAI_FILES[_orc['ground'][0]], _orc['ground'][1]),
+    'edges': (YOKAI_FILES[_orc['edges'][0]], _orc['edges'][1]),
+    'decals': (YOKAI_FILES[_orc['decals'][0]], _orc['decals'][1]),
+    'faces': (YOKAI_FILES[_orc['faces'][0]], _orc['faces'][1]),
+    'fallback': ('orc', {v: k for k, v in YOKAI_FILES.items()}),
+    'shared': {'ladder', 'ram', 'trebuchet'},
+    'tint': lambda a, sheet, slot=None: moonlit(a),
+    'kits': {
+        **_orc['kits'],
+        'kitSpikedWall': 'fae/rose_hedge_run', 'kitSpikedCorner': 'fae/rose_hedge_corner', 'kitSkullGate': 'fae/flower_arch_gate',
+        'kitStakeFence': 'fae/twig_fence', 'longhouse': 'fae/longhouse', 'boneHut': 'fae/cottage', 'hideHut': 'fae/tavern',
+        'forge': 'fae/workshop', 'forgeFire': 'fae/blue_campfire', 'wargPen': 'fae/firefly_pen', 'pigPen': 'fae/mushroom_patch_tile',
+        'watchtower': 'fae/spiral_watchtower', 'lookout': 'liches/watchtower', 'warDrum': 'fae/fairy_ring', 'skullTotem': 'fae/shrine',
+        'skullTorch': 'fae/light_lantern_post', 'spearSign': 'fae/ribbon_signpost', 'bonfire': 'fae/blue_campfire', 'weaponStall': 'fae/silk_stall',
+        'warCart': 'fae/shell_cart', 'granary': 'fae/granary', 'meatRacks': 'fae/honey_jars', 'meatPile': 'fae/flower_bales', 'barrels': 'liches/barrels',
+        'stockpile': 'fae/stockpile', 'woodpile': 'fae/woodpile', 'well': 'fae/well', 'hides': 'fae/baskets', 'logBridge': 'fae/root_bridge',
+        'brazier': 'liches/lantern_post', 'pine1': 'liches/dead_pine', 'pine2': 'fae/silver_birch', 'gnarledTree': 'fae/weeping_willow',
+        'bareTree': 'fae/silver_birch', 'thornBush': 'fae/glow_bush', 'boulders': 'liches/rocks', 'rocks': 'liches/rocks',
+        'darkRocks': 'fae/crystal_rocks', 'darkRocksB': 'liches/rocks', 'chests': 'liches/coffin_stack',
+    },
+}
+
+
+def moonlit(a):
+    """The Moonlit Shrine's stand-in: grass and timber cooled to a moonlit blue-green, the stone silvered, the red cloth a brighter
+    vermilion, the fire kept."""
+    rgb = a[..., :3].astype(float) / 255
+    h, mx, sat = _hue(rgb)
+    fire = (mx > 0.72) & (h < 0.17) & (sat > 0.45)
+    red = ((h < 0.035) | (h > 0.94)) & (sat > 0.45)
+    leafy = (h > 0.12) & (h < 0.45) & (sat > 0.15) & ~fire
+    grey = rgb.mean(-1, keepdims=True)
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    night = np.stack([r * 0.45, g * 0.78, b * 0.7 + g * 0.22], -1)
+    silver = grey * np.array([0.84, 0.9, 1.04]) + (rgb - grey) * 0.35
+    vermilion = mx[..., None] * np.array([1.0, 0.28, 0.16])
+    out = np.where(leafy[..., None], night, np.where(red[..., None], vermilion, np.where(fire[..., None], rgb, silver)))
     res = a.copy()
     res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
     return res

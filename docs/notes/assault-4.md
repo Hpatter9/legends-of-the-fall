@@ -570,3 +570,74 @@ flying demons over every wall.
 `assault-holds` now expects Brimstone Gate's page built too, and the rest locked.
 
 **Screenshots**: `docs/samples/assault-4/brim-*.png`: Mid and the Demon Spire at 360, 393 and 412; the chain bridge over the lava.
+
+## 7. The Moonlit Shrine (the Yokai Night Parade)
+
+`src/sim/assault/maps/yokai.ts` (`MOONLIT_SHRINE`). The owner named it but gave no look, so it follows the camp overlook, which already
+paints the Yokai's "Haunted shrine" (`src/art/camp/camp-arcane.png`, its middle row): a mountain shrine under a full moon, vermilion halls and
+gates among blossom and lanterns, a pond under a red arched bridge, waterfalls and violet spirit fire.
+
+**The layout.** Up the phone from the Landing at the south corner:
+
+- **A stream** from edge to edge, narrow at the edges and widening into **the moon pond** in the middle (seven cells across). It is crossed
+  by:
+  - the vermilion bridge, over the pond, with its barricade (the bridge fort) holding the far end by the ditch;
+  - the West and East fords of stepping stones, where the stream is narrow.
+- **The mountain wood**:
+  - the West and East Watchtowers on their knolls;
+  - the old shrine's ruins to the east, and the ferns (long grass);
+  - the bamboo stakes across the path (the stake field's slowing ground);
+  - the fox kennels under the east watchtower;
+  - the sake stores (they burn), war tents and fires;
+  - the fox shrine's knoll by the pond;
+  - the three great war drums the parade beats.
+- **The rings**:
+  - the ditch, the bank and the ring of white plastered walls under tiled roofs, with the Vermilion Gate, two sally ports and the North
+    Gate;
+  - the outer bailey's halls, storehouses (the fire arrows' targets), the kitchens and their oil, and the crow roosts;
+  - the castle wall of fitted stone, its four corner towers and the Moon Gate;
+  - the Shrine of the Moon and the Oni's Seat at the top.
+- **Behind**: the Mountain Path, whose camp sends the bands.
+
+**The garrison.** 200: 180 at 30 posts and 20 down the path.
+
+- The rank and file are Fox Spirits (they slip away and flank); its archers **Fox Witches**, who curse from afar (so the Yokai have bows: the
+  archers' posts keep to their perches, and Auto does not huddle here); its heavies the Yamabushi tengu monks; and its pens loose the **crow
+  tengu**, who fly (over every wall, when the alarm sounds).
+- A Nine-Tailed Fox takes an officer's place the Council cannot fill; the Oni King (the army's last boss) holds the seat while no warchief
+  sits.
+
+**The balance** (32 seeds, at its mark, 100):
+
+| share | 0.065 | **0.07** | 0.09 |
+| --- | --- | --- | --- |
+| Auto | 34% | **38%** | 6% |
+| Tactical | 100% | **84%** | 59% |
+| Siege | 88% | **88%** | 47% |
+
+So its share is **0.07** (`HOLD_SHARE.yokai`): Tactical and Siege on the marks, Auto a little low (a lower share did not lift it).
+
+**The look.**
+
+- Until its sheets are painted ([the prompts](assault-4-moonlit-shrine-art-prompts.md)), it is drawn with:
+  - the Orc sheets recoloured by `moonlit` in the cutter: grass and timber cooled to a moonlit blue-green, the stone silvered, the red
+    cloth a brighter vermilion, the fire kept;
+  - the Fae and Liches kits: the rose hedges, twig fences, flower arch gate, longhouses, cottages, spiral watchtower, fairy ring, shrine,
+    lanterns, blue campfire, silk stall, shell cart, honey jars, root bridge, willows, birches, glow bushes, crystal rocks, dead pines and
+    rocks (there is no kit drawn for the hold's own halls; the sheets paint them).
+- A cool moonlight over the field (`fieldGrade`); the minimap wears the night wood's blue-greens, the white walls and the red bridge.
+- `docs/samples/assault-art/yokai-kit.jpg` is the two kits' labelled contact sheet.
+
+**Tests.** `assault-shrine`:
+
+- registered and named, the same each build, its own field, and sound (`fieldProblems`);
+- the stream and its pond a barrier but for the bridge and the fords;
+- the baileys opened only by the Vermilion Gate and the Moon Gate;
+- 200 of the Yokai's own, with no orc among them and the Oni King on the seat;
+- Auto plays an assault to its end, the same way twice;
+- the Warpath's bands are its own army;
+- the Yokai have bows (the fox witches' posts are shooters' posts), and the crow tengu fly.
+
+`assault-holds` now expects the Moonlit Shrine's page built too; only the Iron Foundry is locked.
+
+**Screenshots**: `docs/samples/assault-4/moon-*.png`: Mid and the Shrine of the Moon at 360, 393 and 412; the vermilion bridge over the pond.
