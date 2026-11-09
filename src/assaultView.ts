@@ -80,6 +80,12 @@ export function drawHoldMap(canvas: HTMLCanvasElement, army: string, size: numbe
     L: [150, 160, 110], C: [170, 160, 120], K: [92, 128, 70], T: [110, 150, 70], V: [110, 100, 80], R: [40, 80, 150], F: [80, 130, 190], Y: [140, 100, 60],
     D: [70, 60, 50], E: [120, 100, 70], P: [60, 40, 30], B: [130, 110, 80], S: [90, 90, 100], I: [125, 110, 85], M: [150, 130, 95], N: [80, 105, 70],
   };
+  // (the Barrow Necropolis's own colours: the grey downs, the still grey lake, the slate and bone of its rings)
+  if (army === 'undead')
+    Object.assign(zoneCol, {
+      L: [120, 124, 110], C: [130, 128, 112], K: [86, 98, 84], T: [98, 110, 84], V: [92, 90, 86], R: [52, 70, 104], F: [80, 104, 140], Y: [120, 118, 120],
+      D: [56, 54, 58], E: [96, 94, 100], P: [44, 44, 52], B: [104, 102, 110], S: [82, 86, 104], I: [100, 100, 108], M: [128, 126, 134], N: [72, 80, 72],
+    });
   for (let i = 0; i < b.w * b.d; i++) {
     const t = b.tiles[i];
     const c = zoneCol[String.fromCharCode(map.zone[i])] ?? [100, 100, 100];

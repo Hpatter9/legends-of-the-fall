@@ -25,9 +25,9 @@ import { UNITS } from '../units';
 import { forNear, newField, occClear, rebuildBuckets, type FieldGroup, type FieldState } from './field';
 import { jumpClass, nextRegion, reaches, regionAt } from './sectors';
 import { buildHold, ringOf, type HoldMap } from './fieldMap';
-import { BLOODTUSK } from './maps/orcs';
+import { HOLDS } from './holds';
 import type { Blueprint } from './blueprint';
-import { addFieldUnit, ASSAULT, archersOnly, buildGarrison, freeNear } from './garrison';
+import { addFieldUnit, archersOnly, buildGarrison, freeNear, shareOf } from './garrison';
 import { barrelOnForts, canStrikeFort, drumsBeating, landFortHits, makeForts, strikeFort } from './forts';
 import { anchorOf, DRUM_BLOW, holdTick, nearDrum } from './holdMind';
 import { applyQueued, CHARGE_MOVE, defaultFormation, ENGAGE, FORMATION_FX, givePlatoon, HERO_LEASH, LEADERLESS, LEASH, replayEntries, slotAt } from './platoons';
@@ -65,7 +65,7 @@ export const DEFAULT_ROLES: readonly PlatoonRole[] = ['main', 'main', 'cover', '
 export const FLANK_REACH = 3;
 
 /** The holds built so far (a hold's field is the same every time, so it is built once and copied for each assault). */
-const BLUEPRINTS: Record<string, Blueprint> = { orcs: BLOODTUSK };
+const BLUEPRINTS: Readonly<Record<string, Blueprint>> = HOLDS;
 const built = new Map<string, HoldMap>();
 /** A hold's blueprint, if the army has one. */
 export const blueprintOf = (army: string): Blueprint | undefined => BLUEPRINTS[army];
@@ -92,7 +92,7 @@ export function startAssault(input: AssaultInput): Battle {
   const b = startBattle(input.seed, [], { board: map.board, ...(input.castle ? { heroes: input.castle } : {}), ...(input.mana ? { mana: input.mana } : {}) });
   const f = newField(b.board, map.zone);
   b.field = f;
-  const share = input.foeShare ?? ASSAULT.foeShare;
+  const share = shareOf(input);
   const forts = makeForts(map.forts, input.army, share, input.tier);
   const h: HoldState = {
     bp, input, forts, fortAt: new Map(), posts: [], platoons: [], lord: -1, bands: 0, auto: !!input.auto, queue: [], log: [], events: [], fallen: [], foesTotal: 0, garrison: [], fortKills: {},

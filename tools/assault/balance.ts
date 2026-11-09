@@ -15,7 +15,7 @@ import { HEROES, UNITS } from '../../src/sim/units';
 import { learn, tierNodes } from '../../src/sim/talents';
 import { assaultInput, defaultPlan } from '../../src/sim/assault/assaultMode';
 import { playAssault, assaultScore, startAssault } from '../../src/sim/assault/assault';
-import { ASSAULT } from '../../src/sim/assault/garrison';
+import { ASSAULT, HOLD_SHARE } from '../../src/sim/assault/garrison';
 
 const flag = (name: string): string | undefined => (process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : undefined);
 const army = flag('--assault') ?? 'orcs';
@@ -30,7 +30,7 @@ const party = PARTIES[flag('--party') ?? 'design'];
 const maxed = newCastle();
 for (const id of Object.keys(BUILDINGS) as BuildingId[]) maxed[id] = maxLevel(id);
 
-console.log(`\nTHE ASSAULT: ${army}  (${party.map((k) => UNITS[k].name).join(', ')}; a full host, a maxed castle${talents ? ', talents learned' : ''}; foeShare ${share ?? ASSAULT.foeShare}, officerShare ${ASSAULT.officerShare}; ${seeds} seeds a cell)\n`);
+console.log(`\nTHE ASSAULT: ${army}  (${party.map((k) => UNITS[k].name).join(', ')}; a full host, a maxed castle${talents ? ', talents learned' : ''}; foeShare ${share ?? HOLD_SHARE[army] ?? ASSAULT.foeShare}, officerShare ${ASSAULT.officerShare}; ${seeds} seeds a cell)\n`);
 console.log('level  style      wins   host lost   time (won)   sim ms/tick (mean, worst)');
 for (const L of levels)
   for (const style of ['Auto', 'Tactical', 'Siege'] as const) {

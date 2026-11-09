@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.422.0',
+    date: '2026-11-09',
+    title: 'Assault: the Barrow Necropolis',
+    notes: ['The Undead Legion\'s hold opens at ten Undead stars: cross the grey lake by causeway or ford, silence the bone bells and break the Bone Gate.'],
+  },
+  {
     version: '0.421.0',
     date: '2026-11-09',
     title: 'Assault: the warchief flees, holds in codex',

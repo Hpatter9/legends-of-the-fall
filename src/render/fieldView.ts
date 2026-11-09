@@ -34,7 +34,8 @@ import { facesRightOf, figureOf, framesOf, type Anim } from './sheets';
 import { detailFor, type Detail } from './fieldDetail';
 import { CHUNK, chunkHeights, chunksInView, focusOnScreen, viewRect, type PlayArea, type WorldRect } from './fieldCull';
 import { clutterOf, decalOf, DEEP, MAT, faceOf, fortLook, fringesOf, materialsOf, placementsOf, type Placement } from './fieldLooks';
-import { DECALS, EDGES, FACES, SPRITES } from './assaultOrcAtlas';
+import * as ORC_ATLAS from './assaultOrcAtlas';
+import * as UNDEAD_ATLAS from './assaultUndeadAtlas';
 import { VFX, loadVfxArt } from './vfxArt';
 import { holdMapOf, blueprintOf } from '../sim/assault/assault';
 import { FieldLife } from './fieldLife';
@@ -74,11 +75,14 @@ const reducedMotion = (): boolean => (typeof window !== 'undefined' && window.ma
 
 /** The day's grade over the field (phase 1b): a warm light from the upper left, a cool shade towards the bottom. A layer of the page, over the
  *  canvas and under its buttons; it takes no taps. */
-export function fieldGrade(host: HTMLElement): HTMLElement {
+export function fieldGrade(host: HTMLElement, army = 'orcs'): HTMLElement {
   const d = document.createElement('div');
+  // (the Barrow Necropolis is moonlit: a cold light from the upper left, a deeper blue at the foot)
+  const light = army === 'undead' ? 'rgba(160,200,255,.12)' : 'rgba(255,200,130,.10)';
+  const foot = army === 'undead' ? 'rgba(18,26,60,.26)' : 'rgba(30,36,70,.18)';
   d.style.cssText =
     'position:absolute;inset:0;pointer-events:none;z-index:1;' +
-    'background:radial-gradient(120% 80% at 18% 8%,rgba(255,200,130,.10),rgba(255,200,130,0) 60%),linear-gradient(rgba(0,0,0,0) 60%,rgba(30,36,70,.18));';
+    `background:radial-gradient(120% 80% at 18% 8%,${light},rgba(0,0,0,0) 60%),linear-gradient(rgba(0,0,0,0) 60%,${foot});`;
   host.append(d);
   return d;
 }
@@ -127,6 +131,11 @@ interface HoldArt {
   faceShade: { right: HTMLCanvasElement; left: HTMLCanvasElement };
 }
 let hold: HoldArt | null = null;
+/** Each hold's atlas (`tools/assault/cut-sheets.py`): the same piece names in every one, so the field draws every hold by the same rules. */
+const ATLASES = { orcs: ORC_ATLAS, undead: UNDEAD_ATLAS } as const;
+/** The hold whose art is loaded, and its atlas's pieces. */
+let holdArmy = '';
+let { SPRITES, DECALS, EDGES, FACES } = ORC_ATLAS as { SPRITES: typeof ORC_ATLAS.SPRITES; DECALS: readonly string[]; EDGES: readonly string[]; FACES: readonly string[] };
 /** The hold's art files, by URL (copied by `build.mjs` and kept by the service worker for offline play). */
 const holdUrl = (army: string, f: string) => `assault/${army === 'orcs' ? 'orc' : army}/${f}.webp`;
 /** The kit pieces are drawn at the Chronos kits' scale (a tile about 54 px once halved): this lifts them to the field's 64. */
@@ -147,7 +156,11 @@ function turned(img: HTMLImageElement, sx: number, sy: number, size: number): HT
 
 /** Load the hold's own art (the Orcs' for Bloodtusk Hold). It falls back to the lands' art if a file cannot be had. */
 export async function loadHoldArt(army = 'orcs'): Promise<void> {
-  if (hold) return;
+  if (hold && holdArmy === army) return;
+  const atlas = ATLASES[army as keyof typeof ATLASES] ?? ORC_ATLAS;
+  ({ SPRITES, DECALS, EDGES, FACES } = atlas);
+  holdArmy = army;
+  hold = null;
   try {
     const [sprites, ground, edges, decals, faces] = await Promise.all(['sprites', 'ground', 'edges', 'decals', 'faces'].map((f) => loadImage(holdUrl(army, f))));
     const e: Record<string, HTMLCanvasElement[]> = {};
@@ -214,13 +227,13 @@ const noiseOf = (u: number, v: number): number => {
 };
 const hashOf = (a: number, b: number): number => (((Math.imul(a * 73856093 ^ b * 19349663, 0x9e3779b1) >>> 0) % 1000) / 1000);
 /** Whether a piece is one of the Chronos kits' (drawn at their scale), not the hold's sheets'. */
-const KIT_NAMES = new Set(['longhouse', 'boneHut', 'hideHut', 'forge', 'forgeFire', 'wargPen', 'pigPen', 'watchtower', 'lookout', 'warDrum', 'skullTotem', 'skullTorch', 'spearSign', 'bonfire', 'weaponStall', 'skullPile', 'warCart', 'granary', 'meatRacks', 'meatPile', 'barrels', 'chests', 'stockpile', 'woodpile', 'well', 'hides', 'logBridge', 'ruin1', 'ruin2', 'rubblePile', 'brazier', 'pine1', 'pine2', 'pineSmall', 'burntTree', 'gnarledTree', 'bareTree', 'thornBush', 'shrub1', 'shrub2', 'fern', 'stump1', 'stump2', 'fallenLog', 'boulders', 'rocks', 'darkRocks', 'darkRocksB', 'standingStone', 'reeds1', 'reeds2', 'bones1', 'bones2', 'bones3', 'flowers1', 'flowers2', 'pebbles', 'tallGrass', 'kitSpikedWall', 'kitSpikedCorner', 'kitSkullGate', 'kitStakeFence']);
+const KIT_NAMES = new Set(['longhouse', 'boneHut', 'hideHut', 'forge', 'forgeFire', 'wargPen', 'pigPen', 'watchtower', 'lookout', 'warDrum', 'skullTotem', 'skullTorch', 'spearSign', 'bonfire', 'weaponStall', 'skullPile', 'warCart', 'granary', 'meatRacks', 'meatPile', 'barrels', 'chests', 'stockpile', 'woodpile', 'well', 'hides', 'logBridge', 'ruin1', 'ruin2', 'rubblePile', 'brazier', 'pine1', 'pine2', 'pineSmall', 'burntTree', 'gnarledTree', 'bareTree', 'thornBush', 'shrub1', 'shrub2', 'fern', 'stump1', 'stump2', 'fallenLog', 'boulders', 'rocks', 'darkRocks', 'darkRocksB', 'standingStone', 'reeds1', 'reeds2', 'bones1', 'bones2', 'bones3', 'flowers1', 'flowers2', 'pebbles', 'tallGrass', 'kitSpikedWall', 'kitSpikedCorner', 'kitSkullGate', 'kitStakeFence', 'mausoleum', 'gravestones', 'crypt', 'chapel', 'coffinStack', 'gatehouse']);
 const isKit = (name: string): boolean => KIT_NAMES.has(name);
 /** The one-tile pieces big enough to show on the overview. */
 const BIG = new Set(['longhouse', 'watchtower', 'wargPen', 'pigPen', 'throne', 'greatBanner', 'warTent', 'hideHut', 'bonfire']);
 
-export async function loadFieldArt(): Promise<void> {
-  if (art) return;
+export async function loadFieldArt(army = 'orcs'): Promise<void> {
+  if (art) return loadHoldArt(army);
   const land = async (a: 'highlands' | 'warcamp'): Promise<LandArt> => {
     const u = AREA_URLS[a];
     const [tops, high, side, boulders, tall] = await Promise.all([Promise.all(u.tops.map(loadImage)), loadImage(u.high), loadImage(u.side), Promise.all(u.boulders.map(loadImage)), Promise.all(u.tall.map(loadImage))]);
@@ -233,7 +246,7 @@ export async function loadFieldArt(): Promise<void> {
   ]);
   // (the set pieces' atlas: the drums, tents, flags, fires and braziers of the arenas)
   await loadRoadArt();
-  await loadHoldArt();
+  await loadHoldArt(army);
   // (the impact strip: seven frames of 48 x 48)
   const sparks = Array.from({ length: 7 }, (_, i) => new Texture({ source: impact.source, frame: new Rectangle(i * 48, 0, 48, 48) }));
   art = { highlands, warcamp, water, planks, bushes, walls, gate, sparks, arrow };

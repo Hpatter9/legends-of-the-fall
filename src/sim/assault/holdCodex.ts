@@ -11,10 +11,10 @@ import { warchiefOf } from '../muster';
 import { fullName } from '../nemesis';
 import { UNITS } from '../units';
 import type { Blueprint } from './blueprint';
-import { BLOODTUSK } from './maps/orcs';
+import { HOLDS } from './holds';
 
 /** The holds built so far, by army. */
-const BUILT: Readonly<Record<string, Blueprint>> = { [BLOODTUSK.army]: BLOODTUSK };
+const BUILT: Readonly<Record<string, Blueprint>> = HOLDS;
 
 /** How each built hold is won, in a few lines (its tips). */
 export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
@@ -25,7 +25,16 @@ export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
     'Hold the Warpath camp, or burn every tent of it, and no more bands march down to the hold.',
     'A Vain captain at the Iron Gate calls out a champion: send your strongest hero, or refuse and face him Mocking.',
   ],
+  undead: [
+    'The still lake runs from edge to edge: cross by the causeway (its coffin barricade holds the far end) or by the two fords.',
+    'Silence the three bone bells: while one rings, the dead near it strike harder.',
+    'The Bone Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
+    'The crypt pens loose grave wraiths when the alarm sounds: keep a platoon ready for them.',
+    'Hold the Dead Road\'s charnel camp, or burn every tent of it, and no more of the dead march down to the hold.',
+  ],
 };
+/** What each hold's drums are, in the page's words. */
+const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries' };
 
 export interface HoldPage {
   army: string;
@@ -66,7 +75,7 @@ export function holdPages(m: Meta): HoldPage[] {
       built: true,
       name: bp.name,
       record,
-      facts: [lord, `${d.posted + d.bands} defenders: ${d.posted} at ${bp.posts.length} posts, and ${d.bands} more down the Warpath until it is held or burnt`, `Its gates: ${gates.join(', ')}`, `${drums} war drums`],
+      facts: [lord, `${d.posted + d.bands} defenders: ${d.posted} at ${bp.posts.length} posts, and ${d.bands} more down the Warpath until it is held or burnt`, `Its gates: ${gates.join(', ')}`, `${drums} ${DRUMS[army.id] ?? 'war drums'}`],
       tips: HOLD_TIPS[army.id] ?? [],
     };
   });
