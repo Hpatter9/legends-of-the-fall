@@ -641,3 +641,91 @@ So its share is **0.07** (`HOLD_SHARE.yokai`): Tactical and Siege on the marks, 
 `assault-holds` now expects the Moonlit Shrine's page built too; only the Iron Foundry is locked.
 
 **Screenshots**: `docs/samples/assault-4/moon-*.png`: Mid and the Shrine of the Moon at 360, 393 and 412; the vermilion bridge over the pond.
+
+## 8. The Iron Foundry (the Golem Forge)
+
+`src/sim/assault/maps/golems.ts` (`IRON_FOUNDRY`). The owner named it but gave no look, so it follows the camp overlook, which already paints
+the Golem Forge's "War foundry" (`src/art/camp/camp-arcane.png`, its bottom row): a foundry on cliffs at night, dark stone works and
+smokestacks, furnaces glowing orange, teal crystal growths, aqueduct bridges over waterfalls and a great gear. With it, every army's hold is
+built.
+
+**The layout.** Up the phone from the Landing at the south corner:
+
+- **A stone sluice** from edge to edge, narrow and stepped as a built channel is (it shifts one cell every eight across). It is crossed by:
+  - the girder bridge, with its barricade (the bridge fort) holding the far end;
+  - the West Ford and the East Ford.
+- **The cliff tops**:
+  - the West and East Watchtowers on their crags;
+  - the old mine head to the east (ruins), and the scree (long grass);
+  - the caltrops across the road (the stake field's slowing ground);
+  - the golem pens under the east watchtower;
+  - the coal stores (they burn), work tents and fires;
+  - the crystal knoll by the sluice;
+  - the three great steam hammers (the war drums' part): while one pounds, the golems near it strike harder.
+- **The rings**:
+  - the ditch, the bank and the ring of riveted iron walls, with the Piston Gate, two sally ports and the North Gate;
+  - the outer bailey's workshops, stores (the fire arrows' targets), the smelter and its oil, and the golem bays;
+  - the iron-banded wall, its four corner towers and the Furnace Gate;
+  - the Great Foundry and the Titan's Anvil at the top.
+- **Behind**: the Ore Road, whose camp sends the bands.
+
+**The garrison.** 200: 180 at 30 posts and 20 down the road.
+
+- The rank and file are Stone Golems; the crystal golems hold the archers' places; its heavies the Iron Golems; and its bays loose the Magma
+  Golems (the pens' part: slow for a pack, but they burn).
+- **The forge draws no bows** (`bowless`): the crystal golems stride down from their posts, and Auto keeps the host together here.
+- A Sapphire Colossus takes an officer's place the Council cannot fill; the Forge Titan (the army's last boss) holds the anvil while no
+  warchief sits.
+
+**The balance** (32 seeds, at its mark, 100):
+
+| share | 0.06 | 0.075 | **0.0775** | 0.08 |
+| --- | --- | --- | --- | --- |
+| Auto | 88% | 63% | **44%** | 53% |
+| Tactical | 100% | 88% | **97%** | 81% |
+| Siege | 100% | 91% | **84%** | 69% |
+
+The three shares near the marks read noisily (Auto 63%, 44% and 53%; Siege 91%, 84% and 69%); together they win about 53%, 89% and 81%. So
+its share is **0.0775** (`HOLD_SHARE.golems`), the middle of them.
+
+**The look.**
+
+- Until its sheets are painted ([the prompts](assault-4-iron-foundry-art-prompts.md)), it is drawn with:
+  - the Orc sheets (cut after 0.429.0's repaints) recoloured by `foundry` in the cutter: the grass sooted to a dark green-grey, the stone
+    and timber to slate and iron, the red cloth to iron grey, the fire kept;
+  - the Dwarves and Machines kits: the riveted iron walls, piston gate, chain fence, great hall, cottage, workshop, forge and forge fire,
+    quarry, watchtower, shrine, braziers, signpost, anvil stall, ore cart, granary, coil stack, coal heap, oil drums, metal crates, scrap,
+    girder bridge, dead pines and iron trees, cable bushes, boulders, ore rocks and crystals.
+- A furnace-lit night under smoke over the field (`fieldGrade`); the minimap wears soot and slate, the sluice dark blue.
+- `docs/samples/assault-art/golems-kit.jpg` is the two kits' labelled contact sheet.
+
+**Tests.** `assault-foundry`:
+
+- registered and named, the same each build, its own field, and sound (`fieldProblems`);
+- the sluice a barrier but for the bridge and the fords;
+- the baileys opened only by the Piston Gate and the Furnace Gate;
+- 200 of the Golem Forge's own, with no orc among them and the Forge Titan at the anvil;
+- Auto plays an assault to its end, the same way twice;
+- the Warpath's bands are its own army;
+- the forge draws no bows, and its archers' places hunt.
+
+`assault-holds` now expects every army's hold built.
+
+**Screenshots**: `docs/samples/assault-4/forge-*.png`: Mid and the Great Foundry at 360, 393 and 412; the girder bridge.
+
+## Where the holds stand
+
+| hold | army | mark | share | Auto | Tactical | Siege | bows |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Bloodtusk Hold | Orcs | 55 | 0.155 | 44% | 88% | 94% | yes |
+| Barrow Necropolis | Undead | 62 | 0.1175 | 44% | 81% | 88% | yes |
+| Howling Den | Beasts | 69 | 0.14 | 69% | 66% | 78% | no |
+| Elder Root | Wildwood | 76 | 0.095 | 56% | 94% | 94% | no |
+| Heart of the Maze | Labyrinth | 89 | 0.125 | 59% | 88% | 84% | yes |
+| Bonefire Crag | Ogres | 99 | 0.095 | 59% | 84% | 75% | no |
+| Brimstone Gate | Infernal | 100 | 0.075 | 41% | 88% | 91% | no |
+| Moonlit Shrine | Yokai | 100 | 0.07 | 38% | 84% | 88% | yes |
+| Iron Foundry | Golems | 100 | 0.0775 | 44% | 97% | 84% | no |
+
+(Bloodtusk Hold's row is its 16-seed measure from the Auto lever's check; the rest are 32 seeds at each hold's mark.) Every hold is drawn on
+stand-ins until its painted sheets land; each has its ChatGPT prompts in `docs/notes/assault-4-<hold>-art-prompts.md`.
