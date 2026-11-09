@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.425.0',
+    date: '2026-11-09',
+    title: 'Assault: Auto keeps the host together',
+    notes: ['At holds with no bows, Auto sends every platoon over one crossing with the shooters behind the blades. The Den and Elder Root are retuned.'],
+  },
+  {
     version: '0.424.0',
     date: '2026-11-09',
     title: 'Assault: Elder Root',
