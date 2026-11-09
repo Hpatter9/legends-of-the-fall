@@ -272,21 +272,24 @@ export const SCENE_LIFE = {
     drifts: [{ kind: 'motes', box: [0.08, 0.1, 0.92, 0.9], count: 14, colour: 0xffd8a0 }],
   },
 
-  /** The Dark Council's chamber (`art/dynasty/council-backdrop.webp`, under the card's dark veil, so light only): its braziers
-   *  burn and send up embers, violet light breathes over the warchief's seat. */
+  /** The Dark Council's chamber (`art/dynasty/council-backdrop.webp`, under the card's dark veil, so light only): its sconces and
+   *  torches burn, the high ones send up embers, violet light breathes over the warchief's seat. */
   council: {
     size: [768, 1152],
     lights: [
-      { at: [0.07, 0.265], r: 0.12, kind: 'fire', colour: 0xff8a30, power: 0.55 },
-      { at: [0.955, 0.25], r: 0.12, kind: 'fire', colour: 0xff8a30, power: 0.55 },
-      { at: [0.15, 0.32], r: 0.06, kind: 'torch', colour: 0xff9a40, power: 0.45 },
-      { at: [0.86, 0.32], r: 0.06, kind: 'torch', colour: 0xff9a40, power: 0.45 },
+      // (the repainted chamber, docs/notes/art-wire-5.md: a high sconce and a low one on each wall, a torch either side of the throne)
+      { at: [0.04, 0.207], r: 0.12, kind: 'fire', colour: 0xff8a30, power: 0.55 },
+      { at: [0.965, 0.208], r: 0.12, kind: 'fire', colour: 0xff8a30, power: 0.55 },
+      { at: [0.071, 0.287], r: 0.07, kind: 'torch', colour: 0xff9a40, power: 0.45 },
+      { at: [0.938, 0.287], r: 0.07, kind: 'torch', colour: 0xff9a40, power: 0.45 },
+      { at: [0.251, 0.282], r: 0.06, kind: 'torch', colour: 0xff9a40, power: 0.45 },
+      { at: [0.753, 0.281], r: 0.06, kind: 'torch', colour: 0xff9a40, power: 0.45 },
       { at: [0.5, 0.25], r: 0.3, kind: 'magic', colour: 0x9a50ff, power: 0.3 },
     ],
     regions: [],
     spouts: [
-      { kind: 'embers', at: [0.07, 0.25], count: 8, spread: 0.04, rise: 0.12, life: 1.8, colour: 0xff9a40 },
-      { kind: 'embers', at: [0.955, 0.235], count: 8, spread: 0.04, rise: 0.12, life: 1.8, colour: 0xff9a40 },
+      { kind: 'embers', at: [0.04, 0.19], count: 8, spread: 0.04, rise: 0.12, life: 1.8, colour: 0xff9a40 },
+      { kind: 'embers', at: [0.965, 0.19], count: 8, spread: 0.04, rise: 0.12, life: 1.8, colour: 0xff9a40 },
     ],
     drifts: [{ kind: 'wisps', box: [0.3, 0.1, 0.7, 0.45], count: 8, colour: 0xb080ff }],
   },

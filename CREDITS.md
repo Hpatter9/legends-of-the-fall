@@ -593,6 +593,15 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 - House shield and heirloom keepsake (`src/art/dynasty/{house,heirloom}.webp`) are original OpenAI-generated paintings in the owner-approved style, retained in `art-source/dynasty-finish/house-heirloom.png`.
 - Season/fate symbols, twelve Nemesis trait symbols, and Houses/Council backdrops reuse the already credited source artwork in `art-source/expansion/`. `tools/dynasty-art/import.py` crops symbols and downsamples the backdrops; original source art remains unchanged. All new imports are bundled for offline play.
 
+## Expansion art 2 (PR #464: `src/art/council/`, `src/art/dynasty/`, `src/art/expansion/`)
+
+- The owner's repaints of `art-source/expansion/nemesis-icons.png` (twelve traits, ten Council events, the News icons and the War Trophy),
+  `seasons-fates.png` (four seasons, five fates), `frames.png` (three scarred portrait frames, the heirloom frame and its signet ring chip) and the
+  Houses and Council backdrops: original art generated with OpenAI image generation from the prompts in `docs/notes/expansion-2-art-prompts.md`.
+  `tools/art-wire-5/import-expansion.py` trims each symbol and brings it down to the size the game draws (`src/art/council/`, `src/art/dynasty/`,
+  `src/art/expansion/scar-*.png`, `heirloom-frame.png`, `heirloom-chip.png`); `tools/dynasty-art/import.py` downsamples the backdrops. All are bundled
+  into game.js for offline play (docs/notes/art-wire-5.md).
+
 ### Painted tavern hearth
 
 The tavern background (`src/art/ui/tavern-hearth.png`) is original AI-generated artwork made with OpenAI image generation for this game. Sources: `art-source/tavern/hearth-source.png` (first study) and `art-source/tavern/cozy-room-source.png` (current seated scene). Heroes remain the existing credited character illustrations; panel, button, portrait and service icons reuse the shared painted combat UI assets.
@@ -627,7 +636,8 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   wall faces, the ground textures and their transitions, the keep and the throne, the wall's dressing and stairs, the war camp and its props, the siege
   works and ruins, the river pieces, the ground decals), original art generated with OpenAI image generation from the prompts in the art plan
   (`docs/notes/assault-art-plan.md`). `tools/assault/cut-sheets.py` cuts them: the standing pieces trimmed and halved by a 2x2 box average, the ground
-  textures made seamless, the transitions, decals and faces reduced.
+  textures made seamless, the transitions, decals and faces reduced. The South and North Gates (`orc-02`), the Iron Gate and its towers (`orc-03`),
+  the keep (`orc-07`) and the decals (`orc-13`) are the owner's repaints of PR #463 (docs/notes/art-wire-5.md).
 - Beside them, about sixty single pieces of Chronos Settlement's isometric kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/`: Orcs, Dwarves,
   Liches, Moonpack, Knights and the wild flair), halved the same way and packed into the same atlas (`sprites.webp`, listed in
   `src/render/assaultOrcAtlas.ts`). Chronos credits the kits as drawn with ChatGPT's image generation from prompts written for that game.

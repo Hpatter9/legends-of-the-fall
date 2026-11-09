@@ -4,7 +4,8 @@
 .nmFace.captain { border-color: #9a55d0; background: radial-gradient(circle at 50% 40%, #33243e, #0e0a12); }
 .nmFace.warchief { border-color: #e0a830; }
 .nmFace canvas { display: block; image-rendering: pixelated; }
-.nmScars { position: absolute; right: 2px; bottom: 0; font: 700 10px/1 var(--display, serif); color: #f0b3a3; text-shadow: 0 1px 0 #000; font-style: normal; }
+/* (docs/notes/art-wire-5.md: a scarred face wears the painted brass frame, clawed once, twice or thrice, over the rank's border) */
+.nmScars { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; image-rendering: auto; }
 .omChoice.nmRow { display: grid; grid-template-columns: 44px minmax(0, 1fr); column-gap: 8px; row-gap: 1px; align-items: start; }
 .omChoice.nmRow .nmFace { grid-row: 1 / span 3; align-self: center; }
 .omChoice.nmRow > b, .omChoice.nmRow > small { grid-column: 2; }
@@ -65,7 +66,7 @@
 .nmOath { position: absolute; right: 3px; top: 2px; font: 700 12px/1 var(--body, sans-serif); font-style: normal; color: #e0503c; text-shadow: 0 1px 0 #000; }
 .nmOathLine { margin: 0; padding: 2px 6px; color: #f0c2b8; border-left: 2px solid #b03a2e; }
 .nmMusterOpen { margin: 0; padding: 4px 6px; color: #f3dc9a; border-left: 2px solid #e0a830; }
-.nmIcon { width: 24px; height: 24px; flex: none; image-rendering: pixelated; }
+.nmIcon { width: 24px; height: 24px; flex: none; image-rendering: auto; }
 .nmNews, .nmFallen { display: flex; align-items: center; gap: 8px; margin: 0; padding: 3px 4px; border-bottom: 1px solid #ffffff10; }
 .nmNewsWords { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
 .nmNewsWords small { color: #b9ad95; font-size: 11px; }
@@ -74,7 +75,7 @@
 .nmNews.slain .nmNewsWords span { color: #f0c2b8; }
 .nmNews.crowned .nmNewsWords span, .nmNews.muster .nmNewsWords span { color: #f3dc9a; }
 .nmTrophies { display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 10px; align-items: center; }
-.nmTrophies .nmToken { grid-row: 1 / span 2; width: 32px; height: 32px; image-rendering: pixelated; }
+.nmTrophies .nmToken { grid-row: 1 / span 2; width: 32px; height: 32px; image-rendering: auto; }
 .nmTrophies b { font: 400 17px/1.2 var(--display, serif); color: #f3dc9a; }
 .nmTrophies small { color: #d8ccb2; }
 .nmScouted { color: #f3dc9a; }
@@ -104,7 +105,7 @@
 .tcFoe { outline: 2px solid #c0443a; outline-offset: -2px; }
 .tcCut.captain .tcFoe { outline-color: #9a55d0; }
 .tcCut.warchief .tcFoe { outline-color: #e0a830; }
-.tcScars { position: absolute; right: 1px; bottom: -1px; font: 700 10px/1 var(--body); color: #ff8a70; text-shadow: 0 1px 0 #000, 1px 0 0 #000; letter-spacing: -1px; }
+.tcScars { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; image-rendering: auto; }
 .tcTrophy { position: absolute; left: -6px; top: -6px; width: 22px; height: 22px; border-radius: 3px; }
 .tcWords, .tcSaid { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .tcName { font: 400 clamp(15px, 4.4vw, 19px)/1.1 var(--display, var(--body)); color: #fbe9d0; text-shadow: 0 2px 0 #000, 0 0 8px rgb(192 68 58 / 0.5); }
@@ -172,6 +173,6 @@ body.inDuel #hudSpells, body.inDuel .ehHorn, body.inDuel #mana { visibility: hid
 
 /* Learned trait symbols supplement the existing name and explanation; unknown traits stay anonymous. */
 .nmSecret.nmWithTrait { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 8px; }
-.nmTraitIcon { grid-row: 1 / span 2; width: 28px; height: 28px; image-rendering: pixelated; align-self: center; }
+.nmTraitIcon { grid-row: 1 / span 2; width: 28px; height: 28px; image-rendering: auto; align-self: center; }
 .nmSecret.nmWithTrait b, .nmSecret.nmWithTrait small { grid-column: 2; }
 .nmBoard.paintedMenu .omHead { background: rgba(14, 10, 19, 0.28); }
