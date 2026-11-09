@@ -78,6 +78,10 @@ This task paints ONE sheet: the ring of thorn hedge woven through sharpened stak
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-01-thorn-hedge.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -156,6 +160,10 @@ This task paints ONE sheet: the ring's two great gates, in their siege states, a
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-02-gates.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -216,6 +224,10 @@ This task paints ONE sheet: the root wall's great Heartwood Gate, the postern an
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-03-heartwood-gate.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -280,6 +292,10 @@ This task paints ONE sheet: the flat face textures the game shears onto every cl
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-04-faces.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered column.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -343,6 +359,10 @@ This task paints ONE sheet: sixteen seamless ground textures, from the forest fl
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-05-ground.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -398,6 +418,10 @@ This task paints ONE sheet: the overlays the game lays where two grounds meet.
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-06-transitions.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -449,6 +473,10 @@ This task paints ONE sheet: the Elder Root, the throne of roots and the great ba
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-07-keep.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -508,6 +536,10 @@ This task paints ONE sheet: the root wall's dressing, the stairs and small struc
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-08-wall-dressing.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -574,6 +606,10 @@ This task paints ONE sheet: the pipers' rings (the hold's war drums) and its gre
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-09-landmarks.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -634,6 +670,10 @@ This task paints ONE sheet: the grove's small props the kits do not have.
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-10-props.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -700,6 +740,10 @@ This task paints ONE sheet: ruins, and the burnt states of the satyrs' camp.
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-11-ruins.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -756,6 +800,10 @@ This task paints ONE sheet: the black mire, its bridge of roots, fords and banks
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-12-mire.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -825,6 +873,10 @@ This task paints ONE sheet: sixteen ground decals.
 Rules for this task:
 - Branch: art/assault-wildwood. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/wildwood/wld-13-decals.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: Elder Root". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.

@@ -77,6 +77,10 @@ This task paints ONE sheet: the ring of white plastered walls under tiled roofs,
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-01-tiled-wall.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -155,6 +159,10 @@ This task paints ONE sheet: the ring's two great gates, in their siege states, a
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-02-gates.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -216,6 +224,10 @@ This task paints ONE sheet: the castle wall's great Moon Gate, the postern and t
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-03-moon-gate.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -280,6 +292,10 @@ This task paints ONE sheet: the flat face textures the game shears onto every cl
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-04-faces.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered column.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -343,6 +359,10 @@ This task paints ONE sheet: sixteen seamless ground textures, from the mountain 
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-05-ground.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -398,6 +418,10 @@ This task paints ONE sheet: the overlays the game lays where two grounds meet.
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-06-transitions.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -449,6 +473,10 @@ This task paints ONE sheet: the Shrine of the Moon, the oni's seat and the great
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-07-keep.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -509,6 +537,10 @@ This task paints ONE sheet: the inner wall's dressing, the stairs and small stru
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-08-wall-dressing.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -575,6 +607,10 @@ This task paints ONE sheet: the great war drums and the shrine's landmarks.
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-09-landmarks.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -633,6 +669,10 @@ This task paints ONE sheet: the shrine's small props the kits do not have.
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-10-props.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -699,6 +739,10 @@ This task paints ONE sheet: ruins, and the burnt states of the parade's camp.
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-11-ruins.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -756,6 +800,10 @@ This task paints ONE sheet: the pond and stream, the vermilion bridge, the fords
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-12-pond.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
@@ -826,6 +874,10 @@ This task paints ONE sheet: sixteen ground decals.
 Rules for this task:
 - Branch: art/assault-yokai. If it already exists on origin, check it out and add to it; otherwise create it from main.
 - Add exactly one file: art-source/assault/yokai/yok-13-decals.png. Change no other file.
+- Size: the image tool's own output size does not matter (it often gives 1254 x 1254 or another size). Paint the pieces at whatever size
+  it gives, then with Pillow cut each piece out, scale it so it fills its cell like the Orc sheet's matching piece, and pack the pieces
+  into a new transparent canvas of exactly the size below, each in its own cell near its foot point. That is expected, not a failure:
+  placement and scale only need to be close, because the game's cutter re-anchors every piece. Never stop because of the size.
 - Pull request into main titled "Assault art: the Moonlit Shrine". If it is already open, push to it and add this sheet to the
   list in its body; otherwise open it. In the body, list the file and what is in each numbered cell.
 - No text, letters, numbers, logos, frames, grid lines, watermarks or signatures. Original work only.
