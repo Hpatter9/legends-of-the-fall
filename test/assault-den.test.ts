@@ -101,3 +101,57 @@ test('an assault on the Den plays: Auto fights it to an end, the same way twice'
   assert.deepEqual(play(), a, 'deterministic');
   void orderPlatoon;
 });
+
+test('the Warpath\'s bands are the hold\'s own army, not always orcs', async () => {
+  const { quiet, steps } = await import('./assaultKit');
+  const b = quiet({ army: 'beasts' });
+  const h = b.field!.hold!;
+  steps(b, 920);
+  const band = h.posts.find((p) => p.def.zone === 'warpath');
+  assert.ok(band, 'a band set out');
+  for (const id of b.field!.groups[band.group].members) assert.ok(!b.field!.byId[id].def.startsWith('orc'), b.field!.byId[id].def);
+});
+
+test('the Den draws no bows: its archers\' places are held by Red Werewolves, who hunt from them; the other holds\' archers keep to their perches', async () => {
+  const { archersOnly } = await import('../src/sim/assault/garrison');
+  const tower = DEN.posts.find((p) => p.id === 'towerN')!;
+  assert.equal(tower.roster, 'AAA');
+  assert.equal(archersOnly(tower, 'beasts'), false);
+  assert.equal(archersOnly(BLOODTUSK.posts.find((p) => p.id === 'towerN')!, 'orcs'), true);
+  assert.equal(archersOnly(BARROW.posts.find((p) => p.id === 'towerN')!, 'undead'), true);
+  assert.equal(UNITS.packRed.range, 1);
+});
+
+test('the pack hunts our shooters first: a Den post goes round a nearer swordsman for an archer within its reach; Bloodtusk Hold\'s takes the nearer', async () => {
+  const { quiet, steps } = await import('./assaultKit');
+  const { occClear, occPut, rebuildBuckets } = await import('../src/sim/assault/field');
+  const { freeNear } = await import('../src/sim/assault/garrison');
+  assert.equal(DEN.huntShooters, true);
+  assert.equal(BLOODTUSK.huntShooters, undefined);
+  const markOf = (army: string) => {
+    const b = quiet({ army });
+    const f = b.field!;
+    const h = f.hold!;
+    const p = h.posts.find((x) => x.def.id === 'lumber')!;
+    const home = f.groups[p.group].home;
+    p.mood = 'alerted';
+    const soldierOf = (kind: string) => f.byId[h.platoons.find((pl) => pl.hero === kind)!.soldiers[0].id];
+    const put = (x: (typeof b.units)[number], at: { u: number; v: number }) => {
+      occClear(f, x);
+      const to = freeNear(b, f, at, false);
+      x.u = to.u;
+      x.v = to.v;
+      occPut(f, x);
+      return to;
+    };
+    const sword = put(soldierOf('knight'), { u: home.u + 3, v: home.v });
+    const bow = put(soldierOf('archer'), { u: home.u, v: home.v + 8 });
+    rebuildBuckets(f, b.units);
+    steps(b, 10);
+    return { mark: p.mark, sword, bow };
+  };
+  const den = markOf('beasts');
+  assert.ok(Math.abs(den.mark.u - den.bow.u) + Math.abs(den.mark.v - den.bow.v) <= 2, `the Den's pack marks the archer (${JSON.stringify(den)})`);
+  const orc = markOf('orcs');
+  assert.ok(Math.abs(orc.mark.u - orc.sword.u) + Math.abs(orc.mark.v - orc.sword.v) <= 2, `Bloodtusk Hold's post marks the nearer swordsman (${JSON.stringify(orc)})`);
+});

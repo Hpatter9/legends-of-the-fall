@@ -35,7 +35,8 @@ export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
   beasts: [
     'A cold river winds through the gorge from edge to edge: cross by the rope bridge (its barricade of logs holds the far end) or by the two fords.',
     'Silence the three howling stones: while one howls, the pack near it strikes harder.',
-    'The Den draws no bows: its lookouts and its bank are held by Red Werewolves, who leap down on whoever comes near. Your archers shoot freely.',
+    'The Den draws no bows: its lookouts and its bank are held by Red Werewolves, who leap down on whoever comes near.',
+    'The pack hunts your shooters first, going round the line to reach them: keep a wall of blades between it and your archers and mages.',
     'The Antler Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
     'Hold the hunters\' camp on the trail behind, or burn every tent of it, and no more of the pack runs down to the hold.',
   ],

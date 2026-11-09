@@ -127,39 +127,40 @@ and Tactical three in four, as Bloodtusk Hold does at 55.
 **The garrison.** 200: 180 at 30 posts and 20 down the trail.
 
 - The rank and file are Black Werewolves, its heavies White Werewolves, and its pens loose Bloodtusk Hold's war-wolves.
-- **The Beast Packs draw no bows.** Their archers' places (the lookouts, the bank, the corner towers) are held by **Red Werewolves**, who hunt
-  the shooters: they leap down on whoever comes near instead of loosing from the walls. So the Den has no arrows on its walls: a different
-  fight from the other two holds, and the codex says so.
+- **The Beast Packs draw no bows** (the director's call: no new archer; a beast hold with no arrows is its identity). Their archers' places (the
+  lookouts, the bank, the corner towers, the wall-walk) are held by **Red Werewolves**. A post is a shooters' post only if its army's archers
+  shoot (`archersOnly(post, army)`): the Den's are not, so they leap down and hunt as any post does instead of standing on their perches.
+- **The pack hunts our shooters first** (`Blueprint.huntShooters`, set on the Den alone): a post marks the nearest of ours who shoots within
+  its reach, going round the line to them, and only else the nearest of ours. It is the answer to a careful advance with its archers and
+  mages behind a wall of blades, which no bows on the walls would otherwise punish.
 - An Alpha Werewolf takes an officer's place the Council cannot fill; the Boar King (the army's last boss) holds the Seat while no warchief
   sits.
+- (A fix on the way: the Warpath's bands were always built from the Orcs' roster, so the Necropolis's bands were orcs. They are the hold's own
+  army now, which makes the Necropolis's twenty bands skeletons; its share was measured before this.)
 
-**The balance** (`npm run balance -- --assault beasts`, the design party, a maxed castle, a full host, 8 seeds). Its mark is level 75, ten
-levels above the Undead's, as the Necropolis's was above Bloodtusk Hold's:
+**The balance** (`npm run balance -- --assault beasts --seeds 32`, the design party, a maxed castle, a full host). Its mark is level 75,
+ten levels above the Undead's, as the Necropolis's was above Bloodtusk Hold's. The director asked for it to sit where the other holds do
+(about Auto 50%, Tactical 75%, Siege 85 to 90%) and to be brutal, with 16 seeds or more.
 
-| level 75 | 0.12 | 0.13 | 0.135 | 0.14 | 0.15 | 0.155 |
-| --- | --- | --- | --- | --- | --- | --- |
-| Auto | 50% | 88% | **63%** | 25% | 25% | 0% |
-| Tactical | 100% | 88% | **100%** | 88% | 100% | 75% |
-| Siege | 100% | 100% | **100%** | 100% | 88% | 63% |
+First built (the archers' places standing still, 8 seeds), it was soft for careful play: at 0.135, Auto 63%, Tactical 100%, Siege 100%.
+Then, at level 75:
 
-Eight seeds are noisy (0.13 came out easier than 0.12). With no bows on its walls, the Den is kind to a careful advance: Tactical and Siege win
-nearly every time until the Orcs' share, where Auto wins none. So its share is **0.135** (`HOLD_SHARE.beasts`): Auto wins about half, as at
-the other holds, and a player who orders the platoons is rewarded more than elsewhere.
+| what the pack does | share | seeds | Auto | Tactical | Siege |
+| --- | --- | --- | --- | --- | --- |
+| the archers' places hunt | 0.145 | 16 | 50% | 94% | 81% |
+| | 0.15 | 16 | 25% | 81% | 88% |
+| | 0.1475 | 32 | 31% | 97% | 66% |
+| and they hunt our shooters first | 0.135 | 32 | 53% | 94% | 88% |
+| | **0.14** | **32** | **41%** | **84%** | **75%** |
+| | 0.1475 | 32 | 31% | 78% | 63% |
 
-**The look.**
+So its share is **0.14** (`HOLD_SHARE.beasts`). Tactical is still the Den's easiest way (a massed host cuts down melee wolves as they come),
+and Siege sits under it here, the other way round from Bloodtusk Hold: the ram's and the ladders' crews stand still where the pack can reach
+the shooters behind them. A harder share brings Tactical to 75% but sinks Auto and Siege with it, so 0.14 is the closest these levers reach.
 
-- Until its sheets are painted ([the prompts](assault-4-howling-den-art-prompts.md)), it is drawn with:
-  - the Orc sheets recoloured by `den_tint` in the cutter: autumn on the moor (greens to russet and gold, the red cloth to tanned hide, the
-    fire kept), frost on the crag wall's and the den's pieces, and the ground sheet's `campDirt` repainted as trodden snow;
-  - the Moonpack kit: the log walls, bone gate and fence, longhouses, cottages, lookouts, howling stones, shrine, torches, sleds, racks, rope
-    bridge, pines and rocks.
-- The field lays the snow by zone (`snowOf` in `fieldLooks.ts`): the ring and all within it, and patches on the moor's last climb to the ditch;
-  our camp at the Landing stays trodden moor.
-- A low autumn sun over the field (`fieldGrade`), the snow's blue at the foot; the minimap wears russet outside and white within.
-- `docs/samples/assault-art/beasts-kit.jpg` is the kit's labelled contact sheet.
-- The cutter takes a profile's own `tint` (by sheet, and by slot on the ground and faces sheets); the Necropolis's `cold` is the default, and
-  its art cuts byte for byte as before.
-- The barricade's mirrored run is now found from its tiles (a run sharing a u), not from Bloodtusk Hold's column.
+Tried and dropped: **the howl**, the howling stones calling out a pack of war-wolves every forty seconds until silenced (eight packs, and a
+smaller four of three; at the nearest platoon, then at the main push). In every form it cost Auto (which never silences the stones) and
+Siege most and Tactical (which silences them first) least, so it widened the gap it was meant to close, and it was taken out.
 
 **Tests.** `assault-den`:
 
@@ -167,7 +168,10 @@ the other holds, and a player who orders the platoons is rewarded more than else
 - the river a barrier but for the bridge and the fords;
 - the baileys opened only by the Fang Gate and the Antler Gate;
 - 200 of the Beast Packs' own, with no orc among them and the Boar King on the Seat;
-- Auto plays an assault to its end, the same way twice.
+- Auto plays an assault to its end, the same way twice;
+- the Warpath's bands are the hold's own army;
+- its archers' places are not shooters' posts (Bloodtusk Hold's and the Necropolis's are);
+- a Den post goes round a nearer swordsman of ours for an archer within its reach, where Bloodtusk Hold's takes the nearer.
 
 `assault-holds` now expects the Den's page built too, and the rest locked.
 

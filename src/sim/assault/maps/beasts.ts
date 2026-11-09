@@ -219,4 +219,6 @@ export const DEN: Blueprint = {
   throne: { u: 49, v: 49 },
   northGate: { u: 22, v: 40 },
   lands: { outer: 'autumn', inner: 'snow' },
+  // (the pack hunts our shooters first: the Den has no bows of its own to answer them)
+  huntShooters: true,
 };

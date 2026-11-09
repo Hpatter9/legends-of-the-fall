@@ -20,6 +20,7 @@
 import { mendUnit } from '../abilities';
 import type { Battle, BattleEvent, Unit } from '../battle';
 import type { At } from '../board';
+import { UNITS } from '../units';
 import { forNear, type FieldState } from './field';
 import { ringOf } from './fieldMap';
 import { archersOnly, freeNear } from './garrison';
@@ -115,16 +116,18 @@ function postSecond(b: Battle, f: FieldState, h: HoldState, p: PostState): void 
     p.mood = 'alerted';
   }
   // (archers keep to their perch, their wall or their bank; the others hunt the nearest of ours within reach of home)
-  if (archersOnly(p.def)) {
+  if (archersOnly(p.def, h.input.army)) {
     p.mark = { ...g.home };
     return;
   }
   const reach = p.def.id === 'throne' ? THRONE_HUNT : HUNT;
+  // (the Howling Den's pack goes for our shooters first, round the line: a shooter within reach is nearer by `reach` than any other)
+  const shooters = h.bp.huntShooters;
   let best: Unit | null = null;
   let bd = Infinity;
   forNear(f, g.home.u, g.home.v, reach, (x) => {
     if (x.side !== 'hero') return;
-    const d = dist(x, g.home);
+    const d = dist(x, g.home) - (shooters && (UNITS[x.def]?.range ?? 1) > 1 ? reach : 0);
     if (d < bd) {
       bd = d;
       best = x;
@@ -205,7 +208,7 @@ function sallySecond(b: Battle, f: FieldState, h: HoldState): void {
     let best = -1;
     let most = 0;
     h.posts.forEach((p, i) => {
-      if (p.mood === 'routed' || p.mood === 'sally' || archersOnly(p.def) || p.def.id === 'throne') return;
+      if (p.mood === 'routed' || p.mood === 'sally' || archersOnly(p.def, h.input.army) || p.def.id === 'throne') return;
       const g = f.groups[p.group];
       if (dist(g.home, pa) > SALLY_NEAR + 4) return;
       const n = g.members.filter((id) => f.byId[id].alive).length;
