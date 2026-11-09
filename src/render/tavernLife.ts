@@ -81,9 +81,6 @@ export interface Life {
   tint?: 'fire' | 'star' | 'zap' | 'spark';
   /** The instrument the placeholder puts in their hands, where their battle sprite has none (the bard already carries his lute). */
   holds?: 'pipes';
-  /** What is in the hand instead of the activity's usual prop, while the hero has no painted sheet (and, for a coin, what flies up in the
-   *  beat even when they have): Carmilla's wine glass for a tankard, Tenzin's river stone for a coin. */
-  prop?: 'goblet' | 'pebble';
 }
 
 const H = ROOM_W;
@@ -145,8 +142,8 @@ export const LIFE: Record<string, Life> = {
   bloodGargoyle: { act: 'lean', why: 'Gavril against the far wall: a stone sentinel who stands as still as the masonry' },
   dhampir: { act: 'sharpen', why: 'Klara by the bar\'s end: the silver-bolt hunter cleans her crossbow before anything else' },
   vampireLord: { act: 'lean', why: 'Vladislav beside the hearth hall\'s door: the voivode of the red keep lets the room come to him' },
-  hemomancer: { act: 'drink', prop: 'goblet', why: 'Carmilla at the hall\'s far end: the countess sips a vintage nobody else is poured' },
-  geomancer: { act: 'coin', prop: 'pebble', why: 'Tenzin on the hearth hall\'s floor: the shaper of crags flips a smooth river stone as if it were a coin' },
+  hemomancer: { act: 'drink', why: 'Carmilla at the hall\'s far end: the countess sips a vintage nobody else is poured' },
+  geomancer: { act: 'coin', why: 'Tenzin on the hearth hall\'s floor: the shaper of crags flips a smooth river stone as if it were a coin' },
   warDrummer: { act: 'cheer', why: 'Raiden by the stage: the thunder of the keep beats time on his thigh and cheers the bard' },
   falconer: { act: 'sharpen', why: 'Aisling in the games room: she oils her bowstring while the falcon watches the room' },
   bellWarden: { act: 'tea', why: 'Kavi by the games room door: the keeper of the toll takes a quiet cup under the temple bell\'s calm' },
@@ -162,10 +159,10 @@ export const LIFE: Record<string, Life> = {
   corsairSurgeon: { act: 'drink', why: 'Tariq in the games room: the reef\'s sawbones raises the rum he swears is for the patients' },
   harpooner: { act: 'eat', why: 'Siku at the front of the games room: the whaler of the floes gnaws a strip of dried fish' },
   seaReaver: { act: 'sharpen', why: 'Nakoa in the games room: the breaker of hulls polishes the flukes of his anchor' },
-  vael: { act: 'conjure', tint: 'fire', why: 'Vael in the bar room: the eclipse sovereign turns a tiny eclipse over one palm, a dark disc in a ring of gold fire' },
-  astrax: { act: 'conjure', tint: 'star', why: 'Astrax in the games room: the last star lets a mote of starfire turn over one claw, the dragon\'s own small constellation' },
+  vael: { act: 'lean', why: 'Vael stands in contemplation: the edge of totality rests in quiet thought' },
+  astrax: { act: 'lean', why: 'Astrax watches the room: the celestial dragon keeps vigil over the keep' },
   ilyra: { act: 'conjure', tint: 'star', why: 'Ilyra stands in gentle luminescence: a radiant sanctuary in the warm room' },
-  orrun: { act: 'tinker', tint: 'spark', why: 'Orrun in the bar room: the worldroot carves a stone talisman with a knife, and a chip flies now and then' },
+  orrun: { act: 'lean', why: 'Orrun rests against the timber pillar: the earth bastion stands unwavering' },
   nyxara: { act: 'coin', why: 'Nyxara flips a fateful silver token: the weaver watches the threads align' },
 };
 
@@ -217,7 +214,7 @@ export const LIFE_SHEET = { rows: ['loop', 'beat'], cell: 128, figure: 96, base:
 /** Gwen's painted figure behind the bar: `src/art/tavern/life/gwen.png`, three rows, the same cells. */
 export const GWEN_SHEET = { rows: ['idle', 'wipe', 'talk'], cell: 128, figure: 96, base: 8 } as const;
 /** The painted props that take over from the placeholders (`prop-<name>.png`, 16 px square, drawn at their own pixels). */
-export const LIFE_PROPS = ['tankard', 'cup', 'dart', 'cards', 'dice', 'coin', 'goblet', 'pebble'] as const;
+export const LIFE_PROPS = ['tankard', 'cup', 'dart', 'cards', 'dice', 'coin'] as const;
 
 /** Which heroes share a scene with this one (a rival, a teller and the listeners), for the art prompt and the tests. */
 export function partnersOf(kind: string): string[] {

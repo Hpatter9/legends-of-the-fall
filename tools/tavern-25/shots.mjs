@@ -1,7 +1,6 @@
-// Screenshots for TAVERN-25: node tools/tavern-25/shots.mjs [ring] [tavern]  (build with `npm run web` first; SIZES=393,360,412 by default)
-// Writes docs/samples/tavern-25/: the duel's fight in its ring of standing stones (ring-<w>.png); the painted tavern with Hester's table and
-// the Elders' table in the room (tavern-<w>.png), what a tap on each opens (stall-<w>.png, elders-<w>.png), the services panel's buttons
-// still opening them (services-<w>.png); and counts page errors.
+// Screenshots for TAVERN-25: node tools/tavern-25/shots.mjs [ring] [elders]  (build with `npm run web` first; SIZES=393,360,412 by default)
+// Writes docs/samples/tavern-25/: the duel's fight in its ring of standing stones (ring-<w>.png), and the Elders' table's card with the
+// table at its head (elders-<w>.png); and counts page errors.
 import * as esbuild from 'esbuild';
 import { mkdirSync } from 'node:fs';
 import { serve, launch, SIZES } from '../calmap/lib.mjs';
@@ -65,39 +64,18 @@ for (const [w, h] of sizes) {
     await shoot(page, `${OUT}/ring-${w}.png`);
     await ctx.close();
   }
-  if (want('tavern')) {
+  if (want('elders')) {
+    // (the Elders' table's card, opened from its button under Tavern services, with the table at its head)
     const { ctx, page } = await open(w, h, D.meta());
     await page.evaluate(() => window.__game.home.show('heroes'));
-    await page.waitForTimeout(1800);
-    await shoot(page, `${OUT}/tavern-${w}.png`);
-    // (Hester's table opens her stall, as the Hester's shop button does)
-    await page.click('.ptStallTable');
-    await page.waitForSelector('#stall', { state: 'visible', timeout: 5000 });
-    await shoot(page, `${OUT}/stall-${w}.png`);
-    await page.goBack().catch(() => {});
+    await page.waitForTimeout(1500);
+    await page.click('#ptTab1');
+    await page.waitForTimeout(300);
+    await page.click('.ptActions .ptButton:has-text("Elders")');
+    await page.waitForSelector('#eldersTable .hsEldersArt', { state: 'visible', timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector('#eldersTable .hsEldersArt')?.complete);
+    await shoot(page, `${OUT}/elders-${w}.png`);
     await ctx.close();
-    const second = await open(w, h, D.meta());
-    await second.page.evaluate(() => window.__game.home.show('heroes'));
-    await second.page.waitForTimeout(1800);
-    // (the Elders' table in the room opens the Elders' table's card, as its button does)
-    await second.page.click('.ptEldersTable');
-    await second.page.waitForSelector('#eldersTable', { state: 'visible', timeout: 5000 });
-    await shoot(second.page, `${OUT}/elders-${w}.png`);
-    await second.ctx.close();
-    // (the services panel: its buttons stay, and still open them)
-    const third = await open(w, h, D.meta());
-    await third.page.evaluate(() => window.__game.home.show('heroes'));
-    await third.page.waitForTimeout(1500);
-    await third.page.click('#ptTab1');
-    await third.page.waitForTimeout(300);
-    await third.page.evaluate(() => document.querySelector('.ptActions')?.scrollIntoView({ block: 'center' }));
-    await shoot(third.page, `${OUT}/services-${w}.png`);
-    const btns = await third.page.$$eval('.ptActions .ptButton:not([hidden]) span', (s) => s.map((x) => x.textContent));
-    console.log(w, 'services:', btns.join(' | '));
-    await third.page.click('.ptActions .ptButton:has-text("Elders")');
-    await third.page.waitForSelector('#eldersTable', { state: 'visible', timeout: 5000 });
-    console.log(w, 'Elders button opens the card');
-    await third.ctx.close();
   }
 }
 console.log('page errors:', errors);

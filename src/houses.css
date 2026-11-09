@@ -84,3 +84,6 @@
 /* Dynasties, phase 7: a House in mourning on the party picker (steady). */
 .ptPickedFlag.ptMourning { background: #2a2f3a; color: #cfd8e6; border-color: #8fa3b8; }
 .ptSlot.ptMourns { opacity: 0.6; filter: grayscale(0.6); }
+
+/* TAVERN-25: the Elders' table at the head of its card, pixel art at whole pixels where the card allows. */
+.hsEldersArt { display: block; width: min(86%, 314px); height: auto; margin: 2px auto 10px; image-rendering: pixelated; filter: drop-shadow(0 4px 3px #0008); }

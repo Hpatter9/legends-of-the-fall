@@ -240,8 +240,6 @@ const BITS: Record<string, { rows: string[]; ink: Record<string, string> }> = {
   card: { rows: ['ddd', 'dwd', 'drd', 'ddd'], ink: { d: '#2a2018', w: '#f4f0e8', r: '#c02a2a' } },
   dice: { rows: ['ddd', 'dwd', 'ddd'], ink: { d: '#2a2018', w: '#f4f0e8' } },
   coin: { rows: ['gg', 'gG'], ink: { g: '#f0c040', G: '#a87818' } },
-  goblet: { rows: ['#rr#', '#rr#', '.##.', '.#..', '###.'], ink: { r: '#8a1830', '#': '#c8c0b0' } },
-  pebble: { rows: ['.ss.', 'sSSs', '.ss.'], ink: { s: '#7a8088', S: '#a8b0b8' } },
   hands: { rows: ['.dd.', 'dssd', 'dssd', '.dd.'], ink: { d: '#4a2a1a', s: '#d8a07a' } },
   cloth: { rows: ['ww', 'wW'], ink: { w: '#e8e4dc', W: '#b8b0a4' } },
 };
@@ -324,7 +322,7 @@ export function drawLifeFront(c: LifeCtx, b: Body, spots: Record<string, Spot>):
       if (painted) break;
       const p = u >= 0 ? Math.sin(u * Math.PI) : 0;
       const at = toMouth(p);
-      bit(c, life.prop ?? 'tankard', at.x, at.y, flip);
+      bit(c, 'tankard', at.x, at.y, flip);
       break;
     }
     case 'tea': {
@@ -349,9 +347,9 @@ export function drawLifeFront(c: LifeCtx, b: Body, spots: Record<string, Spot>):
       const h = u >= 0 ? Math.sin(u * Math.PI) * 14 : 0;
       // (the coin turns as it flies: full face, edge on)
       if (u >= 0 && Math.floor(u * 8) % 2) {
-        c.g.fillStyle = life.prop === 'pebble' ? '#6a7078' : '#c89a28';
+        c.g.fillStyle = '#c89a28';
         c.g.fillRect(Math.round(hand.x), Math.round(hand.y - 3 - h), 1, 2);
-      } else if (!painted || u >= 0) bit(c, life.prop ?? 'coin', hand.x, hand.y - 3 - h);
+      } else if (!painted || u >= 0) bit(c, 'coin', hand.x, hand.y - 3 - h);
       break;
     }
     case 'conjure': {
@@ -445,7 +443,7 @@ export function drawLifeFront(c: LifeCtx, b: Body, spots: Record<string, Spot>):
       break;
     }
     case 'tinker':
-      rising(c, life.tint === 'spark' ? 'spark' : 'zap', hand.x + b.face * 2, hand.y, ACTIVITIES.tinker.every, 500, 3, 1, seed);
+      rising(c, 'zap', hand.x + b.face * 2, hand.y, ACTIVITIES.tinker.every, 500, 3, 1, seed);
       break;
     case 'armwrestle': {
       // (the locked hands between the two, drawn by the one on the left; a bead of sweat now and then)
