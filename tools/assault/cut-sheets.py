@@ -33,9 +33,6 @@ KITS = os.environ.get('KITS', os.path.join(ROOT, '..', 'hpatter9', 'little-town'
 
 # (each cell: x, y, w, h of the cell; the foot point in the cell; the footprint along u and v, in tiles)
 
-# The pieces that stand on their own base when they are painted away from their foot point (see `cut`).
-BASE_FOOT = {'ladder'}
-
 def props(names):
     """A 1024 x 1024 sheet of 4 x 4 cells of 256, every piece one tile, standing on (128, 208)."""
     return {n: (i % 4 * 256, i // 4 * 256, 256, 256, 128, 208, 1, 1) for i, n in enumerate(names) if n}
@@ -770,6 +767,44 @@ def pack(sprites, width=2048):
     return Image.fromarray(atlas), rects
 
 
+
+# ----- the holds' own layouts of sheets 08 to 12 -----
+#
+# Sheets 01 to 07 and 13 of every hold's set are painted cell for cell as the Orc set, but sheets 08 to 12 have their own cells (the prompts in
+# docs/notes/assault-4-*-art-prompts.md): the wall's dressing in its own order, the war drums first on the landmarks' sheet, the camp's tents
+# and their burnt states and two ruins on the ruins sheet (our siege works are not on it: they stay the Orc sheet's), and the water's props
+# in their own order. A hold sheet that is painted is cut by its own layout below; an Orc slot it does not paint (a camp prop, the siege
+# works) is cut from the Orc sheet in the same slot, recoloured as a stand-in (the siege works in their own colours). A sheet not painted
+# yet is the Orc sheet, recoloured, slot for slot, as before.
+def hold_layouts(files, totem=None, lean=None):
+    """The layouts of a hold's sheets 08 to 12, by its file names. `totem` and `lean` name the prop cells (1 to 16) the field's totems and
+    lean-tos take, where the hold painted one."""
+    d10 = props([f'prop{i}' for i in range(1, 17)])
+    if totem:
+        d10['tuskTotem'] = d10['wolfTotem'] = d10[f'prop{totem}']
+    if lean:
+        d10['leanTo'] = d10[f'prop{lean}']
+    return {
+        files['orc-08-wall-dressing.png']: props([
+            'crenel', 'crenelBroken', 'crenelInner', 'wallBrazier', 'wallLight', 'hangingBanner', 'hoarding', 'spearRack',
+            'stairUp', 'stairDown', 'wallLadder', 'cauldron', 'wallGoods', 'wallHorn', 'wallTrap', 'wallDrift']),
+        files['orc-09-camp.png']: buildings([
+            ('drumStruck', 2, 2), ('drumSilenced', 2, 2), ('landmarkA', 2, 2), ('landmarkB', 2, 2), ('landmarkC', 3, 3), ('landmarkD', 3, 3)]),
+        files['orc-10-camp-props.png']: d10,
+        files['orc-11-siege-ruins.png']: buildings([
+            ('warTent', 2, 1), ('burntHeap', 2, 1), ('pavilionTent', 2, 2), ('pavilionBurnt', 2, 2), ('ruinA', 2, 2), ('ruinB', 2, 2)]),
+        files['orc-12-river.png']: props([
+            'deck', 'deckBroken', 'deckEnd', 'pier', 'fordStones', 'waterPlants', 'sunkenLog', 'waterFlowers',
+            'wetBoulders', 'waterProp10', 'boat', 'mist', 'waterProp13', 'waterProp14', 'waterProp15', 'waterSteps']),
+    }
+
+
+# (the prop cells each hold painted a totem and a lean-to in, on sheet 10)
+for _army, _files, _totem, _lean in (('undead', UNDEAD_FILES, 2, None), ('beasts', BEASTS_FILES, 7, 1), ('wildwood', WILDWOOD_FILES, 7, 1),
+                                     ('labyrinth', LABYRINTH_FILES, 7, None), ('ogres', OGRES_FILES, None, None), ('infernal', INFERNAL_FILES, None, None),
+                                     ('yokai', YOKAI_FILES, 6, None), ('golems', GOLEMS_FILES, None, None)):
+    SHEETS[_army]['layouts'] = hold_layouts(_files, _totem, _lean)
+
 def cut(army, report_only=False):
     spec = SHEETS[army]
     src = os.path.join(ROOT, 'art-source', 'assault', army)
@@ -805,15 +840,28 @@ def cut(army, report_only=False):
             a[y0:y1, x0:x1] = tint(a[y0:y1, x0:x1], sheet, n)
         return Image.fromarray(a).convert(mode)
 
+    # (the sheets to cut: each painted sheet by its hold's own layout where it has one, and the Orc slots that layout leaves out from the Orc
+    #  sheet, recoloured; any other sheet slot for slot)
+    layouts = spec.get('layouts', {})
+    painted = {sheet for sheet in layouts if os.path.exists(os.path.join(src, sheet))}
+    own = {n for sheet in painted for n in layouts[sheet]}
+    jobs = []
     for sheet, cells in spec['sprites'].items():
+        if sheet in painted:
+            a = clean(Image.open(os.path.join(src, sheet)))
+            jobs.append((sheet, layouts[sheet], a, a, False))
+            rest = {n: c for n, c in cells.items() if n not in own}
+            if rest and fb_army and sheet in fb_files:
+                o = clean(Image.open(os.path.join(ROOT, 'art-source', 'assault', fb_army, fb_files[sheet])))
+                jobs.append((fb_files[sheet], rest, tint(o, sheet), o, True))
+            continue
         path, borrowed = sheet_path(sheet)
         if not os.path.exists(path):
             report.append(f'{sheet}: not painted yet (the field falls back to existing art)')
             continue
         a = clean(Image.open(path))
-        if borrowed:
-            plain = a
-            a = tint(a, sheet)
+        jobs.append((sheet, cells, tint(a, sheet) if borrowed else a, a, borrowed))
+    for sheet, cells, a, plain, borrowed in jobs:
         for name, (cx, cy, cw, ch, fx, fy, fu, fv) in cells.items():
             # (the shared pieces, our own siege works, keep their own colours)
             src_a = plain if borrowed and name in spec.get('shared', ()) else a
@@ -833,10 +881,6 @@ def cut(army, report_only=False):
             stray = abs(off_x) > 24 or off_y < -40 or off_y > 20
             if stray:
                 fx, fy = (x0 + x1) // 2, y1 - (fu + fv) * 16
-                # (a piece that leans on a wall stands on its own base, as the Orc sheet paints it: its bottom on the foot point, where the
-                #  field puts it against the wall's foot; stood a footprint lower, a hold's ladder hung half a tile below the wall)
-                if name in BASE_FOOT:
-                    fy = y1 - 3
             if abs(off_y) > 24 or abs(off_x) > 40:
                 report.append(f'{sheet} {name} ({fu}x{fv}): bottom {off_y:+d} px from the footprint tip, middle {off_x:+.0f} px from the foot'
                               + (' (stood on its picture)' if stray else ''))
