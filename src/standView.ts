@@ -9,7 +9,7 @@ import { Container, Graphics, Sprite, type Application } from 'pixi.js';
 import { tileAt } from './sim/board';
 import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { TICK_MS, type Battle, type BattleEvent, type Unit } from './sim/battle';
-import { autoSpellsFor } from './sim/autoCast';
+import { autoSpellsFor, spellAutoSaved } from './sim/autoCast';
 import { ARMIES, armyUnlocked } from './sim/armies';
 import { castSpell, canAfford, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
 import { snapSpell } from './sim/spellAim';
@@ -282,7 +282,15 @@ export class StandView {
     this.hud = new FightHud(heroes, {
       onAuto: (on) => {
         const m = this.host.meta();
+        // (BATTLE-POLISH: the spells' setting is its own from now on: an unset one keeps what it read before, the old one switch)
+        m.spellAuto = spellAutoSaved(m);
         m.ultAuto = on;
+        saveMeta(m);
+        if (this.s) this.setAutoOn(this.s.b);
+      },
+      onSpellAuto: (on) => {
+        const m = this.host.meta();
+        m.spellAuto = on;
         saveMeta(m);
         if (this.s) this.setAutoOn(this.s.b);
       },
@@ -328,9 +336,9 @@ export class StandView {
         saveMeta(this.host.meta());
       },
     });
-    // (the king's spells as orbs under the top bar, with the Auto switch at the row's end: BATTLE-HUD)
+    // (the king's spells as orbs under the top bar, with the two Auto buttons at the row's end: BATTLE-HUD, BATTLE-POLISH)
     const orbs = el('div', 'stOrbs');
-    orbs.append(spells, this.hud.autoEl);
+    orbs.append(spells, this.hud.autosEl);
     // (EIDOLONS: the War Horn at the row's left end; the Last Stand is one long fight, so it is blown once a run)
     this.eid = new EidolonCall({
       meta: () => this.host.meta(),
@@ -1245,7 +1253,7 @@ export class StandView {
       this.acc += Math.min(dt, 250) * (s.phase === 'retreat' ? 1 : momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.ultm.queue.rate * this.fx.timeScale());
       let guard = 0;
       const ts = performance.now();
-      // (the ultimates: tapped on the hero bar, or on their own with its Auto switch on)
+      // (the ultimates: tapped on the hero bar, or on their own with the Auto ultimates button on)
       this.setAutoOn(s.b);
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
       while (this.acc >= TICK_MS && guard++ < 4 && !this.ultm.queue.holdsBattle && !this.eid.holds) {
@@ -1677,11 +1685,13 @@ export class StandView {
     }
   }
 
-  /** Tell the battle what Auto covers (AUTO-CAST): the heroes' ultimates and the king's equipped spells, both on their own while it is on. */
+  /** Tell the battle what the two Auto buttons cover (AUTO-CAST, split by BATTLE-POLISH): the heroes' ultimates, and the king's equipped
+   *  spells, each on its own while its button is on. */
   private setAutoOn(b: Battle): void {
-    const on = !!this.host.meta().ultAuto;
-    b.autoUlt = on;
-    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, castList(this.host.meta().spellbook));
+    const m = this.host.meta();
+    b.autoUlt = !!m.ultAuto;
+    const spells = spellAutoSaved(m);
+    if (spells !== !!b.autoSpells) b.autoSpells = autoSpellsFor(spells, castList(m.spellbook));
   }
 
   private refreshSpells(): void {
@@ -1742,11 +1752,12 @@ export class StandView {
     if (s.phase === 'deploy') this.drawTray();
     p.pause.hidden = s.phase !== 'wave' && s.phase !== 'break';
     p.spells.hidden = !castList(this.host.meta().spellbook).length || s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
-    // (the orbs' row also holds the Auto switch: it shows while the hero rows do)
+    // (the orbs' row also holds the Auto buttons: they show while the hero rows do)
     p.orbs.hidden = s.phase === 'deploy' || s.phase === 'over' || s.phase === 'choice' || s.phase === 'retreat';
     p.heroes.hidden = s.phase === 'deploy' || s.phase === 'over';
     if (!p.heroes.hidden) {
       this.hud.setAuto(!!this.host.meta().ultAuto);
+      this.hud.setSpellAuto(spellAutoSaved(this.host.meta()), castList(this.host.meta().spellbook).length > 0);
       const rebuilt = this.hud.build(s.b);
       // (each row's rim in its hero's colour, as its ring on the field)
       const hk = `${s.run.seed}:${p.heroes.children.length}`;

@@ -151,7 +151,7 @@ import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { ultFull } from './sim/heroKits';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
-import { autoSpellsFor } from './sim/autoCast';
+import { autoSpellsFor, spellAutoSaved } from './sim/autoCast';
 import { bindSpellbook } from './spellbook';
 import { snapSpell } from './sim/spellAim';
 import { castList, fitSchool, schoolOf } from './sim/schools';
@@ -1336,7 +1336,7 @@ class Game {
     this.b.spells.ranks = fightRanks(this.meta.spellbook);
     // (the ultimates: tapped by the player, or on their own with Auto on, or under auto-replay)
     this.setAutoOn(this.b);
-    this.hud.setAuto(this.ultAutoOn());
+    this.showAuto();
     this.hud.build(this.b);
     this.ultm.clear();
     this.ultm.warm(this.b);
@@ -2153,11 +2153,21 @@ class Game {
   private ultAutoOn(): boolean {
     return !!this.auto || !!this.meta.ultAuto;
   }
-  /** Tell the battle what Auto covers (AUTO-CAST): the heroes' ultimates and the king's equipped spells, both on their own while it is on. */
+  /** BATTLE-POLISH: whether the ruler's equipped spells are cast on their own: the player's Auto spells button, and always under auto-replay. */
+  private spellAutoOn(): boolean {
+    return !!this.auto || spellAutoSaved(this.meta);
+  }
+  /** Tell the battle what the two Auto buttons cover (AUTO-CAST, split by BATTLE-POLISH): the heroes' ultimates, and the king's equipped
+   *  spells, each on its own while its button is on. */
   private setAutoOn(b: Battle): void {
-    const on = this.ultAutoOn();
-    b.autoUlt = on;
-    if (on !== !!b.autoSpells) b.autoSpells = autoSpellsFor(on, castList(this.meta.spellbook));
+    b.autoUlt = this.ultAutoOn();
+    const spells = this.spellAutoOn();
+    if (spells !== !!b.autoSpells) b.autoSpells = autoSpellsFor(spells, castList(this.meta.spellbook));
+  }
+  /** Both Auto buttons as the save and the replay have them; the spells' shows only while spells are equipped. */
+  private showAuto(): void {
+    this.hud.setAuto(this.ultAutoOn());
+    this.hud.setSpellAuto(this.spellAutoOn(), castList(this.meta.spellbook).length > 0);
   }
 
   private wire(): void {
@@ -2170,7 +2180,14 @@ class Game {
     this.hud = new FightHud($('fightHud'), {
       equipmentStep: (kind) => awakenedOf(this.meta, kind),
       onAuto: (on) => {
+        // (BATTLE-POLISH: the spells' setting is its own from now on: an unset one keeps what it read before, the old one switch)
+        this.meta.spellAuto = spellAutoSaved(this.meta);
         this.meta.ultAuto = on;
+        saveMeta(this.meta);
+        this.setAutoOn(this.b);
+      },
+      onSpellAuto: (on) => {
+        this.meta.spellAuto = on;
         saveMeta(this.meta);
         this.setAutoOn(this.b);
       },
@@ -2206,7 +2223,7 @@ class Game {
       },
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
-    $('hudSpells').append(this.hud.autoEl);
+    $('hudSpells').append(this.hud.autosEl);
     // (the party's tactic: the button under Auto in the fight, which cycles the tactic mid-fight, and the prep screen's Formation button;
     // docs/notes/tactics.md, docs/notes/tactics-overview.md)
     this.tactics = new TacticsView({

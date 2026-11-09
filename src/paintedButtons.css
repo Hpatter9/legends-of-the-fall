@@ -289,6 +289,15 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.dim,
   background: url(ui/buttons/autocast.webp) center / contain no-repeat; filter: drop-shadow(0 2px 3px #000b);
 }
 #hudSpells .fhAuto.on, .fhAuto.on { background: url(ui/buttons/autocast-lit.webp) center / contain no-repeat; border: 0; }
+/* (BATTLE-POLISH: Auto split in two. The spells' button keeps the autocast medallion; the ultimates' is the ultimate medallion, dimmed while
+   off and lit with a gold glow while on. Each carries a small word under it so the two read apart) */
+#hudSpells .fhAutoUlt, .fhAutoUlt { background: url(ui/buttons/ultimate.webp) center / contain no-repeat; filter: drop-shadow(0 2px 3px #000b) grayscale(0.85) brightness(0.62); }
+#hudSpells .fhAutoUlt.on, .fhAutoUlt.on { background: url(ui/buttons/ultimate.webp) center / contain no-repeat; filter: drop-shadow(0 0 6px #ffd27a) drop-shadow(0 2px 3px #000b); }
+.fhAuto[hidden] { display: none !important; }
+.fhAuto { position: relative; }
+.fhAuto em { position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); padding: 0 3px; border-radius: 3px; background: #120c07e6; border: 1px solid #8a6b32;
+  color: #c9b48a; font: 400 9px/11px var(--body); font-style: normal; letter-spacing: 0.06em; white-space: nowrap; pointer-events: none; }
+.fhAuto.on em { color: #fff3c8; border-color: #f2cf78; }
 .fhAuto span, .fhAuto .sw { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 #hudSpells .fhAuto:active { transform: scale(0.93); filter: drop-shadow(0 1px 1px #000b) brightness(0.9); }
 /* (an ultimate ready to fire: the painted ultimate medallion over the row's portrait corner) */
