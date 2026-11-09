@@ -1230,3 +1230,67 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - **Owner:** Codex tavern art chat. **Branch/worktree:** `art/expansion`, `/workspace/expansion-art`.
 - **Scope:** Hester's merchant table and optional Elders' table source PNGs, plus handoff.
 - **Status:** complete; exact 384×256 and 320×112 dimensions, binary transparency, clear corners and visual inspection passed. Added to Expansion art PR #399. Runtime integration remains with director. [Handoff](notes/expansion-tavern-tables.md).
+
+### EXPANSION-ART-2 — Nemesis icon source sheet
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`.
+- Scope: one `art-source/expansion/nemesis-icons.png` and required task/prompt/handoff records.
+- Direction: owner's explicit 29-icon specification; dark fantasy pixel art, muted gothic palette, crisp dark outline.
+- Completion: 1536×640 transparent PNG; 12×5 cells, ordered 12/10/7 icons, all other cells empty; inspect source and 24px readability; commit, push, open/update Expansion art 2 PR.
+- Status: in progress. Runtime integration excluded.
+- Result: ready for review. Fresh sheet validated: exact dimensions, RGBA/binary alpha, 29 occupied / 31 empty cells, minimum 13px padding; atlas and 24px preview inspected. Source art only; no runtime checks. Handoff: [Expansion art 2](notes/expansion-2.md).
+
+### EXPANSION-2-SEASONS — Warm seasons and fates repaint
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`.
+- Scope: `art-source/expansion/seasons-fates.png`, prompt and handoff documentation.
+- Direction: owner's exact nine-icon brief; existing painted sheet as reference, warmer muted gold and parchment.
+- Completion: one 1152×256 transparent sheet; nine centred icons confined to the upper 128×128 of each 128×256 cell; no text; add to Expansion art 2 PR.
+- Status: ready for review in [Expansion art 2 #464](https://github.com/Hpatter9/legends-of-the-fall/pull/464). Exact dimensions, RGBA, all nine centred bounds and transparent lower half passed; visually reviewed. Source art only; runtime tests/build not run. [Handoff](notes/expansion-2-seasons-fates.md).
+
+EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. Owner requests one five-cell 1280x256 transparent source sheet at art-source/expansion/frames.png, matching existing style, added to Expansion art 2 PR #464. Scope: that source image plus required prompt/task/handoff records. Completion: visual review, exact size and transparent centres/background, commit and push to existing PR. No runtime changes.
+- **EXPANSION-2-FRAMES result:** five-cell source sheet painted and visually reviewed; dimensions, RGBA, binary alpha, padding and empty portrait centres verified. Ready for review in PR #464. See [handoff](notes/expansion-2-art.md). Runtime checks not run (source art only).
+
+### EXPANSION-2-HESTER — Merchant table repaint
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`.
+- Scope: only `art-source/expansion/hester-table.png` plus required prompt/task/handoff records.
+- Completion: one 384×256 transparent side-view merchant table matching tavern prop pixels, palette, outlines and lighting; requested goods, canopy, lantern and book sign; no people/text; add to PR #464.
+- Status: in progress; runtime integration excluded.
+- Result: ready for review in [Expansion art 2 #464](https://github.com/Hpatter9/legends-of-the-fall/pull/464). One 384×256 source PNG, 32 colours, binary alpha and 2×2 pixel grid verified; visually reviewed. [Handoff](notes/expansion-2-hester.md). Runtime tests/build not run (source art only).
+### EXPANSION-2-COUNCIL — Cavern council backdrop
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`; PR #464.
+- Scope: one `art-source/expansion/council-backdrop.png` plus required prompt/task/handoff records.
+- Direction: owner's specified empty cavern war council, violet and ember light, dark centre and edges for menu text.
+- Completion: 1024×1536 upright painterly pixel art, black map table, horned throne, thirteen high-backed chairs, orc/undead/beast banners; no people or text; visually inspect and push to existing PR.
+- Status: in progress; source art only.
+- Result: ready for review in Expansion art 2 PR #464. Painted and visually reviewed; exact 1024×1536 RGB PNG verified. No people or text; subdued map/centre and dark outer edges. [Handoff](notes/expansion-2-art.md). Runtime tests/build not run: source artwork only.
+
+### EXPANSION-2-HOUSES — Tapestry menu backdrop
+
+- Owner: Codex art chat. Branch/worktree: `art/expansion-2`, `/workspace/legends-of-the-fall`; PR #464.
+- Scope: one `art-source/expansion/houses-backdrop.png`, prompt and handoff documentation.
+- Direction: owner's supplied tapestry brief; opaque 1024×1536 painterly pixel art, branching gold family tree and empty shields, stone hall and amber sconces, dark centre/edges, no people or text.
+- Completion: exact PNG dimensions, visual review, commit and push to Expansion art 2.
+- Status: ready for review. PNG decode, 1024×1536 dimensions and opacity passed; finished art visually reviewed. Source art only; no runtime checks. [Handoff](notes/expansion-2-houses-backdrop.md).
+
+### EXPANSION-2-DUEL-RING — Repaint duel perimeter
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`.
+- Scope: one source image `art-source/expansion/duel-ring.png`, prompt and handoff records.
+- Completion: 640×320 transparent PNG; hollow 5×5 square at 2:1 isometric angle, low grey menhirs, occasional brass bands and moss, no ground/text; added to PR #464.
+- Status: complete; final image visually inspected, 640×320 RGBA and transparent centre/exterior verified. Source art only; no runtime checks. [Handoff](notes/expansion-2-duel-ring.md).
+
+### ART-WIRE-5 — Orc repaints and Expansion art 2 in the game
+
+- Owner: Claude worker for the director; branch `claude/art-wire-5`.
+- Scope: merge `art/assault-orc` (#463) and `art/expansion-2` (#464); re-cut the Orc sheets for the four holds; cut and wire the repainted traits,
+  Council and News icons, War Trophy, seasons, fates, scar frames, heirloom frame and chip; credits; before/after screenshots at 393 and 360.
+- Status: complete. Typecheck, web build, the relevant tests and the browser checks pass with 0 page errors. Nothing kept back; the duel ring and
+  Hester's table (also in #464) are not wired. [Handoff](notes/art-wire-5.md).
+### EXPANSION-2-ELDERS — Tavern table source repaint
+- Owner: current Codex art chat; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`; PR #464.
+- Scope: one `art-source/expansion/elders-table.png` plus required prompt and handoff records.
+- Completion: 320×112 transparent side-view oak table, six empty high-backed chairs, three candles and a clay pipe; match `src/art/tavern/` pixel style; no people or text.
+- Status: ready for review; final 320×112 RGBA image visually reviewed, binary alpha and transparent margins checked. Runtime tests/build not run: source art only. [Handoff](notes/expansion-2-elders-table.md).

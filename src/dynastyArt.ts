@@ -17,4 +17,5 @@ export const FATE_ICON: Readonly<Record<string, string>> = { mentor, regular, sh
 // Reserved source symbol: the current bearer model has no separate Legend fate.
 export const LEGEND_ICON = legend;
 export const HOUSE_ICON = house;
+// (the keepsake painting; the Houses' heirloom chip wears the signet ring, `HEIRLOOM_CHIP` in expansionArt.ts)
 export const HEIRLOOM_ICON = heirloom;

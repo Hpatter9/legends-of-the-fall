@@ -39,11 +39,13 @@ try {
   for (const [width,height] of [[393,852],[360,780],[412,915]]) {
     await page.setViewportSize({width,height});
     await page.evaluate(() => window.__councilArt.board('news'));
-    assert.equal(await page.locator('#nemesisBoard .nmNews').count(),19);
+    // (twenty kinds since the Assault's Conquest, which wears the warchief's badge too)
+    assert.equal(await page.locator('#nemesisBoard .nmNews').count(),20);
     assert.ok(await decoded('#nemesisBoard .nmNews img'));
-    // Imported symbols and paintings are 128px; the existing warchief badge is 88×112.
-    assert.equal(await page.locator('#nemesisBoard .nmNews img').evaluateAll(imgs => imgs.filter(i => i.naturalWidth === 128 && i.naturalHeight === 128).length),17);
-    assert.equal(await page.locator('#nemesisBoard .nmNews img').evaluateAll(imgs => imgs.filter(i => i.naturalWidth === 88 && i.naturalHeight === 112).length),2);
+    // The repainted symbols are cut at 96px (docs/notes/art-wire-5.md), the two paintings 128px; the existing warchief badge is 88×112.
+    assert.equal(await page.locator('#nemesisBoard .nmNews img').evaluateAll(imgs => imgs.filter(i => i.naturalWidth === 96 && i.naturalHeight === 96).length),15);
+    assert.equal(await page.locator('#nemesisBoard .nmNews img').evaluateAll(imgs => imgs.filter(i => i.naturalWidth === 128 && i.naturalHeight === 128).length),2);
+    assert.equal(await page.locator('#nemesisBoard .nmNews img').evaluateAll(imgs => imgs.filter(i => i.naturalWidth === 88 && i.naturalHeight === 112).length),3);
     assert.equal(await page.locator('#nemesisBoard .nmNews .nmPainted').count(),2);
     assert.ok(await page.locator('#nemesisBoard .nmBoard').evaluate(e => e.getBoundingClientRect().right <= innerWidth));
     await shot(`news-${width}`);
@@ -62,7 +64,7 @@ try {
     assert.ok(await decoded('#manuscriptLog .qFace img.painted'));
     assert.equal(await page.locator('#manuscriptLog .qFace img').getAttribute('src'),manuscript);
     await shot(`manuscript-log-${width}`);
-    results.push({width,height,newsTypes:19,paintedNews:2,trophy:true,manuscriptCardAndLog:true});
+    results.push({width,height,newsTypes:20,paintedNews:2,trophy:true,manuscriptCardAndLog:true});
     console.log('Council art passed',width);
   }
   assert.deepEqual(errors,[]);

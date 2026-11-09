@@ -30,6 +30,7 @@ import { takeGearNote } from './sim/gearMigrate';
 import { GLYPHS, patchBlock, patchCost, patchItem } from './sim/enchant';
 import { SEASON_CAP, seasonNeed } from './sim/wear';
 import { claimLegends, nextVerseAt, takeLegendNews, versesOpen } from './sim/legends';
+import { HEIRLOOM_FRAME } from './expansionArt';
 import { reclaimed } from './sim/revenge';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -130,6 +131,20 @@ function compareRows(next: EquipStats, cur: EquipStats | undefined): HTMLElement
   return rows;
 }
 
+/** An heirloom's icon in the House's gold filigree frame (docs/notes/art-wire-5.md), a gold mark in a notch for each generation it has
+ *  passed through (three at most). */
+function heirloomFramed(icon: HTMLElement, marks: number): HTMLElement {
+  const box = el('span', 'eqHeirloomFrame');
+  const art = el('img', 'eqHeirloomArt');
+  art.src = HEIRLOOM_FRAME;
+  art.alt = '';
+  art.draggable = false;
+  box.append(icon, art);
+  for (let i = 0; i < 3; i++) box.append(el('i', `eqMark n${i}${i < marks ? ' on' : ''}`));
+  box.title = `${marks} ${marks === 1 ? 'generation' : 'generations'}`;
+  return box;
+}
+
 /** What the picker shows for one item: its icon and name, the stat rows (against `against` when given), the affixes. */
 function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt, home = false): HTMLElement {
   const base = EQUIP_BASES[it.base];
@@ -138,7 +153,8 @@ function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt,
   const title = el('div');
   // (the Nemesis War, phase 3: a piece a slain nemesis carried as a trophy, brought home)
   title.append(el('b', '', itemName(it)), el('small', '', `${RARITY_NAMES[it.rarity]} · Lv ${it.level}${home ? ' · Reclaimed' : ''}`));
-  head.append(itemIcon(it, base.slot, 'small'), title);
+  const ico = itemIcon(it, base.slot, 'small');
+  head.append(it.heirloom ? heirloomFramed(ico, it.heirloom.marks) : ico, title);
   card.append(head);
   const stats = itemStats(it, kind);
   card.append(...compareRows(stats, against ? itemStats(against, kind) : undefined));

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.429.0',
+    date: '2026-11-09',
+    title: 'Painted Orc gates and Nemesis icons',
+    notes: ['The Orc hold\'s gates, Iron Gate, keep and ground marks are repainted, and the Nemesis, Council, News, season, scar and heirloom icons are painted.'],
+  },
+  {
     version: '0.428.0',
     date: '2026-11-09',
     title: 'Assault: holds tuned to when they open',

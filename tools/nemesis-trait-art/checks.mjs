@@ -45,7 +45,7 @@ try {
       await page.evaluate(i=>window.__traitArt.show(i),i);
       assert.equal(await page.locator('#nemesisCard .nmTraitIcon').count(),3);
       assert.ok(await decoded('#nemesisCard .nmTraitIcon'));
-      assert.ok(await page.locator('#nemesisCard .nmTraitIcon').evaluateAll(imgs=>imgs.every(img=>img.naturalWidth===128 && img.width===28 && getComputedStyle(img).imageRendering==='pixelated')));
+      assert.ok(await page.locator('#nemesisCard .nmTraitIcon').evaluateAll(imgs=>imgs.every(img=>(img.naturalWidth===128 || img.naturalWidth===96) && img.width===28 && getComputedStyle(img).imageRendering==='auto')));
       assert.ok(await page.locator('#nemesisCard .nmSecret').evaluateAll(rows=>rows.every(e=>e.getBoundingClientRect().left>=0 && e.getBoundingClientRect().right<=innerWidth)));
       if(width===393 || i===0 || i===7) await shot(`traits-${i}-${width}`);
       await page.evaluate(i=>window.__traitArt.show(i,true),i);

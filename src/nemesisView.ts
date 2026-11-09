@@ -22,7 +22,7 @@ import { paintGearIcon } from './gearIcons';
 import { UNITS } from './sim/units';
 import { menuBackdrop } from './menuBackdrops';
 import { NEMESIS_TRAIT_ICON } from './nemesisTraitArt';
-import { RANK_BADGE } from './expansionArt';
+import { RANK_BADGE, SCAR_FRAME } from './expansionArt';
 import { NEWS_ICON, TROPHY_ICON, SMOOTH_COUNCIL_ART } from './councilArt';
 export { NEWS_ICON, TROPHY_ICON } from './councilArt';
 
@@ -44,12 +44,12 @@ const icon = (src: string, cls = 'nmIcon'): HTMLImageElement => {
 /** Might as pips ("●●●○○○○○○○"). */
 export const mightPips = (might: number): string => '●'.repeat(Math.max(0, Math.min(MIGHT_MAX, might))) + '○'.repeat(Math.max(0, MIGHT_MAX - might));
 
-/** A nemesis's face: its kind's portrait in its rank's frame (CSS), the scars beside it. */
+/** A nemesis's face: its kind's portrait in its rank's frame (CSS); a scarred one wears the brass frame clawed once, twice or thrice. */
 export function face(n: Pick<Nemesis, 'base' | 'rank' | 'scars'>, size: number): HTMLElement {
   const box = el('span', `nmFace ${n.rank}`);
   const sheet = UNITS[n.base]?.sheet;
   if (sheet) box.append(portrait(sheet, size));
-  if (n.scars > 0) box.append(el('i', 'nmScars', '✕'.repeat(Math.min(3, n.scars))));
+  if (n.scars > 0) box.append(icon(SCAR_FRAME[Math.min(3, n.scars) - 1], 'nmScars'));
   box.setAttribute('aria-hidden', 'true');
   return box;
 }
