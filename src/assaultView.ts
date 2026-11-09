@@ -98,6 +98,18 @@ export function drawHoldMap(canvas: HTMLCanvasElement, army: string, size: numbe
       L: [120, 140, 96], C: [124, 120, 90], K: [56, 96, 52], T: [70, 116, 56], V: [96, 96, 80], R: [30, 44, 40], F: [62, 84, 70], Y: [110, 84, 52],
       D: [52, 46, 36], E: [92, 96, 64], P: [40, 64, 34], B: [96, 108, 70], S: [90, 98, 86], I: [104, 120, 80], M: [124, 138, 96], N: [64, 84, 56],
     });
+  // (the Heart of the Maze's: the dry hills, the dark canal, the sandstone ring and the pale limestone within)
+  if (army === 'labyrinth')
+    Object.assign(zoneCol, {
+      L: [176, 156, 110], C: [170, 146, 104], K: [150, 132, 78], T: [120, 120, 70], V: [140, 112, 86], R: [34, 62, 70], F: [70, 110, 116], Y: [170, 150, 120],
+      D: [100, 80, 60], E: [160, 130, 96], P: [150, 110, 70], B: [186, 160, 120], S: [200, 190, 170], I: [206, 196, 172], M: [220, 210, 186], N: [140, 120, 84],
+    });
+  // (Bonefire Crag's: the cold highland, the torrent, the boulder ring and the frozen yards within)
+  if (army === 'ogres')
+    Object.assign(zoneCol, {
+      L: [120, 132, 100], C: [126, 120, 96], K: [80, 104, 70], T: [104, 90, 92], V: [100, 98, 96], R: [36, 66, 96], F: [80, 118, 150], Y: [180, 170, 150],
+      D: [60, 54, 50], E: [96, 92, 90], P: [90, 84, 80], B: [150, 150, 156], S: [64, 64, 72], I: [170, 172, 180], M: [190, 192, 200], N: [86, 90, 76],
+    });
   for (let i = 0; i < b.w * b.d; i++) {
     const t = b.tiles[i];
     const c = zoneCol[String.fromCharCode(map.zone[i])] ?? [100, 100, 100];

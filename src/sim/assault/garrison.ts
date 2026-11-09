@@ -34,9 +34,16 @@ export const ASSAULT = {
   wave: 8,
 } as const;
 
-/** Each hold's own share (`ASSAULT.foeShare`'s part, by army): set so the bot does about as well at each army's Legendary level, by the
- *  balance tool. The Barrow Necropolis: 0.12, at level 65 Auto wins half and Tactical three in four (docs/notes/assault-4.md). */
-export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.1175, beasts: 0.1475, wildwood: 0.11 };
+/** Each hold's mark: the hero level a player has when they win that army's tenth star (the Legendary star), when its hold opens, and so
+ *  the level its share is measured at (the director's ask, docs/notes/assault-4.md "The holds' marks"). The Legendary Orcs are tuned at level
+ *  55 (`armies.ts`, the joint rebalance: 86% of single tries there), and every army's tiers are the same multipliers on its own curve, set so
+ *  its Normal takes two to four tries at its own level (`Army.level`, docs/notes/difficulty.md); so the level each army's Legendary star
+ *  needs moves with that army's level: 55 + (`Army.level` - 1), capped at the level cap, 100. */
+export const HOLD_MARK: Readonly<Record<string, number>> = { orcs: 55, undead: 62, beasts: 69, wildwood: 76, labyrinth: 89, ogres: 99, infernal: 100, yokai: 100, golems: 100 };
+
+/** Each hold's own share (`ASSAULT.foeShare`'s part, by army): set so the bot does about as well at each hold's mark (`HOLD_MARK`) as at the
+ *  others, by the balance tool (docs/notes/assault-4.md). */
+export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.1175, beasts: 0.14, wildwood: 0.095, labyrinth: 0.125, ogres: 0.095 };
 /** The share a hold's garrison stands at: a tool's own, else the hold's. */
 export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare'>): number => input.foeShare ?? HOLD_SHARE[input.army] ?? ASSAULT.foeShare;
 
@@ -53,11 +60,16 @@ export const KINDS: Readonly<Record<string, Record<string, string>>> = {
   // (nor do the Wildwood's satyrs: the snare-layers, who hunt the shooters, hold its archers' places; the revellers who heal their friends
   //  are its heavies; its pens loose wolves, as its Wood Raider's band runs with them)
   wildwood: { G: 'groveSatyr1', A: 'groveSatyr3', B: 'groveSatyr2', W: WAR_WOLF.id },
+  // (the Labyrinth's gorgons shoot: its archers; the bellowing minotaurs who guard their friends are its heavies; its pens loose hounds)
+  labyrinth: { G: 'mazeMino1', A: 'mazeGorgon1', B: 'mazeMino3', W: WAR_WOLF.id },
+  // (the Ogre Clans draw no bows: their orc brutes charge from the archers' places as from any post, the ogres are their heavies, and their
+  //  pens loose wargs)
+  ogres: { G: 'clanBrute', A: 'clanBrute', B: 'clanOgre', W: WAR_WOLF.id },
 };
 /** The Orcs' roster's letters (the first hold's, kept for the tools). */
 export const KIND = KINDS.orcs;
 /** An officer's place the Council cannot fill takes this nameless officer, by army. */
-export const OFFICER: Readonly<Record<string, string>> = { orcs: 'orcChieftain', undead: 'boneCaptain', beasts: 'alphaWolf', wildwood: 'forestBoss1' };
+export const OFFICER: Readonly<Record<string, string>> = { orcs: 'orcChieftain', undead: 'boneCaptain', beasts: 'alphaWolf', wildwood: 'forestBoss1', labyrinth: 'gorgonQueen', ogres: 'shamanKing' };
 /** The order the Council's ranks take the posts' leaders' places (4.2). */
 export const LIEUTENANT_POSTS = ['bridge', 'drumW', 'drumE', 'drumS', 'westTower', 'eastTower'] as const;
 export const CAPTAIN_POSTS = ['southGate', 'ironGate', 'throne', 'throne'] as const;

@@ -38,6 +38,8 @@ import * as ORC_ATLAS from './assaultOrcAtlas';
 import * as UNDEAD_ATLAS from './assaultUndeadAtlas';
 import * as BEASTS_ATLAS from './assaultBeastsAtlas';
 import * as WILDWOOD_ATLAS from './assaultWildwoodAtlas';
+import * as LABYRINTH_ATLAS from './assaultLabyrinthAtlas';
+import * as OGRES_ATLAS from './assaultOgresAtlas';
 import { VFX, loadVfxArt } from './vfxArt';
 import { holdMapOf, blueprintOf } from '../sim/assault/assault';
 import { FieldLife } from './fieldLife';
@@ -80,9 +82,9 @@ const reducedMotion = (): boolean => (typeof window !== 'undefined' && window.ma
 export function fieldGrade(host: HTMLElement, army = 'orcs'): HTMLElement {
   const d = document.createElement('div');
   // (the Barrow Necropolis is moonlit: a cold light from the upper left, a deeper blue at the foot; the Howling Den has a low autumn sun
-  //  and the snow's cold blue at the foot; Elder Root is a green dusk under the canopy)
-  const light = army === 'undead' ? 'rgba(160,200,255,.12)' : army === 'beasts' ? 'rgba(255,184,110,.13)' : army === 'wildwood' ? 'rgba(200,255,170,.10)' : 'rgba(255,200,130,.10)';
-  const foot = army === 'undead' ? 'rgba(18,26,60,.26)' : army === 'beasts' ? 'rgba(40,60,96,.22)' : army === 'wildwood' ? 'rgba(10,36,24,.3)' : 'rgba(30,36,70,.18)';
+  //  and the snow's cold blue at the foot; Elder Root is a green dusk under the canopy; the Heart of the Maze a warm evening; Bonefire Crag a cold night lit by fire)
+  const light = army === 'undead' ? 'rgba(160,200,255,.12)' : army === 'beasts' ? 'rgba(255,184,110,.13)' : army === 'wildwood' ? 'rgba(200,255,170,.10)' : army === 'labyrinth' ? 'rgba(255,170,90,.14)' : army === 'ogres' ? 'rgba(255,140,70,.12)' : 'rgba(255,200,130,.10)';
+  const foot = army === 'undead' ? 'rgba(18,26,60,.26)' : army === 'beasts' ? 'rgba(40,60,96,.22)' : army === 'wildwood' ? 'rgba(10,36,24,.3)' : army === 'labyrinth' ? 'rgba(60,30,40,.24)' : army === 'ogres' ? 'rgba(12,18,40,.34)' : 'rgba(30,36,70,.18)';
   d.style.cssText =
     'position:absolute;inset:0;pointer-events:none;z-index:1;' +
     `background:radial-gradient(120% 80% at 18% 8%,${light},rgba(0,0,0,0) 60%),linear-gradient(rgba(0,0,0,0) 60%,${foot});`;
@@ -135,7 +137,7 @@ interface HoldArt {
 }
 let hold: HoldArt | null = null;
 /** Each hold's atlas (`tools/assault/cut-sheets.py`): the same piece names in every one, so the field draws every hold by the same rules. */
-const ATLASES = { orcs: ORC_ATLAS, undead: UNDEAD_ATLAS, beasts: BEASTS_ATLAS, wildwood: WILDWOOD_ATLAS } as const;
+const ATLASES = { orcs: ORC_ATLAS, undead: UNDEAD_ATLAS, beasts: BEASTS_ATLAS, wildwood: WILDWOOD_ATLAS, labyrinth: LABYRINTH_ATLAS, ogres: OGRES_ATLAS } as const;
 /** The hold whose art is loaded, and its atlas's pieces. */
 let holdArmy = '';
 let { SPRITES, DECALS, EDGES, FACES } = ORC_ATLAS as { SPRITES: typeof ORC_ATLAS.SPRITES; DECALS: readonly string[]; EDGES: readonly string[]; FACES: readonly string[] };
@@ -230,7 +232,7 @@ const noiseOf = (u: number, v: number): number => {
 };
 const hashOf = (a: number, b: number): number => (((Math.imul(a * 73856093 ^ b * 19349663, 0x9e3779b1) >>> 0) % 1000) / 1000);
 /** Whether a piece is one of the Chronos kits' (drawn at their scale), not the hold's sheets'. */
-const KIT_NAMES = new Set(['longhouse', 'boneHut', 'hideHut', 'forge', 'forgeFire', 'wargPen', 'pigPen', 'watchtower', 'lookout', 'warDrum', 'skullTotem', 'skullTorch', 'spearSign', 'bonfire', 'weaponStall', 'skullPile', 'warCart', 'granary', 'meatRacks', 'meatPile', 'barrels', 'chests', 'stockpile', 'woodpile', 'well', 'hides', 'logBridge', 'ruin1', 'ruin2', 'rubblePile', 'brazier', 'pine1', 'pine2', 'pineSmall', 'burntTree', 'gnarledTree', 'bareTree', 'thornBush', 'shrub1', 'shrub2', 'fern', 'stump1', 'stump2', 'fallenLog', 'boulders', 'rocks', 'darkRocks', 'darkRocksB', 'standingStone', 'reeds1', 'reeds2', 'bones1', 'bones2', 'bones3', 'flowers1', 'flowers2', 'pebbles', 'tallGrass', 'kitSpikedWall', 'kitSpikedCorner', 'kitSkullGate', 'kitStakeFence', 'mausoleum', 'gravestones', 'crypt', 'chapel', 'coffinStack', 'gatehouse', 'caveDen', 'snowyPine', 'snowyBush', 'peltStall', 'greatOak', 'weepingWillow', 'glowBush', 'stoneCircle']);
+const KIT_NAMES = new Set(['longhouse', 'boneHut', 'hideHut', 'forge', 'forgeFire', 'wargPen', 'pigPen', 'watchtower', 'lookout', 'warDrum', 'skullTotem', 'skullTorch', 'spearSign', 'bonfire', 'weaponStall', 'skullPile', 'warCart', 'granary', 'meatRacks', 'meatPile', 'barrels', 'chests', 'stockpile', 'woodpile', 'well', 'hides', 'logBridge', 'ruin1', 'ruin2', 'rubblePile', 'brazier', 'pine1', 'pine2', 'pineSmall', 'burntTree', 'gnarledTree', 'bareTree', 'thornBush', 'shrub1', 'shrub2', 'fern', 'stump1', 'stump2', 'fallenLog', 'boulders', 'rocks', 'darkRocks', 'darkRocksB', 'standingStone', 'reeds1', 'reeds2', 'bones1', 'bones2', 'bones3', 'flowers1', 'flowers2', 'pebbles', 'tallGrass', 'kitSpikedWall', 'kitSpikedCorner', 'kitSkullGate', 'kitStakeFence', 'mausoleum', 'gravestones', 'crypt', 'chapel', 'coffinStack', 'gatehouse', 'caveDen', 'snowyPine', 'snowyBush', 'peltStall', 'greatOak', 'weepingWillow', 'glowBush', 'stoneCircle', 'mazeRun']);
 const isKit = (name: string): boolean => KIT_NAMES.has(name);
 /** The one-tile pieces big enough to show on the overview. */
 const BIG = new Set(['longhouse', 'watchtower', 'wargPen', 'pigPen', 'throne', 'greatBanner', 'warTent', 'hideHut', 'bonfire']);

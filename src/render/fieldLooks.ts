@@ -363,7 +363,7 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       // (the Barrow Necropolis's own buildings by their names: its mausoleums, charnel houses, coffin heaps and witch fires; the Howling
       //  Den's hide tents, drying racks and great den; Elder Root's leaf tents, and the Elder Root drawn as the kit's great oak, grown huge,
       //  until its own painting lands)
-      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' || s.name === 'Hide tent' || s.name === 'Leaf tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name === 'Drying rack' ? 'meatRacks' : s.name === 'The Elder Root' ? 'greatOak' : s.name.startsWith('The keep') || / (keep|den)$/.test(s.name) ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile';
+      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' || s.name === 'Storehouse' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' || s.name === 'Hide tent' || s.name === 'Leaf tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name === 'Drying rack' ? 'meatRacks' : s.name === 'The Elder Root' ? 'greatOak' : s.name.startsWith('The keep') || / (keep|den)$/.test(s.name) || s.name === 'The Bull Temple' || s.name === 'The Hall of Tusks' ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile';
       const flip = s.rect.u1 - s.rect.u0 < s.rect.v1 - s.rect.v0;
       out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: name === 'keep' ? 0.62 : name === 'greatOak' ? 2.4 : name === 'longhouse' || name === 'mausoleum' ? 0.95 : name === 'bonfire' ? 0.7 : 1, ...(s.burns ? { hut: hut++ } : {}) });
     } else if (s.kind === 'perch') {
@@ -378,8 +378,9 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       for (const p of s.tiles) {
         const t = p.v * w + p.u;
         taken.add(t);
-        // (the tiles of a run along v, sharing a u with the rest of it, are mirrored)
-        out.push({ name: 'barricade', u: p.u, v: p.v, front: t, flip: s.tiles.filter((q) => q.u === p.u).length > 2 });
+        // (the tiles of a run along v, sharing a u with the rest of it, are mirrored; a maze's walls by their neighbours, as a maze's turn)
+        const flip = s.look === 'maze' ? !s.tiles.some((q) => q.v === p.v && Math.abs(q.u - p.u) === 1) : s.tiles.filter((q) => q.u === p.u).length > 2;
+        out.push({ name: s.look === 'maze' ? 'mazeRun' : 'barricade', u: p.u, v: p.v, front: t, flip });
       }
     } else if (s.kind === 'fence') {
       const m = mid(rectTiles(w, s.rect));

@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.428.0',
+    date: '2026-11-09',
+    title: 'Assault: holds tuned to when they open',
+    notes: ['Each hold is now tuned for the hero level you have when it opens, capped at 100. The Den, Elder Root, the Maze and Bonefire Crag are retuned.'],
+  },
+  {
+    version: '0.427.0',
+    date: '2026-11-09',
+    title: 'Assault: Bonefire Crag',
+    notes: ['The Ogre Clans\' hold: cross the ravine by the bone bridge, douse the great bonefires, and break through the giant\'s jaws to the Hall of Tusks.'],
+  },
+  {
+    version: '0.426.0',
+    date: '2026-11-09',
+    title: 'Assault: the Heart of the Maze',
+    notes: ['The labyrinth\'s hold: cross the dark canal, find a way through the sandstone maze under the gorgons\' bows, and break into the Bull Temple.'],
+  },
+  {
     version: '0.425.0',
     date: '2026-11-09',
     title: 'Assault: Auto keeps the host together',
