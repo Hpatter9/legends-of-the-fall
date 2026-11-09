@@ -1,0 +1,113 @@
+{
+ "camp-393": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "tavern-393": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "castle-393": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "recruit-393": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "armies-393": {
+  "wide": false,
+  "small": [
+   "asDot:10x10",
+   "asDot on:10x10"
+  ],
+  "errors": []
+ },
+ "deploy-393": {
+  "wide": false,
+  "small": [
+   "rbBtn rbMerge:85x30",
+   "rbBtn rbAuto locked:104x30",
+   "rbBtn rbSatchel:75x30"
+  ],
+  "errors": []
+ },
+ "camp-360": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "tavern-360": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "castle-360": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "recruit-360": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "armies-360": {
+  "wide": false,
+  "small": [
+   "asDot:10x10",
+   "asDot on:10x10"
+  ],
+  "errors": []
+ },
+ "deploy-360": {
+  "wide": false,
+  "small": [
+   "rbBtn rbMerge:85x30",
+   "rbBtn rbAuto locked:104x30",
+   "rbBtn rbSatchel:75x30"
+  ],
+  "errors": []
+ },
+ "camp-412": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "tavern-412": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "castle-412": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "recruit-412": {
+  "wide": false,
+  "small": [],
+  "errors": []
+ },
+ "armies-412": {
+  "wide": false,
+  "small": [
+   "asDot:10x10",
+   "asDot on:10x10"
+  ],
+  "errors": []
+ },
+ "deploy-412": {
+  "wide": false,
+  "small": [
+   "rbBtn rbMerge:85x30",
+   "rbBtn rbAuto locked:104x30",
+   "rbBtn rbSatchel:75x30"
+  ],
+  "errors": []
+ }
+}

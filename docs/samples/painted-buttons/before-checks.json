@@ -1,0 +1,275 @@
+{
+ "camp-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "tavern-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "services-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "recruit-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "castle-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "spells-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "armies-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26",
+   "asDot:10x10",
+   "asDot on:10x10"
+  ],
+  "errors": []
+ },
+ "achievements-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "settings-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "stall-393": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "deploy-393": {
+  "wide": false,
+  "small": [
+   "rbBtn rbMerge:59x30",
+   "rbBtn rbAuto locked:78x30",
+   "rbBtn rbSatchel:49x30",
+   "benchGrip:28x96"
+  ],
+  "errors": []
+ },
+ "fight-393": {
+  "wide": false,
+  "small": [
+   "mute:40x42",
+   "gear:40x42",
+   "speed:40x40"
+  ],
+  "errors": []
+ },
+ "camp-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "tavern-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "services-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "recruit-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "castle-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "spells-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "armies-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26",
+   "asDot:10x10",
+   "asDot on:10x10"
+  ],
+  "errors": []
+ },
+ "achievements-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "settings-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "stall-360": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "deploy-360": {
+  "wide": false,
+  "small": [
+   "rbBtn rbMerge:59x30",
+   "rbBtn rbAuto locked:78x30",
+   "rbBtn rbSatchel:49x30",
+   "benchGrip:28x96"
+  ],
+  "errors": []
+ },
+ "fight-360": {
+  "wide": false,
+  "small": [
+   "mute:40x42",
+   "gear:40x42",
+   "speed:40x40"
+  ],
+  "errors": []
+ },
+ "camp-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "tavern-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "services-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "recruit-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "castle-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "spells-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "armies-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26",
+   "asDot:10x10",
+   "asDot on:10x10"
+  ],
+  "errors": []
+ },
+ "achievements-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "settings-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "stall-412": {
+  "wide": false,
+  "small": [
+   "hmSeason:72x26"
+  ],
+  "errors": []
+ },
+ "deploy-412": {
+  "wide": false,
+  "small": [
+   "rbBtn rbMerge:59x30",
+   "rbBtn rbAuto locked:78x30",
+   "rbBtn rbSatchel:49x30",
+   "benchGrip:28x96"
+  ],
+  "errors": []
+ },
+ "fight-412": {
+  "wide": false,
+  "small": [
+   "mute:40x42",
+   "gear:40x42",
+   "speed:40x40"
+  ],
+  "errors": []
+ }
+}

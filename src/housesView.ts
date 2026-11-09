@@ -27,6 +27,7 @@ import {
 } from './sim/heirs';
 import { todayKey } from './modes';
 import { SEASON_ICON, FATE_ICON, HOUSE_ICON } from './dynastyArt';
+import { pbUrl, SEASON_MEDAL } from './paintedButton';
 import { HEIRLOOM_CHIP } from './expansionArt';
 import { menuBackdrop } from './menuBackdrops';
 export { SEASON_ICON, FATE_ICON, HOUSE_ICON, HEIRLOOM_ICON, LEGEND_ICON } from './dynastyArt';
@@ -127,7 +128,8 @@ export function seasonChip(m: Meta, day: number, onOpen: () => void): HTMLButton
   const b = el('button', 'chip hsSeasonChip');
   b.id = 'hmSeason';
   b.type = 'button';
-  b.append(icon(SEASON_ICON[s.name], 'hsSeasonIco'), el('b', '', SEASON_WORDS[s.name]));
+  // (PAINTED-BUTTONS: the season's painted medallion on the chip)
+  b.append(icon(pbUrl(SEASON_MEDAL[s.name]), 'hsSeasonIco'), el('b', '', SEASON_WORDS[s.name]));
   b.setAttribute('aria-label', `${seasonLine(m.dynasty, day)}, ${s.daysLeft} ${s.daysLeft === 1 ? 'day' : 'days'} left. Open the season`);
   b.addEventListener('click', onOpen);
   return b;
