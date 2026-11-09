@@ -100,6 +100,8 @@ export interface PlatoonState {
   /** Its part in the War Plan, played on its own until the player gives it an order (`manual`), or again once Auto is turned on. */
   role: PlatoonRole;
   manual?: boolean;
+  /** The bot has brought it onto the host's one crossing (Auto at a hold that draws no bows, `assault.ts`'s `huddle`). */
+  regrouped?: boolean;
   /** Charge: used once a platoon, and its quickening runs until this battle time. */
   charged?: boolean;
   chargeUntil?: number;

@@ -36,7 +36,7 @@ export const ASSAULT = {
 
 /** Each hold's own share (`ASSAULT.foeShare`'s part, by army): set so the bot does about as well at each army's Legendary level, by the
  *  balance tool. The Barrow Necropolis: 0.12, at level 65 Auto wins half and Tactical three in four (docs/notes/assault-4.md). */
-export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.1175, beasts: 0.14, wildwood: 0.105 };
+export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.1175, beasts: 0.1475, wildwood: 0.11 };
 /** The share a hold's garrison stands at: a tool's own, else the hold's. */
 export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare'>): number => input.foeShare ?? HOLD_SHARE[input.army] ?? ASSAULT.foeShare;
 
@@ -213,6 +213,8 @@ function placeOf(s: NemSnap, tier: number = ASSAULT.tier): ReturnType<typeof nem
 /** Whether a post is all archers (it keeps to its perch, its wall or its bank and shoots from there). */
 /** A post of shooters only: its roster all archers, and the army's archers shoot. They keep to their perch, their wall or their bank. The
  *  Beast Packs draw no bows: the Howling Den's archers' places are held by Red Werewolves, who hunt from them as any post does. */
+/** Whether a hold draws no bows: its army's archers do not shoot (the Howling Den, Elder Root). */
+export const bowless = (army: string): boolean => (UNITS[(KINDS[army] ?? KIND).A]?.range ?? 1) <= 1;
 export const archersOnly = (p: PostDef, army = 'orcs'): boolean => /^[A ]+$/.test(p.roster) && (UNITS[(KINDS[army] ?? KIND).A]?.range ?? 1) > 1;
 
 /** The garrison's boosts for a hold under assault: its army, its share and its tier (Legendary, or Mythic for the Warband regrouped). */

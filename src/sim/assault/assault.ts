@@ -27,7 +27,7 @@ import { jumpClass, nextRegion, reaches, regionAt } from './sectors';
 import { buildHold, ringOf, type HoldMap } from './fieldMap';
 import { HOLDS } from './holds';
 import type { Blueprint } from './blueprint';
-import { addFieldUnit, archersOnly, buildGarrison, freeNear, shareOf } from './garrison';
+import { addFieldUnit, archersOnly, bowless, buildGarrison, freeNear, shareOf } from './garrison';
 import { barrelOnForts, canStrikeFort, drumsBeating, landFortHits, makeForts, strikeFort } from './forts';
 import { anchorOf, DRUM_BLOW, holdTick, nearDrum } from './holdMind';
 import { applyQueued, CHARGE_MOVE, defaultFormation, ENGAGE, FORMATION_FX, givePlatoon, HERO_LEASH, LEADERLESS, LEASH, replayEntries, slotAt } from './platoons';
@@ -891,14 +891,51 @@ function blast(b: Battle, i: number, out: BattleEvent[]): void {
 
 // ---- the bot (Auto) ------------------------------------------------------------------------------------------------------------
 
+/** Whether the bot keeps the host together (the director's Auto lever, phase 4): at a hold that draws no bows, a platoon alone on a far
+ *  crossing is run down by the garrison's hunters, so the plan's split is undone. Its Tactical style keeps the host together already. */
+export const huddle = (h: HoldState): boolean => !h.input.tactical && bowless(h.input.army);
+
+/** The crossing most of the host's platoons took in the opening plan (the bridge between equals), where a huddled host goes together. */
+function gatherWay(h: HoldState): HoldState['bp']['approaches'][number] {
+  const count = new Map<string, number>();
+  for (const pl of h.platoons) {
+    const id = h.input.approaches?.[pl.hero] ?? 'bridge';
+    count.set(id, (count.get(id) ?? 0) + 1);
+  }
+  let best = 'bridge';
+  for (const [id, n] of count) if (n > (count.get(best) ?? 0)) best = id;
+  return h.bp.approaches.find((x) => x.id === best) ?? h.bp.approaches[1];
+}
+
+/** The part a platoon plays in the plan: its own, but at a huddled hold the shooters keep behind the blades (cover) and the rest are the main
+ *  push (none goes round alone on the flank). */
+function partOf(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState): PlatoonState['role'] {
+  if (!huddle(h)) return pl.role;
+  return hasShooters(b, f, pl) ? 'cover' : 'main';
+}
+
 /** The bot's turn for a platoon (Auto, once a second): it plays the opening plan, then pushes for the nearest gate that stands between it
  *  and the throne, then for the throne. With the input's `tactical` set (the balance tool's second style), it silences the drums near its
- *  approach first and sends a flying hero onto the wall-walk by the Iron Gate. */
+ *  approach first and sends a flying hero onto the wall-walk by the Iron Gate. At a hold that draws no bows it brings the host onto one
+ *  crossing first, its shooters behind its blades (`huddle`). */
 export function bot(b: Battle, f: FieldState, h: HoldState, k: number): void {
   const pl = h.platoons[k];
   const a = anchorOf(f, pl);
   if (!a) return;
   if (pl.order.kind === 'fallback' || pl.order.kind === 'charge' || pl.order.kind === 'flank' || pl.order.kind === 'scale' || pl.order.kind === 'fire') return;
+  // (huddled: a platoon still on the opening plan's road takes the host's one crossing instead, from where it stands)
+  if (huddle(h) && !pl.regrouped) {
+    pl.regrouped = true;
+    const way = gatherWay(h);
+    const mine = h.bp.approaches.find((x) => x.id === (h.input.approaches?.[pl.hero] ?? 'bridge'));
+    if (pl.route.length > 1 && mine && mine.id !== way.id) {
+      givePlatoon(b, h, pl, { kind: 'move', at: { ...way.way[way.way.length - 1] } });
+      // (from the nearest point of the host's road on: no turning back to the Landing for it)
+      const near = way.way.reduce((best, p, i) => (dist(p, a) < dist(way.way[best], a) ? i : best), 0);
+      pl.route = way.way.slice(near).map((p) => ({ ...p }));
+      return;
+    }
+  }
   if (pl.route.length > 1) return;
   // (the parts in the plan, unless the bot plays its Tactical style: cover keeps behind the main push; the flank goes round for the North Gate)
   if (!h.input.tactical && roleMove(b, f, h, pl, a)) return;
@@ -961,8 +998,9 @@ export function bot(b: Battle, f: FieldState, h: HoldState, k: number): void {
 /** A platoon's part in the plan, where it is not the main push: cover follows the main push a few tiles behind it (shooters on the ridges
  *  behind the line); the flank goes round for the North Gate, and through it once it is open. True when it gave the platoon its order. */
 function roleMove(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, a: Unit): boolean {
-  if (pl.role === 'cover') {
-    const mains = h.platoons.filter((p) => p.role === 'main').map((p) => anchorOf(f, p)).filter((x): x is Unit => !!x);
+  const part = partOf(b, f, h, pl);
+  if (part === 'cover') {
+    const mains = h.platoons.filter((p) => partOf(b, f, h, p) === 'main').map((p) => anchorOf(f, p)).filter((x): x is Unit => !!x);
     if (!mains.length) return false;
     const lead = mains.reduce((m, x) => (dist(x, h.bp.throne) < dist(m, h.bp.throne) ? x : m));
     // (shooters in cover keep the archers over the main push under their volleys: the nearest awake post of archers within reach of it)
@@ -991,7 +1029,7 @@ function roleMove(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, a: U
     if (!(pl.order.kind === 'move' && dist(pl.order.at, at) <= 2)) givePlatoon(b, h, pl, { kind: 'move', at });
     return true;
   }
-  if (pl.role === 'flank') {
+  if (part === 'flank') {
     // (first the Warpath's camp, to hold it so no more bands come down it; then the North Gate)
     if (!h.warpath.held) {
       const camp = h.bp.warpath;
