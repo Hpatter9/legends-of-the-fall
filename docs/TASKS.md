@@ -1250,3 +1250,11 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 
 EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. Owner requests one five-cell 1280x256 transparent source sheet at art-source/expansion/frames.png, matching existing style, added to Expansion art 2 PR #464. Scope: that source image plus required prompt/task/handoff records. Completion: visual review, exact size and transparent centres/background, commit and push to existing PR. No runtime changes.
 - **EXPANSION-2-FRAMES result:** five-cell source sheet painted and visually reviewed; dimensions, RGBA, binary alpha, padding and empty portrait centres verified. Ready for review in PR #464. See [handoff](notes/expansion-2-art.md). Runtime checks not run (source art only).
+
+### EXPANSION-2-HOUSES — Tapestry menu backdrop
+
+- Owner: Codex art chat. Branch/worktree: `art/expansion-2`, `/workspace/legends-of-the-fall`; PR #464.
+- Scope: one `art-source/expansion/houses-backdrop.png`, prompt and handoff documentation.
+- Direction: owner's supplied tapestry brief; opaque 1024×1536 painterly pixel art, branching gold family tree and empty shields, stone hall and amber sconces, dark centre/edges, no people or text.
+- Completion: exact PNG dimensions, visual review, commit and push to Expansion art 2.
+- Status: ready for review. PNG decode, 1024×1536 dimensions and opacity passed; finished art visually reviewed. Source art only; no runtime checks. [Handoff](notes/expansion-2-houses-backdrop.md).

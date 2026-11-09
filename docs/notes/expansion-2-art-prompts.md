@@ -25,3 +25,19 @@ small gold laurel wreath. Distinct whole silhouettes with transparent padding.
 ```text
 Repository hpatter9/legends-of-the-fall; branch art/expansion-2; output art-source/expansion/frames.png. Paint ONE 1280x256 transparent PNG, five equal 256x256 cells in one row, no text. Match the existing dark fantasy painted pixel-art UI: aged brass and gold, dark outlines, restrained highlights and dark crimson accents. Cells 1–3: matching thin square brass portrait frames, fully transparent centres, bearing exactly ONE, TWO, THREE deep diagonal claw scars respectively, dark red beneath torn brass. Cell 4: aged gold filigree square heirloom frame, transparent centre, small family crest at top, exactly three empty notches along bottom. Cell 5: one gold signet ring with red stone, centred and filling about 60% of its cell. Transparent background and padding; no lettering, no extra objects.
 ```
+
+## Houses tapestry backdrop
+
+```text
+Repository hpatter9/legends-of-the-fall. Branch art/expansion-2.
+Paint ONE image: art-source/expansion/houses-backdrop.png, exact 1024x1536
+upright 2:3 PNG. Opaque full scene (this menu backdrop requires no transparency).
+Painterly pixel art in the game's muted medieval dark fantasy style.
+A great woven tapestry of a family tree hung in a stone hall: gold-thread
+branches spread from one root to many small empty shield-shaped frames.
+Candles in iron sconces either side cast warm amber light. Visible woven
+cloth texture, aged gold, deep umber and muted burgundy. Darken the edges
+and the middle so menu text reads over it. Keep the central vertical area
+quiet, low contrast and deeply shadowed, while the branching design remains
+legible around it. No people, no text, no letters or numbers, no shield emblems.
+```
