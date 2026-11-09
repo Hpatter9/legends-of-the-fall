@@ -17,7 +17,7 @@ Out: src/art/assault/<army>/{sprites,ground,edges,decals,faces}.webp and src/ren
 The report lists any cell whose picture strays from its footprint (its bottom too far above or below the diamond's bottom tip, or its
 middle off the foot point), for the art's notes.
 
-Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood] [--report]
+Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood|labyrinth] [--report]
 """
 import json
 import os
@@ -369,6 +369,74 @@ def forest(a):
     return res
 
 
+
+# ----- the Heart of the Maze (phase 4): the Labyrinth's sandstone -----
+#
+# As for the others: the Orc profile's slots and names, its own sheets (docs/notes/assault-4-heart-of-the-maze-art-prompts.md) and the Knights
+# and Nomads kits; and one sheet of its own with no Orc twin, the maze walls (lab-14), whose pieces the kit's stone wall stands in for until it
+# is painted (`standins`: a kit picture used only for a piece no sheet gave). A borrowed Orc sheet is recoloured by `sandstone`.
+LABYRINTH_FILES = {
+    'orc-01-palisade.png': 'lab-01-ring-wall.png', 'orc-02-gates.png': 'lab-02-gates.png', 'orc-03-iron-gate.png': 'lab-03-bronze-gate.png',
+    'orc-04-faces.png': 'lab-04-faces.png', 'orc-05-ground.png': 'lab-05-ground.png', 'orc-06-transitions.png': 'lab-06-transitions.png',
+    'orc-07-keep.png': 'lab-07-keep.png', 'orc-08-wall-dressing.png': 'lab-08-wall-dressing.png', 'orc-09-camp.png': 'lab-09-landmarks.png',
+    'orc-10-camp-props.png': 'lab-10-props.png', 'orc-11-siege-ruins.png': 'lab-11-ruins.png', 'orc-12-river.png': 'lab-12-canal.png',
+    'orc-13-decals.png': 'lab-13-decals.png',
+}
+SHEETS['labyrinth'] = {
+    'sprites': {
+        **{LABYRINTH_FILES[k]: v for k, v in _orc['sprites'].items()},
+        # (its own sheet: the maze walls; the game draws every maze tile as `mazeRun` for now, the rest wait for the maze's finer drawing)
+        'lab-14-maze-walls.png': props([
+            'mazeRun', 'mazeCracked', 'mazeBanner', 'mazeTorch', 'mazeCornerA', 'mazeCornerB', 'mazeTee', 'mazeEnd',
+            'mazeBroken', 'mazeGap', 'mazeNiche', 'mazeVine', 'mazeFresco', 'mazeGrille', 'mazeSpears', 'mazeJar']),
+    },
+    'ground': (LABYRINTH_FILES[_orc['ground'][0]], _orc['ground'][1]),
+    'edges': (LABYRINTH_FILES[_orc['edges'][0]], _orc['edges'][1]),
+    'decals': (LABYRINTH_FILES[_orc['decals'][0]], _orc['decals'][1]),
+    'faces': (LABYRINTH_FILES[_orc['faces'][0]], _orc['faces'][1]),
+    'fallback': ('orc', {v: k for k, v in LABYRINTH_FILES.items()}),
+    'shared': {'ladder', 'ram', 'trebuchet'},
+    'tint': lambda a, sheet, slot=None: sandstone(a),
+    # (until lab-14 is painted, each maze tile is the hold's own low barricade, recoloured: '=' names another piece of the atlas)
+    'standins': {'mazeRun': '=barricade'},
+    'kits': {
+        **_orc['kits'],
+        'kitSpikedWall': 'knights/stone_wall_run', 'kitSpikedCorner': 'knights/stone_wall_corner', 'kitSkullGate': 'knights/gatehouse',
+        'kitStakeFence': 'nomads/rope_fence', 'longhouse': 'knights/barracks', 'boneHut': 'nomads/cottage', 'hideHut': 'knights/granary',
+        'forge': 'knights/workshop', 'wargPen': 'nomads/horse_corral', 'watchtower': 'knights/watchtower', 'lookout': 'nomads/scaffold_tower',
+        'warDrum': 'nomads/shrine', 'skullTotem': 'nomads/shrine', 'skullTorch': 'nomads/tassel_lantern', 'spearSign': 'nomads/standard',
+        'bonfire': 'nomads/campfire', 'weaponStall': 'nomads/carpet_stall', 'warCart': 'knights/cart', 'granary': 'nomads/granary',
+        'meatRacks': 'nomads/water_skins', 'meatPile': 'knights/hay_bales', 'barrels': 'knights/barrels', 'chests': 'nomads/chests',
+        'stockpile': 'nomads/stockpile', 'woodpile': 'knights/woodpile', 'well': 'knights/well', 'hides': 'knights/crates',
+        'logBridge': 'knights/stone_bridge', 'brazier': 'knights/lamp_post', 'pine1': 'nomads/acacia_tree', 'pine2': 'knights/oak_tree',
+        'gnarledTree': 'nomads/acacia_tree', 'bareTree': 'nomads/dead_shrub', 'thornBush': 'nomads/tumbleweed', 'shrub1': 'knights/bush',
+        'boulders': 'nomads/red_rocks', 'rocks': 'knights/rocks', 'darkRocks': 'nomads/red_rocks', 'darkRocksB': 'nomads/red_rocks_small',
+    },
+}
+
+
+def sandstone(a):
+    """The Labyrinth's stand-in: the grass dried to gold, the grey stone warmed to sandstone, the timber a little paler, the red cloth kept
+    (the Labyrinth's own red), the fire kept."""
+    rgb = a[..., :3].astype(float) / 255
+    mx = rgb.max(-1)
+    mn = rgb.min(-1)
+    c = mx - mn
+    sat = c / np.maximum(mx, 1e-6)
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    h = np.where(c == 0, 0, np.where(mx == r, ((g - b) / np.maximum(c, 1e-6)) % 6, np.where(mx == g, (b - r) / np.maximum(c, 1e-6) + 2, (r - g) / np.maximum(c, 1e-6) + 4))) / 6
+    fire = (mx > 0.72) & (h < 0.17) & (sat > 0.45)
+    red = ((h < 0.035) | (h > 0.94)) & (sat > 0.45)
+    leafy = (h > 0.12) & (h < 0.45) & (c > 0.04) & ~fire
+    grey = rgb.mean(-1, keepdims=True)
+    dry = np.stack([g * 0.98 + r * 0.1, g * 0.84, b * 0.5], -1)
+    warm = grey * np.array([1.12, 0.98, 0.78]) + (rgb - grey) * 0.5 + np.array([0.03, 0.01, -0.02])
+    out = np.where(leafy[..., None], dry, np.where((red | fire)[..., None], rgb, warm))
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
 # (how far above a kit piece's bottom edge it stands, as a share of its width: a one-tile piece's diamond is half as tall as wide, and
 #  its foot point is the diamond's middle; flat pieces and the small flair stand on their bottom)
 KIT_LIFT = 0.2
@@ -457,7 +525,7 @@ def cut(army, report_only=False):
 
     def sheet_path(sheet):
         path = os.path.join(src, sheet)
-        if os.path.exists(path) or not fb_army:
+        if os.path.exists(path) or not fb_army or sheet not in fb_files:
             return path, False
         report.append(f'{sheet}: not painted yet; the stand-in is {fb_files[sheet]}, recoloured')
         return os.path.join(ROOT, 'art-source', 'assault', fb_army, fb_files[sheet]), True
@@ -520,7 +588,13 @@ def cut(army, report_only=False):
             sprites[name] = h[hy0:hy1, hx0:hx1]
             feet[name] = [round((fx - x0) / 2 - hx0, 1), round((fy - y0) / 2 - hy0, 1)]
             feet_of[name] = [fu, fv]
-    for name, path in spec['kits'].items():
+    # (a kit picture stands in for a piece no sheet gave, until its sheet is painted)
+    standins = {n: k for n, k in spec.get('standins', {}).items() if n not in sprites}
+    for name, other in standins.items():
+        if other.startswith('=') and other[1:] in sprites:
+            sprites[name], feet[name], feet_of[name] = sprites[other[1:]], feet[other[1:]], feet_of[other[1:]]
+    kits = {**spec['kits'], **{n: k for n, k in standins.items() if not k.startswith('=')}}
+    for name, path in kits.items():
         p = os.path.join(KITS, path + '.png')
         if not os.path.exists(p):
             report.append(f'kit {path}: missing')

@@ -304,3 +304,81 @@ the Necropolis at 0.1175, level 65, 32 seeds, the same 50%, 97% and 72% as its m
 
 Tests: `assault-plan` checks that the Beast Packs and the Wildwood are bowless and the Orcs and the Undead are not, that Auto brings the plan's
 two fords platoons onto the bridge's road at the Den and Elder Root, and that Tactical and Bloodtusk Hold keep the plan as it was.
+
+## 4. The Heart of the Maze (the Labyrinth)
+
+`src/sim/assault/maps/labyrinth.ts` (`MAZE_HEART`). The owner named it but gave no look, so it follows the camp overlook, which already
+paints the Labyrinth's "stone labyrinth" (`src/art/camp/camp-wild.png`, its middle row): a sandstone maze at evening, braziers and red
+banners on its walls, a horned temple at its heart.
+
+**The layout.** Up the phone from the Landing at the south corner:
+
+- **A dark canal** from edge to edge, straight and stone-lined, three cells wide. It is crossed by:
+  - the stone bridge, with its barricade (the bridge fort) holding the far end by the ditch;
+  - the West Ford and the East Ford.
+- **The maze** (`MAZE`, its own): walls of sandstone on the approaches between the canal and the ring, three a side and mirrored across the
+  hold's middle line, their gaps the ways through. They are per-tile walls a walker goes round (a `barricade` stamp with `look: 'maze'`), so
+  the fords' roads wind through them; every way still goes through (`fieldProblems`).
+- **The hills**:
+  - the West and East Watchtowers on their knolls;
+  - the old palace's ruins to the east, and the scrub (long grass);
+  - the spear pits across the road (the stake field's slowing ground);
+  - the bull pens under the east watchtower;
+  - the herders' fodder stacks (they burn), war tents and fires;
+  - the old shrine's knoll by the canal;
+  - the three horned altars (the war drums' part), where the great horns are blown.
+- **The rings**:
+  - the ditch, the bank and the ring of bronze-capped sandstone walls, with the Horned Gate, two sally ports and the North Gate;
+  - the outer bailey's longhouses, storehouses (the fire arrows' targets), the bronze foundry and its oil, and the hound pens;
+  - the limestone wall, its four corner towers and the Bronze Gate;
+  - the Bull Temple and the Champion's Throne at the top.
+- **Behind**: the Hill Road, whose herders' camp sends the bands.
+
+**The garrison.** 200: 180 at 30 posts and 20 down the road.
+
+- The rank and file are Minotaurs (the chargers); its archers **Gorgons**, who shoot (so the Labyrinth has bows: its archers' posts keep to
+  their perches, and Auto does not huddle here); its heavies the bellowing Minotaurs who guard their friends; its pens loose hounds (the
+  war-wolves).
+- A Gorgon Queen takes an officer's place the Council cannot fill; the Minotaur Champion (the army's last boss) holds the throne while no
+  warchief sits.
+
+**The balance** (`npm run balance -- --assault labyrinth --seeds 32`, the design party, a maxed castle, a full host). Its mark is level 95,
+ten above Elder Root's:
+
+| share | 0.11 | 0.125 | 0.13 | **0.14** |
+| --- | --- | --- | --- | --- |
+| Auto | 78% | 44% | 41% | **44%** |
+| Tactical | 100% | 91% | 94% | **84%** |
+| Siege | 94% | 97% | 94% | **91%** |
+
+So its share is **0.14** (`HOLD_SHARE.labyrinth`): Auto wins a little under half, Tactical 84% and Siege 91%, the nearest of the holds to
+the director's marks. (With bows on its walls, it plays like Bloodtusk Hold and the Necropolis rather than the Den and Elder Root.)
+
+**The look.**
+
+- Until its sheets are painted ([the prompts](assault-4-heart-of-the-maze-art-prompts.md), fourteen: the thirteen of the Orc set and its
+  maze walls, which have no Orc twin), it is drawn with:
+  - the Orc sheets recoloured by `sandstone` in the cutter: the grass dried to gold, the grey stone warmed to sandstone, the red cloth and
+    the fire kept;
+  - the Knights and Nomads kits: the stone walls, gatehouse, barracks, watchtower, scaffold tower, granary, stone bridge, lanterns,
+    standards, shrines, stalls, carts, jars and crates, acacias, oaks, red rocks and dry scrub;
+  - the maze's walls as the hold's own low barricade, recoloured (`standins` in the cutter: `'=barricade'`), until `lab-14` is painted.
+    The Knights kit's stone wall was tried first and dropped: a whole wall a tile, it packed into a crowd of castles, and in the Knights'
+    blue.
+- The cutter takes a sheet with no Orc twin (`lab-14`): not painted, it is skipped, and a stand-in fills its piece.
+- A warm evening over the field (`fieldGrade`); the minimap wears dry gold outside and pale stone within.
+- `docs/samples/assault-art/labyrinth-kit.jpg` is the two kits' labelled contact sheet.
+
+**Tests.** `assault-maze`:
+
+- registered and named, the same each build, its own field, and sound (`fieldProblems`, with the maze in it);
+- the canal a barrier but for the bridge and the fords;
+- the baileys opened only by the Horned Gate and the Bronze Gate;
+- 200 of the Labyrinth's own, with no orc among them and the Minotaur Champion on the throne;
+- Auto plays an assault to its end, the same way twice;
+- the Warpath's bands are its own army;
+- the maze: walls a walker goes round, on the approaches, mirrored, every tile drawn as the maze's wall; and the Labyrinth has bows.
+
+`assault-holds` now expects the Heart of the Maze's page built too, and the rest locked.
+
+**Screenshots**: `docs/samples/assault-4/maze-*.png`: Mid and the Bull Temple at 360, 393 and 412; the maze by the West Ford.
