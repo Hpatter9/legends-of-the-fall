@@ -428,7 +428,7 @@ hall framed by mammoth tusks, hide domes, bone heaps and fires.
 | Tactical | 91% | **69%** | 34% | 9% |
 | Siege | 94% | **78%** | 38% | 13% |
 
-So its share is **0.10** for now (`HOLD_SHARE.ogres`): even at the level cap the clans are the hardest hold yet, and the share falls fast.
+So its share was **0.10** at level 100 (`HOLD_SHARE.ogres`): even at the level cap the clans are the hardest hold yet, and the share falls fast. At its mark, 99, it is **0.095** ("The holds' marks", below).
 
 **The look.**
 
@@ -453,3 +453,48 @@ So its share is **0.10** for now (`HOLD_SHARE.ogres`): even at the level cap the
 `assault-holds` now expects Bonefire Crag's page built too, and the rest locked.
 
 **Screenshots**: `docs/samples/assault-4/crag-*.png`: Mid and the Hall of Tusks at 360, 393 and 412; the bone bridge.
+
+## The holds' marks (`HOLD_MARK`, the director's ask)
+
+Each hold's share is measured at a hero level, its **mark**. Until Bonefire Crag, the marks were a ladder of my own, ten levels an army (55,
+65, 75, 85, 95), which ran past the Legendary band (65 to 85, `difficulty.md`) and would have reached 105 at the Ogres, past the level cap. The
+director set the rule: the mark is the hero level a player has when they win that army's tenth star, since that is when its hold opens.
+
+**Where it comes from.** The Legendary Orcs are tuned at level 55 (the joint rebalance: 86% of single tries there; the Orcs' `tierStart`).
+Every army's tiers are the same multipliers (`TIERS`) on its own curve, and each army's curve is set so its Normal takes two to four tries
+at its own recommended level (`Army.level`; `difficulty.md`, "At the recommended level"). So the level an army's Legendary star needs moves
+with that army's own level, one for one: **mark = 55 + (`Army.level` - 1), at most 100.** It climbs 7 to 13 levels an army, about the old
+ladder, but follows the game's pacing and stops at the cap:
+
+| army | Orcs | Undead | Beasts | Wildwood | Labyrinth | Ogres | Infernal | Yokai | Golems |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `Army.level` | 1 | 8 | 15 | 22 | 35 | 45 | 58 | 65 | 74 |
+| mark | 55 | 62 | 69 | 76 | 89 | 99 | 100 | 100 | 100 |
+| old ladder | 55 | 65 | 75 | 85 | 95 | (105) | | | |
+
+It is one table in `garrison.ts`, with its reasoning in a comment; `assault-holds` checks that it keeps to the rule, and `npm run balance --
+--assault <army>` measures at the hold's mark by default. (The derivation is from the armies' levels and the tiers' design, not a new
+measure of every army's Legendary tier; `tools/army-pace` can check it if wanted.)
+
+**Re-measured** (every hold but Bloodtusk's moved; 32 seeds; targets Auto about 50%, Tactical and Siege 75 to 90%):
+
+| hold, mark | share | Auto | Tactical | Siege |
+| --- | --- | --- | --- | --- |
+| Necropolis, 62 | **0.1175** (kept) | **44%** | **81%** | **88%** |
+| Den, 69 | 0.135 | 78% | 100% | 88% |
+| | **0.14** | **69%** | **66%** | **78%** |
+| | 0.1475 (was) | 72% | 56% | 72% |
+| | 0.155 | 56% | 66% | 50% |
+| Elder Root, 76 | **0.095** | **56%** | **94%** | **94%** |
+| | 0.10 | 38% | 100% | 97% |
+| | 0.11 (was) | 28% | 84% | 84% |
+| Heart of the Maze, 89 | **0.125** | **59%** | **88%** | **84%** |
+| | 0.14 (was) | 19% | 78% | 72% |
+| Bonefire Crag, 99 | **0.095** | **59%** | **84%** | **75%** |
+| | 0.10 | 47% | 72% | 69% |
+
+So the shares are now: the Necropolis 0.1175 (it did not need to move), the Den **0.14**, Elder Root **0.095**, the Heart of the Maze
+**0.125** and Bonefire Crag **0.095**. The Den's measures jump the most from share to share (its Tactical reads 100%, 66%, 56% and 66% over
+four neighbouring shares, as single seeds tip), so 0.14 is the middle of them: over 0.135 to 0.1475 together it wins about 70%, 74% and 79%.
+Auto does better there than at the other holds, as the lever keeps the host together against a garrison of melee wolves at a lower level.
+(The share tables in sections 2 to 5 above were measured at the old marks.)

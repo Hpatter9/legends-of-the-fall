@@ -50,3 +50,8 @@ test('the record follows the save: stormed, then conquered and taken again; the 
   m.war.members.push(chief);
   assert.ok(holdPages(m)[0].facts[0].startsWith('Vorga the Skullsplitter, Warchief of the Dark Council'));
 });
+
+test('each hold\'s mark is the hero level its army\'s tenth star needs: the Legendary Orcs\' 55, moved by the army\'s own level, at most 100', async () => {
+  const { HOLD_MARK } = await import('../src/sim/assault/garrison');
+  for (const a of ARMIES) assert.equal(HOLD_MARK[a.id], Math.min(100, 55 + a.level - 1), a.id);
+});

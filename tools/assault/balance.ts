@@ -7,7 +7,7 @@
 // The targets: Auto wins 40 to 60% and loses 40 to 60% of the host; Tactical wins 75% or more and loses 25 to 40%; tactics worth at least
 // 20 points of win rate.
 //
-//   npm run balance -- --assault orcs [--levels 65,75] [--seeds 8] [--share 0.2] [--party recruits|starters] [--talents] [--tier 4]
+//   npm run balance -- --assault orcs [--levels 65,75 (default: the hold's mark)] [--seeds 8] [--share 0.2] [--party recruits|starters] [--talents] [--tier 4]
 import { savedAt } from '../autoplay';
 import { BUILDINGS, maxLevel, newCastle, type BuildingId } from '../../src/sim/castle';
 import { mixSeed } from '../../src/sim/rng';
@@ -15,11 +15,12 @@ import { HEROES, UNITS } from '../../src/sim/units';
 import { learn, tierNodes } from '../../src/sim/talents';
 import { assaultInput, defaultPlan } from '../../src/sim/assault/assaultMode';
 import { playAssault, assaultScore, startAssault } from '../../src/sim/assault/assault';
-import { ASSAULT, HOLD_SHARE } from '../../src/sim/assault/garrison';
+import { ASSAULT, HOLD_MARK, HOLD_SHARE } from '../../src/sim/assault/garrison';
 
 const flag = (name: string): string | undefined => (process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : undefined);
 const army = flag('--assault') ?? 'orcs';
-const levels = (flag('--levels') ?? '65,75').split(',').map(Number);
+// (by default the hold's mark: the hero level a player has when its army's tenth star opens it, `HOLD_MARK`)
+const levels = (flag('--levels') ?? String(HOLD_MARK[army] ?? 65)).split(',').map(Number);
 const seeds = Number(flag('--seeds') ?? 8);
 const share = flag('--share') ? Number(flag('--share')) : undefined;
 const talents = process.argv.includes('--talents');
