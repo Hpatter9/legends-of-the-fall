@@ -17175,6 +17175,73 @@
      ]
     }
    ]
+  },
+  "warEnd": {
+   "title": "The War’s End",
+   "blurb": "The Last Hold falls, and the Dark Council with it.",
+   "shots": [
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The last hold burned. On its throne stood {chief}, with nowhere left to ride."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "chief",
+       "text": "THE COUNCIL WILL RISE AGAIN!"
+      },
+      {
+       "who": "a",
+       "text": "The Council is a pile of chairs on fire, {chief}."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "{chief} fell on his throne, and the seats of the Dark Council burned with him."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "b",
+       "text": "Is that it, then? The whole War?"
+      },
+      {
+       "who": "c",
+       "text": "Every hold. Every captain. Every last chair."
+      },
+      {
+       "who": "a",
+       "text": "I was fond of the chairs."
+      },
+      {
+       "who": "duchess",
+       "text": "Mehh."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The war drums fell silent. The king, who had only watched, called it a famous victory."
+      }
+     ]
+    }
+   ]
   }
  },
  "king": {
