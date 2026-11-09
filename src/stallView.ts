@@ -7,6 +7,7 @@ import { bookIcon, shopArt } from './bookArt';
 import { classWord, oreIcon } from './oreView';
 import { itemIcon } from './equipView';
 import { ICONS, icon } from './menuArt';
+import { glyphWord, pbUrl, type PbIcon } from './paintedButton';
 import { todayKey } from './modes';
 import { chestShopCards } from './shopView';
 import { TOME_ICON } from './tomeArt';
@@ -60,6 +61,8 @@ const TAB_ICON: Record<AnyTab, () => string> = {
   // (the gold glyph stone, the owner's painting: `gearUiArt.ts`)
   enchant: () => GLYPH_STONE[3],
 };
+/** The tabs' painted medallions (PAINTED-BUTTONS, the tavern sheet's stall row). */
+const STALL_MEDAL: Partial<Record<AnyTab, PbIcon>> = { books: 'stall-books', gear: 'stall-gear', tomes: 'stall-tomes', chests: 'stall-chests', sell: 'stall-sell', repair: 'stall-repair', enchant: 'stall-enchant', caravan: 'stall-caravan' };
 /** Repair all asks first above this many crowns. */
 const ASK_OVER = 500;
 
@@ -104,6 +107,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     // (the head: back, the name, the standing's seal, the purse)
     const head = el('div', 'hsHead');
     const back = el('button', 'hsBack', '‹ Back');
+    glyphWord(back);
     back.setAttribute('aria-label', 'Back');
     back.addEventListener('click', () => {
       root.remove();
@@ -138,8 +142,10 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       const b = el('button', `hsTab${t === tab ? ' on' : ''}`);
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', String(t === tab));
-      const ico = el('i', `hsTabIco ${t}`);
-      ico.style.backgroundImage = `url(${TAB_ICON[t]()})`;
+      // (PAINTED-BUTTONS: the stall's painted medallions for its own tabs and the caravan; the Gloaming Dealer keeps his portrait)
+      const painted = STALL_MEDAL[t];
+      const ico = el('i', `hsTabIco ${t}${painted ? ' pb' : ''}`);
+      ico.style.backgroundImage = `url(${painted ? pbUrl(painted) : TAB_ICON[t]()})`;
       b.append(ico, el('span', '', TAB_NAMES[t]));
       if (t === 'repair' && needingRepair(m).some((x) => wearerOf(m, x.id) !== undefined && wearState(x) !== 'good')) b.append(el('i', 'badge'));
       b.addEventListener('click', () => {

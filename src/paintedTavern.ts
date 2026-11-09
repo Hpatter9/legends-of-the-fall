@@ -12,8 +12,8 @@ import { markReady } from './sim/upgradesReady';
 import { questsWaiting } from './sim/quests';
 import { hesterNews } from './render/tavernSpots';
 import { todayKey } from './modes';
-import { COMBAT_ART } from './combatArtAssets';
 import { TrophyWallModal } from './trophyWall';
+import { medal, type PbIcon } from './paintedButton';
 import { onSettings } from './settings';
 import { AmbientLayer } from './render/ambientLayer';
 import { SCENE_LIFE } from './render/ambientScenes';
@@ -59,7 +59,7 @@ export class PaintedTavern {
     const head = el('header', 'ptHead');
     const title = el('div');
     title.append(el('h2', '', 'The Tavern'), el('p', '', 'A hearth for your heroes'));
-    const roster = this.button('All heroes', 'helmet', onRoster);
+    const roster = this.button('All heroes', 'all-heroes', onRoster);
     roster.classList.add('ptRoster');
     head.append(title, roster);
     const backdrop = el('img', 'ptBackdrop');
@@ -74,7 +74,7 @@ export class PaintedTavern {
     frontTable.src = 'ui/tavern/living-table-supper.webp';
     frontTable.alt = '';
     rearTable.draggable = frontTable.draggable = false;
-    const gwenArt = this.button('Talk to Gwen', 'keg', () => this.quests?.onGwen());
+    const gwenArt = this.button('Talk to Gwen', 'gwen', () => this.quests?.onGwen());
     gwenArt.className = 'ptKeeper';
     gwenArt.replaceChildren();
     gwenArt.setAttribute('aria-label', 'Gwen, tavern keeper. Talk to Gwen');
@@ -113,13 +113,13 @@ export class PaintedTavern {
     company.append(heading, el('p', 'ptHint', 'Ranked by Power · select a hero to manage them'), this.list);
     const actions = el('nav', 'ptActions');
     actions.setAttribute('aria-label', 'Tavern services');
-    this.upgradeBtn = this.button('Upgrades', 'star', () => this.upgrades?.onUpgrades());
-    this.questBtn = this.button('Quests', 'book', () => this.quests?.onQuests());
-    this.stallBtn = this.button('Hester’s shop', 'bag', () => this.shop?.onStall());
-    this.eldersBtn = this.button('Elders’ table', 'chalice', () => this.elders?.onElders());
-    const board = this.button('Quest board', 'banner', () => this.quests?.onBoard());
-    const gwen = this.button('Talk to Gwen', 'keg', () => this.quests?.onGwen());
-    const trophies = this.button('Trophies', 'chalice', () => { if (this.meta) this.trophy.open(this.meta); });
+    this.upgradeBtn = this.button('Upgrades', 'upgrades', () => this.upgrades?.onUpgrades());
+    this.questBtn = this.button('Quests', 'quests', () => this.quests?.onQuests());
+    this.stallBtn = this.button('Hester’s shop', 'hester', () => this.shop?.onStall());
+    this.eldersBtn = this.button('Elders’ table', 'elders', () => this.elders?.onElders());
+    const board = this.button('Quest board', 'quest-board', () => this.quests?.onBoard());
+    const gwen = this.button('Talk to Gwen', 'gwen', () => this.quests?.onGwen());
+    const trophies = this.button('Trophies', 'tav-trophies', () => { if (this.meta) this.trophy.open(this.meta); });
     this.questBtn.hidden = board.hidden = gwen.hidden = !this.quests;
     this.stallBtn.hidden = !this.shop;
     actions.append(this.upgradeBtn, this.questBtn, this.stallBtn, board, gwen, trophies, this.eldersBtn);
@@ -158,14 +158,11 @@ export class PaintedTavern {
     this.root.append(head, this.scene, sections, company, actions, this.trophy.root);
   }
 
-  private button(label: string, icon: string, run: () => void): HTMLButtonElement {
+  /** A service's button: its painted medallion (PAINTED-BUTTONS, the tavern sheet) and its word, on a painted plate. */
+  private button(label: string, icon: PbIcon, run: () => void): HTMLButtonElement {
     const button = el('button', 'ptButton');
     button.type = 'button';
-    const image = el('img');
-    image.src = COMBAT_ART[icon];
-    image.alt = '';
-    image.draggable = false;
-    button.append(image, el('span', '', label));
+    button.append(medal(icon), el('span', '', label));
     button.addEventListener('click', run);
     return button;
   }
@@ -240,7 +237,7 @@ export class PaintedTavern {
       pick.addEventListener('click', () => this.onPick(kind));
       row.append(pick);
       if (this.upgrades && markReady(meta, kind)) {
-        const rise = this.button('Upgrade', 'star', () => this.upgrades?.onRise(kind));
+        const rise = this.button('Upgrade', 'upgrades', () => this.upgrades?.onRise(kind));
         rise.classList.add('ptRise');
         rise.setAttribute('aria-label', `Upgrade ${name}`);
         rise.title = `Upgrade ${name}`;

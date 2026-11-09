@@ -1,6 +1,7 @@
 // The hero detail sheet (opened from a tap on a hero in the tavern): portrait, rank stars, level, XP bar, role, stats and
 // skills. Reads the meta only.
 
+import { glyphWord } from './paintedButton';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { keyOf, KITS, type Skill } from './sim/abilities';
 import { levelLine as skillLevelLine, levelShare, useOf } from './sim/skillLevels';
@@ -226,6 +227,7 @@ function paintSecret(box: HTMLElement, close: () => void, line: string): () => v
   box.replaceChildren();
   const bar = el('div', 'heroToolbar');
   const back = el('button', 'heroBack', '‹ Back');
+  glyphWord(back);
   back.type = 'button';
   back.addEventListener('click', close);
   bar.append(back, el('span', '', 'YOUR COMPANY'));
@@ -255,6 +257,7 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   box.replaceChildren();
   const bar = el('div', 'heroToolbar');
   const back = el('button', 'heroBack', '‹ Back');
+  glyphWord(back);
   back.type = 'button';
   back.addEventListener('click', close);
   bar.append(back, el('span', '', 'YOUR COMPANY'));

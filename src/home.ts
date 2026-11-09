@@ -5,12 +5,12 @@
 // sim's own functions.
 
 import { heroesTabMark } from './heroesTabMark';
+import { glyphWord, medal, pbUrl } from './paintedButton';
 import { openMuster, openAssaultResult } from './assaultView';
 import { runAssault } from './assaultScene';
 import { claimTribute } from './sim/assault/economy';
 import { abandonLive } from './sim/assault/snapshot';
 import { clearBattle, loadBattle } from './assaultSave';
-import { COUNCIL_BADGE } from './expansionArt';
 import { settleMourning } from './sim/oath';
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
@@ -263,7 +263,8 @@ export class Home {
       this.track.append(page);
       this.pages.set(t.id, page);
       const b = el('button', `hmTab${t.id === 'battle' ? ' hero' : ''}`);
-      b.append(icon(ICONS[t.id]), el('span', '', t.label), el('i', 'badge'));
+      // (PAINTED-BUTTONS: the tab's painted medallion, and its lit one for while the tab is chosen)
+      b.append(medal(`tab-${t.id}`), medal(`tab-${t.id}-lit`, 'pbIco lit'), el('span', '', t.label), el('i', 'badge'));
       // (QUESTS: the Heroes tab's gold "!" while a quest waits at the tavern to be taken or handed in)
       if (t.id === 'heroes') b.append(el('i', 'qbadge', '!'));
       // (CLIFF-ROAM: Hester's coin on the Heroes tab, the way to the tavern, while her stock is new or a trader visits)
@@ -284,6 +285,7 @@ export class Home {
     $('hmTrophy').addEventListener('click', () => this.openAchievements());
     $('hmGear').addEventListener('click', () => openSettings());
     $('hmSubBack').addEventListener('click', () => this.closeSub());
+    glyphWord($('hmSubBack'));
     $('hmSheet').addEventListener('click', (e) => e.target === $('hmSheet') && this.closeSheet());
     // (the builders' clock: once a second while something is going up, the countdowns tick and a finished build is raised)
     setInterval(() => this.tickWorks(), 1000);
@@ -633,8 +635,9 @@ export class Home {
     };
     // (QUESTS: the day's offers are drawn the first time a date is seen, and kept; old ones come down)
     if (refreshOffers(m, todayKey())) saveMeta(m);
-    chipCount('hmCrowns', ICONS.crowns, m.crowns);
-    chipCount('hmStones', ICONS.stones, stonesOf(m));
+    // (PAINTED-BUTTONS: the painted crown and stone medallions on the chips)
+    chipCount('hmCrowns', pbUrl('crowns'), m.crowns);
+    chipCount('hmStones', pbUrl('stones'), stonesOf(m));
     this.hooks.onTopBar?.();
     // (Dynasties: the season's chip in the top bar's second row; redrawn only when the season changes, so its icon never blinks)
     if (m.dynasty) {
@@ -858,7 +861,8 @@ export class Home {
     daily.title = `${dailyTheme(todayKey())?.name ?? dailyBossName(todayKey())} · ${dailyStatus(m, todayKey())}`;
     daily.querySelector('small')?.remove();
     // (the painted hourglass, whole, in place of the small pixel one, which read as cut off; already served and cached for the relics)
-    daily.prepend(icon('relics/hourglass.webp', 'ico cpDailyIcon'));
+    // (PAINTED-BUTTONS: now the Daily's own painted medallion, the chest at sunrise)
+    daily.prepend(icon(pbUrl('daily'), 'ico cpDailyIcon'));
     if (cleared) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
@@ -913,7 +917,8 @@ export class Home {
       const council = place('hmCouncil', 'council', 'Council', '', `${councilPlate(m)}${muster ? '. The Warchief’s Muster is open' : ''}. ${councilLine(m)}`, () => this.openCouncil());
       council.querySelector('small')?.remove();
       const medal = el('img', 'cpCouncilBadge');
-      medal.src = COUNCIL_BADGE;
+      // (PAINTED-BUTTONS: the Dark Council's painted medallion, the throne between its candles)
+      medal.src = pbUrl('council');
       medal.alt = '';
       medal.setAttribute('aria-hidden', 'true');
       council.prepend(medal);

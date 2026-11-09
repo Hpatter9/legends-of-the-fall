@@ -4,6 +4,7 @@
 // button. A locked army shows its scene as a silhouette. The rules are in `src/sim/armies.ts`, `armyStars.ts` and
 // `tiers.ts`; this only draws them.
 
+import { glyphWord } from './paintedButton';
 import { blueprintOf } from './sim/assault/assault';
 import { assaultOpen, canAssault, conquered, regrouped, tributeDue, tributeOf } from './sim/assault/economy';
 import { armyOreRow } from './oreView';
@@ -269,6 +270,7 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
   prev.addEventListener('click', () => go(index - 1));
   next.addEventListener('click', () => go(index + 1));
   const back = el('button', 'asBack', '‹ Back');
+  glyphWord(back);
   back.addEventListener('click', () => hooks.onBack());
 
   let frame = 0;

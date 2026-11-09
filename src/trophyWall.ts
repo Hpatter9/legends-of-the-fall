@@ -1,6 +1,7 @@
 // Defeated Boss Trophy Wall: a decorative wooden plaque & trophy rack in the Tavern & Castle Hall
 // showcasing caricatures/tokens of defeated Calamity and Spire bosses with humorous defeat blurbs.
 
+import { glyphWord } from './paintedButton';
 import { modesHidden } from './sim/hiddenModes';
 import type { Meta } from './sim/meta';
 import { play } from './render/sound';
@@ -277,6 +278,8 @@ export class TrophyWallModal {
     titleBox.append(crest, title, sub);
 
     const closeBtn = el('button', 'twCloseBtn', '‹ Back');
+
+    glyphWord(closeBtn);
     closeBtn.title = 'Close Trophy Wall (Esc)';
     closeBtn.addEventListener('click', () => this.close());
     header.append(titleBox, closeBtn);
@@ -396,6 +399,8 @@ export class TrophyWallModal {
     box.style.borderTopColor = trophy.accentColor;
 
     const closeBtn = el('button', 'twDetailClose', 'Close');
+
+    glyphWord(closeBtn);
     closeBtn.addEventListener('click', () => {
       play('tap');
       detailOverlay.remove();

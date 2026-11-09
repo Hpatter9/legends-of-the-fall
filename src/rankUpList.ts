@@ -5,6 +5,7 @@
 // With talent rows, "Auto all talents" (TALENT-AUTO) shows each hero's points and the nodes `sim/talentAuto.ts` would learn in the same
 // confirm, and learns them all on its yes.
 
+import { glyphWord } from './paintedButton';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { MAX_RANK, saveMeta, takenRank, type Meta } from './sim/meta';
@@ -88,6 +89,7 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
   title.id = 'ulTitle';
   const count = el('small', 'ulCount');
   const x = el('button', 'ulClose', '‹ Back');
+  glyphWord(x);
   x.type = 'button';
   x.setAttribute('aria-label', 'Close');
   head.append(title, count, x);

@@ -741,3 +741,7 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 ### Painted Spells study
 
 - `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.
+
+### Painted buttons
+
+- `src/art/ui/buttons/` (136 WebP files, from the nine sheets in `art-source/ui/buttons/`, the owner's art PR #468): original brass medallion, glyph and plate artwork painted for this game by the owner with ChatGPT image generation, matched to the painted tactic medallions and the ornate menus. Cut, trimmed and sized by `tools/painted-buttons/cut.py`; loaded by URL and cached for offline play (`build.mjs`). See `docs/notes/painted-buttons.md`.

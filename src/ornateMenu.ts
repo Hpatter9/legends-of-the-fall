@@ -5,6 +5,8 @@
 // Plain DOM: no Pixi, no game rules; the caller fills the body and decides what the buttons do. `ornateMenus.css` holds every class named
 // here (`OM_CLASSES`; test/ui-standard.test.ts checks it, and that new dialogs are built with this).
 
+import { glyphWord } from './paintedButton';
+
 /** Every class this module puts on the page: each is styled in `ornateMenus.css` (section 24). */
 export const OM_CLASSES = ['omVeil', 'omSheet', 'omDrawer', 'om', 'omHead', 'omCrest', 'omEyebrow', 'omTitle', 'omSub', 'omRule', 'omBody', 'omSection', 'omSectionHead', 'omGrid', 'omChoice', 'omIco', 'omLine', 'omPay', 'omLock', 'omWell', 'omNote', 'omFoot', 'omBack', 'omPrimary'] as const;
 
@@ -176,6 +178,8 @@ export function menuFoot(menu: OrnateMenu, f: FootOptions): { back?: HTMLButtonE
     const word = f.back.word === 'back' ? '‹ Back' : f.back.word === 'close' ? 'Close' : f.back.word;
     const b = el('button', 'omBack', word);
     b.type = 'button';
+    // (PAINTED-BUTTONS: "‹ Back" and "Close" wear the painted back chevron and close glyph before their word, on the slate plate)
+    glyphWord(b);
     b.addEventListener('click', f.back.onClick ?? menu.close);
     menu.foot.append(b);
     out.back = b;

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.434.0',
+    date: '2026-11-09',
+    title: 'Painted buttons everywhere',
+    notes: ['Every button is now painted brass and enamel: the top bars, tabs, camp, deploy bar, fight screen, tavern, stall, menus and Settings\' switches.'],
+  },
+  {
     version: '0.433.0',
     date: '2026-11-09',
     title: 'A ring of standing stones for duels',
