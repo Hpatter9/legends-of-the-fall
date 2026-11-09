@@ -14,7 +14,7 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, '..', '..', 'art-source', 'tavern-life')
 OUT = os.path.join(HERE, '..', '..', 'src', 'art', 'tavern', 'life')
-PROPS = ['tankard', 'cup', 'dart', 'cards', 'dice', 'coin']
+PROPS = ['tankard', 'cup', 'dart', 'cards', 'dice', 'coin', 'goblet', 'pebble']
 check = '--check' in sys.argv
 os.makedirs(OUT, exist_ok=True)
 
