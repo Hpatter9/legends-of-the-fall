@@ -14,7 +14,7 @@ const map = holdMapOf('orcs')!;
 const b = map.board;
 const mats = materialsOf(b, map.zone, bp);
 
-test('every tile has a ground material of the sheet: water as water, the roads cobbled, the wall-walk stone, the bridge planks', () => {
+test('every tile has a ground material of the sheet: water as water, the roads cobbled, the crag paths heath, the bridge planks', () => {
   for (let i = 0; i < b.w * b.d; i++) {
     const t = b.tiles[i];
     const m = mats[i];
@@ -22,7 +22,7 @@ test('every tile has a ground material of the sheet: water as water, the roads c
     if (t.ground === 'deep') assert.equal(m, DEEP);
     if (t.ground === 'water') assert.equal(m, MAT.shallows);
     if (t.bridge) assert.equal(m, MAT.planks);
-    if (map.zone[i] === 83) assert.equal(m, MAT.wallWalk);
+    if (map.zone[i] === 83) assert.equal(m, MAT.heath);
   }
   // (the road from the bridge to the South Gate)
   assert.equal(mats[65 * b.w + 76], MAT.cobbles);
@@ -70,7 +70,7 @@ test('every standing piece is the hold\'s picture, and none taller than half a t
   }
   // (each structure shows; the keep, the throne and the corner towers are there)
   for (let n = 0; n < map.forts.length; n++) assert.ok(list.some((p) => p.fort === n), map.forts[n].id);
-  for (const name of ['keep', 'throne', 'cornerTower', 'gateTower', 'watchtower', 'longhouse', 'hideHut', 'warTent', 'crenel']) assert.ok(list.some((p) => p.name === name), name);
+  for (const name of ['keep', 'throne', 'lookout', 'gateTower', 'watchtower', 'longhouse', 'hideHut', 'warTent', 'smallBanner']) assert.ok(list.some((p) => p.name === name), name);
   assert.deepEqual(placementsOf(b, map.zone, bp, map.forts), list, 'the same every time');
 });
 
@@ -86,4 +86,34 @@ test('a structure\'s picture follows its hp: whole, battered, broken, its breach
   assert.equal(fortLook('drum', 0, 1500, true, false), 'drumSilenced');
   for (const k of ['palisadeRun', 'palisadeBattered', 'palisadeBroken', 'palisadeBreach', 'palisadeInner', 'southGate', 'southGateBattered', 'southGateBroken', 'northGate', 'northGateBroken', 'ironGate', 'ironGateBattered', 'ironGateBroken', 'sallyPort', 'sallyPortBattered', 'sallyPortBroken', 'drumStruck', 'drumSilenced', 'burntHeap', 'ladder', 'ram'])
     assert.ok(SPRITES[k], k);
+});
+
+
+test('the orc inner defences are exposed rock and timber lookouts, with a larger summit hall', () => {
+  const list = placementsOf(b, map.zone, bp, map.forts);
+  const wall = map.zone.findIndex((z) => z === 83);
+  assert.equal(faceOf(b, map.zone, wall, wall + 1, bp), 'cliff');
+  assert.ok(!list.some((p) => p.name === 'cornerTower' || p.name === 'crenel'), 'the continuous dressed-stone curtain is gone');
+  assert.equal(list.filter((p) => p.name === 'lookout').length, 4);
+  const hall = list.find((p) => p.name === 'keep')!;
+  assert.ok(hall.scale! >= 0.85);
+  assert.equal(b.tiles[hall.front].h, 12);
+  assert.ok(hall.u < bp.throne.u && hall.v < bp.throne.v);
+});
+
+
+test('weathered timber keeps actual damage states and earth tracks remain distinct from stone roads', () => {
+  const list = placementsOf(b, map.zone, bp, map.forts);
+  const timber = list.filter((p) => p.fort !== undefined && map.forts[p.fort].kind === 'palisade' && !p.low);
+  assert.ok(new Set(timber.map((p) => p.scale)).size > 5);
+  assert.ok(timber.some((p) => p.lean! < 0) && timber.some((p) => p.lean! > 0));
+  assert.ok(timber.every((p) => p.name === 'palisadeRun'), 'healthy walls are not drawn as damage or breaches');
+  assert.ok(list.some((p) => p.name === 'brokenRail' && p.low));
+  let tracks = 0;
+  for (let i = 0; i < b.tiles.length; i++) if (b.tiles[i].trail && !b.tiles[i].ramp && map.zone[i] !== 83 && !b.tiles[i].ground) {
+    assert.ok(mats[i] === MAT.mud2 || mats[i] === MAT.trampled, `earth track at ${i}`);
+    tracks++;
+  }
+  assert.ok(tracks > 100);
+  assert.equal(mats[65 * b.w + 76], MAT.cobbles, 'the old stone bridge road remains paved');
 });

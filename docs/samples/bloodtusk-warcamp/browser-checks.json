@@ -1,0 +1,83 @@
+[
+  {
+    "width": 393,
+    "height": 852,
+    "errors": [],
+    "stats": {
+      "seed": 1,
+      "run": 1,
+      "ticks": 73,
+      "simMean": 2.145205479421436,
+      "simP95": 7.800000000745058,
+      "simWorst": 20,
+      "fps": 6.233928153978029,
+      "frameMean": 129.70175438593876,
+      "frameP95": 250,
+      "workMean": 86.12280701754386,
+      "detail": "mid",
+      "zoom": 0.23,
+      "fighters": 158,
+      "chunks": 64,
+      "wanted": 64,
+      "alive": 235,
+      "bakeWorst": 34.70000000111759,
+      "copyMean": 0,
+      "copyP95": 0,
+      "worker": false
+    }
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "errors": [],
+    "stats": {
+      "seed": 1,
+      "run": 1,
+      "ticks": 61,
+      "simMean": 3.0540983605763463,
+      "simP95": 12.399999998509884,
+      "simWorst": 36.59999999962747,
+      "fps": 9.835743090390473,
+      "frameMean": 114.14444444446515,
+      "frameP95": 250,
+      "workMean": 58.52592592600181,
+      "detail": "mid",
+      "zoom": 0.23,
+      "fighters": 156,
+      "chunks": 58,
+      "wanted": 58,
+      "alive": 235,
+      "bakeWorst": 30.699999999254942,
+      "copyMean": 0,
+      "copyP95": 0,
+      "worker": false
+    }
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "errors": [],
+    "stats": {
+      "seed": 1,
+      "run": 1,
+      "ticks": 79,
+      "simMean": 3.4405063290997773,
+      "simP95": 8.100000001490116,
+      "simWorst": 72.30000000074506,
+      "fps": 5.21829883457993,
+      "frameMean": 144.6854545454681,
+      "frameP95": 250,
+      "workMean": 88.05090909082104,
+      "detail": "mid",
+      "zoom": 0.23,
+      "fighters": 161,
+      "chunks": 64,
+      "wanted": 64,
+      "alive": 235,
+      "bakeWorst": 131.90000000037253,
+      "copyMean": 0,
+      "copyP95": 0,
+      "worker": false
+    }
+  }
+]

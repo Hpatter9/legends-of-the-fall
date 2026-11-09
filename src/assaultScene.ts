@@ -383,7 +383,8 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   });
   // (Flank, Ladder, Fire, Suppress: the next tap on the field gives the order there)
   let readied: 'flank' | 'scale' | 'fire' | 'suppress' | 'plant' | null = null;
-  const READY_SAY = { flank: 'Flank: tap a foe', scale: 'Ladder: tap the stone wall', fire: 'Fire arrows: tap a hut', suppress: 'Suppress: tap the archers', plant: 'Keg: tap the stone wall or a gate' } as const;
+  const wallWords = h.bp.wallStyle === 'ridge' ? 'crag face' : 'stone wall';
+  const READY_SAY = { flank: 'Flank: tap a foe', scale: `Ladder: tap the ${wallWords}`, fire: 'Fire arrows: tap a hut', suppress: 'Suppress: tap the archers', plant: `Keg: tap the ${wallWords} or a gate` } as const;
   const ready = (what: NonNullable<typeof readied>) => {
     readied = readied === what ? null : what;
     syncOrders();
@@ -584,7 +585,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
         return say(`Flank: ${UNITS[f.byId[target].def].name}`);
       }
       if (what === 'scale') {
-        if (!scaleAim(b, f, t)) return say('Ladder: no stone wall there');
+        if (!scaleAim(b, f, t)) return say(`Ladder: no ${wallWords} there`);
         for (const k of list) if (h.platoons[k].ladder) sim.call('orderPlatoon', k, { kind: 'scale', at: { u: t.u, v: t.v } });
         return say('Ladder: to the wall!');
       }
@@ -595,7 +596,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
         const fi = h.fortAt.get(t.v * f.w + t.u);
         const gate = fi !== undefined ? h.forts[fi] : undefined;
         if (!at && gate && !gate.broken && !gate.open && gate.spec.kind !== 'drum') at = { u: t.u, v: t.v };
-        if (!at) return say('Keg: tap the stone wall or a gate');
+        if (!at) return say(`Keg: tap the ${wallWords} or a gate`);
         sim.call('orderPlatoon', list[0], { kind: 'plant', at });
         return say(h.siege.keg ? 'Keg: to the wall!' : 'Keg: fetch a powder barrel');
       }
@@ -614,7 +615,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     const foe = near('foe');
     if (fort && !fort.broken && !fort.open) {
       for (const k of list) sim.call('orderPlatoon', k, { kind: 'assault', fort: fort.spec.id });
-      say(`Assault: ${fort.spec.name}`);
+      say(fort.discovered && fort.spec.weakness ? `Assault: ${fort.spec.weakness.name} · triple damage` : `Assault: ${fort.spec.name}`);
     } else if (foe !== undefined) {
       for (const k of list) sim.call('orderPlatoon', k, { kind: 'focus', unit: foe });
       say(`Focus: ${UNITS[f.byId[foe].def].name}`);
@@ -812,7 +813,14 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
           else if (e.kind === 'wolves') say(`The wolves ride round for ${heroName(h.platoons[e.platoon].hero)}`);
           else if (e.kind === 'lordFell') say('The lord of the hold falls!');
           else if (e.kind === 'rise') say(`${heroName(h.platoons[e.platoon].hero)} rises at the rally flag`);
-          if (e.kind === 'breach') say(e.fort === 'wall' ? 'The stone wall is breached!' : 'The way is open!');
+          if (e.kind === 'weakness') {
+            const weak = h.forts.find((x) => x.spec.id === e.fort)?.spec.weakness;
+            if (weak) {
+              say(`Weak point discovered: ${weak.name}. ${weak.hint}`);
+              toastUntil = performance.now() + 9000;
+            }
+          }
+          if (e.kind === 'breach') say(e.fort === 'wall' ? `The ${wallWords} is breached!` : 'The way is open!');
         }
         acc -= TICK_MS;
         n++;

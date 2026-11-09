@@ -22,7 +22,7 @@ export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
   orcs: [
     'Silence the three war drums: while one beats, the garrison near it strikes harder.',
     'The Iron Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
-    'Three volleys, or one keg, on a stretch of the stone wall bring it down to a ramp any platoon can climb.',
+    'Three volleys, or one keg, break a reinforced crag face into a rubble ramp. Ladders scale it while it stands.',
     'Hold the Warpath camp, or burn every tent of it, and no more bands march down to the hold.',
     'A Vain captain at the Iron Gate calls out a champion: send your strongest hero, or refuse and face him Mocking.',
   ],

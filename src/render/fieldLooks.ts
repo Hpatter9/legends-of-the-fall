@@ -18,7 +18,7 @@
 //   on open ground stays low.
 
 import type { Board, Tile } from '../sim/board';
-import type { Blueprint } from '../sim/assault/blueprint';
+import { districtAt, landformWeight, type Blueprint } from '../sim/assault/blueprint';
 import type { FortSpec } from '../sim/assault/fieldMap';
 import { GROUND } from './assaultOrcAtlas';
 
@@ -71,6 +71,9 @@ export function materialsOf(b: Board, zone: Uint8Array, bp: Blueprint): Uint8Arr
   const snowy = bp.army === 'beasts';
   const out = new Uint8Array(w * d);
   const posts = bp.posts.map((p) => p.at);
+  const doors = bp.wornPaths ? bp.stamps.flatMap((s) => s.kind === 'solid' && s.level ?
+    [{ u: (s.rect.u0 + s.rect.u1) / 2, v: s.rect.v1 + 1 }, { u: s.rect.u1 + 1, v: (s.rect.v0 + s.rect.v1) / 2 }] : []) : [];
+  const doorstep = (u: number, v: number) => doors.some((p) => Math.abs(p.u - u) + Math.abs(p.v - v) <= 1.5);
   const nearPost = (u: number, v: number, r: number) => posts.some((p) => Math.abs(p.u - u) + Math.abs(p.v - v) <= r);
   const wet = (u: number, v: number) => {
     for (let dv = -1; dv <= 1; dv++)
@@ -91,21 +94,29 @@ export function materialsOf(b: Board, zone: Uint8Array, bp: Blueprint): Uint8Arr
       else if (t.ground === 'water') m = MAT.shallows;
       else if (t.bridge) m = MAT.planks;
       else if (t.ground === 'coals') m = MAT.ash;
-      else if (z === Z('S')) m = MAT.wallWalk;
-      else if (t.paved) m = z === Z('I') || z === Z('M') || t.ramp || t.ground === 'shrine' ? MAT.flagstones : MAT.cobbles;
+      else if (z === Z('S')) m = bp.wallStyle === 'ridge' ? MAT.heath : MAT.wallWalk;
+      else if (bp.wallStyle === 'ridge' && t.ramp) m = MAT.trampled;
+      else if (bp.wornPaths && t.trail) m = n < 0.35 ? MAT.mud2 : MAT.trampled;
+      else if (t.paved) m = z === Z('I') || z === Z('M') || t.ramp || t.ground === 'shrine' ? MAT.flagstones : bp.army === 'orcs' && z === Z('B') ? bp.wornPaths && n < 0.3 ? MAT.mud2 : MAT.trampled : MAT.cobbles;
       else if (t.ground === 'shrine') m = MAT.flagstones;
       else if (t.ground === 'tall') m = MAT.heath;
       else if (z === Z('R') || z === Z('F') || wet(u, v)) m = MAT.shingle;
       else if (z === Z('D')) m = MAT.wetMud;
       else if (z === Z('E')) m = n < 0.5 ? MAT.mud1 : MAT.mud2;
       else if (z === Z('P')) m = MAT.campDirt;
+      else if (bp.wornPaths && z === Z('B') && doorstep(u, v)) m = MAT.trampled;
+      else if (bp.wornPaths && districtAt(bp, u, v)?.kind === 'refuse') m = n < 0.5 ? MAT.scorched : MAT.mud1;
+      else if (z === Z('B') && districtAt(bp, u, v)?.kind === 'beasts') m = n < 0.55 ? MAT.wetMud : MAT.trampled;
+      else if (z === Z('B') && districtAt(bp, u, v)?.kind === 'training') m = n < 0.3 ? MAT.mud1 : MAT.trampled;
       else if (z === Z('B')) m = n < 0.22 ? MAT.wetMud : n < 0.4 ? MAT.mud2 : nearPost(u, v, 3) ? MAT.trampled : MAT.campDirt;
-      else if (z === Z('I')) m = n < 0.3 ? MAT.campDirt : MAT.flagstones;
-      else if (z === Z('M')) m = t.h >= 9 ? MAT.flagstones : t.h >= 7 ? MAT.campDirt : MAT.trampled;
+      else if (z === Z('I')) m = bp.wallStyle === 'ridge' ? n < 0.4 ? MAT.trampled : MAT.campDirt : n < 0.3 ? MAT.campDirt : MAT.flagstones;
+      else if (z === Z('M')) m = bp.wallStyle === 'ridge' ? n < 0.4 ? MAT.heath : MAT.campDirt : t.h >= 9 ? MAT.flagstones : t.h >= 7 ? MAT.campDirt : MAT.trampled;
       else if (z === Z('N')) m = Math.abs(u - bp.warpath.u) + Math.abs(v - bp.warpath.v) <= 6 ? MAT.ash : n < 0.25 ? MAT.trampled : MAT.heath;
       else if (z === Z('V')) m = n < 0.5 ? MAT.ash : MAT.scorched;
       else if (z === Z('C')) m = n < 0.4 ? MAT.campDirt : MAT.trampled;
       else if (z === Z('T')) m = MAT.grass2;
+      else if (bp.landforms?.some((form) => form.surface === 'mud' && landformWeight(form, u, v) > 0.35) && t.h <= 2) m = n < 0.5 ? MAT.wetMud : MAT.mud2;
+      else if (bp.landforms?.some((form) => form.surface === 'grass' && landformWeight(form, u, v) > 0.3)) m = n < 0.4 ? MAT.heath : MAT.grass2;
       else if (t.h >= 6) m = MAT.heath;
       else if (nearPost(u, v, 2)) m = MAT.trampled;
       else m = n < 0.18 ? MAT.heath : noise(u, v, 11, 2) < 0.5 ? MAT.grass1 : MAT.grass2;
@@ -208,11 +219,12 @@ export function fringesOf(b: Board, mats: Uint8Array, u: number, v: number): Fri
 }
 
 /** The face a column shows over its lower neighbour (`FACES` name). */
-export function faceOf(b: Board, zone: Uint8Array, i: number, toward: number): string {
+export function faceOf(b: Board, zone: Uint8Array, i: number, toward: number, bp?: Blueprint): string {
   const t = b.tiles[i];
   const z = zone[i];
   const n = toward >= 0 ? b.tiles[toward] : undefined;
   const nz = toward >= 0 ? zone[toward] : 0;
+  if (bp?.wallStyle === 'ridge' && (z === Z('S') || z === Z('M'))) return 'cliff';
   if (z === Z('S')) return t.perch || t.h >= 10 ? 'tower' : hash(i % b.w, Math.floor(i / b.w), 3) < 0.2 ? 'stoneWallDamaged' : 'stoneWall';
   if (z === Z('M')) return t.h >= 7 ? 'terrace' : 'moundEarth';
   if (t.perch && t.h >= 6) return z === Z('E') || z === Z('P') ? 'rampart' : 'cliff';
@@ -244,9 +256,15 @@ export function decalOf(b: Board, zone: Uint8Array, mats: Uint8Array, bp: Bluepr
     r < share ? { name: names[Math.floor(hash(u, v, 12) * names.length)], turn: Math.floor(hash(u, v, 13) * 4), alpha: 0.75 + hash(u, v, 14) * 0.25 } : null;
   const nearPost = bp.posts.some((p) => Math.abs(p.at.u - u) + Math.abs(p.at.v - v) <= 3);
   const m = mats[i];
+  if (bp.wornPaths && t.paved && !t.ramp && z !== Z('S') && z !== Z('M')) return pick(['ruts', 'bootTracks', 'mudSplash'], 0.8);
   if (m === MAT.cobbles) return pick(['ruts', 'bootTracks'], 0.25);
   if (z === Z('V')) return pick(['ashPatch', 'scorch', 'rubble', 'timber', 'embers'], 0.6);
-  if (z === Z('B')) return pick(['mudSplash', 'puddle', 'straw', 'bootTracks', 'ruts'], 0.32);
+  const yard = districtAt(bp, u, v);
+  if (yard && (z === Z('B') || bp.wornPaths && (z === Z('K') || z === Z('V')))) {
+    const names = yard.kind === 'refuse' ? ['ashPatch', 'scorch', 'rubble', 'timber', 'bones'] : yard.kind === 'forge' ? ['ashPatch', 'scorch', 'rubble', 'embers'] : yard.kind === 'beasts' ? ['wolfTracks', 'straw', 'bones', 'mudSplash'] : yard.kind === 'supplies' ? ['ruts', 'timber', 'bootTracks'] : yard.kind === 'training' ? ['bootTracks', 'bloodSmear', 'mudSplash'] : ['straw', 'bootTracks', 'puddle', 'bones'];
+    return pick(names, 0.7);
+  }
+  if (z === Z('B')) return pick(['mudSplash', 'puddle', 'straw', 'bootTracks', 'ruts'], bp.army === 'orcs' ? 0.48 : 0.32);
   if (z === Z('D')) return pick(['puddle', 'mudSplash'], 0.3);
   if (z === Z('I')) return pick(['cracks', 'straw'], 0.25);
   if (z === Z('M')) return pick(['bones', 'embers', 'cracks'], 0.2);
@@ -269,6 +287,9 @@ export interface Placement {
   flip?: boolean;
   scale?: number;
   tint?: number;
+  /** A slight lean at the foot point, for uneven timber construction. */
+  lean?: number;
+  sway?: boolean;
   fort?: number;
   hut?: number;
   /** A set piece of the arenas' atlas (`roadArt.ts`), not the hold's. */
@@ -339,7 +360,8 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
         const u = t % w;
         const v = Math.floor(t / w);
         // (the ring's two back sides are seen from inside: their inner faces)
-        out.push({ name: 'palisadeRun', u, v, front: t, flip: alongV(u, v), fort: n, inner: u < 40 || v < 40 });
+        out.push({ name: 'palisadeRun', u, v, front: t, flip: bp.contour ? Math.abs(f.front.u - u) > Math.abs(f.front.v - v) : alongV(u, v), fort: n, inner: bp.contour ? f.front.u < u || f.front.v < v : u < 40 || v < 40, ...(bp.weathered ? { scale: 0.93 + hash(u, v, 61) * 0.14, lean: (hash(u, v, 62) - 0.5) * 0.09, tint: hash(u, v, 63) < 0.25 ? 0xd6c1a2 : 0xffffff } : {}) });
+        if (bp.weathered && hash(u, v, 64) < 0.1) out.push({ name: 'brokenRail', u: u + 0.1, v, front: t, flip: alongV(u, v), low: true, scale: 0.55 });
       }
       return;
     }
@@ -363,17 +385,21 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       // (the Barrow Necropolis's own buildings by their names: its mausoleums, charnel houses, coffin heaps and witch fires; the Howling
       //  Den's hide tents, drying racks and great den; Elder Root's leaf tents, and the Elder Root drawn as the kit's great oak, grown huge,
       //  until its own painting lands)
-      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' || s.name === 'Storehouse' || s.name === 'Armoury' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' || s.name === 'Hide tent' || s.name === 'Leaf tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name === 'Drying rack' ? 'meatRacks' : s.name === 'The Elder Root' ? 'greatOak' : s.name.startsWith('The keep') || / (keep|den)$/.test(s.name) || s.name === 'The Bull Temple' || s.name === 'The Hall of Tusks' || s.name === 'The Demon Spire' || s.name === 'The Shrine of the Moon' || s.name === 'The Great Foundry' ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile';
+      const name = s.sprite ?? (s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' || s.name === 'Storehouse' || s.name === 'Armoury' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' || s.name === 'Hide tent' || s.name === 'Leaf tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name === 'Drying rack' ? 'meatRacks' : s.name === 'The Elder Root' ? 'greatOak' : s.name.startsWith('The keep') || / (keep|den)$/.test(s.name) || s.name === 'The Bull Temple' || s.name === 'The Hall of Tusks' || s.name === 'The Demon Spire' || s.name === 'The Shrine of the Moon' || s.name === 'The Great Foundry' ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile');
       const flip = s.rect.u1 - s.rect.u0 < s.rect.v1 - s.rect.v0;
-      out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: name === 'keep' ? 0.62 : name === 'greatOak' ? 2.4 : name === 'longhouse' || name === 'mausoleum' ? 0.95 : name === 'bonfire' ? 0.7 : 1, ...(s.burns ? { hut: hut++ } : {}) });
+      out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: s.scale ?? (name === 'keep' ? 0.62 : name === 'greatOak' ? 2.4 : name === 'longhouse' || name === 'mausoleum' ? 0.95 : name === 'bonfire' ? 0.7 : 1), ...(s.burns ? { hut: hut++ } : {}) });
+    } else if (s.kind === 'dressing') {
+      const i = s.at.v * w + s.at.u;
+      out.push({ name: s.sprite, u: s.at.u, v: s.at.v, front: i, scale: s.scale ?? 0.45, flip: s.flip, low: true });
+      taken.add(i);
     } else if (s.kind === 'perch') {
       const tiles = rectTiles(w, s.rect);
       const m = mid(tiles);
       // (the corner towers' crenellated tops, the gate towers' perches, the watchtowers on their crags)
-      const name = /corner tower/.test(s.name) ? 'cornerTower' : /Watchtower|Ossuary Tower|Lookout|Watch Tree/.test(s.name) ? 'watchtower' : 'gateTower';
+      const name = /corner tower/.test(s.name) ? bp.wallStyle === 'ridge' ? 'lookout' : 'cornerTower' : /Watchtower|Ossuary Tower|Lookout|Watch Tree/.test(s.name) ? 'watchtower' : 'gateTower';
       for (const t of tiles) taken.add(t);
       // (sorted with the perch's back tile: its crew stand on it and are drawn over it, never hidden under its floor)
-      out.push({ name, u: m.u, v: m.v, front: m.front, depth: tiles[0], scale: name === 'watchtower' ? 0.9 : name === 'gateTower' ? 0.8 : 1 });
+      out.push({ name, u: m.u, v: m.v, front: m.front, depth: tiles[0], scale: name === 'lookout' ? 1.35 : name === 'watchtower' ? 0.9 : name === 'gateTower' ? 0.8 : 1 });
     } else if (s.kind === 'barricade') {
       for (const p of s.tiles) {
         const t = p.v * w + p.u;
@@ -392,8 +418,8 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       // (the king's trebuchet stands in our camp at the siege park, in a tent's place: its volleys are thrown from here)
       if (s.piece === 'tent' && bp.park && s.at.u === bp.park.u && s.at.v === bp.park.v) out.push({ name: 'trebuchet', u: s.at.u, v: s.at.v, front: t, scale: 0.9 });
       else if (s.piece === 'tent') out.push({ name: 'conicalTent', u: s.at.u, v: s.at.v, front: t, tint: 0x8fb4ff });
-      else if (s.piece === 'skulls') out.push(s.at.u === 48 && s.at.v === 47 ? { name: 'throne', u: s.at.u, v: s.at.v, front: t, scale: 1.2 } : { name: 'skullPile', u: s.at.u, v: s.at.v, front: t });
-      else if (s.piece === 'flag') out.push(s.at.u === 49 && s.at.v === 46 ? { name: 'greatBanner', u: s.at.u, v: s.at.v, front: t } : { name: 'flag', road: 'flag', u: s.at.u, v: s.at.v, front: t });
+      else if (s.piece === 'skulls') out.push(s.at.u === bp.throne.u - 1 && s.at.v === bp.throne.v - 2 ? { name: 'throne', u: s.at.u, v: s.at.v, front: t, scale: 1.2 } : { name: 'skullPile', u: s.at.u, v: s.at.v, front: t });
+      else if (s.piece === 'flag') out.push(s.at.u === bp.throne.u && s.at.v === bp.throne.v - 3 ? { name: 'greatBanner', u: s.at.u, v: s.at.v, front: t } : { name: 'flag', road: 'flag', u: s.at.u, v: s.at.v, front: t });
       else if (s.piece === 'campfire') out.push(s.at.u === 34 && s.at.v === 50 ? { name: 'bonefire', u: s.at.u, v: s.at.v, front: t, scale: 0.6 } : { name: 'bonfire', u: s.at.u, v: s.at.v, front: t, scale: 0.6 });
       else if (s.piece === 'brazier') out.push({ name: 'brazier', u: s.at.u, v: s.at.v, front: t });
       else out.push({ name: s.piece, road: s.piece, u: s.at.u, v: s.at.v, front: t });
@@ -407,7 +433,11 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       const i = v * w + u;
       if (zone[i] !== Z('S') || taken.has(i) || b.tiles[i].perch || b.tiles[i].ladder) continue;
       const ring = Math.max(Math.abs(u - 49.5), Math.abs(v - 49.5));
-      if (ring > 11) out.push({ name: 'crenel', u, v, front: i, flip: alongV(u, v), scale: 0.9 });
+      const outerEdge = bp.contour ? SIDES.some(([du, dv]) => zone[(v + dv) * w + u + du] === Z('B')) : ring > 11;
+      if (bp.wallStyle === 'ridge') {
+        if (outerEdge && (u + v) % 5 === 0) out.push({ name: 'smallBanner', u, v, front: i, scale: 0.85 });
+        else if ((u + v) % 8 === 0) out.push({ name: 'wallBrazier', u, v, front: i, scale: 0.8 });
+      } else if (outerEdge) out.push({ name: 'crenel', u, v, front: i, flip: alongV(u, v), scale: 0.9 });
       else if ((u + v) % 8 === 0) out.push({ name: 'wallBrazier', u, v, front: i, scale: 0.8 });
     }
   // the tiles themselves: barrels, ruins, boulders and trees on the solid tiles, bushes
@@ -435,6 +465,16 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
         out.push({ name: set[Math.floor(hash(u, v, 32) * set.length)], u, v, front: i, scale: tree ? 0.85 : 0.7 });
       } else if (t.bush) out.push({ name: ['thornBush', 'shrub1', 'shrub2'][Math.floor(r * 3)], u, v, front: i, scale: 0.6, low: true });
     }
+  if (bp.weathered) for (let v = 1; v < b.d - 1; v++) for (let u = 1; u < w - 1; u++) {
+    const i = v * w + u;
+    const t = b.tiles[i];
+    if (taken.has(i) || t.wall || t.rock || t.ramp || t.paved || isWater(t)) continue;
+    const ledge = SIDES.some(([du, dv]) => Math.abs(b.tiles[(v + dv) * w + u + du].h - t.h) >= 3);
+    if (ledge && hash(u, v, 71) < 0.24) {
+      const name = hash(u, v, 72) < 0.45 ? 'darkRocksB' : hash(u, v, 72) < 0.7 ? 'fern' : 'rubblePile';
+      out.push({ name, u, v, front: i, low: true, scale: name === 'fern' ? 0.55 : 0.4 });
+    }
+  }
   // a banner at each post outside the walls; the plan's new landmarks (poles and stones, no walls)
   for (const p of bp.posts) {
     if (p.zone !== 'fields') continue;
@@ -448,6 +488,7 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
   mark('skullTorch', 47, 13, 0.8);
   mark('pennantPole', bp.warpath.u + 2, bp.warpath.v + 2);
   mark('smallBanner', 88, 45);
+  if (bp.weathered) for (const p of out) if (['smallBanner', 'greatBanner', 'hangingBanner', 'hides', 'hideFrame', 'flag'].includes(p.name)) p.sway = !p.low;
   return out;
 }
 

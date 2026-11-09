@@ -8,6 +8,7 @@
 // Structures are not units of the battle (so no kit can shove a gate or poison a drum); a powder barrel beside one still blasts it.
 
 import { atkOf, defOf, strikeDef, type Battle, type BattleEvent, type Unit } from '../battle';
+import { sightClear } from '../board';
 import { BLOW_SCALE } from '../blow';
 import { traitsOf } from '../traits';
 import { rebuildSectors } from './sectors';
@@ -109,6 +110,7 @@ export function landFortHits(b: Battle, h: HoldState, out: BattleEvent[]): void 
 export function hitFort(b: Battle, h: HoldState, fort: number, dmg: number, by: number, out: BattleEvent[]): void {
   const f = h.forts[fort];
   if (f.broken || f.open) return;
+  if (f.discovered && f.spec.weakness) dmg *= 3;
   f.hp = Math.max(0, f.hp - dmg);
   f.struckAt = b.t;
   h.events.push({ kind: 'fortHit', fort: f.spec.id, dmg, by });
@@ -168,3 +170,17 @@ export function barrelOnForts(b: Battle, h: HoldState, i: number, out: BattleEve
 
 /** The structures still standing that a war drum is (the drums beating). */
 export const drumsBeating = (h: HoldState): FortState[] => h.forts.filter((f) => f.spec.kind === 'drum' && !f.broken);
+
+/** Weak points are found in the field, by a living member of one of our platoons within six tiles and with a clear view of the outside
+ *  of the defence. They are ordinary structures until discovered; the discovery survives snapshots and the worker mirror. */
+export function discoverWeaknesses(b: Battle, h: HoldState): void {
+  const scouts = new Set(h.platoons.flatMap((p) => [p.heroId, ...p.soldiers.map((s) => s.id)]));
+  for (const f of h.forts) {
+    if (!f.spec.weakness || f.discovered || f.broken || f.open) continue;
+    const at = f.spec.front;
+    if (!b.units.some((x) => scouts.has(x.id) && x.alive && !x.under &&
+      Math.abs(x.u - at.u) + Math.abs(x.v - at.v) <= 6 && sightClear(b.board, x, at))) continue;
+    f.discovered = true;
+    h.events.push({ kind: 'weakness', fort: f.spec.id });
+  }
+}

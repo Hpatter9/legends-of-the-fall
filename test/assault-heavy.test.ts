@@ -84,16 +84,16 @@ test('a sapper fetches a barrel, carries it at half pace, sets it at the wall, a
   const h = b.field!.hold!;
   const w = b.board.w;
   const hero = b.field!.byId[h.platoons[0].heroId];
-  // (by the forge's barrels, the forge's brutes gone; the keg for the wall's south side, along the outer bailey)
+  // (by the forge's barrels, the forge's brutes gone; the keg for the reshaped wall beside the forge)
   for (const x of b.units) if (x.side === 'foe' && x.u >= 50 && x.u <= 72 && x.v >= 50 && x.v <= 70) fell(b, x.id);
   put(b, hero, 67, 55);
-  orderPlatoon(b, 0, { kind: 'plant', at: { u: 55, v: 61 } });
+  orderPlatoon(b, 0, { kind: 'plant', at: { u: 60, v: 52 } });
   const ev = gather(b, 600, (e) => e.kind === 'keg' && e.state === 'lit');
   assert.ok(ev.some((e) => e.kind === 'keg' && e.state === 'carried'), 'picked up');
   assert.ok(ev.some((e) => e.kind === 'keg' && e.state === 'lit'), 'set and lit');
   const lit = h.siege.keg!;
   assert.ok(lit.lit !== undefined && lit.lit - b.t <= KEG_FUSE_MS);
-  const stretch = wallStretch(b, 61 * w + 55)!.tiles;
+  const stretch = wallStretch(b, 52 * w + 60)!.tiles;
   const boom = gather(b, KEG_FUSE_MS / 100 + 2);
   assert.ok(boom.some((e) => e.kind === 'keg' && e.state === 'boom'));
   assert.ok(boom.some((e) => e.kind === 'breach' && e.fort === 'wall'));

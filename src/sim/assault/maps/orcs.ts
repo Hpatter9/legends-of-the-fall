@@ -1,19 +1,10 @@
-// Bloodtusk Hold, the Orc Warband's hold (phase 1, `docs/notes/assault-1.md`; the design's 2.3): its blueprint, drawn by hand. Up the
-// phone from the Landing at the south corner: the Redwater with the West Ford, the Old Bridge and its barricade, and the East Ford; the
-// Killing Fields with the watchtowers, the burnt village, the stake field, the wolf pens, the lumber camp, the meadows, the shrine and the
-// three war drums; the ditch, the earth bank and the palisade with the South Gate, two sally ports and the North Gate; the outer bailey
-// with its longhouses, forge, Bonefire, training pit and beast pens; the stone wall six steps above it, its corner towers and the Iron
-// Gate; the stepped mound with the throne at the heart; and the Warpath behind.
-//
-// The rings, in tiles (u and v alike): the ditch 24-25 and 74-75, the palisade 26-27 and 72-73, the bank 28-29 and 70-71, the outer
-// bailey 30-37 and 62-69, the stone wall 38-39 and 60-61, the inner bailey 40-43 and 56-59, the mound 44-55.
-//
-// One change from the design's numbers: its river (depth 140 to 148) would run into the palisade's south corner (depth 146 to 150), so the
-// Redwater runs at depth 156 to 163, and its fords cross at across -34 and +34 rather than -50 and +45 (further out is off the map at that
-// depth). Everything else keeps the design's order and roster.
+// Bloodtusk Hold: a timber warcamp beneath a natural crag, with the chief’s hall high on its north-west shoulder.
+// The ditch and palisade follow the rocky shoulders; forge, raider and beast yards cluster round winding trampled lanes.
+// The three river approaches, named gates, garrison strength and reinforcement route remain the hold's tactical anchors.
 
-import type { Blueprint } from '../blueprint';
+import type { Blueprint, Stamp } from '../blueprint';
 
+// The palisade follows a lopsided ridge: a long camp flank and clipped rocky shoulders.
 const STENCIL: readonly string[] = [
   'NNNNNNNNNNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
   'NNNNNNNNNNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
@@ -27,32 +18,32 @@ const STENCIL: readonly string[] = [
   'NNNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
   'NNNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
   'NNNNNNNNNNKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK',
-  'NNNNNNNNNKKKDDDDDDDDDDDDDDDDDDDDDDDDDDKKKKKKKKKKKK',
-  'NNNNNNNNKKKKDPPPPPPPPPPPPPPPPPPPPPPPPDKKKKKKKKKKKK',
-  'NNNNNNNKKKKKDPEEEEEEEEEEEEEEEEEEEEEEPDKKKKKKKKKKKK',
-  'NNNNNNKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKKKKKKKKKK',
-  'NNNNNKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKKKKKKKKKK',
-  'NNNNKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKKKKKKKKKK',
-  'NNNKKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKKKKKKKKKK',
-  'NNKKKKKKKKKKDPEBBBBSSSSSSSSSSSSBBBBEPDKKKKKKKKKKKK',
-  'NKKKKKKKKKKKDPEBBBBSIIIIIIIIIISBBBBEPDKKKKKKKKKKKK',
+  'NNNNNNNNNKKKKKKKKKKDDDDDDDDDDDDKKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNNKKKKKKKKKKDDPPPPPPPPPPDDKKKKKKKKKKKKKKKKKK',
+  'NNNNNNNKKKKKKKKKKDDPEEEEEEEEEEPDDKKKKKKKKKKKKKKKKK',
+  'NNNNNNKKKKKKKKKKDDPEBBBBBBBBBBEPDDDKKKKKKKKKKKKKKK',
+  'NNNNNKKKKKKKKKKDDPEBBBBBBBBBBBBEPPDDKKKKKKKKKKKKKK',
+  'NNNNKKKKKKKKKKDDPEBBBBBBBBBBBBBBEEPDDDKKKKKKKKKKKK',
+  'NNNKKKKKKKKKDDDPEBBBBBBBBBBBBBBBBBEPPDKKKKKKKKKKKK',
+  'NNKKKKKKKKKKDPPEBBBBSSSSSSSSBBBBBBBEPDKKKKKKKKKKKK',
+  'NKKKKKKKKKKKDPEBBBBBMMMMIIIISBBBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSMMMMMIIIISSBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBSMMMMMMMMIIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSMMMMMMIIIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSMMMMMMIIIISBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBSIIIMIIIIIISBBBBEPDKKKKKKKKKKKK',
   'KKKKKKKKKKKKDPEBBBBSIIIIIIIIIISBBBBEPDKKKKKKKKKKKK',
-  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
-  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
-  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
-  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
-  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
-  'KKKKKKKKKKKKDPEBBBBSIIMMMMMMIISBBBBEPDKKKKKKKKKKKK',
-  'KKKKKKKKKKKKDPEBBBBSIIIIIIIIIISBBBBEPDKKKKKKKKKKKK',
-  'KKKKKKKKKKKKDPEBBBBSIIIIIIIIIISBBBBEPDKKKTKKKKKKKR',
-  'KKKKKKKKKKKKDPEBBBBSSSSSSSSSSSSBBBBEPDKKTTTKKKKKFR',
-  'KKKKKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKTTTTTKKKRFF',
-  'KKKKKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKTTTKKKRRRF',
-  'KKKKKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKTKKKRRRRK',
-  'KKKKKKKKKKKKDPEBBBBBBBBBBBBBBBBBBBBEPDKKKKKKRRRRKK',
-  'KKKKKKKKKKKKDPEEEEEEEEEEEEEEEEEEEEEEPDKKKKKRRRRKKL',
-  'KKKKKKKKKKKKDPPPPPPPPPPPPPPPPPPPPPPPPDKKKKRRRRKKLL',
-  'KKKKKKKKKKKKDDDDDDDDDDDDDDDDDDDDDDDDDDKKKRRRRKKLLL',
+  'KKKKKKKKKKKKDPEBBBBSIIIIIIIIISSBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDPEBBBBBSIIIIIIISBBBBBBEPDKKKKKKKKKKKK',
+  'KKKKKKKKKKKKDDPEBBBBBSIIIIISBBBBBBBEPDKKKTKKKKKKKR',
+  'KKKKKKKKKKKKKDDPEBBBBSSSSSSBBBBBBBBEPDKKTTTKKKKKFR',
+  'KKKKKKKKKKKKKKDDPEBBBBBBBBBBBBBBBBBEPDKTTTTTKKKRFF',
+  'KKKKKKKKKKKKKKKDDPEBBBBBBBBBBBBBBBEPPDKKTTTKKKRRRF',
+  'KKKKKKKKKKKKKKKKDDPEBBBBBBBBBBBBEEPDDDKKKTKKKRRRRK',
+  'KKKKKKKKKKKKKKKKKDDPEBBBBBBBBBBEPPDDKKKKKKKKRRRRKK',
+  'KKKKKKKKKKKKKKKKKKDDPEEEEEEEEEEPDDDKKKKKKKKRRRRKKL',
+  'KKKKKKKKKKKKKKKKKKKDPPPPPPPPPPPDDKKKKKKKKKRRRRKKLL',
+  'KKKKKKKKKKKKKKKKKKKDDDDDDDDDDDDDKKKKKKKKKRRRRKKLLL',
   'KKKKKKKKKKKKKKKKKKKKKKKKVKKKKKKKKKKKKKKKRRRRKKLLLL',
   'KKKKKKKKKKKKKKKKKKKKKKKVVVKKKKKKKKKKKKKYYRRKKLLLLL',
   'KKKKKKKKKKKKKKKKKKKKKKVVVVVKKKKKKKKKKKRRYYKKLLLLLL',
@@ -67,9 +58,100 @@ const STENCIL: readonly string[] = [
   'KKKKKKKKKKKKKKKKKKKKKKKKKKKKKRRFFKKLLLLLLLLLCCCCCC',
 ];
 
+// Authored clusters replace the old random tent scatter. Tall structures have solid footprints; small belongings sit below fighters.
+const floorClutter = (sprite: string, places: [number, number][], scale = 0.45): Stamp[] =>
+  places.map(([u, v]) => ({ kind: 'dressing', at: { u, v }, sprite, scale }));
+
+const CAMP_BELONGINGS: Stamp[] = [
+  ...floorClutter('hides', [[36, 64], [40, 66], [43, 65], [46, 66], [48, 68], [62, 35], [67, 37], [68, 40], [85, 44]], 0.55),
+  ...floorClutter('chests', [[39, 64], [43, 68], [49, 67], [53, 66], [59, 65], [66, 38], [61, 35], [85, 46]]),
+  ...floorClutter('barrels', [[56, 67], [58, 67], [59, 66], [68, 51], [68, 54], [67, 56], [32, 48], [35, 49], [88, 47]], 0.5),
+  ...floorClutter('woodpile', [[62, 55], [64, 59], [66, 53], [32, 50], [35, 48], [29, 46], [31, 44], [17, 71]], 0.5),
+  ...floorClutter('shieldStack', [[65, 55], [68, 56], [57, 64], [39, 66], [63, 36], [67, 40], [32, 59]]),
+  ...floorClutter('meatPile', [[48, 34], [55, 34], [32, 55], [35, 50], [87, 46]], 0.5),
+  ...floorClutter('bones1', [[48, 32], [55, 32], [57, 34], [31, 54], [35, 55], [44, 69], [87, 48]], 0.8),
+  ...floorClutter('firepit', [[44, 68], [65, 38], [85, 45], [52, 66]], 0.65),
+  ...floorClutter('rubblePile', [[62, 53], [67, 51], [68, 53], [64, 55]], 0.5),
+];
+
+const CAMP_BUILDINGS: Stamp[] = [
+  // Hot metal yard: the workshop faces its anvil, fuel and cart instead of an empty patch of coals.
+  { kind: 'solid', name: 'The forge workshop', sprite: 'forge', rect: { u0: 64, v0: 52, u1: 65, v1: 53 }, scale: 1.15, level: true, burns: true },
+  { kind: 'solid', name: 'Forge furnace', sprite: 'forgeFire', rect: { u0: 63, v0: 54, u1: 63, v1: 54 }, scale: 0.8 },
+  { kind: 'solid', name: 'Coal store', sprite: 'stockpile', rect: { u0: 68, v0: 42, u1: 68, v1: 43 }, scale: 0.85, level: true, burns: true },
+  // Longhouse neighbourhood: hearths, hide shelters and spoils share a small muddy common.
+  { kind: 'solid', name: 'Clan hide shelter', sprite: 'hideHut', rect: { u0: 42, v0: 66, u1: 43, v1: 67 }, scale: 1.05, level: true, burns: true },
+  { kind: 'solid', name: 'Clan yurt', sprite: 'yurt', rect: { u0: 46, v0: 67, u1: 47, v1: 68 }, scale: 1.05, level: true, burns: true },
+  { kind: 'solid', name: 'The camp well', sprite: 'well', rect: { u0: 47, v0: 63, u1: 47, v1: 63 }, scale: 0.85 },
+  { kind: 'solid', name: 'Clan trophy pole', sprite: 'skullTotem', rect: { u0: 41, v0: 65, u1: 41, v1: 65 }, scale: 0.85 },
+  // Stores on the wagon lane: food, stolen cargo, a guarded store tent and the loading cart.
+  { kind: 'solid', name: 'The grain store', sprite: 'granary', rect: { u0: 57, v0: 67, u1: 58, v1: 68 }, scale: 1.1, level: true, burns: true },
+  { kind: 'solid', name: 'The quartermaster’s tent', sprite: 'warTent', rect: { u0: 51, v0: 67, u1: 52, v1: 68 }, scale: 1.15, level: true, burns: true },
+  { kind: 'solid', name: 'Loading cart', sprite: 'warCart', rect: { u0: 58, v0: 64, u1: 59, v1: 64 }, scale: 0.95, level: true, burns: true },
+  // Cookhouse and practice pit, with open space round the communal Bonefire.
+  { kind: 'solid', name: 'The cookhouse', sprite: 'leanTo', rect: { u0: 31, v0: 49, u1: 32, v1: 50 }, scale: 1.15, level: true, burns: true },
+  { kind: 'solid', name: 'Cooking racks', sprite: 'meatRacks', rect: { u0: 31, v0: 55, u1: 31, v1: 55 }, scale: 0.8, burns: true },
+  { kind: 'solid', name: 'Water well', sprite: 'well', rect: { u0: 36, v0: 48, u1: 36, v1: 48 }, scale: 0.8 },
+  { kind: 'solid', name: 'Training dummy', sprite: 'dummy', rect: { u0: 33, v0: 58, u1: 33, v1: 58 }, scale: 0.9, burns: true },
+  { kind: 'solid', name: 'Training dummy', sprite: 'dummy', rect: { u0: 35, v0: 57, u1: 35, v1: 57 }, scale: 0.85, burns: true },
+  // Beast handlers and butcher station cluster beside the existing enclosure.
+  { kind: 'solid', name: 'The handlers’ hut', sprite: 'boneHut', rect: { u0: 55, v0: 31, u1: 56, v1: 32 }, scale: 1.05, level: true, burns: true },
+  { kind: 'solid', name: 'Drying hides', sprite: 'hideFrame', rect: { u0: 46, v0: 31, u1: 46, v1: 31 }, scale: 0.9, burns: true },
+  { kind: 'solid', name: 'The wolf totem', sprite: 'wolfTotem', rect: { u0: 57, v0: 32, u1: 57, v1: 32 }, scale: 0.9 },
+  // Barracks tents face the shared cooking fire, with a lane past the armoury.
+  { kind: 'solid', name: 'Barracks war tent', sprite: 'warTent', rect: { u0: 61, v0: 36, u1: 62, v1: 37 }, scale: 1.15, level: true, burns: true },
+  { kind: 'solid', name: 'Barracks shelter', sprite: 'conicalTent', rect: { u0: 65, v0: 39, u1: 65, v1: 39 }, scale: 1.15, burns: true },
+  { kind: 'solid', name: 'Barracks yurt', sprite: 'yurt', rect: { u0: 68, v0: 38, u1: 69, v1: 39 }, scale: 1.05, level: true, burns: true },
+  { kind: 'solid', name: 'The armoury stall', sprite: 'weaponStall', rect: { u0: 67, v0: 42, u1: 67, v1: 42 }, scale: 0.9, burns: true },
+  { kind: 'solid', name: 'Siege winch', sprite: 'winch', rect: { u0: 31, v0: 42, u1: 31, v1: 42 }, scale: 0.9 },
+  { kind: 'solid', name: 'Timber wagon', sprite: 'warCart', rect: { u0: 31, v0: 45, u1: 32, v1: 45 }, scale: 0.95, level: true, burns: true },
+  { kind: 'solid', name: 'Raider shelter', sprite: 'warTent', rect: { u0: 84, v0: 43, u1: 85, v1: 43 }, scale: 1.1, level: true, burns: true },
+  { kind: 'solid', name: 'Raider trophies', sprite: 'trophyRack', rect: { u0: 88, v0: 48, u1: 88, v1: 48 }, scale: 0.9, burns: true },
+];
+
 export const BLOODTUSK: Blueprint = {
   army: 'orcs',
+  contour: true,
+  wallStyle: 'ridge',
+  weathered: true,
+  wornPaths: true,
+  summitHeight: 12,
+  relief: { fields: 3, camp: 3 },
   name: 'Bloodtusk Hold',
+  landforms: [
+    { name: 'The Brokenback Ridge', kind: 'hill', at: { u: 34, v: 12 }, radius: [25, 12], height: 12, surface: 'heath', terrace: 3, ramp: 'u' },
+    { name: 'The Lumber Hill', kind: 'hill', at: { u: 13, v: 61 }, radius: [13, 22], height: 11, surface: 'heath', terrace: 3, ramp: 'v' },
+    { name: 'The Wolf Rise', kind: 'hill', at: { u: 86, v: 36 }, radius: [12, 19], height: 10, surface: 'heath' },
+    { name: 'The West Approach Knoll', kind: 'hill', at: { u: 41, v: 86 }, radius: [13, 9], height: 8, surface: 'grass' },
+    { name: 'The Redwater Hollow', kind: 'hollow', at: { u: 62, v: 83 }, radius: [12, 7], height: 1, surface: 'mud' },
+    { name: 'The Raiders’ Rise', kind: 'hill', at: { u: 44, v: 65 }, radius: [8, 5], height: 5, surface: 'heath' },
+    { name: 'The Beast Yard Bank', kind: 'hill', at: { u: 53, v: 34 }, radius: [7, 4], height: 5, surface: 'grass' },
+  ],
+  campLife: [
+    { kind: 'smoke', at: { u: 64, v: 52 }, lift: 105 },
+    { kind: 'smoke', at: { u: 34, v: 50 }, lift: 48 },
+    { kind: 'smoke', at: { u: 65, v: 38 }, lift: 18 },
+    { kind: 'smoke', at: { u: 44, v: 68 }, lift: 18 },
+    { kind: 'worker', at: { u: 62, v: 51 }, job: 'hammer' },
+    { kind: 'worker', at: { u: 45, v: 33 }, job: 'chop', flip: true },
+    { kind: 'worker', at: { u: 20, v: 72 }, job: 'chop', flip: true },
+  ],
+  weaknesses: [
+    { at: { u: 72, v: 44 }, name: 'Rotten palisade', hint: 'Waterlogged posts on the eastern flank. Attacks deal triple damage here; break them to open a rubble path into the camp.' },
+    { at: { u: 44, v: 72 }, name: 'Splintered repairs', hint: 'Hasty repairs on the southern flank. Attacks deal triple damage here; break them to bypass the main gate.' },
+  ],
+  districts: [
+    { name: 'The hot metal yard', kind: 'forge', at: { u: 65, v: 54 }, radius: [6, 7] },
+    { name: 'The clan common', kind: 'living', at: { u: 43, v: 66 }, radius: [8, 5] },
+    { name: 'The wagon stores', kind: 'supplies', at: { u: 55, v: 66 }, radius: [7, 5] },
+    { name: 'The Bonefire kitchen', kind: 'living', at: { u: 33, v: 50 }, radius: [5, 6] },
+    { name: 'The practice pit', kind: 'training', at: { u: 34, v: 57 }, radius: [4, 4] },
+    { name: 'The beast handlers', kind: 'beasts', at: { u: 52, v: 33 }, radius: [8, 4] },
+    { name: 'The challenge yard', kind: 'training', at: { u: 67, v: 47 }, radius: [4, 3] },
+    { name: 'The refuse hollow', kind: 'refuse', at: { u: 35, v: 74 }, radius: [5, 4] },
+    { name: 'The captured convoy', kind: 'supplies', at: { u: 53, v: 79 }, radius: [5, 4] },
+    { name: 'The barracks common', kind: 'living', at: { u: 65, v: 38 }, radius: [5, 6] },
+  ],
   stencil: STENCIL,
   stamps: [
     // the Redwater's crossings: the Old Bridge's barricade fort at its north end (a U of timber with a gap a tile wide, open behind)
@@ -123,15 +205,49 @@ export const BLOODTUSK: Blueprint = {
     // the South Gate's two towers on the bank
     { kind: 'perch', name: 'The South Gate’s north tower', rect: { u0: 70, v0: 55, u1: 71, v1: 56 }, h: 6 },
     { kind: 'perch', name: 'The South Gate’s south tower', rect: { u0: 70, v0: 61, u1: 71, v1: 62 }, h: 6 },
+    // Tusk posts frame the gate without occupying its causeway or assault lane.
+    { kind: 'height', rect: { u0: 74, v0: 56, u1: 74, v1: 56 }, h: 4 },
+    { kind: 'solid', name: 'The South Gate’s north tusks', sprite: 'tuskTotem', rect: { u0: 74, v0: 56, u1: 74, v1: 56 }, scale: 1.2 },
+    { kind: 'height', rect: { u0: 74, v0: 61, u1: 74, v1: 61 }, h: 4 },
+    { kind: 'solid', name: 'The South Gate’s south tusks', sprite: 'tuskTotem', rect: { u0: 74, v0: 61, u1: 74, v1: 61 }, scale: 1.2 },
+    // The main muddy lane bends round the forge; a second lane connects the fire, huts and beast yard.
+    { kind: 'trail', way: [{ u: 69, v: 58 }, { u: 67, v: 59 }, { u: 61, v: 57 }, { u: 62, v: 52 }] },
+    { kind: 'trail', way: [{ u: 33, v: 53 }, { u: 36, v: 55 }, { u: 39, v: 60 }, { u: 44, v: 63 }, { u: 51, v: 64 }, { u: 58, v: 62 }, { u: 61, v: 57 }] },
+    { kind: 'trail', way: [{ u: 33, v: 53 }, { u: 33, v: 46 }, { u: 33, v: 39 }, { u: 37, v: 35 }, { u: 42, v: 35 }, { u: 46, v: 36 }, { u: 55, v: 36 }, { u: 59, v: 38 }, { u: 64, v: 41 }, { u: 64, v: 48 }] },
+    // The captain’s challenge yard stays open beside the Iron Gate.
+    { kind: 'height', rect: { u0: 65, v0: 45, u1: 69, v1: 49 }, h: 2 },
+    // Lived-in work yards: supplies stay beside their workshops, with clear paths between districts.
+    { kind: 'solid', name: 'Forge anvil', sprite: 'anvil', rect: { u0: 63, v0: 51, u1: 63, v1: 51 } },
+    { kind: 'solid', name: 'Forge scrap', sprite: 'stockpile', rect: { u0: 67, v0: 52, u1: 68, v1: 52 } },
+    { kind: 'solid', name: 'Weapon racks', sprite: 'weaponStall', rect: { u0: 67, v0: 57, u1: 67, v1: 57 }, burns: true },
+    { kind: 'solid', name: 'Supply cart', sprite: 'warCart', rect: { u0: 64, v0: 60, u1: 65, v1: 60 }, burns: true },
+    { kind: 'solid', name: 'Forge fuel', sprite: 'woodpile', rect: { u0: 63, v0: 57, u1: 63, v1: 58 }, burns: true },
+    { kind: 'solid', name: 'Camp cookpot', scale: 0.7, sprite: 'cauldron', rect: { u0: 33, v0: 49, u1: 33, v1: 49 } },
+    { kind: 'solid', name: 'Butcher racks', sprite: 'meatRacks', rect: { u0: 47, v0: 33, u1: 47, v1: 34 }, burns: true },
+    { kind: 'solid', name: 'Beast cage', sprite: 'cage', rect: { u0: 56, v0: 33, u1: 56, v1: 33 } },
+    { kind: 'solid', name: 'Bone hut', sprite: 'boneHut', level: true, scale: 0.95, rect: { u0: 38, v0: 64, u1: 39, v1: 65 }, burns: true },
+    { kind: 'solid', name: 'Raid spoils', scale: 0.65, sprite: 'chests', rect: { u0: 40, v0: 65, u1: 40, v1: 65 }, burns: true },
+    { kind: 'solid', name: 'Camp stores', sprite: 'barrels', rect: { u0: 48, v0: 66, u1: 48, v1: 66 }, burns: true },
+    { kind: 'solid', name: 'Siege engine', sprite: 'catapult', rect: { u0: 29, v0: 43, u1: 30, v1: 44 }, burns: true },
+    { kind: 'solid', name: 'Timber stock', sprite: 'woodpile', rect: { u0: 30, v0: 47, u1: 30, v1: 48 }, burns: true },
+    { kind: 'solid', name: 'Raider lean-to', sprite: 'leanTo', rect: { u0: 60, v0: 32, u1: 60, v1: 32 }, burns: true },
+    { kind: 'solid', name: 'Raider supplies', scale: 0.7, sprite: 'stockpile', rect: { u0: 62, v0: 34, u1: 62, v1: 34 }, burns: true },
+    { kind: 'solid', name: 'Raider cart', sprite: 'warCart', rect: { u0: 86, v0: 46, u1: 86, v1: 47 }, burns: true },
+    { kind: 'solid', name: 'Camp cooking', scale: 0.7, sprite: 'cauldron', rect: { u0: 88, v0: 43, u1: 88, v1: 43 } },
+    // Rocky shoulders anchor the timber perimeter in the hillside.
+    { kind: 'height', rect: { u0: 28, v0: 30, u1: 31, v1: 32 }, h: 7 },
+    { kind: 'solid', name: 'Ridge outcrop', sprite: 'darkRocks', rect: { u0: 28, v0: 30, u1: 31, v1: 32 } },
+    { kind: 'height', rect: { u0: 33, v0: 27, u1: 36, v1: 28 }, h: 8 },
+    { kind: 'solid', name: 'Ridge outcrop', sprite: 'darkRocksB', rect: { u0: 33, v0: 27, u1: 36, v1: 28 } },
     // the outer bailey: three longhouses, the forge and its barrels, the training pit, the beast pens, the Bonefire
-    { kind: 'solid', name: 'Longhouse', rect: { u0: 63, v0: 31, u1: 65, v1: 32 }, burns: true },
-    { kind: 'solid', name: 'Longhouse', rect: { u0: 66, v0: 35, u1: 68, v1: 36 }, burns: true },
-    { kind: 'solid', name: 'Longhouse', rect: { u0: 31, v0: 63, u1: 32, v1: 65 }, burns: true },
+    { kind: 'solid', name: 'Longhouse', level: true, rect: { u0: 60, v0: 33, u1: 62, v1: 34 }, burns: true },
+    { kind: 'solid', name: 'Longhouse', level: true, rect: { u0: 66, v0: 35, u1: 68, v1: 36 }, burns: true },
+    { kind: 'solid', name: 'Longhouse', level: true, rect: { u0: 37, v0: 61, u1: 38, v1: 63 }, burns: true },
     // (phase 1b: the hide huts between them, for the fire arrows)
-    { kind: 'solid', name: 'Hide hut', rect: { u0: 45, v0: 65, u1: 45, v1: 65 }, burns: true },
-    { kind: 'solid', name: 'Hide hut', rect: { u0: 54, v0: 67, u1: 54, v1: 67 }, burns: true },
-    { kind: 'solid', name: 'Hide hut', rect: { u0: 66, v0: 45, u1: 66, v1: 45 }, burns: true },
-    { kind: 'solid', name: 'Hide hut', rect: { u0: 63, v0: 38, u1: 63, v1: 38 }, burns: true },
+    { kind: 'solid', name: 'Hide hut', level: true, scale: 0.95, rect: { u0: 45, v0: 65, u1: 46, v1: 66 }, burns: true },
+    { kind: 'solid', name: 'Hide hut', level: true, scale: 0.95, rect: { u0: 54, v0: 67, u1: 55, v1: 68 }, burns: true },
+    { kind: 'solid', name: 'Hide hut', level: true, scale: 0.95, rect: { u0: 66, v0: 40, u1: 67, v1: 41 }, burns: true },
+    { kind: 'solid', name: 'Hide hut', level: true, scale: 0.95, rect: { u0: 63, v0: 38, u1: 64, v1: 39 }, burns: true },
     { kind: 'ground', rect: { u0: 63, v0: 52, u1: 65, v1: 54 }, ground: 'coals' },
     { kind: 'barrel', at: { u: 66, v: 52 } },
     { kind: 'barrel', at: { u: 66, v: 55 } },
@@ -139,24 +255,49 @@ export const BLOODTUSK: Blueprint = {
     { kind: 'fence', rect: { u0: 49, v0: 31, u1: 54, v1: 35 } },
     { kind: 'piece', at: { u: 34, v: 50 }, piece: 'campfire' },
     { kind: 'piece', at: { u: 35, v: 52 }, piece: 'skulls' },
+    // A repair yard, raided convoy, butcher station and rubbish hollow give the camp a history.
+    { kind: 'solid', name: 'Siege repair frame', sprite: 'hideFrame', rect: { u0: 30, v0: 37, u1: 31, v1: 38 }, scale: 1.2, level: true, burns: true },
+    { kind: 'solid', name: 'Spare bolt thrower', sprite: 'boltThrower', rect: { u0: 30, v0: 40, u1: 30, v1: 40 }, scale: 0.9, burns: true },
+    { kind: 'solid', name: 'Captured supply wagon', sprite: 'warCart', rect: { u0: 52, v0: 78, u1: 53, v1: 79 }, scale: 1.1, level: true, burns: true },
+    { kind: 'solid', name: 'Raided cargo', sprite: 'stockpile', rect: { u0: 55, v0: 78, u1: 55, v1: 78 }, scale: 0.9, burns: true },
+    { kind: 'solid', name: 'Butcher’s rack', sprite: 'meatRacks', rect: { u0: 44, v0: 32, u1: 44, v1: 32 }, scale: 1, burns: true },
+    { kind: 'solid', name: 'Boiling pot', sprite: 'cauldron', rect: { u0: 45, v0: 31, u1: 45, v1: 31 }, scale: 0.75 },
+    { kind: 'solid', name: 'The rubbish heap', sprite: 'burntHeap', rect: { u0: 34, v0: 73, u1: 35, v1: 74 }, scale: 0.8, level: true },
+    { kind: 'trail', way: [{ u: 32, v: 38 }, { u: 33, v: 40 }, { u: 33, v: 46 }] },
+    { kind: 'trail', way: [{ u: 52, v: 80 }, { u: 49, v: 82 }, { u: 50, v: 86 }] },
+    { kind: 'trail', way: [{ u: 37, v: 76 }, { u: 40, v: 78 }, { u: 44, v: 81 }, { u: 48, v: 83 }] },
+    ...floorClutter('woodpile', [[29, 38], [31, 39], [32, 41], [29, 42]], 0.55),
+    ...floorClutter('fallenLog', [[29, 40], [31, 37], [19, 72], [21, 74]], 0.55),
+    ...floorClutter('driftShield', [[51, 79], [54, 80]], 0.75),
+    ...floorClutter('driftBanner', [[53, 80]], 0.8),
+    ...floorClutter('chests', [[51, 78], [54, 79], [56, 79]], 0.55),
+    ...floorClutter('hides', [[43, 31], [46, 33]], 0.65),
+    ...floorClutter('meatPile', [[43, 33], [45, 34], [44, 33]], 0.6),
+    ...floorClutter('bones2', [[36, 74], [35, 76], [33, 73], [43, 32]], 0.55),
+    ...floorClutter('brokenRail', [[33, 75], [36, 73], [37, 74]], 0.65),
+    ...floorClutter('rubblePile', [[34, 75], [36, 75], [33, 74]], 0.55),
+    ...CAMP_BUILDINGS,
+    ...CAMP_BELONGINGS,
     // the stone wall: the Iron Gate, the four corner towers, two stairs up its inner face to the wall-walk
     { kind: 'gate', fort: 'ironGate', name: 'The Iron Gate', rect: { u0: 60, v0: 49, u1: 61, v1: 50 }, floor: 2 },
-    { kind: 'perch', name: 'The north corner tower', rect: { u0: 38, v0: 38, u1: 40, v1: 40 }, h: 10 },
-    { kind: 'perch', name: 'The east corner tower', rect: { u0: 59, v0: 38, u1: 61, v1: 40 }, h: 10 },
-    { kind: 'perch', name: 'The west corner tower', rect: { u0: 38, v0: 59, u1: 40, v1: 61 }, h: 10 },
-    { kind: 'perch', name: 'The south corner tower', rect: { u0: 59, v0: 59, u1: 61, v1: 61 }, h: 10 },
+    { kind: 'perch', name: 'The north corner tower', rect: { u0: 46, v0: 38, u1: 48, v1: 40 }, h: 10 },
+    { kind: 'perch', name: 'The east corner tower', rect: { u0: 58, v0: 42, u1: 60, v1: 44 }, h: 10 },
+    { kind: 'perch', name: 'The west corner tower', rect: { u0: 40, v0: 56, u1: 42, v1: 58 }, h: 10 },
+    { kind: 'perch', name: 'The south corner tower', rect: { u0: 52, v0: 58, u1: 54, v1: 60 }, h: 10 },
     { kind: 'stair', from: { u: 50, v: 59 }, dir: [1, 0], h0: 3, dh: 1, n: 6 },
     { kind: 'stair', from: { u: 49, v: 40 }, dir: [-1, 0], h0: 3, dh: 1, n: 6 },
     // the mound's staircases: the broad one on its south face, the narrow one on its north
-    { kind: 'stair', from: { u: 58, v: 48 }, dir: [-1, 0], h0: 3, dh: 1, n: 7, wide: 3 },
-    { kind: 'stair', from: { u: 41, v: 49 }, dir: [1, 0], h0: 3, dh: 1, n: 7 },
+    { kind: 'stair', from: { u: 58, v: 49 }, dir: [-1, 0], h0: 3, dh: 1, n: 5, wide: 3 },
+    { kind: 'stair', from: { u: 53, v: 49 }, dir: [0, -1], h0: 8, dh: 1, n: 5, wide: 3 },
+    { kind: 'stair', from: { u: 44, v: 55 }, dir: [0, -1], h0: 3, dh: 1, n: 10, wide: 2 },
     // the throne's yard: the skull throne, braziers and the war banner
     // (phase 1b: the keep's hall behind the throne, on the mound's back terraces)
-    { kind: 'solid', name: 'The keep’s hall', rect: { u0: 44, v0: 44, u1: 46, v1: 46 } },
-    { kind: 'piece', at: { u: 48, v: 47 }, piece: 'skulls' },
-    { kind: 'piece', at: { u: 47, v: 48 }, piece: 'brazier' },
-    { kind: 'piece', at: { u: 51, v: 47 }, piece: 'brazier' },
-    { kind: 'piece', at: { u: 49, v: 46 }, piece: 'flag' },
+    { kind: 'height', rect: { u0: 34, v0: 42, u1: 39, v1: 45 }, h: 12 },
+    { kind: 'solid', name: 'The keep’s hall', rect: { u0: 34, v0: 42, u1: 39, v1: 45 }, scale: 0.88 },
+    { kind: 'piece', at: { u: 43, v: 42 }, piece: 'skulls' },
+    { kind: 'piece', at: { u: 42, v: 43 }, piece: 'brazier' },
+    { kind: 'piece', at: { u: 46, v: 42 }, piece: 'brazier' },
+    { kind: 'piece', at: { u: 44, v: 41 }, piece: 'flag' },
     // our camp at the Landing: tents, fires and the rally flag
     { kind: 'piece', at: { u: 93, v: 93 }, piece: 'flag' },
     { kind: 'piece', at: { u: 95, v: 97 }, piece: 'tent' },
@@ -196,14 +337,14 @@ export const BLOODTUSK: Blueprint = {
     { id: 'bonefire', name: 'The Bonefire and the training pit', zone: 'bailey', at: { u: 34, v: 52 }, roster: 'GGGGGG BB' },
     { id: 'beasts', name: 'The beast pens', zone: 'bailey', at: { u: 52, v: 33 }, roster: 'WWWWWW', horn: true },
     // the stone wall
-    { id: 'towerN', name: 'The north corner tower', zone: 'wall', at: { u: 39, v: 39 }, roster: 'AAA' },
-    { id: 'towerE', name: 'The east corner tower', zone: 'wall', at: { u: 60, v: 39 }, roster: 'AAA' },
-    { id: 'towerW', name: 'The west corner tower', zone: 'wall', at: { u: 39, v: 60 }, roster: 'AAA' },
-    { id: 'towerS', name: 'The south corner tower', zone: 'wall', at: { u: 60, v: 60 }, roster: 'AAA' },
+    { id: 'towerN', name: 'The north corner tower', zone: 'wall', at: { u: 47, v: 39 }, roster: 'AAA' },
+    { id: 'towerE', name: 'The east corner tower', zone: 'wall', at: { u: 59, v: 43 }, roster: 'AAA' },
+    { id: 'towerW', name: 'The west corner tower', zone: 'wall', at: { u: 41, v: 57 }, roster: 'AAA' },
+    { id: 'towerS', name: 'The south corner tower', zone: 'wall', at: { u: 53, v: 59 }, roster: 'AAA' },
     { id: 'ironGate', name: 'The Iron Gate', zone: 'wall', at: { u: 57, v: 46 }, roster: 'C BBB GG A', guards: 'ironGate' },
     { id: 'wallWalk', name: 'The wall-walk', zone: 'wall', at: { u: 60, v: 52 }, roster: 'AAAA', guards: 'ironGate' },
     // the keep
-    { id: 'throne', name: 'The Throne Mound', zone: 'keep', at: { u: 49, v: 49 }, roster: 'K CC BBBBBBB' },
+    { id: 'throne', name: 'The Throne Mound', zone: 'keep', at: { u: 44, v: 44 }, roster: 'K CC BBBBBBB' },
   ],
   reinforce: { at: { u: 31, v: 40 }, roster: 'GGG A B', bands: 4 },
   warpath: { u: 13, v: 13 },
@@ -221,7 +362,7 @@ export const BLOODTUSK: Blueprint = {
     { u: 86, v: 97 },
     { u: 97, v: 85 },
   ],
-  throne: { u: 49, v: 49 },
+  throne: { u: 44, v: 44 },
   northGate: { u: 22, v: 40 },
   lands: { outer: 'highlands', inner: 'warcamp' },
 };

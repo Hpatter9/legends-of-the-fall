@@ -54,13 +54,17 @@ export type Stamp =
   /** A stair: from `from`, a step a tile in `dir`, from `h0` by `dh` each tile, `n` tiles, `wide` across. */
   | { kind: 'stair'; from: Spot; dir: [number, number]; h0: number; dh: number; n: number; wide?: number }
   /** Solid ground: a longhouse's walls or a log pile (boulders to the rules). `burns`: fire arrows can set it alight (phase 1b). */
-  | { kind: 'solid'; name: string; rect: Rect; wall?: boolean; burns?: boolean }
+  | { kind: 'solid'; name: string; rect: Rect; wall?: boolean; burns?: boolean; sprite?: string; scale?: number; level?: boolean }
   /** A ground laid on a rectangle (the forge's coals, the shrine, the reeds). */
   | { kind: 'ground'; rect: Rect; ground: 'coals' | 'shrine' | 'tall' | 'water' }
   /** A rectangle at a height (the training pit sunk a step, the shrine's knoll). */
   | { kind: 'height'; rect: Rect; h: number }
   /** Flagstones (looks only): the roads. */
   | { kind: 'paved'; rect: Rect }
+  /** A winding camp path; also kept clear of random tents and boulders. */
+  | { kind: 'trail'; way: Spot[] }
+  /** Small floor-level belongings, baked below fighters; never an invisible obstacle. */
+  | { kind: 'dressing'; at: Spot; sprite: string; scale?: number; flip?: boolean }
   /** A ring of fence (looks only): the pens. */
   | { kind: 'fence'; rect: Rect }
   /** Walls of a barricade (solid, not breakable), with gaps left open; `look: 'maze'` draws them as a maze's walls (the Heart of the Maze). */
@@ -97,6 +101,43 @@ export interface Approach {
   way: Spot[];
 }
 
+/** A broad authored landform, added to the background relief before paths and fortifications. Heights are absolute tile levels. */
+export interface Landform {
+  name: string;
+  kind: 'hill' | 'hollow';
+  at: Spot;
+  radius: [number, number];
+  height: number;
+  surface: 'heath' | 'mud' | 'grass';
+  /** Rocky shelves with a broad walking ramp on the positive side of this axis. */
+  terrace?: number;
+  ramp?: 'u' | 'v';
+}
+
+/** The strength of a landform at a tile: a broad rounded crown and sloping shoulders, zero outside its ellipse. */
+export function landformWeight(form: Landform, u: number, v: number): number {
+  const distance = Math.hypot((u - form.at.u) / form.radius[0], (v - form.at.v) / form.radius[1]);
+  return Math.max(0, Math.min(1, (1 - distance) / 0.75));
+}
+
+export interface CampDistrict {
+  name: string;
+  kind: 'forge' | 'living' | 'beasts' | 'supplies' | 'training' | 'refuse';
+  at: Spot;
+  radius: [number, number];
+}
+
+/** The closest camp yard covering a tile, so its ground and belongings tell the same story. */
+export function districtAt(bp: Blueprint, u: number, v: number): CampDistrict | undefined {
+  let nearest: CampDistrict | undefined;
+  let distance = 1;
+  for (const yard of bp.districts ?? []) {
+    const d = Math.hypot((u - yard.at.u) / yard.radius[0], (v - yard.at.v) / yard.radius[1]);
+    if (d < distance) { distance = d; nearest = yard; }
+  }
+  return nearest;
+}
+
 export interface Blueprint {
   army: string;
   name: string;
@@ -122,4 +163,20 @@ export interface Blueprint {
   /** The garrison hunts our shooters first (phase 4, the Howling Den's pack): a post marks the nearest of ours who shoots within its reach,
    *  going round the line to them, and only else the nearest of ours. */
   huntShooters?: boolean;
+  /** Defences follow the stencil's contour rather than the original square ring. */
+  contour?: boolean;
+  /** A natural inner crag, with timber lookouts and dirt paths instead of dressed-stone curtain architecture. */
+  wallStyle?: 'ridge';
+  summitHeight?: number;
+  /** Cosmetic wear and irregular summit edges; fort health is still shown only by its actual damage state. */
+  weathered?: boolean;
+  wornPaths?: boolean;
+  /** Decorative labour and smoke. These sites never add units to the battle. */
+  campLife?: readonly { kind: 'smoke' | 'worker'; at: Spot; job?: 'hammer' | 'chop' | 'sort'; flip?: boolean; lift?: number }[];
+  /** Height variation in the fields and camp, before walkable slopes are eased. */
+  relief?: { fields: number; camp: number };
+  landforms?: readonly Landform[];
+  districts?: readonly CampDistrict[];
+  /** Hidden structural flaws. Troops must inspect the outside of the containing fort to discover one. */
+  weaknesses?: readonly { at: Spot; name: string; hint: string }[];
 }
