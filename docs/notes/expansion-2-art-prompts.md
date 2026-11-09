@@ -41,3 +41,18 @@ and the middle so menu text reads over it. Keep the central vertical area
 quiet, low contrast and deeply shadowed, while the branching design remains
 legible around it. No people, no text, no letters or numbers, no shield emblems.
 ```
+
+## Duel ring
+
+```text
+Repository hpatter9/legends-of-the-fall; branch art/expansion-2;
+output art-source/expansion/duel-ring.png. Paint ONE 640×320 transparent
+image in the game's dark medieval fantasy painterly pixel-art style.
+Use docs/samples/nemesis-4/duel-fight-412.png for the board angle.
+A square ring of low weathered grey menhirs on a 2:1 isometric tactics
+board, outlining a 5×5-tile square (each conceptual tile 128×64).
+Four straight diagonal sides, hollow transparent centre and exterior.
+Stones about a quarter tile high, occasional aged brass bands and moss
+at their feet. Stones only on the perimeter; no ground, tiles or text.
+Muted steel grey, aged brass and moss green, upper-left lighting.
+```

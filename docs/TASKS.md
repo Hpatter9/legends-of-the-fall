@@ -1258,3 +1258,10 @@ EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. O
 - Direction: owner's supplied tapestry brief; opaque 1024×1536 painterly pixel art, branching gold family tree and empty shields, stone hall and amber sconces, dark centre/edges, no people or text.
 - Completion: exact PNG dimensions, visual review, commit and push to Expansion art 2.
 - Status: ready for review. PNG decode, 1024×1536 dimensions and opacity passed; finished art visually reviewed. Source art only; no runtime checks. [Handoff](notes/expansion-2-houses-backdrop.md).
+
+### EXPANSION-2-DUEL-RING — Repaint duel perimeter
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`.
+- Scope: one source image `art-source/expansion/duel-ring.png`, prompt and handoff records.
+- Completion: 640×320 transparent PNG; hollow 5×5 square at 2:1 isometric angle, low grey menhirs, occasional brass bands and moss, no ground/text; added to PR #464.
+- Status: complete; final image visually inspected, 640×320 RGBA and transparent centre/exterior verified. Source art only; no runtime checks. [Handoff](notes/expansion-2-duel-ring.md).
