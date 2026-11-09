@@ -5,7 +5,7 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
 import { LUCKY_ODDS, MAX_RANK, RANK_MULT, RANK_SHARDS, rankOf, saveMeta, stoneCost, stonesOf, takenRank, useStones, type Meta, type Pull } from './sim/meta';
-import { closest, haveOf, needOf, ownedCount } from './sim/unlock';
+import { closest, haveOf, nearestBegun, needOf, ownedCount } from './sim/unlock';
 import { pityAt } from './sim/unlockRules';
 import { isSecret } from './sim/secretHeroes';
 import { secretFigure } from './secretView';
@@ -13,6 +13,12 @@ import { portrait } from './render/sheets';
 import { heroCard, pullInfo, queueReveal, revealUnseen, tarotBack, tarotFace } from './summonTarot';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+/** BATTLE-POLISH: the collection's portraits (72 before: the list of every hero took the screen), and the row of the nearest to joining:
+ *  how many and how big. */
+const COLLECTION_PX = 48;
+const NEAR_ROW = 5;
+const NEAR_PX = 48;
 
 /** The debug hook for the lucky roll: a page (or a screenshot script) sets `window.__forceLucky = true` to make the next summons lucky. The sim's own odds are untouched. */
 const forced = (): { lucky?: boolean } => ((window as unknown as { __forceLucky?: boolean }).__forceLucky ? { lucky: true } : {});
@@ -44,7 +50,9 @@ export class Gacha {
     $('reveal').replaceChildren();
     $('gacha').querySelector('h2')!.textContent = 'Summoning Sanctum';
     $('gachaClose').textContent = 'Return to sanctum';
-    ($('collectionPanel') as HTMLDetailsElement).open = true;
+    // (BATTLE-POLISH: the whole collection starts closed, the director's call; the short row above it shows the heroes nearest to joining,
+    // and the full roster is on the Heroes tab)
+    ($('collectionPanel') as HTMLDetailsElement).open = false;
     this.refresh();
     // (a hero joined elsewhere and not yet revealed has its reveal before the collection shows it)
     void revealUnseen(this.meta).then(() => this.refresh());
@@ -73,6 +81,7 @@ export class Gacha {
       b.disabled = this.busy || stonesOf(m) < stoneCost(n);
     }
     $('pity').textContent = pityLine(m);
+    this.nearRow();
     const list = $('collection');
     list.replaceChildren();
     for (const kind of ALL_HEROES) {
@@ -85,12 +94,36 @@ export class Gacha {
       name.textContent = owned || begun ? heroName(kind) : '???';
       // (SECRET-HEROES: a hero earned in play is a dark figure until it joins)
       const secret = isSecret(m, kind);
-      cell.append(secret ? secretFigure(72) : portrait(def.sheet, 72), name);
+      cell.append(secret ? secretFigure(COLLECTION_PX) : portrait(def.sheet, COLLECTION_PX), name);
       if (owned) cell.append(this.rankLine(kind));
       else if (begun) cell.append(unlockBar(m, kind));
       else if (secret) cell.append(small('A secret'));
       list.append(cell);
     }
+  }
+
+  /** BATTLE-POLISH: the short row over the collection: the heroes you have begun collecting, the nearest to joining first (up to five), each
+   *  with its shard bar. Hidden while none is begun. */
+  private nearRow(): void {
+    const m = this.meta;
+    const row = $('nearRow');
+    const kinds = nearestBegun(m, NEAR_ROW);
+    row.hidden = !kinds.length;
+    const cells = kinds.map((kind) => {
+      const cell = document.createElement('div');
+      cell.className = 'hero';
+      cell.title = `${heroClassLabel(kind)}: ${haveOf(m, kind)} of ${needOf(m)} shards to join`;
+      const name = document.createElement('b');
+      name.textContent = heroName(kind);
+      cell.append(portrait(UNITS[kind].sheet, NEAR_PX), name, unlockBar(m, kind));
+      return cell;
+    });
+    const head = document.createElement('h3');
+    head.textContent = 'Nearest to joining';
+    const list = document.createElement('div');
+    list.className = 'nearList';
+    list.append(...cells);
+    row.replaceChildren(head, list);
   }
 
   /** A hero's rank, and a bar of its shards towards the next rank. */

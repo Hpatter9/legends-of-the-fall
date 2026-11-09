@@ -107,6 +107,11 @@ body[data-phase='fight'] #panel { padding-top: 6px; padding-bottom: calc(env(saf
 body[data-phase='fight'] #hudSpells { display: flex; }
 #hudSpells > * { flex: none; pointer-events: auto; }
 #hudSpells .fhAuto { margin-left: auto; }
+/* (BATTLE-POLISH: the two Auto buttons as one group; a row too full for them (four spells and the War Horn on a narrow phone) wraps the pair
+   onto a line of its own, and the boss's bar follows the row's real bottom) */
+.fhAutos { display: flex; flex: none; gap: 3px; align-items: flex-start; padding-bottom: 5px; }
+#hudSpells { flex-wrap: wrap; row-gap: 4px; }
+#stand .stOrbs { flex-wrap: wrap; row-gap: 4px; }
 #hudSpells #spells { position: relative; flex-direction: row; align-items: center; gap: 3px; }
 /* (AUTO-RIGHT: one line at 360 across with the War Horn, the mana, four orbs and Auto: the mana 54 px, the orbs 44 px with 3 px between) */
 #hudSpells #mana { width: 54px; height: 48px; box-sizing: border-box; min-height: 0; flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; padding: 3px 4px;
@@ -146,7 +151,7 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 #stand .stOrbs .stSpell em { top: auto; right: -4px; bottom: -4px; min-width: 14px; padding: 0 2px; font: 400 12px/13px var(--body); color: #fff; background: var(--b2, #3a78d6); border: 1px solid #000; text-align: center; }
 #stand .stOrbs .stSpell .cool { border-radius: 50%; top: auto; }
 #stand .stOrbs .stSpell.armed { border-color: #fff0bd; box-shadow: 0 0 0 2px #bf9d53, 0 0 12px #eac56b; }
-#stand .stOrbs .fhAuto { margin-left: auto; }
+#stand .stOrbs .fhAutos { margin-left: auto; }
 /* (the countdown and the notes under the top bar move below the orbs) */
 #stand .stCount, #stand .stInfo { top: calc(env(safe-area-inset-top) + 128px); }
 
@@ -256,7 +261,7 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 /* (the blow's flash: the element's colour round where it struck, eased in and out once) */
 .umFlash { position: absolute; inset: 0; pointer-events: none; opacity: 0; mix-blend-mode: screen;
   background: radial-gradient(circle at var(--x, 50%) var(--y, 45%), #fff 0, color-mix(in srgb, var(--el) 80%, #fff) 50px, color-mix(in srgb, var(--el) 40%, transparent) 160px, transparent 320px);
-  animation: umFlash 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  animation: umFlash 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
 @keyframes umIn { 0% { clip-path: inset(0 100% 0 0); } 100% { clip-path: inset(0 0 0 0); } }
 @keyframes umSlide { 0% { transform: rotate(-9deg) translateX(70px); } 100% { transform: rotate(-9deg) translateX(-26px); } }
 @keyframes umOut { 0% { clip-path: inset(0 0 0 0); transform: rotate(-9deg) translateX(-26px); } 100% { clip-path: inset(0 0 0 100%); transform: rotate(-9deg) translateX(40px); } }

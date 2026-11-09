@@ -25,8 +25,11 @@ import { barNumbers, chipLine, chipOf, hudLayout, sheetOf, ultOf, whichCast, typ
 export interface FightHudOpts {
   /** Permanent equipment can stay awakened in modes with local combat stats. */
   equipmentStep?: (kind: string) => number;
-  /** The Auto switch was flipped: the page keeps it (`Meta.ultAuto`, which now covers the spells too: AUTO-CAST) and tells the battle. */
+  /** The Auto ultimates button was flipped: the page keeps it (`Meta.ultAuto`) and tells the battle. BATTLE-POLISH: the spells have their own
+   *  button now (`onSpellAuto`). */
   onAuto: (on: boolean) => void;
+  /** BATTLE-POLISH: the Auto spells button was flipped: the page keeps it (`Meta.spellAuto`) and tells the battle. */
+  onSpellAuto?: (on: boolean) => void;
   /** Whether the ultimates fire on their own now (the ultimate's sheet says so). */
   autoOn?: () => boolean;
   /** A hero kind's use points with a skill (by key), for its sheet's level line (`skillLevels.ts`). */
@@ -52,6 +55,22 @@ interface Row {
 const hex = (n: number) => `#${n.toString(16).padStart(6, '0')}`;
 const elOf = (s: Skill): Element => skillElement(keyOf(s));
 
+/** One of the fight's two Auto buttons (BATTLE-POLISH): its painted face by CSS, a short word under it, and a tap that flips it. */
+function autoButton(cls: string, word: string, title: string, label: string, flip: (on: boolean) => void): HTMLButtonElement {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = cls;
+  b.innerHTML = `<span>AUTO</span><i class="sw"><b></b></i><em>${word}</em>`;
+  b.title = title;
+  b.setAttribute('aria-label', label);
+  b.setAttribute('aria-pressed', 'false');
+  b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    flip(!b.classList.contains('on'));
+  });
+  return b;
+}
+
 /** The skill's painted motif at the control's requested size. */
 function skillIcon(s: Skill, px: number, heals = false): string {
   return paintedSkillIcon(s, px, heals);
@@ -61,8 +80,12 @@ export class FightHud {
   private rows: Row[] = [];
   private key = '';
   private b: Battle | null = null;
-  /** The Auto switch: the page puts it beside the king's spells. */
+  /** The Auto ultimates button: the page puts it beside the king's spells. */
   readonly autoEl: HTMLButtonElement;
+  /** BATTLE-POLISH: the Auto spells button, beside it (shown while the ruler has spells equipped). */
+  readonly spellAutoEl: HTMLButtonElement;
+  /** The two of them together (spells, then ultimates), as the page places them: they wrap onto a line of their own when the row is full. */
+  readonly autosEl: HTMLElement;
   private sheet: HTMLElement;
   private fxLayer: HTMLElement;
   private open: { id: number; which: Which } | null = null;
@@ -78,19 +101,19 @@ export class FightHud {
     private opts: FightHudOpts,
   ) {
     root.classList.add('fightHud');
-    this.autoEl = document.createElement('button');
-    this.autoEl.type = 'button';
-    this.autoEl.className = 'fhAuto';
-    // (AUTO-CAST: one switch for both, the heroes' ultimates and the king's spells; its small line says so)
-    this.autoEl.innerHTML = '<span>AUTO</span><i class="sw"><b></b></i>';
-    this.autoEl.title = 'Auto: ultimates + spells. Every ultimate fires when it is ready, and your spells are cast where they are worth it';
-    this.autoEl.setAttribute('aria-label', 'Auto: ultimates + spells');
-    this.autoEl.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const on = !this.autoEl.classList.contains('on');
+    // (BATTLE-POLISH: two buttons, the owner's ask: Auto ultimates (the heroes' ultimates fire when ready) and Auto spells (the ruler's
+    // equipped spells are cast where they are worth it), each its own painted button and saved setting; before, one switch did both)
+    this.autoEl = autoButton('fhAuto fhAutoUlt', 'ULT', 'Auto ultimates: every ultimate fires on its own when it is ready', 'Auto ultimates', (on) => {
       this.setAuto(on);
       this.opts.onAuto(on);
     });
+    this.spellAutoEl = autoButton('fhAuto fhAutoSpell', 'SPELL', 'Auto spells: your equipped spells are cast on their own, where they are worth it', 'Auto spells', (on) => {
+      this.setSpellAuto(on);
+      this.opts.onSpellAuto?.(on);
+    });
+    this.autosEl = document.createElement('div');
+    this.autosEl.className = 'fhAutos';
+    this.autosEl.append(this.spellAutoEl, this.autoEl);
     this.sheet = document.createElement('div');
     this.sheet.className = 'fhSheet';
     this.sheet.hidden = true;
@@ -108,10 +131,17 @@ export class FightHud {
     document.body.append(this.sheet, this.fxLayer);
   }
 
-  /** Show the switch as on or off. */
+  /** Show the Auto ultimates button as on or off. */
   setAuto(on: boolean): void {
     this.autoEl.classList.toggle('on', on);
     this.autoEl.setAttribute('aria-pressed', String(on));
+  }
+
+  /** Show the Auto spells button as on or off, and whether it shows at all (only with spells equipped). */
+  setSpellAuto(on: boolean, shown = true): void {
+    this.spellAutoEl.classList.toggle('on', on);
+    this.spellAutoEl.setAttribute('aria-pressed', String(on));
+    this.spellAutoEl.hidden = !shown;
   }
 
   /** The heroes the rows show: the placed heroes with a kit, in the order they were placed (the party's order). */
