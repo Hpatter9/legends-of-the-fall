@@ -27,6 +27,15 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.439.0',
+    date: '2026-11-09',
+    title: 'A royal hall for the Keep',
+    notes: [
+      'The throne hall now has painted stone arches, cool stained glass and warm braziers, with your ruler seated on the dais.',
+      'Your four guards still salute, and Duchess still wanders the hall, hops when tapped and keeps her daily haystack treat.',
+    ],
+  },
+  {
     version: '0.438.0',
     date: '2026-11-09',
     title: 'Build Town moves to Developer',

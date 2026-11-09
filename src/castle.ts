@@ -323,14 +323,14 @@ const DEFAULT_GUARD = ['knight', 'paladin', 'samurai', 'archer'];
 // 2 Inner Dais Guards (left and right of the throne steps, facing inward at attention)
 // 2 Outer Floor Guards (left and right of the red carpet, standing at attention)
 const GUARD_SPOTS = [
-  { x: 172, y: 254, height: 110, faceRight: true, label: 'Dais Guard' },
-  { x: 628, y: 254, height: 110, faceRight: false, label: 'Dais Guard' },
-  { x: 120, y: 342, height: 128, faceRight: true, label: 'Honor Guard' },
-  { x: 680, y: 342, height: 128, faceRight: false, label: 'Honor Guard' },
+  { x: 300, y: 280, height: 92, faceRight: true, label: 'Dais Guard' },
+  { x: 500, y: 280, height: 92, faceRight: false, label: 'Dais Guard' },
+  { x: 225, y: 330, height: 105, faceRight: true, label: 'Honor Guard' },
+  { x: 575, y: 330, height: 105, faceRight: false, label: 'Honor Guard' },
 ];
 
-// King's High Throne position (centered at x = 400, anchored firmly on dais platform tread at y = 258)
-const KING_SPOT = { x: 400, y: 258, w: 160, h: 210, frameW: 160, frameH: 210 };
+// The ruler's throne stands on the painted dais; drawing and tap targets share these positions.
+const KING_SPOT = { x: 400, y: 247, h: 165 };
 
 export class CastleScene {
   readonly root = el('div', 'ctWrap crPage');
@@ -394,6 +394,13 @@ export class CastleScene {
     this.canvas.width = 800;
     this.canvas.height = 420;
     this.ctx.imageSmoothingEnabled = false;
+
+    // Load Duchess once, independently of animation frames (also ready when the hall is paused).
+    void goatSheet().then((im) => {
+      this.goatArt = im;
+      this.stepGoat(0);
+      if (this.meta) this.paintGreatHall();
+    });
 
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
     void ensureSceneArt().then(() => {
@@ -713,10 +720,7 @@ export class CastleScene {
   }
 
   private stepGoat(dt: number): void {
-    if (!this.goatArt) {
-      void goatSheet().then((im) => (this.goatArt = im));
-      return;
-    }
+    if (!this.goatArt) return;
     // Duchess actively walks and explores the throne room floor (x = 180..620, y = 370)
     if (!this.goat) {
       this.goat = {
@@ -796,25 +800,18 @@ export class CastleScene {
 
   private stepParticles(dt: number): void {
     if (!this.reduced) {
-      // Ambient golden and emerald arcane motes rising from the Throne Room floor & braziers
-      if (this.particles.length < 48 && Math.random() < dt / 55) {
-        const fromBrazier = Math.random() < 0.45;
-        const bx = Math.random() < 0.5 ? 118 : 682;
-        const x = fromBrazier ? bx + (Math.random() - 0.5) * 18 : 120 + Math.random() * 560;
-        const y = fromBrazier ? 210 + (Math.random() - 0.5) * 10 : 280 + Math.random() * 110;
+      // A few warm embers rise from the painted braziers.
+      if (this.particles.length < 18 && Math.random() < dt / 140) {
+        const bx = Math.random() < 0.5 ? 245 : 555;
+        const x = bx + (Math.random() - 0.5) * 18;
+        const y = 195 + (Math.random() - 0.5) * 10;
         this.particles.push({
           x,
           y,
           vx: (Math.random() - 0.5) * 14,
           vy: -(16 + Math.random() * 28),
-          size: fromBrazier ? 3 : Math.random() < 0.35 ? 3 : 2,
-          color: fromBrazier
-            ? Math.random() < 0.5
-              ? '#ffae42'
-              : '#fff099'
-            : Math.random() < 0.65
-              ? '#ffd700'
-              : '#6ee7b7',
+          size: 3,
+          color: Math.random() < 0.5 ? '#ffae42' : '#fff099',
           alpha: 0.9,
           life: 0,
           maxLife: 1200 + Math.random() * 1400,
@@ -908,20 +905,10 @@ export class CastleScene {
       g.fillRect(0, 0, W, H);
     }
 
-    // 2. SUNBURST & ARCANE DAIS AURA behind the King's Throne
-    const pulse = this.reduced ? 0.5 : 0.5 + 0.5 * Math.sin(this.now / 520);
-    g.save();
-    g.globalCompositeOperation = 'lighter';
-    const daisGlow = g.createRadialGradient(400, 160, 10, 400, 160, 210);
-    daisGlow.addColorStop(0, `rgba(255, 218, 100, ${0.28 + pulse * 0.12})`);
-    daisGlow.addColorStop(0.45, `rgba(234, 179, 8, ${0.12 + pulse * 0.08})`);
-    daisGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    g.fillStyle = daisGlow;
-    g.fillRect(180, 20, 440, 280);
-    g.restore();
+    // The painted windows and braziers provide the hall's light without a gold wash over the architecture.
 
     // 3. KINGDOM UPGRADE PROPS IN THE THRONE ROOM (positioned neatly in alcoves clear of the King & Guards)
-    if (a) {
+    if (a && !hall) {
       // Arcane Spire & Library props (Left Alcove)
       const mageLv = castle?.mageTower ?? 1;
       const libLv = castle?.library ?? 1;
@@ -957,33 +944,25 @@ export class CastleScene {
       g.drawImage(a.brazier, W - 126, 198, 48, 120);
     }
 
-    // Live Brazier Fire & Torchlight Halos
-    this.drawVfx('flameFire', 102, 188, 84, 0);
-    this.drawVfx('flameFire', W - 102, 188, 84, 3);
-    this.drawVfx('sparkleFire', 102, 164, 58, 1);
-    this.drawVfx('sparkleFire', W - 102, 164, 58, 4);
+    // Keep the trophy rack tappable in the right alcove, and fire aligned with the painting.
+    if (hall && a && (castle?.armoury ?? 0) >= 1) g.drawImage(a.rack, 624, 216, 72, 70);
+    const fireX = hall ? 245 : 102;
+    const fireY = hall ? 190 : 188;
+    this.drawVfx('flameFire', fireX, fireY, hall ? 42 : 84, 0);
+    this.drawVfx('flameFire', W - fireX, fireY, hall ? 42 : 84, 3);
 
     // 4. THE KING SITTING ON THE HIGH THRONE (Top-center of Dais)
     if (a) {
       const isDecree = this.now < this.kingDecreeUntil;
       const kx = KING_SPOT.x;
       const ky = KING_SPOT.y;
-      const kw = KING_SPOT.w;
       const kh = KING_SPOT.h;
 
-      // Golden halo aura behind High Throne
       g.save();
-      const kingAura = g.createRadialGradient(kx, ky - kh * 0.55, 10, kx, ky - kh * 0.55, kh * 0.7);
-      kingAura.addColorStop(0, 'rgba(255, 230, 130, 0.45)');
-      kingAura.addColorStop(0.5, 'rgba(234, 179, 8, 0.18)');
-      kingAura.addColorStop(1, 'rgba(234, 179, 8, 0)');
-      g.fillStyle = kingAura;
-      g.fillRect(kx - kw, ky - kh * 1.2, kw * 2, kh * 1.5);
-
       // Throne plinth contact shadow directly on dais step
       g.fillStyle = 'rgba(8, 4, 12, 0.65)';
       g.beginPath();
-      g.ellipse(kx, ky, 72, 14, 0, 0, Math.PI * 2);
+      g.ellipse(kx, ky, 50, 8, 0, 0, Math.PI * 2);
       g.fill();
 
       // King's decree celebration aura
