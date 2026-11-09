@@ -87,6 +87,8 @@ test('at the Last Hold every member stands on the field: the posts\' officers\' 
   // (its rank and file stand at the Last Hold's share of the hold's own)
   assert.equal(shareOf(input), HOLD_SHARE.golems * LAST_SHARE.golems);
   assert.equal(shareOf({ army: 'golems' }), HOLD_SHARE.golems);
+  // (every hold has its Last Hold factor, tuned by `--last`)
+  for (const a of ARMIES) assert.ok((LAST_SHARE[a.id] ?? 0) > 0.5 && LAST_SHARE[a.id] < 2, a.id);
 });
 
 /** The Last Hold stormed and won: the warchief and two captains felled on their posts, the host held back at the Landing. */
