@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.446.0',
+    date: '2026-11-09',
+    title: 'The holds\' camps set right',
+    notes: ['The painted holds\' drums, props, tents and ruins now show the right pieces. Ruins and boulders are each hold\'s own, and the Maze\'s ash frays into the sand.'],
+  },
+  {
     version: '0.445.0',
     date: '2026-11-09',
     title: 'The painted rune bench',
