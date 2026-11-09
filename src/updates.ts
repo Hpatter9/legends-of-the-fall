@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.431.0',
+    date: '2026-11-09',
+    title: 'Assault: the Moonlit Shrine',
+    notes: ['The Yokai\'s hold: cross the moon pond by the vermilion bridge or stepping stones, silence the war drums, and pass the Moon Gate to the Oni\'s Seat.'],
+  },
+  {
+    version: '0.430.0',
+    date: '2026-11-09',
+    title: 'Assault: Brimstone Gate',
+    notes: ['The Infernal Host\'s hold: cross the lava by the chain bridge or the crust fords, quench the fire circles, and storm the Demon Spire.'],
+  },
+  {
     version: '0.429.0',
     date: '2026-11-09',
     title: 'Painted Orc gates and Nemesis icons',
