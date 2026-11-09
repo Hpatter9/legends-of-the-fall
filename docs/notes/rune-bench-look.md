@@ -43,3 +43,7 @@ Credit the paintings in `CREDITS.md` then.
 - `npm test -- rune bench-drop deploy featureUnlocks painted-buttons ui-standard`: 52 of 52 pass; no test changed.
 - `node tools/rune-bench/shots.mjs <dir>` (now takes an output folder) at 393x852, 360x780 and 412x915, before and after: merge, socket
   and refused drop work, no side scroll, 0 page errors. Kept: heroes and bar, the rune bench, a merge drag, a drop drag, a refused drop.
+
+
+**Since RUNE-BENCH-ART** ([rune-bench-art.md](rune-bench-art.md)): the seven pieces from the earlier prompt (PR #474) are wired in as the
+import script's fallbacks for the newer names, and the grip has a class, so the plain-button plate no longer covers its own look.

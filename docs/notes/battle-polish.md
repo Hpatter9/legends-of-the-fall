@@ -62,7 +62,8 @@ banner is unchanged.
 - Now the rune side takes the hero side's height (`contain: size`) and fits into it: its eight tiles in one row, 40 px tall, and the hint on
   one line. The hero cards are cut to their content: **94 px at 393 wide, was 170**, so the board gets 76 px back.
 - The pull bar (`#benchGrip`) stays centred on the shorter bench (90 px tall, 2 px inside it at each end) at all three sizes.
-- The rune names on the narrower tiles are clipped ("Bulwa…") at 360 wide. A hold still shows the rune's card with its full name.
+- The rune names on the narrower tiles were clipped ("Bulwa…") at 360 wide. Since RUNE-BENCH-ART the tile drops the word and the hint
+  names the rune chosen ([rune-bench-art.md](rune-bench-art.md)).
 - File: `src/runeBench.css` (the end). Shots: `bench-{before,after}-{360,393,412}.png`, `bench-runes-after-{360,393,412}.png` (with runes in
   the bag), `bench-runes-before-393.png`.
 
