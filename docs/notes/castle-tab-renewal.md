@@ -52,3 +52,5 @@ Final three-size browser results and PR link are recorded on the task board befo
 
 
 Final validation: all three portrait runs and visual reviews passed; the integrated 0.440.0 code passed typecheck/build and all 119 affected tests. The final 393px release run passed every interaction, build-state, paid-upgrade and offline test, with zero page errors. Its refreshed screenshots and recording were captured on the prepared 0.441.0 build. A concurrent documentation-only art-prompt release then took 0.441.0; its prompt edits and release note are preserved, and this Castle release is 0.442.0. Only documentation and release metadata changed after the browser pass; web build and release-note validation are repeated for the final version.
+
+Release handoff: [PR #490](https://github.com/Hpatter9/legends-of-the-fall/pull/490) contains the completed and validated 0.442.0 Castle redesign, source art, screenshots and motion recording. Owner-authorised merge is the final release step. The chat can be archived once the owner has finished reviewing the result.
