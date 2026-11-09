@@ -1289,3 +1289,8 @@ EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. O
   Council and News icons, War Trophy, seasons, fates, scar frames, heirloom frame and chip; credits; before/after screenshots at 393 and 360.
 - Status: complete. Typecheck, web build, the relevant tests and the browser checks pass with 0 page errors. Nothing kept back; the duel ring and
   Hester's table (also in #464) are not wired. [Handoff](notes/art-wire-5.md).
+### EXPANSION-2-ELDERS — Tavern table source repaint
+- Owner: current Codex art chat; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`; PR #464.
+- Scope: one `art-source/expansion/elders-table.png` plus required prompt and handoff records.
+- Completion: 320×112 transparent side-view oak table, six empty high-backed chairs, three candles and a clay pipe; match `src/art/tavern/` pixel style; no people or text.
+- Status: ready for review; final 320×112 RGBA image visually reviewed, binary alpha and transparent margins checked. Runtime tests/build not run: source art only. [Handoff](notes/expansion-2-elders-table.md).
