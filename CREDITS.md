@@ -653,6 +653,18 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   into its atlas (listed in `src/render/assaultBeastsAtlas.ts`). Its fighters are the Beast Packs' werewolves and the Orc hold's war-wolves, credited
   above.
 
+## The Assault's Elder Root (`src/art/assault/wildwood/`)
+
+- Until its own painted sheets land (the prompts: `docs/notes/assault-4-elder-root-art-prompts.md`), Elder Root is drawn with the owner's Orc sheets
+  above, cut again by `tools/assault/cut-sheets.py wildwood` and recoloured to the deep forest (the grass deepened, stone and timber mossed, red cloth
+  to leaf green); our siege works keep their own colours.
+- Beside them, single pieces of Chronos Settlement's Druids and Fae kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/druids/` and `fae/`:
+  the hedge walls, wattle fence, tree gate, longhouse, cottage, tavern, workshop, watch platform, spiral watchtower, stone circle, shrine, mushroom
+  lantern, totem signpost, campfire, market stall, cart, granary, clay pots, hay bales, honey jars, stockpile, log pile, well, baskets, root bridge,
+  lantern post, great oak (also the Elder Root's stand-in), birches, berry bush, mossy and crystal rocks, weeping willow and glow bush), and the wild
+  flair, halved the same way and packed into its atlas (listed in `src/render/assaultWildwoodAtlas.ts`). Its fighters are the Wildwood's satyrs and
+  forest lords and the Orc hold's war-wolves, credited above.
+
 ### Painted Spells study
 
 - `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.

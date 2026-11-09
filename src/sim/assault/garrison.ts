@@ -36,7 +36,7 @@ export const ASSAULT = {
 
 /** Each hold's own share (`ASSAULT.foeShare`'s part, by army): set so the bot does about as well at each army's Legendary level, by the
  *  balance tool. The Barrow Necropolis: 0.12, at level 65 Auto wins half and Tactical three in four (docs/notes/assault-4.md). */
-export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.12, beasts: 0.14 };
+export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.1175, beasts: 0.14, wildwood: 0.105 };
 /** The share a hold's garrison stands at: a tool's own, else the hold's. */
 export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare'>): number => input.foeShare ?? HOLD_SHARE[input.army] ?? ASSAULT.foeShare;
 
@@ -50,11 +50,14 @@ export const KINDS: Readonly<Record<string, Record<string, string>>> = {
   // (the Beast Packs draw no bows: the Den's archers' places are held by the Red Werewolves, who hunt the shooters; its pens loose the
   //  war-wolves, as Bloodtusk Hold's do)
   beasts: { G: 'packBlack', A: 'packRed', B: 'packWhite', W: WAR_WOLF.id },
+  // (nor do the Wildwood's satyrs: the snare-layers, who hunt the shooters, hold its archers' places; the revellers who heal their friends
+  //  are its heavies; its pens loose wolves, as its Wood Raider's band runs with them)
+  wildwood: { G: 'groveSatyr1', A: 'groveSatyr3', B: 'groveSatyr2', W: WAR_WOLF.id },
 };
 /** The Orcs' roster's letters (the first hold's, kept for the tools). */
 export const KIND = KINDS.orcs;
 /** An officer's place the Council cannot fill takes this nameless officer, by army. */
-export const OFFICER: Readonly<Record<string, string>> = { orcs: 'orcChieftain', undead: 'boneCaptain', beasts: 'alphaWolf' };
+export const OFFICER: Readonly<Record<string, string>> = { orcs: 'orcChieftain', undead: 'boneCaptain', beasts: 'alphaWolf', wildwood: 'forestBoss1' };
 /** The order the Council's ranks take the posts' leaders' places (4.2). */
 export const LIEUTENANT_POSTS = ['bridge', 'drumW', 'drumE', 'drumS', 'westTower', 'eastTower'] as const;
 export const CAPTAIN_POSTS = ['southGate', 'ironGate', 'throne', 'throne'] as const;
