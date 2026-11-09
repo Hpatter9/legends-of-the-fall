@@ -30,6 +30,17 @@ export function closest(m: Meta, rng?: Rng): string | undefined {
   return rng ? rng.pick(best) : best[0];
 }
 
+/** BATTLE-POLISH (docs/notes/battle-polish.md): the heroes begun (some shards, not yet joined), the nearest to joining first (equals in
+ *  roster order), at most `n`: the Summoning screen's short row above the collection. */
+export function nearestBegun(m: Meta, n = 5): string[] {
+  return toCollect(m)
+    .filter((k) => haveOf(m, k) > 0)
+    .map((k, i) => ({ k, i, have: haveOf(m, k) }))
+    .sort((a, b) => b.have - a.have || a.i - b.i)
+    .slice(0, n)
+    .map((x) => x.k);
+}
+
 /** What a gift of shards did. */
 export interface Given {
   kind: string;

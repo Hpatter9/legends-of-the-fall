@@ -745,6 +745,43 @@ button.danger:active:not(:disabled) {
   color: #d6cee0;
 }
 
+/* BATTLE-POLISH: the collection's smaller cells (48 px portraits), and the short row over it of the heroes nearest to joining, in the same
+   framed box as the panels under it */
+#gacha #collection { padding: 10px; gap: 5px; font-size: 11px; }
+#gacha #collection .hero { padding: 3px 1px; min-width: 0; }
+#nearRow {
+  border: 1px solid #5c4e72;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #20212b 0%, #14151c 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 3px 8px rgba(0, 0, 0, 0.4);
+  margin-top: 8px;
+  padding: 8px 10px 10px;
+}
+#nearRow[hidden] { display: none; }
+#nearRow h3 {
+  margin: 0 0 6px;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ornate-brass);
+  letter-spacing: 0.05em;
+}
+#nearRow .nearList { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+#nearRow .hero {
+  text-align: center;
+  font-size: 11px;
+  color: #d6cee0;
+  background: rgb(var(--black-rgb) / 0.35);
+  border: 2px solid var(--s7);
+  border-radius: 8px;
+  padding: 2px 1px;
+  min-width: 0;
+}
+#nearRow .hero b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#nearRow .rank { display: block; color: var(--gold); }
+#nearRow .bar { display: block; height: 6px; margin: 2px 4px 3px; background: var(--s1, rgb(var(--white-rgb) / 0.15)); border-radius: 2px; overflow: hidden; }
+#nearRow .bar i { display: block; height: 100%; background: linear-gradient(var(--gold-hi, var(--gold)) 50%, var(--gold-lo, var(--gold)) 50%); }
+
 .gachaActions {
   border-top: 2px solid #5c4e72;
   background: linear-gradient(180deg, #171820f6 0%, #0d0e13fd 100%);

@@ -43,7 +43,7 @@ async function open(w, h) {
     sessionStorage.setItem('bp-set', '1');
     localStorage.clear();
     // (shards begun on a few heroes not yet joined, for the Summoning screen's row of the nearest)
-    const shards = { ninja: 7, monk: 4, valkyrie: 2, necromancer: 9, beastmaster: 1, bard: 5 };
+    const shards = { kunoichi: 7, ninjaMonk: 4, gorgon: 2, mercenary: 9, beastmaster: 1, wolfBard: 5, seraph: 3 };
     localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 1200, stones: 30, unlocked: owned, party: owned.slice(0, 5), pulls: 0, dry: 0, dryMythic: 0, chapel: true, castle: { treasury: 1, barracks: 1, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards, unlock: shards, stars: {}, xp: Object.fromEntries(owned.map((k) => [k, xp])), bestStage: 14, tower: 9, daily: {}, bosses: [], achievements: [], armies: {}, armySeen: [], stash: [], opened: ['undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems', 'tower', 'castle', 'calamity'] }));
     localStorage.setItem('lotf-tips-off', '1');
     localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false, speed: 1 }));
