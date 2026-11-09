@@ -1,5 +1,7 @@
 # The castle remake: art prompts
 
+**Superseded:** the owner approved a full two-view [Castle tab renewal](castle-tab-renewal.md). Its building scene sheet now supplies all eleven sites; the tall courtyard is retired. This prompt is retained as historical context: do not commission the old courtyard or cutout sheets for the current tab. The royal hall source from the earlier follow-up is retained.
+
 The castle remake (`docs/notes/castle-remake.md`) needs four new paintings. They come from **one** ChatGPT task: one prompt, one branch
 (`art/castle-remake`), one pull request ("Castle remake art"). If that turns out to be too much for one task, run the same prompt twice,
 adding the line "Do images 1 and 2 only" to the first run and "Do images 3 and 4 only" to the second; both runs use the same branch and

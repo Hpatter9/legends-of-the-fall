@@ -755,3 +755,7 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 ### Painted buttons
 
 - `src/art/ui/buttons/` (136 WebP files, from the nine sheets in `art-source/ui/buttons/`, the owner's art PR #468): original brass medallion, glyph and plate artwork painted for this game by the owner with ChatGPT image generation, matched to the painted tactic medallions and the ornate menus. Cut, trimmed and sized by `tools/painted-buttons/cut.py`; loaded by URL and cached for offline play (`build.mjs`). See `docs/notes/painted-buttons.md`.
+
+- Royal hall background (`art-source/castle-remake/throne-hall.png`): generated with ChatGPT for this game from the owner-approved stone hall direction; packed by `tools/castle-remake/cut.py`. Live ruler, guards and Duchess retain their existing artwork and credits.
+
+- Castle building scene thumbnails (`art-source/castle-tab-renewal/building-scenes.png`): generated with ChatGPT for the approved Castle tab design; twelve scenic tiles packed by `tools/castle-tab-renewal/pack.py`, including all eleven sites and the construction scene.

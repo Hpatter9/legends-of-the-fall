@@ -335,9 +335,9 @@
   .flip.up .back { transform: rotateY(-180deg); }
   .flip.up .face { transform: rotateY(0); }
   .flip.new .face em { color: var(--g5); }
-  #collection { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  #collection { flex: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 5px; }
   #collection .hero { text-align: center; font-size: 10px; background: rgb(var(--black-rgb) / 0.35); border: 2px solid var(--s7); border-radius: 8px; padding: 2px; }
-  #collection .hero canvas { width: 100%; max-width: 56px; image-rendering: pixelated; }
+  #collection .hero canvas, #nearRow .hero canvas { width: 100%; max-width: 48px; image-rendering: pixelated; }
   #collection .hero b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #collection .hero.locked canvas { filter: brightness(0.15) grayscale(1); }
   #collection .hero.locked { opacity: 0.85; }
@@ -877,6 +877,7 @@
     <div id="reveal"></div>
     <div id="pity"></div>
     <details id="summonRules"><summary>How summoning works</summary><div id="rates"></div></details>
+    <div id="nearRow" hidden></div>
     <details id="collectionPanel"><summary>Hero collection</summary><div id="collection"></div></details>
   </div>
   <footer class="gachaActions"><button id="gachaClose" class="primary">Return to sanctum</button><div class="pulls"><button id="pull1"></button><button id="pull10" class="primary"></button></div></footer>

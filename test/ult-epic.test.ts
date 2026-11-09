@@ -11,7 +11,7 @@ import { ELEMENTS } from '../src/render/fxRules';
 import { spellPart } from '../src/render/spellLooks';
 import { ULT_MOMENT, UltQueue } from '../src/ultMomentRules';
 import {
-  FALLBACK_BURST, KIT, boostedScale, KIT_SESSION, ULT_EPIC, burstKey, burstPart, burstSpots, epicEvent, litPools, liftedDim, ultScale, ultTargets, ultZoom,
+  FALLBACK_BURST, KIT, boostedScale, KIT_SESSION, ULT_EPIC, burstKey, burstPart, burstSpots, epicEvent, litPools, liftedDim, ultLean, ultScale, ultTargets, ultZoom,
 } from '../src/ultEpicRules';
 
 const hit = (by: number, to: number): BattleEvent => ({ kind: 'hit', by, to, dmg: 40, heavy: true, splash: false, killed: false, src: 'skill' }) as BattleEvent;
@@ -108,9 +108,12 @@ test('the freeze on the blow: as an instant or lingering opening ends, or as a d
   q.step(ULT_EPIC.HIT_STOP_MS - 1);
   assert.equal(q.left, ULT_MOMENT.IMPACT_MS);
   assert.ok(!q.runsEffects);
+  assert.equal(q.rate, 1, 'nothing runs slowly through the freeze: it is held');
   q.step(1);
   assert.ok(q.runsEffects && q.holdsBattle);
   assert.equal(q.dim, 1, 'the dim starts easing as the freeze lets go');
+  // (BATTLE-POLISH: then the slow-motion beat, after which everything runs at full speed again)
+  assert.equal(q.rate, ULT_MOMENT.SLOW_RATE);
   q.step(ULT_EPIC.LIFT_MS);
   assert.ok(Math.abs(q.dim - ULT_EPIC.LIFT) < 1e-9);
 
@@ -215,4 +218,33 @@ test('the six the director looked at: each ultimate touches something to light a
     assert.ok(t.struck.length + t.tiles.length > 0, `${kind}: ${JSON.stringify(t)}`);
     assert.ok(burstSpots(t, f.id, false).length >= 1);
   }
+});
+
+test('BATTLE-POLISH: the slow beat follows the freeze, is cut by a tap, and is left out when the screen is kept still', () => {
+  const q = new UltQueue();
+  q.push({ unit: 1, kind: 'samurai', name: 'Issen', shape: 'instant', ms: 0 });
+  q.step(ULT_MOMENT.OPEN_MS + ULT_EPIC.HIT_STOP_MS);
+  assert.equal(q.rate, ULT_MOMENT.SLOW_RATE);
+  q.step(ULT_MOMENT.SLOW_MS);
+  assert.equal(q.rate, 1);
+  assert.equal(q.phase, 'impact');
+  const k = new UltQueue();
+  k.push({ unit: 1, kind: 'samurai', name: 'Issen', shape: 'instant', ms: 0 });
+  k.step(ULT_MOMENT.OPEN_MS + ULT_EPIC.HIT_STOP_MS + 10);
+  k.skip();
+  assert.equal(k.rate, 1);
+  const c = new UltQueue();
+  c.calm = true;
+  c.push({ unit: 1, kind: 'samurai', name: 'Issen', shape: 'instant', ms: 0 });
+  c.step(ULT_MOMENT.OPEN_MS);
+  assert.equal(c.stopLeft, 0);
+  assert.equal(c.rate, 1);
+});
+
+test("BATTLE-POLISH: the camera's lean builds through the opening to the full zoom, and stays still when calm", () => {
+  assert.ok(ultLean(0, false) > 1 && ultLean(0, false) < ULT_EPIC.ZOOM);
+  assert.ok(ultLean(0.4, false) > ultLean(0.1, false));
+  assert.equal(ultLean(0.8, false), ULT_EPIC.ZOOM);
+  assert.equal(ultLean(1, false), ULT_EPIC.ZOOM);
+  assert.equal(ultLean(0.5, true), 1);
 });

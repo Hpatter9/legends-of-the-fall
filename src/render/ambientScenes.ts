@@ -252,28 +252,31 @@ export const SCENE_LIFE = {
     ],
   },
 
-  /** CASTLE-REMAKE: the great hall inside the keep (`ui/castle/throne-hall.webp`, drawn to cover the throne canvas once the owner's
-   *  painting lands; until then the old pixel room and its `throne` life stay): the four sconces gutter, cool light falls through the
-   *  two windows, the pillars' banners and the cloth of state stir, dust in the light. */
+  /** Approved painted royal hall: cool stained glass, the two warm braziers and crimson banners.
+   *  Positions are in the retained 1536×1024 painting; the canvas crops it evenly to its 800×420 frame. */
   throneHall: {
     size: [1536, 1024],
     lights: [
-      { at: [0.2, 0.32], r: 0.12, kind: 'window', colour: 0x9ad8ff, power: 0.3 },
-      { at: [0.8, 0.32], r: 0.12, kind: 'window', colour: 0x9ad8ff, power: 0.3 },
-      { at: [0.04, 0.12], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
-      { at: [0.32, 0.12], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
-      { at: [0.68, 0.12], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
-      { at: [0.96, 0.12], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
+      { at: [0.15, 0.24], r: 0.15, kind: 'window', colour: 0x9ad8ff, power: 0.18 },
+      { at: [0.85, 0.24], r: 0.15, kind: 'window', colour: 0x9ad8ff, power: 0.18 },
+      { at: [0.305, 0.47], r: 0.09, kind: 'torch', colour: LAMP, power: 0.3 },
+      { at: [0.695, 0.47], r: 0.09, kind: 'torch', colour: LAMP, power: 0.3 },
     ],
     regions: [
-      { kind: 'cloth', poly: [[0.4, 0.14], [0.6, 0.14], [0.6, 0.5], [0.4, 0.5]], amp: 0.0012, anchor: 'top', pace: 0.5 },
-      { kind: 'cloth', poly: [[0.28, 0.16], [0.36, 0.16], [0.36, 0.48], [0.28, 0.48]], amp: 0.002, anchor: 'top' },
-      { kind: 'cloth', poly: [[0.64, 0.16], [0.72, 0.16], [0.72, 0.48], [0.64, 0.48]], amp: 0.002, anchor: 'top', pace: 1.1 },
+      { kind: 'flame', poly: [[0.285, 0.49], [0.29, 0.44], [0.305, 0.42], [0.32, 0.46], [0.325, 0.49]], amp: 0.004, anchor: 'bottom', pace: 1.2 },
+      { kind: 'flame', poly: [[0.675, 0.49], [0.68, 0.44], [0.695, 0.42], [0.71, 0.46], [0.715, 0.49]], amp: 0.004, anchor: 'bottom', pace: 0.9 },
+      { kind: 'cloth', poly: [[0.265, 0.12], [0.323, 0.12], [0.323, 0.42], [0.265, 0.42]], amp: 0.003, anchor: 'top', pace: 0.6 },
+      { kind: 'cloth', poly: [[0.677, 0.12], [0.735, 0.12], [0.735, 0.42], [0.677, 0.42]], amp: 0.003, anchor: 'top', pace: 0.7 },
     ],
-    spouts: [],
+    spouts: [
+      { kind: 'embers', at: [0.305, 0.47], count: 12, spread: 0.015, rise: 0.14, life: 2.8, colour: 0xffb75f, drift: -0.015 },
+      { kind: 'embers', at: [0.695, 0.47], count: 12, spread: 0.015, rise: 0.14, life: 3.1, colour: 0xffb75f, drift: 0.015 },
+      { kind: 'smoke', at: [0.305, 0.47], count: 5, spread: 0.012, rise: 0.2, life: 5, colour: 0xa49f92, drift: -0.025 },
+      { kind: 'smoke', at: [0.695, 0.47], count: 5, spread: 0.012, rise: 0.2, life: 5.3, colour: 0xa49f92, drift: 0.025 },
+    ],
     drifts: [
-      { kind: 'motes', box: [0.12, 0.3, 0.3, 0.85], count: 6, colour: 0xd8f0ff },
-      { kind: 'motes', box: [0.7, 0.3, 0.88, 0.85], count: 6, colour: 0xd8f0ff },
+      { kind: 'motes', box: [0.12, 0.3, 0.3, 0.85], count: 14, colour: 0xd8f0ff },
+      { kind: 'motes', box: [0.7, 0.3, 0.88, 0.85], count: 14, colour: 0xd8f0ff },
     ],
   },
 

@@ -1,90 +1,96 @@
-/* CASTLE-REMAKE (docs/notes/castle-remake.md): the Castle tab as one painted courtyard with its buildings on their plots, in the hand of the
-   tavern and the camp. The head is the tavern's; each building is a place with a painted plaque; what the castle gives is on painted
-   chips; the throne hall keeps its brass frame. Built after keepKingdom.css, whose old castle rules it overrides where they still apply. */
-
-.crPage .crScroll { display: block; background: #09170f; }
-.crStage { display: flex; flex-direction: column; width: 100%; min-height: 100%; padding: 0 0 14px; background: #09170f; color: #f4e1b8; }
-.crStage > * { flex: none; }
-
-/* The head: the tavern's panel, the name, the castle's rank, and the trophy wall */
-.crHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border: 0; border-image: url(ui/combat-panel.png) 24 fill / 6px / 0 stretch; background: #0b1b12; }
-.crHead h2 { margin: 0; font: 700 23px/1.2 var(--display); color: #f4d795; }
-.crHead .crSub { margin: 3px 0 0; font: 13px/1.3 var(--body); color: #d4c5a2; }
-.crHead .crTrophies { flex: none; white-space: nowrap; padding: 6px 12px 6px 8px; font: 600 13px/1.2 var(--body); }
-
-/* The courtyard: the painting fills the width at its own 2:3, its life over it, the places over that */
-.crYard { position: relative; width: 100%; aspect-ratio: 2 / 3; margin: 0; overflow: hidden; isolation: isolate; background: #1d2420; }
-.crYardArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; }
-.crYardLife { z-index: 1; }
-.crSpots { position: absolute; inset: 0; z-index: 2; }
-.crCaption { position: absolute; z-index: 3; bottom: 0; left: 0; right: 0; margin: 0; padding: 8px 4px; text-align: center; background: linear-gradient(transparent, #100c08e8); color: #f5e6c7; font: 12px/1.4 var(--body); pointer-events: none; }
-
-/* A place: the building (its foot on the plot's centre), its plaque just under it. The whole place is the button. */
-.crPage .crSpot, .crPage .crKeep { position: absolute; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 0; min-width: 44px; min-height: 44px; border: 0; border-radius: 0; background: none; box-shadow: none; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.crPage .crSpot { transform: translate(-50%, calc(-100% + 24px)); }
-.crPage .crSpot:active, .crPage .crKeep:active { transform: translate(-50%, calc(-100% + 25px)); background: none; }
-.crArt { position: relative; display: block; width: 100%; aspect-ratio: 10 / 8; pointer-events: none; }
-.crPic, .crSite { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 3px 2px #000a); }
-.crSpot .pbPlaque { position: relative; z-index: 1; margin-top: -10px; --pbw: 8px 9px; padding: 5px 12px 6px; max-width: 140%; white-space: nowrap; line-height: 1.1; gap: 1px; }
-.crSpot .pbPlaque b, .crKeep .pbPlaque b { font: 700 12px/1.15 var(--display); color: #f6dfa4; }
-.crSpot .pbPlaque small, .crKeep .pbPlaque small { font: 600 10.5px/1.15 var(--body); color: #e2d4b0; }
-.crSpot .pbPlaque.ready small { color: #c9f2a4; }
-.crSpot.full .pbPlaque small { color: #ffe08a; }
-/* (an empty plot: the building site once it is painted; until then the old sprite as a grey ghost of what will stand there) */
-.crSpot.unbuilt .crPic { filter: grayscale(0.9) brightness(0.55) drop-shadow(0 3px 2px #000a); opacity: 0.8; }
-.crSpot.working .crPic { filter: brightness(0.8) drop-shadow(0 3px 2px #000a); opacity: 1; }
-.crSpot.working .crSite { opacity: 0.92; }
-/* (an affordable build: the building glows in its own colour and the plaque lights) */
-.crSpot.ready .crPic { filter: drop-shadow(0 0 5px var(--glow, #ffd76a)) drop-shadow(0 3px 2px #000a); animation: crReady 2.6s ease-in-out infinite; }
-.crSpot.ready.unbuilt .crPic { filter: grayscale(0.5) brightness(0.8) drop-shadow(0 0 5px var(--glow, #ffd76a)); opacity: 0.95; }
-@keyframes crReady { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
-/* (the builders' clock over a site while the works go on, swinging gently) */
-.crSpot.working .crArt::after { content: ''; position: absolute; left: 50%; top: 14%; width: 28px; height: 28px; margin-left: -14px; background: url(ui/buttons/clock.webp) center / contain no-repeat; animation: crSwing 1.8s ease-in-out infinite; filter: drop-shadow(0 2px 2px #000c); }
-@keyframes crSwing { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(10deg) translateY(1px); } }
-/* (a build has just started: the place rises with a warm flash) */
-.crSpot.raise .crArt { animation: crRaise 1.2s ease-out 1; }
-@keyframes crRaise { 0% { transform: translateY(4px) scale(0.96); filter: brightness(1); } 45% { transform: translateY(-3px) scale(1.04); filter: brightness(1.8) drop-shadow(0 0 12px #ffd76a); } 100% { transform: none; filter: none; } }
-
-/* The keep: its doors lead down to the throne hall */
-.crPage .crKeep { transform: translate(-50%, -50%); justify-content: center; }
-.crPage .crKeep:active { transform: translate(-50%, -50%) translateY(1px); }
-.crKeep .pbPlaque { --pbw: 8px 9px; padding: 5px 13px 6px; white-space: nowrap; line-height: 1.1; gap: 1px; }
-
-/* The section heads: the tavern's ledger heading on the page's green */
-.crSectionHead { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 14px 14px 7px; }
-.crSectionHead h3 { margin: 0; color: #f4d795; font: 700 19px/1.3 var(--display); }
-.crSectionHead small { font: 12px/1.3 var(--body); color: #d4c5a2; text-align: right; }
-
-/* What the castle gives: six painted chips, three a row */
-.crBoons { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 0 10px; }
-.crBoon { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 6px; min-height: 50px; padding: 7px 12px 7px 8px; border: 1px solid transparent; border-image: url(ui/buttons/chip.webp) var(--chip-slice) / var(--chip-width) / 0 stretch; }
-.crBoon .pbIco { grid-row: 1 / 3; width: 28px; height: 28px; }
-.crBoon b { font: 700 14px/1.1 var(--body); color: #f4e1b8; }
-.crBoon small { font: 11px/1.1 var(--body); color: #c9bb98; }
-.crBoon.on { border-image: url(ui/buttons/chip-lit.webp) var(--chip-slice) / var(--chip-width) / 0 stretch; }
-.crBoon.on b { color: #ffe59e; }
-.crBoon:not(.on) .pbIco { filter: grayscale(0.7) brightness(0.75); }
-
-/* The throne hall: the old scene in its brass frame, full width under its heading (its crest and emoji pennants are gone) */
-.crPage .crHall { margin: 0 6px; height: auto; aspect-ratio: 800 / 470; min-height: 0; padding: 4.2% 4.6% 7.5%; }
-.crPage .crHall .ctThroneScenic { height: 100%; }
-.crPage .crHall .ctHonorCanvas { width: 100%; height: 100%; object-fit: cover; }
-
-@media (max-width: 374px) {
-  .crSpot .pbPlaque { padding: 4px 10px 5px; }
-  .crSpot .pbPlaque b { font-size: 11px; }
-  .crSpot .pbPlaque small { font-size: 10px; }
-  .crBoon { padding: 4px 6px 4px 4px; column-gap: 4px; }
-  .crBoon .pbIco { width: 24px; height: 24px; }
-  .crBoon b { font-size: 13px; }
+/* Approved Castle tab renewal: one calm header, a live throne hall and a readable building ledger. */
+.ctBar[hidden], .crPage [hidden] { display:none !important; }
+.crPage .crScroll { display:block; background:#0b1612; }
+.crStage { width:100%; min-height:100%; padding:0 0 12px; color:#f4e1b8; background:radial-gradient(ellipse at 50% 0,#203027,#0b1612 70%); }
+.crStage *, .crStage *::before, .crStage *::after { box-sizing:border-box; }
+.crNavigation { position:sticky; top:0; z-index:6; background:#14211a; box-shadow:0 5px 12px #0006; }
+.crHead { display:flex; align-items:center; gap:8px; padding:10px 12px 8px; border:0; }
+.crCrest { width:38px; height:42px; object-fit:contain; flex:none; }
+.crHeading { flex:1; min-width:0; }
+.crHead h2 { margin:0; font:700 22px/1.2 var(--display); color:#f4d795; }
+.crSub { margin:2px 0 4px; font:12px/1.2 var(--body); color:#cabd9d; }
+.crRank { display:block; appearance:none; width:100%; max-width:132px; height:4px; border:0; border-radius:2px; background:#06100b; overflow:hidden; }
+.crRank::-webkit-progress-bar { background:#06100b; }
+.crRank::-webkit-progress-value { background:linear-gradient(90deg,#99773d,#edce88); }
+.crRank::-moz-progress-bar { background:#d6b56d; }
+.crUtilities { display:flex; gap:3px; align-self:center; }
+.crUtilities .pbPlate { min-height:40px; padding:6px 7px; font:600 11px/1.2 var(--body); --pbw:8px; gap:3px; }
+.crUtilities .pbIco { width:20px; height:20px; }
+.crTabs { display:grid; grid-template-columns:1fr 1fr; gap:3px; padding:0 9px; }
+.crTabs .crTab { min-height:42px; padding:9px 8px; border:0; border-image:url(ui/buttons/tabplate.webp) var(--tabplate-slice) / 8px 8px 4px 8px / 0 stretch; background:none; box-shadow:none; color:#c5baa1; font:700 15px/1.2 var(--display); cursor:pointer; }
+.crTabs .crTab[aria-selected=true] { border-image-source:url(ui/buttons/tabplate-lit.webp); color:#ffe3a1; }
+.crTab:focus-visible, .crBuilding:focus-visible, .crWorks:focus-visible { outline:2px solid #f8d785; outline-offset:-3px; }
+.crHallPanel, .crBuildingsPanel { padding:8px 10px 2px; }
+.crPage .crHall { height:auto; min-height:0; margin:0; padding:0; aspect-ratio:auto; background:none; filter:none; border:1px solid #8a6b3d; overflow:hidden; border-radius:3px; }
+.crPage .crHall .ctThroneScenic { width:100%; height:auto; aspect-ratio:800 / 540; }
+.crPage .crHall .ctHonorCanvas { width:100%; height:100%; image-rendering:auto; object-fit:contain; }
+.crPage .crHall .ctGuardPlaque { position:relative; bottom:auto; left:auto; transform:none; width:100%; margin:0; padding:7px 8px; border:0; background:#102016; }
+.crPage .ctGuardPlaque span { font:700 13px/1.3 var(--display); letter-spacing:.04em; color:#f5d598; }
+.crPage .ctGuardPlaque b { margin-top:2px; font:11px/1.3 var(--body); color:#b9ba9c; white-space:normal; }
+.crHallHint { margin:5px 0 8px; text-align:center; font:11px/1.2 var(--body); color:#a7ae99; }
+.crWorks { display:flex; align-items:center; gap:9px; width:100%; min-height:64px; margin:0; padding:8px; border:1px solid #56644c; border-radius:3px; color:#f3dfac; text-align:left; background:linear-gradient(110deg,#26362a,#17251c); box-shadow:inset 0 0 14px #0005; cursor:pointer; }
+.crWorks > img { width:52px; height:46px; flex:none; object-fit:cover; border:1px solid #756544; border-radius:2px; }
+.crWorksWords { display:grid; flex:1; min-width:0; gap:3px; }
+.crWorksWords b { font:700 14px/1.15 var(--display); }
+.crWorksWords small { font:11px/1.2 var(--body); color:#c1c3a6; }
+.crWorksTime { flex:none; max-width:82px; text-align:right; font:600 11px/1.2 var(--body); color:#e7d099; }
+.crWorks.working .crWorksTime { font-size:15px; font-variant-numeric:tabular-nums; }
+.crWorks progress { display:block; appearance:none; width:100%; height:5px; border:0; border-radius:2px; overflow:hidden; background:#07150b; }
+.crWorks progress::-webkit-progress-bar { background:#07150b; }
+.crWorks progress::-webkit-progress-value { background:linear-gradient(90deg,#527948,#b9d789); }
+.crWorks progress::-moz-progress-bar { background:#9cbf72; }
+.crWorks.working { position:relative; overflow:hidden; }
+.crWorks.working::after { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(110deg,transparent 35%,#e1ce8220 50%,transparent 65%); transform:translateX(-100%); animation:crWorkLight 5s ease-in-out infinite; }
+@keyframes crWorkLight { 0%,45% { transform:translateX(-100%); } 90%,100% { transform:translateX(100%); } }
+.crSectionHead { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:12px 2px 6px; }
+.crSectionHead h3 { margin:0; font:700 15px/1.3 var(--display); color:#e9cd8f; }
+.crSectionHead small { font:11px/1.2 var(--body); color:#a7ae99; }
+.crBoons { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid #5d6144; border-radius:3px; background:#122019; overflow:hidden; }
+.crBoon { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:0 5px; min-height:43px; padding:5px 6px; border-right:1px solid #4d5638; border-bottom:1px solid #4d5638; }
+.crBoon:nth-child(3n) { border-right:0; }
+.crBoon:nth-last-child(-n+3) { border-bottom:0; }
+.crBoon .pbIco { grid-row:1 / 3; width:24px; height:24px; }
+.crBoon b { font:700 13px/1.1 var(--body); color:#e4d8b3; }
+.crBoon small { font:10px/1.1 var(--body); color:#b9bea4; }
+.crBoon:not(.on) { opacity:.55; }
+.crLedger { display:grid; gap:7px; margin-top:8px; }
+.crBuilding { display:flex; align-items:center; gap:8px; width:100%; min-height:78px; padding:7px; border:1px solid #455843; border-radius:3px; background:linear-gradient(110deg,#233328,#15231b); color:#f3dfac; text-align:left; cursor:pointer; box-shadow:inset 0 0 12px #0004; }
+.crBuilding:hover, .crBuilding:focus-visible { border-color:#a28a52; }
+.crBuilding.ready { border-color:#7b8552; }
+.crBuilding:active { background:#2c402c; }
+.crBuildingPic { width:64px; height:60px; flex:none; object-fit:cover; border:1px solid #756544; border-radius:2px; }
+.crBuildingWords { display:grid; flex:1; min-width:0; gap:5px; }
+.crBuildingName { display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 6px; }
+.crBuildingName b { font:700 14px/1.15 var(--display); color:#f0d699; }
+.crBuildingLevel { font:11px/1.15 var(--body); color:#c3c1a5; white-space:nowrap; }
+.crBuildingBenefit { font:11px/1.25 var(--body); color:#c9cdb0; }
+.crBuilding.unbuilt .crBuildingPic { filter:saturate(.65) brightness(.8); }
+.crBuildingStatus { display:grid; flex:none; width:76px; min-height:43px; align-content:center; justify-items:center; gap:3px; padding:5px 4px; background:#0d1c14; border:1px solid #647343; border-radius:3px; }
+.crBuildingStatus b { font:600 11px/1.15 var(--body); }
+.crBuildingStatus small { font:11px/1.15 var(--body); color:#d5c591; text-align:center; }
+.crBuilding.working .crBuildingStatus { border-color:#c4a15b; }
+.crBuilding.full .crBuildingStatus { border-color:#4e614b; color:#aabda4; }
+.crChevron { width:12px; height:16px; object-fit:contain; flex:none; }
+@media (max-width:374px) {
+  .crHead { padding:8px; gap:5px; }
+  .crCrest { width:30px; height:36px; }
+  .crHead h2 { font-size:20px; }
+  .crSub { font-size:11px; }
+  .crUtilities .pbPlate { padding:5px 6px; font-size:10px; }
+  .crUtilities .pbIco { width:17px; height:17px; }
+  .crHallPanel, .crBuildingsPanel { padding:7px; }
+  .crBuilding { gap:6px; padding:6px; }
+  .crBuildingPic { width:55px; height:56px; }
+  .crBuildingName b { font-size:13px; }
+  .crBuildingStatus { width:69px; }
+  .crWorks > img { width:42px; }
+  .crWorksTime { max-width:70px; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .crSpot .crPic, .crSpot .crArt, .crSpot .crArt::after { animation: none !important; }
-}
+@media (prefers-reduced-motion:reduce) { .crWorks.working::after { animation:none; display:none; } }
 
 /* The building cards (the standard ornate menu): the building at the head of the body, its level in painted stars */
 .crCardArt { display: grid; justify-items: center; gap: 4px; margin: 0 0 6px; }
-.crCardArt img.crCardPic { width: min(46vw, 170px); aspect-ratio: 10 / 9; object-fit: contain; object-position: center bottom; filter: drop-shadow(0 4px 4px #000b); }
+.crCardArt img.crCardPic { width: min(100%, 310px); aspect-ratio: 384 / 341; object-fit: cover; object-position: center; border-radius: 3px; filter: drop-shadow(0 4px 4px #000b); }
 .crCardArt.unbuilt img.crCardPic { filter: grayscale(0.85) brightness(0.6) drop-shadow(0 4px 4px #000b); }
 .crStars { display: flex; justify-content: center; gap: 2px; }
 .crStars .pbIco { width: 20px; height: 20px; }

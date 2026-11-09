@@ -1,0 +1,8 @@
+# Approved royal hall recovery
+
+Repository: `Hpatter9/legends-of-the-fall`. Branch: `art/castle-royal-hall-finish`.
+Source: `art-source/castle-remake/throne-hall.png`. Canvas: landscape 1536 × 1024; opaque architectural background (transparent background: no). The game composites live ruler, four guards and Duchess separately. Recreates the approved direction because the original chat never pushed its source.
+
+```text
+Create an empty medieval royal hall background for Legends of the Last Keep, polished hand-painted fantasy game environment, restrained gothic atmosphere, rich dark slate stone, muted crimson and aged brass. Landscape 1536x1024. Frontal slightly elevated perspective, symmetrical central composition. Tall pointed arch behind an EMPTY elevated stone dais, NO THRONE OR CHAIR: the live ruler brings a throne. Dais landing at 50% width, 60% height, broad shallow steps down to a narrow deep crimson carpet running toward foreground. Keep centre empty for ruler and two inner guards at 37.5% and 62.5% width, 67% height; two outer guards at 28% and 72%, 77% height. Receding side columns and vaulted shadows. Tall stained glass windows cast restrained cool blue light from upper sides, two small warm fire braziers at 35% and 65% width, 45% height. Generous uncluttered foreground stone floor, dark corners. No gold haze, no bloom fog, no text, no UI, no borders, no people, no animals, no statues, no throne, no chair. Architecture occupies full image, not an inset picture. Crisp detailed brushwork matching painted fantasy tavern scenes, not pixel art or 3D. Output only the background, opaque, not transparent.
+```

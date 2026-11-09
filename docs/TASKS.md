@@ -77,6 +77,25 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CASTLE-TAB-RENEWAL — Redesign the whole Castle tab
+
+- **Owner / branch / worktree:** Codex; `design/castle-tab-renewal`; `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner requested the entire Castle tab be redone after reviewing the 0.439.0 throne hall screenshot; current layout is unsatisfactory.
+- **Scope:** full page hierarchy/navigation, building and upgrade presentation, bonuses, hall composition and related card presentation. Preserve castle rules, saves, ruler/guard/Duchess/trophy features, reduced motion and offline play.
+- **Completion:** concrete visual proposal and owner-confirmed direction, then implementation, affected tests, typecheck/build, three portrait sizes and browser/offline checks. The owner previously authorised finishing and merging the Castle rework, and has approved this full-tab direction.
+- **Status:** implemented and validated on the 0.439.0 base: typecheck/build, all 119 affected tests and all three portrait browser runs pass (including animation, reduced motion, eleven building cards, keyboard controls, build completion, Chapel upgrades and offline save persistence). Screenshots and an eight-second real browser recording retained. Main 0.440.0 integrated cleanly and its typecheck/build plus 119 tests pass. Final integrated 393px browser/offline check passed with no page errors, including a paid Chapel upgrade, build completion and saved Duchess treat. The concurrent documentation release 0.441.0 is preserved; final 0.442.0 web build and release-note tests pass. Complete for owner-authorised merge: [PR #490](https://github.com/Hpatter9/legends-of-the-fall/pull/490).
+- **Handoff:** [Castle tab renewal](notes/castle-tab-renewal.md).
+
+
+### CASTLE-ROYAL-HALL — Finish the approved throne hall
+
+- **Owner / branch / worktree:** Codex; `art/castle-royal-hall-finish`; `/workspace/legends-of-the-fall`.
+- **Scope:** recreate the approved empty stone hall (original unpushed source unavailable), integrate with the newer 0.438.0 Castle tab, align live ruler/guards/Duchess, artwork credits and browser checks. Preserve courtyard and all castle rules.
+- **Authorisation:** owner approved the hall concept and requested implementation and merge in the original chat; renewed on 2026-11-09.
+- **Completion:** typecheck/build, affected tests, all three portrait sizes, ruler/guard/Duchess interactions, reduced motion and offline reload; release PR and merge.
+- **Status:** completed and validated for owner-authorised release 0.439.0. Typecheck/build, 115 affected tests and all three portrait browser runs passed, including reduced motion, live ruler/guard/Duchess interactions, haystack save persistence, trophies, building cards and offline reload; zero page errors. Original source was unpushed; the approved hall was recreated within the newer Castle tab. [Handoff](notes/castle-royal-hall.md).
+
+
 ### TAVERN-NATURAL — Living painted tavern
 
 - **Release:** owner requested merging. Integrated main 0.395.0 and its hero weapon repairs; prepared 0.396.0 with matching Updates entry. Final typecheck/build, 34 focused tests and all 36 release browser/offline checks passed. Earlier three-size/reduced-motion coverage: 88 checks passed. Owner-authorised merge: [PR #430](https://github.com/Hpatter9/legends-of-the-fall/pull/430).

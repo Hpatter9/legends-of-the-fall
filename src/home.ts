@@ -243,7 +243,7 @@ export class Home {
           ? this.show('heroes')
           : id === 'chapel'
             ? chapelBuilt(this.meta)
-              ? this.show('spells')
+              ? this.openBuilding('chapel')
               : this.openChapel()
             : id === 'armies'
               ? this.show('battle')
@@ -255,6 +255,8 @@ export class Home {
         this.refresh();
         return true;
       },
+      () => this.openCodex(),
+      () => this.refresh(),
     );
     const pages = $('hmPages');
     const bar = $('hmTabs');
@@ -951,6 +953,8 @@ export class Home {
     const shownAch = shownAchievements(m);
     const got = shownAch.filter((a) => m.achievements.includes(a.id)).length;
     const up = modeOpen(m, 'castle');
+    bar.hidden = up;
+    this.castle.setCodexWaiting(codexWaiting(m).length > 0);
     // (MENU-GLITCH: the chips are built again only when what they show has changed, so a refresh replaces none of their icons)
     const key = `${got}|${m.achievements.length > seenCount() || unclaimed(m).length > 0}|${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}|${codexWaiting(m).length > 0}|${up}|${up ? '' : progressLine(m, MODE_NEED.castle)}`;
     if (bar.dataset.key === key) return;

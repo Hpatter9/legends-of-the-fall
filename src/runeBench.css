@@ -74,3 +74,17 @@ body[data-bench='runes'] #mergeAll { display: none !important; }
 .omWell.rbInfo { display: flex; align-items: center; gap: 12px; }
 .omWell.rbInfo p { margin: 0; }
 .omChoice > .rnStone.rn-small { float: left; margin: 2px 8px 0 0; width: 22px; height: 22px; }
+
+/* BATTLE-POLISH (docs/notes/battle-polish.md): the bench is as tall as its hero cards, with no empty panel under them (the owner's ask: the
+   board gets the height back). The rune side used to set the bench's height (its title row, two rows of four tiles and the hint, about
+   170 px) and the hero cards stretched to it. Now it takes the hero side's height (`contain: size`) and fits it: the eight tiles in one
+   row, a little shorter, the hint scrolled to if it is longer than the room. The pull bar stays centred on the bench. */
+#benchTrack > #runeBench { contain: size; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; gap: 3px; }
+#benchTrack > #runeBench::-webkit-scrollbar { display: none; }
+#benchTrack > #runeBench .rbGrid { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 3px; padding: 2px 4px; }
+#benchTrack > #runeBench .rbTile { height: 40px; padding: 1px 1px 2px; --pbw: 5px 6px; }
+#benchTrack > #runeBench .rbTile small { font-size: 9px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+#benchTrack > #runeBench .rbTile .rnStone.rn-big { width: 24px; height: 24px; }
+#benchTrack > #runeBench .rbHint { flex: none; font-size: 9px; line-height: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#benchTrack > #runeBench .rbTile.empty .rnStone.rn-big { width: 22px; height: 22px; margin: 3px; }
+#benchView > #benchGrip { height: min(96px, calc(100% - 4px)); }

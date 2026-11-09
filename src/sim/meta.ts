@@ -207,6 +207,9 @@ export interface Meta {
   duchessTreat?: number;
   /** Whether the heroes' ultimates fire on their own in a fight (the hero bar's Auto switch, COMBAT-002); off (the player taps) when unset. Auto-replay always fires them. */
   ultAuto?: boolean;
+  /** BATTLE-POLISH: whether the ruler's equipped spells are cast on their own (the fight's Auto spells button). Unset: as `ultAuto`, the one
+   *  switch that covered both before Auto was split (`spellAutoSaved`). */
+  spellAuto?: boolean;
   /** ULT-SHOW: how many full moments of each hero kind's ultimate the player has seen (only heroes with a showcase are counted; the first
    *  and every Nth play the long showcase: `ultShowRules.ts`). Saves from before have none: every showcase still to see. */
   ultSeen?: Record<string, number>;

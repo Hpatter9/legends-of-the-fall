@@ -36,7 +36,8 @@ Issen, Holy Nova, Stampede, Meteor Swarm, Maelstrom and Call Lightning. Also: th
   of them together when they spread (`litPools`), so a wide effect is never hidden. The pools follow the fighters as the camera moves. As
   the blow lands the dim eases from full to 30 % over 0.42 s (`liftedDim`, a smoothstep, never a step), and the fade takes it out from there.
 - **Length.** `IMPACT_MS` went from 850 to 700 ms, so an instant ultimate's whole moment with the 150 ms freeze is the same 2.45 s as before.
-  A tap still skips (and drops the freeze).
+  A tap still skips (and drops the freeze). **Since BATTLE-POLISH** ([battle-polish.md](battle-polish.md)) a hand-fired ultimate's moment is
+  about 3 s: a 1.45 s opening, a 0.24 s freeze, a 0.5 s slow-motion beat inside a 0.65 s impact, and a 0.65 s fade.
 - **Reduced motion**: no shake, no zoom, no freeze; the band and the lines stand still and fade in and out; the flash is a soft 0.3 fade.
   **Battery saver**: two bursts at most, and the particle density and cap as usual. **No flashing**: nothing that loops changes brightness
   (the lines' and edges' loops move their position only; `test/no-flicker.test.ts` passes); the flash and the name's glow are one-shots.

@@ -27,6 +27,44 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.443.0',
+    date: '2026-11-09',
+    title: 'Epic ultimates, split Auto, better camera',
+    notes: ['A hand-cast ultimate takes about 3 s at x1, with a slow-motion beat. Auto spells and Auto ultimates are two buttons. Shorter bench cards.', 'The camera follows the fighting and holds your own pan for 4 s. The Summoning tab\'s collection starts closed under a Nearest to joining row.'],
+  },
+  {
+    version: '0.442.0',
+    date: '2026-11-09',
+    title: 'The Keep comes alive',
+    notes: [
+      'The Castle tab now opens on your living throne hall, with a separate Buildings view for clear levels, benefits, costs and upgrades.',
+      'Painted building scenes, a shared construction countdown and a compact bonus summary bring the whole tab together.',
+      'Fire and banners move, smoke and dust drift, guards salute and Duchess wanders. Reduced motion keeps the hall still.',
+      'Upgrading your castle now keeps Duchess’s daily haystack reward safely saved.',
+    ],
+  },
+  {
+    version: '0.441.0',
+    date: '2026-11-09',
+    title: 'Art prompts cope with any image size',
+    notes: ['The Assault\'s art prompts now resize the image tool\'s paintings to each sheet\'s canvas, so a sheet no longer stops on a size.'],
+  },
+  {
+    version: '0.440.0',
+    date: '2026-11-09',
+    title: 'Painted Drill Yard and two holds\' gates',
+    notes: ['The Drill Yard and its two rooms are painted. The Barrow Necropolis and Elder Root now have painted walls, gates and great gates.'],
+  },
+  {
+    version: '0.439.0',
+    date: '2026-11-09',
+    title: 'A royal hall for the Keep',
+    notes: [
+      'The throne hall now has painted stone arches, cool stained glass and warm braziers, with your ruler seated on the dais.',
+      'Your four guards still salute, and Duchess still wanders the hall, hops when tapped and keeps her daily haystack treat.',
+    ],
+  },
+  {
     version: '0.438.0',
     date: '2026-11-09',
     title: 'Build Town moves to Developer',

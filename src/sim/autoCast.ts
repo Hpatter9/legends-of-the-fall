@@ -365,5 +365,9 @@ export function autoCast(b: Battle): SpellId | undefined {
   return pick.id;
 }
 
+/** BATTLE-POLISH: whether the saved Auto spells setting is on. It has its own key (`Meta.spellAuto`) since Auto split into two buttons; a
+ *  save from before, which has only the one switch (`ultAuto`, that covered both), starts with it as that switch was. */
+export const spellAutoSaved = (m: { ultAuto?: boolean; spellAuto?: boolean }): boolean => m.spellAuto ?? !!m.ultAuto;
+
 /** What the page sets `Battle.autoSpells` to: the equipped spells while the Auto switch is on (or an auto-replay plays), else none. */
 export const autoSpellsFor = (on: boolean, equipped: readonly SpellId[]): SpellId[] | undefined => (on && equipped.length ? [...equipped] : undefined);
