@@ -83,3 +83,21 @@ Stones about a quarter tile high, occasional aged brass bands and moss
 at their feet. Stones only on the perimeter; no ground, tiles or text.
 Muted steel grey, aged brass and moss green, upper-left lighting.
 ```
+
+## Elders' tavern table
+
+```text
+Repository hpatter9/legends-of-the-fall; branch art/expansion-2.
+Paint ONE image: art-source/expansion/elders-table.png, 320×112,
+transparent background. Match src/art/tavern/longtable.png, chair.png
+and bar.png exactly: coarse square pixel clusters, stepped dark
+plum-brown outlines, dusty reddish oak, muted peach-tan highlights,
+deep purple-brown shadows and simple block shading. Long oak table
+in side view with a shallow tabletop visible; exactly six empty
+high-backed wooden chairs evenly spaced behind it, carved stepped
+tops and vertical slats. Two sturdy trestles and a low crossbar.
+Exactly three lit cream candles in small brass holders, and one clay
+pipe lying on the tabletop. Warm lamplight as solid amber pixels.
+No people, text, floor, backdrop, extra clutter or soft glow.
+All parts visible with transparent padding. One sprite only.
+```
