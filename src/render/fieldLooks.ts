@@ -232,6 +232,17 @@ export interface Decal {
   alpha: number;
 }
 
+/** Whether ash lies within two tiles of a tile. */
+function ashNear(b: Board, mats: Uint8Array, u: number, v: number): boolean {
+  for (let dv = -2; dv <= 2; dv++)
+    for (let du = -2; du <= 2; du++) {
+      const uu = u + du;
+      const vv = v + dv;
+      if (uu >= 0 && vv >= 0 && uu < b.w && vv < b.d && mats[vv * b.w + uu] === MAT.ash) return true;
+    }
+  return false;
+}
+
 /** The decal a tile takes, if any: by its zone, near the posts and the drums, on the even tiles only (so two never touch). */
 export function decalOf(b: Board, zone: Uint8Array, mats: Uint8Array, bp: Blueprint, u: number, v: number): Decal | null {
   if (u % 2 || v % 2) return null;
@@ -244,6 +255,9 @@ export function decalOf(b: Board, zone: Uint8Array, mats: Uint8Array, bp: Bluepr
     r < share ? { name: names[Math.floor(hash(u, v, 12) * names.length)], turn: Math.floor(hash(u, v, 13) * 4), alpha: 0.75 + hash(u, v, 14) * 0.25 } : null;
   const nearPost = bp.posts.some((p) => Math.abs(p.at.u - u) + Math.abs(p.at.v - v) <= 3);
   const m = mats[i];
+  // (ash laid on lighter ground, the hot coals by the gates above all: a ring of the hold's soft ash and scorch marks around it, so its edge
+  //  frays into the ground instead of ending on a hard diamond)
+  if (m !== MAT.ash && m !== MAT.scorched && ashNear(b, mats, u, v)) return pick(['ashPatch', 'scorch', 'ashPatch', 'embers'], 0.95);
   if (m === MAT.cobbles) return pick(['ruts', 'bootTracks'], 0.25);
   if (z === Z('V')) return pick(['ashPatch', 'scorch', 'rubble', 'timber', 'embers'], 0.6);
   if (z === Z('B')) return pick(['mudSplash', 'puddle', 'straw', 'bootTracks', 'ruts'], 0.32);
@@ -439,6 +453,7 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       else if ((u + v) % 8 === 0) out.push({ name: 'wallBrazier', u, v, front: i, scale: 0.8 });
     }
   // the tiles themselves: barrels, ruins, boulders and trees on the solid tiles, bushes
+  const orcs = bp.army === 'orcs';
   for (let v = 0; v < b.d; v++)
     for (let u = 0; u < w; u++) {
       const i = v * w + u;
@@ -447,11 +462,14 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       const z = zone[i];
       const r = hash(u, v, 31);
       if (t.barrel) out.push({ name: 'barrels', u, v, front: i, scale: 0.6 });
-      else if (t.wall) out.push(z === Z('V') && r < 0.3 ? { name: 'burntHeap', u, v, front: i, scale: 0.45 } : { name: r < 0.5 ? 'ruin1' : 'ruin2', u, v, front: i, scale: 0.75 });
+      // (the ruined walls: Bloodtusk Hold's the kit's ruined arches; every other hold's its own painted ruins, `ruinA` and `ruinB` of its ruins
+      //  sheet, or the Orc sheet's burnt shells, recoloured, until it is painted: `lookOf` in fieldView.ts)
+      else if (t.wall) out.push(z === Z('V') && r < 0.3 ? { name: 'burntHeap', u, v, front: i, scale: 0.45 } : orcs ? { name: r < 0.5 ? 'ruin1' : 'ruin2', u, v, front: i, scale: 0.75 } : { name: r < 0.5 ? 'ruinA' : 'ruinB', u, v, front: i, scale: 0.45 });
       else if (t.rock) {
         const trees = z === Z('N') ? ['burntTree', 'gnarledTree'] : z === Z('V') ? ['burntTree'] : ['pine1', 'gnarledTree', 'pine1'];
         // (the land's own boulders in the open fields, the kit's dark rocks inside the walls and on the Warpath)
-        const rocks = z === Z('K') || z === Z('T') || z === Z('L') ? ['landBoulder'] : ['darkRocks', 'darkRocksB'];
+        // (every hold but Bloodtusk takes its own painted boulders in the fields, the wet boulders of its water's sheet, not the land's grey)
+        const rocks = z === Z('K') || z === Z('T') || z === Z('L') ? [orcs ? 'landBoulder' : 'wetBoulders'] : ['darkRocks', 'darkRocksB'];
         // (the outer bailey's solid tiles are the war camp's tents in rows)
         if (z === Z('B')) {
           const tents = ['conicalTent', 'conicalTent', 'leanTo', 'hideFrame'];
