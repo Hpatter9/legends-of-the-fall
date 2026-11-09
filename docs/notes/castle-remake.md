@@ -46,8 +46,8 @@ under a panel head, painted plate buttons and medallions, and the standard ornat
    the blurb; a well with "Now" and "Level N"; the Rooms, the Sparring Yard and the Hall's plinths as sections; and the hints. The
    footer has the painted Close and the primary plate "Build · ⚜180 · ⏱20:00" (Building · clock while it goes up, Full at the top, greyed
    while too dear or the builders are elsewhere, with a note saying where). The chapel card is the same shell.
-6. The **Codex** and **Build Town** chips above the page keep their painted chips, now with medallions in place of the pixel icon and
-   the emoji.
+6. The **Codex** chip above the page keeps its painted chip, now with a medallion in place of the pixel icon (Build Town has moved to
+   Settings › Developer).
 
 ### Design calls (what I recommend, and why)
 
@@ -63,9 +63,11 @@ under a panel head, painted plate buttons and medallions, and the standard ornat
   drawing is unchanged. Only the backdrop is to be repainted (`throne-hall.png`, empty dais: the rulers bring their own throne).
   Phase 2, not done here: draw the four guards from the tavern's painted guest art instead of pixel sheets.
 - **Section order: courtyard, then bonuses, then hall.** The buildings are what a player comes to the tab for.
-- **"Build Town" is kept as it was.** It upgrades every building, grants the Chapel and sets crowns to at least 5000. That looks like a
-  developer button on a player's page, so the director may want it moved to Settings › Developer. I left that alone, since it isn't
-  a look change.
+- **"Build Town" moved to Settings › Developer** (the director's follow-up after 0.437.0). It is a testing tool, not a castle door. It
+  works as before: every upgrade one level up (one at its top goes back to 1), the Chapel built, and at least 5000 crowns. The rule is
+  `buildTown` in `src/sim/devGrant.ts` (`devGrant(m, 'town', 0)`), and it is the full-width painted button under the grants on the
+  Developer page, which says what it did. The Castle tab's bar keeps only the Codex chip. Tests are in `test/dev-grant.test.ts`; the
+  shots are `after-dev-*.png` and `after-dev-town-*.png`, with `after-scene-*.png` taken again.
 
 ## Files
 

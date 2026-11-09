@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.438.0',
+    date: '2026-11-09',
+    title: 'Build Town moves to Developer',
+    notes: ['The Build Town shortcut leaves the Castle tab and now lives in Settings, Developer, beside the other grants.'],
+  },
+  {
     version: '0.437.0',
     date: '2026-11-09',
     title: 'The castle remade',
