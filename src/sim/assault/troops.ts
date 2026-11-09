@@ -206,6 +206,9 @@ export const TRICKS = {
   /** Acolytes: each heals the most hurt friend within this reach, by this share of its health a second. */
   mendReach: 2,
   mend: 0.04,
+  /** Skirmishers: a blow from a foe's side or back lands this much harder (the Elite's sharpened flank; a Recruit's flank is the step
+   *  round alone, so only an Elite's blow takes it, at `ELITE_TRICK` times the step's worth). */
+  flank: 1.2,
   /** Beasts: this much more for each other wolf beside the same foe, up to `packMost`. */
   pack: 0.1,
   packMost: 0.3,

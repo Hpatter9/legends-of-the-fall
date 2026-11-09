@@ -31,7 +31,7 @@ export interface MirrorMsg {
   groups: FieldGroup[];
   /** The field records of fighters new since the last batch. */
   info: Record<number, FieldInfo>;
-  /** The tiles a breach, an opening, a ladder or a keg changed in this batch. */
+  /** The tiles a breach, an opening, a ladder, a keg or a duel's stakes changed in this batch. */
   tiles: [number, Tile][];
   ticks: TickOut[];
   /** Each tick's milliseconds in the worker. */
@@ -56,7 +56,7 @@ export function packMirror(b: Battle, ticks: TickOut[], ms: number[], sentInfo: 
   const changed = new Set<number>();
   for (const t of ticks)
     for (const e of t.hold) {
-      if (e.kind === 'breach' || e.kind === 'open' || e.kind === 'ladder') for (const i of e.tiles) changed.add(i);
+      if (e.kind === 'breach' || e.kind === 'open' || e.kind === 'ladder' || e.kind === 'duelRing') for (const i of e.tiles) changed.add(i);
       if (e.kind === 'keg') changed.add(e.tile);
     }
   return {

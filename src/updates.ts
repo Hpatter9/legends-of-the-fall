@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.420.0',
+    date: '2026-11-08',
+    title: 'Assault: the Drill Yard and the gate duel',
+    notes: ['Elite troops gain their tricks, the Drill Yard trains recruits Blooded or Veteran, and a captain at the Iron Gate calls out your champion.'],
+  },
+  {
     version: '0.419.0',
     date: '2026-11-08',
     title: 'The rune bench: pull, merge, drop',

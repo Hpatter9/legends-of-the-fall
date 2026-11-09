@@ -11,7 +11,7 @@ import { UNITS } from './sim/units';
 import { nemesisLines } from './sim/nemesis';
 import { openNemesisCard } from './nemesisView';
 import { blueprintOf, holdMapOf } from './sim/assault/assault';
-import { assaultOf, ASSAULT_PRICES, buyRecruit, buySiege, fillCost, fillRanks, PLATOON_SIZE, scouted, scoutHold, siegeCost, SIEGE_PRICES, troopsOf } from './sim/assault/economy';
+import { assaultOf, ASSAULT_PRICES, buyRecruit, buySiege, fillCost, fillRanks, PLATOON_SIZE, recruitMarks, scouted, scoutHold, siegeCost, SIEGE_PRICES, troopsOf } from './sim/assault/economy';
 import { assaultParty, defaultPlan, lordLine, type AssaultPlan, type AssaultResult } from './sim/assault/assaultMode';
 import { rankOf, troopOf, troopStats, TROOPS, lookOf, troopUnitOf, type PlatoonFormation } from './sim/assault/troops';
 import { FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
@@ -147,7 +147,9 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
       label: `Muster for ${bp.name}`,
     });
     // the host
-    const host = menuSection(menu.body, 'Your host', `${m.crowns} crowns · ${ASSAULT_PRICES.recruit} a recruit`, 2);
+    // (the Drill Yard, phase 3: recruits join at its rank, and the line says so)
+    const drilled = recruitMarks(m.castle);
+    const host = menuSection(menu.body, 'Your host', `${m.crowns} crowns · ${ASSAULT_PRICES.recruit} a recruit${drilled ? ` · the Drill Yard sends them ${rankOf(drilled).name}` : ''}`, 2);
     for (const k of party) {
       const list = troopsOf(m, k);
       const kind = TROOPS[troopOf(k)];
