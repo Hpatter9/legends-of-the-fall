@@ -77,6 +77,16 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CASTLE-TAB-RENEWAL — Redesign the whole Castle tab
+
+- **Owner / branch / worktree:** Codex; `design/castle-tab-renewal`; `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner requested the entire Castle tab be redone after reviewing the 0.439.0 throne hall screenshot; current layout is unsatisfactory.
+- **Scope:** full page hierarchy/navigation, building and upgrade presentation, bonuses, hall composition and related card presentation. Preserve castle rules, saves, ruler/guard/Duchess/trophy features, reduced motion and offline play.
+- **Completion:** concrete visual proposal and owner-confirmed direction, then implementation, affected tests, typecheck/build, three portrait sizes and browser/offline checks. Release authorisation for this new design is unknown.
+- **Status:** implemented and validated on the 0.439.0 base: typecheck/build, all 119 affected tests and all three portrait browser runs pass (including animation, reduced motion, eleven building cards, keyboard controls, build completion, Chapel upgrades and offline save persistence). Screenshots and an eight-second real browser recording retained. Integrating newer main 0.440.0 before review; no release requested.
+- **Handoff:** [Castle tab renewal](notes/castle-tab-renewal.md).
+
+
 ### CASTLE-ROYAL-HALL — Finish the approved throne hall
 
 - **Owner / branch / worktree:** Codex; `art/castle-royal-hall-finish`; `/workspace/legends-of-the-fall`.

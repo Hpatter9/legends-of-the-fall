@@ -1,5 +1,7 @@
 # The castle remake (Castle tab)
 
+**Historical layout:** superseded by the owner-approved [Castle tab renewal](castle-tab-renewal.md), which uses Throne Hall / Buildings views and supplies painted scene thumbnails for all sites. The courtyard and pending cutout art described below are retired.
+
 The owner: "Let's also remake the castle scene and page. It doesn't match the rest of the game anymore. The castle tab."
 This changes only how the tab looks and is laid out. Every castle rule is unchanged: costs, levels, build times, the builders' works,
 rooms, the Chapel, the Sparring Yard, the Hall's plinths, Duchess and the trophy wall. `src/sim/` is untouched.
