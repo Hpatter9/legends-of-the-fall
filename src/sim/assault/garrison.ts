@@ -48,7 +48,7 @@ export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeS
 /** Phase 5: the Last Hold's garrison stands at this share of its hold's own, by army, against the whole Council's weight on its walls
  *  (`lastHold.ts`; tuned by `npm run balance -- --assault <army> --last`). The Council's members are elites and escorts with plainer kits
  *  than a hold's own nameless officers (an Ogre Shaman King, a Devil Leader), so at some holds they weaken it and at others strengthen it. */
-export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 0.95, undead: 1.12, beasts: 0.9, wildwood: 0.97, labyrinth: 0.88, ogres: 1.45, infernal: 1.25, yokai: 0.91, golems: 0.9 };
+export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 0.95, undead: 1.12, beasts: 0.8, wildwood: 0.97, labyrinth: 0.88, ogres: 1.45, infernal: 1.25, yokai: 0.91, golems: 0.9 };
 export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare' | 'last'>): number => input.foeShare ?? (HOLD_SHARE[input.army] ?? ASSAULT.foeShare) * (input.last ? LAST_SHARE[input.army] ?? 1 : 1);
 
 /** The salt of the garrison's own small draws (which grunt stands where), a side stream of the assault's seed. */

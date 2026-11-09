@@ -81,7 +81,7 @@ Measured with `--last --seeds 32` at each hold's mark (Auto / Tactical / Siege w
 | --- | --- | --- | --- | --- | --- | --- |
 | Bloodtusk Hold (Orcs) | 55 | 28 / 84 / 59 | 0.95 | 63% | 100% | 91% |
 | Barrow Necropolis (Undead) | 62 | 88 / 97 / 97 | 1.12 | 50% | 84% | 91% |
-| Howling Den (Beasts) | 69 | 53 / 34 / 34 | 0.9 | 72% | 53% | 44% |
+| Howling Den (Beasts) | 69 | 53 / 34 / 34 | 0.8 | 88% | 84% | 84% |
 | Elder Root (Wildwood) | 76 | 78 / 72 / 75 | 0.97 | 78% | 81% | 84% |
 | Heart of the Maze (Labyrinth) | 89 | 13 / 94 / 94 | 0.88 | 47% | 100% | 91% |
 | Bonefire Crag (Ogres) | 99 | 97 / 97 / 100 | 1.45 | 88% | 81% | 75% |
@@ -92,9 +92,9 @@ Measured with `--last --seeds 32` at each hold's mark (Auto / Tactical / Siege w
 **What it does not reach.** The table is noisy (the same factor swung 10 to 20 points between sweeps; Ogres at x1.5 came out easier
 than at x1.4), so I stopped after four sweeps. The misses:
 
-- **The Howling Den** is the one real miss: Tactical and Siege trail Auto at every factor tried (x0.75 to x1). It draws no bows, so
-  Auto's huddle (the Auto lever) keeps the host together, while Tactical's single crossing meets the whole Council at the throne. A
-  lower factor lifts all three together; at x0.85 they were 84 / 81 / 75.
+- **The Howling Den**: no factor brings Auto to 50 with Tactical over 75 (it draws no bows, so Auto's huddle keeps the host together,
+  while Tactical's single crossing meets the whole Council at the throne). Re-measured at 64 seeds: x0.9 72 / 53 / 44, x0.85 86 / 80 / 67,
+  x0.8 88 / 84 / 84. The director chose x0.8: playable tactics matter more than Auto near 50.
 - **Auto runs high** at Bonefire Crag, Brimstone Gate, Elder Root and the Iron Foundry (72 to 88%), where a factor hard enough to bring it
   to 50 sinks Tactical and Siege below their range. I kept Tactical and Siege on target and let Auto sit high.
 - **Tactical runs at 97 to 100%** at Bloodtusk Hold, the Heart of the Maze and the Moonlit Shrine, as it does at those holds outside the
