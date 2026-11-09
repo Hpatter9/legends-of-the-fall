@@ -18,7 +18,7 @@
 //   on open ground stays low.
 
 import type { Board, Tile } from '../sim/board';
-import type { Blueprint } from '../sim/assault/blueprint';
+import type { Blueprint, Spot } from '../sim/assault/blueprint';
 import type { FortSpec } from '../sim/assault/fieldMap';
 import { GROUND } from './assaultOrcAtlas';
 
@@ -285,6 +285,35 @@ export interface Placement {
 
 /** The pieces that may stand on open ground though taller than half a tile: poles and banners a fighter is not hidden behind, and the
  *  wall-walk's parapet and braziers. */
+/** The plain runs of maze wall, dressed: a hash of the tile picks one, plain half the time (lab-14's dressed runs; the broken stump and the
+ *  open gap are left out, since every maze tile blocks). */
+const MAZE_DRESS = ['mazeRun', 'mazeCracked', 'mazeRun', 'mazeVine', 'mazeRun', 'mazeFresco', 'mazeRun', 'mazeGrille', 'mazeRun', 'mazeTorch', 'mazeRun', 'mazeBanner', 'mazeRun', 'mazeSpears', 'mazeRun', 'mazeJar', 'mazeRun', 'mazeNiche'] as const;
+
+/**
+ * A maze wall tile's piece from the Heart of the Maze's own sheet (lab-14), by the walls beside it. On the screen u - 1 is up to the
+ * left and v - 1 up to the right; a piece painted along u is mirrored for the same shape along v.
+ * - a run (walls on one axis only): a plain or dressed run;
+ * - the near corner (walls up to the left and up to the right): a corner, one of the two painted;
+ * - a T (a run with a branch up the other way): the T;
+ * - an end (one wall, up to the left or up to the right): the run ending on its brazier pier, the pier at the open end;
+ * - any shape the sheet has no piece for (the far corner, the side corners, a branch downwards, a lone tile): a plain run.
+ */
+export function mazePiece(tiles: readonly Spot[], p: Spot): { name: string; flip: boolean } {
+  const has = (du: number, dv: number) => tiles.some((q) => q.u === p.u + du && q.v === p.v + dv);
+  const ul = has(-1, 0);
+  const lr = has(1, 0);
+  const ur = has(0, -1);
+  const ll = has(0, 1);
+  const n = +ul + +lr + +ur + +ll;
+  const hash = (Math.imul(p.u * 73856093 ^ p.v * 19349663, 0x9e3779b1) >>> 0) % 1000;
+  if ((ul || lr) && !ur && !ll) return { name: n === 1 && ul ? 'mazeEnd' : n === 2 ? MAZE_DRESS[hash % MAZE_DRESS.length] : 'mazeRun', flip: false };
+  if ((ur || ll) && !ul && !lr) return { name: n === 1 && ur ? 'mazeEnd' : n === 2 ? MAZE_DRESS[hash % MAZE_DRESS.length] : 'mazeRun', flip: true };
+  if (n === 2 && ul && ur) return { name: hash % 2 ? 'mazeCornerA' : 'mazeCornerB', flip: false };
+  if (n === 3 && ul && lr && ur) return { name: 'mazeTee', flip: false };
+  if (n === 3 && ur && ll && ul) return { name: 'mazeTee', flip: true };
+  return { name: 'mazeRun', flip: !ul && !lr };
+}
+
 export const THIN = new Set(['crenel', 'wallBrazier', 'smallBanner', 'pennantPole', 'spearSign', 'skullTorch', 'wolfTotem', 'tuskTotem', 'greatBanner', 'brazier', 'wallBrazier', 'ladder', 'throne']);
 
 /** The low clutter of a tile, if any (looks only, never on a road, a stair or water; two tiles apart at most one). */
@@ -361,11 +390,10 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       for (const t of tiles) taken.add(t);
       const m = mid(tiles);
       // (the Barrow Necropolis's own buildings by their names: its mausoleums, charnel houses, coffin heaps and witch fires; the Howling
-      //  Den's hide tents, drying racks and great den; Elder Root's leaf tents, and the Elder Root drawn as the kit's great oak, grown huge,
-      //  until its own painting lands)
-      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' || s.name === 'Storehouse' || s.name === 'Armoury' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' || s.name === 'Hide tent' || s.name === 'Leaf tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name === 'Drying rack' ? 'meatRacks' : s.name === 'The Elder Root' ? 'greatOak' : s.name.startsWith('The keep') || / (keep|den)$/.test(s.name) || s.name === 'The Bull Temple' || s.name === 'The Hall of Tusks' || s.name === 'The Demon Spire' || s.name === 'The Shrine of the Moon' || s.name === 'The Great Foundry' ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile';
+      //  Den's hide tents, drying racks and great den; Elder Root's leaf tents, and the Elder Root itself, its keep, the owner's painting)
+      const name = s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' || s.name === 'Storehouse' || s.name === 'Armoury' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' || s.name === 'Hide tent' || s.name === 'Leaf tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name === 'Drying rack' ? 'meatRacks' : s.name === 'The Elder Root' || s.name.startsWith('The keep') || / (keep|den)$/.test(s.name) || s.name === 'The Bull Temple' || s.name === 'The Hall of Tusks' || s.name === 'The Demon Spire' || s.name === 'The Shrine of the Moon' || s.name === 'The Great Foundry' ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile';
       const flip = s.rect.u1 - s.rect.u0 < s.rect.v1 - s.rect.v0;
-      out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: name === 'keep' ? 0.62 : name === 'greatOak' ? 2.4 : name === 'longhouse' || name === 'mausoleum' ? 0.95 : name === 'bonfire' ? 0.7 : 1, ...(s.burns ? { hut: hut++ } : {}) });
+      out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: name === 'keep' ? 0.62 : name === 'longhouse' || name === 'mausoleum' ? 0.95 : name === 'bonfire' ? 0.7 : 1, ...(s.burns ? { hut: hut++ } : {}) });
     } else if (s.kind === 'perch') {
       const tiles = rectTiles(w, s.rect);
       const m = mid(tiles);
@@ -378,9 +406,9 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       for (const p of s.tiles) {
         const t = p.v * w + p.u;
         taken.add(t);
-        // (the tiles of a run along v, sharing a u with the rest of it, are mirrored; a maze's walls by their neighbours, as a maze's turn)
-        const flip = s.look === 'maze' ? !s.tiles.some((q) => q.v === p.v && Math.abs(q.u - p.u) === 1) : s.tiles.filter((q) => q.u === p.u).length > 2;
-        out.push({ name: s.look === 'maze' ? 'mazeRun' : 'barricade', u: p.u, v: p.v, front: t, flip });
+        // (the tiles of a run along v, sharing a u with the rest of it, are mirrored; a maze's walls by their neighbours: `mazePiece`)
+        if (s.look === 'maze') out.push({ ...mazePiece(s.tiles, p), u: p.u, v: p.v, front: t });
+        else out.push({ name: 'barricade', u: p.u, v: p.v, front: t, flip: s.tiles.filter((q) => q.u === p.u).length > 2 });
       }
     } else if (s.kind === 'fence') {
       const m = mid(rectTiles(w, s.rect));
