@@ -15,7 +15,7 @@ import { canSkip, cutLength, plateWords, TAUNT_CUT, type CutMode, type Taunt } f
 import { heroName } from './sim/heroNames';
 import { trophyWords } from './sim/revenge';
 import { UNITS } from './sim/units';
-import { TAUNT_FOE, TAUNT_HERO } from './expansionArt';
+import { TAUNT_FOE, TAUNT_HERO, SCAR_FRAME } from './expansionArt';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -123,7 +123,12 @@ export class TauntCuts {
     const foe = el('span', 'tcFace tcFoe');
     const sheet = UNITS[t.base]?.sheet;
     if (sheet) foe.append(portrait(sheet, 96));
-    if (t.scars > 0) foe.append(el('i', 'tcScars', '✕'.repeat(Math.min(3, t.scars))));
+    if (t.scars > 0) {
+      const scars = el('img', 'tcScars');
+      scars.src = SCAR_FRAME[Math.min(3, t.scars) - 1];
+      scars.alt = '';
+      foe.append(scars);
+    }
     const words = el('div', 'tcWords');
     words.append(el('b', 'tcName', t.name), el('small', 'tcRank', plateWords(t)));
     if (full) words.append(el('q', 'tcLine', t.line));

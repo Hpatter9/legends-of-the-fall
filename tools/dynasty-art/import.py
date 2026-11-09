@@ -1,21 +1,10 @@
-"""Import approved dynasty assets and original Nemesis trait cels."""
+"""Import the Houses' and Council's backdrops and the House and heirloom paintings (the symbols: tools/art-wire-5/import-expansion.py)."""
 from pathlib import Path
 from PIL import Image, ImageDraw
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'src/art/dynasty'
+# (the season, fate and trait symbols are cut by tools/art-wire-5/import-expansion.py since the repainted sheets, at the sizes drawn)
 NAMES=['spring','summer','autumn','winter','mentor','regular','shade','fallen','legend']
-sheet=Image.open(ROOT/'art-source/expansion/seasons-fates.png').convert('RGBA')
-assert sheet.size==(1152,256)
-for i,name in enumerate(NAMES):
-    tile=sheet.crop((i*128,0,(i+1)*128,128))
-    assert tile.getbbox()
-    tile.save(OUT/f'{name}.png',optimize=True)
-traits=['ironSkull','arrowCatcher','scarred','sureFooted','spellScorned','hornDeaf','survivor','healerHunter','executioner','ambusher','hillKing','loneWolf']
-sheet=Image.open(ROOT/'art-source/expansion/nemesis-icons.png').convert('RGBA')
-for i,name in enumerate(traits):
-    tile=sheet.crop((i*128,0,(i+1)*128,128))
-    assert tile.getbbox()
-    tile.save(OUT/f'trait-{name}.png',optimize=True)
 for name in ['houses','council']:
     im=Image.open(ROOT/f'art-source/expansion/{name}-backdrop.png').convert('RGB')
     im.thumbnail((768,1152),Image.Resampling.LANCZOS)
@@ -33,4 +22,4 @@ for i,name in enumerate(NAMES+['house','heirloom']):
     im=im.resize((96,96),Image.Resampling.LANCZOS)
     preview.paste(im,(x,y),im);draw.text((x,y+100),name,fill='#e4d1ad')
 preview.save(ROOT/'docs/samples/dynasty-art/contact.png')
-print('Imported 9 season/fate symbols, 12 trait icons, 2 backdrops and 2 new paintings.')
+print('Imported 2 backdrops and 2 paintings (and previewed the season and fate symbols).')
