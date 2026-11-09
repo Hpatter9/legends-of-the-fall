@@ -19,4 +19,9 @@ Five unframed fates: Mentor, open parchment book and quill; Tavern regular,
 pewter tankard with clay pipe resting against it; Shade, pale spectral hood
 with faint blue glow inside; Fallen, one lit candle on a stone; Legend,
 small gold laurel wreath. Distinct whole silhouettes with transparent padding.
+
+## Portrait and heirloom frames
+
+```text
+Repository hpatter9/legends-of-the-fall; branch art/expansion-2; output art-source/expansion/frames.png. Paint ONE 1280x256 transparent PNG, five equal 256x256 cells in one row, no text. Match the existing dark fantasy painted pixel-art UI: aged brass and gold, dark outlines, restrained highlights and dark crimson accents. Cells 1–3: matching thin square brass portrait frames, fully transparent centres, bearing exactly ONE, TWO, THREE deep diagonal claw scars respectively, dark red beneath torn brass. Cell 4: aged gold filigree square heirloom frame, transparent centre, small family crest at top, exactly three empty notches along bottom. Cell 5: one gold signet ring with red stone, centred and filling about 60% of its cell. Transparent background and padding; no lettering, no extra objects.
 ```

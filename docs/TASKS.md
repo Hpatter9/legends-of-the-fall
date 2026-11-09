@@ -1247,3 +1247,6 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 - Direction: owner's exact nine-icon brief; existing painted sheet as reference, warmer muted gold and parchment.
 - Completion: one 1152×256 transparent sheet; nine centred icons confined to the upper 128×128 of each 128×256 cell; no text; add to Expansion art 2 PR.
 - Status: ready for review in [Expansion art 2 #464](https://github.com/Hpatter9/legends-of-the-fall/pull/464). Exact dimensions, RGBA, all nine centred bounds and transparent lower half passed; visually reviewed. Source art only; runtime tests/build not run. [Handoff](notes/expansion-2-seasons-fates.md).
+
+EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. Owner requests one five-cell 1280x256 transparent source sheet at art-source/expansion/frames.png, matching existing style, added to Expansion art 2 PR #464. Scope: that source image plus required prompt/task/handoff records. Completion: visual review, exact size and transparent centres/background, commit and push to existing PR. No runtime changes.
+- **EXPANSION-2-FRAMES result:** five-cell source sheet painted and visually reviewed; dimensions, RGBA, binary alpha, padding and empty portrait centres verified. Ready for review in PR #464. See [handoff](notes/expansion-2-art.md). Runtime checks not run (source art only).
