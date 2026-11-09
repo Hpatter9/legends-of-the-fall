@@ -1,5 +1,17 @@
 {
- "painted": [
-  "throne-hall"
- ]
+  "painted": [
+    "armoury",
+    "barracks",
+    "chapel",
+    "drillYard",
+    "hall",
+    "library",
+    "mageTower",
+    "site",
+    "smithy",
+    "stable",
+    "throne-hall",
+    "treasury",
+    "watchtower"
+  ]
 }

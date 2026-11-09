@@ -263,13 +263,20 @@ export const SCENE_LIFE = {
       { at: [0.695, 0.47], r: 0.09, kind: 'torch', colour: LAMP, power: 0.3 },
     ],
     regions: [
-      { kind: 'cloth', poly: [[0.265, 0.12], [0.323, 0.12], [0.323, 0.42], [0.265, 0.42]], amp: 0.001, anchor: 'top', pace: 0.6 },
-      { kind: 'cloth', poly: [[0.677, 0.12], [0.735, 0.12], [0.735, 0.42], [0.677, 0.42]], amp: 0.001, anchor: 'top', pace: 0.7 },
+      { kind: 'flame', poly: [[0.285, 0.49], [0.29, 0.44], [0.305, 0.42], [0.32, 0.46], [0.325, 0.49]], amp: 0.004, anchor: 'bottom', pace: 1.2 },
+      { kind: 'flame', poly: [[0.675, 0.49], [0.68, 0.44], [0.695, 0.42], [0.71, 0.46], [0.715, 0.49]], amp: 0.004, anchor: 'bottom', pace: 0.9 },
+      { kind: 'cloth', poly: [[0.265, 0.12], [0.323, 0.12], [0.323, 0.42], [0.265, 0.42]], amp: 0.003, anchor: 'top', pace: 0.6 },
+      { kind: 'cloth', poly: [[0.677, 0.12], [0.735, 0.12], [0.735, 0.42], [0.677, 0.42]], amp: 0.003, anchor: 'top', pace: 0.7 },
     ],
-    spouts: [],
+    spouts: [
+      { kind: 'embers', at: [0.305, 0.47], count: 12, spread: 0.015, rise: 0.14, life: 2.8, colour: 0xffb75f, drift: -0.015 },
+      { kind: 'embers', at: [0.695, 0.47], count: 12, spread: 0.015, rise: 0.14, life: 3.1, colour: 0xffb75f, drift: 0.015 },
+      { kind: 'smoke', at: [0.305, 0.47], count: 5, spread: 0.012, rise: 0.2, life: 5, colour: 0xa49f92, drift: -0.025 },
+      { kind: 'smoke', at: [0.695, 0.47], count: 5, spread: 0.012, rise: 0.2, life: 5.3, colour: 0xa49f92, drift: 0.025 },
+    ],
     drifts: [
-      { kind: 'motes', box: [0.12, 0.3, 0.3, 0.85], count: 6, colour: 0xd8f0ff },
-      { kind: 'motes', box: [0.7, 0.3, 0.88, 0.85], count: 6, colour: 0xd8f0ff },
+      { kind: 'motes', box: [0.12, 0.3, 0.3, 0.85], count: 14, colour: 0xd8f0ff },
+      { kind: 'motes', box: [0.7, 0.3, 0.88, 0.85], count: 14, colour: 0xd8f0ff },
     ],
   },
 
