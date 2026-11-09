@@ -63,8 +63,8 @@ export type Stamp =
   | { kind: 'paved'; rect: Rect }
   /** A ring of fence (looks only): the pens. */
   | { kind: 'fence'; rect: Rect }
-  /** Walls of a barricade (solid, not breakable), with gaps left open. */
-  | { kind: 'barricade'; tiles: Spot[] }
+  /** Walls of a barricade (solid, not breakable), with gaps left open; `look: 'maze'` draws them as a maze's walls (the Heart of the Maze). */
+  | { kind: 'barricade'; tiles: Spot[]; look?: 'maze' }
   /** A powder barrel. */
   | { kind: 'barrel'; at: Spot }
   /** A war drum (a structure on its tile). */

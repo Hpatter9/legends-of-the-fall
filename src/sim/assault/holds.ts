@@ -7,5 +7,6 @@ import { BLOODTUSK } from './maps/orcs';
 import { BARROW } from './maps/undead';
 import { DEN } from './maps/beasts';
 import { ELDER_ROOT } from './maps/wildwood';
+import { MAZE_HEART } from './maps/labyrinth';
 
-export const HOLDS: Readonly<Record<string, Blueprint>> = { [BLOODTUSK.army]: BLOODTUSK, [BARROW.army]: BARROW, [DEN.army]: DEN, [ELDER_ROOT.army]: ELDER_ROOT };
+export const HOLDS: Readonly<Record<string, Blueprint>> = { [BLOODTUSK.army]: BLOODTUSK, [BARROW.army]: BARROW, [DEN.army]: DEN, [ELDER_ROOT.army]: ELDER_ROOT, [MAZE_HEART.army]: MAZE_HEART };
