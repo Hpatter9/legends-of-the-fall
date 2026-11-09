@@ -129,11 +129,21 @@ test('several ultimates queue, each its own opening; a long frame never skips an
   assert.equal(q.current, null);
 });
 
-test('the whole moment stays within a couple of seconds', () => {
-  // (the freeze on the blow included: ULT-EPIC kept the whole about as long as it was)
+test("a hand-fired ultimate's whole moment lasts about 3 s (BATTLE-POLISH, the owner's ask)", () => {
+  // (the freeze on the blow included; the slow beat runs inside the impact's own time)
   const instant = ULT_MOMENT.OPEN_MS + ULT_EPIC.HIT_STOP_MS + ULT_MOMENT.IMPACT_MS + ULT_MOMENT.FADE_MS;
-  assert.ok(instant >= 1500 && instant <= 2600, String(instant));
-  assert.ok(ULT_MOMENT.OPEN_MS + ULT_MOMENT.MAX_DELAY_MS + ULT_MOMENT.FADE_MS <= 3200);
+  assert.ok(instant >= 2800 && instant <= 3200, String(instant));
+  assert.ok(ULT_MOMENT.SLOW_MS <= ULT_MOMENT.IMPACT_MS);
+  // (and the queue really takes that long, step by step)
+  const q = new UltQueue();
+  q.push({ unit: 1, kind: 'samurai', name: 'Issen', shape: 'instant', ms: 0 });
+  let t = 0;
+  while (q.current && t < 10_000) {
+    q.step(16);
+    t += 16;
+  }
+  assert.ok(Math.abs(t - instant) <= 16, `${t} vs ${instant}`);
+  assert.ok(ULT_MOMENT.OPEN_MS + ULT_MOMENT.MAX_DELAY_MS + ULT_MOMENT.FADE_MS <= 3800);
 });
 
 test('with Auto on the moment is always the short banner; the full one needs the setting on and Auto off', () => {

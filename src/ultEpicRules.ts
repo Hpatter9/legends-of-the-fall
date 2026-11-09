@@ -19,10 +19,11 @@ export const ULT_EPIC = {
   MAX_PX: 300,
   /** A beam or a tether is drawn this much thicker (not longer: it still runs from the caster to the struck). */
   BEAM: 1.6,
-  /** The freeze on the blow, real ms. */
-  HIT_STOP_MS: 150,
-  /** The camera's lean in on the hero during the opening, as a multiple of the view it held. */
-  ZOOM: 1.3,
+  /** The freeze on the blow, real ms (150 before BATTLE-POLISH: a heavier landing). */
+  HIT_STOP_MS: 240,
+  /** The camera's lean in on the hero during the opening, as a multiple of the view it held (1.3 before BATTLE-POLISH; it now builds
+   *  through the opening, `ultLean`). */
+  ZOOM: 1.4,
   /** The dim after the blow lands, as a share of its full strength, and how long it takes to ease there. */
   LIFT: 0.3,
   LIFT_MS: 420,
@@ -174,3 +175,13 @@ export function liftedDim(since: number | null): number {
 
 /** The camera's zoom over the view it holds: leaning in through the opening (none with the screen kept still), back as the ultimate fires. */
 export const ultZoom = (opening: boolean, calm: boolean): number => (opening && !calm ? ULT_EPIC.ZOOM : 1);
+
+/** BATTLE-POLISH: the lean `t` (0 to 1) through the opening: it creeps in as the power gathers, eased (a smoothstep from a little lean at
+ *  once to the full `ZOOM` by four fifths of the way), so the build-up is felt before the blow. */
+export function ultLean(t: number, calm: boolean): number {
+  const full = ultZoom(true, calm);
+  if (full === 1) return 1;
+  const k = Math.min(1, Math.max(0, t / 0.8));
+  const s = k * k * (3 - 2 * k);
+  return 1 + (full - 1) * (0.35 + 0.65 * s);
+}

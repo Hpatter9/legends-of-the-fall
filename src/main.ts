@@ -1462,12 +1462,12 @@ class Game {
       // (an ultimate's moment holds the fight: through its opening nothing moves; then its effects play out on the held board)
       this.acc = 0;
       // (a boss's cut-in holds the board still too, so its marks fill with the windup's own time)
-      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
+      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250) * this.ultm.queue.rate);
       this.hud.refresh(b);
     } else if (b.phase === 'fight') {
       // (a boss's fall slows the fight for a beat: `timeScale`)
       // (ULT-SHOW: an ultimate's full moment and an Eidolon's full call run at x1 whatever the speed; the short versions keep it)
-      this.acc += Math.min(dt, 250) * momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.fx.timeScale();
+      this.acc += Math.min(dt, 250) * momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.ultm.queue.rate * this.fx.timeScale();
       // (EIDOLONS: the strike's one tick, let through on the cinematic's first blow)
       if (this.eid.wantsTick) this.acc = Math.max(this.acc, TICK_MS);
       this.setAutoOn(b);
@@ -1524,7 +1524,8 @@ class Game {
       }
       if (b.units.length !== this.sprites.size) this.hud.build(b);
       this.hud.refresh(b);
-      this.fx.step(Math.min(dt, 250) * this.speed);
+      // (BATTLE-POLISH: at x1 while an ultimate's full moment plays, and slowed through its slow beat)
+      this.fx.step(Math.min(dt, 250) * momentSpeed(this.speed, !!this.ultm.queue.current) * this.ultm.queue.rate);
       $('clock').textContent = clock(b.t);
       this.refreshSpells();
     } else if (b.phase !== 'deploy') {

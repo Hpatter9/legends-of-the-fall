@@ -1237,12 +1237,12 @@ export class StandView {
     else if (this.ultm.queue.current) this.ultm.clear();
     if (fighting && (this.ultm.queue.holdsBattle || this.eid.holds)) {
       this.acc = 0;
-      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250));
+      if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250) * this.ultm.queue.rate);
       this.hud.refresh(s.b);
     } else if (fighting) {
       // (the walk to the door goes at its own pace, whatever the speed: STAND-RETREAT)
       // (ULT-SHOW: an ultimate's full moment and an Eidolon's full call run at x1 whatever the speed)
-      this.acc += Math.min(dt, 250) * (s.phase === 'retreat' ? 1 : momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.fx.timeScale());
+      this.acc += Math.min(dt, 250) * (s.phase === 'retreat' ? 1 : momentSpeed(this.speed, !!this.ultm.queue.current || this.eid.long) * this.ultm.queue.rate * this.fx.timeScale());
       let guard = 0;
       const ts = performance.now();
       // (the ultimates: tapped on the hero bar, or on their own with its Auto switch on)
@@ -1283,7 +1283,7 @@ export class StandView {
       this.perf.sim += performance.now() - ts;
       if (this.hud.build(s.b)) this.hbKey = '';
       this.hud.refresh(s.b);
-      this.fx.step(Math.min(dt, 250));
+      this.fx.step(Math.min(dt, 250) * this.ultm.queue.rate);
     } else if (s.phase === 'over') {
       this.acc += dt;
       this.fx.step(dt);

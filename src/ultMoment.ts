@@ -25,7 +25,7 @@ import { spellPart } from './render/spellLooks';
 import { settings } from './settings';
 import { whichCast } from './fightHudRules';
 import { ULT_MOMENT, UltQueue, ultShape, type UltMoment, type UltPhase } from './ultMomentRules';
-import { burstSpots, KIT, KIT_SESSION, litPools, ultTargets, ultZoom, type Pt, type UltTargets } from './ultEpicRules';
+import { burstSpots, KIT, KIT_SESSION, litPools, ultLean, ultTargets, type Pt, type UltTargets } from './ultEpicRules';
 import { hasShowcase, planShow, readCast, wantsShow, type ShowPlan } from './ultShowRules';
 import { UltShow } from './ultShow';
 import { mythicCut, mythicPainting } from './mythicCutRules';
@@ -185,7 +185,8 @@ export class UltMoments {
       return zoom === 1 ? null : { unit: q.current.unit, zoom };
     }
     if (!q.current || q.phase !== 'open') return null;
-    const zoom = ultZoom(true, this.calm());
+    // (BATTLE-POLISH: the lean builds through the opening as the power gathers)
+    const zoom = ultLean(q.openT, this.calm());
     return zoom === 1 ? null : { unit: q.current.unit, zoom };
   }
 
@@ -208,7 +209,8 @@ export class UltMoments {
     }
     if (!paused) q.step(step);
     // (the moment's own effects stand still through the freeze on the blow)
-    if (!paused && q.stopLeft <= 0) fx?.stepMoment(step);
+    // (BATTLE-POLISH: and move slowly through the slow beat after it)
+    if (!paused && q.stopLeft <= 0) fx?.stepMoment(step * q.rate);
     const m = q.current;
     if (!m) return this.hide();
     const u = b.units.find((x) => x.id === m.unit);
