@@ -298,6 +298,8 @@ export interface Placement {
   low?: boolean;
   /** A palisade run on the ring's back sides, seen from inside (its inner face while whole). */
   inner?: boolean;
+  /** Authored healthy timber variant; damaged/breached forts keep their real state pictures. */
+  intact?: string;
   /** The tile it sorts with instead of its front (a tower's top sorts with its back, so the crew on it show). */
   depth?: number;
   /** One of the camp's set pieces of the blueprint (drawn since phase 1 on open ground: the Landing's tents, the fires, the flags). */
@@ -360,7 +362,7 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
         const u = t % w;
         const v = Math.floor(t / w);
         // (the ring's two back sides are seen from inside: their inner faces)
-        out.push({ name: 'palisadeRun', u, v, front: t, flip: bp.contour ? Math.abs(f.front.u - u) > Math.abs(f.front.v - v) : alongV(u, v), fort: n, inner: bp.contour ? f.front.u < u || f.front.v < v : u < 40 || v < 40, ...(bp.weathered ? { scale: 0.93 + hash(u, v, 61) * 0.14, lean: (hash(u, v, 62) - 0.5) * 0.09, tint: hash(u, v, 63) < 0.25 ? 0xd6c1a2 : 0xffffff } : {}) });
+        out.push({ name: 'palisadeRun', u, v, front: t, flip: bp.contour ? Math.abs(f.front.u - u) > Math.abs(f.front.v - v) : alongV(u, v), fort: n, inner: bp.contour ? f.front.u < u || f.front.v < v : u < 40 || v < 40, ...(bp.weathered ? { intact: `palisadeWeathered${Math.floor(hash(u, v, 65) * 4)}`, scale: 0.97 + hash(u, v, 61) * 0.06, lean: (hash(u, v, 62) - 0.5) * 0.09, tint: hash(u, v, 63) < 0.25 ? 0xd6c1a2 : 0xffffff } : {}) });
         if (bp.weathered && hash(u, v, 64) < 0.1) out.push({ name: 'brokenRail', u: u + 0.1, v, front: t, flip: alongV(u, v), low: true, scale: 0.55 });
       }
       return;
@@ -388,6 +390,18 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       const name = s.sprite ?? (s.name === 'Longhouse' ? 'longhouse' : s.name === 'Hide hut' || s.name === 'Storehouse' || s.name === 'Armoury' ? 'hideHut' : s.name === 'Log pile' ? 'woodpile' : s.name === 'Reserve tent' || s.name === 'War tent' || s.name === 'Charnel tent' || s.name === 'Hide tent' || s.name === 'Leaf tent' ? 'warTent' : s.name === 'Bonfire' || s.name === 'Witch fire' ? 'bonfire' : s.name === 'Drying rack' ? 'meatRacks' : s.name === 'The Elder Root' ? 'greatOak' : s.name.startsWith('The keep') || / (keep|den)$/.test(s.name) || s.name === 'The Bull Temple' || s.name === 'The Hall of Tusks' || s.name === 'The Demon Spire' || s.name === 'The Shrine of the Moon' || s.name === 'The Great Foundry' ? 'keep' : s.name === 'Mausoleum' ? 'mausoleum' : s.name === 'Charnel house' ? 'crypt' : s.name === 'Coffin heap' ? 'coffinStack' : 'stockpile');
       const flip = s.rect.u1 - s.rect.u0 < s.rect.v1 - s.rect.v0;
       out.push({ name, u: m.u, v: m.v, front: m.front, flip, scale: s.scale ?? (name === 'keep' ? 0.62 : name === 'greatOak' ? 2.4 : name === 'longhouse' || name === 'mausoleum' ? 0.95 : name === 'bonfire' ? 0.7 : 1), ...(s.burns ? { hut: hut++ } : {}) });
+      if (bp.weathered && s.level) {
+        // Low, irregular aprons sit under the actual solid footprint; door wear stays on open level ground.
+        for (const [u, v] of [[s.rect.u0, s.rect.v1], [s.rect.u1, s.rect.v0]]) {
+          out.push({ name: hash(u, v, 74) < 0.5 ? 'foundationFoot' : 'rootApron', u, v,
+            front: v * w + u, low: true, scale: 0.8 });
+        }
+        const u = Math.round(m.u), v = s.rect.v1 + 1;
+        const tile = b.tiles[v * w + u];
+        if (tile && !tile.wall && !tile.rock && !isWater(tile) && tile.h === b.tiles[m.front].h) {
+          out.push({ name: 'wornDoorstep', u, v, front: v * w + u, low: true, scale: 1 });
+        }
+      }
     } else if (s.kind === 'dressing') {
       const i = s.at.v * w + s.at.u;
       out.push({ name: s.sprite, u: s.at.u, v: s.at.v, front: i, scale: s.scale ?? 0.45, flip: s.flip, low: true });
@@ -471,8 +485,8 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
     if (taken.has(i) || t.wall || t.rock || t.ramp || t.paved || isWater(t)) continue;
     const ledge = SIDES.some(([du, dv]) => Math.abs(b.tiles[(v + dv) * w + u + du].h - t.h) >= 3);
     if (ledge && hash(u, v, 71) < 0.24) {
-      const name = hash(u, v, 72) < 0.45 ? 'darkRocksB' : hash(u, v, 72) < 0.7 ? 'fern' : 'rubblePile';
-      out.push({ name, u, v, front: i, low: true, scale: name === 'fern' ? 0.55 : 0.4 });
+      const name = ['ridgeScree', 'ridgeRoots', 'ridgeRockfall', 'rootApron'][Math.floor(hash(u, v, 72) * 4)];
+      out.push({ name, u, v, front: i, low: true, scale: 0.7 + hash(u, v, 73) * 0.3 });
     }
   }
   // a banner at each post outside the walls; the plan's new landmarks (poles and stones, no walls)

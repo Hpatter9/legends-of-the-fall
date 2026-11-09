@@ -759,3 +759,7 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 - Royal hall background (`art-source/castle-remake/throne-hall.png`): generated with ChatGPT for this game from the owner-approved stone hall direction; packed by `tools/castle-remake/cut.py`. Live ruler, guards and Duchess retain their existing artwork and credits.
 
 - Castle building scene thumbnails (`art-source/castle-tab-renewal/building-scenes.png`): generated with ChatGPT for the approved Castle tab design; twelve scenic tiles packed by `tools/castle-tab-renewal/pack.py`, including all eleven sites and the construction scene.
+
+### Bloodtusk warcamp finishing art
+
+- `art-source/assault/orc/orc-camp-workers.png` and `orc-warcamp-details.png`: original artwork generated with OpenAI image generation for the owner-approved Bloodtusk art correction. Dedicated smith, woodcutter and butcher poses; four intact weathered palisades; unfinished siege engine; low shale, root, foundation and doorstep details. Trimmed/scaled and appended to `src/art/assault/orc/sprites.webp` by `tools/assault/pack-warcamp.py`. Existing fort damage states and all reused artwork retain their credits above.

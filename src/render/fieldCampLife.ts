@@ -1,8 +1,8 @@
-// Quiet camp activity, drawn from existing sheets and effects. Decorative workers flee before contact and never enter the simulation.
-import { Container, Sprite } from 'pixi.js';
+// Quiet camp activity. Decorative workers flee before contact and never enter the simulation.
+import { Container, Sprite, type Texture } from 'pixi.js';
 import type { Battle } from '../sim/battle';
 import { rawAt } from './iso';
-import { framesOf, figureOf, hasSheet, facesRightOf } from './sheets';
+import { SPRITES } from './assaultOrcAtlas';
 import { motionPlan } from './ambient';
 import { settings } from '../settings';
 import { campWorkVisible } from './fieldCampRules';
@@ -14,7 +14,7 @@ export class FieldCampLife {
   private smoke: Sprite[] = [];
   private workers: Sprite[] = [];
 
-  constructor(private b: Battle, private layer: Container) {}
+  constructor(private b: Battle, private layer: Container, private texture: (name: string) => Texture | null) {}
 
   update(t: number, view: WorldRect, near: boolean, reduced: boolean): void {
     const plan = motionPlan({ reduced, saver: !!settings().saver, hidden: false });
@@ -45,20 +45,23 @@ export class FieldCampLife {
       }
       // No decorative figure can be mistaken for a target when the battle reaches its worksite.
       if (!campWorkVisible(b, site.at, near)) continue;
-      const sheet = 'hk_orc_grunt';
-      if (!hasSheet(sheet)) continue;
       const clock = reduced ? 0 : t + index * 1700;
       const cycle = clock % 7000;
       const working = !reduced && cycle < 4000 && site.job !== 'sort';
-      const frames = framesOf(sheet, working ? 'attack' : 'idle');
-      if (!frames?.length) continue;
+      const job = site.job === 'hammer' ? 'Smith' : site.job === 'butcher' ? 'Butcher' : 'Woodcutter';
+      const frame = working ? Math.floor(clock / 300) % 4 : 3;
+      const name = `worker${job}${frame}`;
+      const texture = this.texture(name);
+      const def = SPRITES[name];
+      if (!texture || !def) continue;
       const sp = this.workers[workers] ??= this.add();
-      sp.texture = frames[reduced ? 0 : Math.floor(clock / (working ? 160 : 240)) % frames.length];
+      sp.texture = texture;
       sp.visible = true;
-      sp.scale.set((!site.flip !== facesRightOf(sheet) ? -1 : 1) * 43 / figureOf(sheet), 43 / figureOf(sheet));
+      sp.anchor.set(def.foot[0] / def.r[2], def.foot[1] / def.r[3]);
+      sp.scale.set(site.flip ? -1 : 1, 1);
       sp.position.set(x, y + 5);
       sp.alpha = 1;
-      sp.tint = 0xc6b69a;
+      sp.tint = 0xffffff;
       sp.zIndex = (site.at.u + site.at.v) * 10 + 5;
       workers++;
     }

@@ -380,7 +380,7 @@ export class FieldView {
       this.unitLayer.addChild(this.life.layer);
     }
     this.unitLayer.addChild(this.works);
-    if (bp?.campLife?.length) this.campLife = new FieldCampLife(this.b, this.unitLayer);
+    if (bp?.campLife?.length) this.campLife = new FieldCampLife(this.b, this.unitLayer, holdTex);
     this.works.addChild(this.marks);
     this.works.zIndex = 0;
     this.works.sortableChildren = false;
@@ -723,7 +723,7 @@ export class FieldView {
     if (p.fort !== undefined && h) {
       const f = h.forts[p.fort];
       let look = fortLook(f.spec.kind, f.hp, f.maxHp, f.broken, !!f.open);
-      if (look === 'palisadeRun' && p.inner) look = 'palisadeInner';
+      if (look === 'palisadeRun') look = p.intact ?? (p.inner ? 'palisadeInner' : look);
       // (a breached segment: the ramp of logs on the ring's outer row only)
       if (look === 'palisadeBreach' && Math.max(Math.abs(p.u - 49.5), Math.abs(p.v - 49.5)) < 23) return 'gatePost';
       return look;

@@ -108,6 +108,8 @@ test('weathered timber keeps actual damage states and earth tracks remain distin
   assert.ok(new Set(timber.map((p) => p.scale)).size > 5);
   assert.ok(timber.some((p) => p.lean! < 0) && timber.some((p) => p.lean! > 0));
   assert.ok(timber.every((p) => p.name === 'palisadeRun'), 'healthy walls are not drawn as damage or breaches');
+  assert.equal(new Set(timber.map((p) => p.intact)).size, 4, 'four healthy timber variants');
+  assert.ok(timber.every((p) => p.intact && SPRITES[p.intact]), 'all variants are packed');
   assert.ok(list.some((p) => p.name === 'brokenRail' && p.low));
   let tracks = 0;
   for (let i = 0; i < b.tiles.length; i++) if (b.tiles[i].trail && !b.tiles[i].ramp && map.zone[i] !== 83 && !b.tiles[i].ground) {
@@ -116,4 +118,17 @@ test('weathered timber keeps actual damage states and earth tracks remain distin
   }
   assert.ok(tracks > 100);
   assert.equal(mats[65 * b.w + 76], MAT.cobbles, 'the old stone bridge road remains paved');
+});
+
+test('bespoke camp art replaces stand-ins without adding tall clutter on open routes', () => {
+  const list = placementsOf(b, map.zone, bp, map.forts);
+  const repair = list.find((p) => p.name === 'siegeAssembly');
+  assert.ok(repair && !standable(b.tiles[repair.front]), 'engine occupies its existing solid repair footprint');
+  for (const name of ['foundationFoot', 'wornDoorstep', 'ridgeScree', 'ridgeRoots', 'ridgeRockfall', 'rootApron']) {
+    assert.ok(list.some((p) => p.name === name && p.low), `${name} remains low decoration`);
+  }
+  for (const job of ['Smith', 'Woodcutter', 'Butcher']) for (let frame = 0; frame < 4; frame++) {
+    const def = SPRITES[`worker${job}${frame}`];
+    assert.ok(def && def.r[2] > 0 && def.r[3] > 0, `${job} frame ${frame}`);
+  }
 });

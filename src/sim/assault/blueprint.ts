@@ -172,7 +172,7 @@ export interface Blueprint {
   weathered?: boolean;
   wornPaths?: boolean;
   /** Decorative labour and smoke. These sites never add units to the battle. */
-  campLife?: readonly { kind: 'smoke' | 'worker'; at: Spot; job?: 'hammer' | 'chop' | 'sort'; flip?: boolean; lift?: number }[];
+  campLife?: readonly { kind: 'smoke' | 'worker'; at: Spot; job?: 'hammer' | 'chop' | 'butcher' | 'sort'; flip?: boolean; lift?: number }[];
   /** Height variation in the fields and camp, before walkable slopes are eased. */
   relief?: { fields: number; camp: number };
   landforms?: readonly Landform[];

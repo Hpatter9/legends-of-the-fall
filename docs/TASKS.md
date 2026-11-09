@@ -1,3 +1,11 @@
+### BLOODTUSK-ART — Replace warcamp stand-ins
+
+- **Owner / branch / worktree:** Codex; `art/bloodtusk-weathering`; `/workspace/legends-of-the-fall`.
+- **Authorisation / scope:** owner approved all four corrections: dedicated camp workers, unfinished siege engine, weathered palisades, and cliff/building-to-ground transitions. Existing warcamp palette and composition retained.
+- **Completion:** new matching artwork integrated with correct anchors/scale, real damage states preserved, offline caching/credits, focused tests, typecheck/build and portrait browser review.
+- **Status:** complete; art follow-up for PR #495. Two original sheets imported, measured/anchored into the existing cached atlas, with credits and reproducible cuts. The repair scene was moved clear of the hall silhouette. Nine focused test files passed; seven repeated after relocation, then final typecheck/build. Three portrait sizes, activity and reduced-motion previews passed without browser errors. No merge, release bump or deployment.
+- **Handoff:** [art correction](notes/bloodtusk-art.md); [repair scene](samples/bloodtusk-art/repair-yard-393.png); [new artwork](samples/bloodtusk-art/details-contact.png).
+
 ### BLOODTUSK-WARCAMP — An irregular orc hold and discoverable weaknesses
 
 - **Owner / branch / worktree:** Codex; `feature/bloodtusk-warcamp`; `/workspace/legends-of-the-fall`.
