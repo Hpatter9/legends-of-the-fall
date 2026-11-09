@@ -665,6 +665,18 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   flair, halved the same way and packed into its atlas (listed in `src/render/assaultWildwoodAtlas.ts`). Its fighters are the Wildwood's satyrs and
   forest lords and the Orc hold's war-wolves, credited above.
 
+## The Assault's Heart of the Maze (`src/art/assault/labyrinth/`)
+
+- Until its own painted sheets land (the prompts: `docs/notes/assault-4-heart-of-the-maze-art-prompts.md`), the Heart of the Maze is drawn with the
+  owner's Orc sheets above, cut again by `tools/assault/cut-sheets.py labyrinth` and recoloured to sandstone (the grass dried, the stone warmed); its
+  maze walls are the Orc barricade piece, recoloured; our siege works keep their own colours.
+- Beside them, single pieces of Chronos Settlement's Knights and Nomads kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/knights/` and
+  `nomads/`: the stone walls, gatehouse, barracks, granary, workshop, watchtower, cart, barrels, hay bales, crates, woodpile, well, stone bridge, lamp
+  post, oak, bush and rocks; the rope fence, cottage, horse corral, scaffold tower, shrine, tassel lantern, standard, campfire, carpet stall, granary,
+  water skins, chests, stockpile, acacia, dead shrub, tumbleweed and red rocks), and the wild flair, halved the same way and packed into its atlas
+  (listed in `src/render/assaultLabyrinthAtlas.ts`). Its fighters are the Labyrinth's minotaurs and gorgons and the Orc hold's war-wolves, credited
+  above.
+
 ### Painted Spells study
 
 - `src/art/ui/spells-study.png` and `src/art/ui/spells-parchment.png`: original candlelit arcane study painting and botanical parchment material generated with OpenAI image generation for the owner-approved Spells screen refresh. Source and approved concept retained in `art-source/spells-screen/`. The painting contains no game controls; the interface and spell rules are live. Existing painted spell motifs and standard combat/menu frames retain their credits above.

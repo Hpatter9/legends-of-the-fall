@@ -48,9 +48,17 @@ export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
     'The Heartwood Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
     'Hold the satyrs\' camp on the Grove Trail, or burn every tent of it, and no more of the grove comes down to the hold.',
   ],
+  labyrinth: [
+    'A dark canal runs from edge to edge: cross by the stone bridge (its barricade holds the far end) or by the two fords.',
+    'Between the canal and the ring lies a maze of sandstone walls: its gaps are the ways through, and a platoon that misses one walks round.',
+    'Break the three horned altars: while a great horn sounds on one, the garrison near it strikes harder.',
+    'The gorgons on the walls turn heroes to stone from afar: keep your shooters on them, or a wall of shields before your heroes.',
+    'The Bronze Gate is the strongest structure on the map: the trebuchet\'s volley, the ram or a sapper\'s keg breaks it quicker than blades.',
+    'Hold the herders\' camp on the Hill Road, or burn every tent of it, and no more of the Labyrinth comes down to the hold.',
+  ],
 };
 /** What each hold's drums are, in the page's words. */
-const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones', wildwood: 'pipers’ rings' };
+const DRUMS: Readonly<Record<string, string>> = { orcs: 'war drums', undead: 'bone-bell belfries', beasts: 'howling stones', wildwood: 'pipers’ rings', labyrinth: 'horned altars' };
 
 export interface HoldPage {
   army: string;
