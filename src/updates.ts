@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.444.0',
+    date: '2026-11-09',
+    title: 'Four holds fully painted',
+    notes: ['The Barrow Necropolis, Elder Root, the Heart of the Maze and the Howling Den are painted in full. The Moonlit Shrine has its painted walls and gates.'],
+  },
+  {
     version: '0.443.0',
     date: '2026-11-09',
     title: 'Epic ultimates, split Auto, better camera',
