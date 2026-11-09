@@ -2,7 +2,8 @@
 //   node tools/castle-remake/shots.mjs <before|after> [scene ...]
 // Castle scenes: scene (the top of the tab), chambers (scrolled to the building list), card (a building's card), rooms (a room
 // building's card, the Hall), chapel (the Chapel's card, unbuilt), works (a card while the builders work), built (a building at the top).
-// Reference scenes (the current look): camp, tavern, spells, armies, menu (an ornate menu with painted buttons).
+// Reference scenes (the current look): camp, tavern, spells, armies, menu (an ornate menu with painted buttons). dev: Settings ›
+// Developer, with Build Town (moved off the Castle tab); dev-town: the same after a tap on it.
 // Each at 393x852, 360x780 and 412x915 (`SIZES=393` for one). Writes docs/samples/castle-remake/<prefix>-<scene>-<w>.png and checks
 // that no page error was thrown and nothing runs past the screen's right edge. Exits 1 on either.
 import { createRequire } from 'node:module';
@@ -104,6 +105,17 @@ for (const [w, h] of SIZES) {
       else if (scene === 'spells') { await tap(page, '.hmTab', 4); await page.waitForTimeout(1200); }
       else if (scene === 'armies') { await tap(page, '#hmBattle'); await page.waitForTimeout(1200); }
       else if (scene === 'menu') { await tap(page, '#hmGear'); await page.waitForTimeout(900); }
+      else if (scene === 'dev' || scene === 'dev-town') {
+        // (Settings › Developer, where Build Town lives now; dev-town taps it and then shows the castle it built)
+        await tap(page, '#hmGear');
+        await page.waitForTimeout(700);
+        await tap(page, '.setMenu[data-page="dev"]');
+        await page.waitForTimeout(700);
+        if (scene === 'dev-town') {
+          await page.evaluate(() => document.querySelector('.devTown')?.click());
+          await page.waitForTimeout(400);
+        }
+      }
       else await page.waitForTimeout(800);
       const path = `${dir}/${prefix}-${scene}-${w}.png`;
       await page.screenshot({ path });

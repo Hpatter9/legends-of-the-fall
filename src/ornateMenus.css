@@ -625,6 +625,8 @@ button.danger:active:not(:disabled) {
   font-size: 13px;
   border: 1px solid #75664a;
 }
+/* (Build Town, moved here from the Castle tab: the whole row under the grants) */
+.devGrant .devTown { grid-column: 1 / -1; }
 
 /* Picker Overlay and Sheet (.spOverlay, .spCard) */
 .spOverlay {

@@ -966,23 +966,10 @@ export class Home {
     cdx.append(medal('stall-books'), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
     if (codexWaiting(m).length > 0) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
-    const levelBtn = el('button', 'ctChip');
-    // (CASTLE-REMAKE: the painted rising arrow in place of the emoji castle)
-    levelBtn.append(medal('g-up'), el('b', '', 'Build Town'));
-    levelBtn.title = 'Upgrade all buildings to showcase their grand looks';
-    levelBtn.addEventListener('click', () => {
-      for (const id of BUILDING_IDS) {
-        const cur = m.castle[id] ?? 0;
-        m.castle[id] = cur >= maxLevel(id) ? 1 : cur + 1;
-      }
-      m.chapel = true;
-      m.crowns = Math.max(m.crowns, 5000);
-      saveMeta(m);
-      this.refresh();
-    });
+    // (Build Town is in Settings › Developer now: a testing tool, not a castle door)
     // (UX-FIXES: Achievements is the trophy in the top bar and Reset tips is in Settings: one door each)
     void ach;
-    row.append(cdx, levelBtn);
+    row.append(cdx);
     bar.append(row, el('div', 'ctHelp', 'tap a building to build or upgrade it · tap the guards to salute'));
     // (the buildings open at 10 army stars: until then the courtyard is a locked gate, with the stars still to win)
     this.castle.root.hidden = !up;
