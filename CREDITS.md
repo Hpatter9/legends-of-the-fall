@@ -653,12 +653,10 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## The Assault's Barrow Necropolis (`src/art/assault/undead/`)
 
-- The owner's painted sheets, from the prompts in `docs/notes/assault-4-barrow-necropolis-art-prompts.md` (PR #476: original art generated with
-  OpenAI image generation): `art-source/assault/undead/und-01-railings.png` (the iron railings and the barrow wall), `und-02-gates.png` (the
-  gates and towers) and `und-03-bone-gate.png` (the Bone Gate and its towers), cut by `tools/assault/cut-sheets.py undead`.
-- Until the rest of its painted sheets land, the Necropolis is drawn with the owner's
-  Orc sheets above, cut again by `tools/assault/cut-sheets.py undead` and recoloured cold (fire to witch fire, red cloth to ash grey); our siege works
-  keep their own colours.
+- The owner's painted sheets, all thirteen, from the prompts in `docs/notes/assault-4-barrow-necropolis-art-prompts.md` (PR #476: original art
+  generated with OpenAI image generation): `art-source/assault/undead/und-01-railings.png` to `und-13-decals.png` (the railings, the gates, the Bone
+  Gate, the wall faces, the ground and its transitions, the keep, the wall's dressing, the landmarks, the props, the ruins and siege works, the lake
+  and the decals), cut by `tools/assault/cut-sheets.py undead` (docs/notes/art-wire-7.md).
 - Beside them, single pieces of Chronos Settlement's isometric kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/`), above all the Liches and
   Blood Court kits (the bone wall, iron fence, gatehouse, chapel, mausoleum, crypt, watchtowers, coffins, gravestones, bone pit, skull pile, witch fire,
   lantern posts, braziers, dead oaks and pines, the stone bridge), and the wild flair, halved the same way and packed into its atlas (listed in
@@ -666,9 +664,10 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## The Assault's Howling Den (`src/art/assault/beasts/`)
 
-- Until its own painted sheets land (the prompts: `docs/notes/assault-4-howling-den-art-prompts.md`), the Den is drawn with the owner's Orc sheets
-  above, cut again by `tools/assault/cut-sheets.py beasts`: the moor's pieces recoloured to autumn (red cloth to tanned hide), the crag wall's and the
-  den's frosted, and one ground texture repainted as snow; our siege works keep their own colours.
+- The owner's painted sheets, all thirteen, from the prompts in `docs/notes/assault-4-howling-den-art-prompts.md` (PR #487: original art generated
+  with OpenAI image generation): `art-source/assault/beasts/bst-01-log-walls.png` to `bst-13-decals.png` (the log walls, the gates, the Antler Gate,
+  the wall faces, the ground and its transitions, the great den, the wall's dressing, the landmarks, the props, the ruins and siege works, the gorge
+  and the decals), cut by `tools/assault/cut-sheets.py beasts` (docs/notes/art-wire-7.md).
 - Beside them, single pieces of Chronos Settlement's Moonpack kit (`hpatter9/little-town`, `src/renderer/art/iso/kits/moonpack/`: the log walls, bone
   fence and gate, longhouse, cottage, tavern, lookout tower, howling stone, shrine, torch post, skull signpost, bonfire, pelt stall, sled, granary,
   hide bundles, barrels, stockpile, woodpile, well, rope bridge, cave den, pines, bushes and rocks), and the wild flair, halved the same way and packed
@@ -677,24 +676,23 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## The Assault's Elder Root (`src/art/assault/wildwood/`)
 
-- The owner's painted sheets, from the prompts in `docs/notes/assault-4-elder-root-art-prompts.md` (PR #475: original art generated with OpenAI
-  image generation): `art-source/assault/wildwood/wld-01-thorn-hedge.png` (the thorn hedge), `wld-02-gates.png` (the gates and towers) and
-  `wld-03-heartwood-gate.png` (the Heartwood Gate and its towers), cut by `tools/assault/cut-sheets.py wildwood`.
-- Until the rest of its painted sheets land, Elder Root is drawn with the owner's Orc sheets
-  above, cut again by `tools/assault/cut-sheets.py wildwood` and recoloured to the deep forest (the grass deepened, stone and timber mossed, red cloth
-  to leaf green); our siege works keep their own colours.
+- The owner's painted sheets, all thirteen, from the prompts in `docs/notes/assault-4-elder-root-art-prompts.md` (PR #475: original art generated
+  with OpenAI image generation): `art-source/assault/wildwood/wld-01-thorn-hedge.png` to `wld-13-decals.png` (the thorn hedge, the gates, the
+  Heartwood Gate, the wall faces, the ground and its transitions, the Elder Root itself as the keep, the wall's dressing, the landmarks, the props,
+  the ruins and siege works, the mire and the decals), cut by `tools/assault/cut-sheets.py wildwood` (docs/notes/art-wire-7.md).
 - Beside them, single pieces of Chronos Settlement's Druids and Fae kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/druids/` and `fae/`:
   the hedge walls, wattle fence, tree gate, longhouse, cottage, tavern, workshop, watch platform, spiral watchtower, stone circle, shrine, mushroom
   lantern, totem signpost, campfire, market stall, cart, granary, clay pots, hay bales, honey jars, stockpile, log pile, well, baskets, root bridge,
-  lantern post, great oak (also the Elder Root's stand-in), birches, berry bush, mossy and crystal rocks, weeping willow and glow bush), and the wild
+  lantern post, great oak, birches, berry bush, mossy and crystal rocks, weeping willow and glow bush), and the wild
   flair, halved the same way and packed into its atlas (listed in `src/render/assaultWildwoodAtlas.ts`). Its fighters are the Wildwood's satyrs and
   forest lords and the Orc hold's war-wolves, credited above.
 
 ## The Assault's Heart of the Maze (`src/art/assault/labyrinth/`)
 
-- Until its own painted sheets land (the prompts: `docs/notes/assault-4-heart-of-the-maze-art-prompts.md`), the Heart of the Maze is drawn with the
-  owner's Orc sheets above, cut again by `tools/assault/cut-sheets.py labyrinth` and recoloured to sandstone (the grass dried, the stone warmed); its
-  maze walls are the Orc barricade piece, recoloured; our siege works keep their own colours.
+- The owner's painted sheets, all fourteen, from the prompts in `docs/notes/assault-4-heart-of-the-maze-art-prompts.md` (PR #485: original art
+  generated with OpenAI image generation): `art-source/assault/labyrinth/lab-01-ring-wall.png` to `lab-14-maze-walls.png` (the ring wall, the gates,
+  the Bronze Gate, the wall faces, the ground and its transitions, the Bull Temple, the wall's dressing, the landmarks, the props, the ruins and
+  siege works, the canal, the decals and the maze's walls), cut by `tools/assault/cut-sheets.py labyrinth` (docs/notes/art-wire-7.md).
 - Beside them, single pieces of Chronos Settlement's Knights and Nomads kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/knights/` and
   `nomads/`: the stone walls, gatehouse, barracks, granary, workshop, watchtower, cart, barrels, hay bales, crates, woodpile, well, stone bridge, lamp
   post, oak, bush and rocks; the rope fence, cottage, horse corral, scaffold tower, shrine, tassel lantern, standard, campfire, carpet stall, granary,
@@ -727,8 +725,11 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## The Assault's Moonlit Shrine (`src/art/assault/yokai/`)
 
-- Until its own painted sheets land (the prompts: `docs/notes/assault-4-moonlit-shrine-art-prompts.md`), the Moonlit Shrine is drawn with the owner's
-  Orc sheets above, cut again by `tools/assault/cut-sheets.py yokai` and recoloured to a moonlit night (grass and timber cooled, stone silvered, red
+- The owner's painted sheets so far, from the prompts in `docs/notes/assault-4-moonlit-shrine-art-prompts.md` (PR #488: original art generated
+  with OpenAI image generation): `art-source/assault/yokai/yok-01-tiled-wall.png` (the tiled wall), `yok-02-gates.png` (the gates and towers) and
+  `yok-03-moon-gate.png` (the Moon Gate and its towers), cut by `tools/assault/cut-sheets.py yokai` (docs/notes/art-wire-7.md).
+- Until the rest of its painted sheets land, the Moonlit Shrine is drawn with the owner's Orc sheets above, cut again by
+  `tools/assault/cut-sheets.py yokai` and recoloured to a moonlit night (grass and timber cooled, stone silvered, red
   cloth to vermilion); our siege works keep their own colours.
 - Beside them, single pieces of Chronos Settlement's Fae and Liches kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/fae/` and `liches/`: the
   rose hedges, twig fence, flower arch gate, longhouse, cottage, tavern, workshop, firefly pen, mushroom patch, spiral watchtower, fairy ring, shrine,

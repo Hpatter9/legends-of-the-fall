@@ -130,9 +130,32 @@ test('the maze: walls a walker goes round on the approaches between the canal an
   }
   // (the maze is mirrored across the hold's middle line, as the approaches are)
   for (const p of MAZE) assert.ok(MAZE.some((q) => q.u === p.v && q.v === p.u));
-  const looks = placementsOf(m.board, m.zone, MAZE_HEART, m.forts).filter((p) => p.name === 'mazeRun');
+  // (each maze tile is drawn as one of the maze's own pieces, lab-14's: a run, a corner, a T, an end or a dressed run)
+  const looks = placementsOf(m.board, m.zone, MAZE_HEART, m.forts).filter((p) => p.name.startsWith('maze'));
   assert.equal(looks.length, MAZE.length);
   // (the Labyrinth has bows: its gorgons shoot, so Auto does not huddle here)
   assert.equal(bowless('labyrinth'), false);
   assert.ok(UNITS.mazeGorgon1.range > 1);
+});
+
+test('the maze walls are drawn from the hold\'s own sheet (lab-14) by their neighbours, and every piece is in its atlas', async () => {
+  const { mazePiece } = await import('../src/render/fieldLooks');
+  const { SPRITES: LAB } = await import('../src/render/assaultLabyrinthAtlas');
+  const at = (u: number, v: number) => ({ u, v });
+  // (a run along u, and the same along v mirrored)
+  const runU = [at(10, 10), at(11, 10), at(12, 10)];
+  assert.equal(mazePiece(runU, at(11, 10)).flip, false);
+  assert.equal(mazePiece(runU.map((p) => at(p.v, p.u)), at(10, 11)).flip, true);
+  // (an end: the pier at the open end, down to the right along u, down to the left along v)
+  assert.deepEqual(mazePiece(runU, at(12, 10)), { name: 'mazeEnd', flip: false });
+  assert.deepEqual(mazePiece(runU.map((p) => at(p.v, p.u)), at(10, 12)), { name: 'mazeEnd', flip: true });
+  // (the near corner: walls up to the left and up to the right)
+  assert.match(mazePiece([at(9, 10), at(10, 9), at(10, 10)], at(10, 10)).name, /^mazeCorner[AB]$/);
+  // (a T: a run along u with a branch up to the right)
+  assert.deepEqual(mazePiece([at(9, 10), at(11, 10), at(10, 9), at(10, 10)], at(10, 10)), { name: 'mazeTee', flip: false });
+  // (the hold's maze uses only pieces its atlas has, and blocks everywhere: no open gap, no broken stump)
+  const names = new Set(MAZE.map((p) => mazePiece(MAZE, p).name));
+  for (const n of names) assert.ok(LAB[n], n);
+  assert.ok(!names.has('mazeGap') && !names.has('mazeBroken'));
+  assert.ok(names.has('mazeRun') && names.has('mazeEnd') && names.size >= 6, [...names].join(' '));
 });

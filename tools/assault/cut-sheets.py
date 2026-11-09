@@ -32,6 +32,10 @@ KITS = os.environ.get('KITS', os.path.join(ROOT, '..', 'hpatter9', 'little-town'
 # ----- the sheets' grids (the templates in docs/samples/assault-art/) -----
 
 # (each cell: x, y, w, h of the cell; the foot point in the cell; the footprint along u and v, in tiles)
+
+# The pieces that stand on their own base when they are painted away from their foot point (see `cut`).
+BASE_FOOT = {'ladder'}
+
 def props(names):
     """A 1024 x 1024 sheet of 4 x 4 cells of 256, every piece one tile, standing on (128, 208)."""
     return {n: (i % 4 * 256, i // 4 * 256, 256, 256, 128, 208, 1, 1) for i, n in enumerate(names) if n}
@@ -829,6 +833,10 @@ def cut(army, report_only=False):
             stray = abs(off_x) > 24 or off_y < -40 or off_y > 20
             if stray:
                 fx, fy = (x0 + x1) // 2, y1 - (fu + fv) * 16
+                # (a piece that leans on a wall stands on its own base, as the Orc sheet paints it: its bottom on the foot point, where the
+                #  field puts it against the wall's foot; stood a footprint lower, a hold's ladder hung half a tile below the wall)
+                if name in BASE_FOOT:
+                    fy = y1 - 3
             if abs(off_y) > 24 or abs(off_x) > 40:
                 report.append(f'{sheet} {name} ({fu}x{fv}): bottom {off_y:+d} px from the footprint tip, middle {off_x:+.0f} px from the foot'
                               + (' (stood on its picture)' if stray else ''))
