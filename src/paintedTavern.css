@@ -98,12 +98,14 @@
 
 /* Scene hit targets must not inherit the standard menu button's frame/shadow. */
 .ptTavern .ptGuest, .ptTavern .ptGuest:hover, .ptTavern .ptGuest:active,
-.ptTavern .ptKeeper, .ptTavern .ptKeeper:hover, .ptTavern .ptKeeper:active {
+.ptTavern .ptKeeper, .ptTavern .ptKeeper:hover, .ptTavern .ptKeeper:active,
+.ptTavern .ptTableProp, .ptTavern .ptTableProp:hover, .ptTavern .ptTableProp:active {
   appearance: none; background: none; border: 0; border-image: none;
   box-shadow: none; filter: none; padding: 0;
 }
 .ptTavern .ptGuest:active { transform: translate(-50%, -100%); }
 .ptTavern .ptKeeper:active { transform: none; }
+.ptTavern .ptTableProp:active { transform: translate(-50%, -100%); }
 .ptBarFront { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; pointer-events: none; clip-path: polygon(0 46%, 43% 40%, 43% 54%, 0 76%); }
 
 /* Dynasties, phase 7: the ghosts of bearers slain under the Oath. A steady pale translucence (never a flicker): a guest whose House mourns
@@ -115,3 +117,12 @@
 .ptHearthGhost[data-at='0'] { left: 47%; top: 46%; }
 .ptHearthGhost[data-at='1'] { left: 58%; top: 45%; }
 .ptHearthGhost[data-at='2'] { left: 39%; top: 47%; }
+
+/* TAVERN-25: Hester's merchant table and the Elders' table, pixel art standing in the room (crisp pixels, the room's warm light).
+   Each is a button: a tap opens Hester's shop or the Elders' table, as the buttons under Tavern services do. */
+.ptTavern .ptTableProp { position: absolute; padding: 0; border: 0; background: none; cursor: pointer; transform: translate(-50%, -100%); min-width: 44px; min-height: 44px; }
+.ptTableProp img { display: block; width: 100%; height: auto; image-rendering: pixelated; filter: sepia(0.18) saturate(1.05) brightness(0.96) drop-shadow(0 3px 2px #1a0d0699); }
+.ptTableProp:focus-visible { outline: 2px solid #f1d38b; outline-offset: 2px; }
+.ptTavern .ptTableProp.ptReady img { filter: sepia(0.1) brightness(1.08) drop-shadow(0 0 5px #ffd77a) drop-shadow(0 3px 2px #1a0d0699); }
+.ptStallTable { left: 17%; top: 99.5%; width: 31%; z-index: 6; }
+.ptEldersTable { left: 63%; top: 46.5%; width: 26%; z-index: 1; }

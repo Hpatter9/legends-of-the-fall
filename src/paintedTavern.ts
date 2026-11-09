@@ -21,6 +21,9 @@ import { SCENE_LIFE } from './render/ambientScenes';
 //  the hearth once the line has a bearer again)
 import { cornerGhosts, ghostOf, mourners } from './sim/oath';
 import { FATE_ICON } from './dynastyArt';
+// (TAVERN-25: Hester's merchant table and the Elders' table, PR #464's pixel art, standing in the room; cut by tools/expansion/tavern-tables.py)
+import hesterTableUrl from './art/tavern/hester-table.png';
+import eldersTableUrl from './art/tavern/elders-table.png';
 
 /** How many ghosts stand by the hearth at most. */
 const HEARTH_GHOSTS = 3;
@@ -44,6 +47,9 @@ export class PaintedTavern {
   private questBtn: HTMLButtonElement;
   private stallBtn: HTMLButtonElement;
   private eldersBtn: HTMLButtonElement;
+  /** (TAVERN-25) the two tables in the room, tapped as their buttons below are. */
+  private stallProp: HTMLButtonElement;
+  private eldersProp: HTMLButtonElement;
   private trophy = new TrophyWallModal();
   private meta?: Meta;
   private active = false;
@@ -99,10 +105,16 @@ export class PaintedTavern {
     barFront.alt = '';
     barFront.draggable = false;
     this.ghosts.setAttribute('aria-hidden', 'true');
+    // (TAVERN-25: Hester's table in the near corner below the bar, the Elders' table by the hearth where the House's ghosts stand; each opens
+    //  what its button under "Tavern services" opens, and shows when that button does)
+    this.stallProp = this.tableProp('ptStallTable', hesterTableUrl, 'Hester’s table. Open Hester’s shop', () => this.shop?.onStall());
+    this.stallProp.hidden = !this.shop;
+    this.eldersProp = this.tableProp('ptEldersTable', eldersTableUrl, 'The Elders’ table. Open the Elders’ table', () => this.elders?.onElders());
+    this.eldersProp.hidden = true;
     // (ALIVE: the room's own life over its painting: the hearth licks and breathes, the candles and lanterns gutter, the herbs, ivy
     //  and banner stir, embers and dust drift; `render/ambientLayer.ts`)
     const life = new AmbientLayer(SCENE_LIFE.tavern, backdrop.src, { fit: 'fill' }, 'ptLife');
-    this.scene.append(backdrop, life.root, warmth, gwenArt, barFront, this.ghosts, this.guests, rearTable, frontTable, dice, steam, caption);
+    this.scene.append(backdrop, life.root, warmth, gwenArt, barFront, this.eldersProp, this.ghosts, this.guests, rearTable, frontTable, this.stallProp, dice, steam, caption);
     document.addEventListener('visibilitychange', () => this.syncMotion());
     onSettings(({ saver }) => this.root.classList.toggle('ptSaver', saver));
     this.syncMotion();
@@ -158,6 +170,20 @@ export class PaintedTavern {
     this.root.append(head, this.scene, sections, company, actions, this.trophy.root);
   }
 
+  /** (TAVERN-25) a table standing in the room: its picture, a tap to open what it serves. */
+  private tableProp(cls: string, url: string, label: string, run: () => void): HTMLButtonElement {
+    const prop = el('button', `ptTableProp ${cls}`);
+    prop.type = 'button';
+    prop.setAttribute('aria-label', label);
+    const image = el('img');
+    image.src = url;
+    image.alt = '';
+    image.draggable = false;
+    prop.append(image);
+    prop.addEventListener('click', run);
+    return prop;
+  }
+
   private button(label: string, icon: string, run: () => void): HTMLButtonElement {
     const button = el('button', 'ptButton');
     button.type = 'button';
@@ -184,6 +210,9 @@ export class PaintedTavern {
     this.stallBtn.classList.toggle('ptReady', news.fresh || !!news.visitor);
     this.stallBtn.querySelector('span')!.textContent = news.visitor ? 'Trader visiting' : news.fresh ? 'Shop · new stock' : 'Hester’s shop';
     this.eldersBtn.hidden = !this.elders?.shown(meta);
+    this.eldersProp.hidden = this.eldersBtn.hidden;
+    this.stallProp.classList.toggle('ptReady', news.fresh || !!news.visitor);
+    this.stallProp.setAttribute('aria-label', `Hester’s table. ${news.visitor ? 'A trader is visiting' : news.fresh ? 'New stock' : 'Open Hester’s shop'}`);
     // Reuse each guest's image node while strength changes. No loading flash on refresh.
     const existing = new Map([...this.guests.querySelectorAll<HTMLButtonElement>('.ptGuest')].map((node) => [node.dataset.kind!, node]));
     const keep = new Set(company.map(({ kind }) => kind));

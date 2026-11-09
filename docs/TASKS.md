@@ -17,6 +17,12 @@
 
 # Shared task board
 
+### TAVERN-25 — Tavern sheets for the 25 new heroes; wire Hester's table, the Elders' table and the duel ring
+
+- **Owner / branch:** worker for the director; `claude/tavern-25`.
+- **Scope:** ChatGPT prompts for the 20 new heroes' and five Mythics' pixel-tavern activity sheets (and two props); Hester's table and the Elders' table as tappable props in the painted tavern; the duel's ring of standing stones on the board. No version bump, no PR.
+- **Status:** done, ready for the director. Prompts: [tavern-25-art-prompts](notes/tavern-25-art-prompts.md). Typecheck, web build, 54 focused tests and three-size screenshots (`samples/tavern-25/`) with no page errors. [Handoff](notes/tavern-25.md).
+
 ### HERO-PAINTED-WEAPON-FIX — Redraw the confirmed painted illustration defects
 
 - **Owner / branch / worktree:** Codex; `audit/painted-hero-weapons`; `/workspace/legends-of-the-fall`.
