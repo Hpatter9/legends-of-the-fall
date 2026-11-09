@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.425.0',
+    date: '2026-11-09',
+    title: 'Assault: Auto keeps the host together',
+    notes: ['At holds with no bows, Auto sends every platoon over one crossing with the shooters behind the blades. The Den and Elder Root are retuned.'],
+  },
+  {
+    version: '0.424.0',
+    date: '2026-11-09',
+    title: 'Assault: Elder Root',
+    notes: ['The Wildwood\'s hold: wade the black mire or cross the root bridge, silence the pipers\' rings, and break the Heartwood Gate to the Elder Root.'],
+  },
+  {
     version: '0.423.0',
     date: '2026-11-09',
     title: 'Assault: the Howling Den',
