@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.432.0',
+    date: '2026-11-09',
+    title: 'Assault: the Iron Foundry',
+    notes: ['The Golems\' hold, the last of nine: cross the stone sluice, stop the steam hammers, and break the Furnace Gate to the Titan\'s Anvil.'],
+  },
+  {
     version: '0.431.0',
     date: '2026-11-09',
     title: 'Assault: the Moonlit Shrine',
