@@ -1281,3 +1281,11 @@ EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. O
 - Scope: one source image `art-source/expansion/duel-ring.png`, prompt and handoff records.
 - Completion: 640×320 transparent PNG; hollow 5×5 square at 2:1 isometric angle, low grey menhirs, occasional brass bands and moss, no ground/text; added to PR #464.
 - Status: complete; final image visually inspected, 640×320 RGBA and transparent centre/exterior verified. Source art only; no runtime checks. [Handoff](notes/expansion-2-duel-ring.md).
+
+### ART-WIRE-5 — Orc repaints and Expansion art 2 in the game
+
+- Owner: Claude worker for the director; branch `claude/art-wire-5`.
+- Scope: merge `art/assault-orc` (#463) and `art/expansion-2` (#464); re-cut the Orc sheets for the four holds; cut and wire the repainted traits,
+  Council and News icons, War Trophy, seasons, fates, scar frames, heirloom frame and chip; credits; before/after screenshots at 393 and 360.
+- Status: complete. Typecheck, web build, the relevant tests and the browser checks pass with 0 page errors. Nothing kept back; the duel ring and
+  Hester's table (also in #464) are not wired. [Handoff](notes/art-wire-5.md).

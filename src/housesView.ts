@@ -26,7 +26,8 @@ import {
   HONOUR_LINES, HONOUR_WORDS, HONOURS, honourLock, nameHeir, passMantle, promiseLeft, regularOf, seatedToday, storyOf, storyteller, storyWaits, trainWords, whyNoHeir, whyNoMantle, whyNoRide, whyNotHonour, type Honour, type Mantle,
 } from './sim/heirs';
 import { todayKey } from './modes';
-import { SEASON_ICON, FATE_ICON, HOUSE_ICON, HEIRLOOM_ICON } from './dynastyArt';
+import { SEASON_ICON, FATE_ICON, HOUSE_ICON } from './dynastyArt';
+import { HEIRLOOM_CHIP } from './expansionArt';
 import { menuBackdrop } from './menuBackdrops';
 export { SEASON_ICON, FATE_ICON, HOUSE_ICON, HEIRLOOM_ICON, LEGEND_ICON } from './dynastyArt';
 import { hasFallen, isLegend, mourningLeft, OATH, whyShadeHonour } from './sim/oath';
@@ -304,7 +305,7 @@ export function openLine(m: Meta, kind: string, day: number): OrnateMenu | null 
         const it = (m.equipment ?? []).find((x) => x.id === b.heirloom);
         if (it) {
           const chip = el('small', 'omLine hsHeirloomChip');
-          chip.append(icon(HEIRLOOM_ICON, 'hsChipIco'), `Heirloom: ${itemName(it)}`);
+          chip.append(icon(HEIRLOOM_CHIP, 'hsChipIco'), `Heirloom: ${itemName(it)}`);
           row.append(chip);
         }
       }
