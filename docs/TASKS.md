@@ -17,6 +17,12 @@
 
 # Shared task board
 
+### RUNE-BENCH-LOOK — Paint the pull bar and the rune bench
+
+- **Owner / branch:** worker for the director; `claude/rune-bench-look`.
+- **Scope:** restyle the pull bar and the rune bench with the painted plates, medallions and rune art the game has; one combined ChatGPT prompt for the art still missing, and an import script to drop it in. Behaviour and tests unchanged. No version bump, no PR.
+- **Status:** done, ready for the director. Typecheck, web build, 52 focused tests and before/after screenshots at three sizes (`samples/rune-bench-look/`) with no page errors. [Handoff](notes/rune-bench-look.md), [art prompt](notes/rune-bench-art-prompts.md).
+
 ### TAVERN-25 — Wire the duel ring and the Elders' table (PR #464's art)
 
 - **Owner / branch:** worker for the director; `claude/tavern-25`.
@@ -1064,6 +1070,7 @@ Owner relayed the UI chat's report. GitHub confirms PR #118 is open and draft. T
 
 | ID | Task | Result | Reference |
 | --- | --- | --- | --- |
+| CASTLE-REMAKE | The castle scene and page to match the rest of the game | Done on stand-ins, awaiting review and art: the Castle tab becomes one painted courtyard (2:3, ambient life) with its eleven buildings as tappable places with painted plaques, the six bonuses on painted chips, the throne hall in its frame under its own heading; every castle card is the standard ornate menu with the painted Build plate. No rule changed. Waits on four paintings (one prompt, `docs/notes/castle-remake-art-prompts.md`), dropped in by `tools/castle-remake/cut.py`. Typecheck, build, 84 affected tests, before/after shots at three sizes (0 errors, no overflow); follow-up: Build Town moved to Settings › Developer (`buildTown` in `sim/devGrant.ts`, tested), released 0.437.0 | [Note](notes/castle-remake.md), branch `claude/castle-remake` |
 | FIXES3 | The old map over the new one; a brisk, even walk between waves; the Paladin's colours | Done, awaiting review: the Calamity's map (z-index 5) was left open under any home-screen opening but its own buttons, so every mode begun after drew under it; `TowerView.dismiss()` shuts it when a fight is made, the Last Stand opens or the home screen shows (`tools/fixes3/maps.mjs` checks the switches). Every hero walks to the next section at 230 ms a tile over the fewest tiles, climbs free (`WALK_STEP_MS`, `walkAcross`). The Paladin's plain sheets are made from his awakened ones, gold to steel, his head and the shield's gold sign kept (`tools/paladin/plain.py`). Typecheck, full suite, build, browser checks | [Note](notes/fixes3.md), branch `claude/fixes-map-walk-paladin` |
 | KNIGHT-SPRITE | Kwame's plain battle sprite to look like his awakened form, the same man in plainer gear | Done, awaiting review: the plain front and back sheets are the awakened sheets frame for frame, gold to steel, the red cape and green inlays to dark blue cloth, the blade's blue core to steel, the shield's lion to a plain steel cross (`tools/knight/plain.py`); the soldier sheets take the awakened 152 x 116 grid with the same figure height; the `_deep` copies match, and the heritage tool skips him. Typecheck, affected tests, full suite, build, in-game shots at 393x852 | [Note](notes/knight-sprite.md), branch `claude/knight-sprite` |
 | AUDIO-THEME | Battle music that is unique, catchy, ours: one main theme, the same tune in each army's own dress | Done, awaiting review: an original JRPG-style main theme (`tools/epic-music/theme.mjs`) and an arranger; 12 battle tracks on it (general `battle` for the daily, Last Stand, spire and field fights; nine army tracks; `boss` in fragments; `calbattle`), each a 4-bar intro then a 40-bar seamless loop; the victory fanfare, the triumph bed and the camp re-arranged on the theme; `trackOfRun` gives each army its own track at every tier; `battle2`/`battle3` removed. Audio 5.87 → 7.66 MB. Typecheck, affected tests, full suite, build, every new file decoded in Chromium; examples for the owner to listen to before merging | [Note](notes/music-theme.md), branch `claude/music-theme` |

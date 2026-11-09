@@ -221,6 +221,62 @@ export const SCENE_LIFE = {
     ],
   },
 
+  /** CASTLE-REMAKE: the castle's courtyard (`ui/castle/courtyard.webp`, the Castle tab's painting, a stand-in until the owner's lands;
+   *  every spot is where docs/notes/castle-remake-art-prompts.md asks for it): the keep's banners wave, its great windows glow, the
+   *  gate's and the wall-walks' torches gutter, the fountain ripples, smoke from the keep's chimney, bats over the roofs, fireflies in
+   *  the gardens. The buildings are laid over it in the page, so nothing here sits on a plot. */
+  courtyard: {
+    size: [1024, 1536],
+    lights: [
+      { at: [0.42, 0.155], r: 0.07, kind: 'window', colour: 0xffb050, power: 0.4 },
+      { at: [0.5, 0.15], r: 0.08, kind: 'window', colour: 0xffb050, power: 0.45 },
+      { at: [0.58, 0.155], r: 0.07, kind: 'window', colour: 0xffb050, power: 0.4 },
+      { at: [0.4, 0.88], r: 0.07, kind: 'torch', colour: LAMP, power: 0.6 },
+      { at: [0.6, 0.88], r: 0.07, kind: 'torch', colour: LAMP, power: 0.6 },
+      { at: [0.02, 0.3], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
+      { at: [0.98, 0.3], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
+      { at: [0.02, 0.6], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
+      { at: [0.98, 0.6], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
+      { at: [0.5, 0.95], r: 0.16, kind: 'fire', colour: FIRE, power: 0.2, squash: 0.4 },
+    ],
+    regions: [
+      { kind: 'cloth', poly: [[0.34, 0.012], [0.4, 0.012], [0.4, 0.07], [0.34, 0.07]], amp: 0.004, anchor: 'top' },
+      { kind: 'cloth', poly: [[0.6, 0.012], [0.66, 0.012], [0.66, 0.07], [0.6, 0.07]], amp: 0.004, anchor: 'top', pace: 1.15 },
+      { kind: 'water', poly: [[0.63, 0.44], [0.69, 0.44], [0.7, 0.46], [0.66, 0.47], [0.62, 0.46]], amp: 0.0015, glints: 2 },
+    ],
+    spouts: [{ kind: 'smoke', at: [0.62, 0.065], count: 6, spread: 0.02, rise: 0.05, life: 4, colour: 0x8a8a90 }],
+    drifts: [
+      { kind: 'bats', box: [0.05, 0, 0.95, 0.06], count: 4, colour: 0x14101a },
+      { kind: 'fireflies', box: [0.26, 0.58, 0.74, 0.66], count: 6, colour: 0xe0ff9a },
+      { kind: 'motes', box: [0.3, 0.12, 0.7, 0.3], count: 8, colour: 0xffd9a0 },
+    ],
+  },
+
+  /** CASTLE-REMAKE: the great hall inside the keep (`ui/castle/throne-hall.webp`, drawn to cover the throne canvas once the owner's
+   *  painting lands; until then the old pixel room and its `throne` life stay): the four sconces gutter, cool light falls through the
+   *  two windows, the pillars' banners and the cloth of state stir, dust in the light. */
+  throneHall: {
+    size: [1536, 1024],
+    lights: [
+      { at: [0.2, 0.32], r: 0.12, kind: 'window', colour: 0x9ad8ff, power: 0.3 },
+      { at: [0.8, 0.32], r: 0.12, kind: 'window', colour: 0x9ad8ff, power: 0.3 },
+      { at: [0.04, 0.12], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
+      { at: [0.32, 0.12], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
+      { at: [0.68, 0.12], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
+      { at: [0.96, 0.12], r: 0.05, kind: 'torch', colour: LAMP, power: 0.5 },
+    ],
+    regions: [
+      { kind: 'cloth', poly: [[0.4, 0.14], [0.6, 0.14], [0.6, 0.5], [0.4, 0.5]], amp: 0.0012, anchor: 'top', pace: 0.5 },
+      { kind: 'cloth', poly: [[0.28, 0.16], [0.36, 0.16], [0.36, 0.48], [0.28, 0.48]], amp: 0.002, anchor: 'top' },
+      { kind: 'cloth', poly: [[0.64, 0.16], [0.72, 0.16], [0.72, 0.48], [0.64, 0.48]], amp: 0.002, anchor: 'top', pace: 1.1 },
+    ],
+    spouts: [],
+    drifts: [
+      { kind: 'motes', box: [0.12, 0.3, 0.3, 0.85], count: 6, colour: 0xd8f0ff },
+      { kind: 'motes', box: [0.7, 0.3, 0.88, 0.85], count: 6, colour: 0xd8f0ff },
+    ],
+  },
+
   /** The Altar of Ascension's chamber (`art/altar/sanctuary.webp`, filling the altar's card under its veil): the two torches lick,
    *  the banners stir, the green gems and the shaft of light from above breathe, dust turns in the light. */
   altar: {
@@ -305,6 +361,8 @@ export const SCENE_ART: Record<SceneName, string> = {
   sanctum: 'src/art/hall/sanctum.png',
   study: 'src/art/ui/spells-study.png',
   throne: 'src/art/throne/throne_room.png',
+  courtyard: 'src/art/castle-remake/courtyard.webp',
+  throneHall: 'src/art/castle-remake/throne-hall.webp',
   altar: 'src/art/altar/sanctuary.webp',
   stall: 'src/art/shop/shelf.webp',
   houses: 'src/art/dynasty/houses-backdrop.webp',

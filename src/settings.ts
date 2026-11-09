@@ -150,7 +150,7 @@ const PAGES: readonly { id: Page; title: string; hint: string }[] = [
   { id: 'gameplay', title: 'Gameplay', hint: 'Fight speed, hero quips, cinematics, ultimate scenes, tips' },
   { id: 'ruler', title: 'Ruler and Duchess', hint: 'Who rules your keep, and Duchess’s costume' },
   { id: 'data', title: 'Save and data', hint: 'Start over' },
-  { id: 'dev', title: 'Developer', hint: 'Crowns, shards and stones for testing' },
+  { id: 'dev', title: 'Developer', hint: 'Crowns, shards, stones and Build Town for testing' },
   { id: 'updates', title: 'Updates and notes', hint: 'What changed in each version' },
   { id: 'about', title: 'About', hint: 'Version and credits' },
 ];
@@ -613,7 +613,7 @@ export function onDevGrant(fn: (what: DevGift, n: number) => string): void {
 /** The owner's developer option, for testing: crowns, shards of every hero, or summoning stones, a hundred or a thousand a
  *  tap. Six buttons in two columns (a hundred, a thousand) and three rows, so they fit at 360 wide. */
 function devRow(): HTMLElement {
-  const [r, text] = row('Developer', 'For testing: crowns, shards of every hero, or summoning stones, a hundred or a thousand a tap');
+  const [r, text] = row('Developer', 'For testing: crowns, shards of every hero, or summoning stones, a hundred or a thousand a tap; Build Town raises every castle upgrade a level');
   const group = document.createElement('div');
   group.className = 'devGrant';
   for (const [what, n] of [['crowns', 100], ['crowns', 1000], ['shards', 100], ['shards', 1000], ['stones', 100], ['stones', 1000]] as const) {
@@ -625,6 +625,15 @@ function devRow(): HTMLElement {
     });
     group.append(b);
   }
+  // (Build Town, moved here from the Castle tab: every upgrade one level up, the Chapel built, at least 5000 crowns)
+  const town = document.createElement('button');
+  town.textContent = 'Build Town';
+  town.className = 'small devTown';
+  town.addEventListener('click', () => {
+    const said = devGrantFn?.('town', 0);
+    if (said) text.querySelector('em')!.textContent = said;
+  });
+  group.append(town);
   r.append(group);
   return r;
 }
