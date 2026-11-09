@@ -1250,3 +1250,11 @@ UI-007 final 0.190.0 validation complete: current Last Stand Auto, pause/resume,
 
 EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. Owner requests one five-cell 1280x256 transparent source sheet at art-source/expansion/frames.png, matching existing style, added to Expansion art 2 PR #464. Scope: that source image plus required prompt/task/handoff records. Completion: visual review, exact size and transparent centres/background, commit and push to existing PR. No runtime changes.
 - **EXPANSION-2-FRAMES result:** five-cell source sheet painted and visually reviewed; dimensions, RGBA, binary alpha, padding and empty portrait centres verified. Ready for review in PR #464. See [handoff](notes/expansion-2-art.md). Runtime checks not run (source art only).
+
+### EXPANSION-2-HESTER — Merchant table repaint
+
+- Owner: Codex; branch `art/expansion-2`; worktree `/workspace/legends-of-the-fall`.
+- Scope: only `art-source/expansion/hester-table.png` plus required prompt/task/handoff records.
+- Completion: one 384×256 transparent side-view merchant table matching tavern prop pixels, palette, outlines and lighting; requested goods, canopy, lantern and book sign; no people/text; add to PR #464.
+- Status: in progress; runtime integration excluded.
+- Result: ready for review in [Expansion art 2 #464](https://github.com/Hpatter9/legends-of-the-fall/pull/464). One 384×256 source PNG, 32 colours, binary alpha and 2×2 pixel grid verified; visually reviewed. [Handoff](notes/expansion-2-hester.md). Runtime tests/build not run (source art only).

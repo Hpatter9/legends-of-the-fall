@@ -25,3 +25,23 @@ small gold laurel wreath. Distinct whole silhouettes with transparent padding.
 ```text
 Repository hpatter9/legends-of-the-fall; branch art/expansion-2; output art-source/expansion/frames.png. Paint ONE 1280x256 transparent PNG, five equal 256x256 cells in one row, no text. Match the existing dark fantasy painted pixel-art UI: aged brass and gold, dark outlines, restrained highlights and dark crimson accents. Cells 1–3: matching thin square brass portrait frames, fully transparent centres, bearing exactly ONE, TWO, THREE deep diagonal claw scars respectively, dark red beneath torn brass. Cell 4: aged gold filigree square heirloom frame, transparent centre, small family crest at top, exactly three empty notches along bottom. Cell 5: one gold signet ring with red stone, centred and filling about 60% of its cell. Transparent background and padding; no lettering, no extra objects.
 ```
+
+## Hester merchant table
+
+```text
+Repository hpatter9/legends-of-the-fall; branch art/expansion-2.
+Paint ONE image: art-source/expansion/hester-table.png, 384×256,
+transparent background. Match src/art/tavern/table.png, longtable.png and
+barrels.png: coarse 16-bit pixel clusters, dark plum-brown stepped outlines,
+dusty reddish oak, tan/peach upper-left highlights and deep purple shadows.
+Use docs/samples/cliff-roam/tavern-393.png for context; this replaces its
+large painted stall. Compact travelling merchant trestle table in side view,
+with only a shallow tabletop top visible. Two A-frame trestles; a small
+striped olive-green-and-cream canopy on slender wooden uprights. Stacked
+leather books, a pair of boots, a horizontal dagger, three potion bottles
+and a small iron-banded chest. Hanging amber lantern at left, little wooden
+sign at right with a painted open-book pictogram. No people or text.
+No building, floor, backdrop, fine texture or soft glow. Crisp square pixels,
+restrained palette, logical 192×128 grid doubled to 384×256, transparent
+padding and all parts visible. One image only.
+```
