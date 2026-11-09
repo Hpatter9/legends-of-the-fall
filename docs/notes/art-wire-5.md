@@ -9,7 +9,9 @@ Merged `art/assault-orc` (PR #463, at 4553111b) and `art/expansion-2` (PR #464, 
 - **The cut.** `tools/assault/cut-sheets.py` run for all four holds (`KITS=` the `hpatter9/little-town` kits). Re-cutting main's old sheets first gave
   byte-identical files, so every change below is the repaints'. Only these pieces changed: `southGate` (and Battered, Broken), `northGate` (and Broken),
   `gateTower`, `ironGate` (and Battered, Broken), `postern` (and Broken), `cornerTower`, `keep`, `throne`, `greatBanner`, and the sixteen decals. The
-  Necropolis, the Den and Elder Root change in exactly those slots, since all three still borrow the Orc sheets (recoloured), as expected.
+  Necropolis, the Den and Elder Root change in exactly those slots, since all three still borrow the Orc sheets (recoloured), as expected. After
+  merging main 0.428.0, the Heart of the Maze (`labyrinth`) and Bonefire Crag (`ogres`) were cut too and change in the same slots; main's cutter
+  leaves the first four holds byte-identical. Their South and Iron Gates at Near and Mid, 393 and 360: `after-*-labyrinth-*`, `after-*-ogres-*`.
 - **Fit.** The repainted gates sheet has hard alpha (no halo at all); the iron-gate and keep sheets' faint haze (alpha under 128) is cleared by the
   cutter's own threshold, and the cut pieces show no fringe (checked on a light ground). The cutter's footprint report is better than before: the Iron
   Gate's three states no longer stray (they were 27 px low), and stand on their foot points; only the postern and the corner tower are "stood on
@@ -52,6 +54,6 @@ Nothing new moves, so reduced motion needs nothing more.
 
 ## Checks
 
-`npm run typecheck`, `npm run web`, `npm test -- assault field nemesis council news houses codex ui-standard alive ambient taunt equip` (216 pass) and
-`npm test -- dynasty heir` (26 pass); the browser scripts above and the older council, dynasty and trait art checks at 393, 360 and 412, with 0 page
+`npm run typecheck`, `npm run web`, `npm test -- assault field nemesis council news houses codex ui-standard alive ambient taunt equip dynasty heir` (257 pass
+after merging main 0.428.0); the browser scripts above and the older council, dynasty and trait art checks at 393, 360 and 412, with 0 page
 errors.
