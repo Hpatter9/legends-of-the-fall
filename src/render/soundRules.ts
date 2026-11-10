@@ -56,7 +56,9 @@ export type Cue =
   | 'ultCharge' | 'ultSlow'
   // the menus: the rune bench's pull bar sliding, two runes merging, a rune set on a hero; a ledger's page turned (the Castle's views, the
   // Summoning tab's nearest row)
-  | 'runeSlide' | 'runeMerge' | 'runeSet' | 'ledger';
+  | 'runeSlide' | 'runeMerge' | 'runeSet' | 'ledger'
+  // a duel made a show (DUEL-SHOW, `duelShow.ts`): the two walking into the ring, the crowd cheering a blow, the tug-of-war bar swinging
+  | 'duelWalk' | 'crowdCheer' | 'tugSwing';
 
 /** How a sound mixes. `gap`: least ms (real time) between two of it. `ms`: how long it rings, which is how long it holds
  *  its voices. `weight`: voices it uses. `prio`: 0 may be dropped first when the mix is full, 3 always plays. `gain`: its
@@ -114,6 +116,10 @@ export const CUES: Record<Cue, CueSpec> = {
   runeMerge: c(60, 900, 3, 2, 1.74),
   runeSet: c(60, 600, 2, 2, 2.29),
   ledger: c(150, 350, 1, 1, 4.27),
+  // (DUEL-SHOW: the walk-in plays once; the crowd's cheers and the bar's swing are kept apart so a flurry of blows is one roar)
+  duelWalk: c(0, 1700, 2, 2, 1.24),
+  crowdCheer: c(700, 1100, 2, 1, 2.54),
+  tugSwing: c(500, 500, 1, 1, 2),
 
   // (the holds: the blows on the structures are many and soft, never dropped behind a fight's own; the news of the battle always plays)
   gateHit: c(260, 300, 2, 1, 1.22),
