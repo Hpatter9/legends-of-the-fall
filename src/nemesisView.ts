@@ -112,7 +112,8 @@ export function openNemesisBoard(m: Meta, hooks: BoardHooks, tab: Tab = 'council
   const menu = ornateMenu({ id: 'nemesisBoard', eyebrow: 'The Nemesis War', title: 'The Dark Council', sub: councilLine(m), kind: 'sheet', label: 'The Dark Council: the nemeses who remember you', ...(over ? { onClose: () => endScene() } : {}) });
   if (over) playScene(WAR_END_SCENE);
   menu.card.classList.add('nmBoard');
-  menuBackdrop(menu.card, 'council');
+  // (the Assault's phase 5: once the War has ended, the Council's hall with its seats burning)
+  menuBackdrop(menu.card, over ? 'councilFallen' : 'council');
   const tabs = menuSection(menu.body, undefined, undefined, 4);
   tabs.classList.add('nmTabs');
   const pane = el('div', 'nmPane');

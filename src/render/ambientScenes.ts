@@ -352,6 +352,36 @@ export const SCENE_LIFE = {
     ],
     drifts: [{ kind: 'wisps', box: [0.3, 0.1, 0.7, 0.45], count: 8, colour: 0xb080ff }],
   },
+
+  /** The Council's hall after the War's end (`art/dynasty/council-fallen-backdrop.webp`, the Assault's phase 5): the same chamber, its seats
+   *  burning, the warchief's high seat empty. The seats down each side of the table and the near one gutter with low fire and send up
+   *  embers; ash drifts down through the smoke. Light only, under the card's veil. */
+  councilFallen: {
+    size: [768, 1152],
+    lights: [
+      // (the seats down the left of the table, then the right, far to near; the near seat; a sconce on each wall)
+      { at: [0.25, 0.42], r: 0.06, kind: 'fire', colour: 0xff7a24, power: 0.5 },
+      { at: [0.19, 0.47], r: 0.07, kind: 'fire', colour: 0xff7a24, power: 0.5 },
+      { at: [0.13, 0.53], r: 0.08, kind: 'fire', colour: 0xff7a24, power: 0.55 },
+      { at: [0.09, 0.6], r: 0.08, kind: 'fire', colour: 0xff7a24, power: 0.55 },
+      { at: [0.07, 0.67], r: 0.09, kind: 'fire', colour: 0xff7a24, power: 0.55 },
+      { at: [0.75, 0.42], r: 0.06, kind: 'fire', colour: 0xff7a24, power: 0.5 },
+      { at: [0.81, 0.47], r: 0.07, kind: 'fire', colour: 0xff7a24, power: 0.5 },
+      { at: [0.87, 0.53], r: 0.08, kind: 'fire', colour: 0xff7a24, power: 0.55 },
+      { at: [0.91, 0.6], r: 0.08, kind: 'fire', colour: 0xff7a24, power: 0.55 },
+      { at: [0.93, 0.67], r: 0.09, kind: 'fire', colour: 0xff7a24, power: 0.55 },
+      { at: [0.5, 0.89], r: 0.14, kind: 'fire', colour: 0xff7a24, power: 0.6 },
+      { at: [0.04, 0.23], r: 0.08, kind: 'torch', colour: 0xff9a40, power: 0.4 },
+      { at: [0.96, 0.23], r: 0.08, kind: 'torch', colour: 0xff9a40, power: 0.4 },
+    ],
+    regions: [],
+    spouts: [
+      { kind: 'embers', at: [0.12, 0.52], count: 8, spread: 0.08, rise: 0.14, life: 2, colour: 0xff8a30 },
+      { kind: 'embers', at: [0.88, 0.52], count: 8, spread: 0.08, rise: 0.14, life: 2, colour: 0xff8a30 },
+      { kind: 'embers', at: [0.5, 0.88], count: 10, spread: 0.1, rise: 0.16, life: 2.2, colour: 0xff8a30 },
+    ],
+    drifts: [{ kind: 'motes', box: [0.1, 0.05, 0.9, 0.6], count: 16, colour: 0xc9b8a8 }],
+  },
 } satisfies Record<string, SceneLife>;
 
 export type SceneName = keyof typeof SCENE_LIFE;
@@ -370,4 +400,5 @@ export const SCENE_ART: Record<SceneName, string> = {
   stall: 'src/art/shop/shelf.webp',
   houses: 'src/art/dynasty/houses-backdrop.webp',
   council: 'src/art/dynasty/council-backdrop.webp',
+  councilFallen: 'src/art/dynasty/council-fallen-backdrop.webp',
 };
