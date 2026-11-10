@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.475.0',
+    date: '2026-11-10',
+    title: 'The phone\'s Back button stays in the game',
+    notes: ['Back now closes the open menu, or returns to the Battle tab from another tab. It never leaves the game or drops a run.', 'In a fight it opens Settings, in an Assault the pause card, and it skips a scene as a tap does.'],
+  },
+  {
     version: '0.474.0',
     date: '2026-11-10',
     title: 'Area effects fill their whole area',

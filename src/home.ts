@@ -380,6 +380,11 @@ export class Home {
     return !$('home').hidden;
   }
 
+  /** The tab the home screen is on (PHONE-BACK: Back from another tab goes to Battle). */
+  get currentTab(): Tab {
+    return this.tab;
+  }
+
   /** Where on the home screen the player is, for the ambience: the armies if that screen is up, else the tab; null off the home screen. */
   get spot(): HomeSpot | null {
     if (!this.isOpen) return null;
