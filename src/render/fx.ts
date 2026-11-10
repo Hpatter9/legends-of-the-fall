@@ -6,7 +6,7 @@ import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { GroundPaint, GroundSet, patchRims, patchTile, reachOfWidth } from './groundMarks';
 import { AREA_REACH, areaSkill, areaTiles, auraTiles, spellTiles, tilesWithin } from './fxPlace';
 import { ALIVE, edgeQuarter, stripFrame, tileLook, tilePhase } from './fxAlive';
-import { ALIVE_CELL, aliveQuarters, loadAliveArt } from './aliveArt';
+import { ALIVE_CELL, aliveFill, aliveQuarters, loadAliveArt } from './aliveArt';
 import { TERRAIN_URLS } from './terrainArt';
 import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
@@ -2225,16 +2225,24 @@ export class Fx {
     const rimOf = patchRims(withH);
     // (the painted living-ground loop when the sheet holds the element (`aliveArt.ts`): only the quarters of each frame on the patch's outer
     // edges, so the patch is ringed by a moving painted edge and its inside stays clear; else the pack's rune for the element on each tile)
+    // REPAINTS-2: and the borderless painted fill on every tile under it, each tile a few frames from its neighbours, thinned under a fighter
     const quarters = el && !settings().saver ? aliveQuarters(el) : [];
-    const rune = el && !settings().saver && !quarters.length ? PACK[packKey(el, 'rune')] : undefined;
+    const fills = el && !settings().saver ? aliveFill(el) : [];
+    const rune = el && !settings().saver && !quarters.length && !fills.length ? PACK[packKey(el, 'rune')] : undefined;
     const scale = TW / ALIVE_CELL[0];
     const pieces = withH.map((t) => {
       const [x, y] = this.tilePos(b, t.u, t.v);
       const layer = this.groundOf(t.u, t.v);
       const rims = rimOf(t.u, t.v);
       const fill = set.add(patchTile(new Graphics(), x, y, [], { colour, fill: 1, edge: 0, inset: 0 }), layer);
-      const rim = set.add(patchTile(new Graphics(), x, y, rims, { colour, fill: 0, edge: 1, width: 2.5, inset: 0 }), layer);
       const sps: { sp: Sprite; q: number }[] = [];
+      if (fills.length) {
+        const sp = set.add(new Sprite(fills[0]), layer);
+        sp.scale.set(scale);
+        sp.position.set(x - TW / 2, y - (ALIVE_CELL[1] * scale) / 2);
+        sps.push({ sp, q: -2 });
+      }
+      const rim = set.add(patchTile(new Graphics(), x, y, rims, { colour, fill: 0, edge: 1, width: 2.5, inset: 0 }), layer);
       if (quarters.length) {
         for (const edge of rims) {
           const [qx, qy] = edgeQuarter(edge);
@@ -2276,9 +2284,12 @@ export class Fx {
           p.fill.alpha = look.fill;
           // (where the moving painted edge rings the patch, the drawn rim steps back to a thin line under it; held still with reduced motion,
           // the paint alone is too faint to carry the warning, so the rim keeps its own)
-          p.rim.alpha = !calm && p.sps.length && p.sps[0].q >= 0 ? look.rim * ALIVE.PAINTED_RIM : look.rim;
+          p.rim.alpha = !calm && quarters.length ? look.rim * ALIVE.PAINTED_RIM : look.rim;
           for (const { sp, q } of p.sps) {
-            if (q < 0 && rune) {
+            if (q === -2) {
+              sp.alpha = look.strip * ALIVE.PAINTED_FILL;
+              sp.texture = fills[stripFrame(t, p.phase, fills.length, calm)];
+            } else if (q === -1 && rune) {
               sp.alpha = look.strip;
               sp.texture = rune[stripFrame(t, p.phase, rune.length, calm)];
             } else if (q >= 0) {

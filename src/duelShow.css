@@ -39,8 +39,8 @@
 #bossBar .dsArt .dsFace.hero { left: 16px; }
 #bossBar .dsArt .dsFace.nem { right: 16px; left: auto; }
 #bossBar .dsArt .dsTrack { position: absolute; left: 57px; right: 57px; top: 39px; height: 11px; z-index: 1; border: 0; border-radius: 0; background: #0b0806; box-shadow: none; overflow: visible; }
-#bossBar .dsArt .dsGreen { background: var(--ds-green) left center / 30px 100% repeat-x; }
-#bossBar .dsArt .dsRed { background: var(--ds-red) right center / 30px 100% repeat-x; }
+#bossBar .dsArt .dsGreen { background: var(--ds-green) left center / 32px 100% repeat-x; }
+#bossBar .dsArt .dsRed { background: var(--ds-red) right center / 32px 100% repeat-x; }
 #bossBar .dsArt .dsKnot { top: 50%; bottom: auto; width: 14px; height: 22px; margin: -11px 0 0 -7px; z-index: 3; background: var(--ds-knot) center / contain no-repeat; box-shadow: none; filter: drop-shadow(0 1px 2px #000c); }
 #bossBar .dsArt .dsKnot::after { content: ''; position: absolute; left: 50%; top: 50%; width: 80px; height: 56px; margin: -28px 0 0 -40px; background: var(--ds-flare) center / contain no-repeat; opacity: 0; pointer-events: none; mix-blend-mode: screen; }
 #bossBar .dsArt.swing .dsKnot::after { animation: dsFlare 0.6s ease-out; }

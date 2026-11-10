@@ -28,6 +28,8 @@ export const ALIVE = {
    *  what the drawn rim keeps of its own under a painted edge. */
   PAINTED: 1.6,
   PAINTED_RIM: 0.6,
+  /** REPAINTS-2: the painted fill's strength, of the strip's (the fill is dense, so it lies lighter than the rune did). */
+  PAINTED_FILL: 1.3,
   /** With reduced motion: the patch's share of its strength, held still (mid-breath). */
   CALM: 0.75,
 } as const;

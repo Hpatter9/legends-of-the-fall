@@ -68,3 +68,12 @@ test('a painted loop shows only the quarters on the patch outer edges: each side
   const m = JSON.parse(readFileSync('src/art/fx/alive/atlas.json', 'utf8')) as { rows: Record<string, number[]> };
   assert.deepEqual(Object.keys(m.rows).sort(), ['dark', 'earth', 'fire', 'forest', 'ice', 'light', 'poison', 'wind']);
 });
+
+test('the borderless fill is cut beside the edge: all eight elements, the same 2:1 tile', () => {
+  const m = JSON.parse(readFileSync('src/art/fx/alive/fill.json', 'utf8')) as { cell: number[]; rows: Record<string, number[]> };
+  assert.deepEqual(m.cell, [128, 64]);
+  assert.deepEqual(Object.keys(m.rows).sort(), ['dark', 'earth', 'fire', 'forest', 'ice', 'light', 'poison', 'wind']);
+  for (const row of Object.values(m.rows)) assert.equal(row[1], 8);
+  // (it lies on every tile, so under a fighter it thins with the strip)
+  assert.ok(ALIVE.PAINTED_FILL * tileLook(0, 0, true, false).strip < 0.3);
+});

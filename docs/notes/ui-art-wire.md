@@ -58,7 +58,7 @@ game.js, so nothing for the service worker's list) and sets them as CSS variable
 - **A flaw, fixed in the cut: worth a repaint.** Each fill tile (64 x 26) has a clear 1 px rim and fades over its last column on each side.
   Laid end to end, they showed a dark seam every 64 px. The cut keeps the 60 x 24 middle, which repeats with only a faint join. The tiles
   are also semi-transparent throughout (alpha about 183, so the channel's dark floor shows through, which reads well). A repaint should have
-  the fill run edge to edge with no rim and no fade at the left and right ends, so it repeats seamlessly.
+  the fill run edge to edge with no rim and no fade at the left and right ends, so it repeats seamlessly. (Done: the owner's repaint runs edge to edge and is tiled whole, `docs/notes/repaints-2.md`.)
 - `tools/duel-show/shots.mjs` (the duel-show branch's own) passes all its checks at the three sizes. It now also takes a `swing-<w>` frame
   (the flare). Shots: `duel-bar-{before,after}-<w>.png` (4 s into the fight) and `duel-bar-swing-after-393.png`.
 
