@@ -4,6 +4,7 @@
 
 import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { GroundPaint, GroundSet, patchRims, patchTile, reachOfWidth } from './groundMarks';
+import { AREA_REACH, areaSkill, areaTiles, auraTiles, spellTiles, tilesWithin } from './fxPlace';
 import { TERRAIN_URLS } from './terrainArt';
 import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
@@ -30,7 +31,7 @@ import { skillShown } from '../sim/heroKits';
 import { abilityHeading } from './abilityLooks';
 import { abilityFrames, loadAbilityArt } from './abilityArt';
 import { SPELL_SIGNATURES } from './spellSignatures';
-import { SPELLS } from '../sim/spells';
+import { rankOf, SPELLS } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { at, depth, facesRight, TH, TW } from './iso';
@@ -46,6 +47,8 @@ import { ailmentChip } from './ailmentLayer';
 
 /** An ailment's damage colour (none for a plain blow: it keeps the usual white, gold or red). */
 const numberColour = (ail?: AilmentKey | 'shatter'): number | undefined => (ail === 'shatter' ? SHATTER_COLOUR : ail ? STATUS_STYLES[ail].number : undefined);
+/** FX-PLACE: the base fill of an area's marked tiles; the set's alpha carries main's pulse over it (0.2 to 0.27), and the rim stays firm. */
+const AREA_FILL = 0.235;
 import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
 import { showDuoToast } from '../duoToast';
@@ -55,7 +58,7 @@ import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
 import { isMythic } from '../sim/mythicRules';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
-import { arcStyle, bits, FLASH_MAX, FLASH_MS, HealPool, numberShown, towards, WALL_DIM, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
+import { arcStyle, bits, FLASH_MAX, FLASH_MS, GLOW, HealPool, numberShown, towards, WALL_DIM, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
@@ -1924,12 +1927,8 @@ export class Fx {
     const lay = (c: { u: number; v: number }) => {
       g.destroy();
       g = new GroundSet();
-      const tiles: { u: number; v: number; h: number }[] = [];
-      for (let du = -e.reach; du <= e.reach; du++)
-        for (let dv = -e.reach; dv <= e.reach; dv++) {
-          const tl = tileAt(b.board, c.u + du, c.v + dv);
-          if (tl) tiles.push({ u: c.u + du, v: c.v + dv, h: tl.h });
-        }
+      // (FX-PLACE: the diamond of its reach, as the sim counts it (Manhattan); it was the square round it, half again as many tiles)
+      const tiles = auraTiles(b.board, c, e.reach).map((t) => ({ ...t, h: tileAt(b.board, t.u, t.v)!.h }));
       const rimOf = patchRims(tiles);
       for (const tl of tiles) {
         const [x, y] = this.tilePos(b, tl.u, tl.v);
@@ -2209,6 +2208,19 @@ export class Fx {
     return at(u, v, tileAt(b.board, u, v)?.h ?? 0);
   }
 
+  /** FX-PLACE: a tinted patch on `tiles`, each piece on its own tile's top and ground (so it sits on raised and sunken tiles alike, under whoever
+   *  stands in it), with a rim round the patch. Its strength is the set's `alpha`. */
+  private tilePatch(b: Battle, tiles: readonly { u: number; v: number }[], colour: number, fill = 0.32, edge = 0.8): GroundSet {
+    const set = new GroundSet();
+    const withH = tiles.map((t) => ({ u: t.u, v: t.v, h: tileAt(b.board, t.u, t.v)?.h ?? 0 }));
+    const rimOf = patchRims(withH);
+    for (const t of withH) {
+      const [x, y] = this.tilePos(b, t.u, t.v);
+      set.add(patchTile(new Graphics(), x, y, rimOf(t.u, t.v), { colour, fill, edge, width: 2, inset: 0 }), this.groundOf(t.u, t.v));
+    }
+    return set;
+  }
+
   /** FIXES-4: the layer a mark on tile (u, v) goes on: the tile's own ground, else `ground` when its page shows it, else the effects' own. */
   groundOf(u: number, v: number): Container {
     return this.groundAt(u, v) ?? (this.ground.parent ? this.ground : this.root);
@@ -2320,14 +2332,18 @@ export class Fx {
   private area(b: Battle, e: Extract<BattleEvent, { kind: 'area' }>, royalSky?: 'meteor' | 'starfall'): void {
     const meteor = e.id === 'meteor';
     const color = meteor ? 0xff5a2a : 0xffe27a;
+    // (FX-PLACE: the tiles the sim strikes there, `areaTiles`: a 3x3, wider by its `r`, or a Mythic's diamond round it)
+    const by = e.by === 0 ? undefined : b.units.find((x) => x.id === e.by);
+    const skill = e.by === 0 ? undefined : areaSkill(this.tickCasts.get(e.by), this.casting.get(e.by), by, e);
+    const reach = e.by === 0 ? { tiles: tilesWithin(b.board, e.u, e.v, 1 + (e.r ?? 0), 'square'), help: false } : areaTiles(b.board, e, skill);
+    if (skill && AREA_REACH[skill]) return this.reachBurst(b, e, skill, reach);
     const view = new Container();
     const g = new Graphics();
     view.addChild(g);
     this.root.addChild(view);
-    const tiles: [number, number][] = [];
-    // (a 3x3, or wider for a tier skill's widened volley or judgement)
-    const r = 1 + (e.r ?? 0);
-    for (let du = -r; du <= r; du++) for (let dv = -r; dv <= r; dv++) if (tileAt(b.board, e.u + du, e.v + dv)) tiles.push(this.tilePos(b, e.u + du, e.v + dv));
+    // (the marked tiles lie on their own tiles' ground, under the fighters standing in them; the arrows and the ball fall over them)
+    const patch = this.tilePatch(b, reach.tiles, color, AREA_FILL, 0.75);
+    const tiles: [number, number][] = reach.tiles.map((t) => this.tilePos(b, t.u, t.v));
     const [cx, cy] = this.tilePos(b, e.u, e.v);
     // volley: a dozen arrows, each falling in its own moment; meteor: one fireball from the sky
     const arrows = meteor
@@ -2348,6 +2364,7 @@ export class Fx {
     if (paint && spellFrames(paint.travel ?? paint.mark ?? '').length && this.paintArea(b, e, paint)) {
       this.root.removeChild(view);
       view.destroy({ children: true });
+      patch.destroy();
       return;
     }
     const orbFrames = abilityFrames(skyArt, 'orb') ?? PACK['fire-orb'];
@@ -2369,7 +2386,7 @@ export class Fx {
         // (the marked tiles breathe, quicker as it nears; never fading right out, and steady with reduced motion)
         const k = Math.min(1, t / e.ms);
         const pulse = this.calm() ? 0.2 : 0.2 + 0.07 * Math.sin((t / (320 - 190 * k)) * Math.PI);
-        for (const [x, y] of tiles) g.poly([x, y - TH / 2, x + TW / 2, y, x, y + TH / 2, x - TW / 2, y]).fill({ color, alpha: pulse }).stroke({ color, width: 1.5, alpha: 0.7 });
+        patch.alpha = pulse / AREA_FILL;
         for (const a of arrows) {
           const f = (t - a.at) / 260;
           a.sp.visible = f >= 0 && f < 1;
@@ -2404,7 +2421,30 @@ export class Fx {
             this.meteorLanding(cx, cy, skyArt);
           }
         }
+        if (t >= e.ms) patch.destroy();
         return t < e.ms;
+      },
+    });
+  }
+
+  /** FX-PLACE: a Mythic's great move (`AREA_REACH`): its diamond of tiles lit in its element (a ward in the healers' gold), a burst of the element
+   *  where it goes off, the patch fading over the move's time; Heavenfall's constellations burn their 3x3 for as long as the sim keeps them. No
+   *  meteor falls: the sim strikes, heals or shields the fighters in the diamond at once. */
+  private reachBurst(b: Battle, e: Extract<BattleEvent, { kind: 'area' }>, skill: string, reach: { tiles: { u: number; v: number }[]; help: boolean; burns?: number }): void {
+    const el = skillElement(skill);
+    const colour = reach.help ? 0xffe9a0 : GLOW[el];
+    const patch = this.tilePatch(b, reach.tiles, colour, 0.45, 0.95);
+    const [cx, cy] = this.tilePos(b, e.u, e.v);
+    impactBurst(this.particles, el, cx, cy - 12, 1.4 + 0.3 * (AREA_REACH[skill]?.reach ?? 0), true);
+    if (reach.burns) this.zone(b, e.u, e.v, reach.burns);
+    let t = 0;
+    const ms = Math.max(500, e.ms);
+    this.items.push({
+      view: patch,
+      step: (dt) => {
+        t += dt;
+        patch.alpha = t < ms * 0.5 ? 1 : Math.max(0, 1 - (t - ms * 0.5) / (ms * 0.5));
+        return t < ms;
       },
     });
   }
@@ -2547,15 +2587,15 @@ export class Fx {
         }
     if (e.id === 'smite' || e.id === 'chain' || e.id === 'lance') this.trauma = Math.max(this.trauma, 0.45);
     const { color, ms } = SPELL_GLOW[e.id];
-    const g = new Graphics();
-    this.root.addChild(g);
+    // (FX-PLACE: the tiles the spell touches, `spellTiles`: the Lance's column, the Sunbeam's row, a wall's row, else the 3x3; lying on their own
+    // tiles' ground, under the fighters in them)
+    const glow = this.tilePatch(b, spellTiles(b.board, e.id, e.u, e.v, rankOf(b, e.id)), color, 1);
     let t = 0;
     let puffedAt = 0;
     this.items.push({
-      view: g,
+      view: glow,
       step: (dt) => {
         t += dt;
-        g.clear();
         // (a poison cloud keeps boiling: a puff of green rises from a tile of it now and then, with bubbles over it)
         if (e.id === 'poison' && t - puffedAt >= 160 && this.particles.rate(1)) {
           puffedAt = t;
@@ -2563,13 +2603,8 @@ export class Fx {
           this.particles.spawn({ frames: PACK['poison-smoke'], x: px + jitter(12), y: py - 4, scale: 1.1, life: 900, vy: -0.02, grow: 0.0005, alpha: 0.6, add: true });
           if (this.particles.rate(0.5)) this.particles.spawn({ frames: PACK['poison-status'], x: px + jitter(12), y: py - 10, scale: 1, life: 700, vy: -0.03, add: true });
         }
-        const alpha = e.id === 'poison' ? 0.27 : 0.35 * (1 - t / ms);
-        for (let du = -1; du <= 1; du++)
-          for (let dv = -1; dv <= 1; dv++) {
-            if (!tileAt(b.board, e.u + du, e.v + dv)) continue;
-            const [x, y] = this.tilePos(b, e.u + du, e.v + dv);
-            g.poly([x, y - TH / 2, x + TW / 2, y, x, y + TH / 2, x - TW / 2, y]).fill({ color, alpha });
-          }
+        glow.alpha = e.id === 'poison' ? 0.27 : Math.max(0, 0.35 * (1 - t / ms));
+        if (t >= ms) glow.destroy();
         return t < ms;
       },
     });
