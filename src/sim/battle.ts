@@ -11,7 +11,7 @@ import { mythicBlow, mythicDamage, mythicSpare, mythicWound, tickMythics, type M
 import type { Rift } from './rift';
 import { startRift, tickRift } from './riftBattle';
 import { tickHazards } from './hazards';
-import { BARREL_BLAST, boardOk, CLIMB_COST, COALS_BURN, COALS_STAND, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, tileAt, type Area, type At, type Board, type HazardKind, type Tile } from './board';
+import { BARREL_BLAST, boardOk, canStep, CLIMB_COST, COALS_BURN, COALS_STAND, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, tileAt, type Area, type At, type Board, type HazardKind, type Tile } from './board';
 import { cloneBoard } from './chain';
 import { weatherOf } from './weather';
 import type { LayoutId } from './layouts';
@@ -65,6 +65,8 @@ import { kitBlow, kitDeath, kitDef, kitDefence, kitQuick, kitSpare, kitStill, re
 import { SPLASH_SHARE, UNITS, type Shot, type Side, type UnitDef } from './units';
 import { statMults, type StatMults } from './statPower';
 import { blastThrows, type Throws } from './kits/ranged';
+import { swapPlaces } from './toolkit/blink';
+import { FEEL } from './feel';
 import { airborne, erupt, shotWall, tickToolkit, WALL, type Aura, type Burrowing, type Wall, type WallKind } from './toolkit';
 
 export const TICK_MS = 100;
@@ -109,6 +111,9 @@ export interface Unit {
   /** A charging foe's steps in a row since its last blow (FOE-STYLES, `foeStyles.ts`). */
   run?: number;
   flankAt?: number;
+  /** When it last stepped (`stepTo`), and last changed places with a friend to get past it (BATTLE-FEEL round 2, `unjam`). */
+  movedAt?: number;
+  swapAt?: number;
   hurtAt?: number;
   /** Skill charge, 0 to `CHARGE_MAX` (heroes only). */
   charge: number;
@@ -1427,6 +1432,9 @@ const PERCH_SHOOTER = 1.6;
 const PERCH_MELEE = 1.2;
 /** The most extra walking a fighter does, past the nearest tile it could strike from, for the sake of better footing. */
 const PERCH_DETOUR = 4;
+/** The most further a fighter walks (cost) to strike the foe nearest it as the crow flies, past the foe it could strike soonest
+ *  (BATTLE-FEEL, docs/notes/battle-feel.md): a foe further than that by walking is passed over for one nearer by walking. */
+export const FAR_WALK = 4;
 /** What a shooter adds to a tile's cost for each brute that could reach it in two steps. */
 const MENACE_COST = 0.6;
 /** The most a hurt fighter walks (cost) to reach a shrine. */
@@ -1676,9 +1684,8 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const menace = def.shot ? foes.filter((x) => !defOf(x).shot && defOf(x).range <= 2) : [];
   // (STATS batch 6: a quick melee hero, DEX +3 or more, goes round to a foe's side or back)
   const flank = !def.shot && ((REST.flank && quickHero(me)) || mv === 'flank');
-  for (const f of byDistance) {
-    const hf = tileOf(b, f).h;
-    // (the way costs steps; high ground over the foe takes off the cost of getting there, a shooter's tile under a brute's club adds to it)
+  // (each foe's tiles to strike it from, and the nearest of them by walking)
+  const reach = byDistance.map((f) => {
     const spots: number[] = [];
     let nearest = Infinity;
     for (let i = 0; i < walk.cost.length; i++) {
@@ -1686,6 +1693,20 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
       spots.push(i);
       nearest = Math.min(nearest, walk.cost[i]);
     }
+    return { spots, nearest };
+  });
+  // (BATTLE-FEEL: a foe that is near as the crow flies but a long walk round is passed over for one that can be struck sooner, `FAR_WALK`;
+  // it was the nearest by air that had any free tile at all, and as friends filled and freed its tiles a fighter paced back and forth.
+  // Melee heroes only: a shooter has tiles enough to choose from, and the foes keep their minds, as with `unjam` (on the foes too it cost the
+  // heroes two points of the sweep, and on the shooters it left the Gorgon behind, docs/notes/battle-feel.md).
+  // Not on the Assault's field, which picks its own way.)
+  const soonest = b.field || me.side !== 'hero' || def.shot || !FEEL.on || !FEEL.walk ? Infinity : Math.min(...reach.map((r) => r.nearest));
+  for (let k = 0; k < byDistance.length; k++) {
+    const f = byDistance[k];
+    const hf = tileOf(b, f).h;
+    // (the way costs steps; high ground over the foe takes off the cost of getting there, a shooter's tile under a brute's club adds to it)
+    const { spots, nearest } = reach[k];
+    if (nearest > soonest + FAR_WALK) continue;
     let goal = -1;
     let best = Infinity;
     for (const i of spots) {
@@ -1705,7 +1726,33 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const near = byDistance[0];
   const next = firstStep(open, near.v * b.board.w + near.u);
   if (next !== null && !blocked.has(next)) return stepTo(b, me, next, out);
+  // (BATTLE-FEEL round 2: a melee hero with a still shooter or caster of its own in the way, in a gap in a wall say, changes places with it)
+  if (next !== null && unjam(b, me, def, unitAt(b, next % b.board.w, Math.floor(next / b.board.w)), out)) return;
   me.busyUntil = b.t + WAIT_MS;
+}
+
+/** BATTLE-FEEL round 2: how long a friend must have stood (ms) before a blocked melee hero changes places with it, and how long before either
+ *  changes places that way again. */
+export const STILL_MS = 1000;
+export const UNJAM_MS = 4000;
+
+/** A melee hero that can get at no foe, its way blocked by a friend that strikes from afar (a shooter or a caster) and has stood still for
+ *  `STILL_MS`, changes places with that friend (the toolkit's `swap`), at most once in `UNJAM_MS` for either. Not in the Assault's field, the
+ *  Last Stand or a duel, and never onto lava or coals. True when it did. */
+export function unjam(b: Battle, me: Unit, def: UnitDef, f: Unit | undefined, out: BattleEvent[]): boolean {
+  if (!FEEL.on || !FEEL.swap || !f || f.side !== me.side || me.side !== 'hero' || def.shot || b.field || b.stand || b.duel) return false;
+  if (!strikeDef(b, f).shot || f.busyUntil > b.t + WAIT_MS || (b.kits && kitStill(b, f))) return false;
+  if (b.t - (f.movedAt ?? 0) < STILL_MS) return false;
+  if ((me.swapAt !== undefined && b.t - me.swapAt < UNJAM_MS) || (f.swapAt !== undefined && b.t - f.swapAt < UNJAM_MS)) return false;
+  const hot = (g: Tile['ground']) => g === 'lava' || g === 'coals';
+  if (hot(tileOf(b, me).ground) || hot(tileOf(b, f).ground)) return false;
+  if (canStep(tileOf(b, me), tileOf(b, f), def.jump, me.side) === null || canStep(tileOf(b, f), tileOf(b, me), defOf(f).jump, f.side) === null) return false;
+  if (!swapPlaces(b, me, f, out)) return false;
+  me.swapAt = f.swapAt = b.t;
+  me.movedAt = f.movedAt = b.t;
+  me.facing = wayTo(f, me);
+  me.busyUntil = b.t + def.moveMs;
+  return true;
 }
 
 export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[]): void {
@@ -1769,6 +1816,7 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
   me.u = next.u;
   me.v = next.v;
   me.busyUntil = b.t + ms;
+  me.movedAt = b.t;
   if (b.field) fieldHooks.moved?.(b, me, was);
   noteStep(me);
   // lava and hot coals burn whoever ends a step on them (fliers pass over)

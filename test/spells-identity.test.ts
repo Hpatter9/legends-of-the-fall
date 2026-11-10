@@ -90,6 +90,9 @@
 // 1.36, constants, retuned for the default ruler's player. The armies' raised strengths are put back by value above, so no other scenario moved.)
 // (HEROES-JOIN 2, docs/notes/heroes-join-2.md, re-recorded every scenario again from the tests' own output: eleven more heroes in the roster move the
 // pool means, and the new heroes join the pool the fights draw on; the Knight's, Wanderer's, Priestess's and Tyrant's ultimates and the Mummy's skill 1 were retuned.)
+// (BATTLE-FEEL, docs/notes/battle-feel.md, re-recorded every scenario but tower, stand and calamity from the test's own output: a melee hero now walks
+// for the foe it can strike soonest (`FAR_WALK`) and changes places with a still shooter of its own in a gap (`unjam`), and a skill's blow
+// lands at least a third of its power through armour (`SKILL_FLOOR`). Tower, stand and calamity kept their hashes.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { identityHashes } from '../tools/spells/identity';

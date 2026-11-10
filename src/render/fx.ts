@@ -55,7 +55,7 @@ import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
 import { isMythic } from '../sim/mythicRules';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
-import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
+import { arcStyle, bits, FLASH_MAX, FLASH_MS, HealPool, towards, WALL_DIM, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
@@ -188,6 +188,8 @@ export class Fx {
   private skillStack: { txt: Text; cut: () => void }[] = [];
   /** The skill each caster last cast (its blows' hits read it: a skill or its ultimate). */
   private casting = new Map<number, string>();
+  /** The small heals waiting to be shown (BATTLE-FEEL, `HealPool`). */
+  private heals = new HealPool();
   /** The skills cast this tick, by caster (`show`). */
   private tickCasts = new Map<number, string>();
   /** The painted loops held over fighters (`movePaint`'s stands), so a state shown once is not shown twice. */
@@ -263,6 +265,7 @@ export class Fx {
     this.particles.clear();
     this.moment.clear();
     this.bossFx.clear();
+    this.heals.clear();
     this.epic = new Set();
     this.setEpic(false);
   }
@@ -356,6 +359,13 @@ export class Fx {
     let royalSky: 'meteor' | 'starfall' | undefined;
     const slashes = slashesOf(events);
     this.healerPaint(events);
+    // (the small heals pooled a second ago, or grown big, show now as one quieter number each)
+    for (const h of this.heals.due(this.clock, (id) => this.sprites.get(id)?.unit.maxHp)) {
+      const to = this.sprites.get(h.id)!;
+      if (!to.unit.alive) continue;
+      this.label(`+${h.sum}`, to.x, to.y - to.tall - 10, 0x7dff8a, 10, 700);
+      this.sparkles(to.x, to.y - to.tall * 0.4, 0x7dff8a);
+    }
     // (the tick's casts, by caster: a cast's own events come before its `skill` event, so a ball it throws looks its caster's skill up here)
     this.tickCasts.clear();
     for (const e of events) if (e.kind === 'skill') this.tickCasts.set(e.by, e.name);
@@ -368,7 +378,8 @@ export class Fx {
       else if (e.kind === 'dodge') {
         const to = this.sprites.get(e.to);
         if (to) {
-          this.label('Miss', to.x, to.y - to.tall - 10, 0xcfe8ff, 12);
+          // (the word only with the numbers on, as Glance and Immune: BATTLE-FEEL round 2; the whoosh shows either way)
+          if (settings().numbers) this.label('Miss', to.x, to.y - to.tall - 10, 0xcfe8ff, 12);
           // (a whoosh of wind across the one that dodged)
           this.particles.spawn({ frames: VFX.dashWhite, x: to.x, y: to.y - to.tall * 0.5, scale: 1.1, frameMs: 40, alpha: 0.8, add: true, stretchX: facesRight(to.unit.facing) ? 1 : -1 });
         }
@@ -390,7 +401,8 @@ export class Fx {
       else if (e.kind === 'spellfx') this.spellFx(e);
       else if (e.kind === 'heal') {
         const to = this.sprites.get(e.to);
-        if (to && e.amount > 0) {
+        // (BATTLE-FEEL: a small heal, an aura's tick or a drain, waits to be shown with the fighter's other small heals, `HealPool`)
+        if (to && e.amount > 0 && this.heals.add(e.to, e.amount, to.unit.maxHp, this.clock)) {
           this.label(`+${e.amount}`, to.x, to.y - to.tall - 10, 0x7dff8a, 13);
           this.sparkles(to.x, to.y - to.tall * 0.4, 0x7dff8a);
           // (a green ring rises round the healed, and a thread of light runs to it from the healer)
@@ -479,7 +491,9 @@ export class Fx {
           continue;
         }
         // (a skill's blow has its own sheet; a crit or a big kill adds a burst, a white flash and a harder shake)
-        const castName = e.src === 'skill' ? this.casting.get(e.by) ?? keyOfKit(by) : '';
+        // (a cast's own hits come before its `skill` event in the tick: this tick's cast first, so a hero's second skill or ultimate is not
+        // drawn as the skill it cast before)
+        const castName = e.src === 'skill' ? this.tickCasts.get(e.by) ?? this.casting.get(e.by) ?? keyOfKit(by) : '';
         const signature = kitSignature(castName)?.hit;
         const skillFx = e.src === 'skill' && !signature ? SKILL_FX[castName]?.hit : undefined;
         // (the spark grows with the blow: a scratch is small, a half-health blow fills the struck)
@@ -498,7 +512,7 @@ export class Fx {
         } else if (skillFx) {
           this.effect(skillFx, hx, hy);
           // (and a burst of the skill's own element on top)
-          impactBurst(this.particles, skillElement(keyOfKit(by)), hx, hy, 0.8, e.splash);
+          impactBurst(this.particles, skillElement(castName), hx, hy, 0.8, e.splash);
         } else if (defOf(by).shot) {
           // (a shot lands in its own element: fire bursts, frost shatters, lightning cracks, poison lingers, an arrow bites)
           const m = missileOf(defOf(by).shot!, defOf(by).name);
@@ -508,7 +522,7 @@ export class Fx {
         if (this.particles.rate(0.7)) this.puffAt(to.x, to.y - to.tall * 0.3, target.side === 'hero' ? 'white' : 'blood', 0.8 + spark * 0.2);
         this.flesh(target, hx, hy, e.dmg / target.maxHp);
         // (a glancing blow, STATS batch 4: the word, and a smaller grey number)
-        if (e.glance) this.label('Glance', to.x, to.y - to.tall - 22, 0xb4b4b4, 10, 600);
+        if (e.glance && settings().numbers) this.label('Glance', to.x, to.y - to.tall - 22, 0xb4b4b4, 10, 600);
         this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high, e.ail, e.glance);
         this.trauma = Math.min(1, this.trauma + traumaFor(e.dmg / target.maxHp, e.killed) * 0.5);
         // (the struck is knocked a little away along the blow, and a crit or a killing blow stops the fight for a moment)
@@ -1480,7 +1494,7 @@ export class Fx {
   }
 
   /** A painted loop following `where` while `live` holds, then fading out. */
-  private paintLoop(key: string, where: () => [number, number], live: () => boolean, o: { mult?: number; depthOf?: () => number; alpha?: number; onGone?: () => void; tint?: number; ground?: { b: Battle; tile: () => { u: number; v: number } | null } } = {}): boolean {
+  private paintLoop(key: string, where: () => [number, number], live: () => boolean, o: { mult?: number; depthOf?: () => number; alpha?: number; dim?: () => number; onGone?: () => void; tint?: number; ground?: { b: Battle; tile: () => { u: number; v: number } | null } } = {}): boolean {
     const frames = spellFrames(key);
     if (!frames.length) return false;
     if (o.ground && this.paintGround(key, frames, where, live, o, o.ground)) return true;
@@ -1507,8 +1521,8 @@ export class Fx {
           if (sp.alpha <= 0) o.onGone?.();
           return sp.alpha > 0;
         }
-        // (in over 150 ms, so it does not pop)
-        sp.alpha = Math.min(full, sp.alpha + (full * dt) / 150);
+        // (in over 150 ms, so it does not pop; down to its `dim` while a fighter stands in it, BATTLE-FEEL round 2)
+        sp.alpha = towards(sp.alpha, full * (o.dim?.() ?? 1), dt);
         return true;
       },
     });
@@ -1601,7 +1615,7 @@ export class Fx {
   /** A painted wall tile at its foot (x, y): it rises, stands (a gentle loop) while `live` holds, then breaks down to nothing, all in
    *  the one sprite, so nothing blinks between the parts. A wall with no rise (the wind) comes in over 200 ms, and with no break
    *  fades out. */
-  private paintWall(sheet: string, x: number, y: number, live: () => boolean): boolean {
+  private paintWall(sheet: string, x: number, y: number, live: () => boolean, dim?: () => number): boolean {
     const stand = spellFrames(`${sheet}.stand`);
     if (!stand.length) return false;
     const rise = spellFrames(`${sheet}.rise`);
@@ -1633,7 +1647,7 @@ export class Fx {
           sp.alpha = Math.min(1, (fall.length - (t - end) / 70) / 2);
           return true;
         }
-        if (!rise.length) sp.alpha = Math.min(1, sp.alpha + dt / 200);
+        if (!rise.length || t >= riseMs) sp.alpha = towards(sp.alpha, dim?.() ?? 1, dt);
         if (t < riseMs) sp.texture = rise[Math.floor(t / 70)];
         else sp.texture = this.reduced ? stand[0] : stand[Math.floor((t - riseMs) / 110) % stand.length];
         return true;
@@ -1722,8 +1736,8 @@ export class Fx {
 
   /** A look's strip looped at a point while `live` holds (it may move, `where`); it fades out when `live` stops holding. Reduced motion
    *  holds its first frame. */
-  private lookLoop(l: Look, where: () => [number, number], scale: number, live: () => boolean, depthOf?: () => number): void {
-    if (l.paint && this.paintLoop(l.paint, where, live, { depthOf })) return;
+  private lookLoop(l: Look, where: () => [number, number], scale: number, live: () => boolean, depthOf?: () => number, dim?: () => number): void {
+    if (l.paint && this.paintLoop(l.paint, where, live, { depthOf, dim })) return;
     const frames = l.loop ? PACK[l.loop] : undefined;
     if (!frames?.length) return;
     const sp = new Sprite(frames[0]);
@@ -1752,7 +1766,7 @@ export class Fx {
         const pose = paintHeld(sp, t, scale, 0, l.alpha ?? 0.9, this.reduced);
         if (pose) {
           sp.blendMode = 'add';
-          sp.alpha = Math.min(1, t / 150) * (l.alpha ?? 0.9);
+          sp.alpha = Math.min(1, t / 150) * (l.alpha ?? 0.9) * (dim?.() ?? 1);
           sp.position.set(x + pose.dx * 32 * scale, y + pose.dy * 32 * scale);
         }
         return true;
@@ -1766,10 +1780,12 @@ export class Fx {
     const [x, y] = this.tilePos(b, u, v);
     const i = v * b.board.w + u;
     const live = () => !!b.walls?.some((w) => w.i === i && w.kind === kind && w.until > b.t);
+    // (BATTLE-FEEL round 2: a wall's loop thins while a fighter stands in it, so it does not hide them, `WALL_DIM`)
+    const dim = () => (b.units.some((x) => x.alive && x.u === u && x.v === v) ? WALL_DIM : 1);
     // (KING-SPELLS batch 5: a wall the king raised, `by` 0, stands as its spell's own painted loop)
     const king = b.walls?.find((w) => w.i === i && w.kind === kind && w.until > b.t)?.by === 0 ? KING_WALL[kind] : undefined;
-    if (king && this.paintWall(king, x, y + 2, live)) return;
-    if (look.paint && this.paintWall(look.paint, x, y + 2, live)) return;
+    if (king && this.paintWall(king, x, y + 2, live, dim)) return;
+    if (look.paint && this.paintWall(look.paint, x, y + 2, live, dim)) return;
     this.lookOnce(look, x, y - 8, 1.6);
     if (look.prop && kitArt) {
       const sp = new Sprite(kitArt.walls[(u + v) % 2]);
@@ -1782,7 +1798,7 @@ export class Fx {
       let t = 0;
       this.items.push({ view: sp, step: (dt) => ((t += dt), live() || t < 200 ? true : ((sp.alpha = Math.max(0, sp.alpha - dt / 300)), sp.alpha > 0)) });
     }
-    this.lookLoop(look, () => [x, y - 10], kind === 'wind' ? 1.4 : 1.2, live);
+    this.lookLoop(look, () => [x, y - 10], kind === 'wind' ? 1.4 : 1.2, live, undefined, dim);
   }
 
   private toolkit(b: Battle, e: Extract<BattleEvent, { kind: 'shove' | 'launch' | 'slam' | 'fall' | 'burrow' | 'swap' | 'aura' | 'wallBreak' }>): void {
@@ -2801,12 +2817,21 @@ export class Fx {
    *  ailment's chip (not crossed out: it still takes hold, for half as long). */
   private saved(id: number, what: AilmentKey | 'charm' | 'shove' | 'blast'): void {
     const s = this.sprites.get(id);
-    if (!s || !settings().numbers) return;
-    const { txt } = this.label('Saved', s.x + 6, s.y - s.tall - 12, IMMUNE_COLOUR, 9, 800);
-    if (txt.children.length || what === 'charm' || what === 'shove' || what === 'blast') return;
+    // (BATTLE-FEEL round 2: no word, only the ailment's chip rising beside the fighter; a charm, shove or blast saved has no chip, so shows nothing)
+    if (!s || !settings().numbers || what === 'charm' || what === 'shove' || what === 'blast') return;
     const chip = ailmentChip(what, undefined, false);
-    chip.position.set(-txt.width / 2 - 8, -txt.height / 2);
-    txt.addChild(chip);
+    chip.position.set(Math.round(s.x + 10), Math.round(s.y - s.tall - 16));
+    this.root.addChild(chip);
+    let t = 0;
+    this.items.push({
+      view: chip,
+      step: (dt) => {
+        t += dt;
+        chip.y -= dt * 0.02;
+        chip.alpha = t > 480 ? 1 - (t - 480) / 320 : 1;
+        return t < 800;
+      },
+    });
   }
 
   /** A frozen fighter's ice shatters: the burst of shards, once, and the word (the extra blow's number follows, ice-white and big). */

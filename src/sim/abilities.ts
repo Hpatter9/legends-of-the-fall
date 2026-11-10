@@ -6,6 +6,7 @@ import { mythicKits } from './mythicCombat';
 //
 // Randomness comes from the battle's own side stream (`b.skillRng`), so the fight's main stream is left alone.
 
+import { FEEL } from './feel';
 import { sightClear, standable, tileAt, type At } from './board';
 import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
 import { eliteKits } from './eliteFoes';
@@ -219,8 +220,11 @@ export function roll(b: Battle): number {
   return x;
 }
 
-/** The raw power of a skill, taken off by the foe's defence once it lands. */
-const net = (power: number, to: Unit) => Math.max(1, Math.round(power - defenceOf(to)));
+/** The share of a skill's raw power that always lands, whatever the foe's defence (BATTLE-FEEL round 2, the director's call): a skill
+ *  never shows a "1" or a "2" against armour it cannot get through. */
+export const SKILL_FLOOR = 1 / 3;
+/** The raw power of a skill, taken off by the foe's defence once it lands, but never below `SKILL_FLOOR` of it. */
+const net = (power: number, to: Unit) => Math.max(1, Math.round(Math.max(power - defenceOf(to), FEEL.on && FEEL.floor ? power * SKILL_FLOOR : 0)));
 
 /** The foe with the most foes in the 3x3 around it (the weakest wins a tie), among those `ok` allows. */
 function crowd(b: Battle, me: Unit, ok: (f: Unit) => boolean): Unit | undefined {
