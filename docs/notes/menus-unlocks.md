@@ -6,7 +6,7 @@ The stars counted are every star won over every army and tier (`totalStars` in `
 
 | Opens | At stars |
 | --- | --- |
-| Castle (the buildings) | 10 |
+| Castle (the buildings) | 6 (it was 10 until FIRST-HOUR 3; the Chapel, and the spellbook with it, still waits for 10: `SPELLS_NEED`, `chapelOpen`) |
 | Tower | 12 |
 | Calamity | 16 |
 | Army n (the first is open from the start) | 2 x n: 2, 4, 6, 8, 10, 12, 14, 16 |

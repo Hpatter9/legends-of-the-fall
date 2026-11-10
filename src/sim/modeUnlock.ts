@@ -6,8 +6,18 @@ import type { Meta } from './meta';
 
 export type ModeKey = 'castle' | 'tower' | 'calamity';
 
-/** The army stars each mode opens at. */
-export const MODE_NEED: Readonly<Record<ModeKey, number>> = { castle: 10, tower: 12, calamity: 16 };
+/** The army stars each mode opens at. (FIRST-HOUR 3, the owner's number: the Castle opens at 6, not 10, about the third army.) */
+export const MODE_NEED: Readonly<Record<ModeKey, number>> = { castle: 6, tower: 12, calamity: 16 };
+
+/** The army stars the Chapel, and so the spellbook, opens at. The Castle's gate opens earlier now; the spells stay where they were. */
+export const SPELLS_NEED = 10;
+
+/** Whether the Chapel can be raised: the stars reach its number, or the save had the castle open from before the stars (its Chapel was
+ *  never held back), or the Chapel already stands or is being built. */
+export const chapelOpen = (m: Meta): boolean => totalStars(m) >= SPELLS_NEED || !!m.opened?.includes('castle') || m.chapel === true || (m.castle?.chapel ?? 0) > 0 || m.works?.id === 'chapel';
+
+/** The words for a Chapel that cannot be raised yet: "The Chapel can be raised at 10 stars · 7/10 stars". */
+export const chapelWaits = (m: Meta): string => `The Chapel can be raised at ${SPELLS_NEED} stars · ${progressLine(m, SPELLS_NEED)}`;
 
 /** Whether a mode is open: the stars reach its number, or the save held it open from before the stars. */
 export const modeOpen = (m: Meta, k: ModeKey): boolean => totalStars(m) >= MODE_NEED[k] || !!m.opened?.includes(k);

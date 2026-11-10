@@ -237,3 +237,29 @@ test('the first clear of the first two armies gives a new save a whole hero, onc
   assert.equal(grantClearHero(late, orcs, false), undefined);
   assert.equal(late.clearHeroes, undefined);
 });
+
+test('the Castle opens at 6 stars; the Chapel, and the spellbook with it, still at 10', async () => {
+  const { chapelOpen, chapelWaits, MODE_NEED, SPELLS_NEED, opensAt, progressLine } = await import('../src/sim/modeUnlock');
+  const { totalStars } = await import('../src/sim/armies');
+  const m = newMeta(6);
+  assert.equal(MODE_NEED.castle, 6);
+  assert.equal(SPELLS_NEED, 10);
+  assert.equal(`${opensAt(MODE_NEED.castle)} · ${progressLine(m, MODE_NEED.castle)}`, 'Opens at 6 stars · 0/6 stars');
+  assert.equal(modeOpen(m, 'castle'), false);
+  assert.equal(chapelOpen(m), false);
+  assert.equal(chapelWaits(m), 'The Chapel can be raised at 10 stars · 0/10 stars');
+  // two armies' Normal stars: the gate opens, the Chapel waits
+  m.armies.orcs = { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7 } };
+  m.armies.undead = { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7 } };
+  assert.equal(totalStars(m), 6);
+  assert.equal(modeOpen(m, 'castle'), true);
+  assert.equal(chapelOpen(m), false);
+  assert.equal(chapelWaits(m), 'The Chapel can be raised at 10 stars · 6/10 stars');
+  m.armies.beasts = { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 1 } };
+  assert.equal(totalStars(m), 10);
+  assert.equal(chapelOpen(m), true);
+  // a save that had the castle open from before the stars, or a Chapel standing or being built, is not held back
+  assert.equal(chapelOpen({ ...newMeta(7), opened: ['castle'] }), true);
+  assert.equal(chapelOpen({ ...newMeta(7), chapel: true }), true);
+  assert.equal(chapelOpen({ ...newMeta(7), works: { id: 'chapel', level: 1, doneAt: 1 } }), true);
+});
