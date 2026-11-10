@@ -132,9 +132,11 @@ export class FightHud {
   }
 
   /** Show the Auto ultimates button as on or off. */
-  setAuto(on: boolean): void {
+  setAuto(on: boolean, shown = true): void {
     this.autoEl.classList.toggle('on', on);
     this.autoEl.setAttribute('aria-pressed', String(on));
+    // (FIRST-HOUR 2: the button shows only once a hero on the field has an ultimate to fire: a new save's heroes learn theirs at level 30)
+    this.autoEl.hidden = !shown;
   }
 
   /** Show the Auto spells button as on or off, and whether it shows at all (only with spells equipped). */

@@ -75,7 +75,7 @@ export const ACHIEVEMENTS: readonly Achievement[] = [
       return c.won && heroes.length > 0 && heroes.every((u) => traitsOf(u.def).includes('yokai'));
     },
   },
-  { id: 'threeStar', name: 'Three-Star Hero', text: 'Merge a hero to three stars.', crowns: 15, earned: (c) => c.run.roster.some((h) => h.grade >= 3) },
+  { id: 'threeStar', name: 'Three-Star Hero', text: 'Merge a hero to grade three.', crowns: 15, earned: (c) => c.run.roster.some((h) => h.grade >= 3) },
   { id: 'relics5', name: 'Relic Hoarder', text: 'Collect five relics in one run.', crowns: 15, earned: (c) => (c.run.relics?.length ?? 0) >= 5 },
   { id: 'level10', name: 'Veteran', text: 'Bring a hero to level 10.', crowns: 20, earned: (c) => ALL_HEROES.some((k) => levelOfKind(c.meta, k) >= 10) },
   // (the deep levels: the best level of any hero, with a meter towards the goal)

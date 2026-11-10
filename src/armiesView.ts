@@ -6,7 +6,7 @@
 
 import { glyphWord } from './paintedButton';
 import { blueprintOf } from './sim/assault/assault';
-import { assaultOpen, canAssault, conquered, regrouped, tributeDue, tributeOf } from './sim/assault/economy';
+import { ASSAULT_STARS, canAssault, conquered, regrouped, tributeDue, tributeOf } from './sim/assault/economy';
 import { armyOreRow } from './oreView';
 import { progressLine } from './sim/modeUnlock';
 import { ARMIES, armyBefore, armyCleared, armyNeed, armyIsNew, armyStars, armyUnlocked, bossOf, bossesOf, firstClearTotal, landsOf, recordOf, replayTotal, tierOpen, tierStars, type Army } from './sim/armies';
@@ -470,7 +470,8 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
         draw();
       });
       info.append(go, drop);
-    } else if (open && bp && hooks.onAssault && (assaultOpen(m) || canAssault(m, a.id))) {
+    // (FIRST-HOUR 2: the sealed plate shows from the start, not only once the mode is open: nothing said what the tenth star is for)
+    } else if (open && bp && hooks.onAssault) {
       if (fallen) {
         const due = tributeDue(m, todayKey());
         info.append(el('p', 'asHint asSeal', `${bp.name} is conquered · ${tributeOf(a.id)} crowns of tribute a day`));
@@ -492,7 +493,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
         const storm = el('button', 'primary asAssault', `Assault ${bp.name}`);
         storm.addEventListener('click', () => hooks.onAssault!(a.id));
         info.append(storm);
-      } else info.append(el('p', 'asHint asSeal', `Win all ten stars · Assault ${bp.name}`));
+      } else info.append(el('p', 'asHint asSeal', `${ASSAULT_STARS} stars on this army open its Assault · storm ${bp.name}`));
     }
     if (running) {
       const again = el('button', 'small armyAgain', 'Restart from wave 1');

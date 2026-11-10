@@ -20,6 +20,7 @@
 //   npm run balance -- --no-tables --stand --levels 1,10,20 --attempts 30   the Last Stand held by a greedy player (`tools/stand-balance.ts`; `--tower` is the same, the Tower's old name)
 //   npm run balance -- --eidolon 15[:nivra] ...   any of the above with an Eidolon called at that wave of every army attempt (EIDOLONS);
 //                                                 15:shade[-arcane] calls a Shade instead (Dynasties, phase 7)
+//   npm run balance -- --no-tables --climb --saves 60 --new-save   the same from a real new save (a three-hero starter pack; `--pack 0|1`)
 //   npm run balance -- --no-tables --climb --saves 60   the realistic climb (recruits, castle, gear), table 5c; `--maxed` plays 5d, a full castle
 //
 // Four tables: each hero's value (its win rate in random five-hero teams with it, against the same teams without it),
@@ -35,7 +36,7 @@ import { FIELD_BANDS } from '../src/sim/foes';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, levelOfKind } from '../src/sim/levels';
 import { BUILDINGS, maxLevel, newCastle, nextCost, upgrade, xpRate, type BuildingId, type Castle } from '../src/sim/castle';
-import { startedMeta, heroRank, rankMult, stonesOf, useStones, type Meta } from '../src/sim/meta';
+import { heroRank, rankMult, stonesOf, useStones, type Meta } from '../src/sim/meta';
 import { CAL_TIER } from '../src/sim/calamity';
 import { boostOf, GRADE_BOOST, bandFor, finish, isBossStage, newRun, type Owned, type Run, SQUAD, stageBoost, startStage, summon } from '../src/sim/run';
 import { legacyBoost, PERKS } from '../src/sim/legacy';
@@ -48,7 +49,7 @@ import { autoMerge } from '../src/sim/merge';
 import { awakenStats, awaken } from '../src/sim/awaken';
 import { ARMIES, armyById, settleWave } from '../src/sim/armies';
 import { TIERS } from '../src/sim/tiers';
-import { eidolonAt, maybeSpells, playArmy, savedAt } from './autoplay';
+import { eidolonAt, maybeSpells, playArmy, savedAt, climbMeta } from './autoplay';
 import { fullCouncil, growWar, harshen } from './nemesis/warBot';
 import { WAR_BOT } from './autoplay';
 import { DUEL_ARMY, DUEL_BOSS, DUEL_ROLE, DUEL_SHARE, duelOutcome, startDuel } from '../src/sim/duel';
@@ -280,7 +281,7 @@ function wholeRuns(): void {
   const best: number[][] = Array.from({ length: RUNS }, () => []);
   const levelSum: Record<string, number>[] = Array.from({ length: RUNS }, () => Object.fromEntries(HEROES.map((k) => [k, 0])));
   for (let save = 1; save <= SAVES; save++) {
-    const meta = startedMeta(save);
+    const meta = climbMeta(save);
     for (let r = 0; r < RUNS; r++) {
       best[r].push(playRun(meta, mixSeed(save, 0x7a0c, r)));
       for (const k of HEROES) levelSum[r][k] += levelOfKind(meta, k);
@@ -360,7 +361,7 @@ function armies(): void {
   console.log([pad('army', 16), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('tries (median)', 16), rpad('first try: wave', 17), rpad('level on first try', 20), rpad('crowns (1st clear)', 20)].join(''));
   const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, first: 0, lv: 0, seen: 0, crowns: 0 }));
   for (let save = 1; save <= SAVES; save++) {
-    const meta = startedMeta(save);
+    const meta = climbMeta(save);
     // (CLIMB_ARMIES=4 stops after the first four armies, the early climb's yardstick: the rest are not reached in 25 tries anyway)
     for (let i = 0; i < Math.min(ARMIES.length, Number(process.env.CLIMB_ARMIES ?? ARMIES.length)); i++) {
       const army = ARMIES[i];
@@ -450,7 +451,7 @@ function realClimb(): void {
   console.log([pad('army', 20), rpad('cleared %', 11), rpad('tries (mean)', 14), rpad('median', 8), rpad('90th', 6), rpad('party level', 13), rpad('castle lvls', 13), rpad('heroes owned', 14), rpad('pieces', 8), rpad('Legendary %', 12)].join(''));
   const stats = ARMIES.map(() => ({ tries: [] as number[], clear: 0, lv: 0, castle: 0, owned: 0, seen: 0, pieces: 0, legend: 0 }));
   for (let save = 1; save <= SAVES; save++) {
-    const meta = startedMeta(save);
+    const meta = climbMeta(save);
     // (CLIMB_ARMIES=4 stops after the first four armies, the early climb's yardstick: the rest are not reached in 25 tries anyway)
     for (let i = 0; i < Math.min(ARMIES.length, Number(process.env.CLIMB_ARMIES ?? ARMIES.length)); i++) {
       const army = ARMIES[i];

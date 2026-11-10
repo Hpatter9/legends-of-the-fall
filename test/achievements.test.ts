@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ACHIEVEMENT_STONES, ACHIEVEMENTS, achievementById, BIG_STONES, CENTURION_STONES, checkAchievements, claimAchievement, stonesOfAchievement, unclaimed, type AchievementCtx } from '../src/sim/achievements';
+import { ACHIEVEMENT_STONES, ACHIEVEMENTS, achievementById, BIG_STONES, CENTURION_STONES, checkAchievements, claimAchievement, shownAchievements, stonesOfAchievement, unclaimed, type AchievementCtx } from '../src/sim/achievements';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { place, startBattle, type Battle } from '../src/sim/battle';
 import { BOSS_BANDS, BOSS_IDS } from '../src/sim/foes';
@@ -10,6 +10,7 @@ import { dailyRun, settleRun } from '../src/sim/modes';
 import { armyRun, newRun } from '../src/sim/run';
 import { xpFor } from '../src/sim/levels';
 import { ALL_HEROES } from '../src/sim/units';
+import { setModesHidden } from '../src/sim/hiddenModes';
 
 /** A finished fight with the given heroes placed, won or lost. */
 function fight(kinds: string[], won = true): Battle {
@@ -246,7 +247,14 @@ test('an achievement pays summoning stones with its crowns: two, a few more for 
   assert.equal(stonesOfAchievement(achievementById('firstWin')!), 2);
   const meta = startedMeta(1);
   const stones = meta.stones ?? 0;
+  // (FIRST-HOUR 2, the owner's call through the director: wave 20 and 30 of one run are only reached in the endless mode, so while it is
+  // hidden 'Twenty Waves' and 'Thirty Waves' are neither shown nor earned; they are checked here with the modes shown)
+  const hiddenMeta = startedMeta(2);
+  assert.ok(!checkAchievements(ctx({ meta: hiddenMeta, won: true, stage: 30, battle: fight(['knight']) })).some((a) => a.id === 'stage20' || a.id === 'stage30'));
+  assert.ok(!shownAchievements(hiddenMeta).some((a) => a.id === 'stage20' || a.id === 'stage30'));
+  setModesHidden(false);
   const got = checkAchievements(ctx({ meta, won: true, stage: 30, battle: fight(['knight']) }));
+  setModesHidden(true);
   assert.equal(meta.stones ?? 0, stones, 'nothing is paid until it is claimed');
   for (const a of got) claimAchievement(meta, a.id);
   assert.equal((meta.stones ?? 0) - stones, got.reduce((n, a) => n + stonesOfAchievement(a), 0));

@@ -2,7 +2,7 @@
 // showcasing caricatures/tokens of defeated Calamity and Spire bosses with humorous defeat blurbs.
 
 import { glyphWord } from './paintedButton';
-import { modesHidden } from './sim/hiddenModes';
+import { modesHidden, trophyShown } from './sim/hiddenModes';
 import type { Meta } from './sim/meta';
 import { play } from './render/sound';
 import { trophyPicture } from './trophyArt';
@@ -274,7 +274,8 @@ export class TrophyWallModal {
     const crest = el('span', 'twCrest');
     crest.append(trophyPicture('forgeTitan', true));
     const title = el('h2', 'twTitle', 'DEFEATED BOSS TROPHY WALL');
-    const sub = el('p', 'twSub', 'Caricatures & spoils of the Calamity Heralds and Spire Champions');
+    // (FIRST-HOUR 2: while the modes are hidden the wall is the armies' bosses: the heralds' plaques and the modes' names wait with them)
+    const sub = el('p', 'twSub', modesHidden() ? 'Caricatures & spoils of the armies’ fallen bosses' : 'Caricatures & spoils of the Calamity Heralds and Spire Champions');
     titleBox.append(crest, title, sub);
 
     const closeBtn = el('button', 'twCloseBtn', '‹ Back');
@@ -286,11 +287,13 @@ export class TrophyWallModal {
 
     // Filter Chips
     const filters = el('div', 'twFilters');
-    const chips: [string, string][] = [
-      ['all', 'All Trophies'],
-      ['calamity', 'Calamity Heralds (6)'],
-      ['spire', 'Spire Champions (12)'],
-    ];
+    const chips: [string, string][] = modesHidden()
+      ? []
+      : [
+          ['all', 'All Trophies'],
+          ['calamity', 'Calamity Heralds (6)'],
+          ['spire', 'Spire Champions (12)'],
+        ];
 
     for (const [id, label] of chips) {
       const btn = el('button', `twFilterChip ${this.filter === id ? 'active' : ''}`, label);
@@ -340,7 +343,8 @@ export class TrophyWallModal {
     if (!this.meta) return;
     this.grid.replaceChildren();
 
-    const trophies = BOSS_TROPHIES.filter((t) => this.filter === 'all' || t.origin === this.filter);
+    const meta = this.meta;
+    const trophies = BOSS_TROPHIES.filter((t) => (this.filter === 'all' || t.origin === this.filter) && trophyShown(t.origin, isTrophyUnlocked(meta, t)));
     let unlockedCount = 0;
 
     for (const trophy of trophies) {
@@ -368,7 +372,7 @@ export class TrophyWallModal {
       // Brass Nameplate
       const nameplate = el('div', 'twNameplate');
       const name = el('h4', 'twBossName', unlocked ? trophy.name : 'Unknown Threat');
-      const title = el('span', 'twBossTitle', unlocked ? trophy.title : (trophy.origin === 'calamity' ? 'Calamity Void' : 'Deep Spire'));
+      const title = el('span', 'twBossTitle', unlocked ? trophy.title : (modesHidden() ? 'An army’s boss' : trophy.origin === 'calamity' ? 'Calamity Void' : 'Deep Spire'));
       const statusStamp = el('span', `twStamp ${unlocked ? 'mounted' : 'loose'}`, unlocked ? trophy.defeatTag : 'STILL AT LARGE');
 
       nameplate.append(name, title, statusStamp);
@@ -426,7 +430,7 @@ export class TrophyWallModal {
       const lore = el('p', 'twLoreText', trophy.humorousLore);
       body.append(quote, loreTitle, lore);
     } else {
-      const lockedMsg = el('p', 'twLockedMsg', modesHidden() ? 'This dread boss continues to roam unchallenged! Its trophy is kept for a later day.' : 'This dread boss continues to roam unchallenged! Conquer them in the Spire or the Calamity maps to secure their trophy and preserve the humiliating details for posterity.');
+      const lockedMsg = el('p', 'twLockedMsg', modesHidden() ? 'This dread boss continues to roam unchallenged! Beat it in its army (its mid-boss or last wave) to hang its trophy here.' : 'This dread boss continues to roam unchallenged! Conquer them in the Spire or the Calamity maps to secure their trophy and preserve the humiliating details for posterity.');
       body.append(lockedMsg);
     }
 

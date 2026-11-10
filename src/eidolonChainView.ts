@@ -14,7 +14,7 @@ import { eidolonById, type Eidolon } from './sim/eidolons';
 import { chooseEidolon, chosenOf } from './sim/warHorn';
 import type { Meta } from './sim/meta';
 import { CHAINS, chainById, type ChainDef, type PieceDef } from './sim/eidolonChainData';
-import { activeChain, chainDone, chainState, currentPart, offeredChain, partBlocked, piecesOf, readyToBind, stepsOf, trialDue, trialOf, type PieceFound } from './sim/eidolonChains';
+import { activeChain, chainDone, listedChains, chainState, currentPart, offeredChain, partBlocked, piecesOf, readyToBind, stepsOf, trialDue, trialOf, type PieceFound } from './sim/eidolonChains';
 import { castOf, questBattleById } from './sim/questBattles';
 import { battleWon } from './sim/questRun';
 import { heroName } from './sim/heroNames';
@@ -170,10 +170,10 @@ function pieceRow(c: ChainDef, m: Meta, onPiece?: (p: PieceDef, i: number) => vo
 
 /** The Eidolons tab: the six chains, easiest first, each as far as the save has gone. */
 export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): void {
-  list.append(el('p', 'ecnIntro', 'Six old guardians once answered the keep\'s War Horn. Find the pieces of a pact and the Summoner binds its Eidolon. One chain at a time.'));
+  list.append(el('p', 'ecnIntro', `${listedChains(m).length === 6 ? 'Six' : 'Five'} old guardians once answered the keep's War Horn. Find the pieces of a pact and the Summoner binds its Eidolon. One chain at a time.`));
   const going = activeChain(m);
   const offer = offeredChain(m);
-  for (const c of CHAINS) {
+  for (const c of listedChains(m)) {
     const e = eidolonOf(c);
     const done = chainDone(m, c);
     const st = chainState(m, c.id);
@@ -301,10 +301,11 @@ export function openPactGallery(m: Meta, hooks: GalleryHooks): void {
   shut.setAttribute('aria-label', 'Close the Pact Gallery');
   shut.addEventListener('click', closePactGallery);
   head.append(el('h3', '', 'Pact Gallery'), shut);
-  const bound = CHAINS.filter((c) => chainDone(m, c)).length;
-  box.append(head, el('p', 'ecnIntro', `${bound} of ${CHAINS.length} Eidolons bound. The one chosen answers the War Horn when it is full.`));
+  const listed = listedChains(m);
+  const bound = listed.filter((c) => chainDone(m, c)).length;
+  box.append(head, el('p', 'ecnIntro', `${bound} of ${listed.length} Eidolons bound. The one chosen answers the War Horn when it is full.`));
   const grid = el('div', 'ecnAlcoves');
-  for (const c of CHAINS) {
+  for (const c of listedChains(m)) {
     const e = eidolonOf(c);
     const done = chainDone(m, c);
     const a = el('button', `ecnAlcove el-${e.element}${done ? ' bound' : ''}${chosenOf(m) === e.id ? ' chosen' : ''}`);

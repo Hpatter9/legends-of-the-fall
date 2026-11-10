@@ -32,7 +32,9 @@ import { SHARD_WEEK } from '../src/sim/council';
 import { dailyChestSeed, dailyCrowns, DAILY_WAVES } from '../src/sim/daily';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
-import { crownsTotal, FOE_ENTRIES, stonesTotal } from '../src/sim/codex';
+import { crownsTotal, FOE_ENTRIES, shownEntries, stonesTotal } from '../src/sim/codex';
+import { achievementShown, modesHidden, questShown } from '../src/sim/hiddenModes';
+import { QUESTS } from '../src/sim/questData';
 import { ACHIEVEMENTS, stonesOfAchievement } from '../src/sim/achievements';
 
 const arg = (name: string, fallback: number): number => {
@@ -89,10 +91,14 @@ if (process.argv.includes('--ores') && oresArg) oresArg.split(',').forEach((n, i
 /** Achievements and the codex pay about this many crowns in all over the first 150 days. */
 const EXTRA_CROWNS = 900;
 /** And the stones they pay beside those crowns: the same share of every achievement's and codex reward's stones as `EXTRA_CROWNS` is of their crowns. `--nobadges 1` leaves them out. */
-const BADGE_CROWNS = ACHIEVEMENTS.reduce((n, a) => n + a.crowns, 0) + crownsTotal('bestiary') + crownsTotal('heroes');
-const BADGE_STONES = ACHIEVEMENTS.reduce((n, a) => n + stonesOfAchievement(a), 0) + stonesTotal('bestiary') + stonesTotal('heroes');
+// (FIRST-HOUR 2: while the Last Stand and the Calamity are hidden (`hiddenModes.ts`) the model plays neither and counts nothing only they
+// give: no spire climb, no Calamity, none of their achievements or quests. `--with-modes 1` plays them as before, to compare.)
+const WITH_MODES = !modesHidden() || arg('--with-modes', 0) > 0;
+const BADGES = ACHIEVEMENTS.filter((a) => WITH_MODES || achievementShown(a.id, []));
+const BADGE_CROWNS = BADGES.reduce((n, a) => n + a.crowns, 0) + crownsTotal('bestiary') + crownsTotal('heroes');
+const BADGE_STONES = BADGES.reduce((n, a) => n + stonesOfAchievement(a), 0) + stonesTotal('bestiary') + stonesTotal('heroes');
 /** The stones every one-off quest pays in all (`questPay.ts`); `--noquests 1` leaves quests out. */
-const QUEST_STONES = totalQuestStones();
+const QUEST_STONES = totalQuestStones(QUESTS.filter((q) => WITH_MODES || questShown(q)));
 const NO_QUESTS = arg('--noquests', 0) > 0;
 /** `--nodrops 1`: the army waves drop no shards or tomes (ARMY-DROPS: the pace before them). */
 const NO_DROPS = arg('--nodrops', 0) > 0;
@@ -200,7 +206,7 @@ function simulate(seed: number): Report {
           if (d?.drop.tome) drops.tomes++;
         });
     // the tower: one climb, its crowns, its chests
-    if (m.bestStage >= 1 || m.armies[ARMIES[0].id]?.clears) {
+    if (WITH_MODES && (m.bestStage >= 1 || m.armies[ARMIES[0].id]?.clears)) {
       const floors = Math.min(TOWER_CEIL, Math.floor(TOWER_START + TOWER_GROWTH * day));
       let crowns = 0;
       for (let f = 1; f <= floors; f++) crowns += stageCrowns(f);
@@ -212,7 +218,7 @@ function simulate(seed: number): Report {
       for (let k = 0; k < Math.floor(floors / 15); k++) m.stash.push({ army: ARMIES[Math.min(ARMIES.length - 1, Math.floor(day / 12))].id, at: 5, tier: 0, seed: mixSeed(seed, 0x70e8, day, k), tower: true, ...dry });
     }
     // the calamity: from CALAMITY_DAY, one a week; each full clear a level higher
-    if (day >= CALAMITY_DAY && (day - CALAMITY_DAY) % 7 === 0) {
+    if (WITH_MODES && day >= CALAMITY_DAY && (day - CALAMITY_DAY) % 7 === 0) {
       const level = Math.min(10, asc + 1);
       if (day === CALAMITY_DAY || (day - CALAMITY_DAY) % ASCENSION_GAP === 0) asc = level;
       today += MAP_CROWNS.reduce((n, c) => n + c, 0) * (1 + 0.2 * Math.max(0, asc));
@@ -327,7 +333,7 @@ function simulate(seed: number): Report {
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
 const mean = (xs: number[]) => xs.reduce((n, x) => n + x, 0) / xs.length;
 const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
-console.log(`Unlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${FOE_ENTRIES.length} bestiary entries, ${ACHIEVEMENTS.length} achievements)`);
+console.log(`Unlock pace for a daily player (${SEEDS} seeds, ${DAYS} days; ${Math.round(PULL_SHARE * 100)}% of crowns to pulls after the castle; ${WITH_MODES ? FOE_ENTRIES.length : shownEntries().length} bestiary entries, ${BADGES.length} achievements${WITH_MODES ? '' : '; the hidden modes not played'})`);
 console.log(`Crowns earned: ${Math.round(mean(reports.map((r) => r.crowns)))} in ${DAYS} days; stones used: ${Math.round(mean(reports.map((r) => r.pulls)))} (${EXTRA_STONES} of them from achievements and the codex's milestones)`);
 console.log(`Army drops in ${DAYS} days (mean): ${Math.round(mean(reports.map((r) => r.drops.shards)))} shard drops, ${Math.round(mean(reports.map((r) => r.drops.tomes)))} tomes${NO_DROPS ? ' (--nodrops: none)' : ''}`);
 console.log('\nstones by source, a year (mean per save)');

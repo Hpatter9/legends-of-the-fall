@@ -506,6 +506,9 @@ export function startUlt(u: Unit): void {
 }
 
 /** The ultimate's meter: whether it is full (for the page's ready glow). */
+/** Whether any hero on the field has an ultimate (learned at `ULT_LEVEL`): the fight's Auto ultimates button shows only then. */
+export const anyUltimate = (b: Pick<Battle, 'units'>): boolean => b.units.some((u) => u.side === 'hero' && !!ultimateOf(u));
+
 export const ultFull = (u: Unit): boolean => {
   const ult = ultimateOf(u);
   return !!ult && (u.charge2 ?? 0) >= ult.need;

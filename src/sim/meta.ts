@@ -304,7 +304,9 @@ export interface Pull {
 }
 
 /** A brand-new save: no hero yet, only the two starter packs to pick from (`pickStarter`). */
-export const newMeta = (seed: number): Meta => ({ seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {}, gearV: GEAR_V });
+// (FIRST-HOUR 2: a new save starts with Auto spells on, the director's call: the king's spells decide the first army, and a new player
+// who never casts one meets a wall. A save made before has no `spellAuto` key and keeps what it had, `spellAutoSaved`.)
+export const newMeta = (seed: number): Meta => ({ spellAuto: true, seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {}, gearV: GEAR_V });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {

@@ -7,6 +7,7 @@ import { loadMeta, saveMeta, startedMeta } from '../src/sim/meta';
 import { settleRun } from '../src/sim/modes';
 import { newRun } from '../src/sim/run';
 import { ALL_HEROES, UNITS } from '../src/sim/units';
+import { setModesHidden } from '../src/sim/hiddenModes';
 
 const store = () => {
   const data: Record<string, string> = {};
@@ -121,7 +122,13 @@ test('a hand-edited record is cleaned up', () => {
 test('the progress line counts the two collections', () => {
   const m = startedMeta(1);
   assert.equal(progressLine(m, 'heroes'), `Heroes 5/${ALL_HEROES.length}`);
-  assert.equal(progressLine(m, 'bestiary'), `Bestiary 0/${FOE_ENTRIES.length}`);
+  // (FIRST-HOUR 2: the entries only a hidden mode's fights meet, its elites and the Calamity's heralds, are not counted while it is hidden)
+  const shown = FOE_ENTRIES.filter((e) => e.class !== 'elite' && e.class !== 'calamity');
+  assert.ok(shown.length < FOE_ENTRIES.length);
+  assert.equal(progressLine(m, 'bestiary'), `Bestiary 0/${shown.length}`);
+  setModesHidden(false);
+  assert.equal(progressLine(m, 'bestiary'), `Bestiary 0/${FOE_ENTRIES.length}`, 'all of them again with the modes back');
+  setModesHidden(true);
   assert.equal(gotOf(m, 'heroes'), 5);
 });
 

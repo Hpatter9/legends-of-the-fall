@@ -224,7 +224,8 @@ function drawPlain(run: Run, stage: number, kind: EventKind, rng: Rng): EventCar
       const effect: Effect = roll === 0 && id ? { t: 'relic', id } : roll === 1 ? { t: 'gear', gear: findGear(run, rng, gearId(run), stage, 0, SOURCE.chest) } : { t: 'gold', n: 50 + 8 * stage };
       return {
         kind, stage, title: 'A mystery chest', text: 'It sits in the road, locked by nothing but luck. Someone has already licked it.',
-        options: [{ label: 'Open it', text: 'A relic, gear or gold.', cost: 0, effect }, leave()],
+        // (FIRST-HOUR 2: the chest says what it can pay: a rune run's "gear" is a rune, and the page calls it one everywhere else)
+        options: [{ label: 'Open it', text: run.runes ? 'A relic, a rune or gold.' : 'A relic, gear or gold.', cost: 0, effect }, leave()],
       };
     }
     case 'cursed': {
