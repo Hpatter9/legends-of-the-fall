@@ -116,7 +116,8 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     const title = el('div', 'hsTitle');
     title.append(el('h2', '', 'Hester’s Stall'));
     const next = toNextStanding(m);
-    title.append(el('small', '', `${STANDINGS[standing - 1].name}${next !== undefined ? ` · ${next} to the next` : ''}`));
+    // (FIRST-HOUR 2: the line says what standing is and how it rises: crowns spent at the stall; the rank's name is on the seal)
+    title.append(el('small', '', next !== undefined ? `Standing ${standing} · spend ${next} for ${standing + 1}` : `Standing ${standing} · ${STANDINGS[standing - 1].name}`));
     const seal = img(shopArt(`standing-${standing}`), 'hsSeal', `Standing ${standing}: ${STANDINGS[standing - 1].name}`);
     const purse = el('span', 'hsPurse');
     purse.append(icon(ICONS.crowns, ''), String(m.crowns));
@@ -205,7 +206,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       tag.append(el('span', '', String(w.price)));
       card.append(tag);
       if (left <= 0) card.append(img(shopArt('sold-out'), 'hsSold', 'Sold out'));
-      else if (locked) card.append(el('small', 'hsLeft', `Standing ${w.standing}`));
+      else if (locked) card.append(el('small', 'hsLeft', `Needs standing ${w.standing}`));
       else card.append(el('small', 'hsLeft', `${left} left`));
       card.addEventListener('click', () => warePage(w));
       grid.append(card);
@@ -232,7 +233,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       tag.append(el('span', '', String(w.price)));
       card.append(tag);
       if (left <= 0) card.append(img(shopArt('sold-out'), 'hsSold', 'Sold out'));
-      else if (locked) card.append(el('small', 'hsLeft', `Standing ${w.standing}`));
+      else if (locked) card.append(el('small', 'hsLeft', `Needs standing ${w.standing}`));
       else card.append(el('small', 'hsLeft', 'one only'));
       card.addEventListener('click', () => warePage(w, trader));
       grid.append(card);

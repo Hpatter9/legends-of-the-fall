@@ -10,7 +10,7 @@ import { ESCORT_CLUE, WEAKNESS, knownClues } from './sim/weakness';
 import { roomOpen } from './sim/rooms';
 import { hasSkill, KITS, type Kit } from './sim/abilities';
 import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
-import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, FOE_ENTRIES, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
+import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, shownEntries, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
@@ -30,6 +30,7 @@ import { COMBOS, COMBO_NAME } from './sim/combos';
 import { slotBrief } from './fightHudRules';
 import { holdPages } from './sim/assault/holdCodex';
 import { assaultOpen } from './sim/assault/economy';
+import { legendShown } from './sim/hiddenModes';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -312,6 +313,8 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       // (SEVEN-SLOT GEAR: the named legends, with the verses their renown has opened; one not yet found shows where it waits)
       for (const l of LEGEND_LIST) {
         const id = m.legends?.[l.id];
+        // (FIRST-HOUR 2: a legend that waits in a hidden mode is not listed until the mode is back; one already found stays)
+        if (!legendShown(l.id, id !== undefined)) continue;
         const piece = id === undefined ? undefined : m.equipment?.find((x) => x.id === id);
         const row = el('div', `scRow${id === undefined ? ' locked' : ''}`);
         const text = el('div');
@@ -369,7 +372,7 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
         grid.append(row);
       }
     } else if (tabNow === 'bestiary') {
-      for (const e of FOE_ENTRIES) {
+      for (const e of shownEntries()) {
         const met = isMet(m, e);
         const def = UNITS[e.defs[0]];
         const c = card(def.sheet, 1, e.name, met ? `Felled ${killsOf(m, e)}` : 'not met', met);

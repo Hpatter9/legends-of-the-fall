@@ -18,6 +18,7 @@
 // Pure rules: no Pixi, no DOM, no randomness (nothing is drawn: a chain's offer follows its rules alone).
 
 import type { Meta } from './meta';
+import { modesHidden } from './hiddenModes';
 import { chainPartReward } from './questPay';
 import { blankQuests, goalGain, needMet, payReward, type QuestFight } from './quests';
 import { bindEidolon, boundOf, chooseEidolon } from './warHorn';
@@ -160,6 +161,12 @@ export function partBlocked(m: Meta, part: ChainPart): string[] | null {
 }
 
 /** Whether the chains have anything to show yet (the log's Eidolons tab, the Pact Gallery's button): one offered, begun or bound. */
+/** Whether a chain is listed (FIRST-HOUR 2): one that opens with the Calamity cleared (Vaelkhar's) waits while the Calamity is hidden,
+ *  since nothing else opens it; a save that had begun or bound it keeps it. */
+export const chainListed = (m: Meta, c: ChainDef): boolean => !modesHidden() || c.opens.kind !== 'calCleared' || !!chainState(m, c.id) || chainDone(m, c);
+/** The chains the page lists just now, in their order. */
+export const listedChains = (m: Meta): ChainDef[] => CHAINS.filter((c) => chainListed(m, c));
+
 export const chainsShown = (m: Meta): boolean => !!offeredChain(m) || CHAINS.some((c) => !!chainState(m, c.id) || chainDone(m, c));
 
 /** Whether the Summoner has something waiting (the Recruit tab's badge): a chain to begin, or one to bind. */

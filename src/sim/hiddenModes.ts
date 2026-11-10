@@ -44,10 +44,23 @@ export function questNeedsHiddenMode(q: QuestDef): boolean {
 export const questShown = (q: QuestDef): boolean => !hidden || !questNeedsHiddenMode(q);
 
 /** The achievements only a hidden mode can earn. One already earned stays on the list (and claimable); the rest are not shown or checked. */
-export const HIDDEN_MODE_ACHIEVEMENTS: readonly string[] = ['tower1', 'tower20'];
+// (FIRST-HOUR 2: 'Twenty Waves' and 'Thirty Waves' ask for wave 20 and 30 of one run. Every army is 15 waves and the daily ten, so only the
+// endless mode ever reached them: they wait with it.)
+export const HIDDEN_MODE_ACHIEVEMENTS: readonly string[] = ['tower1', 'tower20', 'stage20', 'stage30'];
 
 /** Whether a line of the page's words names a hidden mode, so a list of tips or sources can leave it out while the modes are hidden. */
 export const namesHiddenMode = (text: string): boolean => hidden && /Last Stand|Calamity/.test(text);
 
 /** Whether an achievement shows (and can be earned) for a save that holds `earned`. */
 export const achievementShown = (id: string, earned: readonly string[]): boolean => !hidden || !HIDDEN_MODE_ACHIEVEMENTS.includes(id) || earned.includes(id);
+
+/** Whether a boss's trophy hangs on the Trophy wall (FIRST-HOUR 2): the Calamity's heralds can only be beaten in the Calamity, so their
+ *  empty plaques wait with it; one already won stays. The other twelve are the armies' bosses, whatever the wall's old chip called them. */
+export const trophyShown = (origin: string, earned: boolean): boolean => !hidden || origin !== 'calamity' || earned;
+
+/** The named Legendary pieces whose only source is in a hidden mode (FIRST-HOUR 2): the spire's act guardians, the Calamity, a wave of the
+ *  Last Stand, Vaelkhar's heart (his chain opens with the Calamity cleared) and a quest that needs a mode (`lostWordsLibrary`). */
+export const HIDDEN_MODE_LEGENDS: readonly string[] = ['helmSevenWinters', 'ferrymansCoat', 'wyrmhideVaelkhar', 'gravesong', 'unwrittenBook', 'sevenLeagueBoots', 'ashwalkerSabatons'];
+
+/** Whether a legend is listed in the codex: one that waits in a hidden mode is not, until the mode is back; one already found stays. */
+export const legendShown = (id: string, found: boolean): boolean => !hidden || found || !HIDDEN_MODE_LEGENDS.includes(id);

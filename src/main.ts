@@ -151,7 +151,8 @@ import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
 import { fullScene } from './ultMomentRules';
 import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
-import { ultFull } from './sim/heroKits';
+import { anyUltimate, ultFull } from './sim/heroKits';
+import { armiesFocusAfterClear } from './screenRules';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
 import { autoSpellsFor, spellAutoSaved } from './sim/autoCast';
@@ -2248,7 +2249,7 @@ class Game {
   }
   /** Both Auto buttons as the save and the replay have them; the spells' shows only while spells are equipped. */
   private showAuto(): void {
-    this.hud.setAuto(this.ultAutoOn());
+    this.hud.setAuto(this.ultAutoOn(), anyUltimate(this.b));
     this.hud.setSpellAuto(this.spellAutoOn(), castList(this.meta.spellbook).length > 0);
   }
 
@@ -3212,8 +3213,9 @@ class Game {
     this.closeResult();
     const next = this.pay?.unlocked ?? undefined;
     this.home.open();
-    // (a chest this clear earned went to the stash; the army's card opens first, with its chest ticked)
-    const focus = this.runStars?.chests.length ? army.id : undefined;
+    // (FIRST-HOUR 2, the director's call: a clear that opens the next army shows that army's card, not the cleared one's with Hard chosen,
+    // which is a much harder step. Otherwise a chest this clear earned went to the stash and the army's own card opens, its chest ticked.)
+    const focus = armiesFocusAfterClear(army.id, next?.id, !!this.runStars?.chests.length);
     // (the card's own button goes to the new army; Continue to the armies, on the one just cleared)
     const before = next ? ARMIES[armyIndex(next.id) - 1] : undefined;
     if (before && (await this.tellUnlock({ kind: 'nextArmy', after: before.id }))) return;
@@ -3564,7 +3566,7 @@ class Game {
       card.dataset.id = id;
       const stars = document.createElement('em');
       stars.className = 'benchGrade';
-      stars.setAttribute('aria-label', `Rank ${h.grade}`);
+      stars.setAttribute('aria-label', `Grade ${h.grade}`);
       for (let i = 0; i < h.grade; i++) {
         const mark = document.createElement('img');
         mark.src = COMBAT_ART.star;

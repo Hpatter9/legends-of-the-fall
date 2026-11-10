@@ -13,7 +13,8 @@ import { playOutTallied } from '../src/sim/nemesisLog';
 import { chooseOption, leaveEvent } from '../src/sim/events';
 import { fightXp, gainXp, xpFor } from '../src/sim/levels';
 import { newCastle, xpRate, type Castle } from '../src/sim/castle';
-import { startedMeta, type Meta } from '../src/sim/meta';
+import { newMeta, pickStarter, startedMeta, type Meta } from '../src/sim/meta';
+import { STARTER_PACKS } from '../src/sim/starter';
 import { ARMIES, armyById, armyCleared } from '../src/sim/armies';
 import { armyRun, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, waveArmyOf, type Owned, type Run } from '../src/sim/run';
 import { autoMerge } from '../src/sim/merge';
@@ -126,6 +127,24 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
   const won = playWaves(meta, run, castle, gear, boostFor);
   const cleared = !!run.cleared && won === army.waves.length;
   return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
+}
+
+/** A real new save (FIRST-HOUR 2): the three heroes of a starter pack and nothing else, as a player's first hour has it. `pack` is the
+ *  pack's place in `FIXED_PACKS` (unset: the saves take the packs in turn). Earned ranks count without a tap, as `startedMeta`'s do. */
+export function newSaveMeta(seed: number, pack?: number): Meta {
+  const m = newMeta(seed);
+  pickStarter(m, pack ?? seed % STARTER_PACKS);
+  delete m.ranked;
+  return m;
+}
+
+/** The save a tool's climb starts from: `startedMeta` (the old five heroes owned, as every table so far was measured), or with
+ *  `--new-save` on the command line a real new save (`newSaveMeta`; `--pack 0` or `--pack 1` fixes its starter pack). */
+export function climbMeta(seed: number): Meta {
+  const argv = typeof process === 'undefined' ? [] : process.argv;
+  if (!argv.includes('--new-save')) return startedMeta(seed);
+  const i = argv.indexOf('--pack');
+  return newSaveMeta(seed, i >= 0 ? Number(argv[i + 1]) : undefined);
 }
 
 /** Play a run of fixed waves to its end as the greedy player (an army's, or the Nemesis War's Muster): returns the last wave won. */
