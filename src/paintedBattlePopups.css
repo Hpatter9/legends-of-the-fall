@@ -65,6 +65,10 @@
 #tacticSheet .tacForms { gap: 8px; }
 #tacticSheet .tacForm { padding: 10px; min-height: 76px; }
 #tacticSheet .tacForm b { font-size: 16px; color: #f0d6a6; }
+/* FORMATIONS-FIT: the shape's medallion stands beside its name, and its words run the card's full width below (the medallion sat over the
+   first lines of the words, worst at 360) */
+#tacticSheet .tacForm::before { top: 8px; left: 8px; width: 32px; height: 32px; transform: none; }
+#tacticSheet .tacForm b { display: flex; align-items: center; min-height: 32px; padding-left: 38px; }
 #tacticSheet .tacForm span { font-size: 13px; line-height: 1.3; color: #d0c9b7; }
 #tacticSheet .tacClose { width: 100%; }
 

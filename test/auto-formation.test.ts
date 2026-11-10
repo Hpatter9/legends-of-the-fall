@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES } from '../src/sim/armies';
 import { autoDeploy, autoRound } from '../src/sim/autoplay';
-import { formationOf, formationSpots, FORMATIONS_LIST } from '../src/sim/formations';
+import { formationOf, formationSpots, FORMATIONS_LIST, type Formation } from '../src/sim/formations';
 import { loadMeta, saveMeta, startedMeta } from '../src/sim/meta';
 import { armyRun, startStage } from '../src/sim/run';
 import { pickedFormation, pickFormation, readFormations } from '../src/sim/tacticPick';
@@ -11,8 +11,8 @@ import { HEROES, UNITS } from '../src/sim/units';
 // Auto place follows the formation picked on the prep screen's Formation sheet (COMBAT-HUD, docs/notes/combat-hud.md): with a shape picked
 // the heroes are set out in it, the same each time; with none, Auto places as it always has.
 
-const shapeOf = (b: ReturnType<typeof startStage>) =>
-  formationOf(b.board.d, b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind;
+const shapeOf = (b: ReturnType<typeof startStage>, prefer?: Formation) =>
+  formationOf(b.board.d, b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })), prefer)?.kind;
 
 test('the pick is kept per army or mode, Loose forgets it, and a save keeps only known shapes', () => {
   const m: { formations?: Record<string, string> } = {};
@@ -51,12 +51,14 @@ test('Auto place with a shape picked sets the heroes out in it, the same each ti
       // (each hero on its tile of the shape, as the Formation sheet's Arrange sets them out)
       const tiles = formationSpots(b.board, run.squad.map((id) => run.roster.find((h) => h.id === id)!.kind), shape);
       assert.deepEqual(spots.map((s) => [s.u, s.v]), tiles.map((t) => [t.u, t.v]), `${seed} ${shape}`);
-      // (the shape reads back wherever the party can make it: a wall needs two front-liners, a spearhead three in the lead, and so on)
+      // (FORMATIONS-FIT: the shape reads back, picked, whoever is in the party; only a board with no room for it (walls, water, cliffs on
+      // the deploy rows) can break it)
       tries++;
-      if (shapeOf(b) === shape) stood++;
+      if (shapeOf(b, shape) === shape) stood++;
     }
   }
-  assert.ok(stood > tries / 3, `${stood} of ${tries} stood in the picked shape`);
+  // (it was more than a third before FORMATIONS-FIT; now every one of these stands in its shape)
+  assert.equal(stood, tries, `${stood} of ${tries} stood in the picked shape`);
 });
 
 test('a party that can make every shape stands in each one Auto places it in', () => {

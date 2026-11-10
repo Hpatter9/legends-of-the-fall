@@ -15,11 +15,12 @@ export const TACTIC_WORDS: Record<Tactic, { name: string; short: string; line: s
 };
 
 /** The words for each formation: its name, a short label for the chip, and its bonus and weak point in a line. */
+// (FORMATIONS-FIT: every shape forms with whoever is in the party, the sturdiest in front, a shorter party in a smaller shape)
 export const FORMATION_WORDS: Record<Formation, { name: string; short: string; line: string }> = {
-  wall: { name: 'Shield Wall', short: 'Wall', line: 'Three side by side in front, two of them sturdy: +1 armour, a fifth less from blows. The ends are open.' },
-  spear: { name: 'Spearhead', short: 'Spear', line: 'A tip with a wing behind each side: they march faster and their first blows strike hard. The tip stands alone.' },
-  square: { name: 'Hollow Square', short: 'Square', line: 'Shooters at the back with friends round them: +2 armour, never struck from the side. Packed close, splash hurts more.' },
-  skirmish: { name: 'Skirmish', short: 'Skirmish', line: 'Four or more, nobody touching: half the splash, less from their spells. Nobody guards a friend.' },
+  wall: { name: 'Shield Wall', short: 'Wall', line: 'The sturdiest three side by side in front: +1 armour, a fifth less from blows. The ends are open.' },
+  spear: { name: 'Spearhead', short: 'Spear', line: 'The sturdiest at the tip, a wing behind each side: they march faster and their first blows strike hard. The tip stands alone.' },
+  square: { name: 'Hollow Square', short: 'Square', line: 'A shooter or healer inside, the sturdiest round it: +2 armour, never struck from the side. Packed close, splash hurts more.' },
+  skirmish: { name: 'Skirmish', short: 'Skirmish', line: 'Spread out, nobody touching: half the splash, less from their spells. Nobody guards a friend.' },
 };
 
 /** BATTLE-FEEL round 3: the words when the party cannot make the shape picked (`shapeFits`), so it stands loose or in another shape: the

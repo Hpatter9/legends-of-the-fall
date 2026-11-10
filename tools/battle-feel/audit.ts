@@ -39,7 +39,7 @@ function cell(level: number, stage: number, print: boolean) {
   };
   // where the front line stands: rows from the nearest foe, for front-liners and back-liners, sampled each second
   const waits = new Map<string, number>();
-  const formed = { n: 0, held: 0 };
+  const formed = { n: 0, held: 0, fw: 0, nw: 0 };
   const backs = new Map<string, number>();
   const gap = new Map<string, { n: number; sum: number }>();
   for (let g = 0; g < GAMES; g++) {
@@ -50,7 +50,7 @@ function cell(level: number, stage: number, print: boolean) {
     // (FORM=wall|spear|square|skirmish: the team stands in that shape, with the formations on)
     const form = process.env.FORM as Formation | undefined;
     if (form) {
-      setFormations(b, true);
+      setFormations(b, true, form);
       formationSpots(b.board, team, form).forEach((at, i) => place(b, team[i], at.u, at.v, undefined, sweepBoost(1, level)));
     } else team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, sweepBoost(1, level)));
     if (form) formed.n++;
@@ -162,11 +162,15 @@ function cell(level: number, stage: number, print: boolean) {
       }
     }
     if (b.phase === 'won') won++;
+    if (form) {
+      const f = b.formation?.kind === form;
+      formed[f ? 'fw' : 'nw'] += b.phase === 'won' ? 1 : 0;
+    }
     lengths.push(b.t);
   }
   lengths.sort((a, c) => a - c);
   const q = (p: number) => (lengths[Math.floor(p * (lengths.length - 1))] / 1000).toFixed(1);
-  if (formed.n) console.log(`\n(formation ${process.env.FORM}: read as that shape in ${formed.held} of ${formed.n} fights)`);
+  if (formed.n) console.log(`\n(formation ${process.env.FORM}: read as that shape in ${formed.held} of ${formed.n} fights; won ${formed.fw} of those, ${formed.nw} of the rest)`);
   console.log(`\n== level ${level}, stage ${stage}: ${GAMES} fights, won ${((100 * won) / GAMES).toFixed(1)}%, fight length s: p10 ${q(0.1)}, median ${q(0.5)}, p90 ${q(0.9)}`);
   for (const [r, t] of time) console.log(`  ${r.padEnd(8)} waiting ${((100 * t.wait) / t.alive).toFixed(1)}% of its time; steps ${((t.steps * 60000) / t.alive).toFixed(1)}/min, back-and-forth ${((100 * t.zigzag) / Math.max(1, t.steps)).toFixed(1)}% of steps, walked off when just struck ${((100 * t.chaseHit) / Math.max(1, t.steps)).toFixed(1)}%`);
   console.log('  why they wait: ' + [...waits.entries()].sort((a, c) => c[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', '));

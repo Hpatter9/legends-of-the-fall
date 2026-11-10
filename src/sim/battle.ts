@@ -52,7 +52,7 @@ import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
-import { formationBlow, formationFacing, formationMelee, formationMove, formationSplash, startFormation, type FormationState } from './formations';
+import { formationBlow, formationFacing, formationMelee, formationMove, formationSplash, startFormation, type Formation, type FormationState } from './formations';
 import { chargeBlow, chargeMove, castGate, heldBy, heldStep, startTactic, TACTICS, tickTactic, type Tactic, type TacticState } from './tactics';
 import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
@@ -504,6 +504,8 @@ export interface Battle {
   tactic?: TacticState;
   /** Whether the formations count in this fight (`setFormations`), and the shape the heroes stood in as it began (`formations.ts`). */
   formationsOn?: boolean;
+  /** The shape the player picked, read first (FORMATIONS-FIT, `setFormations`). */
+  formationPick?: Formation;
   formation?: FormationState;
   /** What the hero kits keep for the whole fight (set when the fight starts with a hero kit on the field): which auras are about, the bodies waiting to rise. */
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };
