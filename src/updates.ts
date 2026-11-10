@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.469.0',
+    date: '2026-11-10',
+    title: 'The duel is a show',
+    notes: ['Duellists walk into the ring while both sides watch and cheer from outside. One bar shows who is winning: green for your hero, red for the foe.', 'Duels last about twice as long, with the same odds of winning.'],
+  },
+  {
     version: '0.468.0',
     date: '2026-11-10',
     title: 'Quest battles end on their card',
