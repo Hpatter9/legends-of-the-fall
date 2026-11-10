@@ -95,12 +95,19 @@ export function noteBattleWon(m: Meta, run: Run): boolean {
   const s = (m.quests ??= blankQuests());
   if ((s.won ??= []).includes(run.mode.quest)) return false;
   s.won.push(run.mode.quest);
-  // (QUEST-COMPLETE: who fought and how it went, from the run's own books, for the Quest complete card)
+  return true;
+}
+
+/** QUEST-COMPLETE: who fought a quest battle and how it went, from the run's own books, for the Quest complete card. Call it once the
+ *  last fight is in the run's recap (the page notes a fight's stats after it settles the win, so `noteBattleWon` is a fight too early:
+ *  found by playing one, QUEST-COMPLETE 2). Written once, at the first win; a replay for practice writes nothing. */
+export function noteBattleHow(m: Meta, run: Run): boolean {
+  if (run.mode?.kind !== 'quest' || !run.cleared || run.mode.practice || !run.recap) return false;
+  const s = (m.quests ??= blankQuests());
+  if (s.how?.[run.mode.quest]) return false;
   const rec = run.recap;
-  if (rec) {
-    const heroes = Object.entries(rec.heroes).sort((a, b) => b[1].dealt - a[1].dealt || a[0].localeCompare(b[0])).map(([k]) => k);
-    (s.how ??= {})[run.mode.quest] = { heroes, ms: Math.round(rec.ms), fights: rec.fights, tries: s.tries?.[run.mode.quest] ?? 1 };
-  }
+  const heroes = Object.entries(rec.heroes).sort((a, b) => b[1].dealt - a[1].dealt || a[0].localeCompare(b[0])).map(([k]) => k);
+  (s.how ??= {})[run.mode.quest] = { heroes, ms: Math.round(rec.ms), fights: rec.fights, tries: s.tries?.[run.mode.quest] ?? 1 };
   return true;
 }
 

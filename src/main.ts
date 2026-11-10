@@ -136,7 +136,7 @@ import { agedLines } from './housesView';
 import { roomOpen } from './sim/rooms';
 import { readyQuests, ultsIn } from './sim/quests';
 import { castOf, castWords, mayFight, notReady, notReadyWords, questBattleById, questBossOf } from './sim/questBattles';
-import { canFightBattle, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
+import { battleOfQuest, canFightBattle, noteBattleHow, markTold as markStoryTold, questBattleOfRun, startQuestBattle, storyDue } from './sim/questRun';
 import { startMuster } from './sim/muster';
 import { questById } from './sim/questData';
 import { grantContent } from './sim/contentHeroes';
@@ -2817,6 +2817,13 @@ class Game {
           }
           // (EIDOLON-CHAINS: a chain's battle hands no quest in: its piece was found, and the log opens on the chain)
           const chain = chainOfBattle(qb.id);
+          // (QUEST-COMPLETE 2, the director's call: a quest's battle won hands the quest in at once: its Quest complete card opens over the
+          // tavern, with no trip to the log. A battle fought for practice, or one whose quest is not taken, goes on as before.)
+          const done = !practice && !chain ? readyQuests(this.meta).find((id) => battleOfQuest(id)?.id === qb.id) : undefined;
+          if (done) {
+            this.home.open(`${qb.title} won!`);
+            if (this.home.completeQuest(done)) return;
+          }
           this.home.open(practice ? `${qb.title}: won again, for practice.` : chain ? `${qb.title} won! A piece of the pact is found.` : `${qb.title} won! Hand the quest in at the tavern.`);
           if (!practice) this.home.openQuests(chain ? 'eidolons' : 'active');
           const piece = this.pendingPiece;
@@ -4057,6 +4064,8 @@ class Game {
       // (Dynasties, phase 6: an heir in its first season has the Heir's Promise, +25% XP)
       const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, promiseXp(this.meta, counselXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }, fielded), todayKey())));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
+      // (QUEST-COMPLETE 2: a quest battle's record, once its last fight is in the run's books)
+      if (won && noteBattleHow(this.meta, run)) saveMeta(this.meta);
       // (SHOP-BOOKS-GEAR: the heroes placed on the board study a fight more of their books, in any mode; their lasting gear wears, half
       // under auto-replay, except in the runs whose heroes start bare, where it does not count)
       const placed = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def));

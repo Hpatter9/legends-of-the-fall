@@ -213,7 +213,7 @@ export function battleStory(qb: QuestBattle, cast: readonly string[]): string[] 
 
 /**
  * A quest's story, from its own words: for a quest battle its blurb and the narration after the win; for any other story quest the ask
- * (the last line of its offer, two sentences at most); then the giver's closing line (the last of its `done` lines). Undefined for a
+ * (the last line of its offer, two sentences at most); then the giver's closing lines (all of its `done` lines, in order). Undefined for a
  * quest with no story.
  */
 export function storyOf(q: QuestDef, cast?: readonly string[]): Story | undefined {
@@ -223,13 +223,13 @@ export function storyOf(q: QuestDef, cast?: readonly string[]): Story | undefine
   const said: string[] = [];
   const ask = q.offer[q.offer.length - 1];
   if (!qb && ask) said.push(firstSentences(ask, 2));
-  const closing = q.done[q.done.length - 1];
-  if (closing) said.push(closing);
+  // (QUEST-COMPLETE 2, the director's call: every closing line the giver has, as the old card showed them; 51 quests have two or three)
+  said.push(...q.done);
   return told.length || said.length ? { told, said } : undefined;
 }
 
-/** The giver's thanks for a quest with no story: its closing line alone. */
-export const thanksOf = (q: QuestDef): string | undefined => (hasStory(q) ? undefined : q.done[q.done.length - 1]);
+/** The giver's thanks for a quest with no story: its closing lines alone, all of them. */
+export const thanksOf = (q: QuestDef): string[] | undefined => (hasStory(q) || !q.done.length ? undefined : [...q.done]);
 
 /* ------------------------------------------------------------------ the recap */
 
@@ -310,7 +310,7 @@ export interface CompleteView {
   /** "★★★☆☆ · Trial · Long". */
   starLine: string;
   story?: Story;
-  thanks?: string;
+  thanks?: string[];
   recap: RecapLine[];
   rewards: RewardRow[];
   next?: NextStep;
