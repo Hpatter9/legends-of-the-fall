@@ -47,6 +47,8 @@ export const CUE_TARGET = {
   ultCharge: -24, ultSlow: -25,
   // the rune bench and the ledgers
   runeSlide: -34, runeMerge: -27, runeSet: -29, ledger: -34,
+  // a duel made a show: the walk-in under its horn, the crowd's roar under a blow, the bar's swing quieter still
+  duelWalk: -28, crowdCheer: -29, tugSwing: -31,
   // deaths
   deathBones: -23, deathBurn: -23, deathThud: -23, deathStone: -23, deathBlood: -23, deathLight: -24,
 };

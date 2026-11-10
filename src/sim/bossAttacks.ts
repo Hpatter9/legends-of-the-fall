@@ -180,7 +180,10 @@ export const signaturesOf = (u: Unit): readonly Signature[] | undefined => (BOSS
 export const sigHp = (id: string): number => (BOSS_BIG.on && SIGNATURES[id] ? SIG.HP : 1);
 
 /** Whether a fight has dragged on so long for this boss that its rage version comes. */
-export const enraged = (b: Battle, s: SigState): boolean => b.t - s.born >= SIG.RAGE_MS;
+export const enraged = (b: Battle, s: SigState): boolean => b.t - s.born >= SIG.RAGE_MS * duelSlow(b);
+/** DUEL-SHOW: a duel's blows land softer and it lasts longer by that much (`Battle.duel.soften`); its boss's great blows keep their place in
+ *  it by coming that much slower too, and its rage that much later. 1 outside a duel. */
+const duelSlow = (b: Battle): number => b.duel?.soften ?? 1;
 
 const idx = (b: Battle, a: At): number => a.v * b.board.w + a.u;
 const onBoard = (b: Battle, u: number, v: number): boolean => u >= 0 && v >= 0 && u < b.board.w && v < b.board.d && !!tileAt(b.board, u, v);
@@ -270,7 +273,7 @@ export function sigTiles(b: Battle, me: Unit, s: Signature, rage: boolean): numb
 export function trySignature(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   const list = signaturesOf(me);
   if (!list?.length || isSilenced(b, me)) return false;
-  const st = ((b.sigs ??= {})[me.id] ??= { born: b.t, next: b.t + SIG.FIRST_MS, i: 0, turns: 0 });
+  const st = ((b.sigs ??= {})[me.id] ??= { born: b.t, next: b.t + Math.round(SIG.FIRST_MS * duelSlow(b)), i: 0, turns: 0 });
   if (b.warnings?.some((w) => w.by === me.id)) return false;
   // (a turn of its health lets one go at once; each once)
   const turn = SIG.TURNS.findIndex((at, k) => k >= st.turns && me.hp <= me.maxHp * at);
@@ -290,7 +293,7 @@ export function trySignature(b: Battle, me: Unit, out: BattleEvent[]): boolean {
   if (turn >= 0) st.turns = turn + 1;
   st.i++;
   const ms = rage ? SIG.RAGE_WARN_MS : SIG.WARN_MS;
-  st.next = b.t + ms + Math.round(SIG.EVERY_MS * (rage ? SIG.RAGE_EVERY : 1));
+  st.next = b.t + ms + Math.round(SIG.EVERY_MS * (rage ? SIG.RAGE_EVERY : 1) * duelSlow(b));
   const w: BossWarning = { n: (b.sigN = (b.sigN ?? 0) + 1), by: me.id, key: s.key, from: b.t, at: b.t + ms, tiles, rage };
   markWindup(w, me);
   (b.warnings ??= []).push(w);

@@ -46,6 +46,13 @@ export function heroSays(hero: string, kind: QuipKind, at: () => Anchor | null):
   if (q && a) showQuip(a, q.text, { who: UNITS[hero]?.name });
 }
 
+/** DUEL-SHOW: the crowd round a duel's ring shouts (a short cheer or groan, `duelShowRules.ts`), over `at`; the Hero quips setting silences
+ *  it, as it does every bubble. The show keeps its own gap between shouts. */
+export function crowdSays(text: string, at: Anchor, who: string): void {
+  if (!settings().quips) return;
+  showQuip(at, text, { who, hold: 1400 });
+}
+
 /** A foe grumbles as the fight starts (a short-staffed band most of all). `at(i)` says where the `i`th foe is on the page. */
 export function foeGrumbles(foes: number, at: (i: number) => Anchor | null): void {
   const text = box.grumble(foes, now());

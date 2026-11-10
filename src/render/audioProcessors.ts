@@ -1027,6 +1027,29 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.thump(t + 0.2, 140, 0.06, 0.06, 80);
   },
 
+  // a duel made a show (DUEL-SHOW): the two walking into the ring (heavy footfalls closing in, a drum roll under the last of them), the
+  // crowd's roar at a blow (a swell of many voices: bands of air, clapping and a shout's rise), and the tug-of-war bar swinging (a rope
+  // drawn tight: a rising rasp and a taut thump)
+  duelWalk: (s, t) => {
+    [0, 0.3, 0.58, 0.84, 1.08, 1.3].forEach((d, i) => {
+      s.thump(t + d, 95 + i * 3, 0.18, 0.22 + i * 0.03, 40);
+      s.hiss(t + d, 0.06, 900, 'bandpass', 0.05, 400);
+    });
+    s.scatter(t + 1.2, 0.45, 14, 0.06, 180, 'lowpass');
+  },
+  crowdCheer: (s, t) => {
+    s.hiss(t, 0.9, 900, 'bandpass', 0.16, 1400, 0.7);
+    s.hiss(t + 0.05, 0.8, 2200, 'bandpass', 0.08, 2800, 0.9);
+    s.scatter(t + 0.06, 0.7, 18, 0.05, 2600, 'bandpass');
+    s.note(t + 0.1, 260, 0.5, 0.05, 'sawtooth', 330);
+    s.note(t + 0.12, 390, 0.45, 0.04, 'sawtooth', 470);
+  },
+  tugSwing: (s, t) => {
+    s.hiss(t, 0.28, 600, 'bandpass', 0.12, 1800, 2.5);
+    s.thump(t + 0.26, 120, 0.16, 0.22, 70);
+    s.click(t + 0.27, 0.05, 1600);
+  },
+
   // relics & menus
   setChime2: (s, t) => {
     [523, 659, 784].forEach((f, i) => s.clang(t + i * 0.09, f, 0.5, 0.14));

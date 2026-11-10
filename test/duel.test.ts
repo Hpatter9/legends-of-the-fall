@@ -16,7 +16,7 @@ import { startNemesisTally, tallyNemesis, type NemesisTally } from '../src/sim/n
 import { VAIN_DUEL } from '../src/sim/nemesisTraits';
 import { CHEAT_DEATH, noteWar, TROPHIES } from '../src/sim/council';
 import { decorate } from '../src/sim/revenge';
-import { acceptDuel, challengeOf, championFor, contenders, DUEL_HEAL, DUEL_SHARE, duelHeal, duelOffer, duelOutcome, duelShare, readRunDuel, refuseDuel, ringFor, settleDuelRun, startDuel, type DuelOffer } from '../src/sim/duel';
+import { acceptDuel, challengeOf, championFor, contenders, DUEL_HEAL, DUEL_SHARE, duelHeal, duelMs, duelOffer, duelOutcome, duelShare, readRunDuel, refuseDuel, ringFor, settleDuelRun, startDuel, type DuelOffer } from '../src/sim/duel';
 import { DUEL_MS, inRing, RING_R } from '../src/sim/duelRing';
 import { REVIVE_SHARE } from '../src/sim/wounds';
 import { armyById } from '../src/sim/armies';
@@ -69,7 +69,7 @@ function decided(run: Run, o: DuelOffer, kind: string, end: 'won' | 'lost' | 'ti
   else if (end === 'lost') events.push(...blow(b, nem, champ, champ.hp + 999));
   else {
     nem.hp = Math.max(1, Math.round(nem.maxHp * left));
-    b.t = DUEL_MS - 100;
+    b.t = duelMs() - 100;
   }
   tallyNemesis(tally, events, b.units, b.t);
   while (b.phase === 'fight') tallyNemesis(tally, stepBattle(b), b.units, b.t);
@@ -143,7 +143,8 @@ test('the duel’s fight: the two alone in the middle ring, sixty seconds, the n
   assert.ok(inRing(b.duel!, champ) && inRing(b.duel!, nem), 'both in the ring');
   assert.ok(champ.v > nem.v, 'the champion at the near side');
   assert.equal(b.duel!.r, RING_R);
-  assert.equal(b.timeLimit, DUEL_MS);
+  assert.equal(b.timeLimit, duelMs());
+  assert.ok(duelMs() >= DUEL_MS, 'the ring’s clock (DUEL-SHOW: stretched) never shorter than its sixty seconds');
   // (the share: against the wave's own nemesis)
   const wave = startDuelWave(run);
   const full = wave.units.find((u) => u.nem?.id === n.id)!;
@@ -213,7 +214,8 @@ test('a Vain nemesis takes a tenth more in a duel, and only in a duel', () => {
   const inDuel = hp - nem.hp;
   const outside = hp - pn.hp;
   assert.ok(outside > 0);
-  assert.ok(Math.abs(inDuel - Math.round(outside * (1 + VAIN_DUEL))) <= 1, `${inDuel} against ${outside}`);
+  // (and, DUEL-SHOW, softened as every blow in a ring is)
+  assert.ok(Math.abs(inDuel - Math.round(Math.round(outside * (1 + VAIN_DUEL)) / (b.duel!.soften ?? 1))) <= 1, `${inDuel} against ${outside}`);
 });
 
 test('a win counts as the wave won, with its pay doubled; the nemesis cannot cheat death; every hero heals a fifth', () => {
@@ -322,7 +324,7 @@ test('a champion for an open challenge, and the duel played out to its end for r
   assert.ok(run.squad.includes(champ));
   const { b } = duelOf(run, o, run.roster.find((h) => h.id === champ)!.kind);
   assert.ok(['won', 'lost', 'timeout'].includes(duelOutcome(b)!));
-  assert.ok(b.t <= DUEL_MS);
+  assert.ok(b.t <= duelMs());
 });
 
 test('a lost duel is never fought again by a heart', async () => {
