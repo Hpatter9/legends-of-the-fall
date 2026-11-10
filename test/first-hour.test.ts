@@ -175,3 +175,65 @@ test('a tool\'s new save has the three heroes of a starter pack', async () => {
   assert.deepEqual(a.party, FIXED_PACKS[0].heroes);
   assert.deepEqual(newSaveMeta(11).unlocked, FIXED_PACKS[11 % FIXED_PACKS.length].heroes);
 });
+
+// ---- FIRST-HOUR 3: the owner's answers ----
+
+test('the first clear of the first two armies gives a new save a whole hero, once, and only while it is short of them', async () => {
+  const { CLEAR_HEROES, clearHeroWaits, grantClearHero } = await import('../src/sim/clearHero');
+  const { newSaveMeta } = await import('../tools/autoplay');
+  const { CONTENT_HEROES } = await import('../src/sim/contentHeroes');
+  const { unseenHeroes } = await import('../src/sim/heroesSeen');
+  const { settleArmyRun } = await import('../src/sim/armyStars');
+  const { armyRun } = await import('../src/sim/run');
+  const { startedMeta } = await import('../src/sim/meta');
+  const [orcs, undead, beasts] = ARMIES;
+  assert.deepEqual(CLEAR_HEROES, { 0: { below: 4 }, 1: { below: 5 } });
+  // a new save: three heroes, the card promises one, the first clear gives it
+  const m = newSaveMeta(21, 0);
+  assert.equal(m.unlocked.length, 3);
+  assert.equal(clearHeroWaits(m, orcs), true);
+  assert.equal(clearHeroWaits(m, beasts), false);
+  const run = armyRun(5, orcs.id, m.party);
+  run.cleared = true;
+  run.over = true;
+  const res = settleArmyRun(m, run)!;
+  const fourth = res.hero!;
+  assert.ok(fourth, 'the result names the hero');
+  assert.equal(m.unlocked.length, 4);
+  assert.ok(m.unlocked.includes(fourth) && m.party.includes(fourth), 'owned, and in the party while it has room');
+  assert.ok(!(fourth in CONTENT_HEROES), 'never a hero earned by a milestone');
+  assert.deepEqual(unseenHeroes(m), [fourth], 'its join reveal is due');
+  assert.equal(clearHeroWaits(m, orcs), false);
+  // once: a second clear, on any tier, gives nothing
+  const again = armyRun(6, orcs.id, m.party, undefined, 1);
+  again.cleared = true;
+  assert.equal(settleArmyRun(m, again)!.hero, undefined);
+  assert.equal(m.unlocked.length, 4);
+  // the second army gives the fifth
+  assert.equal(clearHeroWaits(m, undead), true);
+  const fifth = grantClearHero(m, undead, true)!;
+  assert.ok(fifth && fifth !== fourth);
+  assert.equal(m.unlocked.length, 5);
+  assert.equal(grantClearHero(m, undead, true), undefined);
+  // the pick is the save's own, on its side stream: the same save gets the same hero, and no pull is used
+  const twin = newSaveMeta(21, 0);
+  const pulls = twin.pulls;
+  assert.equal(grantClearHero(twin, orcs, true), fourth);
+  assert.equal(twin.pulls, pulls);
+  // a save that already has its heroes gets nothing, now or later
+  const old = startedMeta(8);
+  assert.equal(clearHeroWaits(old, orcs), false);
+  assert.equal(grantClearHero(old, orcs, true), undefined);
+  assert.deepEqual(old.clearHeroes, [orcs.id], 'settled for good');
+  old.unlocked.length = 3;
+  assert.equal(grantClearHero(old, orcs, true), undefined);
+  // a save that owns four when it first clears the first army gets none there, but still its fifth at the second
+  const four = newSaveMeta(22, 1);
+  four.unlocked.push('knight');
+  assert.equal(grantClearHero(four, orcs, true), undefined);
+  assert.ok(grantClearHero(four, undead, true));
+  // not a first clear: nothing, and nothing is settled
+  const late = newSaveMeta(23, 0);
+  assert.equal(grantClearHero(late, orcs, false), undefined);
+  assert.equal(late.clearHeroes, undefined);
+});

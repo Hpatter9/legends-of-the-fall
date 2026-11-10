@@ -122,6 +122,8 @@ export interface Meta {
   armySeen: string[];
   /** The armies and modes ('castle', 'tower', 'calamity') a save from before the star unlocks already had open: they stay open (`modeUnlock.ts`). Missing in a save from before; read once. */
   opened?: string[];
+  /** FIRST-HOUR 3: the armies whose first clear's hero gift is settled (`clearHero.ts`), given or not: each is settled once a save. */
+  clearHeroes?: string[];
   /** The achievements unlocked (`achievements.ts`, by id). */
   achievements: string[];
   /** The achievements whose crowns have been claimed (an older save's earned ones were paid at once, so they count as claimed). */

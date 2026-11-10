@@ -3985,6 +3985,8 @@ class Game {
       // (the stars this fight won may have opened the Calamity: its reveal, the portal, plays once, the moment it opens)
       if (modeShown('calamity') && modeOpen(this.meta, 'calamity')) void this.queueScene({ kind: 'calOpen' });
       this.earned.push(...joined);
+      // (FIRST-HOUR 3: the hero a first clear gave has its join reveal with them)
+      if (this.runStars?.hero) this.earned.push(this.runStars.hero);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       // (a quest battle replayed for practice pays nothing, XP neither)

@@ -7,6 +7,7 @@
 // later the army. Pure rules: no Pixi, no DOM.
 
 import { marchPay } from './march';
+import { grantClearHero } from './clearHero';
 import { bookById } from './bookData';
 import { chestBook, grantBook } from './books';
 import { dailyStarsMax } from './dailyThemes';
@@ -61,6 +62,8 @@ export interface StarResult {
   chests: number[];
   /** The milestone that sizes the first-clear chest this run paid (3, 5 or 10), or 0 when the tier was cleared before. */
   firstClear: number;
+  /** FIRST-HOUR 3: the hero the army's first clear gave a new save (`clearHero.ts`); missing is none. */
+  hero?: string;
   /** DEPTH-BUILD: the extra chests a cursed or night march's clear put in the stash. */
   marchChests?: number;
 }
@@ -81,12 +84,15 @@ export function settleArmyRun(m: Meta, run: Run): StarResult | null {
     if (!(before & (1 << i))) fresh.push(i);
   });
   (rec.met ??= {})[String(tier)] = before | mask;
+  // (FIRST-HOUR 3: the army's first clear on any tier may give a new save a whole hero, `clearHero.ts`)
+  const firstEver = !(rec.first ?? 0);
   const firstClear = grantFirstClear(m, a, rec, tier);
+  const hero = grantClearHero(m, a, firstEver);
   // (DEPTH-BUILD: a cursed clear earns the tier's laurel; a cursed or night march's clear one more chest, from its own side stream)
   if (run.orders?.mod === 'cursed' && !(rec.cursed ?? []).includes(tier)) rec.cursed = [...(rec.cursed ?? []), tier].sort();
   const extra = marchPay(run.orders).chests;
   for (let i = 0; i < extra; i++) m.stash.push({ army: a.id, at: 3, tier, seed: mixSeed(run.seed, 0x6d62, i) });
-  return { tier, rules, fresh, gained: fresh.length, total: starsOf(rec), chests: grantChests(m, a, rec, tier), firstClear, ...(extra ? { marchChests: extra } : {}) };
+  return { tier, rules, fresh, gained: fresh.length, total: starsOf(rec), chests: grantChests(m, a, rec, tier), firstClear, ...(hero ? { hero } : {}), ...(extra ? { marchChests: extra } : {}) };
 }
 
 /** The star milestone whose chest size an army's first clear of each tier pays: Normal bronze, Hard and Elite silver, Legendary and Mythic gold. */
