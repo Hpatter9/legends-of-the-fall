@@ -27,22 +27,18 @@ interface ArmyClear {
   remark: string;
   gloat: [string, string];
   tail: string;
-  /** A title card over the closing shot (CINE-1110: the first army's end). */
-  card?: { over: string; name: string };
 }
 
 const CLEARS: ArmyClear[] = [
   {
     army: 'orcs', name: 'Orc Warband', area: 'warcamp', boss: 'orcWarlord', escort: 'orcGrunt',
-    // (CINE-1110: the first army's end is the game's first great win; its war bell tolls once more, and a title card closes the chapter)
-    title: 'The Last Toll',
-    blurb: 'The Orc Warlord falls, and the Red Tusk’s war bell tolls one last time, for him.',
-    setup: 'The Orc Warlord sank to one knee. Behind him, the Red Tusk’s war bell rang once, by itself.',
-    last: 'NINE KEEPS... I BURNED NINE KEEPS. THE TENTH WAS *SUPPOSED* TO BE YOURS.',
-    remark: 'Eight, boss. One was a barn. I did tell you about the barn.',
-    gloat: ['Then let the chronicle say: one barn, and no keep.', 'Ring it again, somebody. I think he rather likes the sound.'],
-    tail: 'The bell tolled for the Red Tusk, and the road to the keep fell quiet. The first army was beaten.',
-    card: { over: 'The first army', name: 'The Red Tusk Falls' },
+    title: 'Orc Warband: Routed',
+    blurb: 'The Orc Warlord takes a knee to catch his breath and lodge an administrative complaint.',
+    setup: 'The Orc Warlord dropped onto one knee, the traditional tribal gesture meaning \'mild setback\'.',
+    last: 'THIS ENGAGEMENT IS VOID! TAKE DOWN THAT STATEMENT IN THE CHRONICLES!',
+    remark: 'Who has the quill, boss? Someone took it to draw on the wall.',
+    gloat: ['He will require a remarkably large scroll to list all the grievances.', 'Shall we inform his dear mother, or will the surviving grunts draft the letter?'],
+    tail: 'The remaining orcs held a brief symposium on maternal correspondence. The heroes waited politely.',
   },
   {
     army: 'undead', name: 'Undead Legion', area: 'graveyard', boss: 'lichKing', escort: 'skeleton',
@@ -169,7 +165,6 @@ const clearScene = (c: ArmyClear): Scene => ({
       acts: [{ who: 'boss', pose: 'down' }],
       fx: ['fadeOut'],
       cue: 'boom',
-      ...(c.card ? { title: c.card } : {}),
       lines: [tell(c.tail)],
     },
   ],

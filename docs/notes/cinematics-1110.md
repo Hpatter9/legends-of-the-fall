@@ -28,7 +28,7 @@ where the ask differed. The director was asked which way to take each one (see "
    one of its wave's escort, its boast tilted, a hero's answer in close, a smash cut into the fight. 12 to 16 s; the `sceneBoss` sting; the
    fight's music goes on. The armies' last bosses keep their march (`intro:<army>`) and their arrival. Codex: "The armies' first bosses".
    With cinematics off the boss card plays as before and the film is marked seen, so the Scenes list can play it.
-4. **The first loss: Not the End** (`firstLoss`, same id). Short and kind (about 17 s, was 38 s, `solemn` score, was `comic`): rain over
+4. **The first loss**: left as it is on main (the director: the owner has seen and kept it).
    the highlands from above, the front hero hurt; "We gave ground. We did not give *up*."; the ruler takes it ("Rest. Mend. Then we try a
    different shape."), Duchess beside them; the rain stops, light comes through, and the narrator hands over: "Every hero keeps what they
    learned. Here is how to come back *stronger*." The recap with its come-back-stronger tips (`comebackTips`) comes up as it ends (it

@@ -4583,21 +4583,22 @@
    ]
   },
   "firstLoss": {
-   "title": "Not the End",
-   "blurb": "The first defeat. The heroes pick themselves up, and the keep has a few thoughts on next time.",
+   "title": "A Matter of Geometry",
+   "blurb": "The party's maiden defeat prompts an exceptionally polite inquest regarding fault.",
    "cast": {
     "front": "party:0",
     "mid": "party:1",
+    "back": "party:2",
     "king": "unit:standKing",
     "duchess": "duchess"
    },
    "shots": [
     {
-     "caption": null,
+     "caption": "Back at the keep",
      "lines": [
       {
        "who": "narrator",
-       "text": "The line broke. It happens to every legend once, and never in the songs."
+       "text": "Every legendary host has a first clumsy afternoon. This was theirs. They bore it with bandages."
       }
      ]
     },
@@ -4606,7 +4607,15 @@
      "lines": [
       {
        "who": "front",
-       "text": "We gave ground. We did not give *up*."
+       "text": "I trust nobody is vulgar enough to blame my position."
+      },
+      {
+       "who": "mid",
+       "text": "Thirty percent the position, darling."
+      },
+      {
+       "who": "back",
+       "text": "I asked for thirty paces back. I was given a hedge."
       }
      ]
     },
@@ -4615,11 +4624,19 @@
      "lines": [
       {
        "who": "king",
-       "text": "Rest. Mend. Then we try a different shape."
+       "text": "The line broke on the left. That is on me."
+      },
+      {
+       "who": "mid",
+       "text": "Gracious, majesty. We shall try the eastern flank tomorrow."
       },
       {
        "who": "duchess",
-       "text": "Mehh."
+       "text": "Baaaah."
+      },
+      {
+       "who": "king",
+       "text": "Her Grace says the hedge was her idea."
       }
      ]
     },
@@ -4628,7 +4645,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "Every hero keeps what they learned. Here is how to come back *stronger*."
+       "text": "Tomorrow, they resolved, would be more dignified. Duchess, chewing the hedge, was sceptical."
       }
      ]
     }
@@ -5823,8 +5840,8 @@
    ]
   },
   "clear:orcs": {
-   "title": "The Last Toll",
-   "blurb": "The Orc Warlord falls, and the Red Tusk’s war bell tolls one last time, for him.",
+   "title": "Orc Warband: Routed",
+   "blurb": "The Orc Warlord takes a knee to catch his breath and lodge an administrative complaint.",
    "cast": {
     "boss": "unit:orcWarlord",
     "escort": "unit:orcGrunt",
@@ -5838,7 +5855,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The Orc Warlord sank to one knee. Behind him, the Red Tusk’s war bell rang once, by itself."
+       "text": "The Orc Warlord dropped onto one knee, the traditional tribal gesture meaning 'mild setback'."
       }
      ]
     },
@@ -5847,7 +5864,7 @@
      "lines": [
       {
        "who": "boss",
-       "text": "NINE KEEPS... I BURNED NINE KEEPS. THE TENTH WAS *SUPPOSED* TO BE YOURS."
+       "text": "THIS ENGAGEMENT IS VOID! TAKE DOWN THAT STATEMENT IN THE CHRONICLES!"
       }
      ]
     },
@@ -5856,7 +5873,7 @@
      "lines": [
       {
        "who": "escort",
-       "text": "Eight, boss. One was a barn. I did tell you about the barn."
+       "text": "Who has the quill, boss? Someone took it to draw on the wall."
       }
      ]
     },
@@ -5865,11 +5882,11 @@
      "lines": [
       {
        "who": "hero",
-       "text": "Then let the chronicle say: one barn, and no keep."
+       "text": "He will require a remarkably large scroll to list all the grievances."
       },
       {
        "who": "mate",
-       "text": "Ring it again, somebody. I think he rather likes the sound."
+       "text": "Shall we inform his dear mother, or will the surviving grunts draft the letter?"
       },
       {
        "who": "duchess",
@@ -5882,7 +5899,7 @@
      "lines": [
       {
        "who": "narrator",
-       "text": "The bell tolled for the Red Tusk, and the road to the keep fell quiet. The first army was beaten."
+       "text": "The remaining orcs held a brief symposium on maternal correspondence. The heroes waited politely."
       }
      ]
     }

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sceneSeconds, SCENES, SCENE_ORDER } from '../src/sim/sceneScripts';
+import { sceneSeconds, SCENES } from '../src/sim/sceneScripts';
 import { dueScene, markSeen, sceneList } from '../src/sim/sceneRules';
 import { newMeta, pickStarter } from '../src/sim/meta';
 import { ARMIES, bossesOf } from '../src/sim/armies';
@@ -70,23 +70,4 @@ test('each army’s first boss has its film, played the first time it is met, on
   const rows = sceneList(picked());
   assert.ok(rows.some((r) => r.more && r.title.includes(FAMILY_NAMES.firstBoss)) || rows.some((r) => r.more && r.text.includes(FAMILY_NAMES.firstBoss)));
   assert.ok(sceneList(m).some((r) => r.id === 'boss:orcs' && r.seen));
-});
-
-test('the first army cleared: the Orc Warlord’s last toll, closing on a title card', () => {
-  const sc = SCENES['clear:orcs'];
-  assert.equal(sc.title, 'The Last Toll');
-  assert.deepEqual(sc.moment, { kind: 'armyClear', army: 'orcs' });
-  assert.equal(ARMIES[0].id, 'orcs', 'the orcs are the first army');
-  assert.ok(sc.shots[sc.shots.length - 1].title, 'a title card on the closing shot');
-  assert.ok(!SCENES['clear:undead'].shots.some((s) => s.title), 'the other armies keep their shape');
-});
-
-test('the first loss: short and kind, handing over to the come-back-stronger tips', () => {
-  const sc = SCENES.firstLoss;
-  const secs = sceneSeconds(sc);
-  assert.ok(secs >= 10 && secs <= 20, `${secs.toFixed(1)} s`);
-  assert.notEqual(sc.music, 'comic');
-  const last = sc.shots[sc.shots.length - 1].lines!.at(-1)!.text;
-  assert.match(last, /come back \*?stronger/);
-  assert.ok(SCENE_ORDER.includes('firstLoss'));
 });
