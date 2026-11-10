@@ -18,14 +18,13 @@ import { BusMixer, CueSynth, MusicPlayer } from './audioProcessors';
 import { AmbientBeds } from './audioBeds';
 import { DUCK_HOLD_S, DuckCounter, FIGHT_DUCKS, WAKE_FADE_S, duckChange, duckOf, panOfEvent, sliderGain, type PlannedCue, type Scene } from './audioRules';
 import type { Area } from '../sim/board';
-import { TRACK_OF_PLACE, placeOf, type MapKind, type MusicId, type StingId } from './epicMusic';
+import { TRACK_OF_PLACE, placeOf, sceneTrack, type MapKind, type MusicId, type StingId } from './epicMusic';
 import { BOSS_TRACK, atPlace, crossfadeOf, endAt, musicOf, type BattleEnd, type MusicState } from './battleMusic';
 import { bakeTrack } from './musicBake';
-import { SCENE_TRACKS, type Track } from './musicScore';
 import { Mixer, castsOf, cuesFor, type Cue } from './soundRules';
 import { SpellBank } from './spellBank';
 import { coveredBySpells, spellParts } from './spellSfx';
-import { AMBIENCE_LEVEL, MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, busOf } from './audioMix';
+import { AMBIENCE_LEVEL, MOMENT_CUES, MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, busOf } from './audioMix';
 import { assaultEnd, drumGap, holdCues, holdScene, holdVoice, type AssaultEnd, type HoldAt, type HoldLike } from './holdSound';
 import type { HoldEvent } from '../sim/assault/holdTypes';
 
@@ -284,6 +283,28 @@ export function hushSummon(): void {
   p.setTargetAtTime(1, t + 0.4, 0.02);
 }
 
+/** How long a skipped moment's bus is held shut (seconds): longer than the ultimate's build-up, so none of it comes back. */
+export const MOMENT_HUSH_S = 1.6;
+/** A tap skipped an ultimate's moment: its build-up (and slow beat) still ringing fades out in about a tenth of a second, never cut dead,
+ *  and the bus opens again once they would have ended. The blow's own sting is not on this bus. */
+export function hushMoment(): void {
+  if (!engine) return;
+  const p = engine.mixer.params.show;
+  const t = engine.core.context.currentTime;
+  p.cancelScheduledValues(t);
+  p.setTargetAtTime(0, t, 0.04);
+  p.setTargetAtTime(1, t + MOMENT_HUSH_S, 0.02);
+}
+
+/** The moment's bus opened again just before a new moment's cue starts (`delay` ms from now), whatever a skip left scheduled. */
+function openMoment(delay: number): void {
+  if (!engine) return;
+  const p = engine.mixer.params.show;
+  const t = engine.core.context.currentTime + delay / 1000;
+  p.cancelScheduledValues(t);
+  p.setTargetAtTime(1, t, 0.005);
+}
+
 /** One effect now, unless the same one played too recently. */
 export function play(name: Sfx): void {
   cue(name, 1, 1, 0, 0);
@@ -299,6 +320,8 @@ function cue(name: Cue, speed: number, gain: number, delay: number, pan: number)
   if (!engine || engine.core.context.state !== 'running' || muted) return;
   const v = mixer.request(name, performance.now() + delay, speed, gain);
   if (!v) return;
+  // (a moment's cue asked for after a skip hushed the last one's: the bus is opened for it)
+  if (MOMENT_CUES.includes(name)) openMoment(delay);
   // (a test page can set `window.__sfxLog = []` to see which sounds played)
   (window as unknown as { __sfxLog?: string[] }).__sfxLog?.push(name);
   engine.synth.play(name, engine.core.context.currentTime + 0.01 + delay / 1000, { gain: v.gain, pitch: v.pitch, bus: busOf(name), pan });
@@ -332,13 +355,6 @@ function playSpell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>, events
   }
 }
 
-/** The cinematics' music: a scene's id to the track it plays (a scene with no score of its own has none). */
-const SCENE_TRACK: Record<string, Track> = {
-  ...Object.fromEntries(SCENE_TRACKS.map((t) => [t, t])),
-  // (the Calamity heralds by their foe ids, and some moods by what they are for)
-  calBoss1: 'gorvak', calBoss2: 'herald2', calBoss3: 'herald3', calBoss4: 'herald4', calBoss5: 'herald5', calBoss6: 'herald6',
-  awakening: 'solemn', victory: 'triumph', spireClimb: 'spire',
-};
 /** Plays a victory or defeat sting once over the music, which comes back after it. */
 export function playSting(id: StingId): void {
   engine?.music.sting(id);
@@ -352,10 +368,10 @@ export function setMusic(track: MusicId | `scene:${string}`): void {
   engine?.music.setTrack(track as MusicId);
 }
 
-/** Starts a cinematic's music by the scene's id (`opening`, `gorvak`, `herald2` to `herald6`, `triumph`, `comic`, `solemn`, `spire`, or a Calamity foe id `calBoss1` to `calBoss6`, or the aliases `awakening`, `victory`, `spireClimb`); an id with no score leaves the music as it is. It loops until
+/** Starts a cinematic's music by the scene's id (`opening`, `gorvak`, `herald2` to `herald6`, `triumph`, `comic`, `solemn`, `spire`, or a Calamity foe id `calBoss1` to `calBoss6`, or the aliases `awakening`, `victory`, `spireClimb`, or `warEnd`); an id with no score leaves the music as it is. It loops until
  *  `endScene`. The scenes' stings are cues: `play('sceneBoss')` for a boss arriving, `play('sceneVictory')` for a victory. */
 export function playScene(id: string): void {
-  const track = SCENE_TRACK[id];
+  const track = sceneTrack(id);
   if (!track || !engine) return;
   sceneMusic = true;
   // (a victory cinematic scores the same triumph the victory music plays: it carries on, its fanfare included, without a restart)

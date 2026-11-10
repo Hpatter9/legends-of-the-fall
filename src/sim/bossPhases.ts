@@ -7,7 +7,7 @@
 
 import { standable, tileAt, type At } from './board';
 import { addUnit, apart, defOf, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
-import { CHARGE_MAX, KITS, foesOf, type Kit, type Passive } from './abilities';
+import { CHARGE_MAX, KITS, foesOf, kitOf, type Kit, type Passive, type SkillRef } from './abilities';
 import { TRIALS } from './eidolonTrials';
 
 /** The share of its health at which a boss changes form. */
@@ -132,13 +132,19 @@ export function enterPhase(b: Battle, me: Unit, out: BattleEvent[]): void {
   // (the new skill: its own meter starts part full, so it is seen soon)
   const was: Kit | undefined = KITS[me.def];
   if (was && (k.skill || k.ultimate || k.passive)) {
-    const kit: Kit = { skill: k.skill ? KITS[k.skill].skill : was.skill, passive: k.passive ? { ...was.passive, ...k.passive } : was.passive };
-    const ult = k.ultimate ? KITS[k.ultimate].skill : k.skill ? KITS[k.skill].ultimate ?? was.ultimate : was.ultimate;
-    if (ult) kit.ultimate = ult;
-    me.kit = kit;
+    // (kept on the boss as plain data, `KitRef`: which kit each skill comes from. A kit itself holds functions, and a battle with one in
+    //  it could not be posted from the Assault's worker or kept for a resume: the lord's change of form froze the page's battle)
+    const ult: SkillRef | undefined = k.ultimate
+      ? { of: k.ultimate, slot: 'skill' }
+      : k.skill && KITS[k.skill].ultimate
+        ? { of: k.skill, slot: 'ultimate' }
+        : was.ultimate
+          ? { of: me.def, slot: 'ultimate' }
+          : undefined;
+    me.kitRef = { skill: { of: k.skill ?? me.def, slot: 'skill' }, ...(ult ? { ultimate: ult } : {}), passive: k.passive ? { ...was.passive, ...k.passive } : { ...was.passive } };
   }
   me.charge = Math.max(me.charge, 60);
-  if (k.primed && (me.kit ?? KITS[me.def])?.ultimate) me.charge2 = CHARGE_MAX;
+  if (k.primed && kitOf(me)?.ultimate) me.charge2 = CHARGE_MAX;
   if (k.teleport) leap(b, me, out);
   if (k.adds) {
     const foe = b.foeBoost;

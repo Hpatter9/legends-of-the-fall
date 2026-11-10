@@ -1712,7 +1712,40 @@ for (const kind of TWENTY_HEROES) {
 }
 
 // (a hero still to join the roster has its kit in `kits/vampires.ts` until it does, docs/notes/twenty-heroes.md)
-export const kitOf = (u: Unit): Kit | undefined => u.kit ?? KITS[u.def] ?? comingKits()[u.def];
+export const kitOf = (u: Unit): Kit | undefined => (u.kitRef ? kitOfRef(u.kitRef) : undefined) ?? u.kit ?? KITS[u.def] ?? comingKits()[u.def];
+
+/** A kit a fighter carries in place of its kind's, as plain data: its skill and its ultimate named by the kit and the slot they come
+ *  from, and its passive (numbers and flags). A battle holds only this (never the kit itself, whose skills are functions), so it can be
+ *  cloned whole: posted from the Assault's worker and kept for a resume (`test/assault-clone.test.ts`). */
+export interface SkillRef {
+  of: string;
+  slot: 'skill' | 'ultimate';
+}
+export interface KitRef {
+  skill: SkillRef;
+  ultimate?: SkillRef;
+  passive: Passive;
+}
+const skillOfRef = (r: SkillRef): Skill | undefined => (KITS[r.of] ?? comingKits()[r.of])?.[r.slot];
+/** The kits made from refs, each once (so a fighter's kit is the same object from tick to tick). */
+const refKits = new WeakMap<KitRef, Kit>();
+/** The kit a ref stands for (undefined if its skill's kit is gone). */
+export function kitOfRef(r: KitRef): Kit | undefined {
+  const had = refKits.get(r);
+  if (had) return had;
+  const skill = skillOfRef(r.skill);
+  if (!skill) return undefined;
+  const ult = r.ultimate ? skillOfRef(r.ultimate) : undefined;
+  const kit: Kit = { skill, passive: r.passive, ...(ult ? { ultimate: ult } : {}) };
+  refKits.set(r, kit);
+  return kit;
+}
+/** A fighter's own kind's kit as a ref, with `passive` laid over its own (undefined for a kind with no kit). */
+export function refOfKind(def: string, passive: Partial<Passive> = {}): KitRef | undefined {
+  const kit = KITS[def] ?? comingKits()[def];
+  if (!kit) return undefined;
+  return { skill: { of: def, slot: 'skill' }, ...(kit.ultimate ? { ultimate: { of: def, slot: 'ultimate' as const } } : {}), passive: { ...kit.passive, ...passive } };
+}
 /** The key of a fighter's kit skill, and of its kit's ultimate (the page looks a cast's look and sound up by these). */
 export const keyOfKit = (u: Unit): string => { const k = kitOf(u); return k ? keyOf(k.skill) : ''; };
 export const ultKeyOf = (u: Unit): string | undefined => { const k = kitOf(u)?.ultimate; return k ? keyOf(k) : undefined; };
