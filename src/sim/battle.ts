@@ -38,7 +38,7 @@ import { bondCover, bondFall, startBonds, tickBonds, type BondPair } from './bon
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { chargeOf, noteStep, preyOrder, walkOrder, moveOf } from './foeStyles';
-import { afterBlow, gangOf, kitOf, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
+import { afterBlow, gangOf, kitOf, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type KitRef, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
@@ -52,7 +52,7 @@ import { startDuoCombos, type DuoState } from './duoCombos';
 import type { EquipStats } from './equipment';
 import { heroKitOf, startPool, startUlt, ultOnDamage, type KitState } from './heroKits';
 import { applyOrders, type LogEntry, type Order } from './orders';
-import { formationBlow, formationFacing, formationMelee, formationMove, formationSplash, startFormation, type FormationState } from './formations';
+import { formationBlow, formationFacing, formationMelee, formationMove, formationSplash, startFormation, type Formation, type FormationState } from './formations';
 import { chargeBlow, chargeMove, castGate, heldBy, heldStep, startTactic, TACTICS, tickTactic, type Tactic, type TacticState } from './tactics';
 import { tickEidolon, type EidolonFight } from './eidolons';
 import { settleJump } from './kits/blades';
@@ -230,6 +230,10 @@ export interface Unit {
   phase?: { at: number; done: boolean; surge?: number };
   /** The kit it fights with after changing form (instead of its kind's). */
   kit?: Kit;
+  /** The same as plain data (`KitRef` in `abilities.ts`): which kits its skill and its ultimate come from, and its passive. A boss's second
+   *  form and a Sure-footed nemesis are given this, never `kit`, whose skills are functions: a battle with a function in it cannot be
+   *  posted from the Assault's worker or kept for a resume. `kitOf` reads it. */
+  kitRef?: KitRef;
   /** A hero's chosen skills for its slots, when not its own (`books.ts`; from `Boost.equip.book`). */
   book?: string[];
   /** Its skills' levels by use in slot order, when any is above 1 (`skillLevels.ts`; from `Boost.skillLv`); what a levelled skill adds to its
@@ -504,6 +508,8 @@ export interface Battle {
   tactic?: TacticState;
   /** Whether the formations count in this fight (`setFormations`), and the shape the heroes stood in as it began (`formations.ts`). */
   formationsOn?: boolean;
+  /** The shape the player picked, read first (FORMATIONS-FIT, `setFormations`). */
+  formationPick?: Formation;
   formation?: FormationState;
   /** What the hero kits keep for the whole fight (set when the fight starts with a hero kit on the field): which auras are about, the bodies waiting to rise. */
   kits?: { standards?: boolean; songs?: boolean; vows?: boolean; rewind?: boolean; raise?: { by: number; foe: number }[] };

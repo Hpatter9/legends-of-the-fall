@@ -5,12 +5,12 @@
 
 import { EPIC_MANIFEST, type EpicEntry } from './epicManifest';
 import { EPIC_INFO, type Baked } from './musicBake';
-import type { Track } from './musicScore';
+import { SCENE_TRACKS, type Track } from './musicScore';
 import type { Scene } from './audioRules';
 
 /** Tracks that exist only as files (the synth has no score for them). Every battle plays `battle`, and a boss `boss`
  *  (`battleMusic.ts`; the armies' own tracks and the Calamity's are gone: docs/notes/battle-music-2.md). */
-export type EpicOnly = 'camp' | 'deploy' | 'tower' | 'calmap' | 'tavern';
+export type EpicOnly = 'camp' | 'deploy' | 'tower' | 'calmap' | 'tavern' | 'warend';
 /** Every track the player can be asked for. `town` is the old name of the camp's theme. */
 export type MusicId = Track | EpicOnly;
 export type StingId = 'victory' | 'defeat';
@@ -20,7 +20,7 @@ export const STING_IDS: readonly StingId[] = ['victory', 'defeat'];
 export const SYNTH_OF: Record<MusicId, Track> = {
   town: 'town', battle: 'battle', boss: 'boss', opening: 'opening', gorvak: 'gorvak', herald2: 'herald2', herald3: 'herald3', herald4: 'herald4', herald5: 'herald5', herald6: 'herald6',
   triumph: 'triumph', comic: 'comic', solemn: 'solemn', spire: 'spire',
-  camp: 'town', deploy: 'town', tower: 'town', calmap: 'boss', tavern: 'town',
+  camp: 'town', deploy: 'town', tower: 'town', calmap: 'boss', tavern: 'town', warend: 'triumph',
 };
 
 type FileId = keyof typeof EPIC_MANIFEST;
@@ -74,7 +74,7 @@ export function loadSting(id: StingId): Promise<AudioBuffer> {
 /* ------------------------------------------------------------------ which track for which mood */
 
 /** Where the player is, as the music hears it. */
-export type Place = 'camp' | 'tavern' | 'deploy' | 'tower' | 'calmap';
+export type Place = 'camp' | 'tavern' | 'deploy' | 'tower' | 'calmap' | 'muster' | 'lastHold';
 /** Which map is open over the game, if one is. */
 export type MapKind = 'tower' | 'calamity' | null;
 
@@ -86,7 +86,20 @@ export function placeOf(scene: Scene | null, map: MapKind): Place {
   return 'deploy';
 }
 
-/** The track a place plays. */
-export const TRACK_OF_PLACE: Record<Place, MusicId> = { camp: 'camp', tavern: 'tavern', deploy: 'deploy', tower: 'tower', calmap: 'calmap' };
+/** The track a place plays. The Assault's war table (`holdSound.ts` `holdScene`) is its deployment, so it takes the deployment's music;
+ *  the Last Hold's table the dark map music (the Calamity's, which nothing else plays while the Calamity is hidden). */
+export const TRACK_OF_PLACE: Record<Place, MusicId> = { camp: 'camp', tavern: 'tavern', deploy: 'deploy', tower: 'tower', calmap: 'calmap', muster: 'deploy', lastHold: 'calmap' };
+
+/** The cinematics' music: a scene's id to the track it plays (a scene with no score of its own has none). */
+const SCENE_TRACK: Readonly<Record<string, MusicId>> = {
+  ...Object.fromEntries(SCENE_TRACKS.map((t) => [t, t])),
+  // (the Calamity heralds by their foe ids, and some moods by what they are for)
+  calBoss1: 'gorvak', calBoss2: 'herald2', calBoss3: 'herald3', calBoss4: 'herald4', calBoss5: 'herald5', calBoss6: 'herald6',
+  awakening: 'solemn', victory: 'triumph', spireClimb: 'spire',
+  // (the War's end: its own piece, the main theme told as an ending; the scene after the Last Hold falls and the Council's end card)
+  warEnd: 'warend',
+};
+/** The track a scene's music id plays, if it has one. */
+export const sceneTrack = (id: string): MusicId | undefined => SCENE_TRACK[id];
 
 /* The battle's track (one for the whole battle, wave to wave) and the victory music are chosen in `battleMusic.ts`. */

@@ -75,9 +75,13 @@ export function trackGain(id: string): number {
 /** The cues that are the page's own taps and chimes: they go to the ui bus. */
 export const UI_CUES: ReadonlySet<Cue> = new Set<Cue>([
   'tap', 'summon', 'merge', 'coin', 'star', 'levelUp', 'coinRecycle', 'coinClaim', 'sparkle', 'autoStart', 'autoStop', 'autoDone', 'setChime2', 'setChime3',
+  'runeSlide', 'runeMerge', 'runeSet', 'ledger',
 ]);
+/** The long sounds of a hand-fired ultimate's moment (its build-up, its slow beat): they share the show's bus, so a tap that skips the
+ *  moment can cut them short (`hushMoment` in `sound.ts`). The summoning show and a fight never sound together. */
+export const MOMENT_CUES: readonly Cue[] = ['ultCharge', 'ultSlow'];
 /** The summoning show's sounds go to their own bus (inside sfx), so a tap that skips the show can hush them. */
-export const SHOW_CUES: ReadonlySet<Cue> = new Set<Cue>(['riseSummon', 'stingSummon', 'slam']);
+export const SHOW_CUES: ReadonlySet<Cue> = new Set<Cue>(['riseSummon', 'stingSummon', 'slam', ...MOMENT_CUES]);
 
 /** The bus a cue is sent to. */
 export const busOf = (name: Cue): 'show' | 'ui' | 'sfx' => (SHOW_CUES.has(name) ? 'show' : UI_CUES.has(name) ? 'ui' : 'sfx');

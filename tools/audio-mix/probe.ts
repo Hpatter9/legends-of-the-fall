@@ -13,7 +13,8 @@ import { SpellBank } from '../../src/render/spellBank';
 import { AMBIENCE_LEVEL, MUSIC_LEVEL, SFX_LEVEL, TRACK_GAIN, UI_LEVEL, busOf } from '../../src/render/audioMix';
 import { CUES, Mixer, cuesFor, type Cue } from '../../src/render/soundRules';
 import { CAST_GAIN, EFFECT_DELAY, EFFECT_GAIN, SPELL_TRIM, STAR_GAIN } from '../../src/render/spellSfx';
-import { panOfEvent, pickShot, type Scene } from '../../src/render/audioRules';
+import { ShotClock, panOfEvent, pickShot, type Scene } from '../../src/render/audioRules';
+import { DRUM_SCALE, drumGap, holdVoice } from '../../src/render/holdSound';
 import { EPIC_MANIFEST } from '../../src/render/epicManifest';
 import { FIGHT_LEVEL, VICTORY_BED } from '../../src/render/battleMusic';
 import type { Area } from '../../src/sim/board';
@@ -243,6 +244,35 @@ export async function bed(scene: Scene, land: Area | null = null): Promise<Meter
   return { ...meter(chs), phone: phoneLufs(chs) };
 }
 
+/** A hold's bed (HOLD-SOUND), 30 s, with its one-shots as they fall and, with `drums`, its drums beating as when all stand. */
+export async function holdBed(army: string, drums = false): Promise<Meter & { phone: number }> {
+  const secs = 30;
+  const oc = new OfflineAudioContext(2, Math.round(secs * RATE), RATE);
+  const bus = buses(oc);
+  const beds = new AmbientBeds(oc, seeded(7));
+  beds.output.connect(bus.ambience);
+  const voice = holdVoice(army);
+  beds.setOver(voice.bed);
+  const live = (beds as unknown as { current: Parameters<AmbientBeds['shot']>[0] & { spec: { shots: { kind: string; weight: number }[] }; clock: { due(t: number): boolean; fired(t: number): void } } }).current;
+  const scale = beds as unknown as { shotScale: number };
+  const beat = new ShotClock(drumGap(3, 3)!, seeded(3), 0);
+  for (let t = 0; t < secs; t += 0.5) {
+    if (drums && beat.due(t)) {
+      beat.fired(t);
+      scale.shotScale = DRUM_SCALE;
+      beds.shot(live, voice.drum, t + 0.02);
+      scale.shotScale = 1;
+    }
+    if (!live.clock.due(t)) continue;
+    live.clock.fired(t);
+    beds.shot(live, pickShot(live.spec.shots as never, seeded(Math.round(t * 10))()), t + 0.02);
+  }
+  const buf = await oc.startRendering();
+  beds.setOver(null);
+  const chs = chans(buf).map((c) => c.subarray(3 * RATE));
+  return { ...meter(chs), phone: phoneLufs(chs) };
+}
+
 /** A field fight's bed on `land`, `secs` long, as channels (for the whole fight's mix). */
 async function bedChans(land: Area, secs: number): Promise<Float32Array[]> {
   const oc = new OfflineAudioContext(2, Math.round(secs * RATE), RATE);
@@ -330,4 +360,4 @@ export { VICTORY_BED };
 /** The gains in force, kept with a measurement so `targets.mjs` can say what would reach the targets. */
 const gains = () => ({ TRACK_GAIN, SPELL_TRIM, CUES: Object.fromEntries(Object.entries(CUES).map(([k, v]) => [k, v.gain])), MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL });
 
-(window as unknown as { __mix: unknown }).__mix = { gains, meter, music, sting, cue, allCues, spells, bed, fightMix, VICTORY_BED };
+(window as unknown as { __mix: unknown }).__mix = { gains, meter, music, sting, cue, allCues, spells, bed, holdBed, fightMix, VICTORY_BED };

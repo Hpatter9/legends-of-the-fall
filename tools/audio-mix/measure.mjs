@@ -43,7 +43,7 @@ const HEAD = '| | integrated LUFS | momentary max | peak dBFS | % over limiter |
 const out = { gains: await run('gains') };
 
 if (want('music')) {
-  const TRACKS = ['camp', 'tavern', 'deploy', 'tower', 'calmap', 'battle', 'boss', 'triumph', 'opening', 'gorvak', 'herald2', 'herald3', 'herald4', 'herald5', 'herald6', 'comic', 'solemn', 'spire'];
+  const TRACKS = ['camp', 'tavern', 'deploy', 'tower', 'calmap', 'battle', 'boss', 'triumph', 'opening', 'gorvak', 'herald2', 'herald3', 'herald4', 'herald5', 'herald6', 'comic', 'solemn', 'spire', 'warend'];
   out.music = {};
   console.log('\n## Music (at its playing level; the last column is on a phone\'s speaker)\n' + HEAD.replace('|\n', '| phone LUFS |\n') + '---|');
   for (const id of TRACKS) {
@@ -85,6 +85,18 @@ if (want('beds')) {
       console.log(row(name, m, ph(m)));
     } catch (e) {
       console.log(`| ${name} | (${e.message}) |`);
+    }
+  }
+}
+if (want('holds')) {
+  out.holds = {};
+  console.log('\n## The holds\' beds, alone and with their drums (the last column is on a phone\'s speaker)\n' + HEAD.replace('|\n', '| phone LUFS |\n') + '---|');
+  for (const army of ['orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems']) {
+    for (const drums of [false, true]) {
+      const name = `${army}${drums ? ' + drums' : ''}`;
+      const m = await run('holdBed', army, drums);
+      out.holds[name] = m;
+      console.log(row(name, m, ph(m)));
     }
   }
 }

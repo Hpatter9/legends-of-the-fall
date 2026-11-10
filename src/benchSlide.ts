@@ -75,7 +75,7 @@ export class BenchSlide {
     this.grip.setAttribute('aria-pressed', String(to === 'runes'));
     if (!quiet) setTimeout(() => this.view.classList.remove('springing'), 420);
     if (changed) {
-      if (!quiet) play('tap');
+      if (!quiet) play('runeSlide');
       this.onSide(to);
     }
   }

@@ -31,7 +31,7 @@ import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { claimAchievement, shownAchievements, unclaimed } from './sim/achievements';
-import { play } from './render/sound';
+import { play, setHold } from './render/sound';
 import { playStandGate } from './standGate';
 import type { HomeSpot } from './render/audioRules';
 import { ALL_HEROES, UNITS } from './sim/units';
@@ -1287,6 +1287,8 @@ export class Home {
 
   /** The Armies screen, over the home screen (the Battle button, and the unlock moment's way on). */
   openArmies(focus?: string): void {
+    // (HOLD-SOUND: back from an Assault's war table or result by any way: the page's own music and air again)
+    setHold(null);
     $('home').hidden = false;
     this.openSub(
       'Armies',

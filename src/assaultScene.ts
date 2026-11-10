@@ -41,12 +41,14 @@ import { anchorOf } from './sim/assault/holdMind';
 import { BUCKET } from './sim/assault/field';
 import { troopUnitOf } from './sim/assault/troops';
 import type { FieldEvent } from './sim/assault/spike';
+import type { HoldEvent } from './sim/assault/holdTypes';
 import { FieldView, FIELD_FOG, fieldGrade, loadFieldArt } from './render/fieldView';
 import { loadSomeSheets, portrait } from './render/sheets';
 import { rawAt, TH, TW, HH } from './render/iso';
 import { menuFoot, menuNote, menuPick, menuSection, ornateMenu } from './ornateMenu';
 import { drawHoldMap, mapAt, openPlatoonCard } from './assaultView';
-import { playEvents, startFight, endFight } from './render/sound';
+import { endAssault, play as playCue, playEvents, playHold, setHold, setHoldDrums, startFight } from './render/sound';
+import { HOLD_HEAR_TILES, holdPan, isNearOnly } from './render/holdSound';
 import { standTrack } from './render/battleMusic';
 import { spellIconHtml } from './spellIcons';
 import { todayKey } from './modes';
@@ -170,7 +172,14 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   loading.remove();
   const view = new FieldView(b, app.renderer);
   app.stage.addChild(view.root);
+  // (HOLD-SOUND: the hold's own air and drums under the battle's music; the host's drums and horn as it marches out, and the Last
+  //  Hold's dread over them)
+  setHold({ army: input.army, at: 'field', ...(input.last ? { last: true } : {}) });
   startFight(standTrack(seed));
+  if (!resume) {
+    playCue('hostMarch');
+    if (input.last) setTimeout(() => playCue('lastHold'), 1400);
+  }
 
   // ----- the bar -----
   const top = el('div', 'asTop');
@@ -723,6 +732,17 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   let shown = 0;
   let lordWoke = false;
   let gone = false;
+  /** HOLD-SOUND: an event of the hold, heard: a blow on a structure only near the camera and panned by where it is, the battle's news
+   *  (a breach, the horn, a drum silenced, the lord's fall) wherever the camera is. */
+  const hear = (e: HoldEvent) => {
+    if (!isNearOnly(e)) return playHold(h, e, speed);
+    const tile = e.kind === 'ladder' ? e.tiles[0] : h.forts.find((x) => x.spec.id === (e as { fort: string }).fort)?.spec.tiles[0];
+    if (tile === undefined) return;
+    const c = camTile();
+    const du = (tile % b.board.w) - c.u;
+    const dv = Math.floor(tile / b.board.w) - c.v;
+    if (Math.abs(du) + Math.abs(dv) <= HOLD_HEAR_TILES) playHold(h, e, speed, holdPan(du, dv));
+  };
   const frame = (now: number) => {
     if (gone) return;
     requestAnimationFrame(frame);
@@ -749,6 +769,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
           sound.push(e);
         }
         for (const e of tk.hold) {
+          hear(e);
           if (e.kind === 'breach' || e.kind === 'open') view.breach(e.tiles);
           else if (e.kind === 'volleyTold') say('The trebuchet looses!');
           else if (e.kind === 'volley') {
@@ -901,7 +922,10 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     const left = ASSAULT_LIMIT_MS - b.t;
     clock.textContent = left <= 180_000 ? `${clockWords(Math.max(0, left))} left` : clockWords(b.t);
     foes.textContent = `Foes ${sc.foesLeft} / ${sc.foesTotal}`;
-    drums.replaceChildren(...h.forts.filter((x) => x.spec.kind === 'drum').map((x) => el('i', x.broken ? 'off' : '')));
+    const drumForts = h.forts.filter((x) => x.spec.kind === 'drum');
+    drums.replaceChildren(...drumForts.map((x) => el('i', x.broken ? 'off' : '')));
+    // (HOLD-SOUND: the drums still standing beat in the hold's own voice; none once the battle is over)
+    setHoldDrums(b.phase === 'fight' ? drumForts.filter((x) => !x.broken).length : 0, drumForts.length);
     autoBtn.classList.toggle('on', h.auto);
     const f = b.field!;
     h.platoons.forEach((pl, k) => {
@@ -954,11 +978,12 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     if (gone) return;
     gone = true;
     cuts.clear();
-    endFight();
     // (settled from the worker's own battle, the truth, not the page's copy)
     void sim.final().then((fin) => {
       sim.destroy();
       const result = settleAssault(m, fin, todayKey());
+      // (HOLD-SOUND: the victory fanfare for a hold conquered, the War's end over it, the defeat sting, or only the retreat's horn)
+      endAssault(result);
       hooks.save();
       void clearBattle();
       view.destroy();

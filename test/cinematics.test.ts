@@ -374,11 +374,13 @@ test('no scene flashes more than once a shot or loops a blink; the flash-free on
 });
 
 import { SCENE_TRACKS } from '../src/render/musicScore';
+import { sceneTrack } from '../src/render/epicMusic';
 
 test('a scene’s music is one of the audio worker’s tracks; the heralds have their own, and a cut-in has none', () => {
   for (const id of SCENE_ORDER) {
     const m = SCENES[id].music;
-    if (m) assert.ok((SCENE_TRACKS as readonly string[]).includes(m), `${id}: ${m}`);
+    // (HOLD-SOUND round 2: or the War's End's own piece, a file with no synth score: any id the player has a track for, `sceneTrack`)
+    if (m) assert.ok((SCENE_TRACKS as readonly string[]).includes(m) || sceneTrack(m) !== undefined, `${id}: ${m}`);
     if (SCENES[id].again) assert.equal(m, undefined, `${id}: the fight's own music goes on`);
   }
   assert.deepEqual(['gorvak', 'thornWarden', 'malphas', 'hrungar', 'vorgrath', 'karnok'].map((id) => SCENES[id].music), ['gorvak', 'herald2', 'herald3', 'herald4', 'herald5', 'herald6']);

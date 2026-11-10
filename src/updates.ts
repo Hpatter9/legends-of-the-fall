@@ -27,6 +27,30 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.456.0',
+    date: '2026-11-10',
+    title: 'A smoother first hour',
+    notes: ['First tips come in the right order and point at the right tiles. New tips cover spells, runes and Recycle, and locks say how they open.', 'Unlock notes wait for a result card to close. Summon numerals and several clipped names are fixed.'],
+  },
+  {
+    version: '0.455.0',
+    date: '2026-11-10',
+    title: 'Sieges no longer freeze at the lord',
+    notes: ['An Assault froze when the hold\'s lord changed form: fixed, and the siege resumes properly after closing the game.', 'The War\'s end has its own music, and a skipped ultimate cuts its build-up.'],
+  },
+  {
+    version: '0.454.0',
+    date: '2026-11-10',
+    title: 'The Assault finds its voice',
+    notes: ['A siege now has its own music, and each hold its own ambience and drums. Gates, walls, rams and ladders all sound, and the keep\'s fall rings out.', 'Hand-cast ultimates build up under the slash; the rune bench and Auto buttons have their own sounds.'],
+  },
+  {
+    version: '0.453.0',
+    date: '2026-11-10',
+    title: 'Formations fit any party',
+    notes: ['Every formation now forms with the heroes you have: the sturdiest stand in front, shooters and healers behind. Only a lone hero fights loose.'],
+  },
+  {
     version: '0.452.0',
     date: '2026-11-10',
     title: 'Formations say when they can\'t form',

@@ -18,14 +18,15 @@ import { BusMixer, CueSynth, MusicPlayer } from './audioProcessors';
 import { AmbientBeds } from './audioBeds';
 import { DUCK_HOLD_S, DuckCounter, FIGHT_DUCKS, WAKE_FADE_S, duckChange, duckOf, panOfEvent, sliderGain, type PlannedCue, type Scene } from './audioRules';
 import type { Area } from '../sim/board';
-import { TRACK_OF_PLACE, placeOf, type MapKind, type MusicId, type StingId } from './epicMusic';
+import { TRACK_OF_PLACE, placeOf, sceneTrack, type MapKind, type MusicId, type StingId } from './epicMusic';
 import { BOSS_TRACK, atPlace, crossfadeOf, endAt, musicOf, type BattleEnd, type MusicState } from './battleMusic';
 import { bakeTrack } from './musicBake';
-import { SCENE_TRACKS, type Track } from './musicScore';
 import { Mixer, castsOf, cuesFor, type Cue } from './soundRules';
 import { SpellBank } from './spellBank';
 import { coveredBySpells, spellParts } from './spellSfx';
-import { AMBIENCE_LEVEL, MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, busOf } from './audioMix';
+import { AMBIENCE_LEVEL, MOMENT_CUES, MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, busOf } from './audioMix';
+import { assaultEnd, drumGap, holdCues, holdScene, holdVoice, type AssaultEnd, type HoldAt, type HoldLike } from './holdSound';
+import type { HoldEvent } from '../sim/assault/holdTypes';
 
 const SAVE_KEY = 'legends.sound';
 
@@ -47,6 +48,11 @@ const ducks = new DuckCounter();
 let wantAct: number | null = null;
 let wantScene: Scene | null = null;
 let wantLand: Area | null = null;
+let wantMap: MapKind = null;
+/** The Assault, while the player is in it (HOLD-SOUND): its war table or its hold stands in for the page's scene, and the hold's drums
+ *  beat while any stands (`setHold`, `setHoldDrums`). */
+let hold: HoldAt | null = null;
+let holdDrums: { standing: number; total: number } | null = null;
 /** A lift of the ducker waiting out `DUCK_HOLD_S` (a dip comes at once; a lift waits, so a sheet closing as the next opens
  *  never lets the music bob up between them). */
 let duckLift: ReturnType<typeof setTimeout> | null = null;
@@ -83,6 +89,7 @@ function unlock(): void {
     engine.music.setEnabled(settings().music > 0);
     engine.music.setAct(wantAct);
     engine.beds.setScene(wantScene, wantLand);
+    syncHold();
   }
   // (a phone can hold the clock after the game was away, until a tap: the tap starts it again, and the sound fades back in)
   if (engine.core.context.state !== 'running') void engine.core.start().then(() => fadeIn());
@@ -109,7 +116,7 @@ export function setup(): void {
   // (for the tests and the owner: `window.__audioDebug()` says what the engine is doing)
   const w = window as unknown as { __audioDebug?: () => unknown; __audioApi?: unknown };
   w.__audioDebug = debugState;
-  w.__audioApi = { setAct, setMusic, playSting, duck, setScene, playScene, endScene, probe, bake: bakeTrack, renderCue };
+  w.__audioApi = { setAct, setMusic, playSting, duck, setScene, playScene, endScene, probe, bake: bakeTrack, renderCue, setHold, setHoldDrums, play };
 }
 
 /** Lets the game's sound mix with whatever else the phone is playing (a music app), and never take the audio focus: the
@@ -276,6 +283,28 @@ export function hushSummon(): void {
   p.setTargetAtTime(1, t + 0.4, 0.02);
 }
 
+/** How long a skipped moment's bus is held shut (seconds): longer than the ultimate's build-up, so none of it comes back. */
+export const MOMENT_HUSH_S = 1.6;
+/** A tap skipped an ultimate's moment: its build-up (and slow beat) still ringing fades out in about a tenth of a second, never cut dead,
+ *  and the bus opens again once they would have ended. The blow's own sting is not on this bus. */
+export function hushMoment(): void {
+  if (!engine) return;
+  const p = engine.mixer.params.show;
+  const t = engine.core.context.currentTime;
+  p.cancelScheduledValues(t);
+  p.setTargetAtTime(0, t, 0.04);
+  p.setTargetAtTime(1, t + MOMENT_HUSH_S, 0.02);
+}
+
+/** The moment's bus opened again just before a new moment's cue starts (`delay` ms from now), whatever a skip left scheduled. */
+function openMoment(delay: number): void {
+  if (!engine) return;
+  const p = engine.mixer.params.show;
+  const t = engine.core.context.currentTime + delay / 1000;
+  p.cancelScheduledValues(t);
+  p.setTargetAtTime(1, t, 0.005);
+}
+
 /** One effect now, unless the same one played too recently. */
 export function play(name: Sfx): void {
   cue(name, 1, 1, 0, 0);
@@ -291,6 +320,8 @@ function cue(name: Cue, speed: number, gain: number, delay: number, pan: number)
   if (!engine || engine.core.context.state !== 'running' || muted) return;
   const v = mixer.request(name, performance.now() + delay, speed, gain);
   if (!v) return;
+  // (a moment's cue asked for after a skip hushed the last one's: the bus is opened for it)
+  if (MOMENT_CUES.includes(name)) openMoment(delay);
   // (a test page can set `window.__sfxLog = []` to see which sounds played)
   (window as unknown as { __sfxLog?: string[] }).__sfxLog?.push(name);
   engine.synth.play(name, engine.core.context.currentTime + 0.01 + delay / 1000, { gain: v.gain, pitch: v.pitch, bus: busOf(name), pan });
@@ -324,13 +355,6 @@ function playSpell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>, events
   }
 }
 
-/** The cinematics' music: a scene's id to the track it plays (a scene with no score of its own has none). */
-const SCENE_TRACK: Record<string, Track> = {
-  ...Object.fromEntries(SCENE_TRACKS.map((t) => [t, t])),
-  // (the Calamity heralds by their foe ids, and some moods by what they are for)
-  calBoss1: 'gorvak', calBoss2: 'herald2', calBoss3: 'herald3', calBoss4: 'herald4', calBoss5: 'herald5', calBoss6: 'herald6',
-  awakening: 'solemn', victory: 'triumph', spireClimb: 'spire',
-};
 /** Plays a victory or defeat sting once over the music, which comes back after it. */
 export function playSting(id: StingId): void {
   engine?.music.sting(id);
@@ -344,10 +368,10 @@ export function setMusic(track: MusicId | `scene:${string}`): void {
   engine?.music.setTrack(track as MusicId);
 }
 
-/** Starts a cinematic's music by the scene's id (`opening`, `gorvak`, `herald2` to `herald6`, `triumph`, `comic`, `solemn`, `spire`, or a Calamity foe id `calBoss1` to `calBoss6`, or the aliases `awakening`, `victory`, `spireClimb`); an id with no score leaves the music as it is. It loops until
+/** Starts a cinematic's music by the scene's id (`opening`, `gorvak`, `herald2` to `herald6`, `triumph`, `comic`, `solemn`, `spire`, or a Calamity foe id `calBoss1` to `calBoss6`, or the aliases `awakening`, `victory`, `spireClimb`, or `warEnd`); an id with no score leaves the music as it is. It loops until
  *  `endScene`. The scenes' stings are cues: `play('sceneBoss')` for a boss arriving, `play('sceneVictory')` for a victory. */
 export function playScene(id: string): void {
-  const track = SCENE_TRACK[id];
+  const track = sceneTrack(id);
   if (!track || !engine) return;
   sceneMusic = true;
   // (a victory cinematic scores the same triumph the victory music plays: it carries on, its fanfare included, without a restart)
@@ -374,12 +398,66 @@ export function setAct(act: number | null): void {
 export function setScene(scene: Scene | null, map: MapKind = null, land: Area | null = null): void {
   wantScene = scene;
   wantLand = land;
+  wantMap = map;
   engine?.beds.setScene(scene, land);
+  // (in the Assault the war table or the hold is the place, whatever the page behind it shows: `setHold`)
+  if (hold) return;
   // (the music follows too: the camp's or the tavern's, the tower's or the Calamity's map, or the deployment; off the board a
   //  battle that was on is over or left, and a victory's results are behind)
   music = atPlace(music, placeOf(scene, map));
   if (music.place === 'deploy' && !music.battle) engine?.music.warm('battle');
   syncMusic();
+}
+
+/* ------------------------------------------------------------------ the Assault's holds (HOLD-SOUND, `holdSound.ts`) */
+
+/** The player is at an Assault's war table or on its hold's field (or, with null, has left the Assault): the bed is the host's camp or
+ *  the hold's own, the music the war table's or the battle's, over whatever the page behind the Assault asks for; leaving gives the page
+ *  its own scene back, and stills the drums. */
+export function setHold(h: HoldAt | null): void {
+  hold = h;
+  if (!h || h.at === 'table') holdDrums = null;
+  syncHold();
+  if (h) {
+    music = atPlace(music, holdScene(h).place);
+    if (h.at === 'field' && !music.battle) engine?.music.warm('battle');
+  } else {
+    // (a fanfare still ringing as the result is left fades with it)
+    if (music.victory) engine?.music.stopSting(false);
+    music = atPlace(music, placeOf(wantScene, wantMap));
+  }
+  syncMusic();
+}
+
+/** How many of the hold's drums stand: they beat in the hold's own voice, slower as each is silenced, and not at all once none is left. */
+export function setHoldDrums(standing: number, total: number): void {
+  if (holdDrums && holdDrums.standing === standing && holdDrums.total === total) return;
+  holdDrums = { standing, total };
+  syncHold();
+}
+
+/** The beds follow the Assault: its bed over the scene's, its drums. */
+function syncHold(): void {
+  if (!engine) return;
+  engine.beds.setOver(hold ? holdScene(hold).bed : null);
+  const gap = hold?.at === 'field' && holdDrums ? drumGap(holdDrums.standing, holdDrums.total) : null;
+  engine.beds.setDrums(gap && hold ? holdVoice(hold.army).drum : null, gap);
+}
+
+/** The cues of one event of the hold (`holdCues`), panned by where it happened (`holdPan`; 0 for the battle's news). */
+export function playHold(h: HoldLike, e: HoldEvent, speed = 1, pan = 0): void {
+  for (const q of holdCues(h, e)) cue(q.cue, speed, q.gain ?? 1, q.delay ?? 0, pan);
+}
+
+/** An assault has ended (`assaultEnd`): a hold conquered rings the victory fanfare into the triumph bed, held under the result until
+ *  the Assault is left (`setHold(null)`); the War's end its own sting over it; a fall the defeat sting; a retreat only the horn. */
+export function endAssault(r: AssaultEnd): void {
+  const end = assaultEnd(r);
+  holdDrums = null;
+  syncHold();
+  if (end.music === 'none') endFight();
+  else endWave(end.music);
+  playAll(end.cues);
 }
 
 /** Holds the music and the ambience down, by as much as the deepest reason held asks (`DUCKS` in `audioRules.ts`: a little under
@@ -442,6 +520,8 @@ function debugState(): unknown {
     sceneMusic,
     act: player.act,
     scene: engine.beds.scene,
+    hold,
+    drums: engine.beds.drumming,
     bed: engine.beds.bed,
     beds: engine.beds.live,
     ducked: ducks.reasons,

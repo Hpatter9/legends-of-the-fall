@@ -15,7 +15,7 @@ export const MUSIC_TARGET = {
   // (every loop at the one level since BATTLE-MUSIC-2: the files are mastered to -18 LUFS and play at -30, 6.5 LU under the fight)
   battle: -30, boss: -30,
   camp: -30, tavern: -30, deploy: -30, tower: -30, calmap: -30, triumph: -30,
-  opening: -30, gorvak: -30, herald2: -30, herald3: -30, herald4: -30, herald5: -30, herald6: -30, comic: -30, solemn: -30, spire: -30,
+  opening: -30, gorvak: -30, herald2: -30, herald3: -30, herald4: -30, herald5: -30, herald6: -30, comic: -30, solemn: -30, spire: -30, warend: -30,
   // (the stings, by integrated loudness: the fanfare a touch over the fight, the fall's sting a little under it)
   victory: -23.5, defeat: -25.5,
 };
@@ -39,6 +39,14 @@ export const CUE_TARGET = {
   heal: -28, shieldHum: -29, horn: -27, pipes: -29, dash: -33, blink: -29, trap: -27,
   // big moments
   ultimate: -16, bossSkill: -20, ultSlash: -22, ultImpact: -18, bossSlash: -22, bossImpact: -18,
+  // the Assault's holds (HOLD-SOUND): the blows on the structures under a plain blow (there are many), the breaks and the keep's fall
+  // among the fight's biggest moments, the news between
+  gateHit: -29, wallHit: -29, drumHit: -29, ramHit: -24, gateBreak: -20, wallBreak: -20, ladderUp: -28, ladderDown: -28, trebLoose: -26,
+  fuse: -29, weakPoint: -24, greatHorn: -22, drumSilenced: -23, wolfHowl: -27, keepFall: -19, hostMarch: -23, lastHold: -22, warEnd: -20,
+  // a hand-fired ultimate's build-up (under its slash) and slow beat (under its blow)
+  ultCharge: -24, ultSlow: -25,
+  // the rune bench and the ledgers
+  runeSlide: -34, runeMerge: -27, runeSet: -29, ledger: -34,
   // deaths
   deathBones: -23, deathBurn: -23, deathThud: -23, deathStone: -23, deathBlood: -23, deathLight: -24,
 };
