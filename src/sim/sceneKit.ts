@@ -74,7 +74,7 @@ export type Act = (
  *  and `glow` tint the picture; `fadeIn` and `fadeOut` are to and from black. Nothing loops. */
 export type Fx = 'shake' | 'flash' | 'fadeIn' | 'fadeOut' | 'darken' | 'rumble' | 'glow';
 /** A sound as the shot begins (a cue of `render/soundRules.ts`). */
-export type SceneCue = 'boom' | 'slam' | 'eliteSting' | 'earthRumble' | 'steps';
+export type SceneCue = 'boom' | 'slam' | 'eliteSting' | 'earthRumble' | 'steps' | 'bossSlash' | 'bossImpact';
 
 export interface Line {
   /** An actor's id in the cast, or `narrator`. */
@@ -170,6 +170,8 @@ export type Moment =
   | { kind: 'dailyBoss' }
   /** An army's first march on the keep (CINE-001): its warlord's entrance, the first time a run of that army is set up. */
   | { kind: 'armyIntro'; army: string }
+  /** CINE-1110: an army's first boss (its mid-boss) is met for the first time (`firstBossScenes.ts`). */
+  | { kind: 'armyBoss'; army: string }
   /** A quest battle's story, before it or after a win (`questBattleData.ts`; played by the page, not kept in the Scenes list). */
   | { kind: 'questBattle'; battle: string }
   /** An Eidolon chain's story (`eidolonChainData.ts`: the giver's prologue; played by the page, not kept in the Scenes list). */
