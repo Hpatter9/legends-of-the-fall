@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.449.0',
+    date: '2026-11-10',
+    title: 'Sweep fixes: ultimates, toasts, the Maze',
+    notes: ['A tap ends an ultimate at any point. Unlock notes wait for an open card to close.', 'The Maze\'s borrowed buildings take its sand and bronze; each hold has its own scouts\' line.'],
+  },
+  {
     version: '0.448.0',
     date: '2026-11-10',
     title: 'Each army\'s boss arrives in style',
