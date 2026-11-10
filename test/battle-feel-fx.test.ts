@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { keyOfKit } from '../src/sim/abilities';
 import { castsOf, cuesFor, markCue, terrainCue } from '../src/render/soundRules';
-import { HEAL_BIG, HEAL_POOL_MS, HealPool, SKILL_ELEMENT, towards, WALL_DIM } from '../src/render/fxRules';
+import { HEAL_BIG, HEAL_POOL_MS, HealPool, numberShown, QUIET_UNDER, SKILL_ELEMENT, towards, WALL_DIM } from '../src/render/fxRules';
 import { readyBattle } from './helpers';
 
 test("a skill's hit sounds in the element of the skill cast that tick, not the caster's first skill", () => {
@@ -62,4 +62,13 @@ test("a raised wall's loop eases down to WALL_DIM while a fighter stands in it, 
   for (let t = 0; t < 400; t += 16) a = towards(a, 1, 16);
   assert.equal(a, 1);
   assert.ok(WALL_DIM > 0.2 && WALL_DIM < 0.7);
+});
+
+test('a quiet utility skill shows no number under 3; every other hit shows its number', () => {
+  assert.equal(numberShown('Undertow', 2), false);
+  assert.equal(numberShown('Rift Pounce', 1), false);
+  assert.equal(numberShown('Boarding Swing', 2), false);
+  assert.equal(numberShown('Undertow', QUIET_UNDER), true);
+  assert.equal(numberShown('Meteor', 1), true);
+  assert.equal(numberShown('', 1), true);
 });

@@ -397,6 +397,13 @@ export class HealPool {
   }
 }
 
+/** BATTLE-FEEL round 3, the director's call: the utility skills whose blows are small by design (their kit carries little of the hero's attack, so
+ *  the skill floor cannot lift them) show no number for a blow under `QUIET_UNDER`; the blow's spark, the shove or drag and the sound still show. */
+export const QUIET_SKILLS: ReadonlySet<string> = new Set(['Undertow', 'Rift Pounce', 'Boarding Swing']);
+export const QUIET_UNDER = 3;
+/** Whether a hit's number shows: every hit's does, but a quiet skill's blow under `QUIET_UNDER`. `skill` is the skill the hit came from ('' for a blow). */
+export const numberShown = (skill: string, dmg: number): boolean => !(QUIET_SKILLS.has(skill) && dmg < QUIET_UNDER);
+
 /** BATTLE-FEEL round 2: how far a raised wall's loop (a Wall of Fire's flames) thins while a fighter stands in its tile, so the fighter shows. */
 export const WALL_DIM = 0.45;
 

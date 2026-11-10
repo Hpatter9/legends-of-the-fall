@@ -55,7 +55,7 @@ import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
 import { isMythic } from '../sim/mythicRules';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
-import { arcStyle, bits, FLASH_MAX, FLASH_MS, HealPool, towards, WALL_DIM, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
+import { arcStyle, bits, FLASH_MAX, FLASH_MS, HealPool, numberShown, towards, WALL_DIM, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
@@ -523,7 +523,8 @@ export class Fx {
         this.flesh(target, hx, hy, e.dmg / target.maxHp);
         // (a glancing blow, STATS batch 4: the word, and a smaller grey number)
         if (e.glance && settings().numbers) this.label('Glance', to.x, to.y - to.tall - 22, 0xb4b4b4, 10, 600);
-        this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high, e.ail, e.glance);
+        // (a quiet utility skill's tiny blow shows no number, `numberShown`)
+        if (numberShown(castName, e.dmg)) this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high, e.ail, e.glance);
         this.trauma = Math.min(1, this.trauma + traumaFor(e.dmg / target.maxHp, e.killed) * 0.5);
         // (the struck is knocked a little away along the blow, and a crit or a killing blow stops the fight for a moment)
         const share = e.dmg / target.maxHp;

@@ -1761,6 +1761,9 @@ body #spellbook h2 {
 }
 #formBtn small { font-size: 11px; color: var(--ornate-brass-mid); letter-spacing: 0.08em; text-transform: uppercase; }
 #formBtn b { font-family: var(--display); color: var(--ornate-brass-hi); text-shadow: 0 1px 2px #000; }
+/* BATTLE-FEEL round 3: the shape picked is out of this party's reach: the tag in warning amber, and the card's line */
+#formBtn[data-short] small { color: #ffb15a; }
+#tacticSheet .tacAdvice.tacShort { color: #ffb15a; font-weight: bold; }
 
 /* The Formation sheet: the ornate card, and the chosen shape gilded (it was the old ember orange) */
 #tacticSheet { background: radial-gradient(circle at 50% 80%, rgba(16, 20, 15, 0.7), rgba(5, 7, 5, 0.9)); }

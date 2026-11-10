@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { fight, place, startBattle, stepBattle, type Battle, type Unit } from '../src/sim/battle';
 import { DEPLOY_ROWS } from '../src/sim/board';
-import { FORM, formationAc, formationBlow, formationFacing, formationMelee, formationMove, formationOf, formationSpots, formationSplash, FORMATIONS_LIST, setFormations } from '../src/sim/formations';
+import { FORM, formationAc, formationBlow, formationFacing, formationMelee, formationMove, formationOf, formationSpots, formationSplash, FORMATIONS_LIST, setFormations, shapeFits } from '../src/sim/formations';
+import { shortLine, shortTag } from '../src/sim/tacticPick';
+import { roleOf } from '../src/sim/suggest';
 
 // The party's formations (docs/notes/tactics.md, batch 4): a shape on the deploy rows read as the fight begins, each with a small bonus and
 // a weak point, counted only where the fight has them on.
@@ -141,4 +143,20 @@ test('the tuned shapes (batch 6): the wall takes less from melee blows, the squa
   const s = staged(['samurai', 'knight', 'minotaur', 'archer'], [[3, 0], [2, 1], [4, 1], [3, 2]]);
   fight(s);
   assert.equal(formationBlow(s, unit(s, 'knight')), FORM.WING_BLOW);
+});
+
+test('BATTLE-FEEL round 3: shapeFits says whether a party can make a shape, and the words say so when it cannot', () => {
+  const b = bareBoard(startBattle(11, 'skeletons'));
+  // (the Arrange test's party makes every shape)
+  for (const shape of FORMATIONS_LIST) assert.equal(shapeFits(b.board, ['knight', 'minotaur', 'samurai', 'archer', 'cleric'], shape), true, shape);
+  // (shooters and casters alone have no front-liners for a wall)
+  const back = ['archer', 'wizard', 'cleric', 'gunslinger', 'warlock'];
+  assert.equal(back.filter((k) => roleOf(k) === 'front').length, 0);
+  assert.equal(shapeFits(b.board, back, 'wall'), false);
+  // (three heroes cannot skirmish: it takes four)
+  assert.equal(shapeFits(b.board, ['knight', 'archer', 'cleric'], 'skirmish'), false);
+  assert.equal(shapeFits(b.board, [], 'wall'), false);
+  assert.equal(shortLine('wall'), 'Not enough for a Shield Wall: fighting loose.');
+  assert.equal(shortLine('wall', 'square'), 'Not enough for a Shield Wall: standing in a Hollow Square.');
+  assert.equal(shortTag('wall'), 'No Wall');
 });
