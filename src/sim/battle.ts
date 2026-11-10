@@ -1235,6 +1235,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     // (phase 4: a Vain nemesis takes a tenth more in a duel)
     if (b.duel && to.nem?.weak.includes('vain')) dmg = Math.max(1, Math.round(dmg * (1 + VAIN_DUEL)));
   }
+  // (DUEL-SHOW: a duel's blows land softer, so it lasts longer, `DUEL_LENGTH`)
+  if (b.duel?.soften && by !== to) dmg = Math.max(1, Math.round(dmg / b.duel.soften));
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
   // (a formation takes splash differently, a skirmisher less, a square packed together more, and a skirmisher the foes' skills less, `formations.ts`)

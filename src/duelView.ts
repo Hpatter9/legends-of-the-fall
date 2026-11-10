@@ -7,9 +7,9 @@
 
 import { face } from './nemesisView';
 import { menuFoot, menuPick, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
-import { championWords, duelWords } from './duelRules';
+import { championWords, clockWords, duelWords } from './duelRules';
 import { portrait } from './render/sheets';
-import type { DuelOffer } from './sim/duel';
+import { duelMs, type DuelOffer } from './sim/duel';
 import { heroName } from './sim/heroNames';
 import { rankWord, type NemSnap } from './sim/nemesis';
 import { UNITS } from './sim/units';
@@ -52,7 +52,7 @@ export function openDuelCard(o: DuelOffer, s: NemSnap, squad: readonly { id: num
     champ.append(f, el('b', '', heroName(o.kind)), el('small', '', UNITS[o.kind]?.name ?? o.kind));
   } else champ.append(el('span', 'nmFace dcHero dcOpen', '?'), el('b', '', 'Your champion'), el('small', '', 'pick one below'));
   top.append(champ);
-  menuWell(menu.body).append(el('p', 'nmMemory', 'Alone in the ring of stones for sixty seconds: its escorts stand back and the king’s spells are held. It fights at a fraction of its wave strength; your hero keeps its skills, ultimate and gear.'));
+  menuWell(menu.body).append(el('p', 'nmMemory', `Alone in the ring of stones for ${clockWords(duelMs())}: its escorts stand back and the king’s spells are held. It fights at a fraction of its wave strength; your hero keeps its skills, ultimate and gear.`));
   // (an open challenge: the squad in a strip, its first picked to start)
   let picked = o.hero ?? squad[0]?.id ?? null;
   if (!o.kind && squad.length) {

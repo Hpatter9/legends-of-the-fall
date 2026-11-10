@@ -40,7 +40,22 @@ export const DUEL_ROLE: Record<PartyRole, { hp: number; atk: number }> = { front
 /** Each army's own factor on the nemesis's duel share (health and attack alike), so a duel at the army's own level sits in the band whatever
  *  the army: the armies' walls differ more than the champions' roles do (`npm run balance -- --duel`). The three last armies are out of the
  *  bot's reach at their own level, so they keep the plain share until they can be measured. */
-export const DUEL_ARMY: Record<string, number> = { orcs: 0.6, undead: 1, beasts: 1.35, wildwood: 1.35, labyrinth: 0.95, ogres: 0.78 };
+// (DUEL-SHOW: the Undead Legion's and the Beast Packs' re-tuned for the longer duel, `DUEL_LENGTH`: a longer fight helped the Undead's
+// nemeses and, with its signatures slowed, hurt the Beast Packs' bosses; these give each army back its win rate of before)
+export const DUEL_ARMY: Record<string, number> = { orcs: 0.6, undead: 0.8, beasts: 1.46, wildwood: 1.35, labyrinth: 0.95, ogres: 0.78 };
+/**
+ * DUEL-SHOW (the owner: "the duels are so short"; docs/notes/duel-show.md): how a duel is made longer without changing who wins.
+ * - `soften`: every blow in the ring lands this many times softer (`Battle.duel.soften`, in `hurt`), and a boss's great blows come that much
+ *   slower and its rage that much later (`bossAttacks.ts`), so a duel lasts about this many times as long.
+ * - `clock`: the ring's clock, as a multiple of its sixty seconds.
+ * - `nemHp`: the nemesis's health in the longer ring, a trim measured to give back what a longer fight takes from the champion (its stuns and
+ *   other fixed-length effects count for less in it).
+ * - `hp` and `heal`: the other lever, both duellists' health (and healing) stretched instead; measured and set aside.
+ * `npm run balance -- --duel` measures it; `--duel-soften`, `--duel-clock`, `--duel-nem-hp`, `--duel-length` and `--duel-heal` try others.
+ */
+export const DUEL_LENGTH: { hp: number; soften: number; heal: boolean; clock?: number; nemHp?: number } = { hp: 1, soften: 2.2, heal: false, clock: 2.5, nemHp: 0.95 };
+/** The ring's clock: sixty seconds, stretched with the duellists' health and the blows' softening (or by `clock` when it is set). */
+export const duelMs = (): number => Math.round(DUEL_MS * (DUEL_LENGTH.clock ?? DUEL_LENGTH.hp * DUEL_LENGTH.soften));
 /** A duel won heals every hero this share of its health (the wounded stand nearer whole). */
 export const DUEL_HEAL = 0.2;
 /** A duel that ran out of time with the nemesis under this share of its health humiliates it. */
@@ -168,7 +183,8 @@ export function duelShare(kind: string, boss = false, army?: string): { hp: numb
   const r = DUEL_ROLE[roleOf(kind)];
   const w = boss ? DUEL_BOSS : { hp: 1, atk: 1 };
   const a = (army && DUEL_ARMY[army]) || 1;
-  return { hp: DUEL_SHARE.hp * r.hp * w.hp * a, atk: DUEL_SHARE.atk * r.atk * w.atk * a };
+  // (DUEL-SHOW: and the longer duel's own trim on its health, `DUEL_LENGTH.nemHp`)
+  return { hp: DUEL_SHARE.hp * r.hp * w.hp * a * (DUEL_LENGTH.nemHp ?? 1), atk: DUEL_SHARE.atk * r.atk * w.atk * a };
 }
 
 /**
@@ -193,8 +209,17 @@ export function startDuel(run: Run, o: Pick<DuelOffer, 'id'>, heroId: number, bo
   nem.power = (nem.power ?? 1) * share.atk;
   if (nem.shield) nem.shield = { ...nem.shield, hp: Math.round(nem.shield.hp * share.hp) };
   const hero = addUnit(b, h.kind, ring.hero.u, ring.hero.v, boost, h.id);
-  b.duel = { hero: hero.id, tag: h.id, nem: nem.id, id: o.id, mid: ring.mid, r: RING_R };
-  b.timeLimit = DUEL_MS;
+  // (DUEL-SHOW: both stand longer in the ring, by the one factor, and its clock runs longer by it too)
+  for (const u of [nem, hero]) {
+    if (DUEL_LENGTH.hp !== 1) {
+      u.hp = u.maxHp = Math.max(1, Math.round(u.maxHp * DUEL_LENGTH.hp));
+      if (u.shield) u.shield = { ...u.shield, hp: Math.round(u.shield.hp * DUEL_LENGTH.hp) };
+    }
+    // (and their healing in step with it: stretched with the health, softened with the blows)
+    if (DUEL_LENGTH.heal && DUEL_LENGTH.hp / DUEL_LENGTH.soften !== 1) u.healMult = (u.healMult ?? 1) * (DUEL_LENGTH.hp / DUEL_LENGTH.soften);
+  }
+  b.duel = { hero: hero.id, tag: h.id, nem: nem.id, id: o.id, mid: ring.mid, r: RING_R, ...(DUEL_LENGTH.soften !== 1 ? { soften: DUEL_LENGTH.soften } : {}) };
+  b.timeLimit = duelMs();
   b.rng = mixSeed(b.seed, DUEL_SALT);
   b.skillRng = mixSeed(b.seed, DUEL_SALT, 1);
   delete b.rites;

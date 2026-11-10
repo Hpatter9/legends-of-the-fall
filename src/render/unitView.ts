@@ -189,6 +189,8 @@ export class UnitSprite {
   /** ULT-SHOW (`ultShow.ts`): a pose the page stages over what the sim says while an ultimate's showcase plays (world px, its depth, how
    *  solid, a row and how far through it, the way it faces on the screen); null: drawn as the sim says. */
   stage: { x: number; y: number; z: number; alpha: number; row: Row; p: number; face: 1 | -1; art?: Texture } | null = null;
+  /** DUEL-SHOW (`duelShow.ts`): a bystander watching a duel from outside the ring: no health bar over it, it takes no part. */
+  bystander = false;
 
   constructor(public unit: Unit, private readonly equipmentStep = unit.awaken ?? 0) {
     const def = defOf(unit);
@@ -735,6 +737,11 @@ export class UnitSprite {
   private drawBar(alive: boolean, t: number): void {
     const u = this.unit;
     const g = this.bar;
+    if (this.bystander) {
+      if (this.barKey !== 'bystander') g.clear();
+      this.barKey = 'bystander';
+      return;
+    }
     const share = u.hp / u.maxHp;
     if (!hasSkill(kitOf(u)) && !poolOf(u)) {
       const key = alive ? `${Math.round(share * BAR_W)}${u.side === 'hero' && share <= 0.35 ? 'l' : ''}` : '';

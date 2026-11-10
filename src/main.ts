@@ -121,6 +121,7 @@ import { acceptDuel, contenders, duelOffer, offerSnap, refuseDuel, settleDuelRun
 import { DUEL_MS } from './sim/duelRing';
 import { duelAhead, duelBar, duelTaunt } from './duelRules';
 import { openDuelCard } from './duelView';
+import { DuelShow } from './duelShow';
 import { noteWar } from './sim/council';
 import type { OrnateMenu } from './ornateMenu';
 import { warmGearTextures } from './render/gearTex';
@@ -854,6 +855,8 @@ class Game {
     if (!h) return;
     acceptDuel(this.run, o, heroId);
     saveRun(this.run);
+    // (DUEL-SHOW: the rest of the party as placed and the rest of the wave watch from outside the ring)
+    const before = this.b.units.slice();
     // (the duel's own fight: the wave's board with the two in its middle ring, `startDuel`)
     this.b = startDuel(this.run, o, heroId, this.boostFor(h));
     const section = chainOf(this.run)?.[this.run.stage - 1];
@@ -865,6 +868,7 @@ class Game {
     this.layout();
     this.refresh();
     this.begin();
+    this.duelShow.start(this.b, before);
   }
 
   /** A duel lost or run out of time (`duel.ts`): the War reads it (the nemesis's deed, its escape), the run takes its outcome (the champion
@@ -1384,7 +1388,8 @@ class Game {
     this.taunts.clear();
     newQuipScene();
     // (the opening grumble belongs to a new fight)
-    foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
+    // (DUEL-SHOW: not in a duel: its crowd does the shouting)
+    if (!this.b.duel) foeGrumbles(this.b.units.filter((u) => u.side === 'foe' && !UNITS[u.def].summon).length, (i) => this.anchorOfFoe(i));
     this.stats = startStats(this.b.units);
     this.nemTally = startNemesisTally();
     this.ultsFired = [];
@@ -1483,7 +1488,9 @@ class Game {
     }
     if (this.auto) this.autoTick(dt);
     // (an ultimate's moment (ULT-CUTIN) moves on in real time, whatever the fight's speed; it stands still while a scene or a sheet is up)
-    const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding || this.eid.sheetOpen;
+    // (DUEL-SHOW: a duel's show is dropped once the board is another fight's; through its walk-in the fight is held)
+    if (this.duelShow.on && this.duelShow.battle !== b) this.duelShow.clear();
+    const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding || this.eid.sheetOpen || this.duelShow.holding;
     // (EIDOLONS: the call's cinematic moves on in real time; it may outlast the fight its strike ended)
     this.eid.see(b);
     this.eid.frame(dt, this.sceneHold > 0);
@@ -1521,6 +1528,7 @@ class Game {
         const events = stepBattle(b);
         // (a hero's ultimate fired: its moment begins, and the fight is held from the next tick (the full setting))
         if (fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.note(b, events, b.units.slice(born), before)) this.acc = 0;
+        if (b.duel) this.duelShow.note(b, events);
         this.bossm.note(b, events);
         if (this.eid.noteEvents(b, events)) this.acc = 0;
         for (const e of events) if (e.kind === 'ultLapse') this.hud.lapse(e.by);
@@ -1576,7 +1584,8 @@ class Game {
       this.acc += dt;
       if (!this.ultm.queue.current || this.ultm.queue.runsEffects) this.fx.step(dt);
       // (EIDOLONS: a strike that ended the fight plays out before the result comes up; ULT-SHOW: so does a showcase)
-      if (this.endWait < END_WAIT_MS && !this.eid.playing && !this.ultm.queue.current) {
+      // (DUEL-SHOW: and a duel's crowd erupts and slumps before its outcome)
+      if (this.endWait < END_WAIT_MS && !this.eid.playing && !this.ultm.queue.current && !this.duelShow.ending) {
         this.endWait += dt;
         if (this.endWait >= END_WAIT_MS) this.refresh();
       }
@@ -1589,6 +1598,8 @@ class Game {
     const t = b.phase === 'deploy' ? performance.now() : b.phase === 'fight' ? b.t - TICK_MS + this.acc : b.t + this.acc;
     // (ULT-SHOW: a showcase's stages, for the fighters made this frame too)
     if (b.phase !== 'deploy') this.ultm.stage();
+    // (DUEL-SHOW: the walk-in's poses, the crowd, the bar)
+    if (b.duel) this.duelShow.frame(dt, b);
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
       else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
@@ -1843,11 +1854,14 @@ class Game {
     for (const u of alive) {
       const s = this.sprites.get(u.id);
       if (!s) continue;
-      const engaged = engagedAt(u.u, u.v, u.side === 'hero' ? foesOf.hero : foesOf.foe);
+      // (in a duel the two are the fight from the first step of their walk-in)
+      const engaged = !!b.duel || engagedAt(u.u, u.v, u.side === 'hero' ? foesOf.hero : foesOf.foe);
       const blow = this.lastBlow.get(u.id);
       const ult = this.lastUlt.get(u.id);
       spots.push({ x: s.x, y: s.y, tall: s.tall, engaged, heat: heatOf({ engaged, sinceBlow: blow === undefined ? undefined : b.t - blow, sinceUlt: ult === undefined ? undefined : b.t - ult }) });
     }
+    // (DUEL-SHOW: the crowd round the ring kept in the picture, each too light to pull the middle off the two)
+    if (b.duel) for (const c of this.duelShow.spots()) spots.push({ ...c, engaged: true, heat: 0.01 });
     // (never wider than the board's own width, never closer than a little over the layout's scale, so pixels stay a sensible size)
     const lo = this.minZoom();
     const want = followView(spots, this.safe.w, this.safe.h, this.scale, lo, Math.max(lo, Math.min(FOLLOW_IN, 3 / this.scale)));
@@ -2273,6 +2287,7 @@ class Game {
   private hud!: FightHud;
   /** The ultimates' moments (`ultMoment.ts`, ULT-CUTIN): the slash, the name and the dim, the fight held while they play. */
   private ultm!: UltMoments;
+  private duelShow!: DuelShow;
   /** A boss's signature attack's cut-in (`bossMoment.ts`, BOSS-BIG). */
   private bossm = new BossMoments();
   /** The Nemesis War, phase 3: the taunt cut-ins before a nemesis's first wave of a run (`tauntCut.ts`), and the nemeses each run (by its
@@ -2372,6 +2387,19 @@ class Game {
         noteSeen(this.meta, kind);
         saveMeta(this.meta);
       },
+    });
+    // (DUEL-SHOW: the duel's walk-in, its crowd, its one bar and its end, drawn beside the board's own fighters)
+    this.duelShow = new DuelShow({
+      root: this.boardView.root,
+      sprite: (id) => this.sprites.get(id),
+      anchor: (s) => {
+        if (!s.root.visible || this.homeUp) return null;
+        const box = s.root.getBounds();
+        const r = this.app.canvas.getBoundingClientRect();
+        const k = r.width / this.app.screen.width;
+        return { x: r.left + ((box.minX + box.maxX) / 2) * k, y: r.top + box.minY * k };
+      },
+      awaken: (kind) => awakenedOf(this.meta, kind),
     });
     // (the Auto switch stands at the right end of the spell orbs' row)
     $('hudSpells').append(this.hud.autosEl);

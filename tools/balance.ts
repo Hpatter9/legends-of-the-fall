@@ -52,7 +52,7 @@ import { TIERS } from '../src/sim/tiers';
 import { eidolonAt, maybeSpells, playArmy, savedAt, climbMeta } from './autoplay';
 import { fullCouncil, growWar, harshen } from './nemesis/warBot';
 import { WAR_BOT } from './autoplay';
-import { DUEL_ARMY, DUEL_BOSS, DUEL_ROLE, DUEL_SHARE, duelOutcome, startDuel } from '../src/sim/duel';
+import { DUEL_ARMY, DUEL_BOSS, DUEL_LENGTH, DUEL_ROLE, DUEL_SHARE, duelOutcome, startDuel } from '../src/sim/duel';
 import { roleOf, type PartyRole } from '../src/sim/suggest';
 import { armyRun, recruit } from '../src/sim/run';
 import { snapOf, type Nemesis } from '../src/sim/nemesis';
@@ -698,6 +698,12 @@ function duelTable(): void {
       const [role, hp, atk] = r.split(':');
       DUEL_ROLE[role as PartyRole] = { hp: Number(hp), atk: Number(atk) };
     }
+  // (DUEL-SHOW: `--duel-length k` tries another stretch of the duellists' health and the ring's clock)
+  if (process.argv.includes('--duel-length')) DUEL_LENGTH.hp = Number(flag('--duel-length'));
+  if (process.argv.includes('--duel-soften')) DUEL_LENGTH.soften = Number(flag('--duel-soften'));
+  if (process.argv.includes('--duel-heal')) DUEL_LENGTH.heal = true;
+  if (process.argv.includes('--duel-clock')) DUEL_LENGTH.clock = Number(flag('--duel-clock'));
+  if (process.argv.includes('--duel-nem-hp')) DUEL_LENGTH.nemHp = Number(flag('--duel-nem-hp'));
   const seeds = process.argv.includes('--duel-seeds') ? Number(flag('--duel-seeds')) : 6;
   const kinds = process.argv.includes('--duel-kinds') ? flag('--duel-kinds')!.split(',') : [...ALL_HEROES];
   const mights = [1, 5, 10];
@@ -719,6 +725,9 @@ function duelTable(): void {
   const byArmy = new Map<string, { won: number; n: number }>();
   const byMight = new Map<number, { won: number; n: number }>();
   const byTarget = new Map<string, { won: number; n: number }>();
+  // (DUEL-SHOW: how long each duel lasted (battle ms), and how each ended, plain and with its Dread alike)
+  const lengths: number[] = [];
+  const ends = { won: 0, lost: 0, timeout: 0 };
   for (const kind of kinds) {
     const k = { won: 0, n: 0, dread: 0, dn: 0, out: 0 };
     for (const army of armies) {
@@ -747,6 +756,8 @@ function duelTable(): void {
               fight(b);
               playOut(b);
               const won = duelOutcome(b) === 'won' ? 1 : 0;
+              lengths.push(b.t);
+              ends[duelOutcome(b) ?? 'timeout']++;
               if (dread) {
                 k.dread += won;
                 k.dn++;
@@ -799,6 +810,11 @@ function duelTable(): void {
   const all = [...byKind.values()].reduce((s, k) => ({ won: s.won + k.won, n: s.n + k.n, dread: s.dread + k.dread, dn: s.dn + k.dn }), { won: 0, n: 0, dread: 0, dn: 0 });
   console.log(`\n  in all: ${pct(all.won, all.n).toFixed(1)}% (the band: 55 to 65%), with its Dread ${pct(all.dread, all.dn).toFixed(1)}% (about 70%)`);
   console.log(`  kinds outside 40 to 75%: ${outside.length ? outside.join(', ') : 'none'}`);
+  const sorted = [...lengths].sort((x, y) => x - y);
+  const at = (q: number) => (sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))] / 1000).toFixed(1);
+  const mean = sorted.reduce((s, x) => s + x, 0) / Math.max(1, sorted.length) / 1000;
+  const n = Math.max(1, sorted.length);
+  console.log(`  length ${JSON.stringify(DUEL_LENGTH)} (battle s, ${sorted.length} duels): mean ${mean.toFixed(1)}, quartiles ${at(0.25)} / ${at(0.5)} / ${at(0.75)}, 10th-90th ${at(0.1)}-${at(0.9)}; won ${pct(ends.won, n).toFixed(1)}%, lost ${pct(ends.lost, n).toFixed(1)}%, out of time ${pct(ends.timeout, n).toFixed(1)}%`);
   console.log(`  (${((Date.now() - t0) / 1000).toFixed(0)} s)`);
 }
 

@@ -1,0 +1,42 @@
+/* DUEL-SHOW (docs/notes/duel-show.md, `duelShow.ts`): a duel's one tug-of-war bar in the boss bar's place, the two names at the walk-in's
+   beat, and the veil a tap skips the walk-in through. The bar's frame is the painted plaque (`pbPlaque`), the closest piece of the kit until a
+   bar of its own is painted (`docs/notes/duel-show-art-prompts.md`). */
+#bossBar.duel { padding: 0; border: 0; border-image: none; background: none; box-shadow: none; }
+#bossBar.duel > b, #bossBar.duel > i { display: none; }
+#bossBar .dsTug { display: grid; width: 100%; box-sizing: border-box; grid-template-columns: 34px minmax(0, 1fr) 34px; grid-template-rows: 14px 14px; column-gap: 7px; row-gap: 3px; align-items: center; justify-items: stretch; padding: 7px 12px 8px; }
+#bossBar .dsFace { grid-row: 1 / 3; width: 34px; height: 34px; box-sizing: border-box; border: 1px solid #d9b56f; border-radius: 50%; overflow: hidden; background: #1a140e; box-shadow: 0 0 0 2px #120c07, 0 0 8px #0009; }
+#bossBar .dsFace canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+#bossBar .dsFace.hero { grid-column: 1; border-color: #9fdc85; }
+#bossBar .dsFace.nem { grid-column: 3; border-color: #e58474; }
+#bossBar .dsFace.nem canvas { transform: scaleX(-1); }
+#bossBar .dsTrack { grid-column: 2; grid-row: 2; position: relative; height: 12px; border: 1px solid #b79a5e; border-radius: 2px; background: #100b08; box-shadow: inset 0 1px 3px #000; overflow: hidden; }
+#bossBar .dsGreen, #bossBar .dsRed { position: absolute; top: 0; bottom: 0; transition: width 0.25s ease-out, left 0.25s ease-out; }
+#bossBar .dsGreen { left: 0; width: 50%; background: linear-gradient(#a9ec84, #3f9a3a 55%, #2a6f2a); }
+#bossBar .dsRed { left: 50%; right: 0; background: linear-gradient(#f3998a, #b8402f 55%, #7f2219); }
+#bossBar .dsKnot { position: absolute; top: -1px; bottom: -1px; left: 50%; width: 4px; margin-left: -2px; background: #ffe7a6; box-shadow: 0 0 6px #ffd877, 0 0 2px #fff; transition: left 0.25s ease-out; }
+#bossBar .dsWho { grid-column: 2; grid-row: 1; display: flex; align-items: baseline; justify-content: space-between; gap: 6px; min-width: 0; font: 700 12px/14px var(--display); }
+#bossBar .dsWho em { font-style: normal; min-width: 0; flex: 1 1 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#bossBar .dsWho em:first-child { color: #c6f0a8; text-align: left; }
+#bossBar .dsWho em:last-child { color: #f5b2a4; text-align: right; }
+#bossBar .dsClock { flex: none; font: 700 11px/14px var(--body); color: #f3e3b8; }
+/* (the lead's own glow: whichever side is ahead lights its end) */
+#bossBar .dsTug[data-lead='hero'] .dsFace.hero { box-shadow: 0 0 0 2px #120c07, 0 0 10px #8fe06f; }
+#bossBar .dsTug[data-lead='nem'] .dsFace.nem { box-shadow: 0 0 0 2px #120c07, 0 0 10px #ef6f5b; }
+/* (a big swing: the bar pulses) */
+#bossBar .dsTug.swing { animation: dsSwing 0.6s ease-out; }
+@keyframes dsSwing { 0% { transform: scale(1); filter: brightness(1); } 30% { transform: scale(1.05); filter: brightness(1.45); } 100% { transform: scale(1); filter: brightness(1); } }
+
+/* the walk-in: a veil over the page (a tap skips), and the two names at the beat, the champion's in green and the challenger's in red */
+.dsVeil { position: fixed; inset: 0; z-index: 25; display: flex; align-items: center; justify-content: center; pointer-events: auto; cursor: pointer; }
+.dsNames { display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: calc(100% - 32px); opacity: 0; transform: scale(1.25); pointer-events: none; text-align: center; text-shadow: 0 2px 3px #000, 0 0 14px #000; }
+.dsNames.show { animation: dsNames 1.1s ease-out forwards; }
+.dsNames b { font: 700 26px/1.15 var(--display); letter-spacing: 0.04em; overflow-wrap: anywhere; }
+.dsNames b.hero { color: #c6f0a8; }
+.dsNames b.nem { color: #f5b2a4; }
+.dsNames i { font: 700 15px/1 var(--display); font-style: normal; letter-spacing: 0.3em; color: #f3e3b8; }
+@keyframes dsNames { 0% { opacity: 0; transform: scale(1.25); } 25% { opacity: 1; transform: scale(1); } 80% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.98); } }
+@media (prefers-reduced-motion: reduce) {
+  #bossBar .dsTug.swing { animation: none; }
+  #bossBar .dsGreen, #bossBar .dsRed, #bossBar .dsKnot { transition: none; }
+  .dsNames, .dsNames.show { animation: none; opacity: 1; transform: none; }
+}
