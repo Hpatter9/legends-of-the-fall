@@ -31,7 +31,8 @@ export function devGrant(m: Meta, what: DevGift, n: number): string {
 }
 
 /** Build Town (moved from the Castle tab to Settings › Developer, 0.437.0's follow-up; unchanged): each of the six upgrades one level up,
- *  one at its top level back to 1 (so a tap walks through the looks), the Chapel built, and at least 5000 crowns. */
+ *  one at its top level back to 1 (so a tap walks through the looks), the Chapel built, and at least 5000 crowns. It opens the castle's
+ *  gate as well (FIRST-HOUR: the Castle tab's own preview button is gone, so this is the one testing door), kept open as an old save's is. */
 export function buildTown(m: Meta): string {
   for (const id of BUILDING_IDS) {
     const cur = m.castle[id] ?? 0;
@@ -39,5 +40,6 @@ export function buildTown(m: Meta): string {
   }
   m.chapel = true;
   m.crowns = Math.max(m.crowns, 5000);
-  return 'Built the town: every upgrade one level up, the Chapel built';
+  if (!m.opened?.includes('castle')) m.opened = [...(m.opened ?? []), 'castle'];
+  return 'Built the town: the gate open, every upgrade one level up, the Chapel built';
 }

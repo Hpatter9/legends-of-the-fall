@@ -99,7 +99,8 @@ function toast(line: string): void {
 
 /** SWEEP-1110 (the director's call): a toast never covers an open card or sheet. While one is open (an ornate card, the hero sheet, a
  *  skill's sheet in a fight, Settings) the toasts wait in their queue, and show once it closes. */
-const CARDS = '.om, #hmSheet:not([hidden]), .fhSheet:not([hidden]), #settings:not([hidden])';
+// (FIRST-HOUR: the wave's result card counts too: the first win's achievement toast sat on its gold, crowns and stars)
+const CARDS = '.om, #hmSheet:not([hidden]), .fhSheet:not([hidden]), #settings:not([hidden]), #result:not([hidden])';
 const cardOpen = (): boolean => [...document.querySelectorAll<HTMLElement>(CARDS)].some((e) => e.offsetParent !== null || (getComputedStyle(e).position === 'fixed' && getComputedStyle(e).display !== 'none'));
 const CARD_POLL_MS = 300;
 

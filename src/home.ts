@@ -979,31 +979,12 @@ export class Home {
     this.castle.root.hidden = !up;
     this.castleShut.hidden = up;
     if (!up) {
-      const unlockBtn = el('button', 'primary', '🗝️ Open Castle Gate (Preview)');
-      unlockBtn.style.marginTop = '12px';
-      unlockBtn.addEventListener('click', () => {
-        m.opened = m.opened || [];
-        if (!m.opened.includes('castle')) m.opened.push('castle');
-        m.crowns = Math.max(m.crowns, 3000);
-        if (Object.values(m.castle).every((lv) => lv === 0)) {
-          m.castle = {
-            treasury: 2,
-            barracks: 2,
-            armoury: 2,
-            mageTower: 2,
-            stable: 2,
-            library: 2,
-          };
-          m.chapel = true;
-        }
-        saveMeta(m);
-        this.refresh();
-      });
+      // (FIRST-HOUR: the "Open Castle Gate (Preview)" button that stood here was a testing door on every new player's Castle tab: it
+      // opened the gate and gave 3000 crowns and six buildings. Testing goes through Settings › Developer › Build Town, which opens the gate too.)
       this.castleShut.replaceChildren(
         el('b', '', 'The castle is shut'),
         el('p', '', `${opensAt(MODE_NEED.castle)} · ${progressLine(m, MODE_NEED.castle)}`),
         el('small', '', 'Win stars on the armies to open the gate.'),
-        unlockBtn,
       );
     }
   }

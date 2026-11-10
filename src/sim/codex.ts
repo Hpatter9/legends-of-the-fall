@@ -15,6 +15,7 @@ import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS, isBoss } from './foes';
 import { TRIALS } from './eidolonTrials';
 import type { Meta } from './meta';
 import { ALL_HEROES, UNITS, type UnitDef } from './units';
+import { modesHidden } from './hiddenModes';
 
 /** What the meta remembers: the foe kinds met (by `UNITS` id) and the kills per kind. */
 export interface CodexRecord {
@@ -181,16 +182,17 @@ export function whereMet(e: FoeEntry): string[] {
     out.push(`Calamity: the boss of map ${CAL_BOSSES.indexOf(e.id) + 1}`);
   } else {
     const inBand = (bands: readonly string[]) => bands.some((b) => FOE_BANDS[b].some((d) => e.defs.includes(d)));
-    if (e.defs.some((d) => BOSS_BANDS.some((b) => FOE_BANDS[b][0] === d))) out.push('Boss stage of a run and the Last Stand');
-    else if (inBand(FIELD_BANDS)) out.push('Stages of a run and the Last Stand');
-    else if (inBand(BOSS_BANDS)) out.push('Boss stages of a run and the Last Stand');
+    if (e.defs.some((d) => BOSS_BANDS.some((b) => FOE_BANDS[b][0] === d))) out.push(modesHidden() ? 'Boss stage of a run' : 'Boss stage of a run and the Last Stand');
+    else if (inBand(FIELD_BANDS)) out.push(modesHidden() ? 'Stages of a run' : 'Stages of a run and the Last Stand');
+    else if (inBand(BOSS_BANDS)) out.push(modesHidden() ? 'Boss stages of a run' : 'Boss stages of a run and the Last Stand');
     for (const a of ARMIES) {
       if (!a.waves.some((w) => w.foes.some((f) => e.defs.includes(f)))) continue;
       const boss = a.waves.some((w) => w.boss && e.defs.includes(w.foes[0]));
       out.push(`${a.name}${boss ? ' (boss wave)' : ''}`);
     }
-    if ([1, 2, 3, 4, 5, 6].some((map) => calBossBand(map).some((d) => e.defs.includes(d)))) out.push('Calamity maps');
-    if (ELITES.some((x) => x.escort.some((d) => e.defs.includes(d)))) out.push('Escort of Calamity elites');
+    // (FIRST-HOUR: the hidden modes' places are left out while the modes are hidden)
+    if (!modesHidden() && [1, 2, 3, 4, 5, 6].some((map) => calBossBand(map).some((d) => e.defs.includes(d)))) out.push('Calamity maps');
+    if (!modesHidden() && ELITES.some((x) => x.escort.some((d) => e.defs.includes(d)))) out.push('Escort of Calamity elites');
     // (EIDOLON-TRIAL: an Eidolon met in its own trial)
     for (const t of TRIALS) if (e.defs.includes(t.boss.id)) out.push(`${t.part.title}: the last part of ${t.boss.name}'s Eidolon chain`);
   }

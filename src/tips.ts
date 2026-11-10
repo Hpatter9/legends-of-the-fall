@@ -12,7 +12,7 @@ import { SYSTEM_FINDERS } from './systemTips';
 export type TipId = 'home' | 'deploy' | 'fight' | 'mana' | 'skill' | 'ult' | 'summon' | 'crowns' | SystemTipId;
 
 /** The tips for the newer systems: each shows once, the first time its element is on the page and open to the player. */
-export type SystemTipId = 'calamity' | 'tower' | 'talents' | 'castle' | 'spellbook' | 'stash' | 'equipment' | 'recycle' | 'retry' | 'autoReplay';
+export type SystemTipId = 'calamity' | 'tower' | 'talents' | 'castle' | 'spellbook' | 'stash' | 'equipment' | 'recycle' | 'retry' | 'autoReplay' | 'runes';
 
 /** Where a tip's bubble is shown: on the home screen, or in the game (not under the recruit page or a result). */
 interface TipDef {
@@ -26,7 +26,8 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   home: { text: 'Tap Choose your battle to send your heroes out.', page: 'home' },
   deploy: { text: 'Drag your heroes onto the blue tiles. High ground hits harder; blows from behind hit hardest.', page: 'game', during: 'deploy' },
   fight: { text: 'Press Fight! Your heroes fight on their own.', page: 'game', during: 'deploy' },
-  mana: { text: 'Tap a spell card, then a tile, to cast.', page: 'game', during: 'fight' },
+  // (FIRST-HOUR: the king's spells decide the early fights (`tools/first-hour/pace.mjs`: about 2 tries to clear the first army with them, 6 without), so the tip says so and names the Auto switch)
+  mana: { text: 'Your king has spells, and they win fights. Tap a spell, then a tile, to cast it; or tap SPELL and they are cast for you.', page: 'game', during: 'fight' },
   skill: { text: 'Heroes cast their skills on their own, paid from the blue mana or gold stamina bar under each portrait.', page: 'game', during: 'fight' },
   ult: { text: 'A glowing portrait means its ultimate is ready: tap it to fire. The Auto ultimates button fires them for you; Auto spells casts your spells.', page: 'game', during: 'fight' },
   summon: { text: 'Spend gold to Hire a hero. Drag a hero onto another of the same kind and star to merge them into a stronger one (up to four stars), or tap one then the other. Beating the second army unlocks Auto merge.', page: 'game', during: 'deploy' },
@@ -38,12 +39,19 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   spellbook: { text: 'The Chapel holds your spells: three of your ruler\'s school and one of any. Spare mana fills your Decree.', page: 'home' },
   stash: { text: 'Chests from army stars wait on the cart. Tap one to open it.', page: 'home' },
   equipment: { text: 'Equip best puts the strongest spare gear on this hero. Chests drop more.', page: 'any' },
-  recycle: { text: 'Drag a hero you do not need onto Recycle to turn it back into gold.', page: 'game', during: 'deploy' },
+  recycle: { text: 'Drag a spare hero off the bench and a Recycle spot appears: drop it there to turn it back into gold.', page: 'game', during: 'deploy' },
   retry: { text: 'Hearts: when your party falls, a heart burns and the wave starts again with bonus gold. With none left, the run ends.', page: 'game' },
+  // (FIRST-HOUR: the first rune came with no word; the bench that holds it is shut behind its pull bar)
+  runes: { text: 'You hold a rune. Tap Runes to open the rune bench: drag a rune onto a hero to set it, or onto its twin to merge.', page: 'game', during: 'deploy' },
   autoReplay: { text: 'Switch Auto on to repeat a cleared army by itself, for as many runs as you set.', page: 'home' },
 };
 
 const IDS = Object.keys(TIPS) as TipId[];
+
+const COUNT_WORDS = ['', 'one hero is', 'two are', 'three are', 'four are', 'five are'];
+/** The hint over the Hire button when a run starts with no hero: it counts the party picked for the run (a new save's is three). */
+export const hireHintWords = (pool: number): string =>
+  `Hire to start: your ${COUNT_WORDS[pool] || 'heroes are'} the pool you hire from. Tap Hire below to put ${pool === 1 ? 'one' : 'two'} on the board.`;
 const KEY = 'legends.tips';
 
 /** A box on the screen, in CSS pixels. */
@@ -131,9 +139,11 @@ class Tips {
 
   /** The tips of the deploy screen, offered each time it is drawn: `placed` heroes are on the board, `stage` is the run's,
    *  and `tiles` is the box of the blue tiles (the bubble goes above them, so it does not cover them). */
-  atDeploy(placed: number, stage: number, tiles: () => Box | null): void {
-    this.offer('deploy', tiles);
-    if (placed) this.offer('fight', $('fight'));
+  atDeploy(placed: number, stage: number, tiles: () => Box | null, heroes = 1, canHire = false): void {
+    // (FIRST-HOUR: a new army run starts with no hero, so "drag your heroes" waits for the first hire; the Hire hint says what to do first)
+    if (heroes > 0) this.offer('deploy', tiles);
+    // (and "press Fight!" waits on the first wave while there is still gold for the second hire, or the player fights with one hero)
+    if (placed && !(stage === 1 && canHire)) this.offer('fight', $('fight'));
     // (after the first win, the gold is there to summon with)
     if (stage > 1) this.offer('summon', $('summon'));
   }

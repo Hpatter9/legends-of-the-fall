@@ -30,7 +30,9 @@ export const SYSTEM_FINDERS: Partial<Record<TipId, () => HTMLElement | null>> = 
   spellbook: () => onShow(q('.lbHead')),
   stash: () => onShow(q('.csStash:not(.empty) button')),
   equipment: () => onShow(byText('.eqAuto button', 'Equip best')),
-  recycle: () => (document.body.dataset.phase === 'deploy' && (q('#bench')?.children.length ?? 0) > 1 ? onShow(q('#bench')) : null),
+  // (FIRST-HOUR: only when a hero is really waiting on the bench: a placed hero's card is still a child of the bench, hidden)
+  recycle: () => (document.body.dataset.phase === 'deploy' && document.querySelectorAll('#bench .card:not(.placed)').length > 1 ? onShow(q('#bench .card:not(.placed)')) : null),
+  runes: () => (document.body.dataset.phase === 'deploy' && q('#runeBench .rbTile:not(.empty)') ? onShow(q('#benchGrip')) : null),
   retry: () => onShow(q('#lives:not([hidden])')),
   autoReplay: () => onShow(q('.asAuto')),
 };

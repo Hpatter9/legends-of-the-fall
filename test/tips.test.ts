@@ -40,7 +40,7 @@ test('a bubble goes beside its anchor, clear of it, and inside the screen', () =
 
 test('the newer systems each have a short tip and a place to point at', async () => {
   const { SYSTEM_FINDERS } = await import('../src/systemTips');
-  const ids = ['calamity', 'tower', 'talents', 'castle', 'spellbook', 'stash', 'equipment', 'recycle', 'retry', 'autoReplay'] as const;
+  const ids = ['calamity', 'tower', 'talents', 'castle', 'spellbook', 'stash', 'equipment', 'recycle', 'retry', 'autoReplay', 'runes'] as const;
   for (const id of ids) {
     assert.ok(typeof SYSTEM_FINDERS[id] === 'function', id);
     const text = TIPS[id].text;
