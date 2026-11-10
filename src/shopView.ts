@@ -74,7 +74,7 @@ export function chestShopCards(m: Meta, changed: () => void, redraw: () => void)
     const card = el('div', `shopCard ${c.kind}`);
     card.append(chestPicture(c.kind, 2).root);
     const text = el('div');
-    text.append(el('h3', '', c.name), el('p', '', `${c.stones} summoning stones`), el('p', '', GEAR_LINE[c.kind]), el('p', '', TOME_LINE[c.kind]), el('p', 'shopLeft', `${left} of ${c.stock} left today`));
+    text.append(el('h3', '', c.name), el('p', '', `${c.stones} summoning stone${c.stones === 1 ? '' : 's'}`), el('p', '', GEAR_LINE[c.kind]), el('p', '', TOME_LINE[c.kind]), el('p', 'shopLeft', `${left} of ${c.stock} left today`));
     card.append(text);
     const buy = el('button', 'shopBuy');
     buy.append(icon(ICONS.crowns, ''), `${price}`);

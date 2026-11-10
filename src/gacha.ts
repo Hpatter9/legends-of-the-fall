@@ -11,6 +11,7 @@ import { isSecret } from './sim/secretHeroes';
 import { secretFigure } from './secretView';
 import { portrait } from './render/sheets';
 import { heroCard, pullInfo, queueReveal, revealUnseen, tarotBack, tarotFace } from './summonTarot';
+import { modesHidden } from './sim/hiddenModes';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -327,7 +328,7 @@ export function pityLine(m: Meta): string {
 
 /** The recruit page's short rule: what a stone is, the lucky chance, and why new heroes turn up less as the roster grows. */
 export function ratesText(): string {
-  return `Each summoning stone you use gives one shard of one hero. A new hero joins when its bar fills; one you have earns rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}, then awakening): tap Rank up on its sheet to take it. One stone in ${LUCKY_ODDS} is a lucky summon: a whole hero you do not have joins at once. The more heroes you have, the more stones land on them rather than on a new one. Stones come in chests: buy them in the chest shop with crowns, or win them from armies, the daily, the Last Stand and the Calamity. Ten heroes are earned in play, never summoned: see the Heroes tab.`;
+  return `Each summoning stone you use gives one shard of one hero. A new hero joins when its bar fills; one you have earns rank (+${Math.round((RANK_MULT - 1) * 100)}% hp and attack a rank, up to ${MAX_RANK}, then awakening): tap Rank up on its sheet to take it. One stone in ${LUCKY_ODDS} is a lucky summon: a whole hero you do not have joins at once. The more heroes you have, the more stones land on them rather than on a new one. Stones come in chests: buy them in the chest shop with crowns, or win them from ${modesHidden() ? 'armies and the daily' : 'armies, the daily, the Last Stand and the Calamity'}. Ten heroes are earned in play, never summoned: see the Heroes tab.`;
 }
 
 /** The plain line under the summon buttons. */

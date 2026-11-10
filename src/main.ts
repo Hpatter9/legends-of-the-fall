@@ -1,4 +1,4 @@
-import { modeShown } from './sim/hiddenModes';
+import { modeShown, namesHiddenMode } from './sim/hiddenModes';
 import { heraldPortrait } from './heraldArt';
 // Legends of the Last Keep: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
@@ -142,7 +142,7 @@ import { grantContent } from './sim/contentHeroes';
 import { secretsOf } from './sim/secretHeroes';
 import { grantSpells } from './sim/spellSources';
 import { clockSeed, todayKey } from './modes';
-import { tips, type Box } from './tips';
+import { hireHintWords, tips, type Box } from './tips';
 import { FightHud } from './fightHud';
 import { HoldPress, UnitInfoCard } from './unitInfo';
 import { heroFace } from './heroFace';
@@ -265,7 +265,11 @@ const HURTING = new Set<SpellId>(['meteor', 'smite', 'chain', 'poison', 'frost']
 
 // (the loading screen's tip: one of the jokes, while the page gets ready)
 const loadTip = document.querySelector('.ldTip');
-if (loadTip) loadTip.textContent = LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)];
+if (loadTip) {
+  // (FIRST-HOUR: a tip about a hidden mode is not shown)
+  const shownTips = LOADING_TIPS.filter((t) => !namesHiddenMode(t));
+  loadTip.textContent = shownTips[Math.floor(Math.random() * shownTips.length)];
+}
 
 /** The padlock on a quest's required hero's bench card (QUEST-BATTLES), drawn so it needs no file. */
 const QUEST_LOCK = '<svg viewBox="0 0 12 14" width="12" height="14" aria-hidden="true"><path d="M3 6V4a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="1.5" y="6" width="9" height="7" rx="1.2" fill="currentColor"/></svg>';
@@ -2194,15 +2198,18 @@ class Game {
         y1 = Math.max(y1, y + TH / 2);
       }
     if (x0 > x1) return null;
-    return { x: this.world.x + x0 * this.scale, y: this.world.y + y0 * this.scale, w: (x1 - x0) * this.scale, h: (y1 - y0) * this.scale };
+    // (FIRST-HOUR: the world's own scale, which carries the deploy zoom; `this.scale` alone put the tip's box beside the tiles)
+    const k = this.world.scale.x;
+    return { x: this.world.x + x0 * k, y: this.world.y + y0 * k, w: (x1 - x0) * k, h: (y1 - y0) * k };
   }
 
   /** The screen box of a fighter on the board (for a tip to point at), or null if it has gone. */
   private spriteBox(id: number): Box | null {
     const s = this.sprites.get(id);
     if (!s || !s.root.visible) return null;
-    const h = s.tall * this.scale;
-    return { x: this.world.x + s.x * this.scale - 20, y: this.world.y + s.y * this.scale - h, w: 40, h };
+    const k = this.world.scale.x;
+    const h = s.tall * k;
+    return { x: this.world.x + s.x * k - 20, y: this.world.y + s.y * k - h, w: 40, h };
   }
 
   /* -------------------------------------------------------------- input */
@@ -4099,6 +4106,8 @@ class Game {
     // (UX-FIXES: an empty deploy board says what to do: hire. Hire is the lit button until a hero is on the bench, then Fight! takes over)
     const needHire = b.phase === 'deploy' && !run.roster.length && block === null && run.mode?.kind !== 'calamity';
     $('hireHint').hidden = !needHire;
+    // (FIRST-HOUR: the hint counts the party picked for this run: a new save has three heroes, not five)
+    if (needHire) $('hireHint').textContent = hireHintWords(run.pool?.length ?? 0);
     buy.classList.toggle('primary', needHire);
     buy.title = block === 'bench' ? 'The bench holds 10 heroes: merge a pair, recycle one or send one to the field to hire another' : '';
     // (the Auto merge button shows while a pair is ready, with how many: MERGE-TWO)
@@ -4161,7 +4170,7 @@ class Game {
       $('next').textContent = qrun && run.over ? (run.cleared ? 'Onward' : 'Try again') : run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.rift?.expedition ? 'Return to sanctuary' : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
-    if (b.phase === 'deploy' && !this.auto && !(this.revive && !this.revive.started)) tips.atDeploy(n, run.stage, () => this.deployBox());
+    if (b.phase === 'deploy' && !this.auto && !(this.revive && !this.revive.started)) tips.atDeploy(n, run.stage, () => this.deployBox(), run.roster.length, block === null);
     this.buildBench();
     this.markTiles();
     this.refreshBench();

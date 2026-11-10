@@ -12,6 +12,7 @@ import { play } from './render/sound';
 import { AWAKEN_ORES, CACHE_ORES, ORES, cachesOf, openCache } from './sim/awakenMats';
 import { cacheIcon, oreHex, oreIcon, orePouch } from './oreView';
 import { tellsByCard } from './sim/unlockTell';
+import { modesHidden } from './sim/hiddenModes';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -121,7 +122,7 @@ export function drawAwaken(meta: Meta, kind: string, changed: (taken: Taken) => 
       }),
     );
     panel.append(bar, go);
-    if (plan.shardsReady && ore && !plan.can) panel.append(el('small', 'awNote', `${ore.name} drops in the Calamity (its bosses and mini-bosses) and from some armies' boss waves: see each army's card.`));
+    if (plan.shardsReady && ore && !plan.can) panel.append(el('small', 'awNote', modesHidden() ? `${ore.name} drops from some armies' boss waves: see each army's card.` : `${ore.name} drops in the Calamity (its bosses and mini-bosses) and from some armies' boss waves: see each army's card.`));
   } else panel.append(el('small', 'awNote', 'Fully awakened. More shards of this hero pay crowns once they have nothing left to buy.'));
   // (every class's ores held, so the player sees what else waits)
   if (ore) panel.append(orePouch(meta));
