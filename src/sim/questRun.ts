@@ -95,12 +95,6 @@ export function noteBattleWon(m: Meta, run: Run): boolean {
   const s = (m.quests ??= blankQuests());
   if ((s.won ??= []).includes(run.mode.quest)) return false;
   s.won.push(run.mode.quest);
-  // (QUEST-COMPLETE: who fought and how it went, from the run's own books, for the Quest complete card)
-  const rec = run.recap;
-  if (rec) {
-    const heroes = Object.entries(rec.heroes).sort((a, b) => b[1].dealt - a[1].dealt || a[0].localeCompare(b[0])).map(([k]) => k);
-    (s.how ??= {})[run.mode.quest] = { heroes, ms: Math.round(rec.ms), fights: rec.fights, tries: s.tries?.[run.mode.quest] ?? 1 };
-  }
   return true;
 }
 
