@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.464.0',
+    date: '2026-11-10',
+    title: 'Quest complete, and quests you can finish',
+    notes: ['Handing in a quest opens a Quest complete card: its story, what you did and your rewards.', 'The no hero hired quests could not be finished. They now ask for no sellsword hired at the cart, and your own party no longer counts.'],
+  },
+  {
     version: '0.463.0',
     date: '2026-11-10',
     title: 'The camera keeps clear of the bars',
