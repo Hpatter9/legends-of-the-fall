@@ -9,7 +9,7 @@ pressed and disabled plates share their slice lines), then halved; the nine-slic
 less the crop, to src/paintedButtonsSlices.css as border-image rules. The switch (row 4 of plates-frames) is a whole piece, not sliced.
 
 Everything is WebP (alpha kept) in src/art/ui/buttons/, which build.mjs serves as ui/buttons/<name>.webp and the service worker caches.
-Prints the total bytes written.
+Prints the total bytes written. The single medallions painted later (`SINGLES`, one 256 x 256 file each) are cut the same way.
 """
 import os
 import sys
@@ -48,6 +48,8 @@ PLATES = [
     ('plates-frames', 2, ['plaque', 'plaque-ready', 'plaque-locked'], (72, 64, 72, 64)),
     ('plates-frames', 3, ['switch-off', 'switch-on', 'switch-off-dim'], None),
 ]
+# Single medallions painted later, one 256 x 256 file each (BATTLE-POLISH's Auto ultimates, off and lit; `art/battle-polish`).
+SINGLES = ['auto-ult', 'auto-ult-lit']
 MEDAL = 96
 GLYPH = 48
 SWITCH_W = 120
@@ -89,6 +91,17 @@ def main() -> None:
             im = Image.fromarray(cell).crop(box).resize((size, size), Image.LANCZOS)
             total += save(im, name)
             count += 1
+    for name in SINGLES:
+        src = f'{SRC}/{name}.png'
+        if not os.path.exists(src):
+            continue
+        cell = clean(np.array(Image.open(src).convert('RGBA')))
+        x0, y0, x1, y1 = bbox(cell[..., 3])
+        side = max(x1 - x0, y1 - y0) + 4
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        box = (round(cx - side / 2), round(cy - side / 2), round(cx - side / 2) + side, round(cy - side / 2) + side)
+        total += save(Image.fromarray(cell).crop(box).resize((MEDAL, MEDAL), Image.LANCZOS), name)
+        count += 1
     rules = ['/* PAINTED-BUTTONS: written by tools/painted-buttons/cut.py; do not edit by hand. The nine-slice lines of each plate, in the',
              '   halved files\' own pixels (border-image-slice), and the --pb-* widths the plates are drawn with (half the slice again). */',
              ':root {']

@@ -2,7 +2,8 @@
 
 The fight's Auto split into two buttons (docs/notes/battle-polish.md). Auto spells keeps the painted `autocast` / `autocast-lit` pair. Auto
 ultimates borrows the painted `ultimate` medallion, dimmed by CSS while off and given a gold glow while on; a painted off and lit pair of
-its own would match the spells' button. Until it lands the CSS stand-in is used.
+its own would match the spells' button. Until it lands the CSS stand-in is used. **Landed** (`art/battle-polish`, UI-ART-WIRE):
+`auto-ult.webp` and `auto-ult-lit.webp` are the button's off and on states now ([ui-art-wire.md](ui-art-wire.md)).
 
 ```
 For the repo hpatter9/legends-of-the-fall, branch art/battle-polish: paint two round button medallions for a phone fantasy auto-battler's
