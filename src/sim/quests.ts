@@ -126,6 +126,18 @@ export interface QuestState {
   pieces?: string[];
   /** QUESTS-3: the quests that failed (their days ran out), by the date they did: back on the board after `FAIL_COOLDOWN` days. */
   failed?: Record<string, number>;
+  /** QUEST-COMPLETE: how each quest battle was first won (`noteBattleWon`), for the Quest complete card's recap. A battle won before
+   *  the card existed has none: the recap then says only what the save knows (the tries, the cast). */
+  how?: Record<string, BattleHow>;
+}
+
+/** How a quest battle was won: the heroes who fought (kinds, the one who dealt most first), the battle time of the winning try (ms), the
+ *  fights it took (a wave fought again after a heart counts), and which try it was. */
+export interface BattleHow {
+  heroes: string[];
+  ms: number;
+  fights: number;
+  tries: number;
 }
 
 export const blankQuests = (): QuestState => ({ active: [], offers: [], done: [] });
@@ -870,6 +882,16 @@ export function readQuests(raw: unknown): QuestState | undefined {
   for (const k of ['won', 'told'] as const) {
     const ids = [...new Set((Array.isArray(r[k]) ? r[k] : []).filter((id): id is string => typeof id === 'string' && !!questBattleById(id)))];
     if (ids.length) s[k] = ids;
+  }
+  // (QUEST-COMPLETE: how each battle was won, read safely; only battles still in the game)
+  if (r.how && typeof r.how === 'object') {
+    const how: Record<string, BattleHow> = {};
+    for (const [id, h] of Object.entries(r.how as Record<string, Partial<BattleHow> | null>)) {
+      if (!questBattleById(id) || !h || typeof h !== 'object' || !Array.isArray(h.heroes)) continue;
+      const num = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
+      how[id] = { heroes: h.heroes.filter((k): k is string => typeof k === 'string').slice(0, 12), ms: num(h.ms), fights: num(h.fights), tries: num(h.tries) };
+    }
+    if (Object.keys(how).length) s.how = how;
   }
   // (QUESTS-3: the quests that failed, by their date)
   const failedAt = readCounts(r.failed, isDate);

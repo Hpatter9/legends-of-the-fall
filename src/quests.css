@@ -100,3 +100,35 @@
   .qcCard { animation: none; }
 }
 .qlSide button.qlGoto { min-width: 96px; font-size: 13px; padding: 0 6px; }
+
+/* QUEST-COMPLETE (docs/notes/quest-complete.md): the Quest complete card's own parts inside the standard ornate menu: the giver's row,
+   the story's well, the recap's lines with their counts, and the rewards, which arrive one by one. */
+#questComplete .omEyebrow { color: #f2dc9f; }
+#questComplete .omSub { letter-spacing: .02em; color: #e9cf8c; }
+.qxGiver { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
+.qxGiver .qxFace { flex: none; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; }
+.qxGiver .qxFace .ecnSigil { width: 60px; height: 60px; }
+.qxGiver .qxWho { display: flex; flex-direction: column; min-width: 0; }
+.qxGiver .qxWho b { font: 700 16px/1.2 var(--display); color: #f3e3b8; }
+.qxGiver .qxWho small { font: 400 var(--om-small)/1.3 var(--body); color: #b8af9a; }
+.qxThanks { margin: 0 0 6px; font: italic 400 var(--om-text)/1.4 var(--body); color: #e6dcc4; }
+.qxStory p { margin: 4px 0; }
+.qxStory .qxSaid { font-style: italic; color: #efe4c8; }
+.qxStory .qxSaid cite { font-style: normal; font-size: var(--om-small); color: #b8af9a; white-space: nowrap; }
+.qxStory .qxSaid cite::before { content: '— '; }
+.qxRecap .qxLine { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 3px 0; }
+.qxRecap .qxLine span { min-width: 0; overflow-wrap: anywhere; }
+.qxRecap .qxLine b { flex: none; font: 700 var(--om-text)/1.3 var(--body); color: #f2dc9f; white-space: nowrap; }
+.qxRecap .qxLine.part span, .qxRecap .qxLine.next span { color: #cfe3c0; }
+.qxRecap .qxLine.time span, .qxRecap .qxLine.again span { color: #b8af9a; font-size: var(--om-small); }
+.qxRewards { display: flex; flex-direction: column; gap: 5px; }
+.qxReward { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 10px; border: 1px solid #6e6243; border-radius: 4px; background: linear-gradient(#2a3024, #171d15); opacity: 0; transform: translateY(8px) scale(.98); transition: opacity .28s ease, transform .28s cubic-bezier(.2, 1.4, .4, 1); }
+.qxReward.in { opacity: 1; transform: none; }
+.qxReward.hero, .qxReward.book { border-color: #e4c888; box-shadow: inset 0 0 0 1px #d8b97650; }
+.qxReward .qxIco { flex: none; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+.qxReward .qxIco img { width: 32px; height: 32px; object-fit: contain; image-rendering: pixelated; }
+.qxReward .qxIco.shards img { width: 36px; height: 36px; object-fit: cover; object-position: 50% 12%; border-radius: 4px; border: 1px solid #8a6a32; image-rendering: auto; }
+.qxReward .qxIco.book img { image-rendering: auto; }
+.qxReward .qxWords { min-width: 0; font: 400 var(--om-text)/1.3 var(--body); color: #e6dcc4; overflow-wrap: anywhere; }
+.qxReward .qxN { font: 700 17px/1 var(--display); color: #ffe7ae; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .qxReward { opacity: 1; transform: none; transition: none; } }
