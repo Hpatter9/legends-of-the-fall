@@ -27,6 +27,27 @@
 - **Status:** ready for owner review. Irregular outer/inner defences, stronger relief, winding camp lanes, authored work yards and two proximity-discovered weak points implemented. All 15 affected test files, typecheck/build and final three-size renderer previews passed; reduced-motion preview inspected. Worker-enabled browser preview timed out, so visual captures use the main-thread fallback; worker mirror/resume rules passed. No merge, deployment or version bump.
 - **Handoff:** [Bloodtusk warcamp](notes/bloodtusk-warcamp.md); [actual map preview](samples/bloodtusk-warcamp/camp-393.png); [forge detail](samples/bloodtusk-warcamp/forge-393.png).
 
+### MOONLIT-SHRINE-MAP-DETAIL — Dress every region of the hold
+
+- **Owner / branch / worktree:** Codex; `art/moonlit-shrine-completion`; `/workspace/legends-of-the-fall`.
+- **Scope:** owner requested details across the rest of the map; regional woods, ruins, shoreline, bailey, perimeter and reserve-camp dressing using existing approved art. Preserve grid, routes, simulation and other holds.
+- **Completion:** regional coverage and safety checks, typecheck/build, map-wide browser review at three phone sizes and overview evidence.
+- **Status:** complete locally for review. Regional woods, ruins, stores, camp, shoreline, bailey and wall details implemented. Typecheck/build and focused safety/renderer checks passed; 24 fully loaded regional phone views and a whole-map overview passed. [Handoff](notes/moonlit-shrine-map-detail.md). Prior shrine/pond refinement preserved. PR preparation: rebased onto main 0.455.0; typecheck/build, grid checks, five affected test files and six integrated phone views passed.
+
+### MOONLIT-SHRINE-RICHNESS — Give the shrine the Orc hold’s sense of place
+
+- **Owner / branch / worktree:** Codex; `art/moonlit-shrine-completion`; `/workspace/legends-of-the-fall`.
+- **Scope:** owner requested a more interesting shrine like the Orc pass; render-only shrine landmarks, themed vegetation/camp/lanterns and clearer focal points using approved art. Preserve grid, combat routes, simulation, saves and other holds.
+- **Completion:** compare with Orc work, bounded visual revision, focused deterministic/route checks, typecheck/build and three-size browser review.
+- **Status:** complete locally for review. Crescent-and-fox shrine repaint plus shrine-only landmarks, pond islands, vegetation and lantern approach. Grid checks, typecheck/build and four focused test files passed; 24 phone-size scene views plus three final keep recaptures passed. [Handoff](notes/moonlit-shrine-richness.md). Previous ten-sheet work preserved.
+
+### MOONLIT-SHRINE-COMPLETION — Finish the ten remaining grid-aligned sheets
+
+- **Owner / branch / worktree:** Codex; `art/moonlit-shrine-completion`; `/workspace/legends-of-the-fall`.
+- **Scope:** approved Moonlit Shrine direction; source sheets 04–13, production cut assets, provenance, validation and handoff. Preserve existing sheets 01–03 and gameplay.
+- **Completion:** exact canvases/cell order/anchors, inspect all cells and the in-game grid at three portrait sizes, typecheck/build and focused Assault tests.
+- **Status:** complete locally for review. Ten source sheets and five runtime atlases rebuilt; grid checks for 63 unique standing sprites passed, 62 kit sprites retained their dimensions/anchors/footprints, typecheck/build and all 32 Assault test files passed. Fifteen browser views passed at three phone sizes with no page errors or failed asset requests. [Handoff](notes/moonlit-shrine-completion.md). No merge, deployment or version bump.
+
 ### SPELLS-REFRESH — Bring the Spells screen in line with the painted game
 
 - **Owner / branch / worktree:** current Codex chat; `design/spells-screen-refresh`; `/workspace/legends-of-the-fall`.

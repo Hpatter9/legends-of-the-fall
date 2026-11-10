@@ -17,10 +17,13 @@ Out: src/art/assault/<army>/{sprites,ground,edges,decals,faces}.webp and src/ren
 The report lists any cell whose picture strays from its footprint (its bottom too far above or below the diamond's bottom tip, or its
 middle off the foot point), for the art's notes.
 
+Use --reuse-kits to retain shipped kit sprites and anchors when their original source files are unavailable.
+
 Run by hand: KITS=<path to the kits folder> python3 tools/assault/cut-sheets.py [orc|undead|beasts|wildwood|labyrinth|ogres|infernal|yokai|golems] [--report]
 """
 import json
 import os
+import re
 import sys
 
 import numpy as np
@@ -840,7 +843,7 @@ for _army, _files, _totem, _lean in (('undead', UNDEAD_FILES, 2, None), ('beasts
                                      ('yokai', YOKAI_FILES, 6, None), ('golems', GOLEMS_FILES, None, None)):
     SHEETS[_army]['layouts'] = hold_layouts(_files, _totem, _lean)
 
-def cut(army, report_only=False):
+def cut(army, report_only=False, reuse_kits=False):
     spec = SHEETS[army]
     src = os.path.join(ROOT, 'art-source', 'assault', army)
     out = os.path.join(ROOT, 'src', 'art', 'assault', army)
@@ -849,6 +852,19 @@ def cut(army, report_only=False):
     feet = {}
     feet_of = {}
     report = []
+    # A source-art checkout may omit the private Chronos kits. Explicitly reuse the
+    # already shipped kit pixels and anchors rather than dropping them on recut.
+    kit_cache = {}
+    if reuse_kits:
+        atlas_path = os.path.join(out, 'sprites.webp')
+        metadata_path = os.path.join(ROOT, 'src', 'render', 'assault' + army.capitalize() + 'Atlas.ts')
+        with Image.open(atlas_path) as previous:
+            previous = np.array(previous.convert('RGBA'))
+        with open(metadata_path) as fh:
+            metadata = fh.read()
+        for name, rect, foot, fp in re.findall(r'^  (\w+): \{ r: (\[[^\]]+\]), foot: (\[[^\]]+\]), fp: (\[[^\]]+\]) \},', metadata, re.M):
+            x, y, w, h = json.loads(rect)
+            kit_cache[name] = (previous[y:y + h, x:x + w].copy(), json.loads(foot), json.loads(fp))
     # (a hold's sheet not painted yet borrows another hold's in the same slot, recoloured: `fallback` names the hold and the files)
     fb_army, fb_files = spec.get('fallback', (None, {}))
     # (how a borrowed sheet is recoloured: the Necropolis's cold, unless the profile has its own, which may tint the flat sheets by slot)
@@ -941,6 +957,9 @@ def cut(army, report_only=False):
     for name, path in kits.items():
         p = os.path.join(KITS, path + '.png')
         if not os.path.exists(p):
+            if name in kit_cache:
+                sprites[name], feet[name], feet_of[name] = kit_cache[name]
+                continue
             report.append(f'kit {path}: missing')
             continue
         im = Image.open(p).convert('RGBA')
@@ -1029,4 +1048,4 @@ def soft(im):
 
 if __name__ == '__main__':
     args = [x for x in sys.argv[1:] if not x.startswith('--')]
-    cut(args[0] if args else 'orc', '--report' in sys.argv)
+    cut(args[0] if args else 'orc', '--report' in sys.argv, '--reuse-kits' in sys.argv)

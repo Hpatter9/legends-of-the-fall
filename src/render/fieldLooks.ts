@@ -21,6 +21,7 @@ import type { Board, Tile } from '../sim/board';
 import { districtAt, landformWeight, type Blueprint, type Spot } from '../sim/assault/blueprint';
 import type { FortSpec } from '../sim/assault/fieldMap';
 import { GROUND } from './assaultOrcAtlas';
+import { dressMoonlitShrine } from './moonlitDressing';
 
 /** The ground materials, by their place in the hold's `ground.webp` (`GROUND`). */
 export const MAT = Object.fromEntries(GROUND.map((n, i) => [n, i])) as Record<(typeof GROUND)[number], number>;
@@ -272,6 +273,17 @@ export function decalOf(b: Board, zone: Uint8Array, mats: Uint8Array, bp: Bluepr
   //  frays into the ground instead of ending on a hard diamond)
   if (m !== MAT.ash && m !== MAT.scorched && ashNear(b, mats, u, v)) return pick(['ashPatch', 'scorch', 'ashPatch', 'embers'], 0.95);
   if (bp.wornPaths && t.paved && !t.ramp && z !== Z('S') && z !== Z('M')) return pick(['ruts', 'bootTracks', 'mudSplash'], 0.8);
+
+  // Shrine decal slots are paintings of petals, pine litter, feathers, broken
+  // sake jars and lanterns. Group them by place instead of the Orc's war debris.
+  if (bp.army === 'yokai') {
+    if (z === Z('V')) return pick(['rubble', 'timber', 'embers', 'bloodSmear', 'scorch'], 0.68);
+    if (z === Z('N')) return pick(['bones', 'bootTracks', 'bloodSmear', 'timber'], 0.42);
+    if (z === Z('B')) return pick(['bloodSmear', 'bootTracks', 'mudSplash', 'embers'], 0.4);
+    if (z === Z('I') || z === Z('M')) return pick(['mudSplash', 'cracks', 'bloodPool'], 0.3);
+    if (z === Z('S')) return pick(['cracks', 'mudSplash'], 0.2);
+    if (z === Z('K') || z === Z('T')) return pick(['mudSplash', 'bones', 'wolfTracks', 'bootTracks'], 0.12 + noise(u, v, 7, 91) * 0.35);
+  }
   if (m === MAT.cobbles) return pick(['ruts', 'bootTracks'], 0.25);
   if (z === Z('V')) return pick(['ashPatch', 'scorch', 'rubble', 'timber', 'embers'], 0.6);
   const yard = districtAt(bp, u, v);
@@ -354,10 +366,10 @@ export function mazePiece(tiles: readonly Spot[], p: Spot): { name: string; flip
   return { name: 'mazeRun', flip: !ul && !lr };
 }
 
-export const THIN = new Set(['crenel', 'wallBrazier', 'smallBanner', 'pennantPole', 'spearSign', 'skullTorch', 'wolfTotem', 'tuskTotem', 'greatBanner', 'brazier', 'wallBrazier', 'ladder', 'throne']);
+export const THIN = new Set(['crenel', 'wallBrazier', 'smallBanner', 'pennantPole', 'spearSign', 'skullTorch', 'wolfTotem', 'tuskTotem', 'greatBanner', 'brazier', 'wallBrazier', 'ladder', 'throne', 'hangingBanner', 'prop8']);
 
 /** The low clutter of a tile, if any (looks only, never on a road, a stair or water; two tiles apart at most one). */
-export function clutterOf(b: Board, zone: Uint8Array, mats: Uint8Array, u: number, v: number): string | null {
+export function clutterOf(b: Board, zone: Uint8Array, mats: Uint8Array, u: number, v: number, army = ''): string | null {
   if ((u + v) % 2 || u % 3 === 0) return null;
   const i = v * b.w + u;
   const t = b.tiles[i];
@@ -367,6 +379,21 @@ export function clutterOf(b: Board, zone: Uint8Array, mats: Uint8Array, u: numbe
   if (t.ground === 'water') return r < 0.22 ? 'fordStones' : null;
   if (t.wall || t.rock || isWater(t) || t.ramp || t.paved || t.bush || t.ground === 'tall') return null;
   const z = zone[i];
+  if (army === 'yokai') {
+    if (mats[i] === MAT.shingle) return r < 0.52 ? any(['waterPlants', 'prop13', 'pebbles', 'prop13']) : null;
+    if (z === Z('V')) return r < 0.42 ? any(['prop16', 'fallenStones', 'wallDrift', 'pebbles']) : null;
+    if (z === Z('N')) {
+      const nearCamp = Math.abs(u - 12) + Math.abs(v - 12) < 12;
+      return nearCamp ? (r < 0.42 ? any(['wallGoods', 'prop7', 'fern', 'pebbles']) : null) : (r < 0.25 ? any(['fern', 'pebbles', 'flowers2']) : null);
+    }
+    if (z === Z('B')) return r < 0.22 ? any(['prop13', 'wallGoods', 'prop16', 'pebbles']) : null;
+    if (z === Z('I') || z === Z('M')) return r < 0.14 ? any(['prop13', 'pebbles', 'flowers1']) : null;
+    if (z === Z('K') || z === Z('T') || z === Z('L')) {
+      const lush = noise(u, v, 6, 92);
+      return r < 0.12 + lush * 0.46 ? any(['prop13', 'fern', 'flowers1', 'flowers2', 'pebbles']) : null;
+    }
+    return null;
+  }
   if (mats[i] === MAT.shingle) return r < 0.4 ? any(['reeds1', 'reeds2', 'reeds1', 'pebbles', 'wetBoulders']) : null;
   if (z === Z('K') || z === Z('T') || z === Z('L')) return r < (z === Z('T') ? 0.28 : 0.16) ? any(['flowers1', 'flowers2', 'pebbles', 'fern', 'bones1', 'stump1', 'stump2', 'shrub1']) : null;
   if (z === Z('V')) return r < 0.25 ? any(['bones1', 'pebbles', 'stump1']) : null;
@@ -598,7 +625,7 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
   mark('pennantPole', bp.warpath.u + 2, bp.warpath.v + 2);
   mark('smallBanner', 88, 45);
   if (bp.weathered) for (const p of out) if (['smallBanner', 'greatBanner', 'hangingBanner', 'hides', 'hideFrame', 'flag'].includes(p.name)) p.sway = !p.low;
-  return out;
+  return bp.army === 'yokai' ? dressMoonlitShrine(b, zone, out) : out;
 }
 
 /** A structure's picture for its state: whole, battered (under 60%), broken (under 25%, a palisade's), or fallen (its breach). */

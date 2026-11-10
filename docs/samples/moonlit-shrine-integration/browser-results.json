@@ -1,0 +1,70 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "keep",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 37,
+      "wanted": 37
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "pond",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 26,
+      "wanted": 26
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "keep",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 33,
+      "wanted": 33
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "pond",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 24,
+      "wanted": 24
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "keep",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 37,
+      "wanted": 37
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "pond",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 28,
+      "wanted": 28
+    },
+    {
+      "offlineManifest": true,
+      "rendererUsesYokai": true
+    }
+  ],
+  "errors": [],
+  "failed": []
+}

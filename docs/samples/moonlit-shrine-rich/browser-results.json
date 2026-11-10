@@ -1,0 +1,226 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "approach",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 28
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "foxShrine",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 22
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "garden",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 25
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "pond",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 19
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "pavilion",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 12
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "waterfall",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 20
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "camp",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 22
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "approach",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 27
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "foxShrine",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 24
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "garden",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 25
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "pond",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 24
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "pavilion",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 20
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "waterfall",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 21
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "camp",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 19
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "approach",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 20
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "foxShrine",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 12
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "garden",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 12
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "pond",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 20
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "pavilion",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 10
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "waterfall",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 20
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "camp",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 22
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "keep",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 18
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "keep",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 25
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "keep",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 26
+    },
+    {
+      "offlineManifest": true,
+      "rendererUsesYokai": true
+    }
+  ],
+  "errors": [],
+  "failed": []
+}

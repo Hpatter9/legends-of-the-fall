@@ -1,0 +1,175 @@
+{
+  "totals": {
+    "groundDetailsBefore": 347,
+    "groundDetailsAfter": 751,
+    "decalsBefore": 345,
+    "decalsAfter": 684
+  },
+  "regions": {
+    "N": {
+      "groundDetailsBefore": 44,
+      "groundDetailsAfter": 78,
+      "decalsBefore": 100,
+      "decalsAfter": 101,
+      "art": [
+        "fern",
+        "pebbles",
+        "flowers2",
+        "prop7",
+        "wallGoods"
+      ]
+    },
+    "K": {
+      "groundDetailsBefore": 231,
+      "groundDetailsAfter": 520,
+      "decalsBefore": 97,
+      "decalsAfter": 385,
+      "art": [
+        "prop13",
+        "flowers2",
+        "pebbles",
+        "fern",
+        "flowers1"
+      ]
+    },
+    "T": {
+      "groundDetailsBefore": 0,
+      "groundDetailsAfter": 0,
+      "decalsBefore": 2,
+      "decalsAfter": 15,
+      "art": []
+    },
+    "D": {
+      "groundDetailsBefore": 0,
+      "groundDetailsAfter": 0,
+      "decalsBefore": 29,
+      "decalsAfter": 29,
+      "art": []
+    },
+    "P": {
+      "groundDetailsBefore": 0,
+      "groundDetailsAfter": 0,
+      "decalsBefore": 0,
+      "decalsAfter": 0,
+      "art": []
+    },
+    "E": {
+      "groundDetailsBefore": 0,
+      "groundDetailsAfter": 0,
+      "decalsBefore": 0,
+      "decalsAfter": 0,
+      "art": []
+    },
+    "B": {
+      "groundDetailsBefore": 33,
+      "groundDetailsAfter": 70,
+      "decalsBefore": 80,
+      "decalsAfter": 99,
+      "art": [
+        "prop16",
+        "prop13",
+        "wallGoods",
+        "pebbles"
+      ]
+    },
+    "S": {
+      "groundDetailsBefore": 0,
+      "groundDetailsAfter": 0,
+      "decalsBefore": 2,
+      "decalsAfter": 4,
+      "art": []
+    },
+    "I": {
+      "groundDetailsBefore": 0,
+      "groundDetailsAfter": 9,
+      "decalsBefore": 14,
+      "decalsAfter": 21,
+      "art": [
+        "flowers1",
+        "pebbles",
+        "prop13"
+      ]
+    },
+    "M": {
+      "groundDetailsBefore": 0,
+      "groundDetailsAfter": 6,
+      "decalsBefore": 3,
+      "decalsAfter": 4,
+      "art": [
+        "pebbles",
+        "prop13",
+        "flowers1"
+      ]
+    },
+    "V": {
+      "groundDetailsBefore": 7,
+      "groundDetailsAfter": 12,
+      "decalsBefore": 16,
+      "decalsAfter": 18,
+      "art": [
+        "prop16",
+        "pebbles",
+        "wallDrift",
+        "fallenStones"
+      ]
+    },
+    "shore": {
+      "groundDetailsBefore": 11,
+      "groundDetailsAfter": 18,
+      "decalsBefore": 0,
+      "decalsAfter": 6,
+      "art": [
+        "waterPlants",
+        "prop13",
+        "pebbles"
+      ]
+    },
+    "R": {
+      "groundDetailsBefore": 0,
+      "groundDetailsAfter": 0,
+      "decalsBefore": 0,
+      "decalsAfter": 0,
+      "art": []
+    },
+    "F": {
+      "groundDetailsBefore": 2,
+      "groundDetailsAfter": 2,
+      "decalsBefore": 0,
+      "decalsAfter": 0,
+      "art": [
+        "fordStones"
+      ]
+    },
+    "Y": {
+      "groundDetailsBefore": 0,
+      "groundDetailsAfter": 0,
+      "decalsBefore": 0,
+      "decalsAfter": 0,
+      "art": []
+    },
+    "L": {
+      "groundDetailsBefore": 19,
+      "groundDetailsAfter": 36,
+      "decalsBefore": 2,
+      "decalsAfter": 2,
+      "art": [
+        "flowers1",
+        "flowers2",
+        "prop13",
+        "pebbles",
+        "fern"
+      ]
+    },
+    "C": {
+      "groundDetailsBefore": 0,
+      "groundDetailsAfter": 0,
+      "decalsBefore": 0,
+      "decalsAfter": 0,
+      "art": []
+    }
+  },
+  "wallLamps": 25,
+  "wallBanners": 17,
+  "tentSupplies": 7,
+  "standingPlacements": 924
+}

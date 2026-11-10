@@ -1,0 +1,64 @@
+{
+  "generator": "OpenAI image generation",
+  "brief": "docs/notes/assault-4-moonlit-shrine-art-prompts.md, prompts 4\u201313",
+  "layoutRepairs": [
+    "07: shrine contained within left 1024px cell",
+    "08: complete bases and transparent padding",
+    "10: complete tree silhouettes and transparent padding",
+    "12: water and mist contained in cells"
+  ],
+  "files": [
+    {
+      "file": "yok-04-faces.png",
+      "rawSha256": "e4ce38d07fe3435d868dbd6a3250783419506d7b1e5733e96717229cd3795636",
+      "packedSha256": "2855bcfa36d0376430b19a770c5a461df99961c089ea91061295d2a439971c9b"
+    },
+    {
+      "file": "yok-05-ground.png",
+      "rawSha256": "0adb8cc700312fa268249a0823c0228a620e9d101ddd6f348f6f63fec3715734",
+      "packedSha256": "0aa90afb6a4847fdcd427874725ca22bcc32a86a6d64601d2fe61a5416135ce8"
+    },
+    {
+      "file": "yok-06-transitions.png",
+      "rawSha256": "354b3b59fd6fd55a7963ee76d81f392b127da410c53587107f6dd719f22b2799",
+      "packedSha256": "c108e29540a27639705e91cb7cdeda3e5e8ee16dcfabe47429606e5b4a250ebb"
+    },
+    {
+      "file": "yok-07-keep.png",
+      "rawSha256": "331c48479b095167a0cc0f39447036add70f03a6d542740280995df0c5ead282",
+      "packedSha256": "83196f1216e9ff9de739845d864afa74ab933f39ee98911fa3cc630dfc2472e4"
+    },
+    {
+      "file": "yok-08-wall-dressing.png",
+      "rawSha256": "74bdeae0281d044f0294db99c121c9f360ebaa5407436fd163f86ad099b5985d",
+      "packedSha256": "b7f4d132cd01f317f471622a2fde62776b9a8bb9b4e762779f6f15fd624d8304"
+    },
+    {
+      "file": "yok-09-landmarks.png",
+      "rawSha256": "c3081d308809f8687b614e2bb629b4aa66665c84c2c416f95e278b04b0943a43",
+      "packedSha256": "56ee390d09ab880db74035b9e0dc866f9796c601e3c827170ba27e1ca55d3310"
+    },
+    {
+      "file": "yok-10-props.png",
+      "rawSha256": "3a12d1e7d006ac99f3fe91693793086551c7ff1ee8b8de594e649296ca814485",
+      "packedSha256": "6dac450f6f86befb9a3fb102e4d5f62e4768cc086c6ca8545f399b92dde050f4"
+    },
+    {
+      "file": "yok-11-ruins.png",
+      "rawSha256": "8d586102e82eb18186999aa73c4828e7fa5f3f95d2b8413f2eb11bcc48dd85ac",
+      "packedSha256": "73fdab49ff9d80605d83703787b1f5f8dafc53b91128d917b5a7570d03f314d5"
+    },
+    {
+      "file": "yok-12-pond.png",
+      "rawSha256": "7bc7263987fa11e920376715cb33dd6f5ed4f3bc145b85560d35ca998a22f57e",
+      "packedSha256": "a3ffc5e1e21880bc5d1601b1fae7f42720040d322ab9616296dd329fedb76347"
+    },
+    {
+      "file": "yok-13-decals.png",
+      "rawSha256": "125a22be56f6f743abec6937462f72881f5cfdc3b76cf01295b397be97b13991",
+      "packedSha256": "b1749842953b717cee6c506d63d8b1aff52ad6d3362188ee1b05e75bd10612e5"
+    }
+  ],
+  "refinementBrief": "docs/notes/moonlit-shrine-richness-art-prompts.md",
+  "initialKeepRaw": "raw/initial-yok-07-keep.png"
+}

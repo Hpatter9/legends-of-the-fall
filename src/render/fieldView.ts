@@ -556,7 +556,7 @@ export class FieldView {
       for (let v = v0; v <= v1; v++)
         for (let u = u0; u <= u1; u++) {
           const t = b.tiles[v * b.w + u];
-          const c = clutterOf(b, this.f.zone, mats, u, v);
+          const c = clutterOf(b, this.f.zone, mats, u, v, bp?.army);
           const tex = c ? holdTex(c) : null;
           if (tex && c) low.push({ u: u + (hashOf(u, v) - 0.5) * 0.4, v: v + (hashOf(v, u) - 0.5) * 0.4, h: t.h, tex, ax: SPRITES[c].foot[0], ay: SPRITES[c].foot[1], scale: 0.7 });
         }

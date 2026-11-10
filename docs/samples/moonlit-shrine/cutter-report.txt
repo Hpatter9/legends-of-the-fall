@@ -1,0 +1,14 @@
+yok-01-tiled-wall.png gatePost (1x1): bottom -33 px from the footprint tip, middle +0 px from the foot
+orc-08-wall-dressing.png skullChains (1x1): bottom -29 px from the footprint tip, middle -4 px from the foot
+orc-08-wall-dressing.png wallSpikes (1x1): bottom -27 px from the footprint tip, middle +3 px from the foot
+orc-08-wall-dressing.png banister (1x1): bottom -29 px from the footprint tip, middle +1 px from the foot
+orc-08-wall-dressing.png fallenStones (1x1): bottom -35 px from the footprint tip, middle -2 px from the foot
+orc-08-wall-dressing.png winch (1x1): bottom -29 px from the footprint tip, middle -4 px from the foot
+orc-11-siege-ruins.png ladder (1x1): bottom -29 px from the footprint tip, middle +8 px from the foot
+orc-11-siege-ruins.png ram (2x1): bottom -46 px from the footprint tip, middle -12 px from the foot (stood on its picture)
+orc-11-siege-ruins.png trebuchet (2x2): bottom -46 px from the footprint tip, middle -29 px from the foot (stood on its picture)
+sprites (2048, 897) 193 591346
+ground 363014
+edges 27494
+decals 108484
+faces 67042

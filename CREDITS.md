@@ -727,12 +727,15 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## The Assault's Moonlit Shrine (`src/art/assault/yokai/`)
 
-- The owner's painted sheets so far, from the prompts in `docs/notes/assault-4-moonlit-shrine-art-prompts.md` (PR #488: original art generated
-  with OpenAI image generation): `art-source/assault/yokai/yok-01-tiled-wall.png` (the tiled wall), `yok-02-gates.png` (the gates and towers) and
-  `yok-03-moon-gate.png` (the Moon Gate and its towers), cut by `tools/assault/cut-sheets.py yokai` (docs/notes/art-wire-7.md).
-- Until the rest of its painted sheets land, the Moonlit Shrine is drawn with the owner's Orc sheets above, cut again by
-  `tools/assault/cut-sheets.py yokai` and recoloured to a moonlit night (grass and timber cooled, stone silvered, red
-  cloth to vermilion); our siege works keep their own colours.
+- All thirteen original Moonlit Shrine sheets are now painted with OpenAI image generation, following
+  `docs/notes/assault-4-moonlit-shrine-art-prompts.md`. PR #488 supplied sheets 01–03; the Moonlit Shrine completion pass supplies
+  sheets 04–13 (faces, ground, transitions, shrine/seat/banner, wall dressing, landmarks, props, ruins, pond and decals).
+  The owner-requested richness follow-up refines sheet 07 with a crescent crown and fox-mask entrance (prompt:
+  `docs/notes/moonlit-shrine-richness-art-prompts.md`). Sources, raw generation outputs and hashes are retained under
+  `art-source/assault/yokai/`; the ten new sheets are packed by
+  `tools/moonlit-shrine/pack.py`, then cut by `tools/assault/cut-sheets.py yokai --reuse-kits`.
+- Slots outside the hold's own layouts still use the owner's Orc sheets, recoloured to a moonlit night; our shared siege works
+  keep their own colours. The existing 62 Chronos kit sprites retain their shipped dimensions, anchors and footprints.
 - Beside them, single pieces of Chronos Settlement's Fae and Liches kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/fae/` and `liches/`: the
   rose hedges, twig fence, flower arch gate, longhouse, cottage, tavern, workshop, firefly pen, mushroom patch, spiral watchtower, fairy ring, shrine,
   light lantern post, ribbon signpost, blue campfire, silk stall, shell cart, granary, honey jars, flower bales, stockpile, woodpile, well, baskets,

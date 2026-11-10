@@ -1,0 +1,112 @@
+[
+  {
+    "file": "yok-04-faces.png",
+    "rawSize": [
+      1536,
+      1024
+    ],
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  {
+    "file": "yok-05-ground.png",
+    "rawSize": [
+      1254,
+      1254
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "file": "yok-06-transitions.png",
+    "rawSize": [
+      1254,
+      1254
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "file": "yok-07-keep.png",
+    "rawSize": [
+      1536,
+      1024
+    ],
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  {
+    "file": "yok-08-wall-dressing.png",
+    "rawSize": [
+      1254,
+      1254
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "file": "yok-09-landmarks.png",
+    "rawSize": [
+      1536,
+      1024
+    ],
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  {
+    "file": "yok-10-props.png",
+    "rawSize": [
+      1254,
+      1254
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "file": "yok-11-ruins.png",
+    "rawSize": [
+      1536,
+      1024
+    ],
+    "size": [
+      1536,
+      1024
+    ]
+  },
+  {
+    "file": "yok-12-pond.png",
+    "rawSize": [
+      1254,
+      1254
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  },
+  {
+    "file": "yok-13-decals.png",
+    "rawSize": [
+      1254,
+      1254
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  }
+]

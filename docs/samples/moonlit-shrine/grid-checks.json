@@ -1,0 +1,1172 @@
+[
+  {
+    "file": "yok-04-faces.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "cells": [
+      "cliff",
+      "earth",
+      "mudBank",
+      "rampart",
+      "palisade",
+      "stoneWall",
+      "stoneWallDamaged",
+      "tower",
+      "terrace",
+      "moundEarth",
+      "riverBank",
+      "basalt"
+    ]
+  },
+  {
+    "file": "yok-05-ground.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "cells": 16
+  },
+  {
+    "file": "yok-06-transitions.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "cells": 16
+  },
+  {
+    "file": "yok-07-keep.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "cells": [
+      {
+        "slot": "keep",
+        "bounds": [
+          192,
+          363,
+          832,
+          1000
+        ],
+        "foot": [
+          512,
+          840
+        ],
+        "footprint": [
+          6,
+          4
+        ]
+      },
+      {
+        "slot": "throne",
+        "bounds": [
+          192,
+          316,
+          320,
+          472
+        ],
+        "foot": [
+          256,
+          440
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "greatBanner",
+        "bounds": [
+          192,
+          146,
+          320,
+          472
+        ],
+        "foot": [
+          256,
+          440
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
+  {
+    "file": "yok-08-wall-dressing.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "cells": [
+      {
+        "slot": "crenel",
+        "bounds": [
+          64,
+          143,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "crenelBroken",
+        "bounds": [
+          64,
+          161,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "crenelInner",
+        "bounds": [
+          64,
+          157,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "wallBrazier",
+        "bounds": [
+          64,
+          112,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "wallLight",
+        "bounds": [
+          64,
+          109,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "hangingBanner",
+        "bounds": [
+          64,
+          104,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "hoarding",
+        "bounds": [
+          64,
+          135,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "spearRack",
+        "bounds": [
+          64,
+          130,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "stairUp",
+        "bounds": [
+          64,
+          131,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "stairDown",
+        "bounds": [
+          64,
+          124,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "wallLadder",
+        "bounds": [
+          64,
+          131,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "cauldron",
+        "bounds": [
+          64,
+          126,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "wallGoods",
+        "bounds": [
+          64,
+          142,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "wallHorn",
+        "bounds": [
+          64,
+          122,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "wallTrap",
+        "bounds": [
+          64,
+          130,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "wallDrift",
+        "bounds": [
+          64,
+          138,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
+  {
+    "file": "yok-09-landmarks.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "cells": [
+      {
+        "slot": "drumStruck",
+        "bounds": [
+          128,
+          236,
+          384,
+          480
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          2,
+          2
+        ]
+      },
+      {
+        "slot": "drumSilenced",
+        "bounds": [
+          128,
+          226,
+          384,
+          480
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          2,
+          2
+        ]
+      },
+      {
+        "slot": "landmarkA",
+        "bounds": [
+          128,
+          262,
+          384,
+          480
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          2,
+          2
+        ]
+      },
+      {
+        "slot": "landmarkB",
+        "bounds": [
+          128,
+          259,
+          384,
+          480
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          2,
+          2
+        ]
+      },
+      {
+        "slot": "landmarkC",
+        "bounds": [
+          64,
+          203,
+          448,
+          512
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          3,
+          3
+        ]
+      },
+      {
+        "slot": "landmarkD",
+        "bounds": [
+          64,
+          194,
+          448,
+          512
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          3,
+          3
+        ]
+      }
+    ]
+  },
+  {
+    "file": "yok-10-props.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "cells": [
+      {
+        "slot": "prop1",
+        "bounds": [
+          64,
+          110,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop2",
+        "bounds": [
+          64,
+          110,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop3",
+        "bounds": [
+          64,
+          90,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop4",
+        "bounds": [
+          64,
+          49,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop5",
+        "bounds": [
+          64,
+          138,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop6",
+        "bounds": [
+          64,
+          73,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop7",
+        "bounds": [
+          64,
+          124,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop8",
+        "bounds": [
+          64,
+          33,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop9",
+        "bounds": [
+          64,
+          82,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop10",
+        "bounds": [
+          64,
+          102,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop11",
+        "bounds": [
+          64,
+          125,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop12",
+        "bounds": [
+          64,
+          114,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop13",
+        "bounds": [
+          64,
+          135,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop14",
+        "bounds": [
+          64,
+          139,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop15",
+        "bounds": [
+          64,
+          110,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "prop16",
+        "bounds": [
+          64,
+          157,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
+  {
+    "file": "yok-11-ruins.png",
+    "size": [
+      1536,
+      1024
+    ],
+    "cells": [
+      {
+        "slot": "warTent",
+        "bounds": [
+          160,
+          303,
+          352,
+          464
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          2,
+          1
+        ]
+      },
+      {
+        "slot": "burntHeap",
+        "bounds": [
+          160,
+          333,
+          352,
+          464
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          2,
+          1
+        ]
+      },
+      {
+        "slot": "pavilionTent",
+        "bounds": [
+          128,
+          261,
+          384,
+          480
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          2,
+          2
+        ]
+      },
+      {
+        "slot": "pavilionBurnt",
+        "bounds": [
+          130,
+          268,
+          384,
+          480
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          2,
+          2
+        ]
+      },
+      {
+        "slot": "ruinA",
+        "bounds": [
+          129,
+          287,
+          383,
+          480
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          2,
+          2
+        ]
+      },
+      {
+        "slot": "ruinB",
+        "bounds": [
+          128,
+          295,
+          384,
+          480
+        ],
+        "foot": [
+          256,
+          416
+        ],
+        "footprint": [
+          2,
+          2
+        ]
+      }
+    ]
+  },
+  {
+    "file": "yok-12-pond.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "cells": [
+      {
+        "slot": "deck",
+        "bounds": [
+          64,
+          131,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "deckBroken",
+        "bounds": [
+          64,
+          133,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "deckEnd",
+        "bounds": [
+          64,
+          122,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "pier",
+        "bounds": [
+          64,
+          89,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "fordStones",
+        "bounds": [
+          64,
+          142,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "waterPlants",
+        "bounds": [
+          64,
+          113,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "sunkenLog",
+        "bounds": [
+          64,
+          142,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "waterFlowers",
+        "bounds": [
+          64,
+          142,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "wetBoulders",
+        "bounds": [
+          64,
+          129,
+          191,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "waterProp10",
+        "bounds": [
+          64,
+          140,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "boat",
+        "bounds": [
+          64,
+          139,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "mist",
+        "bounds": [
+          64,
+          137,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "waterProp13",
+        "bounds": [
+          64,
+          134,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "waterProp14",
+        "bounds": [
+          64,
+          131,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "waterProp15",
+        "bounds": [
+          64,
+          120,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      },
+      {
+        "slot": "waterSteps",
+        "bounds": [
+          64,
+          136,
+          192,
+          240
+        ],
+        "foot": [
+          128,
+          208
+        ],
+        "footprint": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
+  {
+    "file": "yok-13-decals.png",
+    "size": [
+      1024,
+      1024
+    ],
+    "cells": 16
+  }
+]

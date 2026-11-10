@@ -1,0 +1,284 @@
+{
+  "results": [
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "bambooWood",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 24,
+      "wanted": 24
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "westWood",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 24,
+      "wanted": 24
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "ruins",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 24,
+      "wanted": 24
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "sakeStores",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 20,
+      "wanted": 20
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "reserve",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 23,
+      "wanted": 23
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "shore",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 23,
+      "wanted": 23
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "bailey",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 33,
+      "wanted": 33
+    },
+    {
+      "width": 393,
+      "height": 852,
+      "spot": "perimeter",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 32,
+      "wanted": 32
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "bambooWood",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 24,
+      "wanted": 24
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "westWood",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 24,
+      "wanted": 24
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "ruins",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 20,
+      "wanted": 20
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "sakeStores",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 18,
+      "wanted": 18
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "reserve",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 19,
+      "wanted": 19
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "shore",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 20,
+      "wanted": 20
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "bailey",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 33,
+      "wanted": 33
+    },
+    {
+      "width": 360,
+      "height": 780,
+      "spot": "perimeter",
+      "reducedMotion": false,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 30,
+      "wanted": 30
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "bambooWood",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 24,
+      "wanted": 24
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "westWood",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 24,
+      "wanted": 24
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "ruins",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 26,
+      "wanted": 26
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "sakeStores",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 20,
+      "wanted": 20
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "reserve",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 23,
+      "wanted": 23
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "shore",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 26,
+      "wanted": 26
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "bailey",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 36,
+      "wanted": 36
+    },
+    {
+      "width": 412,
+      "height": 915,
+      "spot": "perimeter",
+      "reducedMotion": true,
+      "canvas": true,
+      "overflow": false,
+      "chunks": 33,
+      "wanted": 33
+    },
+    {
+      "overview": true,
+      "viewport": [
+        1200,
+        1600
+      ],
+      "diagnosticBodyWidthOverride": true,
+      "canvasSize": [
+        1200,
+        1600
+      ],
+      "stats": {
+        "seed": 1,
+        "run": 1,
+        "ticks": 126,
+        "simMean": 1.2087301588247692,
+        "simP95": 4.099999999627471,
+        "simWorst": 38.69999999925494,
+        "fps": 9.231053263177303,
+        "frameMean": 114.06306306306978,
+        "frameP95": 200,
+        "workMean": 57.55855855859212,
+        "detail": "mid",
+        "zoom": 0.18,
+        "fighters": 235,
+        "chunks": 100,
+        "wanted": 100,
+        "alive": 235,
+        "bakeWorst": 33.59999999962747,
+        "copyMean": 0,
+        "copyP95": 0,
+        "worker": false
+      }
+    },
+    {
+      "offlineManifest": true,
+      "rendererUsesYokai": true
+    }
+  ],
+  "errors": [],
+  "failed": []
+}
