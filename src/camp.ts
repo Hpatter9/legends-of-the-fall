@@ -391,7 +391,10 @@ export class CampScene {
     const line = `${scoutCamp(n.army.id).name} · ${n.boss}`;
     if (this.plate.dataset.key !== `${n.army.name}|${line}`) {
       this.plate.dataset.key = `${n.army.name}|${line}`;
-      this.plate.replaceChildren(el('span', 'cpEyebrow', 'THE ENEMY BELOW'), el('b', '', n.army.name), el('small', '', line));
+      // (BATTLE-PICK-FIX: the camp and its lord each kept whole, so a line too long for the plate wraps at the dot between them)
+      const small = el('small');
+      small.append(el('span', 'cpWhole', scoutCamp(n.army.id).name), ' · ', el('span', 'cpWhole', n.boss));
+      this.plate.replaceChildren(el('span', 'cpEyebrow', 'THE ENEMY BELOW'), el('b', '', n.army.name), small);
     }
     this.root.dataset.army = n.army.id;
     this.root.dataset.area = n.army.area;

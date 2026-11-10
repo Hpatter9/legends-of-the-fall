@@ -2290,6 +2290,16 @@ body #spellbook h2 {
 .hm-battle .hmGo:not(:has(.hmCont)) { grid-template-rows: 48px; }
 .hmPage.hm-battle:not(:has(.hmCont)) { --hmBar: 83px; }
 .hmPage.hm-battle:not(:has(.hmBanner)):not(:has(.hmCont)) { --hmBar: 61px; }
+/* BATTLE-PICK-FIX: the tracked quest's chip is a row of its own in the bar. The painted chip (`#hmQuest`, 44 px, a tap's size) took the
+   place of the slim corner chip `quests.css` set out, so it stood in the bar's flow, and the bar never grew for it: "Choose your battle" was
+   pushed under the nav bar whenever a quest was tracked. The bar now grows by the chip's row (44 px and the 4 px gap) in each of its shapes,
+   and the chip sits in the flow on purpose, centred, the army's line above it centred again. */
+.hmPage.hm-battle:has(.hmQuest) { --hmBar: 178px; }
+.hmPage.hm-battle:has(.hmQuest):not(:has(.hmBanner)) { --hmBar: 156px; }
+.hmPage.hm-battle:has(.hmQuest):not(:has(.hmCont)) { --hmBar: 131px; }
+.hmPage.hm-battle:has(.hmQuest):not(:has(.hmBanner)):not(:has(.hmCont)) { --hmBar: 109px; }
+.hm-battle .hmFront #hmQuest { position: relative; top: auto; right: auto; flex: none; align-self: center; max-width: 100%; box-sizing: border-box; }
+.hm-battle .hmFront.withQuest .hmBanner { align-self: center; max-width: 100%; }
 
 /* --------------------------------------------------------------------------
    26. INT-386 (docs/notes/int-386.md): the bodies of the dialogs PR #386 restyled, now standard ornate menus. Only what a body of its own
