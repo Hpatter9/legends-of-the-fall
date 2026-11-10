@@ -1,10 +1,13 @@
 /* RUNE-BENCH-LOOK: written by tools/rune-bench/import-art.py; do not edit by hand. The owner's rune bench paintings, one rule
    a piece painted (a piece not painted keeps the painted plates of paintedButtons.css, section 12). */
-html body #benchGrip, html body #benchGrip:active:not(:disabled) { border-image: url(ui/rune-bench/grip.webp) 46 14 46 14 fill / 23px 7px 23px 7px / 0 stretch; }
-html body #benchView.pulling #benchGrip { border-image: url(ui/rune-bench/grip-lit.webp) 46 14 46 14 fill / 23px 7px 23px 7px / 0 stretch; }
-html body #runeBench .rbGrid { border-image: url(ui/rune-bench/tray.webp) 38 44 38 44 fill / 10px 11px 10px 11px / 0 stretch; }
-html body #runeBench .rbTile { border-image: url(ui/rune-bench/tile.webp) 26 26 26 26 fill / 6px 6px 6px 6px / 0 stretch; }
-html body #runeBench .rbTile:is(.sel, .mergeCan, .mergeHot) { border-image: url(ui/rune-bench/tile-lit.webp) 26 26 26 26 fill / 6px 6px 6px 6px / 0 stretch; }
-html body #runeBench .rbTile.empty { border-image: url(ui/rune-bench/tile-empty.webp) 26 26 26 26 fill / 6px 6px 6px 6px / 0 stretch; }
+html body #benchGrip, html body #benchGrip:active:not(:disabled) { border-image: url(ui/rune-bench/grip.webp) 40 18 40 18 fill / 20px 9px 20px 9px / 0 stretch; }
+html body #benchView.pulling #benchGrip { border-image: url(ui/rune-bench/grip-lit.webp) 40 18 40 18 fill / 20px 9px 20px 9px / 0 stretch; }
+html body #runeBench .rbGrid { border-image: url(ui/rune-bench/tray.webp) 40 44 40 44 fill / 10px 11px 10px 11px / 0 stretch; }
+html body #runeBench .rbTile { border-image: url(ui/rune-bench/tile.webp) 28 30 28 30 fill / 9px 10px 9px 10px / 0 stretch; }
+html body #runeBench .rbTile:is(.sel, .mergeCan, .mergeHot) { border-image: url(ui/rune-bench/tile-lit.webp) 28 30 28 30 fill / 9px 10px 9px 10px / 0 stretch; }
+html body #runeBench .rbTile.empty { border-image: url(ui/rune-bench/tile-empty.webp) 28 30 28 30 fill / 9px 10px 9px 10px / 0 stretch; }
+html body #runeBench .rbTile .rnStone.rn-big::before, html body #runeBench .rbTile.empty .rnStone.rn-big { background-image: url(ui/rune-bench/socket.webp); }
+html body #runeBench .rbTile.ready .rnStone.rn-big::before { background-image: url(ui/rune-bench/socket-twin.webp); }
+html body #runeBench .rbAuto::before { background-image: url(ui/rune-bench/rune-auto.webp); }
 html body #runeBench .rbAuto.locked::before { content: ''; background-image: url(ui/rune-bench/rune-auto-locked.webp); }
 html body #runeBench .rbAuto .rbLock { display: none; }

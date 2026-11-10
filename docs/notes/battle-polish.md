@@ -50,7 +50,7 @@ banner is unchanged.
 - **A full row**: with four spells and the War Horn on a 360-wide phone the row has no room for both buttons. The pair then wraps onto a line
   of its own under the orbs, and the boss's bar follows the row's real bottom (`placeTopHud`).
 - Art: a painted off and lit pair for Auto ultimates would match the spells' button. Its prompt is in
-  [battle-polish-art-prompts.md](battle-polish-art-prompts.md); the CSS stand-in is used until it lands.
+  [battle-polish-art-prompts.md](battle-polish-art-prompts.md). It landed and is used since UI-ART-WIRE ([ui-art-wire.md](ui-art-wire.md)).
 - Files: `src/fightHud.ts`, `src/main.ts`, `src/standView.ts`, `src/sim/autoCast.ts` (`spellAutoSaved`), `src/sim/meta.ts`,
   `src/paintedButtons.css`, `src/fightHud.css`, `src/tips.ts`. Test: `test/auto-cast.test.ts`.
 - Shots: `hud-{before,after}-{360,393,412}.png`, `hud-on-after-412.png` (both lit).
