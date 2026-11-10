@@ -78,6 +78,6 @@ Pictures: `council-fallen-393.jpg`, `-360.jpg` and `-412.jpg` (the War over), an
 ## Checks
 
 - `npm run typecheck`: clean.
-- `npm test`: the full suite.
+- `npm test`: the full suite, 3093 pass.
 - `npm run web`: builds.
 - The four holds' fields and the Council board looked at at 393 x 852 (the board also at 360 x 780 and 412 x 915).
