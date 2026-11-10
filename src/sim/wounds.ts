@@ -40,6 +40,22 @@ export function settleWounds(run: Run, b: Battle): void {
   }
 }
 
-/** The wave card's lines for the heroes risen at half ("Aiko stands again at half."). */
-export const risenLines = (run: Run, nameOf: (kind: string) => string): string[] =>
-  (run.risen ?? []).map((id) => run.roster.find((h) => h.id === id)).filter((h): h is NonNullable<typeof h> => !!h).map((h) => `${nameOf(h.kind)} stands again at half.`);
+/** The heading of the wave card's row for the heroes risen at half (FIRST-HOUR 3: they were listed under "Found", which read oddly). */
+export const RISEN_HEAD = 'Back on their feet';
+
+/** The names of the heroes risen at half after the last wave, in the order they fell. */
+export const risenNames = (run: Run, nameOf: (kind: string) => string): string[] =>
+  (run.risen ?? []).map((id) => run.roster.find((h) => h.id === id)).filter((h): h is NonNullable<typeof h> => !!h).map((h) => nameOf(h.kind));
+
+/** The row's one line: "Kwame, at half health", "Kwame and Selam, at half health", "Kwame, Selam and Ravi, at half health"; null when
+ *  no hero rose. */
+export function risenLine(run: Run, nameOf: (kind: string) => string): string | null {
+  const names = risenNames(run, nameOf);
+  if (!names.length) return null;
+  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+  return `${list}, at half health`;
+}
+
+/** Whether a line of `Run.found` is the old wording of a hero risen at half ("Kwame stands again at half"): a run saved before FIRST-HOUR 3
+ *  may still hold one, and the wave card leaves it out of its finds. */
+export const isOldRisenLine = (line: string): boolean => /stands again at half\.?$/.test(line);

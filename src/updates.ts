@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.460.0',
+    date: '2026-11-10',
+    title: 'Two new heroes, and an earlier Castle',
+    notes: ['Your first clear of each of the first two armies brings a new hero. The Castle opens at 6 stars; the Chapel and spells at 10.', 'Fallen heroes show as Back on their feet on the wave card. Dailies and conquered holds give more summoning stones.'],
+  },
+  {
     version: '0.459.0',
     date: '2026-11-10',
     title: 'Spells cast themselves for new players',

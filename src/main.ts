@@ -43,6 +43,7 @@ import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
+import { risenLine } from './sim/wounds';
 import { trialShardsLine } from './sim/mythicEcho';
 import { settleStudy, studyWords } from './sim/books';
 import { fightUse, levelUpWords, settleSkillUse, useOf, useShare } from './sim/skillLevels';
@@ -3984,6 +3985,8 @@ class Game {
       // (the stars this fight won may have opened the Calamity: its reveal, the portal, plays once, the moment it opens)
       if (modeShown('calamity') && modeOpen(this.meta, 'calamity')) void this.queueScene({ kind: 'calOpen' });
       this.earned.push(...joined);
+      // (FIRST-HOUR 3: the hero a first clear gave has its join reveal with them)
+      if (this.runStars?.hero) this.earned.push(this.runStars.hero);
       // (a run that levels its own heroes taught them in `finishTower`; the lasting XP is not touched)
       const own = run.local ? climbXpView(run) : null;
       // (a quest battle replayed for practice pays nothing, XP neither)
@@ -4037,7 +4040,7 @@ class Game {
       const nextSnap = next && offerSnap(run, next);
       const ahead = next && nextSnap ? duelAhead(next, nextSnap) : undefined;
       noteSpoils(recapOf(run), waveGains);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}), ...(nemesisLines(this.nemNote).length || ahead ? { nemesis: [...nemesisLines(this.nemNote), ...(ahead ? [ahead] : [])] } : {}) };
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], risen: won ? risenLine(run, heroName) : null, gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}), ...(nemesisLines(this.nemNote).length || ahead ? { nemesis: [...nemesisLines(this.nemNote), ...(ahead ? [ahead] : [])] } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));

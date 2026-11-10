@@ -35,7 +35,6 @@ import type { EquipSlot, EquipStats, Equipment } from './equipment';
 import { migrateRunWorn } from './gearMigrate';
 import { newRunes, readRunes, type RuneState } from './runes';
 import { settleWounds } from './wounds';
-import { heroName } from './heroNames';
 import type { RemedyId } from './remedies';
 import { findGear, foundLine, SOURCE, stow, waveRune, type FoundHome } from './runGear';
 import { convertRelics, fightRelics, RELIC_BOOK, RELIC_NOTE, RELIC_RENAMES, relicEffects, type RelicCtx, type RelicMarks } from './relics';
@@ -592,11 +591,8 @@ export function finish(run: Run, won: boolean, stars = 0): void {
     // (SEVEN-SLOT GEAR batch 4: a rune run's won wave gives a rune of its own, from its side stream)
     if (run.runes) prizes.push(waveRune(run));
     if (boss) prizes.push(findGear(run, new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0), 1, SOURCE.boss));
-    // (and the wave card says who stands again at half)
-    for (const id of run.risen ?? []) {
-      const h = run.roster.find((x) => x.id === id);
-      if (h) run.found.push(`${heroName(h.kind)} stands again at half`);
-    }
+    // (FIRST-HOUR 3: the heroes risen at half are no longer listed among the finds; the wave card reads `run.risen` for a row of its own,
+    // `risenLine` in `wounds.ts`)
     prizes.forEach((g, i) => {
       stow(run, g, boss && i === prizes.length - 1 ? SOURCE.boss : SOURCE.curse);
       run.found!.push(foundLine(g));

@@ -47,7 +47,7 @@ import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
 import { openSettings } from './settings';
 import { modeShown } from './sim/hiddenModes';
-import { modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
+import { chapelOpen, chapelWaits, modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
 import { tips } from './tips';
 import { ICONS, icon } from './menuArt';
 import { drawHeroSheet, drawRoster, strongest } from './menuHeroes';
@@ -249,6 +249,8 @@ export class Home {
               ? this.show('battle')
               : this.openBuilding(id),
       (id) => {
+        // (the Chapel waits for its own stars, `chapelOpen`)
+        if (id === 'chapel' && !chapelOpen(this.meta)) return false;
         const ok = startSite(this.meta, id, Date.now());
         if (!ok) return false;
         saveMeta(this.meta);
@@ -975,7 +977,7 @@ export class Home {
     void ach;
     row.append(cdx);
     bar.append(row, el('div', 'ctHelp', 'tap a building to build or upgrade it · tap the guards to salute'));
-    // (the buildings open at 10 army stars: until then the courtyard is a locked gate, with the stars still to win)
+    // (the buildings open at `MODE_NEED.castle` army stars: until then the courtyard is a locked gate, with the stars still to win)
     this.castle.root.hidden = !up;
     this.castleShut.hidden = up;
     if (!up) {
@@ -1056,7 +1058,10 @@ export class Home {
     this.cardArt(menu.body, 'chapel', 0);
     menuNote(menu.body, 'A place to study the ruler\'s spells: opens the spellbook.');
     menuNote(menu.body, 'One purchase, no levels. Your starting spells still work in fights until then.');
-    this.buildButton(menu, 'chapel', CHAPEL_COST, CHAPEL_MS, canBuildChapel(m), () => startChapel(m, Date.now()));
+    // (FIRST-HOUR 3: the Castle's gate opens at 6 stars now; the Chapel, and the spellbook with it, still waits for 10)
+    const open = chapelOpen(m);
+    if (!open) menuNote(menu.body, `${chapelWaits(m)}.`);
+    this.buildButton(menu, 'chapel', CHAPEL_COST, CHAPEL_MS, open && canBuildChapel(m), () => chapelOpen(m) && startChapel(m, Date.now()));
   }
 
   private drawBuildingCard(id: SiteId): void {

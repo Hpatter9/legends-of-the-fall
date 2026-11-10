@@ -20,6 +20,8 @@ import { backdropFiles } from './render/backdrop';
 import { figureOf, sprite } from './render/sheets';
 import { AREA_NAMES, ICONS, icon } from './menuArt';
 import { CHEST_NAME, chestPicture } from './chestStash';
+import { clearHeroWaits } from './sim/clearHero';
+import { heroName } from './sim/heroNames';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -404,7 +406,10 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
     const t = TIERS[tier];
     const tierDone = tier === 0 ? done : (rec.hard?.[String(tier)]?.clears ?? 0) > 0;
     const pay = el('div', 'asPay');
-    pay.append(tierDone ? 'Cleared ✓ · ' : 'First clear ', tierDone ? '' : crowns(firstClearTotal(a, tier)), tierDone ? 'Replay ' : ' · Replay ', crowns(replayTotal(a, tier)));
+    // (FIRST-HOUR 3: the first two armies' first clear gives a new save a whole hero, `clearHero.ts`: said on the first clear's own line,
+    // since a row of its own pushed the card's last line under the tab bar at 360 wide)
+    const hero = open && !tierDone && clearHeroWaits(m, a);
+    pay.append(tierDone ? 'Cleared ✓ · ' : 'First clear ', tierDone ? '' : crowns(firstClearTotal(a, tier)), ...(hero ? [' · ', el('b', 'asHero', 'a new hero joins')] : []), tierDone ? 'Replay ' : ' · Replay ', crowns(replayTotal(a, tier)));
     info.append(pay);
     // (the rift ores it drops, so a player knows where to look for a class's: `awakenMats.ts`)
     const ores = open ? armyOreRow(a.id) : null;
@@ -535,6 +540,7 @@ export function drawRunStars(root: HTMLElement, res: StarResult | null, tierName
     row.append(el('span', '', r.earned ? '★' : '☆'), el('b', '', r.text), ...(fresh ? [el('em', '', 'NEW')] : []));
     root.append(row);
   });
+  if (res.hero) root.append(el('div', 'armyChestNote armyHeroNote', `A new hero joins: ${heroName(res.hero)}!`));
   if (res.firstClear) root.append(el('div', 'armyChestNote', `First ${tierName} clear! A ${CHEST_NAME[chestKind(res.firstClear)].toLowerCase()} was added to your stash on the Battle tab!`));
   for (const at of res.chests) root.append(el('div', 'armyChestNote', `A ${CHEST_NAME[chestKind(at)].toLowerCase()} was added to your stash on the Battle tab!`));
 }

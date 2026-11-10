@@ -226,12 +226,13 @@ test('a daily run and a tower run save and load with their mode', () => {
   assert.equal(back?.area, run.area);
 });
 
-test('the castle and the Calamity open at 10 and 16 army stars, and a save that had played them keeps them', async () => {
+test('the castle and the Calamity open at 6 and 16 army stars, and a save that had played them keeps them', async () => {
   const { modeOpen, MODE_NEED, grandfather, starsToGo } = await import('../src/sim/modeUnlock');
   const m = startedMeta(1);
-  assert.deepEqual(MODE_NEED, { castle: 10, tower: 12, calamity: 16 });
+  // (FIRST-HOUR 3, the owner's number: the Castle at 6 stars, not 10)
+  assert.deepEqual(MODE_NEED, { castle: 6, tower: 12, calamity: 16 });
   assert.equal(modeOpen(m, 'castle'), false);
-  assert.equal(starsToGo(m, 'castle'), 10);
+  assert.equal(starsToGo(m, 'castle'), 6);
   m.armies.orcs = { best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
   assert.equal(totalStars(m), 10);
   assert.equal(modeOpen(m, 'castle'), true);

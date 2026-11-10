@@ -5,7 +5,7 @@ import { spellbookView } from './spellbook';
 import { menuWell } from './ornateMenu';
 import type { Meta } from './sim/meta';
 import { spellsOpen } from './sim/castle';
-import { MODE_NEED, modeOpen, opensAt, progressLine } from './sim/modeUnlock';
+import { chapelOpen, chapelWaits, modeOpen } from './sim/modeUnlock';
 import { schoolOf } from './sim/schools';
 import { AmbientLayer } from './render/ambientLayer';
 import { SCENE_LIFE } from './render/ambientScenes';
@@ -59,8 +59,9 @@ export class Library {
   update(meta: Meta): void {
     const open = spellsOpen(meta);
     this.lock.hidden = open;
-    // (FIRST-HOUR: while the castle itself is shut the reason says so, with the stars still to win, not only "build the Chapel")
-    this.lockWhy.textContent = modeOpen(meta, 'castle') ? 'Build the Chapel in the Castle to open your spellbook.' : `Your spellbook opens with the Chapel, a building of the Castle. The Castle ${opensAt(MODE_NEED.castle).toLowerCase()} · ${progressLine(meta, MODE_NEED.castle)}.`;
+    // (FIRST-HOUR: while the Chapel cannot be raised the reason says so, with the stars still to win, not only "build the Chapel";
+    // FIRST-HOUR 3: the Castle opens at 6 stars and the Chapel still at 10, so the line counts the Chapel's stars)
+    this.lockWhy.textContent = chapelOpen(meta) && modeOpen(meta, 'castle') ? 'Build the Chapel in the Castle to open your spellbook.' : `Your spellbook opens with the Chapel, a building of the Castle. ${chapelWaits(meta)}.`;
     this.page.hidden = !open;
     this.root.classList.toggle('lbSealed', !open);
     this.school.textContent = `School of ${schoolOf(settings().ruler).name}`;
