@@ -17,7 +17,8 @@ import { chainById, PIECES, readChainState } from '../src/sim/eidolonChainData';
 import { activeChain, beginChain, bindChain, chainDone, chainWantsBattle, currentPart, noteChains, offeredChain, readyToBind, stepsOf, trialDue, trialOf } from '../src/sim/eidolonChains';
 import { lineLen } from '../src/sim/sceneKit';
 import { revealCard } from '../src/sim/sceneReveal';
-import { KITS } from '../src/sim/abilities';
+import { KITS, ULT_LEVEL } from '../src/sim/abilities';
+import { xpFor } from '../src/sim/levels';
 import { SIGNATURES } from '../src/sim/bossAttacks';
 import { PHASE2 } from '../src/sim/bossPhases';
 import { FOES } from '../src/sim/foes';
@@ -129,7 +130,11 @@ test('offered once Nivra is bound and the Labyrinth cleared, not before; the par
   assert.equal(currentPart(p)?.index, 1, 'a loss counts nothing');
   playThrough(p, 'copperWorks');
   assert.equal(currentPart(p)?.index, 2);
-  // (part 3: six ultimates fired in army fights with no king's spell, won or lost)
+  // (part 3: six ultimates fired in army fights with no king's spell, won or lost; QUEST-POSSIBLE: it opens with a hero at level 30, when
+  // ultimates can be fired, and counts nothing before)
+  noteChains(p, win('orcs', { ults: ['knight', 'knight', 'knight'] }));
+  assert.equal(p.quests!.chains!.voltara.progress, 0, 'locked below level 30');
+  p.xp[p.unlocked[0]] = xpFor(ULT_LEVEL);
   noteChains(p, win('orcs', { ults: ['knight', 'knight', 'knight'], spells: ['fireball'] }));
   assert.equal(p.quests!.chains!.voltara.progress, 0, 'Q9: a spell cast counts nothing');
   noteChains(p, win('orcs', { ults: ['knight', 'knight', 'knight'] }));

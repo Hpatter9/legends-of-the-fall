@@ -26,6 +26,9 @@ export interface ChainPart {
   /** The goal in plain words, for the log. */
   text: string;
   goal: Goal;
+  /** QUEST-POSSIBLE: a part that cannot be counted until the save meets this (ultimates open at hero level 30), and the lock's words. */
+  needs?: Need;
+  locked?: string;
   /** The giver's words as the part begins (shown on the chain's card while it is going). */
   begin: string;
   piece: PieceDef;
@@ -725,6 +728,9 @@ export const CHAINS: readonly ChainDef[] = [
         title: 'Thunder on Demand',
         text: "Fire 6 ultimates in army fights where no king's spell is cast",
         goal: { kind: 'ults', n: 6, mode: 'army', noSpells: true },
+        // (QUEST-POSSIBLE: ultimates open at hero level 30, `ULT_LEVEL` (a test holds them equal); the Labyrinth that opens the chain is set for level 16)
+        needs: { kind: 'level', n: 30 },
+        locked: 'Opens with a hero at level 30, when ultimates can be fired',
         begin: "Last, a vessel. The Crown's glassmaker has blown a flask, and it wants to be filled with something that has been shouted. Six great strikes, and no borrowed thunder from the king: the glass is particular about its sources.",
         piece: STORM_GLASS,
         reward: { chest: 'bronze' },
