@@ -385,55 +385,49 @@ export const EVENT_SCENES: Scene[] = [
   },
 
   // ---------------------------------------------------------------- the first loss
+  // (CINE-1110: short and kind, the owner's first loss is not a joke at the player's expense. The heroes pick themselves up, the ruler
+  // takes the blame and the lesson, and the last line hands over to the recap's "come back stronger" tips, which come up as it ends.)
   {
     id: 'firstLoss',
-    title: 'A Matter of Geometry',
-    blurb: 'The party\'s maiden defeat prompts an exceptionally polite inquest regarding fault.',
+    title: 'Not the End',
+    blurb: 'The first defeat. The heroes pick themselves up, and the keep has a few thoughts on next time.',
     moment: { kind: 'firstLoss' },
     cast: {
       front: { role: 'party:0', x: 255, facing: 'right', hidden: true },
       mid: { role: 'party:1', x: 215, facing: 'right', hidden: true },
-      back: { role: 'party:2', x: 175, facing: 'right', hidden: true },
-      king: { role: 'unit:standKing', x: 130, facing: 'right', hidden: true, scale: 1.2 },
-      duchess: { role: 'duchess', x: 120, facing: 'right', hidden: true },
+      king: { role: 'unit:standKing', x: 150, facing: 'right', hidden: true, scale: 1.2 },
+      duchess: { role: 'duchess', x: 115, facing: 'right', hidden: true },
     },
     shots: [
       {
         look: 'highlands',
-        cam: wide(240, 215),
+        cam: wide(235, 215),
         fx: ['fadeIn', 'darken'],
-        caption: 'Back at the keep',
-        ...shoot('wide', undefined, 'pan'),
-        acts: [{ who: 'front', enter: 255, from: 130 }, { who: 'mid', enter: 215, from: 100 }, { who: 'back', enter: 175, from: 70 }],
-        lines: [tell('Every legendary host has a first clumsy afternoon. This was theirs. They bore it with bandages.')],
+        weather: 'rain',
+        ...shoot('high', undefined, 'pushIn'),
+        acts: [{ who: 'front', enter: 255, from: 150 }, { who: 'mid', enter: 215, from: 110 }, { who: 'front', pose: 'hurt' }],
+        lines: [tell('The line broke. It happens to every legend once, and never in the songs.')],
+      },
+      {
+        cam: close('front'),
+        ...shoot('close', 'front', 'pushIn'),
+        acts: [{ who: 'front', pose: 'idle' }],
+        lines: [say('front', 'We gave ground. We did not give *up*.')],
+      },
+      {
+        cam: wide(190, 215),
+        ...shoot('medium', 'king', 'still'),
+        acts: [{ who: 'king', enter: 150, from: 60 }, { who: 'duchess', enter: 115, from: 30, line: 1 }],
+        lines: [say('king', 'Rest. Mend. Then we try a different shape.'), say('duchess', 'Mehh.')],
       },
       {
         cam: wide(215, 215),
-        ...shoot('wide', undefined, 'still'),
-        acts: [{ who: 'front', pose: 'hurt' }, { who: 'back', face: 'left' }],
-        lines: [
-          say('front', 'I trust nobody is vulgar enough to blame my position.'),
-          say('mid', 'Thirty percent the position, darling.'),
-          say('back', 'I asked for thirty paces back. I was given a hedge.'),
-        ],
-      },
-      {
-        cam: wide(180, 215),
-        ...shoot('wide', undefined, 'still'),
-        acts: [{ who: 'king', enter: 135, from: 40 }, { who: 'duchess', enter: 105, from: 30, line: 2 }, { who: 'back', face: 'right' }],
-        lines: [
-          say('king', 'The line broke on the left. That is on me.'),
-          say('mid', 'Gracious, majesty. We shall try the eastern flank tomorrow.'),
-          say('duchess', 'Baaaah.'),
-          say('king', 'Her Grace says the hedge was her idea.'),
-        ],
-      },
-      {
-        cam: wide(210, 215),
-        to: wide(210, 200),
-        ...shoot('high', undefined, 'pullOut', 'dissolve'),
+        to: wide(215, 200),
+        ...shoot('wide', undefined, 'pullOut', 'dissolve'),
         fx: ['fadeOut'],
-        lines: [{ ...tell('Tomorrow, they resolved, would be more dignified. Duchess, chewing the hedge, was sceptical.'), beat: 0.3 }],
+        weather: 'none',
+        rays: true,
+        lines: [tell('Every hero keeps what they learned. Here is how to come back *stronger*.')],
       },
     ],
   },

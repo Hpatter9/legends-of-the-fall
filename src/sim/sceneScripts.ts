@@ -12,6 +12,7 @@ import { close, say, shoot, tell, wide, type Scene } from './sceneKit';
 import type { Area } from './board';
 import { EVENT_SCENES } from './sceneEvents';
 import { FAMILY_SCENES } from './sceneFamilies';
+import { FIRST_BOSS_SCENES } from './firstBossScenes';
 
 export * from './sceneKit';
 
@@ -213,12 +214,12 @@ const EARNED_SCENES: Scene[] = Object.entries(EARNED).map(([k, e]) => earnedScen
 /** The score each scene plays under (the audio worker's tracks, `musicScore.ts`): a herald its own, the rest a shared mood. A cut-in has none: the fight's music goes on. */
 const MUSIC: Record<string, string> = {
   opening: 'opening', calamityOpens: 'gorvak', gorvak: 'gorvak', thornWarden: 'herald2', malphas: 'herald3', hrungar: 'herald4', vorgrath: 'herald5', karnok: 'herald6',
-  calamityEnds: 'triumph', firstLoss: 'comic', eliteMet: 'spire', ascensionOne: 'triumph', dailyBoss: 'spire', mythicOpens: 'triumph', duchessJoins: 'comic',
+  calamityEnds: 'triumph', firstLoss: 'solemn', eliteMet: 'spire', ascensionOne: 'triumph', dailyBoss: 'spire', mythicOpens: 'triumph', duchessJoins: 'comic',
 };
 const STING: Record<string, Scene['sting']> = { calamityOpens: 'sceneBoss', gorvak: 'sceneBoss', thornWarden: 'sceneBoss', malphas: 'sceneBoss', hrungar: 'sceneBoss', vorgrath: 'sceneBoss', karnok: 'sceneBoss', calamityEnds: 'sceneVictory' };
 const FAMILY_MUSIC: Record<string, string> = { oath: 'triumph', clear: 'triumph', awaken: 'solemn', earned: 'triumph', castle: 'comic', spire: 'spire' };
 
-const ALL: Scene[] = [...Object.values(PILOTS), ...EVENT_SCENES, ...FAMILY_SCENES, ...EARNED_SCENES, ...BOND_SCENES, ...VENGEANCE_SCENES, ...HEIR_SCENES, ...WAR_END_SCENES, ...ACT_SCENES].map((c) => {
+const ALL: Scene[] = [...Object.values(PILOTS), ...EVENT_SCENES, ...FAMILY_SCENES, ...FIRST_BOSS_SCENES, ...EARNED_SCENES, ...BOND_SCENES, ...VENGEANCE_SCENES, ...HEIR_SCENES, ...WAR_END_SCENES, ...ACT_SCENES].map((c) => {
   const music = c.music ?? MUSIC[c.id] ?? (c.family ? FAMILY_MUSIC[c.family] : undefined);
   const sting = c.sting ?? (STING[c.id] ?? (c.family === 'clear' ? 'sceneVictory' : c.family === 'oath' || c.family === 'oathcut' ? 'sceneBoss' : undefined));
   return { ...c, ...(music ? { music } : {}), ...(sting ? { sting } : {}) };

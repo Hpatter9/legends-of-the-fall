@@ -3,7 +3,7 @@
 // army, hero or building is a row, not a script. Pure data; it imports only the kit, the fighters' table and the lore
 // (not the armies or the battle, which load this file's way round).
 
-import { say, shoot, tell, wide, close, type Scene, type Shot } from './sceneKit';
+import { lineSeconds, say, shoot, tell, wide, close, type Scene, type Shot } from './sceneKit';
 import type { Area } from './board';
 import { ALL_HEROES, UNITS } from './units';
 import { TRIALS } from './eidolonTrials';
@@ -27,18 +27,22 @@ interface ArmyClear {
   remark: string;
   gloat: [string, string];
   tail: string;
+  /** A title card over the closing shot (CINE-1110: the first army's end). */
+  card?: { over: string; name: string };
 }
 
 const CLEARS: ArmyClear[] = [
   {
     army: 'orcs', name: 'Orc Warband', area: 'warcamp', boss: 'orcWarlord', escort: 'orcGrunt',
-    title: 'Orc Warband: Routed',
-    blurb: 'The Orc Warlord takes a knee to catch his breath and lodge an administrative complaint.',
-    setup: 'The Orc Warlord dropped onto one knee, the traditional tribal gesture meaning \'mild setback\'.',
-    last: 'THIS ENGAGEMENT IS VOID! TAKE DOWN THAT STATEMENT IN THE CHRONICLES!',
-    remark: 'Who has the quill, boss? Someone took it to draw on the wall.',
-    gloat: ['He will require a remarkably large scroll to list all the grievances.', 'Shall we inform his dear mother, or will the surviving grunts draft the letter?'],
-    tail: 'The remaining orcs held a brief symposium on maternal correspondence. The heroes waited politely.',
+    // (CINE-1110: the first army's end is the game's first great win; its war bell tolls once more, and a title card closes the chapter)
+    title: 'The Last Toll',
+    blurb: 'The Orc Warlord falls, and the Red Tusk’s war bell tolls one last time, for him.',
+    setup: 'The Orc Warlord sank to one knee. Behind him, the Red Tusk’s war bell rang once, by itself.',
+    last: 'NINE KEEPS... I BURNED NINE KEEPS. THE TENTH WAS *SUPPOSED* TO BE YOURS.',
+    remark: 'Eight, boss. One was a barn. I did tell you about the barn.',
+    gloat: ['Then let the chronicle say: one barn, and no keep.', 'Ring it again, somebody. I think he rather likes the sound.'],
+    tail: 'The bell tolled for the Red Tusk, and the road to the keep fell quiet. The first army was beaten.',
+    card: { over: 'The first army', name: 'The Red Tusk Falls' },
   },
   {
     army: 'undead', name: 'Undead Legion', area: 'graveyard', boss: 'lichKing', escort: 'skeleton',
@@ -165,6 +169,7 @@ const clearScene = (c: ArmyClear): Scene => ({
       acts: [{ who: 'boss', pose: 'down' }],
       fx: ['fadeOut'],
       cue: 'boom',
+      ...(c.card ? { title: c.card } : {}),
       lines: [tell(c.tail)],
     },
   ],
@@ -534,49 +539,66 @@ const standScene = (f: (typeof STANDS)[number]): Scene => ({
 
 /* ------------------------------------------------------------ a boss changes form */
 
-interface Form {
+export interface Form {
   boss: string;
+  /** The new form's name, on the title card under the boss's own (CINE-1110). */
+  form: string;
   area: Area;
   /** The words of the boss's second form: the same as `PHASE2` in `bossPhases.ts` (a test holds them equal). */
   line: string;
 }
 
-const FORMS: Form[] = [
-  { boss: 'orcWarlord', area: 'warcamp', line: 'WAAAGH! ENOUGH SKULKING! BRING DOWN THE PALISADE!' },
-  { boss: 'lichKing', area: 'graveyard', line: 'Rise, my shattered retainers! Rest is forbidden!' },
-  { boss: 'boarKing', area: 'plains', line: 'OUT OF MY WAY, TWO-LEGGED ACORNS!' },
-  { boss: 'forestBoss3', area: 'forest', line: 'The ancient timber awakes! Taste the briar\'s edge!' },
-  { boss: 'minotaurChampion', area: 'temple', line: 'The labyrinth shuts behind you! All exits are bricked!' },
-  { boss: 'hornedOgre', area: 'highlands', line: 'THE CRAG DOES NOT CRUMBLE! TASTE THE BOULDER!' },
-  { boss: 'demonLord', area: 'volcano', line: 'Burn, impudent mortals! Clause nine is invoked!' },
-  { boss: 'oniKing', area: 'shrine', line: 'HEAR THE ROAR OF THE MIDNIGHT THUNDER DRUM!' },
-  { boss: 'forgeTitan', area: 'forge', line: 'THE FURNACE RUNS WHITE-HOT! HAMMERS DESCEND!' },
-  { boss: 'calBoss1', area: 'volcano', line: 'THE EMBERS FLARE! BURN TO ASH AND SLAG!' },
-  { boss: 'calBoss2', area: 'forest', line: 'THE BRIAR AWAKES! THORNS BURST FROM THE MOSS!' },
-  { boss: 'calBoss3', area: 'dungeon', line: 'ASSEMBLE, MY LEGIONS! THE COURT IS CONVENED!' },
-  { boss: 'calBoss4', area: 'snow', line: 'THE CRAG STRIDES FORWARD! BRACE FOR IMPACT!' },
-  { boss: 'calBoss5', area: 'desert', line: 'FEAST UPON THE WRATH OF THE FINAL CINDER!' },
-  { boss: 'calBoss6', area: 'volcano', line: 'THERE IS NO HORIZON BEYOND MY STRIDE!' },
+export const FORMS: Form[] = [
+  { boss: 'orcWarlord', form: 'The Warlord Unchained', area: 'warcamp', line: 'WAAAGH! ENOUGH SKULKING! BRING DOWN THE PALISADE!' },
+  { boss: 'lichKing', form: 'The Crown Unburied', area: 'graveyard', line: 'Rise, my shattered retainers! Rest is forbidden!' },
+  { boss: 'boarKing', form: 'The Stampede Royal', area: 'plains', line: 'OUT OF MY WAY, TWO-LEGGED ACORNS!' },
+  { boss: 'forestBoss3', form: 'The Grove in Wrath', area: 'forest', line: 'The ancient timber awakes! Taste the briar\'s edge!' },
+  { boss: 'minotaurChampion', form: 'The Maze Made Flesh', area: 'temple', line: 'The labyrinth shuts behind you! All exits are bricked!' },
+  { boss: 'hornedOgre', form: 'The Crag Awake', area: 'highlands', line: 'THE CRAG DOES NOT CRUMBLE! TASTE THE BOULDER!' },
+  { boss: 'demonLord', form: 'Clause Nine', area: 'volcano', line: 'Burn, impudent mortals! Clause nine is invoked!' },
+  { boss: 'oniKing', form: 'The Thunder Drum', area: 'shrine', line: 'HEAR THE ROAR OF THE MIDNIGHT THUNDER DRUM!' },
+  { boss: 'forgeTitan', form: 'White-Hot', area: 'forge', line: 'THE FURNACE RUNS WHITE-HOT! HAMMERS DESCEND!' },
+  { boss: 'calBoss1', form: 'The Flaring Ember', area: 'volcano', line: 'THE EMBERS FLARE! BURN TO ASH AND SLAG!' },
+  { boss: 'calBoss2', form: 'The Briar Awake', area: 'forest', line: 'THE BRIAR AWAKES! THORNS BURST FROM THE MOSS!' },
+  { boss: 'calBoss3', form: 'The Court Convened', area: 'dungeon', line: 'ASSEMBLE, MY LEGIONS! THE COURT IS CONVENED!' },
+  { boss: 'calBoss4', form: 'The Striding Crag', area: 'snow', line: 'THE CRAG STRIDES FORWARD! BRACE FOR IMPACT!' },
+  { boss: 'calBoss5', form: 'The Final Cinder', area: 'desert', line: 'FEAST UPON THE WRATH OF THE FINAL CINDER!' },
+  { boss: 'calBoss6', form: 'Beyond the Horizon', area: 'volcano', line: 'THERE IS NO HORIZON BEYOND MY STRIDE!' },
   // (EIDOLON-TRIAL: each Eidolon in its own trial, its words from its trial's data)
-  ...TRIALS.map((t) => ({ boss: t.boss.id, area: t.land, line: t.phase.line })),
+  ...TRIALS.map((t) => ({ boss: t.boss.id, form: t.signatures[0].rage, area: t.land, line: t.phase.line })),
 ];
 
 /** The beat before a boss's new form, slowed to half pace, then its words. About three seconds all told; the page holds the fight meanwhile. Once a save for each boss (the owner: "Boss cinematics only need to play once"). */
 const SLOW_BEAT = 0.7;
 
-const formScene = (f: Form): Scene => ({
+/** CINE-1110: the cut-in names the boss and its new form on a title card as the light breaks, with a flash and a roar (the boss's growl,
+ *  `bossSlash`), then its words. `name` is the boss's name as the fight calls it (a warchief's own); `look` the fighter it is drawn from. */
+export const formScene = (f: Form, name = UNITS[f.boss]?.name ?? f.boss, look = f.boss): Scene => ({
   id: `form:${f.boss}`,
-  title: `${UNITS[f.boss].name}: Second Form`,
+  title: `${name}: ${f.form}`,
   blurb: 'A formidable boss assumes its second phase with explosive slow-motion fury.',
   moment: { kind: 'bossForm', boss: f.boss },
   family: 'form',
   short: true,
-  cast: { boss: { role: `unit:${f.boss}`, x: 290, facing: 'left', scale: 1.6 } },
+  cast: { boss: { role: `unit:${look}`, x: 290, facing: 'left', scale: 1.6, name } },
   shots: [
     { look: f.area, cam: close('boss', 1.5), to: close('boss', 2), ...shoot('low', 'boss', 'snapZoom', 'smash'), acts: [{ who: 'boss', pose: 'hurt' }], fx: ['darken'], cue: 'boom', hold: SLOW_BEAT, slow: 0.5 },
-    { cam: close('boss', 2), ...shoot('dutch', 'boss', 'shake', 'flash'), acts: [{ who: 'boss', pose: 'cast' }], fx: ['flash', 'glow'], lines: [say('boss', f.line, 'shout')] },
+    {
+      cam: close('boss', 2),
+      ...shoot('dutch', 'boss', 'shake', 'flash'),
+      acts: [{ who: 'boss', pose: 'cast' }],
+      fx: ['flash', 'glow'],
+      cue: 'bossSlash',
+      title: { over: name, name: f.form },
+      lines: [{ ...say('boss', f.line, 'shout'), secs: Math.min(3, lineSeconds(f.line)) }],
+    },
   ],
 });
+
+/** The Warchief of the Dark Council (the Muster's last boss, `CHIEF_PHASE`), who may stand on any fighter's look: his cut-in is one for
+ *  every warchief, drawn as an orc chieftain in the Scenes list and as the warchief himself in the fight (`warchiefForm`). */
+export const WARCHIEF_FORM: Form = { boss: 'warchief', form: 'The Warchief Unbowed', area: 'warcamp', line: 'The Warchief does not kneel! To me, my Council!' };
+export const warchiefForm = (name: string, look: string, area: Area): Scene => formScene({ ...WARCHIEF_FORM, area }, name, look);
 
 /* ------------------------------------------------------------ the Last Oath: a set of five's mega move */
 
@@ -670,7 +692,8 @@ export const FAMILY_SCENES: Scene[] = [
   ...ALL_HEROES.map((k, i) => awakenScene(k, i)),
   ...BUILDS.map(buildScene),
   ...STANDS.map(standScene),
-  ...FORMS.map(formScene),
+  ...FORMS.map((f) => formScene(f)),
+  formScene(WARCHIEF_FORM, 'The Warchief', 'orcChieftain'),
   ...OATHS.map(oathScene),
   ...OATHS.map(oathCut),
 ];
@@ -681,6 +704,7 @@ export const OATH_SETS: readonly { set: string; name: string }[] = OATHS;
 /** The names of the families, for the Scenes list. */
 export const FAMILY_NAMES: Record<string, string> = {
   intro: 'The armies on the march',
+  firstBoss: 'The armies’ first bosses',
   clear: 'The armies’ last stands',
   awaken: 'Awakenings',
   earned: 'Heroes earned',
