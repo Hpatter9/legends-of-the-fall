@@ -121,6 +121,7 @@ import { acceptDuel, contenders, duelOffer, offerSnap, refuseDuel, settleDuelRun
 import { DUEL_MS } from './sim/duelRing';
 import { duelAhead, duelBar, duelTaunt } from './duelRules';
 import { openDuelCard } from './duelView';
+import { initPhoneBack } from './phoneBack';
 import { DuelShow } from './duelShow';
 import { noteWar } from './sim/council';
 import type { OrnateMenu } from './ornateMenu';
@@ -722,6 +723,25 @@ class Game {
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
     (window as unknown as { __screens: () => string[] }).__screens = openScreens;
+    // (PHONE-BACK: the phone's Back and Escape close the topmost thing open, else go to the Battle tab, else open the place's own leave or
+    // pause control; they never leave the game, `phoneBack.ts`)
+    initPhoneBack({
+      place: () => {
+        if (document.getElementById('assaultScene')) return { place: 'assault' };
+        if (this.home.isOpen) return { place: 'home', tab: this.home.currentTab };
+        if (this.standOn) return { place: 'other' };
+        if (this.b.phase === 'deploy') return { place: 'deploy' };
+        if (this.b.phase === 'fight') return { place: 'fight' };
+        return { place: 'other' };
+      },
+      battleTab: () => this.home.show('battle'),
+      // (an Assault's pause card; a deploy's Home, which keeps the run to carry on; a fight's Settings, its one menu)
+      pause: (p) => {
+        if (p === 'assault') document.querySelector<HTMLElement>('#assaultScene .asTop button[aria-label="Pause"]')?.click();
+        else if (p === 'deploy') $('homeBtn').click();
+        else openSettings();
+      },
+    });
     // (the toasts' queue, for the screenshot tools to raise one: `tools/sweep-1110/toasts.mjs`; the game never calls it from here)
     (window as unknown as { __toastLines: typeof toastLines }).__toastLines = toastLines;
     // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
