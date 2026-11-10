@@ -171,7 +171,7 @@ under the music:
 
 ## 3. Tests
 
-- `test/hold-sound.test.ts` (new, 14 tests): every built hold has a voice and a bed that exists; the war table's and the Last Hold's music;
+- `test/hold-sound.test.ts` (new, 15 tests): every built hold has a voice and a bed that exists; the war table's and the Last Hold's music;
   the battle track heard on the field and the triumph bed after a win (and the old state, where it was not); the drums' beat; each kind of
   structure's hit and break; rams, ladders, the trebuchet, kegs, weak points, the horn, the keep; every event's cues exist and the big
   ones always play; near-only events and the pan; the assault's four ends; the ultimate's cues; the doorway swap; the menu cues' bus; the
@@ -182,7 +182,40 @@ under the music:
 
 ## 4. Checked
 
-RESULTS
+- `npm run typecheck`: clean. `npm test` (the full suite): **3021 pass, 0 fail**. `npm run web`: built; no new file in `out/web/audio/` or
+  in the service worker's list.
+- `node tools/audio-mix/measure.mjs --only cues,holds,beds`: the tables above; the old beds and cues measure as before.
+- **Each hold played in Chromium** at 393x852 (`node tools/hold-sound/probe.mjs --run 150 --level 60`: the war table, the march, then the
+  host on Auto at x2 for up to 150 s, reading `__audioDebug()` and `__sfxLog`). For every one of the nine:
+
+  | | Camp | War table | Field | Drums |
+  |---|---|---|---|---|
+  | track / bed | `camp` / `camp` | `deploy` / `armies` | `battle` / the hold's | the hold's |
+  | orcs | | | `warcamp` | `drum` |
+  | undead | | | `barrow` | `bell` |
+  | beasts | | | `den` | `howl` |
+  | wildwood | | | `forest` | `pipe` |
+  | labyrinth | | | `maze` | `lowHorn` |
+  | ogres | | | `bonefire` | `flare` |
+  | infernal | | | `volcano` | `flare` |
+  | yokai | | | `shrine` | `taiko` |
+  | golems | | | `foundry` | `hammer` |
+
+  Cues seen firing across the runs: `hostMarch` (every hold, once), `gateHit` (1 to 116 a run, by where the camera was), `gateBreak` (2 or
+  3 a hold), `greatHorn` (once a hold), `weakPoint`, `wolfHowl`, `horn`, `eliteSting`, `standBoss` and the `boss` track at the lord (undead,
+  wildwood, ogres, golems), `keepFall` (wildwood). **The ends:** Elder Root was conquered: `sting: victory`, `track: triumph`, the drums
+  stopped, and Back gave `camp` / `armies` with no hold. The Maze, Brimstone Gate and the Moonlit Shrine were lost: the `defeat` sting,
+  `deploy` under the result, then `camp`. The Last Hold (the Shrine with every other hold fallen): `lastHold` twice (the table, the march).
+- **Not seen in the browser** (covered by the pure tests only): `wallHit`, `wallBreak`, `drumHit` and `drumSilenced` (Auto went for the
+  gates), `ramHit`, the ladders, the trebuchet and the kegs (Auto bought no siege works), the retreat's horn, and `warEnd` (the Last Hold
+  was not won in the time). The hand-fired ultimate's `ultCharge` / `ultSlow`, the rune bench, the Auto buttons and the ledgers were not
+  driven in the browser either; each is one call at a site the old cue already fired from.
+- **Page errors: none from the sound.** Two runs (the Necropolis, the Foundry) logged one error each from the Assault's worker:
+  `Failed to execute 'postMessage' on 'DedicatedWorkerGlobalScope': function … could not be cloned` (a skeleton's raise, a freeze). It is in
+  the worker's posting of the battle, which this branch does not touch (no file under `src/sim/`, `assaultWorker.ts` or `assaultSim.ts`
+  changed), and the battle played on. One run of the Necropolis on main did not show it, so I could not confirm it there: it depends on
+  what a unit is doing at the moment of the post. Listed for the director below.
+- No screen's look changed, so there are no new screenshots.
 
 ## 5. For the director: what needs a call
 
@@ -205,6 +238,8 @@ RESULTS
 6. **A skipped ultimate still rings its build-up.** A tap that skips the moment drops the freeze, but `ultCharge` (1.4 s) plays out, as
    `ultSlash` always has. Cutting a cue short needs a bus of its own, as the summoning show has (`hushSummon`); small, but a change to the
    mixer, so I left it.
-7. **Nobody has heard any of this.** The levels are measured; the timbres are not. The first things I would listen to: the drums over each
+7. **A worker error, not from this change.** The Assault's worker sometimes fails to post the battle because something in it holds a
+   function (see Checked). It wants its own look: a snapshot that fails to post is a resume that may be lost.
+8. **Nobody has heard any of this.** The levels are measured; the timbres are not. The first things I would listen to: the drums over each
    bed (`DRUM_SCALE`, 2), the `gateHit` at x1 with a full platoon on a gate, `keepFall` into the fanfare, and `ultCharge` under the slash.
    `__audioApi.renderCue('keepFall')` renders any cue to a buffer to save and hear.
