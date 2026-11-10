@@ -66,29 +66,55 @@ again too: `tools/castle-tab-renewal/checks.mjs`, `tools/bench-marks/shots.mjs` 
 
 Nothing else turned up that was a plain bug.
 
-## Open list (for the director)
+## The director's calls on the open list
 
-These need a design call or art, so none was built.
+Four items went to the director as needing a design call or art:
 
-1. **The Maze's houses keep the Knights kit's colours.**
-   - The Heart of the Maze's longhouses and storehouses are the Knights kit's barracks and granary, cut straight in. They show their blue
-     slate and red tile roofs, on grass, inside a sandstone desert hold.
-   - The hold's art prompt says the kit lends "its stone and its drawing, not its colours".
-   - A tint in `cut-sheets.py`, or painted pieces? (`open-maze-knights-houses-393.jpg`, `open-maze-knights-house-zoom.jpg`)
-2. **The Moonlit Shrine's keep is still the Orc pavilion** (horned skulls, red banners), the known stand-in until its sheets 08 to 12 are
-   painted (art wire 8). (`open-moonlit-shrine-keep-standin-393.jpg`)
-3. **Skipping late in an ultimate.**
-   - A tap skips an ultimate only while the battle is held: the opening, the showcase and the impact.
-   - An ultimate with a settle phase (the archer's, the wizard's) then runs about 2.3 s more at x1 with the battle going.
-   - A tap there falls through to the board, as `ultMoment.ts` means it to, so it does not skip.
-   - At x3 that is 2.3 s the player cannot hurry. Should a tap in the settle and fade end the moment too (and the speed come back)?
-4. **Unlock toasts over menus.**
-   - The one-time unlock toasts ("Auto place unlocked", "Rune Auto unlocked") sit over the top of whatever card is open for a few
-     seconds. In the sweep they covered the Last Hold muster's title and the Castle cards' names.
-   - They could wait for a card to close, or sit lower. (`open-unlock-toast-over-last-hold-360.jpg`)
+1. the Maze's houses keep the Knights kit's colours;
+2. the Moonlit Shrine's keep is still the Orc pavilion stand-in;
+3. a tap late in an ultimate (its settle) does not skip it;
+4. the one-time unlock toasts sit over open cards.
+
+The director answered each. Item 2 waits for its art (the shrine's sheets 08 to 12). The other three were built on this branch, after main
+(0.448.0) was merged in:
+
+1. **The Maze's borrowed kit buildings take the hold's palette.**
+   - The Heart of the Maze's Knights-kit pieces now take its sand, bronze and terracotta: the barracks and granary (its longhouses and
+     storehouses), the gatehouse, the walls, the workshop, the watchtower, the well, the bridge and the goods.
+   - The colours:
+     - the slate and red tile roofs and the blue cloth go to terracotta;
+     - the grey stone goes to sand;
+     - the lawns dry to gold;
+     - the timber goes to a warm bronze-brown;
+     - the lamp and fire light are kept.
+   - The kit's trees and bushes are left as they are.
+   - The tint is `maze_kit`, through a `kit_tint` in the hold's profile in `tools/assault/cut-sheets.py`, so a fresh cut makes it.
+   - The Chronos kits were not to hand for a fresh cut, so the atlas already cut was tinted in place by `tools/assault/tint-kit.py`.
+     That is a one-off, never to be run after a fresh cut.
+   - Picture: `maze-kit-tint-before-after-393.jpg`; before, `open-maze-knights-houses-393.jpg` and its zoom.
+3. **A tap ends an ultimate's moment at any point.**
+   - The moment's layer used to take taps only while the battle was held. Through a salvo's settle (about 2.3 s at x1, for the archer's
+     and the wizard's) a tap fell through to the board.
+   - The layer now takes taps all through the moment. A tap sends it to its fade (0.65 s), and a tap in the fade ends it at once, so the
+     fight's speed comes back.
+   - A tap that lands while a moment plays is spent on ending it, as one in the opening always was.
+   - Tested in `test/ult-moment.test.ts`.
+4. **The toasts never cover an open card.**
+   - While an ornate card, the hero sheet, a skill's sheet or Settings is open, the toasts wait in their queue, and they show once it
+     closes. A toast showing when a card opens steps aside at once, and comes back after.
+   - Queueing was chosen over showing them low: at 393 the cards fill the screen with their buttons at the foot, so a low toast would
+     cover those.
+   - Checked at the three sizes by `tools/sweep-1110/toasts.mjs`, through a `__toastLines` hook (like `__screens`).
+   - Before: `open-unlock-toast-over-last-hold-360.jpg`.
+
+The Moonlit Shrine's keep as it stands: `open-moonlit-shrine-keep-standin-393.jpg`.
 
 ## Checks
 
 - `npm run typecheck`: clean.
-- `npm test -- assault-holds assault-last-hold`: 9 pass.
+- `npm test -- assault-holds assault-last-hold ult-moment ult-epic ult-show ui-standard`: 47 pass.
 - `npm run web`: builds.
+- At 393, 360 and 412:
+  - `tools/sweep-1110/toasts.mjs`: every check passes;
+  - `tools/sweep-1110/assault.mjs` at the Maze, the Last Hold's muster included: no errors;
+  - `tools/sweep-1110/fight.mjs`: no errors, and the skip still works.
