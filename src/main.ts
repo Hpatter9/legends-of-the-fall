@@ -220,7 +220,7 @@ import { EIDOLON_IDS } from './sim/eidolons';
 import { openScreen, openScreens } from './screens';
 import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
-import { formationOf, formationSpots, setFormations, type Formation } from './sim/formations';
+import { formationOf, formationSpots, setFormations, shapeFits, type Formation } from './sim/formations';
 import { pickedFormation, pickedTactic, pickFormation, pickTactic } from './sim/tacticPick';
 import { RuneBench } from './runeBench';
 import { BenchSlide } from './benchSlide';
@@ -2309,6 +2309,9 @@ class Game {
       formationsOpen: () => autoPlaceOpen(this.meta),
       formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
       picked: () => pickedFormation(this.meta.formations, this.run.mode),
+      // (BATTLE-FEEL round 3: whether the heroes placed could make a shape, so the button can say when they cannot)
+      fits: (f) => shapeFits(this.b.board, this.placedKinds(), f),
+      placed: () => this.placedKinds().length,
       arrange: (f) => this.arrangeFormation(f),
     });
     // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
@@ -2454,6 +2457,11 @@ class Game {
   }
 
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
+
+  /** The kinds of the heroes placed on the board now (not their summons). */
+  private placedKinds(): string[] {
+    return this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
+  }
 
   /** Set the placed heroes out in a formation's shape (the prep screen's Formation sheet, `tacticsView.ts`): each taken back and placed again at its tile of the shape
    *  (`formationSpots`), or where it stood if that tile will not take it. */

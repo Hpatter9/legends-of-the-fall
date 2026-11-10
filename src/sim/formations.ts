@@ -219,3 +219,12 @@ export function formationSpots(board: Board, kinds: readonly string[], shape: Fo
   }
   return out;
 }
+
+/** Whether a party of `kinds` can make `shape` on `board` (BATTLE-FEEL round 3): set out in it (`formationSpots`) and read back
+ *  (`formationOf`), is it that shape? A Shield Wall needs two front-liners, a Hollow Square a back-liner, a Skirmish four heroes. Pure: no
+ *  rule changes; the page says when the answer is no. */
+export function shapeFits(board: Board, kinds: readonly string[], shape: Formation): boolean {
+  if (!kinds.length) return false;
+  const spots = formationSpots(board, kinds, shape);
+  return formationOf(board.d, kinds.map((kind, i) => ({ id: i + 1, kind, u: spots[i].u, v: spots[i].v })))?.kind === shape;
+}

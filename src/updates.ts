@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.452.0',
+    date: '2026-11-10',
+    title: 'Formations say when they can\'t form',
+    notes: ['If your party can\'t make the chosen formation, its button and card now say so. Three utility skills no longer show hits of 1 or 2.'],
+  },
+  {
     version: '0.451.0',
     date: '2026-11-10',
     title: 'Battles feel right',

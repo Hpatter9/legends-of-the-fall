@@ -13,7 +13,7 @@
 import { glyphWord } from './paintedButton';
 import type { Battle } from './sim/battle';
 import { canChangeTactic, fightTactic, nextTactic, orderTactic, type Tactic } from './sim/tactics';
-import { FORMATION_WORDS, TACTIC_WORDS } from './sim/tacticPick';
+import { FORMATION_WORDS, shortLine, shortTag, TACTIC_WORDS } from './sim/tacticPick';
 import { FORMATIONS_LIST, type Formation } from './sim/formations';
 import { openScreen } from './screens';
 
@@ -27,6 +27,9 @@ export interface TacticsViewOpts {
   picked: () => Formation | undefined;
   /** Set the placed heroes out in a shape and keep it as the pick; undefined (Loose) forgets the pick and moves nobody. */
   arrange: (f: Formation | undefined) => void;
+  /** Whether the heroes placed now could make a shape (`shapeFits`), and how many are placed (BATTLE-FEEL round 3). */
+  fits: (f: Formation) => boolean;
+  placed: () => number;
 }
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -104,12 +107,25 @@ export class TacticsView {
     this.formBtn.hidden = !forms;
     if (forms) {
       const shape = this.opts.formation();
+      // (BATTLE-FEEL round 3: the shape picked that this party cannot make says so, rather than quietly standing loose)
+      const short = this.shortOf(shape);
       const words = shape ? FORMATION_WORDS[shape].short : 'Loose';
-      if (this.formBtn.dataset.words !== words) {
-        this.formBtn.dataset.words = words;
-        this.formBtn.replaceChildren(el('small', '', 'Formation'), el('b', '', words));
+      const key = `${words}:${short ?? ''}`;
+      if (this.formBtn.dataset.words !== key) {
+        this.formBtn.dataset.words = key;
+        this.formBtn.replaceChildren(el('small', '', short ? shortTag(short) : 'Formation'), el('b', '', words));
+        if (short) this.formBtn.dataset.short = short;
+        else delete this.formBtn.dataset.short;
+        this.formBtn.title = short ? `${shortLine(short, shape)} Tap to choose another shape.` : 'Set the heroes out in a formation';
+        this.formBtn.setAttribute('aria-label', short ? shortLine(short, shape) : `Formation: ${shape ? FORMATION_WORDS[shape].name : 'Loose'}`);
       }
     }
+  }
+
+  /** The shape picked that the heroes placed cannot make (they stand loose or in another shape), or undefined. */
+  private shortOf(shape: Formation | undefined): Formation | undefined {
+    const picked = this.opts.picked();
+    return picked && shape !== picked && this.opts.placed() > 0 && !this.opts.fits(picked) ? picked : undefined;
   }
 
   private show(t: Tactic): void {
@@ -148,6 +164,8 @@ export class TacticsView {
     const card = el('div', 'tacCard');
     const shape = this.opts.formation();
     card.append(el('h2', '', 'Formation'));
+    const short = this.shortOf(shape);
+    if (short) card.append(el('p', 'tacAdvice tacShort', shortLine(short, shape)));
     const picked = this.opts.picked();
     card.append(el('p', 'tacAdvice', shape ? `The heroes stand in a ${FORMATION_WORDS[shape].name}. Tap a shape to set them out in it.` : 'The heroes stand in no shape. Tap one to set them out in it.'));
     card.append(el('p', 'tacAdvice', picked ? `Auto place sets them out in a ${FORMATION_WORDS[picked].name}.` : 'Auto place sets them out by their roles. Pick a shape and it uses that.'));

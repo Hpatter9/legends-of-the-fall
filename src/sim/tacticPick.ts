@@ -22,6 +22,13 @@ export const FORMATION_WORDS: Record<Formation, { name: string; short: string; l
   skirmish: { name: 'Skirmish', short: 'Skirmish', line: 'Four or more, nobody touching: half the splash, less from their spells. Nobody guards a friend.' },
 };
 
+/** BATTLE-FEEL round 3: the words when the party cannot make the shape picked (`shapeFits`), so it stands loose or in another shape: the
+ *  Formation button's tag over the shape it does stand in, and its card's line. */
+export const shortTag = (f: Formation): string => `No ${FORMATION_WORDS[f].short}`;
+/** The card's line: the shape picked is out of reach, and what the heroes stand in instead (`read`; none: loose). */
+export const shortLine = (f: Formation, read?: Formation): string =>
+  `Not enough for a ${FORMATION_WORDS[f].name}: ${read ? `standing in a ${FORMATION_WORDS[read].name}` : 'fighting loose'}.`;
+
 /** Where a pick is kept: by army in the army runs, by mode in the others. */
 export const tacticKey = (mode?: RunMode): string => (!mode ? 'classic' : mode.kind === 'army' ? `army:${mode.army}` : mode.kind);
 

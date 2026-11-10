@@ -212,6 +212,24 @@ The audit at level 15 (500 fights), back-and-forth steps against main: front-lin
 2. **A formation the party cannot make** is silently no formation (see above). Recommendation: the deploy screen says which shape it read,
    or "no formation".
 
+## Round 3: two follow-ups (on main 0.451.0)
+
+1. **No number for a quiet utility skill's tiny blow** (renderer only; `QUIET_SKILLS`, `QUIET_UNDER` 3, `numberShown` in `fxRules.ts`).
+   Undertow, Rift Pounce and Boarding Swing show no number for a blow under 3. Their spark, shove or drag, and sound still play. Every
+   other hit shows its number as before. Test: `test/battle-feel-fx.test.ts`.
+2. **The Formation button says when the party cannot make the shape picked** (words and a state only, no rule changes). `shapeFits`
+   (`formations.ts`) sets a party out in a shape (`formationSpots`) and reads it back (`formationOf`). When the shape picked for this mode
+   or army is not what the heroes stand in, and the heroes placed could not make it:
+   - the button's tag reads "No Wall" (in amber) over the shape they do stand in ("Loose", or another shape that the tiles happened to
+     form);
+   - the card opens with "Not enough for a Shield Wall: fighting loose." (or "…: standing in a Hollow Square.");
+   - the button's label and title say the same.
+
+   Tests: `test/formations.test.ts` (a party of shooters and casters cannot make a Wall; three heroes cannot Skirmish; the words). Shots,
+   with a Wall picked for a party of five shooters and casters: `docs/samples/battle-feel/form-short-*.png` (the button) and
+   `form-short-card-*.png` (the card), at 393, 360 and 412 wide (`node tools/battle-feel/formShots.mjs`). Already the case on main, and left
+   alone: on the Formation card, each shape's painted medallion sits over the first lines of its description.
+
 ## Checks run
 
 `npm run typecheck`. `npm test -- battle-feel battle-sound tactile-juice combat-fx battle terrain height foe-styles hero-kits` (round 1);
