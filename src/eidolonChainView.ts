@@ -14,7 +14,7 @@ import { eidolonById, type Eidolon } from './sim/eidolons';
 import { chooseEidolon, chosenOf } from './sim/warHorn';
 import type { Meta } from './sim/meta';
 import { CHAINS, chainById, type ChainDef, type PieceDef } from './sim/eidolonChainData';
-import { activeChain, chainDone, listedChains, chainState, currentPart, offeredChain, partBlocked, piecesOf, readyToBind, stepsOf, trialDue, trialOf, type PieceFound } from './sim/eidolonChains';
+import { activeChain, chainDone, listedChains, chainState, currentPart, offeredChain, partBlocked, partLocked, piecesOf, readyToBind, stepsOf, trialDue, trialOf, type PieceFound } from './sim/eidolonChains';
 import { castOf, questBattleById } from './sim/questBattles';
 import { battleWon } from './sim/questRun';
 import { heroName } from './sim/heroNames';
@@ -225,7 +225,9 @@ export function drawEidolonsTab(list: HTMLElement, m: Meta, hooks: ChainHooks): 
       bar.append(fill);
       body.append(bar, el('small', 'ecnSaid', `${c.giver.name}: “${p.begin}”`));
       const blocked = partBlocked(m, p);
-      if (blocked) body.append(el('small', 'ecnWarn', `Needs ${[...new Set(blocked)].map(heroName).join(' or ')}: recruit one to take this on`));
+      const locked = partLocked(m, p);
+      if (locked) body.append(el('small', 'ecnWarn', locked));
+      else if (blocked) body.append(el('small', 'ecnWarn', `Needs ${[...new Set(blocked)].map(heroName).join(' or ')}: recruit one to take this on`));
       else if (p.goal.kind === 'battle' && hooks.fight) {
         const qb = questBattleById(p.goal.battle)!;
         const go = el('button', 'primary ecnGo', hooks.saved?.() === qb.id ? `Continue: ${qb.title}` : `Fight: ${qb.title}`);

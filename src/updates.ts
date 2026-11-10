@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.466.0',
+    date: '2026-11-10',
+    title: 'Auto holds off for no-spell quests',
+    notes: ['On a fight for a no spells or no ultimates quest, SPELL or ULT Auto holds off by itself and says why, then comes back.', 'Two quests that could be offered too early now wait until you can do them.'],
+  },
+  {
     version: '0.465.0',
     date: '2026-11-10',
     title: 'The Council button matches the Daily',
