@@ -173,7 +173,7 @@ button.primary::after, button.pbPrimary::after { content: none; }
 }
 .hm-battle .cpDailySlot .cpPlace.done { border-image: url(ui/buttons/plaque-ready.webp) var(--plaque-slice) / var(--pbw) / 0 stretch; }
 .hm-battle .cpDailySlot .cpPlace:active { filter: brightness(1.15); }
-.hm-battle .cpDailySlot .cpPlace::before { content: none; }
+.hm-battle .cpDailySlot .cpPlace::before, .hm-battle .cpCouncilSlot .cpPlace::before { content: none; }
 .hm-battle .cpDailySlot .cpDailyIcon, .hm-battle .cpCouncilBadge { width: 38px; height: 38px; margin-top: 0; image-rendering: auto; }
 .hm-battle .cpSlot.cpDailySlot .cpTag { border: 0; border-image: none; }
 /* the camp's places: the Daily's painted medallion (the cleared tick and the new pip painted too), the Council's, and their plaques */
