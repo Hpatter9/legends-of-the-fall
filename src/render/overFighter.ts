@@ -9,7 +9,7 @@
 /** How strong an effect over a fighter's body is drawn, of its own alpha (skill, ultimate, spell, combo and hit effects). */
 export const OVER_FIGHTER_ALPHA = 0.6;
 /** How strong an ailment's parts in front of the body are drawn, of their own alpha (`statusStyles.ts`: front, halo, motes). */
-export const OVER_FIGHTER_STATUS_ALPHA = 0.7;
+export const OVER_FIGHTER_STATUS_ALPHA = 0.5; // (FX-ALIVE: 0.7 to 0.5, docs/notes/fx-alive.md: the owner found the marks over heroes hid them)
 
 /** A fighter as drawn: its feet in world px and how tall it is. */
 export interface Body {
