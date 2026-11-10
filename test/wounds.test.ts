@@ -7,7 +7,8 @@ import assert from 'node:assert/strict';
 import { armyRun, finish, noteFight, recruit, startStage, type Run } from '../src/sim/run';
 import { emptyStats } from '../src/sim/equipment';
 import { hpShare, setShare } from '../src/sim/health';
-import { REVIVE_SHARE, risenLines } from '../src/sim/wounds';
+import { isOldRisenLine, REVIVE_SHARE, RISEN_HEAD, risenLine } from '../src/sim/wounds';
+import { waveNotes } from '../src/sim/waveCard';
 import { place, type Battle } from '../src/sim/battle';
 
 function run2(): Run {
@@ -30,8 +31,16 @@ test('after a won wave the fallen stand again at half and the standing are whole
   assert.equal(hpShare(run, a.id), REVIVE_SHARE);
   assert.equal(hpShare(run, b.id), 1);
   finish(run, true);
-  assert.ok(run.found!.some((l) => l.endsWith('stands again at half')));
-  assert.deepEqual(risenLines(run, () => 'Aiko'), ['Aiko stands again at half.']);
+  // (FIRST-HOUR 3, the owner's ask: the risen are not among the finds ("Found: Kwame stands again at half" read oddly); the card has a
+  // row of its own for them, read from `run.risen`)
+  assert.ok(!(run.found ?? []).some((l) => /stands again|half/.test(l)));
+  assert.equal(risenLine(run, () => 'Aiko'), 'Aiko, at half health');
+  const notes = waveNotes({ ups: [], fell: [], hearts: 0, heartsLeft: 2, found: ['Ember rune I', 'Kwame stands again at half'], risen: risenLine(run, () => 'Aiko') });
+  assert.deepEqual(notes.filter((n) => n.kind === 'risen'), [{ kind: 'risen', head: RISEN_HEAD, text: 'Aiko, at half health' }]);
+  assert.equal(RISEN_HEAD, 'Back on their feet');
+  assert.deepEqual(notes.filter((n) => n.kind === 'found').map((n) => n.text), ['Found Ember rune I'], 'an old save\'s line is left out of the finds');
+  assert.ok(isOldRisenLine('Kwame stands again at half') && isOldRisenLine('Kwame stands again at half.') && !isOldRisenLine('Ember rune I'));
+  assert.equal(waveNotes({ ups: [], fell: [], hearts: 0, heartsLeft: 2, found: [] }).filter((n) => n.kind === 'risen').length, 0, 'no row when nobody rose');
   // (the next wave: those that stand fall again or not; a hero not fallen this time is whole again)
   noteFight(run, fought(run, [b.id], 'won'));
   assert.equal(hpShare(run, a.id), 1);

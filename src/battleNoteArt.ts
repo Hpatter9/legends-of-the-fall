@@ -3,7 +3,7 @@ import { COMBAT_ART } from './combatArtAssets';
 import heart from './art/ui/combat-heart.png';
 
 export function battleNoteSource(kind: string): string {
-  if (kind === 'heart') return heart;
+  if (kind === 'heart' || kind === 'risen') return heart;
   if (kind === 'horn') return 'eidolons/horn-ready.webp';
   if (kind === 'wear') return 'shop/repair.webp';
   const motifs: Record<string, string> = {
