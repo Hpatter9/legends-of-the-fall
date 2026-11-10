@@ -412,6 +412,8 @@ export class SummoningHall {
     fold.ariaExpanded = String(this.open);
     fold.addEventListener('click', () => {
       this.open = !this.open;
+      // (the nearest hero's row unrolled or rolled up: a page turned)
+      playSfx('ledger');
       try {
         localStorage.setItem(FOLD_KEY, this.open ? '1' : '0');
       } catch {

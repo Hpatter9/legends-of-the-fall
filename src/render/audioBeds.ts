@@ -8,6 +8,7 @@
 
 import { AudioProcessor } from '@audiorective/core';
 import { BEDS, BED_FADE_S, BED_LEVEL_MAX, ShotClock, bedOf, pickShot, type BedId, type BedLayer, type BedSpec, type Scene, type ShotKind } from './audioRules';
+import { DRUM_SCALE } from './holdSound';
 import type { Area } from '../sim/board';
 
 /** How often the one-shot timer looks at the clock (ms). */
@@ -35,6 +36,13 @@ export class AmbientBeds extends AudioProcessor {
   private timer: ReturnType<typeof setInterval> | null = null;
   /** The scene asked for last (null for none). */
   scene: Scene | null = null;
+  /** The land asked for with it, and a bed that stands in for the scene's own while it is set (an Assault's war table or hold). */
+  private land: Area | null = null;
+  private over: BedId | null = null;
+  /** A hold's drums (HOLD-SOUND): the one-shot they beat with and their clock, while any stands. */
+  private drums: { kind: ShotKind; gap: readonly [number, number]; clock: ShotClock } | null = null;
+  /** The level of the one-shot being made now against a bed's own (the drums are louder). */
+  private shotScale = 1;
 
   constructor(
     ctx: BaseAudioContext,
@@ -61,7 +69,35 @@ export class AmbientBeds extends AudioProcessor {
   /** Crossfades to the bed for `scene` (null for silence), a field fight's by its `land`. The same bed again changes nothing. */
   setScene(scene: Scene | null, land: Area | null = null): void {
     this.scene = scene;
-    const id = scene ? bedOf(scene, land) : null;
+    this.land = land;
+    this.sync();
+  }
+
+  /** A bed that takes the scene's place while it is set (the Assault: its war table, its hold), or null to give the scene its own back. */
+  setOver(bed: BedId | null): void {
+    this.over = bed;
+    this.sync();
+  }
+
+  /** The hold's drums: they beat with `kind`, `gap` seconds apart (lowest and highest), until told otherwise; null for none. The same
+   *  again changes nothing, so a beat is never hurried by being asked for twice. */
+  setDrums(kind: ShotKind | null, gap: readonly [number, number] | null = null): void {
+    if (!kind || !gap) {
+      this.drums = null;
+      return;
+    }
+    if (this.drums && this.drums.kind === kind && this.drums.gap[0] === gap[0] && this.drums.gap[1] === gap[1]) return;
+    this.drums = { kind, gap, clock: new ShotClock(gap, this.rand, this.context.currentTime) };
+  }
+
+  /** Whether a hold's drums are beating (for the debug view and the tests). */
+  get drumming(): ShotKind | null {
+    return this.drums?.kind ?? null;
+  }
+
+  /** Crossfades to the bed wanted now. */
+  private sync(): void {
+    const id = this.over ?? (this.scene ? bedOf(this.scene, this.land) : null);
     if (id === (this.current?.id ?? null)) return;
     // (a bed still fading from the last change goes at once, so no more than two ever sound together)
     if (this.leaving) this.release(this.leaving, 0.02, 80);
@@ -203,6 +239,13 @@ export class AmbientBeds extends AudioProcessor {
     const bed = this.current;
     if (!bed || ac.state !== 'running') return;
     const now = ac.currentTime;
+    // (the hold's drums, over its air)
+    if (this.drums?.clock.due(now)) {
+      this.drums.clock.fired(now);
+      this.shotScale = DRUM_SCALE;
+      this.shot(bed, this.drums.kind, now + 0.02);
+      this.shotScale = 1;
+    }
     if (!bed.clock.due(now)) return;
     bed.clock.fired(now);
     this.shot(bed, pickShot(bed.spec.shots, this.rand()), now + 0.02);
@@ -292,6 +335,69 @@ export class AmbientBeds extends AudioProcessor {
         this.burst(out, t, 0.22, 3500, 'bandpass', 0.35, 0.8, 2400, 0.35);
         this.burst(out, t + 0.24, 0.1, 2800, 'bandpass', 0.18, 0.9);
         break;
+      // a wolf, far off: a long howl that rises, holds and falls away
+      case 'howl': {
+        const far = new BiquadFilterNode(this.context, { type: 'lowpass', frequency: 1800 });
+        far.connect(out);
+        const f = 330 + r() * 90;
+        this.tone(far, t, f, 0.5, 0.16, f * 1.45);
+        this.tone(far, t + 0.45, f * 1.45, 1.3, 0.2, f * 1.1);
+        if (r() < 0.5) this.tone(far, t + 0.7, f * 1.2, 1.1, 0.09, f * 0.9);
+        break;
+      }
+      // a bell tolling: a low strike and its sour overtones, ringing a long time
+      case 'bell': {
+        const f = 147 + r() * 8;
+        for (const [k, v, d] of [[1, 0.4, 3.2], [2.02, 0.2, 2.4], [2.76, 0.12, 1.6], [5.4, 0.05, 0.8]] as const) this.tone(out, t, f * k, d, v);
+        break;
+      }
+      // a shrine's small bell: one clear high ring, and a second a little under it
+      case 'chime': {
+        const f = [1047, 1175, 1397][Math.floor(r() * 3)];
+        this.tone(out, t, f, 1.6, 0.14);
+        this.tone(out, t, f * 2.76, 0.7, 0.05);
+        this.tone(out, t + 0.5 + r() * 0.3, f * 0.75, 1.4, 0.09);
+        break;
+      }
+      // steam let go: a hiss that opens and dies
+      case 'steam':
+        this.burst(out, t, 1.3, 3800, 'highpass', 0.3, 0.7, 6500, 0.15);
+        break;
+      // a far horn, low: a long note that swells
+      case 'lowHorn':
+        this.tone(out, t, 98, 1.8, 0.4, 104);
+        this.tone(out, t + 0.05, 147, 1.7, 0.2, 156);
+        this.burst(out, t, 1.6, 300, 'bandpass', 0.15, 2, 420, 0.5);
+        break;
+      // a piper's phrase: four or five soft notes of a minor scale, wandering
+      case 'pipe': {
+        const scale = [587, 659, 698, 784, 880];
+        let k = Math.floor(r() * scale.length);
+        const n = 4 + Math.floor(r() * 2);
+        for (let i = 0; i < n; i++) {
+          this.tone(out, t + i * 0.22, scale[k], 0.3, 0.14);
+          k = Math.max(0, Math.min(scale.length - 1, k + (r() < 0.5 ? -1 : 1)));
+        }
+        break;
+      }
+      // a great taiko: one deep beat and two quick ones after it
+      case 'taiko':
+        for (const [at, v] of [[0, 0.7], [0.5, 0.4], [0.72, 0.5]] as const) {
+          this.tone(out, t + at, 110, 0.5, v, 46);
+          this.burst(out, t + at, 0.08, 600, 'bandpass', v * 0.4, 1.2);
+        }
+        break;
+      // a steam hammer: the hiss of its lift, then the fall, iron on iron
+      case 'hammer':
+        this.burst(out, t, 0.4, 3000, 'highpass', 0.14, 0.7, 5000, 0.6);
+        this.tone(out, t + 0.42, 95, 0.5, 0.4, 34);
+        for (const [f, v] of [[820, 0.14], [1230, 0.08], [1890, 0.05]] as const) this.tone(out, t + 0.42, f * (1 + r() * 0.01), 0.6, v);
+        break;
+      // a fire flaring up: a roar that swells and settles, a few sparks
+      case 'flare':
+        this.burst(out, t, 1.6, 500, 'lowpass', 0.6, 0.8, 1400, 0.4);
+        for (let i = 0; i < 4; i++) this.burst(out, t + 0.3 + r() * 0.9, 0.02 + r() * 0.03, 2000 + r() * 2400, 'bandpass', 0.2, 1.5);
+        break;
     }
   }
 
@@ -302,7 +408,7 @@ export class AmbientBeds extends AudioProcessor {
     if (to) o.frequency.exponentialRampToValueAtTime(to, t + d);
     const g = new GainNode(ac, { gain: 0.0001 });
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(v * SHOT_SCALE, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(v * SHOT_SCALE * this.shotScale, t + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t + d);
     o.connect(g).connect(dest);
     o.start(t);
@@ -317,7 +423,7 @@ export class AmbientBeds extends AudioProcessor {
     if (to) filter.frequency.exponentialRampToValueAtTime(to, t + d);
     const g = new GainNode(ac, { gain: 0.0001 });
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(v * SHOT_SCALE, t + Math.max(0.004, d * rise));
+    g.gain.exponentialRampToValueAtTime(v * SHOT_SCALE * this.shotScale, t + Math.max(0.004, d * rise));
     g.gain.exponentialRampToValueAtTime(0.0001, t + d);
     src.connect(filter).connect(g).connect(dest);
     src.start(t, this.rand() * 2);

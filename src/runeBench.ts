@@ -119,7 +119,7 @@ export class RuneBench {
     all.addEventListener('click', () => {
       const before = this.wornKey(s);
       this.fresh = new Set(mergeAll(s).map((r) => r.id));
-      play('merge');
+      play('runeMerge');
       this.after(before);
     });
     const open = autoRunesOpen(this.hooks.meta());
@@ -134,7 +134,7 @@ export class RuneBench {
     auto.addEventListener('click', (e) => {
       if (!open) return twinNote(`Rune Auto opens at ${AUTO_RUNES_STARS} stars won across the armies: ${featureStarsToGo(this.hooks.meta(), 'autoRunes')} to go`, e.clientX, e.clientY - 20);
       const before = this.wornKey(s);
-      if (autoRunes(s, this.hooks.kinds())) play('summon');
+      if (autoRunes(s, this.hooks.kinds())) play('runeSet');
       this.after(before);
     });
     const satchel = el('button', 'rbBtn rbSatchel', 'Satchel');
@@ -302,8 +302,8 @@ export class RuneBench {
     this.putDown(false);
     if (done === 'merged') {
       this.fresh = new Set([to.rune!]);
-      play('merge');
-    } else if (done === 'set') play('summon');
+      play('runeMerge');
+    } else if (done === 'set') play('runeSet');
     this.after(before);
   }
 

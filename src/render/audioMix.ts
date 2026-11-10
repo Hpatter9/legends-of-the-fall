@@ -75,6 +75,7 @@ export function trackGain(id: string): number {
 /** The cues that are the page's own taps and chimes: they go to the ui bus. */
 export const UI_CUES: ReadonlySet<Cue> = new Set<Cue>([
   'tap', 'summon', 'merge', 'coin', 'star', 'levelUp', 'coinRecycle', 'coinClaim', 'sparkle', 'autoStart', 'autoStop', 'autoDone', 'setChime2', 'setChime3',
+  'runeSlide', 'runeMerge', 'runeSet', 'ledger',
 ]);
 /** The summoning show's sounds go to their own bus (inside sfx), so a tap that skips the show can hush them. */
 export const SHOW_CUES: ReadonlySet<Cue> = new Set<Cue>(['riseSummon', 'stingSummon', 'slam']);

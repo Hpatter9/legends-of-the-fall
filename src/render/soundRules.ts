@@ -46,7 +46,17 @@ export type Cue =
   // flash or a snap zoom, a swell under a reveal
   | 'blipQuill' | 'blipHero' | 'blipBoss' | 'blipBeast' | 'blipKing' | 'blipGoat' | 'cineHit' | 'cineWhoosh' | 'cineSwell'
   // the Last Stand: a boss wave is coming, and the king takes a hit
-  | 'standBoss' | 'kingHit';
+  | 'standBoss' | 'kingHit'
+  // the Assault's holds (HOLD-SOUND, `holdSound.ts`): a gate, a wall and a drum struck, the ram's head, a gate and a wall broken, a ladder
+  // up and thrown down, the trebuchet let go, a keg's fuse, a weak point found, the great horn, a drum silenced, the wolves, the keep
+  // falling, the host marching out, the Last Hold's dread and the War's end
+  | 'gateHit' | 'wallHit' | 'drumHit' | 'ramHit' | 'gateBreak' | 'wallBreak' | 'ladderUp' | 'ladderDown' | 'trebLoose' | 'fuse'
+  | 'weakPoint' | 'greatHorn' | 'drumSilenced' | 'wolfHowl' | 'keepFall' | 'hostMarch' | 'lastHold' | 'warEnd'
+  // a hand-fired ultimate's three seconds (BATTLE-POLISH): the power gathering through its opening, and the slow beat after the blow
+  | 'ultCharge' | 'ultSlow'
+  // the menus: the rune bench's pull bar sliding, two runes merging, a rune set on a hero; a ledger's page turned (the Castle's views, the
+  // Summoning tab's nearest row)
+  | 'runeSlide' | 'runeMerge' | 'runeSet' | 'ledger';
 
 /** How a sound mixes. `gap`: least ms (real time) between two of it. `ms`: how long it rings, which is how long it holds
  *  its voices. `weight`: voices it uses. `prio`: 0 may be dropped first when the mix is full, 3 always plays. `gain`: its
@@ -100,6 +110,32 @@ export const CUES: Record<Cue, CueSpec> = {
   autoStart: c(0, 400, 1, 2, 2.67),
   autoStop: c(0, 600, 2, 2, 1.85),
   autoDone: c(0, 1000, 3, 2, 0.87),
+  runeSlide: c(120, 300, 1, 1, 4.3),
+  runeMerge: c(60, 900, 3, 2, 1.74),
+  runeSet: c(60, 600, 2, 2, 2.29),
+  ledger: c(150, 350, 1, 1, 4.27),
+
+  // (the holds: the blows on the structures are many and soft, never dropped behind a fight's own; the news of the battle always plays)
+  gateHit: c(260, 300, 2, 1, 1.22),
+  wallHit: c(260, 300, 2, 1, 1.48),
+  drumHit: c(260, 400, 2, 1, 0.94),
+  ramHit: c(300, 700, 3, 2, 0.83),
+  gateBreak: c(0, 1400, 4, 3, 0.91),
+  wallBreak: c(0, 1500, 4, 3, 1),
+  ladderUp: c(200, 500, 2, 2, 2.04),
+  ladderDown: c(200, 600, 2, 2, 1.86),
+  trebLoose: c(300, 900, 3, 2, 1.45),
+  fuse: c(300, 1200, 2, 2, 2.72),
+  weakPoint: c(0, 1200, 3, 3, 1.72),
+  greatHorn: c(0, 2400, 4, 3, 0.68),
+  drumSilenced: c(0, 1300, 3, 3, 0.76),
+  wolfHowl: c(600, 1800, 2, 2, 1.05),
+  keepFall: c(0, 3000, 5, 3, 0.82),
+  hostMarch: c(0, 2000, 3, 3, 1.08),
+  lastHold: c(0, 3200, 4, 3, 0.71),
+  warEnd: c(0, 4200, 5, 3, 1),
+  ultCharge: c(0, 1450, 3, 3, 1.05),
+  ultSlow: c(0, 700, 2, 3, 1.29),
 
   swingLight: c(110, 120, 1, 0, 0.8),
   swingSword: c(110, 160, 1, 0, 0.9),
@@ -222,6 +258,15 @@ function leaving(unit: Unit, shot: Shot): Cued[] {
   return [{ cue: elementCue(m.el), gain: 0.8 }];
 }
 
+/** How long after the doorway swap its event may be heard (ms: the tick it happened in, and the one after). */
+export const DOORWAY_MS = 200;
+/** Whether a swap just made was the doorway one (`unjam` in `battle.ts`): it stamps the two with the battle's time (`swapAt`); a kit's or
+ *  a spell's swap does not. */
+export function isDoorwaySwap(b: Pick<Battle, 't' | 'units'>, id: number): boolean {
+  const at = b.units.find((x) => x.id === id)?.swapAt;
+  return at !== undefined && b.t - at >= 0 && b.t - at <= DOORWAY_MS;
+}
+
 /** The skills cast in one tick, by caster (`castsOf`): a cast's own hits come before its `skill` event, so a hit looks its skill up here. */
 export function castsOf(events: readonly BattleEvent[]): Map<number, string> {
   const m = new Map<number, string>();
@@ -330,6 +375,9 @@ export function cuesFor(b: Battle, e: BattleEvent, casts?: ReadonlyMap<number, s
     case 'burrow':
       return [{ cue: 'earthRumble', gain: e.phase === 'up' ? 1.1 : 0.7 }];
     case 'swap':
+      // (HOLD-SOUND: a blocked hero and its shooter changing places in a doorway (`unjam`, which stamps both with the moment) is two
+      //  pairs of feet shuffling past each other, not a spell's blink)
+      if (isDoorwaySwap(b, e.a)) return [{ cue: 'steps', gain: 0.6 }];
       return [{ cue: 'blink' }, { cue: 'blink', delay: 80, gain: 0.8 }];
     case 'aura':
       return [{ cue: 'shieldHum', gain: 0.7 }];

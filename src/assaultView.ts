@@ -23,6 +23,7 @@ import { snapOf } from './sim/nemesis';
 import { warchiefOf } from './sim/muster';
 import type { ApproachId, PlatoonRole } from './sim/assault/holdTypes';
 import { portrait, loadSomeSheets } from './render/sheets';
+import { play, setHold } from './render/sound';
 
 export interface MusterHooks {
   /** Save the meta (a recruit bought, the plan changed). */
@@ -186,6 +187,10 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
     formations: { ...st.formations },
   };
   let menu: OrnateMenu | null = null;
+  // (HOLD-SOUND: the war table has its own music and the host's camp under it; the Last Hold's is darker, and tolls as it opens)
+  const lastHold = !hooks.restorm && isLastHold(m, army) && !!m.war && !m.war.end;
+  setHold({ army, at: 'table', ...(lastHold ? { last: true } : {}) });
+  if (lastHold) play('lastHold');
   const draw = () => {
     const short = party.filter((k) => troopsOf(m, k).length < PLATOON_SIZE).length;
     // (phase 5: the Last Hold, the whole Council left on its walls)
@@ -315,7 +320,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
     const others = last ? [] : (war?.members ?? []).filter((n) => n.army !== army && n.rank !== 'warchief').slice(0, 2);
     for (const n of others) menuNote(hold.parentElement!, `${n.name} keeps to the ${armyById(n.army)?.name.replace(/^The /, '') ?? n.army}: this is not their war.`);
     menuFoot(menu, {
-      back: { word: 'back', onClick: () => { menu?.close(); hooks.onBack(); } },
+      back: { word: 'back', onClick: () => { menu?.close(); setHold(null); hooks.onBack(); } },
       primary: {
         label: short ? `March · ${short} platoon${short === 1 ? '' : 's'} short` : 'March',
         onClick: () => {
@@ -482,7 +487,7 @@ export function openAssaultResult(_m: Meta, r: AssaultResult, hooks: { onBack():
     menuWell(sec.parentElement!).append(el('p', '', `The works not used are paid back: ${r.refund} crowns`));
   }
   menuFoot(menu, {
-    back: { word: 'back', onClick: () => { menu.close(); hooks.onBack(); } },
-    ...(!r.won && hooks.onFill ? { primary: { label: 'Fill the ranks', onClick: () => { menu.close(); hooks.onFill!(); } } } : {}),
+    back: { word: 'back', onClick: () => { menu.close(); setHold(null); hooks.onBack(); } },
+    ...(!r.won && hooks.onFill ? { primary: { label: 'Fill the ranks', onClick: () => { menu.close(); setHold(null); hooks.onFill!(); } } } : {}),
   });
 }
