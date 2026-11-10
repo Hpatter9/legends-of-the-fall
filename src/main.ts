@@ -210,7 +210,9 @@ import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/ui/combat-heart.png';
 import { COMBAT_ART } from './combatArtAssets';
 import { EidolonCall } from './eidolonCall';
-import { nextWords, pieceInfo, showPieceCard } from './eidolonChainView';
+import { nextWords, pieceInfo, pieceSigil, showPieceCard } from './eidolonChainView';
+import { openQuestComplete } from './questComplete';
+import { chainPartView, eidolonChainOf } from './questCompleteRules';
 import { chainOfBattle, readyToBind, type PieceFound } from './sim/eidolonChains';
 import { chainById } from './sim/eidolonChainData';
 import { trialOfBattle } from './sim/eidolonTrials';
@@ -2230,6 +2232,17 @@ class Game {
   private taunted = new Map<number, Set<number>>();
   /** EIDOLON-CHAINS: a piece a quest battle's win found, shown once its beat after has played. */
   private pendingPiece: PieceFound | null = null;
+  /** QUEST-COMPLETE: a part of an Eidolon chain is done (its piece found): the Quest complete card for the part, whose "See the piece"
+   *  goes on to the piece's own card (as it showed before); Close leaves it for the Pact Gallery. */
+  private showPartDone(piece: PieceFound, onClose?: () => void): void {
+    const pieceCard = (): void => showPieceCard(piece, { next: nextWords(this.meta, piece), ...(onClose ? { onClose } : {}) });
+    const chain = eidolonChainOf(piece.chain);
+    const goal = chain?.parts[piece.part]?.goal;
+    const view = chain ? chainPartView(chain, piece.part, this.meta.unlocked, goal?.kind === 'battle' ? this.meta.quests?.how?.[goal.battle] : undefined) : undefined;
+    if (!view) return pieceCard();
+    let on = false;
+    openQuestComplete(view, { face: pieceSigil(piece.piece), onNext: () => ((on = true), pieceCard()), onClose: () => queueMicrotask(() => !on && onClose?.()) });
+  }
   /** EIDOLONS: the War Horn in the fight and at the camp, and the Eidolon's call (`eidolonCall.ts`). */
   private eid!: EidolonCall;
   private tactics!: TacticsView;
@@ -2766,7 +2779,7 @@ class Game {
           if (!practice) this.home.openQuests(chain ? 'eidolons' : 'active');
           const piece = this.pendingPiece;
           this.pendingPiece = null;
-          if (piece) showPieceCard(piece, { next: nextWords(this.meta, piece), onClose: () => this.home.openQuests('eidolons') });
+          if (piece) this.showPartDone(piece, () => this.home.openQuests('eidolons'));
         });
       });
   }
@@ -4091,7 +4104,7 @@ class Game {
       const pieces = (this.meta.quests?.pieces ?? []).filter((id) => !piecesBefore.includes(id)).map(pieceInfo).filter((p) => !!p);
       // (a quest battle's piece waits for its beat after: the card shows over the quest log, `questEnd`)
       if (pieces.length && quest) this.pendingPiece = pieces[0];
-      else if (pieces.length && !this.auto) setTimeout(() => showPieceCard(pieces[0], { next: nextWords(this.meta, pieces[0]) }), 900);
+      else if (pieces.length && !this.auto) setTimeout(() => this.showPartDone(pieces[0]), 900);
     }
     document.body.dataset.phase = b.phase;
     document.body.dataset.roster = run.roster.length ? 'some' : 'none';

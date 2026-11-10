@@ -203,10 +203,10 @@ export class Home {
     this.camp = new CampScene((kind) => this.openSheet(kind), () => this.go(this.hooks.onParty));
     // (QUESTS: Gwen behind the bar opens her card, the board opens the log's Board tab, the Quests button its Active tab)
     this.tavern = new PaintedTavern((kind) => this.openSheet(kind), () => this.openRoster(), {
-      onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), closed: () => this.revealJoined(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
+      onGwen: () => openGiverCard(this.meta, 'gwen', { changed: () => this.questsChanged(), closed: () => this.revealJoined(), openBoard: () => this.openQuests('board'), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
       onBoard: () => this.openQuests('board'),
       onQuests: () => this.openQuests('active'),
-      onGiver: (key) => openGiverCard(this.meta, key, { changed: () => this.questsChanged(), closed: () => this.revealJoined(), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
+      onGiver: (key) => openGiverCard(this.meta, key, { changed: () => this.questsChanged(), closed: () => this.revealJoined(), openBoard: () => this.openQuests('board'), openLog: () => this.openQuests('active'), fight: (id) => this.questBattle(id) }),
     }, {
       // (TAVERN-RANKUP: the Upgrades button's quick list, and a hero's gold chevron straight to their Rank up card)
       // (TALENT-ARROWS: a talent row's Spend, and a chevron that marks only talent points, open that hero's talent tree)
@@ -499,12 +499,14 @@ export class Home {
     this.camp.stop();
     const draw = (t: LogTab) =>
       drawQuestLog($('hmSheetBox'), this.meta, t, {
-        changed: () => {
+        changed: (hold) => {
           saveMeta(this.meta);
           this.refresh();
-          // (SECRET-HEROES: a hero quest handed in from the log brings its hero in: its reveal plays over the log)
-          this.revealJoined();
+          // (SECRET-HEROES: a hero quest handed in from the log brings its hero in: its reveal plays over the log; QUEST-COMPLETE: once
+          // the Quest complete card has closed, not under it)
+          if (!hold) this.revealJoined();
         },
+        board: () => draw('board'),
         close: () => this.closeSheet(),
         fight: (id, auto) => this.questBattle(id, auto),
         saved: () => this.hooks.questSaved?.() ?? null,

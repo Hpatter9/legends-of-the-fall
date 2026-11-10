@@ -22,6 +22,8 @@ import { settings } from './settings';
 import { rulerOf, rulerWords } from './rulerRules';
 import { RULER_URLS } from './rulerUrls';
 import { battleOfQuest, canFightBattle } from './sim/questRun';
+import { openQuestComplete } from './questComplete';
+import { questCompleteView, snapOf } from './questCompleteRules';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -102,6 +104,8 @@ export interface CardHooks {
   fight?(battle: string): void;
   /** The card was closed after a hand-in (SECRET-HEROES: a hero quest's hero has its reveal now). */
   closed?(): void;
+  /** QUEST-COMPLETE: show the quest board (the Quest complete card's primary button). */
+  openBoard?(): void;
 }
 
 let wrap: HTMLElement | null = null;
@@ -183,20 +187,15 @@ export function openGiverCard(m: Meta, key: string, hooks: CardHooks): void {
     btn('Close', 'primary', closeGiverCard);
   } else if (t.kind === 'handIn') {
     lines.append(el('h4', '', t.q.title), el('p', '', 'Done! Hand it in for your reward.'), el('p', 'qcPay', rewardText(rewardOf(t.q), m)));
-    // (the words before the hand-in: a hero quest's hero is still the tease, SECRET-HEROES; its reveal plays as the card closes)
-    const paid = rewardText(rewardOf(t.q), m);
     btn('Hand in', 'primary', () => {
+      // (QUEST-COMPLETE: the giver's thanks, the recap and the rewards are the Quest complete card's now; the quest as it stands is read
+      // before the hand-in takes it out of the log, and a hero it brings has its reveal as that card closes)
+      const snap = snapOf(m, t.q.id, todayKey());
       if (!handIn(m, t.q.id, todayKey())) return;
-      play('coinClaim');
       hooks.changed();
-      // (their thanks, then the card's done: a tap closes it)
-      const keep = t.q.reward.keepsake ? [el('p', 'qcKeep', `Keepsake: ${t.q.reward.keepsake}`)] : [];
-      lines.replaceChildren(el('h4', '', t.q.title), ...t.q.done.map((l) => say(t.q, l)), ...keep, el('p', 'qcPay', `+ ${paid}`));
-      row.replaceChildren();
-      btn('Close', 'primary', () => {
-        closeGiverCard();
-        hooks.closed?.();
-      });
+      closeGiverCard();
+      if (snap) openQuestComplete(questCompleteView(snap), { quest: t.q, onClose: () => hooks.closed?.(), ...(hooks.openBoard ? { onNext: () => hooks.openBoard!() } : {}) });
+      else hooks.closed?.();
     });
     btn('Not now', '', closeGiverCard);
   } else if (t.kind === 'offer') {

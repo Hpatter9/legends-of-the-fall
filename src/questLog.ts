@@ -24,6 +24,8 @@ import { chainsShown, summonerWaiting } from './sim/eidolonChains';
 import { drawEidolonsTab } from './eidolonChainView';
 import { questPlace, ruleLines, type Destination } from './sim/questGoto';
 import { takeMeThere } from './questGo';
+import { openQuestComplete } from './questComplete';
+import { questCompleteView, snapOf } from './questCompleteRules';
 
 export type LogTab = 'active' | 'board' | 'eidolons' | 'done';
 
@@ -44,9 +46,12 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 
 export interface LogHooks {
-  /** The save changed: save it and redraw the home screen. */
-  changed(): void;
+  /** The save changed: save it and redraw the home screen. `hold` (QUEST-COMPLETE): a hero the change brought waits for its reveal, which
+   *  plays when `changed()` is called again without it (as the Quest complete card closes). */
+  changed(hold?: boolean): void;
   close(): void;
+  /** QUEST-COMPLETE: show the quest board (the Quest complete card's "The next part" and "Quest board"). */
+  board?(): void;
   /** Begin (or carry on) a quest battle (batch 2): the page opens the party with its cast locked in. */
   fight?(battle: string, auto?: number): void;
   /** The quest battle saved part-way, if there is one (its Fight reads Continue). */
@@ -157,10 +162,13 @@ function drawActive(list: HTMLElement, m: Meta, redraw: () => void, hooks: LogHo
     } else if (isDone(a)) {
       const give = el('button', 'primary', 'Hand in');
       give.addEventListener('click', () => {
+        // (QUEST-COMPLETE: the quest as it stands is read before the hand-in takes it out of the log; the card's rewards have the cues)
+        const snap = snapOf(m, a.id, todayKey());
         if (!handIn(m, a.id, todayKey())) return;
-        play('coinClaim');
-        hooks.changed();
+        hooks.changed(true);
         redraw();
+        if (snap) openQuestComplete(questCompleteView(snap), { quest: q, onClose: () => hooks.changed(), ...(hooks.board ? { onNext: () => hooks.board!() } : {}) });
+        else hooks.changed();
       });
       side.append(give);
     } else if (battleOfQuest(a.id) && hooks.fight) {
