@@ -171,7 +171,7 @@ under the music:
 
 ## 3. Tests
 
-- `test/hold-sound.test.ts` (new, 15 tests): every built hold has a voice and a bed that exists; the war table's and the Last Hold's music;
+- `test/hold-sound.test.ts` (new, 16 tests with round 2): every built hold has a voice and a bed that exists; the war table's and the Last Hold's music;
   the battle track heard on the field and the triumph bed after a win (and the old state, where it was not); the drums' beat; each kind of
   structure's hit and break; rams, ladders, the trebuchet, kegs, weak points, the horn, the keep; every event's cues exist and the big
   ones always play; near-only events and the pan; the assault's four ends; the ultimate's cues; the doorway swap; the menu cues' bus; the
@@ -211,35 +211,81 @@ under the music:
   was not won in the time). The hand-fired ultimate's `ultCharge` / `ultSlow`, the rune bench, the Auto buttons and the ledgers were not
   driven in the browser either; each is one call at a site the old cue already fired from.
 - **Page errors: none from the sound.** Two runs (the Necropolis, the Foundry) logged one error each from the Assault's worker:
-  `Failed to execute 'postMessage' on 'DedicatedWorkerGlobalScope': function … could not be cloned` (a skeleton's raise, a freeze). It is in
-  the worker's posting of the battle, which this branch does not touch (no file under `src/sim/`, `assaultWorker.ts` or `assaultSim.ts`
-  changed), and the battle played on. One run of the Necropolis on main did not show it, so I could not confirm it there: it depends on
-  what a unit is doing at the moment of the post. Listed for the director below.
+  `Failed to execute 'postMessage' on 'DedicatedWorkerGlobalScope': function … could not be cloned`. I wrote here at first that the battle
+  played on. It did not: the logs show the page's clock stopped at that moment (3:56 and 4:14) and never moved again. Found and fixed in
+  round 2, below.
 - No screen's look changed, so there are no new screenshots.
 
-## 5. For the director: what needs a call
+## Round 2 (the director's calls, after merging main 0.453.0)
 
-1. **Each hold's own music.** None exists. Every hold's field plays `battle`, then `boss` at the lord; the war table plays `deploy` (the Last
-   Hold's, `calmap`). My recommendation: bring back the nine army arrangements BATTLE-MUSIC-2 dropped (`orcs undead beasts wildwood labyrinth
-   ogres infernal yokai golems`; their sources were `tools/epic-music/tracks/<army>.mjs`, in git history) as each hold's *field* track, one
-   line each in a new `HOLD_TRACK` beside `HOLD_VOICE`. They are the main theme in each army's dress, so the boss crossfade still blends. The
-   cost is about 250 KB a hold, 2.3 MB in all, on the first visit's download (4.9 MB of audio now), and they need a listen: the owner
-   dropped them once for "one good battle music". I did not render them: it is the owner's call whether the Assault is where the armies get
-   their themes back.
-2. **The Last Hold and the War's end have stings, not music.** `lastHold` and `warEnd` are synthesised cues of three and four seconds. If
-   the War's end deserves a piece of its own (I think it does: it is the end of the game's long arc), that is a new render from the main
-   theme (`tools/epic-music/`), played by `endAssault` in place of the plain fanfare.
-3. **The war table's music is `deploy`.** It reads as "planning before a battle", and it is what every other deployment plays. If the camp's
-   theme was wanted there, it is one word in `TRACK_OF_PLACE` (`muster`).
-4. **`calmap` on the Last Hold's table** is a borrowed track. When the Calamity comes back out of hiding it will be heard in both places;
-   say if the Last Hold should have its own by then.
-5. **The Auto buttons reuse the auto-replay's cues** (`autoStart`, `autoStop`). They fit, but a player may hear them as "a replay began".
-   A pair of their own is ten lines if wanted.
-6. **A skipped ultimate still rings its build-up.** A tap that skips the moment drops the freeze, but `ultCharge` (1.4 s) plays out, as
-   `ultSlash` always has. Cutting a cue short needs a bus of its own, as the summoning show has (`hushSummon`); small, but a change to the
-   mixer, so I left it.
-7. **A worker error, not from this change.** The Assault's worker sometimes fails to post the battle because something in it holds a
-   function (see Checked). It wants its own look: a snapshot that fails to post is a resume that may be lost.
-8. **Nobody has heard any of this.** The levels are measured; the timbres are not. The first things I would listen to: the drums over each
-   bed (`DRUM_SCALE`, 2), the `gateHit` at x1 with a full platoon on a gate, `keepFall` into the fanfare, and `ultCharge` under the slash.
-   `__audioApi.renderCue('keepFall')` renders any cue to a buffer to save and hear.
+The calls: no per-hold music (the owner chose one battle arrangement); a piece for the War's end; cut a skipped ultimate's build-up; find
+and fix the worker's error. The war table's `deploy`, the Last Hold's `calmap` and the Auto buttons' cues stay as they are.
+
+### The worker's error: the lord's change of form froze the Assault
+
+**What was posted.** A boss that changes form (`enterPhase` in `bossPhases.ts`) was given its second form's kit as `Unit.kit`: an object
+whose skills are functions (`cast: raiseDead`, `cast: shardBurst` ...). The Assault's worker posts every fighter to the page each batch and
+keeps the battle for a resume every twenty seconds, both by structured clone, and a clone fails on a function. Found by stepping each hold
+headless and searching every batch: `units[225].kit.skill.cast` at 4:29 of the Necropolis, the moment the Lich King changed form. Not the
+warcamp and not the weak points: the lord, in any hold whose lord changes form. A Sure-footed nemesis did the same from the first tick
+(`nemStart` put a copied kit on its unit), which made the worker fail at its start and the page fall back to running the battle itself.
+
+**What it cost.**
+- **The battle froze.** The worker's post threw, so the batch never reached the page; the page waits for a batch before it asks for the
+  next, so it never asked again. The field stood still with the boss track playing, until the player left. (The first probe's logs: the
+  Necropolis stopped at 3:56, the Foundry at 4:14.)
+- **The resume snapshot was lost** from that moment: `saveBattle` clones the battle, caught the failure and kept nothing, so a resume
+  went back to the last snapshot before the change of form, up to twenty seconds earlier (and would freeze again when he changed).
+- The battle's end could not be posted either, so the assault could not be settled.
+
+**The fix** (the sim; no number changes). The changed kit is kept on the unit as plain data, `Unit.kitRef` (`KitRef` in `abilities.ts`:
+which kit and slot the skill and the ultimate come from, and the passive), and `kitOf` builds the kit from it (once a ref, so the kit is the
+same object from tick to tick). `enterPhase` and `nemStart` set `kitRef`; nothing sets `Unit.kit` in an Assault any more. A resumed battle's
+lord now keeps his second form (before, a clone that somehow succeeded would still have lost it). The Duchess's fight keeps its `Unit.kit`
+(a plain battle, never cloned).
+
+**Tests.** `test/assault-clone.test.ts` (new): for each of the nine holds, no function anywhere in the battle as it starts, in any batch, or
+after the lord has changed form; the battle and each batch can be structured-cloned; the page's copy stands where the worker's does; a
+battle kept and read back has a lord with the same skill and ultimate. A kit ref is the kit it names and survives a clone; a Sure-footed
+nemesis keeps its feet with no function on its unit. `test/bossPhases.test.ts`: reads the changed skill through `kitOf` (it read
+`Unit.kit`), and clones the battle after the change.
+
+### The War's End: a piece of its own
+
+`src/audio/warend.opus` (`tools/epic-music/tracks/warend.mjs`): the main theme in D major at 100 bpm, 24 bars, **57.6 s**, 237 KB. The tune
+first alone on a horn over still strings and a bell; the B section on the strings with the choir rising; then the tune again with
+trumpets, horns, choir, bells, the timpani and a march on the kit. It loops (seam 0.69; 86 % of the melody on chord tones). Levelled by the
+pipeline to **-18.0 LUFS, -6.5 dBTP** (phone -19.6), so it takes the loops' usual trim. `build.mjs` copies every file in `src/audio/` and
+lists it in the service worker, so `audio/warend.opus` is in `FILES` (checked in `out/web/sw.js`); the audio download is 5.13 MB (was 4.90).
+
+It plays:
+- **over the War's-end scene** (`warEndScene.ts`: `music: 'warEnd'`, was `triumph`; its `sceneVictory` sting is kept);
+- **over the Council board's end card**: while the Dark Council's board is open after the War has ended (`nemesisView.ts`), and the
+  place's music comes back when it closes.
+
+`sceneTrack` (moved from `sound.ts` to `epicMusic.ts`, pure) maps a scene's music id to its track. The Last Hold keeps its sting, and the
+result card after the Last Hold falls keeps the fanfare, the triumph bed and the `warEnd` sting; the piece comes with the scene at the camp.
+
+### A skipped ultimate cuts its build-up
+
+`ultCharge` and `ultSlow` now go to the show's bus (`MOMENT_CUES` in `audioMix.ts`; the bus the summoning show already uses so a tap can
+hush it, and a fight and the show never sound together). A tap that skips a moment calls `hushMoment()`: the bus fades out in about a tenth
+of a second (never cut dead) and opens again 1.6 s later, after the build-up would have ended; the next moment's cue opens it at once. The
+slash and the blow's own sting are not on that bus.
+
+### Round 2's checks
+
+R2RESULTS
+
+## 5. For the director: what is still open
+
+(Round 1's calls 1 to 6 were answered: see Round 2.)
+
+1. **Nobody has heard any of this**, the War's End included. The levels are measured; the timbres and the arrangement are not. The first
+   things I would listen to: `src/audio/warend.opus`, the drums over each bed (`DRUM_SCALE`, 2), `gateHit` at x1 with a full platoon on a
+   gate, `keepFall` into the fanfare, and `ultCharge` under the slash. `__audioApi.renderCue('keepFall')` renders any cue to a buffer.
+2. **The Council's board plays the War's End on every tab** once the War is over (the Council, the News, the Fallen, the Spoils), not only
+   on the end card's tab: the board as a whole is the War's record by then, and music that stopped and started between tabs would jar. Say
+   if it should be the Council tab alone.
+3. **Other places that keep a battle by cloning** may hold a `Unit.kit` too: I fixed the two that put one on a fighter in an Assault and
+   checked the Assault. The Duchess's fight still uses `Unit.kit`; it is never posted or snapshotted today.

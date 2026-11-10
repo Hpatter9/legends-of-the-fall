@@ -19,7 +19,7 @@ export function warEndScene(end?: WarEnd, look: Area = 'warcamp'): Scene {
     title: 'The War’s End',
     blurb: 'The Last Hold falls, and the Dark Council with it.',
     moment: { kind: 'warEnd' },
-    music: 'triumph',
+    music: 'warEnd',
     sting: 'sceneVictory',
     out: 'fade',
     cast: {

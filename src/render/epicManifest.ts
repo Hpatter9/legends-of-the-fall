@@ -1,6 +1,6 @@
 // The epic music's files and loop lengths. Written by tools/epic-music/manifest.mjs: do not edit by hand.
 // `seconds` is the loop's length (or, for a sting, its whole length); each file also holds a second more of the loop's start, so
-// the page can loop a window of it however a decoder trims the ends. About 4.90 MB in all.
+// the page can loop a window of it however a decoder trims the ends. About 5.13 MB in all.
 
 export interface EpicEntry {
   file: string;
@@ -33,4 +33,5 @@ export const EPIC_MANIFEST = {
   tower: { file: 'tower.opus', loop: true, seconds: 86.4137, start: 0, bytes: 417779 },
   triumph: { file: 'triumph.opus', loop: true, seconds: 46.1538, start: 0, bytes: 183290 },
   victory: { file: 'victory.opus', loop: false, seconds: 13.8889, start: 0, bytes: 66207 },
+  warend: { file: 'warend.opus', loop: true, seconds: 57.6, start: 0, bytes: 242184 },
 } satisfies Record<string, EpicEntry>;

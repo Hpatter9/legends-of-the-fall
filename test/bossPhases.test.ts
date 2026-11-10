@@ -6,6 +6,7 @@ import { CAL_BOSSES } from '../src/sim/calamityBosses';
 import { PHASE2, PHASE_AT, PHASE_PAUSE_MS } from '../src/sim/bossPhases';
 import { calBossBoost } from '../src/sim/calamity';
 import { readyBattle } from './helpers';
+import { kitOf } from '../src/sim/abilities';
 
 const FINALS = [...ARMIES.map(bossOf), ...CAL_BOSSES];
 
@@ -89,7 +90,9 @@ test('the second form is the data: surge, shield, adds, new skill, and a leap', 
   assert.equal(orc.b.units.filter((u) => u.side === 'foe').length, orc.foes + 2, 'adds');
   assert.ok(orc.boss.hasteUntil! > orc.b.t, 'hasted');
   const boar = surge('boarKing');
-  assert.equal(boar.boss.kit!.skill.name, 'Gore Charge', 'its skill is changed');
+  assert.equal(kitOf(boar.boss)!.skill.name, 'Gore Charge', 'its skill is changed');
+  // (HOLD-SOUND round 2: the changed kit is on the boss as plain data, so the battle can still be cloned)
+  assert.doesNotThrow(() => structuredClone(boar.b));
   const min = surge('minotaurChampion');
   assert.ok(min.b.units.some((u) => u.side === 'hero' && u.alive && Math.abs(min.boss.u - u.u) + Math.abs(min.boss.v - u.v) === 1), 'it leaps in beside a hero');
 });
