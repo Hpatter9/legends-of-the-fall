@@ -1,3 +1,11 @@
+### BLOODTUSK-STRUCTURES — Cohesive walls and buildings
+
+- **Owner / branch / worktree:** Codex; `fix/bloodtusk-structures`; `/workspace/legends-of-the-fall`.
+- **Authorisation / scope:** owner approved correcting doubled walls/corners, building proportions, timber gates and slope foundations. Preserve map collision, breach and siege rules, existing weak points and other holds.
+- **Completion:** continuous perimeter artwork, readable matching gates and building hierarchy, grounded structures, focused checks/typecheck/build and three portrait previews. Update PR #495; no merge or deployment.
+- **Status:** complete, structure correction for PR #495. One exposed-edge palisade with corner posts and earth bank faces; matched timber gate states aligned to opening planes; lower longhouse, consistent timber lookouts and low earth/sill/threshold foundations. Eight affected test files, final typecheck/build, three phone sizes and reduced motion passed.
+- **Handoff:** [structure correction](notes/bloodtusk-structures.md); [hall](samples/bloodtusk-structures/chiefs-hall-393.png); [gate](samples/bloodtusk-structures/main-gate-393.png).
+
 ### BLOODTUSK-ART — Replace warcamp stand-ins
 
 - **Owner / branch / worktree:** Codex; `art/bloodtusk-weathering`; `/workspace/legends-of-the-fall`.

@@ -56,3 +56,7 @@ Validation: 20 affected test files passed, including ambient rules, map integrit
 ## Bespoke art follow-up
 
 After PR #495, the owner approved replacing all four art stand-ins. Dedicated worker poses, intact weathered palisades, an unfinished siege engine and low cliff/foundation transitions are now imported on `art/bloodtusk-weathering`. The earlier pending-art statements above describe the previous pass. See [the art correction handoff](bloodtusk-art.md) for current assets and validation.
+
+## Wall and building fit
+
+The approved structure correction removes double fencing, connects the perimeter at shared corner posts, aligns timber gates with their openings, replaces the chief's hall with a lower timber longhouse, and fits low foundations into the hillside. See [the structure handoff](bloodtusk-structures.md) for the latest screenshots and validation.

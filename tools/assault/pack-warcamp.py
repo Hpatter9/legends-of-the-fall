@@ -49,7 +49,7 @@ for row, (job, y0, y1, foot_y) in enumerate([
 
 details = Image.open(source / 'orc-warcamp-details.png').convert('RGBA')
 for col in range(4):
-    cut(details, f'palisadeWeathered{col}', (col * 384, 0, (col + 1) * 384, 475), width=38, foot=(192, 367))
+    cut(details, f'palisadeWeathered{col}', (col * 384, 0, (col + 1) * 384, 475), width=34, foot=(192, 367))
 for col, (name, width) in enumerate([('ridgeScree', 58), ('ridgeRoots', 55), ('foundationFoot', 46), ('wornDoorstep', 66)]):
     cut(details, name, (col * 384, 475, (col + 1) * 384, 697), width=width)
 for col, (name, width, fp) in enumerate([
@@ -58,21 +58,36 @@ for col, (name, width, fp) in enumerate([
 ]):
     cut(details, name, (col * 384, 697, (col + 1) * 384, 1024), width=width, fp=fp)
 
+# Timber architecture shares the camp's camera and measured ground contacts.
+gates = Image.open(source / 'orc-timber-gates.png').convert('RGBA')
+for row, (kind, width, foot_y) in enumerate([('timberGate', 88, 399), ('timberInner', 80, 900)]):
+    for col, state in enumerate(['Whole', 'Battered', 'Open']):
+        cut(gates, kind + state, (col * 512, row * 512, (col + 1) * 512, (row + 1) * 512),
+            width=width, foot=(256, foot_y - row * 512), fp=(2, 2))
+fittings = Image.open(source / 'orc-structure-fittings.png').convert('RGBA')
+cut(fittings, 'timberHall', (0, 0, 512, 512), width=272, foot=(256, 435), fp=(6, 4))
+cut(fittings, 'timberJoint', (512, 0, 1024, 512), width=24, foot=(260, 477))
+cut(fittings, 'timberRubble', (1024, 0, 1536, 512), width=30, foot=(256, 477))
+for col, (name, width) in enumerate([('earthApron', 74), ('timberSill', 64), ('earthThreshold', 66)]):
+    cut(fittings, name, (col * 512, 512, (col + 1) * 512, 1024), width=width)
+
 height = max(image.height for _, image, _, _ in pieces) + 4
 names = {name for name, *_ in pieces}
 for name, y in re.findall(r'  (\w+): \{ r: \[\d+, (\d+),', meta):
     if int(y) >= base.height and name not in names:
         raise ValueError(f'Another atlas extension follows the original art: {name}; repack together rather than overwrite it')
 meta = '\n'.join(line for line in meta.split('\n') if not any(line.startswith(f'  {name}:') for name in names))
-result = Image.new('RGBA', (base.width, base.height + height))
+result = Image.new('RGBA', (base.width, base.height + height * 2))
 result.paste(base, (0, 0))
 x, y = 2, base.height + 2
 lines = []
 for name, image, foot, fp in pieces:
+    if x + image.width + 2 > base.width:
+        x, y = 2, y + height
     result.paste(image, (x, y))
     lines.append(f'  {name}: {{ r: [{x}, {y}, {image.width}, {image.height}], foot: [{foot[0]:.2f}, {foot[1]:.2f}], fp: [{fp[0]}, {fp[1]}] }},')
     x += image.width + 3
-assert x < base.width, 'Finishing strip needs another shelf'
+result = result.crop((0, 0, base.width, y + height))
 result.save(ROOT / atlas_path, lossless=True)
 notice = '// Bloodtusk finishing strip appended by tools/assault/pack-warcamp.py.'
 if notice not in meta:

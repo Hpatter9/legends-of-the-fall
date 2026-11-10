@@ -76,12 +76,12 @@ const CAMP_BELONGINGS: Stamp[] = [
 
 const CAMP_BUILDINGS: Stamp[] = [
   // Hot metal yard: the workshop faces its anvil, fuel and cart instead of an empty patch of coals.
-  { kind: 'solid', name: 'The forge workshop', sprite: 'forge', rect: { u0: 64, v0: 52, u1: 65, v1: 53 }, scale: 1.15, level: true, burns: true },
+  { kind: 'solid', name: 'The forge workshop', sprite: 'forge', rect: { u0: 64, v0: 52, u1: 65, v1: 53 }, scale: 0.95, level: true, burns: true },
   { kind: 'solid', name: 'Forge furnace', sprite: 'forgeFire', rect: { u0: 63, v0: 54, u1: 63, v1: 54 }, scale: 0.8 },
   { kind: 'solid', name: 'Coal store', sprite: 'stockpile', rect: { u0: 68, v0: 42, u1: 68, v1: 43 }, scale: 0.85, level: true, burns: true },
   // Longhouse neighbourhood: hearths, hide shelters and spoils share a small muddy common.
-  { kind: 'solid', name: 'Clan hide shelter', sprite: 'hideHut', rect: { u0: 42, v0: 66, u1: 43, v1: 67 }, scale: 1.05, level: true, burns: true },
-  { kind: 'solid', name: 'Clan yurt', sprite: 'yurt', rect: { u0: 46, v0: 67, u1: 47, v1: 68 }, scale: 1.05, level: true, burns: true },
+  { kind: 'solid', name: 'Clan hide shelter', sprite: 'hideHut', rect: { u0: 42, v0: 66, u1: 43, v1: 67 }, scale: 0.95, level: true, burns: true },
+  { kind: 'solid', name: 'Clan yurt', sprite: 'yurt', rect: { u0: 46, v0: 67, u1: 47, v1: 68 }, scale: 0.95, level: true, burns: true },
   { kind: 'solid', name: 'The camp well', sprite: 'well', rect: { u0: 47, v0: 63, u1: 47, v1: 63 }, scale: 0.85 },
   { kind: 'solid', name: 'Clan trophy pole', sprite: 'skullTotem', rect: { u0: 41, v0: 65, u1: 41, v1: 65 }, scale: 0.85 },
   // Stores on the wagon lane: food, stolen cargo, a guarded store tent and the loading cart.
@@ -293,7 +293,7 @@ export const BLOODTUSK: Blueprint = {
     // the throne's yard: the skull throne, braziers and the war banner
     // (phase 1b: the keep's hall behind the throne, on the mound's back terraces)
     { kind: 'height', rect: { u0: 34, v0: 42, u1: 39, v1: 45 }, h: 12 },
-    { kind: 'solid', name: 'The keep’s hall', rect: { u0: 34, v0: 42, u1: 39, v1: 45 }, scale: 0.88 },
+    { kind: 'solid', name: 'The keep’s hall', sprite: 'timberHall', rect: { u0: 34, v0: 42, u1: 39, v1: 45 }, scale: 1, level: true },
     { kind: 'piece', at: { u: 43, v: 42 }, piece: 'skulls' },
     { kind: 'piece', at: { u: 42, v: 43 }, piece: 'brazier' },
     { kind: 'piece', at: { u: 46, v: 42 }, piece: 'brazier' },

@@ -225,6 +225,7 @@ export function faceOf(b: Board, zone: Uint8Array, i: number, toward: number, bp
   const n = toward >= 0 ? b.tiles[toward] : undefined;
   const nz = toward >= 0 ? zone[toward] : 0;
   if (bp?.wallStyle === 'ridge' && (z === Z('S') || z === Z('M'))) return 'cliff';
+  if (bp?.weathered && z === Z('P')) return nz === Z('D') ? 'mudBank' : 'rampart';
   if (z === Z('S')) return t.perch || t.h >= 10 ? 'tower' : hash(i % b.w, Math.floor(i / b.w), 3) < 0.2 ? 'stoneWallDamaged' : 'stoneWall';
   if (z === Z('M')) return t.h >= 7 ? 'terrace' : 'moundEarth';
   if (t.perch && t.h >= 6) return z === Z('E') || z === Z('P') ? 'rampart' : 'cliff';
@@ -300,6 +301,8 @@ export interface Placement {
   inner?: boolean;
   /** Authored healthy timber variant; damaged/breached forts keep their real state pictures. */
   intact?: string;
+  /** A shared post where two contour edges turn, rather than another whole fence panel. */
+  joint?: boolean;
   /** The tile it sorts with instead of its front (a tower's top sorts with its back, so the crew on it show). */
   depth?: number;
   /** One of the camp's set pieces of the blueprint (drawn since phase 1 on open ground: the Landing's tents, the fires, the flags). */
@@ -336,6 +339,49 @@ const rectTiles = (w: number, r: { u0: number; v0: number; u1: number; v1: numbe
   return out;
 };
 
+/** One connected outer skin over the two-tile collision bank. A panel follows each exposed ditch edge;
+ *  its endpoints share a post at a turn. Internal collision-cell edges never become fences. */
+export function contourTimber(b: Board, zone: Uint8Array, forts: readonly FortSpec[]): Placement[] {
+  const out: Placement[] = [];
+  const ends = new Map<string, { u: number; v: number; axes: Set<boolean>; p: Placement }>();
+  forts.forEach((f, fort) => {
+    if (f.kind !== 'palisade') return;
+    for (const front of f.tiles) {
+      const u = front % b.w, v = Math.floor(front / b.w);
+      for (const [du, dv] of SIDES) {
+        const x = u + du, y = v + dv;
+        if (x < 0 || y < 0 || x >= b.w || y >= b.d || ![Z('D'), Z('K'), Z('N'), Z('T')].includes(zone[y * b.w + x])) continue;
+        const flip = dv !== 0;
+        const p: Placement = { name: 'palisadeRun', u: u + du / 2, v: v + dv / 2, front, fort, flip,
+          intact: `palisadeWeathered${Math.floor(hash(u, v, 65) * 4)}`, scale: 0.995 + hash(u, v, 61) * 0.01,
+          lean: (hash(u, v, 62) - 0.5) * 0.015 };
+        out.push(p);
+        for (const sign of [-1, 1]) {
+          const eu = p.u + Math.abs(dv) * sign / 2, ev = p.v + Math.abs(du) * sign / 2;
+          const key = `${eu},${ev}`;
+          const end = ends.get(key) ?? { u: eu, v: ev, axes: new Set<boolean>(), p };
+          end.axes.add(flip);
+          ends.set(key, end);
+        }
+      }
+    }
+  });
+  for (const end of ends.values()) if (end.axes.size === 2) {
+    out.push({ name: 'timberJoint', u: end.u, v: end.v, front: end.p.front, fort: end.p.fort, joint: true });
+  }
+  return out;
+}
+
+/** Match the gate's painted plane to the outer edge of its actual opening, rather than the middle of a thick bank. */
+export function timberGateFoot(f: FortSpec, w: number): { u: number; v: number; flip: boolean } {
+  const us = f.tiles.map((i) => i % w), vs = f.tiles.map((i) => Math.floor(i / w));
+  let u = (Math.min(...us) + Math.max(...us)) / 2, v = (Math.min(...vs) + Math.max(...vs)) / 2;
+  const alongU = Math.abs(f.front.u - u) > Math.abs(f.front.v - v);
+  if (alongU) u = f.front.u > u ? Math.max(...us) + 0.5 : Math.min(...us) - 0.5;
+  else v = f.front.v > v ? Math.max(...vs) + 0.5 : Math.min(...vs) - 0.5;
+  return { u, v, flip: !alongU };
+}
+
 /** Every standing piece of the hold (the hold's own art; the arenas' set pieces where it has none). */
 export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: readonly FortSpec[]): Placement[] {
   const { w } = b;
@@ -354,10 +400,12 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
   };
   // (a ring side runs along u where its tiles share a v, so the run's sprite is mirrored where they share a u)
   const alongV = (u: number, v: number) => Math.abs(u - 49.5) > Math.abs(v - 49.5);
+  if (bp.weathered && bp.contour) out.push(...contourTimber(b, zone, forts));
   // the structures
   forts.forEach((f, n) => {
     for (const t of f.tiles) taken.add(t);
     if (f.kind === 'palisade') {
+      if (bp.weathered && bp.contour) return;
       for (const t of f.tiles) {
         const u = t % w;
         const v = Math.floor(t / w);
@@ -368,14 +416,15 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       return;
     }
     const m = mid(f.tiles);
+    const timber = bp.weathered && f.kind !== 'drum' ? timberGateFoot(f, w) : undefined;
     const name = f.kind === 'drum' ? 'drumStruck' : f.kind === 'ironGate' ? 'ironGate' : f.kind === 'northGate' ? 'northGate' : f.kind === 'southGate' ? 'southGate' : 'sallyPort';
     // (a sally port is one tile along its wall: its picture stands on the outer of its two tiles)
     if (f.kind === 'sallyPort') {
       const outer = f.tiles.reduce((p, q) => (Math.max(Math.abs((q % w) - 49.5), Math.abs(Math.floor(q / w) - 49.5)) > Math.max(Math.abs((p % w) - 49.5), Math.abs(Math.floor(p / w) - 49.5)) ? q : p));
-      out.push({ name, u: outer % w, v: Math.floor(outer / w), front: m.front, flip: alongV(outer % w, Math.floor(outer / w)), fort: n });
+      out.push({ name, u: outer % w, v: Math.floor(outer / w), front: m.front, flip: alongV(outer % w, Math.floor(outer / w)), ...timber, scale: bp.weathered ? 0.75 : 1, fort: n });
       return;
     }
-    out.push({ name, u: m.u, v: m.v, front: m.front, flip: f.kind !== 'drum' && alongV(m.u, m.v), fort: n, scale: f.kind === 'drum' ? 0.7 : 1 });
+    out.push({ name, u: m.u, v: m.v, front: m.front, flip: f.kind !== 'drum' && alongV(m.u, m.v), ...timber, fort: n, scale: f.kind === 'drum' ? 0.7 : 1 });
   });
   // the stamps
   let hut = 0;
@@ -393,13 +442,13 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       if (bp.weathered && s.level) {
         // Low, irregular aprons sit under the actual solid footprint; door wear stays on open level ground.
         for (const [u, v] of [[s.rect.u0, s.rect.v1], [s.rect.u1, s.rect.v0]]) {
-          out.push({ name: hash(u, v, 74) < 0.5 ? 'foundationFoot' : 'rootApron', u, v,
+          out.push({ name: hash(u, v, 74) < 0.5 ? 'earthApron' : 'timberSill', u, v,
             front: v * w + u, low: true, scale: 0.8 });
         }
         const u = Math.round(m.u), v = s.rect.v1 + 1;
         const tile = b.tiles[v * w + u];
         if (tile && !tile.wall && !tile.rock && !isWater(tile) && tile.h === b.tiles[m.front].h) {
-          out.push({ name: 'wornDoorstep', u, v, front: v * w + u, low: true, scale: 1 });
+          out.push({ name: 'earthThreshold', u, v, front: v * w + u, low: true, scale: 1 });
         }
       }
     } else if (s.kind === 'dressing') {
@@ -410,10 +459,10 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       const tiles = rectTiles(w, s.rect);
       const m = mid(tiles);
       // (the corner towers' crenellated tops, the gate towers' perches, the watchtowers on their crags)
-      const name = /corner tower/.test(s.name) ? bp.wallStyle === 'ridge' ? 'lookout' : 'cornerTower' : /Watchtower|Ossuary Tower|Lookout|Watch Tree/.test(s.name) ? 'watchtower' : 'gateTower';
+      const name = bp.weathered ? 'lookout' : /corner tower/.test(s.name) ? bp.wallStyle === 'ridge' ? 'lookout' : 'cornerTower' : /Watchtower|Ossuary Tower|Lookout|Watch Tree/.test(s.name) ? 'watchtower' : 'gateTower';
       for (const t of tiles) taken.add(t);
       // (sorted with the perch's back tile: its crew stand on it and are drawn over it, never hidden under its floor)
-      out.push({ name, u: m.u, v: m.v, front: m.front, depth: tiles[0], scale: name === 'lookout' ? 1.35 : name === 'watchtower' ? 0.9 : name === 'gateTower' ? 0.8 : 1 });
+      out.push({ name, u: m.u, v: m.v, front: m.front, depth: tiles[0], scale: name === 'lookout' ? bp.weathered ? 1 : 1.35 : name === 'watchtower' ? 0.9 : name === 'gateTower' ? 0.8 : 1 });
     } else if (s.kind === 'barricade') {
       for (const p of s.tiles) {
         const t = p.v * w + p.u;
@@ -516,4 +565,11 @@ export function fortLook(kind: string, hp: number, maxHp: number, broken: boolea
   // (the North Gate's sheet has no battered picture)
   if (share < 0.6 && base !== 'northGate') return `${base}Battered`;
   return base;
+}
+
+/** Timber gates keep the same damage/open rules as the original gate artwork. */
+export function timberGateLook(look: string): string {
+  if (!/^(southGate|northGate|ironGate|sallyPort)/.test(look)) return look;
+  const family = /^(southGate|northGate)/.test(look) ? 'timberGate' : 'timberInner';
+  return family + (look.endsWith('Broken') ? 'Open' : look.endsWith('Battered') ? 'Battered' : 'Whole');
 }

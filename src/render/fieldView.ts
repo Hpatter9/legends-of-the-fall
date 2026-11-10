@@ -34,7 +34,7 @@ import { facesRight, FOOT, HH, rawAt, TH, TW } from './iso';
 import { facesRightOf, figureOf, framesOf, type Anim } from './sheets';
 import { detailFor, type Detail } from './fieldDetail';
 import { CHUNK, chunkHeights, chunksInView, focusOnScreen, viewRect, type PlayArea, type WorldRect } from './fieldCull';
-import { clutterOf, decalOf, DEEP, MAT, faceOf, fortLook, fringesOf, materialsOf, placementsOf, type Placement } from './fieldLooks';
+import { clutterOf, decalOf, DEEP, MAT, faceOf, fortLook, timberGateLook, fringesOf, materialsOf, placementsOf, type Placement } from './fieldLooks';
 import * as ORC_ATLAS from './assaultOrcAtlas';
 import * as UNDEAD_ATLAS from './assaultUndeadAtlas';
 import * as BEASTS_ATLAS from './assaultBeastsAtlas';
@@ -630,7 +630,7 @@ export class FieldView {
       // (the firelight: a warm glow round each flame, above the scene, added)
       const glows: { sp: Sprite; base: number; seed: number; big: boolean }[] = [];
       for (const p of this.placed.get(cy * 100 + cx) ?? []) {
-        const up = LIGHTS[p.road ? (p.road === 'campfire' ? 'bonfire' : p.road) : p.name];
+        const up = LIGHTS[p.road ? (p.road === 'campfire' ? 'bonfire' : p.road) : this.f.hold?.bp.weathered ? this.lookOf(p) : p.name];
         if (up === undefined || (p.road && p.road !== 'campfire')) continue;
         const t = b.tiles[p.front];
         const h = p.fort !== undefined ? this.floorOf(p) : t.h;
@@ -722,7 +722,9 @@ export class FieldView {
     const h = this.f.hold;
     if (p.fort !== undefined && h) {
       const f = h.forts[p.fort];
+      if (p.joint) return f.broken ? 'timberRubble' : 'timberJoint';
       let look = fortLook(f.spec.kind, f.hp, f.maxHp, f.broken, !!f.open);
+      if (h.bp.weathered) look = timberGateLook(look);
       if (look === 'palisadeRun') look = p.intact ?? (p.inner ? 'palisadeInner' : look);
       // (a breached segment: the ramp of logs on the ring's outer row only)
       if (look === 'palisadeBreach' && Math.max(Math.abs(p.u - 49.5), Math.abs(p.v - 49.5)) < 23) return 'gatePost';

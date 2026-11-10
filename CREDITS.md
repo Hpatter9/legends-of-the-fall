@@ -763,3 +763,5 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 ### Bloodtusk warcamp finishing art
 
 - `art-source/assault/orc/orc-camp-workers.png` and `orc-warcamp-details.png`: original artwork generated with OpenAI image generation for the owner-approved Bloodtusk art correction. Dedicated smith, woodcutter and butcher poses; four intact weathered palisades; unfinished siege engine; low shale, root, foundation and doorstep details. Trimmed/scaled and appended to `src/art/assault/orc/sprites.webp` by `tools/assault/pack-warcamp.py`. Existing fort damage states and all reused artwork retain their credits above.
+
+- `art-source/assault/orc/orc-timber-gates.png` and `orc-structure-fittings.png`: original timber gate damage states, compact chief's longhouse, corner post/stump and low earth/sill/threshold fittings generated with OpenAI image generation for the approved Bloodtusk structure correction. The fittings sheet received a transparency cleanup with the same image tool. Cut and anchored by `tools/assault/pack-warcamp.py` into the existing cached orc atlas.
