@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.461.0',
+    date: '2026-11-10',
+    title: 'A foe calls you out once',
+    notes: ['When a nemesis both taunted a hero and challenged them to a duel, the call-out played twice. It now plays once, then the challenge.'],
+  },
+  {
     version: '0.460.0',
     date: '2026-11-10',
     title: 'Two new heroes, and an earlier Castle',
