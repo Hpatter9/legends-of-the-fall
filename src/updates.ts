@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.457.0',
+    date: '2026-11-10',
+    title: 'Choose your battle always shows',
+    notes: ['With a quest tracked, the Choose your battle button slid under the tab bar: fixed. The Council\'s label and the enemy plaque\'s last line are whole again.'],
+  },
+  {
     version: '0.456.0',
     date: '2026-11-10',
     title: 'A smoother first hour',
