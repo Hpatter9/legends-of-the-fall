@@ -599,6 +599,14 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 - House shield and heirloom keepsake (`src/art/dynasty/{house,heirloom}.webp`) are original OpenAI-generated paintings in the owner-approved style, retained in `art-source/dynasty-finish/house-heirloom.png`.
 - Season/fate symbols, twelve Nemesis trait symbols, and Houses/Council backdrops reuse the already credited source artwork in `art-source/expansion/`. `tools/dynasty-art/import.py` crops symbols and downsamples the backdrops; original source art remains unchanged. All new imports are bundled for offline play.
 
+## Quest complete (UI-ART-WIRE)
+
+- **The Quest complete card's paintings** (`src/art/ui/quest-complete/seal.webp`, `keepsake.webp`, `hero-joins.webp`): the wax seal on its
+  ribbon over the card's head, a keepsake on its nail and the hooded stranger in a doorway for a hero joining: original art made for this game
+  with OpenAI image generation from the prompts in `docs/notes/quest-complete-art-prompts.md` (`art/quest-complete`, sources in
+  `art-source/quest-complete/`). `tools/quest-complete/import-art.py` trims and downscales them, never repainted. Bundled into game.js for
+  offline play (docs/notes/ui-art-wire.md).
+
 ## Duel show (UI-ART-WIRE)
 
 - **The duel's tug-of-war bar** (`src/art/duel/bar-frame.webp`, `bar-fill-green.webp`, `bar-fill-red.webp`, `bar-knot.webp`, `bar-flare.webp`): original art
