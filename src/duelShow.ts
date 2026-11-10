@@ -19,6 +19,7 @@ import { at, depth, facesRight } from './render/iso';
 import { portrait } from './render/sheets';
 import { play } from './render/sound';
 import { crowdSays } from './quips';
+import { registerCamCover } from './camSafe';
 import type { Anchor } from './quipView';
 import { bigSwing, crowdSpots, endMoods, hitMoods, hopOf, shoutFor, SHOUT_GAP_MS, TUG, tugLeader, tugPoint, walkAt, walkFrom, END_SHOW_MS, type CrowdSpot, type Mood } from './duelShowRules';
 
@@ -321,6 +322,8 @@ export class DuelShow {
     root.append(face(champion, 'hero'), track, face(nem, 'nem'), label);
     host.append(root);
     this.bar = { root, green, red, knot, clock };
+    // (CAM-SAFE: the camera keeps the two clear of the bar; `#bossBar` is a cover already, and the bar is registered in its own right too)
+    registerCamCover('#bossBar .dsTug');
   }
 
   private drawBar(b: Battle, dt: number): void {

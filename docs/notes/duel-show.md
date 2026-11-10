@@ -73,6 +73,8 @@ The beat's horn is the existing `horn` cue. The walk-in's cue is skipped for red
   - `main.ts` holds the fight while `holding`, holds the outcome while `ending`, feeds it each tick's events, and adds the crowd to the
     follow camera.
   - In a duel the opening foe grumble is not said: its crowd does the shouting.
+- **The camera's safe area** (CAM-SAFE, `camSafe.ts`, from 0.463.0): the bar is drawn inside `#bossBar`, already a cover, and is registered in its
+  own right too (`registerCamCover('#bossBar .dsTug')`). Checked at the three sizes: the two and the crowd stand clear below it.
 - `src/duelShow.css`: the bar, the veil and the names.
 - `src/quips.ts`: `crowdSays`.
 - `src/duelRules.ts`: `clockWords`. The card's "alone in the ring for two and a half minutes" and the timeout's line follow the ring's
