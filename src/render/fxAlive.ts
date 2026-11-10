@@ -24,6 +24,10 @@ export const ALIVE = {
   STRIP_MS: 95,
   /** What a tile keeps of its fill and its strip while a fighter stands on it. */
   OCCUPIED: 0.4,
+  /** FX-ALIVE-ART: a painted edge's strength, of the rim's (the painted loops are soft, so they are drawn a little over the rim's own), and
+   *  what the drawn rim keeps of its own under a painted edge. */
+  PAINTED: 1.6,
+  PAINTED_RIM: 0.6,
   /** With reduced motion: the patch's share of its strength, held still (mid-breath). */
   CALM: 0.75,
 } as const;
@@ -57,3 +61,8 @@ export function tileLook(t: number, phase: number, occupied: boolean, calm: bool
 /** Which frame of an `n`-frame strip a tile shows at time `t` (ms): each tile a few frames on from its neighbours; the first, held, with
  *  reduced motion. */
 export const stripFrame = (t: number, phase: number, n: number, calm: boolean): number => (calm || n <= 1 ? 0 : Math.floor(t / ALIVE.STRIP_MS + phase * n) % n);
+
+/** FX-ALIVE-ART: which quarter of a painted tile's frame holds a diamond edge (`[a, b]`, the corners from the top going round to the right,
+ *  as `rimEdges` gives them): its column and row, 0 or 1. The painted loops frame their whole diamond, so a patch shows only the quarters on
+ *  its outer edges: inside, the frames would meet as a lattice of separate blocks. */
+export const edgeQuarter = (edge: readonly [number, number]): [number, number] => [[1, 0], [1, 1], [0, 1], [0, 0]][edge[0]] as [number, number];
