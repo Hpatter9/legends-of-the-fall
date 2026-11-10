@@ -129,6 +129,33 @@ test('several ultimates queue, each its own opening; a long frame never skips an
   assert.equal(q.current, null);
 });
 
+test('a tap ends the moment at any point: in the settle of a salvo in the air, and in the fade (SWEEP-1110, the director\'s call)', () => {
+  const q = new UltQueue();
+  q.push({ unit: 1, kind: 'archer', name: 'Rain', shape: 'delayed', ms: 1700 });
+  q.step(ULT_MOMENT.OPEN_MS);
+  assert.equal(q.phase, 'settle');
+  q.step(300);
+  q.skip();
+  assert.equal(q.phase, 'fade', 'the settle goes straight to the fade');
+  assert.equal(q.rate, 1, 'no slow beat after a skip');
+  q.step(100);
+  q.skip();
+  assert.ok(q.current, 'still the moment until the next frame');
+  q.step(16);
+  assert.equal(q.current, null, 'a tap in the fade ends it at once');
+  assert.equal(q.phase, 'idle');
+  // (and a queued moment begins after it, with its own opening)
+  q.push({ unit: 1, kind: 'archer', name: 'Rain', shape: 'delayed', ms: 1700 });
+  q.push({ unit: 2, kind: 'wizard', name: 'Bolt', shape: 'instant', ms: 0 });
+  q.skip();
+  q.skip();
+  q.step(16);
+  // (read afresh: the asserts above narrowed it to null)
+  const now = (): { name: string } | null => q.current;
+  assert.equal(now()?.name, 'Bolt');
+  assert.equal(q.phase as string, 'open');
+});
+
 test("a hand-fired ultimate's whole moment lasts about 3 s (BATTLE-POLISH, the owner's ask)", () => {
   // (the freeze on the blow included; the slow beat runs inside the impact's own time)
   const instant = ULT_MOMENT.OPEN_MS + ULT_EPIC.HIT_STOP_MS + ULT_MOMENT.IMPACT_MS + ULT_MOMENT.FADE_MS;

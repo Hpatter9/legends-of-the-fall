@@ -97,7 +97,18 @@ function toast(line: string): void {
   if (!showing) next();
 }
 
+/** SWEEP-1110 (the director's call): a toast never covers an open card or sheet. While one is open (an ornate card, the hero sheet, a
+ *  skill's sheet in a fight, Settings) the toasts wait in their queue, and show once it closes. */
+const CARDS = '.om, #hmSheet:not([hidden]), .fhSheet:not([hidden]), #settings:not([hidden])';
+const cardOpen = (): boolean => [...document.querySelectorAll<HTMLElement>(CARDS)].some((e) => e.offsetParent !== null || (getComputedStyle(e).position === 'fixed' && getComputedStyle(e).display !== 'none'));
+const CARD_POLL_MS = 300;
+
 function next(): void {
+  if (waiting.length && cardOpen()) {
+    showing = true;
+    setTimeout(next, CARD_POLL_MS);
+    return;
+  }
   const line = waiting.shift();
   if (line === undefined) {
     showing = false;
@@ -119,7 +130,17 @@ function next(): void {
   // (a quip's bubble already up steps out of the toast's lane)
   if (lane !== undefined) reclearQuip();
   requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => {
+  // (a card opened while it shows: it steps aside at once, and its line goes back to the front of the queue for when the card closes)
+  const watch = setInterval(() => {
+    if (!cardOpen()) return;
+    clearInterval(watch);
+    clearTimeout(done);
+    el.remove();
+    waiting.unshift(line);
+    next();
+  }, CARD_POLL_MS / 3);
+  const done = setTimeout(() => {
+    clearInterval(watch);
     el.classList.remove('show');
     setTimeout(() => {
       el.remove();

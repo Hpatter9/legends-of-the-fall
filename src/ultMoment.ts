@@ -215,8 +215,9 @@ export class UltMoments {
     if (!m) return this.hide();
     const u = b.units.find((x) => x.id === m.unit);
     this.layer.hidden = false;
-    // (the layer takes taps (to skip) while the battle is held; once it runs again they reach the page)
-    this.layer.classList.toggle('live', q.holdsBattle);
+    // (the layer takes taps (to skip) all through the moment, SWEEP-1110: the settle and the fade too, while the battle runs again; once
+    // the moment is over they reach the page)
+    this.layer.classList.add('live');
     if (q.phase === 'open' && this.shown !== q.seq && u) {
       this.slash(u, m.name);
       fx?.ultGather(u.id, m.el ?? 'light', ULT_MOMENT.OPEN_MS);

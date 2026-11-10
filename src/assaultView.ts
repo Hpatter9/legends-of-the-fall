@@ -14,6 +14,7 @@ import { blueprintOf, holdMapOf } from './sim/assault/assault';
 import { assaultOf, ASSAULT_PRICES, buyRecruit, buySiege, fillCost, fillRanks, PLATOON_SIZE, recruitMarks, scouted, scoutHold, siegeCost, SIEGE_PRICES, troopsOf } from './sim/assault/economy';
 import { assaultParty, defaultPlan, lordLine, type AssaultPlan, type AssaultResult } from './sim/assault/assaultMode';
 import { isLastHold, lastCouncil } from './sim/assault/lastHold';
+import { HOLD_LOOKS } from './sim/assault/holdCodex';
 import { rankOf, troopOf, troopStats, TROOPS, lookOf, troopUnitOf, type PlatoonFormation } from './sim/assault/troops';
 import { FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
 import { levelOfKind } from './sim/levels';
@@ -165,7 +166,7 @@ export function openWarTable(army: string, then: () => void): void {
   const well = menuWell(menu.body);
   for (const line of [
     `Ten stars against the ${a.name.replace(/^The /, '')}, and their warbands have stopped coming. The scouts found where they went.`,
-    `${bp.name}: a palisade over a ditch, a stone wall six steps high, and the warchief's throne on the mound at its heart. Two hundred of them, and the Council's own at the gates.`,
+    `${bp.name}: ${HOLD_LOOKS[army] ?? HOLD_LOOKS.orcs}. Two hundred of them, and the Council's own at the gates.`,
     'Each hero leads a platoon of ten soldiers who fight as it does. Soldiers who fall are gone for good; more are bought with crowns. Heroes are only downed.',
   ])
     well.append(el('p', '', line));

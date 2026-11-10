@@ -212,9 +212,11 @@ export class UltQueue {
     this.left = ms;
   }
 
-  /** A tap: the moment playing goes straight to its fade (its effects then run as they would). */
+  /** A tap: the moment playing goes straight to its fade (its effects then run as they would); a tap in the fade ends it at once.
+   *  SWEEP-1110 (the director's call): a tap ends it at any point, the settle of a salvo in the air included. */
   skip(): void {
     if (this.current && this.phase !== 'fade') this.to('fade', ULT_MOMENT.FADE_MS);
+    else if (this.current) this.left = 0;
     this.stopLeft = 0;
     this.slowLeft = 0;
   }

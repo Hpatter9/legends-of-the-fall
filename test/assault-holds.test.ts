@@ -2,7 +2,8 @@
 // lord, its defences counted from its blueprint, the player's record there and how it is won; one not built yet is a locked line.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { defendersOf, holdPages } from '../src/sim/assault/holdCodex';
+import { defendersOf, HOLD_LOOKS, holdPages } from '../src/sim/assault/holdCodex';
+import { HOLDS } from '../src/sim/assault/holds';
 import { BLOODTUSK } from '../src/sim/assault/maps/orcs';
 import { holdName } from '../src/sim/assault/warAnswer';
 import { ARMIES } from '../src/sim/armies';
@@ -58,4 +59,15 @@ test('the record follows the save: stormed, then conquered and taken again; the 
 test('each hold\'s mark is the hero level its army\'s tenth star needs: the Legendary Orcs\' 55, moved by the army\'s own level, at most 100', async () => {
   const { HOLD_MARK } = await import('../src/sim/assault/garrison');
   for (const a of ARMIES) assert.equal(HOLD_MARK[a.id], Math.min(100, 55 + a.level - 1), a.id);
+});
+
+test('the scouts describe each hold by its own walls, not Bloodtusk Hold\'s palisade and mound (SWEEP-1110)', () => {
+  for (const a of ARMIES) {
+    if (!HOLDS[a.id]) continue;
+    const look = HOLD_LOOKS[a.id];
+    assert.ok(look, `${a.id} has the scouts' line`);
+    assert.ok(look.endsWith('at its heart') && !look.endsWith('.'), `${a.id}: the line closes the sentence the report writes round it`);
+    if (a.id !== 'orcs') assert.ok(!/palisade|on the mound/.test(look), `${a.id} is not described as Bloodtusk Hold`);
+  }
+  assert.equal(new Set(Object.values(HOLD_LOOKS)).size, Object.keys(HOLD_LOOKS).length, 'no two holds alike');
 });

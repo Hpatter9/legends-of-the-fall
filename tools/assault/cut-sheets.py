@@ -383,6 +383,8 @@ LABYRINTH_FILES = {
     'orc-10-camp-props.png': 'lab-10-props.png', 'orc-11-siege-ruins.png': 'lab-11-ruins.png', 'orc-12-river.png': 'lab-12-canal.png',
     'orc-13-decals.png': 'lab-13-decals.png',
 }
+# (the Knights kit's pieces the Maze leaves in their own colours: its living green)
+MAZE_KIT_UNTINTED = {'knights/oak_tree', 'knights/bush'}
 SHEETS['labyrinth'] = {
     'sprites': {
         **{LABYRINTH_FILES[k]: v for k, v in _orc['sprites'].items()},
@@ -398,6 +400,9 @@ SHEETS['labyrinth'] = {
     'fallback': ('orc', {v: k for k, v in LABYRINTH_FILES.items()}),
     'shared': {'ladder', 'ram', 'trebuchet'},
     'tint': lambda a, sheet, slot=None: sandstone(a),
+    # (SWEEP-1110: the Knights kit's buildings and stonework take the hold's sand, bronze and terracotta, `maze_kit`; its trees and bushes
+    # are left as they are)
+    'kit_tint': lambda path: maze_kit if path.startswith('knights/') and path not in MAZE_KIT_UNTINTED else None,
     # (until lab-14 is painted, each maze tile is the hold's own low barricade, recoloured: '=' names another piece of the atlas)
     'standins': {'mazeRun': '=barricade'},
     'kits': {
@@ -433,6 +438,36 @@ def sandstone(a):
     dry = np.stack([g * 0.98 + r * 0.1, g * 0.84, b * 0.5], -1)
     warm = grey * np.array([1.12, 0.98, 0.78]) + (rgb - grey) * 0.5 + np.array([0.03, 0.01, -0.02])
     out = np.where(leafy[..., None], dry, np.where((red | fire)[..., None], rgb, warm))
+    res = a.copy()
+    res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
+    return res
+
+
+
+def maze_kit(a):
+    """SWEEP-1110 (the director's call): the Knights kit's pieces the Maze borrows (drawn for a northern kingdom: blue slate roofs, red
+    tiles, green lawns) brought into the hold's own palette, as its painted sheets are: the roofs and the blue cloth to terracotta, the grey
+    stone to sand, the lawns dried to gold, the timber to a warm bronze-brown, the lamp and fire light kept. Each takes the shade of its
+    own pixel, so the drawing is kept."""
+    rgb = a[..., :3].astype(float) / 255
+    mx = rgb.max(-1)
+    mn = rgb.min(-1)
+    c = mx - mn
+    sat = c / np.maximum(mx, 1e-6)
+    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    h = np.where(c == 0, 0, np.where(mx == r, ((g - b) / np.maximum(c, 1e-6)) % 6, np.where(mx == g, (b - r) / np.maximum(c, 1e-6) + 2, (r - g) / np.maximum(c, 1e-6) + 4))) / 6
+    lum = (0.3 * r + 0.55 * g + 0.15 * b)[..., None]
+    fire = (mx > 0.72) & (h > 0.06) & (h < 0.17) & (sat > 0.45)
+    blue = (h > 0.45) & (h < 0.8) & (c > 0.025)
+    red = ((h < 0.045) | (h > 0.9)) & (sat > 0.3)
+    leafy = (h > 0.17) & (h <= 0.45) & (c > 0.04)
+    ramp = lambda lo, hi: np.array(lo) / 255 + (np.array(hi) - np.array(lo)) / 255 * np.clip(lum * 1.25, 0, 1)
+    terracotta = ramp([70, 28, 18], [236, 150, 104])
+    sand = ramp([58, 40, 26], [246, 214, 168])
+    gold = ramp([70, 52, 20], [222, 186, 102])
+    bronze = rgb * np.array([1.06, 0.94, 0.72]) + np.array([0.02, 0.0, -0.02])
+    brown = (h >= 0.045) & (h <= 0.17) & ~fire
+    out = np.where(fire[..., None], rgb, np.where((blue | red)[..., None], terracotta, np.where(leafy[..., None], gold, np.where(brown[..., None], bronze, sand))))
     res = a.copy()
     res[..., :3] = (out.clip(0, 1) * 255).astype(np.uint8)
     return res
@@ -911,6 +946,10 @@ def cut(army, report_only=False):
         im = Image.open(p).convert('RGBA')
         a = np.array(im)
         a[..., 3] = np.where(a[..., 3] >= 128, 255, 0)
+        # (a hold may bring a borrowed kit's colours into its own palette: `kit_tint`)
+        kt = spec.get('kit_tint', lambda path: None)(path)
+        if kt:
+            a = kt(a)
         # (the small flair is kept at its own size: halved, a flower is a pixel)
         h = a if min(im.size) < 70 else half(a)
         bb = bbox(h)
