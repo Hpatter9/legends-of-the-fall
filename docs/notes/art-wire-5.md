@@ -43,7 +43,7 @@ down with Lanczos to the size the game draws, saved as a 256-colour palette PNG 
 - **The backdrops.** The PR also repainted the Houses' and the Council's backdrops; `tools/dynasty-art/import.py` brings them in as before. The
   Council's chamber was repainted with its sconces elsewhere, so its ALIVE lights and embers (`render/ambientScenes.ts`) were moved onto the new
   flames (found from the painting's bright pixels); the Houses' candles still sit where they were.
-- **Not wired** (not asked for, and nothing draws them yet): `duel-ring.png`, `hester-table.png` and `elders-table.png`, also repainted in PR #464.
+- **Not wired** (not asked for, and nothing draws them yet): `duel-ring.png`, `hester-table.png` and `elders-table.png`, also repainted in PR #464. (Since then the ring and the Elders' table were wired by TAVERN-25 and Hester's table by UNUSED-ART: [unused-art.md](unused-art.md).)
 - The older importers (`tools/council-art/import.py`, `tools/dynasty-art/import.py`) no longer cut these symbols, so re-running them cannot bring
   back the 128 px cuts; their browser checks were brought up to date (the sizes, and the twentieth News kind, the Assault's Conquest).
 - **Screens** at 393 and 360: `docs/samples/art-wire-5/{before,after}-<screen>-<width>.jpg` for the Council board, News (top and bottom), Spoils,
