@@ -17,6 +17,20 @@ import { endLine, isLastHold } from './lastHold';
 /** The holds built so far, by army. */
 const BUILT: Readonly<Record<string, Blueprint>> = HOLDS;
 
+/** What the scouts see of each built hold, for the war table's report (SWEEP-1110: the report gave every hold Bloodtusk Hold's palisade and
+ *  mound): its outer ring, its inner wall and its heart, from the hold's blueprint. */
+export const HOLD_LOOKS: Readonly<Record<string, string>> = {
+  orcs: 'a palisade over a ditch, a stone wall six steps high, and the warchief\'s throne on the mound at its heart',
+  undead: 'a ring of iron railings over a ditch, a crypt wall six steps high, and the Lich\'s throne on the barrow at its heart',
+  beasts: 'a ring of log walls over a ditch, a crag wall six steps high, and the Seat of the Pack in the great den at its heart',
+  wildwood: 'a thorn hedge over a ditch, a wall of roots six steps high, and the throne of roots under the Elder Root at its heart',
+  labyrinth: 'a maze of sandstone walls before a bronze-capped ring, a limestone wall six steps high, and the champion\'s throne before the Bull Temple at its heart',
+  ogres: 'a ring wall of boulders and tusks over a ditch, a basalt wall six steps high, and the giant\'s seat in the Hall of Tusks at its heart',
+  infernal: 'a ring of spiked obsidian walls over a ditch, a basalt wall six steps high, and the burning throne under the Demon Spire at its heart',
+  yokai: 'a ring of plastered walls over a ditch, a castle wall six steps high, and the Oni\'s seat before the Shrine of the Moon at its heart',
+  golems: 'a ring of riveted iron walls over a ditch, an iron-banded wall six steps high, and the Titan\'s anvil in the Great Foundry at its heart',
+};
+
 /** How each built hold is won, in a few lines (its tips). */
 export const HOLD_TIPS: Readonly<Record<string, readonly string[]>> = {
   orcs: [
