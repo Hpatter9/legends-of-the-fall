@@ -275,7 +275,18 @@ slash and the blow's own sting are not on that bus.
 
 ### Round 2's checks
 
-R2RESULTS
+- `npm run typecheck`: clean. `npm test` (the full suite): **3028 pass, 0 fail**. `npm run web`: built; `audio/warend.opus` is in
+  `out/web/audio/` and in the service worker's list.
+- **The two holds that froze, played again in Chromium** (`node tools/hold-sound/probe.mjs --armies undead` and `golems`, `--run 240
+  --level 60`): both now play through the lord's change of form to the end with no page error. The Necropolis: conquered, `triumph` under
+  the result. The Foundry: the `boss` track at 5:32, the clock running on past where it had stopped, conquered at about 6:20.
+- **The War's End in Chromium** (`node tools/hold-sound/warend.mjs`, a save whose War has ended): the scene plays `warend` from its file
+  (`fallback: []`), the camp's music comes back after; the Council's board opens on "The War is over" playing `warend`, and the camp's
+  music comes back as it closes. No errors.
+- `test/cinematics.test.ts`: **changed to match** the new requirement: a scene's music may be any track the player has (`sceneTrack`), not
+  only the eleven old synth scores (the War's End is a file with no synth score).
+- Not driven in the browser: the tap that skips an ultimate (`hushMoment` is one call in the moment's tap handler; the bus the cues take is
+  tested).
 
 ## 5. For the director: what is still open
 
