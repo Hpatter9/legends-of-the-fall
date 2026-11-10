@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.471.0',
+    date: '2026-11-10',
+    title: 'Painted gates and keeps for four holds',
+    notes: ['The Moonlit Shrine, Bonefire Crag, Brimstone Gate and the Iron Foundry have their painted gates, keeps and drums.', 'Once the War ends, the Council board shows its hall burning.'],
+  },
+  {
     version: '0.470.0',
     date: '2026-11-10',
     title: 'Painted edges on area effects',
