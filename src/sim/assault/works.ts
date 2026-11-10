@@ -52,6 +52,16 @@ export function wallStretch(b: Battle, i: number): { key: string; tiles: number[
   if (!isWallWalk(b, i)) return null;
   const w = b.board.w;
   const { u, v } = atOf(i, w);
+  if (b.field!.hold?.bp.contour) {
+    // A contoured wall may turn within a stretch. Include its local thickness on both axes, with a stable key for repeated volleys.
+    const x0 = Math.floor(u / 3) * 3;
+    const y0 = Math.floor(v / 3) * 3;
+    const tiles: number[] = [];
+    for (let y = y0 - 2; y <= y0 + 4; y++) for (let x = x0 - 2; x <= x0 + 4; x++) {
+      if (x >= 0 && y >= 0 && x < w && y < b.board.d && isWallWalk(b, y * w + x)) tiles.push(y * w + x);
+    }
+    return { key: `contour:${x0}:${y0}`, tiles };
+  }
   // (the wall runs along u where it is further from the middle in v, along v otherwise)
   const alongU = Math.abs(v - 49.5) >= Math.abs(u - 49.5);
   const along = alongU ? u : v;

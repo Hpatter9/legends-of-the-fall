@@ -12,7 +12,7 @@ import { canStep, DIRS, relief, standable, type Board, type Hazard, type Piece, 
 import { mixSeed, Rng } from '../rng';
 import { armyIndex } from '../armies';
 import { ASSAULT_SALT, FIELD } from './stencil';
-import type { Blueprint, FortKind, Rect, Spot, Stamp } from './blueprint';
+import { landformWeight, type Blueprint, type FortKind, type Rect, type Spot, type Stamp } from './blueprint';
 
 /** The fields' base height, how much the relief adds, and the bands of the rings above and below it. */
 export const LAND = 2;
@@ -32,6 +32,10 @@ export interface FortSpec {
   front: Spot;
   /** For a palisade segment: the ditch tiles before it that its rubble ramp fills, outer then inner (by board index). */
   rubble?: number[][];
+  /** Contoured runs carry their actual rubble heights instead of assuming square-ring coordinates. */
+  ramp?: [number, number][];
+  /** Found by approaching the outside of this run; scouting does not mark it automatically. */
+  weakness?: { name: string; hint: string };
 }
 
 export interface HoldMap {
@@ -61,6 +65,7 @@ export function buildHold(bp: Blueprint): HoldMap {
   const tiles: Tile[] = new Array(w * d);
   const zone = new Uint8Array(w * d);
   const stamped = new Uint8Array(w * d);
+  const terrainFixed = new Uint8Array(w * d);
   const noise = mixSeed(seed, 1);
   for (let v = 0; v < d; v++)
     for (let u = 0; u < w; u++) {
@@ -70,20 +75,24 @@ export function buildHold(bp: Blueprint): HoldMap {
       const t: Tile = { h: LAND, deco: (mixSeed(noise, u, v) >>> 0) % 1000 };
       switch (z) {
         case 'L': case 'C': t.h = 1 + Math.floor(n * 1.6); break;
-        case 'K': case 'T': case 'V': case 'N': t.h = LAND + Math.floor(n * RELIEF); break;
+        case 'K': case 'T': case 'V': case 'N': t.h = LAND + Math.floor(n * (bp.relief?.fields ?? RELIEF)); break;
         case 'R': t.h = 0; t.ground = 'deep'; t.stream = true; break;
         case 'F': t.h = 0; t.ground = 'water'; t.stream = true; break;
         case 'Y': t.h = 0; t.bridge = true; break;
         case 'D': t.h = 0; break;
         case 'E': t.h = BANK; break;
         case 'P': t.h = BANK; t.wall = true; break;
-        case 'B': t.h = LAND + Math.floor(n * 1.6); break;
+        case 'B': t.h = LAND + Math.floor(n * (bp.relief?.camp ?? 1.6)); break;
         case 'S': t.h = WALL_TOP; t.paved = true; break;
         case 'I': t.h = LAND; break;
         case 'M': {
           const r = ringOf(u, v);
-          t.h = r >= 4.5 ? LAND + 3 : r >= 3.5 ? LAND + 5 : LAND + 7;
-          t.paved = r < 3.5;
+          t.h = bp.summitHeight ?? (r >= 4.5 ? LAND + 3 : r >= 3.5 ? LAND + 5 : LAND + 7);
+          t.paved = bp.wallStyle !== 'ridge' && r < 3.5;
+          // Shallow scallops break the summit's rim. Paths, foundations and perches are stamped afterwards.
+          const rim = DIRS.some(([du, dv]) => bp.stencil[(v + dv) >> 1]?.[(u + du) >> 1] !== 'M');
+          if (bp.weathered && rim && (mixSeed(noise, u, v, 91) >>> 0) % 3 === 0) t.h--;
+
           break;
         }
       }
@@ -91,38 +100,80 @@ export function buildHold(bp: Blueprint): HoldMap {
       tiles[v * w + u] = t;
     }
   const board: Board = { seed, area: bp.lands.outer as Board['area'], w, d, tiles, pieces: [], hazards: [] };
-  ease(board, zone, stamped);
+  // Broad landforms dominate the small noise. Water, deployment ground and the defensive structures retain their own heights.
+  for (const form of bp.landforms ?? []) for (let v = 0; v < d; v++) for (let u = 0; u < w; u++) {
+    const i = v * w + u;
+    if (!'KTVNB'.includes(String.fromCharCode(zone[i]))) continue;
+    const weight = landformWeight(form, u, v);
+    if (weight <= 0) continue;
+    let height = LAND + Math.round((form.height - LAND) * weight);
+    if (form.terrace && form.kind === 'hill') {
+      const along = form.ramp === 'u' ? u - form.at.u : v - form.at.v;
+      const across = form.ramp === 'u' ? v - form.at.v : u - form.at.u;
+      const ramp = along >= -2 && Math.abs(across) <= 2;
+      if (!ramp) height = Math.min(form.height, LAND + Math.ceil((height - LAND) / form.terrace) * form.terrace);
+      terrainFixed[i] = 1;
+    }
+    tiles[i].h = form.kind === 'hill' ? Math.max(tiles[i].h, height) : Math.min(tiles[i].h, height);
+  }
+  ease(board, zone, stamped, !!bp.contour, terrainFixed);
   // (the land round the ditch meets it at the land's height, so the ditch is two steps down and the bank two up)
   for (let v = 0; v < d; v++)
     for (let u = 0; u < w; u++) {
       const r = ringOf(u, v);
       const i = v * w + u;
-      if (r > 25 && r < 28 && SOFT.has(zone[i])) tiles[i].h = LAND;
+      if (!bp.contour && r > 25 && r < 28 && SOFT.has(zone[i])) tiles[i].h = LAND;
     }
-  ease(board, zone, stamped);
+  if (bp.contour) {
+    // The camp rolls between its yards, but the ditch approaches and stone wall's foot remain accessible siege lanes.
+    for (let v = 0; v < d; v++) for (let u = 0; u < w; u++) {
+      const i = v * w + u;
+      if (!SOFT.has(zone[i])) continue;
+      for (let dv = -2; dv <= 2; dv++) for (let du = -2; du <= 2; du++) {
+        const x = u + du, y = v + dv;
+        if (x < 0 || y < 0 || x >= w || y >= d) continue;
+        const z = zone[y * w + x];
+        if (z === 68 || z === 83) tiles[i].h = LAND;
+      }
+    }
+  }
+  ease(board, zone, stamped, !!bp.contour, terrainFixed);
   // the stamps, in order
   const forts: FortSpec[] = [];
   for (const s of bp.stamps) stamp(board, zone, stamped, s, forts);
   // the palisade's segments: every palisade tile not a gate's, three along a face, both rows deep
-  forts.push(...palisadeSegments(board, zone));
+  forts.push(...(bp.contour ? contourSegments(board, zone) : palisadeSegments(board, zone)));
+  for (const weak of bp.weaknesses ?? []) {
+    const fort = forts.find((f) => f.tiles.includes(weak.at.v * w + weak.at.u));
+    if (!fort) throw new Error(`Weak point ${weak.name} has no structure`);
+    fort.weakness = { name: weak.name, hint: weak.hint };
+  }
   // (the ditch's stakes: slower than the stake field's)
   const ditch: number[] = [];
   for (let i = 0; i < w * d; i++) if (zone[i] === 68 && !stamped[i]) ditch.push(i);
   board.hazards!.push({ kind: 'spikes', tiles: ditch, period: 8000, offset: 4000, tell: 1000 });
-  ease(board, zone, stamped);
+  ease(board, zone, stamped, !!bp.contour, terrainFixed);
+  if (bp.contour) for (const f of forts) if (f.kind === 'palisade') {
+    const i = f.front.v * w + f.front.u;
+    stamped[i] = 1;
+  }
+  if (bp.contour) for (let v = 1; v < d - 1; v++) for (let u = 1; u < w - 1; u++) {
+    const i = v * w + u;
+    if (zone[i] === 66 && !stamped[i] && DIRS.some(([du, dv]) => zone[(v + dv) * w + u + du] === 69)) tiles[i].h = BANK - 1;
+  }
   flesh(board, zone, stamped, bp, rng);
   return { board, zone, forts, stamped };
 }
 
 /** Ease the soft land to a walker's single step against its neighbours (the water, the bridges, the causeways, the stairs' feet), so the
  *  rolling fields never wall a walker in. The walls, the ditch, the mound and the stamped set pieces keep their faces. */
-function ease(b: Board, zone: Uint8Array, stamped: Uint8Array): void {
+function ease(b: Board, zone: Uint8Array, stamped: Uint8Array, contour = false, terrainFixed?: Uint8Array): void {
   for (let pass = 0; pass < 16; pass++) {
     let moved = false;
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
         const i = v * b.w + u;
-        if (!SOFT.has(zone[i]) || stamped[i]) continue;
+        if (!SOFT.has(zone[i]) || stamped[i] || terrainFixed?.[i]) continue;
         const a = b.tiles[i];
         for (const [du, dv] of DIRS) {
           const nu = u + du;
@@ -132,7 +183,7 @@ function ease(b: Board, zone: Uint8Array, stamped: Uint8Array): void {
           const n = b.tiles[j];
           // (eased against the soft land, the water and anything stamped that a walker stands on; never against a wall's face)
           const zj = String.fromCharCode(zone[j]);
-          const against = SOFT.has(zone[j]) || 'RFY'.includes(zj) || (stamped[j] && standable(n));
+          const against = (SOFT.has(zone[j]) && (!contour || !(stamped[j] && !standable(n)))) || 'RFY'.includes(zj) || (stamped[j] && standable(n));
           if (!against) continue;
           if (a.h - n.h > 1) {
             a.h = n.h + 1;
@@ -221,13 +272,19 @@ function stamp(b: Board, _zone: Uint8Array, stamped: Uint8Array, s: Stamp, forts
           mark(u, v);
         }
       break;
-    case 'solid':
+    case 'solid': {
+      const floor = s.level ? Math.min(...[...tilesOf(s.rect)].map(([u, v]) => at(u, v).h)) : undefined;
       for (const [u, v] of tilesOf(s.rect)) {
         const t = at(u, v);
+        if (floor !== undefined) t.h = floor;
         if (s.wall) t.wall = true;
         else t.rock = true;
         mark(u, v);
       }
+      break;
+    }
+    case 'dressing':
+      mark(s.at.u, s.at.v);
       break;
     case 'ground':
       for (const [u, v] of tilesOf(s.rect)) {
@@ -239,6 +296,20 @@ function stamp(b: Board, _zone: Uint8Array, stamped: Uint8Array, s: Stamp, forts
       for (const [u, v] of tilesOf(s.rect)) {
         at(u, v).h = s.h;
         mark(u, v);
+      }
+      break;
+    case 'trail':
+      for (let n = 1; n < s.way.length; n++) {
+        const a = s.way[n - 1], z = s.way[n];
+        const steps = Math.max(Math.abs(z.u - a.u), Math.abs(z.v - a.v));
+        for (let k = 0; k <= steps; k++) {
+          const u = Math.round(a.u + (z.u - a.u) * k / Math.max(1, steps));
+          const v = Math.round(a.v + (z.v - a.v) * k / Math.max(1, steps));
+          for (const [du, dv] of [[0, 0], [1, 0], [0, 1]]) {
+            at(u + du, v + dv).paved = true;
+            at(u + du, v + dv).trail = true;
+          }
+        }
       }
       break;
     case 'paved':
@@ -343,6 +414,59 @@ function palisadeSegments(b: Board, zone: Uint8Array): FortSpec[] {
   return out.filter((x) => x.tiles.length);
 }
 
+/** Each two-by-two contour cell is a short palisade run. Find its outward rubble path through the ditch, using the stencil rather than
+ *  the distance to the old square's centre. Other holds keep their original segments and ids. */
+function contourSegments(b: Board, zone: Uint8Array): FortSpec[] {
+  const out: FortSpec[] = [];
+  const w = b.w;
+  for (let v = 0; v < b.d; v += 2) for (let u = 0; u < w; u += 2) {
+    const tiles = [v * w + u, v * w + u + 1, (v + 1) * w + u, (v + 1) * w + u + 1]
+      .filter((i) => zone[i] === 80 && b.tiles[i].wall && !b.tiles[i].paved);
+    if (!tiles.length) continue;
+    const own = new Set(tiles);
+    const queue = tiles.map((i) => [i]);
+    const seen = new Set(tiles);
+    let path: number[] | undefined;
+    for (let k = 0; k < queue.length && !path; k++) {
+      const route = queue[k];
+      const i = route[route.length - 1];
+      for (const [du, dv] of DIRS) {
+        const x = i % w + du;
+        const y = Math.floor(i / w) + dv;
+        if (x < 0 || y < 0 || x >= w || y >= b.d) continue;
+        const j = y * w + x;
+        if (seen.has(j)) continue;
+        if ((zone[j] === 75 || zone[j] === 78) && standable(b.tiles[j])) { path = [...route, j]; break; }
+        if ((zone[j] !== 68 || !standable(b.tiles[j])) && !own.has(j)) continue;
+        seen.add(j);
+        queue.push([...route, j]);
+      }
+    }
+    if (!path) throw new Error(`Palisade at ${u},${v} has no outward ditch`);
+    const frontTile = path[path.length - 1];
+    const ramp: [number, number][] = tiles.map((i) => [i, BANK - 1]);
+    // (a one-step descent into the ditch, then rubble rises towards the camp)
+    const ditch = path.filter((i) => zone[i] === 68).reverse();
+    ditch.forEach((i, n) => ramp.push([i, Math.min(BANK - 1, LAND - 1 + n)]));
+    const face = u >= 50 ? 'south-east' : v >= 50 ? 'south-west' : 'north-west';
+    out.push({ id: `palisade:${face}:${u}:${v}`, kind: 'palisade', name: `The palisade (${face})`, tiles, floor: BANK,
+      front: { u: frontTile % w, v: Math.floor(frontTile / w) }, ramp });
+  }
+  // A stepped corner sometimes has an extra cell of timber between its tip and the bank. Keep that tip with its neighbouring run,
+  // so a single assault order breaches the full thickness instead of opening a useless pocket inside the palisade.
+  const touchesBank = (f: FortSpec) => f.tiles.some((i) => DIRS.some(([du, dv]) => zone[i + dv * w + du] === 69));
+  for (const f of [...out]) {
+    if (touchesBank(f)) continue;
+    const next = out.find((g) => g !== f && touchesBank(g) && g.tiles.some((j) => f.tiles.some((i) =>
+      Math.abs(i % w - j % w) + Math.abs(Math.floor(i / w) - Math.floor(j / w)) === 1)));
+    if (!next) throw new Error(`Palisade ${f.id} has no inward bank`);
+    next.tiles.push(...f.tiles);
+    next.ramp!.push(...f.tiles.map((i): [number, number] => [i, BANK - 1]));
+    out.splice(out.indexOf(f), 1);
+  }
+  return out;
+}
+
 /** Break a structure's tiles on the board: a gate's open to floor at its height; a palisade segment's to a rubble ramp from the ditch up to
  *  the bank (the ditch before it raised a step at a time). */
 export function openFort(b: Board, f: FortSpec): number[] {
@@ -351,6 +475,10 @@ export function openFort(b: Board, f: FortSpec): number[] {
     const t = b.tiles[i];
     delete t.wall;
     if (f.kind !== 'drum') delete t.rock;
+    changed.push(i);
+  }
+  if (f.ramp) for (const [i, height] of f.ramp) {
+    b.tiles[i].h = height;
     changed.push(i);
   }
   if (f.kind === 'palisade' && f.rubble) {
@@ -402,6 +530,8 @@ function flesh(b: Board, zone: Uint8Array, stamped: Uint8Array, bp: Blueprint, r
   for (const m of bp.muster) clear(m, 2);
   clear(bp.rally, 2);
   clear(bp.reinforce.at, 2);
+  // Reserve tents on rocky shelves need clear walkways around their entrances.
+  if (bp.landforms?.length) clear(bp.warpath, 5);
   for (let i = 0; i < w * b.d; i++) {
     const u = i % w;
     const v = (i - u) / w;
@@ -419,7 +549,11 @@ function flesh(b: Board, zone: Uint8Array, stamped: Uint8Array, bp: Blueprint, r
     } else if (z === 'B') {
       // (the tents in rows: on every third lane, a gap now and then, never within two tiles of a gate's line)
       const r = ringOf(u, v);
-      if (r > 8.5 && r < 15.5 && ((u + v) % 6 === 0 || (u - v + 600) % 6 === 0) && roll < 0.45) t.rock = true;
+      if (bp.districts?.length) continue;
+      if (bp.contour) {
+        const nearCamp = [[39, 65], [64, 37], [32, 50]].some(([x, y]) => Math.abs(u - x) + Math.abs(v - y) < 7);
+        if (nearCamp && roll < 0.13) t.rock = true;
+      } else if (r > 8.5 && r < 15.5 && ((u + v) % 6 === 0 || (u - v + 600) % 6 === 0) && roll < 0.45) t.rock = true;
     }
   }
   // (no tent shuts a lane: a tent with three solid neighbours comes down)
@@ -468,7 +602,7 @@ export function fieldProblems(map: HoldMap, bp: Blueprint): string[] {
   for (let i = 0; i < w * b.d; i++) {
     const u = i % w;
     const v = (i - u) / w;
-    if (ringOf(u, v) < 26.5 || !standable(b.tiles[i]) || b.tiles[i].ground === 'deep' || walk1[i]) continue;
+    if ((bp.contour ? !'KLCTVN'.includes(String.fromCharCode(map.zone[i])) : ringOf(u, v) < 26.5) || !standable(b.tiles[i]) || b.tiles[i].ground === 'deep' || walk1[i]) continue;
     lost++;
     if (!first) first = `(${u}, ${v}) h${b.tiles[i].h}`;
   }

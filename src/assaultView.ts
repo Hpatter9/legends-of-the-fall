@@ -166,7 +166,7 @@ export function openWarTable(army: string, then: () => void): void {
   const well = menuWell(menu.body);
   for (const line of [
     `Ten stars against the ${a.name.replace(/^The /, '')}, and their warbands have stopped coming. The scouts found where they went.`,
-    `${bp.name}: ${HOLD_LOOKS[army] ?? HOLD_LOOKS.orcs}. Two hundred of them, and the Council's own at the gates.`,
+    bp.wallStyle === 'ridge' ? `${bp.name}: a timber warcamp beneath a rocky crag, with the chief’s hall high on its north-west shoulder. Two hundred defend it, and the Council’s own hold the gates.` : `${bp.name}: ${HOLD_LOOKS[army] ?? HOLD_LOOKS.orcs}. Two hundred of them, and the Council's own at the gates.`,
     'Each hero leads a platoon of ten soldiers who fight as it does. Soldiers who fall are gone for good; more are bought with crowns. Heroes are only downed.',
   ])
     well.append(el('p', '', line));
@@ -271,7 +271,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
     // the hold
     const hold = menuSection(menu.body, 'The hold', 'what the scouts saw', 2);
     const intel = menuWell(hold.parentElement!);
-    const zones: Record<string, string> = { fields: 'The Killing Fields', palisade: 'The palisade', bailey: 'The outer bailey', wall: 'The stone wall', keep: 'The Throne Mound' };
+    const zones: Record<string, string> = { fields: 'The Killing Fields', palisade: 'The palisade', bailey: 'The outer bailey', wall: bp.wallStyle === 'ridge' ? 'The crag defences' : 'The stone wall', keep: bp.wallStyle === 'ridge' ? 'The summit hall' : 'The Throne Mound' };
     for (const [z, name] of Object.entries(zones)) {
       const posts = bp.posts.filter((p) => p.zone === z);
       const n = posts.reduce((s, p) => s + p.roster.replace(/ /g, '').length, 0);
@@ -279,6 +279,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
     }
     intel.append(el('p', '', 'The Warpath: 20 more, marching down to the North Gate until its camp is held'));
     intel.append(el('p', '', 'Three war drums hurry the bands while they beat'));
+    if (army === 'orcs') intel.append(el('p', '', 'Look for damaged defences. Bring a platoon close enough to inspect them and reveal a weak point.'));
     hold.parentElement!.append(hold);
     const war = m.war;
     const chief = warchiefOf(war);
@@ -354,7 +355,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
         title: `A ladder · ${SIEGE_PRICES.ladder}`,
         icon: '🪜',
         on: ladder,
-        lines: ['Scale the stone wall: up in four seconds, pushed down by its defenders', ladder ? '✓ Carried' : 'Tap to carry one'],
+        lines: [bp.wallStyle === 'ridge' ? 'Scale the crag: up in four seconds, pushed down by its defenders' : 'Scale the stone wall: up in four seconds, pushed down by its defenders', ladder ? '✓ Carried' : 'Tap to carry one'],
         onPick: () => {
           const list = (st.siege?.ladders ?? []).filter((x) => x !== k);
           st.siege = { ...st.siege, ladders: ladder ? list : [...list, k] };

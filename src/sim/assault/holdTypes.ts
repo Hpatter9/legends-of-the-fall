@@ -213,10 +213,13 @@ export interface FortState {
   open?: boolean;
   /** When it was last struck (the horn, the renderer's battered look). */
   struckAt?: number;
+  /** This run’s troops have seen the weak structure closely enough to exploit it. */
+  discovered?: boolean;
 }
 
 /** What the field tells the page this tick, besides the battle's own events. */
 export type HoldEvent =
+  | { kind: 'weakness'; fort: string }
   | { kind: 'breach'; fort: string; tiles: number[] }
   | { kind: 'fortHit'; fort: string; dmg: number; by: number }
   | { kind: 'horn' }
