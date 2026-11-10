@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ALIVE, breath, stripFrame, tileLook, tilePhase } from '../src/render/fxAlive';
+import { ALIVE, breath, edgeQuarter, stripFrame, tileLook, tilePhase } from '../src/render/fxAlive';
 import { OVER_FIGHTER_STATUS_ALPHA } from '../src/render/overFighter';
 
 test('the edge carries the area: the rim is bright and the fill faint', () => {
@@ -57,4 +57,14 @@ test('the marks in front of a fighter are drawn at half their strength; the livi
   const m = JSON.parse(readFileSync('src/art/fx/alive/atlas.json', 'utf8')) as { cell: number[]; rows: Record<string, number[]> };
   assert.deepEqual(m.cell, [128, 64], 'a 2:1 tile, as the prompt asks');
   for (const [el, row] of Object.entries(m.rows)) assert.ok(row.length === 2 && row[1] > 1, el);
+});
+
+test('a painted loop shows only the quarters on the patch outer edges: each side of the diamond lies in its own quarter of the frame', () => {
+  // (the corners from the top going round to the right: up-right, down-right, down-left, up-left)
+  assert.deepEqual(edgeQuarter([0, 1]), [1, 0]);
+  assert.deepEqual(edgeQuarter([1, 2]), [1, 1]);
+  assert.deepEqual(edgeQuarter([2, 3]), [0, 1]);
+  assert.deepEqual(edgeQuarter([3, 0]), [0, 0]);
+  const m = JSON.parse(readFileSync('src/art/fx/alive/atlas.json', 'utf8')) as { rows: Record<string, number[]> };
+  assert.deepEqual(Object.keys(m.rows).sort(), ['dark', 'earth', 'fire', 'forest', 'ice', 'light', 'poison', 'wind']);
 });

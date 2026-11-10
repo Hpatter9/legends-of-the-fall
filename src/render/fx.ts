@@ -5,8 +5,8 @@
 import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { GroundPaint, GroundSet, patchRims, patchTile, reachOfWidth } from './groundMarks';
 import { AREA_REACH, areaSkill, areaTiles, auraTiles, spellTiles, tilesWithin } from './fxPlace';
-import { ALIVE, stripFrame, tileLook, tilePhase } from './fxAlive';
-import { ALIVE_CELL, aliveFrames, loadAliveArt } from './aliveArt';
+import { ALIVE, edgeQuarter, stripFrame, tileLook, tilePhase } from './fxAlive';
+import { ALIVE_CELL, aliveQuarters, loadAliveArt } from './aliveArt';
 import { TERRAIN_URLS } from './terrainArt';
 import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
@@ -2216,34 +2216,44 @@ export class Fx {
   }
 
   /** FX-PLACE, FX-ALIVE: a living patch on `tiles` (`fxAlive.ts`), each piece on its own tile's top and ground (so it sits on raised and sunken
-   *  tiles alike, under whoever stands in it): a faint fill, a bright rim round the patch, and the element's rune strip from the pack lying on
-   *  each tile (none on the battery saver), each tile breathing and turning on its own beat, its fill and strip thinned under a fighter. The
+   *  tiles alike, under whoever stands in it): a faint fill, a bright rim round the patch, and the element's painted loop along the patch's
+   *  outer edges (FX-ALIVE-ART), or the pack's rune strip on each tile for an element the sheet lacks (neither on the battery saver), each tile breathing and turning on its own beat, its fill and strip thinned under a fighter. The
    *  caller sets its `strength` (0 to 1) as it lasts and destroys it when done. */
   private alivePatch(b: Battle, tiles: readonly { u: number; v: number }[], colour: number, el?: Element): AlivePatch {
     const set = new GroundSet();
     const withH = tiles.map((t) => ({ u: t.u, v: t.v, h: tileAt(b.board, t.u, t.v)?.h ?? 0 }));
     const rimOf = patchRims(withH);
-    // (the painted living-ground loop, a whole tile, when the sheet has landed (`aliveArt.ts`); else the pack's rune for the element)
-    const painted = el ? aliveFrames(el) : [];
-    const strip = el && !settings().saver ? (painted.length ? painted : PACK[packKey(el, 'rune')]) : undefined;
-    const tileArt = painted.length > 0;
+    // (the painted living-ground loop when the sheet holds the element (`aliveArt.ts`): only the quarters of each frame on the patch's outer
+    // edges, so the patch is ringed by a moving painted edge and its inside stays clear; else the pack's rune for the element on each tile)
+    const quarters = el && !settings().saver ? aliveQuarters(el) : [];
+    const rune = el && !settings().saver && !quarters.length ? PACK[packKey(el, 'rune')] : undefined;
+    const scale = TW / ALIVE_CELL[0];
     const pieces = withH.map((t) => {
       const [x, y] = this.tilePos(b, t.u, t.v);
       const layer = this.groundOf(t.u, t.v);
+      const rims = rimOf(t.u, t.v);
       const fill = set.add(patchTile(new Graphics(), x, y, [], { colour, fill: 1, edge: 0, inset: 0 }), layer);
-      const rim = set.add(patchTile(new Graphics(), x, y, rimOf(t.u, t.v), { colour, fill: 0, edge: 1, width: 2.5, inset: 0 }), layer);
-      let sp: Sprite | undefined;
-      if (strip?.length) {
-        // (the rune lies on the tile: as wide as most of it, squashed to the ground's slope, brightening rather than covering)
-        sp = set.add(new Sprite(strip[0]), layer);
+      const rim = set.add(patchTile(new Graphics(), x, y, rims, { colour, fill: 0, edge: 1, width: 2.5, inset: 0 }), layer);
+      const sps: { sp: Sprite; q: number }[] = [];
+      if (quarters.length) {
+        for (const edge of rims) {
+          const [qx, qy] = edgeQuarter(edge);
+          const q = qy * 2 + qx;
+          const sp = set.add(new Sprite(quarters[0][q]), layer);
+          sp.scale.set(scale);
+          sp.position.set(x - TW / 2 + (qx * TW) / 2, y - (ALIVE_CELL[1] * scale) / 2 + (qy * ALIVE_CELL[1] * scale) / 2);
+          sps.push({ sp, q });
+        }
+      } else if (rune?.length) {
+        // (the pack's 32 px rune lies on most of the tile, squashed to the ground's slope, brightening rather than covering)
+        const sp = set.add(new Sprite(rune[0]), layer);
         sp.anchor.set(0.5);
-        // (a painted loop is a whole tile, drawn to the tile's width; the pack's 32 px rune lies on most of it, squashed to the slope)
-        if (tileArt) sp.scale.set(TW / ALIVE_CELL[0]);
-        else sp.scale.set((TW * 0.8) / 32, (TW * 0.4) / 32);
+        sp.scale.set((TW * 0.8) / 32, (TW * 0.4) / 32);
         sp.blendMode = 'add';
         sp.position.set(x, y);
+        sps.push({ sp, q: -1 });
       }
-      return { u: t.u, v: t.v, phase: tilePhase(t.u, t.v), fill, rim, sp };
+      return { u: t.u, v: t.v, phase: tilePhase(t.u, t.v), fill, rim, sps };
     });
     const patch: AlivePatch = {
       strength: 1,
@@ -2264,10 +2274,18 @@ export class Fx {
           const occupied = b.units.some((x) => x.alive && x.u === p.u && x.v === p.v);
           const look = tileLook(t, p.phase, occupied, calm, patch.strength);
           p.fill.alpha = look.fill;
-          p.rim.alpha = look.rim;
-          if (p.sp && strip) {
-            p.sp.alpha = look.strip;
-            p.sp.texture = strip[stripFrame(t, p.phase, strip.length, calm)];
+          // (where the moving painted edge rings the patch, the drawn rim steps back to a thin line under it; held still with reduced motion,
+          // the paint alone is too faint to carry the warning, so the rim keeps its own)
+          p.rim.alpha = !calm && p.sps.length && p.sps[0].q >= 0 ? look.rim * ALIVE.PAINTED_RIM : look.rim;
+          for (const { sp, q } of p.sps) {
+            if (q < 0 && rune) {
+              sp.alpha = look.strip;
+              sp.texture = rune[stripFrame(t, p.phase, rune.length, calm)];
+            } else if (q >= 0) {
+              // (the painted edge is the patch's own rim: it breathes with the rim, and stays under a fighter as the rim does)
+              sp.alpha = Math.min(1, look.rim * ALIVE.PAINTED);
+              sp.texture = quarters[stripFrame(t, p.phase, quarters.length, calm)][q];
+            }
           }
         }
         return true;
