@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.472.0',
+    date: '2026-11-10',
+    title: 'Painted rune bench, duel bar and ULT button',
+    notes: ['The rune bench\'s sockets and Auto medallion, the duel\'s tug bar, the ULT Auto button and the Quest complete seal are now painted.'],
+  },
+  {
     version: '0.471.0',
     date: '2026-11-10',
     title: 'Painted gates and keeps for four holds',
