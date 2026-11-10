@@ -178,3 +178,54 @@ Each with my recommendation. None of these is changed.
 
 - `node tools/first-hour/pace.mjs [--saves 40] [--tries 12]`: a new save's tries at the Orc Warband, per starter pack
   (`BOT_SPELLS=0` for no spells).
+
+## Round 2: the director's calls (after 0.456.0)
+
+The open list above is as it stood after the first pass. These items of it are now settled; the crowns pace, three heroes all
+session and the bench filling with copies that cannot merge are with the owner and untouched.
+
+| Call | What changed | Where |
+|---|---|---|
+| SPELL Auto on for a new save | `newMeta` starts with `spellAuto: true`. A save made before has no such key and reads as it did (`spellAutoSaved`); one that chose off stays off. The spell tip now says the switch casts them and how to cast one by hand. | `src/sim/meta.ts`, `src/tips.ts` |
+| After a first clear, the new army's card | The armies screen opens on the army the clear has opened; with none opened, on the cleared army when it earned a chest, as before. | `src/screenRules.ts` (`armiesFocusAfterClear`), `src/main.ts` |
+| ULT Auto only with an ultimate | The button is hidden until a hero on the field has an ultimate (level 30). | `src/sim/heroKits.ts` (`anyUltimate`), `src/fightHud.ts`, `src/main.ts` |
+| Hidden-mode things not offered | All through `src/sim/hiddenModes.ts` or the flag, so lifting it brings each back; no data is deleted. See below. | |
+| Ten stars and the Assault | Every open army's card says "10 stars on this army open its Assault · storm <hold>" from the start (it showed only once the mode was open). | `src/armiesView.ts` |
+| One word: **grade** | A hero's merge level in a run is "grade" in the Hire tip, the banner over a merged hero, the bench card's label and the Three-Star Hero achievement's text. | `src/tips.ts`, `src/render/fx.ts`, `src/main.ts`, `src/sim/achievements.ts` |
+| The mystery chest | "A relic, a rune or gold." in a rune run (it pays a rune there). | `src/sim/events.ts` |
+| Standing | The stall's head reads "Standing 1 · spend 4000 for 2" (it was "A known face · 4000 to the next"); a shut ware reads "Needs standing 2". | `src/stallView.ts` |
+| Tools | `--new-save` (and `--pack 0|1`) starts the balance climbs from a real new save (`climbMeta`, `newSaveMeta` in `tools/autoplay.ts`). `unlock-pace` no longer plays the spire or the Calamity, nor counts their achievements and quests, while they are hidden (`--with-modes 1` plays them as before). | `tools/autoplay.ts`, `tools/balance.ts`, `tools/unlockPace.ts`, `tools/first-hour/pace.ts` |
+
+### What waits with the hidden modes
+
+| Thing | Rule | Kept for |
+|---|---|---|
+| Achievements "Twenty Waves", "Thirty Waves" | `HIDDEN_MODE_ACHIEVEMENTS` | a save that earned one |
+| Bestiary: the 12 elites and 6 heralds | `entryOfHiddenMode`, `shownEntries` in `codex.ts`: not listed or counted, so the total is 55 and the 100% reward can be reached. The quests that ask for a share of the bestiary count the same 55. | the save's record of what it met |
+| Trophy wall: the six heralds' plaques | `trophyShown`. The other twelve are the armies' bosses (the wall only called them "Spire Champions"), so the wall stays, without its chips; a plaque not yet won reads "An army's boss" and says to beat it in its army. | a herald's trophy already won |
+| Vaelkhar's chain | `chainListed`, `listedChains` in `eidolonChains.ts`: the Eidolons tab and the Pact Gallery list five. | a save that had begun or bound it |
+| Seven Legendary pieces | `HIDDEN_MODE_LEGENDS`, `legendShown`: the six in the open list and the Wyrmhide, whose source is Vaelkhar's heart. | one already found |
+| `musterStandard`, `keepOneRun` | No change needed: `canOffer` already refuses a quest whose `after` is not done, and their first steps are hidden. A save that did the first step before can still be offered the second, which asks for nothing hidden. A test now says so. | |
+
+Tests: `test/first-hour.test.ts` (round 2's rules), and two updated for the changed requirement: `test/achievements.test.ts`
+(Thirty Waves is checked with the modes shown, and checked to be absent while hidden) and `test/codex.test.ts` (the bestiary's
+total). Shots: `docs/samples/first-hour/r2-01-at-393.png` (first fight of a new save, the armies card, the Trophy wall, the stall,
+the codex) and `r2-02-at-360-and-412.png`.
+
+### What the tools say now
+
+- `CLIMB_ARMIES=2 npm run balance -- --no-tables --climb --saves 6 --new-save`: the Orc Warband in 2.0 tries with three heroes owned,
+  the Undead Legion in 3.0 with five (a small sample: run it with more saves before quoting it).
+- `npm run unlock-pace`, the hidden modes not played: 1991 stones a year (2779 with them), and the thirtieth hero on day 204
+  (155 with them). Quests 40%, the chest shop 30%, the daily chest 26%.
+
+### Words I was not sure of, left as they are
+
+- The **star glyphs for a grade**: the unit card shows a grade as "★★", and the Recycle question says "Recycle the ★★ Knight". The
+  hero sheet shows a hero's shard rank as stars too. Words now say grade; the glyphs still look like rank.
+- The achievement is still **named** "Three-Star Hero" (its text says grade three).
+- "**Rank**" stays for a hero's shard rank ("Rank up", "0/1 shards to rank 1") and a spell's rank.
+- Road events' **"grade 1"** was already the word.
+- The ores are still "**Rift ores**" and the "Rift Cache", and a great relic is "The Calamity's Eye": names, not directions.
+- The Sentry's Cloak still explains its back row "in the Last Stand" (`src/sim/relics.ts:166`): it is one constant string of relic
+  data; say if it should be cut.

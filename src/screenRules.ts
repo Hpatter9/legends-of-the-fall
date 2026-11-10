@@ -35,3 +35,7 @@ export function closeOnOpen(open: readonly ScreenEntry[], next: ScreenEntry): st
 export function closeOnPlace(open: readonly ScreenEntry[]): string[] {
   return open.filter((e) => e.kind === 'flow').map((e) => e.name).reverse();
 }
+
+/** The army whose card the armies screen opens on after a clear (FIRST-HOUR 2): the army the clear has just opened, if any; else the one
+ *  just cleared when it earned a chest (its chest is ticked there); else the screen's own choice (undefined). */
+export const armiesFocusAfterClear = (cleared: string, opened: string | undefined, chest: boolean): string | undefined => opened ?? (chest ? cleared : undefined);

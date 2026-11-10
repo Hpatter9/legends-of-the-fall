@@ -5,9 +5,8 @@
 //
 //   node tools/first-hour/pace.mjs [--saves 40] [--tries 12]
 import { FIXED_PACKS } from '../../src/sim/starter';
-import { newMeta, type Meta } from '../../src/sim/meta';
 import { levelOfKind } from '../../src/sim/levels';
-import { playArmy } from '../autoplay';
+import { newSaveMeta, playArmy } from '../autoplay';
 
 const arg = (name: string, d: number): number => {
   const i = process.argv.indexOf(`--${name}`);
@@ -16,21 +15,12 @@ const arg = (name: string, d: number): number => {
 const SAVES = arg('saves', 40);
 const TRIES = arg('tries', 12);
 
-function fresh(seed: number, pack: readonly string[]): Meta {
-  const m = newMeta(seed);
-  delete m.starter;
-  m.unlocked = [...pack];
-  m.party = [...pack];
-  m.heroesSeen = [...pack];
-  return m;
-}
-
-for (const pack of FIXED_PACKS) {
+FIXED_PACKS.forEach((pack, packIndex) => {
   const ends: number[][] = Array.from({ length: TRIES }, () => []);
   const clearAt: number[] = [];
   const lvAtClear: number[] = [];
   for (let s = 0; s < SAVES; s++) {
-    const m = fresh(1000 + s, pack.heroes);
+    const m = newSaveMeta(1000 + s, packIndex);
     let cleared = 0;
     for (let t = 0; t < TRIES; t++) {
       const r = playArmy(m, 'orcs', 77 * s + t + 1, pack.heroes);
@@ -53,4 +43,4 @@ for (const pack of FIXED_PACKS) {
   }
   const done = clearAt.filter((c) => c > 0);
   console.log(`cleared within ${TRIES} tries: ${done.length}/${SAVES}; mean tries to clear ${mean(done).toFixed(1)}; top hero level at the clear ${mean(lvAtClear).toFixed(1)}`);
-}
+});

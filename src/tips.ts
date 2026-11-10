@@ -27,10 +27,10 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   deploy: { text: 'Drag your heroes onto the blue tiles. High ground hits harder; blows from behind hit hardest.', page: 'game', during: 'deploy' },
   fight: { text: 'Press Fight! Your heroes fight on their own.', page: 'game', during: 'deploy' },
   // (FIRST-HOUR: the king's spells decide the early fights (`tools/first-hour/pace.mjs`: about 2 tries to clear the first army with them, 6 without), so the tip says so and names the Auto switch)
-  mana: { text: 'Your king has spells, and they win fights. Tap a spell, then a tile, to cast it; or tap SPELL and they are cast for you.', page: 'game', during: 'fight' },
+  mana: { text: 'Your king has spells, and they win fights. The SPELL switch casts them for you; tap a spell, then a tile, to cast one yourself.', page: 'game', during: 'fight' },
   skill: { text: 'Heroes cast their skills on their own, paid from the blue mana or gold stamina bar under each portrait.', page: 'game', during: 'fight' },
   ult: { text: 'A glowing portrait means its ultimate is ready: tap it to fire. The Auto ultimates button fires them for you; Auto spells casts your spells.', page: 'game', during: 'fight' },
-  summon: { text: 'Spend gold to Hire a hero. Drag a hero onto another of the same kind and star to merge them into a stronger one (up to four stars), or tap one then the other. Beating the second army unlocks Auto merge.', page: 'game', during: 'deploy' },
+  summon: { text: 'Spend gold to Hire a hero. Drag a hero onto another of the same kind and grade to merge them into a stronger one (up to grade four), or tap one then the other. Beating the second army unlocks Auto merge.', page: 'game', during: 'deploy' },
   crowns: { text: 'Crowns buy chests in the Recruit tab, and chests hold summoning stones. Each stone gives a hero shard. Army stars open the Castle.', page: 'home' },
   calamity: { text: 'Calamity: start with one hero, recruit a team and evolve your altar across three regions. Your starter grows stronger.', page: 'home' },
   tower: { text: 'Last Stand: guard your ruler on the keep as wave after wave comes in from every side. It never ends.', page: 'home' },

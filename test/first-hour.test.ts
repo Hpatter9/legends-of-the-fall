@@ -72,3 +72,106 @@ test('the hire hint counts the party picked, and the first-run tips name what is
   assert.match(TIPS.recycle.text, /Recycle spot appears/);
   assert.match(TIPS.runes.text, /Tap Runes/);
 });
+
+// ---- FIRST-HOUR 2: the director's calls after the first pass ----
+
+test('a new save starts with Auto spells on; a save from before keeps what it had', async () => {
+  const { spellAutoSaved } = await import('../src/sim/autoCast');
+  const { loadMeta, startedMeta } = await import('../src/sim/meta');
+  assert.equal(spellAutoSaved(newMeta(1)), true);
+  assert.equal(newMeta(1).ultAuto, undefined, 'the ultimates\' switch is left alone');
+  // (an old save has no `spellAuto` key: it reads as its one old switch did, off unless that was on)
+  const old = { ...startedMeta(3) } as Record<string, unknown>;
+  delete old.spellAuto;
+  const back = loadMeta(1, { getItem: () => JSON.stringify(old) });
+  assert.equal(back.spellAuto, undefined);
+  assert.equal(spellAutoSaved(back), false);
+  const was = loadMeta(1, { getItem: () => JSON.stringify({ ...old, spellAuto: false }) });
+  assert.equal(spellAutoSaved(was), false, 'one that chose off stays off');
+});
+
+test('the Auto ultimates button waits for a hero with an ultimate', async () => {
+  const { anyUltimate } = await import('../src/sim/heroKits');
+  const { ULT_LEVEL } = await import('../src/sim/abilities');
+  const unit = (level: number, side = 'hero') => ({ def: 'knight', side, level }) as never;
+  assert.equal(anyUltimate({ units: [] }), false);
+  assert.equal(anyUltimate({ units: [unit(1), unit(ULT_LEVEL - 1)] }), false, 'a new save\'s heroes have none');
+  assert.equal(anyUltimate({ units: [unit(1), unit(ULT_LEVEL)] }), true);
+});
+
+test('after a clear the armies screen opens on the army it opened', async () => {
+  const { armiesFocusAfterClear } = await import('../src/screenRules');
+  assert.equal(armiesFocusAfterClear('orcs', 'undead', true), 'undead', 'the new army, not the cleared one on Hard');
+  assert.equal(armiesFocusAfterClear('orcs', undefined, true), 'orcs', 'no new army: the cleared one, its chest ticked');
+  assert.equal(armiesFocusAfterClear('orcs', undefined, false), undefined);
+});
+
+test('what only a hidden mode gives is not offered while it is hidden, and comes back with it', async () => {
+  const { achievementShown, HIDDEN_MODE_LEGENDS, legendShown, trophyShown } = await import('../src/sim/hiddenModes');
+  const { ACHIEVEMENTS } = await import('../src/sim/achievements');
+  const { allMilestones, gotOf, shownEntries, totalOf, entryOfHiddenMode } = await import('../src/sim/codex');
+  const { CHAINS } = await import('../src/sim/eidolonChainData');
+  const { listedChains } = await import('../src/sim/eidolonChains');
+  const { LEGEND_LIST } = await import('../src/sim/legendBases');
+  const { canOffer } = await import('../src/sim/quests');
+  const { questById } = await import('../src/sim/questData');
+  const { DAILY_WAVES } = await import('../src/sim/daily');
+  const m = newMeta(4);
+  // the achievements: no run a player can start reaches wave 20
+  assert.ok(Math.max(DAILY_WAVES, ...ARMIES.map((a) => a.waves.length)) < 20);
+  for (const id of ['stage20', 'stage30']) {
+    assert.ok(ACHIEVEMENTS.some((a) => a.id === id), 'the data stays');
+    assert.equal(achievementShown(id, []), false);
+    assert.equal(achievementShown(id, [id]), true, 'one already earned stays');
+  }
+  // the bestiary: every entry counted can be met, so the last reward can be reached
+  assert.ok(shownEntries().every((e) => e.class === 'common' || e.class === 'boss'));
+  assert.equal(totalOf('bestiary'), shownEntries().length);
+  const all = { ...m, codex: { met: FOE_ENTRIES.flatMap((e) => e.defs), kills: {} } };
+  assert.equal(gotOf(all, 'bestiary'), totalOf('bestiary'), 'a herald met before is not counted over the total');
+  assert.equal(allMilestones().find((x) => x.id === 'bestiary100')!.need, shownEntries().length);
+  // the trophies: the heralds' empty plaques wait; the armies' bosses hang
+  assert.equal(trophyShown('calamity', false), false);
+  assert.equal(trophyShown('calamity', true), true);
+  assert.equal(trophyShown('spire', false), true);
+  // Vaelkhar's chain opens with the Calamity cleared: not listed until begun
+  const vael = CHAINS.find((c) => c.opens.kind === 'calCleared')!;
+  assert.ok(vael);
+  assert.ok(!listedChains(m).includes(vael));
+  assert.equal(listedChains(m).length, CHAINS.length - 1);
+  assert.ok(listedChains({ ...m, quests: { active: [], offers: [], done: [], chains: { [vael.id]: { part: 0, progress: 0 } } } } as never).includes(vael), 'a save that had begun it keeps it');
+  // the legends that wait in a mode
+  for (const id of HIDDEN_MODE_LEGENDS) {
+    assert.ok(LEGEND_LIST.some((l) => l.id === id), `${id} is a legend`);
+    assert.equal(legendShown(id, false), false);
+    assert.equal(legendShown(id, true), true);
+  }
+  for (const l of LEGEND_LIST.filter((x) => !HIDDEN_MODE_LEGENDS.includes(x.id))) assert.doesNotMatch(l.legend!.source, /spire|Calamity|Last Stand|Vaelkhar/, l.id);
+  // the two quests whose first step is in a mode are never offered to a save that could not have done it
+  for (const id of ['musterStandard', 'keepOneRun']) assert.equal(canOffer(m, questById(id)!), false, id);
+  // and all of it is back when the modes are
+  setModesHidden(false);
+  assert.equal(achievementShown('stage30', []), true);
+  assert.equal(totalOf('bestiary'), FOE_ENTRIES.length);
+  assert.ok(FOE_ENTRIES.some((e) => e.class === 'elite') && !FOE_ENTRIES.some(entryOfHiddenMode));
+  assert.equal(trophyShown('calamity', false), true);
+  assert.equal(listedChains(m).length, CHAINS.length);
+  assert.equal(legendShown('gravesong', false), true);
+  setModesHidden(true);
+});
+
+test('one word for a hero\'s merge level, and the chest and the shop say what they mean', async () => {
+  const { ACHIEVEMENTS } = await import('../src/sim/achievements');
+  assert.match(TIPS.summon.text, /same kind and grade/);
+  assert.doesNotMatch(TIPS.summon.text, /star/);
+  assert.match(ACHIEVEMENTS.find((a) => a.id === 'threeStar')!.text, /grade three/);
+});
+
+test('a tool\'s new save has the three heroes of a starter pack', async () => {
+  const { newSaveMeta } = await import('../tools/autoplay');
+  const { FIXED_PACKS } = await import('../src/sim/starter');
+  const a = newSaveMeta(10, 0);
+  assert.deepEqual(a.unlocked, FIXED_PACKS[0].heroes);
+  assert.deepEqual(a.party, FIXED_PACKS[0].heroes);
+  assert.deepEqual(newSaveMeta(11).unlocked, FIXED_PACKS[11 % FIXED_PACKS.length].heroes);
+});

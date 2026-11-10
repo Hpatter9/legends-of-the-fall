@@ -1399,7 +1399,7 @@ export class Fx {
     // health and attack only, so the banner names that, not a skill)
     const life = grade > 2 ? 2200 : 1500;
     this.label(`${def.name} · more health and attack`, sp.x, sp.y - sp.tall - 8, 0xfff2a0, 12, life, true);
-    this.label(`Rank ${grade}`, sp.x, sp.y - sp.tall - 22, grade > 3 ? 0xd49aff : grade > 2 ? 0xffe27a : 0xdce8ff, grade > 3 ? 28 : grade > 2 ? 24 : 12, life, true);
+    this.label(`Grade ${grade}`, sp.x, sp.y - sp.tall - 22, grade > 3 ? 0xd49aff : grade > 2 ? 0xffe27a : 0xdce8ff, grade > 3 ? 28 : grade > 2 ? 24 : 12, life, true);
     this.trauma = Math.max(this.trauma, grade > 2 ? 0.35 : 0.12);
     if (grade < 3) return;
     this.flash(0.35, 110);

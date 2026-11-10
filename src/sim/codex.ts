@@ -70,6 +70,11 @@ function buildEntries(): FoeEntry[] {
 
 /** Every bestiary entry: the common foes, the bosses, the tower's elites and the calamity's heralds. */
 export const FOE_ENTRIES: readonly FoeEntry[] = buildEntries();
+/** Whether an entry is only met in a mode that is hidden just now (FIRST-HOUR 2, `hiddenModes.ts`): the Calamity's elites and its heralds.
+ *  While hidden they are not listed or counted, so the bestiary's shares and its last reward can be reached; the save keeps what it met. */
+export const entryOfHiddenMode = (e: FoeEntry): boolean => modesHidden() && (e.class === 'elite' || e.class === 'calamity');
+/** The entries the bestiary lists and counts just now. */
+export const shownEntries = (): FoeEntry[] => FOE_ENTRIES.filter((e) => !entryOfHiddenMode(e));
 export const entryOfDef = (def: string): FoeEntry | undefined => FOE_ENTRIES.find((e) => e.defs.includes(def));
 const ALL_FOE_DEFS: readonly string[] = FOE_ENTRIES.flatMap((e) => e.defs);
 
@@ -121,8 +126,8 @@ export const MILESTONE_CROWNS: Record<Collection, readonly number[]> = { bestiar
 /** The summoning stones each milestone pays beside its crowns (the owner's ask: "a stone or two"). A save that claimed a milestone before is not paid again. */
 export const CODEX_STONES = 1;
 
-export const totalOf = (c: Collection): number => (c === 'bestiary' ? FOE_ENTRIES.length : ALL_HEROES.length);
-export const gotOf = (m: Meta, c: Collection): number => (c === 'bestiary' ? metEntries(m).length : ALL_HEROES.filter((k) => heroKnown(m, k)).length);
+export const totalOf = (c: Collection): number => (c === 'bestiary' ? shownEntries().length : ALL_HEROES.length);
+export const gotOf = (m: Meta, c: Collection): number => (c === 'bestiary' ? shownEntries().filter((e) => isMet(m, e)).length : ALL_HEROES.filter((k) => heroKnown(m, k)).length);
 /** "Bestiary 34/60" */
 export const progressLine = (m: Meta, c: Collection): string => `${COLLECTION_NAMES[c]} ${gotOf(m, c)}/${totalOf(c)}`;
 
@@ -138,14 +143,15 @@ export interface Milestone {
 }
 
 export const milestonesOf = (c: Collection): Milestone[] => MILESTONES.map((p, i) => ({ id: `${c}${p}`, collection: c, percent: p, need: Math.ceil((totalOf(c) * p) / 100), crowns: MILESTONE_CROWNS[c][i], stones: CODEX_STONES }));
-export const ALL_MILESTONES: readonly Milestone[] = COLLECTIONS.flatMap(milestonesOf);
+/** Every milestone, worked out afresh: the bestiary's needs follow the entries shown. */
+export const allMilestones = (): Milestone[] => COLLECTIONS.flatMap(milestonesOf);
 
 export const milestoneReached = (m: Meta, ms: Milestone): boolean => gotOf(m, ms.collection) >= ms.need;
 export const milestoneClaimed = (m: Meta, ms: Milestone): boolean => (m.codexClaimed ?? []).includes(ms.id);
 /** Whether a milestone is reached and its crowns not yet taken. */
 export const milestoneReady = (m: Meta, ms: Milestone): boolean => milestoneReached(m, ms) && !milestoneClaimed(m, ms);
 /** The milestones whose crowns are waiting. */
-export const codexWaiting = (m: Meta): Milestone[] => ALL_MILESTONES.filter((ms) => milestoneReady(m, ms));
+export const codexWaiting = (m: Meta): Milestone[] => allMilestones().filter((ms) => milestoneReady(m, ms));
 
 /** The crowns every milestone of a collection pays in all, those taken, and those waiting to be taken. */
 export const crownsTotal = (c: Collection): number => milestonesOf(c).reduce((n, ms) => n + ms.crowns, 0);
@@ -158,7 +164,7 @@ export const stonesWaiting = (m: Meta): number => codexWaiting(m).reduce((n, ms)
 
 /** Take a reached milestone's crowns and stones. Returns the crowns paid (0 when it isn't reached, is unknown, or was claimed already). */
 export function claimCodex(m: Meta, id: string): number {
-  const ms = ALL_MILESTONES.find((x) => x.id === id);
+  const ms = allMilestones().find((x) => x.id === id);
   if (!ms || !milestoneReady(m, ms)) return 0;
   (m.codexClaimed ??= []).push(id);
   m.crowns += ms.crowns;
@@ -167,7 +173,7 @@ export function claimCodex(m: Meta, id: string): number {
 }
 
 /** The saved claims read safely. */
-export const readCodexClaimed = (raw: unknown): string[] | undefined => (Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string' && ALL_MILESTONES.some((ms) => ms.id === id)) : undefined);
+export const readCodexClaimed = (raw: unknown): string[] | undefined => (Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string' && allMilestones().some((ms) => ms.id === id)) : undefined);
 
 /* ------------------------------------------------------------------ where a foe is met, and how to meet it */
 
