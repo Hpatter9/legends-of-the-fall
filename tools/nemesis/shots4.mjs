@@ -38,13 +38,11 @@ const shoot = async (page, path) => {
   await page.waitForTimeout(400);
   await page.screenshot({ path });
 };
-/** Carry on the saved run, place the five, and wait for the challenge's cut-in (the taunt's goes first: it is skipped). */
+/** Carry on the saved run, place the five, and wait for the challenge's cut-in (CALLOUT-ONCE: it takes the place of the nemesis's taunt). */
 async function toChallenge(page) {
   await page.click('.hmCont');
   await page.waitForFunction(() => document.querySelector('.tcLayer:not([hidden]) .tcCut'), null, { timeout: 15000 });
   await page.evaluate(() => window.__game.autoArrange(true));
-  // (the taunt's cut-in ends; the challenge's comes next)
-  await page.evaluate(() => window.__game.taunts.end());
   await page.waitForTimeout(150);
 }
 /** Hold the cut-in's clock for a shot. */
