@@ -141,6 +141,8 @@ export function momentText(mo: Moment): string {
       return `Two heroes reach bond level ${mo.level} together; it plays at the camp or the castle.`;
     case 'armyIntro':
       return 'The first time an army marches on the keep.';
+    case 'armyBoss':
+      return 'The first time an army sends a boss at the keep.';
     case 'questBattle':
       return 'A quest battle, before it begins and after it is won.';
     case 'eidolon':

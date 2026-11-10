@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.448.0',
+    date: '2026-11-10',
+    title: 'Each army\'s boss arrives in style',
+    notes: ['The first time you meet each army\'s boss, it gets its own short film. A boss\'s second form now shows its new name with a flash and a roar.'],
+  },
+  {
+    version: '0.447.0',
+    date: '2026-11-10',
+    title: 'More painted buttons',
+    notes: ['Next stage, the summoning buttons, Return, Keep, March to battle, the info button and the satchel\'s steppers now use their painted art.'],
+  },
+  {
     version: '0.446.0',
     date: '2026-11-09',
     title: 'The holds\' camps set right',

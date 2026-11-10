@@ -12,6 +12,7 @@ import { close, say, shoot, tell, wide, type Scene } from './sceneKit';
 import type { Area } from './board';
 import { EVENT_SCENES } from './sceneEvents';
 import { FAMILY_SCENES } from './sceneFamilies';
+import { FIRST_BOSS_SCENES } from './firstBossScenes';
 
 export * from './sceneKit';
 
@@ -218,7 +219,7 @@ const MUSIC: Record<string, string> = {
 const STING: Record<string, Scene['sting']> = { calamityOpens: 'sceneBoss', gorvak: 'sceneBoss', thornWarden: 'sceneBoss', malphas: 'sceneBoss', hrungar: 'sceneBoss', vorgrath: 'sceneBoss', karnok: 'sceneBoss', calamityEnds: 'sceneVictory' };
 const FAMILY_MUSIC: Record<string, string> = { oath: 'triumph', clear: 'triumph', awaken: 'solemn', earned: 'triumph', castle: 'comic', spire: 'spire' };
 
-const ALL: Scene[] = [...Object.values(PILOTS), ...EVENT_SCENES, ...FAMILY_SCENES, ...EARNED_SCENES, ...BOND_SCENES, ...VENGEANCE_SCENES, ...HEIR_SCENES, ...WAR_END_SCENES, ...ACT_SCENES].map((c) => {
+const ALL: Scene[] = [...Object.values(PILOTS), ...EVENT_SCENES, ...FAMILY_SCENES, ...FIRST_BOSS_SCENES, ...EARNED_SCENES, ...BOND_SCENES, ...VENGEANCE_SCENES, ...HEIR_SCENES, ...WAR_END_SCENES, ...ACT_SCENES].map((c) => {
   const music = c.music ?? MUSIC[c.id] ?? (c.family ? FAMILY_MUSIC[c.family] : undefined);
   const sting = c.sting ?? (STING[c.id] ?? (c.family === 'clear' ? 'sceneVictory' : c.family === 'oath' || c.family === 'oathcut' ? 'sceneBoss' : undefined));
   return { ...c, ...(music ? { music } : {}), ...(sting ? { sting } : {}) };
