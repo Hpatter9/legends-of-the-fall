@@ -1,5 +1,4 @@
-// UNUSED-ART screenshots (docs/notes/unused-art.md): the tavern's services, Hester's stall and the other screens the newly wired paintings
-// show on, at the three upright phone sizes.
+// UNUSED-ART screenshots (docs/notes/unused-art.md): the screens the newly wired painted cells show on, at the three upright phone sizes.
 //
 //   npm run web && OUT=docs/samples/unused-art TAG=after node tools/unused-art/shots.mjs [--sizes 393x852,360x780,412x915] [--only services,stall]
 //
@@ -17,7 +16,7 @@ const ROOT = process.env.ROOT ?? 'out/web';
 const OUT = process.env.OUT ?? 'out/unused-art';
 const TAG = process.env.TAG ?? 'after';
 const SIZES = opt('--sizes', '393x852,360x780,412x915').split(',').map((s) => s.split('x').map(Number));
-const ONLY = opt('--only', 'services,stall,gacha,party,dispatch,buttons').split(',');
+const ONLY = opt('--only', 'gacha,party,dispatch,buttons').split(',');
 mkdirSync(OUT, { recursive: true });
 
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css', jpg: 'image/jpeg' };

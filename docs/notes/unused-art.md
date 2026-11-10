@@ -15,19 +15,6 @@ version is unchanged. Before and after shots at 393x852, 360x780 and 412x915 are
 
 ## Wired in
 
-### Hester's merchant table (`hester-table.png`, PR #464)
-
-It was painted for the pixel tavern's stall (`src/tavern.ts`), which nothing creates any more. It now stands on the counter of her stall's
-scene: bottom right, under her line, where the shelf was bare. It is drawn at half its file's size, one of its painted pixels to a CSS
-pixel, with crisp pixels and a drop shadow: 100 px tall, 84 px on a short screen. It shows only on her own tabs; a visiting trader (the
-caravan, the Gloaming Dealer) stands there with his own wares. `tools/unused-art/hester-table.py` trims it to its paint and writes
-`src/art/shop/hester-table.webp`, lossless. `build.mjs` copies it and the service worker caches it. Files: `src/stallView.ts` (`.hsTable`),
-`src/stall.css`. Shots: `stall-{before,after}-<w>.png`.
-
-TAVERN-25 had left it out because a pixel table might clash with her painted portrait. At this size, on the counter's far side, it reads
-as her trestle of wares beside her, and the scene's own lamp light and shadow sit over it. **Worth a look from the owner**; it is one
-line to take out (`if (!trader) scene.append(...)`).
-
 ### Painted button cells that were cut but never shown
 
 Each is put on the button it was painted for. The button keeps its plate and its words, with the medallion before them, as Hire, Fight
@@ -63,7 +50,8 @@ and Merge already have theirs (`paintedButtons.css`, the UNUSED-ART section):
 
 | Art | Why |
 | --- | --- |
-| `src/art/shop/hester-sign.webp` (a hanging "Hester's Books & Gear" sign) | The stall's scene has no room for it beside Hester, her line and now her table. In the head it would rival the page's own title, "Hester's Stall", with other words. It would fit a hanging sign over a stall in a scene, should one come back. |
+| `art-source/expansion/hester-table.png` (Hester's merchant table, PR #464) | It was painted for the pixel tavern's stall (`src/tavern.ts`), which nothing creates any more. It was tried on the counter of her stall's scene and taken back out, the director's call: the pixel-art table clashes with her painted portrait scene (as TAVERN-25 had found). It stays as source art. |
+| `src/art/shop/hester-sign.webp` (a hanging "Hester's Books & Gear" sign) | The stall's scene has no room for it beside Hester and her line. In the head it would rival the page's own title, "Hester's Stall", with other words. It would fit a hanging sign over a stall in a scene, should one come back. |
 | `ready-ring` (an empty gold ring) | Not a button; nothing marks a "ready" thing with a ring now (the tavern's ready buttons light their plate). |
 | `horn-lit` | The War Horn has its own painting, filled and glowing as it charges (`eidolonCall.ts`). The medallion would be a second, plainer horn. |
 | `orb-silver` (an empty silver ring) | The spell orbs use the gold, bronze and lit ones; no spell state calls for a fourth. |
@@ -78,6 +66,6 @@ owner's call, so this branch keeps them.
 
 ## Checks run
 
-- `npm run typecheck`: clean. `npm run web`: builds, with `shop/hester-table.webp` in the service worker's list.
+- `npm run typecheck`: clean. `npm run web`: builds.
 - `npm test -- painted-buttons ui-standard stall hester party shop`: 31 of 31 pass.
 - The screens above at 393x852, 360x780 and 412x915, before and after, with 0 page errors.

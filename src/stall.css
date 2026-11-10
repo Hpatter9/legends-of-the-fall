@@ -16,9 +16,6 @@
 .hsSay { position: absolute; z-index: 2; left: 46%; right: 10px; top: 18px; margin: 0; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; font: 400 13px/1.35 var(--body); color: #2c2014; background: #f3e6c8f2; border: 1px solid #a07a44; border-radius: 6px; box-shadow: 0 3px 10px #0008; }
 .hsSay::before { content: ''; position: absolute; left: -8px; top: 22px; border: 8px solid transparent; border-left: 0; border-right-color: #f3e6c8; }
 .hsSay b { font: 700 12px var(--display); color: #6a4417; }
-/* UNUSED-ART (docs/notes/unused-art.md): Hester's trestle table, at half its file's size (one of its painted pixels to a CSS pixel), on the
-   counter's right under her line; drawn with crisp pixels, as it was painted */
-.hsTable { position: absolute; right: 6px; bottom: 2px; z-index: 1; height: 100px; width: auto; image-rendering: pixelated; filter: drop-shadow(0 3px 4px #000b); pointer-events: none; }
 
 .hsTabs { flex: none; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; padding: 4px 4px 0; background: #16201b; border-bottom: 1px solid #8e733e; }
 .hsTab { position: relative; min-height: 50px; padding: 3px 0 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: 400 12px var(--body); color: #c9c3ad; background: #1c2a23; border: 1px solid #4c4430; border-bottom: 0; border-radius: 4px 4px 0 0; }
@@ -93,7 +90,6 @@
   .hsScene { height: 176px; }
   .hsHester { height: 196px; }
   .hsSay { top: 12px; font-size: 12px; }
-  .hsTable { height: 84px; }
 }
 @media (prefers-reduced-motion: reduce) {
 }

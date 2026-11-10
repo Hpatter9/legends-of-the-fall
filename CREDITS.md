@@ -607,9 +607,6 @@ Original generated illustrations for the approved Calamity portal-expedition dir
   `tools/art-wire-5/import-expansion.py` trims each symbol and brings it down to the size the game draws (`src/art/council/`, `src/art/dynasty/`,
   `src/art/expansion/scar-*.png`, `heirloom-frame.png`, `heirloom-chip.png`); `tools/dynasty-art/import.py` downsamples the backdrops. All are bundled
   into game.js for offline play (docs/notes/art-wire-5.md).
-- Hester's merchant table (`art-source/expansion/hester-table.png`): original pixel art generated with OpenAI image generation from the prompt in
-  `docs/notes/expansion-2-art-prompts.md`. `tools/unused-art/hester-table.py` only trims it to its paint (`src/art/shop/hester-table.webp`, never
-  repainted), for the counter of Hester's stall's scene; cached by the service worker for offline play (docs/notes/unused-art.md).
 - The Elders' table (`art-source/expansion/elders-table.png`) and the duel's ring of standing stones (`duel-ring.png`): original art generated
   with OpenAI image generation from the prompts in `docs/notes/expansion-2-art-prompts.md`. `tools/expansion/tavern-tables.py` trims the
   table for the head of the Elders' table's card (`src/art/tavern/elders-table.png`); `tools/expansion/duel-ring.py` cuts the ring into its

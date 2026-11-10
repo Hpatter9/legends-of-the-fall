@@ -129,8 +129,6 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     // (ALIVE: her lamp's light breathes over the shelf, dust drifts in it)
     scene.append(new AmbientLayer(SCENE_LIFE.stall, shelf, { fit: 'cover', pos: [0.5, 1] }).root);
     scene.append(img(shopArt(trader === 'caravan' ? 'caravan-master' : trader === 'gloaming' ? 'gloaming-dealer' : 'hester'), 'hsHester', trader ? TRADER_NAMES[trader].name : 'Hester Vane'));
-    // (UNUSED-ART: her own trestle table on the counter, the merchant table of PR #464, under her line; a visiting trader brings his own)
-    if (!trader) scene.append(img(shopArt('hester-table'), 'hsTable'));
     const say = el('p', 'hsSay');
     say.append(el('b', '', trader ? TRADER_NAMES[trader].name : 'Hester'), el('span', '', said));
     scene.append(say);
