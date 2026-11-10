@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { fight, place, startBattle, stepBattle, type Battle, type Unit } from '../src/sim/battle';
 import { DEPLOY_ROWS } from '../src/sim/board';
-import { FORM, formationAc, formationBlow, formationFacing, formationMelee, formationMove, formationOf, formationSpots, formationSplash, FORMATIONS_LIST, setFormations, shapeFits } from '../src/sim/formations';
+import { FORM, FORM_MIN, formationAc, formationBlow, formationFacing, formationMelee, formationMove, formationOf, formationSpots, formationSplash, FORMATIONS_LIST, setFormations, shapeFits, sturdiness, type Formation } from '../src/sim/formations';
 import { shortLine, shortTag } from '../src/sim/tacticPick';
 import { roleOf } from '../src/sim/suggest';
 
@@ -21,15 +21,15 @@ function staged(party: string[], spots: [number, number][], on = true, seed = 11
 const unit = (b: Battle, kind: string): Unit => b.units.find((u) => u.def === kind)!;
 const ending = (b: Battle) => JSON.stringify({ phase: b.phase, t: b.t, units: b.units.map((u) => [u.def, u.hp, u.u, u.v]) });
 
-test('the shapes are read from where the heroes stand: a wall needs two front-liners, a spearhead a tip and two wings', () => {
+test('the shapes are read from where the heroes stand: a wall is three side by side in front, a spearhead a tip and two wings', () => {
   const d = 11;
   const at = (kind: string, u: number, dv: number, id: number) => ({ id, kind, u, v: d - DEPLOY_ROWS + dv });
   // (Knight, Minotaur and Samurai side by side on the front row: a wall, its ends the Knight and the Samurai)
   const wall = formationOf(d, [at('knight', 2, 0, 1), at('minotaur', 3, 0, 2), at('samurai', 4, 0, 3), at('archer', 3, 2, 4)]);
   assert.equal(wall?.kind, 'wall');
   assert.deepEqual(wall?.ends, [1, 3]);
-  // (one front-liner is not a wall: the Knight between two strikers)
-  assert.notEqual(formationOf(d, [at('samurai', 2, 0, 1), at('knight', 3, 0, 2), at('kunoichi', 4, 0, 3)])?.kind, 'wall');
+  // (FORMATIONS-FIT: whoever stands there, the Knight between two strikers is a wall too; it was not, with one front-liner)
+  assert.equal(formationOf(d, [at('samurai', 2, 0, 1), at('knight', 3, 0, 2), at('kunoichi', 4, 0, 3)])?.kind, 'wall');
   const spear = formationOf(d, [at('samurai', 3, 0, 1), at('knight', 2, 1, 2), at('minotaur', 4, 1, 3), at('archer', 3, 2, 4)]);
   assert.equal(spear?.kind, 'spear');
   assert.equal(spear?.tip, 1);
@@ -145,18 +145,86 @@ test('the tuned shapes (batch 6): the wall takes less from melee blows, the squa
   assert.equal(formationBlow(s, unit(s, 'knight')), FORM.WING_BLOW);
 });
 
-test('BATTLE-FEEL round 3: shapeFits says whether a party can make a shape, and the words say so when it cannot', () => {
+test('BATTLE-FEEL round 3, FORMATIONS-FIT: every shape fits any party of its FORM_MIN or more; the words for the one that cannot', () => {
   const b = bareBoard(startBattle(11, 'skeletons'));
-  // (the Arrange test's party makes every shape)
   for (const shape of FORMATIONS_LIST) assert.equal(shapeFits(b.board, ['knight', 'minotaur', 'samurai', 'archer', 'cleric'], shape), true, shape);
-  // (shooters and casters alone have no front-liners for a wall)
+  // (shooters and casters alone, no front-liner among them: they make every shape now, a wall of the sturdiest three among them)
   const back = ['archer', 'wizard', 'cleric', 'gunslinger', 'warlock'];
   assert.equal(back.filter((k) => roleOf(k) === 'front').length, 0);
-  assert.equal(shapeFits(b.board, back, 'wall'), false);
-  // (three heroes cannot skirmish: it takes four)
-  assert.equal(shapeFits(b.board, ['knight', 'archer', 'cleric'], 'skirmish'), false);
+  for (const shape of FORMATIONS_LIST) assert.equal(shapeFits(b.board, back, shape), true, `shooters: ${shape}`);
+  // (three heroes skirmish now; a lone hero makes nothing, and two make no square)
+  assert.equal(shapeFits(b.board, ['knight', 'archer', 'cleric'], 'skirmish'), true);
+  for (const shape of FORMATIONS_LIST) assert.equal(shapeFits(b.board, ['knight'], shape), false, `one: ${shape}`);
+  assert.equal(shapeFits(b.board, ['knight', 'archer'], 'square'), false);
+  for (const shape of ['wall', 'spear', 'skirmish'] as const) assert.equal(shapeFits(b.board, ['knight', 'archer'], shape), true, `two: ${shape}`);
+  assert.deepEqual(FORM_MIN, { wall: 2, spear: 2, square: 3, skirmish: 2 });
   assert.equal(shapeFits(b.board, [], 'wall'), false);
   assert.equal(shortLine('wall'), 'Not enough for a Shield Wall: fighting loose.');
   assert.equal(shortLine('wall', 'square'), 'Not enough for a Shield Wall: standing in a Hollow Square.');
   assert.equal(shortTag('wall'), 'No Wall');
+});
+
+// ---- FORMATIONS-FIT (docs/notes/formations-fit.md) ----
+
+const d = 11;
+const front = d - DEPLOY_ROWS;
+const read = (b: Battle, kinds: string[], shape: Formation, prefer?: Formation) => {
+  const spots = formationSpots(b.board, kinds, shape);
+  return { spots, f: formationOf(d, kinds.map((kind, i) => ({ id: i + 1, kind, u: spots[i].u, v: spots[i].v })), prefer) };
+};
+
+test('FORMATIONS-FIT: the sturdiest take the exposed tiles whatever their class; the shooters and healers the protected ones', () => {
+  const b = bareBoard(startBattle(11, 'skeletons'));
+  const party = ['archer', 'kunoichi', 'juggernaut', 'cleric', 'samurai'];
+  const { spots, f } = read(b, party, 'wall', 'wall');
+  // (the three who are not shooters or healers stand in the wall, the archer and the cleric behind it)
+  for (const k of ['kunoichi', 'juggernaut', 'samurai']) assert.equal(spots[party.indexOf(k)].v, front, `${k} in the wall`);
+  for (const k of ['archer', 'cleric']) assert.equal(spots[party.indexOf(k)].v, front + 2, `${k} behind`);
+  assert.equal(f?.kind, 'wall');
+  // (the spearhead's tip is the sturdiest: the Juggernaut)
+  const sp = read(b, party, 'spear', 'spear');
+  assert.equal(sp.f?.tip, party.indexOf('juggernaut') + 1);
+  assert.ok(sturdiness('juggernaut') > sturdiness('samurai') && sturdiness('samurai') > 0);
+  // (the square's inside is a shooter or healer: the most fragile of them)
+  const sq = read(b, party, 'square', 'square');
+  assert.equal(sq.f?.kind, 'square');
+  assert.ok(sq.f!.inside!.every((id) => ['archer', 'cleric'].includes(party[id - 1])), 'a shooter or healer inside');
+  // (a party with no shooter or healer: the least sturdy goes inside)
+  const melee = ['knight', 'minotaur', 'samurai', 'kunoichi'];
+  const mq = read(b, melee, 'square', 'square');
+  assert.equal(mq.f?.kind, 'square');
+  assert.equal(melee[mq.f!.inside![0] - 1], [...melee].sort((x, y) => sturdiness(x) - sturdiness(y))[0]);
+});
+
+test('FORMATIONS-FIT: the shape picked is read first, so a party set out in it is not read as another its tiles also make', () => {
+  const b = bareBoard(startBattle(11, 'skeletons'));
+  const back = ['archer', 'wizard', 'cleric', 'gunslinger', 'warlock'];
+  for (const shape of FORMATIONS_LIST) assert.equal(read(b, back, shape, shape).f?.kind, shape, shape);
+  // (and the fight reads it so: `setFormations` carries the pick)
+  const f = bareBoard(startBattle(11, 'skeletons'));
+  const spots = formationSpots(f.board, back, 'wall');
+  back.forEach((k, i) => place(f, k, spots[i].u, spots[i].v));
+  setFormations(f, true, 'wall');
+  fight(f);
+  assert.equal(f.formation?.kind, 'wall');
+});
+
+test('FORMATIONS-FIT: a short party makes a smaller shape (two a wall, a spear or a skirmish; three a square), the same every time', () => {
+  const b = bareBoard(startBattle(11, 'skeletons'));
+  const pool = ['knight', 'archer', 'cleric', 'kunoichi', 'minotaur', 'wizard', 'samurai', 'gunslinger'];
+  for (let n = 2; n <= 5; n++) {
+    for (let s = 0; s < pool.length; s++) {
+      const party = Array.from({ length: n }, (_, i) => pool[(s + i * 3) % pool.length]).filter((k, i, a) => a.indexOf(k) === i);
+      for (const shape of FORMATIONS_LIST) {
+        if (party.length < FORM_MIN[shape]) continue;
+        const one = read(b, party, shape, shape);
+        assert.equal(one.f?.kind, shape, `${party.join(',')}: ${shape}`);
+        assert.equal(new Set(one.spots.map((t) => `${t.u},${t.v}`)).size, party.length, 'a tile each');
+        assert.deepEqual(read(b, party, shape, shape).spots, one.spots, 'deterministic');
+      }
+    }
+  }
+  // (a wall of two: its two members, both ends)
+  const two = read(b, ['knight', 'archer'], 'wall', 'wall');
+  assert.equal(two.f?.members.length, 2);
 });

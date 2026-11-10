@@ -40,11 +40,11 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.waitForTimeout(400);
   const btn = await page.evaluate(() => { const b = document.getElementById('formBtn'); return { hidden: b.hidden, text: b.textContent, short: b.dataset.short, label: b.getAttribute('aria-label') }; });
   console.log(w, JSON.stringify(btn));
-  await page.screenshot({ path: `docs/samples/battle-feel/form-short-${w}.png` });
+  await page.screenshot({ path: `docs/samples/${process.env.SHOT ?? 'battle-feel/form-short'}-${w}.png` });
   await page.evaluate(() => document.getElementById('formBtn').click());
   await page.waitForTimeout(600);
   console.log(w, 'card:', await page.evaluate(() => document.querySelector('#tacticSheet .tacShort')?.textContent));
-  await page.screenshot({ path: `docs/samples/battle-feel/form-short-card-${w}.png` });
+  await page.screenshot({ path: `docs/samples/${process.env.SHOT ?? 'battle-feel/form-short'}-card-${w}.png` });
   await ctx.close();
 }
 console.log('page errors:', errors);
