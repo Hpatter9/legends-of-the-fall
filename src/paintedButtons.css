@@ -233,6 +233,39 @@ body[data-phase='deploy'] #buttons #homeBtn::before { background-image: url(ui/b
 #ptGo::before { content: ''; display: inline-block; width: 30px; height: 30px; margin-right: 6px; vertical-align: middle; background: url(ui/buttons/march.webp) center / contain no-repeat; }
 
 /* --------------------------------------------------------------------------
+   UNUSED-ART (docs/notes/unused-art.md): painted cells that were cut but never shown, on the buttons they were painted for. Each action
+   button keeps its plate and its words, with its medallion before them, as Hire, Fight and Merge all have theirs; the glyphs take the
+   place of a bare character (×, ⓘ, −, +), the button's words kept for a reader.
+   -------------------------------------------------------------------------- */
+#result #next::before, #revealAll::before, #pull1::before, #pull10::before, #askNo::before, #askYes::before, #gachaClose::before, #asumOk::before {
+  content: ''; display: inline-block; flex: none; width: 26px; height: 26px; margin-right: 6px; vertical-align: middle; background: center / contain no-repeat;
+}
+#result #next::before { width: 30px; height: 30px; background-image: url(ui/buttons/next-stage.webp); }
+#revealAll::before { background-image: url(ui/buttons/reveal-all.webp); }
+#pull1::before { background-image: url(ui/buttons/pull-1.webp); }
+#pull10::before { background-image: url(ui/buttons/pull-10.webp); }
+#askNo::before { background-image: url(ui/buttons/retain.webp); }
+/* (and its answer, Recycle for Gold, the painted recycle medallion the deploy's recycle zone uses, so the two read as a pair) */
+#askYes::before { background-image: url(ui/buttons/recycle.webp); }
+/* (two buttons side by side at 360 wide: their words stay on one line beside the medallion) */
+#ask #askNo, #ask #askYes { padding-left: 8px; padding-right: 8px; white-space: nowrap; }
+#ask #askNo::before, #ask #askYes::before { width: 22px; height: 22px; margin-right: 4px; }
+#gachaClose::before, #asumOk::before { background-image: url(ui/buttons/return.webp); }
+/* (March to battle: the painted march-to-battle medallion in place of the plain march one) */
+#ptGo::before { background-image: url(ui/buttons/march-battle.webp); }
+/* (the Calamity's map and the Sanctuary: Return home, the painted cross; the altar's help, the painted info glyph) */
+.dmClose { font-size: 0 !important; color: transparent; background: #12241b url(ui/buttons/g-cross.webp) center / 32px 32px no-repeat; }
+#towerMap .dmAltarVeil .riftAltar .altarInfo { font-size: 0; color: transparent; background: #0b1d14e6 url(ui/buttons/g-info.webp) center / 34px 34px no-repeat; }
+/* (the party's satchel: one remedy fewer or more, the painted minus and plus) */
+.ptRemedy .ptStep { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 36px; padding: 0 6px;
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/plate-secondary.webp) var(--plate-secondary-slice) / var(--plate-secondary-width) / 0 stretch; }
+.ptRemedy .ptStep:active:not(:disabled) { border-image: url(ui/buttons/plate-secondary-down.webp) var(--plate-secondary-slice) / var(--plate-secondary-width) / 0 stretch; }
+.ptRemedy .ptStep:disabled { border-image: url(ui/buttons/plate-secondary-off.webp) var(--plate-secondary-slice) / var(--plate-secondary-width) / 0 stretch; }
+.ptRemedy .ptStep img { width: 24px; height: 24px; }
+.ptRemedy .ptStep:disabled img { filter: grayscale(0.8) brightness(0.7); }
+
+/* --------------------------------------------------------------------------
    Reduced motion: no press nudge or scale (the plates still change).
    -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
