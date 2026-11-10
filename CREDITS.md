@@ -607,6 +607,10 @@ Original generated illustrations for the approved Calamity portal-expedition dir
   `tools/art-wire-5/import-expansion.py` trims each symbol and brings it down to the size the game draws (`src/art/council/`, `src/art/dynasty/`,
   `src/art/expansion/scar-*.png`, `heirloom-frame.png`, `heirloom-chip.png`); `tools/dynasty-art/import.py` downsamples the backdrops. All are bundled
   into game.js for offline play (docs/notes/art-wire-5.md).
+- The Council's hall after the War's end (`art-source/expansion/council-fallen-backdrop.png`, from `art/assault-war-end`): the owner's painting of
+  the same chamber with its seats burning, original art generated with OpenAI image generation from the prompt in
+  `docs/notes/assault-5-art-prompts.md`. `tools/dynasty-art/import.py` downsamples it beside the Council backdrop
+  (`src/art/dynasty/council-fallen-backdrop.webp`), bundled into game.js (docs/notes/art-wire-9.md).
 - The Elders' table (`art-source/expansion/elders-table.png`) and the duel's ring of standing stones (`duel-ring.png`): original art generated
   with OpenAI image generation from the prompts in `docs/notes/expansion-2-art-prompts.md`. `tools/expansion/tavern-tables.py` trims the
   table for the head of the Elders' table's card (`src/art/tavern/elders-table.png`); `tools/expansion/duel-ring.py` cuts the ring into its
@@ -704,7 +708,11 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## The Assault's Bonefire Crag (`src/art/assault/ogres/`)
 
-- Until its own painted sheets land (the prompts: `docs/notes/assault-4-bonefire-crag-art-prompts.md`), Bonefire Crag is drawn with the owner's Orc
+- The owner's painted sheets so far, from the prompts in `docs/notes/assault-4-bonefire-crag-art-prompts.md` (`art/assault-ogres`: original art generated with OpenAI image
+  generation): `art-source/assault/ogres/ogr-02-gates.png` (the gates and towers), `ogr-03-skull-gate.png` (the Skull Gate,
+  the postern and the corner towers), `ogr-07-keep.png` (the Hall of Tusks, the throne and the great banner) and `ogr-09-landmarks.png` (the
+  bonefires, the hold's war drums, and its landmarks), cut by `tools/assault/cut-sheets.py ogres` (docs/notes/art-wire-9.md).
+- Until the rest of its painted sheets land (the prompts: `docs/notes/assault-4-bonefire-crag-art-prompts.md`), Bonefire Crag is drawn with the owner's Orc
   sheets above, cut again by `tools/assault/cut-sheets.py ogres` and recoloured to the cold highlands (the grass cooled, timber and stone greyed);
   our siege works keep their own colours.
 - Beside them, single pieces of Chronos Settlement's Orcs and Dwarves kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/orcs/` and `dwarves/`:
@@ -715,7 +723,11 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## The Assault's Brimstone Gate (`src/art/assault/infernal/`)
 
-- Until its own painted sheets land (the prompts: `docs/notes/assault-4-brimstone-gate-art-prompts.md`), Brimstone Gate is drawn with the owner's
+- The owner's painted sheets so far, from the prompts in `docs/notes/assault-4-brimstone-gate-art-prompts.md` (`art/assault-infernal`: original art generated with OpenAI image
+  generation): `art-source/assault/infernal/inf-02-gates.png` (the gates and towers), `inf-03-infernal-gate.png` (the Infernal
+  Gate, the postern and the corner towers), `inf-07-keep.png` (the Demon Spire, the throne and the great banner) and `inf-09-landmarks.png` (the
+  fire circles, the hold's war drums, and its landmarks), cut by `tools/assault/cut-sheets.py infernal` (docs/notes/art-wire-9.md).
+- Until the rest of its painted sheets land (the prompts: `docs/notes/assault-4-brimstone-gate-art-prompts.md`), Brimstone Gate is drawn with the owner's
   Orc sheets above, cut again by `tools/assault/cut-sheets.py infernal` and recoloured to the pit (darkened to ash with a red cast; the river's water
   repainted as lava and its shingle as cooling crust); our siege works keep their own colours.
 - Beside them, single pieces of Chronos Settlement's Blood Court and Dwarves kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/bloodcourt/`
@@ -729,7 +741,9 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 - The owner's painted sheets so far, from the prompts in `docs/notes/assault-4-moonlit-shrine-art-prompts.md` (PR #488: original art generated
   with OpenAI image generation): `art-source/assault/yokai/yok-01-tiled-wall.png` (the tiled wall), `yok-02-gates.png` (the gates and towers) and
-  `yok-03-moon-gate.png` (the Moon Gate and its towers), cut by `tools/assault/cut-sheets.py yokai` (docs/notes/art-wire-7.md).
+  `yok-03-moon-gate.png` (the Moon Gate and its towers), `yok-07-keep.png` (the Shrine of the Moon, the oni's seat and the great banner) and
+  `yok-09-landmarks.png` (the great war drums and the shrine's landmarks), cut by `tools/assault/cut-sheets.py yokai` (docs/notes/art-wire-7.md,
+  art-wire-9.md).
 - Until the rest of its painted sheets land, the Moonlit Shrine is drawn with the owner's Orc sheets above, cut again by
   `tools/assault/cut-sheets.py yokai` and recoloured to a moonlit night (grass and timber cooled, stone silvered, red
   cloth to vermilion); our siege works keep their own colours.
@@ -742,7 +756,11 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## The Assault's Iron Foundry (`src/art/assault/golems/`)
 
-- Until its own painted sheets land (the prompts: `docs/notes/assault-4-iron-foundry-art-prompts.md`), the Iron Foundry is drawn with the owner's
+- The owner's painted sheets so far, from the prompts in `docs/notes/assault-4-iron-foundry-art-prompts.md` (`art/assault-golems`: original art generated with OpenAI image
+  generation): `art-source/assault/golems/gol-02-gates.png` (the gates and towers), `gol-03-furnace-gate.png` (the Furnace
+  Gate, the postern and the corner towers), `gol-07-keep.png` (the Great Foundry, the throne and the great banner) and `gol-09-landmarks.png`
+  (the steam hammers, the hold's war drums, and its landmarks), cut by `tools/assault/cut-sheets.py golems` (docs/notes/art-wire-9.md).
+- Until the rest of its painted sheets land (the prompts: `docs/notes/assault-4-iron-foundry-art-prompts.md`), the Iron Foundry is drawn with the owner's
   Orc sheets above, cut again by `tools/assault/cut-sheets.py golems` and recoloured to the foundry (grass sooted, stone and timber to slate and iron,
   red cloth to iron grey); our siege works keep their own colours.
 - Beside them, single pieces of Chronos Settlement's Dwarves and Machines kits (`hpatter9/little-town`, `src/renderer/art/iso/kits/dwarves/` and
