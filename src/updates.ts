@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.463.0',
+    date: '2026-11-10',
+    title: 'The camera keeps clear of the bars',
+    notes: ['The fight camera now centres the action in the part of the board you can see, clear of the spell row, the boss bar and the bench.'],
+  },
+  {
+    version: '0.462.0',
+    date: '2026-11-10',
+    title: 'Effects that move, and hide less',
+    notes: ['Area effects under your heroes now breathe and shimmer with a bright edge and a faint fill, and dim further on a tile someone stands in.'],
+  },
+  {
     version: '0.461.0',
     date: '2026-11-10',
     title: 'A foe calls you out once',
