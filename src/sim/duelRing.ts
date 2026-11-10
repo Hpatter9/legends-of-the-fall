@@ -21,6 +21,9 @@ export interface DuelRing {
   /** The ring's middle and half-width. */
   mid: At;
   r: number;
+  /** DUEL-SHOW: every blow in the ring lands this many times softer (none: as hard as anywhere), so the duel lasts longer (`duel.ts`,
+   *  `DUEL_LENGTH`). */
+  soften?: number;
   /** How it ended: the nemesis fell, the champion fell, or the time ran out with both standing. */
   ended?: 'won' | 'lost' | 'timeout';
 }

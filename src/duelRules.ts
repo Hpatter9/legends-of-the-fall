@@ -3,7 +3,7 @@
 // answering, then the challenge's card (`duelView.ts`): who calls out whom and why, what each outcome means, Accept and Refuse. Pure: no Pixi,
 // no DOM.
 
-import { DUEL_HEAL, DUEL_SHAMED, type DuelOffer, type DuelWhy } from './sim/duel';
+import { DUEL_HEAL, DUEL_SHAMED, duelMs, type DuelOffer, type DuelWhy } from './sim/duel';
 import { DUEL_LINES } from './sim/duelLines';
 import { heroName } from './sim/heroNames';
 import { fullName, MOCKING_ATK, type NemSnap } from './sim/nemesis';
@@ -40,6 +40,20 @@ export function duelTaunt(o: DuelOffer, s: NemSnap, seed: number): Taunt {
   };
 }
 
+const SMALL = ['no', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'];
+
+/** DUEL-SHOW: the ring's clock in words ("sixty seconds", "two minutes", "two and a half minutes"; else "2:15"). */
+export function clockWords(ms: number): string {
+  const s = Math.round(ms / 1000);
+  if (s === 60) return 'sixty seconds';
+  if (s < 60) return `${s} seconds`;
+  const m = Math.floor(s / 60);
+  const name = SMALL[m] ?? String(m);
+  if (s % 60 === 0) return m === 1 ? 'a minute' : `${name} minutes`;
+  if (s % 60 === 30) return m === 1 ? 'a minute and a half' : `${name} and a half minutes`;
+  return `${m}:${String(s % 60).padStart(2, '0')}`;
+}
+
 /** Why it challenges, in words. */
 const WHY: Readonly<Record<DuelWhy, (hero: string) => string>> = {
   vengeful: (h) => `It swore vengeance on ${h}`,
@@ -56,7 +70,7 @@ export function duelWords(o: DuelOffer, s: NemSnap): { title: string; why: strin
     why: WHY[o.why](hero),
     win: `It is slain for good${s.rank === 'warchief' ? ' (a warchief is humiliated, and flees to his Muster)' : ''}, its wave breaks and runs and the wave is won, every hero heals ${DUEL_HEAL * 100}%, and it pays double`,
     lose: `${o.kind ? hero : 'Your champion'} falls and stands again at half; it gains a Might and fights the wave with its escorts`,
-    time: `After sixty seconds it slips away a Might stronger (humiliated if under ${DUEL_SHAMED * 100}% health); the wave fights on without it`,
+    time: `After ${clockWords(duelMs())} it slips away a Might stronger (humiliated if under ${DUEL_SHAMED * 100}% health); the wave fights on without it`,
     refuse: `The wave is fought as usual, and it is Mocking: +${MOCKING_ATK * 100}% attack for the rest of the run`,
   };
 }

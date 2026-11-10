@@ -78,6 +78,10 @@ Accept or Refuse, the one-on-one in the middle ring, the rout on a win, and the 
 
   The last three armies keep x1, unmeasured (below).
 
+  **Since DUEL-SHOW** (`docs/notes/duel-show.md`) a duel is about 2.2 times as long: its blows land softer, its clock is two and a half
+  minutes, and a trim of x0.95 on the nemesis's health and two re-tuned army factors (the Undead Legion x0.8, the Beast Packs x1.46) keep
+  who wins as it was.
+
 ### The outcomes (`settleDuelRun` for the run, `noteWar` for the War)
 
 - **Won.** The nemesis is slain for good:
