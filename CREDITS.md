@@ -788,3 +788,5 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 - `art-source/assault/orc/orc-timber-gates.png` and `orc-structure-fittings.png`: original timber gate damage states, compact chief's longhouse, corner post/stump and low earth/sill/threshold fittings generated with OpenAI image generation for the approved Bloodtusk structure correction. The fittings sheet received a transparency cleanup with the same image tool. Cut and anchored by `tools/assault/pack-warcamp.py` into the existing cached orc atlas.
 
 - Shattered Crown loading poster: original generated artwork directed for Legends of the Last Keep; source `art-source/loading/shattered-crown.png`, runtime `src/art/loading/shattered-crown.webp`.
+
+- Living ground loops (`art-source/fx-alive/ground-loops.png`, runtime `src/art/fx/alive/atlas.png`): original artwork painted for this game by the owner with ChatGPT image generation from the FX-ALIVE prompt (`docs/notes/fx-alive-art-prompts.md`): eight elements' eight-frame tile loops. Cut by `tools/fx-alive/cut.py`; drawn as the moving edge of a marked patch by `src/render/fx.ts` (`docs/notes/fx-alive-art.md`).
