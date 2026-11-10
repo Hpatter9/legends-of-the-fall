@@ -30,7 +30,7 @@ import { TWISTS } from './twists';
 import { HEROES, UNITS } from './units';
 import { HERO_NAMES, heroName } from './heroNames';
 import { landOf, waveFoes } from './armies';
-import { benchFull, MAX_RETRIES, recruit, summonCost, tierOfRun, waveArmyOf, type Buff, type Run } from './run';
+import { benchFull, MAX_RETRIES, noteHired, recruit, summonCost, tierOfRun, waveArmyOf, type Buff, type Run } from './run';
 import { marketTier } from './market';
 import { EVENT_KINDS, type EventCard, type EventKind, type EventOption } from './events';
 import type { Area } from './board';
@@ -472,6 +472,7 @@ export function applyRoad(run: Run, a: RoadAct, cost = 0): string {
       return 'There is no room on the bench. The sellsword shrugs, keeps nothing, and walks on.';
     }
     recruit(run, a.hire, cost);
+    noteHired(run);
   }
   if (a.lose) run.gold = Math.max(0, run.gold - a.lose);
   if (a.relic) {

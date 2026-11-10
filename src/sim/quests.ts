@@ -535,7 +535,7 @@ export interface QuestFight {
   stand?: { best: number; act: number; held: number };
   /** The quest battle this fight won (its last wave), if it did. */
   battle?: string;
-  /** QUESTS-3: the run this fight was in (its seed), whether the run is over now, the hearts burnt and the heroes hired in it so far. */
+  /** QUESTS-3: the run this fight was in (its seed), whether the run is over now, the hearts burnt and the outside help (sellswords, guests) hired in it so far. */
   run?: number;
   runOver?: boolean;
   hearts?: number;
@@ -625,7 +625,8 @@ export function questFightOf(c: AchievementCtx, extra: FightExtra = {}): QuestFi
     run: run.seed,
     runOver: run.over || !!run.cleared,
     hearts: run.retries ?? 0,
-    hires: run.summons,
+    // (QUEST-POSSIBLE: outside help hired, not the party's own heroes put on the board, which every army run buys with Hire)
+    hires: run.hired ?? 0,
     levels: Object.fromEntries(heroes.map((u) => [u.def, levelOfKind(c.meta, u.def)])),
     ...(bestHero(c.meta) ? { best: bestHero(c.meta) } : {}),
   };
