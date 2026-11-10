@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.453.0',
+    date: '2026-11-10',
+    title: 'Formations fit any party',
+    notes: ['Every formation now forms with the heroes you have: the sturdiest stand in front, shooters and healers behind. Only a lone hero fights loose.'],
+  },
+  {
     version: '0.452.0',
     date: '2026-11-10',
     title: 'Formations say when they can\'t form',
