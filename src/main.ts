@@ -710,6 +710,8 @@ class Game {
     $('loading').remove();
     (window as unknown as { __game: Game }).__game = this;
     (window as unknown as { __screens: () => string[] }).__screens = openScreens;
+    // (the toasts' queue, for the screenshot tools to raise one: `tools/sweep-1110/toasts.mjs`; the game never calls it from here)
+    (window as unknown as { __toastLines: typeof toastLines }).__toastLines = toastLines;
     // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
