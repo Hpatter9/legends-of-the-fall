@@ -18,6 +18,9 @@ const SIZES = opt('--sizes', '393x852').split(',').map((s) => s.split('x').map(N
 const EVERY = Number(opt('--every', '400'));
 const FRAMES = Number(opt('--frames', '12'));
 const OUT = opt('--out', 'docs/samples/battle-feel');
+const TAG = opt('--tag', '');
+// (--from <ms>: the first frame is taken once the fight's clock reaches it, for a strip of one moment)
+const FROM = Number(opt('--from', '0'));
 const TMP = 'out/battle-feel-frames';
 mkdirSync(OUT, { recursive: true });
 rmSync(TMP, { recursive: true, force: true });
@@ -31,6 +34,9 @@ const FIGHTS = [
   { name: 'ogres-casters-lv32', army: 'ogres', stage: 5, level: 32, party: ['knight', 'lightningMage', 'wizard', 'sage', 'cleric'], speed: 2 },
   { name: 'infernal-ults-lv40', army: 'infernal', stage: 8, level: 40, party: ['samurai', 'reaper', 'kraken', 'druid', 'gunslinger'], speed: 3, tier: 1 },
   { name: 'yokai-boss-lv46', army: 'yokai', stage: 15, level: 46, party: ['paladin', 'dragoon', 'demonSwordsman', 'illusionist', 'cleric'], speed: 1 },
+  // (FX-PLACE: the area and aura effects whose placing changed, a Mythic's bursts among them)
+  { name: 'fx-mythic', army: 'orcs', stage: 3, level: 35, party: ['vael', 'archer', 'wizard', 'paladin', 'knight'], speed: 1 },
+  { name: 'fx-aura', army: 'undead', stage: 4, level: 35, party: ['warlock', 'inquisitor', 'seraph', 'cleric', 'knight'], speed: 1 },
   // (round 2: the daily's waves, a plain one and the boss of the day, on a fixed date)
   { name: 'daily-w4-lv10', mode: { kind: 'daily', date: 20261110, practice: true }, stage: 4, level: 10, party: ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'], speed: 1 },
   { name: 'daily-boss-lv20', mode: { kind: 'daily', date: 20261110, practice: true }, stage: 10, level: 20, party: ['knight', 'cleric', 'kunoichi', 'archer', 'wizard'], speed: 2 },
@@ -82,7 +88,7 @@ for (const [w, h] of SIZES) {
     await page.evaluate(() => document.getElementById('fight').click());
     await page.waitForTimeout(800);
     const shots = [];
-    let lastT = -1;
+    let lastT = FROM - EVERY - 1;
     for (let i = 0; i < FRAMES; i++) {
       // (wait for the fight's clock to move on `EVERY` ms, however fast it runs; a boss card or a moment holds it)
       const t0 = Date.now();
@@ -120,7 +126,7 @@ out = Image.new('RGB', (tw * cols, th * rows), (0, 0, 0))
 for i, im in enumerate(ims):
     out.paste(im.resize((tw, th)), ((i % cols) * tw, (i // cols) * th))
 out.save(sys.argv[1], quality=72)
-`, `${OUT}/${f.name}-${w}.jpg`, ...shots], { stdio: 'inherit' });
+`, `${OUT}/${f.name}${TAG}-${w}.jpg`, ...shots], { stdio: 'inherit' });
     if (py.status) console.log('strip failed', f.name);
     await ctx.close();
   }
