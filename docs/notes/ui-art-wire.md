@@ -84,5 +84,5 @@ the duel bar and the Quest complete card.
 
 - `npm run typecheck`: clean. `npm run web`: builds.
 - `npm test -- painted-buttons fight-hud`, `duel safe-rect ui-standard`, `quest-complete ui-standard` as each set went in; then the full
-  suite (its result below).
+  suite: `npm test`, 3093 of 3093 pass, none failed, cancelled or skipped.
 - The shots above at 393x852, 360x780 and 412x915, with 0 page errors.
