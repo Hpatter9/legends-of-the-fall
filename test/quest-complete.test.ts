@@ -8,7 +8,7 @@ import { startedMeta, type Meta } from '../src/sim/meta';
 import { QUESTS, questById, type QuestDef } from '../src/sim/questData';
 import { questBattleById } from '../src/sim/questBattles';
 import { rewardOf } from '../src/sim/questPay';
-import { battleOfQuest, noteBattleWon } from '../src/sim/questRun';
+import { battleOfQuest, noteBattleHow, noteBattleWon } from '../src/sim/questRun';
 import { handIn, needOf, objectivesOf, readQuests, type QuestActive } from '../src/sim/quests';
 import { rewardWords } from '../src/sim/rewardWords';
 import { lengthOf, partsOf, storyParts } from '../src/sim/questStars';
@@ -36,11 +36,10 @@ test('the first sentences of a line are cut at a sentence end, never mid-word', 
 
 test('a plain quest has no story block, only its giver\'s thanks; a story quest ends on the giver\'s closing line', () => {
   assert.equal(storyOf(plain), undefined);
-  assert.equal(thanksOf(plain), plain.done[plain.done.length - 1]);
+  assert.deepEqual(thanksOf(plain), [...plain.done]);
   const s = storyOf(chainQuest)!;
   assert.deepEqual(s.told, []);
-  assert.equal(s.said.length, 2);
-  assert.equal(s.said[1], chainQuest.done[chainQuest.done.length - 1], 'the closing line is the giver\'s own, whole');
+  assert.deepEqual(s.said.slice(1), [...chainQuest.done], 'every closing line, the giver\'s own, whole');
   assert.ok(chainQuest.offer[chainQuest.offer.length - 1].startsWith(s.said[0]), 'the ask is the start of the offer\'s last line');
   assert.equal(thanksOf(chainQuest), undefined);
 });
@@ -49,7 +48,7 @@ test('a quest battle\'s story is its blurb, the narration that ends the scene af
   const qb = battleOfQuest(battleQuest.id)!;
   const s = storyOf(battleQuest, ['samurai', 'samuraiCommander'])!;
   assert.deepEqual(s.told, [qb.blurb, 'The lanterns drift on downriver. Nobody collects the toll again.']);
-  assert.deepEqual(s.said, [battleQuest.done[battleQuest.done.length - 1]]);
+  assert.deepEqual(s.said, [...battleQuest.done]);
 });
 
 test('no story invents a word: every line of every quest\'s story is in the quest\'s own text, and none is long', () => {
@@ -58,7 +57,7 @@ test('no story invents a word: every line of every quest\'s story is in the ques
     const s = storyOf(q);
     assert.equal(!!s, hasStory(q), q.id);
     if (!s) {
-      assert.ok(thanksOf(q) === undefined || q.done.includes(thanksOf(q)!), q.id);
+      assert.deepEqual(thanksOf(q) ?? [], [...q.done], q.id);
       continue;
     }
     stories++;
@@ -72,7 +71,9 @@ test('no story invents a word: every line of every quest\'s story is in the ques
       // (the scene's line may carry an actor's name filled in: its words, the names aside, are the scene's)
       if (s.told[1]) assert.ok(after.some((t) => t.replace(/\{\w+\}/g, '').split(/\s+/).filter((w) => w.length > 3).every((w) => s.told[1].includes(w))), `${q.id}: the line after the battle is the scene's`);
     } else assert.deepEqual(s.told, [], q.id);
-    assert.ok(s.told.length + s.said.length <= 3, `${q.id}: three lines at most`);
+    // (round 2: every closing line is shown, so a quest with three of them has up to two told, the ask and three closing)
+    assert.deepEqual(s.said.slice(-q.done.length), [...q.done], `${q.id}: every closing line, in order`);
+    assert.ok(s.told.length + s.said.length <= 3 + q.done.length, `${q.id}: no more than its own lines`);
     assert.ok(s.said.length >= 1, `${q.id}: it ends on the giver's words`);
   }
   assert.ok(stories > 100);
@@ -120,7 +121,7 @@ test('a quest battle\'s recap says who fought and how it went where the save kno
   // (a battle won before the card existed: the tries begun and the cast, no more)
   assert.deepEqual(battleLines(qb, undefined, ['samurai', 'samuraiCommander'], 3).map((l) => l.text), ['Two Blades on the Bridge: won on the third try', 'Fought by Kenji and Hideo']);
   assert.deepEqual(battleLines(qb, undefined, undefined).map((l) => l.text), ['Two Blades on the Bridge: won']);
-  // the win is recorded from the run's own books, once
+  // the win is recorded from the run's own books once its last fight is in them, once; a replay for practice writes nothing
   const m = startedMeta(3);
   m.quests = { active: [], offers: [], done: [], tries: { [qb.id]: 2 } };
   const recap = newRecap();
@@ -129,8 +130,13 @@ test('a quest battle\'s recap says who fought and how it went where the save kno
   recap.heroes = { samurai: { dealt: 50, taken: 0, healed: 0, kills: 1, grade: 1 }, samuraiCommander: { dealt: 90, taken: 0, healed: 0, kills: 2, grade: 1 } };
   const run = { mode: { kind: 'quest', quest: qb.id }, cleared: true, recap } as unknown as Run;
   assert.equal(noteBattleWon(m, run), true);
+  assert.equal((m.quests as { how?: unknown }).how, undefined, 'the win alone writes no record: the last fight is not in the books yet');
+  assert.equal(noteBattleHow(m, { ...run, cleared: false } as Run), false);
+  assert.equal(noteBattleHow(m, run), true);
   assert.deepEqual(m.quests.how, { [qb.id]: { heroes: ['samuraiCommander', 'samurai'], ms: 61_500, fights: 3, tries: 2 } });
-  assert.equal(noteBattleWon(m, { ...run, recap: newRecap() } as Run), false, 'a replay does not rewrite it');
+  assert.equal(noteBattleHow(m, { ...run, recap: newRecap() } as Run), false, 'a later win does not rewrite it');
+  const pm = startedMeta(4);
+  assert.equal(noteBattleHow(pm, { ...run, mode: { kind: 'quest', quest: qb.id, practice: true } } as unknown as Run), false, 'practice writes nothing');
   assert.equal(m.quests.how![qb.id].ms, 61_500);
   // and it is read back safely
   const back = readQuests(JSON.parse(JSON.stringify({ ...m.quests, how: { ...m.quests.how, notABattle: { heroes: ['x'], ms: 1, fights: 1, tries: 1 }, [`${qb.id}x`]: null } })))!;

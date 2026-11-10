@@ -107,7 +107,7 @@ export function openQuestComplete(view: CompleteView, hooks: CompleteHooks = {})
   giver.append(names);
   menu.body.append(giver);
   // (a quest with no story: the giver's thanks, as their own words)
-  if (view.thanks) menu.body.append(el('p', 'qxThanks', `“${say(view.thanks)}”`));
+  for (const line of view.thanks ?? []) menu.body.append(el('p', 'qxThanks', `“${say(line)}”`));
 
   // the story's close: what it was, then the giver's words
   if (view.story) {
@@ -142,6 +142,7 @@ export function openQuestComplete(view: CompleteView, hooks: CompleteHooks = {})
     list.setAttribute('role', 'list');
     menu.body.append(list);
     const calm = still();
+    const arrive: (() => void)[] = [];
     view.rewards.forEach((r, i) => {
       const row = el('div', `qxReward ${r.kind}${calm ? ' in' : ''}`);
       row.setAttribute('role', 'listitem');
@@ -153,11 +154,10 @@ export function openQuestComplete(view: CompleteView, hooks: CompleteHooks = {})
       row.append(rewardPicture(r), words);
       list.append(row);
       if (calm) return;
-      timers.push(
-        window.setTimeout(() => {
+      arrive.push(() =>
+        timers.push(
+          window.setTimeout(() => {
           row.classList.add('in');
-          // (a long card scrolls: a reward arriving below the fold is brought into view, so none arrives unseen)
-          row.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
           play(cueOf(r));
           if (!amount || r.n === undefined) return;
           const t0 = performance.now();
@@ -168,9 +168,27 @@ export function openQuestComplete(view: CompleteView, hooks: CompleteHooks = {})
             if (k < 1) requestAnimationFrame(tick);
           };
           requestAnimationFrame(tick);
-        }, 250 + i * ARRIVE_MS),
+          }, 250 + i * ARRIVE_MS),
+        ),
       );
     });
+    // (QUEST-COMPLETE 2, found by playing one: on a long card the rewards are below the fold while the story is being read. They wait
+    // until the list is in view, so none arrives unseen and the card is never pulled down under the reader.)
+    const start = (): void => {
+      for (const go of arrive.splice(0)) go();
+    };
+    if (!calm && 'IntersectionObserver' in window) {
+      const seen = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((e) => e.isIntersecting)) return;
+          seen.disconnect();
+          start();
+        },
+        { root: menu.body, threshold: 0.15 },
+      );
+      seen.observe(list);
+      timers.push(window.setTimeout(() => seen.disconnect(), 600_000));
+    } else start();
     // (reduced motion: everything is there at once, with one cue)
     if (calm) play('coinClaim');
   }

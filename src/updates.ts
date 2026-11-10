@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.468.0',
+    date: '2026-11-10',
+    title: 'Quest battles end on their card',
+    notes: ['Winning a quest battle opens its Quest complete card at once, with no trip to the log. The card shows all of the giver\'s closing lines.'],
+  },
+  {
     version: '0.467.0',
     date: '2026-11-10',
     title: 'The Shattered Crown',
