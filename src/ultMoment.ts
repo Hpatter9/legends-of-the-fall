@@ -19,12 +19,12 @@ import { keyOf, ultimateOf } from './sim/abilities';
 import { heroName } from './sim/heroNames';
 import { GLOW, skillElement } from './render/fxRules';
 import type { Fx } from './render/fx';
-import { play } from './render/sound';
+import { playAll } from './render/sound';
 import { spellImage } from './render/spellArt';
 import { spellPart } from './render/spellLooks';
 import { settings } from './settings';
 import { whichCast } from './fightHudRules';
-import { ULT_MOMENT, UltQueue, ultShape, type UltMoment, type UltPhase } from './ultMomentRules';
+import { ULT_MOMENT, UltQueue, ultCues, ultShape, type UltMoment, type UltPhase } from './ultMomentRules';
 import { burstSpots, KIT, KIT_SESSION, litPools, ultLean, ultTargets, type Pt, type UltTargets } from './ultEpicRules';
 import { hasShowcase, planShow, readCast, wantsShow, type ShowPlan } from './ultShowRules';
 import { UltShow } from './ultShow';
@@ -221,7 +221,7 @@ export class UltMoments {
     if (q.phase === 'open' && this.shown !== q.seq && u) {
       this.slash(u, m.name);
       fx?.ultGather(u.id, m.el ?? 'light', ULT_MOMENT.OPEN_MS);
-      play('ultSlash');
+      playAll(ultCues('open', q.calm));
     }
     if (q.strikes !== this.struckSeen) {
       this.struckSeen = q.strikes;
@@ -262,7 +262,7 @@ export class UltMoments {
     const t = m.landing ?? m.targets ?? NONE;
     const spots = burstSpots(t, m.unit, settings().saver);
     this.opts.fx?.ultImpact(b, el, spots);
-    play('ultImpact');
+    playAll(ultCues('impact', this.queue.calm));
     const at = spots.map((s) => ('unit' in s ? this.opts.anchor(s.unit) : this.opts.tile?.(s.u, s.v) ?? null)).filter((p): p is Pt => !!p);
     const c = at.length ? { x: at.reduce((n, p) => n + p.x, 0) / at.length, y: at.reduce((n, p) => n + p.y, 0) / at.length } : { x: innerWidth / 2, y: innerHeight * 0.45 };
     this.layer.querySelector('.umFlash')?.remove();

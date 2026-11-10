@@ -76,7 +76,7 @@ export function drawRuneTray(card: HTMLElement, state: RuneState, heroes: readon
   const kinds = heroes.map((h) => h.kind);
   const after = (what: ReturnType<typeof dropRune> | 'auto' | 'all') => {
     sel = undefined;
-    if (what === 'merged' || what === 'all') play('merge');
+    if (what === 'merged' || what === 'all') play('runeMerge');
     changed();
     draw();
     fresh = new Set();

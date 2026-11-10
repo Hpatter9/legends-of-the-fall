@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.454.0',
+    date: '2026-11-10',
+    title: 'The Assault finds its voice',
+    notes: ['A siege now has its own music, and each hold its own ambience and drums. Gates, walls, rams and ladders all sound, and the keep\'s fall rings out.', 'Hand-cast ultimates build up under the slash; the rune bench and Auto buttons have their own sounds.'],
+  },
+  {
     version: '0.453.0',
     date: '2026-11-10',
     title: 'Formations fit any party',

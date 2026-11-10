@@ -847,6 +847,186 @@ export const SOUNDS: Record<Cue, (s: Voices, t: number) => void> = {
     s.clang(t + 0.01, 523, 0.45, 0.12);
   },
 
+  // the Assault's holds (HOLD-SOUND, docs/notes/hold-sound.md)
+  // a gate struck: the thud of timber, its iron bands ringing a little
+  gateHit: (s, t) => {
+    s.thump(t, 120, 0.22, 0.4, 48);
+    s.hiss(t, 0.14, 520, 'lowpass', 0.22, 180);
+    s.clang(t + 0.005, 610, 0.18, 0.05);
+  },
+  // a wall or a palisade struck: a dull crack and grit falling
+  wallHit: (s, t) => {
+    s.thump(t, 95, 0.18, 0.36, 40);
+    s.snap(t, 0.18, 1500);
+    s.scatter(t + 0.03, 0.2, 3, 0.07, 900, 'bandpass');
+  },
+  // a war drum struck by a blade: the skin's dead thud
+  drumHit: (s, t) => {
+    s.thump(t, 150, 0.3, 0.42, 62);
+    s.hiss(t, 0.09, 900, 'bandpass', 0.14, 300);
+  },
+  // the ram's head swung home: a deep boom, the gate groaning after it
+  ramHit: (s, t) => {
+    s.thump(t, 70, 0.6, 0.7, 26);
+    s.thump(t + 0.015, 140, 0.25, 0.35, 50);
+    s.hiss(t, 0.3, 420, 'lowpass', 0.3, 110);
+    s.clang(t + 0.01, 440, 0.4, 0.07);
+    s.note(t + 0.12, 92, 0.4, 0.08, 'sawtooth', 70);
+  },
+  // a gate broken: the crash, the timbers splintering, the iron bands ringing as they fall
+  gateBreak: (s, t) => {
+    s.thump(t, 80, 0.9, 0.8, 22);
+    s.snap(t, 0.5, 1400);
+    s.hiss(t, 0.7, 700, 'lowpass', 0.45, 140);
+    s.scatter(t + 0.04, 0.7, 12, 0.16, 1700, 'bandpass');
+    s.clang(t + 0.08, 392, 0.9, 0.1);
+    s.clang(t + 0.3, 294, 0.8, 0.07);
+    s.thump(t + 0.45, 60, 0.5, 0.35, 24);
+  },
+  // a wall breached: a long rolling crash of stone and stakes, the rubble settling
+  wallBreak: (s, t) => {
+    s.thump(t, 62, 1.1, 0.8, 18);
+    s.hiss(t, 1.1, 480, 'lowpass', 0.5, 90);
+    s.scatter(t + 0.05, 1.0, 14, 0.16, 900, 'bandpass');
+    s.scatter(t + 0.3, 0.9, 8, 0.1, 2200);
+    s.thump(t + 0.35, 50, 0.6, 0.4, 22);
+  },
+  // a ladder thrown up against the wall: wood knocking on stone, twice
+  ladderUp: (s, t) => {
+    s.hiss(t, 0.16, 500, 'bandpass', 0.14, 1500, 3);
+    s.snap(t + 0.16, 0.26, 1300);
+    s.thump(t + 0.16, 170, 0.12, 0.22, 80);
+    s.snap(t + 0.27, 0.16, 1500);
+  },
+  // a ladder pushed down: it scrapes, falls and clatters
+  ladderDown: (s, t) => {
+    s.hiss(t, 0.25, 1600, 'bandpass', 0.14, 500, 3);
+    s.thump(t + 0.26, 130, 0.2, 0.3, 50);
+    s.scatter(t + 0.26, 0.3, 6, 0.14, 1300, 'bandpass');
+  },
+  // the trebuchet let go: the arm's creak, the sling's whoosh up and away
+  trebLoose: (s, t) => {
+    s.note(t, 130, 0.3, 0.1, 'sawtooth', 210);
+    s.thump(t + 0.24, 100, 0.3, 0.4, 36);
+    s.hiss(t + 0.24, 0.6, 500, 'bandpass', 0.3, 2600, 2.5);
+    s.hiss(t + 0.3, 0.5, 3000, 'highpass', 0.06);
+  },
+  // a keg's fuse: a bright spitting hiss that climbs
+  fuse: (s, t) => {
+    s.hiss(t, 1.1, 3600, 'bandpass', 0.16, 6500, 3);
+    s.scatter(t, 1.1, 14, 0.1, 4200);
+  },
+  // a weak point found: a tap on hollow stone, then a clear rising pair of notes (something learnt)
+  weakPoint: (s, t) => {
+    s.snap(t, 0.2, 1700);
+    s.thump(t, 190, 0.1, 0.18, 90);
+    s.ring(t + 0.12, 784, 0.5, 0.11);
+    s.ring(t + 0.27, 1175, 0.8, 0.12);
+    s.hiss(t + 0.27, 0.5, 5500, 'highpass', 0.04);
+  },
+  // the hold's great horn: a long low call that swells and falls, a fifth over it, breath in it
+  greatHorn: (s, t) => {
+    s.pad(t, 87.3, 2.2, 0.34, 'sawtooth', 520, 92.5);
+    s.pad(t + 0.05, 130.8, 2.1, 0.22, 'sawtooth', 640, 138.6);
+    s.pad(t + 0.1, 174.6, 2.0, 0.1, 'sawtooth', 900, 185);
+    s.hiss(t, 1.8, 380, 'bandpass', 0.1, 520, 2);
+    s.thump(t, 58, 1.6, 0.3, 34);
+  },
+  // a drum silenced: its last beat, the skin splitting, the note falling away to nothing
+  drumSilenced: (s, t) => {
+    s.thump(t, 140, 0.9, 0.6, 26);
+    s.snap(t, 0.3, 1100);
+    s.hiss(t, 0.35, 1400, 'bandpass', 0.2, 300, 2);
+    s.note(t + 0.05, 196, 1.0, 0.1, 'triangle', 73);
+  },
+  // the wolves: one long howl rising and falling, a second answering under it
+  wolfHowl: (s, t) => {
+    s.pad(t, 370, 1.5, 0.12, 'triangle', 1400, 520);
+    s.note(t + 0.9, 520, 0.7, 0.08, 'triangle', 330);
+    s.pad(t + 0.35, 310, 1.3, 0.07, 'triangle', 1200, 440);
+    s.hiss(t, 1.4, 700, 'bandpass', 0.04, 1100, 4);
+  },
+  // the keep falls: the lord's last blow, a long low brass chord sinking, a great bell, the walls' rumble
+  keepFall: (s, t) => {
+    s.thump(t, 60, 2.2, 0.8, 16);
+    s.snap(t, 0.5, 1300);
+    s.hiss(t, 1.6, 420, 'lowpass', 0.4, 70);
+    s.pad(t + 0.1, 146.8, 2.6, 0.24, 'sawtooth', 800, 110);
+    s.pad(t + 0.1, 220, 2.6, 0.16, 'sawtooth', 900, 164.8);
+    s.ring(t + 0.5, 196, 2.4, 0.22);
+    s.scatter(t + 0.2, 1.4, 12, 0.12, 900, 'bandpass');
+  },
+  // the host marches out: three drum beats quickening, the horn's short call over them
+  hostMarch: (s, t) => {
+    [0, 0.42, 0.78, 1.05].forEach((d, i) => {
+      s.thump(t + d, 88 + i * 4, 0.4, 0.5, 34);
+      s.hiss(t + d, 0.12, 700, 'bandpass', 0.12, 260);
+    });
+    s.pad(t + 0.9, 196, 1.0, 0.16, 'sawtooth', 1200, 220);
+    s.pad(t + 0.95, 293.7, 0.95, 0.1, 'sawtooth', 1400, 329.6);
+  },
+  // the Last Hold: a tolling bell over a dark, close chord, a slow heavy drum under it
+  lastHold: (s, t) => {
+    s.thump(t, 50, 2.6, 0.6, 20);
+    s.pad(t, 73.4, 3.0, 0.26, 'sawtooth', 600);
+    s.pad(t, 77.8, 3.0, 0.2, 'sawtooth', 600);
+    s.pad(t + 0.2, 110, 2.8, 0.14, 'sawtooth', 700);
+    s.ring(t + 0.1, 146.8, 2.8, 0.22);
+    s.ring(t + 1.5, 146.8, 1.7, 0.16);
+    [0.9, 1.8].forEach((d) => {
+      s.thump(t + d, 70, 0.7, 0.45, 26);
+      s.hiss(t + d, 0.3, 300, 'lowpass', 0.2);
+    });
+  },
+  // the War's end: bells pealing over a great bright chord that climbs and holds, a last drum under it
+  warEnd: (s, t) => {
+    [293.7, 370, 440, 587.3].forEach((f, i) => s.note(t + i * 0.2, f, 0.42, 0.18, 'sawtooth'));
+    [293.7, 440, 587.3, 740, 880].forEach((f) => s.pad(t + 0.9, f, 3.0, 0.1, 'triangle', 2600));
+    s.pad(t + 0.9, 146.8, 3.0, 0.2, 'sawtooth', 900);
+    [0.9, 1.25, 1.6, 2.0, 2.5].forEach((d, i) => s.ring(t + d, [1175, 880, 1480, 1175, 1760][i], 1.6, 0.09));
+    s.thump(t + 0.9, 62, 1.8, 0.55, 22);
+    s.hiss(t + 0.9, 1.4, 6500, 'highpass', 0.05);
+  },
+
+  // a hand-fired ultimate's three seconds (BATTLE-POLISH): the power gathering through the opening (a tone and a band of air climbing all
+  // the way to the blow, a pulse quickening under them), and the slow beat after the blow (the world dragged down and let go)
+  ultCharge: (s, t) => {
+    s.pad(t, 110, 1.4, 0.2, 'sawtooth', 1500, 440);
+    s.pad(t, 165, 1.4, 0.12, 'triangle', 2200, 660);
+    s.hiss(t, 1.4, 400, 'bandpass', 0.2, 5200, 3);
+    [0, 0.42, 0.74, 0.98, 1.16, 1.29].forEach((d, i) => s.thump(t + d, 80 + i * 8, 0.16, 0.2 + i * 0.03, 44));
+  },
+  ultSlow: (s, t) => {
+    s.note(t, 220, 0.6, 0.16, 'sine', 55);
+    s.hiss(t, 0.6, 2400, 'bandpass', 0.14, 260, 2);
+    s.thump(t + 0.02, 90, 0.5, 0.25, 30);
+  },
+
+  // the menus: the rune bench's bar sliding across (stone on stone), two runes ground into one (a grind, a crack of light, a rising
+  // chord), a rune set in a hero's socket (a click home and a shimmer), a ledger's heavy page turned
+  runeSlide: (s, t) => {
+    s.hiss(t, 0.22, 500, 'bandpass', 0.14, 1300, 2);
+    s.thump(t + 0.2, 150, 0.08, 0.12, 80);
+    s.click(t + 0.2, 0.06, 2200);
+  },
+  runeMerge: (s, t) => {
+    s.hiss(t, 0.28, 700, 'bandpass', 0.16, 2400, 3);
+    s.snap(t + 0.26, 0.2, 2600);
+    [392, 587, 784].forEach((f, i) => s.ring(t + 0.28 + i * 0.07, f, 0.6, 0.09));
+    s.hiss(t + 0.3, 0.4, 6000, 'highpass', 0.04);
+  },
+  runeSet: (s, t) => {
+    s.thump(t, 180, 0.09, 0.2, 90);
+    s.click(t, 0.1, 2000);
+    s.ring(t + 0.05, 880, 0.5, 0.08);
+    s.ring(t + 0.12, 1319, 0.4, 0.05);
+  },
+  ledger: (s, t) => {
+    s.hiss(t, 0.2, 3200, 'bandpass', 0.12, 2000, 0.8);
+    s.hiss(t + 0.2, 0.09, 2600, 'bandpass', 0.07, undefined, 0.9);
+    s.thump(t + 0.2, 140, 0.06, 0.06, 80);
+  },
+
   // relics & menus
   setChime2: (s, t) => {
     [523, 659, 784].forEach((f, i) => s.clang(t + i * 0.09, f, 0.5, 0.14));

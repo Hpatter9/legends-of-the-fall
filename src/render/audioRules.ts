@@ -358,7 +358,9 @@ export type Scene = 'camp' | 'tavern' | 'hall' | 'castle' | 'spells' | 'armies' 
  *  battle boards' kinds of land. */
 export type BedId =
   | 'camp' | 'tavern' | 'hall' | 'castle' | 'library' | 'armies' | 'field' | 'crypt' | 'halls' | 'storm'
-  | 'meadow' | 'forest' | 'snow' | 'desert' | 'oasis' | 'volcano' | 'forge' | 'cave' | 'swamp' | 'graveyard' | 'ruins';
+  | 'meadow' | 'forest' | 'snow' | 'desert' | 'oasis' | 'volcano' | 'forge' | 'cave' | 'swamp' | 'graveyard' | 'ruins'
+  // (the Assault's holds, `holdSound.ts`: the ones whose place no land's bed already is)
+  | 'warcamp' | 'barrow' | 'den' | 'maze' | 'bonefire' | 'shrine' | 'foundry';
 
 export const BED_OF: Record<Scene, BedId> = {
   camp: 'camp',
@@ -406,7 +408,11 @@ export const BED_LEVEL_MAX = 0.5;
 export const MIN_SHOT_GAP_S = 2.5;
 
 /** The one-shots a bed can sprinkle in. */
-export type ShotKind = 'pop' | 'clink' | 'twinkle' | 'bird' | 'drum' | 'drip' | 'thunder' | 'gust' | 'frog' | 'crow' | 'anvil' | 'page';
+export type ShotKind =
+  | 'pop' | 'clink' | 'twinkle' | 'bird' | 'drum' | 'drip' | 'thunder' | 'gust' | 'frog' | 'crow' | 'anvil' | 'page'
+  // (the holds' own: a wolf's howl, a tolling bell, a shrine's small bell, a hiss of steam, a far low horn, a piper's phrase, a great
+  //  taiko, a steam hammer's fall, a flare of fire)
+  | 'howl' | 'bell' | 'chime' | 'steam' | 'lowHorn' | 'pipe' | 'taiko' | 'hammer' | 'flare';
 
 /** A continuous layer of a bed: filtered noise or a held tone, with slow movement. */
 export interface BedLayer {
@@ -723,6 +729,129 @@ export const BEDS: Record<BedId, BedSpec> = {
       { kind: 'gust', weight: 1 },
     ],
     gap: [6, 13],
+  },
+  // ---- the Assault's holds (`HOLD_VOICE` in `holdSound.ts`): the place itself, under the battle; the hold's drums are a line of their own
+  // Bloodtusk Hold, the orcs' warcamp: the forge's roar and its bellows, the cook fires, the yards at work (hammers on anvils, a far drum)
+  warcamp: {
+    id: 'warcamp',
+    level: 0.33,
+    layers: [
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 170, gain: 0.32, mods: [slow(0.12, 0.4)] },
+      // (the bellows: the furnace breathing in and out)
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 720, gain: 0.24, mods: [slow(0.45, 0.6), slow(2.1, 0.25)] },
+      // (the cook fires and the butcher's: a bright flicker)
+      { kind: 'noise', filter: 'bandpass', q: 1.3, hz: 2400, gain: 0.05, mods: [slow(3.7, 0.7), slow(6.1, 0.5)] },
+      // (the camp's own noise: a low murmur of many voices)
+      { kind: 'noise', filter: 'bandpass', q: 1.2, hz: 380, gain: 0.16, sweep: { hz: 0.09, depth: 80 }, mods: [slow(0.14, 0.7)] },
+    ],
+    shots: [
+      { kind: 'anvil', weight: 3 },
+      { kind: 'pop', weight: 2 },
+      { kind: 'crow', weight: 1 },
+    ],
+    gap: [3, 6],
+  },
+  // the Barrow Necropolis: a cold drone under the mounds, thin wind through the stones, and now and then a drip or a crow
+  barrow: {
+    id: 'barrow',
+    level: 0.17,
+    layers: [
+      { kind: 'tone', wave: 'sine', hz: 55, detune: 7, gain: 0.12, mods: [slow(0.06, 0.35)] },
+      { kind: 'tone', wave: 'triangle', hz: 82.4, detune: 11, gain: 0.04, mods: [slow(0.05, 0.5)] },
+      // (a hollow fifth, far and faint: the barrows' voices)
+      { kind: 'tone', wave: 'sine', hz: 220, detune: 9, gain: 0.05, mods: [slow(0.09, 0.9)] },
+      { kind: 'noise', filter: 'bandpass', q: 1.4, hz: 520, gain: 0.42, sweep: { hz: 0.06, depth: 140 }, mods: [slow(0.07, 0.7)] },
+      { kind: 'noise', filter: 'bandpass', q: 4, hz: 1300, gain: 0.09, sweep: { hz: 0.05, depth: 400 }, mods: [slow(0.1, 0.8)] },
+    ],
+    echo: { delay: 0.38, feedback: 0.35, mix: 0.4 },
+    shots: [
+      { kind: 'drip', weight: 2 },
+      { kind: 'crow', weight: 1 },
+      { kind: 'gust', weight: 1 },
+    ],
+    gap: [5, 11],
+  },
+  // the Howling Den: the wind howling over the crags (a narrow band, swept), its low roar, and wolves far off
+  den: {
+    id: 'den',
+    level: 0.31,
+    layers: [
+      { kind: 'noise', filter: 'bandpass', q: 3.5, hz: 640, gain: 0.3, sweep: { hz: 0.08, depth: 280 }, mods: [slow(0.1, 0.7)] },
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 300, gain: 0.28, mods: [slow(0.06, 0.5)] },
+      { kind: 'noise', filter: 'bandpass', q: 0.6, hz: 2800, gain: 0.06, sweep: { hz: 0.13, depth: 800 }, mods: [slow(0.12, 0.8)] },
+    ],
+    shots: [
+      { kind: 'howl', weight: 3 },
+      { kind: 'gust', weight: 1 },
+    ],
+    gap: [5, 10],
+  },
+  // the Heart of the Maze: still air in the stone passages, a low drone, every sound coming back off the walls
+  maze: {
+    id: 'maze',
+    level: 0.15,
+    layers: [
+      { kind: 'tone', wave: 'sine', hz: 61.7, detune: 6, gain: 0.1, mods: [slow(0.07, 0.3)] },
+      { kind: 'noise', filter: 'bandpass', q: 1.1, hz: 520, gain: 0.34, sweep: { hz: 0.09, depth: 200 }, mods: [slow(0.08, 0.7)] },
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 280, gain: 0.1, mods: [slow(0.08, 0.5)] },
+    ],
+    echo: { delay: 0.47, feedback: 0.5, mix: 0.6 },
+    shots: [
+      { kind: 'drip', weight: 2 },
+      { kind: 'gust', weight: 1 },
+      { kind: 'lowHorn', weight: 1 },
+    ],
+    gap: [5, 11],
+  },
+  // Bonefire Crag: the great fires roaring (a low body, a rolling flame, a bright crackle), the wind on the crag
+  bonefire: {
+    id: 'bonefire',
+    level: 0.3,
+    layers: [
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 420, gain: 0.4, mods: [slow(0.3, 0.5), slow(1.6, 0.3)] },
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 130, gain: 0.3, mods: [slow(0.1, 0.5)] },
+      { kind: 'noise', filter: 'bandpass', q: 1.2, hz: 2500, gain: 0.08, mods: [slow(3.3, 0.7), slow(7.1, 0.5)] },
+      { kind: 'noise', filter: 'bandpass', q: 0.8, hz: 480, gain: 0.12, sweep: { hz: 0.08, depth: 200 }, mods: [slow(0.07, 0.7)] },
+    ],
+    shots: [
+      { kind: 'pop', weight: 4 },
+      { kind: 'flare', weight: 1 },
+    ],
+    gap: [3, 6],
+  },
+  // the Moonlit Shrine: the night's insects, a soft wind in the pines, a held high note like a bowl singing, and the shrine's bells
+  shrine: {
+    id: 'shrine',
+    level: 0.2,
+    layers: [
+      { kind: 'noise', filter: 'bandpass', q: 0.7, hz: 560, gain: 0.3, sweep: { hz: 0.1, depth: 220 }, mods: [slow(0.08, 0.6)] },
+      { kind: 'noise', filter: 'bandpass', q: 0.6, hz: 3200, gain: 0.07, sweep: { hz: 0.13, depth: 900 }, mods: [slow(0.11, 0.8)] },
+      { kind: 'noise', filter: 'bandpass', q: 16, hz: 4800, gain: 0.04, mods: [slow(19, 1), slow(0.21, 0.9)] },
+      { kind: 'tone', wave: 'sine', hz: 587, detune: 4, gain: 0.03, mods: [slow(0.11, 1)] },
+    ],
+    shots: [
+      { kind: 'chime', weight: 3 },
+      { kind: 'bell', weight: 1 },
+    ],
+    gap: [4, 9],
+  },
+  // the Iron Foundry: the furnaces' roar, the engines turning over (a low pulse), steam, and hammers
+  foundry: {
+    id: 'foundry',
+    level: 0.27,
+    layers: [
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 160, gain: 0.34, mods: [slow(0.12, 0.4)] },
+      { kind: 'noise', filter: 'lowpass', q: 0.7, hz: 700, gain: 0.22, mods: [slow(0.4, 0.4), slow(2.1, 0.25)] },
+      // (the engines: a low hum that throbs, about one stroke a second)
+      { kind: 'tone', wave: 'triangle', hz: 73.4, detune: 5, gain: 0.12, mods: [slow(1.1, 0.8)] },
+      // (steam leaking somewhere: a thin high hiss that comes and goes)
+      { kind: 'noise', filter: 'highpass', q: 0.6, hz: 5200, gain: 0.03, mods: [slow(0.17, 0.9)] },
+    ],
+    shots: [
+      { kind: 'anvil', weight: 2 },
+      { kind: 'steam', weight: 2 },
+    ],
+    gap: [3, 7],
   },
 };
 

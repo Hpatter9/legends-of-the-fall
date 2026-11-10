@@ -2260,11 +2260,14 @@ class Game {
         this.meta.ultAuto = on;
         saveMeta(this.meta);
         this.setAutoOn(this.b);
+        // (HOLD-SOUND: each of the two Auto buttons says which way it was flipped)
+        play(on ? 'autoStart' : 'autoStop');
       },
       onSpellAuto: (on) => {
         this.meta.spellAuto = on;
         saveMeta(this.meta);
         this.setAutoOn(this.b);
+        play(on ? 'autoStart' : 'autoStop');
       },
       autoOn: () => this.ultAutoOn(),
       useOf: (kind, key) => useOf(this.meta, kind, key),
