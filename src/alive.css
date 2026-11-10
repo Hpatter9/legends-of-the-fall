@@ -59,9 +59,6 @@
 .lowPower .tcBand::after, .lowPower .tcFoe { animation: none; }
 .lowPower .tcBand::after { opacity: 0; }
 
-/* ALIVE: the keep's beacon on the loading screen gutters as it swells (the loading screen's reduced-motion rule stills it). */
-.ldBeacon { animation: ldGlow 4.8s ease-in-out infinite alternate, ldGutter 2.3s linear infinite; }
-@keyframes ldGutter { 0%, 100% { opacity: .72; } 12% { opacity: .6; } 19% { opacity: .82; } 33% { opacity: .66; } 47% { opacity: .86; } 58% { opacity: .7; } 71% { opacity: .62; } 86% { opacity: .78; } }
 
 /* ALIVE: the heroes' cards: every class's motes drift (only the casters' did), out of step from card to card; on a hero's own sheet
    the halo behind them turns slowly and the motes rise. */

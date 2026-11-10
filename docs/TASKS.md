@@ -1364,3 +1364,11 @@ EXPANSION-2-FRAMES — Codex; art/expansion-2; /workspace/legends-of-the-fall. O
 - Status: ready for review; final 320×112 RGBA image visually reviewed, binary alpha and transparent margins checked. Runtime tests/build not run: source art only. [Handoff](notes/expansion-2-elders-table.md).
 - Status: complete. Typecheck, web build, the relevant tests and the browser checks pass with 0 page errors. Nothing kept back; the duel ring,
   Hester's table and the Elders' table (also in #464) are not wired. [Handoff](notes/art-wire-5.md).
+
+## LOAD-002 — Animated Shattered Crown
+
+- Owner: current Codex chat. Branch: `design/shattered-crown-loading`; worktree: `/workspace/legends-of-the-fall`.
+- Scope: loading artwork, loading-only markup/styles, build embedding, credits, preview and handoff.
+- Direction: owner selected minimalist Shattered Crown portrait and requested effects and animation.
+- Completion: animated screen, reduced-motion support, three portrait sizes, startup/offline checks, typecheck and web build. No deployment requested.
+- Status: complete, ready for review. Typecheck/build, all three portrait sizes, crown-only masking, two moving cloud layers, 36 snowflakes, reduced motion, seeded startup, actual service-worker offline reload and diff checks passed; zero browser errors. [Handoff and previews](notes/shattered-crown-loading.md). No merge or deployment.
