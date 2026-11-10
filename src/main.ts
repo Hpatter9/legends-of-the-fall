@@ -157,6 +157,7 @@ import { armiesFocusAfterClear } from './screenRules';
 import { startAwake } from './render/awake';
 import { canAfford, castSpell, cooldownLeft, MANA_MAX, manaText, SPELLS, type SpellId } from './sim/spells';
 import { autoSpellsFor, spellAutoSaved } from './sim/autoCast';
+import { autoHolds, holdLines, type AutoHold } from './sim/autoHold';
 import { bindSpellbook } from './spellbook';
 import { snapSpell } from './sim/spellAim';
 import { castList, fitSchool, schoolOf } from './sim/schools';
@@ -748,6 +749,12 @@ class Game {
     // (Duchess the goat may join one fight in a thousand: the test page's `?duchess=1` always brings her, `duchessFight.ts`)
     this.b = startStage(this.run, this.duchessWish());
     hideDuchessCard();
+    // (QUEST-POSSIBLE: a taken quest that bars spells or ultimates holds that Auto switch off for a fight it would count for, and says why)
+    const run0 = this.run;
+    const holds = autoHolds(this.meta, { mode: run0.mode?.kind, army: run0.mode?.kind === 'army' ? run0.mode.army : undefined, tier: tierOfRun(run0), stage: run0.stage });
+    const told = holdLines(holds).filter((l) => !holdLines(this.autoHeld).includes(l));
+    this.autoHeld = holds;
+    if (told.length && !this.auto) toastLines(told);
     // (an army's section may lie turned on the long map: everything is drawn and tapped through its frame)
     const section = chainOf(this.run)?.[this.run.stage - 1];
     setFrame(section ? frameOf(section, section) : undefined);
@@ -2277,11 +2284,13 @@ class Game {
   private tactics!: TacticsView;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
   private ultAutoOn(): boolean {
-    return !!this.auto || !!this.meta.ultAuto;
+    return !!this.auto || (!!this.meta.ultAuto && !this.autoHeld.ults);
   }
+  /** QUEST-POSSIBLE: the Auto switches a taken quest holds off for this fight (the player's own setting is left as it is). */
+  private autoHeld: AutoHold = {};
   /** BATTLE-POLISH: whether the ruler's equipped spells are cast on their own: the player's Auto spells button, and always under auto-replay. */
   private spellAutoOn(): boolean {
-    return !!this.auto || spellAutoSaved(this.meta);
+    return !!this.auto || (spellAutoSaved(this.meta) && !this.autoHeld.spells);
   }
   /** Tell the battle what the two Auto buttons cover (AUTO-CAST, split by BATTLE-POLISH): the heroes' ultimates, and the king's equipped
    *  spells, each on its own while its button is on. */

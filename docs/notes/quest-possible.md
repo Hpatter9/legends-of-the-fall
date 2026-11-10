@@ -62,26 +62,38 @@ objectives, and every Eidolon chain part, by rule against the game's own tables:
 It exits 1 if any quest is broken. Recent changes checked: no goal reads formations, the Castle's 6 stars, skills or the Assault; the SPELL
 and ULT Auto switches are the chips above.
 
-**Result: 413 checked: 346 can be done, 65 wait with the hidden modes, 2 need a call, 0 broken** (8 broken before the fix).
+**Result: 413 checked: 348 can be done, 65 wait with the hidden modes, 0 need a call, 0 broken** (8 broken before the fix; 2 calls answered in round 2).
 
-## For the director's call
+## Round 2: the director's calls
 
-1. **`lichsLetter`** (the Lich King's spoils, needs nothing): "The king casts Resurrect 12 times in Hard or harder army runs". Resurrect is
-   bought at the Chapel (10 stars). The Lich King falls in the second army, so the quest can come well before a save can cast it. It is
-   not impossible, since it waits in the log, but it may sit there a long time. Add a `{ kind: 'spell', id: 'resurrect' }` need?
-2. **`voltara3`** (the Dry Storm, opens with the Labyrinth cleared): "Fire 6 ultimates in army fights where no king's spell is cast".
-   Ultimates open at hero level 30, and the Labyrinth is set for hero level 16 (`docs/notes/difficulty.md`). It can be done once a
-   hero reaches 30. Leave it, or gate the part on level 30?
-3. **A tavern regular riding along** as a free guest: counted as no outside help hired (it was not hired at the cart). Say if it should
-   count.
-4. **SPELL Auto against `noSpells`:** the chip now tells the player to turn it off. Should a fight that counts for a taken `noSpells`
-   quest turn Auto spells off by itself instead?
+1. **`lichsLetter`** ("The king casts Resurrect 12 times in Hard or harder army runs") now needs Resurrect known
+   (`{ kind: 'spell', id: 'resurrect' }`), so it is offered only once the Chapel has sold it.
+2. **`voltara3`** ("Thunder on Demand", 6 ultimates) waits for a hero at level 30, when ultimates can be fired. A chain part may now have
+   `needs` and `locked` words (`ChainPart`): `partLocked` gives the lock, `noteChains` counts nothing while it holds, and the Eidolons tab
+   shows "Opens with a hero at level 30, when ultimates can be fired" in place of the way there. The 30 is `ULT_LEVEL`, written as a number
+   to keep the chain data free of the fighters' code; `test/quest-auto-hold.test.ts` holds the two equal.
+3. **A tavern regular riding along** for nothing is not hired help; left as it is.
+4. **The Auto switches are held off for a fight a taken quest counts for** (`src/sim/autoHold.ts`, pure). If a taken quest's open
+   objective, or the chain's part going, bars the king's spells or the ultimates, and the fight's place fits its riders (army, mode, tier,
+   wave), then SPELL Auto or ULT Auto is off for that fight (`autoHolds`). A toast says why, once, as the first such fight is set up:
+   "SPELL Auto is held off this fight: “Hands Off the Horn” asks for no king's spells", or one line for both when one quest holds both
+   (the toasts show one at a time). The player's own switches (`Meta.spellAuto`, `ultAuto`) are not touched. They come back with the first
+   fight no taken quest asks it of (another army, or the quest done). The chips keep their words. Auto-replay is left as it was.
+
+**The audit is in the suite:** `test/quest-audit.test.ts` runs it (`tools/quest-audit/rules.ts`, which `audit.ts` prints). Every quest and
+chain part must be possible or waiting with the hidden modes, and none may need a call. Put back on the old hire rule, it fails.
 
 ## Checks
 
 - `test/quest-no-hires.test.ts`: the party's Hires are not hired help and the Bell is met; a sellsword, a guest and a deserters' captain
   each count, a resumed run remembers and junk reads as none; the chip's words.
-- Full suite: 3056 pass, 0 fail. Typecheck and `npm run web` pass.
+- `test/quest-auto-hold.test.ts` (round 2): a taken no-spells quest holds SPELL Auto off only where its fights count, and the player's
+  setting is untouched; no ultimates holds ULT Auto, one line for both from one quest, nothing once done; the Lich King's letter waits for
+  Resurrect; Thunder on Demand counts nothing below level 30 and the same fight finishes it at 30. `test/eidolon-chain-4.test.ts` follows
+  the new lock (the part locked first, then a hero raised to level 30). `test/quest-audit.test.ts`: the audit.
+- `node tools/quest-audit/hold.mjs`: in the real page at the three sizes, a taken "Hands Off the Horn" holds both switches off, with its
+  line, while the saved switches stay on, and both come back once it is done.
+- Full suite: 3076 pass, 0 fail. Typecheck and `npm run web` pass.
 - `node tools/quest-audit/shots.mjs`: the Eidolons tab on Askel's Part 3 at 393x852, 360x780 and 412x915 shows the new words with nothing
   wider than the page (`docs/samples/quest-possible/`).
 
@@ -174,7 +186,7 @@ and ULT Auto switches are the chips above.
 | `royalLastKeep` By My Word: the Last Keep | ruler | Win 2 boss waves on Legendary or harder, no hero falling | ok |  |
 | `warlordsMap` The Warlord's Map | spoils | Win wave 8 or later of the Undead Legion 3 times, with four heroes or fewer | ok |  |
 | `chieftainsTally` The Chieftain's Tally Stick | spoils | Clear the Orc Warband twice on Hard or harder | ok |  |
-| `lichsLetter` The Lich King's Letter | spoils | The king casts Resurrect 12 times in Hard or harder army runs | call | asks for resurrect, which a save learns only at the Chapel (10 stars), and the quest may come sooner |
+| `lichsLetter` The Lich King's Letter | spoils | The king casts Resurrect 12 times in Hard or harder army runs | ok |  |
 | `gorgonsMirror` The Gorgon's Hand Mirror | spoils | Beat the Gorgon Queen 3 times with two heroes or fewer on the field | ok |  |
 | `oniMask` The Oni King's Mask | spoils | Win 6 waves on Hard or harder with only Yokai heroes on the field | ok |  |
 | `forgeCore` A Forge Core, Still Warm | spoils | Your heroes deal 600,000 damage in Elite or harder army runs, within 7 days | ok |  |
@@ -489,7 +501,7 @@ and ULT Auto switches are the chips above.
 | `aurelan5` Before the Cock Crows | chain: The Late Dawn | Beat 2 Wildwood bosses on Hard with no sellsword hired at the cart in the run | ok |  |
 | `voltara1` Wire in the Maze | chain: The Dry Storm | Beat a Labyrinth boss on Hard, with no hero falling: the Gorgon Queen (wave 8) or the Minotaur Champion (wave 15) | ok |  |
 | `voltara2` The Copper Works | chain: The Dry Storm | Win the quest battle The Copper Works (Kwame or Minh fights; any starter hero may stand in) | ok |  |
-| `voltara3` Thunder on Demand | chain: The Dry Storm | Fire 6 ultimates in army fights where no king's spell is cast | call | ultimates open at level 30; the quest may come sooner |
+| `voltara3` Thunder on Demand | chain: The Dry Storm | Fire 6 ultimates in army fights where no king's spell is cast | ok |  |
 | `voltara4` The Straight Road | chain: The Dry Storm | Clear the Labyrinth whole on Hard with no heart spent | ok |  |
 | `voltara5` Both Lords, One Storm | chain: The Dry Storm | Beat 2 Labyrinth bosses on Hard with no hero falling and no sellsword hired at the cart in the run | ok |  |
 | `gorm1` Fire in the Stone | chain: A Goat of Consequence | Beat an Infernal Host boss on Hard, with no hero falling: the Devil Leader (wave 8) or the Demon Lord (wave 15) | ok |  |
