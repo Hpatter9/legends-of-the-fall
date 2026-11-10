@@ -57,6 +57,12 @@
 .hm-battle .cpPlate::after { right: 4px; }
 .hm-battle .cpPlate b { font: 700 14px/1.25 var(--display); color: #e8cb86; }
 .hm-battle .cpPlate small { font: 400 12px/1.15 var(--body); color: #d1cebd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+/* BATTLE-PICK-FIX: the camp's line and its lord ("Elder-root stronghold · Grove Spearlord") wrap onto a second line rather than being cut
+   short; the plate is set higher by its own height (`camp.ts`, `layPlate`), so it still clears the bar */
+.hm-battle .cpPlate small { white-space: normal; text-overflow: clip; overflow: visible; }
+.hm-battle .cpPlate small .cpWhole { white-space: nowrap; }
+/* (the painted plaque's frame is 14 px deep and is drawn over the padding: a second line stands clear of its foot) */
+.hm-battle .cpPlate { padding: 7px 14px 10px; }
 .hm-battle .cpPlate .cpEyebrow { font-size: 8px; letter-spacing: 1.5px; }
 .hm-battle .cpStash { z-index: 2; }
 .hm-battle .cpStash:has(.csChest) { border-radius: 4px; background: #12191dbb; }
