@@ -229,3 +229,92 @@ the codex) and `r2-02-at-360-and-412.png`.
 - The ores are still "**Rift ores**" and the "Rift Cache", and a great relic is "The Calamity's Eye": names, not directions.
 - The Sentry's Cloak still explains its back row "in the Last Stand" (`src/sim/relics.ts:166`): it is one constant string of relic
   data; say if it should be cut.
+
+## Round 3: the owner's answers (after 0.459.0, branch `claude/first-hour-3`)
+
+One commit an item.
+
+| # | The owner's answer | What changed | Where |
+|---|---|---|---|
+| 1 | "Found: Kwame stands again at half" reads oddly | A hero that fell in a won wave is no longer listed among the finds. The wave card has a short row of its own, headed **Back on their feet**, with one line for all of them: "Kwame, at half health", "Kwame and Selam, at half health". It reads `run.risen`; the rule (`wounds.ts`) is unchanged. A run saved before may still hold the old line in `run.found`: the card leaves it out of its finds. | `src/sim/run.ts`, `src/sim/wounds.ts` (`risenLine`, `RISEN_HEAD`, `isOldRisenLine`), `src/sim/waveCard.ts`, `src/waveCardView.ts`, `src/battleReports.css` |
+| 2 | A new player reaches five heroes sooner | The first clear of the first army gives a fourth hero outright, and the first clear of the second a fifth (`src/sim/clearHero.ts`). A whole hero the save does not own, picked as a lucky summon picks one (any hero still to collect by shards, never a milestone hero) from a side stream of its own (`CLEAR_HERO_SALT`), so no pull or chest rolls differently. It joins the party while there is room and has the usual join reveal (the page's `earned` list). Once a save (`Meta.clearHeroes`), and only while the save owns fewer than four (or five) heroes, so a save that has its five gets nothing, then or later. The army's card says "First clear 339 · **a new hero joins** · Replay 52", and the clear's result "A new hero joins: Ravi!". | `src/sim/clearHero.ts`, `src/sim/armyStars.ts`, `src/sim/meta.ts`, `src/main.ts`, `src/armiesView.ts` |
+| 3 | The Castle tab opens at 6 stars | `MODE_NEED.castle` is 6. The shut page reads "Opens at 6 stars · 0/6 stars". **Spells stay at 10:** the spellbook opens with the Chapel, which is a building of the Castle, so the Chapel now has its own number (`SPELLS_NEED` 10, `chapelOpen`): its card says "The Chapel can be raised at 10 stars · 6/10 stars" with Build shut, and the Spells tab's lock says the same. A save that had the castle open from before the stars, or whose Chapel stands or is being built, is not held back. The climb tool keeps the castle shut for three armies (it was five). | `src/sim/modeUnlock.ts`, `src/home.ts`, `src/library.ts`, `tools/balance.ts`, `docs/notes/menus-unlocks.md` |
+| 4 | The bench filling with copies | Nothing changed. | |
+| 5 | Move the hidden modes' stones | See below. | `src/sim/hiddenModes.ts`, `src/sim/armyStars.ts`, `tools/unlockPace.ts` |
+
+On the army card the promise is on the first clear's own line: as a row of its own it pushed the Assault line under the tab bar at 360
+wide (`r3-02-army-card-360-393-412.png`). The risen row is `r3-01-back-on-their-feet-360.png`.
+
+### The moved stones
+
+While a mode is hidden its stones are paid elsewhere (`MOVED_STONES` in `hiddenModes.ts`):
+
+| Where | Its own stones | Added while both modes are hidden |
+|---|---|---|
+| A daily chest | 1, and 1 a bonus star | **+1** |
+| A hold's first Conquest chest | 5 (a gold chest's 3, half again) | **+8** |
+| A regrouped Warband's chest (the weekly re-storm) | 3 | **+1** |
+
+`movedStones(where)` is the amount times `hiddenStoneShare()`: the Last Stand's part is 0.4 and the Calamity's 0.6 (the spire's chests
+paid 158 stones a year and the Calamity's clears and chests 267). With both hidden the share is 1; with both shown it is 0 and nothing
+is added anywhere; if one day one mode is shown and not the other, only its part goes (the two parts of each amount add up to the
+whole). So the total does not double. Crowns are not touched. The daily chest and the Conquest chest read it when they are opened.
+
+### unlock-pace, before and after
+
+`npm run unlock-pace` (20 seeds, a year, a daily player). The model did not play the Assault at all before this round; it does now
+(`--noassault 1` leaves it out), which matters for reading the numbers:
+
+| | Stones a year | 10th hero | 20th | 30th | 40th | 45th |
+|---|---|---|---|---|---|---|
+| **Before the modes were hidden** (`--with-modes 1`, the Assault not modelled): the target | **2779** | day 12 | 73 | **155** | 264 | 340 |
+| Modes hidden, round 2 (the Assault not modelled) | 1991 | 13 | 87 | 204 | >365 | >365 |
+| Modes hidden, the Assault's own chests counted, nothing moved (`--nomoved 1`) | 2436 | 13 | 84 | 185 | 315 | >365 |
+| **Modes hidden, the stones moved (now)** | **2855** | 12 | 75 | **162** | 269 | 336 |
+| Modes shown again, the Assault counted (`--with-modes 1`): nothing is added | 3203 | 12 | 73 | 150 | 247 | 307 |
+
+Stones by source, a year:
+
+| Source | Before (target) | Hidden, round 2 | Hidden, nothing moved | **Hidden, moved (now)** | Modes shown again |
+|---|---|---|---|---|---|
+| Achievements and codex | 59 | 56 | 56 | 56 | 59 |
+| Quests | 988 | 787 | 787 | 787 | 988 |
+| Daily chest | 508 | 508 | 508 | **764** | 508 |
+| Army first-clear and star chests | 45 | 45 | 45 | 45 | 45 |
+| Chest shop | 753 | 595 | 606 | 567 | 744 |
+| Spire chests | 158 | | | | 158 |
+| Calamity clear and chest | 267 | | | | 267 |
+| Assault: first conquests | not modelled | not modelled | 45 | **117** | 45 |
+| Assault: a Warband beaten again | not modelled | not modelled | 389 | **519** | 389 |
+| All | 2779 | 1991 | 2436 | **2855** | 3203 |
+
+What to know about these numbers:
+
+- **The year comes to 2855 against the target of 2779 (+3%), and the thirtieth hero to day 162 against 155.** I could not land both
+  exactly: the modes' stones started on day 1 and the Assault's start on day 60, so matching the total with Assault stones leaves the
+  middle of the year a week behind. Tried: (+1 daily, +10 conquest, +0 re-storm) gives 2746 and day 167; (+1, +20, +0) gives 2825 and
+  day 157 but puts nothing on repeat conquests, which was asked for; (+1, +12, +1) gives 2887 and day 161. One more stone in the daily
+  chest instead (+2) overshoots by about 250.
+- **The Assault's days are assumptions**, the softest part of the model: a hold falls 20 days after its army's Elite clear (day 60 for the
+  first, day 210 for the ninth), and from day 90 a daily player beats each regrouped Warband in half the weeks (`--restorm 0.5`). The
+  re-storm is at Mythic, which `docs/notes/army-pace.md` calls the wall; if players win it less often, the year falls short by about
+  10 stones for every point of that share. Worth measuring once the Assault has been played for a while.
+- **The Assault's own chests were never in this model**, so the real gap after hiding the modes was smaller than 1991 against 2779
+  suggested, and with the modes shown again the year is 3203, not 2779. The Spoils of the Hold and the daily tribute are crowns and are
+  still not modelled, so the chest shop's stones are a little understated in every Assault column.
+- The first-clear heroes (item 2) are in the model too: they move the fourth and fifth hero, not the later ones.
+
+### Tests
+
+`test/first-hour.test.ts`: the first-clear heroes (given once, only while short, the same hero for the same save, no pull used, old
+saves nothing), the Castle at 6 and the Chapel at 10, the moved stones (the amounts, each chest, nothing added with the modes shown,
+the parts adding up). `test/wounds.test.ts`: the risen row and the old line left out. Updated for the changed requirements:
+`test/modes.test.ts` (the Castle's number), `test/daily.test.ts` and `test/quest-pay.test.ts` (the daily chest's stones).
+
+### Not checked by hand
+
+- The Chapel's card with the Castle open and fewer than 10 stars (it needs a save at 6 to 9 stars; the rule and its words are tested).
+- A real first clear on the new build giving the hero: the rule is tested, and the card's line and the join reveal were each seen in
+  the browser, but not the two in one played run.
+- At 360x780 with a run under way, "Restart from wave 1" sits below the fold of the army card (the card scrolls); the round 2
+  Assault line is what took its place.
