@@ -16,6 +16,10 @@ import type { ChestKind } from './sim/armyStars';
 import type { QuestDef } from './sim/questData';
 import type { TomeSize } from './sim/tomes';
 import { TOME_ICON } from './tomeArt';
+// (UI-ART-WIRE: the card's own paintings, art/quest-complete, cut by tools/quest-complete/import-art.py; bundled, so they play offline)
+import sealUrl from './art/ui/quest-complete/seal.webp';
+import keepsakeUrl from './art/ui/quest-complete/keepsake.webp';
+import heroJoinsUrl from './art/ui/quest-complete/hero-joins.webp';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -35,7 +39,8 @@ const img = (src: string): HTMLImageElement => {
 };
 
 /** A reward's picture: the packs' and the paintings' own (the crown, the stone, the chest, the ore, the tome, the hero's portrait, the
- *  book's cover). A hero who joins is a plain crest, so the join reveal that follows the card is still a reveal. */
+ *  book's cover), and since UI-ART-WIRE the card's own: a keepsake on its nail, and a hero who joins as a hooded stranger in a doorway, so
+ *  the join reveal that follows the card is still a reveal. */
 function rewardPicture(r: RewardRow): HTMLElement {
   const box = el('span', `qxIco ${r.kind}`);
   if (r.kind === 'crowns') box.append(img(ICONS.crowns));
@@ -45,7 +50,9 @@ function rewardPicture(r: RewardRow): HTMLElement {
   else if (r.kind === 'tome' && r.ref) box.append(img(TOME_ICON[r.ref as TomeSize]));
   else if (r.kind === 'shards' && r.ref) box.append(img(`heroes/${r.ref}-portrait.webp`));
   else if (r.kind === 'book' && r.ref && bookById(r.ref)) box.append(img(bookCoverUrl(bookById(r.ref)!)));
-  else if (r.kind === 'hero') box.append(img(ICONS.heroes));
+  // (a hero who joins: the stranger in the doorway, hooded and unnamed, so the join reveal after the card is still a reveal)
+  else if (r.kind === 'hero') box.append(img(heroJoinsUrl));
+  else if (r.kind === 'keepsake') box.append(img(keepsakeUrl));
   else box.append(img(ICONS.trophy));
   return box;
 }
@@ -91,6 +98,12 @@ export function openQuestComplete(view: CompleteView, hooks: CompleteHooks = {})
   });
   open = menu;
   menu.root.classList.add('qxVeil');
+  // (UI-ART-WIRE: the wax seal on its ribbon over the head, a quest closed, in place of the standard battle crest)
+  const crest = menu.root.querySelector<HTMLElement>('.omCrest');
+  if (crest) {
+    crest.classList.add('qxSeal');
+    crest.style.backgroundImage = `url(${sealUrl})`;
+  }
   const say = (line: string): string => (hooks.quest ? giverWords(hooks.quest, line) : line);
 
   // the giver: their painted face, name and the line under it

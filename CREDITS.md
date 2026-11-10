@@ -2,7 +2,7 @@
 
 - **Active ceremonial summoner** (`src/art/hall/summoner-active.png`) and character-free sanctum background (`src/art/hall/sanctum.png`): original generated artwork based on the existing approved chamber. Separate idle, casting and eye-shield poses; no third-party character art. Both images are bundled into game.js for offline use.
 
-- **The rune bench's paintings** (`src/art/ui/rune-bench/`: the pull bar's grip and its held state, the tray, the rune tiles plain, lit and empty, and the locked rune Auto's padlock): original artwork made for this game from the owner's earlier rune bench prompt (PR #474, `art/rune-bench`, sources in `art-source/rune-bench/`), resized and nine-sliced by `tools/rune-bench/import-art.py`, never repainted. See `docs/notes/rune-bench-art.md`.
+- **The rune bench's paintings** (`src/art/ui/rune-bench/`: the pull bar's grip resting and held, the tray, the rune tiles plain, lit and empty, the stone's socket plain and twin-ready, and the rune Auto medallion open and locked): original artwork made for this game from the owner's rune bench prompts (PR #474, `art/rune-bench`, sources in `art-source/rune-bench/`: the ten-piece set of `docs/notes/rune-bench-art-prompts.md`, which took the place of the seven earlier pieces). Resized and nine-sliced by `tools/rune-bench/import-art.py`, never repainted. See `docs/notes/rune-bench-art.md` and `docs/notes/ui-art-wire.md`.
 
 - **Full Resonance hero upgrade** (`src/art/units/hero_res_*.png`, separate `_back` sheets, and the two pilot heroes): original generated pixel artwork following the owner's approved direction. Includes the 43 remaining collectible heroes, Werewolf Brute/awakened appearances and three Treants. Front/rear art supplies four isometric facings through left/right mirroring; dedicated walking atlases supply eight-frame strides. Prompts, specifications and packing tools are in `tools/resonance/`; raw generation intermediates remain in the art workspace. No franchise sprites are included. Foes/NPCs retain their existing art and credits.
 
@@ -599,6 +599,21 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 - House shield and heirloom keepsake (`src/art/dynasty/{house,heirloom}.webp`) are original OpenAI-generated paintings in the owner-approved style, retained in `art-source/dynasty-finish/house-heirloom.png`.
 - Season/fate symbols, twelve Nemesis trait symbols, and Houses/Council backdrops reuse the already credited source artwork in `art-source/expansion/`. `tools/dynasty-art/import.py` crops symbols and downsamples the backdrops; original source art remains unchanged. All new imports are bundled for offline play.
 
+## Quest complete (UI-ART-WIRE)
+
+- **The Quest complete card's paintings** (`src/art/ui/quest-complete/seal.webp`, `keepsake.webp`, `hero-joins.webp`): the wax seal on its
+  ribbon over the card's head, a keepsake on its nail and the hooded stranger in a doorway for a hero joining: original art made for this game
+  with OpenAI image generation from the prompts in `docs/notes/quest-complete-art-prompts.md` (`art/quest-complete`, sources in
+  `art-source/quest-complete/`). `tools/quest-complete/import-art.py` trims and downscales them, never repainted. Bundled into game.js for
+  offline play (docs/notes/ui-art-wire.md).
+
+## Duel show (UI-ART-WIRE)
+
+- **The duel's tug-of-war bar** (`src/art/duel/bar-frame.webp`, `bar-fill-green.webp`, `bar-fill-red.webp`, `bar-knot.webp`, `bar-flare.webp`): original art
+  made for this game with OpenAI image generation from the prompt in `docs/notes/duel-show-art-prompts.md` (`art/duel-show`, sources in
+  `art-source/duel-show/`). `tools/duel-show/import-art.py` keeps each at its painted size (the fills cropped of their clear rim and faded
+  last columns so they tile), never repainted. Bundled into game.js for offline play (docs/notes/ui-art-wire.md).
+
 ## Expansion art 2 (PR #464: `src/art/council/`, `src/art/dynasty/`, `src/art/expansion/`)
 
 - The owner's repaints of `art-source/expansion/nemesis-icons.png` (twelve traits, ten Council events, the News icons and the War Trophy),
@@ -775,7 +790,7 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ### Painted buttons
 
-- `src/art/ui/buttons/` (136 WebP files, from the nine sheets in `art-source/ui/buttons/`, the owner's art PR #468): original brass medallion, glyph and plate artwork painted for this game by the owner with ChatGPT image generation, matched to the painted tactic medallions and the ornate menus. Cut, trimmed and sized by `tools/painted-buttons/cut.py`; loaded by URL and cached for offline play (`build.mjs`). See `docs/notes/painted-buttons.md`.
+- `src/art/ui/buttons/` (138 WebP files: 136 from the nine sheets in `art-source/ui/buttons/`, the owner's art PR #468, and the Auto ultimates button off and lit, `auto-ult.webp` and `auto-ult-lit.webp`, from `art-source/ui/buttons/auto-ult*.png` on `art/battle-polish`, cut by the same `tools/painted-buttons/cut.py`): original brass medallion, glyph and plate artwork painted for this game by the owner with ChatGPT image generation, matched to the painted tactic medallions and the ornate menus. Cut, trimmed and sized by `tools/painted-buttons/cut.py`; loaded by URL and cached for offline play (`build.mjs`). See `docs/notes/painted-buttons.md`.
 
 - Royal hall background (`art-source/castle-remake/throne-hall.png`): generated with ChatGPT for this game from the owner-approved stone hall direction; packed by `tools/castle-remake/cut.py`. Live ruler, guards and Duchess retain their existing artwork and credits.
 

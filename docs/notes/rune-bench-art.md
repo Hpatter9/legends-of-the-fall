@@ -51,3 +51,10 @@ hold opens the rune's card, as before.
 - `npm test -- rune bench-drop deploy featureUnlocks painted-buttons ui-standard`: 52 of 52 pass.
 - The screens at the three sizes (the shots above): the hero side, the rune side and a rune chosen. The grip, the tray and the tiles wear
   the paintings, and the pull bar is centred on the shorter bench.
+
+## Since UI-ART-WIRE: the ten-piece set
+
+The newer prompt's ten pieces landed on `art/rune-bench` beside the seven earlier ones, and now win in every slot
+([ui-art-wire.md](ui-art-wire.md)). The painter saved the newer resting grip as `grip-rest.png` (64 x 208), keeping the earlier
+`grip.png` (64 x 224); the script's `ALIASES` takes it as the newer grip. The socket, the twin-ready socket and the open rune Auto
+medallion, which neither set had painted before, replace the last stand-ins.

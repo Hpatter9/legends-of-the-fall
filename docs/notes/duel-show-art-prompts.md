@@ -1,5 +1,7 @@
 # Duel show: prompts for the art it borrows
 
+**Landed** (`art/duel-show`): the five pieces are the bar now ([ui-art-wire.md](ui-art-wire.md)).
+
 The duel's one tug-of-war bar (`docs/notes/duel-show.md`, `src/duelShow.css`) is framed for now by the painted plaque
 (`ui/buttons/plaque.webp`, `pbPlaque`), the closest piece of the HUD kit. Its track, its two fills, the meeting point's knot and the two
 face rings are drawn in CSS. The prompts below are for the pieces that would replace them. Each stands alone: paste everything inside its

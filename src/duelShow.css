@@ -1,6 +1,6 @@
 /* DUEL-SHOW (docs/notes/duel-show.md, `duelShow.ts`): a duel's one tug-of-war bar in the boss bar's place, the two names at the walk-in's
-   beat, and the veil a tap skips the walk-in through. The bar's frame is the painted plaque (`pbPlaque`), the closest piece of the kit until a
-   bar of its own is painted (`docs/notes/duel-show-art-prompts.md`). */
+   beat, and the veil a tap skips the walk-in through. The bar is painted since UI-ART-WIRE (`.dsArt`, at the end of this file: the owner's
+   frame, fills, knot and flare from art/duel-show); the rules just below are its plain shape, drawn in CSS before the art came. */
 #bossBar.duel { padding: 0; border: 0; border-image: none; background: none; box-shadow: none; }
 #bossBar.duel > b, #bossBar.duel > i { display: none; }
 #bossBar .dsTug { display: grid; width: 100%; box-sizing: border-box; grid-template-columns: 34px minmax(0, 1fr) 34px; grid-template-rows: 14px 14px; column-gap: 7px; row-gap: 3px; align-items: center; justify-items: stretch; padding: 7px 12px 8px; }
@@ -26,6 +26,30 @@
 #bossBar .dsTug.swing { animation: dsSwing 0.6s ease-out; }
 @keyframes dsSwing { 0% { transform: scale(1); filter: brightness(1); } 30% { transform: scale(1.05); filter: brightness(1.45); } 100% { transform: scale(1); filter: brightness(1); } }
 
+/* UI-ART-WIRE (docs/notes/ui-art-wire.md): the painted bar. The pieces are drawn at half their files' size (painted at 2x). The frame is
+   56 px tall and nine-slices across: its two ends, 65 px each with a socket and its clasp, keep their shape, and the plain rails between
+   stretch to the bar's width. It is laid over everything but the knot (`::after`), so the faces sit inside its sockets' rims and the fills
+   run between its rails. The faces are 28 px rounds in the sockets' 28 px openings; the fills tile from each end in the channel (11 px
+   tall, 57 px in from each side); the knot rides the meeting point; the flare bursts over the knot on a big swing. The names and the
+   clock run along the top, over the frame's ends. */
+#bossBar .dsTug.dsArt { position: relative; display: block; height: 72px; padding: 0; border: 0; border-image: none; background: none; box-shadow: none; }
+#bossBar .dsArt::after { content: ''; position: absolute; left: 0; right: 0; top: 16px; height: 56px; z-index: 2; pointer-events: none;
+  border-style: solid; border-width: 0 65px; border-image: var(--ds-frame) 0 130 0 130 fill / 0 65px 0 65px / 0 stretch; filter: drop-shadow(0 2px 3px #000b); }
+#bossBar .dsArt .dsFace { position: absolute; top: 30px; z-index: 1; width: 28px; height: 28px; border: 0; box-shadow: none; background: #1a140e; }
+#bossBar .dsArt .dsFace.hero { left: 16px; }
+#bossBar .dsArt .dsFace.nem { right: 16px; left: auto; }
+#bossBar .dsArt .dsTrack { position: absolute; left: 57px; right: 57px; top: 39px; height: 11px; z-index: 1; border: 0; border-radius: 0; background: #0b0806; box-shadow: none; overflow: visible; }
+#bossBar .dsArt .dsGreen { background: var(--ds-green) left center / 30px 100% repeat-x; }
+#bossBar .dsArt .dsRed { background: var(--ds-red) right center / 30px 100% repeat-x; }
+#bossBar .dsArt .dsKnot { top: 50%; bottom: auto; width: 14px; height: 22px; margin: -11px 0 0 -7px; z-index: 3; background: var(--ds-knot) center / contain no-repeat; box-shadow: none; filter: drop-shadow(0 1px 2px #000c); }
+#bossBar .dsArt .dsKnot::after { content: ''; position: absolute; left: 50%; top: 50%; width: 80px; height: 56px; margin: -28px 0 0 -40px; background: var(--ds-flare) center / contain no-repeat; opacity: 0; pointer-events: none; mix-blend-mode: screen; }
+#bossBar .dsArt.swing .dsKnot::after { animation: dsFlare 0.6s ease-out; }
+@keyframes dsFlare { 0% { opacity: 0; transform: scale(0.6); } 25% { opacity: 1; transform: scale(1.15); } 100% { opacity: 0; transform: scale(1.3); } }
+#bossBar .dsArt .dsWho { position: absolute; left: 4px; right: 4px; top: 0; height: 14px; z-index: 3; text-shadow: 0 1px 2px #000, 0 0 4px #000; }
+/* (the side ahead lights its socket: a glow round its face, under the frame's rim) */
+#bossBar .dsArt[data-lead='hero'] .dsFace.hero { box-shadow: 0 0 10px 3px #8fe06f; }
+#bossBar .dsArt[data-lead='nem'] .dsFace.nem { box-shadow: 0 0 10px 3px #ef6f5b; }
+
 /* the walk-in: a veil over the page (a tap skips), and the two names at the beat, the champion's in green and the challenger's in red */
 .dsVeil { position: fixed; inset: 0; z-index: 25; display: flex; align-items: center; justify-content: center; pointer-events: auto; cursor: pointer; }
 .dsNames { display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: calc(100% - 32px); opacity: 0; transform: scale(1.25); pointer-events: none; text-align: center; text-shadow: 0 2px 3px #000, 0 0 14px #000; }
@@ -37,6 +61,7 @@
 @keyframes dsNames { 0% { opacity: 0; transform: scale(1.25); } 25% { opacity: 1; transform: scale(1); } 80% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.98); } }
 @media (prefers-reduced-motion: reduce) {
   #bossBar .dsTug.swing { animation: none; }
+  #bossBar .dsArt.swing .dsKnot::after { animation: none; }
   #bossBar .dsGreen, #bossBar .dsRed, #bossBar .dsKnot { transition: none; }
   .dsNames, .dsNames.show { animation: none; opacity: 1; transform: none; }
 }

@@ -73,7 +73,8 @@ as the piece's card did). The binding ceremony at a chain's end is its own film 
 
 ## Art
 
-Everything on the card is art the game has. Three stand-ins, with prompts in
+Since UI-ART-WIRE the three stand-ins below are the owner's paintings (`art/quest-complete`): the wax seal over the head, the keepsake on
+its nail and the hooded stranger for a hero joining ([ui-art-wire.md](ui-art-wire.md)). Before: everything on the card was art the game had. Three stand-ins, with prompts in
 [quest-complete-art-prompts.md](quest-complete-art-prompts.md): the header's ornament (the standard battle crest for now, a wax seal
 asked for), a keepsake's icon (the trophy medal) and "a hero joins" (the Heroes medal).
 

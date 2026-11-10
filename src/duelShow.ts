@@ -20,6 +20,12 @@ import { portrait } from './render/sheets';
 import { play } from './render/sound';
 import { crowdSays } from './quips';
 import { registerCamCover } from './camSafe';
+// (UI-ART-WIRE: the bar's painted pieces, art/duel-show, cut by tools/duel-show/import-art.py; bundled, so they play offline)
+import barFrame from './art/duel/bar-frame.webp';
+import barGreen from './art/duel/bar-fill-green.webp';
+import barRed from './art/duel/bar-fill-red.webp';
+import barKnot from './art/duel/bar-knot.webp';
+import barFlare from './art/duel/bar-flare.webp';
 import type { Anchor } from './quipView';
 import { bigSwing, crowdSpots, endMoods, hitMoods, hopOf, shoutFor, SHOUT_GAP_MS, TUG, tugLeader, tugPoint, walkAt, walkFrom, END_SHOW_MS, type CrowdSpot, type Mood } from './duelShowRules';
 
@@ -294,11 +300,13 @@ export class DuelShow {
     if (!host) return;
     host.classList.add('duel');
     const root = document.createElement('div');
-    root.className = 'dsTug pbPlaque';
+    // (UI-ART-WIRE: the painted bar: its frame with a socket at each end for the faces, the two fills' tiles, the knot and its flare)
+    root.className = 'dsTug dsArt';
+    for (const [k, url] of [['frame', barFrame], ['green', barGreen], ['red', barRed], ['knot', barKnot], ['flare', barFlare]] as const) root.style.setProperty(`--ds-${k}`, `url(${url})`);
     const face = (u: Unit | undefined, cls: string) => {
       const f = document.createElement('span');
       f.className = `dsFace ${cls}`;
-      if (u) f.append(portrait(UNITS[u.def].sheet, 30));
+      if (u) f.append(portrait(UNITS[u.def].sheet, 28));
       return f;
     };
     const track = document.createElement('span');

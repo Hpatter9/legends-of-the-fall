@@ -67,12 +67,18 @@ RULES = {
 EARLIER_CANVAS = {'grip': (64, 224)}
 
 
-def newer(name: str) -> bool:
-    """Whether the newer prompt's piece of this name is there."""
-    src = f'{SRC}/{name}.png'
-    if not os.path.exists(src):
-        return False
-    return Image.open(src).size != EARLIER_CANVAS.get(name)
+# The newer pieces' other file names: the painter of the ten-piece set (PR #474's second commit) saved the resting grip as grip-rest.png so as
+# to keep the earlier grip.png beside it.
+ALIASES = {'grip': ['grip', 'grip-rest']}
+
+
+def newer_src(name: str) -> str | None:
+    """The file of the newer prompt's piece of this name (by its name or an alias, not the earlier piece's canvas), or None."""
+    for n in ALIASES.get(name, [name]):
+        src = f'{SRC}/{n}.png'
+        if os.path.exists(src) and Image.open(src).size != EARLIER_CANVAS.get(name):
+            return src
+    return None
 
 
 def trim(im: Image.Image) -> Image.Image:
@@ -84,9 +90,9 @@ def main() -> None:
     rules = []
     total = 0
     for name, (w, h, slice_, k) in PIECES.items():
-        src = f'{SRC}/{name}.png'
         # (the newer piece first; else the earlier prompt's, at its own size; else none)
-        if not newer(name) and name in FALLBACKS:
+        src = newer_src(name) or f'{SRC}/{name}.png'
+        if not newer_src(name) and name in FALLBACKS:
             fb, w, h, slice_, k = FALLBACKS[name]
             src = f'{SRC}/{fb}.png'
         if not os.path.exists(src):

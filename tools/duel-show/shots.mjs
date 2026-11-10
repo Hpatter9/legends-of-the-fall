@@ -123,6 +123,9 @@ for (const [w, h] of SIZES) {
     await page.evaluate((d) => window.__step(d), ms);
     await shot(page, `fight-${ms}-${w}`);
   }
+  // (UI-ART-WIRE: a big swing's flare over the knot, the bar's swing set by hand and caught 150 ms in)
+  await page.evaluate(() => { const t = document.querySelector('#bossBar .dsTug'); t?.classList.remove('swing'); void t?.offsetWidth; t?.classList.add('swing'); window.__step(150); });
+  await shot(page, `swing-${w}`);
   const s2 = await state(page);
   console.log(w, 'fight', JSON.stringify(s2));
   check(parseFloat(s2.green) > 0 && parseFloat(s2.green) < 100, `${w}: the bar's meeting point moves (green ${s2.green})`);
