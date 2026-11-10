@@ -104,5 +104,18 @@ export function noteBattleWon(m: Meta, run: Run): boolean {
   return true;
 }
 
+/** QUEST-COMPLETE: who fought a quest battle and how it went, from the run's own books, for the Quest complete card. Call it once the
+ *  last fight is in the run's recap (the page notes a fight's stats after it settles the win, so `noteBattleWon` is a fight too early:
+ *  found by playing one, QUEST-COMPLETE 2). Written once, at the first win; a replay for practice writes nothing. */
+export function noteBattleHow(m: Meta, run: Run): boolean {
+  if (run.mode?.kind !== 'quest' || !run.cleared || run.mode.practice || !run.recap) return false;
+  const s = (m.quests ??= blankQuests());
+  if (s.how?.[run.mode.quest]) return false;
+  const rec = run.recap;
+  const heroes = Object.entries(rec.heroes).sort((a, b) => b[1].dealt - a[1].dealt || a[0].localeCompare(b[0])).map(([k]) => k);
+  (s.how ??= {})[run.mode.quest] = { heroes, ms: Math.round(rec.ms), fights: rec.fights, tries: s.tries?.[run.mode.quest] ?? 1 };
+  return true;
+}
+
 /** The quest battle a run is, if it is one. */
 export const questBattleOfRun = (run: Run): QuestBattle | undefined => (run.mode?.kind === 'quest' ? questBattleById(run.mode.quest) : undefined);

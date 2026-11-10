@@ -65,7 +65,9 @@ import { readyKinds } from './sim/rankUp';
 import type { ComebackGo } from './sim/comeback';
 import { announceArmy } from './armyShown';
 import { starsOf } from './sim/questStars';
-import { refreshOffers, questsWaiting, trackedQuest, progressOf, isDone } from './sim/quests';
+import { handIn, refreshOffers, questsWaiting, trackedQuest, progressOf, isDone } from './sim/quests';
+import { openQuestComplete } from './questComplete';
+import { questCompleteView, snapOf } from './questCompleteRules';
 import { questById } from './sim/questData';
 import { drawQuestLog, type LogTab } from './questLog';
 import type { Destination } from './sim/questGoto';
@@ -482,6 +484,21 @@ export class Home {
   private questsChanged(): void {
     saveMeta(this.meta);
     this.refresh();
+  }
+
+  /** QUEST-COMPLETE 2 (the director's call): hand a done quest in here and now and show its Quest complete card, with no trip to the log:
+   *  a quest battle just won. A hero it brings has its reveal as the card closes; the card's primary button opens the board. False (and
+   *  nothing changes) when the quest is not in the log or not done. No quest's hand-in asks the player for a choice today; one that did
+   *  would keep the log's step. */
+  completeQuest(id: string): boolean {
+    const m = this.meta;
+    const q = questById(id);
+    const snap = snapOf(m, id, todayKey());
+    if (!q || !snap || !handIn(m, id, todayKey())) return false;
+    saveMeta(m);
+    this.refresh();
+    openQuestComplete(questCompleteView(snap), { quest: q, onClose: () => this.revealJoined(), onNext: () => this.openQuests('board') });
+    return true;
   }
 
   /** SECRET-HEROES: a hero quest handed in has brought its hero: its first reveal plays now (after the giver's last words). */

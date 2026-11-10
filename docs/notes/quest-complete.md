@@ -89,12 +89,45 @@ rewards against the real pay for every quest, old saves, every part of every Eid
 
 ## Not done, and worth knowing
 
-- **The giver's thanks are the last `done` line only.** 51 of the 383 quests have two or three `done` lines; the old card showed all of them.
+- (Superseded in round 2.) **The giver's thanks are the last `done` line only.** 51 of the 383 quests have two or three `done` lines; the old card showed all of them.
   The card keeps to "two or three sentences", so the earlier ones are not shown anywhere now.
-- **A quest battle is not handed in from the battlefield.** Winning one still goes to the quest log with "Hand the quest in at the
+- (Superseded in round 2.) **A quest battle is not handed in from the battlefield.** Winning one still goes to the quest log with "Hand the quest in at the
   tavern"; the card comes at that hand-in, not straight after the fight. Say if it should open at once.
 - **"Standing"** cannot be paid by a quest (`Reward` has no such field), so there is no row for it; gear, runes and relics neither.
   If a quest's chest holds them they show when the chest is opened.
 - **The first Eidolon chain's story line names the Calamity** ("They burned when the Calamity came"): it is the chain's own text,
   lore of the past and not a pointer at the hidden mode, as round 2 of the first-hour pass left it.
 - **An auto-replay** shows no card for a chain's part, as it showed no piece card.
+
+## Round 2: the director's calls, and one quest and one battle played through
+
+The notes above are as the first pass stood; these change them.
+
+- **Every closing line is shown.** The story ends on all of the giver's `done` lines, in order, and a plain quest's thanks are all of
+  them (51 quests have two or three), as the old card showed them. `thanksOf` returns the lines; the "last line only" point under
+  "Not done" no longer holds.
+- **A quest battle won hands its quest in at once.** After the battle's closing scene the Quest complete card opens over the home
+  screen (`home.completeQuest`, called from `main.ts` `questEnd`), with no trip to the log. A battle replayed for practice, or one
+  whose quest is not in the log, goes on as before; an Eidolon chain's battle keeps its own card. No quest's hand-in asks the player
+  for a choice today, so nothing keeps the log step; one that did would not go through `completeQuest`.
+
+### Played in the page
+
+- **A quest, offer to card:** "A Lame Mule" was taken from the board and its five waves won during the first-hour play; handed in
+  from the tavern's quest log on this build. The card showed both of the hunter's lines, "5 of 5", "Finished the day you took it"
+  and 150 crowns, and the save gained 150 (`7-played-quest-handed-in-393.png`).
+- **A quest battle:** "A Crown of Cinders" (The Kiln Road, three waves). The board draws offers once a day, so the offer was put on the
+  board by hand; from there it was taken, marched to from the War Council, its story skipped, its three waves fought and won, and
+  "Onward" pressed. The card opened after the closing scene with no visit to the log (`8-played-quest-battle-card-393.png`).
+
+### What playing it turned up, fixed
+
+- **The battle's record was a fight short** ("0:31 of battle", 2 fights for a three-wave battle): the page settles the win before it
+  adds the last fight to the run's books, and the record was written at the win. It is its own step now, `noteBattleHow`, called once
+  the last fight is counted; the replay read "1:28 of battle", 3 fights. A replay for practice writes nothing.
+- **The rewards pulled the card down under the reader.** On a long card they are below the fold, and bringing each into view scrolled
+  the story away a moment after the card opened. They now wait until the list is in view (an `IntersectionObserver` on the card's
+  body) and then arrive as before; the card opens at its top and stays there.
+
+Not played through: a quest handed in at a giver's own card in the tavern (the same call as the log's, checked by the test of both
+files), and a battle lost and retried.
