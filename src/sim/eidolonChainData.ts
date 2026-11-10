@@ -26,6 +26,9 @@ export interface ChainPart {
   /** The goal in plain words, for the log. */
   text: string;
   goal: Goal;
+  /** QUEST-POSSIBLE: a part that cannot be counted until the save meets this (ultimates open at hero level 30), and the lock's words. */
+  needs?: Need;
+  locked?: string;
   /** The giver's words as the part begins (shown on the chain's card while it is going). */
   begin: string;
   piece: PieceDef;
@@ -539,9 +542,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'askel3',
         title: "The Kennel-Master's Bell",
-        text: "Fell the Bone Captain (the Undead Legion's eighth wave) on Hard, with no hero hired in the run",
+        text: "Fell the Bone Captain (the Undead Legion's eighth wave) on Hard, with no sellsword hired at the cart in the run",
         goal: { kind: 'bossDown', n: 1, army: 'undead', boss: ['boneCaptain'], tier: 1, noHires: true },
-        begin: 'One thing more: the bell that called him to supper. The kennel-master was buried with it, and the Legion does not leave the buried alone. On Hard, and with the party you came with: he was never one for hired hands.',
+        begin: 'One thing more: the bell that called him to supper. The kennel-master was buried with it, and the Legion does not leave the buried alone. On Hard, and with the party you came with, no sellsword off the cart: he was never one for hired hands.',
         piece: KENNEL_BELL,
         reward: { chest: 'bronze' },
       },
@@ -680,9 +683,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'aurelan5',
         title: "Before the Cock Crows",
-        text: "Beat 2 Wildwood bosses on Hard with no hero hired in the run",
+        text: "Beat 2 Wildwood bosses on Hard with no sellsword hired at the cart in the run",
         goal: { kind: 'bossDown', n: 2, army: 'wildwood', tier: 1, noHires: true },
-        begin: "He will not come till the first cock has been sent for, and the first cock has been sulking in the grove ever since. Bring two of the wood's lords down on Hard, with only the heroes you started with, and he may feel flattered enough to crow.",
+        begin: "He will not come till the first cock has been sent for, and the first cock has been sulking in the grove ever since. Bring two of the wood's lords down on Hard, with your own party and no sellsword off the cart, and he may feel flattered enough to crow.",
         piece: COCKS_SPUR,
         reward: { chest: 'bronze' },
       },
@@ -725,6 +728,9 @@ export const CHAINS: readonly ChainDef[] = [
         title: 'Thunder on Demand',
         text: "Fire 6 ultimates in army fights where no king's spell is cast",
         goal: { kind: 'ults', n: 6, mode: 'army', noSpells: true },
+        // (QUEST-POSSIBLE: ultimates open at hero level 30, `ULT_LEVEL` (a test holds them equal); the Labyrinth that opens the chain is set for level 16)
+        needs: { kind: 'level', n: 30 },
+        locked: 'Opens with a hero at level 30, when ultimates can be fired',
         begin: "Last, a vessel. The Crown's glassmaker has blown a flask, and it wants to be filled with something that has been shouted. Six great strikes, and no borrowed thunder from the king: the glass is particular about its sources.",
         piece: STORM_GLASS,
         reward: { chest: 'bronze' },
@@ -741,9 +747,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'voltara5',
         title: "Both Lords, One Storm",
-        text: "Beat 2 Labyrinth bosses on Hard with no hero falling and no hero hired in the run",
+        text: "Beat 2 Labyrinth bosses on Hard with no hero falling and no sellsword hired at the cart in the run",
         goal: { kind: 'bossDown', n: 2, army: 'labyrinth', tier: 1, flawless: true, noHires: true },
-        begin: "One spark more, and it comes out of the maze's lords. Two of them, on Hard, and your party exactly as it set out: no one fallen, no one hired. The glassmaker says the spark can tell.",
+        begin: "One spark more, and it comes out of the maze's lords. Two of them, on Hard, and your party your own: no one fallen, no sellsword off the cart. The glassmaker says the spark can tell.",
         piece: LAST_SPARK,
         reward: { chest: 'bronze' },
       },
@@ -802,9 +808,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'gorm5',
         title: "Plumb and True",
-        text: "Win 5 army waves on Hard with no hero falling and no hero hired in the run",
+        text: "Win 5 army waves on Hard with no hero falling and no sellsword hired at the cart in the run",
         goal: { kind: 'wavesWon', n: 5, mode: 'army', tier: 1, flawless: true, noHires: true },
-        begin: "Mehh. (The last piece is a plumb-line. She says the quarry only trusts a party that stands straight: five fights on Hard, nobody fallen, nobody hired. She will check it with her horns.)",
+        begin: "Mehh. (The last piece is a plumb-line. She says the quarry only trusts a party that stands straight: five fights on Hard, nobody fallen, no sellsword off the cart. She will check it with her horns.)",
         piece: PLUMB_LINE,
         reward: { chest: 'bronze' },
       },

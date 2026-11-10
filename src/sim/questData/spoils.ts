@@ -42,7 +42,8 @@ export const SPOILS_QUESTS: readonly QuestDef[] = [
     title: "The Lich King's Letter",
     giver: 'spoils',
     from: ['lichKing'],
-    needs: { kind: 'any' },
+    // (QUEST-POSSIBLE: only once Resurrect can be had, bought at the Chapel)
+    needs: { kind: 'spell', id: 'resurrect' },
     text: 'The king casts Resurrect 3 times',
     offer: [
       'Found on the Lich King: a letter, never sent, three hundred years old. "My dear, I have found a way for us to wake again. I am sorry it is like this."',
