@@ -182,6 +182,8 @@ import { Fx, loadFx } from './render/fx';
 import { lookSheet } from './render/awakenLook';
 import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS, settle, type View } from './render/cameraRules';
+import { coverElements, measureSafe, onCamCover } from './camSafe';
+import { easeRect, type Rect } from './render/safeRectRules';
 import { engagedAt, followView, heatOf, manualHeld, returnEase, tileKey, type HotSpot } from './render/followCamRules';
 import { whichCast } from './fightHudRules';
 import { deployBox, deployView, type Top } from './render/deployCam';
@@ -795,7 +797,7 @@ class Game {
     this.queueDuel();
   }
 
-  /** The Nemesis War, phase 4: a challenge on this wave (`duel.ts`): its cut-in queued after the taunts, its card when the screen is free.
+  /** The Nemesis War, phase 4: a challenge on this wave (`duel.ts`): its cut-in queued with the taunts, in the place of the same nemesis's own (CALLOUT-ONCE: a foe calls out once a wave), its card when the screen is free.
    *  None under auto-replay. A card still up from a wave before is put away without answering it. */
   private queueDuel(): void {
     this.duelWait = null;
@@ -1629,6 +1631,7 @@ class Game {
       if (f) this.zoom = easeTo(this.zoom, this.tzoom, dt, ease.zoom);
       this.clampCam();
     }
+    this.easeSafe(dt);
     this.place();
   }
 
@@ -1648,7 +1651,7 @@ class Game {
     const box = landmarkBounds(board, frameOf(section, section));
     if (!box) return;
     this.bbox = { x0: Math.min(this.bbox.x0, box.x0), x1: Math.max(this.bbox.x1, box.x1), y0: Math.min(this.bbox.y0, box.y0), y1: Math.max(this.bbox.y1, box.y1) };
-    this.destinationReveal = { armed: false, left: 3200, x: (box.x0 + box.x1) / 2, y: (box.y0 + box.y1) / 2, zoom: Math.min(2, this.area.w / (box.x1 - box.x0 + 30) / this.scale, this.area.h / (box.y1 - box.y0 + 30) / this.scale) };
+    this.destinationReveal = { armed: false, left: 3200, x: (box.x0 + box.x1) / 2, y: (box.y0 + box.y1) / 2, zoom: Math.min(2, this.safe.w / (box.x1 - box.x0 + 30) / this.scale, this.safe.h / (box.y1 - box.y0 + 30) / this.scale) };
   }
 
   private stepDestinationReveal(dt: number, elapsed: number): void {
@@ -1794,6 +1797,12 @@ class Game {
   private tx = 0;
   private ty = 0;
   private area = { x: 0, y: 0, w: 1, h: 1 };
+  /** CAM-SAFE (`render/safeRectRules.ts`, `camSafe.ts`): the room the player really sees, in column px: the canvas less every part of the
+   *  page over it (the top bar, the spell row, the boss's bar, the combo bar, the tactic button, the bench or hero rows, and any cover
+   *  registered later). The camera centres and frames in it; `safeTo` is the room as last measured, which `safe` eases to. The board's
+   *  own scale is still fitted to `area`, so the board is the same size as before. */
+  private safe = { x: 0, y: 0, w: 1, h: 1 };
+  private safeTo: Rect = { x0: 0, y0: 0, x1: 1, y1: 1 };
   /** The camera's zoom on the boss during its card (1 otherwise). */
   private zoom = 1;
   /** Where the zoom is heading, the view the follow camera is holding (its dead zone), and when it may follow again after a manual move. */
@@ -1834,7 +1843,7 @@ class Game {
     }
     // (never wider than the board's own width, never closer than a little over the layout's scale, so pixels stay a sensible size)
     const lo = this.minZoom();
-    const want = followView(spots, this.area.w, this.area.h, this.scale, lo, Math.max(lo, Math.min(FOLLOW_IN, 3 / this.scale)));
+    const want = followView(spots, this.safe.w, this.safe.h, this.scale, lo, Math.max(lo, Math.min(FOLLOW_IN, 3 / this.scale)));
     if (!want) return;
     this.held = this.held ? settle(this.held, want) : want;
     this.tx = this.held.cx;
@@ -1858,7 +1867,7 @@ class Game {
   /** The least zoom of the fight camera: the whole board across the room (the layout's scale upright is zoomed in past that). */
   private minZoom(): number {
     const { x0, x1 } = this.bbox;
-    return Math.min(1, (this.area.w - 20) / (x1 - x0) / this.scale);
+    return Math.min(1, (this.safe.w - 20) / (x1 - x0) / this.scale);
   }
 
   /** The fight's top parts, each under the measured bottom of the ones above it (COMBAT-HUD, docs/notes/combat-hud.md): a twist's banner
@@ -1897,6 +1906,8 @@ class Game {
       if (busy) return;
       busy = true;
       this.placeTopHud();
+      // (CAM-SAFE: the camera's room follows the parts over the board)
+      this.measureSafeRect();
       // (a toast in the lane goes under the parts as they now stand, and a quip's bubble is set clear of them all: the spell row coming in
       // as the fight begins, the bar moving as the row changes)
       const lane = fightToastTop();
@@ -1907,6 +1918,35 @@ class Game {
     // (the panel and the tactic button too: its fight rows and the button over them come in as the fight begins, and a quip
     // said at the deploy must clear them)
     for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar', 'panel', 'tacticBtn']) watch.observe($(id));
+    // (CAM-SAFE: and every cover of the board, those made later (the combo bar as a fight starts) and those registered later too)
+    this.watchCovers = () => coverElements().forEach((e) => watch.observe(e));
+    this.watchCovers();
+    onCamCover(() => {
+      this.watchCovers();
+      this.measureSafeRect();
+    });
+  }
+  private watchCovers: () => void = () => {};
+
+  /** CAM-SAFE: measure the room the player sees now (`snap`: the camera takes it at once, else it eases there). */
+  private measureSafeRect(snap = false): void {
+    if (typeof document === 'undefined') return;
+    this.watchCovers();
+    const L = colLeft();
+    const r = measureSafe({ x0: L, y0: 0, x1: L + viewW(), y1: viewH() });
+    this.safeTo = { x0: r.x0 - L, y0: r.y0, x1: r.x1 - L, y1: r.y1 };
+    if (snap || reducedMotion()) this.safe = { x: this.safeTo.x0, y: this.safeTo.y0, w: this.safeTo.x1 - this.safeTo.x0, h: this.safeTo.y1 - this.safeTo.y0 };
+  }
+
+  /** CAM-SAFE: each frame the camera's room eases to the room last measured. */
+  private easeSafe(dt: number): void {
+    const s = this.safe;
+    const to = this.safeTo;
+    if (s.x === to.x0 && s.y === to.y0 && s.w === to.x1 - to.x0 && s.h === to.y1 - to.y0) return;
+    const r = reducedMotion() ? to : easeRect({ x0: s.x, y0: s.y, x1: s.x + s.w, y1: s.y + s.h }, to, dt, EASE_MOVE_MS);
+    const near = Math.abs(r.x0 - to.x0) + Math.abs(r.y0 - to.y0) + Math.abs(r.x1 - to.x1) + Math.abs(r.y1 - to.y1) < 0.5;
+    const f = near ? to : r;
+    this.safe = { x: f.x0, y: f.y0, w: f.x1 - f.x0, h: f.y1 - f.y0 };
   }
 
   /** Fit the board into the room the bench and the top bar leave: it is zoomed in and panned. */
@@ -1940,6 +1980,7 @@ class Game {
     this.world.scale.set(k);
     this.ghost.scale.set(k);
     this.area = area;
+    this.measureSafeRect(true);
     const scenic = landmarkBounds(b, { rot: chainOf(this.run)?.[this.run.stage - 1]?.rot ?? 0, ou: 0, ov: 0, w: b.w, d: b.d });
     this.bbox = scenic ? { x0: Math.min(x0, scenic.x0), x1: Math.max(x1, scenic.x1), y0: Math.min(y0, scenic.y0), y1: Math.max(y1, scenic.y1) } : { x0, x1, y0, y1 };
     // (a camera the player has moved stays put through a resize, kept over the board)
@@ -1956,8 +1997,8 @@ class Game {
 
   /** The player zooms to `z` about a screen point (client px), the world under it held still or carried to `(tx, ty)`: the camera is theirs now. */
   private zoomTo(z: number, sx: number, sy: number, tx = sx, ty = sy): void {
-    const midX = colLeft() + this.area.x + this.area.w / 2;
-    const midY = this.area.y + this.area.h / 2;
+    const midX = colLeft() + this.safe.x + this.safe.w / 2;
+    const midY = this.safe.y + this.safe.h / 2;
     const k0 = this.scale * this.zoom;
     const c = zoomAbout(this.cx, this.cy, k0, this.scale * z, sx - midX, sy - midY, tx - midX, ty - midY);
     this.takeCam();
@@ -2039,7 +2080,7 @@ class Game {
     const box = deployBox(tops);
     if (!box) return null;
     const { lo, hi } = this.camLimits();
-    return deployView(box, this.area.w, this.area.h, this.scale, lo, hi);
+    return deployView(box, this.safe.w, this.safe.h, this.scale, lo, hi);
   }
 
   /** Each frame of a deploy: the camera eases in on the placement rows (a cut with reduced motion), unless the player has taken it, or an
@@ -2070,15 +2111,15 @@ class Game {
     const r = this.reachBox();
     this.tx = (r.x0 + r.x1) / 2;
     this.ty = (r.y0 + r.y1) / 2;
-    this.tzoom = Math.min(1, this.area.w / (r.x1 - r.x0 + 40) / this.scale, this.area.h / (r.y1 - r.y0 + 40) / this.scale);
+    this.tzoom = Math.min(1, this.safe.w / (r.x1 - r.x0 + 40) / this.scale, this.safe.h / (r.y1 - r.y0 + 40) / this.scale);
     this.zoom = easeTo(this.zoom, this.tzoom, dt, EASE_ZOOM_MS);
   }
 
   /** Keep the camera over the board: no scrolling past its edge, and a board that fits stays centred. */
   private clampCam(): void {
     const { x0, x1, y0, y1 } = this.reachBox();
-    const hw = this.area.w / 2 / (this.scale * this.zoom);
-    const hh = this.area.h / 2 / (this.scale * this.zoom);
+    const hw = this.safe.w / 2 / (this.scale * this.zoom);
+    const hh = this.safe.h / 2 / (this.scale * this.zoom);
     const lim = (c: number, lo: number, hi: number, half: number, slack = 0) =>
       hi - lo <= half * 2 ? Math.min((lo + hi) / 2 + slack, Math.max((lo + hi) / 2 - slack, c)) : Math.min(hi - half + slack, Math.max(lo + half - slack, c));
     // (up and down there is some give past the board's edge, so any row can be dragged clear of the bench and the top bar)
@@ -2093,8 +2134,9 @@ class Game {
   private place(): void {
     const k = this.scale * this.zoom;
     this.world.scale.set(k);
-    this.baseX = Math.round(this.area.x + this.area.w / 2 - this.cx * k);
-    this.baseY = Math.round(this.area.y + this.area.h / 2 - this.cy * k);
+    // (CAM-SAFE: the camera's point at the middle of the room the player sees, clear of the bars and the spells)
+    this.baseX = Math.round(this.safe.x + this.safe.w / 2 - this.cx * k);
+    this.baseY = Math.round(this.safe.y + this.safe.h / 2 - this.cy * k);
     this.world.position.set(this.baseX + this.fx.shakeX, this.baseY + this.fx.shakeY);
     const { x0, x1, y0, y1 } = this.bbox;
     const fx = x1 > x0 ? (this.cx - (x0 + x1) / 2) / (x1 - x0) : 0;

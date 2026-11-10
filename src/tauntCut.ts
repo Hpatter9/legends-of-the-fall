@@ -11,7 +11,7 @@ import { paintGearIcon } from './gearIcons';
 import { portrait } from './render/sheets';
 import { heroFace } from './heroFace';
 import { reducedMotion } from './reviveView';
-import { canSkip, cutLength, plateWords, TAUNT_CUT, type CutMode, type Taunt } from './tauntCutRules';
+import { canSkip, cutLength, onceEach, plateWords, TAUNT_CUT, type CutMode, type Taunt } from './tauntCutRules';
 import { heroName } from './sim/heroNames';
 import { trophyWords } from './sim/revenge';
 import { UNITS } from './sim/units';
@@ -72,7 +72,8 @@ export class TauntCuts {
 
   /** Queue the wave's cut-ins (in the order they stand), with the setting's mode. */
   add(taunts: readonly Taunt[], mode: CutMode): void {
-    for (const t of taunts) if (cutLength(mode, t).ms > 0) this.queue.push({ t, mode });
+    // (CALLOUT-ONCE: each nemesis once a wave: a challenge takes the place of the same nemesis's taunt, `onceEach`)
+    this.queue = onceEach(this.queue, taunts.filter((t) => cutLength(mode, t).ms > 0).map((t) => ({ t, mode })), this.now);
   }
 
   /** Each frame: `dt` real ms; `held` while something else has the screen (a boss's card, a scene). */
