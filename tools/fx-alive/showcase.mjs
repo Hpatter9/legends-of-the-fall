@@ -1,7 +1,7 @@
 // FX-ALIVE-ART (docs/notes/fx-alive-art.md): each element's living patch laid over the heroes as they stand deployed, for the eye: a 3 x 3
 // patch on the middle of the party and a cross beside it, three frames each, at each phone size; with reduced motion and the battery saver.
 //
-//   npm run web && node tools/fx-alive/showcase.mjs [--sizes 393x852,360x780,412x915] [--mode normal|calm|saver]
+//   npm run web && node tools/fx-alive/showcase.mjs [--sizes 393x852,360x780,412x915] [--mode normal|calm|saver] [--out <dir>]
 //
 // It writes docs/samples/fx-alive-art/<mode>-<width>.jpg (a row an element) and prints the page's errors. A tool only: it calls the effects'
 // own `alivePatch` on the page's game, and the battle is not started.
@@ -16,7 +16,7 @@ const args = process.argv.slice(2);
 const opt = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
 const SIZES = opt('--sizes', '393x852,360x780,412x915').split(',').map((s) => s.split('x').map(Number));
 const MODE = opt('--mode', 'normal');
-const OUT = 'docs/samples/fx-alive-art';
+const OUT = opt('--out', 'docs/samples/fx-alive-art');
 const TMP = 'out/fx-alive-art';
 const ELEMENTS = ['fire', 'ice', 'light', 'dark', 'poison', 'wind', 'earth', 'forest'];
 const COLOURS = { fire: 0xff7a2a, ice: 0x8fd0ff, light: 0xffe9a8, dark: 0xa070ff, poison: 0x7cff6a, wind: 0xb8f0e0, earth: 0xd8a050, forest: 0x7ad860 };
