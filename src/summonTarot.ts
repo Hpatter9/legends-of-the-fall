@@ -27,6 +27,7 @@ import flameIcon from './art/talent/blast.png';
 import targetIcon from './art/talent/target.png';
 import haloIcon from './art/talent/halo.png';
 import { openScreen } from './screens';
+import { roman } from './sim/roman';
 
 /** The rows of the arcana atlas, by the Pixel Effects element. */
 const ELEMENTS = ['light', 'earth', 'blood', 'wind', 'lightning', 'crystal', 'star', 'fire', 'dark', 'moon', 'forest', 'sand'] as const;
@@ -43,12 +44,6 @@ export const BEATS = [0, 1400, 1900, 3100] as const;
 /** With reduced motion: casting pose, then a calm fade to the hero and its name. */
 export const CALM_BEATS = [0, 900, 900, 900] as const;
 
-const roman = (n: number): string => {
-  const R: [number, string][] = [[40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
-  let s = '';
-  for (const [v, r] of R) while (n >= v) { s += r; n -= v; }
-  return s;
-};
 const hex = (c: number): string => `#${c.toString(16).padStart(6, '0')}`;
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -353,6 +348,8 @@ const css = `
 .tarotInfo { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%; visibility: hidden; }
 .tarotResult.up .tarotInfo { visibility: visible; }
 .tarotInfo .tarotName { margin-top: 3px; color: #ffe4a4; font: 900 11px/1.1 var(--display); overflow-wrap: anywhere; min-height: 2.2em; display: flex; align-items: center; justify-content: center; }
+/* (FIRST-HOUR: a new hero's name and title are stacked; as flex items in a row they ran together, "RaviKindler of Pyres") */
+.tarotInfo .tarotName.htStack { flex-direction: column; }
 .tarotInfo .tarotGain { color: #b8eac2; font: 700 11px var(--body); font-style: normal; }
 .tarotInfo .tarotBar { display: block; width: 92%; height: 5px; background: #06120d; border: 1px solid #6c7749; }
 .tarotInfo .tarotBar i { display: block; height: 100%; background: linear-gradient(#ceefab, #4f9e70); }

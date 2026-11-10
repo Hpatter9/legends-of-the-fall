@@ -136,7 +136,11 @@ export class PaintedTavern {
       panels[index].id = `ptPanel${index}`;
       panels[index].setAttribute('role', 'tabpanel');
       panels[index].setAttribute('aria-labelledby', tab.id);
-      tab.addEventListener('click', () => select(index));
+      // (FIRST-HOUR: the panels sit under the painting, mostly below the fold at phone height: a tapped tab brings its panel into view)
+      tab.addEventListener('click', () => {
+        select(index);
+        requestAnimationFrame(() => panels[index].scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
+      });
       tab.addEventListener('keydown', (event) => {
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();

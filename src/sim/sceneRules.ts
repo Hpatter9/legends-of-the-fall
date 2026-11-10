@@ -165,6 +165,15 @@ export interface SceneRow {
   more?: number;
 }
 
+/** The moments only the Last Stand or the Calamity bring about. */
+const MODE_MOMENTS: ReadonlySet<string> = new Set(['calOpen', 'calBoss', 'calVictory', 'calAct', 'spire', 'elite', 'ascension']);
+
+/** Whether scene `id` can only be played by a mode that is hidden just now. */
+export const sceneOfHiddenMode = (id: string): boolean => {
+  const s = SCENES[id];
+  return !!s && !modeShown('calamity') && (!!s.calamity || MODE_MOMENTS.has(s.moment.kind));
+};
+
 /** The scenes the list shows, in order: each seen one with Watch, each lone unseen one a mystery, and a family's unseen ones folded into one line saying how many are left. */
 export function sceneList(m: Meta): SceneRow[] {
   const rows: SceneRow[] = [];
@@ -172,6 +181,8 @@ export function sceneList(m: Meta): SceneRow[] {
   for (const id of SCENE_ORDER) {
     const s = SCENES[id];
     const seen = seenScene(m, id);
+    // (FIRST-HOUR: an unseen scene that only a hidden mode can play is not listed while the modes are hidden; one already seen stays)
+    if (!seen && sceneOfHiddenMode(id)) continue;
     if (seen) rows.push({ id, title: s.title, text: s.blurb, seen });
     else if (!s.family) rows.push({ id, title: '???', text: momentText(s.moment), seen });
     else {

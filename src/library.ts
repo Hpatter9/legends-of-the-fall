@@ -5,6 +5,7 @@ import { spellbookView } from './spellbook';
 import { menuWell } from './ornateMenu';
 import type { Meta } from './sim/meta';
 import { spellsOpen } from './sim/castle';
+import { MODE_NEED, modeOpen, opensAt, progressLine } from './sim/modeUnlock';
 import { schoolOf } from './sim/schools';
 import { AmbientLayer } from './render/ambientLayer';
 import { SCENE_LIFE } from './render/ambientScenes';
@@ -21,6 +22,7 @@ export class Library {
   private scene = el('div', 'lbScene');
   private panel = el('div', 'lbPanel');
   private lock = menuWell(this.panel);
+  private readonly lockWhy = el('p');
   private page = el('div', 'lbPage');
   private known = el('span', 'lbKnown');
   private school = el('p', 'lbSchool');
@@ -43,7 +45,7 @@ export class Library {
     this.lock.classList.add('lbLock');
     const go = el('button', 'omPrimary lbGo', 'To the Castle');
     go.addEventListener('click', onCastle);
-    this.lock.append(el('h2', '', 'A little magic awaits'), el('p', '', 'Build the Chapel in the Castle to open your spellbook.'), go);
+    this.lock.append(el('h2', '', 'A little magic awaits'), this.lockWhy, go);
     this.page.append(this.book.root);
     this.panel.append(this.page);
     const ledger = el('div', 'lbLedger');
@@ -57,6 +59,8 @@ export class Library {
   update(meta: Meta): void {
     const open = spellsOpen(meta);
     this.lock.hidden = open;
+    // (FIRST-HOUR: while the castle itself is shut the reason says so, with the stars still to win, not only "build the Chapel")
+    this.lockWhy.textContent = modeOpen(meta, 'castle') ? 'Build the Chapel in the Castle to open your spellbook.' : `Your spellbook opens with the Chapel, a building of the Castle. The Castle ${opensAt(MODE_NEED.castle).toLowerCase()} · ${progressLine(meta, MODE_NEED.castle)}.`;
     this.page.hidden = !open;
     this.root.classList.toggle('lbSealed', !open);
     this.school.textContent = `School of ${schoolOf(settings().ruler).name}`;

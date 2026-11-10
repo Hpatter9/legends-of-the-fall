@@ -8,6 +8,7 @@ import { SPELLS, SPELL_IDS, RANK_MAX, RIDERS, type SpellId } from './sim/spells'
 import { castList, equipBlock, equipSpell, fitSchool, schoolOf, schoolsOfSpell, SCHOOL_SLOTS, unequipSpell } from './sim/schools';
 import { DECREES } from './sim/decrees';
 import { marksEarned, marksFree, rankBlock, rankIn, rankUp } from './sim/spellRanks';
+import { namesHiddenMode } from './sim/hiddenModes';
 
 let meta: Meta | null = null;
 let changed: () => void = () => {};
@@ -160,7 +161,9 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
       details.append(el('p', `rider${rk >= RANK_MAX ? ' on' : ''}`, `Rank ${RANK_MAX}: ${RIDERS[id]}`));
       details.addEventListener('toggle', () => { if (details.open) expanded.add(id); else expanded.delete(id); });
       card.append(details);
-      const lock = owned ? undefined : spellLock(m, id);
+      // (FIRST-HOUR: a spell whose milestone is in a hidden mode shows its other way in, the chest scroll, while the mode is hidden)
+      const milestone = owned ? undefined : spellLock(m, id);
+      const lock = milestone && namesHiddenMode(milestone.line) ? undefined : milestone;
       if (!owned) {
         const how = el('div', 'how', lock ? `${lock.line}${lock.need > 1 ? ` · ${lock.now}/${lock.need}` : ''}` : 'Find a spell scroll in a gold or Mythic chest.');
         if (lock && lock.need > 1) {
