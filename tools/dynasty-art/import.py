@@ -5,7 +5,8 @@ ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'src/art/dynasty'
 # (the season, fate and trait symbols are cut by tools/art-wire-5/import-expansion.py since the repainted sheets, at the sizes drawn)
 NAMES=['spring','summer','autumn','winter','mentor','regular','shade','fallen','legend']
-for name in ['houses','council']:
+# (and the Council's hall after the War's end, the Assault's phase 5: docs/notes/assault-5-art-prompts.md)
+for name in ['houses','council','council-fallen']:
     im=Image.open(ROOT/f'art-source/expansion/{name}-backdrop.png').convert('RGB')
     im.thumbnail((768,1152),Image.Resampling.LANCZOS)
     im.save(OUT/f'{name}-backdrop.webp',quality=86,method=6)
@@ -22,4 +23,4 @@ for i,name in enumerate(NAMES+['house','heirloom']):
     im=im.resize((96,96),Image.Resampling.LANCZOS)
     preview.paste(im,(x,y),im);draw.text((x,y+100),name,fill='#e4d1ad')
 preview.save(ROOT/'docs/samples/dynasty-art/contact.png')
-print('Imported 2 backdrops and 2 paintings (and previewed the season and fate symbols).')
+print('Imported 3 backdrops and 2 paintings (and previewed the season and fate symbols).')
