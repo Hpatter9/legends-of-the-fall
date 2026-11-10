@@ -8,6 +8,9 @@
 body.hasGrip #benchTrack > #bench { padding-right: calc(var(--grip) + 4px); }
 #runeBench { padding-left: calc(var(--grip) + 4px); display: flex; flex-direction: column; gap: 4px; max-height: 172px; }
 body:not(.hasGrip) #runeBench, body:not(.hasGrip) #benchGrip { display: none; }
+/* (FIRST-HOUR: an empty bench is one line of words, shorter than the bar, and the window cut the bar's word to "IES": the window is never
+   shorter than the bar while deploying) */
+body.hasGrip[data-phase='deploy'] #benchView { min-height: 100px; }
 /* (the spring: it overshoots a touch and settles, as a weighted slider would; while the finger has it, it follows at once) */
 #benchView.springing #benchTrack { transition: transform .38s cubic-bezier(.3, 1.32, .5, 1); }
 #benchView.springing #benchGrip { transition: left .38s cubic-bezier(.3, 1.32, .5, 1), box-shadow .2s; }

@@ -19,7 +19,7 @@ import { keyOf, ultimateOf } from './sim/abilities';
 import { heroName } from './sim/heroNames';
 import { GLOW, skillElement } from './render/fxRules';
 import type { Fx } from './render/fx';
-import { playAll } from './render/sound';
+import { hushMoment, playAll } from './render/sound';
 import { spellImage } from './render/spellArt';
 import { spellPart } from './render/spellLooks';
 import { settings } from './settings';
@@ -94,6 +94,8 @@ export class UltMoments {
     // (a tap skips the moment playing)
     this.layer.addEventListener('click', (e) => {
       e.stopPropagation();
+      // (the build-up or the slow beat still ringing fades with it: a skipped moment is not heard on)
+      if (this.queue.current) hushMoment();
       this.queue.skip();
     });
     document.body.append(this.layer);

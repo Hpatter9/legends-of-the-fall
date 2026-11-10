@@ -162,7 +162,7 @@ export const HERO_KITS = (): Record<string, HeroKit> => (table ??= HERO_TABLE())
 
 /** A placed hero's kit: only one of the 45 heroes the player places (not a summon, not a foe, not one that changed kit). */
 export function heroKitOf(u: Unit): HeroKit | undefined {
-  if (u.side !== 'hero' || u.owner !== undefined || u.kit) return undefined;
+  if (u.side !== 'hero' || u.owner !== undefined || u.kit || u.kitRef) return undefined;
   if (UNITS[u.def]?.summon) return undefined;
   // (a hero with skills from books in its slots: its kit with those two, `books.ts`)
   const kit = u.book ? kitWithLoadout(u.def, u.book) : (HERO_KITS()[u.def] ?? comingHeroKits()[u.def]);

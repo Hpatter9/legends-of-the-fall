@@ -15,7 +15,7 @@ export const MUSIC_TARGET = {
   // (every loop at the one level since BATTLE-MUSIC-2: the files are mastered to -18 LUFS and play at -30, 6.5 LU under the fight)
   battle: -30, boss: -30,
   camp: -30, tavern: -30, deploy: -30, tower: -30, calmap: -30, triumph: -30,
-  opening: -30, gorvak: -30, herald2: -30, herald3: -30, herald4: -30, herald5: -30, herald6: -30, comic: -30, solemn: -30, spire: -30,
+  opening: -30, gorvak: -30, herald2: -30, herald3: -30, herald4: -30, herald5: -30, herald6: -30, comic: -30, solemn: -30, spire: -30, warend: -30,
   // (the stings, by integrated loudness: the fanfare a touch over the fight, the fall's sting a little under it)
   victory: -23.5, defeat: -25.5,
 };

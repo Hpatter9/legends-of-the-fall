@@ -505,3 +505,8 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.dim,
   #benchGrip:has(#gripBadge:not([hidden]))::after { content: none; }
   #runeBench .rbTile.mergeHot { transform: none; }
 }
+
+/* FIRST-HOUR: the hero sheet's strip of the company. A plaque's side padding left 31px for a name, so "Kwame" and "Natsu" were cut to
+   "Kwa…" and "Nat…" while the selected one fitted: the unselected plaques keep a narrower gutter, clear of the frame. */
+/* (the selector copies the plates' own, section 1, which counts three ids: a plainer one loses to it) */
+.heroDetail .heroStrip button:not([class]):not(#mute):not(#gear):not(#speed) { padding-left: 8px; padding-right: 8px; }

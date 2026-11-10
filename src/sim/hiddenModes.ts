@@ -46,5 +46,8 @@ export const questShown = (q: QuestDef): boolean => !hidden || !questNeedsHidden
 /** The achievements only a hidden mode can earn. One already earned stays on the list (and claimable); the rest are not shown or checked. */
 export const HIDDEN_MODE_ACHIEVEMENTS: readonly string[] = ['tower1', 'tower20'];
 
+/** Whether a line of the page's words names a hidden mode, so a list of tips or sources can leave it out while the modes are hidden. */
+export const namesHiddenMode = (text: string): boolean => hidden && /Last Stand|Calamity/.test(text);
+
 /** Whether an achievement shows (and can be earned) for a save that holds `earned`. */
 export const achievementShown = (id: string, earned: readonly string[]): boolean => !hidden || !HIDDEN_MODE_ACHIEVEMENTS.includes(id) || earned.includes(id);
