@@ -105,12 +105,14 @@ export function ruleLines(q: QuestDef, goal: Goal = q.goal): string[] {
   const c = goal as Goal & Cond;
   const out: string[] = [];
   if (q.ordered) out.push('Objectives in order');
-  if (q.oneRun) out.push('All in one army run');
+  // (QUEST-POSSIBLE: a one-run quest counts in any one run; the daily's say so)
+  if (q.oneRun) out.push(objectivesOf(q).some((x) => (x as Cond).mode === 'daily' || x.kind === 'clearDaily') ? 'All in one daily' : 'All in one army run');
   if (q.streak) out.push(`${q.streak} days running`);
   if (q.within) out.push(`Within ${q.within} day${q.within === 1 ? '' : 's'} of taking it`);
-  if (c.noUlts) out.push('No ultimates in this fight');
-  if (c.noSpells) out.push("No king's spells");
-  if (c.noHires) out.push('No heroes hired');
+  // (QUEST-POSSIBLE: the Auto switches would break these rules by themselves, so the chip says which to turn off)
+  if (c.noUlts) out.push('No ultimates in this fight (ULT Auto off)');
+  if (c.noSpells) out.push("No king's spells (SPELL Auto off)");
+  if (c.noHires) out.push('No sellsword hired at the cart');
   if (c.noHeart) out.push('No heart spent');
   if (c.flawless) out.push('No hero falls');
   if (c.quick !== undefined) out.push(`Win within ${c.quick} seconds`);

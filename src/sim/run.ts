@@ -142,6 +142,9 @@ export interface Run {
   stage: number;
   /** Summons so far: the price and the draw both follow it. */
   summons: number;
+  /** QUEST-POSSIBLE: outside help hired this run: the passing cart's sellsword and guest, and a deserters' captain paid his wages (not the
+   *  party's own heroes bought with Hire, `summons`). Optional: a run saved before it has hired none. A quest's "no sellsword hired" reads it. */
+  hired?: number;
   roster: Owned[];
   nextId: number;
   /** Heroes chosen to fight (roster ids), at most `SQUAD`. */
@@ -350,6 +353,9 @@ const draw = (run: Run): string => {
   const pool = run.pool?.length ? run.pool : HEROES;
   return pool[new Rng(mixSeed(run.seed, 0x5033, run.nextId)).int(0, pool.length - 1)];
 };
+/** Count a hand hired from outside the party (QUEST-POSSIBLE): a sellsword, a guest, a deserters' captain. */
+export const noteHired = (run: Run): void => void (run.hired = (run.hired ?? 0) + 1);
+
 export const summonCost = (run: Run) => SUMMON_BASE + SUMMON_STEP * run.summons;
 
 /** The hero the next Hire would bring: its kind, and its grade (now and then a summon arrives a grade up, from its own side stream so the draws stay as they were). */
@@ -683,6 +689,8 @@ export function catalogueRun(r: Run): Run {
   // (SEVEN-SLOT GEAR: the finds a run from before wears move to the new slots, and a rune run's runes are read safely)
   migrateRunWorn(r);
   if (r.runes) r.runes = readRunes(r.runes) ?? newRunes();
+  // (QUEST-POSSIBLE: the outside help hired, a whole count or none)
+  if (r.hired !== undefined && !(Number.isInteger(r.hired) && r.hired >= 0)) delete r.hired;
   if (r.relicBook === RELIC_BOOK) return r;
   // (RELICS-3: a run already in the second catalogue is only quietly moved on; the line is for the first conversion, or a relic that changed)
   const first = r.relicBook === undefined;
