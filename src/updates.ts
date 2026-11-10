@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.470.0',
+    date: '2026-11-10',
+    title: 'Painted edges on area effects',
+    notes: ['Area effects now wear your painted, animated edges in all eight elements, with the middle left clear so heroes stay in view.'],
+  },
+  {
     version: '0.469.0',
     date: '2026-11-10',
     title: 'The duel is a show',
