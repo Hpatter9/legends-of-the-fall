@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.465.0',
+    date: '2026-11-10',
+    title: 'The Council button matches the Daily',
+    notes: ['Council and Daily are now a matching pair: the same plate, gold label and painted count seal, with their corner marks fully on screen.'],
+  },
+  {
     version: '0.464.0',
     date: '2026-11-10',
     title: 'Quest complete, and quests you can finish',
