@@ -74,4 +74,7 @@ and 360 x 780 with two rows and the boss's bar. `test/follow-cam.test.ts` is unc
 
 ## Checks run
 
-See the end of this note for the full suite's result.
+- `npm test` (the full suite): 3059 of 3059 pass, none failed, cancelled or skipped.
+- `npm run typecheck`: clean. `npm run web`: builds.
+- The shots above at 393x852, 360x780 and 412x915, each with four spells and the War Horn (two spell rows at 393 and 360, one at 412), with
+  and without the boss's bar; the deploy and the ultimate's lean-in at 393. 0 page errors.
