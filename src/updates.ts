@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.458.0',
+    date: '2026-11-10',
+    title: 'Effects land where they hit',
+    notes: ['Area effects now cover exactly the tiles they strike: the mythics\' bursts, the king\'s Lance, Sunbeam and walls, and auras.', 'Tile marks sit on the ground under your heroes, and Heavenfall\'s burning patches now show.'],
+  },
+  {
     version: '0.457.0',
     date: '2026-11-10',
     title: 'Choose your battle always shows',
