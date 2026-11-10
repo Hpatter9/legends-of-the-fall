@@ -15,6 +15,7 @@ import type { BattleEvent, Unit } from './sim/battle';
 import type { Skill } from './sim/abilities';
 import { liftedDim, ULT_EPIC, type UltTargets } from './ultEpicRules';
 import type { Element } from './render/fxRules';
+import type { PlannedCue } from './render/audioRules';
 
 /** Whether an ultimate gets the full moment (the hold and the dim): the setting on, and Auto off. With Auto the banner is short. */
 export const fullScene = (setting: boolean, auto: boolean): boolean => setting && !auto;
@@ -41,6 +42,14 @@ export const ULT_MOMENT = {
   /** The short version's banner. */
   SHORT_MS: 1500,
 };
+
+/** The sound of the moment's two beats (HOLD-SOUND, docs/notes/hold-sound.md). The opening: the slash's sting and, under it, the power
+ *  gathering for the whole of the build-up. The blow: its heavy sting and, once the freeze lets go, the slow beat's drag (none when calm:
+ *  reduced motion has no freeze and no slow beat, so nothing to drag). */
+export function ultCues(beat: 'open' | 'impact', calm: boolean): PlannedCue[] {
+  if (beat === 'open') return [{ cue: 'ultSlash' }, { cue: 'ultCharge' }];
+  return calm ? [{ cue: 'ultImpact' }] : [{ cue: 'ultImpact' }, { cue: 'ultSlow', delay: ULT_EPIC.HIT_STOP_MS }];
+}
 
 /** Words in an ultimate's own text that say it calls fighters up (the cast tick's new fighters say so too; this is for one that calls them a
  *  moment later). Most ultimates' words name a duration ("stunned for 2s"), so durations are read from the cast's events instead. */

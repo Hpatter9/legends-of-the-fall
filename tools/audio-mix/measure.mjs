@@ -88,6 +88,18 @@ if (want('beds')) {
     }
   }
 }
+if (want('holds')) {
+  out.holds = {};
+  console.log('\n## The holds\' beds, alone and with their drums (the last column is on a phone\'s speaker)\n' + HEAD.replace('|\n', '| phone LUFS |\n') + '---|');
+  for (const army of ['orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems']) {
+    for (const drums of [false, true]) {
+      const name = `${army}${drums ? ' + drums' : ''}`;
+      const m = await run('holdBed', army, drums);
+      out.holds[name] = m;
+      console.log(row(name, m, ph(m)));
+    }
+  }
+}
 if (want('fights')) {
   out.fights = {};
   const FIGHTS = [

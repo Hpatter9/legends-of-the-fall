@@ -511,7 +511,11 @@ export class CastleScene {
   }
 
   private setView(view: 'hall' | 'buildings'): void {
-    if (view !== this.view) hideQuip();
+    if (view !== this.view) {
+      hideQuip();
+      // (the ledger's page turned, or turned back to the hall)
+      play('ledger');
+    }
     this.view = view;
     this.hallPanel.hidden = view !== 'hall';
     this.buildingsPanel.hidden = view !== 'buildings';

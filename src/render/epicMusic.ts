@@ -74,7 +74,7 @@ export function loadSting(id: StingId): Promise<AudioBuffer> {
 /* ------------------------------------------------------------------ which track for which mood */
 
 /** Where the player is, as the music hears it. */
-export type Place = 'camp' | 'tavern' | 'deploy' | 'tower' | 'calmap';
+export type Place = 'camp' | 'tavern' | 'deploy' | 'tower' | 'calmap' | 'muster' | 'lastHold';
 /** Which map is open over the game, if one is. */
 export type MapKind = 'tower' | 'calamity' | null;
 
@@ -86,7 +86,8 @@ export function placeOf(scene: Scene | null, map: MapKind): Place {
   return 'deploy';
 }
 
-/** The track a place plays. */
-export const TRACK_OF_PLACE: Record<Place, MusicId> = { camp: 'camp', tavern: 'tavern', deploy: 'deploy', tower: 'tower', calmap: 'calmap' };
+/** The track a place plays. The Assault's war table (`holdSound.ts` `holdScene`) is its deployment, so it takes the deployment's music;
+ *  the Last Hold's table the dark map music (the Calamity's, which nothing else plays while the Calamity is hidden). */
+export const TRACK_OF_PLACE: Record<Place, MusicId> = { camp: 'camp', tavern: 'tavern', deploy: 'deploy', tower: 'tower', calmap: 'calmap', muster: 'deploy', lastHold: 'calmap' };
 
 /* The battle's track (one for the whole battle, wave to wave) and the victory music are chosen in `battleMusic.ts`. */
