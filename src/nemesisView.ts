@@ -114,6 +114,7 @@ export function openNemesisBoard(m: Meta, hooks: BoardHooks, tab: Tab = 'council
   menu.card.classList.add('nmBoard');
   // (the Assault's phase 5: once the War has ended, the Council's hall with its seats burning)
   menuBackdrop(menu.card, over ? 'councilFallen' : 'council');
+  if (over) menu.card.classList.add('nmEnded');
   const tabs = menuSection(menu.body, undefined, undefined, 4);
   tabs.classList.add('nmTabs');
   const pane = el('div', 'nmPane');

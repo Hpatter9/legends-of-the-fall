@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.473.0',
+    date: '2026-11-10',
+    title: 'The burning hall shows through',
+    notes: ['On the Council board after the War, the veil is lighter so the burning hall shows, with darker bands behind the words.'],
+  },
+  {
     version: '0.472.0',
     date: '2026-11-10',
     title: 'Painted rune bench, duel bar and ULT button',

@@ -179,3 +179,9 @@ body.inDuel #hudSpells, body.inDuel .ehHorn, body.inDuel #mana { visibility: hid
 .nmTraitIcon { grid-row: 1 / span 2; width: 28px; height: 28px; image-rendering: auto; align-self: center; }
 .nmSecret.nmWithTrait b, .nmSecret.nmWithTrait small { grid-column: 2; }
 .nmBoard.paintedMenu .omHead { background: rgba(14, 10, 19, 0.28); }
+/* The board once the War has ended (the Assault's phase 5): its burning hall under a light veil (`menuBackdrops.ts`), so the fire shows;
+   a darker band behind each of its words instead, so they read over it. The wells keep their own dark fill. */
+.nmBoard.nmEnded .omHead { background: linear-gradient(180deg, rgba(14, 10, 8, 0.78), rgba(14, 10, 8, 0.6)); }
+.nmBoard.nmEnded .omSectionHead { padding: 3px 8px; border-radius: 3px; background: linear-gradient(90deg, rgba(12, 9, 7, 0.86), rgba(12, 9, 7, 0.55) 70%, rgba(12, 9, 7, 0)); text-shadow: 0 1px 2px #000; }
+.nmBoard.nmEnded .omWell { background: rgba(12, 10, 8, 0.86); }
+.nmBoard.nmEnded .omNote { padding: 6px 8px; border-radius: 3px; background: rgba(12, 9, 7, 0.8); }
