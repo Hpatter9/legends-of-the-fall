@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.450.0',
+    date: '2026-11-10',
+    title: 'Bloodtusk Hold, a living warcamp',
+    notes: ['Bloodtusk is an uneven orc warcamp under a crag, with the chief\'s hall up high, working yards and two weak points in its wall to find.'],
+  },
+  {
     version: '0.449.0',
     date: '2026-11-10',
     title: 'Sweep fixes: ultimates, toasts, the Maze',

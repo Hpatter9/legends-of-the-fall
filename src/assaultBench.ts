@@ -58,6 +58,8 @@ export interface BenchStats {
   workMean: number;
   /** The longest a frame spent baking chunks so far (ms). */
   bakeWorst?: number;
+  campWorkers?: number;
+  campSmoke?: number;
   /** With the worker: each batch's copy on the page (mean, p95, ms), and whether the worker runs it. */
   copyMean?: number;
   copyP95?: number;
@@ -399,7 +401,7 @@ export async function startAssaultBench(): Promise<void> {
       const alive = b.units.filter((x) => x.alive);
       Object.assign(stats, {
         seed, run, ticks: b.field!.stats.ticks, simMean: mean(simMs), simP95: p95(simMs), simWorst, fps, frameMean: mean(frameMs), frameP95: p95(frameMs), workMean: mean(workMs), bakeWorst, copyMean: mean(copyMs), copyP95: p95(copyMs), worker: !!sim?.inWorker,
-        detail: view.detail, zoom: cam.zoom, fighters: view.drawn.fighters, chunks: view.drawn.chunks, wanted: view.wanted.length, alive: alive.length,
+        campWorkers: view.drawn.campWorkers, campSmoke: view.drawn.campSmoke, detail: view.detail, zoom: cam.zoom, fighters: view.drawn.fighters, chunks: view.drawn.chunks, wanted: view.wanted.length, alive: alive.length,
       });
       const ours = alive.filter((x) => x.side === 'hero').length;
       const clock = `${Math.floor(b.t / 60000)}:${String(Math.floor((b.t % 60000) / 1000)).padStart(2, '0')}`;

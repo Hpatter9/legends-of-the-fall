@@ -1,0 +1,19 @@
+# Bloodtusk walls and buildings
+
+Owner approved correcting the doubled perimeter, wall corners, building proportions, masonry gates and hillside foundations. Work is on `fix/bloodtusk-structures`, following the two existing commits in PR #495. Only Bloodtusk's visual skin is changed; other holds keep their original placements and artwork.
+
+The doubled fence had two causes: full panels on both rows of a thick collision bank, and timber painted on that bank's vertical faces. The bank now shows earth/mud. `contourTimber` draws one panel per exposed outer ditch edge, with shared timber posts at turns. Panel mirroring follows the actual edge axis; the previous orientation could cross adjacent runs. A small overlap and much smaller lean/scale variation keep joins closed. The existing two-tile collision thickness, fort ownership, weak points and rubble ramps are retained. Posts follow their fort's breached state.
+
+The gates use new low timber frames in actual whole, battered and open/breached states. Their foot point follows the outer plane of the opening, not the middle of a thick bank. Gate width is sized to that opening; sally ports are smaller. The old gate flame glows are removed because the new art has no fire. Existing braziers and other real flame sources remain. Gate health, opening, collision and siege logic are unchanged.
+
+A new compact timber-and-hide longhouse replaces the stone-plinth chief's hall, preserving its summit position and collision footprint. The forge and clan shelters are brought closer to the surrounding building scale. All eight authored lookout/gate/worksite towers share the timber lookout art at a consistent scale. Foundations use low irregular earth/root aprons, timber sills and earthen thresholds rather than upright decorative posts. The hall foundation remains at its authored height; level door wear is only added where the existing ground meets the floor.
+
+Two original transparent architecture sheets are retained in `art-source/assault/orc/`. Their prompts are in [the art brief](bloodtusk-structures-art-prompts.md); cuts, anchors and scales are reproducible through `tools/assault/pack-warcamp.py`. The packer uses shelves for the longer finishing strip and refuses unknown atlas extensions. The existing Orc atlas URL is still copied and precached by `build.mjs`; no new runtime URL or save key. Credits are in `CREDITS.md`.
+
+Validation: all eight affected test files passed (looks, warcamp, map, renderer, duel, siege, mirror and resume). Final typecheck and web build passed, including a final guard preserving other holds' original glow behaviour. New coverage checks exact exposed-edge representation, matching perspective, all forts remaining visible, earth bank faces, actual gate damage/open pictures and gate opening-plane anchors. Existing coverage preserves all breach routes, building entrances, summit access, siege actions, duels and deterministic save/mirror behaviour.
+
+Fully loaded final views were inspected at 393×852, 360×780 and 412×915, plus hall, forge, gate, corner and reduced-motion close-ups; no browser errors. Reduced motion reports zero smoke with static decorative workers. Overviews retain 235 simulation actors. Packed atlas bounds, byte-identical built copy and service-worker inventory were checked. Captures use the existing software-rendered main-thread fallback and are visual evidence rather than device performance measurements. Evidence: [overview](../samples/bloodtusk-structures/camp-393.png), [hall](../samples/bloodtusk-structures/chiefs-hall-393.png), [gate](../samples/bloodtusk-structures/main-gate-393.png), [corner](../samples/bloodtusk-structures/wall-corner-393.png), [browser results](../samples/bloodtusk-structures/browser-checks.json).
+
+Prepared for [PR #495](https://github.com/Hpatter9/legends-of-the-fall/pull/495).
+
+No merge, deployment or release bump.
