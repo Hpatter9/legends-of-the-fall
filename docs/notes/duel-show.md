@@ -80,7 +80,8 @@ The beat's horn is the existing `horn` cue. The walk-in's cue is skipped for red
 - `src/duelRules.ts`: `clockWords`. The card's "alone in the ring for two and a half minutes" and the timeout's line follow the ring's
   clock.
 
-**Art.** The bar's frame is the painted plaque (`pbPlaque`), the closest piece of the HUD kit. Its track, fills, knot and face rings are
+**Art.** Since UI-ART-WIRE the bar is the owner's painting (`art/duel-show`: its frame with a socket at each end, the two fills, the knot
+and the flare; [ui-art-wire.md](ui-art-wire.md)). Before it: the bar's frame was the painted plaque (`pbPlaque`), the closest piece of the HUD kit. Its track, fills, knot and face rings are
 CSS. `docs/notes/duel-show-art-prompts.md` has the ChatGPT prompt for a painted tug-of-war bar: its frame, the two fills, the knot and the
 swing's flare. Nothing new is loaded by URL, so the service worker's list is unchanged.
 

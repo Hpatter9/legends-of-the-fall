@@ -599,6 +599,13 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 - House shield and heirloom keepsake (`src/art/dynasty/{house,heirloom}.webp`) are original OpenAI-generated paintings in the owner-approved style, retained in `art-source/dynasty-finish/house-heirloom.png`.
 - Season/fate symbols, twelve Nemesis trait symbols, and Houses/Council backdrops reuse the already credited source artwork in `art-source/expansion/`. `tools/dynasty-art/import.py` crops symbols and downsamples the backdrops; original source art remains unchanged. All new imports are bundled for offline play.
 
+## Duel show (UI-ART-WIRE)
+
+- **The duel's tug-of-war bar** (`src/art/duel/bar-frame.webp`, `bar-fill-green.webp`, `bar-fill-red.webp`, `bar-knot.webp`, `bar-flare.webp`): original art
+  made for this game with OpenAI image generation from the prompt in `docs/notes/duel-show-art-prompts.md` (`art/duel-show`, sources in
+  `art-source/duel-show/`). `tools/duel-show/import-art.py` keeps each at its painted size (the fills cropped of their clear rim and faded
+  last columns so they tile), never repainted. Bundled into game.js for offline play (docs/notes/ui-art-wire.md).
+
 ## Expansion art 2 (PR #464: `src/art/council/`, `src/art/dynasty/`, `src/art/expansion/`)
 
 - The owner's repaints of `art-source/expansion/nemesis-icons.png` (twelve traits, ten Council events, the News icons and the War Trophy),
