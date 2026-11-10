@@ -26,6 +26,8 @@ import { RANK_BADGE, SCAR_FRAME } from './expansionArt';
 import { NEWS_ICON, TROPHY_ICON, SMOOTH_COUNCIL_ART } from './councilArt';
 import { endLine } from './sim/assault/lastHold';
 import { holdName } from './sim/assault/warAnswer';
+import { WAR_END_SCENE } from './sim/warEndScene';
+import { endScene, playScene } from './render/sound';
 export { NEWS_ICON, TROPHY_ICON } from './councilArt';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -105,7 +107,10 @@ const TAB_WORD: Readonly<Record<Tab, string>> = { council: 'Council', news: 'New
 
 /** Open the board, on a tab (the Council's pyramid by default). */
 export function openNemesisBoard(m: Meta, hooks: BoardHooks, tab: Tab = 'council'): void {
-  const menu = ornateMenu({ id: 'nemesisBoard', eyebrow: 'The Nemesis War', title: 'The Dark Council', sub: councilLine(m), kind: 'sheet', label: 'The Dark Council: the nemeses who remember you' });
+  // (the War over: the board is its end card, and plays the War's End while it is open)
+  const over = !!m.war?.end;
+  const menu = ornateMenu({ id: 'nemesisBoard', eyebrow: 'The Nemesis War', title: 'The Dark Council', sub: councilLine(m), kind: 'sheet', label: 'The Dark Council: the nemeses who remember you', ...(over ? { onClose: () => endScene() } : {}) });
+  if (over) playScene(WAR_END_SCENE);
   menu.card.classList.add('nmBoard');
   menuBackdrop(menu.card, 'council');
   const tabs = menuSection(menu.body, undefined, undefined, 4);

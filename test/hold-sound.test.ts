@@ -8,10 +8,12 @@ import { blueprintOf } from '../src/sim/assault/assault';
 import type { HoldEvent } from '../src/sim/assault/holdTypes';
 import { BEDS, PAN_MAX } from '../src/render/audioRules';
 import { AmbientBeds } from '../src/render/audioBeds';
-import { busOf } from '../src/render/audioMix';
+import { FILE_LOUDNESS, MOMENT_CUES, busOf, trackGain } from '../src/render/audioMix';
+import { EPIC_MANIFEST } from '../src/render/epicManifest';
+import { WAR_END_SCENE, warEndScene } from '../src/sim/warEndScene';
 import { CUES, cuesFor, isDoorwaySwap, type Cue } from '../src/render/soundRules';
 import type { Battle } from '../src/sim/battle';
-import { TRACK_OF_PLACE } from '../src/render/epicMusic';
+import { TRACK_OF_PLACE, sceneTrack } from '../src/render/epicMusic';
 import { atPlace, endAt, musicOf, BATTLE_TRACK, VICTORY_LOOP, type MusicState } from '../src/render/battleMusic';
 import {
   DRUM_GAP_S, HOLD_HEAR_TILES, HOLD_PLAIN, HOLD_VOICE, assaultEnd, drumGap, fortHitCue, holdCues, holdPan, holdScene, holdVoice, isNearOnly,
@@ -192,7 +194,9 @@ test('the doorway swap is feet shuffling past, not a spell\'s blink; a kit\'s sw
 
 test('the menus\' new cues are the page\'s own (the ui bus)', () => {
   for (const k of ['runeSlide', 'runeMerge', 'runeSet', 'ledger'] as const) assert.equal(busOf(k), 'ui');
-  for (const k of ['gateHit', 'keepFall', 'ultCharge', 'warEnd'] as const) assert.equal(busOf(k), 'sfx');
+  for (const k of ['gateHit', 'keepFall', 'ultSlash', 'ultImpact', 'warEnd'] as const) assert.equal(busOf(k), 'sfx');
+  // (round 2: the ultimate's long cues are on the bus a skip can hush; its slash and its blow are not)
+  for (const k of MOMENT_CUES) assert.equal(busOf(k), 'show');
 });
 
 /* ------------------------------------------------------------------ the engine */
@@ -261,4 +265,23 @@ test('every one-shot a hold\'s bed or drums can make is built without error', ()
   const kinds = new Set([...Object.values(HOLD_VOICE).map((v) => v.drum), ...Object.values(HOLD_VOICE).flatMap((v) => BEDS[v.bed].shots.map((s) => s.kind))]);
   for (const k of kinds) assert.doesNotThrow(() => beds.shot(live, k, 1), k);
   beds.destroy();
+});
+
+/* ------------------------------------------------------------------ round 2: the War's End */
+
+test('the War\'s end has its own piece: the scene and the Council\'s end card play it, a minute of the main theme at the music\'s one loudness', () => {
+  assert.equal(sceneTrack(WAR_END_SCENE), 'warend');
+  assert.equal(warEndScene().music, WAR_END_SCENE, 'the scene asks for it');
+  const e = EPIC_MANIFEST.warend;
+  assert.ok(e.loop, 'it loops under the scene and the card');
+  assert.ok(e.seconds >= 40 && e.seconds <= 60, `${e.seconds} s`);
+  assert.ok(e.bytes < 300_000, 'a small file');
+  const m = FILE_LOUDNESS.warend;
+  assert.ok(Math.abs(m.lufs - -18) <= 1 && m.tp < -1, 'levelled to -18 LUFS, its peak under -1 dBTP');
+  assert.ok(Number.isFinite(m.phone), 'its phone loudness is measured, so its trim is a number');
+  assert.ok(Number.isFinite(trackGain('warend')) && trackGain('warend') > 0.5 && trackGain('warend') < 2);
+  // (the scenes that had music keep it)
+  assert.equal(sceneTrack('victory'), 'triumph');
+  assert.equal(sceneTrack('calBoss1'), 'gorvak');
+  assert.equal(sceneTrack('no such scene'), undefined);
 });

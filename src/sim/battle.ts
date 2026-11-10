@@ -38,7 +38,7 @@ import { bondCover, bondFall, startBonds, tickBonds, type BondPair } from './bon
 import { dangerFor, dodgeStep, sigHp, tickSignatures, trySignature, type BossWarning, type SigElement, type SigState } from './bossAttacks';
 import { ailCtx, AILMENT_SWITCH, fleeTile, groundSecond, groundStep, isFeared, shatterOf, tagged, type Ailment, type AilmentKey } from './ailments';
 import { chargeOf, noteStep, preyOrder, walkOrder, moveOf } from './foeStyles';
-import { afterBlow, gangOf, kitOf, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type Hot, type Trap, type Zone } from './abilities';
+import { afterBlow, gangOf, kitOf, CHARGE_MAX, echoSkill, mendUnit, undying, farOf, finishOf, frenzyOf, landArea, onKill, pierceOf, preyOf, onStrike, rageOf, critOf, onDodged, sureFooted, tickStatus, tryCast, type Dot, type Kit, type KitRef, type Hot, type Trap, type Zone } from './abilities';
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
@@ -230,6 +230,10 @@ export interface Unit {
   phase?: { at: number; done: boolean; surge?: number };
   /** The kit it fights with after changing form (instead of its kind's). */
   kit?: Kit;
+  /** The same as plain data (`KitRef` in `abilities.ts`): which kits its skill and its ultimate come from, and its passive. A boss's second
+   *  form and a Sure-footed nemesis are given this, never `kit`, whose skills are functions: a battle with a function in it cannot be
+   *  posted from the Assault's worker or kept for a resume. `kitOf` reads it. */
+  kitRef?: KitRef;
   /** A hero's chosen skills for its slots, when not its own (`books.ts`; from `Boost.equip.book`). */
   book?: string[];
   /** Its skills' levels by use in slot order, when any is above 1 (`skillLevels.ts`; from `Boost.skillLv`); what a levelled skill adds to its

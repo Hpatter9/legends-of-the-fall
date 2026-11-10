@@ -8,7 +8,7 @@
 
 import type { AilmentKey } from './ailmentKeys';
 import type { Battle, BattleEvent, HitSrc, Unit } from './battle';
-import type { Kit } from './abilities';
+import { refOfKind, type Kit } from './abilities';
 import { hasAil } from './ailments';
 import { tileAt } from './board';
 import { callingOf, type Calling } from './weakness';
@@ -273,7 +273,8 @@ export const nemStrike = (u: Unit, share: number): number => (has(u, 'hornDeaf')
 /** As the fight is made: an Ambusher starts hasted for 4 s; a Sure-footed nemesis's kit cannot be moved. */
 export function nemStart(u: Unit, kit: Kit | undefined): void {
   if (has(u, 'ambusher')) u.hasteUntil = 4000;
-  if (has(u, 'sureFooted') && kit) u.kit = { ...kit, passive: { ...kit.passive, steady: true } };
+  // (as plain data, `KitRef`: a kit's skills are functions, and a battle holding one cannot be posted from the Assault's worker or saved)
+  if (has(u, 'sureFooted') && kit) u.kitRef = refOfKind(u.def, { steady: true });
 }
 
 // ---- fleeing (phase 3, the design's 2.6) ---------------------------------------------------------------------------------------
