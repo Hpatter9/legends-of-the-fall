@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.459.0',
+    date: '2026-11-10',
+    title: 'Spells cast themselves for new players',
+    notes: ['A new save starts with SPELL Auto on. After a first clear the armies page opens on the new army, and each army\'s card says ten stars open its Assault.', 'Achievements, bestiary entries and quests from the hidden modes no longer count against you.'],
+  },
+  {
     version: '0.458.0',
     date: '2026-11-10',
     title: 'Effects land where they hit',
