@@ -55,7 +55,7 @@ import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
 import { isMythic } from '../sim/mythicRules';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
-import { arcStyle, bits, FLASH_MAX, FLASH_MS, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
+import { arcStyle, bits, FLASH_MAX, FLASH_MS, HealPool, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
@@ -188,6 +188,8 @@ export class Fx {
   private skillStack: { txt: Text; cut: () => void }[] = [];
   /** The skill each caster last cast (its blows' hits read it: a skill or its ultimate). */
   private casting = new Map<number, string>();
+  /** The small heals waiting to be shown (BATTLE-FEEL, `HealPool`). */
+  private heals = new HealPool();
   /** The skills cast this tick, by caster (`show`). */
   private tickCasts = new Map<number, string>();
   /** The painted loops held over fighters (`movePaint`'s stands), so a state shown once is not shown twice. */
@@ -263,6 +265,7 @@ export class Fx {
     this.particles.clear();
     this.moment.clear();
     this.bossFx.clear();
+    this.heals.clear();
     this.epic = new Set();
     this.setEpic(false);
   }
@@ -356,6 +359,13 @@ export class Fx {
     let royalSky: 'meteor' | 'starfall' | undefined;
     const slashes = slashesOf(events);
     this.healerPaint(events);
+    // (the small heals pooled a second ago, or grown big, show now as one quieter number each)
+    for (const h of this.heals.due(this.clock, (id) => this.sprites.get(id)?.unit.maxHp)) {
+      const to = this.sprites.get(h.id)!;
+      if (!to.unit.alive) continue;
+      this.label(`+${h.sum}`, to.x, to.y - to.tall - 10, 0x7dff8a, 10, 700);
+      this.sparkles(to.x, to.y - to.tall * 0.4, 0x7dff8a);
+    }
     // (the tick's casts, by caster: a cast's own events come before its `skill` event, so a ball it throws looks its caster's skill up here)
     this.tickCasts.clear();
     for (const e of events) if (e.kind === 'skill') this.tickCasts.set(e.by, e.name);
@@ -390,7 +400,8 @@ export class Fx {
       else if (e.kind === 'spellfx') this.spellFx(e);
       else if (e.kind === 'heal') {
         const to = this.sprites.get(e.to);
-        if (to && e.amount > 0) {
+        // (BATTLE-FEEL: a small heal, an aura's tick or a drain, waits to be shown with the fighter's other small heals, `HealPool`)
+        if (to && e.amount > 0 && this.heals.add(e.to, e.amount, to.unit.maxHp, this.clock)) {
           this.label(`+${e.amount}`, to.x, to.y - to.tall - 10, 0x7dff8a, 13);
           this.sparkles(to.x, to.y - to.tall * 0.4, 0x7dff8a);
           // (a green ring rises round the healed, and a thread of light runs to it from the healer)
@@ -479,7 +490,9 @@ export class Fx {
           continue;
         }
         // (a skill's blow has its own sheet; a crit or a big kill adds a burst, a white flash and a harder shake)
-        const castName = e.src === 'skill' ? this.casting.get(e.by) ?? keyOfKit(by) : '';
+        // (a cast's own hits come before its `skill` event in the tick: this tick's cast first, so a hero's second skill or ultimate is not
+        // drawn as the skill it cast before)
+        const castName = e.src === 'skill' ? this.tickCasts.get(e.by) ?? this.casting.get(e.by) ?? keyOfKit(by) : '';
         const signature = kitSignature(castName)?.hit;
         const skillFx = e.src === 'skill' && !signature ? SKILL_FX[castName]?.hit : undefined;
         // (the spark grows with the blow: a scratch is small, a half-health blow fills the struck)
@@ -498,7 +511,7 @@ export class Fx {
         } else if (skillFx) {
           this.effect(skillFx, hx, hy);
           // (and a burst of the skill's own element on top)
-          impactBurst(this.particles, skillElement(keyOfKit(by)), hx, hy, 0.8, e.splash);
+          impactBurst(this.particles, skillElement(castName), hx, hy, 0.8, e.splash);
         } else if (defOf(by).shot) {
           // (a shot lands in its own element: fire bursts, frost shatters, lightning cracks, poison lingers, an arrow bites)
           const m = missileOf(defOf(by).shot!, defOf(by).name);

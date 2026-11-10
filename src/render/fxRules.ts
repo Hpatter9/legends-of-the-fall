@@ -356,11 +356,45 @@ export function isBackstab(fromFacing: number, toFacing: number, way?: number): 
 /** A hit-stop in ms for a blow: only a crit, a lethal backstab, meteor, or a big share of health, and none when reduced motion or no-shake is on. */
 export function hitStopMs(heavy: boolean, share: number, killed: boolean, calm: boolean, backstab = false, crit = false, meteor = false): number {
   if (calm) return 0;
+  // (BATTLE-FEEL: a killing blow that takes a big share holds longest, crit or backstab or not: it was cut to the 2-frame stop below)
+  if (killed && share >= 0.3) return 90;
   if (meteor) return 34; // subtle 2-frame hit-stop at 60fps (~33.3ms)
   if (crit) return 34;
   if (backstab && killed) return 34;
-  if (killed && share >= 0.3) return 90;
   return heavy ? 60 : 0;
+}
+
+/** BATTLE-FEEL: a heal of this share of its fighter's health or more shows at once, with its ring and its healer's thread; a smaller one (an aura's
+ *  tick, a drain, a regrowth) is pooled with the fighter's other small heals and shown as one quieter number at most once in `HEAL_POOL_MS`. */
+export const HEAL_BIG = 0.05;
+export const HEAL_POOL_MS = 1000;
+
+/** The small heals waiting to be shown, by fighter (`HEAL_BIG`). Pure: the clock is the caller's (ms). */
+export class HealPool {
+  private pool = new Map<number, { sum: number; since: number }>();
+  /** A heal of `amount` on a fighter of `maxHp`: true when it is big enough to show now; else it is pooled. */
+  add(id: number, amount: number, maxHp: number, now: number): boolean {
+    if (amount >= HEAL_BIG * maxHp) return true;
+    const p = this.pool.get(id);
+    if (p) p.sum += amount;
+    else this.pool.set(id, { sum: amount, since: now });
+    return false;
+  }
+  /** The pooled heals to show now (pooled `HEAL_POOL_MS` ago or more, or grown to a big heal), each fighter's sum, taken out of the pool. */
+  due(now: number, maxHpOf: (id: number) => number | undefined): { id: number; sum: number }[] {
+    const out: { id: number; sum: number }[] = [];
+    for (const [id, p] of this.pool) {
+      const max = maxHpOf(id);
+      if (max === undefined || now - p.since >= HEAL_POOL_MS || p.sum >= HEAL_BIG * max) {
+        if (max !== undefined) out.push({ id, sum: p.sum });
+        this.pool.delete(id);
+      }
+    }
+    return out;
+  }
+  clear(): void {
+    this.pool.clear();
+  }
 }
 
 /** The knock a blow gives its target, in px along the line from the attacker: bigger for a bigger share of health. */

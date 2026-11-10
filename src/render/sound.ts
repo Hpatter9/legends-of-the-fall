@@ -22,7 +22,7 @@ import { TRACK_OF_PLACE, placeOf, type MapKind, type MusicId, type StingId } fro
 import { BOSS_TRACK, atPlace, crossfadeOf, endAt, musicOf, type BattleEnd, type MusicState } from './battleMusic';
 import { bakeTrack } from './musicBake';
 import { SCENE_TRACKS, type Track } from './musicScore';
-import { Mixer, cuesFor, type Cue } from './soundRules';
+import { Mixer, castsOf, cuesFor, type Cue } from './soundRules';
 import { SpellBank } from './spellBank';
 import { coveredBySpells, spellParts } from './spellSfx';
 import { AMBIENCE_LEVEL, MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, busOf } from './audioMix';
@@ -252,10 +252,11 @@ export function playEvents(b: Battle, events: BattleEvent[], speed = 1): void {
   // (a king's spell plays its own rendered cast and effect once they are decoded, and the plain cues they stand in for are
   // left out: `spellSfx.ts`)
   const covered = spellBank?.ready ? coveredBySpells(events) : null;
+  const casts = castsOf(events);
   for (const e of events) {
     if (covered && e.kind === 'spell') playSpell(b, e, events, speed);
     if (covered && (e.kind === 'spell' || covered.has(e))) continue;
-    const cues = cuesFor(b, e);
+    const cues = cuesFor(b, e, casts);
     if (cues.length) {
       const pan = panOfEvent(b, e);
       for (const q of cues) cue(q.cue, speed, q.gain ?? 1, q.delay ?? 0, pan);

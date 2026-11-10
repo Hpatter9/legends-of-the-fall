@@ -1427,6 +1427,9 @@ const PERCH_SHOOTER = 1.6;
 const PERCH_MELEE = 1.2;
 /** The most extra walking a fighter does, past the nearest tile it could strike from, for the sake of better footing. */
 const PERCH_DETOUR = 4;
+/** The most further a fighter walks (cost) to strike the foe nearest it as the crow flies, past the foe it could strike soonest
+ *  (BATTLE-FEEL, docs/notes/battle-feel.md): a foe further than that by walking is passed over for one nearer by walking. */
+export const FAR_WALK = 4;
 /** What a shooter adds to a tile's cost for each brute that could reach it in two steps. */
 const MENACE_COST = 0.6;
 /** The most a hurt fighter walks (cost) to reach a shrine. */
@@ -1676,9 +1679,8 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   const menace = def.shot ? foes.filter((x) => !defOf(x).shot && defOf(x).range <= 2) : [];
   // (STATS batch 6: a quick melee hero, DEX +3 or more, goes round to a foe's side or back)
   const flank = !def.shot && ((REST.flank && quickHero(me)) || mv === 'flank');
-  for (const f of byDistance) {
-    const hf = tileOf(b, f).h;
-    // (the way costs steps; high ground over the foe takes off the cost of getting there, a shooter's tile under a brute's club adds to it)
+  // (each foe's tiles to strike it from, and the nearest of them by walking)
+  const reach = byDistance.map((f) => {
     const spots: number[] = [];
     let nearest = Infinity;
     for (let i = 0; i < walk.cost.length; i++) {
@@ -1686,6 +1688,18 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
       spots.push(i);
       nearest = Math.min(nearest, walk.cost[i]);
     }
+    return { spots, nearest };
+  });
+  // (BATTLE-FEEL: a foe that is near as the crow flies but a long walk round is passed over for one that can be struck sooner, `FAR_WALK`;
+  // it was the nearest by air that had any free tile at all, and as friends filled and freed its tiles a fighter paced back and forth.
+  // Not on the Assault's field, which picks its own way.)
+  const soonest = b.field ? Infinity : Math.min(...reach.map((r) => r.nearest));
+  for (let k = 0; k < byDistance.length; k++) {
+    const f = byDistance[k];
+    const hf = tileOf(b, f).h;
+    // (the way costs steps; high ground over the foe takes off the cost of getting there, a shooter's tile under a brute's club adds to it)
+    const { spots, nearest } = reach[k];
+    if (nearest > soonest + FAR_WALK) continue;
     let goal = -1;
     let best = Infinity;
     for (const i of spots) {

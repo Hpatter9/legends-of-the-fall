@@ -222,8 +222,16 @@ function leaving(unit: Unit, shot: Shot): Cued[] {
   return [{ cue: elementCue(m.el), gain: 0.8 }];
 }
 
-/** The sounds one battle event calls for. `b` is the battle just stepped (for who is who). */
-export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
+/** The skills cast in one tick, by caster (`castsOf`): a cast's own hits come before its `skill` event, so a hit looks its skill up here. */
+export function castsOf(events: readonly BattleEvent[]): Map<number, string> {
+  const m = new Map<number, string>();
+  for (const e of events) if (e.kind === 'skill') m.set(e.by, e.name);
+  return m;
+}
+
+/** The sounds one battle event calls for. `b` is the battle just stepped (for who is who); `casts` the tick's casts (`castsOf`), so a skill's
+ *  hit sounds in that skill's element and not its caster's first skill's. */
+export function cuesFor(b: Battle, e: BattleEvent, casts?: ReadonlyMap<number, string>): Cued[] {
   const unit = (id: number) => b.units.find((x) => x.id === id);
   switch (e.kind) {
     case 'swing': {
@@ -275,7 +283,7 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
         else if (e.ail === 'poison') out.push({ cue: 'poisonHiss', gain: 0.25 });
         else if (e.ail === 'shock') out.push({ cue: 'crackle', gain: 0.35 });
       } else if (e.src === 'skill') {
-        const name = keyOfKit(by);
+        const name = casts?.get(by.id) ?? keyOfKit(by);
         out.push({ cue: elementCue(skillElement(name)), gain: 0.7 });
       } else if (to.guardUntil !== undefined && to.guardUntil > b.t) {
         out.push({ cue: 'block' });
@@ -346,6 +354,15 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return e.amount > 0 ? [{ cue: 'heal' }] : [];
     case 'gaze':
       return [{ cue: 'shadowHum', gain: 0.8 }];
+    // (BATTLE-FEEL: ground a skill lays, in its own voice; its going again is quiet)
+    case 'terrain':
+      return e.ms > 0 ? terrainCue(e.what) : [];
+    // (BATTLE-FEEL: a skill's mark on a fighter that changes what it does is heard; the quiet bookkeeping marks are not)
+    case 'mark':
+      return markCue(e.what);
+    // (a ward or a boss's ladder turns an ailment aside: the soft ring of a block)
+    case 'immune':
+      return [{ cue: 'block', gain: 0.5 }];
     case 'song':
       return [{ cue: 'pipes' }];
     case 'banner':
@@ -371,6 +388,36 @@ export function cuesFor(b: Battle, e: BattleEvent): Cued[] {
       return [{ cue: e.won ? 'victory' : 'defeat' }];
     default:
       return [];
+  }
+}
+
+/** The sound of ground a kit lays (BATTLE-FEEL): fire roars, thorns rustle, ice cracks, stone and statues rumble, wind gusts, light chimes,
+ *  water rushes. */
+export function terrainCue(what: string): Cued[] {
+  switch (what) {
+    case 'fire': return [{ cue: 'fireWhoosh', gain: 0.6 }];
+    case 'thorns': return [{ cue: 'rustle', gain: 0.7 }];
+    case 'ice': return [{ cue: 'frostCrack', gain: 0.7 }];
+    case 'stone': case 'rampart': case 'statue': return [{ cue: 'earthRumble', gain: 0.6 }];
+    case 'wind': return [{ cue: 'windGust', gain: 0.6 }];
+    case 'light': return [{ cue: 'holyChime', gain: 0.5 }];
+    case 'flood': return [{ cue: 'windGust', gain: 0.5 }];
+    default: return [];
+  }
+}
+
+/** The sound of a kit's mark (BATTLE-FEEL): the ones that change how a fighter acts (turned to stone, frightened, changed into a beast,
+ *  charged with lightning, hexed) are heard; the rest are left to the fight's own sounds. */
+export function markCue(what: string): Cued[] {
+  switch (what) {
+    case 'stone': return [{ cue: 'deathStone', gain: 0.5 }];
+    case 'fear': return [{ cue: 'shadowHum', gain: 0.7 }];
+    case 'polymorph': case 'puppet': return [{ cue: 'blink', gain: 0.7 }];
+    case 'charged': return [{ cue: 'crackle', gain: 0.6 }];
+    case 'curse': case 'brand': case 'condemned': case 'edict': return [{ cue: 'shadowHum', gain: 0.5 }];
+    case 'ward': case 'angel': case 'shield': case 'scales': return [{ cue: 'shieldHum', gain: 0.6 }];
+    case 'acid': return [{ cue: 'poisonHiss', gain: 0.6 }];
+    default: return [];
   }
 }
 

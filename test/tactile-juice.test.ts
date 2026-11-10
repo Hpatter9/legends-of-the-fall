@@ -24,6 +24,10 @@ test('hitStopMs: subtle 2-frame hit-stop (~34ms) for lethal backstabs, crits, an
   assert.equal(hitStopMs(true, 0.1, false, false), 60);
   assert.equal(hitStopMs(false, 0.4, true, false), 90);
   assert.equal(hitStopMs(true, 0.5, true, true), 0);
+
+  // 6. BATTLE-FEEL: a crit or a backstab that kills with a big share holds as long as any big kill
+  assert.equal(hitStopMs(true, 0.4, true, false, false, true, false), 90, 'a critical killing blow is not cut short');
+  assert.equal(hitStopMs(false, 0.5, true, false, true, false, false), 90, 'a big backstab kill is not cut short');
 });
 
 test('isBackstab: detects strikes from behind defender facing', () => {
