@@ -793,7 +793,7 @@ class Game {
     this.queueDuel();
   }
 
-  /** The Nemesis War, phase 4: a challenge on this wave (`duel.ts`): its cut-in queued after the taunts, its card when the screen is free.
+  /** The Nemesis War, phase 4: a challenge on this wave (`duel.ts`): its cut-in queued with the taunts, in the place of the same nemesis's own (CALLOUT-ONCE: a foe calls out once a wave), its card when the screen is free.
    *  None under auto-replay. A card still up from a wave before is put away without answering it. */
   private queueDuel(): void {
     this.duelWait = null;

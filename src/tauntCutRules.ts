@@ -144,3 +144,17 @@ export function wavesTaunts(rn: { members: readonly NemSnap[]; waves: Readonly<R
   const ids = rn?.waves[String(wave)] ?? [];
   return ids.filter((id) => !shown.has(id)).map((id) => rn!.members.find((s) => s.id === id)).filter((s): s is NemSnap => !!s);
 }
+
+/** CALLOUT-ONCE (the owner: "When an enemy calls out a hero, the call out plays twice"): a foe calls out once a wave. The cut-ins waiting
+ *  and the new ones, with each nemesis at most once: a later one for the same nemesis (a challenge to a duel, after its wave's taunt) takes
+ *  the earlier one's place in the queue, and one for the nemesis showing now is dropped (it has had its say). */
+export function onceEach<T extends { t: Pick<Taunt, 'id'> }>(queue: readonly T[], incoming: readonly T[], showing?: Pick<Taunt, 'id'> | null): T[] {
+  const out = [...queue];
+  for (const x of incoming) {
+    if (showing && showing.id === x.t.id) continue;
+    const at = out.findIndex((y) => y.t.id === x.t.id);
+    if (at >= 0) out[at] = x;
+    else out.push(x);
+  }
+  return out;
+}
