@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.467.0',
+    date: '2026-11-10',
+    title: 'The Shattered Crown',
+    notes: ['A broken golden crown and red banners welcome you to the Last Keep.', 'Clouds drift and snow falls while the keep prepares. The crown gleams, with a still view for reduced motion.'],
+  },
+  {
     version: '0.466.0',
     date: '2026-11-10',
     title: 'Auto holds off for no-spell quests',

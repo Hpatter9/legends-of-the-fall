@@ -6,7 +6,7 @@ The owner selected option 4, the minimalist Shattered Crown, approved its full p
 
 The poster has a slow depth drift, a breathing gold crown light, a soft sweeping crown gleam, two drifting cloud cutouts, two mist layers, 36 falling snowflakes, twelve rising gold flecks and a travelling indeterminate bar with a sheen. Both crown lighting effects are constrained by an alpha mask extracted from the gold ink, excluding the banners, clouds, fracture and landscape. The mask shares the poster’s sizing and depth transform so it stays aligned. The two cloud layers reuse ivory strokes lifted from the approved painting, moving at different speeds. Snow varies in size, speed and drift and fades away from the title and footer. The title stays still. The effects use CSS and disappear with the existing loading element, with no added timers or startup delays. Reduced motion stops every animation and hides moving embellishments. The obsolete loading beacon flicker was removed from alive.css.
 
-The build embeds the poster, crown mask and cloud cutout into the cached HTML, preserving immediate display and offline play without another asset request. Existing startup, save keys, simulation and package version remain unchanged. No merge, push or deployment performed.
+The build embeds the poster, crown mask and cloud cutout into the cached HTML, preserving immediate display and offline play without another asset request. Existing startup, save keys and simulation remain unchanged. The owner approved the red banners and requested a PR and merge. Latest main 0.466.0 was integrated cleanly; this release is 0.467.0 with its matching Updates entry. Final PR/merge verification is pending. The temporary blue alternative was never applied.
 
 ## Validation
 
