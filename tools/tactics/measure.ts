@@ -99,7 +99,7 @@ for (let g = 0; g < GAMES; g++) {
   const advice = ADVICE_ON ? adviseTactic(b.units.filter((u) => u.side === 'foe').map((u) => u.def), team, 'advance') : undefined;
   const shape = advice ? advice.formation : FORMATION;
   const spots = shape ? formationSpots(b.board, team, shape).map((a) => [a.u, a.v] as [number, number]) : PLACED === 'random' ? random(b, seed) : sensible(b, team);
-  if (FORMATION || ADVICE_ON || process.argv.includes('--formations-on')) setFormations(b, true);
+  if (FORMATION || ADVICE_ON || process.argv.includes('--formations-on')) setFormations(b, true, shape || undefined);
   team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, sweepBoost(1, LEVEL)));
   const role = new Map<number, PartyRole>();
   for (const u of b.units) if (u.side === 'hero') role.set(u.id, roleOf(u.def));

@@ -1344,7 +1344,8 @@ class Game {
     if (this.questBlock()) return void this.refresh();
     // (the party's tactic picked for this mode or army, Advance together when none: docs/notes/tactics.md)
     setTactic(this.b, pickedTactic(this.meta.tactics, this.run.mode));
-    setFormations(this.b, autoPlaceOpen(this.meta));
+    // (FORMATIONS-FIT: the shape picked is read first, so heroes set out in it stand in it)
+    setFormations(this.b, autoPlaceOpen(this.meta), pickedFormation(this.meta.formations, this.run.mode));
     if (!fight(this.b)) return;
     // (EIDOLONS: the fight may call the chosen Eidolon when the War Horn is full; a mid-boss wave's boss counts as an elite, and an Eidolon
     // in its own trial as a great being, EIDOLON-TRIAL)
@@ -2307,7 +2308,7 @@ class Game {
       },
       // (the formations open with Auto place, the owner's answer; the shape is read from where the heroes stand)
       formationsOpen: () => autoPlaceOpen(this.meta),
-      formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })))?.kind,
+      formation: () => formationOf(this.b.board.d, this.b.units.filter((u) => u.alive && u.side === 'hero' && !UNITS[u.def].summon).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })), pickedFormation(this.meta.formations, this.run.mode))?.kind,
       picked: () => pickedFormation(this.meta.formations, this.run.mode),
       // (BATTLE-FEEL round 3: whether the heroes placed could make a shape, so the button can say when they cannot)
       fits: (f) => shapeFits(this.b.board, this.placedKinds(), f),

@@ -48,50 +48,74 @@ const touching = (a: At, c: At) => Math.max(Math.abs(a.u - c.u), Math.abs(a.v - 
 const beside = (a: At, c: At) => Math.abs(a.u - c.u) + Math.abs(a.v - c.v) === 1;
 const isBack = (kind: string) => roleOf(kind) === 'back' || roleOf(kind) === 'support';
 
-/** The shape that `heroes` (a kind and a tile each, on a board `d` deep) stand in, and its parts: the first that fits of Shield Wall,
- *  Spearhead, Hollow Square and Skirmish; undefined (Loose) when none does. `id` names each in the parts. */
-export function formationOf(d: number, heroes: readonly { id: number; kind: string; u: number; v: number }[]): FormationState | undefined {
+/** FORMATIONS-FIT (docs/notes/formations-fit.md): how sturdy a hero is, from its kind (health, and its defence as the blows' step down): the
+ *  sturdiest take a shape's exposed tiles, whatever their class. */
+export const sturdiness = (kind: string): number => (UNITS[kind]?.hp ?? 0) * (10 + (UNITS[kind]?.def ?? 0));
+/** The fewest heroes each shape forms with (`formationOf`): two side by side make a wall, a tip and one wing a spearhead, three a square
+ *  (one inside, two round it), two apart a skirmish. One hero alone stands loose. */
+export const FORM_MIN: Record<Formation, number> = { wall: 2, spear: 2, square: 3, skirmish: 2 };
+
+type Stand = { id: number; kind: string; u: number; v: number };
+
+/** Whether `heroes` stand in `shape` (FORMATIONS-FIT: each shape adapts to the party; a short party makes a smaller one), and its parts. */
+function readShape(d: number, heroes: readonly Stand[], shape: Formation): FormationState | undefined {
+  const n = heroes.length;
+  if (n < FORM_MIN[shape]) return undefined;
   const front = d - DEPLOY_ROWS;
   const at = (u: number, v: number) => heroes.find((h) => h.u === u && h.v === v);
-  // (the Shield Wall: the longest run of heroes side by side on the front row, three or more, two of them front-liners)
-  const row = heroes.filter((h) => h.v === front).sort((x, y) => x.u - y.u);
-  let best: typeof row = [];
-  for (let i = 0; i < row.length; i++) {
-    let j = i;
-    while (j + 1 < row.length && row[j + 1].u === row[j].u + 1) j++;
-    const run = row.slice(i, j + 1);
-    if (run.length > best.length) best = run;
-    i = j;
+  if (shape === 'wall') {
+    // (the longest run of heroes side by side on the front row: three or more, or the whole party when it is two)
+    const row = heroes.filter((h) => h.v === front).sort((x, y) => x.u - y.u);
+    let best: Stand[] = [];
+    for (let i = 0; i < row.length; i++) {
+      let j = i;
+      while (j + 1 < row.length && row[j + 1].u === row[j].u + 1) j++;
+      const run = row.slice(i, j + 1);
+      if (run.length > best.length) best = run;
+      i = j;
+    }
+    return best.length >= Math.min(3, n) ? { kind: 'wall', members: best.map((h) => h.id), ends: [best[0].id, best[best.length - 1].id] } : undefined;
   }
-  if (best.length >= 3 && best.filter((h) => roleOf(h.kind) === 'front').length >= 2) {
-    return { kind: 'wall', members: best.map((h) => h.id), ends: [best[0].id, best[best.length - 1].id] };
+  if (shape === 'spear') {
+    // (a tip at the front with a wing a row behind on each diagonal; a party of two, one wing)
+    for (const t of [...heroes].sort((x, y) => x.u - y.u)) {
+      if (t.v !== front) continue;
+      const wings = [at(t.u - 1, t.v + 1), at(t.u + 1, t.v + 1)].filter((w): w is Stand => !!w);
+      if (wings.length >= Math.min(2, n - 1)) return { kind: 'spear', members: [t.id, ...wings.map((w) => w.id)], tip: t.id, wings: wings.map((w) => w.id) };
+    }
+    return undefined;
   }
-  // (the Spearhead: a tip at the front with a wing a row behind on each diagonal)
-  for (const t of heroes) {
-    if (t.v !== front) continue;
-    const l = at(t.u - 1, t.v + 1);
-    const r = at(t.u + 1, t.v + 1);
-    if (l && r) return { kind: 'spear', members: [t.id, l.id, r.id], tip: t.id, wings: [l.id, r.id] };
+  if (shape === 'square') {
+    // (one on the back row with a friend on each side (beside it or a row ahead) and one in front (one or two rows ahead); a party of three
+    // guards it on two of the three. A shooter or healer inside first, else whoever stands there)
+    const need = Math.min(3, n - 1);
+    const guarded = (h: Stand) =>
+      [at(h.u - 1, h.v) ?? at(h.u - 1, h.v - 1), at(h.u + 1, h.v) ?? at(h.u + 1, h.v - 1), at(h.u, h.v - 1) ?? at(h.u, h.v - 2)].filter(Boolean).length >= need;
+    const back = heroes.filter((h) => h.v === d - 1 && guarded(h));
+    const inside = back.some((h) => isBack(h.kind)) ? back.filter((h) => isBack(h.kind)) : back.slice(0, 1);
+    return inside.length ? { kind: 'square', members: heroes.map((h) => h.id), inside: inside.map((h) => h.id) } : undefined;
   }
-  // (the Hollow Square: a back-liner on the back row, a friend on each side (beside it or a row ahead) and one in front (one or two rows ahead))
-  const inside = heroes.filter(
-    (h) =>
-      h.v === d - 1 &&
-      isBack(h.kind) &&
-      (at(h.u - 1, h.v) || at(h.u - 1, h.v - 1)) &&
-      (at(h.u + 1, h.v) || at(h.u + 1, h.v - 1)) &&
-      (at(h.u, h.v - 1) || at(h.u, h.v - 2)),
-  );
-  if (inside.length) return { kind: 'square', members: heroes.map((h) => h.id), inside: inside.map((h) => h.id) };
-  // (the Skirmish: four or more, no two touching)
-  if (heroes.length >= 4 && !heroes.some((h, i) => heroes.some((o, j) => j > i && touching(h, o)))) return { kind: 'skirmish', members: heroes.map((h) => h.id) };
+  // (the Skirmish: the whole party, no two touching; two or more)
+  return !heroes.some((h, i) => heroes.some((o, j) => j > i && touching(h, o))) ? { kind: 'skirmish', members: heroes.map((h) => h.id) } : undefined;
+}
+
+/** The shape that `heroes` (a kind and a tile each, on a board `d` deep) stand in, and its parts: the shape picked (`prefer`) when they stand
+ *  in it, else the first that fits of Shield Wall, Spearhead, Hollow Square and Skirmish; undefined (Loose) when none does. `id` names each
+ *  in the parts. */
+export function formationOf(d: number, heroes: readonly Stand[], prefer?: Formation): FormationState | undefined {
+  for (const shape of prefer ? [prefer, ...FORMATIONS_LIST.filter((f) => f !== prefer)] : FORMATIONS_LIST) {
+    const f = readShape(d, heroes, shape);
+    if (f) return f;
+  }
   return undefined;
 }
 
 /** Whether the formations count in this fight (off unless set: every fight the page or a tool did not set plays as before). */
-export function setFormations(b: Battle, on: boolean): void {
+export function setFormations(b: Battle, on: boolean, pick?: Formation): void {
   if (b.phase !== 'deploy') return;
   b.formationsOn = on || undefined;
+  // (FORMATIONS-FIT: the shape the player picked is read first, so heroes set out in it are not read as another the tiles also make)
+  b.formationPick = on ? pick : undefined;
 }
 
 /** The placed heroes a formation is read from: the player's own, not their summons. */
@@ -101,7 +125,7 @@ const placed = (b: Battle) => b.units.filter((u) => u.alive && u.side === 'hero'
 export function startFormation(b: Battle): void {
   b.formation = undefined;
   if (!b.formationsOn || b.stand) return;
-  b.formation = formationOf(b.board.d, placed(b).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })));
+  b.formation = formationOf(b.board.d, placed(b).map((u) => ({ id: u.id, kind: u.def, u: u.u, v: u.v })), b.formationPick);
 }
 
 const unitOf = (b: Battle, id: number) => b.units.find((u) => u.id === id);
@@ -166,37 +190,62 @@ export function formationMelee(b: Battle, to: Unit): number {
 
 // ---- Arranging a party into a shape (the page's Arrange) ----
 
-/** Each shape's tiles, relative to its centre column on the front row (dv 0 the front row, 2 the back): the lead's (front-liners first,
- *  then strikers) and the rear's (the back line, support last), each filled in order; a party too many for one list takes the other's. */
-const SHAPES: Record<Formation, { lead: readonly [number, number][]; rear: readonly [number, number][] }> = {
-  wall: { lead: [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0]], rear: [[0, 2], [-1, 2], [1, 2]] },
-  spear: { lead: [[0, 0], [-1, 1], [1, 1]], rear: [[-2, 2], [2, 2], [0, 2]] },
-  square: { lead: [[0, 0], [1, 0], [-1, 1], [2, 1]], rear: [[0, 2], [1, 2]] },
-  skirmish: { lead: [[-2, 0], [2, 0], [0, 1]], rear: [[-3, 2], [3, 2], [-4, 0]] },
+/** Each shape's tiles, relative to its centre column on the front row (dv 0 the front row, 2 the back) (FORMATIONS-FIT): its `core`, in the
+ *  order a party fills it (a short party fills only the first, so it makes a smaller shape), each exposed (`L`: the sturdiest) or protected
+ *  (`R`: a shooter or healer); then the tiles the rest take, the lead's for the others and the rear's for the shooters and healers, each
+ *  spilling into the other's. */
+type Slot = readonly [number, number, 'L' | 'R'];
+export const SHAPES: Record<Formation, { core: readonly Slot[]; lead: readonly [number, number][]; rear: readonly [number, number][] }> = {
+  // (three side by side in front, the sturdiest; the rest at the wall's ends a row behind, free to go round, and the back line behind it)
+  wall: { core: [[0, 0, 'L'], [1, 0, 'L'], [-1, 0, 'L']], lead: [[-2, 1], [2, 1], [-2, 0], [2, 0]], rear: [[0, 2], [-1, 2], [1, 2], [-2, 2], [2, 2]] },
+  // (the sturdiest at the tip, the next two its wings)
+  spear: { core: [[0, 0, 'L'], [-1, 1, 'L'], [1, 1, 'L']], lead: [[0, 1], [-2, 2], [2, 2]], rear: [[0, 2], [-1, 2], [1, 2]] },
+  // (a shooter or healer inside on the back row, the sturdiest in front of it, then one on each side; the rest ahead)
+  square: { core: [[0, 2, 'R'], [0, 1, 'L'], [-1, 2, 'L'], [1, 2, 'L']], lead: [[0, 0], [-1, 1], [1, 1]], rear: [[-2, 2], [2, 2]] },
+  // (spread out, none touching: the sturdy ahead, the shooters and healers behind)
+  skirmish: { core: [], lead: [[0, 1], [-2, 0], [2, 0]], rear: [[-3, 2], [3, 2], [-4, 0]] },
 };
-
-const RANK = { front: 0, striker: 1, back: 2, support: 3 } as const;
 
 /** Where a party of `kinds` would stand in `shape` on `board` (a tile each, in the given order; the heroes' rows only). The shape is laid
  *  at the centre column that fits the most of its tiles on standable ground; a tile that does not fit goes to the nearest free standable tile
- *  of the heroes' rows. Deterministic: the board and the kinds decide it. */
+ *  of the heroes' rows. Who takes which tile (FORMATIONS-FIT): the sturdiest of those who are not shooters or healers take the exposed tiles,
+ *  the shooters and healers the protected ones, each from the other's when it runs short (`sturdiness`, then the order given). Deterministic:
+ *  the board and the kinds decide it. */
 export function formationSpots(board: Board, kinds: readonly string[], shape: Formation): At[] {
   const front = board.d - DEPLOY_ROWS;
   const ok = (u: number, v: number) => v >= front && v < board.d && standable(tileAt(board, u, v));
-  // (who takes which tile of the shape: the lead's kinds the lead's tiles, the rear's the rear's, either spilling into the other's)
-  const order = kinds.map((_, i) => i).sort((x, y) => RANK[roleOf(kinds[x])] - RANK[roleOf(kinds[y])] || x - y);
-  const lead = [...SHAPES[shape].lead];
-  const rear = [...SHAPES[shape].rear];
-  const slot = new Map<number, readonly [number, number] | undefined>();
-  for (const i of order.filter((i) => RANK[roleOf(kinds[i])] <= 1)) slot.set(i, lead.shift() ?? rear.shift());
-  for (const i of order.filter((i) => RANK[roleOf(kinds[i])] > 1)) slot.set(i, rear.shift() ?? lead.shift());
+  const byStrength = (x: number, y: number) => sturdiness(kinds[y]) - sturdiness(kinds[x]) || x - y;
+  // (the others, sturdiest first; the shooters and healers, the most fragile first)
+  const others = kinds.map((_, i) => i).filter((i) => !isBack(kinds[i])).sort(byStrength);
+  const rears = kinds.map((_, i) => i).filter((i) => isBack(kinds[i])).sort((x, y) => byStrength(y, x));
+  const slot = new Map<number, readonly [number, number]>();
+  const { core, lead, rear } = SHAPES[shape];
+  for (const [du, dv, tag] of core) {
+    if (!others.length && !rears.length) break;
+    // (an exposed tile takes the sturdiest other, or the sturdiest shooter; a protected one the most fragile shooter, or the least sturdy other)
+    const i = tag === 'L' ? (others.shift() ?? rears.pop()) : (rears.shift() ?? others.pop());
+    slot.set(i!, [du, dv]);
+  }
+  const leadLeft = [...lead];
+  const rearLeft = [...rear];
+  for (const i of others) {
+    const t = leadLeft.shift() ?? rearLeft.shift();
+    if (t) slot.set(i, t);
+  }
+  for (const i of rears) {
+    const t = rearLeft.shift() ?? leadLeft.shift();
+    if (t) slot.set(i, t);
+  }
+  const order = [...slot.keys(), ...kinds.map((_, i) => i).filter((i) => !slot.has(i))];
   const tiles = [...slot.values()].filter((t): t is readonly [number, number] => !!t);
+  // (the core's tiles weigh most: they decide whether the shape stands)
+  const isCore = (t: readonly [number, number]) => core.some(([du, dv]) => du === t[0] && dv === t[1]);
   // (the centre column that fits most; the middle first on a tie)
   const cols = [...Array(board.w).keys()].sort((x, y) => Math.abs(x - (board.w - 1) / 2) - Math.abs(y - (board.w - 1) / 2) || x - y);
   let centre = cols[0];
   let fits = -1;
   for (const c of cols) {
-    const n = tiles.filter(([du, dv]) => ok(c + du, front + dv)).length;
+    const n = tiles.reduce((m, t) => m + (ok(c + t[0], front + t[1]) ? (isCore(t) ? 10 : 1) : 0), 0);
     if (n > fits) {
       fits = n;
       centre = c;
@@ -220,11 +269,11 @@ export function formationSpots(board: Board, kinds: readonly string[], shape: Fo
   return out;
 }
 
-/** Whether a party of `kinds` can make `shape` on `board` (BATTLE-FEEL round 3): set out in it (`formationSpots`) and read back
- *  (`formationOf`), is it that shape? A Shield Wall needs two front-liners, a Hollow Square a back-liner, a Skirmish four heroes. Pure: no
- *  rule changes; the page says when the answer is no. */
+/** Whether a party of `kinds` can make `shape` on `board` (BATTLE-FEEL round 3): set out in it (`formationSpots`) and read back with it
+ *  picked (`formationOf`), is it that shape? Since FORMATIONS-FIT every shape adapts, so only a party under `FORM_MIN` (or a board with no
+ *  room for it) says no. Pure: the page says when the answer is no. */
 export function shapeFits(board: Board, kinds: readonly string[], shape: Formation): boolean {
   if (!kinds.length) return false;
   const spots = formationSpots(board, kinds, shape);
-  return formationOf(board.d, kinds.map((kind, i) => ({ id: i + 1, kind, u: spots[i].u, v: spots[i].v })))?.kind === shape;
+  return formationOf(board.d, kinds.map((kind, i) => ({ id: i + 1, kind, u: spots[i].u, v: spots[i].v })), shape)?.kind === shape;
 }
