@@ -8,7 +8,8 @@ import { isAssaultBench, startAssaultBench } from './assaultBench';
 import { socketStrip } from './runeTray';
 import { checkAppUpdate, inApp } from './appUpdate';
 import { Application, Container, Sprite, TextureSource } from 'pixi.js';
-import { standable, tileAt } from './sim/board';
+import { standable, tileAt, type Area } from './sim/board';
+import { PHASE2 } from './sim/bossPhases';
 import * as toolkit from './sim/toolkit';
 import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
@@ -55,6 +56,8 @@ import { ScenePlayer } from './render/sceneView';
 import { WAR_END_SCENE, warEndScene } from './sim/warEndScene';
 import { direct } from './sim/cineDirector';
 import { actScene, ACT_LOOKS, arrivalScene } from './sim/cineMoments';
+import { WARCHIEF_FORM, warchiefForm } from './sim/sceneFamilies';
+import { firstBossArmy } from './sim/firstBossScenes';
 import { revealCard, revealOf, type RevealGo } from './sim/sceneReveal';
 import type { Reveal } from './sim/sceneKit';
 import { ascOpenedBy, tellsByCard, unlockOfReveal } from './sim/unlockTell';
@@ -1073,6 +1076,8 @@ class Game {
 
   /** A scene by id as it plays: the War's end is built from the save's own ending (its warchief, its hold's land); any other is as written. */
   private filmFor(id: string): string | Scene {
+    const chief = this.chiefForm;
+    if (id === `form:${WARCHIEF_FORM.boss}` && chief) return warchiefForm(chief.name, chief.look, chief.area);
     const end = this.meta.war?.end;
     return id === WAR_END_SCENE ? warEndScene(end, end ? armyById(end.army)?.area : undefined) : id;
   }
@@ -1198,6 +1203,18 @@ class Game {
     markCard(this.meta, card0);
     saveMeta(this.meta);
     this.goat.react('boss');
+    // (CINE-1110: an army's first boss, met for the first time, has its own film in place of the plain entrance; with cinematics off it is
+    // marked seen as the card plays, so the Scenes list can play it)
+    const firstOf = !named && !elite ? firstBossArmy(boss.def) : undefined;
+    const firstMoment: Moment | undefined = firstOf ? { kind: 'armyBoss', army: firstOf } : undefined;
+    if (firstMoment && dueScene(this.meta, firstMoment)) {
+      if (!sceneJustPlayed && this.scenesOn()) {
+        void this.queueScene(firstMoment);
+        return;
+      }
+      markSeen(this.meta, `boss:${firstOf}`);
+      saveMeta(this.meta);
+    }
     // (CINE-001: with cinematics on, the boss makes a film villain's entrance instead of the card, unless a scene has just introduced it)
     if (!sceneJustPlayed && this.scenesOn()) {
       const def0 = UNITS[boss.def];
@@ -1660,6 +1677,9 @@ class Game {
     this.tzoom = Math.min(this.tzoom * p.zoom, Math.max(this.minZoom(), 3 / this.scale));
   }
 
+  /** The warchief whose form is changing (CINE-1110): his name, his look and the land, for his cut-in. */
+  private chiefForm: { name: string; look: string; area: Area } | null = null;
+
   /** The boss changing form, while the fight is held: the banner is up and the camera is on it. */
   private phaseBoss: Unit | null = null;
   private phaseZoom = 1;
@@ -1669,7 +1689,10 @@ class Game {
     const boss = this.b.units.find((u) => u.id === e.by);
     if (!boss) return;
     // (the boss's cut-in: the fight is held while it plays, brief and skippable)
-    void this.queueScene({ kind: 'bossForm', boss: boss.def });
+    // (CINE-1110: any boss that changes form has its cut-in; a warchief on a look with no form of its own has the Warchief's, drawn as himself)
+    const own = !!PHASE2[boss.def];
+    this.chiefForm = own ? null : { name: boss.nem?.name ?? UNITS[boss.def].name, look: boss.def, area: this.b.board.area };
+    void this.queueScene({ kind: 'bossForm', boss: own ? boss.def : WARCHIEF_FORM.boss });
     this.phaseBoss = boss;
     this.phaseZoom = Math.min(this.tzoom * 1.4, 3 / this.scale);
     const banner = $('phaseBanner');

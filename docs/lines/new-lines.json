@@ -5452,6 +5452,393 @@
     }
    ]
   },
+  "boss:orcs": {
+   "title": "The Chieftain’s Banner",
+   "blurb": "Orc Warband: Orc Chieftain comes for the keep.",
+   "cast": {
+    "boss": "unit:orcChieftain",
+    "escort": "unit:orcGrunt",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Orc Warband",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Halfway up the road, the orcs stopped marching and started chanting. Never a good sign."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "SHIELDS UP, LITTLE ONES. I *COLLECT* THEM."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Then he can start a collection of dents."
+      }
+     ]
+    }
+   ]
+  },
+  "boss:undead": {
+   "title": "Fall In",
+   "blurb": "Undead Legion: Bone Captain comes for the keep.",
+   "cast": {
+    "boss": "unit:boneCaptain",
+    "escort": "unit:skeleton",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Undead Legion",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "A bugle sounded from under the graveyard. It was flat, and something answered it."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "RANKS OF THE DEAD! BY THE LEFT... *QUICK* MARCH!"
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "He drills them well. Shame about the knees."
+      }
+     ]
+    }
+   ]
+  },
+  "boss:beasts": {
+   "title": "The Moon Is Up",
+   "blurb": "Beast Packs: Alpha Werewolf comes for the keep.",
+   "cast": {
+    "boss": "unit:alphaWolf",
+    "escort": "unit:packBlack",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Beast Packs",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The moon rose fat over the plains, and every howl in the dark turned towards the keep."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "The pack has your *scent*. The pack never forgets a scent."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "I bathed this week. Twice, in fact."
+      }
+     ]
+    }
+   ]
+  },
+  "boss:wildwood": {
+   "title": "The Path Closes",
+   "blurb": "The Wildwood: Thorn Warden comes for the keep.",
+   "cast": {
+    "boss": "unit:forestBoss1",
+    "escort": "unit:groveSatyr1",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "The Wildwood",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The path through the wood closed up behind them, quietly, like a door."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "Mind the thorns. No, truly. *Mind* them. They mind you."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Did the hedge just threaten us?"
+      }
+     ]
+    }
+   ]
+  },
+  "boss:labyrinth": {
+   "title": "A Garden of Statues",
+   "blurb": "The Labyrinth: Gorgon Queen comes for the keep.",
+   "cast": {
+    "boss": "unit:gorgonQueen",
+    "escort": "unit:mazeMino1",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "The Labyrinth",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Deep in the maze stood a garden of statues, each with a look of great surprise."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "Look at me, darlings. Just *once*. Everyone does, in the end."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "Eyes on the floor. Strike at the ankles."
+      }
+     ]
+    }
+   ]
+  },
+  "boss:ogres": {
+   "title": "Faces in the Smoke",
+   "blurb": "Ogre Clans: Shaman King comes for the keep.",
+   "cast": {
+    "boss": "unit:shamanKing",
+    "escort": "unit:clanBrute",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Ogre Clans",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Smoke rose from a bone fire on the crag, and the smoke had faces in it."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "THE SPIRITS OF THE CRAG HAVE SPOKEN. THEY SAY YOU ARE *VERY* SMALL."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "The spirits should see us from closer up."
+      }
+     ]
+    }
+   ]
+  },
+  "boss:infernal": {
+   "title": "Sulphur and Paperwork",
+   "blurb": "Infernal Host: Devil Leader comes for the keep.",
+   "cast": {
+    "boss": "unit:devilLeader",
+    "escort": "unit:hellImp",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Infernal Host",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The air went hot, and smelt of sulphur and freshly stamped paperwork."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "Light the fires. All of them. Then *invoice* them."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "I am not signing anything that is on fire."
+      }
+     ]
+    }
+   ]
+  },
+  "boss:yokai": {
+   "title": "Nine Lanterns",
+   "blurb": "Yokai Night Parade: Nine-Tailed Fox comes for the keep.",
+   "cast": {
+    "boss": "unit:nineTails",
+    "escort": "unit:yokaiFox",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Yokai Night Parade",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "Nine lanterns lit along the shrine steps, one by one, with nobody to light them."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "Nine tails, nine lanterns, nine riddles. Guess *wrong*."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "I hate riddles. I shall answer with steel."
+      }
+     ]
+    }
+   ]
+  },
+  "boss:golems": {
+   "title": "The Blue Vein",
+   "blurb": "Golem Forge: Sapphire Colossus comes for the keep.",
+   "cast": {
+    "boss": "unit:sapphireColossus",
+    "escort": "unit:stoneGolem",
+    "hero": "party:0",
+    "mate": "party:1"
+   },
+   "shots": [
+    {
+     "caption": "Golem Forge",
+     "lines": [
+      {
+       "who": "narrator",
+       "text": "The forge floor split along a seam of blue stone, and the seam began to stand up."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "THE BLUE VEIN WAKES. THE STONE *REMEMBERS* YOUR PICKAXES."
+      }
+     ]
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "hero",
+       "text": "We have never owned a pickaxe between us."
+      }
+     ]
+    }
+   ]
+  },
   "clear:orcs": {
    "title": "Orc Warband: Routed",
    "blurb": "The Orc Warlord takes a knee to catch his breath and lodge an administrative complaint.",
@@ -8982,7 +9369,7 @@
    ]
   },
   "form:orcWarlord": {
-   "title": "Orc Warlord: Second Form",
+   "title": "Orc Warlord: The Warlord Unchained",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:orcWarlord"
@@ -9004,7 +9391,7 @@
    ]
   },
   "form:lichKing": {
-   "title": "Lich King: Second Form",
+   "title": "Lich King: The Crown Unburied",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:lichKing"
@@ -9026,7 +9413,7 @@
    ]
   },
   "form:boarKing": {
-   "title": "Boar King: Second Form",
+   "title": "Boar King: The Stampede Royal",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:boarKing"
@@ -9048,7 +9435,7 @@
    ]
   },
   "form:forestBoss3": {
-   "title": "Grove Spearlord: Second Form",
+   "title": "Grove Spearlord: The Grove in Wrath",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:forestBoss3"
@@ -9070,7 +9457,7 @@
    ]
   },
   "form:minotaurChampion": {
-   "title": "Minotaur Champion: Second Form",
+   "title": "Minotaur Champion: The Maze Made Flesh",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:minotaurChampion"
@@ -9092,7 +9479,7 @@
    ]
   },
   "form:hornedOgre": {
-   "title": "Horned Ogre: Second Form",
+   "title": "Horned Ogre: The Crag Awake",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:hornedOgre"
@@ -9114,7 +9501,7 @@
    ]
   },
   "form:demonLord": {
-   "title": "Demon Lord: Second Form",
+   "title": "Demon Lord: Clause Nine",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:demonLord"
@@ -9136,7 +9523,7 @@
    ]
   },
   "form:oniKing": {
-   "title": "Oni King: Second Form",
+   "title": "Oni King: The Thunder Drum",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:oniKing"
@@ -9158,7 +9545,7 @@
    ]
   },
   "form:forgeTitan": {
-   "title": "Forge Titan: Second Form",
+   "title": "Forge Titan: White-Hot",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:forgeTitan"
@@ -9180,7 +9567,7 @@
    ]
   },
   "form:calBoss1": {
-   "title": "Gorvak the Ashen: Second Form",
+   "title": "Gorvak the Ashen: The Flaring Ember",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:calBoss1"
@@ -9202,7 +9589,7 @@
    ]
   },
   "form:calBoss2": {
-   "title": "The Thorn Warden: Second Form",
+   "title": "The Thorn Warden: The Briar Awake",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:calBoss2"
@@ -9224,7 +9611,7 @@
    ]
   },
   "form:calBoss3": {
-   "title": "Malphas: Second Form",
+   "title": "Malphas: The Court Convened",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:calBoss3"
@@ -9246,7 +9633,7 @@
    ]
   },
   "form:calBoss4": {
-   "title": "Hrungar the Mountain: Second Form",
+   "title": "Hrungar the Mountain: The Striding Crag",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:calBoss4"
@@ -9268,7 +9655,7 @@
    ]
   },
   "form:calBoss5": {
-   "title": "Vorgrath the Hellbringer: Second Form",
+   "title": "Vorgrath the Hellbringer: The Final Cinder",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:calBoss5"
@@ -9290,7 +9677,7 @@
    ]
   },
   "form:calBoss6": {
-   "title": "Karnok the Calamity: Second Form",
+   "title": "Karnok the Calamity: Beyond the Horizon",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
     "boss": "unit:calBoss6"
@@ -9312,10 +9699,10 @@
    ]
   },
   "form:nivraWyrm": {
-   "title": "Nivra: Second Form",
+   "title": "Nivra: The Long Winter",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "cast": {
-    "boss": "unit:calBoss6"
+    "boss": "unit:nivraWyrm"
    },
    "shots": [
     {
@@ -9334,7 +9721,7 @@
    ]
   },
   "form:aurelanLion": {
-   "title": "Aurelan: Second Form",
+   "title": "Aurelan: The Sun Comes Down",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "shots": [
     {
@@ -9350,10 +9737,13 @@
       }
      ]
     }
-   ]
+   ],
+   "cast": {
+    "boss": "unit:aurelanLion"
+   }
   },
   "form:voltaraGoddess": {
-   "title": "Voltara: Second Form",
+   "title": "Voltara: The Arc Unbroken",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "shots": [
     {
@@ -9369,10 +9759,13 @@
       }
      ]
     }
-   ]
+   ],
+   "cast": {
+    "boss": "unit:voltaraGoddess"
+   }
   },
   "form:gormTitan": {
-   "title": "Gorm: Second Form",
+   "title": "Gorm: The Hill Comes Down",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "shots": [
     {
@@ -9388,10 +9781,13 @@
       }
      ]
     }
-   ]
+   ],
+   "cast": {
+    "boss": "unit:gormTitan"
+   }
   },
   "form:vaelkharKing": {
-   "title": "Vaelkhar: Second Form",
+   "title": "Vaelkhar: Torrent of Night",
    "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
    "shots": [
     {
@@ -9404,6 +9800,31 @@
       {
        "who": "boss",
        "text": "KNEEL, LITTLE KING. THEN STAND, AND WATCH!"
+      }
+     ]
+    }
+   ],
+   "cast": {
+    "boss": "unit:vaelkharKing"
+   }
+  },
+  "form:warchief": {
+   "title": "The Warchief: The Warchief Unbowed",
+   "blurb": "A formidable boss assumes its second phase with explosive slow-motion fury.",
+   "cast": {
+    "boss": "unit:orcChieftain"
+   },
+   "shots": [
+    {
+     "caption": null,
+     "lines": []
+    },
+    {
+     "caption": null,
+     "lines": [
+      {
+       "who": "boss",
+       "text": "The Warchief does not kneel! To me, my Council!"
       }
      ]
     }
