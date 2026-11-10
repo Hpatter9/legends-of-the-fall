@@ -19,6 +19,7 @@
 // (whole, battered, broken), a drum beats, a hut burns, the ladders lean on the wall and the ram rolls.
 
 import { Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
+import { FieldCampLife } from './fieldCampLife';
 import type { Battle, Unit } from '../sim/battle';
 import type { FieldState } from '../sim/assault/field';
 import type { FieldEvent } from '../sim/assault/spike';
@@ -33,7 +34,7 @@ import { facesRight, FOOT, HH, rawAt, TH, TW } from './iso';
 import { facesRightOf, figureOf, framesOf, type Anim } from './sheets';
 import { detailFor, type Detail } from './fieldDetail';
 import { CHUNK, chunkHeights, chunksInView, focusOnScreen, viewRect, type PlayArea, type WorldRect } from './fieldCull';
-import { clutterOf, decalOf, DEEP, MAT, faceOf, fortLook, fringesOf, materialsOf, placementsOf, type Placement } from './fieldLooks';
+import { clutterOf, decalOf, DEEP, MAT, faceOf, fortLook, timberGateLook, fringesOf, materialsOf, placementsOf, type Placement } from './fieldLooks';
 import * as ORC_ATLAS from './assaultOrcAtlas';
 import * as UNDEAD_ATLAS from './assaultUndeadAtlas';
 import * as BEASTS_ATLAS from './assaultBeastsAtlas';
@@ -311,7 +312,7 @@ export class FieldView {
   private frame = 0;
   detail: Detail = 'near';
   /** What the last frame drew (for the bench's readout). */
-  drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0, bakeMs: 0 };
+  drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0, bakeMs: 0, campWorkers: 0, campSmoke: 0 };
   private brokenGates = new Set<number>();
   /** Each chunk's highest and lowest ground, for culling. */
   private heights: ReturnType<typeof chunkHeights>;
@@ -326,6 +327,7 @@ export class FieldView {
   private glowTex: Texture | null = null;
   /** The small life: embers off the fires, rings on the river (`fieldLife.ts`, moved by the shared `ambient.ts`). */
   private life: FieldLife | null = null;
+  private campLife: FieldCampLife | null = null;
   private ladders: Sprite[] = [];
   /** The heavy works (phase 2): the volley's ground marks, its stone in flight, the keg carried or set, the blasts. */
   private marks = new Graphics();
@@ -378,6 +380,7 @@ export class FieldView {
       this.unitLayer.addChild(this.life.layer);
     }
     this.unitLayer.addChild(this.works);
+    if (bp?.campLife?.length) this.campLife = new FieldCampLife(this.b, this.unitLayer, holdTex);
     this.works.addChild(this.marks);
     this.works.zIndex = 0;
     this.works.sortableChildren = false;
@@ -509,8 +512,8 @@ export class FieldView {
         const dl = Math.ceil(t.h - hOf(u, v + 1));
         if (H && mats) {
           const zone = this.f.zone;
-          if (dr > 0) sheetFace(faceOf(b, zone, i, u + 1 < b.w ? i + 1 : -1), rawAt(u + 0.5, v - 0.5, t.h), rawAt(u + 0.5, v + 0.5, t.h), dr, 0.22);
-          if (dl > 0) sheetFace(faceOf(b, zone, i, v + 1 < b.d ? i + b.w : -1), rawAt(u - 0.5, v + 0.5, t.h), rawAt(u + 0.5, v + 0.5, t.h), dl, 0.06);
+          if (dr > 0) sheetFace(faceOf(b, zone, i, u + 1 < b.w ? i + 1 : -1, this.f.hold?.bp), rawAt(u + 0.5, v - 0.5, t.h), rawAt(u + 0.5, v + 0.5, t.h), dr, 0.22);
+          if (dl > 0) sheetFace(faceOf(b, zone, i, v + 1 < b.d ? i + b.w : -1, this.f.hold?.bp), rawAt(u - 0.5, v + 0.5, t.h), rawAt(u + 0.5, v + 0.5, t.h), dl, 0.06);
           const m = mats[i];
           // (deep water: the sheet's water over its stones, darkened to the deep's blue-green; Brimstone Gate's is lava, its sheet's slot
           //  painted so, darkened to a molten red)
@@ -621,13 +624,13 @@ export class FieldView {
         sp.zIndex = ((at % b.w) + Math.floor(at / b.w)) * 10 + (p.depth !== undefined ? 1 : 4);
         props.push(sp);
         this.unitLayer.addChild(sp);
-        if (p.fort !== undefined || p.hut !== undefined) live.push({ sp, p, h });
+        if (p.fort !== undefined || p.hut !== undefined || p.sway) live.push({ sp, p, h });
       }
       this.live.set(cy * 100 + cx, live);
       // (the firelight: a warm glow round each flame, above the scene, added)
       const glows: { sp: Sprite; base: number; seed: number; big: boolean }[] = [];
       for (const p of this.placed.get(cy * 100 + cx) ?? []) {
-        const up = LIGHTS[p.road ? (p.road === 'campfire' ? 'bonfire' : p.road) : p.name];
+        const up = LIGHTS[p.road ? (p.road === 'campfire' ? 'bonfire' : p.road) : this.f.hold?.bp.weathered ? this.lookOf(p) : p.name];
         if (up === undefined || (p.road && p.road !== 'campfire')) continue;
         const t = b.tiles[p.front];
         const h = p.fort !== undefined ? this.floorOf(p) : t.h;
@@ -711,6 +714,7 @@ export class FieldView {
     s.anchor.set(def.foot[0] / def.r[2], def.foot[1] / def.r[3]);
     const k = (p.scale ?? 1) * (isKit(name) ? KIT_SCALE : 1);
     s.scale.set(p.flip ? -k : k, k);
+    s.skew.x = name.startsWith('palisade') && name !== 'palisadeBreach' ? p.lean ?? 0 : 0;
   }
 
   /** The picture a piece shows now: a structure's by its state, a hut's once burnt. */
@@ -718,8 +722,10 @@ export class FieldView {
     const h = this.f.hold;
     if (p.fort !== undefined && h) {
       const f = h.forts[p.fort];
+      if (p.joint) return f.broken ? 'timberRubble' : 'timberJoint';
       let look = fortLook(f.spec.kind, f.hp, f.maxHp, f.broken, !!f.open);
-      if (look === 'palisadeRun' && p.inner) look = 'palisadeInner';
+      if (h.bp.weathered) look = timberGateLook(look);
+      if (look === 'palisadeRun') look = p.intact ?? (p.inner ? 'palisadeInner' : look);
       // (a breached segment: the ramp of logs on the ring's outer row only)
       if (look === 'palisadeBreach' && Math.max(Math.abs(p.u - 49.5), Math.abs(p.v - 49.5)) < 23) return 'gatePost';
       return look;
@@ -933,7 +939,7 @@ export class FieldView {
     this.farLayer.visible = far;
     // the world rectangle in view, and a margin
     const view = viewRect(cam, vw, vh, focus);
-    this.drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0, bakeMs: 0 };
+    this.drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0, bakeMs: 0, campWorkers: 0, campSmoke: 0 };
     this.simT = simT;
     if (far) this.drawFar(simT, cam.zoom);
     else {
@@ -946,6 +952,9 @@ export class FieldView {
         this.life.update(simT, view, fires, this.detail === 'near');
       }
       this.drawFighters(view, simT, events);
+      this.campLife?.update(simT, view, this.detail === 'near', reducedMotion());
+      this.drawn.campWorkers = this.campLife?.drawn.workers ?? 0;
+      this.drawn.campSmoke = this.campLife?.drawn.smoke ?? 0;
     }
   }
 
@@ -1105,9 +1114,9 @@ export class FieldView {
       }
       c.used = this.frame;
       if (!c.sprite.parent) this.chunkLayer.addChild(c.sprite);
-      for (const l of this.live.get(key) ?? []) this.liveLook(l);
-      // (the firelight flickers: two slow waves and a quick one, out of step light to light; steady for less motion)
       const steady = reducedMotion();
+      for (const l of this.live.get(key) ?? []) this.liveLook(l, steady);
+      // (the firelight flickers: two slow waves and a quick one, out of step light to light; steady for less motion)
       for (const g of this.glows.get(key) ?? []) {
         const t = this.simT;
         const f = steady ? 0 : Math.sin(t * 0.011 + g.seed) * 0.5 + Math.sin(t * 0.027 + g.seed * 2.3) * 0.3 + Math.sin(t * 0.083 + g.seed * 5.1) * 0.2;
@@ -1166,13 +1175,14 @@ export class FieldView {
   }
 
   /** A piece that follows the battle: its state's picture, a drum's beat (a small squash), a hut's fire. */
-  private liveLook(l: Live): void {
+  private liveLook(l: Live, steady: boolean): void {
     const name = this.lookOf(l.p);
     const tex = holdTex(name);
     if (tex && l.sp.texture !== tex) {
       l.sp.texture = tex;
       this.footOn(l.sp, name, l.p);
     }
+    if (l.p.sway) l.sp.skew.x = steady || name === 'burntHeap' ? 0 : Math.sin(this.simT / 1200 + l.p.front * 0.17) * 0.035;
     if (name === 'drumStruck') {
       const k = (l.p.scale ?? 1);
       const beat = Math.max(0, Math.sin(this.simT / 140)) ** 6;
@@ -1243,6 +1253,15 @@ export class FieldView {
     const g = this.marks;
     g.clear();
     const steady = reducedMotion();
+    // A steady amber outline marks only a weak point our troops have actually discovered.
+    for (const fort of h?.forts ?? []) {
+      if (!fort.discovered || !fort.spec.weakness || fort.broken || fort.open) continue;
+      for (const i of fort.spec.tiles) {
+        const [x, y] = rawAt(i % b.w, Math.floor(i / b.w), b.tiles[i].h);
+        g.poly([x, y - TH / 2, x + TW / 2, y, x, y + TH / 2, x - TW / 2, y]);
+        g.fill({ color: 0xffc060, alpha: 0.2 }).stroke({ width: 3, color: 0xffc060, alpha: 0.95 });
+      }
+    }
     const vol = h?.siege.volley;
     if (vol) {
       const left = Math.max(0, vol.lands - this.simT);

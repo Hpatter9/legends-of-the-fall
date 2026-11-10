@@ -1,3 +1,32 @@
+### BLOODTUSK-STRUCTURES — Cohesive walls and buildings
+
+- **Owner / branch / worktree:** Codex; `fix/bloodtusk-structures`; `/workspace/legends-of-the-fall`.
+- **Authorisation / scope:** owner approved correcting doubled walls/corners, building proportions, timber gates and slope foundations. Preserve map collision, breach and siege rules, existing weak points and other holds.
+- **Completion:** continuous perimeter artwork, readable matching gates and building hierarchy, grounded structures, focused checks/typecheck/build and three portrait previews. Update PR #495; no merge or deployment.
+- **Status:** complete, structure correction for PR #495. One exposed-edge palisade with corner posts and earth bank faces; matched timber gate states aligned to opening planes; lower longhouse, consistent timber lookouts and low earth/sill/threshold foundations. Eight affected test files, final typecheck/build, three phone sizes and reduced motion passed.
+- **Handoff:** [structure correction](notes/bloodtusk-structures.md); [hall](samples/bloodtusk-structures/chiefs-hall-393.png); [gate](samples/bloodtusk-structures/main-gate-393.png).
+
+### BLOODTUSK-ART — Replace warcamp stand-ins
+
+- **Owner / branch / worktree:** Codex; `art/bloodtusk-weathering`; `/workspace/legends-of-the-fall`.
+- **Authorisation / scope:** owner approved all four corrections: dedicated camp workers, unfinished siege engine, weathered palisades, and cliff/building-to-ground transitions. Existing warcamp palette and composition retained.
+- **Completion:** new matching artwork integrated with correct anchors/scale, real damage states preserved, offline caching/credits, focused tests, typecheck/build and portrait browser review.
+- **Status:** complete; art follow-up for PR #495. Two original sheets imported, measured/anchored into the existing cached atlas, with credits and reproducible cuts. The repair scene was moved clear of the hall silhouette. Nine focused test files passed; seven repeated after relocation, then final typecheck/build. Three portrait sizes, activity and reduced-motion previews passed without browser errors. No merge, release bump or deployment.
+- **Handoff:** [art correction](notes/bloodtusk-art.md); [repair scene](samples/bloodtusk-art/repair-yard-393.png); [new artwork](samples/bloodtusk-art/details-contact.png).
+
+### BLOODTUSK-WARCAMP — An irregular orc hold and discoverable weaknesses
+
+- **Owner / branch / worktree:** Codex; `feature/bloodtusk-warcamp`; `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner approved the rocky, irregular warcamp concept; scope is the orc map first. Owner also requested discoverable weak points.
+- **Allowed scope:** Bloodtusk blueprint, contour-aware fort construction/rendering, camp dressing, discovery rules/UI, focused tests and visual evidence. Other holds retain their layouts.
+- **Completion:** irregular defensible perimeter, readable uneven terrain and camp districts; discoverable tactical weakness; deterministic rules, focused checks, typecheck/build, three portrait previews and handoff.
+- **Terrain follow-up:** complete on the same branch. Added broad flank hills, terraced rear ridge and lumber hill with ramps, river hollow and small camp rises; reduced background noise. All 15 affected test files, typecheck/build, fully loaded three-size previews and reduced-motion review passed. [Hillside preview](samples/bloodtusk-terrain/lumber-hill-393.png). Approaches, every breach and the weak points remain usable.
+- **Settlement follow-up:** complete, ready for owner review. Seven authored camp yards, 26 added structures and 61 small belongings; actual forge/stores/cookhouse/handlers, yard-specific ground wear, corrected hut footprints and level foundations. All 15 affected test files, typecheck/build, three portrait overviews, two close views and reduced-motion review passed. [Clan common and stores](samples/bloodtusk-settlement/clan-and-stores-393.png); [forge yard](samples/bloodtusk-settlement/forge-yard-393.png). Same branch; no merge or deployment.
+- **Ridge composition follow-up:** complete, ready for owner review. Larger off-centre summit hall/throne, exposed crag defences and four timber lookouts, bent climbing routes and tusk-framed South Gate. Preserved camp/weak points and restored the captain’s challenge yard. All 19 affected files passed; eight focused files passed again after final hall placement. Typecheck/build and fully loaded three-size, close-up and reduced-motion renderer previews passed. [Summit hall](samples/bloodtusk-ridge/chiefs-hall-393.png); [overview](samples/bloodtusk-ridge/camp-393.png). No merge or deployment.
+- **Weathering/life follow-up:** owner approved all five next steps: weathered defences, rough ridge edges, larger storytelling scenes, worn routes/entrances, and camp life. Completed on the same branch: varied intact timber, scalloped ridge edges and scree, repair/convoy/butcher/refuse scenes, muddy routes and doorstep wear, bounded smoke/workers and cloth sway. Existing-art stand-ins and bespoke art prompts are documented. Routes, duel yard, siege rules and weak points pass coverage. Twenty affected test files, typecheck and build passed; three phone-size views and reduced motion reviewed without browser errors. Evidence: [finishing pass](samples/bloodtusk-finishing/camp-393.png). Local only; no merge or deployment.
+- **Status:** ready for owner review. Irregular outer/inner defences, stronger relief, winding camp lanes, authored work yards and two proximity-discovered weak points implemented. All 15 affected test files, typecheck/build and final three-size renderer previews passed; reduced-motion preview inspected. Worker-enabled browser preview timed out, so visual captures use the main-thread fallback; worker mirror/resume rules passed. No merge, deployment or version bump.
+- **Handoff:** [Bloodtusk warcamp](notes/bloodtusk-warcamp.md); [actual map preview](samples/bloodtusk-warcamp/camp-393.png); [forge detail](samples/bloodtusk-warcamp/forge-393.png).
+
 ### SPELLS-REFRESH — Bring the Spells screen in line with the painted game
 
 - **Owner / branch / worktree:** current Codex chat; `design/spells-screen-refresh`; `/workspace/legends-of-the-fall`.

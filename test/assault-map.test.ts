@@ -51,7 +51,7 @@ test('a broken palisade segment is a rubble ramp from the ditch up to the bank',
   assert.equal(reach[t], 1, 'a jump-1 walker climbs the rubble');
 });
 
-test('the structures are the blueprint\'s: four palisade gates, the Iron Gate, three drums, and the palisade in segments of three', () => {
+test('the structures are the blueprint\'s: four palisade gates, the Iron Gate, three drums, and the palisade in short contour runs', () => {
   const m = buildHold(BLOODTUSK);
   const count = (k: string) => m.forts.filter((f) => f.kind === k).length;
   assert.equal(count('southGate'), 1);
@@ -60,7 +60,7 @@ test('the structures are the blueprint\'s: four palisade gates, the Iron Gate, t
   assert.equal(count('ironGate'), 1);
   assert.equal(count('drum'), 3);
   assert.ok(count('palisade') >= 60);
-  for (const f of m.forts.filter((x) => x.kind === 'palisade')) assert.ok(f.tiles.length >= 1 && f.tiles.length <= 6, `${f.id} has ${f.tiles.length} tiles`);
+  for (const f of m.forts.filter((x) => x.kind === 'palisade')) assert.ok(f.tiles.length >= 1 && f.tiles.length <= 8, `${f.id} has ${f.tiles.length} tiles`);
   // (every structure stands shut on its tiles, and a gate's tiles are paved)
   for (const f of m.forts) for (const i of f.tiles) assert.ok(!standable(m.board.tiles[i]), `${f.id}'s tile ${i} is shut`);
   // (no structure is outside the hold's rings but the drums)

@@ -28,7 +28,7 @@ import { buildHold, ringOf, type HoldMap } from './fieldMap';
 import { HOLDS } from './holds';
 import type { Blueprint } from './blueprint';
 import { addFieldUnit, archersOnly, bowless, buildGarrison, freeNear, shareOf } from './garrison';
-import { barrelOnForts, canStrikeFort, drumsBeating, landFortHits, makeForts, strikeFort } from './forts';
+import { barrelOnForts, canStrikeFort, discoverWeaknesses, drumsBeating, landFortHits, makeForts, strikeFort } from './forts';
 import { anchorOf, DRUM_BLOW, holdTick, nearDrum } from './holdMind';
 import { applyQueued, CHARGE_MOVE, defaultFormation, ENGAGE, FORMATION_FX, givePlatoon, HERO_LEASH, LEADERLESS, LEASH, replayEntries, slotAt } from './platoons';
 import type { AssaultInput, AssaultLogEntry, AssaultOutcome, HoldState, PlatoonRole, PlatoonState, PostState } from './holdTypes';
@@ -160,6 +160,7 @@ function tick(b: Battle, out: BattleEvent[]): void {
   }
   // (the two in a duel's ring are left out of the buckets: nobody outside it looks for them)
   rebuildBuckets(f, h.duel?.state === 'fighting' ? b.units.filter((x) => !inDuel(h, x.id)) : b.units);
+  discoverWeaknesses(b, h);
   landFortHits(b, h, out);
   landCleaves(b, h, out);
   noteFalls(f, h);
