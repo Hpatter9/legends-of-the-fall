@@ -1,0 +1,51 @@
+[
+  {
+    "width": 393,
+    "height": 852,
+    "artWidth": 851,
+    "footerVisible": true,
+    "overflow": false,
+    "animations": 57,
+    "crownMask": true,
+    "cloudLayers": 2,
+    "snowflakes": 36,
+    "movement": true,
+    "reducedMotion": true,
+    "startup": true,
+    "pageErrors": []
+  },
+  {
+    "width": 360,
+    "height": 780,
+    "artWidth": 851,
+    "footerVisible": true,
+    "overflow": false,
+    "animations": 57,
+    "crownMask": true,
+    "cloudLayers": 2,
+    "snowflakes": 36,
+    "movement": true,
+    "reducedMotion": true,
+    "startup": true,
+    "pageErrors": []
+  },
+  {
+    "width": 412,
+    "height": 915,
+    "artWidth": 851,
+    "footerVisible": true,
+    "overflow": false,
+    "animations": 57,
+    "crownMask": true,
+    "cloudLayers": 2,
+    "snowflakes": 36,
+    "movement": true,
+    "reducedMotion": true,
+    "startup": true,
+    "pageErrors": []
+  },
+  {
+    "offlineReload": true,
+    "artEmbeddedInCachedPage": true
+  }
+]

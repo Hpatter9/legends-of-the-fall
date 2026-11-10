@@ -194,7 +194,11 @@ for (const f of readdirSync('src/art/relics').filter((f) => f.endsWith('.webp'))
 }
 // (the loading illustration is embedded in the cached page, so it appears before game.js and works offline)
 const dataUrl = (f) => `data:image/${f.endsWith('.webp') ? 'webp' : 'png'};base64,${readFileSync(f).toString('base64')}`;
-const LOADING_ART = { __LD_KEEP__: 'src/art/loading/last-keep.webp' };
+const LOADING_ART = {
+  __LD_KEEP__: 'src/art/loading/shattered-crown.webp',
+  __LD_CROWN_MASK__: 'src/art/loading/crown-mask.png',
+  __LD_CLOUDS__: 'src/art/loading/crown-clouds.webp',
+};
 const withLoadingArt = (html) => Object.entries(LOADING_ART).reduce((h, [k, f]) => h.replaceAll(k, () => dataUrl(f)), html);
 const writeIndexHtml = () => {
   writeFileSync(
