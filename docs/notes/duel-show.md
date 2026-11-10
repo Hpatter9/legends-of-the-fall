@@ -165,7 +165,8 @@ War's bot takes none unless asked (`WAR_BOT.duels`). The only tests that changed
 
 - `npm run typecheck`: clean.
 - `npm run web`: builds.
-- **The full `npm test`: 3,056 tests, all passing.** That includes:
+- **The full `npm test`: 3,056 tests, all passing** on 0.460.0, and again after main (0.466.0) was merged in: **3,093 tests, all
+  passing**, with `tools/duel-show/shots.mjs`'s checks passing there too. That includes:
   - `test/duel-show.test.ts` (6 tests): the crowd's places (its side, facing in, one to a tile, the lanes open, standing ground only, the same
     every time); the walk-in's way and time, and reduced motion's beat; the bar's point, leader and swing; the moods and shouts; the
     softened blows, the clock, the signatures' later rage, the trim in the share, and the card's words;
