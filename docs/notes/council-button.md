@@ -2,8 +2,10 @@
 
 The owner, on 0.460.0: "The council button could use a look at visually." The Council's place on the Battle tab (the Battle Overlook,
 `drawBattle` in `src/home.ts`) stands over the Daily's at the scene's right edge. 0.457.0 put its label back under its medallion
-(`docs/notes/battle-pick-fix.md`), but the two plates still did not match. Pictures: `docs/samples/council-button/`. Each one is a before
-and after of the pair, at 393 x 852, 360 x 780 and 412 x 915.
+(`docs/notes/battle-pick-fix.md`), but the two plates still did not match. Pictures: `docs/samples/council-button/`.
+- `pair-before-after-<size>.jpg` shows the pair at 393 x 852, 360 x 780 and 412 x 915: before on the top row, after under it. Its columns,
+  left to right: members named, the Muster open, before the War opens, a quest tracked, Continue showing, pressed, the Daily cleared.
+- `before-*-393.jpg` and `after-*-393.jpg` show the whole Battle tab: as it stands, with a quest tracked, and with Continue showing.
 
 ## What was off
 
@@ -39,7 +41,7 @@ is pictured too.
 ## Checks
 
 - `npm run typecheck`: clean.
-- `npm test` (the full suite).
+- `npm test`: the full suite, 3050 pass.
 - `npm run web`: builds.
 - The pair looked at at 393 x 852, 360 x 780 and 412 x 915 (`docs/samples/council-button/`), each before and after:
   - the Council with members named;
