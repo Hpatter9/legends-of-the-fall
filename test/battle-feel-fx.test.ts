@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { keyOfKit } from '../src/sim/abilities';
 import { castsOf, cuesFor, markCue, terrainCue } from '../src/render/soundRules';
-import { HEAL_BIG, HEAL_POOL_MS, HealPool, SKILL_ELEMENT } from '../src/render/fxRules';
+import { HEAL_BIG, HEAL_POOL_MS, HealPool, SKILL_ELEMENT, towards, WALL_DIM } from '../src/render/fxRules';
 import { readyBattle } from './helpers';
 
 test("a skill's hit sounds in the element of the skill cast that tick, not the caster's first skill", () => {
@@ -53,4 +53,13 @@ test('small heals are pooled into one number a second; a big heal shows at once'
   // (a fighter gone from the board takes its pool with it)
   pool.add(4, 5, max, 0);
   assert.deepEqual(pool.due(10, () => undefined), []);
+});
+
+test("a raised wall's loop eases down to WALL_DIM while a fighter stands in it, and back up", () => {
+  let a = 1;
+  for (let t = 0; t < 1000; t += 16) a = towards(a, WALL_DIM, 16);
+  assert.equal(a, WALL_DIM);
+  for (let t = 0; t < 400; t += 16) a = towards(a, 1, 16);
+  assert.equal(a, 1);
+  assert.ok(WALL_DIM > 0.2 && WALL_DIM < 0.7);
 });

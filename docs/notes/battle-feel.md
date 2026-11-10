@@ -53,7 +53,7 @@ page's default.
 
 ## The fixes
 
-1. **The foe a fighter walks for** (`decide`, `src/sim/battle.ts`). Each foe's nearest strike tile by walking is worked out first. A foe whose
+1. **The foe a melee hero walks for** (`decide`, `src/sim/battle.ts`; melee heroes only since round 2, see below). Each foe's nearest strike tile by walking is worked out first. A foe whose
    nearest tile is more than `FAR_WALK` (4) steps further than the soonest strike tile of any foe is passed over. Otherwise the order is as
    before (nearest by air first, with the same perch, menace and flank scores). No randomness is involved. The Assault's field
    (`b.field`) keeps the old choice. Tests: `test/battle-feel.test.ts` (a wall between the hero and the near-by-air foe: it goes for the
@@ -101,7 +101,119 @@ every role (foes 7.0% to 6.4%, front-liners 5.8% to 5.1%), with the same win rat
 5. **x3 pace** (10). Recommendation: leave the sim's pace. If x3 feels like a blur, cap x3 at x2.5, or at x3 show only crit and kill
    numbers. The owner's call.
 
+## Round 2: the director's calls
+
+The director's answers to the list above: (a) yes, a floor; (b) yes, the swap; (c) drop "Saved", put Glance, Miss and Immune behind the
+numbers setting; (d) dim the loop for now; (e) leave the pace. Also: cover the formations, the daily and the Assault.
+
+### What was built
+
+- **(a) A floor for skill hits** (`SKILL_FLOOR`, a third, in `net`, `src/sim/abilities.ts`: every skill's blow before armour). A skill now
+  lands at least a third of its raw power through any armour, for both sides. Audit at level 1, stage 3 (hits of 2 or less, before and
+  after): Vampire Lord Crimson Lunge 183 to 65, Harpooner Barbed Harpoon 168 to 98, Paladin Holy Challenge 19 to 0, Ninja Monk Thousand
+  Fists 75 to 54 (over about the same number of casts). **Still at 1 or 2**: Kraken Mate Undertow, Astral Sphinx Rift Pounce and Corsair
+  Surgeon Boarding Swing. These skills carry only a small share of attack by design (their kit `tune`), so a third of a tiny blow is still
+  1 or 2. Armour was not the cause. That needs another call (below).
+- **(b) The doorway swap** (`unjam`, `STILL_MS` 1 s, `UNJAM_MS` 4 s, in `src/sim/battle.ts`). A melee hero with no way to any foe, whose
+  next step is onto a friend that strikes from afar (shooter or caster), has not moved for a second and is not planted (`kitStill`),
+  changes places with it through the toolkit's `swap` (its event, blink sound and look). Either can do it again only after 4 s. Heroes only:
+  foes keep their minds. Not on the Assault's field, in the Last Stand or in a duel, and never onto lava or coals. Tests in
+  `test/battle-feel.test.ts`: a knight behind an archer in a wall's only gap swaps once and goes through; a melee friend in the gap is waited
+  for.
+- **(c) Fewer words.** "Saved" is gone: only its ailment chip rises beside the fighter, and a saved charm, shove or blast shows nothing.
+  "Miss" and "Glance" now show only with the numbers setting on, as "Immune" already did. The Miss whoosh shows either way.
+- **(d) A raised wall thins while someone stands in it** (`WALL_DIM` 0.45, `towards` in `fxRules.ts`): its painted or pack loop eases
+  down to 45% while a living fighter stands on the tile, and back when the tile is empty. The art prompt for a low ground-fire stays in
+  `battle-feel-art-prompts.md` for the owner's queue.
+- **`FEEL`** (`src/sim/feel.ts`): the three sim rules (FAR_WALK from round 1, the swap and the floor) can be turned off, together (`on`)
+  or one at a time (`walk`, `swap`, `floor`).
+  `test/ailments-identical.test.ts` turns them off, as it does the bosses' great attacks and their weaknesses, so its proof stands. Round 1
+  shipped without this, and that test failed on it.
+
+### What the coverage showed
+
+- **Formations** (`FORM=wall|spear|square|skirmish node tools/battle-feel/audit.mjs 15:24`, 300 fights each, the team placed by
+  `formationSpots` with the formations on):
+
+  | Shape | read as it | won | strikers waiting | strikers' back-and-forth |
+  | --- | --- | --- | --- | --- |
+  | none | - | 97.0% | 9.5% | 9.0% |
+  | Shield Wall | 91 of 300 | 97.3% | 13.2% | 9.8% |
+  | Spearhead | 168 of 300 | 98.0% | 10.4% | 10.1% |
+  | Hollow Square | 236 of 300 | 95.7% | 10.7% | 10.1% |
+  | Skirmish | 300 of 300 | 98.3% | 9.0% | 11.4% |
+
+  All within noise on wins. The Shield Wall packs the front row, so the strikers behind it wait longest. Skirmishers spread out and step
+  about more. With random five-hero teams, the Wall is read in under a third of fights (it needs two front-liners) and the Spearhead in a
+  little over half. A party that lays the shape without the heroes it needs gets no formation, and nothing in this audit says whether the
+  page tells the player (a question for the tactics owner, not changed here).
+- **The daily** (`npm run daily-rate -- --days 40`, main 0.450.0 against the branch before the walk was narrowed): cleared with the two
+  hearts 88% and 88%; with no hearts 65% and 70% (two dates of forty). On the final code, the daily test's own dates: 44 of 56 against
+  main's 45. Frame strips of a plain wave and the boss of the day at all three phone sizes:
+  `docs/samples/battle-feel/daily-*.jpg`.
+- **The Assault** (`npm run assault-bench -- --seeds 2`): the same checksums on main and the branch (3241885634 and 3980559039), so its
+  battles play exactly as before (the walk and the swap leave `b.field` alone, and the floor never changes a blow there on these seeds).
+  The bench's time per tick is over its own budget on both (an existing matter, not this branch's).
+
+### The full suite, and what that changed
+
+Round 1 was checked with the affected tests only. The director's full `npm test` on it failed seven tests:
+- the hero balance band (with and without the ultimate);
+- the daily's clear-rate band;
+- four replay tests that pin recorded fights: the Nemesis War's, two in spells-identity, and the Last Stand's.
+
+What the full suite led to:
+
+- **The balance band.** Each rule turned off alone (`FEEL.walk`, `FEEL.swap`, `FEEL.floor`; `FEEL=walk node tools/battle-feel/lifts.mjs
+  12000 5`) showed the walk rule was the one. It also made the *foes* smarter: the average team fell from 59.1% to 57.1%, and the Gorgon
+  (−7.1), the Minotaur (+6.2) and the Sea Reaver (+6.2) left the band. The floor and the swap alone stayed at main's numbers. The walk rule
+  is now for **melee heroes only**. The foes keep their minds, as with the swap, and a shooter has tiles enough to choose from (heroes-only
+  still left the Gorgon at −6.01). The band was not touched.
+
+  | Balance table (`heroLifts`, 12,000 fights) | main | heroes, walk on foes too | heroes only | melee heroes only |
+  | --- | --- | --- | --- | --- |
+  | Level 1, stage 5: average / worst | 59.11 / Gorgon −5.44 | 57.69 / Gorgon −6.91 | 59.47 / Gorgon −6.01 | 59.52 / Gorgon −5.75 |
+  | Level 30, stage 92: average / worst | 61.01 / Wizard −5.81 | - | 61.64 / Wizard −5.50 | 61.54 / Wizard −5.82 |
+
+- **The daily's band** (the test's own dates 113 to 168, `node tools/battle-feel/dailyBand.mjs`): main clears 45 of 56 (80%), the branch 44
+  (79%). The band is 50 to 85%.
+- **The replay tests**, re-recorded from each test's own output, nothing they check loosened:
+  - `test/fixtures/spells-identity.json`: every scenario but tower, stand and calamity moved (melee heroes walk and swap differently, and
+    skills land their floor).
+  - `nemesis-regression`: three of its eight army runs re-pinned.
+  - `stand-regression`: plays as pinned with the melee-only walk; nothing re-pinned.
+  - `ailments-identical` (the ailment model's proof) turns `FEEL` off for its proof, as it already turns off the bosses' great attacks and
+    their weaknesses, so its fixture is unchanged.
+- With the walk on melee heroes only, the foes no longer get round 1's smaller drop in back-and-forth steps; the heroes keep theirs.
+
+### Balance after round 2 (against main 0.450.0, the final code: walk for melee heroes, swap, floor)
+
+| Measure | main | branch |
+| --- | --- | --- |
+| Sweep 1:5 | 58.0% | 58.5% |
+| Sweep 1:8 | 6.5% | 6.8% |
+| Sweep 15:30 | 69.7% | 70.1% |
+| Sweep 35:65 | 98.1% | 98.1% |
+| Hero balance table, level 1 stage 5: average / worst hero | 59.11 / −5.44 | 59.52 / −5.75 |
+| Hero balance table, level 30 stage 92: average / worst hero | 61.01 / −5.81 | 61.54 / −5.82 |
+| Armies 5a, mean waves won over 27 cells | 116.8 | 116.8 |
+| Daily test's dates 113 to 168 cleared | 45 of 56 | 44 of 56 |
+| Daily, 40 dates, with hearts / without (taken before the walk was narrowed) | 88% / 65% | 88% / 70% |
+| Assault bench checksums, seeds 1 and 2 | 3241885634, 3980559039 | the same |
+
+The audit at level 15 (500 fights), back-and-forth steps against main: front-liners 5.8% to 5.4%, strikers 7.1% to 7.0%, support 7.6% to
+7.4%; foes as on main (7.1%).
+
+### Still for the director
+
+1. **The low-tune skills** (Undertow, Rift Pounce, Boarding Swing) still show 1 or 2 at low levels. Options: raise their `tune` a little
+   (a balance pass), or show a skill's number only when it is 3 or more and let the hit's effect carry it. Recommendation: the second,
+   renderer only, for these utility hits.
+2. **A formation the party cannot make** is silently no formation (see above). Recommendation: the deploy screen says which shape it read,
+   or "no formation".
+
 ## Checks run
 
-`npm run typecheck`. `npm test -- battle-feel battle-sound tactile-juice combat-fx battle terrain height foe-styles hero-kits`. `npm run web`.
+`npm run typecheck`. `npm test -- battle-feel battle-sound tactile-juice combat-fx battle terrain height foe-styles hero-kits` (round 1);
+round 2 the full `npm test` (3,004 tests, all pass). `npm run web`.
 The page at 393x852, 360x780 and 412x915 (frame strips in `docs/samples/battle-feel/`).

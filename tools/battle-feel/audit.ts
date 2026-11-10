@@ -13,6 +13,7 @@ import { FIELD_BANDS } from '../../src/sim/foes';
 import { mixSeed, Rng } from '../../src/sim/rng';
 import { UNITS } from '../../src/sim/units';
 import { isFeared } from '../../src/sim/ailments';
+import { formationSpots, setFormations, type Formation } from '../../src/sim/formations';
 import { heldBy } from '../../src/sim/tactics';
 import { roleOf } from '../../src/sim/suggest';
 import { deploySpots, fieldBoost, pickTeam, sweepBoost } from '../heroSweep';
@@ -38,6 +39,7 @@ function cell(level: number, stage: number, print: boolean) {
   };
   // where the front line stands: rows from the nearest foe, for front-liners and back-liners, sampled each second
   const waits = new Map<string, number>();
+  const formed = { n: 0, held: 0 };
   const backs = new Map<string, number>();
   const gap = new Map<string, { n: number; sum: number }>();
   for (let g = 0; g < GAMES; g++) {
@@ -45,8 +47,15 @@ function cell(level: number, stage: number, print: boolean) {
     const team = pickTeam(new Rng(mixSeed(seed, 0x7ea4)));
     const b = startBattle(seed, FIELD_BANDS[g % FIELD_BANDS.length], fieldBoost(stage));
     const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
-    team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, sweepBoost(1, level)));
+    // (FORM=wall|spear|square|skirmish: the team stands in that shape, with the formations on)
+    const form = process.env.FORM as Formation | undefined;
+    if (form) {
+      setFormations(b, true);
+      formationSpots(b.board, team, form).forEach((at, i) => place(b, team[i], at.u, at.v, undefined, sweepBoost(1, level)));
+    } else team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, sweepBoost(1, level)));
+    if (form) formed.n++;
     fight(b);
+    if (form && b.formation?.kind === form) formed.held++;
     const open: Open[] = [];
     const trail = new Map<number, number[]>();
     const lastBusy = new Map<number, number>();
@@ -157,6 +166,7 @@ function cell(level: number, stage: number, print: boolean) {
   }
   lengths.sort((a, c) => a - c);
   const q = (p: number) => (lengths[Math.floor(p * (lengths.length - 1))] / 1000).toFixed(1);
+  if (formed.n) console.log(`\n(formation ${process.env.FORM}: read as that shape in ${formed.held} of ${formed.n} fights)`);
   console.log(`\n== level ${level}, stage ${stage}: ${GAMES} fights, won ${((100 * won) / GAMES).toFixed(1)}%, fight length s: p10 ${q(0.1)}, median ${q(0.5)}, p90 ${q(0.9)}`);
   for (const [r, t] of time) console.log(`  ${r.padEnd(8)} waiting ${((100 * t.wait) / t.alive).toFixed(1)}% of its time; steps ${((t.steps * 60000) / t.alive).toFixed(1)}/min, back-and-forth ${((100 * t.zigzag) / Math.max(1, t.steps)).toFixed(1)}% of steps, walked off when just struck ${((100 * t.chaseHit) / Math.max(1, t.steps)).toFixed(1)}%`);
   console.log('  why they wait: ' + [...waits.entries()].sort((a, c) => c[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', '));

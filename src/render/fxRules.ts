@@ -397,6 +397,12 @@ export class HealPool {
   }
 }
 
+/** BATTLE-FEEL round 2: how far a raised wall's loop (a Wall of Fire's flames) thins while a fighter stands in its tile, so the fighter shows. */
+export const WALL_DIM = 0.45;
+
+/** An alpha eased towards `top`: up over 150 ms, down over 300 ms (`dt` in ms). */
+export const towards = (a: number, top: number, dt: number): number => (a < top ? Math.min(top, a + (top * dt) / 150) : Math.max(top, a - dt / 300));
+
 /** The knock a blow gives its target, in px along the line from the attacker: bigger for a bigger share of health. */
 export const nudgeOf = (share: number) => Math.min(7, 2 + share * 14);
 

@@ -37,6 +37,7 @@ import { DAILY_ANSWER } from '../src/sim/modes';
 import { KITS } from '../src/sim/abilities';
 import { BOSS_BIG } from '../src/sim/bossAttacks';
 import { WEAK } from '../src/sim/weakness';
+import { FEEL } from '../src/sim/feel';
 
 // (MERGE-TWO, the owner's change to merging, re-recorded the three scenarios that hire and merge: `army`, `daily` and `tower` (two of a kind merge,
 // by the greedy player's Auto merge, and the spire's foes grow faster); every other scenario's hash is the one recorded on main)
@@ -135,9 +136,12 @@ test('with the new ailments off, every mode plays as it did before the ailment m
   BOSS_BIG.on = false;
   // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)
   WEAK.on = false;
+  // (BATTLE-FEEL: and the fight's feel rules, the walk, the swap and the skill floor, docs/notes/battle-feel.md)
+  FEEL.on = false;
   try {
     assert.deepEqual(scenarioHashes(), recorded);
   } finally {
+    FEEL.on = true;
     BOSS_BIG.on = true;
     WEAK.on = true;
     AILMENT_SWITCH.on = was;

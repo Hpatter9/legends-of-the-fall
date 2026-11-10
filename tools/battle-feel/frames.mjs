@@ -31,6 +31,9 @@ const FIGHTS = [
   { name: 'ogres-casters-lv32', army: 'ogres', stage: 5, level: 32, party: ['knight', 'lightningMage', 'wizard', 'sage', 'cleric'], speed: 2 },
   { name: 'infernal-ults-lv40', army: 'infernal', stage: 8, level: 40, party: ['samurai', 'reaper', 'kraken', 'druid', 'gunslinger'], speed: 3, tier: 1 },
   { name: 'yokai-boss-lv46', army: 'yokai', stage: 15, level: 46, party: ['paladin', 'dragoon', 'demonSwordsman', 'illusionist', 'cleric'], speed: 1 },
+  // (round 2: the daily's waves, a plain one and the boss of the day, on a fixed date)
+  { name: 'daily-w4-lv10', mode: { kind: 'daily', date: 20261110, practice: true }, stage: 4, level: 10, party: ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'], speed: 1 },
+  { name: 'daily-boss-lv20', mode: { kind: 'daily', date: 20261110, practice: true }, stage: 10, level: 20, party: ['knight', 'cleric', 'kunoichi', 'archer', 'wizard'], speed: 2 },
 ];
 const ONLY = opt('--only', '').split(',').filter(Boolean);
 const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 1));
@@ -56,7 +59,7 @@ for (const [w, h] of SIZES) {
       localStorage.setItem('lotf-tips-off', '1');
       localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false, speed, autoUlt: true, autoSpells: true }));
     }, [f.party, xpAt(f.level), f.speed]);
-    await page.goto(`http://localhost:${port}/`);
+    await page.goto(`http://localhost:${port}/`, { timeout: 180000 });
     await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 60000 });
     await page.waitForTimeout(1500);
     await page.evaluate(() => document.getElementById('tipSkip')?.click());
@@ -64,7 +67,7 @@ for (const [w, h] of SIZES) {
     await page.evaluate((f) => {
       const g = window.__game;
       const r = JSON.parse(JSON.stringify(g.run));
-      Object.assign(r, { seed: 4242, mode: { kind: 'army', army: f.army }, tier: f.tier ?? 0, stage: f.stage, over: false, cleared: false, gold: 0, event: undefined, roster: f.party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+      Object.assign(r, { seed: 4242, mode: f.mode ?? { kind: 'army', army: f.army }, tier: f.tier ?? 0, stage: f.stage, over: false, cleared: false, gold: 0, event: undefined, roster: f.party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
       document.getElementById('home').hidden = true;
       g.startRun(r);
     }, f);
