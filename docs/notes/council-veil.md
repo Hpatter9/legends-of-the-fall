@@ -18,6 +18,6 @@ from 62% to 82% black, so only a little of its fire showed round the edges. Pict
 ## Checks
 
 - `npm run typecheck`: clean.
-- `npm test`: the full suite.
+- `npm test`: the full suite, 3094 pass (before 0.471.0 was merged in; nemesis, ambient, ui-standard and updates after).
 - `npm run web`: builds.
 - The ended board looked at at 393 x 852, 360 x 780 and 412 x 915, at its top and its foot; the live board at 393 x 852.
