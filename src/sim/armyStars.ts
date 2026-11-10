@@ -7,6 +7,7 @@
 // later the army. Pure rules: no Pixi, no DOM.
 
 import { marchPay } from './march';
+import { movedStones } from './hiddenModes';
 import { grantClearHero } from './clearHero';
 import { bookById } from './bookData';
 import { chestBook, grantBook } from './books';
@@ -270,7 +271,8 @@ export function peekChest(m: Meta, index: number): Loot | null {
  */
 export function chestStones(c: Pick<StashChest, 'at' | 'daily' | 'bonus' | 'dry' | 'half'>): number {
   if (c.dry) return 0;
-  const n = c.daily !== undefined ? DAILY_CHEST_STONES + (c.bonus ?? 0) : CHEST_STONES[c.at] ?? 1;
+  // (FIRST-HOUR 3: while the Last Stand and the Calamity are hidden a daily chest holds their moved stones too, `movedStones`)
+  const n = c.daily !== undefined ? DAILY_CHEST_STONES + (c.bonus ?? 0) + movedStones('daily') : CHEST_STONES[c.at] ?? 1;
   return c.half ? Math.ceil(n / 2) : n;
 }
 
@@ -302,7 +304,8 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   const crowns = c.conquest ? Math.round(roll.crowns * CONQUEST_SHARE * (c.half ? 0.5 : 1)) : roll.crowns;
   const items: LootItem[] = [{ type: 'crowns', text: `${crowns} crowns`, n: crowns }];
   if (apply) m.crowns += crowns;
-  const stones = c.conquest ? Math.ceil(chestStones(c) * CONQUEST_SHARE) : chestStones(c);
+  // (FIRST-HOUR 3: and a Conquest chest the hidden modes' moved stones: more for a hold's first fall, fewer for a regrouped Warband's)
+  const stones = c.conquest ? Math.ceil(chestStones(c) * CONQUEST_SHARE) + movedStones(c.half ? 'restorm' : 'conquest') : chestStones(c);
   if (apply) m.stones = (m.stones ?? 0) + stones;
   items.push(...stoneItems(stones, 0));
   // (XP tomes: on top of the rest, from a side stream of the chest's seed, so the crowns and gear roll as they always did)

@@ -14,6 +14,7 @@ import { LENGTHS, lengthOf, partsOf, starsOf, storyParts } from '../src/sim/ques
 import { CAL_STONES_PER_DRAW, DAILY_CHEST_STONES } from '../src/sim/unlockRules';
 import { newStandRun, settleStand } from '../src/sim/stand';
 import { clearStones } from '../src/sim/calReward';
+import { setStonesMoved } from '../src/sim/hiddenModes';
 
 const armies = ARMIES.map((a) => a.id);
 const roster = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
@@ -84,7 +85,11 @@ test('a one-star quest handed in with a chest pays the chest with no stones; a t
 test("the shop's chests hold 1, 3 and 6 stones; the daily chest 1 and a stone a bonus star; a Calamity draw 1, and its chest half", () => {
   assert.deepEqual(SHOP.map((c) => c.stones), [1, 3, 6]);
   assert.equal(DAILY_CHEST_STONES, 1);
+  // (FIRST-HOUR 3: the daily chest's own stones are 1 and one a bonus star, as they were; while the modes are hidden one more is added)
+  setStonesMoved(false);
   assert.equal(chestStones({ at: 3, daily: 20261101, bonus: 2 }), 3);
+  setStonesMoved(true);
+  assert.equal(chestStones({ at: 3, daily: 20261101, bonus: 2 }), 4);
   assert.equal(CAL_STONES_PER_DRAW, 1);
   assert.equal(clearStones(0), 2);
   assert.equal(chestStones({ at: 10 }), 3);

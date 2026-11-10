@@ -33,7 +33,8 @@ import { dailyChestSeed, dailyCrowns, DAILY_WAVES } from '../src/sim/daily';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
 import { crownsTotal, FOE_ENTRIES, shownEntries, stonesTotal } from '../src/sim/codex';
-import { achievementShown, modesHidden, questShown } from '../src/sim/hiddenModes';
+import { achievementShown, modesHidden, questShown, setModesHidden, setStonesMoved } from '../src/sim/hiddenModes';
+import { grantClearHero } from '../src/sim/clearHero';
 import { QUESTS } from '../src/sim/questData';
 import { ACHIEVEMENTS, stonesOfAchievement } from '../src/sim/achievements';
 
@@ -94,6 +95,20 @@ const EXTRA_CROWNS = 900;
 // (FIRST-HOUR 2: while the Last Stand and the Calamity are hidden (`hiddenModes.ts`) the model plays neither and counts nothing only they
 // give: no spire climb, no Calamity, none of their achievements or quests. `--with-modes 1` plays them as before, to compare.)
 const WITH_MODES = !modesHidden() || arg('--with-modes', 0) > 0;
+// (FIRST-HOUR 3: with the modes played their stones are the game's own again, and the stones moved while they are hidden go away: the
+// flag itself is lifted, so `movedStones` reads 0. `--nomoved 1` keeps the modes hidden and pays no moved stones, to see the gap.)
+if (WITH_MODES) setModesHidden(false);
+if (arg('--nomoved', 0) > 0) setStonesMoved(false);
+// The Assault (it was not in this model before FIRST-HOUR 3). A hold can be stormed at ten stars on its army, which is its Legendary
+// clear; the model has no Legendary days, so a hold falls `CONQUEST_AFTER` days after its army's Elite clear (the first army's ten
+// stars come at about level 45, day 39 to 45: `docs/notes/army-pace.md`). Its Warband regroups each week and is stormed again at
+// Mythic, the wall: from `RESTORM_FROM` (and `RESTORM_WAIT` days after the fall) a daily player wins `--restorm` of those weeks.
+// Only the Conquest chests are counted: the Spoils of the Hold and the daily tribute are crowns, and are left out as they always were.
+const NO_ASSAULT = arg('--noassault', 0) > 0;
+const CONQUEST_AFTER = 20;
+const RESTORM_FROM = 90;
+const RESTORM_WAIT = 30;
+const RESTORM_WIN = process.argv.includes('--restorm') ? Number(process.argv[process.argv.indexOf('--restorm') + 1]) : 0.5;
 const BADGES = ACHIEVEMENTS.filter((a) => WITH_MODES || achievementShown(a.id, []));
 const BADGE_CROWNS = BADGES.reduce((n, a) => n + a.crowns, 0) + crownsTotal('bestiary') + crownsTotal('heroes');
 const BADGE_STONES = BADGES.reduce((n, a) => n + stonesOfAchievement(a), 0) + stonesTotal('bestiary') + stonesTotal('heroes');
@@ -174,6 +189,8 @@ function simulate(seed: number): Report {
         rec.clears = 1;
         today += firstClearTotal(a, 0);
         m.stash.push({ army: a.id, at: FIRST_CLEAR_CHEST[0], tier: 0, seed: firstClearSeed(m.seed, a, 0), first: true });
+        // (FIRST-HOUR 3: the first two armies' first clear gives a new save its fourth and fifth hero)
+        grantClearHero(m, a, true);
         armyGain(settleArmyOres(m, a.id, 'final', 0, true, true, mixSeed(seed, 0x0e55, day, i), a.waves.length));
         m.stash.push({ army: a.id, at: 3, tier: 0, seed: chestSeed(m.seed, a, 3) });
         ((m.codex ??= { met: [], kills: {} }).met).push(...armyFoes(a));
@@ -189,6 +206,15 @@ function simulate(seed: number): Report {
       armyGain(settleArmyOres(m, a.id, 'final', t, true, true, mixSeed(seed, 0x0e56, day, i), a.waves.length));
       if (t === 1) m.stash.push({ army: a.id, at: 5, tier: t, seed: chestSeed(m.seed, a, 5) });
     }
+    // the Assault: a hold's first fall and its Conquest chest, then the regrouped Warband's each week it is beaten
+    if (!NO_ASSAULT)
+      for (const [i, t, d] of HARDER) {
+        if (t !== 2) continue;
+        const fell = d + CONQUEST_AFTER;
+        const a = ARMIES[i];
+        if (day === fell) m.stash.push({ army: a.id, at: FIRST_CLEAR_CHEST[3], tier: 3, seed: mixSeed(seed, 0xc0a1, i), conquest: true });
+        else if (day > fell && day >= Math.max(RESTORM_FROM, fell + RESTORM_WAIT) && day % 7 === 0 && new Rng(mixSeed(seed, 0xc0a2, day, i)).chance(RESTORM_WIN)) m.stash.push({ army: a.id, at: FIRST_CLEAR_CHEST[4], tier: 4, seed: mixSeed(seed, 0xc0a3, day, i), conquest: true, half: true });
+      }
     // the farm: the best tier cleared, thirteen runs
     today += FARM_RUNS * bestFarm();
     // (the farm's boss waves now and then drop the army's ores)
@@ -254,7 +280,7 @@ function simulate(seed: number): Report {
       const c = m.stash[0];
       const was = m.stones ?? 0;
       openChest(m, 0);
-      note(c.daily !== undefined ? 'Daily chest' : c.half ? 'Calamity chest' : c.tower ? 'Spire chests' : 'Army first-clear and star chests', (m.stones ?? 0) - was);
+      note(c.conquest ? (c.half ? 'Assault: a Warband beaten again' : 'Assault: first conquests') : c.daily !== undefined ? 'Daily chest' : c.half ? 'Calamity chest' : c.tower ? 'Spire chests' : 'Army first-clear and star chests', (m.stones ?? 0) - was);
     }
     aw.src.chest += held() - before;
     for (const k of grantContent(m)) at[k] = at[k] ?? day;
