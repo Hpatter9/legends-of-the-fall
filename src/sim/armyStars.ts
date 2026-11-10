@@ -7,6 +7,8 @@
 // later the army. Pure rules: no Pixi, no DOM.
 
 import { marchPay } from './march';
+import { movedStones } from './hiddenModes';
+import { grantClearHero } from './clearHero';
 import { bookById } from './bookData';
 import { chestBook, grantBook } from './books';
 import { dailyStarsMax } from './dailyThemes';
@@ -61,6 +63,8 @@ export interface StarResult {
   chests: number[];
   /** The milestone that sizes the first-clear chest this run paid (3, 5 or 10), or 0 when the tier was cleared before. */
   firstClear: number;
+  /** FIRST-HOUR 3: the hero the army's first clear gave a new save (`clearHero.ts`); missing is none. */
+  hero?: string;
   /** DEPTH-BUILD: the extra chests a cursed or night march's clear put in the stash. */
   marchChests?: number;
 }
@@ -81,12 +85,15 @@ export function settleArmyRun(m: Meta, run: Run): StarResult | null {
     if (!(before & (1 << i))) fresh.push(i);
   });
   (rec.met ??= {})[String(tier)] = before | mask;
+  // (FIRST-HOUR 3: the army's first clear on any tier may give a new save a whole hero, `clearHero.ts`)
+  const firstEver = !(rec.first ?? 0);
   const firstClear = grantFirstClear(m, a, rec, tier);
+  const hero = grantClearHero(m, a, firstEver);
   // (DEPTH-BUILD: a cursed clear earns the tier's laurel; a cursed or night march's clear one more chest, from its own side stream)
   if (run.orders?.mod === 'cursed' && !(rec.cursed ?? []).includes(tier)) rec.cursed = [...(rec.cursed ?? []), tier].sort();
   const extra = marchPay(run.orders).chests;
   for (let i = 0; i < extra; i++) m.stash.push({ army: a.id, at: 3, tier, seed: mixSeed(run.seed, 0x6d62, i) });
-  return { tier, rules, fresh, gained: fresh.length, total: starsOf(rec), chests: grantChests(m, a, rec, tier), firstClear, ...(extra ? { marchChests: extra } : {}) };
+  return { tier, rules, fresh, gained: fresh.length, total: starsOf(rec), chests: grantChests(m, a, rec, tier), firstClear, ...(hero ? { hero } : {}), ...(extra ? { marchChests: extra } : {}) };
 }
 
 /** The star milestone whose chest size an army's first clear of each tier pays: Normal bronze, Hard and Elite silver, Legendary and Mythic gold. */
@@ -264,7 +271,8 @@ export function peekChest(m: Meta, index: number): Loot | null {
  */
 export function chestStones(c: Pick<StashChest, 'at' | 'daily' | 'bonus' | 'dry' | 'half'>): number {
   if (c.dry) return 0;
-  const n = c.daily !== undefined ? DAILY_CHEST_STONES + (c.bonus ?? 0) : CHEST_STONES[c.at] ?? 1;
+  // (FIRST-HOUR 3: while the Last Stand and the Calamity are hidden a daily chest holds their moved stones too, `movedStones`)
+  const n = c.daily !== undefined ? DAILY_CHEST_STONES + (c.bonus ?? 0) + movedStones('daily') : CHEST_STONES[c.at] ?? 1;
   return c.half ? Math.ceil(n / 2) : n;
 }
 
@@ -296,7 +304,8 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   const crowns = c.conquest ? Math.round(roll.crowns * CONQUEST_SHARE * (c.half ? 0.5 : 1)) : roll.crowns;
   const items: LootItem[] = [{ type: 'crowns', text: `${crowns} crowns`, n: crowns }];
   if (apply) m.crowns += crowns;
-  const stones = c.conquest ? Math.ceil(chestStones(c) * CONQUEST_SHARE) : chestStones(c);
+  // (FIRST-HOUR 3: and a Conquest chest the hidden modes' moved stones: more for a hold's first fall, fewer for a regrouped Warband's)
+  const stones = c.conquest ? Math.ceil(chestStones(c) * CONQUEST_SHARE) + movedStones(c.half ? 'restorm' : 'conquest') : chestStones(c);
   if (apply) m.stones = (m.stones ?? 0) + stones;
   items.push(...stoneItems(stones, 0));
   // (XP tomes: on top of the rest, from a side stream of the chest's seed, so the crowns and gear roll as they always did)

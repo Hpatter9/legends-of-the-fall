@@ -5,6 +5,8 @@
 import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { GroundPaint, GroundSet, patchRims, patchTile, reachOfWidth } from './groundMarks';
 import { AREA_REACH, areaSkill, areaTiles, auraTiles, spellTiles, tilesWithin } from './fxPlace';
+import { ALIVE, stripFrame, tileLook, tilePhase } from './fxAlive';
+import { ALIVE_CELL, aliveFrames, loadAliveArt } from './aliveArt';
 import { TERRAIN_URLS } from './terrainArt';
 import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
@@ -47,8 +49,12 @@ import { ailmentChip } from './ailmentLayer';
 
 /** An ailment's damage colour (none for a plain blow: it keeps the usual white, gold or red). */
 const numberColour = (ail?: AilmentKey | 'shatter'): number | undefined => (ail === 'shatter' ? SHATTER_COLOUR : ail ? STATUS_STYLES[ail].number : undefined);
-/** FX-PLACE: the base fill of an area's marked tiles; the set's alpha carries main's pulse over it (0.2 to 0.27), and the rim stays firm. */
-const AREA_FILL = 0.235;
+/** FX-ALIVE: a living patch's handle (`alivePatch`): its strength the caller sets as it lasts. */
+interface AlivePatch {
+  strength: number;
+  readonly destroyed: boolean;
+  destroy(): void;
+}
 import { loadPackArt, PACK } from './fxSheets';
 import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
 import { showDuoToast } from '../duoToast';
@@ -58,7 +64,7 @@ import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
 import { isMythic } from '../sim/mythicRules';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
-import { arcStyle, bits, FLASH_MAX, FLASH_MS, GLOW, HealPool, numberShown, towards, WALL_DIM, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
+import { arcStyle, bits, FLASH_MAX, FLASH_MS, GLOW, HealPool, SPELL_ELEMENT, numberShown, towards, WALL_DIM, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
@@ -111,7 +117,7 @@ export async function loadFx(): Promise<void> {
   await loadVfxArt();
   await loadPackArt();
   magic.pinkHeart = { frames: VFX.pinkHeart };
-  await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt()]);
+  await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt(), loadAliveArt()]);
   // (RPG-SPELLS: the painted spell effects load by URL behind the game; until they have, the placeholders show)
   void loadSpellArt();
   // (ULT-SHOW: the showcases' painted poses and props, behind the game too)
@@ -1921,19 +1927,15 @@ export class Fx {
     };
     const tile = () => e.at ?? (me ? { u: me.u, v: me.v } : null);
     if (look.paint && this.paintAura(look.paint, e.reach, centre, live, () => this.auraShown.delete(`${e.by}:${e.what}`), { hang: look.hang, ground: { b, tile } })) return;
-    // (FIXES-4: the reach's tiles tinted, a rim round them, each on its tile's ground under whoever stands in it; laid again as it moves)
-    let g = new GroundSet();
+    // (FIXES-4: the reach's tiles tinted, a rim round them, each on its tile's ground under whoever stands in it; laid again as it moves.
+    // FX-ALIVE: a living patch, its rim bright and its fill faint, each tile breathing on its own beat)
+    const el = skillElement(e.what);
+    let g = this.alivePatch(b, [], look.ring);
     let at = '';
     const lay = (c: { u: number; v: number }) => {
       g.destroy();
-      g = new GroundSet();
       // (FX-PLACE: the diamond of its reach, as the sim counts it (Manhattan); it was the square round it, half again as many tiles)
-      const tiles = auraTiles(b.board, c, e.reach).map((t) => ({ ...t, h: tileAt(b.board, t.u, t.v)!.h }));
-      const rimOf = patchRims(tiles);
-      for (const tl of tiles) {
-        const [x, y] = this.tilePos(b, tl.u, tl.v);
-        g.add(patchTile(new Graphics(), x, y, rimOf(tl.u, tl.v), { colour: look.ring, fill: 0.14, edge: 0.75, width: 2, inset: 0 }), this.groundOf(tl.u, tl.v));
-      }
+      g = this.alivePatch(b, auraTiles(b.board, c, e.reach), look.ring, el);
     };
     const view = { get destroyed() { return g.destroyed; }, destroy: () => g.destroy() };
     let t = 0;
@@ -1955,14 +1957,19 @@ export class Fx {
           alpha = Math.max(0, alpha - dt / 300);
           if (alpha <= 0) this.auraShown.delete(`${e.by}:${e.what}`);
         }
-        g.alpha = alpha;
+        g.strength = alpha;
+        if (alpha <= 0) g.destroy();
         return alpha > 0;
       },
     });
+    // (FX-ALIVE: the loop at its heart thins while a fighter stands there, its caster most often)
     this.lookLoop(look, () => {
       const [x, y] = centre();
       return [x, y - 4];
-    }, 1.3, live);
+    }, 1.3, live, undefined, () => {
+      const c = tile();
+      return c && b.units.some((x) => x.alive && x.u === c.u && x.v === c.v) ? ALIVE.OCCUPIED + 0.1 : 1;
+    });
   }
 
   /** The healers' painted spells (RPG-SPELLS batch 2, session C), over the looks their skills already play: by the skill's key, a part
@@ -2208,17 +2215,65 @@ export class Fx {
     return at(u, v, tileAt(b.board, u, v)?.h ?? 0);
   }
 
-  /** FX-PLACE: a tinted patch on `tiles`, each piece on its own tile's top and ground (so it sits on raised and sunken tiles alike, under whoever
-   *  stands in it), with a rim round the patch. Its strength is the set's `alpha`. */
-  private tilePatch(b: Battle, tiles: readonly { u: number; v: number }[], colour: number, fill = 0.32, edge = 0.8): GroundSet {
+  /** FX-PLACE, FX-ALIVE: a living patch on `tiles` (`fxAlive.ts`), each piece on its own tile's top and ground (so it sits on raised and sunken
+   *  tiles alike, under whoever stands in it): a faint fill, a bright rim round the patch, and the element's rune strip from the pack lying on
+   *  each tile (none on the battery saver), each tile breathing and turning on its own beat, its fill and strip thinned under a fighter. The
+   *  caller sets its `strength` (0 to 1) as it lasts and destroys it when done. */
+  private alivePatch(b: Battle, tiles: readonly { u: number; v: number }[], colour: number, el?: Element): AlivePatch {
     const set = new GroundSet();
     const withH = tiles.map((t) => ({ u: t.u, v: t.v, h: tileAt(b.board, t.u, t.v)?.h ?? 0 }));
     const rimOf = patchRims(withH);
-    for (const t of withH) {
+    // (the painted living-ground loop, a whole tile, when the sheet has landed (`aliveArt.ts`); else the pack's rune for the element)
+    const painted = el ? aliveFrames(el) : [];
+    const strip = el && !settings().saver ? (painted.length ? painted : PACK[packKey(el, 'rune')]) : undefined;
+    const tileArt = painted.length > 0;
+    const pieces = withH.map((t) => {
       const [x, y] = this.tilePos(b, t.u, t.v);
-      set.add(patchTile(new Graphics(), x, y, rimOf(t.u, t.v), { colour, fill, edge, width: 2, inset: 0 }), this.groundOf(t.u, t.v));
-    }
-    return set;
+      const layer = this.groundOf(t.u, t.v);
+      const fill = set.add(patchTile(new Graphics(), x, y, [], { colour, fill: 1, edge: 0, inset: 0 }), layer);
+      const rim = set.add(patchTile(new Graphics(), x, y, rimOf(t.u, t.v), { colour, fill: 0, edge: 1, width: 2.5, inset: 0 }), layer);
+      let sp: Sprite | undefined;
+      if (strip?.length) {
+        // (the rune lies on the tile: as wide as most of it, squashed to the ground's slope, brightening rather than covering)
+        sp = set.add(new Sprite(strip[0]), layer);
+        sp.anchor.set(0.5);
+        // (a painted loop is a whole tile, drawn to the tile's width; the pack's 32 px rune lies on most of it, squashed to the slope)
+        if (tileArt) sp.scale.set(TW / ALIVE_CELL[0]);
+        else sp.scale.set((TW * 0.8) / 32, (TW * 0.4) / 32);
+        sp.blendMode = 'add';
+        sp.position.set(x, y);
+      }
+      return { u: t.u, v: t.v, phase: tilePhase(t.u, t.v), fill, rim, sp };
+    });
+    const patch: AlivePatch = {
+      strength: 1,
+      get destroyed() {
+        return set.destroyed;
+      },
+      destroy: () => set.destroy(),
+    };
+    let t = 0;
+    this.items.push({
+      view: new Container(),
+      step: (dt) => {
+        if (set.destroyed) return false;
+        t += dt;
+        const calm = this.calm();
+        for (const p of pieces) {
+          if (p.fill.destroyed) continue;
+          const occupied = b.units.some((x) => x.alive && x.u === p.u && x.v === p.v);
+          const look = tileLook(t, p.phase, occupied, calm, patch.strength);
+          p.fill.alpha = look.fill;
+          p.rim.alpha = look.rim;
+          if (p.sp && strip) {
+            p.sp.alpha = look.strip;
+            p.sp.texture = strip[stripFrame(t, p.phase, strip.length, calm)];
+          }
+        }
+        return true;
+      },
+    });
+    return patch;
   }
 
   /** FIXES-4: the layer a mark on tile (u, v) goes on: the tile's own ground, else `ground` when its page shows it, else the effects' own. */
@@ -2342,7 +2397,7 @@ export class Fx {
     view.addChild(g);
     this.root.addChild(view);
     // (the marked tiles lie on their own tiles' ground, under the fighters standing in them; the arrows and the ball fall over them)
-    const patch = this.tilePatch(b, reach.tiles, color, AREA_FILL, 0.75);
+    const patch = this.alivePatch(b, reach.tiles, color, meteor ? 'fire' : 'wind');
     const tiles: [number, number][] = reach.tiles.map((t) => this.tilePos(b, t.u, t.v));
     const [cx, cy] = this.tilePos(b, e.u, e.v);
     // volley: a dozen arrows, each falling in its own moment; meteor: one fireball from the sky
@@ -2385,8 +2440,8 @@ export class Fx {
         g.clear();
         // (the marked tiles breathe, quicker as it nears; never fading right out, and steady with reduced motion)
         const k = Math.min(1, t / e.ms);
-        const pulse = this.calm() ? 0.2 : 0.2 + 0.07 * Math.sin((t / (320 - 190 * k)) * Math.PI);
-        patch.alpha = pulse / AREA_FILL;
+        // (it grows surer as the blow nears)
+        patch.strength = this.calm() ? 0.8 : 0.55 + 0.45 * k;
         for (const a of arrows) {
           const f = (t - a.at) / 260;
           a.sp.visible = f >= 0 && f < 1;
@@ -2433,7 +2488,7 @@ export class Fx {
   private reachBurst(b: Battle, e: Extract<BattleEvent, { kind: 'area' }>, skill: string, reach: { tiles: { u: number; v: number }[]; help: boolean; burns?: number }): void {
     const el = skillElement(skill);
     const colour = reach.help ? 0xffe9a0 : GLOW[el];
-    const patch = this.tilePatch(b, reach.tiles, colour, 0.45, 0.95);
+    const patch = this.alivePatch(b, reach.tiles, colour, reach.help ? 'light' : el);
     const [cx, cy] = this.tilePos(b, e.u, e.v);
     impactBurst(this.particles, el, cx, cy - 12, 1.4 + 0.3 * (AREA_REACH[skill]?.reach ?? 0), true);
     if (reach.burns) this.zone(b, e.u, e.v, reach.burns);
@@ -2443,7 +2498,7 @@ export class Fx {
       view: patch,
       step: (dt) => {
         t += dt;
-        patch.alpha = t < ms * 0.5 ? 1 : Math.max(0, 1 - (t - ms * 0.5) / (ms * 0.5));
+        patch.strength = t < ms * 0.5 ? 1 : Math.max(0, 1 - (t - ms * 0.5) / (ms * 0.5));
         return t < ms;
       },
     });
@@ -2457,14 +2512,9 @@ export class Fx {
     const spots = e.tiles.map((i) => this.tilePos(b, i % w, Math.floor(i / w)));
     if (!spots.length) return;
     if (e.phase === 'tell') {
-      // (FIXES-4: tinted tiles with a rim round the patch, each on its tile's ground, so those standing in it show over it)
-      const view = new GroundSet();
-      const tiles = e.tiles.map((i) => ({ u: i % w, v: Math.floor(i / w), h: tileAt(b.board, i % w, Math.floor(i / w))?.h ?? 0 }));
-      const rimOf = patchRims(tiles);
-      tiles.forEach((t, k) => {
-        const [x, y] = spots[k];
-        view.add(patchTile(new Graphics(), x, y, rimOf(t.u, t.v), { colour: look.colour, fill: 0.45, width: 3 }), this.groundOf(t.u, t.v));
-      });
+      // (FIXES-4: tinted tiles with a rim round the patch, each on its tile's ground, so those standing in it show over it. FX-ALIVE: a living
+      // patch, the rim carrying the warning and the fill faint)
+      const view = this.alivePatch(b, e.tiles.map((i) => ({ u: i % w, v: Math.floor(i / w) })), look.colour);
       if (look.word) {
         const mx = spots.reduce((a, s) => a + s[0], 0) / spots.length;
         const my = Math.min(...spots.map((s) => s[1]));
@@ -2481,7 +2531,7 @@ export class Fx {
           t += dt;
           // (it grows surer as it comes: the mark breathes faster and brighter, and never blinks out)
           const k = Math.min(1, t / e.ms);
-          view.alpha = calm ? 0.9 : 0.65 + 0.25 * k + 0.1 * Math.sin((t / (260 - 160 * k)) * Math.PI);
+          view.strength = calm ? 0.9 : 0.65 + 0.25 * k + 0.1 * Math.sin((t / (260 - 160 * k)) * Math.PI);
           return t < e.ms;
         },
       });
@@ -2589,7 +2639,7 @@ export class Fx {
     const { color, ms } = SPELL_GLOW[e.id];
     // (FX-PLACE: the tiles the spell touches, `spellTiles`: the Lance's column, the Sunbeam's row, a wall's row, else the 3x3; lying on their own
     // tiles' ground, under the fighters in them)
-    const glow = this.tilePatch(b, spellTiles(b.board, e.id, e.u, e.v, rankOf(b, e.id)), color, 1);
+    const glow = this.alivePatch(b, spellTiles(b.board, e.id, e.u, e.v, rankOf(b, e.id)), color, SPELL_ELEMENT[e.id]);
     let t = 0;
     let puffedAt = 0;
     this.items.push({
@@ -2603,7 +2653,7 @@ export class Fx {
           this.particles.spawn({ frames: PACK['poison-smoke'], x: px + jitter(12), y: py - 4, scale: 1.1, life: 900, vy: -0.02, grow: 0.0005, alpha: 0.6, add: true });
           if (this.particles.rate(0.5)) this.particles.spawn({ frames: PACK['poison-status'], x: px + jitter(12), y: py - 10, scale: 1, life: 700, vy: -0.03, add: true });
         }
-        glow.alpha = e.id === 'poison' ? 0.27 : Math.max(0, 0.35 * (1 - t / ms));
+        glow.strength = e.id === 'poison' ? 0.85 : Math.max(0, 1 - t / ms);
         if (t >= ms) glow.destroy();
         return t < ms;
       },
@@ -2631,10 +2681,12 @@ export class Fx {
     // (each flame stands on its own tile's ground: under whoever stands in the fire, behind whoever stands in front of it)
     const view = new GroundSet();
     const flames: Sprite[] = [];
+    const where: { u: number; v: number }[] = [];
     for (let du = -1; du <= 1; du++)
       for (let dv = -1; dv <= 1; dv++) {
         if (!tileAt(b.board, u + du, v + dv)) continue;
         const [x, y] = this.tilePos(b, u + du, v + dv);
+        where.push({ u: u + du, v: v + dv });
         const sp = new Sprite(fire.frames[0]);
         sp.anchor.set(0.5, 0.8);
         sp.scale.set(1.1);
@@ -2657,7 +2709,12 @@ export class Fx {
           sp.blendMode = 'add';
           if (pose) sp.position.set(bases[i][0] + pose.dx * 35, bases[i][1] + pose.dy * 35);
         });
-        view.alpha = t > ms - 600 ? Math.max(0, (ms - t) / 600) : 1;
+        // (FX-ALIVE: a flame under a fighter burns lower, so the one standing in the fire still shows)
+        const fade = t > ms - 600 ? Math.max(0, (ms - t) / 600) : 1;
+        flames.forEach((sp, i) => {
+          if (sp.destroyed) return;
+          sp.alpha = fade * (b.units.some((x) => x.alive && x.u === where[i].u && x.v === where[i].v) ? ALIVE.OCCUPIED + 0.15 : 1);
+        });
         // (sparks and smoke lift off it)
         if (!this.calm() && t - emberAt >= 160 && t < ms - 400) {
           emberAt = t;

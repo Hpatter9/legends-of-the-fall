@@ -14,6 +14,7 @@ import { DAILY_CHEST_STONES } from '../src/sim/unlockRules';
 import { UNITS } from '../src/sim/units';
 import { dateKey } from '../src/sim/dailySeed';
 import { playDaily } from '../tools/autoplay';
+import { movedStones } from '../src/sim/hiddenModes';
 
 const store = () => {
   const s: Record<string, string> = {};
@@ -176,7 +177,8 @@ test('the daily chest holds crowns, summoning stones (more with bonus stars) and
     assert.equal(loot.kind, 'daily');
     assert.equal(openChest(m, 0), null, 'it opens once');
     assert.ok(m.crowns > crowns, 'crowns paid');
-    assert.equal(m.stones, DAILY_CHEST_STONES + bonus, 'a base of stones, one more for each bonus star');
+    // (FIRST-HOUR 3, the owner's call: while the Last Stand and the Calamity are hidden the daily chest holds their moved stones too)
+    assert.equal(m.stones, DAILY_CHEST_STONES + bonus + movedStones('daily'), 'a base of stones, one more for each bonus star, and the hidden modes\' moved stones');
     assert.deepEqual(m.unlocked, owned);
     assert.deepEqual(m.unlock ?? {}, before.unlock);
     assert.deepEqual(m.shards, before.shards);

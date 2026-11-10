@@ -114,6 +114,8 @@ export function noteChains(m: Meta, f: QuestFight): PieceFound[] {
   const cur = currentPart(m);
   if (!cur) return [];
   const st = chainState(m, cur.chain.id)!;
+  // (QUEST-POSSIBLE: a part with a need counts nothing until the save meets it)
+  if (partLocked(m, cur.part)) return [];
   const add = goalGain(cur.part.goal, f);
   if (!add) return [];
   st.progress = Math.min(cur.part.goal.n, st.progress + add);
@@ -150,6 +152,9 @@ export function chainWantsBattle(m: Meta, battle: string): boolean {
 /** The chain whose part (or trial) a battle is, if one is. */
 export const chainOfBattle = (battle: string): ChainDef | undefined =>
   CHAINS.find((c) => c.parts.some((p) => p.goal.kind === 'battle' && p.goal.battle === battle) || trialOf(c)?.id === battle);
+
+/** QUEST-POSSIBLE: the lock's words for a part whose need the save does not meet yet (null: it counts). */
+export const partLocked = (m: Meta, part: ChainPart): string | null => (part.needs && !needMet(m, part.needs) ? part.locked ?? 'Not open yet' : null);
 
 /** A part that cannot be done with the heroes owned (its battle's cast cannot be filled): the heroes it asks for, in words' order. With every
  *  slot listing both starter packs this should not happen; the page shows the part greyed with them rather than hide it. */

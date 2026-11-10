@@ -31,7 +31,7 @@ import { UNITS } from './units';
 import { applyMystery, drawMystery, type MysteryAct } from './mystery';
 import { applyRoad, drawRoad, faceOf, noteRoad, pickRoadKind, roadRun, type RoadAct, type RoadKind } from './midEvents';
 import { isWare, MARKET_BUYS, marketOptions, stockMarket } from './market';
-import { recruit, benchFull, type Run } from './run';
+import { recruit, benchFull, noteHired, type Run } from './run';
 import { guestBlock, takeGuest } from './guest';
 import { heroName } from './heroNames';
 
@@ -346,6 +346,7 @@ export function chooseOption(run: Run, i: number): string | null {
         return 'The bench is full: merge or recycle a hero first, and the sellsword will wait.';
       }
       recruit(run, fx.kind, o.cost);
+      noteHired(run);
       line = `The ${UNITS[fx.kind]?.name ?? 'sellsword'} climbs down off the cart and joins the bench.`;
       break;
     case 'guest':
@@ -353,6 +354,7 @@ export function chooseOption(run: Run, i: number): string | null {
         run.gold += o.cost;
         return 'The party has a guest already: one at a time.';
       }
+      noteHired(run);
       line = `${heroName(fx.kind)} climbs down off the cart and joins you as a guest: a sixth hero on the field, for this run only.`;
       break;
     case 'reroll': {

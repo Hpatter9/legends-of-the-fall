@@ -27,6 +27,48 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.466.0',
+    date: '2026-11-10',
+    title: 'Auto holds off for no-spell quests',
+    notes: ['On a fight for a no spells or no ultimates quest, SPELL or ULT Auto holds off by itself and says why, then comes back.', 'Two quests that could be offered too early now wait until you can do them.'],
+  },
+  {
+    version: '0.465.0',
+    date: '2026-11-10',
+    title: 'The Council button matches the Daily',
+    notes: ['Council and Daily are now a matching pair: the same plate, gold label and painted count seal, with their corner marks fully on screen.'],
+  },
+  {
+    version: '0.464.0',
+    date: '2026-11-10',
+    title: 'Quest complete, and quests you can finish',
+    notes: ['Handing in a quest opens a Quest complete card: its story, what you did and your rewards.', 'The no hero hired quests could not be finished. They now ask for no sellsword hired at the cart, and your own party no longer counts.'],
+  },
+  {
+    version: '0.463.0',
+    date: '2026-11-10',
+    title: 'The camera keeps clear of the bars',
+    notes: ['The fight camera now centres the action in the part of the board you can see, clear of the spell row, the boss bar and the bench.'],
+  },
+  {
+    version: '0.462.0',
+    date: '2026-11-10',
+    title: 'Effects that move, and hide less',
+    notes: ['Area effects under your heroes now breathe and shimmer with a bright edge and a faint fill, and dim further on a tile someone stands in.'],
+  },
+  {
+    version: '0.461.0',
+    date: '2026-11-10',
+    title: 'A foe calls you out once',
+    notes: ['When a nemesis both taunted a hero and challenged them to a duel, the call-out played twice. It now plays once, then the challenge.'],
+  },
+  {
+    version: '0.460.0',
+    date: '2026-11-10',
+    title: 'Two new heroes, and an earlier Castle',
+    notes: ['Your first clear of each of the first two armies brings a new hero. The Castle opens at 6 stars; the Chapel and spells at 10.', 'Fallen heroes show as Back on their feet on the wave card. Dailies and conquered holds give more summoning stones.'],
+  },
+  {
     version: '0.459.0',
     date: '2026-11-10',
     title: 'Spells cast themselves for new players',

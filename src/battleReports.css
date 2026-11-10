@@ -138,6 +138,9 @@ body[data-move] #result #banner { background: #15251ac4; }
 #result #waveNotes .wn.drop > span { color: #ffd77a; text-shadow: 0 0 6px #ffcf6a; }
 #result #waveNotes .wn.drop::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, #fff4cf55 50%, transparent 70%); transform: translateX(-110%); animation: dropShine 1.1s ease-out forwards; animation-delay: calc(var(--i) * .12s + .55s); pointer-events: none; }
 @keyframes dropShine { to { transform: translateX(110%); } }
+/* (FIRST-HOUR 3: the risen row, its heading in small capitals before the names) */
+#result #waveNotes .wn.risen { border-left-color: #7fae7a; flex-wrap: wrap; }
+#result #waveNotes .wn .wnHead { font: 700 10px/1.35 var(--body); letter-spacing: .08em; text-transform: uppercase; color: #a9d3a0; }
 #result #waveNotes .wn.fell { border-left-color: #a8705f; color: #e2c7b8; }
 #result #waveNotes .wn.nemesis { border-left-color: #8a4fa0; color: #e6d0ee; }
 #result #waveNotes .wn.nemesis > span { color: #c98fe0; }

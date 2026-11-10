@@ -5,6 +5,7 @@
 import { ULT_LEVEL } from './abilities';
 import { heroName } from './heroNames';
 import { otherFinds, type WaveGain } from './waveGains';
+import { isOldRisenLine, RISEN_HEAD } from './wounds';
 
 /** What a wave left worth saying, gathered when it is settled. */
 export interface WaveMoments {
@@ -19,6 +20,8 @@ export interface WaveMoments {
   farewell?: string;
   /** Gear and prizes picked up (the run's `found`). */
   found: readonly string[];
+  /** The heroes that fell in this won wave and stand again at half (`risenLine`, `wounds.ts`): a row of its own; missing is none. */
+  risen?: string | null;
   /** Everything the wave brought in, grouped (RECAP-REVEAL, `waveGains.ts`): the card lists them as chips, and a `found` line they
    *  already cover is dropped. Missing (an older caller): every `found` line is kept. */
   gains?: readonly WaveGain[];
@@ -42,8 +45,10 @@ export interface WaveMoments {
 
 /** One line on the card, with its kind (the line's mark and colour). */
 export interface WaveNote {
-  kind: 'level' | 'ult' | 'drop' | 'found' | 'fell' | 'heart' | 'horn' | 'quest' | 'learned' | 'skill' | 'study' | 'wear' | 'guest' | 'pack' | 'nemesis';
+  kind: 'level' | 'ult' | 'drop' | 'found' | 'risen' | 'fell' | 'heart' | 'horn' | 'quest' | 'learned' | 'skill' | 'study' | 'wear' | 'guest' | 'pack' | 'nemesis';
   text: string;
+  /** A short heading set before the line (the risen row's "Back on their feet"). */
+  head?: string;
 }
 
 const nameOf = (k: string) => heroName(k);
@@ -79,7 +84,10 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   for (const d of m.drops ?? []) out.push({ kind: 'drop', text: `Found: ${d}` });
   if (m.horn) out.push({ kind: 'horn', text: m.horn });
   for (const q of m.quests ?? []) out.push({ kind: 'quest', text: q });
-  for (const f of m.gains ? otherFinds(m.found, m.gains) : m.found) out.push({ kind: 'found', text: `Found ${f}` });
+  // (a run saved before FIRST-HOUR 3 may hold the old "stands again at half" among its finds: left out, the risen row says it)
+  const finds = m.found.filter((f) => !isOldRisenLine(f));
+  for (const f of m.gains ? otherFinds(finds, m.gains) : finds) out.push({ kind: 'found', text: `Found ${f}` });
+  if (m.risen) out.push({ kind: 'risen', head: RISEN_HEAD, text: m.risen });
   if (m.farewell) out.push({ kind: 'guest', text: m.farewell });
   if (m.fell.length) out.push({ kind: 'fell', text: `Fell: ${names(m.fell)}` });
   if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });

@@ -175,3 +175,130 @@ test('a tool\'s new save has the three heroes of a starter pack', async () => {
   assert.deepEqual(a.party, FIXED_PACKS[0].heroes);
   assert.deepEqual(newSaveMeta(11).unlocked, FIXED_PACKS[11 % FIXED_PACKS.length].heroes);
 });
+
+// ---- FIRST-HOUR 3: the owner's answers ----
+
+test('the first clear of the first two armies gives a new save a whole hero, once, and only while it is short of them', async () => {
+  const { CLEAR_HEROES, clearHeroWaits, grantClearHero } = await import('../src/sim/clearHero');
+  const { newSaveMeta } = await import('../tools/autoplay');
+  const { CONTENT_HEROES } = await import('../src/sim/contentHeroes');
+  const { unseenHeroes } = await import('../src/sim/heroesSeen');
+  const { settleArmyRun } = await import('../src/sim/armyStars');
+  const { armyRun } = await import('../src/sim/run');
+  const { startedMeta } = await import('../src/sim/meta');
+  const [orcs, undead, beasts] = ARMIES;
+  assert.deepEqual(CLEAR_HEROES, { 0: { below: 4 }, 1: { below: 5 } });
+  // a new save: three heroes, the card promises one, the first clear gives it
+  const m = newSaveMeta(21, 0);
+  assert.equal(m.unlocked.length, 3);
+  assert.equal(clearHeroWaits(m, orcs), true);
+  assert.equal(clearHeroWaits(m, beasts), false);
+  const run = armyRun(5, orcs.id, m.party);
+  run.cleared = true;
+  run.over = true;
+  const res = settleArmyRun(m, run)!;
+  const fourth = res.hero!;
+  assert.ok(fourth, 'the result names the hero');
+  assert.equal(m.unlocked.length, 4);
+  assert.ok(m.unlocked.includes(fourth) && m.party.includes(fourth), 'owned, and in the party while it has room');
+  assert.ok(!(fourth in CONTENT_HEROES), 'never a hero earned by a milestone');
+  assert.deepEqual(unseenHeroes(m), [fourth], 'its join reveal is due');
+  assert.equal(clearHeroWaits(m, orcs), false);
+  // once: a second clear, on any tier, gives nothing
+  const again = armyRun(6, orcs.id, m.party, undefined, 1);
+  again.cleared = true;
+  assert.equal(settleArmyRun(m, again)!.hero, undefined);
+  assert.equal(m.unlocked.length, 4);
+  // the second army gives the fifth
+  assert.equal(clearHeroWaits(m, undead), true);
+  const fifth = grantClearHero(m, undead, true)!;
+  assert.ok(fifth && fifth !== fourth);
+  assert.equal(m.unlocked.length, 5);
+  assert.equal(grantClearHero(m, undead, true), undefined);
+  // the pick is the save's own, on its side stream: the same save gets the same hero, and no pull is used
+  const twin = newSaveMeta(21, 0);
+  const pulls = twin.pulls;
+  assert.equal(grantClearHero(twin, orcs, true), fourth);
+  assert.equal(twin.pulls, pulls);
+  // a save that already has its heroes gets nothing, now or later
+  const old = startedMeta(8);
+  assert.equal(clearHeroWaits(old, orcs), false);
+  assert.equal(grantClearHero(old, orcs, true), undefined);
+  assert.deepEqual(old.clearHeroes, [orcs.id], 'settled for good');
+  old.unlocked.length = 3;
+  assert.equal(grantClearHero(old, orcs, true), undefined);
+  // a save that owns four when it first clears the first army gets none there, but still its fifth at the second
+  const four = newSaveMeta(22, 1);
+  four.unlocked.push('knight');
+  assert.equal(grantClearHero(four, orcs, true), undefined);
+  assert.ok(grantClearHero(four, undead, true));
+  // not a first clear: nothing, and nothing is settled
+  const late = newSaveMeta(23, 0);
+  assert.equal(grantClearHero(late, orcs, false), undefined);
+  assert.equal(late.clearHeroes, undefined);
+});
+
+test('the Castle opens at 6 stars; the Chapel, and the spellbook with it, still at 10', async () => {
+  const { chapelOpen, chapelWaits, MODE_NEED, SPELLS_NEED, opensAt, progressLine } = await import('../src/sim/modeUnlock');
+  const { totalStars } = await import('../src/sim/armies');
+  const m = newMeta(6);
+  assert.equal(MODE_NEED.castle, 6);
+  assert.equal(SPELLS_NEED, 10);
+  assert.equal(`${opensAt(MODE_NEED.castle)} · ${progressLine(m, MODE_NEED.castle)}`, 'Opens at 6 stars · 0/6 stars');
+  assert.equal(modeOpen(m, 'castle'), false);
+  assert.equal(chapelOpen(m), false);
+  assert.equal(chapelWaits(m), 'The Chapel can be raised at 10 stars · 0/10 stars');
+  // two armies' Normal stars: the gate opens, the Chapel waits
+  m.armies.orcs = { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7 } };
+  m.armies.undead = { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7 } };
+  assert.equal(totalStars(m), 6);
+  assert.equal(modeOpen(m, 'castle'), true);
+  assert.equal(chapelOpen(m), false);
+  assert.equal(chapelWaits(m), 'The Chapel can be raised at 10 stars · 6/10 stars');
+  m.armies.beasts = { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 1 } };
+  assert.equal(totalStars(m), 10);
+  assert.equal(chapelOpen(m), true);
+  // a save that had the castle open from before the stars, or a Chapel standing or being built, is not held back
+  assert.equal(chapelOpen({ ...newMeta(7), opened: ['castle'] }), true);
+  assert.equal(chapelOpen({ ...newMeta(7), chapel: true }), true);
+  assert.equal(chapelOpen({ ...newMeta(7), works: { id: 'chapel', level: 1, doneAt: 1 } }), true);
+});
+
+test('the hidden modes\' stones are moved to the daily and the Assault, and go back as a mode is shown: the total never doubles', async () => {
+  const { MOVED_SHARE, MOVED_STONES, hiddenStoneShare, movedStones, setStonesMoved } = await import('../src/sim/hiddenModes');
+  const { chestStones, CONQUEST_SHARE, FIRST_CLEAR_CHEST, openChest } = await import('../src/sim/armyStars');
+  const { CHEST_STONES, DAILY_CHEST_STONES } = await import('../src/sim/unlockRules');
+  assert.deepEqual(MOVED_STONES, { daily: 1, conquest: 8, restorm: 1 });
+  assert.ok(MOVED_STONES.restorm < MOVED_STONES.conquest, 'a repeat conquest pays at a lower rate');
+  assert.equal(MOVED_SHARE.tower + MOVED_SHARE.calamity, 1);
+  // both hidden: the whole share
+  assert.equal(hiddenStoneShare(), 1);
+  assert.equal(chestStones({ at: 3, daily: 20261110, bonus: 1 }), DAILY_CHEST_STONES + 1 + MOVED_STONES.daily);
+  const open = (c: Record<string, unknown>): number => {
+    const m = newMeta(3);
+    m.stash.push({ army: 'orcs', seed: 77, ...c } as never);
+    openChest(m, 0);
+    return m.stones ?? 0;
+  };
+  const gold = CHEST_STONES[FIRST_CLEAR_CHEST[3]];
+  const first = Math.ceil(gold * CONQUEST_SHARE);
+  const again = Math.ceil(Math.ceil(CHEST_STONES[FIRST_CLEAR_CHEST[4]] / 2) * CONQUEST_SHARE);
+  assert.equal(open({ at: FIRST_CLEAR_CHEST[3], tier: 3, conquest: true }), first + MOVED_STONES.conquest, 'a hold\'s first Conquest chest');
+  assert.equal(open({ at: FIRST_CLEAR_CHEST[4], tier: 4, conquest: true, half: true }), again + MOVED_STONES.restorm, 'a regrouped Warband\'s');
+  assert.equal(open({ at: 10, tier: 3 }), gold, 'an army\'s own chest is untouched');
+  // the modes shown again: nothing is added anywhere
+  setModesHidden(false);
+  assert.equal(hiddenStoneShare(), 0);
+  for (const k of ['daily', 'conquest', 'restorm'] as const) assert.equal(movedStones(k), 0, k);
+  assert.equal(chestStones({ at: 3, daily: 20261110, bonus: 1 }), DAILY_CHEST_STONES + 1);
+  assert.equal(open({ at: FIRST_CLEAR_CHEST[3], tier: 3, conquest: true }), first);
+  assert.equal(open({ at: FIRST_CLEAR_CHEST[4], tier: 4, conquest: true, half: true }), again);
+  setModesHidden(true);
+  // each mode's part is its own: the parts of the two add up to the whole, so one mode back takes only its part away
+  for (const k of ['daily', 'conquest', 'restorm'] as const) assert.equal(Math.round(MOVED_STONES[k] * MOVED_SHARE.tower) + Math.round(MOVED_STONES[k] * MOVED_SHARE.calamity), MOVED_STONES[k], k);
+  // the tools' switch
+  setStonesMoved(false);
+  assert.equal(movedStones('daily'), 0);
+  setStonesMoved(true);
+  assert.equal(movedStones('daily'), MOVED_STONES.daily);
+});

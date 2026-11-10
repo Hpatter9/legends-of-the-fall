@@ -35,7 +35,6 @@ import type { EquipSlot, EquipStats, Equipment } from './equipment';
 import { migrateRunWorn } from './gearMigrate';
 import { newRunes, readRunes, type RuneState } from './runes';
 import { settleWounds } from './wounds';
-import { heroName } from './heroNames';
 import type { RemedyId } from './remedies';
 import { findGear, foundLine, SOURCE, stow, waveRune, type FoundHome } from './runGear';
 import { convertRelics, fightRelics, RELIC_BOOK, RELIC_NOTE, RELIC_RENAMES, relicEffects, type RelicCtx, type RelicMarks } from './relics';
@@ -143,6 +142,9 @@ export interface Run {
   stage: number;
   /** Summons so far: the price and the draw both follow it. */
   summons: number;
+  /** QUEST-POSSIBLE: outside help hired this run: the passing cart's sellsword and guest, and a deserters' captain paid his wages (not the
+   *  party's own heroes bought with Hire, `summons`). Optional: a run saved before it has hired none. A quest's "no sellsword hired" reads it. */
+  hired?: number;
   roster: Owned[];
   nextId: number;
   /** Heroes chosen to fight (roster ids), at most `SQUAD`. */
@@ -351,6 +353,9 @@ const draw = (run: Run): string => {
   const pool = run.pool?.length ? run.pool : HEROES;
   return pool[new Rng(mixSeed(run.seed, 0x5033, run.nextId)).int(0, pool.length - 1)];
 };
+/** Count a hand hired from outside the party (QUEST-POSSIBLE): a sellsword, a guest, a deserters' captain. */
+export const noteHired = (run: Run): void => void (run.hired = (run.hired ?? 0) + 1);
+
 export const summonCost = (run: Run) => SUMMON_BASE + SUMMON_STEP * run.summons;
 
 /** The hero the next Hire would bring: its kind, and its grade (now and then a summon arrives a grade up, from its own side stream so the draws stay as they were). */
@@ -592,11 +597,8 @@ export function finish(run: Run, won: boolean, stars = 0): void {
     // (SEVEN-SLOT GEAR batch 4: a rune run's won wave gives a rune of its own, from its side stream)
     if (run.runes) prizes.push(waveRune(run));
     if (boss) prizes.push(findGear(run, new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0), 1, SOURCE.boss));
-    // (and the wave card says who stands again at half)
-    for (const id of run.risen ?? []) {
-      const h = run.roster.find((x) => x.id === id);
-      if (h) run.found.push(`${heroName(h.kind)} stands again at half`);
-    }
+    // (FIRST-HOUR 3: the heroes risen at half are no longer listed among the finds; the wave card reads `run.risen` for a row of its own,
+    // `risenLine` in `wounds.ts`)
     prizes.forEach((g, i) => {
       stow(run, g, boss && i === prizes.length - 1 ? SOURCE.boss : SOURCE.curse);
       run.found!.push(foundLine(g));
@@ -687,6 +689,8 @@ export function catalogueRun(r: Run): Run {
   // (SEVEN-SLOT GEAR: the finds a run from before wears move to the new slots, and a rune run's runes are read safely)
   migrateRunWorn(r);
   if (r.runes) r.runes = readRunes(r.runes) ?? newRunes();
+  // (QUEST-POSSIBLE: the outside help hired, a whole count or none)
+  if (r.hired !== undefined && !(Number.isInteger(r.hired) && r.hired >= 0)) delete r.hired;
   if (r.relicBook === RELIC_BOOK) return r;
   // (RELICS-3: a run already in the second catalogue is only quietly moved on; the line is for the first conversion, or a relic that changed)
   const first = r.relicBook === undefined;

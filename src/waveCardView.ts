@@ -84,7 +84,12 @@ export function drawWaveNotes(root: HTMLElement, notes: readonly WaveNote[], gai
     const mark = img(battleNoteSource(n.kind));
     mark.className = 'battleNoteIcon';
     mark.setAttribute('aria-hidden', 'true');
-    line.append(mark, document.createTextNode(n.text));
+    if (n.head) {
+      const head = document.createElement('b');
+      head.className = 'wnHead';
+      head.textContent = n.head;
+      line.append(mark, head, document.createTextNode(n.text));
+    } else line.append(mark, document.createTextNode(n.text));
     root.append(line);
   });
 }
