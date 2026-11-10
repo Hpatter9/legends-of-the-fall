@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.451.0',
+    date: '2026-11-10',
+    title: 'Battles feel right',
+    notes: ['Heroes stop pacing and swap past a friend in a doorway. Skills show their own look and sound, and land a third of their power through armour.', 'Small heals pool into one number, big crits land harder, and fewer words pile up over a melee.'],
+  },
+  {
     version: '0.450.0',
     date: '2026-11-10',
     title: 'Bloodtusk Hold, a living warcamp',
