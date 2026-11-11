@@ -5,8 +5,9 @@
 // - Sort: the game's own order (the default, as before), or by level, rank (then shards), name, class, newest joined, power, or the heroes
 //   with an upgrade ready first; each either way round.
 // - Filter (several at once: every group chosen must hold, and within classes or traits any one of the chosen): owned or not yet owned, the
-//   class on the hero's card, its traits, in the party or not, an upgrade ready, Mythic. The game has no elements and no favourites, so
+//   class on the hero's card, its job in a party (the War Council's roles), its traits, in the party or not, an upgrade ready, Mythic. The game has no elements and no favourites, so
 //   there are no such filters.
+// - The War Council's Reinforcements grid (`party.ts`) is drawn from the same rules and shares the saved choice.
 // - A hero the save may not name yet (a secret hero, "???") is never sorted or filtered by what it is: it keeps its own place and order, a
 //   name search never finds it, and a filter by class, trait, Mythic or upgrade leaves it out, so no filter can tell what it is.
 
@@ -22,6 +23,7 @@ import { markReady } from './sim/upgradesReady';
 import { isMythic } from './sim/mythicRules';
 import { lockInfo } from './sim/contentHeroes';
 import { haveOf } from './sim/unlock';
+import { ROLE_NAMES, roleOf, type PartyRole } from './sim/suggest';
 
 export const ROSTER_SORTS = ['default', 'level', 'rank', 'name', 'class', 'newest', 'power', 'ready'] as const;
 export type RosterSort = (typeof ROSTER_SORTS)[number];
@@ -51,6 +53,8 @@ export interface RosterView {
   own?: 'owned' | 'missing';
   /** Any of these classes (`StarterClass`). */
   classes?: string[];
+  /** Any of these party roles (`PartyRole`: front-liner, striker, back-liner, support). */
+  roles?: string[];
   /** Any of these traits (`TRAITS`). */
   traits?: string[];
   /** Only the heroes in the party, or only those out of it. */
@@ -71,6 +75,8 @@ export interface RosterRow {
   /** What a name search reads (lower case; empty for a hero not named). */
   text: string;
   cls: StarterClass;
+  /** Its job in a party (`roleOf`). */
+  role: PartyRole;
   traits: readonly string[];
   level: number;
   rank: number;
@@ -98,6 +104,8 @@ export function cleanView(raw: unknown): RosterView {
   const list = (x: unknown, ok: (s: string) => boolean): string[] => (Array.isArray(x) ? [...new Set(x.filter((s): s is string => typeof s === 'string' && ok(s)))] : []);
   const classes = list(v.classes, (s) => CLASS_ORDER.includes(s as StarterClass));
   if (classes.length) out.classes = classes;
+  const roles = list(v.roles, (s) => s in ROLE_NAMES);
+  if (roles.length) out.roles = roles;
   const traits = list(v.traits, (s) => s in TRAITS);
   if (traits.length) out.traits = traits;
   if (v.ready === true) out.ready = true;
@@ -105,9 +113,9 @@ export function cleanView(raw: unknown): RosterView {
   return out;
 }
 
-/** How many filters are on (each class and each trait chosen counts as one). */
+/** How many filters are on (each class, role and trait chosen counts as one). */
 export const filterCount = (v: RosterView): number =>
-  (v.own ? 1 : 0) + (v.classes?.length ?? 0) + (v.traits?.length ?? 0) + (v.party ? 1 : 0) + (v.ready ? 1 : 0) + (v.mythic ? 1 : 0);
+  (v.own ? 1 : 0) + (v.classes?.length ?? 0) + (v.roles?.length ?? 0) + (v.traits?.length ?? 0) + (v.party ? 1 : 0) + (v.ready ? 1 : 0) + (v.mythic ? 1 : 0);
 
 /** Whether anything is chosen at all (the Clear button shows). */
 export const viewActive = (v: RosterView, search = ''): boolean => (!!v.sort && v.sort !== 'default') || filterCount(v) > 0 || !!search.trim();
@@ -128,9 +136,10 @@ export function passes(r: RosterRow, v: RosterView, search = ''): boolean {
   if (v.party === 'in' && !r.inParty) return false;
   if (v.party === 'out' && r.inParty) return false;
   // (what a hero is stays unknown until it may be named)
-  const about = !!v.classes?.length || !!v.traits?.length || !!v.mythic || !!v.ready;
+  const about = !!v.classes?.length || !!v.roles?.length || !!v.traits?.length || !!v.mythic || !!v.ready;
   if (about && !r.named) return false;
   if (v.classes?.length && !v.classes.includes(r.cls)) return false;
+  if (v.roles?.length && !v.roles.includes(r.role)) return false;
   if (v.traits?.length && !v.traits.some((t) => r.traits.includes(t))) return false;
   if (v.ready && !r.ready) return false;
   if (v.mythic && !r.mythic) return false;
@@ -188,6 +197,7 @@ export function rosterRows(m: Meta, extra: (kind: string) => string = () => ''):
       name: heroName(kind),
       text: named ? `${heroName(kind)} ${UNITS[kind].name} ${CARD_CLASS_NAMES[cls]} ${extra(kind)}`.toLowerCase() : '',
       cls,
+      role: roleOf(kind),
       traits: traitsOf(kind),
       level: owned ? progressOf(xpOf(m, kind)).level : 0,
       rank: owned ? takenRank(m, kind) : 0,
@@ -201,6 +211,9 @@ export function rosterRows(m: Meta, extra: (kind: string) => string = () => ''):
     };
   });
 }
+
+/** The party roles in the order the filter lists them. */
+export const ROLE_ORDER = Object.keys(ROLE_NAMES) as PartyRole[];
 
 /** The traits the filter offers: those some hero the save may name has, in the game's order (so a secret hero's trait is not given away
  *  by being on the list alone). */

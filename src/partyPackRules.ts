@@ -1,4 +1,5 @@
-// HEROES-FILTER, job 2 (docs/notes/heroes-filter.md): the War Council's pack. The owner: "The satchel and plan should be on a different
+// HEROES-FILTER, job 2 (docs/notes/heroes-filter.md): the War Council's supplies (the drawer's tab says "Supplies"; "pack" in the names
+// here is only the code's word for it: the owner found "Pack" misleading on a button). The owner: "The satchel and plan should be on a different
 // screen in the party formation screen. Maybe a button or a slide out menu." The Satchel (the remedies a run takes) and the Plan (the March
 // orders) are off the party page, in a drawer that slides out from the right edge (`partyPack.ts`), with two tabs. These are the pure parts:
 // whether the drawer is offered, the one line the page keeps ("Satchel 2/5 · Plan: Plain march"), and when the pull tab wears its mark.
@@ -17,8 +18,8 @@ export interface PackState {
   auto: boolean;
   /** The Plan's line ("Plain march · Shielded"), or null when no orders are open for this march (a new save, an edit, a quest). */
   plan: string | null;
-  /** Whether the player has looked at the Plan, or set it, since the War Council opened. */
-  planSeen: boolean;
+  /** Whether the player has ever changed the orders from the plain default (kept with the settings, `Settings.planChosen`). */
+  planChosen: boolean;
 }
 
 const count = (b: Bag | undefined): number => REMEDY_IDS.reduce((n, id) => n + (b?.[id] ?? 0), 0);
@@ -35,8 +36,12 @@ export function satchelCanFill(s: PackState): boolean {
   return REMEDY_IDS.some((id) => (s.pick[id] ?? 0) < Math.min(s.owned?.[id] ?? 0, id === 'elixir' ? ELIXIR_MAX : SATCHEL_MAX));
 }
 
-/** Whether the Plan waits to be chosen: orders are open, and they have not been looked at or set this visit. */
-export const planWaits = (s: PackState): boolean => s.plan !== null && !s.planSeen;
+/** Whether the Plan waits to be chosen: orders are open, and the player has never yet changed them from the plain default. Once they
+ *  have, the mark is not shown again: a plain march after that is a choice. */
+export const planWaits = (s: PackState): boolean => s.plan !== null && !s.planChosen;
+
+/** Whether the orders have been changed from the default: their line now against the line they opened with. */
+export const planChanged = (opened: string | null, now: string | null): boolean => opened !== null && now !== null && opened !== now;
 
 /** The tabs that want attention: the pull tab wears its mark while there is one, and so does the tab inside the drawer. */
 export const packMarks = (s: PackState): PackTab[] => [...(satchelCanFill(s) ? (['satchel'] as const) : []), ...(planWaits(s) ? (['plan'] as const) : [])];

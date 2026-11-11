@@ -15,7 +15,7 @@ export function askAuto(m: Meta, title: string, go: (count: number) => void): vo
   const left = ticketsLeft(m, todayKey());
   const best = Math.max(...AUTO_COUNTS.filter((n) => n <= left), 0);
   let pick = Math.min(3, best);
-  const menu = ornateMenu({ id: 'autoAsk', eyebrow: 'Repeat runs', title: 'Auto-fight', sub: title });
+  const menu = ornateMenu({ id: 'autoAsk', eyebrow: 'Repeat runs', title: 'Auto-fight', sub: title, asked: true });
   const grid = menuSection(menu.body, 'Runs', 'no reward, as many times as you pick', 4);
   menuPick<number>(grid, AUTO_COUNTS, pick || undefined, (n) => ({ title: `×${n}`, disabled: n > left }), (n) => ((pick = n), draw()));
   menuNote(menu.body, `Auto runs left today: ${left}/${AUTO_TICKETS} · more at midnight`);

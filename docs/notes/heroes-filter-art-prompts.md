@@ -30,7 +30,7 @@ background, with no text, no shadow on the ground and nothing else in the pictur
 clearly at 28 pixels.
 ```
 
-## The pack's pull tab: `art-source/ui/buttons/pack-tab.png`
+## The supplies' pull tab: `art-source/ui/buttons/pack-tab.png`
 
 The War Council's pull tab wears the camp plaque plate (`plaque.webp`, `plaque-ready.webp`) with the back chevron glyph. A tab of its
 own, with a satchel on it, would say what it holds.

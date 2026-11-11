@@ -7,6 +7,7 @@ import type { Meta } from './sim/meta';
 import { SPELLS, type SpellId } from './sim/spells';
 import { fightToastTop } from './hudClear';
 import { reclearQuip } from './quipView';
+import { readMs } from './popupGuardRules';
 
 /** The Achievements page: every achievement, the earned ones marked, the counting ones with a bar. One earned and not yet
  *  claimed has a Claim button (they come first), and `claim` takes its crowns and stones (or every waiting one's, for Claim all). */
@@ -92,7 +93,22 @@ export function toastLines(lines: readonly string[]): void {
 const waiting: string[] = [];
 let showing = false;
 
+/** POPUP-GUARD: every line told since the run began, so its recap can list what a toast said to a player who missed it. */
+const told: string[] = [];
+/** The lines the toasts have told since `clearNotices` (each once, in order). */
+export const toldNotices = (): string[] => [...told];
+/** A new run: its notices start empty. */
+export function clearNotices(): void {
+  told.length = 0;
+}
+
+/** Keep a line for the run's recap without a toast (a skill's level, which the wave's card told). */
+export function noteNotice(line: string): void {
+  if (!told.includes(line)) told.push(line);
+}
+
 function toast(line: string): void {
+  noteNotice(line);
   waiting.push(line);
   if (!showing) next();
 }
@@ -147,5 +163,6 @@ function next(): void {
       el.remove();
       next();
     }, 450);
-  }, 2400);
+    // (POPUP-GUARD: a line stays long enough to read: about two seconds at the least, longer with its length)
+  }, readMs(line));
 }

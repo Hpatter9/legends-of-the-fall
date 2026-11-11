@@ -1219,7 +1219,7 @@ export class TowerView {
 
   private oathInfo(id: OathId): void {
     const oath = OATHS[id];
-    const menu = ornateMenu({ id: 'expeditionOath', title: oath.name, sub: 'Sworn for this expedition' });
+    const menu = ornateMenu({ asked: true, id: 'expeditionOath', title: oath.name, sub: 'Sworn for this expedition' });
     const picture = icon(OATH_ART[id], 'rtOathOffer');
     picture.style.alignSelf = 'center';
     menu.body.append(picture);

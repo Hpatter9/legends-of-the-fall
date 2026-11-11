@@ -27,6 +27,9 @@ export interface MenuOptions {
   label?: string;
   /** Called once the menu has gone, however it went (its own buttons, Escape, or `close`). */
   onClose?: () => void;
+  /** POPUP-GUARD (`popupGuardRules.ts`): the player opened this menu themselves, by a tap of their own (the Auto card, a relic's card).
+   *  Left out, the menu is one the game raised: in a run it ignores taps for its first moment, and no tap on its veil closes it. */
+  asked?: boolean;
 }
 
 export interface OrnateMenu {
@@ -55,6 +58,7 @@ export function ornateMenu(o: MenuOptions): OrnateMenu {
   document.getElementById(o.id)?.remove();
   const root = el('div', `omVeil${o.kind === 'sheet' ? ' omSheet' : o.kind === 'drawer' ? ' omDrawer' : o.kind === 'side' ? ' omSide' : ''}`);
   root.id = o.id;
+  if (o.asked) root.dataset.asked = '';
   const card = el('div', 'om');
   card.setAttribute('role', 'dialog');
   card.setAttribute('aria-modal', 'true');

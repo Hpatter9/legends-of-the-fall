@@ -1674,7 +1674,6 @@ body #spellbook h2 {
 #tip #tipSkip,
 #party #ptBack,
 #party #ptSuggest,
-#ptFilters button,
 .heroBack,
 .dialogActions button,
 #asumOk,
@@ -2257,7 +2256,7 @@ body #spellbook h2 {
    and its word), its twin on the drawer's edge while the drawer is out, the page's one line of what is packed, and the drawer's two tabs,
    the Satchel's rows and the Plan's lines. */
 .ptPackTab, .ptPackTab:active:not(:disabled) {
-  position: absolute; z-index: 6; right: 0; top: calc(env(safe-area-inset-top) + 172px); width: 30px; height: 92px; min-height: 0; padding: 8px 0 6px; box-sizing: border-box;
+  position: absolute; z-index: 6; right: 0; top: calc(env(safe-area-inset-top) + 172px); width: 30px; height: 108px; min-height: 0; padding: 8px 0 6px; box-sizing: border-box;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; touch-action: none; cursor: grab;
   border: 1px solid transparent; border-radius: 0; background: none; color: #f3e3b8; text-shadow: 0 1px 2px #000; transform: none;
   --pbw: 8px 7px; border-image: url(ui/buttons/plaque.webp) var(--plaque-slice) / var(--pbw) / 0 stretch;
@@ -2395,3 +2394,11 @@ body #spellbook h2 {
 .uiCard .fsClose { width: auto; min-width: 64px; min-height: 44px; padding: 0 10px; font: 700 13px var(--body); }
 /* the full artwork viewer on the standard double brass rim and shadow */
 dialog.heroArtViewer { border: var(--ornate-border-double); box-shadow: var(--ornate-shadow); }
+
+/* --------------------------------------------------------------------------
+   POPUP-GUARD (docs/notes/popup-guard.md): a popup that has only just appeared ignores taps for a moment. Its buttons are dimmed
+   while it does (`pgWait`), then light (`pgReady`); with reduced motion they change at once, with no fade.
+   -------------------------------------------------------------------------- */
+.pgWait :is(button, .omChoice, [role='button']) { opacity: 0.45; filter: saturate(0.4); cursor: default; }
+.pgReady :is(button, .omChoice, [role='button']) { transition: opacity 0.25s ease-out, filter 0.25s ease-out; }
+@media (prefers-reduced-motion: reduce) { .pgReady :is(button, .omChoice, [role='button']) { transition: none; } }
