@@ -47,18 +47,13 @@
 /* in the fight: at the left end of the spell orbs row, its words a small pill on its foot (44 px: AUTO-RIGHT keeps the row one line) */
 .ehFight { width: 44px; height: 44px; margin-right: 0; align-self: center; justify-content: center; }
 .ehFight .ehArt { width: 42px; }
-/* HORN-CORNER, HORN-RIGHT (docs/notes/horn-corner.md; the owner: "Let's move the horn again. Maybe we make it bottom right then."): in an
-   army's, the daily's or a quest's fight the horn is out of the spell row, in the board's bottom-right corner. It rides on the panel's top
-   edge beside the tactic button, just to its left on the same line and centred on it (66 px tall against the horn's 56), so the pair stand
-   no taller over the fighters than the tactic button did alone and the camera loses no room. A 56 px thumb target. Only in a fight. With
-   no tactic button it takes the corner itself. (The Last Stand, hidden, keeps its horn in its own row.) */
-#panel > .ehFight { position: absolute; z-index: 2; right: 72px; bottom: calc(100% + 15px); width: 56px; height: 56px; display: none; }
-#panel:has(> #tacticBtn[hidden]) > .ehFight, #panel:not(:has(> #tacticBtn)) > .ehFight { right: 8px; bottom: calc(100% + 10px); }
+/* HORN-CORNER, HORN-RIGHT, HUD-EVEN (docs/notes/horn-corner.md, hud-even.md): in an army's, the daily's or a quest's fight the horn is out
+   of the spell row, in the board's bottom-right corner, riding on the panel's top edge. Since HUD-EVEN moved the tactic button to the
+   upper right it has the corner to itself. A 56 px thumb target. Only in a fight. (The Last Stand, hidden, keeps its horn in its row.) */
+#panel > .ehFight { position: absolute; z-index: 2; right: 8px; bottom: calc(100% + 10px); width: 56px; height: 56px; display: none; }
 body[data-phase='fight'] #panel > .ehFight { display: flex; }
 #panel > .ehFight .ehArt { width: 52px; }
 #panel > .ehFight .ehWords { right: auto; left: 50%; translate: -50% 0; bottom: -4px; }
-/* (the tactic button's word used to rise just left of the button, where the horn now is: while the horn shows it rises over the button) */
-body:not(.inDuel) #panel:has(> .ehFight:not([hidden])) .fhTacticWord { right: 8px; bottom: calc(100% + 80px); }
 .ehFight .ehWords, .ehCamp .ehWords { position: absolute; right: -3px; bottom: -2px; padding: 1px 3px; border-radius: 4px; background: #0d0b08d9; font-size: 10px; }
 /* at the camp: beside the stones */
 .ehCamp { width: 46px; height: 36px; justify-content: center; flex-direction: row; }

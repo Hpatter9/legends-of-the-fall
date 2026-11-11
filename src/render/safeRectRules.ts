@@ -1,7 +1,7 @@
 // CAM-SAFE (docs/notes/cam-safe.md): the part of the board the player can really see. The owner: "Make sure when the camera is centered on
 // the action in the wave, it takes the on screen bars into account. Or the spells." The canvas is full screen, and parts of the page lie
 // over it: the top bar, the fight's spell row (mana, the orbs, the Auto buttons; one row, or two when it wraps), a twist's banner, the
-// boss's bar, the combo bar, the synergies, the tactic button and the War Horn beside it in the bottom-right corner, a duel's bar, and at the bottom the
+// boss's bar, the combo bar, the synergies, the tactic button's plaque under the row at the right, the War Horn in the bottom-right corner, a duel's bar, and at the bottom the
 // bench and its buttons (or the hero rows in a fight). The camera frames and centres the fight in what is left: the safe rect. Pure: no DOM, no Pixi, so the tests
 // run it; `camSafe.ts` reads the covers' real boxes from the page.
 //
