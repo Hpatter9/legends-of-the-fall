@@ -2,7 +2,7 @@
 // its own switch (off: every fight is as it was) and laid from its own side stream.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { AREAS, boardOk, makeBoard, standable } from '../src/sim/board';
+import { AREAS, boardOk, DEPLOY_ROWS, makeBoard, standable } from '../src/sim/board';
 import { startBattle } from '../src/sim/battle';
 import { FLOODS, LAND_TERRAIN, layLandTerrain } from '../src/sim/landTerrain';
 
@@ -71,17 +71,58 @@ test('the mire floods: more shallow water on its lowest open ground, never deep,
   assert.ok(now >= was * 1.6 && now <= was * 3, `${was} shallow tiles as it is, ${now} flooded, over 120 boards`);
 });
 
-test('only the mire floods; the other lands, a board with scenery and a big field are left as they are', () => {
+test('each land\'s own flag: the mire and the snows are on, the ashlands and the highlands are off; the other lands, a board with scenery and a big field are left as they are', () => {
+  assert.deepEqual(Object.keys(FLOODS).sort(), ['highlands', 'snow', 'swamp', 'volcano']);
+  // (what the measure allowed, docs/notes/land-identity.md: a land ships on only within noise overall and with no band moved by more than about 8 points)
+  assert.deepEqual(Object.entries(FLOODS).map(([a, f]) => [a, f.kind, f.on]).sort(), [['highlands', 'rock', false], ['snow', 'ice', true], ['swamp', 'water', true], ['volcano', 'lava', false]]);
   for (const area of AREAS) {
-    if (FLOODS[area]) continue;
+    if (FLOODS[area]?.on) continue;
     const b = makeBoard(5, area);
     const before = JSON.stringify(b);
     assert.deepEqual(flooded(() => layLandTerrain(b, 5)), [], area);
     assert.equal(JSON.stringify(b), before);
+    assert.equal(JSON.stringify(flooded(() => startBattle(5, 'orcs', { area }).board)), before, `${area}: a fight there is on the board as it was`);
   }
-  assert.deepEqual(Object.keys(FLOODS), ['swamp']);
   const big = makeBoard(5, 'swamp', 24, 24);
   assert.deepEqual(flooded(() => layLandTerrain(big, 5)), []);
+});
+
+test('ice on the snows, and (were they on) lava in the ashlands and boulders in the highlands: each laid on plain open ground, lava and boulders in the middle ground only, and every tile can still be walked to', () => {
+  for (const area of ['snow', 'volcano', 'highlands'] as const) {
+    const flood = FLOODS[area]!;
+    const was = flood.on;
+    flood.on = true;
+    try {
+      let before = 0;
+      let after = 0;
+      for (let seed = 1; seed <= 100; seed++) {
+        const plain = makeBoard(seed, area);
+        const b = makeBoard(seed, area);
+        const laid = flooded(() => layLandTerrain(b, seed));
+        assert.deepEqual(flooded(() => layLandTerrain(makeBoard(seed, area), seed)), laid, 'the same seed, the same patches');
+        const is = (t: { ground?: string; rock?: boolean }) => (flood.kind === 'rock' ? !!t.rock : t.ground === flood.kind);
+        b.tiles.forEach((t, i) => {
+          const old = plain.tiles[i];
+          if (!laid.includes(i)) return assert.deepEqual(t, old, 'only the patches\' tiles change');
+          assert.ok(is(t) && !is(old), `${area}: a patch of ${flood.kind}`);
+          assert.ok(standable(old) && !old.ground && !old.rock && !old.bridge && !old.barrel && !old.brazier && !old.perch && !old.ramp, 'on what was plain open ground');
+          assert.equal(t.h, old.h);
+          const v = Math.floor(i / b.w);
+          // (lava and boulders keep out of both sides' rows, as the board's own do)
+          if (flood.kind !== 'ice') assert.ok(v >= DEPLOY_ROWS && v <= b.d - 1 - DEPLOY_ROWS, `${area}: ${flood.kind} in row ${v}`);
+        });
+        assert.ok(boardOk(b), `${area} ${seed}: the board can be walked`);
+        const stands = (t: (typeof b.tiles)[number]): boolean => standable(t);
+        const open = b.tiles.filter((t) => stands(t) || (flood.kind === 'rock' && !!t.rock)).length;
+        assert.ok(b.tiles.filter(is).length / open <= Math.max(flood.most, plain.tiles.filter(is).length / open) + 1e-9);
+        before += plain.tiles.filter(is).length;
+        after += b.tiles.filter(is).length;
+      }
+      assert.ok(after >= before * 1.8 && after <= before * 5, `${area}: ${before} tiles of ${flood.kind} as it is, ${after} laid thicker, over 100 boards`);
+    } finally {
+      flood.on = was;
+    }
+  }
 });
 
 test('flooding draws from its own side stream: a flooded fight has the same foes in the same places and the same stream as it had', () => {

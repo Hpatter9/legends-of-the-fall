@@ -5,10 +5,10 @@
 //   --only hazards | terrain   turns only that one on in the second pass
 import '../joint/off';
 import '../tactics/off';
-import { AREAS, type Area } from '../../src/sim/board';
+import { AREAS, boardOk, makeBoard, standable, type Area } from '../../src/sim/board';
 import { FIELD_BANDS } from '../../src/sim/foes';
 import { FIELD_HAZARDS, hazardLevel } from '../../src/sim/fieldTraps';
-import { LAND_TERRAIN } from '../../src/sim/landTerrain';
+import { FLOODS, LAND_TERRAIN, layLandTerrain } from '../../src/sim/landTerrain';
 import { mixSeed, Rng } from '../../src/sim/rng';
 import { fieldBoost, pickTeam, play, SWEEP } from '../heroSweep';
 
@@ -19,9 +19,42 @@ const STAGE = Number(val('--stage') ?? 5);
 const LANDS = (val('--lands')?.split(',') as Area[] | undefined) ?? [...AREAS];
 const ONLY = val('--only');
 const LEVEL = hazardLevel(STAGE, 0);
+// (`--force`: a land whose own terrain is off is measured with it on; `--base hazards`: the first pass has the traps on too, so the
+//  change read is the terrain's alone, on top of the traps as the game now has them)
+if (has('--force')) for (const a of LANDS) if (FLOODS[a]) FLOODS[a]!.on = true;
+const BASE_HAZARDS = val('--base') === 'hazards';
+
+// (`--boards`: how much of each land's own ground its boards carry, as `makeBoard` lays them and with the land's terrain laid thicker)
+if (has('--boards')) {
+  const N = 500;
+  console.log(`\nTHE BOARDS (${N} seeds a land)`);
+  for (const area of LANDS) {
+    const flood = FLOODS[area];
+    if (!flood) continue;
+    const is = (t: { ground?: string; rock?: boolean }) => (flood.kind === 'rock' ? !!t.rock : t.ground === flood.kind);
+    let [open, was, now, ok, most] = [0, 0, 0, 0, 0];
+    for (let seed = 1; seed <= N; seed++) {
+      const b = makeBoard(seed, area);
+      const stands = (t: (typeof b.tiles)[number]): boolean => standable(t);
+      const n = b.tiles.filter((t) => stands(t) || (flood.kind === 'rock' && !!t.rock)).length;
+      open += n;
+      was += b.tiles.filter(is).length;
+      const [t0, f0] = [LAND_TERRAIN.on, flood.on];
+      LAND_TERRAIN.on = flood.on = true;
+      layLandTerrain(b, seed);
+      LAND_TERRAIN.on = t0;
+      flood.on = f0;
+      const k = b.tiles.filter(is).length;
+      now += k;
+      most = Math.max(most, k / n);
+      if (boardOk(b)) ok++;
+    }
+    console.log(`${area.padEnd(11)}${flood.kind.padEnd(6)} ${((100 * was) / open).toFixed(1)}% of the open tiles as it is, ${((100 * now) / open).toFixed(1)}% laid thicker (${(was / N).toFixed(1)} tiles a board to ${(now / N).toFixed(1)}; the most on a board ${(100 * most).toFixed(0)}%); every tile still walkable on ${ok} of ${N}`);
+  }
+}
 
 const tally = (area: Area, on: boolean): Map<string, [number, number]> => {
-  FIELD_HAZARDS.on = on && ONLY !== 'terrain';
+  FIELD_HAZARDS.on = BASE_HAZARDS || (on && ONLY !== 'terrain');
   LAND_TERRAIN.on = on && ONLY !== 'hazards';
   SWEEP.hazards = FIELD_HAZARDS.on ? LEVEL : 0;
   const by = new Map<string, [number, number]>();
