@@ -1,7 +1,7 @@
 // The Eidolon's call on the page (EIDOLONS batch 4, docs/notes/eidolons.md; the rules and timings are `eidolonRules.ts`, the sim's call is
 // `sim/eidolons.ts`, the horn's fill `sim/warHorn.ts`). Three parts:
 //
-// - **The War Horn**, in the fight in the board's bottom-left corner (HORN-CORNER) and at the camp beside the stones: the horn's painting (`horn-empty`) with its lit
+// - **The War Horn**, in the fight in the board's bottom-right corner (HORN-CORNER) and at the camp beside the stones: the horn's painting (`horn-empty`) with its lit
 //   painting (`horn-light`) revealed from the mouthpiece to the bell as it fills, and a glow along it that grows with it. A gain streams motes
 //   of light into it (a boss wave's is a rush). Full, it turns to its ready painting with a warm aura of drifting runes and a sheen crossing
 //   it, steady (nothing blinks). A tap when full blows it (a confirm the first time). Before the first Eidolon is bound the horn is not the
@@ -240,7 +240,7 @@ interface Playing {
 }
 
 export class EidolonCall {
-  /** The horn in the fight (the page places it: the board's bottom-left corner, HORN-CORNER; the Last Stand's in its orbs row). */
+  /** The horn in the fight (the page places it: the board's bottom-right corner, HORN-CORNER; the Last Stand's in its orbs row). */
   readonly horn = new HornView('ehFight', 'The War Horn');
   /** The horn at the camp, beside the stones. */
   readonly camp = new HornView('ehCamp', 'The War Horn');
@@ -517,13 +517,16 @@ export class EidolonCall {
     say.append(face, said);
     const hornBlast = el('div', 'ecHorn');
     hornBlast.append(el('i', 'ecCone'), img(URL_OF('horn-blast'), 'ecHornArt'), el('i', 'ecRing'));
-    // (HORN-CORNER: the call starts from the horn's button. In the bottom-left corner the great horn rises out of it and comes to rest just
-    // above it; a horn in a top row (the Last Stand's) keeps the old place)
+    // (HORN-CORNER, HORN-RIGHT: the call starts from the horn's button. In a bottom corner the great horn rises out of it and comes to rest
+    // just above it: from the left it lies along the left edge, from the right along the right edge, turned to face the field; a horn in a
+    // top row (the Last Stand's) keeps the old place)
     const from = this.horn.root.getBoundingClientRect();
     if (from.width > 0 && from.top + from.height / 2 > innerHeight / 2) {
       const size = innerWidth * 0.44;
-      const left = Math.max(0, from.left - 4);
+      const right = from.left + from.width / 2 > innerWidth / 2;
+      const left = right ? Math.min(innerWidth - size, from.right + 4 - size) : Math.max(0, from.left - 4);
       const bottom = innerHeight - from.top + 4;
+      if (right) hornBlast.style.setProperty('--sx', '-1');
       hornBlast.classList.add('fromBtn');
       hornBlast.style.left = `${Math.round(left)}px`;
       hornBlast.style.bottom = `${Math.round(bottom)}px`;

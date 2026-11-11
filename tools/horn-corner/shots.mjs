@@ -1,4 +1,4 @@
-// HORN-CORNER shots and checks (docs/notes/horn-corner.md): the War Horn in the fight's bottom-left corner. For each upright size:
+// HORN-CORNER shots and checks (docs/notes/horn-corner.md): the War Horn in the fight's bottom-right corner, beside the tactic button. For each upright size:
 //   wave5-ready     an army fight with four spells, the horn full (an Eidolon bound),
 //   wave5-charging  the same, the horn part filled,
 //   wave5-locked    the same on a save with no Eidolon bound (no horn at all),
@@ -7,14 +7,14 @@
 // It prints the spell row's height (one line or two), the horn's box, whatever the horn's box lies over, and how far the action's centre
 // sits from the middle of the camera's room. Exits 1 on a failed check (run against a build with the horn in the corner).
 //
-//   npm run web && node tools/horn-corner/shots.mjs            (TAG=after, OUT=docs/samples/horn-corner)
+//   npm run web && node tools/horn-corner/shots.mjs            (TAG=after, OUT=docs/samples/horn-right)
 //   ROOT=<a build of main> TAG=before node tools/horn-corner/shots.mjs
 import * as esbuild from 'esbuild';
 import { mkdirSync } from 'node:fs';
 import { serve, launch } from '../calmap/lib.mjs';
 
 const ROOT = process.env.ROOT ?? 'out/web';
-const OUT = process.env.OUT ?? 'docs/samples/horn-corner';
+const OUT = process.env.OUT ?? 'docs/samples/horn-right';
 const TAG = process.env.TAG ?? 'after';
 const PORT = 8139;
 const ALL = [[393, 852], [360, 780], [412, 915]];
@@ -114,14 +114,15 @@ function report(name, w, i, wantHorn) {
   check(!!i.horn === wantHorn, `${name}-${w}: the horn ${wantHorn ? 'shows' : 'is not shown'}`);
   if (i.horn) {
     check(i.horn[2] - i.horn[0] >= 48 && i.horn[3] - i.horn[1] >= 48, `${name}-${w}: a thumb target of at least 48 px (${i.horn[2] - i.horn[0]} x ${i.horn[3] - i.horn[1]})`);
-    check(i.horn[0] >= 4 && i.horn[0] < 24 && i.horn[3] <= i.panelTop, `${name}-${w}: in the bottom-left corner, above the panel`);
+    check(i.horn[2] >= w - 80 && i.horn[2] <= w - 4 && i.horn[3] <= i.panelTop, `${name}-${w}: in the bottom-right corner, above the panel`);
+    check(!i.tactic || (i.horn[2] <= i.tactic[0] - 4 && i.horn[1] >= i.tactic[1] && i.horn[3] <= i.tactic[3]), `${name}-${w}: beside the tactic button, a gap between, no taller than it`);
     check(!i.hits.length, `${name}-${w}: the horn lies over no other part`);
-    check(i.cutLeft >= i.horn[2], `${name}-${w}: a skill's banner comes in beside the horn, not over it (x ${i.cutLeft})`);
-    check(!i.tactic || i.cutLeft + Math.min(200, w * 0.56) <= i.tactic[0], `${name}-${w}: and stops short of the tactic button`);
+    check(i.cutLeft + Math.min(200, w * 0.56) <= i.horn[0], `${name}-${w}: a skill's banner stops short of the horn`);
+    check(!i.tactic || i.safe[3] === i.tactic[1] - 8, `${name}-${w}: the camera's room ends where the tactic button alone cut it`);
     check(i.safe[3] <= i.horn[1], `${name}-${w}: the camera's room ends above the horn`);
   }
   if (i.rowH && w >= 393) check(i.rowH <= 56, `${name}-${w}: the spell row is one line (${i.rowH} px)`);
-  if (!i.horn) check(i.cutLeft === 0, `${name}-${w}: with no horn a skill's banner keeps the left edge`);
+  check(i.cutLeft === 0, `${name}-${w}: a skill's banner comes in at the left edge`);
   if (i.off) check(Math.abs(i.off[0]) <= 24 && Math.abs(i.off[1]) <= 8, `${name}-${w}: the action sits at the middle of the room (${i.off})`);
 }
 
@@ -156,6 +157,21 @@ for (const [w, h] of SIZES) {
       console.log(`${TAG} note-${w}: ${JSON.stringify(note)}`);
       if (after) check(!!note && note[0] >= 0 && note[2] <= w && note[1] >= 0 && note[3] <= i.horn[1], `note-${w}: the horn's note shows above it, on the screen`);
     }
+    // (a tap on the tactic button: its word rises clear of the horn)
+    if (name === 'wave8-ready') {
+      await page.evaluate(() => { window.__game.app.ticker.start(); document.getElementById('tacticBtn').click(); });
+      await page.waitForTimeout(350);
+      const word = await page.evaluate(() => {
+        const box = (e) => { const b = e.getBoundingClientRect(); return [Math.round(b.left), Math.round(b.top), Math.round(b.right), Math.round(b.bottom)]; };
+        const wd = document.querySelector('#tacticWord.up');
+        const hn = [...document.querySelectorAll('.ehFight')].find((e) => e.getBoundingClientRect().width > 0);
+        return wd && hn ? { word: box(wd), horn: box(hn), tactic: box(document.getElementById('tacticBtn')) } : null;
+      });
+      await page.screenshot({ path: `${OUT}/${TAG}-wave8-tactic-word-${w}.png` });
+      console.log(`${TAG} word-${w}: ${JSON.stringify(word)}`);
+      const apart = (a, b) => a[2] <= b[0] || b[2] <= a[0] || a[3] <= b[1] || b[3] <= a[1];
+      if (after) check(!!word && apart(word.word, word.horn) && apart(word.word, word.tactic) && word.word[2] <= w, `word-${w}: the tactic's word shows clear of the horn and the button`);
+    }
     // (the full horn blown: the call's horn swings up from the button)
     if (name === 'wave5-ready') {
       await page.evaluate(() => { window.__game.app.ticker.start(); [...document.querySelectorAll('.ehFight')].find((e) => e.getBoundingClientRect().width > 0).click(); });
@@ -163,7 +179,7 @@ for (const [w, h] of SIZES) {
       const blast = await page.evaluate(() => { const n = document.querySelector('.ecLayer .ecHorn'); if (!n) return null; const b = n.getBoundingClientRect(); return [Math.round(b.left), Math.round(b.top), Math.round(b.right), Math.round(b.bottom)]; });
       await page.screenshot({ path: `${OUT}/${TAG}-wave5-call-${w}.png` });
       console.log(`${TAG} call-${w}: the call's horn ${JSON.stringify(blast)}`);
-      if (after) check(!!blast && blast[0] <= i.horn[2] && blast[3] >= i.horn[1] - 40 && blast[3] <= h, `call-${w}: the call's horn rises from the button's corner`);
+      if (after) check(!!blast && blast[2] >= i.horn[0] && blast[2] <= w + 12 && blast[0] >= 0 && blast[3] >= i.horn[1] - 40 && blast[3] <= h, `call-${w}: the call's horn rises from the button's corner`);
     }
     await ctx.close();
   }

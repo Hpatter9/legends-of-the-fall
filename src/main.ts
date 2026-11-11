@@ -2462,8 +2462,8 @@ class Game {
       // (EIDOLON-CHAINS: the horn's card at the camp opens the Pact Gallery)
       gallery: () => this.home.openGallery(),
     });
-    // (HORN-CORNER: the War Horn rides on the panel's top edge at the left, as the tactic button does at the right: the board's bottom-left
-    // corner in a fight, out of the spell row, which then keeps to one line; the camera frames the fight clear of it)
+    // (HORN-CORNER: the War Horn rides on the panel's top edge at the right, beside the tactic button: the board's bottom-right corner in
+    // a fight, out of the spell row, which then keeps to one line; the camera frames the fight clear of it)
     $('panel').append(this.eid.horn.root);
     registerCamCover(HORN_CORNER);
     const canvas = this.app.canvas;
