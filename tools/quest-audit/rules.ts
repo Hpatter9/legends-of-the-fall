@@ -11,7 +11,7 @@ import { ARMIES, bossesOf } from '../../src/sim/armies';
 import { TIERS } from '../../src/sim/tiers';
 import { ALL_HEROES, UNITS } from '../../src/sim/units';
 import { traitsOf } from '../../src/sim/traits';
-import { SPELLS, STARTER_SPELLS } from '../../src/sim/spells';
+import { FIRST_SPELL, SPELLS, STARTER_SPELLS } from '../../src/sim/spells';
 import { COMBOS } from '../../src/sim/combos';
 import { questBattleById } from '../../src/sim/questBattles';
 import { ULT_LEVEL } from '../../src/sim/abilities';
@@ -68,9 +68,11 @@ function check(g: Goal, q: { oneRun?: boolean; needs?: Need; within?: number }):
   const spells = [...(c.spells ?? []), ...(c.spellsOnly ?? [])];
   for (const s of spells) if (!(s in SPELLS)) broken.push(`no spell "${s}"`);
   const learnt = (n?: Need): string[] => (!n ? [] : n.kind === 'spell' ? [n.id] : n.kind === 'all' ? n.of.flatMap(learnt) : []);
-  // (a list of spells is met by any one of them: a save knows the starting three from its first fight, the rest once the Chapel sells them)
-  const known = (s: string) => STARTER_SPELLS.includes(s as never) || learnt(q.needs).includes(s);
-  if (spells.length && !spells.some(known)) call.push(`asks for ${spells.join(', ')}, which a save learns only at the Chapel (10 stars), and the quest may come sooner`);
+  // (a list of spells is met by any one of them. SPELL-SLOTS: a save carries Heal alone from its first fight; any other spell is cast once
+  //  the quest waits for it to be learnt, or, for the starting three, for the spellbook that lets the player put it in a slot)
+  const book = (n?: Need): boolean => !!n && (n.kind === 'spellbook' || (n.kind === 'all' && n.of.some(book)));
+  const known = (s: string) => s === FIRST_SPELL || learnt(q.needs).includes(s) || (STARTER_SPELLS.includes(s as never) && book(q.needs));
+  if (spells.length && !spells.some(known)) call.push(`asks for ${spells.join(', ')}, which a save can carry only once the spellbook opens at the Chapel (10 stars), and the quest may come sooner`);
   if (g.kind === 'teamCombo' && c.combo && !COMBOS.some((x) => x.id === c.combo)) broken.push(`no combo "${c.combo}"`);
   if (g.kind === 'battle' && !questBattleById(c.battle!)) broken.push(`no quest battle "${c.battle}"`);
   if (g.kind === 'ults' || (c.ultsIn ?? 0) > 0) if (!q.needs || !needsLevel(q.needs, ULT_LEVEL)) call.push(`ultimates open at level ${ULT_LEVEL}; the quest may come sooner`);

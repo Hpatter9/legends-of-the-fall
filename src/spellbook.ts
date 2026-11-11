@@ -5,7 +5,9 @@ import { menuChoice, menuFoot, menuSection, menuWell, ornateMenu, type OrnateMen
 import type { Meta } from './sim/meta';
 import { spellLock } from './sim/spellSources';
 import { SPELLS, SPELL_IDS, RANK_MAX, RIDERS, type SpellId } from './sim/spells';
-import { castList, equipBlock, equipSpell, fitSchool, schoolOf, schoolsOfSpell, SCHOOL_SLOTS, unequipSpell } from './sim/schools';
+import { castList, equipBlock, equipSpell, fitSchool, LOADOUT_SLOTS, schoolOf, schoolsOfSpell, SCHOOL_SLOTS, unequipSpell } from './sim/schools';
+import { slotLockLine, spellSlots } from './sim/spellSlots';
+import { medal } from './paintedButton';
 import { DECREES } from './sim/decrees';
 import { marksEarned, marksFree, rankBlock, rankIn, rankUp } from './sim/spellRanks';
 import { namesHiddenMode } from './sim/hiddenModes';
@@ -54,13 +56,16 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
     const m = meta;
     const l = m.spellbook;
     const sc = schoolOf(rulerId());
-    fitSchool(l, sc.id);
+    fitSchool(l, sc.id, spellSlots(m));
     const dc = DECREES[sc.decree];
     body.replaceChildren();
 
     const loadout = menuWell(body);
     loadout.classList.add('sbLoadout');
-    const slots = menuSection(loadout, 'Battle loadout', '3 school slots + 1 open', 4);
+    // (SPELL-SLOTS: four slots, as many open as the save's stars have opened; the spells in the order the fight casts them, then the empty
+    // open slots, then the shut ones with the painted lock and the stars they open at)
+    const openN = spellSlots(m);
+    const slots = menuSection(loadout, 'Battle loadout', openN < LOADOUT_SLOTS ? `${openN} of ${LOADOUT_SLOTS} slots open` : '3 school slots + 1 open', 4);
     slots.classList.add('sbSlots');
     const slot = (id: SpellId | undefined, label: string, open: boolean, index: number) => {
       const b = menuChoice(slots, { title: id ? SPELLS[id].name : 'Empty', on: !!id });
@@ -79,14 +84,32 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
         }
       });
     };
-    for (let i = 0; i < SCHOOL_SLOTS; i++) slot(l.equipped[i], `School ${i + 1}`, false, i);
-    slot(l.open, 'Open', true, SCHOOL_SLOTS);
+    const locked = (index: number) => {
+      const b = menuChoice(slots, { title: 'Locked' });
+      b.classList.add('sbSlot', 'sbShut');
+      b.dataset.sbFocus = `slot-${index}`;
+      b.replaceChildren(el('small', '', `Slot ${index + 1}`), medal('lock', 'sbLock'), el('b', '', 'Locked'), el('em', '', slotLockLine(m, index)));
+      b.setAttribute('aria-label', `Slot ${index + 1}: locked. ${slotLockLine(m, index).replace('★', 'stars')}`);
+      b.setAttribute('aria-disabled', 'true');
+      b.addEventListener('click', () => { note = `Slot ${index + 1} ${slotLockLine(m, index).replace('Opens', 'opens')}. Win stars on the armies to open it.`; redraw(); body.querySelector<HTMLElement>(`[data-sb-focus="slot-${index}"]`)?.focus({ preventScroll: true }); });
+    };
+    if (openN >= LOADOUT_SLOTS) {
+      for (let i = 0; i < SCHOOL_SLOTS; i++) slot(l.equipped[i], `School ${i + 1}`, false, i);
+      slot(l.open, 'Open', true, SCHOOL_SLOTS);
+    } else {
+      let i = 0;
+      for (const id of l.equipped) slot(id, 'School', false, i++);
+      if (l.open) slot(l.open, 'Open', true, i++);
+      // (an empty open slot takes a school spell, or any spell while the loadout's open slot is free)
+      while (i < openN) slot(undefined, 'Empty', !l.open, i++);
+      while (i < LOADOUT_SLOTS) locked(i++);
+    }
     loadout.append(el('p', 'sbHint', 'Tap an equipped spell to free its slot.'));
 
     const school = el('details', 'sbSchool');
     school.open = schoolExpanded;
     school.append(el('summary', '', `School of ${sc.name} · ${dc.name}`));
-    school.append(el('p', '', `Your ruler grants three ${sc.name} slots and one open slot for any known spell. Change ruler in Settings to change school.`));
+    school.append(el('p', '', `Your ruler grants three ${sc.name} slots and one open slot for any known spell${openN < LOADOUT_SLOTS ? `; ${openN} of the four ${openN === 1 ? 'is' : 'are'} open so far, and the rest open as you win army stars` : ''}. Change ruler in Settings to change school.`));
     school.append(el('p', '', `Decree: ${dc.text}. Once a fight, tap the mana when the Decree meter is full.`));
     school.addEventListener('toggle', () => { schoolExpanded = school.open; });
     body.append(school);
@@ -187,14 +210,14 @@ export function spellbookView(onDraw: () => void = () => {}): { root: HTMLElemen
         up.addEventListener('click', () => act(() => rankUp(m, id), why ?? '', `${sp.name} raised to rank ${rk + 1}.`));
         acts.append(up);
       }
-      const block = isOn ? null : equipBlock(l, id, sc.id);
+      const block = isOn ? null : equipBlock(l, id, sc.id, openN);
       const btn = el('button', 'sbEquip', isOn ? 'Unequip' : sc.spells.includes(id) && l.equipped.length < SCHOOL_SLOTS ? 'Equip' : 'Equip · Open slot');
       btn.dataset.sbFocus = `equip-${id}`;
       btn.disabled = !!block;
       btn.setAttribute('aria-label', `${btn.textContent}: ${sp.name}${block ? `. ${block}` : ''}`);
       btn.addEventListener('click', () => isOn
         ? act(() => unequipSpell(l, id), '', `${sp.name} unequipped.`)
-        : act(() => equipSpell(l, id, sc.id), block ?? '', `${sp.name} equipped.`));
+        : act(() => equipSpell(l, id, sc.id, openN), block ?? '', `${sp.name} equipped.`));
       acts.append(btn);
       card.append(acts);
       if (block) card.append(el('p', 'sbBlocked', block));

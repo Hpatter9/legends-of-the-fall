@@ -8,7 +8,7 @@
 //
 // Pure rules: no Pixi, no DOM, no randomness.
 
-import { SPELLS, type Loadout, type SpellId } from './spells';
+import { FIRST_SPELL, SPELLS, type Loadout, type SpellId } from './spells';
 import type { DecreeId } from './decrees';
 
 /** The rulers' ids, as the page's ruler picker names them (`src/rulerRules.ts`; `test/king-spells-b2.test.ts` checks the two match). */
@@ -42,7 +42,9 @@ export const DEFAULT_SCHOOL: SchoolId = 'iron_stag';
 /** The school slots hold three spells; one more, the open slot, takes any spell the save knows. */
 export const SCHOOL_SLOTS = 3;
 /** The spell a save's open slot starts with (the owner's call: Heal stays in reach of every ruler). */
-export const OPEN_START: SpellId = 'heal';
+export const OPEN_START: SpellId = FIRST_SPELL;
+/** The loadout's slots, all told: the three school slots and the open slot. How many a save may fill is `spellSlots` (SPELL-SLOTS). */
+export const LOADOUT_SLOTS = SCHOOL_SLOTS + 1;
 
 export const schoolOf = (id: string | undefined): School => SCHOOLS[(id && id in SCHOOLS ? id : DEFAULT_SCHOOL) as SchoolId];
 /** The two spells of a school every save knows. */
@@ -58,8 +60,11 @@ export const castList = (l: Loadout): SpellId[] => [...l.equipped, ...(l.open &&
  * the school is new to the loadout (a ruler changed, or a save from before the schools) are empty slots filled from the known spells of the
  * school, and a spell that no longer fits moves to the open slot (if it is free; else Heal goes there when known). A loadout already fitted to
  * this school keeps the player's choices, empty slots included. Changes `l` and returns it.
+ *
+ * SPELL-SLOTS: `slots` is how many slots the save has open (`spellSlots`; all four when not said). A loadout holding more than that keeps
+ * Heal first, then its spells in the order the fight casts them.
  */
-export function fitSchool(l: Loadout, id: string | undefined): Loadout {
+export function fitSchool(l: Loadout, id: string | undefined, slots = LOADOUT_SLOTS): Loadout {
   const s = schoolOf(id);
   for (const f of firstSpells(s)) if (!l.owned.includes(f)) l.owned.push(f);
   const fresh = l.school !== s.id;
@@ -73,16 +78,40 @@ export function fitSchool(l: Loadout, id: string | undefined): Loadout {
     if (!l.open) delete l.open;
     l.school = s.id;
   }
+  const all = castList(l);
+  if (all.length > slots) {
+    const keep = [...all.filter((x) => x === OPEN_START), ...all.filter((x) => x !== OPEN_START)].slice(0, Math.max(0, slots));
+    l.equipped = l.equipped.filter((x) => keep.includes(x));
+    if (l.open && !keep.includes(l.open)) delete l.open;
+  }
   return l;
 }
 
+/**
+ * SPELL-SLOTS: fill a loadout's empty slots, up to `slots` spells in all, with the spells a save carries by default: Heal in the open slot
+ * (if it is free and Heal is not a school spell already in), then the school's known spells in the school's order. Changes `l` and returns
+ * the spells it added. Used when a slot opens while the spellbook is still shut, and by the balance tools' player.
+ */
+export function fillSlots(l: Loadout, id: string | undefined, slots = LOADOUT_SLOTS): SpellId[] {
+  const s = schoolOf(id);
+  const added: SpellId[] = [];
+  while (castList(l).length < slots) {
+    const on = castList(l);
+    const next = !l.open && l.owned.includes(OPEN_START) && !on.includes(OPEN_START) && !s.spells.includes(OPEN_START) ? OPEN_START : l.equipped.length < SCHOOL_SLOTS ? s.spells.find((x) => l.owned.includes(x) && !on.includes(x)) : undefined;
+    if (!next || !equipSpell(l, next, id, slots)) break;
+    added.push(next);
+  }
+  return added;
+}
+
 /** Why a spell can't be equipped under this school now, or null when it can. A school spell takes a school slot, or the open slot once those
- *  are full; any other spell takes the open slot. */
-export function equipBlock(l: Loadout, id: SpellId, schoolId: string | undefined): string | null {
+ *  are full; any other spell takes the open slot. SPELL-SLOTS: no more spells than the save has slots open (`slots`; all four when not said). */
+export function equipBlock(l: Loadout, id: SpellId, schoolId: string | undefined, slots = LOADOUT_SLOTS): string | null {
   const s = schoolOf(schoolId);
   if (!SPELLS[id]) return 'No such spell';
   if (!l.owned.includes(id)) return 'Not learnt yet';
   if (castList(l).includes(id)) return 'Already equipped';
+  if (slots < LOADOUT_SLOTS && castList(l).length >= slots) return `Your ${slots === 1 ? 'one open slot is' : `${slots} open slots are`} full: unequip a spell first, or win army stars to open another`;
   const own = s.spells.includes(id);
   if (own && l.equipped.length < SCHOOL_SLOTS) return null;
   if (!l.open) return null;
@@ -90,8 +119,8 @@ export function equipBlock(l: Loadout, id: SpellId, schoolId: string | undefined
 }
 
 /** Equip a spell under this school. False (and nothing changed) when `equipBlock` says no. */
-export function equipSpell(l: Loadout, id: SpellId, schoolId: string | undefined): boolean {
-  if (equipBlock(l, id, schoolId)) return false;
+export function equipSpell(l: Loadout, id: SpellId, schoolId: string | undefined, slots = LOADOUT_SLOTS): boolean {
+  if (equipBlock(l, id, schoolId, slots)) return false;
   if (schoolOf(schoolId).spells.includes(id) && l.equipped.length < SCHOOL_SLOTS) l.equipped.push(id);
   else l.open = id;
   return true;

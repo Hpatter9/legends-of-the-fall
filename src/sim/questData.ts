@@ -125,6 +125,8 @@ export type Need =
   | { kind: 'duchess' }
   /** One of the king's spells known. */
   | { kind: 'spell'; id: string }
+  /** SPELL-SLOTS: the spellbook is open (the Chapel stands), so the player can choose which spells the king carries. */
+  | { kind: 'spellbook' }
   /** HERO-TALES-2: a Calamity cleared at this ascension or a higher one (0 a plain clear). */
   | { kind: 'ascension'; n: number }
   /** HERO-TALES-2: this share (0 to 1) of the bestiary's foes met. */

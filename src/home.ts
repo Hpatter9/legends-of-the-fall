@@ -45,7 +45,8 @@ import { cadetsOf, HEIR_NOTE, regularsOf, takeHeirNote } from './sim/heirs';
 import { drawCodex, stopCodex } from './codexView';
 import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
-import { openSettings } from './settings';
+import { openSettings, settings } from './settings';
+import { slotWaiting } from './sim/spellSlots';
 import { modeShown } from './sim/hiddenModes';
 import { chapelOpen, chapelWaits, modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
 import { tips } from './tips';
@@ -721,7 +722,10 @@ export class Home {
     const spellsTab = this.tabBtns.get('spells')!;
     const shut = !chapelBuilt(m);
     spellsTab.classList.toggle('locked', shut);
-    spellsTab.setAttribute('aria-label', shut ? 'Spells (locked: build the Chapel in the Castle)' : 'Spells');
+    // (SPELL-SLOTS: the tab wears its mark while an open slot stands empty and a spell known could fill it)
+    const slotFree = slotWaiting(m, settings().ruler);
+    spellsTab.classList.toggle('new', slotFree);
+    spellsTab.setAttribute('aria-label', shut ? 'Spells (locked: build the Chapel in the Castle)' : slotFree ? 'Spells, a spell slot is empty' : 'Spells');
     this.drawBattle();
     this.tavern.update(m);
     this.drawCastle();
