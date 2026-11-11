@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { AREAS, makeBoard } from '../src/sim/board';
-import { PUDDLE_SHARE, TORCH_UPS, WALL_STUDS, puddleOn, wallStuds, CLOUDS, CLOUD_DARK, LAND_LIGHT, LAND_WASH, MAX_DARK, RIMS, RIM_LIGHTS_MAX, RIM_PIECES_MAX, WASH_MAX, cloudsFor, dressingOf, lightsOf, rimNames, rimOf, wallTorches, washFor, wetLow } from '../src/render/landRimRules';
+import { DARK_MARGIN, darkTint, PUDDLE_SHARE, TORCH_UPS, WALL_STUDS, puddleOn, wallStuds, CLOUDS, CLOUD_DARK, LAND_LIGHT, LAND_WASH, MAX_DARK, RIMS, RIM_LIGHTS_MAX, RIM_PIECES_MAX, WASH_MAX, cloudsFor, dressingOf, lightsOf, rimNames, rimOf, wallTorches, washFor, wetLow } from '../src/render/landRimRules';
 import { FLOORS, ROLES, floorRoles } from '../src/render/floorRules';
 import { BATS, LAND_AIR, SOARERS, batsFor, edgeFalls, lifeFor, soarersFor } from '../src/render/boardLifeRules';
 
@@ -275,4 +275,22 @@ test('the underground lands are rooms: tall walls, torches at two heights, and t
     }
   }
   assert.equal(wallStuds(makeBoard(1, 'plains')).length, 0);
+});
+
+test('a dark land\'s walls take its dark as a tint, so the dark layer covers only the floor', () => {
+  for (const area of AREAS) {
+    const tint = darkTint(area);
+    if (!LAND_LIGHT[area]) {
+      assert.equal(tint, 0xffffff, `${area} is not dark: its rim is drawn as it is`);
+      continue;
+    }
+    // (each channel is the dark laid over white at the land's weight: darker than white, never black)
+    const { dark, colour } = LAND_LIGHT[area]!;
+    for (const shift of [16, 8, 0]) {
+      const ch = (tint >> shift) & 255;
+      assert.equal(ch, Math.round(255 * (1 - dark) + ((colour >> shift) & 255) * dark));
+      assert.ok(ch < 255 && ch > 120, `${area}: ${ch}`);
+    }
+  }
+  assert.ok(DARK_MARGIN <= 1);
 });

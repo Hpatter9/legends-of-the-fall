@@ -83,6 +83,14 @@ for (const [w, h] of sizes) {
           const g = window.__game;
           g.life.cost = { ms: 0, frames: 0 };
           window.__frames = [];
+          // (the draw itself, timed with the GPU's work finished, which the frames' intervals are too coarse to show)
+          const r = g.app.renderer;
+          if (!r.__timed) {
+            const draw = r.render.bind(r);
+            r.__timed = true;
+            r.render = (...a) => { const t = performance.now(); draw(...a); r.gl?.finish(); window.__draw.ms += performance.now() - t; window.__draw.n++; };
+          }
+          window.__draw = { ms: 0, n: 0 };
           let last = performance.now();
           const tick = (now) => { window.__frames.push(now - last); last = now; if (window.__frames.length < 4000) requestAnimationFrame(tick); };
           requestAnimationFrame(tick);
@@ -97,7 +105,7 @@ for (const [w, h] of sizes) {
           const f = window.__frames.slice(5).sort((a, b) => a - b);
           const g = window.__game;
           const mean = f.reduce((a, b) => a + b, 0) / f.length;
-          return { frames: f.length, meanMs: +mean.toFixed(2), p95Ms: +f[Math.floor(f.length * 0.95)].toFixed(2), lifeStepMs: +(g.life.cost.ms / Math.max(1, g.life.cost.frames)).toFixed(4), units: g.b.units.filter((x) => x.alive).length };
+          return { frames: f.length, meanMs: +mean.toFixed(2), p95Ms: +f[Math.floor(f.length * 0.95)].toFixed(2), drawMs: +(window.__draw.ms / Math.max(1, window.__draw.n)).toFixed(2), lifeStepMs: +(g.life.cost.ms / Math.max(1, g.life.cost.frames)).toFixed(4), units: g.b.units.filter((x) => x.alive).length };
         })));
         console.log(land, layout, 'phase', await page.evaluate(() => window.__game.b.phase), 'sprung:', (await page.evaluate(() => window.__trapLog)).join(' ') || 'none');
       }

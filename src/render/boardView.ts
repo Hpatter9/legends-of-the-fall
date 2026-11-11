@@ -14,7 +14,7 @@ import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
 import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow, growthOf, loadRoadArt, piece, sceneryPictures, setPiece, type Pic } from './roadArt';
 import { loadLifeArt } from './boardLife';
-import { dressingOf, rimOf, torchLight, wallStuds, WALL_STUDS, puddleOn, RIMS, wallTorches, type RimPiece } from './landRimRules';
+import { darkTint, dressingOf, rimOf, torchLight, wallStuds, WALL_STUDS, puddleOn, RIMS, wallTorches, type RimPiece } from './landRimRules';
 import { holdPiece, holdSpritesReady, loadHoldSprites } from './holdSprites';
 import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
@@ -920,6 +920,8 @@ export class BoardView {
       const sp = new Sprite(this.rimTex);
       sp.position.set(bounds.minX, bounds.minY);
       sp.zIndex = -1e5;
+      // (a dark land's walls take its dark as a tint, which costs nothing to draw; the dark layer itself then only has to cover the floor)
+      sp.tint = darkTint(b.area);
       this.root.addChild(sp);
       this.rim.push(sp);
     } else still.destroy({ children: true });
@@ -960,6 +962,7 @@ export class BoardView {
         sp.scale.set(t.edge === 'u' ? -stud.scale : stud.scale, stud.scale);
         sp.position.set(x, y);
         sp.zIndex = depthIn(f, t.u, t.v) + 1;
+        sp.tint = darkTint(b.area);
         this.root.addChild(sp);
         this.rim.push(sp);
       }

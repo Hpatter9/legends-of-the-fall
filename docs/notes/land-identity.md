@@ -139,6 +139,21 @@ fades (a test holds both). Shots, each land before | deployed | mid-fight at 393
 shrine), `batch3-*` (wood, autumn wood, meadows, highlands), `batch4-*` (dunes, oasis, ruins, temple, war camp);
 `open-lands-sizes-360.jpg` and `-412.jpg` (graveyard, snows, ashlands, meadows, dunes, deployed and mid-fight).
 
+## The dark lands' cost, trimmed (the director's ask)
+
+- The walls no longer lie under the dark layer: the baked wall picture and the pieces hung on its face take the land's dark as a
+  **tint** (`darkTint`: the dark laid over white, multiplied in, which costs nothing to draw). The dark layer is now cut to the
+  board's own shape (its floor as high as it stands and its near sides, one tile's margin: `DARK_MARGIN`), not a box four tiles
+  and twelve steps past it, so it covers far fewer pixels. The pools of light on the floor are as they were; the walls' own light is
+  their torches' glow.
+- **What the numbers say.** The bench now also times the draw itself (`drawMs`: the renderer's `render` with the GPU's work
+  finished). On this box's software renderer the draw is about 1.1 ms a frame on every land, before LAND-IDENTITY, after it, and
+  after this trim (crypt 2.4 to 3.5 as the first land measured, warming up; caves 1.03 to 1.41; forge 1.05 to 1.21; war camp 0.94
+  to 1.28): the layer's cost is inside the noise. The frame *intervals* reported earlier (45 to 70 ms) are this box's own load, not
+  the draw, and swing by 10 ms or more from run to run, so the earlier "dearer by 12 ms" readings were not a sound measure and I
+  withdraw them. **Still not measured:** a real phone's GPU, where covering fewer pixels is what matters; that is what this trim
+  is for.
+
 ## Not built: needs art, or the owner's call
 
 - **Art the sheets do not have** (`docs/notes/land-identity-art-prompts.md`): cacti and palms, hedgerows, a fence, haystacks and a

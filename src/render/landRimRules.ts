@@ -552,3 +552,15 @@ export const washFor = (area: Area, weather: string): LandWash | null => (weathe
  *  tile has one. */
 export const PUDDLE_SHARE = 0.65;
 export const puddleOn = (b: Board, i: number): boolean => wetLow(b, i) && hash(i % b.w, Math.floor(i / b.w), (b.seed & 0xffff) + 933) < PUDDLE_SHARE;
+
+/** A dark land's dark as a tint (what multiplying a picture by it does is near what laying the dark over it does): the walls take it
+ *  this way, so the dark layer need only cover the board's floor. White for a land that is not dark. */
+export function darkTint(area: Area): number {
+  const spec = LAND_LIGHT[area];
+  if (!spec) return 0xffffff;
+  const a = Math.min(MAX_DARK, spec.dark);
+  const ch = (shift: number) => Math.round(255 * (1 - a) + ((spec.colour >> shift) & 255) * a);
+  return (ch(16) << 16) | (ch(8) << 8) | ch(0);
+}
+/** How far past the board's own tiles the dark layer reaches (tiles): the walls beyond are darkened by `darkTint` instead. */
+export const DARK_MARGIN = 1;

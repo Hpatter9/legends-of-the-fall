@@ -18,7 +18,7 @@ import { floorArt, loadFloorArt } from './floorArt';
 import { loadImage } from './loadImage';
 import { statusFrames } from './statusArt';
 import { batFrames } from './zoneLife';
-import { CLOUD_CROSS_MS, CLOUD_DARK, cloudsFor, LAND_LIGHT, lightsOf, MAX_DARK, rimOf, washFor, WASH_MAX, type LightSpot } from './landRimRules';
+import { DARK_MARGIN, CLOUD_CROSS_MS, CLOUD_DARK, cloudsFor, LAND_LIGHT, lightsOf, MAX_DARK, rimOf, washFor, WASH_MAX, type LightSpot } from './landRimRules';
 import type { PackKey } from './fxRules';
 import { BAT_CROSS_MS, BAT_FLIT, batsFor, DRIP_EVERY, DRIPS, LAND_AIR, SOAR_MS, SOARERS, soarersFor, critterSpots, DECAL_NAMES, edgeFalls, FLEE_MS, landDecals, markOf, MARK_MS, MARKS_MAX, RETURN_MS, scaredBy, shaftsFor, SMOKE_EVERY, STEP_EVERY, stepPuff, type Critter, type DecalName, type Spot } from './boardLifeRules';
 import lifeUrl from '../art/living-fields/life.png';
@@ -300,18 +300,26 @@ export class BoardLife {
     const spec = b && LAND_LIGHT[b.area];
     if (!b || !spec || !this.on || b.w * b.d > 400) return;
     const Q = 4;
-    const [xa] = at(-4, b.d + 3, 0);
-    const [xb] = at(b.w + 3, -4, 0);
-    const [, ya] = at(-4, -4, 12);
-    const [, yb] = at(b.w + 3, b.d + 3, 0);
-    const [x0, y0, cw, ch] = [xa, ya - 40, Math.ceil((xb - xa) / Q), Math.ceil((yb - ya + 100) / Q)];
+    // (over the board's own floor and a tile past it: the walls beyond take the dark as a tint, `darkTint`, which costs nothing)
+    const M = DARK_MARGIN;
+    const top = Math.max(...b.tiles.map((t) => t.h)) + 2;
+    const [xa] = at(-M, b.d + M, 0);
+    const [xb] = at(b.w + M, -M, 0);
+    const [, ya] = at(-M, -M, top);
+    const [, yb] = at(b.w + M, b.d + M, 0);
+    const [x0, y0, cw, ch] = [xa, ya, Math.ceil((xb - xa) / Q), Math.ceil((yb - ya + 30) / Q)];
     const c = document.createElement('canvas');
     c.width = cw;
     c.height = ch;
     const g = c.getContext('2d')!;
     const col = spec.colour;
     g.fillStyle = `rgba(${(col >> 16) & 255},${(col >> 8) & 255},${col & 255},${Math.min(MAX_DARK, spec.dark)})`;
-    g.fillRect(0, 0, cw, ch);
+    // (the board's own shape: its floor as high as it stands, and its near sides down to the foot; drawn small, so its edge is soft)
+    const shape: [number, number][] = [at(-M, b.d + M, top), at(-M, -M, top), at(b.w + M, -M, top), at(b.w + M, -M, 0), at(b.w + M, b.d + M, 0), at(-M, b.d + M, 0)];
+    g.beginPath();
+    shape.forEach(([sx, sy], k) => (k ? g.lineTo((sx - x0) / Q, (sy - y0 + (k === 4 ? 30 : 0)) / Q) : g.moveTo((sx - x0) / Q, (sy - y0) / Q)));
+    g.closePath();
+    g.fill();
     g.globalCompositeOperation = 'destination-out';
     const pool = (s: LightSpot) => {
       const [x, y] = at(s.u, s.v, s.h);
@@ -332,8 +340,6 @@ export class BoardLife {
       g.restore();
     };
     for (const s of lightsOf(b, rimOf(b))) pool(s);
-    // (no box: the dark fades out toward the picture's edges)
-    fadeEdges(g, cw, ch, 0.14);
     const sp = new Sprite(Texture.from(c));
     sp.position.set(x0, y0);
     sp.scale.set(Q);
