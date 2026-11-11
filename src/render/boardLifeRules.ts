@@ -14,9 +14,10 @@
 import { DEPLOY_ROWS, LAVA_LANDS, standable, type Area, type Board, type HazardKind, type Trap } from '../sim/board';
 import type { Weather } from '../sim/weather';
 import { hash } from './fieldLooks';
+import { RIMS } from './landRimRules';
 
-export type Critter = 'bird' | 'butterfly' | 'frog' | 'firefly' | 'fish' | 'rabbit';
-export const CRITTERS: readonly Critter[] = ['bird', 'butterfly', 'frog', 'firefly', 'fish', 'rabbit'];
+export type Critter = 'bird' | 'butterfly' | 'frog' | 'firefly' | 'fish' | 'rabbit' | 'dragonfly';
+export const CRITTERS: readonly Critter[] = ['bird', 'butterfly', 'frog', 'firefly', 'fish', 'rabbit', 'dragonfly'];
 
 /** How many of each a land has on a clear day on the usual board (fish are a share of its water tiles instead: `FISH_SHARE`). */
 export const LAND_LIFE: Record<Area, Partial<Record<Exclude<Critter, 'fish'>, number>>> = {
@@ -28,7 +29,7 @@ export const LAND_LIFE: Record<Area, Partial<Record<Exclude<Critter, 'fish'>, nu
   dungeon: { firefly: 2 },
   plains: { bird: 2, rabbit: 2, butterfly: 3 },
   autumn: { bird: 3, rabbit: 1 },
-  swamp: { frog: 3, firefly: 4, bird: 1 },
+  swamp: { frog: 3, firefly: 3, dragonfly: 3 },
   graveyard: { bird: 3, firefly: 2 },
   ruins: { bird: 2 },
   temple: { bird: 2, butterfly: 2, frog: 1 },
@@ -58,7 +59,7 @@ export function lifeFor(area: Area, weather: Weather, saver = false): Partial<Re
   for (const [k, n] of Object.entries(LAND_LIFE[area]) as [Exclude<Critter, 'fish'>, number][]) {
     let m = n;
     if (k === 'bird') m = foul ? 0 : weather === 'night' ? Math.min(1, n) : weather === 'fog' ? Math.ceil(n / 2) : n;
-    else if (k === 'butterfly') m = foul || weather === 'night' || weather === 'fog' ? 0 : n;
+    else if (k === 'butterfly' || k === 'dragonfly') m = foul || weather === 'night' ? 0 : weather === 'fog' && k === 'butterfly' ? 0 : n;
     else if (k === 'rabbit') m = foul ? 0 : n;
     else if (k === 'frog') m = wet ? n + 1 : n;
     else if (k === 'firefly') m = weather === 'night' ? n + 2 : weather === 'clear' && area !== 'swamp' && area !== 'crystal' && area !== 'shrine' && area !== 'dungeon' ? 0 : n;
@@ -243,7 +244,8 @@ export interface FallSpot {
 /** Where water or lava pours off a plain board's near edges: every tile of it on the last row or the last column (an army's road has
  *  its own, `Board.falls`). */
 export function edgeFalls(b: Board): FallSpot[] {
-  if (b.falls || b.tiles.some((t) => t.scene)) return [];
+  // (LAND-IDENTITY: nor where the land's rim rings the near edges with water of its own: there is nowhere to fall)
+  if (b.falls || b.tiles.some((t) => t.scene) || (RIMS[b.area]?.near ?? 0) > 0) return [];
   const out: FallSpot[] = [];
   const lavaLand = LAVA_LANDS.includes(b.area);
   for (let v = 0; v < b.d; v++)
@@ -274,5 +276,42 @@ export function stepPuff(area: Area, ground: string | undefined): { key: 'earth-
   if (area === 'volcano' || area === 'forge') return { key: 'earth-puff', scale: 0.4, alpha: 0.4, tint: 0x8a8078 };
   return { key: 'earth-puff', scale: 0.4, alpha: 0.32 };
 }
+/** LAND-IDENTITY: the bats of a dark land (the caves, the crypt): how many hang on its walls, how often one flits across (ms, min and
+ *  max), and how long a crossing takes. They all take off when the fight begins and keep away while it lasts. */
+export const BATS: Partial<Record<Area, number>> = { crystal: 5, dungeon: 4, ruins: 2 };
+export const BAT_FLIT: [number, number] = [5000, 11000];
+export const BAT_CROSS_MS = 2600;
+export const batsFor = (area: Area, saver: boolean): number => (saver ? Math.ceil((BATS[area] ?? 0) / 2) : BATS[area] ?? 0);
+/** Water drips from a cave's roof about this often (ms); none on a battery saver. */
+export const DRIP_EVERY = 1700;
+export const DRIPS: readonly Area[] = ['crystal', 'dungeon'];
+
+/** LAND-IDENTITY: the birds that wheel high over a land (looks only, far over every head): how many, and how dark they are drawn. */
+export const SOARERS: Partial<Record<Area, { n: number; tint: number }>> = {
+  highlands: { n: 1, tint: 0x4a3a2a },
+  desert: { n: 2, tint: 0x2a2220 },
+  graveyard: { n: 2, tint: 0x14141c },
+  oasis: { n: 1, tint: 0x3a3028 },
+  warcamp: { n: 1, tint: 0x14141c },
+};
+/** One turn of a wheeling bird's circle takes 2 pi of these (ms). */
+export const SOAR_MS = 2600;
+/** The wheeling birds over a land in a weather: none in rain, snow, ash or by night; one on a battery saver. */
+export const soarersFor = (area: Area, weather: Weather, saver: boolean): number => {
+  const n = SOARERS[area]?.n ?? 0;
+  if (!n || weather === 'rain' || weather === 'snow' || weather === 'ash' || weather === 'embers' || weather === 'night') return 0;
+  return saver ? 1 : n;
+};
+
+/** What falls or rises through a land's air, a little at a time (leaves in the autumn wood, petals at the shrine, ash and sparks in
+ *  the ashlands and the forge): the strip, its tint, and how often one is let go (ms). None on a battery saver or with reduced motion. */
+export const LAND_AIR: Partial<Record<Area, { key: 'light-sparkle' | 'fire-sparkle'; tint: number; every: number; rises: boolean }>> = {
+  autumn: { key: 'light-sparkle', tint: 0xd8782a, every: 700, rises: false },
+  shrine: { key: 'light-sparkle', tint: 0xffb8d8, every: 800, rises: false },
+  forest: { key: 'light-sparkle', tint: 0x8ab84a, every: 2200, rises: false },
+  volcano: { key: 'fire-sparkle', tint: 0xff8040, every: 500, rises: true },
+  forge: { key: 'fire-sparkle', tint: 0xffb050, every: 600, rises: true },
+};
+
 /** How often a fire on the board sends up a puff of smoke (ms). */
 export const SMOKE_EVERY = 900;

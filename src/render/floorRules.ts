@@ -10,6 +10,7 @@
 import { DEPLOY_ROWS, DIRS, LAVA_LANDS, RAMP, canStep, standable, type Area, type Board, type Tile } from '../sim/board';
 import { mixSeed, Rng } from '../sim/rng';
 import { hash, noise } from './fieldLooks';
+import { wetLow } from './landRimRules';
 
 /** The painted hold sheets, by their folder under `src/art/assault/`. */
 export const HOLDS = ['orc', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems'] as const;
@@ -204,6 +205,8 @@ export function floorRoles(b: Board, path: ReadonlySet<number> = pathOf(b)): Uin
       else if (t.trail || path.has(i)) r = 'path';
       else if (b.area === 'oasis') r = oasisRole(b, u, v, n);
       else if (set.shore >= 0 && !t.scene && waterNear(b, u, v, 1) <= 1 && nearWaterLevel(b, u, v)) r = 'shore';
+      // (LAND-IDENTITY: a wet land's lowest open ground lies sodden: its shore's wet mud, `landRimRules.ts`)
+      else if (wetLow(b, i)) r = 'shore';
       else if (t.ground === 'tall') r = 'second';
       else if (t.h >= RAISED && !t.scene) r = set.stone ? (n < set.share ? 'outcrop' : 'high') : noise(u, v, 2.3, salt + 9) < OUTCROP_SHARE ? 'outcrop' : n < set.share ? 'second' : 'high';
       else r = n < set.share ? 'second' : 'ground';

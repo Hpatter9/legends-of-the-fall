@@ -287,7 +287,7 @@ single tile. Second, the boss finding above.
 Stand-ins until the painted sheet lands: marks drawn on the tile (a spike plate, a rope loop, a rune ring, a mud sink, a bubbling bog,
 cracks in ice, a vent, rubble, a blade's slot, a scorch), the graveyard's thorns for brambles, the Calamity's skull totem and rune,
 the road's brazier. One sheet covers all of them plus each land's own shrine, ruined wall and powder barrel (audit finding 6):
-`docs/notes/living-fields-art-prompts.md`, cut by `tools/living-fields/import-art.py traps` into `src/art/living-fields/`. A painted
+`docs/notes/land-identity-art-prompts.md`, cut by `tools/living-fields/import-art.py traps` into `src/art/living-fields/`. A painted
 cell replaces its stand-in with no code change (`trapArt.ts`, `trapLooks.ts`); a test checks every cell the board asks for is one the
 importer cuts.
 
@@ -344,7 +344,7 @@ GPU, so it shows the layer is not a CPU cost and says little about a phone's fil
 
 **Not done, or only partly:**
 - **Rabbits and frogs are in the rules but not on the board yet.** There is no pack art for them, so they appear only once the painted
-  sheet lands (`docs/notes/living-fields-art-prompts.md`, sheet 2; `python3 -I tools/living-fields/import-art.py life`). The same sheet
+  sheet lands (`docs/notes/land-identity-art-prompts.md`, sheet 2; `python3 -I tools/living-fields/import-art.py life`). The same sheet
   replaces the stand-in butterfly and fish and gives the birds a proper take-off.
 - **Banners in the wind:** not done. The plain boards have no banner prop, and a pole on an open tile would hide a fighter.
 - **Swaying trees:** the plain boards have no trees (`Tile.tree` is only set on roads and the Stand). The growth, tall grass and

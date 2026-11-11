@@ -801,10 +801,10 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   from the packs for it.
 - The battlefield's life (LIVING-FIELDS step 4, `src/render/boardLife.ts`) uses art already credited above: the road's pecking birds,
   growth and fall strips (`src/art/road/`), the hold sheets' decals (`src/art/assault/<hold>/decals.webp`) and the Pixel Effects
-  pack's puffs and smoke. The butterfly and the fish are plain stand-ins drawn in code until `art-source/living-fields/life.png` is painted.
+  pack's puffs and smoke. The butterfly and the fish are plain stand-ins drawn in code until `art-source/land-identity/life.png` is painted.
 - The traps' stand-ins (LIVING-FIELDS step 3) use the graveyard's thorns (`src/art/areas/graveyard/tall*.png`), the Calamity's skull
   totem and runes (`src/art/calzones/`) and the road's brazier; the rest are marks drawn in code until
-  `art-source/living-fields/traps.png` is painted.
+  `art-source/land-identity/traps.png` is painted.
 ## Army War Room
 `src/art/ui/war-room.png`: original candlelit campaign room generated with OpenAI image generation for this game, following the owner-approved War Room concept. Source: `art-source/army-war-room/room-source.png`; prompt: `docs/notes/army-war-room-art-prompts.md`. Army banners reuse the credited painted boss trophies.
 ## Crown Terrace court artwork

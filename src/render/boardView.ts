@@ -14,6 +14,8 @@ import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
 import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow, growthOf, loadRoadArt, piece, sceneryPictures, setPiece, type Pic } from './roadArt';
 import { loadLifeArt } from './boardLife';
+import { dressingOf, rimOf, torchLight, wallStuds, WALL_STUDS, puddleOn, RIMS, wallTorches, type RimPiece } from './landRimRules';
+import { holdPiece, holdSpritesReady, loadHoldSprites } from './holdSprites';
 import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
 import { mixSeed } from '../sim/rng';
@@ -164,8 +166,10 @@ interface Live {
   loops: { sp: Sprite; frames: Texture[]; ph: number; ms: number }[];
   /** ALIVE: still water's light, drifting and shimmering over the tile (where it lies at rest, and its phase). */
   ripples: { sp: Sprite; x: number; ph: number }[];
+  /** LAND-IDENTITY: things that hang in the air and drift a little (mist over water, a will-o'-wisp). */
+  drift: { sp: Sprite; x: number; y: number; ph: number }[];
 }
-const noLive = (): Live => ({ sway: [], lights: [], loops: [], ripples: [] });
+const noLive = (): Live => ({ sway: [], lights: [], loops: [], ripples: [], drift: [] });
 
 /** ALIVE: the light on still water: a few pale arcs inside the tile's diamond (one picture, made once, shared by every tile). */
 let rippleTex: Texture | null = null;
@@ -209,6 +213,10 @@ interface FloorTile {
   seams: boolean[];
   U: number;
   V: number;
+  /** LAND-IDENTITY: the land's own colour laid over this tile's liquid (the mire's murky green over its rim water), and a puddle
+   *  standing on it (a wet land's lowest ground). Looks only. */
+  tone?: string;
+  puddle?: boolean;
 }
 const mod4 = (n: number) => ((Math.round(n) % 4) + 4) % 4;
 
@@ -303,6 +311,14 @@ export class BoardView {
     const hold = FLOORS[b.area].hold;
     if (!floorArt(hold)) void loadFloorArt(hold).then((got) => got && this.board === b && this.repaint());
     this.built = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
+    // (LAND-IDENTITY: what stands round the board and on it, once the land's pieces are here: `landRimRules.ts`)
+    this.rim = [];
+    this.rimTex?.destroy(true);
+    this.rimTex = null;
+    if (!look.boss && rot === 0) {
+      if (holdSpritesReady(hold) && floorArt(hold)) this.layRim(b);
+      else void Promise.all([loadHoldSprites(hold), loadFloorArt(hold)]).then(([got, floor]) => got && floor && this.board === b && this.built && this.layRim(b));
+    }
     this.marks = this.built.marks;
     this.rings = this.built.rings;
     this.root.addChild(...this.built.tiles);
@@ -416,6 +432,11 @@ export class BoardView {
         r.sp.alpha = 0.24 + 0.2 * Math.sin(t * 1.7 + r.ph * 2);
       }
       for (const lp of live.loops) lp.sp.texture = lp.frames[(Math.floor(this.liveT / lp.ms) + lp.ph) % lp.frames.length];
+      for (const m of live.drift) {
+        if (m.sp.destroyed) continue;
+        m.sp.position.set(m.x + Math.sin(t * 0.35 + m.ph) * 7, m.y + Math.sin(t * 0.6 + m.ph * 2) * 2.5);
+        m.sp.alpha = 0.6 + 0.3 * Math.sin(t * 0.8 + m.ph);
+      }
     }
     // (a Calamity zone: its runes, totems and candles loop, its glows breathe, its chains and banners swing, its air moves)
     const zone = this.built?.zone;
@@ -803,6 +824,159 @@ export class BoardView {
     return { tiles, marks, rings, grounds, tex, redo, barrels, traps, landmark, live, zone };
   }
 
+  /** LAND-IDENTITY: the rim's columns and pieces, on the stage now (they go with the board at the next build). */
+  private rim: Container[] = [];
+  /** The far rim's still part, drawn once (`layRim`). */
+  private rimTex: Texture | null = null;
+  /** Whether the board's rim is laid (the page's light and life wait for it). */
+  get rimLaid(): boolean {
+    return this.rim.length > 0;
+  }
+
+  /** LAND-IDENTITY: lay what stands round the board and on it (`landRimRules.ts`): the rim's columns outside the two far edges (cavern
+   *  walls, open water), each in the board's own draw order so it lies behind every fighter, with its set pieces; the wall's torches; and
+   *  the small things on the board's own tiles (reeds, lilies). Looks only: none of it is a tile of the board. */
+  private layRim(b: Board): void {
+    const built = this.built;
+    if (!built) return;
+    for (const c of this.rim) if (!c.destroyed) c.destroy({ children: true });
+    this.rim = [];
+    this.rimTex?.destroy(true);
+    this.rimTex = null;
+    const f: Frame = { rot: 0, ou: 0, ov: 0, w: b.w, d: b.d };
+    const hold = FLOORS[b.area].hold;
+    const live = built.live;
+    const stand = (parent: Container, p: RimPiece, x: number, y: number) => {
+      const got = holdPiece(hold, p.name);
+      if (!got) return;
+      const sp = new Sprite(got.tex);
+      sp.anchor.set(got.ax, got.ay);
+      sp.scale.set(p.scale);
+      sp.position.set(x + p.dx, y + p.dy);
+      parent.addChild(sp);
+      const ph = (x * 0.071 + y * 0.113) % (Math.PI * 2);
+      if (p.sway) live.sway.push({ sp, ph, amp: 0.03 });
+      if (p.drift) live.drift.push({ sp, x: sp.x, y: sp.y, ph });
+      if (p.light) {
+        const g = new Sprite(glow());
+        g.anchor.set(0.5);
+        g.tint = p.light.colour;
+        g.blendMode = 'add';
+        g.scale.set(p.light.reach * 0.7);
+        g.position.set(x + p.dx, y + p.dy - p.light.up * p.scale);
+        parent.addChild(g);
+        live.lights.push({ sp: g, ph, base: 0.5, kind: 'magic' });
+      }
+    };
+    const rim = rimOf(b);
+    // (the far rim lies behind the whole board, so its ground, its walls and everything on it that stands still are drawn once into one
+    //  picture laid under the board; only what moves stays a sprite of its own: what sways at the board's edge, what drifts, what glows)
+    const still = new Container();
+    still.sortableChildren = true;
+    const leases: { release(): void }[] = [];
+    for (const r of rim) {
+      const far = r.u < 0 || r.v < 0;
+      const tile: Tile = { h: r.h, deco: ((r.u + 64) * 31 + (r.v + 64) * 17) % 997, ground: r.ground };
+      // (open water and lava run on unbroken; a wall's blocks keep their lines)
+      const lease = this.column(tile, r.u, r.v, b.area, false, false, { role: r.role, fringes: [], seams: r.ground ? [false, false, false, false] : [true, true, true, true], U: r.u, V: r.v, tone: r.ground ? RIMS[b.area].tones?.[Math.min(r.ring, (RIMS[b.area].tones?.length ?? 1) - 1)] : undefined });
+      const [x, y] = project(f, r.u, r.v, r.h);
+      const col = new Sprite(lease.value);
+      col.position.set(x - TW / 2, y - TH / 2);
+      col.alpha = r.alpha;
+      const z = depthIn(f, r.u, r.v);
+      const moves = (p: RimPiece) => !!p.drift || !!p.light || (!!p.sway && (r.u === -1 || r.v === -1 || !far));
+      const live = r.pieces.filter(moves);
+      if (far && this.renderer) {
+        const c = new Container();
+        c.zIndex = z;
+        c.addChild(col);
+        for (const p of r.pieces) if (!moves(p)) stand(c, { ...p, sway: false }, x, y);
+        still.addChild(c);
+        leases.push(lease);
+      }
+      if (!far || !this.renderer || live.length) {
+        const c = new Container();
+        c.zIndex = z;
+        if (!far || !this.renderer) {
+          built.tex.push(lease);
+          c.addChild(col);
+          for (const p of r.pieces) if (!moves(p)) stand(c, p, x, y);
+        }
+        for (const p of live) stand(c, p, x, y);
+        this.root.addChild(c);
+        this.rim.push(c);
+      }
+    }
+    if (still.children.length && this.renderer) {
+      const bounds = still.getLocalBounds();
+      try {
+        this.rimTex = this.renderer.generateTexture({ target: still, resolution: 1 });
+      } finally {
+        still.destroy({ children: true });
+        for (const l of leases) l.release();
+      }
+      const sp = new Sprite(this.rimTex);
+      sp.position.set(bounds.minX, bounds.minY);
+      sp.zIndex = -1e5;
+      this.root.addChild(sp);
+      this.rim.push(sp);
+    } else still.destroy({ children: true });
+    // the wall's torches, on the face that looks onto the board
+    for (const t of wallTorches(b)) {
+      const edge = tileAt(b, Math.max(0, t.u), Math.max(0, t.v))!;
+      const c = new Container();
+      c.zIndex = depthIn(f, t.u, t.v) + 1;
+      const [x, y] = project(f, t.u + (t.edge === 'u' ? 0.5 : 0), t.v + (t.edge === 'v' ? 0.5 : 0), edge.h + t.up);
+      const got = holdPiece(hold, 'wallLight') ?? holdPiece(hold, 'wallBrazier');
+      if (got) {
+        const sp = new Sprite(got.tex);
+        sp.anchor.set(got.ax, got.ay);
+        sp.scale.set(t.edge === 'u' ? -0.8 : 0.8, 0.8);
+        sp.position.set(x, y);
+        c.addChild(sp);
+      }
+      const g = new Sprite(glow());
+      g.anchor.set(0.5);
+      g.tint = torchLight(b.area);
+      g.blendMode = 'add';
+      g.scale.set(t.up > 2 ? 1.7 : 2.3);
+      g.position.set(x, y - 14);
+      c.addChild(g);
+      live.lights.push({ sp: g, ph: (x * 0.071 + y * 0.113) % (Math.PI * 2), base: 0.85, kind: 'torch' });
+      this.root.addChild(c);
+      this.rim.push(c);
+    }
+    // what breaks up a tall wall's face: crystals in the rock, skulls in niches, pipes
+    const stud = WALL_STUDS[b.area];
+    const studArt = stud && holdPiece(hold, stud.name);
+    if (stud && studArt)
+      for (const t of wallStuds(b)) {
+        const edge = tileAt(b, Math.max(0, t.u), Math.max(0, t.v))!;
+        const [x, y] = project(f, t.u + (t.edge === 'u' ? 0.5 : 0), t.v + (t.edge === 'v' ? 0.5 : 0), edge.h + t.up);
+        const sp = new Sprite(studArt.tex);
+        sp.anchor.set(studArt.ax, studArt.ay);
+        sp.scale.set(t.edge === 'u' ? -stud.scale : stud.scale, stud.scale);
+        sp.position.set(x, y);
+        sp.zIndex = depthIn(f, t.u, t.v) + 1;
+        this.root.addChild(sp);
+        this.rim.push(sp);
+      }
+    // the small things on the board's own tiles
+    for (const d of dressingOf(b)) {
+      const tile = built.tiles[d.i];
+      const t = b.tiles[d.i];
+      if (!tile || tile.destroyed) continue;
+      const [x, y] = project(f, d.i % b.w, Math.floor(d.i / b.w), t.h);
+      const c = new Container();
+      tile.addChild(c);
+      stand(c, d.piece, x, y);
+      this.rim.push(c);
+    }
+    this.onRim?.();
+  }
+  /** Called when the rim has been laid (the page lights the board then). */
+  onRim: (() => void) | null = null;
+
   /** LIVING-FIELDS: every tile's floor (`floorRules.ts`), worked out on the board as it lies on the screen (a section of an army's road may
    *  lie turned), so the textures and the ragged edges run on across the tiles as they are seen. Null until the land's sheet is loaded. */
   private floorOf(b: Board, f: Frame): FloorTile[] | null {
@@ -824,7 +998,7 @@ export class BoardView {
     const roles = floorRoles(tb, new Set([...pathOf(b)].map((i) => to[i])));
     const out: FloorTile[] = new Array(W * D);
     for (let V = 0; V < D; V++)
-      for (let U = 0; U < W; U++) out[from[V * W + U]] = { role: ROLES[roles[V * W + U]], fringes: fringesOf(tb, roles, U, V), seams: seamsOf(tb, U, V), U: U + f.ou, V: V + f.ov };
+      for (let U = 0; U < W; U++) out[from[V * W + U]] = { role: ROLES[roles[V * W + U]], fringes: fringesOf(tb, roles, U, V), seams: seamsOf(tb, U, V), U: U + f.ou, V: V + f.ov, puddle: puddleOn(b, from[V * W + U]) || undefined };
     return out;
   }
 
@@ -1093,7 +1267,7 @@ export class BoardView {
     const top = (!road && t.h >= STONY) || boss || t.perch ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
     const skirt = road ? Math.min(t.h, ROAD_SKIRT) : -1;
     // (LIVING-FIELDS: a painted floor's column is its own: its ground, its place in the texture, its neighbours' edges and its seams)
-    const floor = fl ? `floor:${fl.role}:${mod4(fl.U)}${mod4(fl.V)}:${fl.fringes.map((x) => `${x.role}${x.turn}${x.corner ? 'c' : ''}${x.foam ? 'f' : ''}`).join(',')}:${fl.seams.map((x) => +x).join('')}` : '';
+    const floor = fl ? `floor:${fl.role}:${mod4(fl.U)}${mod4(fl.V)}:${fl.fringes.map((x) => `${x.role}${x.turn}${x.corner ? 'c' : ''}${x.foam ? 'f' : ''}`).join(',')}:${fl.seams.map((x) => +x).join('')}:${fl.tone ?? ''}:${fl.puddle ? 'p' : ''}` : '';
     // (and a trap's mark, or a strike's)
     const trap = t.trap || strike ? `trap:${t.trap ?? ''}:${strike ?? ''}:${t.deco % 4}` : '';
     const extra = (road ? `skirt${skirt}` : '') + floor + trap;
@@ -1247,6 +1421,15 @@ export class BoardView {
       g.setTransform(a, b, -a, b, TW / 2, 0);
       lay(g, role);
       g.setTransform(1, 0, 0, 1, 0, 0);
+      if (fl.tone) {
+        // (the land's own water: its hue over the sheet's painting, the painting's light and shade kept; then its murk)
+        g.globalCompositeOperation = 'color';
+        g.fillStyle = fl.tone.replace(/[\d.]+\)$/, '1)');
+        g.fillRect(0, 0, TW, TH);
+        g.globalCompositeOperation = 'source-over';
+        g.fillStyle = fl.tone.replace(/[\d.]+\)$/, `${(+(fl.tone.match(/([\d.]+)\)$/)?.[1] ?? 0.6) * 0.5).toFixed(2)})`);
+        g.fillRect(0, 0, TW, TH);
+      }
       const wash = role === 'water' ? fset.waterTone : role === 'deep' ? fset.deepTone : undefined;
       for (const tone of [wash, role === 'lava' && t.ground === 'deep' ? fset.deepTone : undefined, fset.tone]) {
         if (!tone) continue;
@@ -1274,6 +1457,26 @@ export class BoardView {
         g.setTransform(a, b, -a, b, TW / 2, 0);
         g.drawImage(pic, 0, 0);
         g.setTransform(1, 0, 0, 1, 0, 0);
+      }
+      if (fl.puddle) {
+        // (standing water on a wet land's low ground: a ragged pool of the land's water, dark at its rim, with a glint)
+        const k = (u * 7 + v * 13) % 5;
+        const [px, py, rx, ry] = [TW * (0.42 + k * 0.04), TH * (0.46 + (k % 3) * 0.05), TW * (0.2 + (k % 2) * 0.05), TH * (0.17 + (k % 3) * 0.03)];
+        g.save();
+        g.beginPath();
+        g.ellipse(px, py, rx, ry, 0, 0, Math.PI * 2);
+        g.ellipse(px + rx * 0.7, py + ry * 0.5, rx * 0.55, ry * 0.6, 0, 0, Math.PI * 2);
+        g.fillStyle = 'rgba(18,70,66,0.82)';
+        g.fill();
+        g.strokeStyle = 'rgba(8,30,26,0.55)';
+        g.lineWidth = 1;
+        g.stroke();
+        g.strokeStyle = 'rgba(190,235,220,0.55)';
+        g.beginPath();
+        g.moveTo(px - rx * 0.45, py - ry * 0.2);
+        g.quadraticCurveTo(px, py - ry * 0.55, px + rx * 0.45, py - ry * 0.2);
+        g.stroke();
+        g.restore();
       }
     } else if (art && set) {
       const a = TW / (2 * SRC);
@@ -1403,7 +1606,7 @@ export class BoardView {
 }
 
 /** LIVING-FIELDS: a trap's mark painted on its tile's top (the canvas is clipped to the diamond): the tell every fighter and the player can
- *  see before the fight. Plain stand-ins, drawn here, until the painted sheet lands (`docs/notes/living-fields-art-prompts.md`); brambles,
+ *  see before the fight. Plain stand-ins, drawn here, until the painted sheet lands (`docs/notes/land-identity-art-prompts.md`); brambles,
  *  totems, wards and braziers also have something standing on the tile (`trapProps`). */
 function paintTrap(g: CanvasRenderingContext2D, t: Tile, area: Area, strike?: HazardKind): void {
   const cx = TW / 2;
