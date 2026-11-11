@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.478.0',
+    date: '2026-11-11',
+    title: 'Every hold is fully painted',
+    notes: ['Bonefire Crag, Brimstone Gate and the Iron Foundry are painted in full: all nine holds now have their own art.', 'The Moonlit Shrine\'s bridge has its lantern posts and railings, and Brimstone Gate\'s camp pitches its great horned tents.'],
+  },
+  {
     version: '0.477.0',
     date: '2026-11-11',
     title: 'The Moonlit Shrine, fully painted',
