@@ -36,8 +36,12 @@ export interface RimTile {
   /** The tile it is painted as (its ground, for the painter's marks: water has ripples). */
   ground?: Tile['ground'];
   pieces: RimPiece[];
-  /** A light on its face that looks onto the board (a torch in a sconce): px up from its foot. */
+  /** On a near edge (below the board, in front of it). */
   near: boolean;
+  /** Which ring out from the board (0 is beside it), and how solid it is drawn (the outer rings of open water thin away into the
+   *  backdrop, so the rim has no hard outer edge). */
+  ring: number;
+  alpha: number;
 }
 
 /** How a land's rim is laid. */
@@ -58,17 +62,21 @@ export interface RimSpec {
   ground?: Tile['ground'];
   /** The colour of a wall's torches (a walled land only); warm fire unless given. */
   torch?: number;
+  /** A wash laid over the rim's liquid, by ring (the mire's water is murky green, darker further out). */
+  tones?: string[];
+  /** The outer rings thin away and break up (open water running out into the backdrop). */
+  fades?: boolean;
 }
 
 export const RIMS: Record<Area, RimSpec> = {
   // (the caves: rock walls rising along the back and the side, so the board sits inside a cavern)
-  crystal: { far: 2, near: 0, rise: [3, 6], role: 'outcrop', second: 'high' },
+  crystal: { far: 2, near: 0, rise: [8, 12], role: 'outcrop', second: 'high' },
   // (the mire: open water all round, deeper further out; the board is an island in it)
-  swamp: { far: 3, near: 2, level: 0, role: 'water', second: 'deep', ground: 'water' },
+  swamp: { far: 4, near: 3, level: 0, role: 'water', second: 'water', ground: 'water', fades: true, tones: ['rgba(26,104,88,0.62)', 'rgba(16,78,72,0.7)', 'rgba(10,56,58,0.78)', 'rgba(6,40,46,0.85)'] },
   // (the crypt: walls of dressed stone, tombs and angels along their tops, cold lamps)
-  dungeon: { far: 2, near: 0, rise: [3, 5], role: 'outcrop', second: 'high', torch: 0x70e8c8 },
+  dungeon: { far: 2, near: 0, rise: [7, 10], role: 'outcrop', second: 'high', torch: 0x70e8c8 },
   // (the forge: stone walls hung with pipes, gears and furnaces)
-  forge: { far: 2, near: 0, rise: [3, 5], role: 'outcrop', second: 'high' },
+  forge: { far: 2, near: 0, rise: [6, 9], role: 'outcrop', second: 'high' },
   // (open country: the land's own ground runs on past the far edges, and carries what grows and stands there)
   highlands: { far: 2, near: 0, follow: [0, 2], role: 'outcrop', second: 'high' },
   forest: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'high' },
@@ -90,7 +98,7 @@ export const RIMS: Record<Area, RimSpec> = {
 /** A wall's torches: one about every this many columns along a far edge. */
 export const TORCH_EVERY = 3;
 /** The most set pieces a rim carries, and the most that give light. */
-export const RIM_PIECES_MAX = 40;
+export const RIM_PIECES_MAX = 160;
 export const RIM_LIGHTS_MAX = 10;
 
 const LIGHT_WARM = 0xffa040;
@@ -288,17 +296,28 @@ function piecesFor(area: Area, b: Board, u: number, v: number, ring: number, nea
     return [];
   }
   if (area === 'swamp') {
-    if (nearEdge) return r < 0.3 ? [{ name: 'waterFlowers', scale: 0.8, dx: jx, dy: 0 }] : r < 0.42 ? [{ name: 'waterPlants', scale: 0.7, dx: jx, dy: 0, sway: true }] : [];
-    if (!onWater) return [];
+    if (nearEdge) {
+      // (the near sides: only what lies low. Beside the board, lilies and water plants flat on the water; further out, reed clumps,
+      //  sunken logs, wet stones, wisps and mist as well)
+      if (ring === 0) return r < 0.4 ? [{ name: 'waterFlowers', scale: 0.8, dx: jx, dy: 0 }] : r < 0.62 ? [{ name: 'waterPlants', scale: 0.7, dx: jx, dy: 0, sway: true }] : [];
+      if (r < 0.22) return [{ name: 'waterFlowers', scale: 0.9, dx: jx, dy: 0 }];
+      if (r < 0.38) return [{ name: 'reeds1', scale: 0.75, dx: jx, dy: 2, sway: true }];
+      if (r < 0.5) return [{ name: 'waterPlants', scale: 0.8, dx: jx, dy: 0, sway: true }];
+      if (r < 0.58) return [{ name: 'sunkenLog', scale: 0.8, dx: jx, dy: 2 }];
+      if (r < 0.65) return [{ name: 'wetBoulders', scale: 0.7, dx: jx, dy: 2 }];
+      if (r < 0.72) return [{ name: 'waterProp14', scale: 0.7, dx: jx, dy: -8, drift: true, light: { colour: LIGHT_WISP, up: 8, reach: 1.1 } }];
+      if (r < 0.84) return [{ name: 'mist', scale: 1.5, dx: jx, dy: 0, drift: true }];
+      return [];
+    }
     // trees standing in the water further out, reeds and lilies nearer the board, a sunken log, wisps and mist over it
-    if (ring >= 1 && r < 0.16) return [{ name: r2 < 0.5 ? 'gnarledTree' : 'weepingWillow', scale: r2 < 0.5 ? 0.62 : 0.8, dx: jx, dy: 6, sway: true }];
-    if (r < 0.34) return [{ name: 'reeds2', scale: 0.8, dx: jx, dy: 6, sway: true }];
-    if (r < 0.5) return [{ name: 'waterFlowers', scale: 0.85, dx: jx, dy: 2 }];
-    if (r < 0.6) return [{ name: 'waterPlants', scale: 0.85, dx: jx, dy: 4, sway: true }];
-    if (r < 0.66) return [{ name: 'sunkenLog', scale: 0.85, dx: jx, dy: 4 }];
-    if (r < 0.72) return [{ name: 'wetBoulders', scale: 0.8, dx: jx, dy: 4 }];
-    if (r < 0.79) return [{ name: 'waterProp14', scale: 0.8, dx: jx, dy: -10, drift: true, light: { colour: LIGHT_WISP, up: 8, reach: 1.2 } }];
-    if (r < 0.88) return [{ name: 'mist', scale: 1.6, dx: jx, dy: -2, drift: true }];
+    if (ring >= 1 && r < 0.2) return [{ name: r2 < 0.5 ? 'gnarledTree' : 'weepingWillow', scale: r2 < 0.5 ? 0.62 : 0.8, dx: jx, dy: 6, sway: true }];
+    if (r < 0.38) return [{ name: 'reeds2', scale: 0.8, dx: jx, dy: 6, sway: true }];
+    if (r < 0.54) return [{ name: 'waterFlowers', scale: 0.85, dx: jx, dy: 2 }];
+    if (r < 0.64) return [{ name: 'waterPlants', scale: 0.85, dx: jx, dy: 4, sway: true }];
+    if (r < 0.7) return [{ name: 'sunkenLog', scale: 0.85, dx: jx, dy: 4 }];
+    if (r < 0.76) return [{ name: 'wetBoulders', scale: 0.8, dx: jx, dy: 4 }];
+    if (r < 0.82) return [{ name: 'waterProp14', scale: 0.8, dx: jx, dy: -10, drift: true, light: { colour: LIGHT_WISP, up: 8, reach: 1.2 } }];
+    if (r < 0.94) return [{ name: 'mist', scale: 1.6, dx: jx, dy: -2, drift: true }];
     return [];
   }
   // (the other lands: down the land's list, taking the lines that may stand on this ring and this ground)
@@ -323,16 +342,21 @@ export function rimOf(b: Board): RimTile[] {
   if (!spec || b.w * b.d > 400 || b.tiles.some((t) => t.scene) || b.props?.length) return [];
   const { w, d } = b;
   const salt = b.seed & 0xffff;
-  const out: RimTile[] = [];
+  const tiles: RimTile[] = [];
   const edgeH = (u: number, v: number) => b.tiles[Math.max(0, Math.min(d - 1, v)) * w + Math.max(0, Math.min(w - 1, u))].h;
   let pieces = 0;
   let lights = 0;
   const add = (u: number, v: number, ring: number, nearEdge: boolean) => {
+    // (open water thins away: the two outer rings are fainter, and the outermost is broken up, so there is no straight outer edge)
+    const rings = nearEdge ? spec.near : spec.far;
+    const out = spec.fades ? rings - 1 - ring : 9;
+    if (out === 0 && noise(u + 31, v + 17, 1.7, salt + 77) < 0.45) return;
+    const alpha = out === 0 ? 0.4 : out === 1 ? 0.72 : 1;
     let h: number;
     if (spec.rise) {
       // (over the highest of the board's edge tiles beside it, so the wall always stands over the board)
       const base = Math.max(edgeH(u - 1, v), edgeH(u, v), edgeH(u + 1, v), edgeH(u, v - 1), edgeH(u, v + 1));
-      h = base + spec.rise[0] + Math.round(noise(u + 20, v + 20, 2.6, salt + 5) * (spec.rise[1] - spec.rise[0])) + ring;
+      h = base + spec.rise[0] + Math.round(noise(u + 20, v + 20, 2.6, salt + 5) * (spec.rise[1] - spec.rise[0])) + ring * 2;
     } else if (ring > 0 && spec.secondLevel !== undefined) h = spec.secondLevel;
     else if (spec.follow) h = Math.max(0, edgeH(u, v) + spec.follow[0] + Math.round(noise(u + 20, v + 20, 2.6, salt + 5) * (spec.follow[1] - spec.follow[0])));
     else h = spec.level ?? 0;
@@ -342,7 +366,7 @@ export function rimOf(b: Board): RimTile[] {
     if (ps.some((p) => p.light) && lights >= RIM_LIGHTS_MAX) ps = ps.map(({ light, ...p }) => (void light, p));
     pieces += ps.length;
     lights += ps.filter((p) => p.light).length;
-    out.push({ u, v, h, role, ground: onWater ? (role === 'deep' ? 'deep' : role === 'lava' ? 'lava' : spec.ground) : undefined, pieces: ps, near: nearEdge });
+    tiles.push({ u, v, h, role, ground: onWater ? (role === 'deep' ? 'deep' : role === 'lava' ? 'lava' : spec.ground) : undefined, pieces: ps, near: nearEdge, ring, alpha });
   };
   // the far edges: beyond row 0 (v < 0) and beyond column 0 (u < 0), with the corner between them
   for (let ring = 0; ring < spec.far; ring++) {
@@ -356,19 +380,47 @@ export function rimOf(b: Board): RimTile[] {
     for (let v = 0; v < d + ring; v++) add(w + ring, v, ring, true);
   }
   // back to front, as the board is drawn
-  return out.sort((x, y) => x.u + x.v - (y.u + y.v) || x.u - y.u);
+  return tiles.sort((x, y) => x.u + x.v - (y.u + y.v) || x.u - y.u);
 }
 
-/** The torches on a wall's face that looks onto the board: at the foot of the first ring, one about every `TORCH_EVERY` columns along
- *  each far edge, on the columns whose hash says so. Each is where it hangs (the board tile it stands behind, and which edge). */
-export function wallTorches(b: Board): { u: number; v: number; edge: 'v' | 'u' }[] {
+/** The torches on a wall's face that looks onto the board: one about every `TORCH_EVERY` columns along each far edge, at two heights
+ *  in turn (low, near the floor, to light it; and higher up the rock). Each is where it hangs (the board tile it stands behind, which
+ *  edge, and how many steps up the wall from that tile). */
+export const TORCH_UPS: readonly number[] = [1.6, 4.4];
+export function wallTorches(b: Board): { u: number; v: number; edge: 'v' | 'u'; up: number }[] {
   const spec = RIMS[b.area];
   if (!spec?.rise || b.w * b.d > 400 || b.tiles.some((t) => t.scene)) return [];
   const salt = (b.seed & 0xffff) + 811;
-  const out: { u: number; v: number; edge: 'v' | 'u' }[] = [];
+  const out: { u: number; v: number; edge: 'v' | 'u'; up: number }[] = [];
   const start = Math.floor(hash(1, 2, salt) * TORCH_EVERY);
-  for (let u = start; u < b.w; u += TORCH_EVERY) out.push({ u, v: -1, edge: 'v' });
-  for (let v = (start + 1) % TORCH_EVERY; v < b.d; v += TORCH_EVERY) out.push({ u: -1, v, edge: 'u' });
+  let k = 0;
+  // (a wall lower than the high torch takes the low one)
+  const up = () => TORCH_UPS[spec.rise![0] >= 6 ? k++ % 2 : 0];
+  for (let u = start; u < b.w; u += TORCH_EVERY) out.push({ u, v: -1, edge: 'v', up: up() });
+  for (let v = (start + 1) % TORCH_EVERY; v < b.d; v += TORCH_EVERY) out.push({ u: -1, v, edge: 'u', up: up() });
+  return out;
+}
+
+/** What breaks up a tall wall's face between its torches (the caves: crystals growing out of the rock; the crypt: skulls in niches;
+ *  the forge: pipes), each a small piece of the land's sheet hung on the face: where, how high, and how big. Looks only. */
+export const WALL_STUDS: Partial<Record<Area, { name: string; scale: number; light?: number }>> = {
+  crystal: { name: 'darkRocksB', scale: 0.5, light: LIGHT_VIOLET },
+  dungeon: { name: 'skullPile', scale: 0.45 },
+  forge: { name: 'prop5', scale: 0.5 },
+};
+export function wallStuds(b: Board): { u: number; v: number; edge: 'v' | 'u'; up: number }[] {
+  const spec = RIMS[b.area];
+  if (!spec?.rise || !WALL_STUDS[b.area] || b.w * b.d > 400 || b.tiles.some((t) => t.scene)) return [];
+  const salt = (b.seed & 0xffff) + 1213;
+  const torch = new Set(wallTorches(b).map((t) => `${t.u},${t.v}`));
+  const out: { u: number; v: number; edge: 'v' | 'u'; up: number }[] = [];
+  const at = (u: number, v: number, edge: 'v' | 'u') => {
+    const r = hash(u + 9, v + 9, salt);
+    if (torch.has(`${u},${v}`) || r > 0.6) return;
+    out.push({ u, v, edge, up: 2.2 + Math.round(r * 10) * 0.5 });
+  };
+  for (let u = 0; u < b.w; u++) at(u, -1, 'v');
+  for (let v = 0; v < b.d; v++) at(-1, v, 'u');
   return out;
 }
 
@@ -397,10 +449,10 @@ export function dressingOf(b: Board): Dressing[] {
     const v = Math.floor(i / b.w);
     const r = hash(u, v, salt);
     const back = r < 0.5 ? -14 : 14;
-    if (t.ground === 'water' && r < 0.45) out.push({ i, piece: { name: 'reeds1', scale: 0.7, dx: back, dy: -5, sway: true } });
-    else if (t.ground === 'water' && r < 0.7) out.push({ i, piece: { name: 'waterFlowers', scale: 0.55, dx: back * 0.6, dy: 3 } });
+    if (t.ground === 'water' && r < 0.6) out.push({ i, piece: { name: 'reeds1', scale: 0.7, dx: back, dy: -5, sway: true } });
+    else if (t.ground === 'water' && r < 0.85) out.push({ i, piece: { name: 'waterFlowers', scale: 0.55, dx: back * 0.6, dy: 3 } });
     else if (t.ground === 'deep' && r < 0.5) out.push({ i, piece: { name: 'waterFlowers', scale: 0.7, dx: Math.round((r - 0.25) * 30), dy: 2 } });
-    else if (t.ground === 'deep' && r < 0.62) out.push({ i, piece: { name: 'waterPlants', scale: 0.7, dx: back * 0.5, dy: 2, sway: true } });
+    else if (t.ground === 'deep' && r < 0.75) out.push({ i, piece: { name: 'waterPlants', scale: 0.7, dx: back * 0.5, dy: 2, sway: true } });
   });
   return out;
 }
@@ -454,7 +506,7 @@ export function lightsOf(b: Board, rim: readonly RimTile[] = rimOf(b)): LightSpo
   const w = b.w;
   for (const t of wallTorches(b)) {
     const edge = b.tiles[Math.max(0, t.v) * w + Math.max(0, t.u)];
-    out.push({ u: t.u + (t.edge === 'u' ? 0.5 : 0), v: t.v + (t.edge === 'v' ? 0.5 : 0), h: edge.h + 1.6, colour: torchLight(b.area), reach: 2.6, kind: 'torch' });
+    out.push({ u: t.u + (t.edge === 'u' ? 0.5 : 0), v: t.v + (t.edge === 'v' ? 0.5 : 0), h: edge.h + t.up, colour: torchLight(b.area), reach: t.up > 2 ? 2.4 : 3.3, kind: 'torch' });
   }
   for (const r of rim) for (const p of r.pieces) if (p.light) out.push({ u: r.u, v: r.v, h: r.h, colour: p.light.colour, reach: p.light.reach, kind: 'magic' });
   b.tiles.forEach((t, i) => {
@@ -495,3 +547,8 @@ export const LAND_WASH: Partial<Record<Area, LandWash>> = {
 };
 export const WASH_MAX = 0.1;
 export const washFor = (area: Area, weather: string): LandWash | null => (weather === 'night' || weather === 'fog' ? null : LAND_WASH[area] ?? null);
+
+/** The share of a wet land's lowest tiles with a puddle standing on them (looks only: to the rules it is plain ground), and whether a
+ *  tile has one. */
+export const PUDDLE_SHARE = 0.65;
+export const puddleOn = (b: Board, i: number): boolean => wetLow(b, i) && hash(i % b.w, Math.floor(i / b.w), (b.seed & 0xffff) + 933) < PUDDLE_SHARE;

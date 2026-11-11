@@ -107,6 +107,28 @@ which ring they may stand on, and whether they sway, drift or glow), and its lig
   way), and a fight of more than ten fighters. The layer's own step is under 0.05 ms a frame.
 - Reduced motion: clouds lie still, nothing wheels, falls or breathes. Battery saver: one cloud fewer, one bird, no leaves or sparks.
 
+## The third push: the mire's water, and taller walls (the director's and the owner's notes)
+
+- **The mire** read as a board on a brown mat: the hold sheet's own water is brown, and the rim had a straight outer edge. Now the
+  rim water takes the land's colour (`RimSpec.tones`: the sheet's painting recoloured murky green to teal, darker each ring out),
+  is four rings deep on the far sides and three on the near, and thins away (`fades`: the outer two rings are fainter and the
+  outermost is broken up by a noise), so it runs out into the backdrop with no straight edge. Much more lies in it on every side;
+  on the near sides only what lies low (beside the board lilies and water plants; further out reed clumps, sunken logs, wet
+  stones, wisps and mist; a test holds the list). On the board: puddles stand on about two thirds of the lowest tiles
+  (`puddleOn`, drawn on the tile, looks only) and there are more reeds and lilies on its water.
+- **Taller walls** (the owner: "I'd like taller cave walls"): the caves' walls stand 8 to 12 steps over the board (they were 3 to
+  6), the crypt's 7 to 10, the forge's 6 to 9; the second ring stands two steps higher again, so the top is stepped and ragged.
+  Torches hang at two heights in turn (`TORCH_UPS`: 1.6 and 4.4 steps up; the low ones' pools are wider and their glow stronger and
+  warmer against the dark). The faces are broken up by small pieces of the land's sheet hung on them (`WALL_STUDS`: crystals in the
+  caves, skulls in the crypt, pipes in the forge); the rock itself is the sheet's face laid step by step, so it does not stretch.
+  Still on the two far edges only. At 393 x 852, 360 x 780 and 412 x 915 the walls stay under the top bar when deployed; mid-fight
+  (the camera closer) their tops pass behind the spell row and the tactic plaque, which stay readable (`batch1-sizes-*.jpg`).
+  Stalactites wait for art (the prompt file's sheet 3 does not have them yet: added below).
+- Frame time for this batch (same measure, a noisier hour: the war camp, unchanged since the second push, read 56 then 51 ms):
+  mire 71 then 63; caves 81 then 71 (both cheaper than the first push, because the rim is now baked); forge 62 then 74 (new walls
+  and its dark).
+- Shots: `batch1-crystal-swamp.jpg`, `batch1-dungeon-forge.jpg` (before | deployed | mid-fight), `batch1-sizes-360.jpg`, `-412.jpg`.
+
 ## Not built: needs art, or the owner's call
 
 - **Art the sheets do not have** (`docs/notes/land-identity-art-prompts.md`): cacti and palms, hedgerows, a fence, haystacks and a
@@ -119,5 +141,4 @@ which ring they may stand on, and whether they sway, drift or glow), and its lig
 ## Shots
 
 `docs/samples/land-identity/lands-1..6-*.jpg`: every land before, after (deployed) and after (mid-fight) at 393 wide.
-`sizes-360.jpg` and `sizes-412.jpg`: the caves, crypt, snows, mire and war camp at the other two sizes, deployed and mid-fight.
 `caves-mire-before-after.jpg` is the first push's. No page errors in any run.

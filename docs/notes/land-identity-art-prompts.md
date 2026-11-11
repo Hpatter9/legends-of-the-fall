@@ -97,8 +97,8 @@ small rock pool with reeds; vulture perched on a dead branch.
 Row 2, meadow and highlands: hedgerow segment running left-right; hedgerow segment running front-back; wooden post-and-rail fence
 segment left-right; the same fence front-back; round haystack; second haystack with a pitchfork; small windmill with four sails;
 wildflower patch; stone cairn; lone wind-bent pine; mossy boulder; grazing sheep.
-Row 3, snow and autumn: snow drift; frozen dead tree hung with icicles; icicle cluster hanging from a rock ledge; ice-crusted
-boulder; snowman-less plain snow mound with footprints; red toadstool ring; brown mushroom cluster on a log; fallen mossy log;
+Row 3, snow, caves and autumn: snow drift; frozen dead tree hung with icicles; icicle cluster hanging from a rock ledge; ice-crusted
+boulder; stalactite cluster for a cave roof (the one object drawn hanging from its cell's TOP edge); red toadstool ring; brown mushroom cluster on a log; fallen mossy log;
 pile of autumn leaves; orange maple tree; yellow birch tree; antlered deer standing.
 Row 4, crypt and graveyard: stone pillar with a cobweb; thick corner cobweb (for hanging on a wall); candle cluster on a skull,
 lit; iron candelabra, lit; open sarcophagus; tilted headstone; celtic cross headstone; wrought-iron fence segment left-right; the

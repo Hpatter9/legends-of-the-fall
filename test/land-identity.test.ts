@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { AREAS, makeBoard } from '../src/sim/board';
-import { CLOUDS, CLOUD_DARK, LAND_LIGHT, LAND_WASH, MAX_DARK, RIMS, RIM_LIGHTS_MAX, RIM_PIECES_MAX, WASH_MAX, cloudsFor, dressingOf, lightsOf, rimNames, rimOf, wallTorches, washFor, wetLow } from '../src/render/landRimRules';
+import { PUDDLE_SHARE, TORCH_UPS, WALL_STUDS, puddleOn, wallStuds, CLOUDS, CLOUD_DARK, LAND_LIGHT, LAND_WASH, MAX_DARK, RIMS, RIM_LIGHTS_MAX, RIM_PIECES_MAX, WASH_MAX, cloudsFor, dressingOf, lightsOf, rimNames, rimOf, wallTorches, washFor, wetLow } from '../src/render/landRimRules';
 import { FLOORS, ROLES, floorRoles } from '../src/render/floorRules';
 import { BATS, LAND_AIR, SOARERS, batsFor, edgeFalls, lifeFor, soarersFor } from '../src/render/boardLifeRules';
 
@@ -49,7 +49,9 @@ test('a wall stands on the far edges only and over the board; nothing stands in 
           // (a near edge: only a land of water, below every board tile, and only things that lie flat)
           assert.ok(spec.near > 0 && r.near);
           assert.ok(r.h <= Math.min(...b.tiles.map((t) => t.h)), `${area}: a near column stands as high as the board`);
-          for (const p of r.pieces) assert.ok(['waterFlowers', 'waterPlants'].includes(p.name), `${area}: ${p.name} on a near edge`);
+          // (beside the board only what lies flat on the water; further out, low things as well: never a tree)
+          const low = r.ring === 0 ? ['waterFlowers', 'waterPlants'] : ['waterFlowers', 'waterPlants', 'reeds1', 'sunkenLog', 'wetBoulders', 'waterProp14', 'mist'];
+          for (const p of r.pieces) assert.ok(low.includes(p.name), `${area}: ${p.name} on a near edge, ring ${r.ring}`);
         }
       }
       // (the torches hang on the far walls, one about every three columns of each)
@@ -201,4 +203,66 @@ test('the sky\'s light: cloud shadows on a clear day over open country only, a w
   assert.ok(SOARERS.highlands && SOARERS.desert && SOARERS.graveyard);
   assert.ok(LAND_AIR.autumn && LAND_AIR.shrine && LAND_AIR.volcano?.rises && LAND_AIR.forge?.rises);
   for (const a of Object.values(LAND_AIR)) assert.ok(a.every >= 400, 'a few at a time');
+});
+
+test('the mire\'s water is the land\'s own murky green, thins away into the backdrop with no straight outer edge, and its low ground has puddles', () => {
+  const spec = RIMS.swamp;
+  assert.ok(spec.fades && spec.tones && spec.tones.length >= 3 && spec.near >= 3 && spec.far >= 4);
+  for (const tone of spec.tones!) {
+    // (green to teal, never brown or plain blue: much more green than red, and no more blue than a teal has)
+    const [r, g, bl] = tone.match(/\d+/g)!.map(Number);
+    assert.ok(g > r * 2 && bl <= g + 12, tone);
+  }
+  let puddles = 0;
+  let low = 0;
+  for (let seed = 1; seed <= 12; seed++) {
+    const b = makeBoard(seed, 'swamp');
+    const rim = rimOf(b);
+    assert.ok(rim.every((r) => r.role === 'water' && r.ground === 'water'));
+    // (the ring beside the board is whole and solid; the outermost is faint and broken)
+    const outer = rim.filter((r) => r.ring === (r.near ? spec.near : spec.far) - 1);
+    const inner = rim.filter((r) => r.ring === 0);
+    assert.ok(inner.every((r) => r.alpha === 1) && inner.length >= (b.w + b.d) * 2);
+    assert.ok(outer.every((r) => r.alpha < 0.5));
+    const whole = (b.w + b.d) * 2 + 4 * (spec.far + spec.near);
+    assert.ok(outer.length < whole * 0.85 && outer.length > whole * 0.2, `the outer ring is broken up: ${outer.length} of about ${whole}`);
+    // (plenty lying in the water on the near sides too)
+    assert.ok(rim.filter((r) => r.near && r.pieces.length).length >= 10, 'lilies, reeds and logs on the near sides');
+    b.tiles.forEach((t, i) => {
+      if (wetLow(b, i)) low++;
+      if (!puddleOn(b, i)) return;
+      puddles++;
+      assert.ok(wetLow(b, i) && !t.ground && !t.trap);
+    });
+  }
+  assert.ok(puddles > 0 && puddles <= low && Math.abs(puddles / low - PUDDLE_SHARE) < 0.2, `${puddles} puddles on ${low} low tiles`);
+  // (no other land fades or has puddles)
+  for (const area of AREAS) if (area !== 'swamp') assert.ok(!RIMS[area].fades && rimOf(makeBoard(2, area)).every((r) => r.alpha === 1) && !makeBoard(2, area).tiles.some((_, i) => puddleOn(makeBoard(2, area), i)), area);
+});
+
+test('the underground lands are rooms: tall walls, torches at two heights, and their faces broken up', () => {
+  assert.ok(RIMS.crystal.rise![0] >= 8 && RIMS.crystal.rise![1] >= 12, 'the caves\' walls are eight to twelve steps over the board');
+  assert.ok(RIMS.dungeon.rise![0] >= 6 && RIMS.forge.rise![0] >= 6);
+  for (const area of ['crystal', 'dungeon', 'forge'] as const) {
+    assert.ok(WALL_STUDS[area]);
+    for (let seed = 1; seed <= 10; seed++) {
+      const b = makeBoard(seed, area);
+      const torches = wallTorches(b);
+      assert.ok(TORCH_UPS.every((up) => torches.some((t) => t.up === up)), `${area}: torches low and high`);
+      for (const t of torches) assert.ok(t.up < RIMS[area].rise![0], 'a torch hangs on the wall, under its top');
+      const studs = wallStuds(b);
+      assert.ok(studs.length >= 4, `${area}: ${studs.length} on the face`);
+      const taken = new Set(torches.map((t) => `${t.u},${t.v}`));
+      for (const x of studs) {
+        assert.ok(!taken.has(`${x.u},${x.v}`), 'not on a torch');
+        assert.ok(x.up >= 2 && x.up < RIMS[area].rise![0], 'on the face, over the fighters\' heads and under the top');
+        assert.ok((x.edge === 'v' && x.v === -1) || (x.edge === 'u' && x.u === -1), 'on a far wall');
+      }
+      // (the wall's second ring stands higher still, so its top is stepped, not a flat rampart)
+      const rim = rimOf(b);
+      const tops = new Set(rim.map((r) => r.h));
+      assert.ok(tops.size >= 4, `${area}: the wall's top varies (${[...tops].join(',')})`);
+    }
+  }
+  assert.equal(wallStuds(makeBoard(1, 'plains')).length, 0);
 });
