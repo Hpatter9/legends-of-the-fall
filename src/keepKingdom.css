@@ -127,6 +127,17 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 .rosterSearch input::placeholder { color: #a8a28f; }
 .rosterResult { margin: 0; font-size: 14px; color: var(--kk-muted); }
 .rosterResult:empty { display: none; }
+/* HEROES-FILTER: the roster's painted Sort and Filter buttons, the line that says what is chosen with its Clear, and the empty list */
+.rosTools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rosTools .pbPlate { position: relative; min-height: 46px; }
+.rosTools .pbPlate.on .pbWord { color: #ffe9b0; text-shadow: 0 0 8px #e8ae5988; }
+.rosActive { display: flex; align-items: center; justify-content: space-between; gap: 8px; font: 14px var(--body); color: var(--kk-gold); }
+.rosActive > span { flex: 1; min-width: 0; }
+.heroRoster .rosClear { flex: none; min-height: 44px; }
+.rosEmpty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 8px; text-align: center; font: 15px var(--body); color: var(--kk-muted); }
+.rosEmpty p { margin: 0; }
+.rosLocked { display: flex; flex-direction: column; gap: 12px; }
+.rosLocked:empty { display: none; }
 .heroRoster .rosGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .heroRoster .hcard { gap: 5px; padding: 9px 3px; }
 .heroRoster .hcard b { font: 700 14px var(--body); color: var(--kk-text); }
