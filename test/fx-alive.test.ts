@@ -95,6 +95,10 @@ test('the rendered loop lies on every tile, a little over the strip\'s strength,
   assert.ok(open > 0.45 && open <= 1, `open ground ${open}`);
   assert.ok(under < 0.4, `under a fighter ${under}`);
   assert.ok(ALIVE.RENDERED_GLOW < 0.5, 'a patch\'s glows overlap, so each tile keeps a share');
+  // (the loop fills its tile edge to edge, as the painted borderless fill did: the recipe's fill is most of the ground)
+  const recipe = readFileSync('tools/blender-fx/effects.py', 'utf8');
+  assert.match(recipe, /fx\(f'ground-\{el\}', 'tile'.*fill=0\.[7-9]/);
+  assert.match(readFileSync('tools/blender-fx/scenes.py', 'utf8'), /runs right to the tile's edge/);
   // (burning ground is its own, taller loop)
   const zone = bfxClip(ZONE_BFX)!;
   assert.ok(zone.loop && zone.h > bfxClip(groundBfx('fire')!)!.h);

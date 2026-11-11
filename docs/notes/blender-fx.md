@@ -160,7 +160,43 @@ the rendered loops instead: every element has one, a tile's worth, the lights wi
 loader are gone; the loop's strength on open ground and under a fighter. This is the owner's decision changing a requirement,
 not a test loosened. `tools/fx-alive/cut.py` (which cut the painted sheet) is kept for the record; its output is no longer used.
 
-## The ultimates
+## The ultimates, round 2: each hero's own three stages (fifteen at a time)
+
+The director's review of the first ultimates push: every hero's wind-up, strike and aftermath is to be its own recipe, sized to its
+real length, bigger than any spell, building through the wind-up and lingering after; delivered about fifteen heroes at a time. So
+the shared wind-ups and aftermaths described below are now only what a hero plays until its turn comes (`ULT_OWN` in
+`tools/blender-fx/effects.py`). The first fifteen are done: Vael, Astrax, Ilyra, Orrun, Nyxara, Kunoichi, Wizard, Beastmaster,
+Mercenary, Arc Blade, Samurai, Lancer, Minotaur, Barbarian, Ninja Monk.
+
+For a hero whose turn has come:
+
+- **Wind-up** `ult-<kind>-windup`: the weight's own gathering, with a part of the hero's own joining it from a third of the way in
+  and swelling to the blow (so it builds). No two heroes of an element have the same scenes. Its frames are one per 105 ms of the
+  stage's real length (`ULT_STAGES[kind].windup.ms`: 15 to 21 frames), and it is played across the stage as it runs that use.
+- **Strike** `ult-<kind>-strike`: the same pair of scenes as before, half as large again (three to four tiles across or high) and
+  longer: 18 frames over 1.5 s.
+- **Aftermath** `ult-<kind>-aftermath`: something low where it struck and something lifting off it, both thinning to nothing; no
+  two heroes of an element have the same pair. One frame per 120 ms of the stage's real length (12 to 18 frames).
+
+`ultBfx` gives a hero its own sheet when it exists and the shared one otherwise, so the other 55 heroes still play all three
+stages. The manifest now also carries each staged clip's scenes (`sc`), which the tests read.
+
+**Bytes**: the atlases are 2,612,154 bytes now. The fifteen heroes' own sheets and larger strikes added 594,292 bytes over the
+first ultimates push; the other 55 will add about 2.2 MB more at this size.
+
+Photographed in fights with `tools/ult-epic/stages.mjs`: Kunoichi, Wizard, Beastmaster, Samurai, Minotaur and Barbarian (that tool's
+save owns fourteen heroes; the Mythics, Mercenary, Arc Blade, Lancer and Ninja Monk are not among them, so theirs are shown as
+frames only, `ult-frames.png`). Known rough edge: a strike made of smoke (the Kunoichi's) is a heavy mass for a moment at this size.
+
+## The ground loops, round 2: full tiles
+
+The director's review: the loops were thin (a few flames or shards on a tile) where the painted fill they replaced covered the
+patch edge to edge. Each loop now covers its whole tile: the element's moving pattern runs right to the tile's edges (so
+neighbouring tiles join into one ground with no borders) and fills most of it, with nine things standing in it instead of five;
+burning ground has ten tall flames. Under a fighter it still thins. `docs/samples/blender-fx/ground-frames.png` and
+`ground-in-fight-<size>.jpg` were retaken, the latter in the opening seconds of a fight on open ground, before the lines meet.
+
+## The ultimates (the first push: shared wind-ups and aftermaths)
 
 ULT-EPIC (0.495.0, `src/ultStageRules.ts`, `docs/notes/ult-epic.md`) plays an ultimate fired by hand in three stages over 4 to 6
 seconds and left `STAGE_ART[kind][stage]` as the place to hang a sheet. Every hero kind with a show (70 of them: the five Mythics,
