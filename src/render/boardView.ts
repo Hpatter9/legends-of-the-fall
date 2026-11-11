@@ -14,7 +14,7 @@ import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
 import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow, growthOf, loadRoadArt, piece, sceneryPictures, setPiece, type Pic } from './roadArt';
 import { loadLifeArt } from './boardLife';
-import { dressingOf, rimOf, torchLight, wallStuds, WALL_STUDS, puddleOn, RIMS, wallTorches, type RimPiece } from './landRimRules';
+import { darkTint, dressingOf, rimOf, torchLight, wallStuds, WALL_STUDS, puddleOn, RIMS, wallTorches, type RimPiece } from './landRimRules';
 import { holdPiece, holdSpritesReady, loadHoldSprites } from './holdSprites';
 import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
@@ -882,13 +882,14 @@ export class BoardView {
       const [x, y] = project(f, r.u, r.v, r.h);
       const col = new Sprite(lease.value);
       col.position.set(x - TW / 2, y - TH / 2);
-      col.alpha = r.alpha;
       const z = depthIn(f, r.u, r.v);
       const moves = (p: RimPiece) => !!p.drift || !!p.light || (!!p.sway && (r.u === -1 || r.v === -1 || !far));
       const live = r.pieces.filter(moves);
       if (far && this.renderer) {
         const c = new Container();
         c.zIndex = z;
+        // (a far ring thins away with everything on it, as into a haze)
+        c.alpha = r.alpha;
         c.addChild(col);
         for (const p of r.pieces) if (!moves(p)) stand(c, { ...p, sway: false }, x, y);
         still.addChild(c);
@@ -897,6 +898,7 @@ export class BoardView {
       if (!far || !this.renderer || live.length) {
         const c = new Container();
         c.zIndex = z;
+        c.alpha = r.alpha;
         if (!far || !this.renderer) {
           built.tex.push(lease);
           c.addChild(col);
@@ -918,6 +920,8 @@ export class BoardView {
       const sp = new Sprite(this.rimTex);
       sp.position.set(bounds.minX, bounds.minY);
       sp.zIndex = -1e5;
+      // (a dark land's walls take its dark as a tint, which costs nothing to draw; the dark layer itself then only has to cover the floor)
+      sp.tint = darkTint(b.area);
       this.root.addChild(sp);
       this.rim.push(sp);
     } else still.destroy({ children: true });
@@ -958,6 +962,7 @@ export class BoardView {
         sp.scale.set(t.edge === 'u' ? -stud.scale : stud.scale, stud.scale);
         sp.position.set(x, y);
         sp.zIndex = depthIn(f, t.u, t.v) + 1;
+        sp.tint = darkTint(b.area);
         this.root.addChild(sp);
         this.rim.push(sp);
       }

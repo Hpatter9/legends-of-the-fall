@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { AREAS, makeBoard } from '../src/sim/board';
-import { PUDDLE_SHARE, TORCH_UPS, WALL_STUDS, puddleOn, wallStuds, CLOUDS, CLOUD_DARK, LAND_LIGHT, LAND_WASH, MAX_DARK, RIMS, RIM_LIGHTS_MAX, RIM_PIECES_MAX, WASH_MAX, cloudsFor, dressingOf, lightsOf, rimNames, rimOf, wallTorches, washFor, wetLow } from '../src/render/landRimRules';
+import { DARK_MARGIN, darkTint, PUDDLE_SHARE, TORCH_UPS, WALL_STUDS, puddleOn, wallStuds, CLOUDS, CLOUD_DARK, LAND_LIGHT, LAND_WASH, MAX_DARK, RIMS, RIM_LIGHTS_MAX, RIM_PIECES_MAX, WASH_MAX, cloudsFor, dressingOf, lightsOf, rimNames, rimOf, wallTorches, washFor, wetLow } from '../src/render/landRimRules';
 import { FLOORS, ROLES, floorRoles } from '../src/render/floorRules';
 import { BATS, LAND_AIR, SOARERS, batsFor, edgeFalls, lifeFor, soarersFor } from '../src/render/boardLifeRules';
 
@@ -18,7 +18,7 @@ test('the rim lies outside the board, and the board is not changed by it', () =>
       const rim = rimOf(b);
       assert.equal(JSON.stringify(b), before, area);
       assert.deepEqual(rimOf(makeBoard(seed, area)), rim, 'the same board, the same rim');
-      assert.ok(rim.length >= (b.w + b.d) * RIMS[area].far, `${area}: every land has a rim along its far edges`);
+      assert.ok(rim.length >= (b.w + b.d) * (RIMS[area].far - (RIMS[area].fades ? 1 : 0)), `${area}: every land has a rim along its far edges`);
       for (const r of rim) {
         assert.ok(r.u < 0 || r.v < 0 || r.u >= b.w || r.v >= b.d, `${area}: a rim column on the board at ${r.u},${r.v}`);
         assert.ok(ROLES.includes(r.role));
@@ -236,8 +236,18 @@ test('the mire\'s water is the land\'s own murky green, thins away into the back
     });
   }
   assert.ok(puddles > 0 && puddles <= low && Math.abs(puddles / low - PUDDLE_SHARE) < 0.2, `${puddles} puddles on ${low} low tiles`);
-  // (no other land fades or has puddles)
-  for (const area of AREAS) if (area !== 'swamp') assert.ok(!RIMS[area].fades && rimOf(makeBoard(2, area)).every((r) => r.alpha === 1) && !makeBoard(2, area).tiles.some((_, i) => puddleOn(makeBoard(2, area), i)), area);
+  // (no other land has puddles; every open land thins away the same way, and a wall never does)
+  for (const area of AREAS) {
+    const b = makeBoard(2, area);
+    if (area !== 'swamp') assert.ok(!b.tiles.some((_, i) => puddleOn(b, i)), area);
+    const rim = rimOf(b);
+    assert.equal(!!RIMS[area].fades, !RIMS[area].rise, `${area}: open country thins into the backdrop, a wall stands solid`);
+    if (RIMS[area].rise) assert.ok(rim.every((r) => r.alpha === 1));
+    else {
+      assert.ok(RIMS[area].far >= 3, `${area}: three rings, to thin away over`);
+      assert.ok(rim.filter((r) => r.ring === 0).every((r) => r.alpha === 1) && rim.some((r) => r.alpha < 0.5) && rim.some((r) => r.alpha > 0.5 && r.alpha < 1));
+    }
+  }
 });
 
 test('the underground lands are rooms: tall walls, torches at two heights, and their faces broken up', () => {
@@ -265,4 +275,22 @@ test('the underground lands are rooms: tall walls, torches at two heights, and t
     }
   }
   assert.equal(wallStuds(makeBoard(1, 'plains')).length, 0);
+});
+
+test('a dark land\'s walls take its dark as a tint, so the dark layer covers only the floor', () => {
+  for (const area of AREAS) {
+    const tint = darkTint(area);
+    if (!LAND_LIGHT[area]) {
+      assert.equal(tint, 0xffffff, `${area} is not dark: its rim is drawn as it is`);
+      continue;
+    }
+    // (each channel is the dark laid over white at the land's weight: darker than white, never black)
+    const { dark, colour } = LAND_LIGHT[area]!;
+    for (const shift of [16, 8, 0]) {
+      const ch = (tint >> shift) & 255;
+      assert.equal(ch, Math.round(255 * (1 - dark) + ((colour >> shift) & 255) * dark));
+      assert.ok(ch < 255 && ch > 120, `${area}: ${ch}`);
+    }
+  }
+  assert.ok(DARK_MARGIN <= 1);
 });
