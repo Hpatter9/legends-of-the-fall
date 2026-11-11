@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.489.0',
+    date: '2026-11-11',
+    title: 'The War Room and the Crown Terrace',
+    notes: ['The Armies screen is a candlelit War Room with painted banners, and shows your Party Strength against each army\'s challenge.', 'The Castle opens on a living Crown Terrace: your ruler\'s own court and landscape, companions you choose, and buildings that grow.'],
+  },
+  {
     version: '0.488.0',
     date: '2026-11-11',
     title: 'Fighters stand out on every floor',
