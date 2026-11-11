@@ -47,8 +47,9 @@ point must land in the page, never in the tab beneath or the bars. It also check
 put while the content scrolls, that each Codex tab's label is whole on one line (with six tabs and with seven), that "‹ Back" closes
 the page, and that the Castle's header is back at the top of the tab, tappable, afterwards.
 
-Before the fix it fails on the Codex and the Achievements from the Castle (every size, every Castle position) and on the tabs'
-labels; nothing else showed the fault. After it, every check passes.
+Before the fix it fails on the Codex and the Achievements from the Castle (every size, every Castle position), on the quest log
+opened over the Castle (`#hmSheet`, also z-index 5: the same fault, mended by the same line) and on the tabs' labels; nothing else
+showed the fault. After it, every check passes.
 
 ```bash
 npm run web && node tools/codex-topbar/check.mjs          # exits 1 on a failed check
