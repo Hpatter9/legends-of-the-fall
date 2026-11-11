@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.497.0',
+    date: '2026-11-11',
+    title: 'Every ultimate gets its showcase',
+    notes: ['Every ultimate you fire by hand now plays its full showcase, not only the first and every tenth. \'Shorter ultimates\' in Settings still turns it off.', 'Ultimates with volleys still to land, like Meteor Swarm, may run to about 7 seconds so nothing is rushed.'],
+  },
+  {
     version: '0.496.0',
     date: '2026-11-11',
     title: 'The snows\' ice shows up',
