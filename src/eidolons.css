@@ -47,6 +47,17 @@
 /* in the fight: at the left end of the spell orbs row, its words a small pill on its foot (44 px: AUTO-RIGHT keeps the row one line) */
 .ehFight { width: 44px; height: 44px; margin-right: 0; align-self: center; justify-content: center; }
 .ehFight .ehArt { width: 42px; }
+/* HORN-CORNER (docs/notes/horn-corner.md; the owner: "Let's move the horn location in the battle screen. Bottom left seems free."): in an
+   army's, the daily's or a quest's fight the horn is out of the spell row, in the board's bottom-left corner: it rides on the panel's top
+   edge at the left, as the tactic button does at the right, so it stays just above the hero rows however many there are. A 56 px thumb
+   target. Only in a fight, as the row it left was. (The Last Stand, hidden, keeps its horn in its own row.) */
+#panel > .ehFight { position: absolute; z-index: 2; left: 8px; bottom: calc(100% + 10px); width: 56px; height: 56px; display: none; }
+body[data-phase='fight'] #panel > .ehFight { display: flex; }
+#panel > .ehFight .ehArt { width: 52px; }
+#panel > .ehFight .ehWords { right: auto; left: 50%; translate: -50% 0; bottom: -4px; }
+/* (the hero rows' skill banners come in at the left edge just above the rows, the horn's corner: while the horn shows they come in beside
+   it, not over it; in a duel the horn is put away and they keep the edge) */
+body[data-phase='fight']:not(.inDuel, [data-stand]):has(#panel > .ehFight:not([hidden])) .fhCutStack { left: 70px; }
 .ehFight .ehWords, .ehCamp .ehWords { position: absolute; right: -3px; bottom: -2px; padding: 1px 3px; border-radius: 4px; background: #0d0b08d9; font-size: 10px; }
 /* at the camp: beside the stones */
 .ehCamp { width: 46px; height: 36px; justify-content: center; flex-direction: row; }
@@ -107,7 +118,10 @@
 .ecCone { position: absolute; left: 70%; top: -40%; width: 120%; height: 120%; transform-origin: 0 100%; rotate: -10deg; opacity: 0;
   background: conic-gradient(from 25deg at 0 100%, transparent 0deg, rgb(255 226 150 / 0.7) 15deg, rgb(255 240 200 / 0.9) 25deg, rgb(255 226 150 / 0.7) 35deg, transparent 50deg); filter: blur(4px); }
 .ecRing { position: absolute; left: 85%; top: 5%; width: 20px; height: 10px; translate: -50% -50%; border-radius: 50%; border: 3px solid rgb(255 226 150 / 0.9); opacity: 0; }
-.ecLayer[data-stage='horn'] .ecHorn { opacity: 1; rotate: -8deg; translate: 0 0; }
+/* (HORN-CORNER: with the horn's button in the board's bottom-left corner, the call's horn rises out of it: it starts small on the button
+   (`--hx`, `--hy`: from where it comes to rest to the button's middle) and swings up to rest just above it) */
+.ecHorn.fromBtn { translate: var(--hx) var(--hy); scale: 0.22; transition: opacity 0.25s ease, rotate 0.45s cubic-bezier(.2,.9,.3,1.3), translate 0.45s cubic-bezier(.2,.9,.3,1.3), scale 0.45s cubic-bezier(.2,.9,.3,1.3); }
+.ecLayer[data-stage='horn'] .ecHorn { opacity: 1; rotate: -8deg; translate: 0 0; scale: 1; }
 .ecLayer[data-stage='horn'] .ecCone { animation: ecCone 0.6s ease-out 0.15s both; }
 .ecLayer[data-stage='horn'] .ecRing { animation: ecRing 0.7s ease-out 0.15s both; }
 .ecLayer[data-stage='pass'] .ecHorn { opacity: 0; transition-duration: 0.3s; }
@@ -277,7 +291,7 @@
 .ecLayer.stop *, .ecLayer.stop { animation-play-state: paused !important; }
 /* reduced motion: the calm version. The figure fades in where it would cross mid-screen and fades out, held still; the trail is laid
    down at once; the runs are drawn without a head racing; no shake, snap or wake */
-.ecLayer.still .ecHorn { transition: opacity 0.4s ease !important; translate: none; rotate: none; }
+.ecLayer.still .ecHorn { transition: opacity 0.4s ease !important; translate: none; rotate: none; scale: none; }
 .ecLayer.still .ecHorn :is(.ecCone, .ecRing) { animation: none !important; }
 .ecLayer.still .ecBars i { display: none; }
 .ecLayer.still .ecName { animation: none !important; }

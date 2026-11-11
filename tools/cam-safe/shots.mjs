@@ -81,7 +81,7 @@ for (const [w, h] of SIZES) {
     const g = window.__game;
     g.app.ticker.stop();
     const safeRect = eval(rule);
-    const sels = ['#top', '#twistBanner', '#hudSpells', '#bossBar', '#comboBar', '#synCol', '#tacticBtn', '#panel', '#duelBar'];
+    const sels = ['#top', '#twistBanner', '#hudSpells', '#bossBar', '#comboBar', '#synCol', '#tacticBtn', '#panel', '#duelBar', '#panel > .ehFight'];
     const covers = [];
     for (const sel of sels)
       for (const e of document.querySelectorAll(sel)) {
@@ -109,7 +109,7 @@ for (const [w, h] of SIZES) {
     rect({ x0: ax - 2, y0: ay - 14, x1: ax + 2, y1: ay + 14 }, 'background:#ffe23b;box-shadow:0 0 0 1px #000');
     document.body.append(box);
     const orbs = document.querySelectorAll('#spellCards > *').length;
-    const horn = !!document.querySelector('#hudSpells .ehHorn:not([hidden])');
+    const horn = !!document.querySelector('.ehFight:not([hidden])');
     const boss = !document.getElementById('bossBar').hidden;
         return { safe, ax, ay, mx, my, orbs, horn, boss, covers: covers.map((r) => r.sel), cam: { safe: g.safe, safeTo: g.safeTo, tx: g.tx, ty: g.ty, cx: g.cx, cy: g.cy, held: g.held, zoom: g.zoom, tzoom: g.tzoom, manual: g.manualCam } };
   }, RULE);

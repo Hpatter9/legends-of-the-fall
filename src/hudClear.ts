@@ -1,9 +1,12 @@
 // COMBAT-HUD (docs/notes/combat-hud.md): the fight screen's fixed parts that a passing message (a toast, a quip's bubble) must not cover,
 // and the lane under the top ones where a toast shows in a fight. The page only: it reads the DOM, never the battle.
 
-/** The fight's parts kept clear: the top bar, the spell row (orbs, Auto, the War Horn), the boss's bar, a twist's banner, the combo bar,
- *  the tactic button over the hero rows, and the hero rows. */
-export const FIGHT_HUD = ['#top', '#hudSpells', '#bossBar', '#twistBanner', '#comboBar', '#tacticBtn', '#fightHud'];
+/** HORN-CORNER (docs/notes/horn-corner.md): the War Horn in a fight, on the panel's top edge at the left (the board's bottom-left corner). */
+export const HORN_CORNER = '#panel > .ehFight';
+
+/** The fight's parts kept clear: the top bar, the spell row (orbs, Auto), the boss's bar, a twist's banner, the combo bar,
+ *  the tactic button and the War Horn over the hero rows, and the hero rows. */
+export const FIGHT_HUD = ['#top', '#hudSpells', '#bossBar', '#twistBanner', '#comboBar', '#tacticBtn', HORN_CORNER, '#fightHud'];
 
 /** The boxes of those parts that show now (none hidden or empty). */
 export function hudBoxes(sels: readonly string[] = FIGHT_HUD): DOMRect[] {
