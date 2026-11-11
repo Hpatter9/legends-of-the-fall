@@ -8,7 +8,7 @@
 import { glyphWord } from './paintedButton';
 
 /** Every class this module puts on the page: each is styled in `ornateMenus.css` (section 24). */
-export const OM_CLASSES = ['omVeil', 'omSheet', 'omDrawer', 'om', 'omHead', 'omCrest', 'omEyebrow', 'omTitle', 'omSub', 'omRule', 'omBody', 'omSection', 'omSectionHead', 'omGrid', 'omChoice', 'omIco', 'omLine', 'omPay', 'omLock', 'omWell', 'omNote', 'omFoot', 'omBack', 'omPrimary'] as const;
+export const OM_CLASSES = ['omVeil', 'omSheet', 'omDrawer', 'omSide', 'om', 'omHead', 'omCrest', 'omEyebrow', 'omTitle', 'omSub', 'omRule', 'omBody', 'omSection', 'omSectionHead', 'omGrid', 'omChoice', 'omIco', 'omLine', 'omPay', 'omLock', 'omWell', 'omNote', 'omFoot', 'omBack', 'omPrimary'] as const;
 
 export interface MenuOptions {
   /** The page id of the veil (one menu of a kind at a time: an open one with the same id is closed first). */
@@ -19,8 +19,10 @@ export interface MenuOptions {
   /** A line under the title. */
   sub?: string;
   /** 'card' (default): centred, a pop-up over the page. 'sheet': rises from the foot of the screen, tall. 'drawer': slides up from the
-   *  foot of the screen and stops short, so the page above it (Hester and her shelf) stays in sight; the full dress all the same. */
-  kind?: 'card' | 'sheet' | 'drawer';
+   *  foot of the screen and stops short, so the page above it (Hester and her shelf) stays in sight; the full dress all the same. 'side':
+   *  slides in from the right edge and stands the height of the screen, the page in sight on its left (the War Council's pack; `--p` on
+   *  the veil is how far out it is, 0 to 1). */
+  kind?: 'card' | 'sheet' | 'drawer' | 'side';
   /** Spoken name of the dialog (the title if left out). */
   label?: string;
   /** Called once the menu has gone, however it went (its own buttons, Escape, or `close`). */
@@ -51,7 +53,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 export function ornateMenu(o: MenuOptions): OrnateMenu {
   document.getElementById(o.id)?.dispatchEvent(new Event('omclose'));
   document.getElementById(o.id)?.remove();
-  const root = el('div', `omVeil${o.kind === 'sheet' ? ' omSheet' : o.kind === 'drawer' ? ' omDrawer' : ''}`);
+  const root = el('div', `omVeil${o.kind === 'sheet' ? ' omSheet' : o.kind === 'drawer' ? ' omDrawer' : o.kind === 'side' ? ' omSide' : ''}`);
   root.id = o.id;
   const card = el('div', 'om');
   card.setAttribute('role', 'dialog');

@@ -3,10 +3,11 @@ import { mythicFits, MYTHIC_LIMIT_WORDS } from './sim/mythicRules';
 // The searchable hero grid below lets the player add or take out heroes from the summons pool (a
 // long press, or the small i, opens the hero's role and skill), and the locked heroes shaded at the end. A draft is kept
 // until Start or Done, which saves it through `setParty`; Back throws it away. The rules are in `src/sim/meta.ts`.
+// (HEROES-FILTER: the Satchel and the Plan, the March orders, are off this page: they are in the pack, a drawer pulled out from the right
+// edge, `partyPack.ts`; the page keeps one line of what is packed over the start button.)
 
-import { glyphWord, medal } from './paintedButton';
-import { ELIXIR_MAX, REMEDY_LIST, SATCHEL_MAX, pickSatchel, satchelFor } from './sim/remedies';
-import { REMEDY_ICON } from './gearUiArt';
+import { glyphWord } from './paintedButton';
+import { PartyPack } from './partyPack';
 import { retired } from './sim/legacy';
 import { fieldedOf, fieldsElder } from './sim/dynasty';
 import { mourning, mourningLeft } from './sim/oath';
@@ -67,13 +68,18 @@ export class Party {
   /** A quest battle's party (batch 2 of the quests): its required cast, locked in their slots, its title and rule, and where the
    *  picks go (they are the battle's own: the saved party is not changed). Null for the ordinary party screen. */
   private quest: { cast: readonly string[]; title: string; rule: string; fits: (kind: string) => boolean; then: (picked: string[]) => void } | null = null;
-  /** UI-STANDARD: the March orders button (an army's start, once any order is open): its line, and what a tap opens with the picks so far. */
+  /** UI-STANDARD: the March orders (an army's start, once any order is open): their line, and what opens them with the picks so far. */
   private orders: { line: () => string; open: (party: readonly string[], redraw: () => void) => void } | null = null;
+  /** HEROES-FILTER: the pack, the drawer that holds the Satchel and the Plan. */
+  private pack: PartyPack;
 
   constructor(
     private meta: Meta,
     private onBack: () => void,
   ) {
+    this.pack = new PartyPack(meta);
+    $('party').append(this.pack.tab);
+    $('ptGo').before(this.pack.line);
     $('ptBack').addEventListener('click', () => this.close(this.onBack));
     glyphWord($('ptBack'));
     $('ptGo').addEventListener('click', () => this.confirm());
@@ -100,6 +106,7 @@ export class Party {
     this.focus = undefined;
     this.onDone = then;
     this.orders = null;
+    this.pack.reset();
     this.filter = 'all';
     this.search = '';
     $<HTMLInputElement>('ptSearch').value = '';
@@ -120,31 +127,17 @@ export class Party {
     this.draw();
   }
 
-  /** UI-STANDARD: show the March orders button above March (`null` takes it away). Set after `open`, which clears it. */
+  /** UI-STANDARD: give the March orders for this start (`null` takes them away). Set after `open`, which clears them. They are the pack's
+   *  Plan (HEROES-FILTER): its tab names them and opens them in the standard menu. */
   setOrders(o: { line: () => string; open: (party: readonly string[], redraw: () => void) => void } | null): void {
     this.orders = o;
     this.drawOrders();
   }
 
-  /** The March orders button: a gilded row over the start button naming the orders set; a tap opens them in the standard menu. */
+  /** The Plan of the pack: the orders set, unless this is a quest battle (which has none). */
   private drawOrders(): void {
-    let b = document.getElementById('ptOrders') as HTMLButtonElement | null;
-    if (!b) {
-      b = el('button', 'ptOrders');
-      b.id = 'ptOrders';
-      b.type = 'button';
-      $('ptGo').before(b);
-    }
     const o = this.orders;
-    b.hidden = !o || !!this.quest;
-    if (!o || b.hidden) return;
-    const line = o.line();
-    if (b.dataset.line !== line) {
-      b.dataset.line = line;
-      b.replaceChildren(el('small', '', 'March orders'), el('b', '', line), el('i', 'ptOrdersGo', '›'));
-    }
-    b.setAttribute('aria-label', `March orders: ${line}. Change them`);
-    b.onclick = () => o.open([...this.picked], () => this.drawOrders());
+    this.pack.setPlan(o && !this.quest ? { line: o.line, open: (redraw) => o.open([...this.picked], redraw) } : null);
   }
 
   private get slots(): number {
@@ -166,6 +159,7 @@ export class Party {
 
   private close(then?: () => void): void {
     this.closeSheet();
+    this.pack.close(true);
     $('party').hidden = true;
     then?.();
   }
@@ -284,59 +278,6 @@ export class Party {
     };
   }
 
-  /** SEVEN-SLOT GEAR batch 6: the satchel the run will take (up to five remedies, one Elixir; the last choice is remembered) and the switch
-   *  that lets Auto use them (off by default). Shown once a remedy is owned. */
-  private drawSatchel(): void {
-    const m = this.meta;
-    const go = $('ptGo');
-    let box = document.getElementById('ptSatchel');
-    if (!box) {
-      box = el('div', 'ptSatchel');
-      box.id = 'ptSatchel';
-      go.before(box);
-    }
-    const owned = REMEDY_LIST.filter((r) => (m.satchel?.[r.id] ?? 0) > 0);
-    box.hidden = !owned.length && !m.autoRemedies;
-    if (box.hidden) return;
-    const pick = satchelFor(m);
-    const taken = REMEDY_LIST.reduce((n, r) => n + (pick[r.id] ?? 0), 0);
-    box.replaceChildren(el('b', '', `Satchel · ${taken} / ${SATCHEL_MAX}`));
-    for (const r of owned) {
-      const row = el('div', 'ptRemedy');
-      const n = pick[r.id] ?? 0;
-      // (UNUSED-ART: the painted minus and plus glyphs; the words are for a reader)
-      const less = el('button', 'ptStep');
-      const more = el('button', 'ptStep');
-      less.append(medal('g-minus'));
-      more.append(medal('g-plus'));
-      less.setAttribute('aria-label', `One ${r.name} fewer`);
-      more.setAttribute('aria-label', `One ${r.name} more`);
-      less.disabled = n <= 0;
-      more.disabled = taken >= SATCHEL_MAX || n >= (m.satchel?.[r.id] ?? 0) || (r.id === 'elixir' && n >= ELIXIR_MAX);
-      const set = (k: number) => {
-        pickSatchel(m, { ...pick, [r.id]: k });
-        saveMeta(m);
-        this.drawSatchel();
-      };
-      less.addEventListener('click', () => set(n - 1));
-      more.addEventListener('click', () => set(n + 1));
-      const pic = el('img', 'ptRemedyPic');
-      pic.src = REMEDY_ICON[r.id];
-      pic.alt = '';
-      row.append(pic, el('span', '', `${r.name} · ${n} of ${m.satchel?.[r.id] ?? 0}`), less, more);
-      box.append(row);
-    }
-    const auto = el('button', 'ptAutoRemedy', `Auto may use remedies: ${m.autoRemedies ? 'On' : 'Off'}`);
-    auto.title = 'With it on, Auto heals any hero under half with the cheapest remedy that brings it to three quarters, and keeps the Phoenix Ash and the Elixir for a boss';
-    auto.addEventListener('click', () => {
-      if (m.autoRemedies) delete m.autoRemedies;
-      else m.autoRemedies = true;
-      saveMeta(m);
-      this.drawSatchel();
-    });
-    box.append(auto);
-  }
-
   private draw(): void {
     const m = this.meta;
     const slots = this.slots;
@@ -391,7 +332,6 @@ export class Party {
     $('ptCount').textContent = `${this.picked.length} / ${slots} ready · Party power ${powerText(partyPower(m, this.picked))}`;
     $('ptAvailable').textContent = `${m.unlocked.length} available`;
     this.drawWear();
-    this.drawSatchel();
     this.drawOrders();
     const key = this.picked.join('|');
     if (this.sceneKey !== key || !$('ptTableau').firstChild) {

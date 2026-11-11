@@ -2219,8 +2219,20 @@ body #spellbook h2 {
 .omBack:only-child { flex: 1 1 auto; }
 @media (prefers-reduced-motion: reduce) { .omVeil, .omDrawer .om { animation: none; } }
 
+/* the side drawer (HEROES-FILTER: the War Council's pack): slides in from the right edge and stands the height of the screen, the page in
+   sight on its left. `--p` on the veil is how far out it is (0 shut, 1 out): a pull sets it under the finger, a tap springs it. */
+.omVeil.omSide {
+  justify-content: flex-end; align-items: stretch; overflow: hidden; animation: none;
+  padding: calc(env(safe-area-inset-top) + 8px) 0 calc(env(safe-area-inset-bottom) + 8px) 44px;
+  background: linear-gradient(90deg, rgba(5, 7, 5, calc(0.2 * var(--p, 1))), rgba(5, 7, 5, calc(0.6 * var(--p, 1))));
+}
+.omSide .om { width: min(350px, 100%); max-height: none; border-right: 0; border-radius: 10px 0 0 10px; transform: translateX(calc((1 - var(--p, 1)) * (100% + 36px))); }
+.omSide.springing .om { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.25, 1); }
+.omSide.leaving { pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .omSide.springing .om { transition: none; } }
+
 /* the War Council's March orders button (UI-STANDARD): a gilded row over March naming the orders set; a tap opens the orders menu */
-#party .ptOrders {
+.ptOrders {
   width: 100%;
   min-height: 52px;
   margin: 0 0 6px;
@@ -2236,10 +2248,52 @@ body #spellbook h2 {
   background: radial-gradient(ellipse at 0% 50%, rgba(219, 193, 139, 0.12), transparent 60%), linear-gradient(180deg, #2c3125 0%, #1a1d15 100%);
   box-shadow: inset 0 0 0 1px #11140e, inset 0 1px 0 rgba(255, 235, 185, 0.18), 0 3px 8px rgba(0, 0, 0, 0.55);
 }
-#party .ptOrders[hidden] { display: none; }
-#party .ptOrders small { font: 700 11px var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ornate-brass-mid); }
-#party .ptOrders b { max-width: 100%; font: 400 15px/1.25 var(--display); color: var(--ornate-brass-hi); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-#party .ptOrders .ptOrdersGo { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font: normal 26px/1 var(--display); color: var(--ornate-brass); }
+.ptOrders[hidden] { display: none; }
+.ptOrders small { font: 700 11px var(--body); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ornate-brass-mid); }
+.ptOrders b { max-width: 100%; font: 400 15px/1.25 var(--display); color: var(--ornate-brass-hi); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ptOrders .ptOrdersGo { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font: normal 26px/1 var(--display); color: var(--ornate-brass); }
+
+/* HEROES-FILTER: the War Council's pack. The pull tab on the page's right edge (the rune bench's bar's kin: the painted plaque, a chevron
+   and its word), its twin on the drawer's edge while the drawer is out, the page's one line of what is packed, and the drawer's two tabs,
+   the Satchel's rows and the Plan's lines. */
+.ptPackTab, .ptPackTab:active:not(:disabled) {
+  position: absolute; z-index: 6; right: 0; top: calc(env(safe-area-inset-top) + 172px); width: 30px; height: 92px; min-height: 0; padding: 8px 0 6px; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; touch-action: none; cursor: grab;
+  border: 1px solid transparent; border-radius: 0; background: none; color: #f3e3b8; text-shadow: 0 1px 2px #000; transform: none;
+  --pbw: 8px 7px; border-image: url(ui/buttons/plaque.webp) var(--plaque-slice) / var(--pbw) / 0 stretch;
+  box-shadow: none; filter: drop-shadow(-2px 0 5px rgb(0 0 0 / 0.6));
+}
+/* (a wider touch area than it looks, for one thumb at 360 wide) */
+.ptPackTab::before { content: ''; position: absolute; inset: -8px -2px -8px -16px; }
+.ptPackTab[hidden] { display: none; }
+.ptPackTab.out { visibility: hidden; }
+.ptPackTab:has(.pbBadge), .omSide.pulling .ptPackGrip { border-image: url(ui/buttons/plaque-ready.webp) var(--plaque-slice) / var(--pbw) / 0 stretch; }
+.ptPackTab .gripArrow { width: 20px; height: 20px; flex: none; background: url(ui/buttons/g-back.webp) center / contain no-repeat; filter: drop-shadow(0 1px 1px #000a); }
+.ptPackTab .gripWord { writing-mode: vertical-rl; transform: rotate(180deg); text-transform: uppercase; font: 700 10px/1 var(--body); letter-spacing: 0.08em; color: #f5e4ba; }
+.ptPackTab .pbBadge { position: absolute; top: -7px; left: -7px; right: auto; }
+.ptPackGrip, .ptPackGrip:active:not(:disabled) { right: auto; left: -30px; top: 164px; }
+.ptPackGrip .gripArrow { background-image: url(ui/buttons/g-right.webp); }
+#party .ptPackLine { position: relative; width: 100%; min-height: 44px; margin: 0 0 6px; padding: 4px 14px; justify-content: flex-start; gap: 8px; text-align: left; font: 400 14px var(--body); }
+#party .ptPackLine[hidden] { display: none; }
+#party .ptPackLine .pbIco { width: 26px; height: 26px; }
+#party .ptPackLine span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ornate-brass-hi); }
+#party .ptPackLine .ptPackGo { width: 16px; height: 16px; flex: none; background: url(ui/buttons/g-right.webp) center / contain no-repeat; }
+.ptPackTabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 10px; }
+.ptPackTabs .pbTab { position: relative; min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: 400 15px var(--display); }
+.ptPackTabs .pbTab .pbBadge { position: absolute; top: -4px; right: -2px; }
+#ptPack .ptSatchel { display: flex; flex-direction: column; gap: 8px; margin: 0 0 10px; padding: 8px; border: 0; font-size: var(--om-small); }
+#ptPack .ptRemedy { gap: 8px; }
+#ptPack .ptRemedy > span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+#ptPack .ptRemedy b { font: 400 15px/1.2 var(--display); color: var(--ornate-brass-hi); }
+#ptPack .ptRemedy small { font: 13px/1.25 var(--body); color: #cfc8b4; }
+#ptPack .ptRemedyPic { width: 32px; height: 32px; }
+#ptPack .ptRemedy .ptStep { min-width: 44px; min-height: 44px; padding: 0 4px; }
+#ptPack .ptAutoRemedy { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 48px; font: var(--om-text) var(--body); color: #f1ead9; }
+#ptPack .ptOrders { padding-left: 48px; }
+#ptPack .ptOrders::before { position: absolute; left: 12px; top: 50%; margin: 0; transform: translateY(-50%); }
+#ptPack .ptPlan { margin: 0 0 10px; }
+#ptPack .ptPlan p { margin: 5px 0; padding-left: 16px; position: relative; font: 400 15px/1.25 var(--display); color: var(--ornate-brass-hi); }
+#ptPack .ptPlan p::before { content: '◆'; position: absolute; left: 0; top: 2px; font-size: 9px; color: var(--ornate-brass-mid); }
 
 /* --------------------------------------------------------------------------
    25. THE FIGHT'S AUTO SWITCH AND TACTIC BUTTON (the owner: "Move the auto cast button up next to the spells", "Make the tactic button

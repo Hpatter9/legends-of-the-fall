@@ -443,7 +443,7 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.dim,
 /* the War Council's hero search: the painted magnifying glass in the box */
 #party #ptSearch { padding-left: 38px; background: #0d1914 url(ui/buttons/g-search.webp) 7px center / 24px 24px no-repeat; }
 /* the War Council's March orders: its map and pin */
-#party .ptOrders::before { content: ''; display: inline-block; width: 26px; height: 26px; margin-right: 5px; vertical-align: middle; background: url(ui/buttons/march-orders.webp) center / contain no-repeat; }
+.ptOrders::before { content: ''; display: inline-block; width: 26px; height: 26px; margin-right: 5px; vertical-align: middle; background: url(ui/buttons/march-orders.webp) center / contain no-repeat; }
 
 /* --------------------------------------------------------------------------
    12. THE RUNE BENCH AND ITS PULL BAR (RUNE-BENCH-LOOK, docs/notes/rune-bench-look.md): the owner's ask, "Change the look of the pull bar

@@ -143,3 +143,74 @@ test('the roster is drawn from the rules, and its sheets are standard ornate men
   const rules = readFileSync('src/heroFilterRules.ts', 'utf8');
   assert.doesNotMatch(rules, /document\.|pixi|Math\.random|Date\.now/, 'pure');
 });
+
+// ---- job 2: the War Council's pack (`src/partyPackRules.ts`, `src/partyPack.ts`) ----
+import { firstTab, packLine, packMarks, packShown, planWaits, satchelCanFill, satchelShown, type PackState } from '../src/partyPackRules';
+import { BACK_LAYERS } from '../src/backRules';
+import { OM_CLASSES } from '../src/ornateMenu';
+import { SATCHEL_MAX, pickSatchel, satchelFor } from '../src/sim/remedies';
+
+const pack = (over: Partial<PackState> = {}): PackState => ({ owned: undefined, pick: {}, auto: false, plan: null, planSeen: false, ...over });
+
+test('the pack is offered only when there is something to pack: a new save sees no tab and no line', () => {
+  assert.equal(packShown(pack()), false);
+  assert.equal(packLine(pack()), '');
+  assert.deepEqual(packMarks(pack()), []);
+  assert.equal(packShown(pack({ owned: { bandage: 1 } })), true);
+  assert.equal(packShown(pack({ plan: 'Plain march' })), true);
+  assert.equal(satchelShown(pack({ auto: true })), true, 'Auto’s switch left on still shows the satchel, as the page did');
+});
+
+test('the party page keeps one line of what is packed', () => {
+  assert.equal(packLine(pack({ owned: { bandage: 4, draught: 2 }, pick: { bandage: 2 }, plan: 'Plain march · Shielded' })), `Satchel 2/${SATCHEL_MAX} · Plan: Plain march · Shielded`);
+  assert.equal(packLine(pack({ owned: { bandage: 4 }, pick: {} })), `Satchel 0/${SATCHEL_MAX}`, 'no orders open: the satchel alone');
+  assert.equal(packLine(pack({ plan: 'Cursed' })), 'Plan: Cursed', 'no remedy owned: the plan alone');
+});
+
+test('the tab wears its mark while the satchel could take more or the plan is not yet chosen', () => {
+  // (room left and a remedy owned that is not packed)
+  assert.equal(satchelCanFill(pack({ owned: { bandage: 4 }, pick: { bandage: 2 } })), true);
+  assert.equal(satchelCanFill(pack({ owned: { bandage: 2 }, pick: { bandage: 2 } })), false, 'all that is owned is packed');
+  assert.equal(satchelCanFill(pack({ owned: { bandage: 9 }, pick: { bandage: SATCHEL_MAX } })), false, 'the satchel is full');
+  assert.equal(satchelCanFill(pack({ owned: { elixir: 3 }, pick: { elixir: 1 } })), false, 'one Elixir at most');
+  assert.equal(satchelCanFill(pack({ owned: {}, auto: true })), false, 'nothing owned');
+  // (the plan waits until it is looked at or set)
+  assert.equal(planWaits(pack({ plan: 'Plain march' })), true);
+  assert.equal(planWaits(pack({ plan: 'Plain march', planSeen: true })), false);
+  assert.equal(planWaits(pack()), false, 'no orders open: nothing to choose');
+  assert.deepEqual(packMarks(pack({ owned: { bandage: 4 }, pick: {}, plan: 'Plain march' })), ['satchel', 'plan']);
+  assert.deepEqual(packMarks(pack({ owned: { bandage: 1 }, pick: { bandage: 1 }, plan: 'Cursed', planSeen: true })), []);
+});
+
+test('the drawer opens on the tab asked for, else the one that wants attention', () => {
+  assert.equal(firstTab(pack({ owned: { bandage: 1 }, pick: { bandage: 1 }, plan: 'Plain march' })), 'plan');
+  assert.equal(firstTab(pack({ owned: { bandage: 2 }, pick: {}, plan: 'Plain march' })), 'satchel');
+  assert.equal(firstTab(pack({ owned: { bandage: 2 }, pick: {}, plan: 'Plain march' }), 'plan'), 'plan');
+  assert.equal(firstTab(pack({ plan: 'Cursed', planSeen: true })), 'plan', 'nothing in the satchel: the plan');
+});
+
+test('what the satchel does is unchanged: the pick is kept within the room and what is owned', () => {
+  const m = newMeta(3);
+  m.satchel = { bandage: 4, elixir: 2 };
+  assert.deepEqual(pickSatchel(m, { bandage: 9, elixir: 2 }), { elixir: 1, bandage: 4 });
+  assert.deepEqual(satchelFor(m), { elixir: 1, bandage: 4 });
+});
+
+test('the pack is a standard ornate menu from the right edge, off the party page, and the phone’s Back closes it', () => {
+  const view = readFileSync('src/partyPack.ts', 'utf8');
+  assert.match(view, /ornateMenu\(\{ id: 'ptPack', kind: 'side'/);
+  assert.match(view, /menuFoot\(menu, \{ back: \{ word: 'close'/, 'its footer says Close');
+  assert.match(view, /gripLanding\(/, 'the tab lands by the rune bench bar’s rules');
+  assert.ok((OM_CLASSES as readonly string[]).includes('omSide'));
+  const css = readFileSync('src/ornateMenus.css', 'utf8');
+  assert.match(css, /\.omSide \.om \{[^}]*translateX/);
+  assert.match(css, /prefers-reduced-motion: reduce\) \{ \.omSide\.springing \.om \{ transition: none/);
+  // (Back presses an ornate menu's own way out, which the drawer has)
+  assert.ok(BACK_LAYERS.some((l) => l.sel === '.omVeil' && l.act?.includes('.omFoot .omBack')));
+  // (the Satchel's rows and the March orders button are no longer drawn by the party page itself)
+  const party = readFileSync('src/party.ts', 'utf8');
+  assert.doesNotMatch(party, /ptRemedy|pickSatchel|el\('button', 'ptOrders'\)/);
+  assert.match(party, /this\.pack\.setPlan\(/);
+  const rules = readFileSync('src/partyPackRules.ts', 'utf8');
+  assert.doesNotMatch(rules, /document\.|pixi|Math\.random|Date\.now/, 'pure');
+});

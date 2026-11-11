@@ -29,3 +29,25 @@ deep green, as in a gothic medieval keep. The medallion alone, centred, front vi
 background, with no text, no shadow on the ground and nothing else in the picture. 256 x 256 pixels, transparent PNG. It must read
 clearly at 28 pixels.
 ```
+
+## The pack's pull tab: `art-source/ui/buttons/pack-tab.png`
+
+The War Council's pull tab wears the camp plaque plate (`plaque.webp`, `plaque-ready.webp`) with the back chevron glyph. A tab of its
+own, with a satchel on it, would say what it holds.
+
+```
+A single tall, narrow fantasy RPG pull tab for the right edge of a phone screen, for the game "Legends of the Last Keep", painted in
+a rich hand-painted style with soft rim light and gentle texture, like a premium mobile RPG interface piece. Dark oiled wood framed in
+polished brass with small rivets, rounded on its left side and flat on its right side where it meets the screen's edge. On it, from
+top to bottom: a small gold chevron pointing left, then a small brown leather satchel with a brass buckle. Warm brass and gold, dark
+wood, deep green, as in a gothic medieval keep. The tab alone, centred, front view, on a fully transparent background, with no text,
+no shadow on the ground and nothing else in the picture. 120 x 368 pixels (it is shown at 30 x 92), transparent PNG.
+```
+
+A second copy lit for attention, same size, saved as `art-source/ui/buttons/pack-tab-ready.png`:
+
+```
+The same pull tab as pack-tab.png, exactly the same shape, size and picture, but lit: the brass frame glowing warm gold and a soft
+amber light on the satchel, as if something inside wants attention. Fully transparent background, no text. 120 x 368 pixels,
+transparent PNG.
+```
