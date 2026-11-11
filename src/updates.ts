@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.494.0',
+    date: '2026-11-11',
+    title: 'More ice on the snows',
+    notes: ['The snows now hold wider patches of ice, where a walker steps quickly but may slide a tile on.', 'More lava for the ashlands and more boulders for the highlands are built but held back while their balance is tuned.'],
+  },
+  {
     version: '0.493.0',
     date: '2026-11-11',
     title: 'Traps, hazards and a wetter mire',
