@@ -187,7 +187,7 @@ export function drawRemedies(card: HTMLElement, run: Run, meta: Meta | undefined
     box.replaceChildren(el('small', 'rnHead', 'Remedies'));
     const have = REMEDY_LIST.filter((r) => (run.satchel?.[r.id] ?? 0) > 0);
     if (!have.length) {
-      box.append(el('p', 'note', 'No remedies in the satchel. Hester sells them; the War Council’s Pack tab packs them for a run.'));
+      box.append(el('p', 'note', 'No remedies in the satchel. Hester sells them; the War Council’s Supplies tab packs them for a run.'));
       return;
     }
     const row = el('div', 'rmRow');

@@ -401,7 +401,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 #ptCompanyHeading { margin: 6px 5px 12px; }
 #ptCompanyHeading h3 { font-size: 12px; }
 #ptSlots { gap: 0; margin: 0 4px; padding: 0 2px; border-block: 1px solid #a68b50; background: linear-gradient(#33412a55, #112017); box-shadow: inset 0 3px #0c1710, inset 0 -3px #0c1710; }
-#party .ptSlot { position: relative; min-height: 53px; gap: 0; padding: 13px 4px 5px; border: 0; border-right: 1px solid #9b804b66; border-radius: 0; background: transparent; box-shadow: none; }
+#party .ptSlot { position: relative; min-height: 112px; justify-content: flex-start; gap: 3px; padding: 14px 3px 7px; border: 0; border-right: 1px solid #9b804b66; border-radius: 0; background: transparent; box-shadow: none; }
 #party .ptSlot:last-child { border-right: 0; }
 #party .ptSlot small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; max-width: 100%; overflow: hidden; white-space: normal; text-overflow: ellipsis; font: 12px/1.15 var(--body); color: #eee0b4; }
 #party .ptSlotNumber { position: absolute; left: 50%; top: -9px; transform: translateX(-50%) rotate(45deg); width: 17px; height: 17px; border-radius: 3px; background: #223d2b; border: 1px solid #c1a15a; box-shadow: 0 0 0 2px #0d1912; color: transparent; font: 10px/16px var(--body); }
@@ -409,6 +409,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 .ptSlotRemove { position: absolute; right: 4px; top: 2px; color: #b9ac87; font: 12px/1 var(--body); }
 #party .ptSlot:hover { background: #a2b16a15; }
 #party .ptSlot.empty small { color: #a7ae8e; font-size: 11px; }
+/* (HEROES-FILTER: the room the footer gave back: each of the company is a card with its portrait, name and level) */
+#party .ptSlot canvas { width: 48px; height: 48px; flex: none; image-rendering: pixelated; background: radial-gradient(ellipse, #677c4544, transparent 70%); }
+#party .ptSlot .lvb { margin: 0; padding: 0 4px; font-size: 11px; line-height: 16px; border-width: 1px; flex: none; }
+#party .ptSlot.empty { justify-content: center; }
+#party .ptSlot .ptSlotPlus { width: 48px; height: 48px; display: grid; place-items: center; border: 1px dashed #9b804b99; border-radius: 50%; font: normal 24px/1 var(--display); color: #c7b67f; }
 #ptHint { font: 12px/1.4 var(--body); color: #bcb7a1; margin: 7px 3px; min-height: 17px; }
 #ptRoles { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 9px; border-block: 1px solid #9c855133; padding: 7px 1px; font: 11px/1.3 var(--body); color: #8d9583; }
 #ptRoles .covered { color: #c0d5a2; }
@@ -426,9 +431,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 #ptSearch { box-sizing: border-box; width: 100%; min-height: 40px; border: 1px solid #877547; border-radius: 3px; padding: 8px 12px; background: #0d1914; color: #f3e6be; font: 15px var(--body); }
 #ptSearch::placeholder { color: #a8af98; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-#ptFilters { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 3px 8px; }
-#ptFilters button { flex: 1; padding: 7px 4px; min-height: 34px; font: 11px var(--body); border: 1px solid #726442; border-radius: 3px; background: #19271d; color: #c6c9b0; white-space: nowrap; }
-#ptFilters button[aria-pressed='true'] { border-color: #d2b66c; color: #ffe1a0; background: linear-gradient(#435936, #20351f); }
+/* HEROES-FILTER: the Reinforcements wear the roster's Sort and Filter (the role chips' place) */
+#ptTools { display: flex; flex-direction: column; gap: 6px; padding: 0 3px 8px; }
+/* (the Supplies tab rides the right edge: Clear keeps clear of it) */
+#ptTools .rosActive { padding-right: 32px; }
+#ptNoResults:not([hidden]) { display: flex; flex-direction: column; align-items: center; gap: 10px; margin: 0; padding: 18px 8px; text-align: center; font: 15px var(--body); color: #bcb7a1; }
+#ptNoResults .rosClear { min-height: 44px; }
 #ptGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; gap: 7px; padding: 0 3px; }
 #party .ptCard { display: flex; flex-direction: column; gap: 3px; min-height: 191px; padding: 19px 5px 12px; border: 0; border-radius: 5px; background: #101c15 url(ui/hero-brass-frame.png) center / 100% 100% no-repeat; outline: none; box-shadow: 0 3px 7px #0007; }
 #party .ptCard > * { flex-shrink: 0; }

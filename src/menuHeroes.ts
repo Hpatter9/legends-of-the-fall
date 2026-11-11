@@ -1,10 +1,9 @@
 // The hero detail sheet (opened from a tap on a hero in the tavern): portrait, rank stars, level, XP bar, role, stats and
 // skills. Reads the meta only.
 
-import { glyphWord, plateButton, setBadge } from './paintedButton';
-import { SORT_INFO, cleanView, filterCount, rosterRows, viewActive, viewLine, viewRows, type RosterRow, type RosterView } from './heroFilterRules';
-import { openRosterFilter, openRosterSort } from './heroFilterView';
-import { setSetting, settings } from './settings';
+import { glyphWord } from './paintedButton';
+import { filterCount, rosterRows, viewActive, viewRows, type RosterRow, type RosterView } from './heroFilterRules';
+import { rosterTools } from './heroFilterView';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { keyOf, KITS, type Skill } from './sim/abilities';
 import { levelLine as skillLevelLine, levelShare, useOf } from './sim/skillLevels';
@@ -586,28 +585,9 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   box.append(label);
   // (HEROES-FILTER: the painted Sort and Filter buttons, each opening its sheet; what is chosen is kept with the settings, and the
   // rules are in heroFilterRules.ts)
-  let view: RosterView = cleanView(settings().roster);
   const rows = rosterRows(meta, (kind) => CLASS_NAMES[CLASS_OF[kind]]);
-  const keep = (v: RosterView): void => {
-    view = cleanView(v);
-    setSetting('roster', viewActive(view) ? view : undefined);
-    render();
-  };
-  const tools = el('div', 'rosTools');
-  const sortBtn = plateButton({ label: 'Sort', icon: 'g-down', cls: 'rosSortBtn', onClick: () => openRosterSort(view, keep) });
-  const filterBtn = plateButton({ label: 'Filter', icon: 'auto-pick', cls: 'rosFilterBtn', onClick: () => openRosterFilter(rows, view, keep, (v) => shownOf(v).length) });
-  tools.append(sortBtn, filterBtn);
-  box.append(tools);
-  // (the list's head: what is chosen, and one tap to clear it)
-  const active = el('div', 'rosActive');
-  const activeLine = el('span');
-  const clearAll = (): void => {
-    search.value = '';
-    keep({});
-  };
-  const clear = plateButton({ label: 'Clear', icon: 'g-cross', cls: 'rosClear', onClick: clearAll });
-  active.append(activeLine, clear);
-  box.append(active);
+  const bar = rosterTools({ rows: () => rows, count: (v) => shownOf(v).length, changed: () => render(), clearSearch: () => (search.value = '') });
+  box.append(bar.tools, bar.active);
   // (the count is in the head's line; this says it to a reader as it changes)
   const result = el('p', 'rosterResult srOnly');
   result.setAttribute('role', 'status');
@@ -692,11 +672,12 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   const grid = el('div', 'rosGrid');
   // (nothing left: a friendly line and the way back)
   const empty = el('div', 'rosEmpty');
-  empty.append(el('p', '', 'No hero answers that call. Loosen the search or the filters, or clear them.'), plateButton({ label: 'Clear', icon: 'g-cross', cls: 'rosClear', onClick: clearAll }));
+  empty.append(el('p', '', 'No hero answers that call. Loosen the search or the filters, or clear them.'), bar.clearButton());
   const locked = el('div', 'rosLocked');
   box.append(grid, empty, locked);
   const rest = toCollect(meta).length - begun.length;
   const render = (): void => {
+    const view = bar.view();
     const shown = shownOf(view);
     const kinds = shown.map((r) => r.kind);
     grid.replaceChildren(...kinds.filter((k) => meta.unlocked.includes(k)).map(piece));
@@ -714,17 +695,8 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     const sorted = view.sort ? kinds : begun;
     section('Gathering shards', sorted.filter((k) => begun.includes(k) && kinds.includes(k)), plain && rest ? `${rest} more to find: summoning stones give their shards.` : '');
     empty.hidden = !!shown.length;
-    const on = viewActive(view, search.value);
-    // (the empty list has its own Clear, so the head's is left out there)
-    active.hidden = !on || !shown.length;
-    activeLine.textContent = `${viewLine(view) || 'Searching by name'} · ${shown.length} found`;
-    const n = filterCount(view);
-    sortBtn.classList.toggle('on', !!view.sort);
-    filterBtn.classList.toggle('on', n > 0);
-    setBadge(filterBtn, n ? { kind: 'count', n } : null);
-    sortBtn.setAttribute('aria-label', view.sort ? `Sort: by ${SORT_INFO[view.sort].word}` : 'Sort');
-    filterBtn.setAttribute('aria-label', n ? `Filter: ${n} on` : 'Filter');
-    result.textContent = on ? `${shown.length} ${shown.length === 1 ? 'hero' : 'heroes'} found` : '';
+    bar.update(shown.length, search.value);
+    result.textContent = viewActive(view, search.value) ? `${shown.length} ${shown.length === 1 ? 'hero' : 'heroes'} found` : '';
   };
   search.addEventListener('input', render);
   render();
