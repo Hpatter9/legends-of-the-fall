@@ -57,7 +57,7 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
   askel: {
     sigil: { ...sheet('askel-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
     pillar: { ...sheet('askel-stage-pillar', 144, 352, 16, 16, 950, 320, 5), lit: true },
-    explosion: { ...sheet('askel-stage-explosion', 320, 300, 20, 10, 1500, 250, 7), lit: true },
+    explosion: { ...sheet('askel-stage-explosion', 320, 300, 16, 8, 1500, 250, 7), lit: true },
     cracks: { ...sheet('askel-stage-cracks', 256, 136, 12, 6, 0, 68, 4), open: 4 },
     embers: sheet('askel-stage-embers', 160, 200, 12, 12, 1500, 190, 0),
     fire: sheet('askel-stage-fire', 64, 112, 14, 14, 1250, 104, 5),
@@ -242,7 +242,7 @@ export const DETONATIONS: readonly { dx: number; dy: number; mul: number }[] = [
 ];
 /** The blow's own size (the wall is wider than the screen), and how far into its frames it already is in the frozen frame (ms: the
  *  white core blown out, its spikes thrown). */
-export const BLOW = { mul: 1.25, lead: 150 } as const;
+export const BLOW = { mul: 1.25, lead: 190 } as const;
 /** The smoke columns after the blow: how far from the foes' middle each stands (shares of the screen's width), nearest first. */
 export const SMOKE_SPOTS: readonly number[] = [0, -0.3, 0.3, -0.15, 0.17];
 /** What the staged blow asks of the page's own flash and shake: a hard white flash and a harder, longer shake than the painted blow's. */
