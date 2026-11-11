@@ -113,6 +113,14 @@ body[data-phase='fight'] #hudSpells { display: flex; }
 #hudSpells { flex-wrap: wrap; row-gap: 4px; }
 #stand .stOrbs { flex-wrap: wrap; row-gap: 4px; }
 #hudSpells #spells { position: relative; flex-direction: row; align-items: center; gap: 3px; }
+/* (HUD-EVEN, docs/notes/hud-even.md; the owner: "Let's even out the spell bar across the whole screen. No gap that way."): the row's
+   pieces (the mana, each orb, SPELL and ULT) are laid out as one evenly spaced line across the screen, the same margin at both sides. The
+   groups that held them (#spells, #spellCards, the Auto pair) step aside (`display: contents`), the row is centred, and the page sets the
+   gap (`spellRowGap`, fightHudRules.ts): edge to edge with enough pieces, a centred group with few. */
+#hudSpells { justify-content: center; column-gap: 3px; }
+#hudSpells #spells:not([hidden]), #hudSpells #spellCards:not([hidden]), #hudSpells .fhAutos:not([hidden]) { display: contents; }
+#hudSpells #spellCards .spell { margin-top: 2px; }
+#hudSpells .fhAuto { margin-bottom: 5px; }
 /* (AUTO-RIGHT: one line at 360 across with the War Horn, the mana, four orbs and Auto: the mana 54 px, the orbs 44 px with 3 px between) */
 #hudSpells #mana { width: 54px; height: 48px; box-sizing: border-box; min-height: 0; flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; padding: 3px 4px;
   background: rgb(var(--black-rgb) / 0.62); border: 1px solid #a28a58; border-radius: 4px; }

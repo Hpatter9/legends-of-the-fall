@@ -76,18 +76,22 @@ test('any registered cover counts: a duel bar is kept clear of as the rest are',
   assert.equal(check([TOP, SPELLS_1, duel, ROWS]).y0, 190 + M);
 });
 
-// HORN-CORNER (docs/notes/horn-corner.md): the War Horn in the board's bottom-right corner, on the panel's top edge beside the tactic button
-test('the War Horn beside the tactic button trims the room\'s foot no further than the button did, and the room stays centred across', () => {
-  const HORN: Rect = { x0: 265, y0: 533, x1: 321, y1: 589 };
-  const r = check([TOP, SPELLS_1, ROWS, TACTIC, HORN]);
+// HUD-EVEN (docs/notes/hud-even.md): the tactic button's plaque hangs under the spell row at the right (the Formation button's corner), and
+// the War Horn has the bottom-right corner, on the panel's top edge
+test('the tactic plaque under the spell row trims the room\'s top, the War Horn in the corner its foot, and the room stays centred across', () => {
+  const PLAQUE: Rect = { x0: 290, y0: 178, x1: 385, y1: 249 };
+  const HORN: Rect = { x0: 329, y0: 534, x1: 385, y1: 590 };
+  const r = check([TOP, SPELLS_1, ROWS, PLAQUE, HORN]);
   assert.equal(r.x0, M);
   assert.equal(r.x1, 393 - M);
-  // (no lower than the tactic button already cut it: the horn costs the fight no room)
-  assert.equal(r.y1, 528 - M);
-  assert.deepEqual(r, check([TOP, SPELLS_1, ROWS, TACTIC]));
-  // (alone in the corner, with no tactic button, it still cuts from the foot, not a strip down the side)
-  const alone = check([TOP, SPELLS_1, ROWS, { x0: 329, y0: 538, x1: 385, y1: 594 }]);
-  assert.equal(alone.y1, 538 - M);
+  assert.equal(r.y0, 249 + M);
+  assert.equal(r.y1, 534 - M);
+  // (a boss's bar beside the plaque, no taller than it, costs no more room)
+  const boss: Rect = { x0: 12, y0: 178, x1: 284, y1: 212 };
+  assert.deepEqual(check([TOP, SPELLS_1, boss, ROWS, PLAQUE, HORN]), r);
+  // (the horn alone in the corner cuts from the foot, not a strip down the side)
+  const alone = check([TOP, SPELLS_1, ROWS, HORN]);
+  assert.equal(alone.y1, 534 - M);
   assert.equal(alone.x1, 393 - M);
   // (a toast and a quip keep clear of it too)
   assert.ok(FIGHT_HUD.includes(HORN_CORNER));
