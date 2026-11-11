@@ -116,7 +116,7 @@ Time Stop, Cataclysm; `SIZES=upright node tools/fxlab/shots.mjs ultimates-arrow-
 360x780 and 412x915: `ultimates-sheet-{locked,unlocked}[-360x780|-412x915].png` (`node tools/audit/ultimates.mjs`).
 
 **How long one plays** (ULT-EPIC 2, [ult-epic.md](ult-epic.md)): fired by hand, 4 to 6 s in three stages (a wind-up, the strike, an aftermath), by its weight
-(`src/ultStageRules.ts`), the fight at x1 for the show; on Auto, the 1.5 s banner over a fight that keeps its speed.
+(`src/ultStageRules.ts`), its showcase inside the strike on every use (about 7 s for one with a salvo to land after it), the fight at x1 for the show; on Auto, the 1.5 s banner over a fight that keeps its speed.
 
 ## Balance
 

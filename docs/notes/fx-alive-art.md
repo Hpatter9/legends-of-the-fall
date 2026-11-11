@@ -1,5 +1,9 @@
 # FX-ALIVE-ART: the owner's living ground loops
 
+> **Superseded in part by BLENDER-FX** (`docs/notes/blender-fx.md`): the painted ground sheets (`src/art/fx/alive/`) and the pack's rune strip
+> are no longer drawn. Each tile of a patch carries the element's Blender-rendered loop instead. The living patch's rules below (the faint
+> fill, the rim, each tile's own beat, thinning under a fighter, reduced motion, the battery saver) all still hold.
+
 Branch `claude/fx-alive-art` (from main 0.469.0, with `art/fx-alive` merged in). The sheet is `art-source/fx-alive/ground-loops.png`: 1024 x 512,
 eight rows of eight 128 x 64 frames. It is cut by `python3 tools/fx-alive/cut.py art-source/fx-alive/ground-loops.png` into
 `src/art/fx/alive/` (all eight rows kept). Renderer only. The version is unchanged.
