@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.505.0',
+    date: '2026-11-11',
+    title: 'The camera follows the effect',
+    notes: ['An ultimate cast by hand shows the caster for the casting, then the camera travels to where the effect lands and frames all of it before easing back.', 'Eidolon calls do the same, and a king\'s spell cast by hand gets a quick look at its target. Auto and reduced motion get no camera move.'],
+  },
+  {
     version: '0.504.0',
     date: '2026-11-11',
     title: 'Armies: only the card swipes',
