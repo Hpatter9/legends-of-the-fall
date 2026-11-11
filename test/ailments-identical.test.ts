@@ -39,10 +39,14 @@ import { BOSS_BIG } from '../src/sim/bossAttacks';
 import { WEAK } from '../src/sim/weakness';
 import { FEEL } from '../src/sim/feel';
 import { FIELD_HAZARDS } from '../src/sim/fieldTraps';
+import { LAND_TERRAIN } from '../src/sim/landTerrain';
 
 // (LIVING-FIELDS: these fights were recorded before the land's traps and hazards, `fieldTraps.ts`; the set's one switch is off here, so every
 // fight is laid as it was and plays as recorded)
 FIELD_HAZARDS.on = false;
+// (LAND-IDENTITY: nor had the lands' own terrain been laid thicker, `landTerrain.ts`: the mire's pools are off here for the same reason.
+//  What the two switches do to a fight is held by their own tests, `living-fields-traps` and `land-terrain`.)
+LAND_TERRAIN.on = false;
 
 // (MERGE-TWO, the owner's change to merging, re-recorded the three scenarios that hire and merge: `army`, `daily` and `tower` (two of a kind merge,
 // by the greedy player's Auto merge, and the spire's foes grow faster); every other scenario's hash is the one recorded on main)

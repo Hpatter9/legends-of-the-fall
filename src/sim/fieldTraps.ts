@@ -21,9 +21,8 @@ import { mixSeed, Rng } from './rng';
 import { weatherOf } from './weather';
 
 /** The one switch: off, no board is given a trap or a hazard of this set (the pinned recordings turn it off; so can a balance tool).
- *  It ships OFF: the set changes how fights play, so it waits for the owner's nod on the list (docs/notes/living-fields.md, step 3).
- *  The set's own tests turn it on. */
-export const FIELD_HAZARDS = { on: false };
+ *  It is ON (the owner's call, 2026-11-11; it shipped off until then, because the set changes how fights play). */
+export const FIELD_HAZARDS = { on: true };
 /** The side stream every placement and clock is drawn from. */
 export const FIELD_SALT = 0xf1e1d;
 

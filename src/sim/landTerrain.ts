@@ -1,6 +1,6 @@
 // LAND-IDENTITY, the terrain proposal (docs/notes/land-identity.md): a land's own ground laid a little thicker on its battlefield, so the
 // place is felt in the fight as well as seen. Unlike the rest of LAND-IDENTITY this changes how a fight plays, so it is a rule of its
-// own, behind its own switch (`LAND_TERRAIN`, off: nothing is laid and every fight is as it was), laid from its own side stream of the
+// own, behind its own switch (`LAND_TERRAIN`; with it off nothing is laid and every fight is as it was), laid from its own side stream of the
 // seed (`TERRAIN_SALT`: the board, the foes, the traps and the fight's own stream draw nothing more or less for it).
 //
 // - THE MIRE FLOODS: two or three pools of shallow water lie on its lowest open ground, a few tiles each. Shallow water slows a walker
@@ -10,8 +10,8 @@ import { DIRS, standable, tileAt, type Area, type Board } from './board';
 import { fieldOk } from './fieldTraps';
 import { mixSeed, Rng } from './rng';
 
-/** The switch: with it off no land lays anything more than `makeBoard` did. */
-export const LAND_TERRAIN = { on: false };
+/** The switch: with it off no land lays anything more than `makeBoard` did. ON (the owner's call, 2026-11-11). */
+export const LAND_TERRAIN = { on: true };
 export const TERRAIN_SALT = 0x3a7e2;
 
 /** How a land floods: how many pools, how many tiles each, and how far over the board's lowest open ground a pool may lie (steps). */

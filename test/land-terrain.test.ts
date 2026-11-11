@@ -6,25 +6,36 @@ import { AREAS, boardOk, makeBoard, standable } from '../src/sim/board';
 import { startBattle } from '../src/sim/battle';
 import { FLOODS, LAND_TERRAIN, layLandTerrain } from '../src/sim/landTerrain';
 
-const flooded = <T>(run: () => T): T => {
-  LAND_TERRAIN.on = true;
+/** Play `run` with the switch set, and put it back as it was. */
+const withSwitch = <T>(on: boolean, run: () => T): T => {
+  const was = LAND_TERRAIN.on;
+  LAND_TERRAIN.on = on;
   try {
     return run();
   } finally {
-    LAND_TERRAIN.on = false;
+    LAND_TERRAIN.on = was;
   }
 };
+const flooded = <T>(run: () => T): T => withSwitch(true, run);
+const dry = <T>(run: () => T): T => withSwitch(false, run);
 
-test('the switch is off: nothing is laid, and a fight\'s board is the board as it was', () => {
-  assert.equal(LAND_TERRAIN.on, false);
+test('the switch is on (the owner\'s call, 2026-11-11); with it off nothing is laid, and a fight\'s board is the board as it was', () => {
+  assert.equal(LAND_TERRAIN.on, true);
   for (const area of AREAS)
     for (let seed = 1; seed <= 6; seed++) {
       const b = makeBoard(seed, area);
       const before = JSON.stringify(b);
-      assert.deepEqual(layLandTerrain(b, seed), []);
+      assert.deepEqual(dry(() => layLandTerrain(b, seed)), []);
       assert.equal(JSON.stringify(b), before);
-      assert.equal(JSON.stringify(startBattle(seed, 'skeletons', { area }).board), before, `${area} ${seed}`);
+      assert.equal(JSON.stringify(dry(() => startBattle(seed, 'skeletons', { area }).board)), before, `${area} ${seed}`);
     }
+  // (and with it on, a fight on the mire is fought on the flooded board)
+  let more = 0;
+  for (let seed = 1; seed <= 20; seed++) {
+    const wet = (b: { tiles: { ground?: string }[] }) => b.tiles.filter((t) => t.ground === 'water').length;
+    more += wet(startBattle(seed, 'skeletons', { area: 'swamp' }).board) - wet(makeBoard(seed, 'swamp'));
+  }
+  assert.ok(more >= 60, `${more} more shallow tiles over 20 fights on the mire`);
 });
 
 test('the mire floods: more shallow water on its lowest open ground, never deep, and every tile can still be walked to', () => {
@@ -75,12 +86,12 @@ test('only the mire floods; the other lands, a board with scenery and a big fiel
 
 test('flooding draws from its own side stream: a flooded fight has the same foes in the same places and the same stream as it had', () => {
   for (let seed = 1; seed <= 8; seed++) {
-    const dry = startBattle(seed, 'orcs', { area: 'swamp' });
+    const was = dry(() => startBattle(seed, 'orcs', { area: 'swamp' }));
     const wet = flooded(() => startBattle(seed, 'orcs', { area: 'swamp' }));
-    assert.equal(wet.rng, dry.rng);
-    assert.equal(wet.skillRng, dry.skillRng);
-    assert.deepEqual(wet.units.map((x) => [x.def, x.u, x.v]), dry.units.map((x) => [x.def, x.u, x.v]));
+    assert.equal(wet.rng, was.rng);
+    assert.equal(wet.skillRng, was.skillRng);
+    assert.deepEqual(wet.units.map((x) => [x.def, x.u, x.v]), was.units.map((x) => [x.def, x.u, x.v]));
     // (and off the mire a flooded fight is the fight as it was)
-    assert.equal(JSON.stringify(flooded(() => startBattle(seed, 'orcs', { area: 'plains' }))), JSON.stringify(startBattle(seed, 'orcs', { area: 'plains' })));
+    assert.equal(JSON.stringify(flooded(() => startBattle(seed, 'orcs', { area: 'plains' }))), JSON.stringify(dry(() => startBattle(seed, 'orcs', { area: 'plains' }))));
   }
 });

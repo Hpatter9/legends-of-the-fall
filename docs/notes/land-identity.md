@@ -154,10 +154,10 @@ shrine), `batch3-*` (wood, autumn wood, meadows, highlands), `batch4-*` (dunes, 
   withdraw them. **Still not measured:** a real phone's GPU, where covering fewer pixels is what matters; that is what this trim
   is for.
 
-## The terrain proposal: the mire floods (built, switched OFF, for the owner to decide)
+## The terrain rule: the mire floods (ON since the owner's call; see "Both switches on" below)
 
 Everything above is looks only. This is the one part that changes how a fight plays, so it is a rule of its own
-(`src/sim/landTerrain.ts`), behind its own switch (`LAND_TERRAIN.on`, **false**: nothing is laid and every fight is exactly as it
+(`src/sim/landTerrain.ts`), behind its own switch (`LAND_TERRAIN.on`; it was built off, and with it off nothing is laid and every fight is exactly as it
 was; a test holds it) and laid from its own side stream of the seed (`TERRAIN_SALT`), at the fight's start, before the traps. With
 it on a flooded fight has the same foes in the same places and the same fight stream as before (a test holds that too).
 
@@ -192,6 +192,66 @@ it on a flooded fight has the same foes in the same places and the same fight st
 - **Owner's calls:** whether to turn it on; whether the skeletons' fights on the mire want easing if so; and whether the other
   lands should get the same (more ice on the snows, more lava in the ashlands, more rock in the highlands). `FLOODS` takes a land
   a line; the lava and ice would each need their own measure, because they hurt and slide where water only slows.
+
+## Both switches on (the owner's call, 2026-11-11)
+
+The owner decided: swamp water on, hazards on. `LAND_TERRAIN.on` and `FIELD_HAZARDS.on` are both **true**. No traps on a boss's
+wave, as designed (`run.ts`); the skeletons on the mire are not eased (the owner's word).
+
+**Measured** with `node tools/land-identity/flip.mjs` (the hero sweep's fights on each land's own boards: random five-hero teams,
+the nine field bands in turn, stage 5 foes, the traps at the level a run lays them on that wave, 2; the same seeds, teams and bands
+with both switches off and then both on). Heroes' wins:
+
+| Over all 17 lands (900 fights a land, 1,700 a band) | Both off | Both on | Change |
+| --- | --- | --- | --- |
+| skeletons | 47.6% | 49.5% | +1.9 |
+| werewolves | 54.2% | 58.3% | +4.1 |
+| minotaurs | 60.4% | 63.5% | +3.1 |
+| gorgons | 66.2% | 66.4% | +0.2 |
+| satyrs | 68.5% | 70.5% | +2.0 |
+| mixed | 66.1% | 69.2% | +3.1 |
+| orcs | 59.7% | 63.6% | +3.9 |
+| demons | 48.7% | 47.6% | -1.1 |
+| ogres | 64.6% | 64.4% | -0.2 |
+| **all** | **59.6%** | **61.5%** | **+1.9** |
+
+One standard error is about 0.4 points for the whole and 1.2 for a band over all lands, so the whole's +1.9 is real: the traps
+help the heroes a little on balance (the foes cross more ground to reach them, and walk into more). By land (1.7 an error): from
+-3.6 (the autumn wood) to +6.0 (the temple) and +5.8 (the ruins); eleven of the seventeen within two errors. A band on one land
+is only 100 fights (5 an error), so those cells are too noisy to read one by one.
+
+| The mire alone, flooded and trapped (3,000 fights, 333 a band) | Both off | Both on | Change |
+| --- | --- | --- | --- |
+| skeletons | 44.6% | 45.8% | +1.2 |
+| werewolves | 61.4% | 74.0% | +12.6 |
+| minotaurs | 59.3% | 70.7% | +11.4 |
+| gorgons | 63.7% | 55.3% | -8.4 |
+| satyrs | 68.8% | 73.3% | +4.5 |
+| mixed | 65.2% | 71.2% | +6.0 |
+| orcs | 61.3% | 69.1% | +7.8 |
+| demons | 47.7% | 48.0% | +0.3 |
+| ogres | 63.1% | 67.6% | +4.5 |
+| **all** | **59.4%** | **63.9%** | **+4.4** |
+
+(0.9 an error for the whole, 2.7 for a band.) On the mire the two together favour the heroes more than elsewhere: the bands that
+run in (werewolves, minotaurs, orcs) wade through pools, mud and bog to get there, and lose by it; the gorgons, who stand off and
+shoot, gain. The skeletons' fall under flooding alone (-7.5) is cancelled by the traps (+1.2 with both). Nothing was eased.
+
+- **The first hour** (`node tools/first-hour/pace.mjs`, 40 new saves a starter pack on the first army, Normal): Sword and Shield
+  cleared in a mean 2.1 tries before and 2.2 after; Blade and Spell 1.8 and 1.8; every save of both packs cleared within 12 tries
+  before and after; nobody lost on wave 1 either way. No move beyond noise, so the first army keeps its hazards.
+- **What the flip broke: three tests, all recordings of other systems** (`spells-identity`, `ailments-identical`; each "plays
+  exactly as recorded before <that system>"). They already turn the traps off for that reason; they failed because the mire's
+  fights were now flooded. They now turn the flooding off the same way, and say why. Nothing was re-recorded and no test was
+  loosened; what the two switches themselves do is held by `living-fields-traps` and `land-terrain` (whose first test now holds
+  that the switch is on, that off is still the old board, and that a fight on the mire is fought flooded). Every balance band test
+  passed unchanged with both on.
+- `tools/living-fields/switch.ts` reads `FIELD_HAZARDS=0` and `LAND_TERRAIN=0`, so any balance tool and the pace tool can be played
+  as before the flip.
+- Shots with both on: `docs/samples/land-identity/switches-on-393.jpg` (mire, crypt, meadows, snows; deployed and mid-fight),
+  `switches-on-360.jpg`, `switches-on-412.jpg`. No page errors.
+- **Not measured:** whole runs, the daily and the armies' own tables with both on (the armies' table was measured for the traps
+  alone in LIVING-FIELDS: 22.31% then 22.30%); fights above stage 5 or above the Normal tier, where the traps lie thicker (level 3).
 
 ## Not built: needs art, or the owner's call
 
