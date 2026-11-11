@@ -73,7 +73,8 @@ test('the mire floods: more shallow water on its lowest open ground, never deep,
 
 test('each land\'s own flag: the mire and the snows are on, the ashlands and the highlands are off; the other lands, a board with scenery and a big field are left as they are', () => {
   assert.deepEqual(Object.keys(FLOODS).sort(), ['highlands', 'snow', 'swamp', 'volcano']);
-  // (what the measure allowed, docs/notes/land-identity.md: a land ships on only within noise overall and with no band moved by more than about 8 points)
+  // (docs/notes/land-identity.md: a land ships on only within noise overall, with no band moved by more than about 8 points, and only
+  //  if it shows at phone size; the ashlands' and the highlands' lighter numbers met the first two and not the third)
   assert.deepEqual(Object.entries(FLOODS).map(([a, f]) => [a, f.kind, f.on]).sort(), [['highlands', 'rock', false], ['snow', 'ice', true], ['swamp', 'water', true], ['volcano', 'lava', false]]);
   for (const area of AREAS) {
     if (FLOODS[area]?.on) continue;
@@ -118,7 +119,8 @@ test('ice on the snows, and (were they on) lava in the ashlands and boulders in 
         before += plain.tiles.filter(is).length;
         after += b.tiles.filter(is).length;
       }
-      assert.ok(after >= before * 1.8 && after <= before * 5, `${area}: ${before} tiles of ${flood.kind} as it is, ${after} laid thicker, over 100 boards`);
+      // (the snows' ice is laid thick; the ashlands' lava and the highlands' boulders lightly, a tile or two a board)
+      assert.ok(after >= before * (area === 'snow' ? 1.8 : 1.3) && after <= before * 5, `${area}: ${before} tiles of ${flood.kind} as it is, ${after} laid thicker, over 100 boards`);
     } finally {
       flood.on = was;
     }

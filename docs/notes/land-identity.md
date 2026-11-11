@@ -292,6 +292,38 @@ own `on`, laid by the same rule as the mire's pools (`kind`: water, ice, lava or
   412 wide, deployed and mid-fight). On the snows the ice is pale on pale: a few more glinting tiles a board, easy to miss at
   phone size. No page errors.
 
+## Lighter lava and boulders tried; the snows' ice made easier to see
+
+The director's ask: try lighter settings for the ashlands and the highlands until each meets the same rule, and ship each on if
+a setting meets it **and still shows at phone size**; and make the snows' extra ice easier to see (looks only).
+
+- **Tried** (`flip.mjs ... --set "volcano=1,1,1,2;highlands=1,1,1,1"`: a land's patches at other numbers; 3,000 fights a land,
+  traps on in both passes; 0.9 an error for a land, 2.7 for a band):
+
+  | Land | Patches x tiles | On a board | Heroes' wins | Largest band moves | Meets the balance rule |
+  | --- | --- | --- | --- | --- | --- |
+  | Ashlands, as first built | 1 to 2 x 2 to 3 | 2.5 lava tiles to 6.2 | 66.9% to 70.2% (+3.4) | werewolves +12.3, ogres +10.2 | no |
+  | Ashlands | 1 x 2 | 2.5 to about 4.5 | 68.6% (+1.7) | skeletons +6.9, werewolves +6.3, demons -6.3 | yes, just |
+  | **Ashlands** | **1 x 1 to 2** | **2.5 to 4.0** | **68.5% (+1.6)** | werewolves +6.0, skeletons +5.7, demons -4.5 | **yes** |
+  | Highlands, as first built | 2 to 3 x 1 to 2 | 1.7 boulders to 5.3 | 60.9% to 65.4% (+4.6) | minotaurs +13.5, demons +10.2 | no |
+  | Highlands | 2 x 1 | about 3.5 | 61.6% (+0.8) | minotaurs +9.6, gorgons -6.9 | no |
+  | Highlands | 1 to 2 x 1 | 3.2 | 61.9% (+1.1) | minotaurs +8.4 | no (the minotaurs) |
+  | Highlands | 1 x 1 to 2 | 3.1 | 62.4% (+1.5) | minotaurs +8.1, gorgons -5.7 | on the line |
+  | **Highlands** | **1 x 1** | **1.7 to 2.7** | **60.7% (-0.1)** | minotaurs +4.5, gorgons -4.2 | **yes** |
+
+  The minotaurs are what boulders hurt: every setting with more than one boulder moves them by 8 or more.
+- **Both are left OFF.** The settings that meet the balance rule are a tile or two more of lava and one more boulder a board, and
+  in the shots at phone size I cannot pick either out (`docs/samples/land-identity/volcano-terrain.jpg`, `highlands-terrain.jpg`:
+  three boards each, 0.494.0 beside the lighter setting on). The ashlands already have a river of lava round them and the
+  highlands their boulders on the rim, which is where those lands' look comes from. So neither meets "still shows", and a rule of
+  the fight that cannot be seen is not worth having. `FLOODS` keeps the lighter numbers, with `on: false`, so either can be turned
+  on by one word if the owner would rather have it.
+- **The snows' ice** is bluer on the snows (a blue wash over the tile and a bright rim of light along its two far edges, in the
+  tile's painter; other lands' ice is as it was). Looks only: no rule, and no test of the fight, is touched.
+  `docs/samples/land-identity/snows-ice-bluer.jpg` (three boards, 0.494.0 beside now), `snows-ice-bluer-sizes.jpg` (360 and 412
+  wide, and mid-fight at 393). No page errors.
+- The first hour: unchanged (2.2 and 1.8 tries; 40 of 40 saves of both packs clear).
+
 ## Not built: needs art, or the owner's call
 
 - **Art the sheets do not have** (`docs/notes/land-identity-art-prompts.md`): cacti and palms, hedgerows, a fence, haystacks and a
