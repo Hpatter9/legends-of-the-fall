@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.482.0',
+    date: '2026-11-11',
+    title: 'The War Horn moves to the bottom right',
+    notes: ['The War Horn now sits at the bottom right of the fight, beside the tactic button. Skill banners are back at the left edge.'],
+  },
+  {
     version: '0.481.0',
     date: '2026-11-11',
     title: 'Sort and filter your heroes',
