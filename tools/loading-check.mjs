@@ -43,10 +43,10 @@ try {
       const ctx=canvas.getContext('2d'); ctx.drawImage(im,0,0);
       const alpha=(x,y)=>ctx.getImageData(x,y,1,1).data[3];
       return { crownMask: alpha(425,400)>0 && alpha(425,100)===0 && alpha(20,850)===0 && alpha(425,1200)===0,
-        cloudLayers: document.querySelectorAll('.ldClouds').length, snowflakes: document.querySelectorAll('.ldSnow i').length };
+        cloudLayers: document.querySelectorAll('.ldClouds').length, snowflakes: document.querySelectorAll('.ldSnow i').length, embers: document.querySelectorAll('.ldEmbers, .ldEmbers i').length };
     });
     assert(layers.crownMask, 'Gold mask must exclude banners, clouds and landscape');
-    assert.equal(layers.cloudLayers, 2); assert.equal(layers.snowflakes, 36);
+    assert.equal(layers.cloudLayers, 2); assert.equal(layers.snowflakes, 320); assert.equal(layers.embers, 0, 'No rising flecks: only falling snow');
     assert(evidence.artWidth>800); assert(evidence.footerVisible); assert(!evidence.overflow); assert(evidence.animations>=17);
     const title = await page.locator('.ldTitle').boundingBox();
     const footer = await page.locator('.ldFooter').boundingBox();
