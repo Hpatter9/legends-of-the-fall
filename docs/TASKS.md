@@ -1,3 +1,10 @@
+### ARMY-WAR-ROOM — Painted campaign room and party strength
+
+- **Owner / branch / worktree:** Codex; `feature/army-war-room`; `/workspace/legends-of-the-fall`.
+- **Scope:** approved War Room army selection/briefings, Party Strength on built parties, estimated challenge suggestions, art/credits/offline integration and focused tests. Preserve battle balance, tier gates, rewards and saves.
+- **Completion:** three portrait sizes reviewed; relevant tests, typecheck/build and offline checks; open PR for owner review. No merge or deployment.
+- **Status:** complete; [PR #545](https://github.com/Hpatter9/legends-of-the-fall/pull/545) open. Painted room/banner selection, Party Strength and live challenge suggestions implemented. Typecheck/build, focused tests, all three portrait layouts and all 28 integrated browser checks (including reduced motion, tier gating and offline artwork) passed. [Handoff](notes/army-war-room.md); [screen](samples/war-room/armies-393.png). No merge, deployment or version bump.
+
 ### BLOODTUSK-STRUCTURES — Cohesive walls and buildings
 
 - **Owner / branch / worktree:** Codex; `fix/bloodtusk-structures`; `/workspace/legends-of-the-fall`.

@@ -805,3 +805,5 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 - The traps' stand-ins (LIVING-FIELDS step 3) use the graveyard's thorns (`src/art/areas/graveyard/tall*.png`), the Calamity's skull
   totem and runes (`src/art/calzones/`) and the road's brazier; the rest are marks drawn in code until
   `art-source/living-fields/traps.png` is painted.
+## Army War Room
+`src/art/ui/war-room.png`: original candlelit campaign room generated with OpenAI image generation for this game, following the owner-approved War Room concept. Source: `art-source/army-war-room/room-source.png`; prompt: `docs/notes/army-war-room-art-prompts.md`. Army banners reuse the credited painted boss trophies.

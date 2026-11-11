@@ -1,0 +1,44 @@
+/* Approved War Room: live labels and controls over an offline-cached room painting. */
+#hmSub.armies .wrBody { touch-action: auto; }
+.wrBody .asRoot { background: #17120e; color: #f3e4c5; }
+.wrBody .asScene { flex: 0 0 43%; min-height: 260px; background: url(ui/war-room.png) center 62% / cover; border: 0; image-rendering: auto; text-align: center; padding: 18px 12px 0; }
+.wrEyebrow { display: block; color: #dfc28c; font: 10px var(--body); letter-spacing: 3px; text-shadow: 0 2px 4px #000; }
+.wrTitle { margin: 4px 0 8px; font: 700 26px var(--display); color: #f7dfaa; text-shadow: 0 2px 5px #000; }
+.wrBanners { display: flex; align-items: center; justify-content: center; gap: 8px; height: 62%; margin-top: 7px; }
+.wrBody .wrBanner { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 28%; height: 85%; min-height: 125px; padding: 4px 4px 13px; border: 0; border-radius: 0; border-image: url(ui/combat-panel.png) 24 fill / 6px / 0 stretch; background: #221811e8; color: #e6cfa6; box-shadow: 0 8px 16px #0009; }
+.wrBanner img { width: 100%; height: 72%; object-fit: contain; image-rendering: auto; }
+.wrBanner b { font: 700 11px/1.25 var(--display); }
+.wrBody .wrBanner.selected { width: 34%; height: 100%; background-color: #442619e8; filter: brightness(1.15); }
+.wrBody .wrBanner:focus-visible { outline: 2px solid #ffe4aa; outline-offset: 2px; }
+.wrBody .asRib, .wrBody .armyNew { display: none; }
+.wrBody .asLock { bottom: 4px; top: auto; padding: 5px 35px; background: #100c08d9; }
+.wrBody .asLock b { font-size: 13px; }
+.wrBody .asLock small { font-size: 11px; }
+.wrBody .asInfo { flex: 1 1 0; min-height: 0; margin: 0 8px 8px; padding: 12px; gap: 7px; background: #171b19f5; border: 0; border-image: url(ui/combat-panel.png) 24 fill / 7px / 0 stretch; color: #f3e4c5; }
+.wrArmyName { margin: 0; color: #f2d59a; font: 700 19px/1.2 var(--display); }
+.wrStrength { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 5px 9px; padding: 7px 0; border-block: 1px solid #b8995d55; font: 13px var(--body); }
+.wrStrength b { color: #ffe1a3; font-size: 19px; font-variant-numeric: tabular-nums; }
+.wrAssessment { color: #e6cf97; border-left: 1px solid #a88b55; padding-left: 9px; }
+.wrBody .asBlurb { font: italic 13px/1.3 var(--body); color: #e3d3b6; }
+.wrBody .asMeta, .wrBody .asHint { color: #c1baa5; font: 11px/1.35 var(--body); }
+.wrBody .asTiers { gap: 3px; }
+.wrBody .asTier { min-height: 44px; font: 10px var(--body); border: 1px solid #8e7549; background: #222922; color: #f1dfbc; }
+.wrBody .asTier.on { border-color: #edcb7c; background: #4c3820; box-shadow: inset 0 0 9px #c7923533; }
+.wrBody .asTier.shut { filter: none; opacity: .55; }
+.wrBody .asTier small { color: #cfbea1; }
+.wrBody .asPay { font: 12px/1.4 var(--body); color: #ead6ac; }
+.wrBody .asFight { min-height: 46px; flex-shrink: 0; font: 700 16px var(--display); }
+.wrBody .asGo { flex-shrink: 0; }
+.wrBody .asStars { flex-shrink: 0; padding-top: 8px; }
+.wrBody .asStarCol { width: 24px; }
+.wrBody .asStarCol.gap { margin-left: 4px; }
+.wrBody .asStar { font-size: 21px; }
+.wrBody .asDots { display: none; }
+.wrBody .asArrow { top: calc(var(--sceneH, 300px) - 52px); width: 44px; height: 44px; border: 1px solid #8d7245; background: #17100cc9; font-size: 28px; }
+.wrBody .asBack { top: 5px; left: 5px; min-height: 44px; max-width: 80px; font-size: 11px; padding: 0 8px; }
+.wrBody button:focus-visible { outline: 2px solid #ffe4a5; outline-offset: -2px; }
+@media (max-height: 820px) { .wrBody .asScene { flex-basis: 39%; min-height: 235px; } .wrTitle { font-size: 23px; } .wrBody .asInfo { gap: 5px; padding: 10px; } }
+#ptCount { font-variant-numeric: tabular-nums; }
+#ptChallenge { padding: 7px 10px; color: #e5d0a3; font: 13px/1.4 var(--body); background: #141c17; border-block: 1px solid #9c855155; }
+
+.wrBody .wrSuggest { min-height: 44px; flex-shrink: 0; padding: 6px; font: 12px var(--body); color: #eddbb5; border: 1px solid #8e7549; background: #2a3025; }

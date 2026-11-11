@@ -1424,7 +1424,7 @@ export class Home {
     $('hmSub').classList.toggle('armies', full);
     $('hmSub').classList.remove('codex');
     stopCodex();
-    $('hmSubBody').classList.remove('asBody');
+    $('hmSubBody').classList.remove('asBody', 'wrBody');
     $('hmSubTitle').textContent = title;
     const body = $('hmSubBody');
     body.replaceChildren();
