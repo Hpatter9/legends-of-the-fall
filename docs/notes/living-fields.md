@@ -252,7 +252,8 @@ Oasis quicksand, thorn scrub.
   fight's own stream and its skill stream are untouched (a test compares them, and the rest of the board tile for tile, on every land).
   A trap springs on a step with no roll; a strike goes by the board's clock.
 - A fight made outside a run has none (`Stage.hazards` unset). `startStage` sets the level.
-- **The switch is `FIELD_HAZARDS.on`.** With it off no board is given anything and every fight plays as it did.
+- **The switch is `FIELD_HAZARDS.on`**, ON since the owner's call of 2026-11-11 (the numbers for the flip are in
+  `docs/notes/land-identity.md`, "Both switches on"). With it off no board is given anything and every fight plays as it did.
 - **Pinned recordings: none re-recorded.** Three files pin whole fights and turn the switch off at their top:
   `test/ailments-identical.test.ts`, `test/nemesis-regression.test.ts`, `test/spells-identity.test.ts`. They pass unchanged.
 - One test was updated for the changed requirement: `test/long-map.test.ts` compared an army fight's tiles with its section's, tile
