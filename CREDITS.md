@@ -390,7 +390,8 @@ After an Eidolon's painting crosses the screen, its sprite comes onto the board 
   (`art-source/eidolons/fx/raw/impact-ring.png`, its job in `impact-ring-result.json`), its eight frames doubled by whole pixels. Original
   art for this game.
 - Prompts for Gemini-generated replacements, not yet made (the key's image quota was 0): `art-source/eidolons/fx/PROMPTS.md`.
-- `askel-stage-sigil`, `askel-stage-pillar`, `askel-stage-fire`, `askel-stage-scorch`, `askel-stage-smoke` (EIDOLON-BLENDER,
+- `askel-stage-sigil`, `askel-stage-pillar`, `askel-stage-explosion`, `askel-stage-cracks`, `askel-stage-fire`, `askel-stage-scorch`,
+  `askel-stage-smoke`, `askel-stage-embers` and the `-glow` sheets of the pillar and the explosion (EIDOLON-BLENDER,
   `docs/notes/eidolon-blender.md`): original to this game, staged and rendered in Blender from the game's camera
   (`tools/blender-fx/eidolons/parts.py`) and given the heroes' pixels (`parts_finish.py`). No outside art.
 
@@ -813,4 +814,5 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 ## Crown Terrace court artwork
 The Crown Terrace environments, eight seated ruler cutouts, seventy companion cutouts, three tiers of eleven kingdom landmarks, construction overlays and Duchess's eight poses were generated with ChatGPT image generation for this project in November 2026. The owner approved the Crown Terrace concept. Original prompts, references and generation sources are retained in `docs/notes/crown-terrace-art-prompts.md` and `art-source/crown-terrace/`; `tools/crown-terrace/pack.py` packs them into `src/art/crown-terrace/`. Hero and ruler identities follow the game's existing credited character artwork. Existing hay and cosmetic assets retain their original credits above.
 ## Blender-rendered battle effects
+`src/art/fx/blender/*.webp`: original effect sheets rendered for this game with Blender (Cycles, as the `bpy` Python module) from the scene scripts in `tools/blender-fx/`, then cut to pixel art by the same tools (`npm run blender-fx` makes them again from nothing). No pack's or third party's art is in them. So far: the king's thirty-five spells and the ground loops of all ten elements (`docs/notes/blender-fx.md`). The ground loops take the place of the painted living-ground sheets (`src/art/fx/alive/`, removed).
 `src/art/fx/blender/*.webp`: original effect sheets rendered for this game with Blender (Cycles, as the `bpy` Python module) from the scene scripts in `tools/blender-fx/`, then cut to pixel art by the same tools (`npm run blender-fx` makes them again from nothing). No pack's or third party's art is in them. So far: the king's thirty-five spells, the ground loops of all ten elements and every hero's ultimate (its wind-up, strike and aftermath) (`docs/notes/blender-fx.md`). The ground loops take the place of the painted living-ground sheets (`src/art/fx/alive/`, removed).

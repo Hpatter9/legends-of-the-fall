@@ -1,8 +1,9 @@
 // The Eidolon's staged ground show (EIDOLON-BLENDER, docs/notes/eidolon-blender.md). The owner chose the hybrid: each Eidolon keeps its
 // painting for the figure, its name and its line, and everything round it is staged in Blender from the game's camera and given the
-// heroes' pixels: a sigil that burns onto the ground, the pillar of flame the painting leaps out of, fire that crosses the foes' ground
-// tile by tile as the lead-in to the painted blow (the painted walls and bursts are kept: they are the stronger), the ground left scorched
-// under it and smoke climbing off it.
+// heroes' pixels: a sigil that burns onto the ground, the pillar of flame the painting leaps out of (the ground bursting under it), fire
+// that crosses the foes' ground tile by tile as the lead-in, and the blow itself: a white-hot core blown out to a wall of fire wider than
+// the screen, laid over the painted walls and bursts (kept: they add their own detail), the ground cracked open and glowing under it, a
+// second and third detonation rolling through the foes, then heavy smoke, falling embers, scorch and cooling coals.
 //
 // The show is cut into small sheets (`tools/blender-fx/eidolons/parts.py`) the page lays by the board's own tiles, so it follows a board
 // that is turned or not flat, and in two layers: the sigil and the scorch lie on the tiles' ground, under every fighter; the pillar, the
@@ -24,6 +25,8 @@ export interface StageSheet {
   ms: number;
   foot: number;
   hold: number;
+  /** It has a glow sheet too (`<sheet>-glow.webp`: the light under its brightest parts, a quarter of the size, the same frames). */
+  lit?: boolean;
 }
 
 /** A sheet's pixel is a hero's: about 1.414 of the board's own (a tile's side is 32 of them, its diamond 64 board px across). */
@@ -34,6 +37,12 @@ export interface StagedLook {
   /** On the ground: frames `draw` burn it on, `glow` flicker while it stands, `cool` dull and fade it. */
   sigil: StageSheet & { draw: number; glow: number; cool: number };
   pillar: StageSheet;
+  /** The blow: the core, the wall of fire, the smoke rolling off it. */
+  explosion: StageSheet;
+  /** On the ground: a shock ring and the cracks opening (the first `open` frames, quick), then cooling and going dark. */
+  cracks: StageSheet & { open: number };
+  /** Embers falling, a loop. */
+  embers: StageSheet;
   fire: StageSheet;
   /** On the ground: the first `hot` frames are its coals cooling, the rest it fading. */
   scorch: StageSheet & { hot: number };
@@ -47,17 +56,21 @@ const sheet = (name: string, fw: number, fh: number, n: number, cols: number, ms
 export const STAGED: Readonly<Record<string, StagedLook>> = {
   askel: {
     sigil: { ...sheet('askel-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
-    pillar: sheet('askel-stage-pillar', 120, 288, 16, 16, 1250, 274, 5),
+    pillar: { ...sheet('askel-stage-pillar', 144, 352, 16, 16, 950, 320, 5), lit: true },
+    explosion: { ...sheet('askel-stage-explosion', 320, 300, 16, 8, 1500, 250, 7), lit: true },
+    cracks: { ...sheet('askel-stage-cracks', 256, 136, 12, 6, 0, 68, 4), open: 4 },
+    embers: sheet('askel-stage-embers', 160, 200, 12, 12, 1500, 190, 0),
     fire: sheet('askel-stage-fire', 64, 112, 14, 14, 1250, 104, 5),
     scorch: { ...sheet('askel-stage-scorch', 88, 48, 8, 8, 0, 24, 3), hot: 5 },
-    smoke: sheet('askel-stage-smoke', 72, 128, 12, 12, 1500, 125, 5),
+    smoke: sheet('askel-stage-smoke', 128, 176, 16, 16, 1900, 160, 6),
     from: 'right',
   },
 };
 
 /** Every sheet the staged shows load (for the tests and the credits). */
-export const STAGE_SHEETS: readonly StageSheet[] = Object.values(STAGED).flatMap((l) => [l.sigil, l.pillar, l.fire, l.scorch, l.smoke]);
+export const STAGE_SHEETS: readonly StageSheet[] = Object.values(STAGED).flatMap((l) => [l.sigil, l.pillar, l.explosion, l.cracks, l.fire, l.scorch, l.smoke, l.embers]);
 export const stageUrl = (s: StageSheet): string => `eidolons/fx/${s.sheet}.webp`;
+export const glowUrl = (s: StageSheet): string => `eidolons/fx/${s.sheet}-glow.webp`;
 
 /** A call with no time for the sigil to be drawn (the short one: the painting is on at once) shows it already burnt on. */
 const DRAWN_ALREADY_MS = 200;
@@ -136,7 +149,7 @@ export function risePass(spec: PassSpec, x: number, y: number, ground: number): 
 /** How much of the lead-in is laid: the tiles that catch fire beside the foes' own (few: the painted blow is the strike), and how many
  *  of them smoke. Battery saver and the short call lay less. */
 export function stageBudget(saver: boolean, short: boolean): { tiles: number; smokes: number } {
-  return saver ? { tiles: 2, smokes: 2 } : short ? { tiles: 4, smokes: 3 } : { tiles: 7, smokes: 6 };
+  return saver ? { tiles: 2, smokes: 2 } : short ? { tiles: 4, smokes: 3 } : { tiles: 7, smokes: 5 };
 }
 
 /** The crossing's length in the plan's own time (ms): the page stretches it over the build-up, the last tile catching just before the blow. */
@@ -208,3 +221,29 @@ export function scorchFrame(look: StagedLook, age: number, reduced = false): num
 
 /** Where frame `i` is on its sheet (px). */
 export const frameAt = (s: StageSheet, i: number): { x: number; y: number } => ({ x: (i % s.cols) * s.fw, y: Math.floor(i / s.cols) * s.fh });
+
+/** The cracks open in a rush (`CRACKS_OPEN_MS`), then cool and go dark over the rest of `CRACKS_MS`; their frame `age` ms after the
+ *  ground broke (-1: gone). Reduced motion: one steady frame. */
+export const CRACKS_OPEN_MS = 300;
+export const CRACKS_MS = 2800;
+export function cracksFrame(look: StagedLook, age: number, reduced = false): number {
+  const s = look.cracks;
+  if (age < 0 || age >= CRACKS_MS) return -1;
+  if (reduced) return s.hold;
+  if (age < CRACKS_OPEN_MS) return Math.min(s.open - 1, Math.floor((age / CRACKS_OPEN_MS) * s.open));
+  return s.open + Math.min(s.n - s.open - 1, Math.floor(((age - CRACKS_OPEN_MS) / (CRACKS_MS - CRACKS_OPEN_MS)) * (s.n - s.open)));
+}
+
+/** The second and third detonations (the attack's later beats): where each goes off, as an offset from the foes' middle in shares of
+ *  the screen's width and height (one to each side, rolling through them), and how big it is beside the first. */
+export const DETONATIONS: readonly { dx: number; dy: number; mul: number }[] = [
+  { dx: -0.27, dy: 0.012, mul: 0.72 },
+  { dx: 0.27, dy: -0.008, mul: 0.78 },
+];
+/** The blow's own size (the wall is wider than the screen), and how far into its frames it already is in the frozen frame (ms: the
+ *  white core blown out, its spikes thrown). */
+export const BLOW = { mul: 1.25, lead: 190 } as const;
+/** The smoke columns after the blow: how far from the foes' middle each stands (shares of the screen's width), nearest first. */
+export const SMOKE_SPOTS: readonly number[] = [0, -0.3, 0.3, -0.15, 0.17];
+/** What the staged blow asks of the page's own flash and shake: a hard white flash and a harder, longer shake than the painted blow's. */
+export const BLOW_FEEL = { flash: 0.95, shake: 1.5, shakeMs: 760 } as const;
