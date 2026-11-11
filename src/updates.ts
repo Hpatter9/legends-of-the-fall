@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.499.0',
+    date: '2026-11-11',
+    title: 'Askel\'s call, staged in fire',
+    notes: ['The Cinderhound\'s call gains a sigil burning onto the ground, a pillar of flame Askel leaps from, and fire crossing the foes\' ground before the blow.', 'The ground is left scorched and smoking, with coals that cool under the fight. A bigger strike is in the works.'],
+  },
+  {
     version: '0.498.0',
     date: '2026-11-11',
     title: 'The king\'s spells, rendered anew',
