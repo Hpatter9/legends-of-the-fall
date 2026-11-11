@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.491.0',
+    date: '2026-11-11',
+    title: 'Spell slots open one at a time',
+    notes: ['A new save starts with one spell slot holding Heal; the others open at 3, 10 and 20 stars. Existing saves keep every slot they had.', 'Locked slots show a lock and the stars they need, and a notice tells you when a new slot opens.'],
+  },
+  {
     version: '0.490.0',
     date: '2026-11-11',
     title: 'Every land is its own place',
