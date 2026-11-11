@@ -22,14 +22,24 @@ soft glow sheet under the two big pieces):
 | `askel-stage-cracks` | 12 of 256 x 136 | a shock ring racing out and the ground cracking open white-hot, then red, then dark | the ground, under the fighters |
 | `askel-stage-scorch` | 8 of 88 x 48 | a patch of burnt ground, its coals cooling, then fading | the ground, under the fighters |
 | `askel-stage-pillar` (+ glow) | 16 of 144 x 352 | the pillar: the ground bursts, a white core, ragged tongues twisting up 12 tiles, rock thrown, torn away | over the fighters |
-| `askel-stage-explosion` (+ glow) | 20 of 320 x 300 | the blow: a white-hot core blown out with spikes of flame, a wall of fire wider than the screen in three ranks of tongues, rock and embers thrown, heavy smoke rolling off it | over the fighters |
+| `askel-stage-explosion` (+ glow) | 16 of 320 x 300 | the blow: a white-hot core blown out with spikes of flame, a wall of fire wider than the screen in three ranks of tongues, rock and embers thrown, heavy smoke rolling off it | over the fighters |
 | `askel-stage-fire` | 14 of 64 x 112 | a tile catching fire: thin pointed tongues | over the fighters |
 | `askel-stage-smoke` | 16 of 128 x 176 | a heavy column of smoke | over the fighters |
 | `askel-stage-embers` | 12 of 160 x 200 | embers falling, a loop | over the fighters |
 
-**520,144 bytes** in all (the explosion 299,452 and its glow 39,822; the pillar 92,128 and its glow 16,832; the sigil 35,158; the
-cracks 16,528; the rest under 10 KB each). The largest sheet is 3200 x 600, inside any phone's texture limit. They load by URL from
+**459,842 bytes** in all (the explosion 246,542 and its glow 32,430; the pillar 92,128 and its glow 16,832; the sigil 35,158; the
+cracks 16,528; the rest under 10 KB each). The largest sheet is 2560 x 600, inside any phone's texture limit. They load by URL from
 `src/art/eidolons/fx/`, which `build.mjs` already copies and lists in the service worker's `FILES`, so they play offline.
+
+**Making it smaller** (after 0.501.0, which shipped 520,144 bytes). Two things were tried on the explosion, the largest sheet:
+- **Lossy WebP: not kept.** The sheet is 32 flat colours, which lossless packs well and lossy does not: at quality 90 the file is
+  larger (365,172 bytes against 299,452), at 85 barely smaller (283,426), and only at 75 a real saving (203,538), where the flames'
+  hard pixels visibly soften (`docs/samples/eidolon-blender/askel-explosion-lossless-q90-q75.webp`: lossless, 90 and 75, top to
+  bottom, at twice the size).
+- **Fewer frames: kept.** It is rendered as 20 frames and shipped as 16: every frame of the blast itself, two in three of the long
+  burn and the smoke after it, where one frame is much like the next. 60,314 bytes off (the sheet and its glow), and matched stills
+  of the cast cannot be told apart (`askel-explosion-20-vs-16-frames.webp`: 20 above, 16 below). The palette is still taken from all
+  20, so no other sheet changed by a byte.
 
 **What plays.** Askel's call stays **5.0 s** (`EIDOLON_MS`, unchanged: the show fits, and its smoke, embers, cracks and coals carry on
 over the fight after it; nothing in its beats, the sim or the speed rule changed):
@@ -52,7 +62,9 @@ foes lie.
 **The short call** (2.2 s, on Auto or with full calls off): the sigil is there from the start, the pillar burns in 0.57 s, the blow
 and one more detonation, fewer burning tiles and smoke columns. **Battery saver**: fewer tiles, two smoke columns, one fall of embers.
 **Reduced motion**: every strip holds its steady frame and fades (the layer's own rule), the sigil and the cracks are one steady frame,
-the painting fades in held still; no smoke, embers, flames before the painting, shake or rumble.
+the painting fades in held still; no smoke, embers, flames before the painting, shake or rumble, and the field is not darkened hard
+before the blow (it keeps the lighter dim every call has, so nothing goes nearly black and comes back:
+`askel-reduced-dim-before-after.webp`).
 
 **Where things are.** `src/eidolonStage.ts` (pure: the sheets' shapes, `sigilFrame`, `sigilSpot`, `risePass`, `wavePlan`,
 `scorchFrame`, `cracksFrame`, `BLOW`, `BLOW_FEEL`, `DETONATIONS`, the budgets; `STAGED` has Askel only, so the other five play exactly
@@ -70,8 +82,7 @@ so its turbulence tears the outlines ragged, and the wall moved behind the paint
 **Honestly.**
 - The Blender fire is tongues built from cones with turbulent, torn edges. It is large, sharp and bright, but it is streakier than
   painted fire; up close a tongue still reads as a spike. The painted walls in front carry the fine detail.
-- 520 KB is a lot beside the first version's 120 KB; the explosion is most of it. Fewer frames or a lossy sheet would halve it at
-  some cost to the pixels.
+- 460 KB is a lot beside the first version's 120 KB; the explosion is most of it, and lossy packing does not help it (above).
 - The blow lays more at once than main's (the explosion and its glow, two detonations, five smokes, three ember falls, the lead-in
   fires) on top of the painted strike. It ran without trouble in the captures; a slow phone has battery saver.
 - The sigil is dim while the horn sounds: it lies under the call's dim, with a glow put back over it.

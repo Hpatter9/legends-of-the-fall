@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.502.0',
+    date: '2026-11-11',
+    title: 'Askel\'s call, a little lighter',
+    notes: ['Askel\'s explosion ships in fewer frames with no visible change, trimming the download.', 'With reduced motion on, the field no longer goes very dark before Askel\'s blow.'],
+  },
+  {
     version: '0.501.0',
     date: '2026-11-11',
     title: 'Askel strikes with force',

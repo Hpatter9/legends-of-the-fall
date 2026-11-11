@@ -17,9 +17,12 @@ SRC = args[0]
 OUT = args[1] if len(args) > 1 else 'src/art/eidolons/fx'
 COLOURS = 32
 # (name: frame width, height, frames to a row)
-PARTS = {'sigil': (160, 96, 6), 'pillar': (144, 352, 16), 'explosion': (320, 300, 10), 'cracks': (256, 136, 6), 'fire': (64, 112, 14), 'scorch': (88, 48, 8), 'smoke': (128, 176, 16), 'embers': (160, 200, 12)}
+PARTS = {'sigil': (160, 96, 6), 'pillar': (144, 352, 16), 'explosion': (320, 300, 8), 'cracks': (256, 136, 6), 'fire': (64, 112, 14), 'scorch': (88, 48, 8), 'smoke': (128, 176, 16), 'embers': (160, 200, 12)}
 # (the big pieces keep a soft glow under their brightest parts: its own sheet, a quarter of the size, the same frames in the same places)
 GLOW = ('pillar', 'explosion')
+# (the explosion is rendered as 20 frames and shipped as 16: every frame of the blast itself, two in three of the long burn and the
+# smoke after it, where one frame is much like the next; it takes a fifth off the largest sheet)
+KEEP = {'explosion': [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 17, 19]}
 LUM = np.array([0.3, 0.59, 0.11], dtype=np.float32)
 
 
@@ -53,7 +56,8 @@ os.makedirs(OUT, exist_ok=True)
 total = 0
 contact = []
 for name, (w, h, cols) in PARTS.items():
-    fs = frames[name]
+    # (the palette above is from every rendered frame, so dropping frames here changes no other sheet)
+    fs = [f for i, f in enumerate(frames[name]) if name not in KEEP or i in KEEP[name]]
     rows = -(-len(fs) // cols)
     sheet = Image.new('RGBA', (w * cols, h * rows), (0, 0, 0, 0))
     for i, (rgb, a) in enumerate(fs):
