@@ -185,7 +185,7 @@ import { Fx, loadFx } from './render/fx';
 import { lookSheet } from './render/awakenLook';
 import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS, settle, type View } from './render/cameraRules';
-import { coverElements, measureSafe, onCamCover } from './camSafe';
+import { coverElements, measureSafe, onCamCover, registerCamCover } from './camSafe';
 import { easeRect, type Rect } from './render/safeRectRules';
 import { engagedAt, followView, heatOf, manualHeld, returnEase, tileKey, type HotSpot } from './render/followCamRules';
 import { whichCast } from './fightHudRules';
@@ -209,7 +209,7 @@ import { endingQuip, foeGrumbles, heroSays, initQuips, newQuipScene, revivedQuip
 import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
 import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
-import { fightToastTop } from './hudClear';
+import { fightToastTop, HORN_CORNER } from './hudClear';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/ui/combat-heart.png';
@@ -1927,7 +1927,7 @@ class Game {
     // (the king's spell orbs sit under the top bar in a fight (BATTLE-HUD), over the board's sky)
     const row = $('hudSpells');
     row.style.top = `${below + 6}px`;
-    // (the row's real bottom when it shows (the War Horn, the mana, the orbs and Auto, on one line); before the fight, when it is not drawn, a
+    // (the row's real bottom when it shows (the mana, the orbs and Auto, on one line); before the fight, when it is not drawn, a
     // single row's height)
     const drawn = row.getBoundingClientRect();
     const rowBottom = drawn.height > 0 ? Math.max(drawn.bottom, below + 6 + ORBS_ROW) : below + 6 + ORBS_ROW;
@@ -1938,7 +1938,7 @@ class Game {
     return { below, barBottom };
   }
 
-  /** Lay the top parts out again whenever the spell row or the boss's bar changes size (the War Horn given, a spell added, the
+  /** Lay the top parts out again whenever the spell row or the boss's bar changes size (a spell added, the
    *  fonts loading, the bar coming in), so the boss's bar never lies under Auto or the orbs; and set a toast and a quip clear again. */
   private watchTopHud(): void {
     if (typeof ResizeObserver !== 'function') return;
@@ -2439,7 +2439,7 @@ class Game {
       placed: () => this.placedKinds().length,
       arrange: (f) => this.arrangeFormation(f),
     });
-    // (EIDOLONS: the War Horn at the left end of the row, and the call's cinematic over the board)
+    // (EIDOLONS: the War Horn, and the call's cinematic over the board)
     this.eid = new EidolonCall({
       meta: () => this.meta,
       save: () => saveMeta(this.meta),
@@ -2462,7 +2462,10 @@ class Game {
       // (EIDOLON-CHAINS: the horn's card at the camp opens the Pact Gallery)
       gallery: () => this.home.openGallery(),
     });
-    $('hudSpells').prepend(this.eid.horn.root);
+    // (HORN-CORNER: the War Horn rides on the panel's top edge at the left, as the tactic button does at the right: the board's bottom-left
+    // corner in a fight, out of the spell row, which then keeps to one line; the camera frames the fight clear of it)
+    $('panel').append(this.eid.horn.root);
+    registerCamCover(HORN_CORNER);
     const canvas = this.app.canvas;
     canvas.addEventListener('pointerdown', (e) => {
       // (two fingers on the board pinch it: any drag the first began is let go where it was, FIGHT-FIXES)
