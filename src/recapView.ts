@@ -43,6 +43,9 @@ export interface RecapHead {
   results?: JrData;
   /** RUN-GEAR: the Found row (`foundRow.ts`), under the results. */
   found?: HTMLElement | null;
+  /** POPUP-GUARD: what the run's toasts said (an achievement, a quest done, a spell learnt, something unlocked), for a player who
+   *  tapped past one: listed under the spoils. */
+  notices?: readonly string[];
 }
 
 /** The "How to come back stronger" card on a lost run's recap (`sim/comeback.ts`): each pointer's button closes the recap and goes there. */
@@ -116,6 +119,15 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
   // the company, and the XP and levels (`recapDetail`)
   // (the owner: "No need for the final recap to have the individual wave best heroes and stars listed": no wave strip here, RECAP-SPOILS)
   sheet.append(...recapDetail(recap, { prefix: 'W', equipmentStep: head.equipmentStep, xp: !player }));
+
+  // (POPUP-GUARD: the run's notices, each line as its toast said it)
+  if (head.notices?.length) {
+    const box = el('section', 'rcAdvice rcNotices');
+    box.setAttribute('aria-label', 'News of the run');
+    box.append(el('h3', '', 'News of the run'));
+    for (const line of head.notices) box.append(el('p', '', line));
+    sheet.append(box);
+  }
 
   const done = el('div', 'rcFoot');
   const ok = el('button', 'primary', 'Continue');

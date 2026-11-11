@@ -337,7 +337,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
   };
   // (a platoon's orders in the plan: its way over the river, with each way's cost, and its part)
   const openOrders = (k: string) => {
-    const card = ornateMenu({ id: 'assaultOrders', eyebrow: 'The War Plan', title: `${heroName(k)}'s orders`, sub: `${TROOPS[troopOf(k)].name} · ${troopsOf(m, k).length} soldiers`, onClose: redraw });
+    const card = ornateMenu({ asked: true, id: 'assaultOrders', eyebrow: 'The War Plan', title: `${heroName(k)}'s orders`, sub: `${TROOPS[troopOf(k)].name} · ${troopsOf(m, k).length} soldiers`, onClose: redraw });
     const ways = menuSection(card.body, 'The way', 'over the Redwater', 2);
     menuPick(ways, APPROACHES, plan.approaches[k], (w) => ({ title: APPROACH_NAME[w].replace(/^the /, 'The '), icon: w === 'bridge' ? '⌇' : '≈', lines: [APPROACH_COST[w]] }), (w) => {
       plan.approaches[k] = w;
@@ -422,7 +422,7 @@ export function openPlatoonCard(m: Meta, hero: string, o: { save(): void; onChan
   const st = assaultOf(m);
   const draw = () => {
     const list = troopsOf(m, hero);
-    const menu = ornateMenu({ id: 'assaultPlatoon', eyebrow: `Platoon of ${heroName(hero)}`, title: kind.name, sub: kind.trick, onClose: o.onChange });
+    const menu = ornateMenu({ asked: true, id: 'assaultPlatoon', eyebrow: `Platoon of ${heroName(hero)}`, title: kind.name, sub: kind.trick, onClose: o.onChange });
     const ranks = menuSection(menu.body, 'The ranks', o.readOnly ? `${o.alive ?? list.length} standing` : `${list.length} / ${PLATOON_SIZE}`, 4);
     ranks.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
     const sheet = UNITS[troopUnitOf(hero)].sheet;
