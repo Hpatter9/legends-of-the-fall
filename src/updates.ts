@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.485.0',
+    date: '2026-11-11',
+    title: 'An even spell bar, and the tactic up top',
+    notes: ['The fight\'s spell bar now spreads evenly across the screen. The tactic button moves to the top right, under the bar, where Formation sits between waves.'],
+  },
+  {
     version: '0.484.0',
     date: '2026-11-11',
     title: 'The Rank up card reads cleanly',

@@ -213,6 +213,7 @@ import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
 import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
 import { fightToastTop, HORN_CORNER } from './hudClear';
+import { laySpellRow, watchSpellRow } from './spellRow';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/ui/combat-heart.png';
@@ -1936,7 +1937,6 @@ class Game {
   private placeTopHud(): { below: number; barBottom: number } {
     const top = $('top').getBoundingClientRect();
     const bar = $('bossBar');
-    bar.style.right = '12px';
     // (a floor's twist banner sits under the top bar; the bar for a boss goes below it)
     const twist = $('twistBanner');
     twist.style.top = `${top.bottom + 2}px`;
@@ -1948,6 +1948,13 @@ class Game {
     // single row's height)
     const drawn = row.getBoundingClientRect();
     const rowBottom = drawn.height > 0 ? Math.max(drawn.bottom, below + 6 + ORBS_ROW) : below + 6 + ORBS_ROW;
+    // (HUD-EVEN: the row's pieces evenly spaced across the screen; and the tactic button's plaque hangs at the right just under the row,
+    // in the Formation button's corner. The boss's bar, under the row too, stops short of the plaque, so it stays put when a boss comes)
+    laySpellRow(row);
+    const dock = this.tactics.dock;
+    dock.style.setProperty('--dock-top', `${Math.round(rowBottom + 4)}px`);
+    const plaque = dock.getBoundingClientRect();
+    bar.style.right = plaque.width > 0 ? `${Math.round(innerWidth - plaque.left + 6)}px` : '12px';
     bar.style.top = `${rowBottom + 4}px`;
     const barBottom = bar.hidden ? below : bar.getBoundingClientRect().bottom + 4;
     // (the row of active synergies and the combo bar sit under the bars during a fight)
@@ -1975,7 +1982,10 @@ class Game {
     });
     // (the panel and the tactic button too: its fight rows and the button over them come in as the fight begins, and a quip
     // said at the deploy must clear them)
-    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar', 'panel', 'tacticBtn']) watch.observe($(id));
+    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar', 'panel', 'tacticBtn', 'tacticDock']) watch.observe($(id));
+    // (HUD-EVEN: the spell row's pieces come and go without the row changing size (a spell learnt, ULT's Auto showing once a hero has an
+    // ultimate): lay it out again then)
+    watchSpellRow($('hudSpells'), () => this.placeTopHud());
     // (CAM-SAFE: and every cover of the board, those made later (the combo bar as a fight starts) and those registered later too)
     this.watchCovers = () => coverElements().forEach((e) => watch.observe(e));
     this.watchCovers();
@@ -2479,8 +2489,8 @@ class Game {
       // (EIDOLON-CHAINS: the horn's card at the camp opens the Pact Gallery)
       gallery: () => this.home.openGallery(),
     });
-    // (HORN-CORNER: the War Horn rides on the panel's top edge at the right, beside the tactic button: the board's bottom-right corner in
-    // a fight, out of the spell row, which then keeps to one line; the camera frames the fight clear of it)
+    // (HORN-CORNER: the War Horn rides on the panel's top edge at the right: the board's bottom-right corner in a fight, out of the spell
+    // row, which then keeps to one line; the camera frames the fight clear of it)
     $('panel').append(this.eid.horn.root);
     registerCamCover(HORN_CORNER);
     const canvas = this.app.canvas;

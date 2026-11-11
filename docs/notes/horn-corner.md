@@ -132,3 +132,7 @@ cases as above plus `wave8-tactic-word`, at 393x852, 360x780 and 412x915, halved
 `test/safe-rect.test.ts`: the horn's box beside the tactic button leaves the room as the button alone does; alone in the corner it still
 trims the foot, not a strip down the side.
 
+## After HUD-EVEN
+
+HUD-EVEN (`hud-even.md`) moved the tactic button to the upper right, under the spell row, so the horn now has the bottom-right corner to
+itself (`right: 8px`). Its looks, its note and the call's start are as HORN-RIGHT left them.

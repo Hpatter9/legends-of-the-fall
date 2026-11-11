@@ -1676,15 +1676,15 @@ body #spellbook h2 {
    -------------------------------------------------------------------------- */
 /* The prep screen's Formation button: under every layer laid over the board (the home screen, the party, Settings, a card), where it
    used to float over them all (it came after #home in the page at the same z-index); and gilded, as the HUD's own buttons are. */
-#formBtn {
+#formBtn, #tacticBtn {
   z-index: 3;
   border: 1px solid var(--ornate-brass-mid);
   border-radius: 4px;
   background: linear-gradient(180deg, #3a3d31 0%, #1f221b 100%);
   box-shadow: inset 0 0 0 1px #11140e, inset 0 1px 0 rgba(255, 235, 185, 0.22), 0 3px 8px rgba(0, 0, 0, 0.7);
 }
-#formBtn small { font-size: 11px; color: var(--ornate-brass-mid); letter-spacing: 0.08em; text-transform: uppercase; }
-#formBtn b { font-family: var(--display); color: var(--ornate-brass-hi); text-shadow: 0 1px 2px #000; }
+#formBtn small, #tacticBtn small { font-size: 11px; color: var(--ornate-brass-mid); letter-spacing: 0.08em; text-transform: uppercase; }
+#formBtn b, #tacticBtn b { font-family: var(--display); color: var(--ornate-brass-hi); text-shadow: 0 1px 2px #000; }
 /* BATTLE-FEEL round 3: the shape picked is out of this party's reach: the tag in warning amber, and the card's line */
 #formBtn[data-short] small { color: #ffb15a; }
 #tacticSheet .tacAdvice.tacShort { color: #ffb15a; font-weight: bold; }
@@ -2221,45 +2221,11 @@ body #spellbook h2 {
 
 /* --------------------------------------------------------------------------
    25. THE FIGHT'S AUTO SWITCH AND TACTIC BUTTON (the owner: "Move the auto cast button up next to the spells", "Make the tactic button
-   more ornate"). The Auto switch sits straight after the spell orbs on their row; the tactic button has its own spot at the right edge
-   just above the hero rows (COMBAT-HUD: "down on the right side, above the heroes' bars"), a gilded medallion as the camp's Daily is: the double brass rim, the tactic's icon (painted once drawn, ui/tactics/<id>.png)
-   in a brass ring, its name under it. Its word pops up to its left. Steady light; no pulse.
+   more ornate"). The Auto switch sits after the spell orbs on their row. (HUD-EVEN, docs/notes/hud-even.md: the tactic button is no
+   longer the medallion above the hero rows; it is a plaque in the Formation button's corner and make, `#formBtn, #tacticBtn` above and
+   `tactics.css`.)
    -------------------------------------------------------------------------- */
 #hudSpells .fhAuto { margin-left: 0; }
-#panel .fhTactic {
-  right: 8px;
-  width: 58px;
-  height: 66px;
-  padding: 4px 2px 3px;
-  justify-content: flex-start;
-  gap: 2px;
-  color: var(--ornate-brass-hi);
-  border: var(--ornate-border-double);
-  border-radius: 6px;
-  background: radial-gradient(ellipse at 50% 0%, #4a553d66 0%, transparent 70%), linear-gradient(180deg, #2c3125f5 0%, #161a12f8 100%);
-  box-shadow: inset 0 0 0 1px #11140e, inset 0 1px 0 rgba(255, 235, 185, 0.22), 0 3px 10px #000c, 0 0 10px rgba(219, 193, 139, 0.18);
-}
-#panel .fhTactic[data-tactic='charge'], #panel .fhTactic[data-tactic='hold'] { background: radial-gradient(ellipse at 50% 0%, #4a553d66 0%, transparent 70%), linear-gradient(180deg, #2c3125f5 0%, #161a12f8 100%); }
-#panel .fhTactic .fhTacticFace {
-  flex: none;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  border: 1px solid #c9ad72;
-  background: radial-gradient(circle at 50% 40%, #3a4130, #12150e 75%);
-  box-shadow: inset 0 0 6px #000, 0 0 6px rgba(219, 193, 139, 0.25);
-}
-/* (each tactic's ring takes a little of its colour: Charge ember, Hold steel; Advance the brass) */
-#panel .fhTactic[data-tactic='charge'] .fhTacticFace { background: radial-gradient(circle at 50% 40%, #6a2a1c, #1d0c08 75%); border-color: #e3a36b; }
-#panel .fhTactic[data-tactic='hold'] .fhTacticFace { background: radial-gradient(circle at 50% 40%, #2d3a4a, #10161f 75%); border-color: #a9bed3; }
-#panel .fhTactic svg { width: 22px; height: 22px; filter: drop-shadow(0 1px 1px #000); }
-#panel .fhTactic .fhTacticArt { width: 32px; height: 32px; object-fit: contain; image-rendering: auto; filter: drop-shadow(0 1px 2px #000); pointer-events: none; }
-#panel .fhTactic small { font: 700 11px/1.1 var(--display); letter-spacing: 0.04em; color: var(--ornate-brass); opacity: 1; text-shadow: 0 1px 2px #000; }
-#panel .fhTactic:active:not(:disabled) { transform: translateY(1px); }
-#panel .fhTacticWord { min-width: 58px; }
 
 /* The Battle page's bar without its Party button (the owner's call): Choose your battle alone, with Continue centred under it while a run
    is going; with no run the second row goes and the bar closes up */

@@ -233,3 +233,33 @@ export function sheetOf(b: Battle, u: Unit, which: Which, auto = false, use?: (k
 export function hudLayout(n: number): { pairs: boolean; rows: number } {
   return n > 5 ? { pairs: true, rows: Math.ceil(n / 2) } : { pairs: false, rows: Math.max(1, n) };
 }
+
+/** HUD-EVEN (docs/notes/hud-even.md; the owner: "Let's even out the spell bar across the whole screen. No gap that way."): the gaps of the
+ *  fight's spell row. Its pieces (the mana, each orb, the SPELL and ULT Auto buttons) keep their size and stand evenly spaced; the row is
+ *  centred. When spreading them edge to edge needs no more than `MAX_GAP` between two, they are spread so (five pieces or more on a
+ *  phone); with fewer the gap would yawn, so the pieces stand close as one centred group (`GROUP_GAP`). */
+export const SPELL_ROW = {
+  /** The least gap between two pieces, px (a full row on the narrowest phone). */
+  MIN_GAP: 3,
+  /** The widest gap a row spread edge to edge may have, px. */
+  MAX_GAP: 40,
+  /** The gap of a centred group, px. */
+  GROUP_GAP: 24,
+};
+
+/** The gap (whole px) between the pieces of the spell row, `room` px across, holding pieces of these widths. The row is centred, so the
+ *  spreading gap spans it edge to edge (to within the px lost to rounding) and the group's gap leaves room either side. */
+export function spellRowGap(room: number, widths: readonly number[]): number {
+  if (widths.length < 2) return 0;
+  const free = room - widths.reduce((a, b) => a + b, 0);
+  const even = Math.floor(free / (widths.length - 1));
+  return even > SPELL_ROW.MAX_GAP ? SPELL_ROW.GROUP_GAP : Math.max(SPELL_ROW.MIN_GAP, even);
+}
+
+/** Whether a row with that gap spans its room edge to edge (rather than standing as a centred group). */
+export function spellRowSpans(room: number, widths: readonly number[]): boolean {
+  if (widths.length < 2) return false;
+  const used = widths.reduce((a, b) => a + b, 0) + spellRowGap(room, widths) * (widths.length - 1);
+  return room - used < widths.length - 1;
+}
+
