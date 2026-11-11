@@ -718,20 +718,36 @@ export interface Loadout {
   school?: string;
   /** Each spell's rank above the first (KING-SPELLS batch 3, `spellRanks.ts`); a spell not listed is rank 1. */
   ranks?: Partial<Record<SpellId, number>>;
+  /** SPELL-SLOTS: the spell slots this save holds open whatever its stars (`spellSlots.ts`): what a save from before the slots had filled.
+   *  Unset means one, the slot every save starts with. */
+  slots?: number;
 }
 
-/** A new save's: the starting three known and in the slots (the page fits them to the ruler's school when it loads: `fitSchool`). */
-export const newLoadout = (): Loadout => ({ owned: [...STARTER_SPELLS], equipped: [...STARTER_SPELLS] });
+/** The spell a new save carries in its one slot (SPELL-SLOTS; `schools.ts` calls it `OPEN_START`). Heal: of the spells a new save knows it
+ *  is the one that holds the first army to about two tries on its own (`docs/notes/spell-slots.md`). */
+export const FIRST_SPELL: SpellId = 'heal';
+
+/** A new save's: the starting three known, and Heal in its one slot, the open slot (SPELL-SLOTS; the other slots open with the army stars,
+ *  `spellSlots.ts`). */
+export const newLoadout = (): Loadout => ({ owned: [...STARTER_SPELLS], equipped: [], open: FIRST_SPELL });
+/** A save from before the spells, or before the slots, with nothing saved: the starting three in the slots, as it had them. */
+const oldLoadout = (): Loadout => ({ owned: [...STARTER_SPELLS], equipped: [...STARTER_SPELLS] });
 
 /** The total power of some spells. */
 export const powerOf = (ids: readonly SpellId[]) => ids.reduce((n, id) => n + SPELLS[id].power, 0);
 
 /** A loadout read from a saved value: the starting three are always known (and in the slots when nothing was saved); the slots and the open
- *  slot hold only spells known, three at most in the slots. Old saves keep every spell they own; the page then fits the slots to the ruler's
+ *  slot hold only spells known, three at most in the slots. The slots it has filled stay open (`slots`). Old saves keep every spell they own; the page then fits the slots to the ruler's
  *  school (`fitSchool`). */
 export function readLoadout(raw: unknown): Loadout {
-  const l = newLoadout();
-  if (!raw || typeof raw !== 'object') return l;
+  const l = oldLoadout();
+  // (SPELL-SLOTS: a save keeps open the slots it had filled, so one from before the slots loses no spell)
+  const keep = (saved: unknown): Loadout => {
+    const n = Math.min(LOADOUT_SIZE + 1, Math.max(typeof saved === 'number' && Number.isFinite(saved) ? Math.floor(saved) : 0, l.equipped.length + (l.open ? 1 : 0)));
+    if (n > 1) l.slots = n;
+    return l;
+  };
+  if (!raw || typeof raw !== 'object') return keep(undefined);
   const list = (x: unknown): SpellId[] => (Array.isArray(x) ? [...new Set(x.filter((id): id is SpellId => typeof id === 'string' && id in SPELLS))] : []);
   const r = raw as Record<string, unknown>;
   l.owned = [...new Set([...STARTER_SPELLS, ...list(r.owned)])];
@@ -744,5 +760,5 @@ export function readLoadout(raw: unknown): Loadout {
     for (const [id, n] of Object.entries(r.ranks as Record<string, unknown>)) if (id in SPELLS && typeof n === 'number' && n >= 2) ranks[id as SpellId] = Math.min(RANK_MAX, Math.floor(n));
     if (Object.keys(ranks).length) l.ranks = ranks;
   }
-  return l;
+  return keep(r.slots);
 }
