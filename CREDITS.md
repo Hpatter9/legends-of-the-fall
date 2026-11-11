@@ -792,3 +792,7 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 - Living ground loops (`art-source/fx-alive/ground-loops.png`, runtime `src/art/fx/alive/atlas.png`): original artwork painted for this game by the owner with ChatGPT image generation from the FX-ALIVE prompt (`docs/notes/fx-alive-art-prompts.md`): eight elements' eight-frame tile loops. Cut by `tools/fx-alive/cut.py`; drawn as the moving edge of a marked patch by `src/render/fx.ts` (`docs/notes/fx-alive-art.md`).
 
 - Borderless living ground fills and seamless duel bar fills (REPAINTS-2, `art-source/fx-alive/ground-fill-loops.png`, runtime `src/art/fx/alive/fill.png`; `art-source/duel-show/duel-bar-fill-green.png` and `-red.png`, runtime `src/art/duel/bar-fill-*.webp`): original artwork repainted for this game by the owner with ChatGPT image generation. Cut by `tools/fx-alive/cut.py` and `tools/duel-show/import-art.py` (`docs/notes/repaints-2.md`). The duel bar's fills were repainted again with a soft texture (`art/ui-extras`), still seamless, and cut the same way (`docs/notes/art-wire-10.md`).
+
+## Army War Room
+
+`src/art/ui/war-room.png`: original candlelit campaign room generated with OpenAI image generation for this game, following the owner-approved War Room concept. Source: `art-source/army-war-room/room-source.png`; prompt: `docs/notes/army-war-room-art-prompts.md`. Army banners reuse the credited painted boss trophies.

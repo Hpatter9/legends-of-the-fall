@@ -1,0 +1,58 @@
+[
+  {
+    "name": "party strength 412",
+    "ok": true
+  },
+  {
+    "name": "no horizontal overflow 412",
+    "ok": true
+  },
+  {
+    "name": "prepare visible 412",
+    "ok": true
+  },
+  {
+    "name": "details scroll 412",
+    "ok": true
+  },
+  {
+    "name": "party opens with estimate 412",
+    "ok": true
+  },
+  {
+    "name": "draft strength updates 412",
+    "ok": true
+  },
+  {
+    "name": "no page errors 412",
+    "ok": true
+  },
+  {
+    "name": "tier selection updates estimate",
+    "ok": true
+  },
+  {
+    "name": "locked tier remains gated",
+    "ok": true
+  },
+  {
+    "name": "suggested tier remains available",
+    "ok": true
+  },
+  {
+    "name": "locked army cannot prepare",
+    "ok": true
+  },
+  {
+    "name": "room is precached",
+    "ok": true
+  },
+  {
+    "name": "room fetches offline",
+    "ok": true
+  },
+  {
+    "name": "offline banners decode",
+    "ok": true
+  }
+]

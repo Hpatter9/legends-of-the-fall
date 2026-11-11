@@ -1,0 +1,90 @@
+[
+  {
+    "name": "party strength 393",
+    "ok": true
+  },
+  {
+    "name": "no horizontal overflow 393",
+    "ok": true
+  },
+  {
+    "name": "prepare visible 393",
+    "ok": true
+  },
+  {
+    "name": "details scroll 393",
+    "ok": true
+  },
+  {
+    "name": "party opens with estimate 393",
+    "ok": true
+  },
+  {
+    "name": "draft strength updates 393",
+    "ok": true
+  },
+  {
+    "name": "no page errors 393",
+    "ok": true
+  },
+  {
+    "name": "party strength 360",
+    "ok": true
+  },
+  {
+    "name": "no horizontal overflow 360",
+    "ok": true
+  },
+  {
+    "name": "prepare visible 360",
+    "ok": true
+  },
+  {
+    "name": "details scroll 360",
+    "ok": true
+  },
+  {
+    "name": "party opens with estimate 360",
+    "ok": true
+  },
+  {
+    "name": "draft strength updates 360",
+    "ok": true
+  },
+  {
+    "name": "no page errors 360",
+    "ok": true
+  },
+  {
+    "name": "party strength 412",
+    "ok": true
+  },
+  {
+    "name": "no horizontal overflow 412",
+    "ok": true
+  },
+  {
+    "name": "prepare visible 412",
+    "ok": true
+  },
+  {
+    "name": "details scroll 412",
+    "ok": true
+  },
+  {
+    "name": "party opens with estimate 412",
+    "ok": true
+  },
+  {
+    "name": "draft strength updates 412",
+    "ok": true
+  },
+  {
+    "name": "no page errors 412",
+    "ok": true
+  },
+  {
+    "name": "tier selection updates estimate",
+    "ok": true
+  }
+]
