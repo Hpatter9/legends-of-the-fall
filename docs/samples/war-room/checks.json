@@ -86,5 +86,29 @@
   {
     "name": "tier selection updates estimate",
     "ok": true
+  },
+  {
+    "name": "locked tier remains gated",
+    "ok": true
+  },
+  {
+    "name": "suggested tier remains available",
+    "ok": true
+  },
+  {
+    "name": "locked army cannot prepare",
+    "ok": true
+  },
+  {
+    "name": "room is precached",
+    "ok": true
+  },
+  {
+    "name": "room fetches offline",
+    "ok": true
+  },
+  {
+    "name": "offline banners decode",
+    "ok": true
   }
 ]
