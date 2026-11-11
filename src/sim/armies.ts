@@ -537,6 +537,15 @@ function readTiers(rec: ArmyRecord, r: Partial<ArmyRecord>): void {
     });
     if (mask) rec.first = mask;
   }
+  // (TIER-CLEARS: until 0.476 the page settled every wave as Normal, so a harder tier cleared left no clear of its own and its Auto and x3
+  //  never opened. A tier whose stars were earned, or whose first clear was paid, was cleared: such a save is given that clear back)
+  TIERS.forEach((_, i) => {
+    if (i === 0) return;
+    const cleared = (rec.met?.[String(i)] ?? 0) > 0 || (((rec.first ?? 0) >> i) & 1) === 1;
+    if (!cleared || (rec.hard?.[String(i)]?.clears ?? 0) > 0) return;
+    const waves = rec.waves ?? ARMY_WAVES;
+    (rec.hard ??= {})[String(i)] = { won: Math.max(rec.hard?.[String(i)]?.won ?? 0, waves), clears: 1 };
+  });
 }
 
 /** The ids of the armies a saved list names (anything else is dropped). */
