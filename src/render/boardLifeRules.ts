@@ -278,13 +278,40 @@ export function stepPuff(area: Area, ground: string | undefined): { key: 'earth-
 }
 /** LAND-IDENTITY: the bats of a dark land (the caves, the crypt): how many hang on its walls, how often one flits across (ms, min and
  *  max), and how long a crossing takes. They all take off when the fight begins and keep away while it lasts. */
-export const BATS: Partial<Record<Area, number>> = { crystal: 5, dungeon: 4 };
+export const BATS: Partial<Record<Area, number>> = { crystal: 5, dungeon: 4, ruins: 2 };
 export const BAT_FLIT: [number, number] = [5000, 11000];
 export const BAT_CROSS_MS = 2600;
 export const batsFor = (area: Area, saver: boolean): number => (saver ? Math.ceil((BATS[area] ?? 0) / 2) : BATS[area] ?? 0);
 /** Water drips from a cave's roof about this often (ms); none on a battery saver. */
 export const DRIP_EVERY = 1700;
 export const DRIPS: readonly Area[] = ['crystal', 'dungeon'];
+
+/** LAND-IDENTITY: the birds that wheel high over a land (looks only, far over every head): how many, and how dark they are drawn. */
+export const SOARERS: Partial<Record<Area, { n: number; tint: number }>> = {
+  highlands: { n: 1, tint: 0x4a3a2a },
+  desert: { n: 2, tint: 0x2a2220 },
+  graveyard: { n: 2, tint: 0x14141c },
+  oasis: { n: 1, tint: 0x3a3028 },
+  warcamp: { n: 1, tint: 0x14141c },
+};
+/** One turn of a wheeling bird's circle takes 2 pi of these (ms). */
+export const SOAR_MS = 2600;
+/** The wheeling birds over a land in a weather: none in rain, snow, ash or by night; one on a battery saver. */
+export const soarersFor = (area: Area, weather: Weather, saver: boolean): number => {
+  const n = SOARERS[area]?.n ?? 0;
+  if (!n || weather === 'rain' || weather === 'snow' || weather === 'ash' || weather === 'embers' || weather === 'night') return 0;
+  return saver ? 1 : n;
+};
+
+/** What falls or rises through a land's air, a little at a time (leaves in the autumn wood, petals at the shrine, ash and sparks in
+ *  the ashlands and the forge): the strip, its tint, and how often one is let go (ms). None on a battery saver or with reduced motion. */
+export const LAND_AIR: Partial<Record<Area, { key: 'light-sparkle' | 'fire-sparkle'; tint: number; every: number; rises: boolean }>> = {
+  autumn: { key: 'light-sparkle', tint: 0xd8782a, every: 700, rises: false },
+  shrine: { key: 'light-sparkle', tint: 0xffb8d8, every: 800, rises: false },
+  forest: { key: 'light-sparkle', tint: 0x8ab84a, every: 2200, rises: false },
+  volcano: { key: 'fire-sparkle', tint: 0xff8040, every: 500, rises: true },
+  forge: { key: 'fire-sparkle', tint: 0xffb050, every: 600, rises: true },
+};
 
 /** How often a fire on the board sends up a puff of smoke (ms). */
 export const SMOKE_EVERY = 900;

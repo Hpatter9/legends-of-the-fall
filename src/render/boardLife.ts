@@ -18,13 +18,13 @@ import { floorArt, loadFloorArt } from './floorArt';
 import { loadImage } from './loadImage';
 import { statusFrames } from './statusArt';
 import { batFrames } from './zoneLife';
-import { LAND_LIGHT, lightsOf, MAX_DARK, rimOf, type LightSpot } from './landRimRules';
+import { CLOUD_CROSS_MS, CLOUD_DARK, cloudsFor, LAND_LIGHT, lightsOf, MAX_DARK, rimOf, washFor, WASH_MAX, type LightSpot } from './landRimRules';
 import type { PackKey } from './fxRules';
-import { BAT_CROSS_MS, BAT_FLIT, batsFor, DRIP_EVERY, DRIPS, critterSpots, DECAL_NAMES, edgeFalls, FLEE_MS, landDecals, markOf, MARK_MS, MARKS_MAX, RETURN_MS, scaredBy, shaftsFor, SMOKE_EVERY, STEP_EVERY, stepPuff, type Critter, type DecalName, type Spot } from './boardLifeRules';
+import { BAT_CROSS_MS, BAT_FLIT, batsFor, DRIP_EVERY, DRIPS, LAND_AIR, SOAR_MS, SOARERS, soarersFor, critterSpots, DECAL_NAMES, edgeFalls, FLEE_MS, landDecals, markOf, MARK_MS, MARKS_MAX, RETURN_MS, scaredBy, shaftsFor, SMOKE_EVERY, STEP_EVERY, stepPuff, type Critter, type DecalName, type Spot } from './boardLifeRules';
 import lifeUrl from '../art/living-fields/life.png';
 import LIFE from '../art/living-fields/life.json';
 
-/** The painted creatures (`art-source/living-fields/life.png`, cut by `tools/living-fields/import-art.py life`): each kind's eight frames,
+/** The painted creatures (`art-source/land-identity/life.png`, cut by `tools/living-fields/import-art.py life`): each kind's eight frames,
  *  four at rest and four fleeing. Empty until the sheet is painted: birds are the road's own pecking birds, a butterfly, a firefly and a
  *  fish are drawn here, and a rabbit or a frog is not shown at all. */
 const cells = LIFE as Record<string, [number, number, number, number, number, number]>;
@@ -145,6 +145,18 @@ export interface Puffer {
   puff(key: PackKey, x: number, y: number, o?: { scale?: number; alpha?: number; tint?: number; life?: number; vy?: number; grow?: number }): void;
 }
 
+/** Fade a picture out toward its four edges (over `share` of its size), so a layer laid over the board has no box. */
+function fadeEdges(g: CanvasRenderingContext2D, cw: number, ch: number, share: number): void {
+  g.globalCompositeOperation = 'destination-out';
+  for (const [gx0, gy0, gx1, gy1] of [[0, 0, cw * share, 0], [cw, 0, cw * (1 - share), 0], [0, 0, 0, ch * share], [0, ch, 0, ch * (1 - share)]]) {
+    const fade = g.createLinearGradient(gx0, gy0, gx1, gy1);
+    fade.addColorStop(0, 'rgba(0,0,0,1)');
+    fade.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = fade;
+    g.fillRect(0, 0, cw, ch);
+  }
+}
+
 export class BoardLife {
   /** Off: nothing is built or stepped (the bench turns it off to measure its cost). */
   on = true;
@@ -169,6 +181,11 @@ export class BoardLife {
   private bats: { sp: Sprite; hx: number; hy: number; tx: number; ty: number; t: number; next: number; gone: boolean }[] = [];
   private fought = false;
   private dripAt = 0;
+  private airAt = 0;
+  /** The shadows of clouds crossing an open land, and the land's wash of light (the snows' cold, the ashlands' glow from below). */
+  private clouds: { sp: Sprite; x0: number; x1: number; y: number; ph: number }[] = [];
+  private wash: { sp: Sprite; base: number; breathes: boolean } | null = null;
+  private soarers: { sp: Sprite; frames: Texture[]; cx: number; cy: number; r: number; ph: number }[] = [];
   private calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** Ms spent in `step` over the frames so far (the bench reads it). */
   cost = { ms: 0, frames: 0 };
@@ -187,6 +204,9 @@ export class BoardLife {
     this.roots.clear();
     this.dark = null;
     this.bats = [];
+    this.clouds = [];
+    this.wash = null;
+    this.soarers = [];
     this.fought = false;
     this.board = b;
     if (!this.on || b.w * b.d > 400) return;
@@ -258,6 +278,7 @@ export class BoardLife {
     });
     this.light();
     this.hangBats(b, saver);
+    this.sky(b, weather, saver);
     // what lies about the land (once its sheet is here)
     const hold = FLOORS[b.area].hold;
     const lay = () => {
@@ -312,19 +333,85 @@ export class BoardLife {
     };
     for (const s of lightsOf(b, rimOf(b))) pool(s);
     // (no box: the dark fades out toward the picture's edges)
-    for (const [gx0, gy0, gx1, gy1] of [[0, 0, cw * 0.14, 0], [cw, 0, cw * 0.86, 0], [0, 0, 0, ch * 0.14], [0, ch, 0, ch * 0.86]]) {
-      const fade = g.createLinearGradient(gx0, gy0, gx1, gy1);
-      fade.addColorStop(0, 'rgba(0,0,0,1)');
-      fade.addColorStop(1, 'rgba(0,0,0,0)');
-      g.fillStyle = fade;
-      g.fillRect(0, 0, cw, ch);
-    }
+    fadeEdges(g, cw, ch, 0.14);
     const sp = new Sprite(Texture.from(c));
     sp.position.set(x0, y0);
     sp.scale.set(Q);
     sp.zIndex = 4300;
     this.view.root.addChild(sp);
     this.dark = sp;
+  }
+
+  /** LAND-IDENTITY: the sky's part in a land's light. On a clear day the shadows of clouds drift across an open land (two or three soft
+   *  dark sprites); a land's wash tints it (the snows' cold light) or glows on it (the ashlands' red from below, which breathes); and a
+   *  bird or two wheel high over the lands that have them. Reduced motion holds all of it still. */
+  private sky(b: Board, weather: Weather, saver: boolean): void {
+    const [xa] = at(-2, b.d + 1, 0);
+    const [xb] = at(b.w + 1, -2, 0);
+    const [, ya] = at(-2, -2, 6);
+    const [, yb] = at(b.w + 1, b.d + 1, 0);
+    const n = cloudsFor(b.area, weather, saver);
+    for (let k = 0; k < n; k++) {
+      const sp = new Sprite(glow());
+      sp.anchor.set(0.5);
+      sp.tint = 0x101828;
+      sp.alpha = CLOUD_DARK;
+      sp.width = 300 + k * 70;
+      sp.height = 130 + k * 30;
+      const y = ya + ((k + 0.5) / n) * (yb - ya);
+      const ph = (((b.seed & 0xff) / 255 + k * 0.47) % 1) * CLOUD_CROSS_MS;
+      sp.zIndex = 4280;
+      this.view.root.addChild(sp);
+      this.things.push(sp);
+      this.clouds.push({ sp, x0: xa - 260, x1: xb + 260, y, ph });
+      sp.position.set(xa - 260 + ((ph / CLOUD_CROSS_MS) % 1) * (xb - xa + 520), y);
+    }
+    const wash = washFor(b.area, weather);
+    if (wash) {
+      const Q = 8;
+      const [cw, ch] = [Math.ceil((xb - xa) / Q), Math.ceil((yb - ya + 60) / Q)];
+      const c = document.createElement('canvas');
+      c.width = cw;
+      c.height = ch;
+      const g = c.getContext('2d')!;
+      const rgb = `${(wash.colour >> 16) & 255},${(wash.colour >> 8) & 255},${wash.colour & 255}`;
+      if (wash.below) {
+        const up = g.createLinearGradient(0, ch, 0, 0);
+        up.addColorStop(0, `rgba(${rgb},1)`);
+        up.addColorStop(0.55, `rgba(${rgb},0.45)`);
+        up.addColorStop(1, `rgba(${rgb},0.1)`);
+        g.fillStyle = up;
+      } else g.fillStyle = `rgb(${rgb})`;
+      g.fillRect(0, 0, cw, ch);
+      fadeEdges(g, cw, ch, 0.2);
+      const sp = new Sprite(Texture.from(c));
+      sp.position.set(xa, ya - 30);
+      sp.scale.set(Q);
+      sp.alpha = Math.min(WASH_MAX, wash.alpha);
+      if (wash.mode === 'glow') sp.blendMode = 'add';
+      sp.zIndex = 4290;
+      this.view.root.addChild(sp);
+      this.things.push(sp);
+      this.wash = { sp, base: sp.alpha, breathes: !!wash.below };
+    }
+    // the birds that wheel overhead (eagles over the high country, vultures over the dunes, crows over the graves)
+    const m = soarersFor(b.area, weather, saver);
+    const frames = m ? birdOf(b.area, 3) ?? birdOf('plains', 3) : null;
+    if (frames?.length)
+      for (let k = 0; k < m; k++) {
+        const sp = new Sprite(frames[0]);
+        sp.anchor.set(0.5);
+        sp.tint = SOARERS[b.area]!.tint;
+        sp.scale.set(0.8);
+        sp.alpha = 0.85;
+        sp.zIndex = 4400;
+        const cx = xa + ((k + 1) / (m + 1)) * (xb - xa);
+        const cy = ya + 30 + k * 46;
+        sp.position.set(cx + 70, cy);
+        this.view.root.addChild(sp);
+        this.things.push(sp);
+        this.soarers.push({ sp, frames, cx, cy, r: 70 + k * 24, ph: k * 2.4 + (b.seed & 7) });
+      }
   }
 
   /** LAND-IDENTITY: the bats of a dark land hang along its far walls (`BATS`); `stepBats` flits them. */
@@ -506,6 +593,7 @@ export class BoardLife {
     const fighters = [...where.values()];
     this.markRoots(b, where);
     this.stepBats(dt, b);
+    this.stepSky(dt);
     const saver = !!settings().saver;
     const calm = this.calm;
     this.clock += dt;
@@ -578,6 +666,15 @@ export class BoardLife {
       const [dx, dy] = at(i % b.board.w, Math.floor(i / b.board.w), t.h);
       this.fx.puff('ice-puff', dx, dy, { scale: 0.22, alpha: 0.7, tint: 0xbfe0ff });
     }
+    const air = LAND_AIR[b.board.area];
+    if (!calm && !saver && air && this.clock >= this.airAt) {
+      // (a leaf or a petal comes down, a spark or a fleck of ash goes up, somewhere over the board)
+      this.airAt = this.clock + air.every;
+      const i = Math.floor(this.clock / 17) % b.board.tiles.length;
+      const t = b.board.tiles[i];
+      const [ax, ay] = at(i % b.board.w, Math.floor(i / b.board.w), t.h);
+      this.fx.puff(air.key, ax, ay - (air.rises ? 6 : 90), { scale: 0.16, alpha: 0.8, tint: air.tint, life: 2400, vy: air.rises ? -0.035 : 0.035 });
+    }
     if (!calm && !saver && b.phase === 'fight') {
       // smoke off a fire, now and then
       if (this.fires.length && this.clock >= this.smokeAt) {
@@ -604,10 +701,31 @@ export class BoardLife {
     this.cost.frames++;
   }
 
+  /** Each frame: the clouds' shadows cross, the glow from below breathes, the birds overhead wheel. */
+  private stepSky(dt: number): void {
+    if (this.calm) return;
+    for (const c of this.clouds) {
+      if (c.sp.destroyed) continue;
+      c.ph = (c.ph + dt) % CLOUD_CROSS_MS;
+      c.sp.x = c.x0 + (c.ph / CLOUD_CROSS_MS) * (c.x1 - c.x0);
+    }
+    if (this.wash?.breathes && !this.wash.sp.destroyed) this.wash.sp.alpha = this.wash.base * (0.75 + 0.25 * Math.sin(this.clock / 1400));
+    for (const s of this.soarers) {
+      if (s.sp.destroyed) continue;
+      const a = s.ph + this.clock / SOAR_MS;
+      s.sp.position.set(s.cx + Math.cos(a) * s.r, s.cy + Math.sin(a) * s.r * 0.4);
+      s.sp.scale.x = Math.sin(a) > 0 ? -0.8 : 0.8;
+      s.sp.texture = s.frames[Math.floor(this.clock / 260) % s.frames.length];
+    }
+  }
+
   /** Take everything this layer put outside the tiles away (the tiles' own go with the board). */
   clear(): void {
     for (const c of this.things) if (!c.destroyed) c.destroy();
     this.things = [];
     this.shafts = [];
+    this.clouds = [];
+    this.soarers = [];
+    this.wash = null;
   }
 }

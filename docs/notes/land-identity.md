@@ -69,16 +69,55 @@ hangs from a roof) and no cave-wall art of its own (the walls are the floor's ro
 (`docs/notes/land-identity-art-prompts.md`, with the earlier traps and life sheets folded in) comes with the next push, when the
 other fifteen lands show what is still missing.
 
-## Not in this push
+## The second push: the other fifteen lands
 
-- **The other fifteen lands' rims, set pieces, creatures and light** (the brief above).
-- **Cloud shadows and daylight** for the open lands; the ashlands' red underglow.
-- **More swamp water as terrain** (and more ice, lava, rock on their lands): this changes how fights play, so it will be proposed
-  separately, behind its own switch and side stream, with balance numbers. What is here is looks only.
-- **Frame time**: not yet measured for this layer; the dark is one quarter-size picture and the rim is at most about 60 static
-  columns and 40 sprites.
+Every land now has a rim (`RIMS` is a full table), set pieces from its own hold sheet (`PICKS`: a list of pieces with their shares,
+which ring they may stand on, and whether they sway, drift or glow), and its light.
+
+| Land | Rim | What stands on it (from the land's sheet) | Light and air |
+| --- | --- | --- | --- |
+| Crypt | walls of dressed stone, 3 to 5 steps | sarcophagi, coffins, weeping angels, skulls, cold lamps; cold wall lamps | dark 0.32, cold pools; bats; drips |
+| Forge | stone walls, 3 to 5 steps | pipes and gauges, gears, a furnace, a crane, chains, a pouring crucible | dark 0.30, warm pools; sparks rise |
+| Graveyard | open, follows the board | iron fence at the edge, headstones, crosses, dead trees, angel, mausoleum, lamps, mist | dusk 0.24; two crows wheel overhead |
+| Highlands | open, up to 2 steps up | boulders, pines, rocks, a standing stone | cloud shadows; an eagle overhead |
+| Wood | open | great oaks and pines thick behind the board, brush, foxgloves, toadstools, a hollow log | one cloud; green leaves drift down |
+| Snows | open | white pines, drifts, snowy brush, bare trees, a frozen fall | cold blue tint; one cloud |
+| Dunes | open, up to 2 steps up | red rock, thorn, bones, a fallen column, a great skull | warm glow; two vultures overhead |
+| Oasis | green shore, then sand | shade trees, cypress, olive, tents, jars | warm glow; a bird overhead |
+| Meadows | open | long grass, a far copse, a log, a wood stack, a well | cloud shadows |
+| Autumn wood | open | gold birches, red brush, logs, stumps | cloud shadows; leaves fall |
+| Ruins | open, up to 2 steps up | standing and fallen columns, broken and ivied walls, a statue, olives | cloud shadows; two bats |
+| Temple | a raised terrace of pale stone | a colonnade, braziers, banners, the bull, cypress, an altar | one cloud |
+| Shrine | open | blossom and wish trees, bamboo, stone lanterns, small gates, a fox, a shrine | violet glow; petals fall |
+| War camp | open | a stake line at the edge; tents, banners, a bonfire, a watchtower behind | cloud shadows; a crow overhead |
+| Ashlands | black rock, then a river of lava | burnt and burning trees, glowing spires, sulphur, a lava fall; vents smoking in the lava | red glow from below that breathes; sparks rise |
+
+- **Walls** stand only in the caves, the crypt and the forge, and only along the two far edges (a test holds it). Open country never
+  stands more than its two steps over the board's edge beside it.
+- **Light** (`landRimRules.ts`): `LAND_LIGHT` (the dark lands; each passes the fighters' contrast rule under its dark), `CLOUDS`
+  (shadows that cross an open land on a clear day only), `LAND_WASH` (a tint or a glow of at most 0.1; none at night or in fog),
+  `torchLight` (a land's own torch colour). `boardLifeRules.ts`: `SOARERS` (birds wheeling overhead), `LAND_AIR` (leaves, petals,
+  sparks, a few at a time).
+- **Cost.** The far rim lies behind the whole board, so its ground, walls and every piece that stands still are drawn once into one
+  picture under the board; only what sways at the board's edge, drifts or glows stays a sprite. Measured in this box (a software
+  renderer, 393 x 852, ten fighters mid-fight, mean frame time, before then after, two runs each): crypt 50 and 53 ms, then 64 and
+  67; graveyard 51 and 50, then 54 and 50; shrine 53 and 53, then 60 and 59; war camp 47 and 46, then 51 and 50. Before the rim was
+  baked the same lands were 5 to 10 ms dearer. The crypt's cost is its dark layer (the caves' has been in since the first push).
+  **Not measured:** a real phone's GPU (the software renderer pays for every pixel drawn, which a phone's GPU does not in the same
+  way), and a fight of more than ten fighters. The layer's own step is under 0.05 ms a frame.
+- Reduced motion: clouds lie still, nothing wheels, falls or breathes. Battery saver: one cloud fewer, one bird, no leaves or sparks.
+
+## Not built: needs art, or the owner's call
+
+- **Art the sheets do not have** (`docs/notes/land-identity-art-prompts.md`): cacti and palms, hedgerows, a fence, haystacks and a
+  windmill for the meadows, cobwebs and candles, icicles, a torii of full size, deer, rats, falling leaves and petals as painted
+  frames. Stand-ins are in where the sheets have something near (acacia and olive for the palms, tinted sparkles for leaves).
+- **More swamp water as terrain** (and more ice, lava, rock on their lands): this changes how fights play, so it is still to be
+  proposed separately, behind its own switch and side stream, with balance numbers. What is here is looks only.
+- **Heat shimmer** over the dunes: not built (it needs a filter over the board, which costs more than this layer may).
 
 ## Shots
 
-`docs/samples/land-identity/caves-mire-before-after.jpg`: each of the two lands before, after (deployed) and after (mid-fight), at 393
-wide. `after-*` and `fight-*` are the full screens; `-360` and `-412` the other two sizes. No page errors.
+`docs/samples/land-identity/lands-1..6-*.jpg`: every land before, after (deployed) and after (mid-fight) at 393 wide.
+`sizes-360.jpg` and `sizes-412.jpg`: the caves, crypt, snows, mire and war camp at the other two sizes, deployed and mid-fight.
+`caves-mire-before-after.jpg` is the first push's. No page errors in any run.

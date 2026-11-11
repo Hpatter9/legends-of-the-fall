@@ -14,7 +14,7 @@ import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
 import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow, growthOf, loadRoadArt, piece, sceneryPictures, setPiece, type Pic } from './roadArt';
 import { loadLifeArt } from './boardLife';
-import { dressingOf, rimOf, TORCH_LIGHT, wallTorches, type RimPiece } from './landRimRules';
+import { dressingOf, rimOf, torchLight, wallTorches, type RimPiece } from './landRimRules';
 import { holdPiece, holdSpritesReady, loadHoldSprites } from './holdSprites';
 import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
@@ -309,6 +309,8 @@ export class BoardView {
     this.built = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
     // (LAND-IDENTITY: what stands round the board and on it, once the land's pieces are here: `landRimRules.ts`)
     this.rim = [];
+    this.rimTex?.destroy(true);
+    this.rimTex = null;
     if (!look.boss && rot === 0) {
       if (holdSpritesReady(hold) && floorArt(hold)) this.layRim(b);
       else void Promise.all([loadHoldSprites(hold), loadFloorArt(hold)]).then(([got, floor]) => got && floor && this.board === b && this.built && this.layRim(b));
@@ -820,6 +822,8 @@ export class BoardView {
 
   /** LAND-IDENTITY: the rim's columns and pieces, on the stage now (they go with the board at the next build). */
   private rim: Container[] = [];
+  /** The far rim's still part, drawn once (`layRim`). */
+  private rimTex: Texture | null = null;
   /** Whether the board's rim is laid (the page's light and life wait for it). */
   get rimLaid(): boolean {
     return this.rim.length > 0;
@@ -833,6 +837,8 @@ export class BoardView {
     if (!built) return;
     for (const c of this.rim) if (!c.destroyed) c.destroy({ children: true });
     this.rim = [];
+    this.rimTex?.destroy(true);
+    this.rimTex = null;
     const f: Frame = { rot: 0, ou: 0, ov: 0, w: b.w, d: b.d };
     const hold = FLOORS[b.area].hold;
     const live = built.live;
@@ -859,21 +865,57 @@ export class BoardView {
       }
     };
     const rim = rimOf(b);
+    // (the far rim lies behind the whole board, so its ground, its walls and everything on it that stands still are drawn once into one
+    //  picture laid under the board; only what moves stays a sprite of its own: what sways at the board's edge, what drifts, what glows)
+    const still = new Container();
+    still.sortableChildren = true;
+    const leases: { release(): void }[] = [];
     for (const r of rim) {
-      const c = new Container();
-      c.zIndex = depthIn(f, r.u, r.v);
+      const far = r.u < 0 || r.v < 0;
       const tile: Tile = { h: r.h, deco: ((r.u + 64) * 31 + (r.v + 64) * 17) % 997, ground: r.ground };
+      // (open water and lava run on unbroken; a wall's blocks keep their lines)
       const lease = this.column(tile, r.u, r.v, b.area, false, false, { role: r.role, fringes: [], seams: r.ground ? [false, false, false, false] : [true, true, true, true], U: r.u, V: r.v });
-      // (open water runs on unbroken; a wall's blocks keep their lines)
-      built.tex.push(lease);
       const [x, y] = project(f, r.u, r.v, r.h);
       const col = new Sprite(lease.value);
       col.position.set(x - TW / 2, y - TH / 2);
-      c.addChild(col);
-      for (const p of r.pieces) stand(c, p, x, y);
-      this.root.addChild(c);
-      this.rim.push(c);
+      const z = depthIn(f, r.u, r.v);
+      const moves = (p: RimPiece) => !!p.drift || !!p.light || (!!p.sway && (r.u === -1 || r.v === -1 || !far));
+      const live = r.pieces.filter(moves);
+      if (far && this.renderer) {
+        const c = new Container();
+        c.zIndex = z;
+        c.addChild(col);
+        for (const p of r.pieces) if (!moves(p)) stand(c, { ...p, sway: false }, x, y);
+        still.addChild(c);
+        leases.push(lease);
+      }
+      if (!far || !this.renderer || live.length) {
+        const c = new Container();
+        c.zIndex = z;
+        if (!far || !this.renderer) {
+          built.tex.push(lease);
+          c.addChild(col);
+          for (const p of r.pieces) if (!moves(p)) stand(c, p, x, y);
+        }
+        for (const p of live) stand(c, p, x, y);
+        this.root.addChild(c);
+        this.rim.push(c);
+      }
     }
+    if (still.children.length && this.renderer) {
+      const bounds = still.getLocalBounds();
+      try {
+        this.rimTex = this.renderer.generateTexture({ target: still, resolution: 1 });
+      } finally {
+        still.destroy({ children: true });
+        for (const l of leases) l.release();
+      }
+      const sp = new Sprite(this.rimTex);
+      sp.position.set(bounds.minX, bounds.minY);
+      sp.zIndex = -1e5;
+      this.root.addChild(sp);
+      this.rim.push(sp);
+    } else still.destroy({ children: true });
     // the wall's torches, on the face that looks onto the board
     for (const t of wallTorches(b)) {
       const edge = tileAt(b, Math.max(0, t.u), Math.max(0, t.v))!;
@@ -890,7 +932,7 @@ export class BoardView {
       }
       const g = new Sprite(glow());
       g.anchor.set(0.5);
-      g.tint = TORCH_LIGHT;
+      g.tint = torchLight(b.area);
       g.blendMode = 'add';
       g.scale.set(1.5);
       g.position.set(x, y - 14);
@@ -1515,7 +1557,7 @@ export class BoardView {
 }
 
 /** LIVING-FIELDS: a trap's mark painted on its tile's top (the canvas is clipped to the diamond): the tell every fighter and the player can
- *  see before the fight. Plain stand-ins, drawn here, until the painted sheet lands (`docs/notes/living-fields-art-prompts.md`); brambles,
+ *  see before the fight. Plain stand-ins, drawn here, until the painted sheet lands (`docs/notes/land-identity-art-prompts.md`); brambles,
  *  totems, wards and braziers also have something standing on the tile (`trapProps`). */
 function paintTrap(g: CanvasRenderingContext2D, t: Tile, area: Area, strike?: HazardKind): void {
   const cx = TW / 2;

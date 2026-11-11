@@ -1,6 +1,6 @@
-# LIVING-FIELDS: cut the painted sheets into the game (docs/notes/living-fields-art-prompts.md).
-#   python3 -I tools/living-fields/import-art.py traps   art-source/living-fields/traps.png -> src/art/living-fields/traps.png + traps.json
-#   python3 -I tools/living-fields/import-art.py life    art-source/living-fields/life.png  -> src/art/living-fields/life.png + life.json
+# LIVING-FIELDS: cut the painted sheets into the game (docs/notes/land-identity-art-prompts.md).
+#   python3 -I tools/living-fields/import-art.py traps   art-source/land-identity/traps.png -> src/art/living-fields/traps.png + traps.json
+#   python3 -I tools/living-fields/import-art.py life    art-source/land-identity/life.png  -> src/art/living-fields/life.png + life.json
 # Each sheet is a grid of equal cells, named in reading order below. A cell is trimmed to its paint and packed into one atlas; the json
 # says where each lies and where its tile's middle is against it (`foot`), so the game stands it on its tile with no code change
 # (`src/render/trapArt.ts`). A cell left blank in the sheet is left out, and the game keeps its stand-in for it. Run once; the results
@@ -24,9 +24,9 @@ SHEETS = {
 
 def cut(kind):
     spec = SHEETS[kind]
-    src = os.path.join(ROOT, 'art-source', 'living-fields', f'{kind}.png')
+    src = os.path.join(ROOT, 'art-source', 'land-identity', f'{kind}.png')
     if not os.path.exists(src):
-        sys.exit(f'{src} is not there yet: paint it from docs/notes/living-fields-art-prompts.md')
+        sys.exit(f'{src} is not there yet: paint it from docs/notes/land-identity-art-prompts.md')
     sheet = Image.open(src).convert('RGBA')
     cw, ch = spec['cell']
     cols = spec['cols']

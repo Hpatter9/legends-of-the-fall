@@ -801,7 +801,7 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   from the packs for it.
 - The battlefield's life (LIVING-FIELDS step 4, `src/render/boardLife.ts`) uses art already credited above: the road's pecking birds,
   growth and fall strips (`src/art/road/`), the hold sheets' decals (`src/art/assault/<hold>/decals.webp`) and the Pixel Effects
-  pack's puffs and smoke. The butterfly and the fish are plain stand-ins drawn in code until `art-source/living-fields/life.png` is painted.
+  pack's puffs and smoke. The butterfly and the fish are plain stand-ins drawn in code until `art-source/land-identity/life.png` is painted.
 - The traps' stand-ins (LIVING-FIELDS step 3) use the graveyard's thorns (`src/art/areas/graveyard/tall*.png`), the Calamity's skull
   totem and runes (`src/art/calzones/`) and the road's brazier; the rest are marks drawn in code until
-  `art-source/living-fields/traps.png` is painted.
+  `art-source/land-identity/traps.png` is painted.

@@ -1,4 +1,4 @@
-// LIVING-FIELDS, step 3: the painted traps sheet (`art-source/living-fields/traps.png`, cut by `tools/living-fields/import-art.py` into
+// LIVING-FIELDS, step 3: the painted traps sheet (`art-source/land-identity/traps.png`, cut by `tools/living-fields/import-art.py` into
 // `src/art/living-fields/traps.png` and `traps.json`). Until the sheet is painted the atlas is empty and the board draws its stand-ins
 // (`paintTrap` and `trapProps` in `boardView.ts`); once a cell is in the atlas the board stands it on its tile instead, with no code change.
 

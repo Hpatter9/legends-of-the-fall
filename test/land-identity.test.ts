@@ -4,9 +4,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { AREAS, makeBoard } from '../src/sim/board';
-import { LAND_LIGHT, MAX_DARK, RIMS, RIM_LIGHTS_MAX, RIM_PIECES_MAX, dressingOf, lightsOf, rimOf, wallTorches, wetLow } from '../src/render/landRimRules';
+import { CLOUDS, CLOUD_DARK, LAND_LIGHT, LAND_WASH, MAX_DARK, RIMS, RIM_LIGHTS_MAX, RIM_PIECES_MAX, WASH_MAX, cloudsFor, dressingOf, lightsOf, rimNames, rimOf, wallTorches, washFor, wetLow } from '../src/render/landRimRules';
 import { FLOORS, ROLES, floorRoles } from '../src/render/floorRules';
-import { BATS, batsFor, edgeFalls, lifeFor } from '../src/render/boardLifeRules';
+import { BATS, LAND_AIR, SOARERS, batsFor, edgeFalls, lifeFor, soarersFor } from '../src/render/boardLifeRules';
 
 const atlasOf = (hold: string): string => readFileSync(`src/render/assault${hold === 'orc' ? 'Orc' : hold[0].toUpperCase() + hold.slice(1)}Atlas.ts`, 'utf8');
 
@@ -18,7 +18,7 @@ test('the rim lies outside the board, and the board is not changed by it', () =>
       const rim = rimOf(b);
       assert.equal(JSON.stringify(b), before, area);
       assert.deepEqual(rimOf(makeBoard(seed, area)), rim, 'the same board, the same rim');
-      if (!RIMS[area]) assert.equal(rim.length, 0, `${area} has no rim yet`);
+      assert.ok(rim.length >= (b.w + b.d) * RIMS[area].far, `${area}: every land has a rim along its far edges`);
       for (const r of rim) {
         assert.ok(r.u < 0 || r.v < 0 || r.u >= b.w || r.v >= b.d, `${area}: a rim column on the board at ${r.u},${r.v}`);
         assert.ok(ROLES.includes(r.role));
@@ -71,6 +71,7 @@ test('every set piece is a piece of the land\'s own hold sheet', () => {
       for (const d of dressingOf(b)) names.add(d.piece.name);
     }
     if (RIMS[area]?.rise) names.add('wallLight');
+    for (const n of rimNames(area)) names.add(n);
     for (const n of names) assert.ok(new RegExp(`\\n  ${n}: \\{ r: \\[`).test(atlas), `${area}: ${n} is not in the ${FLOORS[area].hold} sheet`);
     if (RIMS[area]) assert.ok(names.size >= 3, `${area}: only ${[...names].join(', ')}`);
   }
@@ -133,4 +134,71 @@ test('bats in the caves and the crypt, dragonflies and frogs in the mire', () =>
   assert.ok(batsFor('crystal', true) <= Math.ceil(BATS.crystal! / 2), 'half on a battery saver');
   assert.ok((lifeFor('swamp', 'clear').dragonfly ?? 0) >= 2 && (lifeFor('swamp', 'clear').frog ?? 0) >= 2);
   assert.equal(lifeFor('swamp', 'rain').dragonfly, undefined);
+});
+
+test('every land is its own place: open country follows the board, the indoor lands are walled and dark, and each carries its own things', () => {
+  const walled = AREAS.filter((a) => RIMS[a].rise);
+  assert.deepEqual([...walled].sort(), ['crystal', 'dungeon', 'forge']);
+  for (const a of walled) assert.ok(LAND_LIGHT[a], `${a} is walled, so it is dark and lit by its torches`);
+  const has = (area: (typeof AREAS)[number], names: string[]) => {
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 30; seed++) for (const r of rimOf(makeBoard(seed, area))) for (const p of r.pieces) seen.add(p.name);
+    for (const n of names) assert.ok(seen.has(n), `${area}: no ${n} in 30 boards (${[...seen].join(', ')})`);
+  };
+  // (what the owner asked for by name, where the land's sheet has it)
+  has('forest', ['greatOak', 'pine1']);
+  has('snow', ['snowyPine', 'prop15']);
+  has('graveyard', ['prop1', 'kitStakeFence', 'gnarledTree']);
+  has('ruins', ['prop5', 'mazeVine']);
+  has('temple', ['prop5', 'prop6', 'mazeBanner']);
+  has('forge', ['prop5', 'prop4', 'forgeFire']);
+  has('shrine', ['prop1', 'prop4', 'prop5']);
+  has('warcamp', ['stakeLine', 'warTent', 'greatBanner', 'bonfire']);
+  has('dungeon', ['prop3', 'prop10']);
+  for (let seed = 1; seed <= 12; seed++) {
+    for (const area of AREAS) {
+      const spec = RIMS[area];
+      if (!spec.follow) continue;
+      const b = makeBoard(seed, area);
+      for (const r of rimOf(b)) {
+        if (r.role === 'lava') {
+          // (the ashlands' river of lava lies beyond the rocks, at the foot)
+          assert.ok(area === 'volcano' && r.h === 0 && r.ground === 'lava' && (r.u < -1 || r.v < -1));
+          continue;
+        }
+        // (open country stands no more than its two steps over the board's edge beside it: a slope, not a wall)
+        const u = Math.max(0, Math.min(b.w - 1, r.u));
+        const v = Math.max(0, Math.min(b.d - 1, r.v));
+        assert.ok(r.h - b.tiles[v * b.w + u].h <= spec.follow[1] && r.h >= 0, `${area}: ${r.h} beside ${b.tiles[v * b.w + u].h}`);
+      }
+    }
+    // (lava stands only in the ashlands' rim, and only things that belong in it stand on it)
+    const ash = rimOf(makeBoard(seed, 'volcano'));
+    assert.ok(ash.some((r) => r.role === 'lava'));
+    for (const r of ash) if (r.role === 'lava') for (const p of r.pieces) assert.ok(['waterProp13', 'prop5'].includes(p.name));
+  }
+});
+
+test('the sky\'s light: cloud shadows on a clear day over open country only, a weak wash, wheeling birds and drifting leaves', () => {
+  for (const area of AREAS) {
+    const n = cloudsFor(area, 'clear', false);
+    assert.equal(n, CLOUDS[area] ?? 0);
+    assert.ok(n <= 3);
+    if (RIMS[area].rise || LAND_LIGHT[area]) assert.equal(n, 0, `${area} has a roof or its own dusk: no clouds`);
+    for (const w of ['rain', 'fog', 'night', 'snow', 'ash']) assert.equal(cloudsFor(area, w, false), 0);
+    assert.ok(cloudsFor(area, 'clear', true) <= Math.max(0, n - 1) || n === 0);
+    const wash = LAND_WASH[area];
+    if (wash) {
+      assert.ok(wash.alpha > 0 && wash.alpha <= WASH_MAX, `${area}: a wash of ${wash.alpha}`);
+      assert.equal(washFor(area, 'night'), null);
+      assert.equal(washFor(area, 'fog'), null);
+      assert.ok(!LAND_LIGHT[area], 'a dark land has its dark, not a wash');
+    }
+    assert.ok(soarersFor(area, 'clear', false) <= 2 && soarersFor(area, 'rain', false) === 0 && soarersFor(area, 'clear', true) <= 1);
+  }
+  assert.ok(CLOUD_DARK <= 0.15 && WASH_MAX <= 0.1);
+  assert.ok(LAND_WASH.snow && LAND_WASH.snow.mode === 'tint' && LAND_WASH.volcano?.below, 'cold light on the snows, a glow from below in the ashlands');
+  assert.ok(SOARERS.highlands && SOARERS.desert && SOARERS.graveyard);
+  assert.ok(LAND_AIR.autumn && LAND_AIR.shrine && LAND_AIR.volcano?.rises && LAND_AIR.forge?.rises);
+  for (const a of Object.values(LAND_AIR)) assert.ok(a.every >= 400, 'a few at a time');
 });

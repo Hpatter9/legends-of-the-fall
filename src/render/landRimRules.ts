@@ -46,19 +46,45 @@ export interface RimSpec {
   far: number;
   near: number;
   /** A wall rises over the board's edge by this many steps (min, max, by a smooth noise), and one more a ring further out; or the rim
-   *  lies at a fixed height (water: at the foot). */
+   *  lies at a fixed height (water: at the foot); or it is open country that follows the board's own edge, up or down by a step or two
+   *  (min, max, by the same noise). */
   rise?: [number, number];
   level?: number;
+  follow?: [number, number];
   role: Role;
   second?: Role;
+  /** The rings past the first lie at this fixed height (a river of lava beyond the rocks). */
+  secondLevel?: number;
   ground?: Tile['ground'];
+  /** The colour of a wall's torches (a walled land only); warm fire unless given. */
+  torch?: number;
 }
 
-export const RIMS: Partial<Record<Area, RimSpec>> = {
+export const RIMS: Record<Area, RimSpec> = {
   // (the caves: rock walls rising along the back and the side, so the board sits inside a cavern)
   crystal: { far: 2, near: 0, rise: [3, 6], role: 'outcrop', second: 'high' },
   // (the mire: open water all round, deeper further out; the board is an island in it)
   swamp: { far: 3, near: 2, level: 0, role: 'water', second: 'deep', ground: 'water' },
+  // (the crypt: walls of dressed stone, tombs and angels along their tops, cold lamps)
+  dungeon: { far: 2, near: 0, rise: [3, 5], role: 'outcrop', second: 'high', torch: 0x70e8c8 },
+  // (the forge: stone walls hung with pipes, gears and furnaces)
+  forge: { far: 2, near: 0, rise: [3, 5], role: 'outcrop', second: 'high' },
+  // (open country: the land's own ground runs on past the far edges, and carries what grows and stands there)
+  highlands: { far: 2, near: 0, follow: [0, 2], role: 'outcrop', second: 'high' },
+  forest: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'high' },
+  snow: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'high' },
+  desert: { far: 2, near: 0, follow: [0, 2], role: 'ground', second: 'outcrop' },
+  oasis: { far: 2, near: 0, follow: [0, 1], role: 'shore', second: 'ground' },
+  plains: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'second' },
+  autumn: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'second' },
+  graveyard: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'high' },
+  ruins: { far: 2, near: 0, follow: [0, 2], role: 'outcrop', second: 'high' },
+  // (the temple: a raised terrace of pale stone behind the lawns)
+  temple: { far: 2, near: 0, follow: [1, 2], role: 'high', second: 'outcrop' },
+  shrine: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'high' },
+  warcamp: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'second' },
+  // (the ashlands: black rock at the edge, and a river of lava beyond it)
+  volcano: { far: 3, near: 0, follow: [0, 1], role: 'outcrop', second: 'lava', secondLevel: 0 },
 };
 
 /** A wall's torches: one about every this many columns along a far edge. */
@@ -70,6 +96,183 @@ export const RIM_LIGHTS_MAX = 10;
 const LIGHT_WARM = 0xffa040;
 const LIGHT_VIOLET = 0xb090ff;
 const LIGHT_WISP = 0x9affd0;
+const LIGHT_COLD = 0x70e8c8;
+const LIGHT_LAVA = 0xff7a30;
+const LIGHT_LANTERN = 0xffd890;
+
+/** One line of a land's list: the piece, its share of the columns, and where it may stand (which ring; trees and tents stand further
+ *  back, fences and low things at the board's edge). */
+interface Pick {
+  name: string;
+  share: number;
+  scale: number;
+  ring?: 0 | 1;
+  dy?: number;
+  sway?: boolean;
+  drift?: boolean;
+  light?: { colour: number; up: number; reach: number };
+  /** Only on the rim's liquid (lava), or only off it. */
+  wet?: boolean;
+}
+
+/** What stands on each land's rim, from its own hold sheet (the shares of a ring add to under 1: the rest of the columns are bare). */
+const PICKS: Partial<Record<Area, Pick[]>> = {
+  // (the high country: boulders, pines and a standing stone)
+  highlands: [
+    { name: 'boulders', share: 0.2, scale: 0.85 },
+    { name: 'pine1', share: 0.16, scale: 0.95, ring: 1, sway: true },
+    { name: 'pine2', share: 0.1, scale: 0.9, ring: 1, sway: true },
+    { name: 'rocks', share: 0.1, scale: 0.9 },
+    { name: 'standingStone', share: 0.05, scale: 0.7, ring: 1 },
+    { name: 'darkRocks', share: 0.06, scale: 0.9 },
+  ],
+  // (the wood: great oaks and pines standing thick behind the board, ferns, a hollow log, toadstools)
+  forest: [
+    { name: 'greatOak', share: 0.2, scale: 0.85, ring: 1, sway: true },
+    { name: 'pine1', share: 0.14, scale: 0.95, ring: 1, sway: true },
+    { name: 'pine2', share: 0.16, scale: 0.9, sway: true },
+    { name: 'boulders', share: 0.08, scale: 0.75 },
+    { name: 'prop14', share: 0.1, scale: 0.9, ring: 0, sway: true },
+    { name: 'prop13', share: 0.08, scale: 0.9, ring: 0, sway: true },
+    { name: 'prop5', share: 0.06, scale: 0.9, ring: 0 },
+    { name: 'prop6', share: 0.05, scale: 0.85, ring: 0 },
+  ],
+  // (the snows: white pines, drifts, bare trees, and a frozen fall now and then)
+  snow: [
+    { name: 'snowyPine', share: 0.24, scale: 0.95, sway: true },
+    { name: 'pine2', share: 0.08, scale: 0.9, ring: 1 },
+    { name: 'snowyBush', share: 0.1, scale: 0.9 },
+    { name: 'prop15', share: 0.12, scale: 0.9 },
+    { name: 'bareTree', share: 0.08, scale: 0.9 },
+    { name: 'boulders', share: 0.08, scale: 0.8 },
+    { name: 'landmarkD', share: 0.03, scale: 0.75, ring: 1 },
+  ],
+  // (the dunes: red rock, dead thorn, old bones, a fallen column of something older)
+  desert: [
+    { name: 'boulders', share: 0.14, scale: 0.75 },
+    { name: 'thornBush', share: 0.1, scale: 0.75 },
+    { name: 'bareTree', share: 0.07, scale: 0.8, ring: 1 },
+    { name: 'prop8', share: 0.09, scale: 0.9 },
+    { name: 'rocks', share: 0.08, scale: 0.9 },
+    { name: 'prop4', share: 0.05, scale: 0.85 },
+    { name: 'landmarkD', share: 0.03, scale: 0.7, ring: 1 },
+  ],
+  // (the oasis: shade trees on the green, tents and jars of a caravan)
+  oasis: [
+    { name: 'pine1', share: 0.14, scale: 0.7, ring: 1, sway: true },
+    { name: 'prop2', share: 0.16, scale: 0.9, sway: true },
+    { name: 'prop3', share: 0.1, scale: 0.9, sway: true },
+    { name: 'pine2', share: 0.1, scale: 0.9, sway: true },
+    { name: 'pavilionTent', share: 0.05, scale: 0.7, ring: 1 },
+    { name: 'campTent', share: 0.04, scale: 0.7, ring: 1 },
+    { name: 'prop1', share: 0.07, scale: 0.85, ring: 0 },
+  ],
+  // (the meadows: long grass, a far copse, a well and a wood stack)
+  plains: [
+    { name: 'tallGrass', share: 0.22, scale: 0.8, sway: true },
+    { name: 'pine1', share: 0.16, scale: 0.9, ring: 1, sway: true },
+    { name: 'fallenLog', share: 0.05, scale: 0.8 },
+    { name: 'woodpile', share: 0.04, scale: 0.75, ring: 1 },
+    { name: 'well', share: 0.03, scale: 0.75, ring: 1 },
+    { name: 'stump1', share: 0.05, scale: 0.9 },
+  ],
+  // (the autumn wood: gold birches, red brush, logs and stumps)
+  autumn: [
+    { name: 'prop13', share: 0.3, scale: 1, sway: true },
+    { name: 'prop14', share: 0.16, scale: 0.95, sway: true },
+    { name: 'fallenLog', share: 0.07, scale: 0.8 },
+    { name: 'stump1', share: 0.06, scale: 0.9 },
+    { name: 'woodpile', share: 0.04, scale: 0.75, ring: 1 },
+    { name: 'prop9', share: 0.03, scale: 0.9, ring: 1 },
+  ],
+  // (the graveyard: headstones and crosses, an iron fence, dead trees, a mausoleum, lamps and mist)
+  graveyard: [
+    { name: 'kitStakeFence', share: 0.2, scale: 0.8, ring: 0 },
+    { name: 'prop1', share: 0.14, scale: 0.9 },
+    { name: 'prop2', share: 0.12, scale: 0.9 },
+    { name: 'gnarledTree', share: 0.12, scale: 0.9, ring: 1 },
+    { name: 'bareTree', share: 0.08, scale: 0.9, ring: 1 },
+    { name: 'prop9', share: 0.05, scale: 0.9 },
+    { name: 'mausoleum', share: 0.04, scale: 0.7, ring: 1 },
+    { name: 'prop10', share: 0.05, scale: 0.9, light: { colour: LIGHT_COLD, up: 34, reach: 1.4 } },
+    { name: 'mist', share: 0.1, scale: 1.5, drift: true, dy: -2 },
+  ],
+  // (the ruins: standing and fallen columns, broken walls under ivy, a statue)
+  ruins: [
+    { name: 'prop5', share: 0.16, scale: 1 },
+    { name: 'prop4', share: 0.1, scale: 0.9 },
+    { name: 'mazeVine', share: 0.08, scale: 0.9, ring: 0 },
+    { name: 'mazeBroken', share: 0.08, scale: 0.9, ring: 0 },
+    { name: 'mazeCracked', share: 0.06, scale: 0.9, ring: 0 },
+    { name: 'ruinA', share: 0.05, scale: 0.6, ring: 1 },
+    { name: 'ruinB', share: 0.05, scale: 0.6, ring: 1 },
+    { name: 'prop7', share: 0.05, scale: 0.9 },
+    { name: 'prop2', share: 0.08, scale: 0.85, sway: true },
+  ],
+  // (the temple: a colonnade, braziers, banners, an altar and its bull)
+  temple: [
+    { name: 'prop5', share: 0.26, scale: 1.1 },
+    { name: 'prop6', share: 0.12, scale: 1, light: { colour: LIGHT_WARM, up: 24, reach: 1.6 } },
+    { name: 'mazeBanner', share: 0.1, scale: 0.9, ring: 0 },
+    { name: 'prop7', share: 0.06, scale: 0.9 },
+    { name: 'prop3', share: 0.1, scale: 0.95, ring: 1, sway: true },
+    { name: 'landmarkC', share: 0.04, scale: 0.6, ring: 1 },
+    { name: 'landmarkB', share: 0.03, scale: 0.6, ring: 1 },
+  ],
+  // (the shrine: blossom and wish trees, bamboo, stone lanterns, small gates, a fox)
+  shrine: [
+    { name: 'prop1', share: 0.2, scale: 0.95, sway: true },
+    { name: 'prop3', share: 0.12, scale: 0.95, sway: true },
+    { name: 'prop2', share: 0.08, scale: 0.9, ring: 1 },
+    { name: 'prop4', share: 0.1, scale: 0.9, light: { colour: LIGHT_LANTERN, up: 30, reach: 1.5 } },
+    { name: 'prop5', share: 0.08, scale: 1, ring: 0 },
+    { name: 'prop8', share: 0.06, scale: 0.9, light: { colour: LIGHT_LANTERN, up: 40, reach: 1.4 } },
+    { name: 'prop6', share: 0.05, scale: 0.9 },
+    { name: 'prop12', share: 0.05, scale: 0.9, ring: 1, sway: true },
+    { name: 'landmarkA', share: 0.03, scale: 0.6, ring: 1 },
+  ],
+  // (the war camp: a stake line at the board's edge; tents, banners, fires and a watchtower behind it)
+  warcamp: [
+    { name: 'stakeLine', share: 0.34, scale: 0.9, ring: 0 },
+    { name: 'smallBanner', share: 0.1, scale: 0.85, ring: 0, sway: true },
+    { name: 'warTent', share: 0.12, scale: 0.6, ring: 1 },
+    { name: 'conicalTent', share: 0.12, scale: 0.75, ring: 1 },
+    { name: 'greatBanner', share: 0.1, scale: 0.85, ring: 1, sway: true },
+    { name: 'bonfire', share: 0.06, scale: 0.7, ring: 1, light: { colour: LIGHT_WARM, up: 20, reach: 1.8 } },
+    { name: 'watchtower', share: 0.05, scale: 0.75, ring: 1 },
+    { name: 'woodpile', share: 0.05, scale: 0.7, ring: 1 },
+  ],
+  // (the ashlands: burnt and burning trees and spires of glowing rock on the black edge; vents smoking in the lava beyond)
+  volcano: [
+    { name: 'burntTree', share: 0.14, scale: 0.9, wet: false },
+    { name: 'prop10', share: 0.1, scale: 0.9, wet: false, light: { colour: LIGHT_LAVA, up: 20, reach: 1.3 } },
+    { name: 'prop5', share: 0.14, scale: 1, wet: false, light: { colour: LIGHT_LAVA, up: 16, reach: 1.2 } },
+    { name: 'prop9', share: 0.1, scale: 0.9, wet: false },
+    { name: 'prop11', share: 0.05, scale: 0.9, wet: false },
+    { name: 'landmarkD', share: 0.04, scale: 0.7, wet: false, light: { colour: LIGHT_LAVA, up: 30, reach: 1.8 } },
+    { name: 'waterProp13', share: 0.16, scale: 1, wet: true, drift: true, dy: -6 },
+    { name: 'prop5', share: 0.1, scale: 0.8, wet: true },
+  ],
+  // (the crypt's wall tops: tombs, coffins, angels, skulls and cold lamps)
+  dungeon: [
+    { name: 'prop3', share: 0.12, scale: 0.9 },
+    { name: 'coffinStack', share: 0.08, scale: 0.85 },
+    { name: 'prop9', share: 0.08, scale: 0.9 },
+    { name: 'skullPile', share: 0.08, scale: 0.8 },
+    { name: 'prop10', share: 0.1, scale: 0.9, light: { colour: LIGHT_COLD, up: 34, reach: 1.4 } },
+    { name: 'wallDrift', share: 0.05, scale: 0.9 },
+  ],
+  // (the forge's wall tops: pipes and gauges, gears, a furnace, a crane, chains)
+  forge: [
+    { name: 'prop5', share: 0.14, scale: 0.9 },
+    { name: 'prop4', share: 0.1, scale: 0.9 },
+    { name: 'forgeFire', share: 0.08, scale: 0.75, light: { colour: LIGHT_WARM, up: 20, reach: 1.6 } },
+    { name: 'prop7', share: 0.06, scale: 0.85 },
+    { name: 'prop15', share: 0.08, scale: 0.9 },
+    { name: 'landmarkA', share: 0.04, scale: 0.65, ring: 1, light: { colour: LIGHT_LAVA, up: 24, reach: 1.8 } },
+    { name: 'waterProp13', share: 0.05, scale: 0.9, ring: 0 },
+  ],
+};
 
 /** The pieces a rim column carries, by land: a hash of the seed and the column says which (most columns carry none). */
 function piecesFor(area: Area, b: Board, u: number, v: number, ring: number, nearEdge: boolean, onWater: boolean): RimPiece[] {
@@ -98,8 +301,20 @@ function piecesFor(area: Area, b: Board, u: number, v: number, ring: number, nea
     if (r < 0.88) return [{ name: 'mist', scale: 1.6, dx: jx, dy: -2, drift: true }];
     return [];
   }
+  // (the other lands: down the land's list, taking the lines that may stand on this ring and this ground)
+  let at = 0;
+  for (const p of PICKS[area] ?? []) {
+    if (p.ring !== undefined && (p.ring === 0) !== (ring === 0)) continue;
+    if (p.wet !== undefined && p.wet !== onWater) continue;
+    if (p.wet === undefined && onWater) continue;
+    at += p.share;
+    if (r < at) return [{ name: p.name, scale: p.scale, dx: jx, dy: p.dy ?? 3, ...(p.sway ? { sway: true } : {}), ...(p.drift ? { drift: true } : {}), ...(p.light ? { light: p.light } : {}) }];
+  }
   return [];
 }
+
+/** The names a land's rim can carry (the tests check each against the land's sheet). */
+export const rimNames = (area: Area): string[] => (PICKS[area] ?? []).map((p) => p.name);
 
 /** A land's rim for a board: every column outside it, back to front. Empty for a land with none, for an army's road (it has its own
  *  land beside it) and for a field too big to be a battlefield. */
@@ -118,14 +333,16 @@ export function rimOf(b: Board): RimTile[] {
       // (over the highest of the board's edge tiles beside it, so the wall always stands over the board)
       const base = Math.max(edgeH(u - 1, v), edgeH(u, v), edgeH(u + 1, v), edgeH(u, v - 1), edgeH(u, v + 1));
       h = base + spec.rise[0] + Math.round(noise(u + 20, v + 20, 2.6, salt + 5) * (spec.rise[1] - spec.rise[0])) + ring;
-    } else h = spec.level ?? 0;
+    } else if (ring > 0 && spec.secondLevel !== undefined) h = spec.secondLevel;
+    else if (spec.follow) h = Math.max(0, edgeH(u, v) + spec.follow[0] + Math.round(noise(u + 20, v + 20, 2.6, salt + 5) * (spec.follow[1] - spec.follow[0])));
+    else h = spec.level ?? 0;
     const role = ring > 0 && spec.second ? spec.second : spec.role;
-    const onWater = role === 'water' || role === 'deep';
+    const onWater = role === 'water' || role === 'deep' || role === 'lava';
     let ps = pieces < RIM_PIECES_MAX ? piecesFor(b.area, b, u, v, ring, nearEdge, onWater) : [];
     if (ps.some((p) => p.light) && lights >= RIM_LIGHTS_MAX) ps = ps.map(({ light, ...p }) => (void light, p));
     pieces += ps.length;
     lights += ps.filter((p) => p.light).length;
-    out.push({ u, v, h, role, ground: onWater ? (role === 'deep' ? 'deep' : spec.ground) : undefined, pieces: ps, near: nearEdge });
+    out.push({ u, v, h, role, ground: onWater ? (role === 'deep' ? 'deep' : role === 'lava' ? 'lava' : spec.ground) : undefined, pieces: ps, near: nearEdge });
   };
   // the far edges: beyond row 0 (v < 0) and beyond column 0 (u < 0), with the corner between them
   for (let ring = 0; ring < spec.far; ring++) {
@@ -155,8 +372,9 @@ export function wallTorches(b: Board): { u: number; v: number; edge: 'v' | 'u' }
   return out;
 }
 
-/** The colour of a wall torch's light. */
+/** The colour of a wall torch's light: warm fire, or the land's own (the crypt's lamps burn cold). */
 export const TORCH_LIGHT = LIGHT_WARM;
+export const torchLight = (area: Area): number => RIMS[area].torch ?? TORCH_LIGHT;
 
 // ---- dressing on the board's own tiles ----------------------------------------------------------------------------------------------
 
@@ -212,6 +430,10 @@ export interface LandLight {
  *  from the ground (the test holds the same contrast rule the floors pass). */
 export const LAND_LIGHT: Partial<Record<Area, LandLight>> = {
   crystal: { dark: 0.4, colour: 0x0a0824 },
+  dungeon: { dark: 0.32, colour: 0x06081a },
+  forge: { dark: 0.3, colour: 0x140804 },
+  // (the graveyard lies under a dusk of its own, lighter than a roof's)
+  graveyard: { dark: 0.24, colour: 0x060a14 },
   // (the mire is not darkened: its ground sits just lighter than a hero, and any dark over it brings the two together)
 };
 export const MAX_DARK = 0.42;
@@ -232,7 +454,7 @@ export function lightsOf(b: Board, rim: readonly RimTile[] = rimOf(b)): LightSpo
   const w = b.w;
   for (const t of wallTorches(b)) {
     const edge = b.tiles[Math.max(0, t.v) * w + Math.max(0, t.u)];
-    out.push({ u: t.u + (t.edge === 'u' ? 0.5 : 0), v: t.v + (t.edge === 'v' ? 0.5 : 0), h: edge.h + 1.6, colour: TORCH_LIGHT, reach: 2.6, kind: 'torch' });
+    out.push({ u: t.u + (t.edge === 'u' ? 0.5 : 0), v: t.v + (t.edge === 'v' ? 0.5 : 0), h: edge.h + 1.6, colour: torchLight(b.area), reach: 2.6, kind: 'torch' });
   }
   for (const r of rim) for (const p of r.pieces) if (p.light) out.push({ u: r.u, v: r.v, h: r.h, colour: p.light.colour, reach: p.light.reach, kind: 'magic' });
   b.tiles.forEach((t, i) => {
@@ -244,3 +466,32 @@ export function lightsOf(b: Board, rim: readonly RimTile[] = rimOf(b)): LightSpo
   });
   return out;
 }
+
+// ---- daylight, cold light and underglow ---------------------------------------------------------------------------------------------
+
+/** The lands under an open sky: on a clear day the sun lies on them and the shadows of clouds drift across (how many at once). */
+export const CLOUDS: Partial<Record<Area, number>> = { highlands: 2, plains: 2, forest: 1, desert: 1, oasis: 1, autumn: 2, ruins: 2, temple: 1, warcamp: 2, snow: 1 };
+/** How long a cloud's shadow takes to cross the board (ms), and how dark it lies. */
+export const CLOUD_CROSS_MS = 42000;
+export const CLOUD_DARK = 0.12;
+/** The clouds over a board in a weather: only on a clear day; one fewer on a battery saver (reduced motion holds them where they lie). */
+export const cloudsFor = (area: Area, weather: string, saver: boolean): number => (weather === 'clear' ? Math.max(0, (CLOUDS[area] ?? 0) - (saver ? 1 : 0)) : 0);
+
+/** A wash of light over a whole land: the snows' cold light, the dunes' and the oasis's heat, the ashlands' red glow from below (which
+ *  breathes). Weak: a tint, never a veil (`WASH_MAX`). Not at night or in fog, which have their own light. */
+export interface LandWash {
+  colour: number;
+  alpha: number;
+  /** Laid over (a tint) or added (a glow); a glow from below is strongest at the board's foot. */
+  mode: 'tint' | 'glow';
+  below?: boolean;
+}
+export const LAND_WASH: Partial<Record<Area, LandWash>> = {
+  snow: { colour: 0xa8c8ff, alpha: 0.07, mode: 'tint' },
+  desert: { colour: 0xffd070, alpha: 0.06, mode: 'glow' },
+  oasis: { colour: 0xffe090, alpha: 0.05, mode: 'glow' },
+  volcano: { colour: 0xff4a18, alpha: 0.1, mode: 'glow', below: true },
+  shrine: { colour: 0xc8a0ff, alpha: 0.05, mode: 'glow' },
+};
+export const WASH_MAX = 0.1;
+export const washFor = (area: Area, weather: string): LandWash | null => (weather === 'night' || weather === 'fog' ? null : LAND_WASH[area] ?? null);
