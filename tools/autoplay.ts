@@ -33,7 +33,8 @@ import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
 import { armEidolon, armShade, SHADE_ID, type ShadeFight } from '../src/sim/eidolons';
 import { orderEidolon } from '../src/sim/orders';
 import { RANK_MAX, STARTER_SPELLS, type SpellId } from '../src/sim/spells';
-import { castList, DEFAULT_SCHOOL, fitSchool, schoolOf } from '../src/sim/schools';
+import { castList, DEFAULT_SCHOOL, fitSchool, LOADOUT_SLOTS, schoolOf } from '../src/sim/schools';
+import { spellSlots } from '../src/sim/spellSlots';
 import { armDecree } from '../src/sim/decrees';
 import { TOWER_SPELLS } from '../src/sim/spellSources';
 import { giveMastery, MASTERY_AUTO } from './skills/mastery';
@@ -59,7 +60,8 @@ export function botLoadout(castle: Castle = newCastle(), meta?: Meta): SpellId[]
   if (botSpells.loadout) return [...botSpells.loadout];
   const owned = new Set<SpellId>([...STARTER_SPELLS, ...(meta?.spellbook.owned ?? [])]);
   for (const [id, lvl] of Object.entries(TOWER_SPELLS)) if ((lvl ?? 9) <= castle.mageTower) owned.add(id as SpellId);
-  return castList(fitSchool({ owned: [...owned], equipped: [] }, DEFAULT_SCHOOL));
+  // (SPELL-SLOTS: no more spells than the save has slots open; a tool with no save, or `startedMeta`'s old save, has all four)
+  return castList(fitSchool({ owned: [...owned], equipped: [] }, DEFAULT_SCHOOL, meta ? spellSlots(meta) : LOADOUT_SLOTS));
 }
 /** The ranks the bot's marks buy (KING-SPELLS batch 6): a mark for each Mage Tower level and each army cleared, spent a rank at a time round
  *  the spells it casts, in order (each to rank 2, then each to rank 3). */

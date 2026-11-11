@@ -208,7 +208,8 @@ export const GWEN_QUESTS: readonly QuestDef[] = [
     id: 'smokeTheBees',
     title: 'Smoke Out the Bees',
     giver: 'gwen',
-    needs: { kind: 'army', army: 'beasts' },
+    // (SPELL-SLOTS: a new save carries Heal alone until it can choose its spells, so the quest waits for the spellbook)
+    needs: { kind: 'all', of: [{ kind: 'army', army: 'beasts' }, { kind: 'spellbook' }] },
     text: 'Cast Meteor, Meteor Shower or Poison Cloud 6 times',
     offer: [
       'Bees have taken the brewhouse. My mead, my brewhouse, their bees.',
