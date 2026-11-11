@@ -24,6 +24,8 @@ export interface Settings {
   ruler: RulerId;
   /** Set once the player picks a ruler in the picker (kept for old saves; the Iron Stag is the default again and stays whoever picked it). */
   rulerPicked?: boolean;
+  /** Cosmetic court companions, independent of the battle party. Missing means use the strongest owned heroes. */
+  courtHeroes?: string[];
   /** Music volume, 0 to 100, heard on the perceptual curve (`sliderGain` in `render/audioRules.ts`). */
   music: number;
   /** Effects volume, 0 to 100, on the same curve. */
@@ -89,6 +91,7 @@ export function parseSettings(raw: string | null): Settings {
     // (a saved `the_king` loads as the default, the Iron Stag, quietly: every other setting is kept)
     ruler: rulerOf(saved.ruler).id,
     ...(saved.rulerPicked === true ? { rulerPicked: true } : {}),
+    ...(Array.isArray(saved.courtHeroes) ? { courtHeroes: [...new Set(saved.courtHeroes.filter((k): k is string => typeof k === 'string' && k.length > 0))].slice(0,4) } : {}),
     music: volume(saved.music, DEFAULTS.music),
     effects: volume(saved.effects, DEFAULTS.effects),
     volCurve: true,

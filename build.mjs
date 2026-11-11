@@ -73,6 +73,12 @@ mkdirSync(`${out}/fonts`, { recursive: true });
 for (const [pkgName, f] of FONTS) copyFileSync(`node_modules/@fontsource/${pkgName}/files/${f}`, `${out}/fonts/${f}`);
 // (the pixel UI's frames, as files the CSS 9-slices by URL: ui/<name>.png; the tab icons are bundled into game.js instead)
 const UI_FILES = [];
+// Crown Terrace: eight ruler environments and independent landmark stages, all available offline.
+mkdirSync(`${out}/ui/crown-terrace`, { recursive: true });
+for (const f of readdirSync('src/art/crown-terrace').filter((f) => f.endsWith('.webp'))) {
+  copyFileSync(`src/art/crown-terrace/${f}`, `${out}/ui/crown-terrace/${f}`);
+  UI_FILES.push(`ui/crown-terrace/${f}`);
+}
 mkdirSync(`${out}/ui`, { recursive: true });
 for (const f of readdirSync('src/art/ui').filter((f) => f.endsWith('.png') && !f.startsWith('tab-'))) {
   copyFileSync(`src/art/ui/${f}`, `${out}/ui/${f}`);

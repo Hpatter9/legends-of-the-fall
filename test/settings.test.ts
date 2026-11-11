@@ -66,6 +66,13 @@ test('the chosen ruler is saved by identity; missing and malformed choices get t
   }
 });
 
+test('court companions persist separately from ruler and tolerate malformed old settings', () => {
+  assert.equal(parseSettings(null).courtHeroes, undefined);
+  assert.deepEqual(parseSettings(JSON.stringify({ruler:'frost_witch',courtHeroes:['wizard','knight','wizard',null,42,'','archer','cleric','samurai']})).courtHeroes,['wizard','knight','archer','cleric']);
+  assert.equal(parseSettings('{"courtHeroes":"knight"}').courtHeroes,undefined);
+  assert.deepEqual(parseSettings('{"courtHeroes":[]}').courtHeroes,[]);
+});
+
 // The King was retired in DEFAULT-RULER (the owner's call): a save that chose him loads as the Iron Stag, quietly, with every other setting kept.
 test('a saved The King loads as the Iron Stag and keeps every other setting', () => {
   const saved = { ruler: 'the_king', rulerPicked: true, music: 40, effects: 25, volCurve: true, speed: 2, shake: false, quips: false };

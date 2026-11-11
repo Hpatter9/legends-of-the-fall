@@ -1,0 +1,282 @@
+[
+  {
+    "kind": "knight",
+    "name": "Knight"
+  },
+  {
+    "kind": "samurai",
+    "name": "Samurai"
+  },
+  {
+    "kind": "kunoichi",
+    "name": "Kunoichi"
+  },
+  {
+    "kind": "archer",
+    "name": "Archer"
+  },
+  {
+    "kind": "wizard",
+    "name": "Fire Wizard"
+  },
+  {
+    "kind": "peasant",
+    "name": "Peasant"
+  },
+  {
+    "kind": "ninjaMonk",
+    "name": "Ninja Monk"
+  },
+  {
+    "kind": "wanderer",
+    "name": "Wanderer"
+  },
+  {
+    "kind": "lightningMage",
+    "name": "Lightning Mage"
+  },
+  {
+    "kind": "kitsune",
+    "name": "Kitsune"
+  },
+  {
+    "kind": "karasu",
+    "name": "Karasu Tengu"
+  },
+  {
+    "kind": "yamabushi",
+    "name": "Yamabushi Tengu"
+  },
+  {
+    "kind": "werewolf",
+    "name": "Werewolf"
+  },
+  {
+    "kind": "minotaur",
+    "name": "Minotaur"
+  },
+  {
+    "kind": "satyr",
+    "name": "Satyr"
+  },
+  {
+    "kind": "gorgon",
+    "name": "Gorgon"
+  },
+  {
+    "kind": "samuraiCommander",
+    "name": "Samurai Commander"
+  },
+  {
+    "kind": "paladin",
+    "name": "Paladin"
+  },
+  {
+    "kind": "cleric",
+    "name": "Cleric"
+  },
+  {
+    "kind": "druid",
+    "name": "Druid"
+  },
+  {
+    "kind": "barbarian",
+    "name": "Barbarian"
+  },
+  {
+    "kind": "ranger",
+    "name": "Ranger"
+  },
+  {
+    "kind": "warlock",
+    "name": "Warlock"
+  },
+  {
+    "kind": "illusionist",
+    "name": "Illusionist"
+  },
+  {
+    "kind": "gunslinger",
+    "name": "Gunslinger"
+  },
+  {
+    "kind": "shambler",
+    "name": "Shambler"
+  },
+  {
+    "kind": "rifleBot",
+    "name": "Rifle Bot"
+  },
+  {
+    "kind": "mercenary",
+    "name": "Mercenary"
+  },
+  {
+    "kind": "mummy",
+    "name": "Mummy"
+  },
+  {
+    "kind": "buccaneer",
+    "name": "Buccaneer"
+  },
+  {
+    "kind": "wolfBard",
+    "name": "Wolf Bard"
+  },
+  {
+    "kind": "beastmaster",
+    "name": "Beastmaster"
+  },
+  {
+    "kind": "kraken",
+    "name": "Kraken Mate"
+  },
+  {
+    "kind": "lancer",
+    "name": "Lancer"
+  },
+  {
+    "kind": "reaper",
+    "name": "Reaper"
+  },
+  {
+    "kind": "timeWitch",
+    "name": "Time Witch"
+  },
+  {
+    "kind": "arcBlade",
+    "name": "Arc Blade"
+  },
+  {
+    "kind": "dreadPirate",
+    "name": "Dread Pirate"
+  },
+  {
+    "kind": "siegeBot",
+    "name": "Siege Bot"
+  },
+  {
+    "kind": "priestess",
+    "name": "High Priestess"
+  },
+  {
+    "kind": "dragoon",
+    "name": "Queen Dragoon"
+  },
+  {
+    "kind": "juggernaut",
+    "name": "Juggernaut"
+  },
+  {
+    "kind": "sage",
+    "name": "Great Sage"
+  },
+  {
+    "kind": "demonSwordsman",
+    "name": "Demon Swordsman"
+  },
+  {
+    "kind": "tyrant",
+    "name": "Tyrant"
+  },
+  {
+    "kind": "vampireLord",
+    "name": "Vampire Lord"
+  },
+  {
+    "kind": "hemomancer",
+    "name": "Hemomancer"
+  },
+  {
+    "kind": "nightstalker",
+    "name": "Strigoi"
+  },
+  {
+    "kind": "bloodGargoyle",
+    "name": "Blood Gargoyle"
+  },
+  {
+    "kind": "dhampir",
+    "name": "Dhampir"
+  },
+  {
+    "kind": "warDrummer",
+    "name": "War Drummer"
+  },
+  {
+    "kind": "geomancer",
+    "name": "Geomancer"
+  },
+  {
+    "kind": "bellWarden",
+    "name": "Bell Warden"
+  },
+  {
+    "kind": "falconer",
+    "name": "Falconer"
+  },
+  {
+    "kind": "banneret",
+    "name": "Banneret"
+  },
+  {
+    "kind": "astralSphinx",
+    "name": "Astral Sphinx"
+  },
+  {
+    "kind": "mirageDancer",
+    "name": "Mirage Dancer"
+  },
+  {
+    "kind": "plagueDoctor",
+    "name": "Plague Doctor"
+  },
+  {
+    "kind": "bombardier",
+    "name": "Bombardier"
+  },
+  {
+    "kind": "astrologer",
+    "name": "Astrologer"
+  },
+  {
+    "kind": "inquisitor",
+    "name": "Inquisitor"
+  },
+  {
+    "kind": "seraph",
+    "name": "Seraph"
+  },
+  {
+    "kind": "corsairSurgeon",
+    "name": "Corsair Surgeon"
+  },
+  {
+    "kind": "harpooner",
+    "name": "Harpooner"
+  },
+  {
+    "kind": "seaReaver",
+    "name": "Sea Reaver"
+  },
+  {
+    "kind": "vael",
+    "name": "Eclipse Sovereign"
+  },
+  {
+    "kind": "astrax",
+    "name": "Last Star"
+  },
+  {
+    "kind": "ilyra",
+    "name": "Unburied Saint"
+  },
+  {
+    "kind": "orrun",
+    "name": "Worldroot"
+  },
+  {
+    "kind": "nyxara",
+    "name": "Fateweaver"
+  }
+]

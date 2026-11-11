@@ -1,4 +1,4 @@
-// The Keep: an animated throne hall and a separate building ledger. Presentation only; upgrades use the castle simulation.
+// The Keep: an animated royal terrace and a separate building ledger. Presentation only; upgrades use the castle simulation.
 
 import {
   BUILDING_IDS,
@@ -15,8 +15,7 @@ import {
 import { roomsOf } from './sim/rooms';
 import type { Meta } from './sim/meta';
 import { strongest } from './menuHeroes';
-import { sheetInfo } from './render/sheets';
-import { loadImage } from './render/loadImage';
+import { drawCourtFigure } from './render/courtFigure';
 import { VFX, type VfxKey } from './render/vfxArt';
 import { UNITS } from './sim/units';
 import { play } from './render/sound';
@@ -27,9 +26,6 @@ import { showQuip, hideQuip } from './quipView';
 import {
   chewBob,
   drawDuchessCosmetic,
-  drawHaystack,
-  FRAME as GOAT_FRAME,
-  goatFrame,
   hopLift,
   rollDailyTreat,
   tapNudgeGoat,
@@ -38,15 +34,13 @@ import {
 import { TrophyWallModal } from './trophyWall';
 
 // Bespoke Castle Throne Room background and Seated King sprite sheets
-import throneRoomUrl from './art/throne/throne_room.png';
-import { drawRuler } from './render/rulerArt';
-import { settings } from './settings';
-import { rulerOf, rulerWords } from './rulerRules';
+import { settings, setSetting, onSettings } from './settings';
+import { RULERS, rulerOf, rulerWords } from './rulerRules';
+import { CrownTerracePainter } from './render/crownTerracePaint';
+import { RULER_COURTS, TERRACE_WIDTH, TERRACE_HEIGHT, TERRACE_KING as KING_SPOT, TERRACE_GUARDS as GUARD_SPOTS, TERRACE_GOAT, TERRACE_LANDMARKS, courtGuardKinds, changeCourtGuard, landmarkState, terraceArtUrl, terraceCharacterAt } from './crownTerrace';
+import { ornateMenu, menuSection, menuChoice, menuNote, menuFoot, type OrnateMenu } from './ornateMenu';
 
 // High-res chamber & architectural sprites (bundled as data URLs by esbuild)
-import lightPillarUrl from './art/hall/fx_light-pillar.png';
-import rugUrl from './art/tavern/rug.png';
-import lecternUrl from './art/library/lectern.png';
 
 // Building architectural diorama sprites
 import greatHallUrl from './art/castle/great_hall.png';
@@ -64,15 +58,7 @@ import watchtowerGrandUrl from './art/castle/watchtower_grand.png';
 import hallUrl from './art/castle/hall_of_legends.png';
 
 // Hall props & treasures that appear as you upgrade your kingdom
-import chestsUrl from './art/castle/chests.png';
-import rackUrl from './art/castle/rack.png';
 import drillYardUrl from './art/castle/drill_yard.png';
-import anvilUrl from './art/castle/anvil_stall.png';
-import bannerUrl from './art/castle/banner.png';
-import crystalsUrl from './art/castle/crystals.png';
-import brazierUrl from './art/castle/brazier.png';
-import shrineUrl from './art/castle/shrine.png';
-import goldChestUrl from './art/ui/chest-gold.png';
 
 // Sacred Relic emblems
 import crownUrl from './art/items/jewel_crown.png';
@@ -82,47 +68,9 @@ import sapphireUrl from './art/items/frost_sapphire.png';
 import bootsUrl from './art/items/cloud_treads.png';
 import tomeUrl from './art/items/hourglass.png';
 import chaliceUrl from './art/items/holy_chalice.png';
-import { motionPlan } from './render/ambient';
 import { medal, plateButton, setBadge, type PbIcon } from './paintedButton';
 import { castleArtUrl, isPainted, buildingArt } from './castleArt';
-import { LifePainter } from './render/ambientPaint';
-import { SCENE_LIFE } from './render/ambientScenes';
-import { CASTLE_SITES, HALL_WIDTH, HALL_HEIGHT, HALL_FLOOR_OFFSET, sitePresentation, constructionProgress } from './castleTab';
-
-const SCENE_ART_URLS = {
-  throneRoom: throneRoomUrl,
-  lightPillar: lightPillarUrl,
-  rug: rugUrl,
-  lectern: lecternUrl,
-  chests: chestsUrl,
-  goldChest: goldChestUrl,
-  rack: rackUrl,
-  anvil: anvilUrl,
-  banner: bannerUrl,
-  crystals: crystalsUrl,
-  brazier: brazierUrl,
-  shrine: shrineUrl,
-  greatHall: greatHallUrl,
-  forge: forgeUrl,
-  barracks: barracksUrl,
-  spiral: spiralUrl,
-  stable: stableUrl,
-  manor: manorUrl,
-  chapel: chapelUrl,
-} as const;
-
-type SceneArtKey = keyof typeof SCENE_ART_URLS;
-let sceneArt: Record<SceneArtKey, HTMLImageElement> | null = null;
-async function ensureSceneArt(): Promise<Record<SceneArtKey, HTMLImageElement>> {
-  if (sceneArt) return sceneArt;
-  const loaded = {} as Record<SceneArtKey, HTMLImageElement>;
-  await Promise.all(
-    (Object.keys(SCENE_ART_URLS) as SceneArtKey[]).map(async (k) => {
-      loaded[k] = await loadImage(SCENE_ART_URLS[k]);
-    }),
-  );
-  return (sceneArt = loaded);
-}
+import { CASTLE_SITES, sitePresentation, constructionProgress } from './castleTab';
 
 export interface ChamberDef {
   id: SiteId;
@@ -314,21 +262,6 @@ interface BurstEffect {
   label?: string;
 }
 
-const DEFAULT_GUARD = ['knight', 'paladin', 'samurai', 'archer'];
-
-// 4 disciplined Royal Guards standing at attention flanking the High Throne & dais:
-// 2 Inner Dais Guards (left and right of the throne steps, facing inward at attention)
-// 2 Outer Floor Guards (left and right of the red carpet, standing at attention)
-const GUARD_SPOTS = [
-  { x: 300, y: 280, height: 92, faceRight: true, label: 'Dais Guard' },
-  { x: 500, y: 280, height: 92, faceRight: false, label: 'Dais Guard' },
-  { x: 225, y: 330, height: 105, faceRight: true, label: 'Honor Guard' },
-  { x: 575, y: 330, height: 105, faceRight: false, label: 'Honor Guard' },
-];
-
-// The ruler's throne stands on the painted dais; drawing and tap targets share these positions.
-const KING_SPOT = { x: 400, y: 247, h: 165 };
-
 export class CastleScene {
   readonly root = el('div', 'ctWrap crPage');
   private scroll = el('div', 'ctScroll crScroll');
@@ -361,20 +294,19 @@ export class CastleScene {
   private running = false;
   private now = 0;
   private last = 0;
+  private lastPaint = 0;
   private meta: Meta | null = null;
-  private heroKinds: string[] = [...DEFAULT_GUARD];
+  private heroKinds: string[] = [];
   private particles: HallParticle[] = [];
   private bursts: BurstEffect[] = [];
   private heroFlourishUntil = [0, 0, 0, 0];
   private kingDecreeUntil = 0;
-  private kingDecreeStarted = 0;
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  /** ALIVE: the throne room's own life: banners and curtain stir, light through the glass, sconces gutter, dust (`ambientPaint.ts`). */
-  private life = new LifePainter(SCENE_LIFE.throne, true);
-  /** (CASTLE-REMAKE: the painted hall's life, once the owner's painting lands) */
-  private hallLife = new LifePainter(SCENE_LIFE.throneHall, true);
-  private hallArt: HTMLImageElement | null = null;
-  private lifeOf: HTMLImageElement | null = null;
+  private terrace = new CrownTerracePainter(() => { if (this.meta) this.paintGreatHall(); });
+  private courtMenu: OrnateMenu | null = null;
+  private courtControls = el('div', 'crCourtControls');
+  private rulerButton: HTMLButtonElement | null = null;
+  private courtButton: HTMLButtonElement | null = null;
   private trophyModal = new TrophyWallModal();
   /** A newly started build triggers the hall celebration once. */
   private worksSeen = '';
@@ -393,8 +325,8 @@ export class CastleScene {
     private onReward?: () => void,
   ) {
     this.buildLayout();
-    this.canvas.width = HALL_WIDTH;
-    this.canvas.height = HALL_HEIGHT;
+    this.canvas.width = TERRACE_WIDTH;
+    this.canvas.height = TERRACE_HEIGHT;
     this.ctx.imageSmoothingEnabled = false;
 
     // Load Duchess once, independently of animation frames (also ready when the hall is paused).
@@ -404,15 +336,15 @@ export class CastleScene {
       if (this.meta) this.paintGreatHall();
     });
 
-    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
-    void ensureSceneArt().then(() => {
-      if (this.meta) this.paintGreatHall();
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => {
+      this.reduced = e.matches;
+      this.paintGreatHall();
     });
-    if (isPainted('throne-hall'))
-      void loadImage(castleArtUrl('throne-hall')).then((im) => {
-        this.hallArt = im;
-        if (this.meta) this.paintGreatHall();
-      }).catch(() => undefined);
+    onSettings(() => { if (this.meta) this.update(this.meta); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { cancelAnimationFrame(this.raf); this.raf = 0; }
+      else if (this.running) this.start();
+    });
   }
 
   private buildLayout(): void {
@@ -454,15 +386,19 @@ export class CastleScene {
       panel.setAttribute('aria-labelledby', `castleTab-${view}`);
     }
     this.canvas.setAttribute('role', 'img');
-    this.canvas.setAttribute('aria-label', 'The live throne hall. Tap your ruler, guards or Duchess.');
+    this.canvas.setAttribute('aria-label', 'The Crown Terrace. Live ruler, court companions, Duchess and the kingdom you are building.');
     this.scenicViewport.append(this.canvas);
     this.guardPlaque.append(this.guardTitle, this.guardNames);
-    this.scenicFrame.append(this.scenicViewport, this.guardPlaque);
+    this.rulerButton = plateButton({label:'Ruler', icon:'tab-castle', cls:'crChangeRuler', onClick:() => this.openRulerPicker()});
+    this.courtButton = plateButton({label:'Heroes', icon:'tab-heroes', cls:'crChooseCourt', onClick:() => this.openCourtPicker()});
+    this.courtControls.append(this.rulerButton, this.courtButton);
+    this.scenicFrame.append(this.scenicViewport, this.guardPlaque, this.courtControls);
     this.scenicViewport.addEventListener('pointerdown', (e) => this.handleSceneTap(e));
-    const hint = el('p', 'crHallHint', 'Tap your ruler, guards or Duchess');
+    const hint = el('p', 'crHallHint', 'Your kingdom grows with every completed building' );
     const bonusHead = el('div', 'crSectionHead');
     bonusHead.append(el('h3', '', 'Castle bonuses'), el('small', '', 'every run'));
-    this.hallPanel.append(this.scenicFrame, hint, this.makeWorksCard(), bonusHead, this.powerBanner);
+    this.powerBanner.setAttribute('aria-label', 'Castle bonuses, every run');
+    this.hallPanel.append(this.scenicFrame, hint, this.makeWorksCard(), this.powerBanner);
     this.buildingsPanel.append(this.makeWorksCard());
     const ledger = el('div', 'crLedger');
     for (const id of CASTLE_SITES) {
@@ -533,12 +469,12 @@ export class CastleScene {
     const rect = this.canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     const cx = ((e.clientX - rect.left) / rect.width) * this.canvas.width;
-    const cy = ((e.clientY - rect.top) / rect.height) * this.canvas.height - HALL_FLOOR_OFFSET;
+    const cy = ((e.clientY - rect.top) / rect.height) * this.canvas.height;
 
     // 1. Check if Duchess is tapped
     if (this.goat) {
       const gx = this.goat.x;
-      const gy = 368;
+      const gy = TERRACE_GOAT.y;
       if (Math.hypot(cx - gx, cy - (gy - 28)) < 44) {
         const nudge = tapNudgeGoat(this.goat, this.now);
         if (nudge.hopped) {
@@ -554,7 +490,7 @@ export class CastleScene {
             /* ignore */
           }
           const clientX = rect.left + (gx / this.canvas.width) * rect.width;
-          const clientY = rect.top + ((gy - 38 + HALL_FLOOR_OFFSET) / this.canvas.height) * rect.height;
+          const clientY = rect.top + ((gy - 38) / this.canvas.height) * rect.height;
           if (nudge.nudgedFromNest) {
             this.claimHaystackTreat(clientX, clientY, gx, gy);
           } else {
@@ -566,11 +502,21 @@ export class CastleScene {
       }
     }
 
+    // Distant landmarks open the same standard building card as the ledger.
+    const plot = TERRACE_LANDMARKS.find(p => {
+      const state = this.meta && landmarkState(this.meta,p.id);
+      return state && (state.level > 0 || state.working) && Math.abs(cx-p.x)<p.w*.45 && cy<=p.y+8 && cy>=p.y-p.w;
+    });
+    if (plot) { this.onPick(plot.id); return; }
+
     // 2. Check if King on the High Throne is tapped
-    const kingDist = Math.hypot(cx - KING_SPOT.x, cy - (KING_SPOT.y - 45));
-    if (kingDist < 85) {
+    const royalArt = this.terrace.rulers.get(settings().ruler);
+    const actor = terraceCharacterAt(cx,cy,GUARD_SPOTS.map((spot,i) => {
+      const image = this.terrace.heroes.get(this.heroKinds[i]);
+      return image ? spot.height*image.naturalWidth/image.naturalHeight : 0;
+    }),royalArt ? KING_SPOT.h*royalArt.naturalWidth/royalArt.naturalHeight : 0);
+    if (actor === 'ruler') {
       play('levelUp');
-      this.kingDecreeStarted = this.now;
       this.kingDecreeUntil = this.now + 1600;
       for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 1200 + i * 110;
       this.triggerHallBurst(KING_SPOT.x, KING_SPOT.y - 70, '#ffd700', `The ${rulerOf(settings().ruler).female ? 'Queen' : 'King'} Decrees!`);
@@ -578,7 +524,7 @@ export class CastleScene {
     }
 
     // 3. Check Trophy Rack mounted on the wall
-    if (cx >= 590 && cx <= 710 && cy >= 190 && cy <= 300) {
+    if (cx >= 735 && cy >= 360 && cy <= 470) {
       if (this.meta) {
         this.triggerHallBurst(655, 240, '#f59e0b', 'Boss Trophies!');
         this.trophyModal.open(this.meta);
@@ -587,15 +533,7 @@ export class CastleScene {
     }
 
     // 4. Check nearest Royal Guard
-    let nearestIdx = -1;
-    let bestDist = 110;
-    GUARD_SPOTS.forEach((spot, idx) => {
-      const d = Math.hypot(cx - spot.x, cy - (spot.y - spot.height * 0.45));
-      if (d < bestDist) {
-        bestDist = d;
-        nearestIdx = idx;
-      }
-    });
+    const nearestIdx = typeof actor === 'number' ? actor : -1;
 
     play('sparkle');
     if (nearestIdx >= 0) {
@@ -606,7 +544,6 @@ export class CastleScene {
       this.triggerHallBurst(spot.x, spot.y - 30, '#ffd700', `${unitName} Salutes!`);
     } else {
       // Tap on throne room hall / carpet: King & all guards salute
-      this.kingDecreeStarted = this.now;
       this.kingDecreeUntil = this.now + 1400;
       for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 900 + i * 120;
       this.triggerHallBurst(400, 225, '#ffe066', `For the ${rulerOf(settings().ruler).female ? 'Queen' : 'King'}!`);
@@ -639,17 +576,13 @@ export class CastleScene {
   update(meta: Meta): void {
     this.meta = meta;
 
-    // 1. Assemble 4 disciplined Royal Guards flanking the King's throne
-    const topUnlocked = strongest(meta, 4);
-    const guard: string[] = [...topUnlocked];
-    for (const fallback of DEFAULT_GUARD) {
-      if (guard.length >= 4) break;
-      if (!guard.includes(fallback)) guard.push(fallback);
-    }
-    this.heroKinds = guard.slice(0, 4);
-
-    const names = this.heroKinds.map((k) => UNITS[k]?.name ?? k).join(' · ');
-    this.guardNames.textContent = `${names} · Duchess`;
+    this.heroKinds = courtGuardKinds(meta.unlocked, settings().courtHeroes, strongest(meta, 4));
+    void this.terrace.characters(this.heroKinds,settings().ruler).catch(() => undefined);
+    const names = this.heroKinds.map(k => UNITS[k]?.name ?? k).join(' · ');
+    this.guardNames.textContent = names ? `${names} · Duchess` : 'Duchess is keeping watch';
+    if (this.courtButton) this.courtButton.setAttribute('aria-label', `Choose court heroes. ${names || 'No heroes recruited yet'}`);
+    this.root.dataset.ruler = settings().ruler;
+    this.canvas.setAttribute('aria-label', `${RULER_COURTS[settings().ruler].name}. ${rulerOf(settings().ruler).name}, ${names || 'no companions'} and Duchess. Buildings reflect completed castle levels.`);
 
     // 2. The castle's rank, under the page's title
     const totalLevels = [...BUILDING_IDS, ...ROOM_BUILDING_IDS].reduce((sum, id) => sum + siteLevel(meta.castle, id), 0) + chapelLevel(meta);
@@ -714,7 +647,6 @@ export class CastleScene {
     const c = CHAMBERS.find((x) => x.id === id);
     play('levelUp');
     this.triggerHallBurst(400, 230, c?.glow ?? '#ffd700', `${c?.name ?? 'The castle'} rising!`);
-    this.kingDecreeStarted = this.now;
     this.kingDecreeUntil = this.now + 1500;
     for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 850;
   }
@@ -764,14 +696,17 @@ export class CastleScene {
     const dt = Math.max(0, Math.min(100, t - this.last));
     this.last = t;
     this.now += dt;
-    if (this.view !== 'hall') return;
+    if (settings().saver && t - this.lastPaint < 1000 / 30) return;
+    const frameDt = Math.max(0,Math.min(100,t-this.lastPaint));
+    this.lastPaint = t;
+    if (this.view !== 'hall' || this.courtMenu || document.hidden) return;
     if (!this.reduced && !settings().saver && this.now >= this.nextIdleSalute) {
       const guard = Math.floor(this.now / 6500) % 4;
       this.heroFlourishUntil[guard] = this.now + 850;
       this.nextIdleSalute = this.now + 6500;
     }
-    this.stepParticles(dt);
-    this.stepGoat(this.reduced ? 0 : dt);
+    this.stepParticles(frameDt);
+    this.stepGoat(this.reduced ? 0 : frameDt);
     this.paintGreatHall();
   }
 
@@ -792,14 +727,14 @@ export class CastleScene {
 
     const g = this.goat;
     if (this.reduced && g.mode !== 'hop') return;
-    const groundMin = 180;
-    const groundMax = 620;
+    const groundMin = TERRACE_GOAT.minX;
+    const groundMax = TERRACE_GOAT.maxX;
     const friends = GUARD_SPOTS.map((s) => s.x);
 
     // Duchess occasionally nests on the throne room haystack
     if (g.mode !== 'nest' && g.mode !== 'hop' && Math.random() < 0.003) {
       g.mode = 'nest';
-      g.x = 210;
+      g.x = TERRACE_GOAT.nestX;
       g.at = this.now + 12000;
     }
 
@@ -849,7 +784,7 @@ export class CastleScene {
     if (g.mode === 'nibble' && this.goatWas !== 'nibble') {
       const rect = this.canvas.getBoundingClientRect();
       const clientX = rect.left + (g.x / this.canvas.width) * rect.width;
-      const clientY = rect.top + ((368 - 38 + HALL_FLOOR_OFFSET) / this.canvas.height) * rect.height;
+      const clientY = rect.top + ((TERRACE_GOAT.y - 38) / this.canvas.height) * rect.height;
       goatSays('nibble', { x: clientX, y: clientY });
     }
     this.goatWas = g.mode;
@@ -859,9 +794,9 @@ export class CastleScene {
     if (!this.reduced) {
       // A few warm embers rise from the painted braziers.
       if (this.particles.length < 18 && Math.random() < dt / 140) {
-        const bx = Math.random() < 0.5 ? 245 : 555;
+        const bx = 740;
         const x = bx + (Math.random() - 0.5) * 18;
-        const y = 195 + (Math.random() - 0.5) * 10;
+        const y = 662 + (Math.random() - 0.5) * 10;
         this.particles.push({
           x,
           y,
@@ -920,275 +855,133 @@ export class CastleScene {
     g.restore();
   }
 
-  /** Paint the full multi-layered Royal Citadel Throne Room scene on the portrait hall canvas. */
+  /** The approved terrace: separate architecture, kingdom, ruler, animated companions and Duchess. */
   private paintGreatHall(): void {
-    const title = rulerOf(settings().ruler).name;
+    if (!this.meta || this.view !== 'hall') return;
+    const ruler = settings().ruler;
+    const title = RULER_COURTS[ruler].name;
     if (this.guardTitle.textContent !== title) this.guardTitle.textContent = title;
+    if (this.rulerButton) {
+      this.rulerButton.title = `Change ruler · ${rulerOf(ruler).name}`;
+      this.rulerButton.setAttribute('aria-label',`Change ruler. Currently ${rulerOf(ruler).name}`);
+    }
     const g = this.ctx;
-    const W = this.canvas.width;
-    const H = this.canvas.height;
-    g.clearRect(0, 0, W, H);
-
-    const a = sceneArt;
-    const castle = this.meta?.castle;
-
-    // 1. ARCHITECTURAL BACKDROP: Bespoke Castle Throne Room (400x210 pixel art drawn at 2x)
-    const life = motionPlan({ reduced: this.reduced, saver: settings().saver, hidden: false });
-    const lt = this.now / 1000;
-    // (CASTLE-REMAKE: the owner's painted hall, once it lands, covers the canvas with its own life; until then the old pixel room)
-    const hall = this.hallArt;
-    if (hall) {
-      const k = Math.max(W / hall.naturalWidth, H / hall.naturalHeight);
-      const place = { x: (W - hall.naturalWidth * k) / 2, y: (H - hall.naturalHeight * k) / 2, w: hall.naturalWidth * k, h: hall.naturalHeight * k };
-      g.imageSmoothingEnabled = true;
-      g.drawImage(hall, place.x, place.y, place.w, place.h);
-      g.imageSmoothingEnabled = false;
-      if (this.lifeOf !== hall) {
-        this.lifeOf = hall;
-        this.hallLife.layout(hall, hall.naturalWidth, hall.naturalHeight, place);
-      }
-      this.hallLife.regions(g, lt, life);
-    } else if (a?.throneRoom) {
-      g.drawImage(a.throneRoom, 0, 0, 400, 210, 0, 0, W, H);
-      if (this.lifeOf !== a.throneRoom) {
-        this.lifeOf = a.throneRoom;
-        this.life.layout(a.throneRoom, 400, 210, { x: 0, y: 0, w: W, h: H });
-      }
-      this.life.regions(g, lt, life);
-    } else {
-      const fallbackBg = g.createLinearGradient(0, 0, 0, H);
-      fallbackBg.addColorStop(0, '#221b28');
-      fallbackBg.addColorStop(1, '#0e0b12');
-      g.fillStyle = fallbackBg;
-      g.fillRect(0, 0, W, H);
-    }
-
-    g.save();
-    g.translate(0, HALL_FLOOR_OFFSET);
-
-    // The painted windows and braziers provide the hall's light without a gold wash over the architecture.
-
-    // 3. KINGDOM UPGRADE PROPS IN THE THRONE ROOM (positioned neatly in alcoves clear of the King & Guards)
-    if (a && !hall) {
-      // Arcane Spire & Library props (Left Alcove)
-      const mageLv = castle?.mageTower ?? 1;
-      const libLv = castle?.library ?? 1;
-      if (mageLv >= 1) {
-        g.drawImage(a.crystals, 24, 216, 68, 98);
-      }
-      if (libLv >= 1) {
-        g.drawImage(a.lectern, 126, 216, 56, 70);
-      }
-
-      // Armoury props (Right Alcove)
-      const armouryLv = castle?.armoury ?? 1;
-      if (armouryLv >= 1) {
-        g.drawImage(a.rack, W - 188, 208, 86, 84);
-      }
-      if (armouryLv >= 2) {
-        g.drawImage(a.anvil, W - 92, 222, 68, 84);
-      }
-
-      // High Treasury props (Treasury Chests on Dais sides)
-      const treasuryLv = castle?.treasury ?? 1;
-      if (treasuryLv >= 1) {
-        g.drawImage(a.chests, 212, 198, 72, 56);
-        g.drawImage(a.chests, W - 284, 198, 72, 56);
-      }
-      if (treasuryLv >= 2) {
-        g.drawImage(a.goldChest, 236, 224, 46, 46);
-        g.drawImage(a.goldChest, W - 282, 224, 46, 46);
-      }
-
-      // Standing Twin Stone Braziers flanking the royal steps
-      g.drawImage(a.brazier, 78, 198, 48, 120);
-      g.drawImage(a.brazier, W - 126, 198, 48, 120);
-    }
-
-    // Keep the trophy rack tappable in the right alcove, and fire aligned with the painting.
-    if (hall && a && (castle?.armoury ?? 0) >= 1) g.drawImage(a.rack, 624, 216, 72, 70);
-    const fireX = hall ? 245 : 102;
-    const fireY = hall ? 195 : 188;
-    this.drawVfx('flameFire', fireX, fireY, hall ? 42 : 84, 0);
-    this.drawVfx('flameFire', W - fireX, fireY, hall ? 42 : 84, 3);
-
-    // 4. THE KING SITTING ON THE HIGH THRONE (Top-center of Dais)
-    if (a) {
-      const isDecree = this.now < this.kingDecreeUntil;
-      const kx = KING_SPOT.x;
-      const ky = KING_SPOT.y;
-      const kh = KING_SPOT.h;
-
-      g.save();
-      // Throne plinth contact shadow directly on dais step
-      g.fillStyle = 'rgba(8, 4, 12, 0.65)';
-      g.beginPath();
-      g.ellipse(kx, ky, 50, 8, 0, 0, Math.PI * 2);
-      g.fill();
-
-      // King's decree celebration aura
-      if (isDecree) {
-        this.drawVfx('levelupGold', kx, ky - kh * 0.5, 200, 0, 0, 0.85);
-      }
-
-      drawRuler(g, settings().ruler, isDecree ? 'command' : 'seated', isDecree ? this.now - this.kingDecreeStarted : this.now, this.reduced, kx, ky, kh);
-
-      // Crown glint star
-      if (!this.reduced && !isDecree) {
-        this.drawVfx('starGold', kx, ky - kh + 32, 44, 0, 0, 0.75);
-      }
+    g.clearRect(0,0,TERRACE_WIDTH,TERRACE_HEIGHT);
+    this.terrace.background(g,ruler,this.meta,this.now,this.reduced,settings().saver);
+    const shadow = (x: number,y: number,w: number) => {
+      g.fillStyle = 'rgba(15,12,20,.35)'; g.beginPath(); g.ellipse(x,y,w,w*.18,0,0,Math.PI*2); g.fill();
+    };
+    shadow(KING_SPOT.x,KING_SPOT.y,80);
+    const decree = this.now < this.kingDecreeUntil;
+    const royalArt = this.terrace.rulers.get(ruler);
+    if (royalArt) {
+      const w = KING_SPOT.h*royalArt.naturalWidth/royalArt.naturalHeight;
+      g.save(); g.translate(KING_SPOT.x,KING_SPOT.y); g.scale(-1,1);
+      g.drawImage(royalArt,-w/2,-KING_SPOT.h,w,KING_SPOT.h);
       g.restore();
+      if (decree && !this.reduced) this.drawVfx('starGold',KING_SPOT.x,KING_SPOT.y-KING_SPOT.h+20,35,0,0,.65);
     }
-
-    // 5. THE 4 ROYAL GUARDS STANDING AT ATTENTION (Clean, disciplined posture with no aura/fx spam)
-    GUARD_SPOTS.forEach((spot, i) => {
-      const kind = this.heroKinds[i] ?? DEFAULT_GUARD[i];
-      const unit = UNITS[kind];
+    GUARD_SPOTS.forEach((spot,i) => {
+      const unit = UNITS[this.heroKinds[i]];
       if (!unit) return;
-      const s = sheetInfo(unit.sheet);
-      if (!s) return;
-
-      const flourishing = this.now < this.heroFlourishUntil[i];
-
-      // Subtle, clean floor shadow (no glowing neon halos or pedestal rings)
-      g.save();
-      g.fillStyle = 'rgba(10, 6, 14, 0.45)';
-      g.beginPath();
-      g.ellipse(spot.x, spot.y - 1, 24, 7, 0, 0, Math.PI * 2);
-      g.fill();
-      g.restore();
-
-      // Guards stand strictly at attention! Attack salute only when tapped or King decrees
-      const useAttack = flourishing && s.rows.includes('attack');
-      const rowName = useAttack ? 'attack' : s.rows.includes('idle') ? 'idle' : s.rows[0];
-      const rowIdx = Math.max(0, s.rows.indexOf(rowName));
-      const frameCount = s.counts[rowName] ?? 1;
-      const frameSpeed = useAttack ? 105 : 180;
-      const frameIdx = this.reduced ? 0 : Math.floor((this.now + i * 350) / frameSpeed) % frameCount;
-      const breatheLift = !this.reduced && !useAttack && frameCount === 1 && Math.sin((this.now + i * 900) / 480) > 0.4 ? 1 : 0;
-
-      const scale = spot.height / s.figure;
-      const dw = Math.round(s.w * scale);
-      const dh = Math.round(s.h * scale);
-
-      g.save();
-      g.translate(spot.x, spot.y - breatheLift);
-      if (s.facesRight !== spot.faceRight) g.scale(-1, 1);
-      g.drawImage(
-        s.img,
-        frameIdx * s.w,
-        rowIdx * s.h,
-        s.w,
-        s.h,
-        Math.round(-dw / 2),
-        Math.round(-dh + 8),
-        dw,
-        dh,
-      );
-      g.restore();
-
-      // Subtle golden salute shine only when tapped
-      if (flourishing) {
-        this.drawVfx('sparkleLight', spot.x, spot.y - spot.height * 0.6, 90, i);
-      }
+      const image = this.terrace.heroes.get(this.heroKinds[i]);
+      if (!image) return;
+      const salute = this.now < this.heroFlourishUntil[i];
+      shadow(spot.x,spot.y,spot.height*.2);
+      drawCourtFigure(g,image,spot.x,spot.y,spot.height,spot.faceRight,this.now+i*1730,this.reduced,salute?1-(this.heroFlourishUntil[i]-this.now)/950:0);
+      if (salute && !this.reduced) this.drawVfx('sparkleLight',spot.x,spot.y-spot.height*.6,60,i,0,.5);
     });
-
-    if (this.lifeOf) {
-      g.save();
-      g.translate(0, -HALL_FLOOR_OFFSET);
-      (this.hallArt ? this.hallLife : this.life).smoke(g, lt, life);
-      (this.hallArt ? this.hallLife : this.life).lights(g, lt, life);
-      g.restore();
-      g.globalCompositeOperation = 'source-over';
-      g.globalAlpha = 1;
-    }
-
-    // 6. DUCHESS THE GOAT WANDERING THE THRONE ROOM FLOOR
-    drawHaystack(g, 210, 370, 2);
-    if (this.goat && this.goatArt) {
-      const gx = Math.round(this.goat.x);
-      const gy = 370;
-      const lift = Math.round(hopLift(this.goat, this.now));
-      const bob = chewBob(this.goat, this.now, this.reduced);
-      const fr = goatFrame(this.goat);
-
-      g.save();
-      // Goat shadow
-      g.fillStyle = 'rgba(8, 5, 12, 0.45)';
-      g.beginPath();
-      g.ellipse(gx, gy, 20, 6, 0, 0, Math.PI * 2);
-      g.fill();
-
-      // Draw Duchess at 2x scale (48x48 -> 96x96)
-      const gw = GOAT_FRAME * 2;
-      const gh = GOAT_FRAME * 2;
-      const dy = Math.round(gy - gh - lift * 2 + bob * 2);
-      g.drawImage(
-        this.goatArt,
-        fr * GOAT_FRAME,
-        0,
-        GOAT_FRAME,
-        GOAT_FRAME,
-        Math.round(gx - gw / 2),
-        dy,
-        gw,
-        gh,
-      );
-      drawDuchessCosmetic(g, settings().duchessHat, Math.round(gx - gw / 2), dy, 2, this.goat.face, 0);
+    const hay = this.terrace.buildings.get('nest');
+    if (hay) g.drawImage(hay,TERRACE_GOAT.nestX-38,TERRACE_GOAT.y-35,76,44);
+    if (this.goat && this.terrace.duchess.length === 8) {
+      const goat = this.goat, x = Math.round(goat.x), y = TERRACE_GOAT.y;
+      const size = 128;
+      const lift = this.reduced ? 0 : hopLift(goat,this.now)*1.8;
+      const bob = chewBob(goat,this.now,this.reduced);
+      shadow(x,y,25);
+      g.save(); g.translate(x,y-lift+bob);
+      if (goat.face === -1) g.scale(-1,1);
+      const frame = goat.mode === 'nest' ? 7 : this.reduced ? 4 : goat.mode === 'hop' ? 6 : goat.mode === 'walk' ? Math.floor(goat.steps/8)%4 : goat.mode === 'graze' || goat.mode === 'nibble' ? 5 : 4;
+      g.drawImage(this.terrace.duchess[frame],-size*.375,-size*.79,size*.75,size);
+      drawDuchessCosmetic(g,settings().duchessHat,-44,-88,1.8);
       g.restore();
     }
-
-    // 6. CELEBRATION LIGHT PILLARS & FLOATING BANNERS (on tap or upgrade)
-    for (const b of this.bursts) {
-      const age = this.now - b.t0;
-      const p = Math.min(1, age / b.dur);
-      const alpha = p < 0.2 ? p / 0.2 : Math.max(0, 1 - (p - 0.2) / 0.8);
-
-      g.save();
-      g.globalCompositeOperation = 'lighter';
-      g.globalAlpha = alpha * 0.75;
-      if (a?.lightPillar) {
-        const pw = 130;
-        g.drawImage(a.lightPillar, 0, 0, 96, 160, b.x - pw / 2, 0, pw, b.y + 20);
-      } else {
-        const beamGrad = g.createLinearGradient(b.x - 45, 0, b.x + 45, 0);
-        beamGrad.addColorStop(0, 'rgba(255,215,0,0)');
-        beamGrad.addColorStop(0.5, b.color);
-        beamGrad.addColorStop(1, 'rgba(255,215,0,0)');
-        g.fillStyle = beamGrad;
-        g.fillRect(b.x - 45, 0, 90, b.y + 10);
-      }
-      g.restore();
-
-      if (b.label) {
-        g.save();
-        g.globalAlpha = alpha;
-        g.font = 'bold 20px Cinzel Decorative, Georgia, serif';
-        g.textAlign = 'center';
-        const ly = Math.round(b.y - 95 - p * 36);
-        g.fillStyle = '#09140e';
-        g.fillText(b.label, b.x + 2, ly + 2);
-        g.fillStyle = '#ffe89e';
-        g.fillText(b.label, b.x, ly);
+    this.terrace.atmosphere(g,ruler,this.now,this.reduced,settings().saver);
+    if (!this.reduced) {
+      for (const b of this.bursts) {
+        const p = (this.now-b.t0)/b.dur;
+        g.save(); g.globalAlpha = 1-p; g.font = 'bold 23px Cinzel Decorative, Georgia, serif';
+        g.textAlign = 'center'; g.fillStyle = '#ffe4a2'; g.shadowColor = '#000'; g.shadowBlur = 5;
+        if (b.label) g.fillText(b.label,Math.max(180,Math.min(620,b.x)),b.y-70-p*35,600);
         g.restore();
       }
-    }
-
-    // 7. AMBIENT & BURST PARTICLES (golden motes, coins, embers)
-    for (const pt of this.particles) {
-      const ratio = pt.life / pt.maxLife;
-      const alpha = ratio < 0.2 ? ratio / 0.2 : Math.max(0, 1 - (ratio - 0.2) / 0.8);
-      g.save();
-      g.globalAlpha = alpha * pt.alpha;
-      g.fillStyle = pt.color;
-      g.fillRect(Math.round(pt.x), Math.round(pt.y), pt.size, pt.size);
-      if (pt.kind === 'coin') {
-        g.fillStyle = '#fff9db';
-        g.fillRect(Math.round(pt.x) + 1, Math.round(pt.y) + 1, Math.max(1, pt.size - 2), Math.max(1, pt.size - 2));
+      for (const p of this.particles) {
+        g.save(); g.globalAlpha = Math.max(0,1-p.life/p.maxLife)*p.alpha;
+        g.fillStyle = p.color; g.fillRect(p.x,p.y,p.size,p.size); g.restore();
       }
-      g.restore();
     }
-    g.restore();
+  }
+
+  private makeCourtMenu(title: string, sub: string): OrnateMenu {
+    this.courtMenu?.close();
+    const trigger = document.activeElement as HTMLElement | null;
+    const menu = ornateMenu({id:'castleCourt',title,eyebrow:'The Crown Terrace',sub,kind:'sheet',onClose:() => {
+      this.courtMenu = null;
+      if (trigger?.isConnected) trigger.focus({preventScroll:true});
+      this.paintGreatHall();
+    }});
+    this.courtMenu = menu;
+    menuFoot(menu,{back:{word:'close'}});
+    menu.root.addEventListener('keydown',e => {
+      if (e.key !== 'Tab') return;
+      const buttons = [...menu.card.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')];
+      if (!buttons.length) return;
+      const at = buttons.indexOf(document.activeElement as HTMLButtonElement);
+      if (e.shiftKey && at <= 0 || !e.shiftKey && (at < 0 || at === buttons.length-1)) {
+        e.preventDefault(); buttons[e.shiftKey?buttons.length-1:0].focus();
+      }
+    });
+    requestAnimationFrame(() => { if (menu.root.isConnected) menu.card.querySelector<HTMLButtonElement>('.omBack')?.focus(); });
+    return menu;
+  }
+
+  private openRulerPicker(): void {
+    const menu = this.makeCourtMenu('Choose your ruler','Each ruler brings an entirely different court and kingdom.');
+    const grid = menuSection(menu.body,'Eight royal domains',undefined,2);
+    for (const ruler of RULERS) {
+      const theme = RULER_COURTS[ruler.id];
+      const button = menuChoice(grid,{title:ruler.name,lines:[theme.name],on:settings().ruler===ruler.id,onPick:() => {
+        setSetting('ruler',ruler.id); setSetting('rulerPicked',true); menu.close();
+      }});
+      const image = el('img','crCourtPreview'); image.src = terraceArtUrl(ruler.id); image.alt = ''; image.loading = 'lazy';
+      button.prepend(image); button.dataset.ruler = ruler.id;
+    }
+  }
+
+  private openCourtPicker(slot?: number): void {
+    if (!this.meta) return;
+    const menu = this.makeCourtMenu(slot === undefined?'Choose your court':`Choose companion ${slot+1}`,'Court companions are cosmetic. Your battle party stays as you set it.');
+    if (slot === undefined) {
+      const grid = menuSection(menu.body,'Your companions',undefined,2);
+      for (let i=0;i<4;i++) {
+        const kind = this.heroKinds[i];
+        const button = menuChoice(grid,{title:kind ? UNITS[kind]?.name ?? kind : 'Empty place',lines:[`Companion ${i+1} · Change`],onPick:() => this.openCourtPicker(i)});
+        button.dataset.slot = String(i);
+        if (kind) { const image = el('img','crCourtPortrait'); image.src = `heroes/${kind}-portrait.webp`; image.alt = ''; button.prepend(image); }
+      }
+      menuChoice(menu.body,{title:'Use strongest heroes automatically',on:!settings().courtHeroes,onPick:() => {setSetting('courtHeroes',undefined);menu.close();}});
+      menuNote(menu.body,'Tap a companion in the scene for a salute. Recruit heroes to fill empty places.');
+    } else {
+      const grid = menuSection(menu.body,'Recruited heroes',undefined,2);
+      for (const kind of this.meta.unlocked.filter(k => !!UNITS[k])) {
+        const button = menuChoice(grid,{title:UNITS[kind].name,on:this.heroKinds[slot]===kind,lines:[this.heroKinds.includes(kind)?'In your court':'Available'],onPick:() => {
+          setSetting('courtHeroes',changeCourtGuard(this.heroKinds,Math.min(slot,this.heroKinds.length),kind)); menu.close(); this.openCourtPicker();
+        }});
+        button.dataset.hero = kind;
+        const image = el('img','crCourtPortrait'); image.src = `heroes/${kind}-portrait.webp`; image.alt = ''; image.loading = 'lazy'; button.prepend(image);
+      }
+      if (!this.meta.unlocked.length) menuNote(menu.body,'Recruit your first hero to welcome them to court.');
+    }
   }
 
   private claimHaystackTreat(clientX: number, clientY: number, gx: number, gy: number): void {

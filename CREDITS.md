@@ -807,3 +807,5 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
   `art-source/living-fields/traps.png` is painted.
 ## Army War Room
 `src/art/ui/war-room.png`: original candlelit campaign room generated with OpenAI image generation for this game, following the owner-approved War Room concept. Source: `art-source/army-war-room/room-source.png`; prompt: `docs/notes/army-war-room-art-prompts.md`. Army banners reuse the credited painted boss trophies.
+## Crown Terrace court artwork
+The Crown Terrace environments, eight seated ruler cutouts, seventy companion cutouts, three tiers of eleven kingdom landmarks, construction overlays and Duchess's eight poses were generated with ChatGPT image generation for this project in November 2026. The owner approved the Crown Terrace concept. Original prompts, references and generation sources are retained in `docs/notes/crown-terrace-art-prompts.md` and `art-source/crown-terrace/`; `tools/crown-terrace/pack.py` packs them into `src/art/crown-terrace/`. Hero and ruler identities follow the game's existing credited character artwork. Existing hay and cosmetic assets retain their original credits above.

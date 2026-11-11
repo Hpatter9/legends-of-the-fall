@@ -113,6 +113,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 
 ## Active work
 
+### CROWN-TERRACE — Ruler courts and a growing kingdom
+
+- **Owner / branch / worktree:** Codex; `art/crown-terrace`; `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner approved the fourth Crown Terrace mockup and requested implementation, all necessary art and a PR.
+- **Scope:** animated selectable court heroes; eight distinct ruler terraces; eleven background landmarks reflecting completed levels and active construction; relevant UI, persistence, artwork, offline caching and tests. Preserve battle parties, castle costs, timings and saves.
+- **Completion:** generated production art, functional ruler/hero selection, independent building growth, focused tests, typecheck/build, three portrait sizes, reduced motion and offline browser checks; open a PR without merging.
+- **Status:** implemented and ready for review on main 0.484.0. Eight ruler environments, 70 selectable painted companions, independent growth for all eleven sites and 130 cached art assets. Typecheck/build and all 18 affected test files pass; real browser checks pass at 393×852, 360×780 and 412×915, including reduced motion and offline changes. Actual screenshots and a 5.22-second animation clip retained. [PR #547](https://github.com/Hpatter9/legends-of-the-fall/pull/547) is open and ready for review; no merge or deployment.
+- **Handoff:** [Crown Terrace](notes/crown-terrace.md).
+
 ### CASTLE-TAB-RENEWAL — Redesign the whole Castle tab
 
 - **Owner / branch / worktree:** Codex; `design/castle-tab-renewal`; `/workspace/legends-of-the-fall`.
