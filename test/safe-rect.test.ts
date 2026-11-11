@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CAM_COVERS, easeRect, SAFE, safeRect, type Rect } from '../src/render/safeRectRules';
 import { camCovers, registerCamCover, onCamCover } from '../src/camSafe';
+import { FIGHT_HUD, HORN_CORNER } from '../src/hudClear';
 
 // (a 393 x 852 phone, upright; the boxes as the page draws them, near enough)
 const VIEW: Rect = { x0: 0, y0: 0, x1: 393, y1: 852 };
@@ -73,6 +74,23 @@ test('any registered cover counts: a duel bar is kept clear of as the rest are',
   for (const sel of CAM_COVERS) assert.ok(camCovers().includes(sel));
   const duel: Rect = { x0: 20, y0: 148, x1: 373, y1: 190 };
   assert.equal(check([TOP, SPELLS_1, duel, ROWS]).y0, 190 + M);
+});
+
+// HORN-CORNER (docs/notes/horn-corner.md): the War Horn in the board's bottom-left corner, on the panel's top edge
+test('the War Horn in the bottom-left corner trims the room\'s foot, not a strip down its side, and the room stays centred across', () => {
+  const HORN: Rect = { x0: 8, y0: 534, x1: 64, y1: 590 };
+  const r = check([TOP, SPELLS_1, ROWS, TACTIC, HORN]);
+  assert.equal(r.x0, M);
+  assert.equal(r.x1, 393 - M);
+  // (no lower than the tactic button already cut it: the horn costs the fight no more room)
+  assert.equal(r.y1, 528 - M);
+  assert.deepEqual(r, check([TOP, SPELLS_1, ROWS, TACTIC]));
+  // (alone, with no tactic button, it still cuts from the foot)
+  assert.equal(check([TOP, SPELLS_1, ROWS, HORN]).y1, 534 - M);
+  // (a toast and a quip keep clear of it too)
+  assert.ok(FIGHT_HUD.includes(HORN_CORNER));
+  registerCamCover(HORN_CORNER);
+  assert.ok(camCovers().includes(HORN_CORNER));
 });
 
 test('covers with no size are skipped; a cover over the whole screen (a sheet) leaves the room as it was', () => {
