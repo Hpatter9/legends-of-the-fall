@@ -1559,6 +1559,15 @@ class Game {
     // (ULT-SHOW: a showcase whose ultimate ended the fight still plays out, and the result waits for it)
     if (b.phase === 'fight' || (b.phase !== 'deploy' && this.ultm.queue.current?.show)) this.ultm.frame(b, dt, !!held);
     else if (this.ultm.queue.current) this.ultm.clear();
+    // (ULT-EPIC 2: the speed button reads x1 while a show holds the fight to it, and the set speed again the moment it is over; the set
+    // speed itself is never touched, so it comes back however the show ends)
+    const showing = b.phase === 'fight' && (!!this.ultm.queue.current || this.eid.long);
+    if (showing !== this.speedShown) {
+      this.speedShown = showing;
+      $('speed').textContent = `×${momentSpeed(this.speed, showing)}`;
+      if (showing) $('speed').dataset.show = '1';
+      else delete $('speed').dataset.show;
+    }
     // (BOSS-BIG: a boss's signature cut-in, the fight held for it alone in full)
     if (b.phase === 'fight') this.bossm.frame(dt, !!held);
     else this.bossm.clear();
@@ -1705,6 +1714,16 @@ class Game {
       this.tx = us.x;
       this.ty = us.y - us.tall * 0.5;
       this.tzoom = (this.held?.zoom ?? this.tzoom) * uf.zoom;
+      // (ULT-EPIC 2: the hero sits just under the band that names it, never behind it, and never down under the hero rows: the camera's
+      // point is the middle of the room the player sees, so the camera looks that much above the hero)
+      if (uf.under !== undefined) {
+        const r = this.app.canvas.getBoundingClientRect();
+        const px = r.height / this.app.screen.height;
+        const mid = r.top + (this.safe.y + this.safe.h / 2) * px;
+        const low = r.top + (this.safe.y + this.safe.h) * px - 56;
+        const down = Math.max(0, Math.min(uf.under, low) - mid);
+        this.ty -= down / (px * this.scale * this.tzoom);
+      }
     }
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
@@ -2386,6 +2405,8 @@ class Game {
   private eid!: EidolonCall;
   private tactics!: TacticsView;
   /** Whether the heroes' ultimates fire on their own: the player's Auto switch, and always under auto-replay. */
+  /** ULT-EPIC 2: a show is holding the fight to x1 (the speed button says so). */
+  private speedShown = false;
   private ultAutoOn(): boolean {
     return !!this.auto || (!!this.meta.ultAuto && !this.autoHeld.ults);
   }
@@ -2497,6 +2518,7 @@ class Game {
     // (EIDOLONS: the War Horn, and the call's cinematic over the board)
     this.eid = new EidolonCall({
       meta: () => this.meta,
+      auto: () => this.ultAutoOn(),
       save: () => saveMeta(this.meta),
       fx: this.fx,
       anchor: (id) => {
@@ -2634,7 +2656,7 @@ class Game {
   /** The fight's speed (×1, ×2 or, where allowed, ×3), shown on the top bar's button. */
   private setSpeed(n: 1 | 2 | 3): void {
     this.speed = Math.min(n, this.fastest()) as 1 | 2 | 3;
-    $('speed').textContent = `×${this.speed}`;
+    $('speed').textContent = `×${momentSpeed(this.speed, this.speedShown)}`;
     // (PAINTED-BUTTONS: the painted chevrons, one, two or three, by the CSS from this; the words for a reader)
     $('speed').dataset.speed = String(this.speed);
     $('speed').setAttribute('aria-label', `Fight speed ×${this.speed}`);

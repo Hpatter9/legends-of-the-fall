@@ -97,6 +97,8 @@ export const DUCKS: Readonly<Record<string, DuckDepth>> = {
   // (an eidolon's call, in the middle of a fight: lower, but the battle music stays clear (it was -8 dB and muffled to 1.4 kHz for
   //  the whole call, the owner's "muffled in battle"))
   eidolon: { db: -4, hz: OPEN_HZ },
+  // (ULT-EPIC 2: an ultimate fired by hand, for its whole show: the same touch, so its stings and its charge stand clear)
+  ult: { db: -4, hz: OPEN_HZ },
   // (the shows off the battlefield with their own big sounds: the summoning show, a hero's reveal, a binding)
   summon: { db: -9, hz: 1800 },
   reveal: { db: -9, hz: 1800 },
@@ -105,7 +107,7 @@ export const DUCKS: Readonly<Record<string, DuckDepth>> = {
 /** The reasons that belong to a fight's own moments and are counted by hand (an eidolon's call): a fight starting or ending lets
  *  them go whatever their count, so a call begun twice and ended once can never leave the battle music held down. (The boss's
  *  card follows its element, `bindDuck`, so it cannot stick.) */
-export const FIGHT_DUCKS: readonly string[] = ['eidolon'];
+export const FIGHT_DUCKS: readonly string[] = ['eidolon', 'ult'];
 
 /** A reason with no depth of its own. */
 export const DUCK_OTHER: DuckDepth = { db: -6, hz: 4000 };

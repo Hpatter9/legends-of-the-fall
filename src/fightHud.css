@@ -270,6 +270,17 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 .umFlash { position: absolute; inset: 0; pointer-events: none; opacity: 0; mix-blend-mode: screen;
   background: radial-gradient(circle at var(--x, 50%) var(--y, 45%), #fff 0, color-mix(in srgb, var(--el) 80%, #fff) 50px, color-mix(in srgb, var(--el) 40%, transparent) 160px, transparent 320px);
   animation: umFlash 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+/* ULT-EPIC 2: the three stages. The wind-up's tint: the element's colour closing in round the screen's edge as the power gathers, gone
+   with the blow. The aftermath's light: the element's glow left where the blow fell, fading over the stage. */
+.umTint { position: absolute; inset: 0; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  background: radial-gradient(ellipse 86% 66% at 50% 46%, transparent 58%, color-mix(in srgb, var(--el, #fff) 42%, transparent) 100%);
+  animation: umTint var(--open, 1600ms) cubic-bezier(0.5, 0, 0.8, 0.6) both; }
+.umLayer:not([data-stage='windup']) .umTint { animation: umFadeOut 0.3s ease-out both; }
+.umAfter { position: absolute; inset: 0; pointer-events: none; opacity: 0; mix-blend-mode: screen;
+  background: radial-gradient(circle 46vmin at var(--x, 50%) var(--y, 45%), color-mix(in srgb, var(--el, #fff) 60%, transparent), color-mix(in srgb, var(--el, #fff) 22%, transparent) 55%, transparent 100%);
+  animation: umAfter var(--ms, 1500ms) ease-out both; }
+@keyframes umTint { 0% { opacity: 0; } 70% { opacity: 0.45; } 100% { opacity: 0.75; } }
+@keyframes umAfter { 0% { opacity: 0; } 12% { opacity: 0.5; } 100% { opacity: 0; } }
 @keyframes umIn { 0% { clip-path: inset(0 100% 0 0); } 100% { clip-path: inset(0 0 0 0); } }
 @keyframes umSlide { 0% { transform: rotate(-9deg) translateX(70px); } 100% { transform: rotate(-9deg) translateX(-26px); } }
 @keyframes umOut { 0% { clip-path: inset(0 0 0 0); transform: rotate(-9deg) translateX(-26px); } 100% { clip-path: inset(0 0 0 100%); transform: rotate(-9deg) translateX(40px); } }
@@ -338,7 +349,12 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
   .umLines, .umEdges::before, .umEdges::after { animation: none; }
   .umStreak { display: none; }
   .umFlash { animation: umFlashSoft 0.7s ease-in-out both; }
+  /* (the stages stay, held steady: the tint and the afterglow fade in and out once, a little softer) */
+  .umTint { animation: umTintSoft var(--open, 1600ms) ease-out both; }
+  .umAfter { animation: umAfterSoft var(--ms, 1500ms) ease-out both; }
 }
+@keyframes umTintSoft { 0% { opacity: 0; } 30%, 100% { opacity: 0.5; } }
+@keyframes umAfterSoft { 0% { opacity: 0; } 20% { opacity: 0.3; } 100% { opacity: 0; } }
 @keyframes umFade { 0% { opacity: 0; } 100% { opacity: 1; } }
 @keyframes umFadeOut { 0% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes umFlashSoft { 0% { opacity: 0; } 40% { opacity: 0.3; } 100% { opacity: 0; } }

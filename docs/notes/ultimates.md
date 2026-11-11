@@ -115,6 +115,9 @@ Screenshots: `docs/samples/ultimates-<name>-upright.png` (nine frames each: Arro
 Time Stop, Cataclysm; `SIZES=upright node tools/fxlab/shots.mjs ultimates-arrow-storm,...`), and the hero sheet locked and unlocked at 393x852,
 360x780 and 412x915: `ultimates-sheet-{locked,unlocked}[-360x780|-412x915].png` (`node tools/audit/ultimates.mjs`).
 
+**How long one plays** (ULT-EPIC 2, [ult-epic.md](ult-epic.md)): fired by hand, 4 to 6 s in three stages (a wind-up, the strike, an aftermath), by its weight
+(`src/ultStageRules.ts`), the fight at x1 for the show; on Auto, the 1.5 s banner over a fight that keeps its speed.
+
 ## Balance
 
 The owner's rule: all 45 heroes within 4 points of each other (`test/hero-balance.test.ts`), with the ultimates locked and unlocked. Two tests hold it:

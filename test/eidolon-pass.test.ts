@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { exitPoint, markTime, marksOf, maxRuns, onScreen, PASS, passPose, passShare, runFrom, SOURCES, spriteFrame, spritePlace, SPRITES, wakeRate, hitAt, breathReach } from '../src/eidolonPass';
 import { readFileSync } from 'node:fs';
-import { FULL, SHORT } from '../src/eidolonRules';
+import { FULL, fullOf, SHORT } from '../src/eidolonRules';
 import { EIDOLONS } from '../src/sim/eidolons';
 
 // (the three phone sizes the owner checks, upright)
@@ -42,7 +42,7 @@ test('each pass comes on from off the screen, crosses it and leaves it before th
       }
   }
   // (the strike never lands while it is still crossing)
-  for (const m of [FULL, SHORT]) {
+  for (const m of [FULL, SHORT, ...EIDOLONS.map((e) => fullOf(e.id))]) {
     assert.equal(passShare(m, m.STRIKE), 1);
     assert.equal(passShare(m, m.EXIT), 1);
     assert.equal(passShare(m, m.PASS), 0);
@@ -94,7 +94,7 @@ test('the sprite Eidolons come on only once the painting has gone, and their blo
     assert.ok(e.id in SPRITES, `${e.id} has a sprite, or none on purpose`);
     if (!sp) continue;
     assert.ok(sp.hit >= 1 && sp.hit < sp.attack.n && sp.walk.n >= 2, e.id);
-    for (const m of [FULL, SHORT]) {
+    for (const m of [FULL, SHORT, ...EIDOLONS.map((e) => fullOf(e.id))]) {
       // (nothing of it before the painting has left the screen)
       for (let t = 0; t < m.EXIT; t += 50) assert.equal(spriteFrame(sp, m, t), null, `${e.id} at ${t}`);
       assert.equal(spritePlace(m, m.EXIT - 1, { x: 0, y: 0 }, { x: 100, y: 100 }).alpha, 0);
