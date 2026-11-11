@@ -51,3 +51,18 @@ test('figures are listed only when the step changes them', () => {
     assert.equal(plan.figures.some((f) => f.startsWith('To hit')), a.toHit !== b.toHit, kind);
   }
 });
+
+test('the figures as numbers say the same as the figures in words, one for one (RANKUP-LAYOUT)', () => {
+  for (const kind of ALL_HEROES) {
+    for (const [from, to] of [[0, 1], [1, 2], [3, 4], [4, 5], [5, 6]]) {
+      const plan = stepPlan(kind, 40, from, to)!;
+      assert.equal(plan.figureSteps.length, plan.figures.length, `${kind} ${to}`);
+      plan.figureSteps.forEach((f, i) => {
+        assert.notEqual(f.from, f.to, `${kind} ${f.label} moved`);
+        assert.ok(plan.figures[i].startsWith(`${f.label} `), `${kind}: "${plan.figures[i]}" is ${f.label}`);
+        // (a save and to hit are written with their sign; AC and the skill DC plain)
+        assert.equal(f.signed, /save$|^To hit$/.test(f.label), `${kind} ${f.label}`);
+      });
+    }
+  }
+});

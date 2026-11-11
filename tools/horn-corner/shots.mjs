@@ -1,4 +1,5 @@
-// HORN-CORNER shots and checks (docs/notes/horn-corner.md): the War Horn in the fight's bottom-right corner, beside the tactic button. For each upright size:
+// HORN-CORNER shots and checks (docs/notes/horn-corner.md): the War Horn in the fight's bottom-right corner (its own since HUD-EVEN
+// moved the tactic button to the upper right; `tools/hud-even/shots.mjs` checks that plaque). For each upright size:
 //   wave5-ready     an army fight with four spells, the horn full (an Eidolon bound),
 //   wave5-charging  the same, the horn part filled,
 //   wave5-locked    the same on a save with no Eidolon bound (no horn at all),
@@ -115,11 +116,11 @@ function report(name, w, i, wantHorn) {
   if (i.horn) {
     check(i.horn[2] - i.horn[0] >= 48 && i.horn[3] - i.horn[1] >= 48, `${name}-${w}: a thumb target of at least 48 px (${i.horn[2] - i.horn[0]} x ${i.horn[3] - i.horn[1]})`);
     check(i.horn[2] >= w - 80 && i.horn[2] <= w - 4 && i.horn[3] <= i.panelTop, `${name}-${w}: in the bottom-right corner, above the panel`);
-    check(!i.tactic || (i.horn[2] <= i.tactic[0] - 4 && i.horn[1] >= i.tactic[1] && i.horn[3] <= i.tactic[3]), `${name}-${w}: beside the tactic button, a gap between, no taller than it`);
+    check(i.horn[2] === w - 8, `${name}-${w}: it has the corner to itself (8 px from the right edge)`);
+    check(!i.tactic || i.tactic[3] < i.horn[1] - 100, `${name}-${w}: the tactic button is up under the spell row, far above it`);
     check(!i.hits.length, `${name}-${w}: the horn lies over no other part`);
     check(i.cutLeft + Math.min(200, w * 0.56) <= i.horn[0], `${name}-${w}: a skill's banner stops short of the horn`);
-    check(!i.tactic || i.safe[3] === i.tactic[1] - 8, `${name}-${w}: the camera's room ends where the tactic button alone cut it`);
-    check(i.safe[3] <= i.horn[1], `${name}-${w}: the camera's room ends above the horn`);
+    check(i.safe[3] <= Math.ceil((i.horn[1] + i.horn[3]) / 2) - 7, `${name}-${w}: the camera's room ends no lower than half way up the horn (a corner cover)`);
   }
   if (i.rowH && w >= 393) check(i.rowH <= 56, `${name}-${w}: the spell row is one line (${i.rowH} px)`);
   check(i.cutLeft === 0, `${name}-${w}: a skill's banner comes in at the left edge`);

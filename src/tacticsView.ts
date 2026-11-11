@@ -58,6 +58,8 @@ export class TacticsView {
   readonly button: HTMLButtonElement;
   readonly word: HTMLDivElement;
   readonly formBtn: HTMLButtonElement;
+  /** HUD-EVEN: the fixed box at the board's upper right that holds the fight's tactic button and its word. */
+  readonly dock: HTMLDivElement;
   private sheet: HTMLDivElement;
   private closer?: () => void;
   private b?: Battle;
@@ -65,8 +67,12 @@ export class TacticsView {
   private wordTimer?: ReturnType<typeof setTimeout>;
 
   constructor(private opts: TacticsViewOpts) {
-    // (the fight's tactic button: at the right, just above the hero rows (COMBAT-HUD, the owner: "down on the right side, above the heroes'
-    // bars, not at the top"); it rides on the panel's top edge, so it stays just above the rows however many heroes there are)
+    // (HUD-EVEN (docs/notes/hud-even.md; the owner: "move the tactics button up to where the formation button usually is in between
+    // waves"): the fight's tactic button is a plaque at the board's upper right, the Formation button's corner, in its size and style, so
+    // the corner holds Formation while placing and the tactic in the fight. It hangs just under the spell row, which now spans the screen
+    // (the page sets the dock's top, `placeTopHud`). Its word rises under it.)
+    this.dock = el('div');
+    this.dock.id = 'tacticDock';
     this.button = el('button', 'fhTactic');
     this.button.id = 'tacticBtn';
     this.button.type = 'button';
@@ -75,7 +81,8 @@ export class TacticsView {
     this.word.id = 'tacticWord';
     this.word.setAttribute('role', 'status');
     this.word.setAttribute('aria-live', 'polite');
-    document.getElementById('panel')!.append(this.button, this.word);
+    this.dock.append(this.button, this.word);
+    document.body.appendChild(this.dock);
 
     // (the prep screen's Formation button, at the side of the board)
     this.formBtn = el('button');
@@ -132,7 +139,8 @@ export class TacticsView {
     if (this.shown === t) return;
     this.shown = t;
     const w = TACTIC_WORDS[t];
-    this.button.innerHTML = `<span class="fhTacticFace">${icon(t)}</span><small>${w.short}</small>`;
+    // (the Formation plaque's make: the icon, a small label, the word)
+    this.button.innerHTML = `<span class="fhTacticFace">${icon(t)}</span><small>Tactic</small><b>${w.short}</b>`;
     this.button.dataset.tactic = t;
     this.button.setAttribute('aria-label', `Tactic: ${w.name}. Tap for the next`);
     this.button.title = `${w.name}: ${w.line} Tap for the next tactic.`;

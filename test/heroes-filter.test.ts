@@ -11,8 +11,9 @@ import { MYTHIC_KINDS } from '../src/sim/mythicRules';
 import { secretsOf } from '../src/sim/secretHeroes';
 import { toCollect } from '../src/sim/unlock';
 import { parseSettings } from '../src/settings';
+import { roleOf } from '../src/sim/suggest';
 
-const row = (kind: string, over: Partial<RosterRow> = {}): RosterRow => ({ kind, named: true, owned: true, name: kind, text: kind, cls: 'front', traits: [], level: 1, rank: 0, shards: 0, power: 0, joined: 0, inParty: false, ready: false, mythic: false, base: 0, ...over });
+const row = (kind: string, over: Partial<RosterRow> = {}): RosterRow => ({ kind, named: true, owned: true, name: kind, text: kind, cls: 'front', role: 'front', traits: [], level: 1, rank: 0, shards: 0, power: 0, joined: 0, inParty: false, ready: false, mythic: false, base: 0, ...over });
 const kinds = (rows: readonly RosterRow[]) => rows.map((r) => r.kind);
 
 test('the default is the list as it always was: the game’s order, nothing filtered, nothing said', () => {
@@ -61,6 +62,8 @@ test('filters hold together: every group chosen, and any one of the classes or t
   assert.equal(f({ party: 'out', own: 'owned' }), 'mage');
   assert.equal(f({ ready: true, party: 'in' }), 'bow');
   assert.equal(f({ classes: ['caster'], traits: ['marksman'] }), '', 'nothing is both');
+  assert.equal(f({ roles: ['front'] }), 'tank,mage,bow,far', 'the War Council’s roles are a filter too');
+  assert.equal(f({ roles: ['support'] }), '');
   assert.equal(f({ mythic: true }), '');
   assert.equal(f({}, 'MAG'), 'mage', 'the search is by name, any case');
   assert.equal(filterCount({ own: 'owned', classes: ['caster', 'shooter'], traits: ['arcane'], party: 'in', ready: true, mythic: true }), 7);
@@ -78,7 +81,7 @@ test('a hero the save may not name stays hidden whatever the sort or filter', ()
   const secret = rows[1];
   assert.equal(passes(secret, {}), true, 'with no filter it shows as it does today');
   assert.equal(passes(secret, { own: 'missing', party: 'out' }), true, 'not owned and not in the party give nothing away');
-  for (const v of [{ classes: ['caster'] }, { traits: ['arcane'] }, { mythic: true }, { ready: true }] as RosterView[]) assert.equal(passes(secret, v), false, JSON.stringify(v));
+  for (const v of [{ classes: ['caster'] }, { roles: ['front'] }, { traits: ['arcane'] }, { mythic: true }, { ready: true }] as RosterView[]) assert.equal(passes(secret, v), false, JSON.stringify(v));
   assert.equal(passes(secret, {}, 'aaa'), false, 'a name search never finds it');
   assert.deepEqual(traitChoices([secret]), [], 'its traits are not offered');
   assert.equal(mythicKnown([secret]), false, 'nor the Mythic filter');
@@ -89,7 +92,7 @@ test('a saved choice is made safe: unknown sorts, classes and traits are dropped
   assert.deepEqual(cleanView(null), {});
   assert.deepEqual(cleanView('level'), {});
   assert.deepEqual(cleanView({ sort: 'default', flip: true }), {}, 'the default has no other way round');
-  assert.deepEqual(cleanView({ sort: 'luck', own: 'all', classes: ['front', 'wizard', 'front', 3], traits: ['arcane', 'nope'], party: 'in', ready: 1, mythic: true }), { classes: ['front'], traits: ['arcane'], party: 'in', mythic: true });
+  assert.deepEqual(cleanView({ sort: 'luck', own: 'all', classes: ['front', 'wizard', 'front', 3], roles: ['striker', 'tank'], traits: ['arcane', 'nope'], party: 'in', ready: 1, mythic: true }), { classes: ['front'], roles: ['striker'], traits: ['arcane'], party: 'in', mythic: true });
   assert.deepEqual(cleanView({ sort: 'power', flip: true }), { sort: 'power', flip: true });
 });
 
@@ -119,6 +122,7 @@ test('the save’s rows: every hero of the game once, in the game’s order, rea
   assert.equal(of(have[3]).shards, 2);
   for (const r of rows) {
     assert.equal(r.cls, CLASS_OF[r.kind], r.kind);
+    assert.equal(r.role, roleOf(r.kind), r.kind);
     assert.ok(CLASS_ORDER.includes(r.cls), r.kind);
     assert.deepEqual(r.traits, traitsOf(r.kind));
     assert.equal(r.mythic, MYTHIC_KINDS.includes(r.kind));
@@ -139,18 +143,18 @@ test('the roster is drawn from the rules, and its sheets are standard ornate men
   assert.match(view, /ornateMenu\(\{ id: 'rosterFilter'/);
   const roster = readFileSync('src/menuHeroes.ts', 'utf8');
   assert.match(roster, /viewRows\(/);
-  assert.match(roster, /setSetting\('roster'/);
+  assert.match(readFileSync('src/heroFilterView.ts', 'utf8'), /setSetting\('roster'/);
   const rules = readFileSync('src/heroFilterRules.ts', 'utf8');
   assert.doesNotMatch(rules, /document\.|pixi|Math\.random|Date\.now/, 'pure');
 });
 
 // ---- job 2: the War Council's pack (`src/partyPackRules.ts`, `src/partyPack.ts`) ----
-import { firstTab, packLine, packMarks, packShown, planWaits, satchelCanFill, satchelShown, type PackState } from '../src/partyPackRules';
+import { firstTab, packLine, packMarks, packShown, planChanged, planWaits, satchelCanFill, satchelShown, type PackState } from '../src/partyPackRules';
 import { BACK_LAYERS } from '../src/backRules';
 import { OM_CLASSES } from '../src/ornateMenu';
 import { SATCHEL_MAX, pickSatchel, satchelFor } from '../src/sim/remedies';
 
-const pack = (over: Partial<PackState> = {}): PackState => ({ owned: undefined, pick: {}, auto: false, plan: null, planSeen: false, ...over });
+const pack = (over: Partial<PackState> = {}): PackState => ({ owned: undefined, pick: {}, auto: false, plan: null, planChosen: false, ...over });
 
 test('the pack is offered only when there is something to pack: a new save sees no tab and no line', () => {
   assert.equal(packShown(pack()), false);
@@ -174,19 +178,24 @@ test('the tab wears its mark while the satchel could take more or the plan is no
   assert.equal(satchelCanFill(pack({ owned: { bandage: 9 }, pick: { bandage: SATCHEL_MAX } })), false, 'the satchel is full');
   assert.equal(satchelCanFill(pack({ owned: { elixir: 3 }, pick: { elixir: 1 } })), false, 'one Elixir at most');
   assert.equal(satchelCanFill(pack({ owned: {}, auto: true })), false, 'nothing owned');
-  // (the plan waits until it is looked at or set)
+  // (the plan waits only until the orders are first changed from the plain default, not at every march)
   assert.equal(planWaits(pack({ plan: 'Plain march' })), true);
-  assert.equal(planWaits(pack({ plan: 'Plain march', planSeen: true })), false);
+  assert.equal(planWaits(pack({ plan: 'Plain march', planChosen: true })), false, 'a plain march after that is a choice');
+  assert.equal(planChanged('Plain march · Shielded', 'Plain march · Shielded'), false, 'looking is not choosing');
+  assert.equal(planChanged('Plain march · Shielded', 'Cursed · Shielded'), true);
+  assert.equal(planChanged(null, 'Cursed'), false);
+  assert.equal(parseSettings(JSON.stringify({ planChosen: true })).planChosen, true, 'kept with the settings');
+  assert.equal('planChosen' in parseSettings(null), false);
   assert.equal(planWaits(pack()), false, 'no orders open: nothing to choose');
   assert.deepEqual(packMarks(pack({ owned: { bandage: 4 }, pick: {}, plan: 'Plain march' })), ['satchel', 'plan']);
-  assert.deepEqual(packMarks(pack({ owned: { bandage: 1 }, pick: { bandage: 1 }, plan: 'Cursed', planSeen: true })), []);
+  assert.deepEqual(packMarks(pack({ owned: { bandage: 1 }, pick: { bandage: 1 }, plan: 'Cursed', planChosen: true })), []);
 });
 
 test('the drawer opens on the tab asked for, else the one that wants attention', () => {
   assert.equal(firstTab(pack({ owned: { bandage: 1 }, pick: { bandage: 1 }, plan: 'Plain march' })), 'plan');
   assert.equal(firstTab(pack({ owned: { bandage: 2 }, pick: {}, plan: 'Plain march' })), 'satchel');
   assert.equal(firstTab(pack({ owned: { bandage: 2 }, pick: {}, plan: 'Plain march' }), 'plan'), 'plan');
-  assert.equal(firstTab(pack({ plan: 'Cursed', planSeen: true })), 'plan', 'nothing in the satchel: the plan');
+  assert.equal(firstTab(pack({ plan: 'Cursed', planChosen: true })), 'plan', 'nothing in the satchel: the plan');
 });
 
 test('what the satchel does is unchanged: the pick is kept within the room and what is owned', () => {
@@ -211,6 +220,13 @@ test('the pack is a standard ornate menu from the right edge, off the party page
   const party = readFileSync('src/party.ts', 'utf8');
   assert.doesNotMatch(party, /ptRemedy|pickSatchel|el\('button', 'ptOrders'\)/);
   assert.match(party, /this\.pack\.setPlan\(/);
+  // (round 2: the Reinforcements grid is drawn from the roster's rules and shares its buttons and saved choice; the tab says Supplies)
+  assert.match(party, /rosterTools\(/);
+  assert.match(party, /viewRows\(this\.rows\(\), v, this\.search\)/);
+  assert.doesNotMatch(party, /ptFilters/);
+  assert.match(readFileSync('src/menuHeroes.ts', 'utf8'), /rosterTools\(/);
+  assert.match(view, /'gripWord', 'Supplies'/);
+  assert.doesNotMatch(view, /'gripWord', 'Pack'/);
   const rules = readFileSync('src/partyPackRules.ts', 'utf8');
   assert.doesNotMatch(rules, /document\.|pixi|Math\.random|Date\.now/, 'pure');
 });

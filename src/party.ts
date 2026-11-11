@@ -8,12 +8,13 @@ import { mythicFits, MYTHIC_LIMIT_WORDS } from './sim/mythicRules';
 
 import { glyphWord } from './paintedButton';
 import { PartyPack } from './partyPack';
+import { rosterRows, viewRows, type RosterView } from './heroFilterRules';
+import { rosterTools, type RosterTools } from './heroFilterView';
 import { retired } from './sim/legacy';
 import { fieldedOf, fieldsElder } from './sim/dynasty';
 import { mourning, mourningLeft } from './sim/oath';
 import { bannerChoices, fieldName } from './sim/heirs';
 import { openBanner } from './housesView';
-import { ALL_HEROES, UNITS } from './sim/units';
 import { heroRank, partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { heroClassLabel, heroName } from './sim/heroNames';
 import { progressOf, xpOf } from './sim/levels';
@@ -32,7 +33,7 @@ import { markReady } from './sim/upgradesReady';
 import { kindPower, partyPower, powerText } from './sim/power';
 import { partyTableau } from './partyScene';
 import { awakenedStep } from './render/awakenRig';
-import { ROLE_NAMES, roleOf, suggestParty, type PartyRole } from './sim/suggest';
+import { ROLE_NAMES, roleOf, suggestParty } from './sim/suggest';
 
 import { partyWear, repairAllCost } from './sim/wear';
 import { stallRepairAll } from './sim/stall';
@@ -57,7 +58,8 @@ export class Party {
   /** The draft: the kinds picked so far (saved only by Start or Done). */
   private picked: string[] = [];
   private note = '';
-  private filter: PartyRole | 'all' = 'all';
+  /** HEROES-FILTER: the Reinforcements' Sort and Filter, the roster's own (`heroFilterView.ts`): one saved choice for both lists. */
+  private bar: RosterTools;
   private search = '';
   private sceneKey = '';
   private held = false;
@@ -77,6 +79,9 @@ export class Party {
     private meta: Meta,
     private onBack: () => void,
   ) {
+    this.bar = rosterTools({ rows: () => this.rows(), count: (v) => this.shown(v).length, changed: () => this.draw(), clearSearch: () => ((this.search = ''), ($<HTMLInputElement>('ptSearch').value = '')) });
+    $('ptTools').append(this.bar.tools, this.bar.active);
+    $('ptNoResults').append(this.bar.clearButton());
     this.pack = new PartyPack(meta);
     $('party').append(this.pack.tab);
     $('ptGo').before(this.pack.line);
@@ -107,7 +112,6 @@ export class Party {
     this.onDone = then;
     this.orders = null;
     this.pack.reset();
-    this.filter = 'all';
     this.search = '';
     $<HTMLInputElement>('ptSearch').value = '';
     $('ptGo').textContent = mode === 'start' ? '⚔  March to battle' : 'Save company';
@@ -138,6 +142,19 @@ export class Party {
   private drawOrders(): void {
     const o = this.orders;
     this.pack.setPlan(o && !this.quest ? { line: o.line, open: (redraw) => o.open([...this.picked], redraw) } : null);
+  }
+
+  /** HEROES-FILTER: every hero as the Reinforcements list sees it: the roster's rows, but "in the party" is the draft being picked, and a
+   *  search also finds the bearer who takes the field. */
+  private rows() {
+    return rosterRows(this.meta, (k) => fieldName(this.meta, k)).map((r) => ({ ...r, inParty: this.picked.includes(r.kind) }));
+  }
+
+  /** The heroes a choice leaves in the grid: filtered and sorted by the roster's rules, the unlocked ones first and the locked shaded
+   *  after them, as before. */
+  private shown(v: RosterView): string[] {
+    const kinds = viewRows(this.rows(), v, this.search).map((r) => r.kind);
+    return [...kinds.filter((k) => this.meta.unlocked.includes(k)), ...kinds.filter((k) => !this.meta.unlocked.includes(k))];
   }
 
   private get slots(): number {
@@ -292,7 +309,7 @@ export class Party {
         const empty = el('div', 'ptSlot empty');
         const number = el('span', 'ptSlotNumber', String(i + 1));
         number.dataset.number = String(i + 1);
-        empty.append(number, el('small', '', 'Recruit +'));
+        empty.append(number, el('i', 'ptSlotPlus', '+'), el('small', '', 'Recruit'));
         row.append(empty);
         continue;
       }
@@ -310,7 +327,8 @@ export class Party {
       // (phase 7: a House in mourning does not march with the armies: its slot is greyed and says so)
       const mourns = mourning(this.meta, kind, todayKey());
       if (mourns) b.classList.add('ptMourns');
-      b.append(number, el('small', '', mourns ? `${fieldName(this.meta, kind)} · mourning` : fieldName(this.meta, kind)), remove);
+      // (HEROES-FILTER: with the Satchel and the Plan off the page, the company's five are proper cards: the portrait, the name and the level)
+      b.append(number, portrait(lookSheet(kind, heroRank(this.meta, kind), 1), 48), el('small', '', mourns ? `${fieldName(this.meta, kind)} · mourning` : fieldName(this.meta, kind)), levelBadge(progressOf(xpOf(this.meta, kind)).level), remove);
       if (locked) b.append(el('span', 'ptQuestRibbon', 'Quest'));
       b.addEventListener('click', () => (this.held ? (this.held = false) : this.toggle(kind)));
       this.holdTo(b, kind);
@@ -345,18 +363,6 @@ export class Party {
       const chip = el('span', n ? 'covered' : '', `${n ? '◆' : '◇'} ${name} ${n}`);
       roles.append(chip);
     }
-    const filters = $('ptFilters');
-    filters.replaceChildren();
-    for (const [id, name] of [['all', 'All'], ...Object.entries(ROLE_NAMES)]) {
-      const button = el('button', '', name);
-      button.setAttribute('aria-pressed', String(this.filter === id));
-      button.addEventListener('click', () => {
-        this.filter = id as PartyRole | 'all';
-        this.draw();
-        $('ptFilters').querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus({ preventScroll: true });
-      });
-      filters.append(button);
-    }
     const traits = $('ptTraits');
     traits.replaceChildren();
     for (const c of counts) {
@@ -371,15 +377,11 @@ export class Party {
     // the unlocked heroes first (in the game's order), the locked ones shaded at the end
     const grid = $('ptGrid');
     grid.replaceChildren();
-    const order = [...ALL_HEROES].sort((a, b) => Number(m.unlocked.includes(b)) - Number(m.unlocked.includes(a)));
+    // (HEROES-FILTER: which heroes, and in what order, is the roster's Sort and Filter; a hero not yet named stays unknown through any
+    // filter or search, as the rules have it)
+    const order = this.shown(this.bar.view());
     for (const kind of order) {
-      const def = UNITS[kind];
-      // (SECRET-HEROES: a secret hero is under no role, so a filter cannot tell what it is)
       const secret = isSecret(m, kind);
-      if (this.filter !== 'all' && (secret || roleOf(kind) !== this.filter)) continue;
-      // Unknown locked names stay unknown, including through search.
-      const known = m.unlocked.includes(kind) || lockInfo(m, kind)?.named;
-      if (this.search.trim() && (!known || !`${heroName(kind)} ${fieldName(m, kind)} ${def.name}`.toLocaleLowerCase().includes(this.search.trim().toLocaleLowerCase()))) continue;
       const open = m.unlocked.includes(kind);
       const on = this.picked.includes(kind);
       const hit = !!this.focus && traitsOf(kind).includes(this.focus);
@@ -439,6 +441,7 @@ export class Party {
     }
 
     $('ptNoResults').hidden = !!grid.childElementCount;
+    this.bar.update(order.length, this.search);
     $<HTMLButtonElement>('ptGo').disabled = !full;
   }
 }

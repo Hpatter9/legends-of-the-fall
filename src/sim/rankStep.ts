@@ -36,6 +36,16 @@ export interface StepPlan {
   scores: ScoreStep[];
   /** AC, to hit, skill DC and saves, only those the step changes: "AC 15 → 16". */
   figures: string[];
+  /** The same figures as numbers, for a card that sets each on a row of its own (RANKUP-LAYOUT). */
+  figureSteps: FigureStep[];
+}
+
+/** One figure a step moves: its label, the value before and after, and whether it is written with its sign ("+5"). */
+export interface FigureStep {
+  label: string;
+  from: number;
+  to: number;
+  signed: boolean;
 }
 
 /** The numbers for a hero going from whole rank `from` to rank `to` (the next rank, or the next awakened step) at `level`. */
@@ -56,12 +66,17 @@ export function stepPlan(kind: string, level: number, from: number, to: number, 
     });
   }
   const figures: string[] = [];
-  const diff = (label: string, x: number, y: number, sign = false) => { if (x !== y) figures.push(`${label} ${sign ? signed(x) : x} → ${sign ? signed(y) : y}`); };
+  const figureSteps: FigureStep[] = [];
+  const diff = (label: string, x: number, y: number, sign = false) => {
+    if (x === y) return;
+    figures.push(`${label} ${sign ? signed(x) : x} → ${sign ? signed(y) : y}`);
+    figureSteps.push({ label, from: x, to: y, signed: sign });
+  };
   diff('AC', a.ac, b.ac);
   diff('To hit', a.toHit, b.toHit, true);
   diff('Skill DC', a.dc, b.dc);
   for (const k of ABILITIES) diff(`${ABILITY_SHORT[k]} save`, a.saves[k], b.saves[k], true);
   const x = fightFigures(kind, level, from, extra);
   const y = fightFigures(kind, level, to, extra);
-  return { hp: [x.hp, y.hp], atk: [x.atk, y.atk], scores, figures };
+  return { hp: [x.hp, y.hp], atk: [x.atk, y.atk], scores, figures, figureSteps };
 }

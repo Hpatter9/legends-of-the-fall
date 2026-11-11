@@ -1,6 +1,7 @@
-// The Rank up card: what a hero has earned, the stats before and after, the look before and after (when it changes: an awakening
-// equips its legendary gear), and the button that takes the step. A rank is the player's choice, never automatic (`sim/rankUp.ts`); the awakening
-// steps above the top rank use the same card (`sim/awaken.ts`). `openRankUp` puts the card over the page and calls `done` with what
+// The Rank up card: the hero and its look before and after (when it changes: an awakening equips its legendary gear), the rank's stars
+// old to new, what the step gives, the stats before and after (one row each, `statRows.ts`), what earned it, and the button that takes
+// the step. A standard ornate menu (RANKUP-LAYOUT, docs/notes/rankup-layout.md). A rank is the player's choice, never automatic
+// (`sim/rankUp.ts`); the awakening steps above the top rank use the same card (`sim/awaken.ts`). `openRankUp` puts the card over the page and calls `done` with what
 // was taken (a rank, or an awakened step) when the button is tapped; Back (or a tap outside) closes it and changes nothing.
 
 import { UNITS } from './sim/units';
@@ -16,6 +17,12 @@ import { lookSheet, stepOfRank } from './render/awakenLook';
 import { loadAwakenedSheets, sprite } from './render/sheets';
 import { play } from './render/sound';
 import { openScreen } from './screens';
+import { menuFoot, menuNote, menuSection, menuWell, ornateMenu } from './ornateMenu';
+import { statRows, type StatRow } from './statRows';
+import { signed } from './sim/statLines';
+import { MAX_AWAKEN } from './sim/awakenRules';
+import heartUrl from './art/ui/combat-heart.png';
+import swordsUrl from './art/ui/combat-icon-swords.png';
 
 export interface Taken {
   /** `rank`: a shard rank taken (`n` is the new rank); `awaken`: an awakened step (`n` is the step, 1 or 2); `cache`: a Rift Cache opened on the awakening panel (`n` ores; no show). */
@@ -29,7 +36,8 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   if (text) e.textContent = text;
   return e;
 };
-const stars = (n: number): string => '★'.repeat(n) + '☆'.repeat(MAX_RANK - n);
+/** A rank as its marks: the stars taken of `MAX_RANK`, then the awakening's gems. */
+const marks = (rank: number, awakened: number): string => `${'★'.repeat(rank)}${'☆'.repeat(MAX_RANK - rank)} ${'◆'.repeat(awakened)}${'◇'.repeat(MAX_AWAKEN - awakened)}`;
 
 /** A hero's picture at a whole rank (its permanent equipment form); `tick` animates its idle. */
 function pic(kind: string, full: number): { box: HTMLElement; tick: (n: number) => void } {
@@ -61,9 +69,26 @@ function openReadyRankUp(meta: Meta, kind: string, done: (t: Taken) => void): vo
   const steps = awakenedOf(meta, kind);
   const now = taken + steps;
   const next = rp ? rp.to + steps : taken + steps + 1;
-  const back = el('div', 'ruBack');
-  const card = el('div', 'ruCard');
-  card.append(el('h3', '', rp ? `${heroName(kind)} · Rank up` : `${heroName(kind)} · Awakening`));
+  const level = levelOfKind(meta, kind);
+  // (RANKUP-LAYOUT: the standard ornate menu; top to bottom: the hero and its look, the rank's stars old to new, what the step gives,
+  // then the stats, each on one row)
+  let timer = 0;
+  // (CLOSE-SCREENS: a moment over the hero's sheet (a place, which stays))
+  const leave = openScreen('rankUp', () => undefined, { kind: 'moment' });
+  const menu = ornateMenu({
+    id: 'rankUp', eyebrow: rp ? 'Rank up' : 'Awakening', title: heroName(kind), sub: `${UNITS[kind].name} · Level ${level}`,
+    label: `${heroName(kind)}: ${rp ? 'Rank up' : 'Awakening'}`,
+    onClose: () => {
+      clearInterval(timer);
+      leave();
+    },
+  });
+  menu.card.classList.add('ruCard');
+  const close = menu.close;
+  // (a tap outside the card closes it and changes nothing, as before)
+  menu.root.addEventListener('click', (e) => {
+    if (e.target === menu.root) close();
+  });
   // the look, before and after (one picture when the look does not change)
   const looks = el('div', 'ruLooks');
   const before = pic(kind, now);
@@ -71,67 +96,62 @@ function openReadyRankUp(meta: Meta, kind: string, done: (t: Taken) => void): vo
   const changes = lookSheet(kind, now, 1) !== lookSheet(kind, next, 1);
   looks.append(before.box);
   if (changes) {
-    const arrow = el('span', 'ruArrow', '→');
     after.box.classList.add('new');
-    looks.append(arrow, after.box);
+    looks.append(el('span', 'ruArrow', '→'), after.box);
     looks.classList.add('two');
-    card.append(looks, el('p', 'ruNote', 'It takes on a new look.'));
-  } else card.append(looks);
-  // what was earned
-  const have = meta.shards[kind] ?? 0;
-  card.append(el('p', 'ruEarned', rp ? `Earned with ${RANK_SHARDS[rp.to - 1]} shards (you have ${have}).` : `${AWAKEN_SHARDS[steps]} shards in all, and ${AWAKEN_COSTS[steps]} of them are used up${ap?.ore && ORES[ap.ore] ? `, with ${ap.oreCost} ${ORES[ap.ore].name}` : ''}.`));
-  // the stats, before and after
-  // (every number is the fight's own, with the score steps: `sim/rankStep.ts`)
-  const plan = stepPlan(kind, levelOfKind(meta, kind), now, next, heroStats(meta, kind)?.scores);
-  const table = el('div', 'ruStats');
-  const row = (name: string, from: string, to: string): void => {
-    table.append(el('span', 'k', name), el('span', 'v', from), el('span', 'a', '→'), el('span', 'v up', to));
-  };
-  if (rp) row('Rank', stars(taken), stars(rp.to));
-  if (plan) {
-    row('Hp', String(plan.hp[0]), String(plan.hp[1]));
-    row('Attack', String(plan.atk[0]), String(plan.atk[1]));
   }
-  card.append(table);
-  if (plan) {
-    if (plan.scores.length) card.append(el('p', 'ruScores', plan.scores.map((sc) => `${sc.short} ${sc.from} → ${sc.to}`).join(' · ')));
-    const words = [...plan.scores.filter((sc) => sc.mod).map((sc) => `${sc.short} ${sc.mod}${sc.effects.length ? `: ${sc.effects.join(', ')}` : ''}`), ...plan.figures];
-    if (words.length) card.append(el('p', 'ruNote ruWhy', words.join(' · ')));
-  }
+  // the rank, old to new: its stars, and the awakening's gems beside them
+  const ranks = el('div', 'ruRanks');
+  ranks.setAttribute('aria-label', rp ? `Rank ${taken} to ${rp.to}` : `Awakening ${steps} to ${steps + 1}`);
+  ranks.append(el('span', 'ruRankOld', marks(taken, steps)), el('span', 'ruArrow', '→'), el('span', 'ruRankNew', rp ? marks(rp.to, steps) : marks(taken, steps + 1)));
+  menu.body.append(looks, ranks);
+  // what the step gives, and what earned it
+  const plan = stepPlan(kind, level, now, next, heroStats(meta, kind)?.scores);
+  const gives = el('ul', 'ruGives');
+  const give = (text: string, cls = ''): void => void gives.append(el('li', cls, text));
   const p = PASSIVES[kind];
-  if (!rp && p) card.append(el('p', 'ruNote', steps === 0 ? `Wakes ${p.name}: ${p.text}.` : `${p.name} grows stronger.`));
-  const btns = el('div', 'ruBtns');
-  const go = el('button', 'primary', rp ? 'Rank up' : 'Awaken');
-  go.type = 'button';
-  const no = el('button', '', 'Back');
-  no.type = 'button';
-  btns.append(go, no);
-  card.append(btns);
-  back.append(card);
+  if (!rp && p) give(steps === 0 ? `Wakes ${p.name}: ${p.text}.` : `${p.name} grows stronger.`, 'ruGift');
+  if (changes) give('It takes on a new look.', 'ruGift');
+  // (what each raised score's new modifier does: "CON +5 → +6: health +5%")
+  for (const sc of plan?.scores ?? []) if (sc.mod) give(`${sc.short} ${sc.mod}${sc.effects.length ? `: ${sc.effects.join(', ')}` : ''}`);
+  if (gives.childElementCount) menu.body.append(gives);
+  // the stats, before and after, each on one row
+  // (every number is the fight's own, with the score steps: `sim/rankStep.ts`)
+  if (plan) {
+    const num = (n: number): string => String(n);
+    const rows: StatRow[] = [
+      { name: 'Health', from: num(plan.hp[0]), to: num(plan.hp[1]), gain: `+${plan.hp[1] - plan.hp[0]}`, icon: heartUrl },
+      { name: 'Attack', from: num(plan.atk[0]), to: num(plan.atk[1]), gain: `+${plan.atk[1] - plan.atk[0]}`, icon: swordsUrl },
+      ...plan.scores.map((sc) => ({ name: sc.short, from: num(sc.from), to: num(sc.to), gain: `+${sc.to - sc.from}` })),
+      ...plan.figureSteps.map((f) => ({ name: f.label, from: f.signed ? signed(f.from) : num(f.from), to: f.signed ? signed(f.to) : num(f.to), gain: `+${f.to - f.from}` })),
+    ];
+    // (a section's heading over a slate well, in place of its grid of choices)
+    const sec = menuSection(menu.body, 'Stats', 'before and after').parentElement!;
+    sec.querySelector('.omGrid')?.remove();
+    const well = menuWell(sec);
+    well.classList.add('ruStats');
+    well.append(statRows(rows));
+  }
+  const have = meta.shards[kind] ?? 0;
+  menuNote(menu.body, rp ? `Earned with ${RANK_SHARDS[rp.to - 1]} shards (you have ${have}).` : `${AWAKEN_SHARDS[steps]} shards in all, and ${AWAKEN_COSTS[steps]} of them are used up${ap?.ore && ORES[ap.ore] ? `, with ${ap.oreCost} ${ORES[ap.ore].name}` : ''} (you have ${have}).`).classList.add('ruEarned');
+  menuFoot(menu, {
+    back: { word: 'close' },
+    primary: {
+      label: rp ? 'Rank up' : 'Awaken',
+      onClick: () => {
+        const got = rp ? rankUp(meta, kind) : awaken(meta, kind);
+        if (!got) return close();
+        saveMeta(meta);
+        close();
+        play('levelUp');
+        done({ what: rp ? 'rank' : 'awaken', n: got });
+      },
+    },
+  });
   let n = 0;
-  const timer = setInterval(() => {
+  timer = window.setInterval(() => {
     n++;
     before.tick(n);
     after.tick(n);
   }, 140);
-  // (CLOSE-SCREENS: a moment over the hero's sheet (a place, which stays))
-  const leave = openScreen('rankUp', () => undefined, { kind: 'moment' });
-  const close = (): void => {
-    clearInterval(timer);
-    back.remove();
-    leave();
-  };
-  no.addEventListener('click', close);
-  back.addEventListener('click', (e) => {
-    if (e.target === back) close();
-  });
-  go.addEventListener('click', () => {
-    const got = rp ? rankUp(meta, kind) : awaken(meta, kind);
-    if (!got) return close();
-    saveMeta(meta);
-    close();
-    play('levelUp');
-    done({ what: rp ? 'rank' : 'awaken', n: got });
-  });
-  document.body.append(back);
 }

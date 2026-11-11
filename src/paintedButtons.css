@@ -215,12 +215,13 @@ body[data-phase='deploy'] #buttons button,
 body[data-phase='deploy'] #buttons button:not(#fight),
 body[data-phase='deploy'] #benchWrap #mergeAll,
 body[data-phase='deploy'] #formBtn,
+#tacticBtn,
 #runeBench .rbBtn {
   border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
   --pbw: 12px 14px; border-image: url(ui/buttons/plate-secondary.webp) var(--plate-secondary-slice) / var(--pbw) / 0 stretch;
   color: #f4ead2; text-shadow: 0 1px 2px #000;
 }
-:is(body[data-phase='deploy'] #buttons button, body[data-phase='deploy'] #benchWrap #mergeAll, body[data-phase='deploy'] #formBtn, #runeBench .rbBtn):active:not(:disabled) {
+:is(body[data-phase='deploy'] #buttons button, body[data-phase='deploy'] #benchWrap #mergeAll, body[data-phase='deploy'] #formBtn, #tacticBtn, #runeBench .rbBtn):active:not(:disabled) {
   border-image: url(ui/buttons/plate-secondary-down.webp) var(--plate-secondary-slice) / var(--pbw, var(--plate-secondary-width)) / 0 stretch; filter: none; transform: translateY(1px);
 }
 :is(body[data-phase='deploy'] #buttons button, body[data-phase='deploy'] #formBtn, #runeBench .rbBtn):disabled,

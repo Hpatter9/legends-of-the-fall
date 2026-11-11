@@ -374,7 +374,7 @@ export class RuneBench {
     const r = s && whereRune(s, id)?.rune;
     if (!r) return;
     this.putDown(false);
-    const menu = ornateMenu({ id: 'runeInfo', title: runeName(r), eyebrow: 'Rune', kind: 'card' });
+    const menu = ornateMenu({ asked: true, id: 'runeInfo', title: runeName(r), eyebrow: 'Rune', kind: 'card' });
     const well = menuWell(menu.body);
     well.classList.add('rbInfo');
     well.append(runeStone(r), el('p', '', runeText(r)));
@@ -387,7 +387,7 @@ export class RuneBench {
   openSockets(kind: string): void {
     const s = this.hooks.runes();
     if (!s) return;
-    const menu = ornateMenu({ id: 'runeSockets', title: heroName(kind), eyebrow: 'Rune sockets', kind: 'card' });
+    const menu = ornateMenu({ asked: true, id: 'runeSockets', title: heroName(kind), eyebrow: 'Rune sockets', kind: 'card' });
     const grid = menuSection(menu.body, 'Sockets', `${s.worn[kind]?.length ?? 0} of ${SOCKETS}`, 2);
     const worn = s.worn[kind] ?? [];
     for (let i = 0; i < SOCKETS; i++) {

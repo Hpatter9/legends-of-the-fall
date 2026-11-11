@@ -27,6 +27,30 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.486.0',
+    date: '2026-11-11',
+    title: 'More of the board in view',
+    notes: ['The camera now treats corner buttons as corners, so the fight gets back the room the top-right tactic plaque had taken.'],
+  },
+  {
+    version: '0.485.0',
+    date: '2026-11-11',
+    title: 'An even spell bar, and the tactic up top',
+    notes: ['The fight\'s spell bar now spreads evenly across the screen. The tactic button moves to the top right, under the bar, where Formation sits between waves.'],
+  },
+  {
+    version: '0.484.0',
+    date: '2026-11-11',
+    title: 'The Rank up card reads cleanly',
+    notes: ['On the Rank up and Awakening cards each stat is one row: its name, the old value, the new value and the gain, in columns that line up.'],
+  },
+  {
+    version: '0.483.0',
+    date: '2026-11-11',
+    title: 'Popups wait to be read',
+    notes: ['A popup in a run no longer closes on a stray tap: it ignores taps for half a second and closes by its own button. The recap lists the run\'s news.', 'The party picker shares the roster\'s Sort and Filter, and the drawer\'s tab is now Supplies.'],
+  },
+  {
     version: '0.482.0',
     date: '2026-11-11',
     title: 'The War Horn moves to the bottom right',

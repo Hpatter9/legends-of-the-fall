@@ -183,3 +183,32 @@ test('every chip name is one word of at most 8 letters, unique within its hero k
     assert.ok(rows.some(([k]) => k === 'Cooldown'), h);
   });
 });
+
+// HUD-EVEN (docs/notes/hud-even.md): the spell row's pieces evenly spaced across the screen
+test('the spell row: spread edge to edge with enough pieces, a centred group with few, never tighter than the least gap', async () => {
+  const { SPELL_ROW, spellRowGap, spellRowSpans } = await import('../src/fightHudRules');
+  const MANA = 54, ORB = 44, AUTO = 48;
+  const row = (orbs: number, autos: number) => [MANA, ...Array(orbs).fill(ORB), ...Array(autos).fill(AUTO)];
+  const sum = (w: number[]) => w.reduce((a, b) => a + b, 0);
+  for (const room of [344, 377, 396]) {
+    // (three or four spells with the Auto pair: edge to edge, the margins the row's own)
+    for (const w of [row(4, 2), row(3, 2), row(4, 1)]) {
+      const gap = spellRowGap(room, w);
+      assert.ok(gap >= SPELL_ROW.MIN_GAP && gap <= SPELL_ROW.MAX_GAP);
+      assert.ok(spellRowSpans(room, w), `${w.length} pieces span ${room}`);
+      assert.ok(room - sum(w) - gap * (w.length - 1) < w.length - 1, 'under a px a gap is left over');
+    }
+    // (one spell, or none: the pieces stand close as a group in the middle)
+    for (const w of [row(1, 2), row(1, 1), row(0, 1)]) {
+      assert.equal(spellRowGap(room, w), SPELL_ROW.GROUP_GAP);
+      assert.ok(!spellRowSpans(room, w));
+    }
+    // (the mana alone: nothing to space)
+    assert.equal(spellRowGap(room, row(0, 0)), 0);
+  }
+  // (a full row on the narrowest phone fits at the least gap: 326 px of pieces and six gaps of 3 in 344)
+  assert.equal(spellRowGap(344, row(4, 2)), 3);
+  // (a row too full for its room keeps the least gap, and wraps)
+  assert.equal(spellRowGap(300, row(4, 2)), SPELL_ROW.MIN_GAP);
+});
+

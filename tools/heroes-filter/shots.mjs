@@ -74,7 +74,7 @@ const home = async (page, tab) => {
 };
 // (each roster scene starts from the plain list: the choice is remembered, so the last scene's is cleared first)
 const roster = async (p) => { await home(p, 'heroes'); await ev(p, () => window.__game.home.openRoster()); await wait(p); await click(p, '.rosActive:not([hidden]) .rosClear', 300); };
-const party = async (p) => { await home(p); await ev(p, () => window.__game.home.hooks.onArmy('orcs', 0)); await wait(p, 900); };
+const party = async (p) => { await home(p); await ev(p, () => window.__game.home.hooks.onArmy('orcs', 0)); await wait(p, 900); await click(p, '#ptTools .rosActive:not([hidden]) .rosClear', 300); await ev(p, () => (document.getElementById('ptBody').scrollTop = 0)); };
 const foot = (p) => ev(p, () => { const b = document.getElementById('ptBody'); b.scrollTop = b.scrollHeight; });
 
 const SCENES = {
@@ -88,6 +88,8 @@ const SCENES = {
   // ---- job 2: the War Council ----
   'party': party,
   'party-foot': async (p) => { await party(p); await foot(p); await wait(p, 300); },
+  'party-grid': async (p) => { await party(p); await click(p, '#ptTools .rosActive:not([hidden]) .rosClear', 300); await ev(p, () => document.getElementById('ptTools').scrollIntoView({ block: 'start' })); await wait(p, 300); },
+  'party-grid-filtered': async (p) => { await SCENES['party-grid'](p); await click(p, '#ptTools .rosFilterBtn'); await clickText(p, '#rosterFilter .omChoice', '^Back-liner'); await click(p, '#rosterFilter .omBack'); await click(p, '#ptTools .rosSortBtn'); await clickText(p, '#rosterSort .omChoice', '^Power'); await click(p, '#rosterSort .omBack'); await ev(p, () => document.getElementById('ptTools').scrollIntoView({ block: 'start' })); await wait(p, 300); },
   'party-satchel': async (p) => { await party(p); await click(p, '#ptPackTab', 700); },
   'party-plan': async (p) => { await party(p); await click(p, '#ptPackTab', 700); await clickText(p, '.ptPackTabs button', 'Plan'); },
 };
@@ -102,7 +104,7 @@ for (const [w, h] of SIZES) {
       const bad = await ev(page, () => {
         const out = [];
         if (document.documentElement.scrollWidth > innerWidth) out.push(`page ${document.documentElement.scrollWidth} wide`);
-        for (const e of document.querySelectorAll('.rosTools button, .rosTools input, .rosActive button, #ptPackTab, .ptPack button, .ptPackLine, #rosterSort button, #rosterFilter button')) {
+        for (const e of document.querySelectorAll('#ptNoResults button, .rosTools button, .rosTools input, .rosActive button, #ptPackTab, .ptPack button, .ptPackLine, #rosterSort button, #rosterFilter button')) {
           const r = e.getBoundingClientRect();
           if (!r.width) continue;
           if (r.right > innerWidth + 0.5 || r.left < -0.5) out.push(`${e.className || e.id} off the side (${Math.round(r.left)}..${Math.round(r.right)})`);

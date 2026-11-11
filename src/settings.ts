@@ -62,6 +62,8 @@ export interface Settings {
   nemesisCut: CutMode;
   /** HEROES-FILTER: the roster's sort and filters (`heroFilterRules.ts`); missing is the list as it always was. */
   roster?: RosterView;
+  /** HEROES-FILTER: set once the March orders are first changed from the plain default: the War Council's Plan no longer wears its mark. */
+  planChosen?: boolean;
 }
 
 export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, volCurve: true, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, ultShort: false, ultEvery: DEFAULT_EVERY, eidolonFull: true, duchessHat: 'none', nemesisCut: 'full' };
@@ -104,6 +106,7 @@ export function parseSettings(raw: string | null): Settings {
     duchessHat: validHat(saved.duchessHat),
     nemesisCut: CUT_MODES.includes(saved.nemesisCut as CutMode) ? (saved.nemesisCut as CutMode) : DEFAULTS.nemesisCut,
     ...(viewActive(cleanView(saved.roster)) ? { roster: cleanView(saved.roster) } : {}),
+    ...(saved.planChosen === true ? { planChosen: true } : {}),
   };
 }
 

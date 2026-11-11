@@ -103,7 +103,7 @@ import { showDailyStart } from './dailyView';
 import { showBuilt } from './builtCard';
 import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
-import { toastAchievements, toastLines, toastSpells, toastStones } from './achievementsView';
+import { clearNotices, noteNotice, toastAchievements, toastLines, toastSpells, toastStones, toldNotices } from './achievementsView';
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
 import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
 import { defaultPicks, marchChoice, marchLine, openMarchOrders, ordersOf, showAnvil, showLectern } from './marchCard';
@@ -200,6 +200,9 @@ import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
 import { colLeft, viewH, viewW } from './viewport';
 import { installTapGuard } from './tapGuard';
+import { guardRuns, installPopupGuard } from './popupGuard';
+import { CHAINS } from './sim/eidolonChainData';
+import { readMs } from './popupGuardRules';
 import { onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
 import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
@@ -211,6 +214,7 @@ import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
 import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
 import { fightToastTop, HORN_CORNER } from './hudClear';
+import { laySpellRow, watchSpellRow } from './spellRow';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/ui/combat-heart.png';
@@ -269,6 +273,8 @@ const ORBS_ROW = 48;
 const PASS_AFTER_MARCH_MS = 1400;
 const PASS_NO_MARCH_MS = 3200;
 const PASS_FADE_MS = 450;
+/** POPUP-GUARD: the longest the short card waits for its lines to be read before it goes on by itself (a tap on it goes on at once). */
+const CARD_READ_MAX_MS = 5000;
 
 /** The spells that hurt foes (their 3x3 shows red). */
 const HURTING = new Set<SpellId>(['meteor', 'smite', 'chain', 'poison', 'frost']);
@@ -345,6 +351,8 @@ class Game {
   /** The Nemesis War, phase 4: the challenge this wave opens with, waiting for its cut-in to play before its card opens; the card while up. */
   private duelWait: DuelOffer | null = null;
   private duelCard: OrnateMenu | null = null;
+  /** POPUP-GUARD: the seed of the run the notices' list is for. */
+  private noticeRun = 0;
   /** How long the fight has been over (ms): the recap waits `END_WAIT_MS` after the last kill, so the deaths play out. */
   private endWait = 0;
   /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the fallen heroes rise, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
@@ -355,7 +363,7 @@ class Game {
   private heartsBurned = 0;
   /** A won wave with more to come (WAVE-RECAP): its short card rides over the march, see-through, and goes by itself once the party has arrived. `wait` counts the ms since
    *  nothing held it (the march, a cinematic, the home screen), `marched` whether a march was seen. Null otherwise. */
-  private passing: { wait: number; marched: boolean } | null = null;
+  private passing: { wait: number; marched: boolean; shown: number; read: number } | null = null;
   /** The settled wave's short card (WAVE-RECAP): its number, its count of waves, and the moments worth a line; null for a card that keeps the full report (the spire and the Calamity). */
   private waveCard: (WaveMoments & { wave: number; of: number | null; title?: string }) | null = null;
   /** JRPG-RECAP: the results screen's data once a fight is settled, and its player once the card is up. */
@@ -728,6 +736,8 @@ class Game {
     (window as unknown as { __screens: () => string[] }).__screens = openScreens;
     // (PHONE-BACK: the phone's Back and Escape close the topmost thing open, else go to the Battle tab, else open the place's own leave or
     // pause control; they never leave the game, `phoneBack.ts`)
+    // (POPUP-GUARD: a run is going anywhere but on the home screen: a deploy, a fight, a result, the Last Stand, an Assault)
+    guardRuns(() => !this.home.isOpen || !!document.getElementById('assaultScene'));
     initPhoneBack({
       place: () => {
         if (document.getElementById('assaultScene')) return { place: 'assault' };
@@ -747,6 +757,14 @@ class Game {
     });
     // (the toasts' queue, for the screenshot tools to raise one: `tools/sweep-1110/toasts.mjs`; the game never calls it from here)
     (window as unknown as { __toastLines: typeof toastLines }).__toastLines = toastLines;
+    // (POPUP-GUARD: two cards the game raises, for the check to raise at will: `tools/popup-guard/check.mjs`; the game never calls it from here)
+    (window as unknown as { __popups: Record<string, () => void> }).__popups = {
+      anvil: () => showAnvil(2, 40, true, () => undefined),
+      piece: () => {
+        const p = pieceInfo(CHAINS[0].parts[0].piece.id);
+        if (p) showPieceCard(p);
+      },
+    };
     // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
@@ -1931,7 +1949,6 @@ class Game {
   private placeTopHud(): { below: number; barBottom: number } {
     const top = $('top').getBoundingClientRect();
     const bar = $('bossBar');
-    bar.style.right = '12px';
     // (a floor's twist banner sits under the top bar; the bar for a boss goes below it)
     const twist = $('twistBanner');
     twist.style.top = `${top.bottom + 2}px`;
@@ -1943,6 +1960,13 @@ class Game {
     // single row's height)
     const drawn = row.getBoundingClientRect();
     const rowBottom = drawn.height > 0 ? Math.max(drawn.bottom, below + 6 + ORBS_ROW) : below + 6 + ORBS_ROW;
+    // (HUD-EVEN: the row's pieces evenly spaced across the screen; and the tactic button's plaque hangs at the right just under the row,
+    // in the Formation button's corner. The boss's bar, under the row too, stops short of the plaque, so it stays put when a boss comes)
+    laySpellRow(row);
+    const dock = this.tactics.dock;
+    dock.style.setProperty('--dock-top', `${Math.round(rowBottom + 4)}px`);
+    const plaque = dock.getBoundingClientRect();
+    bar.style.right = plaque.width > 0 ? `${Math.round(innerWidth - plaque.left + 6)}px` : '12px';
     bar.style.top = `${rowBottom + 4}px`;
     const barBottom = bar.hidden ? below : bar.getBoundingClientRect().bottom + 4;
     // (the row of active synergies and the combo bar sit under the bars during a fight)
@@ -1970,7 +1994,10 @@ class Game {
     });
     // (the panel and the tactic button too: its fight rows and the button over them come in as the fight begins, and a quip
     // said at the deploy must clear them)
-    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar', 'panel', 'tacticBtn']) watch.observe($(id));
+    for (const id of ['top', 'twistBanner', 'hudSpells', 'bossBar', 'panel', 'tacticBtn', 'tacticDock']) watch.observe($(id));
+    // (HUD-EVEN: the spell row's pieces come and go without the row changing size (a spell learnt, ULT's Auto showing once a hero has an
+    // ultimate): lay it out again then)
+    watchSpellRow($('hudSpells'), () => this.placeTopHud());
     // (CAM-SAFE: and every cover of the board, those made later (the combo bar as a fight starts) and those registered later too)
     this.watchCovers = () => coverElements().forEach((e) => watch.observe(e));
     this.watchCovers();
@@ -2474,8 +2501,8 @@ class Game {
       // (EIDOLON-CHAINS: the horn's card at the camp opens the Pact Gallery)
       gallery: () => this.home.openGallery(),
     });
-    // (HORN-CORNER: the War Horn rides on the panel's top edge at the right, beside the tactic button: the board's bottom-right corner in
-    // a fight, out of the spell row, which then keeps to one line; the camera frames the fight clear of it)
+    // (HORN-CORNER: the War Horn rides on the panel's top edge at the right: the board's bottom-right corner in a fight, out of the spell
+    // row, which then keeps to one line; the camera frames the fight clear of it)
     $('panel').append(this.eid.horn.root);
     registerCamCover(HORN_CORNER);
     const canvas = this.app.canvas;
@@ -2549,7 +2576,7 @@ class Game {
       if (got) heroSays(got.kind, 'hired', () => rectAnchor(card));
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
-    // (a tap anywhere hurries the heart-burn: the wave starts at once, and the line goes)
+    // (a tap anywhere hurries the heart-burn: the wave starts at once; the line stays its time, POPUP-GUARD)
     document.addEventListener('pointerdown', () => this.skipRevive(), true);
     // (a tap on the short card over the march goes straight on to the next wave)
     // (JRPG-RECAP: a first tap hurries the count-ups to their end; once they are done, a tap between waves goes on, and at a fight's end
@@ -2557,8 +2584,9 @@ class Game {
     $('result').addEventListener('click', (e) => {
       if ((e.target as HTMLElement).closest('button')) return;
       if (this.jr && this.jr.finish()) return;
+      // (POPUP-GUARD: the short card over the march is a notice with no button: a tap on it goes on. A full card closes by its button
+      // alone: a tap elsewhere on it no longer presses Next)
       if (this.passing) this.passOn();
-      else if (this.jr?.done() && $('qbLeave').hidden && !$('result').hidden) ($('next') as HTMLButtonElement).click();
     });
     $('qbLeave').addEventListener('click', () => this.leaveQuest());
     $('next').addEventListener('click', () => {
@@ -2915,6 +2943,9 @@ class Game {
   }
 
   private startRun(run: Run): void {
+    // (POPUP-GUARD: a new run's notices start empty; its recap lists what its toasts said)
+    if (this.noticeRun !== run.seed || !run.recap?.fights) clearNotices();
+    this.noticeRun = run.seed;
     // (DEPTH-BUILD: an army run keeps a snapshot of the bonds as it starts, so its fights replay)
     if (run.mode?.kind === 'army' && !run.bonds) {
       const snap = bondSnapshot(this.meta);
@@ -3073,12 +3104,15 @@ class Game {
     const p = this.passing;
     const card = $('result');
     if (!p || card.hidden) return;
+    p.shown += dt;
     if (document.body.dataset.move) p.marched = true;
     // (JRPG-RECAP: the results screen waits for a tap, as a JRPG's does; the march goes on behind it)
     if (this.jr) return;
     if (document.body.dataset.move || this.sceneHold || this.homeUp || this.destinationReveal) return;
     p.wait += dt;
-    const stay = p.marched ? PASS_AFTER_MARCH_MS : PASS_NO_MARCH_MS;
+    // (POPUP-GUARD: a card with lines to read (a level, a find, a fall) stays long enough to read them, the march counted; a quiet
+    // wave's card goes as quickly as it did)
+    const stay = Math.max(p.marched ? PASS_AFTER_MARCH_MS : PASS_NO_MARCH_MS, p.wait + p.read - p.shown);
     if (p.wait >= stay - PASS_FADE_MS) card.classList.add('leaving');
     if (p.wait >= stay) this.passOn();
   }
@@ -3172,7 +3206,7 @@ class Game {
 
   /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the fight resumes by itself. */
   private beginRevive(): void {
-    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine(this.reviveWords(), this.reviveTimes().end) };
+    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine(this.reviveWords(), Math.max(this.reviveTimes().end, Math.min(4000, readMs(this.reviveWords())))) };
     play('sparkle');
     this.drawLives(this.run);
   }
@@ -3183,7 +3217,7 @@ class Game {
     return `Wave ${this.run.stage} lost · a heart burns, ${left} ${left === 1 ? 'heart (life)' : 'hearts (lives)'} left. The party rises.`;
   }
 
-  /** A tap during the burn skips ahead to the wave starting again, and a tap after that to its fight (and sends the line away). */
+  /** A tap during the burn skips ahead to the wave starting again, and a tap after that to its fight (the line stays to be read). */
   private skipRevive(): void {
     const r = this.revive;
     if (!r) return;
@@ -3191,7 +3225,7 @@ class Game {
     else {
       // (but not before the fallen are on their feet: they would slide about lying down)
       r.fightAt = Math.min(r.fightAt, r.risenAt ?? 0);
-      r.line?.dismiss();
+      // (POPUP-GUARD: the line stays its time: a tap hurries the burn, and no longer sends away what it said)
     }
   }
 
@@ -3330,7 +3364,7 @@ class Game {
     const results = runResult(this.meta, recapOf(run), head, { cleared: recapOf(run).cleared, hearts: heartsBurned(recapOf(run)) }, run);
     // (RUN-GEAR: the pieces the run brought home, and Sell the Commons)
     const found = foundRow(this.meta, run.foundHome, todayKey(), () => saveMeta(this.meta));
-    showRecap($('recap'), recapOf(run), { ...head, joke, results, found, equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
+    showRecap($('recap'), recapOf(run), { ...head, joke, results, found, notices: toldNotices(), equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 
   /** A run has ended: back to the main screen, showing what it earned. */
@@ -4147,6 +4181,8 @@ class Game {
       // the Calamity count too, though their heroes fight at Level 1 there: the owner's answers)
       const useCut = useShare(run.mode, !!this.auto);
       const skillUps = useCut > 0 ? levelUpWords(settleSkillUse(this.meta, fightUse(b, this.meta.unlocked), useCut)) : [];
+      // (POPUP-GUARD: a skill's new level is on the wave's card; the run's recap lists it too, for a card tapped past)
+      for (const w of skillUps) noteNotice(w);
       // (RUN-GEAR: the found pieces wear as the lasting kit does, and a lasting piece a find sits in for does not)
       const fought = placed.map((u) => ({ kind: u.def, fell: !u.alive }));
       const wore = [...(run.local ? [] : wearWords(settleWear(this.meta, fought, !!this.auto, (kind, slot) => slotTaken(run, kind, slot) || markedHero(run, kind)), heroName)), ...wearWords(settleRunWear(run, fought, !!this.auto), heroName)];
@@ -4160,7 +4196,7 @@ class Game {
       // (a calamity's map just cleared takes its share of the recap for its map recap, and the next map counts from here)
       closeMapLeg(run);
       // (WAVE-RECAP-2: the spire's floors and the Calamity's fights have the short card too; their decisions, the map and the picks, keep their own screens after it)
-      this.passing = won && !run.over && !run.cleared && !this.auto ? { wait: 0, marched: false } : null;
+      this.passing = won && !run.over && !run.cleared && !this.auto ? { wait: 0, marched: false, shown: 0, read: 0 } : null;
       const title = run.tower ? towerHeadline(run.rift?.expedition ? 'expedition' : run.mode?.kind === 'calamity' ? 'calamity' : 'spire', stage, won, this.bossDown ? run.tower.act - 1 : undefined) : undefined;
       // (EIDOLONS: the War Horn takes the fight's share: a boss wave 100, each foe slain 1, an auto-replay half; nothing in a fight lost,
       // practised, or one in which it was blown)
@@ -4207,7 +4243,9 @@ class Game {
         drawRunStars($('armyStars'), army && run.cleared ? this.runStars : null, army ? tierOf(tierOfRun(run)).name : '');
         drawOreGain($('oreDrop'), this.oreGain);
         // (WAVE-RECAP: every card is short: its one-liners here, the performance table and each hero's XP in the end recap or summary)
-        drawWaveNotes($('waveNotes'), this.waveCard ? waveNotes(this.waveCard) : [], this.waveCard?.gains ?? []);
+        const notes = this.waveCard ? waveNotes(this.waveCard) : [];
+        drawWaveNotes($('waveNotes'), notes, this.waveCard?.gains ?? []);
+        if (this.passing && notes.length) this.passing.read = Math.min(CARD_READ_MAX_MS, readMs(notes.map((n) => n.text).join(' ')));
         for (const id of ['xp', 'fightStats']) $(id).hidden = true;
         // (JRPG-RECAP, the owner's call: between waves the short card above; the full results screen only where a run ends with no
         // end recap after it (a spire's or Calamity's last fight, a quest battle's end). An army's, the daily's and an endless run's
@@ -4507,6 +4545,8 @@ function overBench(x: number, y: number): boolean {
 }
 
 // (MENU-GLITCH: a tap that opens a panel does not also press what of it is under the finger)
+// (POPUP-GUARD: first in line, before the ghost-click guard and the page's own listeners)
+installPopupGuard();
 installTapGuard();
 // (ASSAULT-0: `?bench=assault` is the Assault's engine bench, `assaultBench.ts`; it plays instead of the game and touches no save)
 if (isAssaultBench())

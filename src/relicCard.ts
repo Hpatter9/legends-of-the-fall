@@ -84,7 +84,7 @@ export function relicCard(h: RelicHolder, id: string): HTMLElement {
  *  lines and the Chapter), and Close; a tap anywhere closes it, as before. (`_root` was the layer it sat in: the menu covers the page.) */
 export function openRelicCard(h: RelicHolder, id: string, _root: HTMLElement = document.body, onClose?: () => void): void {
   const ctx = { marks: h.relicMarks, gold: h.gold };
-  const menu = ornateMenu({ id: 'relicCard', eyebrow: 'Relic', title: RELICS[id] ? relicName(id, ctx) : 'Relic', onClose });
+  const menu = ornateMenu({ id: 'relicCard', eyebrow: 'Relic', title: RELICS[id] ? relicName(id, ctx) : 'Relic', onClose, asked: true });
   const card = relicCard(h, id);
   // (the name is the menu's title now: the card's head keeps the icon and the rarity)
   card.querySelector('.rlHead b')?.remove();
