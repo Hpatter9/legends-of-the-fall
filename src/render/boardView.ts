@@ -14,6 +14,8 @@ import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
 import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow, growthOf, loadRoadArt, piece, sceneryPictures, setPiece, type Pic } from './roadArt';
 import { loadLifeArt } from './boardLife';
+import { dressingOf, rimOf, TORCH_LIGHT, wallTorches, type RimPiece } from './landRimRules';
+import { holdPiece, holdSpritesReady, loadHoldSprites } from './holdSprites';
 import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
 import { mixSeed } from '../sim/rng';
@@ -164,8 +166,10 @@ interface Live {
   loops: { sp: Sprite; frames: Texture[]; ph: number; ms: number }[];
   /** ALIVE: still water's light, drifting and shimmering over the tile (where it lies at rest, and its phase). */
   ripples: { sp: Sprite; x: number; ph: number }[];
+  /** LAND-IDENTITY: things that hang in the air and drift a little (mist over water, a will-o'-wisp). */
+  drift: { sp: Sprite; x: number; y: number; ph: number }[];
 }
-const noLive = (): Live => ({ sway: [], lights: [], loops: [], ripples: [] });
+const noLive = (): Live => ({ sway: [], lights: [], loops: [], ripples: [], drift: [] });
 
 /** ALIVE: the light on still water: a few pale arcs inside the tile's diamond (one picture, made once, shared by every tile). */
 let rippleTex: Texture | null = null;
@@ -303,6 +307,12 @@ export class BoardView {
     const hold = FLOORS[b.area].hold;
     if (!floorArt(hold)) void loadFloorArt(hold).then((got) => got && this.board === b && this.repaint());
     this.built = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
+    // (LAND-IDENTITY: what stands round the board and on it, once the land's pieces are here: `landRimRules.ts`)
+    this.rim = [];
+    if (!look.boss && rot === 0) {
+      if (holdSpritesReady(hold) && floorArt(hold)) this.layRim(b);
+      else void Promise.all([loadHoldSprites(hold), loadFloorArt(hold)]).then(([got, floor]) => got && floor && this.board === b && this.built && this.layRim(b));
+    }
     this.marks = this.built.marks;
     this.rings = this.built.rings;
     this.root.addChild(...this.built.tiles);
@@ -416,6 +426,11 @@ export class BoardView {
         r.sp.alpha = 0.24 + 0.2 * Math.sin(t * 1.7 + r.ph * 2);
       }
       for (const lp of live.loops) lp.sp.texture = lp.frames[(Math.floor(this.liveT / lp.ms) + lp.ph) % lp.frames.length];
+      for (const m of live.drift) {
+        if (m.sp.destroyed) continue;
+        m.sp.position.set(m.x + Math.sin(t * 0.35 + m.ph) * 7, m.y + Math.sin(t * 0.6 + m.ph * 2) * 2.5);
+        m.sp.alpha = 0.6 + 0.3 * Math.sin(t * 0.8 + m.ph);
+      }
     }
     // (a Calamity zone: its runes, totems and candles loop, its glows breathe, its chains and banners swing, its air moves)
     const zone = this.built?.zone;
@@ -802,6 +817,103 @@ export class BoardView {
     }
     return { tiles, marks, rings, grounds, tex, redo, barrels, traps, landmark, live, zone };
   }
+
+  /** LAND-IDENTITY: the rim's columns and pieces, on the stage now (they go with the board at the next build). */
+  private rim: Container[] = [];
+  /** Whether the board's rim is laid (the page's light and life wait for it). */
+  get rimLaid(): boolean {
+    return this.rim.length > 0;
+  }
+
+  /** LAND-IDENTITY: lay what stands round the board and on it (`landRimRules.ts`): the rim's columns outside the two far edges (cavern
+   *  walls, open water), each in the board's own draw order so it lies behind every fighter, with its set pieces; the wall's torches; and
+   *  the small things on the board's own tiles (reeds, lilies). Looks only: none of it is a tile of the board. */
+  private layRim(b: Board): void {
+    const built = this.built;
+    if (!built) return;
+    for (const c of this.rim) if (!c.destroyed) c.destroy({ children: true });
+    this.rim = [];
+    const f: Frame = { rot: 0, ou: 0, ov: 0, w: b.w, d: b.d };
+    const hold = FLOORS[b.area].hold;
+    const live = built.live;
+    const stand = (parent: Container, p: RimPiece, x: number, y: number) => {
+      const got = holdPiece(hold, p.name);
+      if (!got) return;
+      const sp = new Sprite(got.tex);
+      sp.anchor.set(got.ax, got.ay);
+      sp.scale.set(p.scale);
+      sp.position.set(x + p.dx, y + p.dy);
+      parent.addChild(sp);
+      const ph = (x * 0.071 + y * 0.113) % (Math.PI * 2);
+      if (p.sway) live.sway.push({ sp, ph, amp: 0.03 });
+      if (p.drift) live.drift.push({ sp, x: sp.x, y: sp.y, ph });
+      if (p.light) {
+        const g = new Sprite(glow());
+        g.anchor.set(0.5);
+        g.tint = p.light.colour;
+        g.blendMode = 'add';
+        g.scale.set(p.light.reach * 0.7);
+        g.position.set(x + p.dx, y + p.dy - p.light.up * p.scale);
+        parent.addChild(g);
+        live.lights.push({ sp: g, ph, base: 0.5, kind: 'magic' });
+      }
+    };
+    const rim = rimOf(b);
+    for (const r of rim) {
+      const c = new Container();
+      c.zIndex = depthIn(f, r.u, r.v);
+      const tile: Tile = { h: r.h, deco: ((r.u + 64) * 31 + (r.v + 64) * 17) % 997, ground: r.ground };
+      const lease = this.column(tile, r.u, r.v, b.area, false, false, { role: r.role, fringes: [], seams: r.ground ? [false, false, false, false] : [true, true, true, true], U: r.u, V: r.v });
+      // (open water runs on unbroken; a wall's blocks keep their lines)
+      built.tex.push(lease);
+      const [x, y] = project(f, r.u, r.v, r.h);
+      const col = new Sprite(lease.value);
+      col.position.set(x - TW / 2, y - TH / 2);
+      c.addChild(col);
+      for (const p of r.pieces) stand(c, p, x, y);
+      this.root.addChild(c);
+      this.rim.push(c);
+    }
+    // the wall's torches, on the face that looks onto the board
+    for (const t of wallTorches(b)) {
+      const edge = tileAt(b, Math.max(0, t.u), Math.max(0, t.v))!;
+      const c = new Container();
+      c.zIndex = depthIn(f, t.u, t.v) + 1;
+      const [x, y] = project(f, t.u + (t.edge === 'u' ? 0.5 : 0), t.v + (t.edge === 'v' ? 0.5 : 0), edge.h + 1.6);
+      const got = holdPiece(hold, 'wallLight') ?? holdPiece(hold, 'wallBrazier');
+      if (got) {
+        const sp = new Sprite(got.tex);
+        sp.anchor.set(got.ax, got.ay);
+        sp.scale.set(t.edge === 'u' ? -0.8 : 0.8, 0.8);
+        sp.position.set(x, y);
+        c.addChild(sp);
+      }
+      const g = new Sprite(glow());
+      g.anchor.set(0.5);
+      g.tint = TORCH_LIGHT;
+      g.blendMode = 'add';
+      g.scale.set(1.5);
+      g.position.set(x, y - 14);
+      c.addChild(g);
+      live.lights.push({ sp: g, ph: (x * 0.071 + y * 0.113) % (Math.PI * 2), base: 0.7, kind: 'torch' });
+      this.root.addChild(c);
+      this.rim.push(c);
+    }
+    // the small things on the board's own tiles
+    for (const d of dressingOf(b)) {
+      const tile = built.tiles[d.i];
+      const t = b.tiles[d.i];
+      if (!tile || tile.destroyed) continue;
+      const [x, y] = project(f, d.i % b.w, Math.floor(d.i / b.w), t.h);
+      const c = new Container();
+      tile.addChild(c);
+      stand(c, d.piece, x, y);
+      this.rim.push(c);
+    }
+    this.onRim?.();
+  }
+  /** Called when the rim has been laid (the page lights the board then). */
+  onRim: (() => void) | null = null;
 
   /** LIVING-FIELDS: every tile's floor (`floorRules.ts`), worked out on the board as it lies on the screen (a section of an army's road may
    *  lie turned), so the textures and the ragged edges run on across the tiles as they are seen. Null until the land's sheet is loaded. */

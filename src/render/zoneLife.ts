@@ -137,6 +137,8 @@ export async function loadZoneArt(): Promise<void> {
 export const zoneArtReady = (): boolean => !!art;
 /** LIVING-FIELDS: the skull totem's and a rune's frames, for a battlefield's totem and ward (`boardView.ts`); null until the art is loaded. */
 export const totemFrames = (): Texture[] | null => art?.totem ?? null;
+/** LAND-IDENTITY: the bats' two frames (wings up, wings down), for the caves and the crypt (`boardLife.ts`). */
+export const batFrames = (): Texture[] | null => art?.bats ?? null;
 export const runeFrames = (kind: Look['rune']): Texture[] | null => art?.runes[kind] ?? null;
 
 /** What moves among a zone's things: frames that loop, glows that breathe, things that swing from their tops, and the tall things

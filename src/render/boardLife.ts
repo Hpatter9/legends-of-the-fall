@@ -17,8 +17,10 @@ import { FLOORS } from './floorRules';
 import { floorArt, loadFloorArt } from './floorArt';
 import { loadImage } from './loadImage';
 import { statusFrames } from './statusArt';
+import { batFrames } from './zoneLife';
+import { LAND_LIGHT, lightsOf, MAX_DARK, rimOf, type LightSpot } from './landRimRules';
 import type { PackKey } from './fxRules';
-import { critterSpots, DECAL_NAMES, edgeFalls, FLEE_MS, landDecals, markOf, MARK_MS, MARKS_MAX, RETURN_MS, scaredBy, shaftsFor, SMOKE_EVERY, STEP_EVERY, stepPuff, type Critter, type DecalName, type Spot } from './boardLifeRules';
+import { BAT_CROSS_MS, BAT_FLIT, batsFor, DRIP_EVERY, DRIPS, critterSpots, DECAL_NAMES, edgeFalls, FLEE_MS, landDecals, markOf, MARK_MS, MARKS_MAX, RETURN_MS, scaredBy, shaftsFor, SMOKE_EVERY, STEP_EVERY, stepPuff, type Critter, type DecalName, type Spot } from './boardLifeRules';
 import lifeUrl from '../art/living-fields/life.png';
 import LIFE from '../art/living-fields/life.json';
 
@@ -53,7 +55,19 @@ function standIn(kind: Critter): Texture[] | null {
     return Texture.from(c);
   };
   let frames: Texture[] | null = null;
-  if (kind === 'butterfly') {
+  if (kind === 'dragonfly') {
+    // (a thin body and two pairs of wings, blurred or folded)
+    frames = [6, 3].map((span) =>
+      make(14, 6, (g) => {
+        g.fillStyle = 'rgba(200,240,255,0.75)';
+        g.fillRect(7 - span, 1, span * 2, 2);
+        g.fillStyle = '#2ac0b0';
+        g.fillRect(2, 3, 10, 1);
+        g.fillStyle = '#103a40';
+        g.fillRect(11, 2, 2, 2);
+      }),
+    );
+  } else if (kind === 'butterfly') {
     // (two frames: wings open, wings shut)
     frames = [5, 2].map((span) =>
       make(12, 8, (g) => {
@@ -148,6 +162,13 @@ export class BoardLife {
   private seen = new Map<number, number>();
   /** The mark on each snared fighter (by its id): a ring at its feet and an icon over its head, while the snare holds it. */
   private roots = new Map<number, { ring: Sprite | null; icon: Sprite | null }>();
+  /** LAND-IDENTITY: the dark over a dark land, with a pool cut out round each light (one low-resolution picture, made when the board is
+   *  built and again when a light goes out or falls). */
+  private dark: Sprite | null = null;
+  /** The bats: where each hangs, and where it is on a crossing. */
+  private bats: { sp: Sprite; hx: number; hy: number; tx: number; ty: number; t: number; next: number; gone: boolean }[] = [];
+  private fought = false;
+  private dripAt = 0;
   private calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** Ms spent in `step` over the frames so far (the bench reads it). */
   cost = { ms: 0, frames: 0 };
@@ -164,6 +185,9 @@ export class BoardLife {
     this.fires = [];
     this.seen.clear();
     this.roots.clear();
+    this.dark = null;
+    this.bats = [];
+    this.fought = false;
     this.board = b;
     if (!this.on || b.w * b.d > 400) return;
     const saver = !!settings().saver;
@@ -180,7 +204,7 @@ export class BoardLife {
       if (!frames?.length) continue;
       const sp = new Sprite(frames[0]);
       const x = tx + spot.dx;
-      const y = ty + spot.dy + (spot.kind === 'firefly' || spot.kind === 'butterfly' ? -14 : spot.kind === 'fish' ? 0 : 4);
+      const y = ty + spot.dy + (spot.kind === 'firefly' || spot.kind === 'butterfly' || spot.kind === 'dragonfly' ? -14 : spot.kind === 'fish' ? 0 : 4);
       sp.anchor.set(0.5, spot.kind === 'bird' || spot.kind === 'rabbit' || spot.kind === 'frog' ? 1 : 0.5);
       sp.position.set(x, y);
       if (spot.kind === 'firefly') {
@@ -232,6 +256,8 @@ export class BoardLife {
     b.tiles.forEach((t, i) => {
       if (t.brazier || t.ground === 'lava' || t.ground === 'coals' || (t.ground === 'deep' && LAVA_LANDS.includes(b.area))) this.fires.push(at(i % b.w, Math.floor(i / b.w), t.h));
     });
+    this.light();
+    this.hangBats(b, saver);
     // what lies about the land (once its sheet is here)
     const hold = FLOORS[b.area].hold;
     const lay = () => {
@@ -240,6 +266,137 @@ export class BoardLife {
     };
     if (floorArt(hold)) lay();
     else void loadFloorArt(hold).then((got) => got && lay());
+  }
+
+  /** LAND-IDENTITY: lay the dark over a dark land (`LAND_LIGHT`): a picture a quarter of the screen's size, the land's dark colour at its
+   *  weight, with a soft pool cut out round every light (`lightsOf`: wall torches, glowing crystals, braziers, lava, shrines), and faded
+   *  out at its own edges so it has no box. It lies over the board and the fighters and under the effects; the lights' own glows flicker
+   *  on the board (`boardView.ts`). Called again when the rim is laid and when a light changes. */
+  light(): void {
+    const b = this.board;
+    if (this.dark && !this.dark.destroyed) this.dark.destroy(true);
+    this.dark = null;
+    const spec = b && LAND_LIGHT[b.area];
+    if (!b || !spec || !this.on || b.w * b.d > 400) return;
+    const Q = 4;
+    const [xa] = at(-4, b.d + 3, 0);
+    const [xb] = at(b.w + 3, -4, 0);
+    const [, ya] = at(-4, -4, 12);
+    const [, yb] = at(b.w + 3, b.d + 3, 0);
+    const [x0, y0, cw, ch] = [xa, ya - 40, Math.ceil((xb - xa) / Q), Math.ceil((yb - ya + 100) / Q)];
+    const c = document.createElement('canvas');
+    c.width = cw;
+    c.height = ch;
+    const g = c.getContext('2d')!;
+    const col = spec.colour;
+    g.fillStyle = `rgba(${(col >> 16) & 255},${(col >> 8) & 255},${col & 255},${Math.min(MAX_DARK, spec.dark)})`;
+    g.fillRect(0, 0, cw, ch);
+    g.globalCompositeOperation = 'destination-out';
+    const pool = (s: LightSpot) => {
+      const [x, y] = at(s.u, s.v, s.h);
+      const px = (x - x0) / Q;
+      const py = (y - y0) / Q;
+      const r = (s.reach * TW * 0.85) / Q;
+      // (a pool lies on the ground: wider than it is deep)
+      g.save();
+      g.translate(px, py);
+      g.scale(1, 0.62);
+      const grad = g.createRadialGradient(0, 0, r * 0.15, 0, 0, r);
+      grad.addColorStop(0, 'rgba(0,0,0,0.95)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = grad;
+      g.beginPath();
+      g.arc(0, 0, r, 0, Math.PI * 2);
+      g.fill();
+      g.restore();
+    };
+    for (const s of lightsOf(b, rimOf(b))) pool(s);
+    // (no box: the dark fades out toward the picture's edges)
+    for (const [gx0, gy0, gx1, gy1] of [[0, 0, cw * 0.14, 0], [cw, 0, cw * 0.86, 0], [0, 0, 0, ch * 0.14], [0, ch, 0, ch * 0.86]]) {
+      const fade = g.createLinearGradient(gx0, gy0, gx1, gy1);
+      fade.addColorStop(0, 'rgba(0,0,0,1)');
+      fade.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = fade;
+      g.fillRect(0, 0, cw, ch);
+    }
+    const sp = new Sprite(Texture.from(c));
+    sp.position.set(x0, y0);
+    sp.scale.set(Q);
+    sp.zIndex = 4300;
+    this.view.root.addChild(sp);
+    this.dark = sp;
+  }
+
+  /** LAND-IDENTITY: the bats of a dark land hang along its far walls (`BATS`); `stepBats` flits them. */
+  private hangBats(b: Board, saver: boolean): void {
+    const frames = batFrames();
+    const n = batsFor(b.area, saver);
+    if (!frames?.length || !n) return;
+    const salt = (b.seed & 0xffff) + 97;
+    for (let k = 0; k < n; k++) {
+      // (along the two far edges in turn, over the board's rim)
+      const along = ((k * 2 + 1) / (n * 2)) * (k % 2 ? b.d : b.w);
+      const t = tileAt(b, k % 2 ? 0 : Math.min(b.w - 1, Math.floor(along)), k % 2 ? Math.min(b.d - 1, Math.floor(along)) : 0)!;
+      const [hx, hy] = k % 2 ? at(-1, along, t.h + 4.2) : at(along, -1, t.h + 4.2);
+      const sp = new Sprite(frames[0]);
+      sp.anchor.set(0.5);
+      sp.scale.set(1.3);
+      sp.tint = 0x1a1420;
+      sp.position.set(hx, hy);
+      sp.zIndex = 4350;
+      this.view.root.addChild(sp);
+      this.things.push(sp);
+      this.bats.push({ sp, hx, hy, tx: hx, ty: hy, t: -1, next: BAT_FLIT[0] + ((salt + k * 2371) % (BAT_FLIT[1] - BAT_FLIT[0])), gone: false });
+    }
+  }
+
+  /** Each frame: a bat hangs, flits across to another roost now and then, and they all take off when the fight begins (they come back to
+   *  their roosts when the board is next laid). Still with reduced motion: they hang, and are gone in a fight. */
+  private stepBats(dt: number, b: Battle): void {
+    const frames = batFrames();
+    if (!this.bats.length || !frames) return;
+    const start = b.phase === 'fight' && !this.fought;
+    if (b.phase === 'fight') this.fought = true;
+    for (const [k, bat] of this.bats.entries()) {
+      if (bat.sp.destroyed || bat.gone) continue;
+      if (start) {
+        // (up and away, each its own way)
+        bat.t = 0;
+        bat.tx = bat.hx + (k % 2 ? -1 : 1) * (120 + k * 30);
+        bat.ty = bat.hy - 260;
+        bat.gone = this.calm;
+        if (this.calm) bat.sp.visible = false;
+        continue;
+      }
+      if (this.calm) continue;
+      if (bat.t < 0) {
+        bat.next -= dt;
+        if (bat.next > 0 || this.fought) continue;
+        // (across to the next bat's roost)
+        const to = this.bats[(k + 1 + Math.floor(this.clock / 977) % Math.max(1, this.bats.length - 1)) % this.bats.length];
+        bat.t = 0;
+        bat.tx = to.hx + 6;
+        bat.ty = to.hy + 4;
+        continue;
+      }
+      bat.t += dt;
+      const p = Math.min(1, bat.t / BAT_CROSS_MS);
+      // (a dip in the middle of the crossing)
+      bat.sp.position.set(bat.hx + (bat.tx - bat.hx) * p, bat.hy + (bat.ty - bat.hy) * p + Math.sin(p * Math.PI) * (this.fought ? 0 : 46));
+      bat.sp.texture = frames[Math.floor(bat.t / 90) % frames.length];
+      if (p >= 1) {
+        if (this.fought) {
+          bat.gone = true;
+          bat.sp.visible = false;
+        } else {
+          bat.hx = bat.tx;
+          bat.hy = bat.ty;
+          bat.t = -1;
+          bat.next = BAT_FLIT[0] + ((k * 1931 + Math.floor(this.clock)) % (BAT_FLIT[1] - BAT_FLIT[0]));
+          bat.sp.texture = frames[0];
+        }
+      }
+    }
   }
 
   /** A decal laid flat on a tile (the sheet's cell covers two tiles by two: it is laid a little wider than the tile), or null. */
@@ -300,6 +457,8 @@ export class BoardLife {
         if (this.marks.length > MARKS_MAX) this.marks.shift()!.c.destroy({ children: true });
       }
     }
+    // (a light has fallen or gone out: the dark is laid again round the lights that are left)
+    if (this.dark && events.some((e) => e.kind === 'fieldTrap' && e.gone)) this.light();
   }
 
   /** A snared fighter is marked while the snare holds its feet (`Unit.rootUntil`, `sim/fieldTraps.ts`): an icon over its
@@ -346,6 +505,7 @@ export class BoardLife {
     const t0 = performance.now();
     const fighters = [...where.values()];
     this.markRoots(b, where);
+    this.stepBats(dt, b);
     const saver = !!settings().saver;
     const calm = this.calm;
     this.clock += dt;
@@ -369,7 +529,7 @@ export class BoardLife {
         if (kind === 'firefly') {
           c.sp.position.set(c.x + Math.sin(sec * 0.7 + ph) * 9, c.y + Math.sin(sec * 1.1 + ph * 2) * 5);
           c.sp.alpha = (near ? 0.25 : 0.55) + 0.35 * Math.sin(sec * 2.3 + ph);
-        } else if (kind === 'butterfly') {
+        } else if (kind === 'butterfly' || kind === 'dragonfly') {
           c.sp.position.set(c.x + Math.sin(sec * 1.3 + ph) * 10, c.y + Math.sin(sec * 2.1 + ph) * 4);
           c.sp.texture = c.frames[c.painted ? Math.floor(c.t / 160) % 4 : Math.floor(c.t / 110) % c.frames.length];
         } else if (kind === 'fish') {
@@ -380,7 +540,7 @@ export class BoardLife {
       } else if (c.state === 'flee') {
         const k = Math.min(1, c.t / FLEE_MS);
         // (up and away for what flies, a dart for a fish, a bound for what runs)
-        const flies = kind === 'bird' || kind === 'butterfly';
+        const flies = kind === 'bird' || kind === 'butterfly' || kind === 'dragonfly';
         c.sp.position.set(c.x + c.spot.way * k * (kind === 'fish' ? 26 : 60), c.y - (flies ? k * k * 70 : kind === 'fish' ? 0 : Math.abs(Math.sin(k * Math.PI * 3)) * 8));
         c.sp.alpha = (kind === 'fish' ? 0.55 : 1) * (1 - k);
         c.sp.texture = c.frames[c.painted ? 4 + (Math.floor(c.t / 90) % 4) : Math.floor(c.t / 80) % c.frames.length];
@@ -409,6 +569,14 @@ export class BoardLife {
     if (!calm) {
       for (const f of this.falls) if (!f.sp.destroyed) f.sp.texture = f.frames[(Math.floor(this.clock / 70) + f.ph) % f.frames.length];
       for (const s of this.shafts) if (!s.sp.destroyed) s.sp.alpha = 0.07 + 0.05 * flicker(sec * 0.25, Math.round(s.ph * 100), 'window');
+    }
+    if (!calm && !saver && DRIPS.includes(b.board.area) && this.clock >= this.dripAt) {
+      // (water drips from the roof, somewhere on the floor)
+      this.dripAt = this.clock + DRIP_EVERY;
+      const i = Math.floor(this.clock / 13) % b.board.tiles.length;
+      const t = b.board.tiles[i];
+      const [dx, dy] = at(i % b.board.w, Math.floor(i / b.board.w), t.h);
+      this.fx.puff('ice-puff', dx, dy, { scale: 0.22, alpha: 0.7, tint: 0xbfe0ff });
     }
     if (!calm && !saver && b.phase === 'fight') {
       // smoke off a fire, now and then
