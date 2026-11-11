@@ -74,3 +74,61 @@ shots with the same script.
 
 `test/safe-rect.test.ts`: the horn's box in the bottom-left trims the room's foot (not a strip down the side), costs no more room than the
 tactic button already did, and is among the camera's covers and the parts a toast keeps clear of.
+
+## HORN-RIGHT: the horn moves to the bottom right (after 0.480.0)
+
+Branch `claude/horn-right`, from main 0.480.0. The owner, having seen the bottom-left: "Let's move the horn again. Maybe we make it bottom
+right then." The version is unchanged. Everything above still holds except where the horn stands; this section says what changed.
+
+### The pair: the horn just left of the tactic button, on the same line
+
+Two layouts were weighed against the measured boxes (the tactic button is 58 x 66 px, 10 px above the panel, 8 px from the right):
+
+| Layout | The pair's box over the board | The camera's room | The right thumb |
+| --- | --- | --- | --- |
+| Horn above the tactic button, right-aligned, 6 px gap | 58 wide, 128 tall: it stands 138 px above the panel | the foot is cut 62 px higher (at 360 the room is only 265 px tall: it would lose near a quarter) | the horn is the higher of the two, a longer reach |
+| **Horn left of the tactic button, same line, 6 px gap (chosen)** | 120 wide, 66 tall: no taller than the tactic button alone | **unchanged**: the tactic button had already cut the foot to that line | both on the bottom line; the horn a thumb's width further in |
+
+The side-by-side pair hides less of where the fight is (the board's lower-right corner strip is cliff and trees in most layouts, and the
+fighters stand above it), costs the camera nothing, and keeps both buttons on the line the thumb already rests on. Stacked, the horn would
+stand over the right-hand fighters and the camera would have to back the fight away from it.
+
+- `#panel > .ehFight`: `right: 72px; bottom: calc(100% + 15px)` (`src/eidolons.css`), so it is centred on the tactic button's height. With
+  no tactic button it takes the corner itself (`right: 8px`).
+- 56 x 56 px, the paintings, the fill, the ready, charging and blown looks, hidden until an Eidolon is bound, hidden in a duel, the tap: all
+  as before.
+
+### What moved with it
+
+- **The skill banners** are back at the left edge, as before 0.480 (the rule that set them beside the horn is gone). At their widest
+  (200 px, or 56 % of the screen) they stop short of the horn at every size (at 360 the horn starts at x 232).
+- **The tactic button's word** ("Hold", "Advance", after a tap) used to rise just left of the button, where the horn now is. While the
+  horn shows it rises over the button instead (right-aligned with it, 4 px above). With no horn, and in a duel, it is where it was.
+- **The note** by the horn opens above it, kept on the screen (it ends at the right edge at 360).
+- **The call's cinematic**: the great horn rises out of the button and rests just above it against the right edge, turned to face left
+  (`--sx: -1`), so it is blown across the field. From a button on the left it would still face right.
+- **The camera's cover** (`HORN_CORNER`, `'#panel > .ehFight'`) and the toasts' and quips' clear area (`FIGHT_HUD`) are the same selector,
+  so they follow the button. The room is exactly what the tactic button alone leaves.
+
+### The right side in every state
+
+| State | What is there | Against the horn |
+| --- | --- | --- |
+| A fight, a boss wave | the tactic button; the boss's bar at the top | 6 px between the horn and the button; nothing else |
+| The tactic button tapped | it cycles the order (no menu in a fight) and shows its word | the word rises over the button, clear of both |
+| The deploy | the Formation button under the top bar, the rune bench's pull bar in the bench | the horn is not drawn outside a fight; the bench is not drawn in one |
+| A duel | the tactic button | the horn is put away |
+| The result card | over the whole screen | covers both |
+| The Last Stand (hidden), the Assault | as before | untouched |
+
+### Checks
+
+`tools/horn-corner/shots.mjs` now checks the right corner: the horn beside the tactic button with a gap and no taller than it, over no
+other part, the skill banners at the left edge and short of the horn, the camera's room ending exactly where the tactic button alone cut
+it, the action at the room's middle, the note on the screen above the horn, the call's horn rising at the right, and the tactic's word
+clear of the horn and the button. Shots in `docs/samples/horn-right/` (`before-*` is main 0.480.0 with the horn at the left), the same
+cases as above plus `wave8-tactic-word`, at 393x852, 360x780 and 412x915, halved to one pixel a point.
+
+`test/safe-rect.test.ts`: the horn's box beside the tactic button leaves the room as the button alone does; alone in the corner it still
+trims the foot, not a strip down the side.
+

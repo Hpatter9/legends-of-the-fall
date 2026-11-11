@@ -346,7 +346,7 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 #hudSpells #mana.decreeReady, #stand .stOrbs .stMana.decreeReady { cursor: pointer; border-color: #ffe08a; box-shadow: 0 0 0 1px #ffe08a, 0 0 14px #eac56be6; }
 #hudSpells #mana.decreeReady::before { content: 'DECREE'; color: #ffe9a8; }
 /* (AUTO-RIGHT: the row no longer wraps; every part is sized so the War Horn, the mana, four orbs and Auto fit one line at 360 across) */
-/* (HORN-CORNER: the War Horn has left this row for the board's bottom-left corner, `eidolons.css`; the mana, four orbs and the Auto pair
+/* (HORN-CORNER: the War Horn has left this row for the board's bottom-right corner, `eidolons.css`; the mana, four orbs and the Auto pair
    are one line at 393 and 412) */
 
 /* ---- UX-FIXES (the audit's #3): bigger rows for a party of five or fewer, and the skill name no longer covers the casting hero's own row ----
