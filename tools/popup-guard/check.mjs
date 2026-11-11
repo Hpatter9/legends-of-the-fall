@@ -22,7 +22,7 @@ for (const [W, H] of sizes) {
   const ms = await page.evaluate(() => window.__popupGuard.ms);
   /** The eager thumb: tap at each of the points in turn, `gap` ms apart, for `forMs` (by default while the newest popup is still in its guarded moment). */
   const age = () => page.evaluate(() => Math.min(...window.__popupGuard.open().map((o) => o.age), Infinity));
-  const hammer = async (points, forMs = 0, gap = 45) => { const t = Date.now(); let n = 0; for (let i = 0; forMs ? Date.now() - t < forMs : (await age()) < ms - 130; i++) { await tap(...points[i % points.length]); n++; await wait(page, gap); } return n; };
+  const hammer = async (points, forMs = 0, gap = 45) => { const t = Date.now(); let n = 0; for (let i = 0; forMs ? Date.now() - t < forMs : (await age()) < ms - 250; i++) { await tap(...points[i % points.length]); n++; await wait(page, gap); } return n; };
 
   // ---- a run: a deploy, then a fight the party wins at once
   const startRun = async (stage = 3) => {
@@ -116,12 +116,13 @@ for (const [W, H] of sizes) {
 
   // ---- 5. the run's last card and its recap: the fight is lost for good; eager taps where Next is do not press it as it appears
   await fight(true);
-  await page.waitForFunction(() => !document.getElementById('result').hidden && window.__game.run.over, null, { timeout: 40000 }).catch(() => {});
+  // (the card is in the page before it shows: wait until it is really up, as the guard sees it)
+  await page.waitForFunction(() => window.__game.run.over && window.__popupGuard.open().some((o) => o.id === 'result') && Number(getComputedStyle(document.getElementById('result')).opacity) > 0.5, null, { timeout: 40000, polling: 50 }).catch(() => {});
   const over = await page.evaluate(() => window.__game.run.over);
   if (over) {
     const nextAt = await centre('#next');
     await hammer([nextAt, fightAt]);
-    check((await up('#result')) && !(await up('#recap')), 'the run’s last card is still up after eager taps on its Run recap button');
+    check((await up('#result')) && !(await up('#recap')), 'the run’s last card is still up after eager taps on its Run recap button', JSON.stringify(await page.evaluate(() => ({ result: !document.getElementById('result').hidden, opacity: getComputedStyle(document.getElementById('result')).opacity, recap: !document.getElementById('recap').hidden, open: window.__popupGuard.open(), log: window.__popupGuard.log.slice(-4), over: window.__game.run.over, auto: !!window.__game.auto }))));
     await wait(page, ms + 100);
     await tap(W / 2, H * 0.45);
     await wait(page, 250);
