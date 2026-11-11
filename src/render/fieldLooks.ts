@@ -614,19 +614,25 @@ const CAMP_TENTS: Record<string, { names: string[]; scale: Record<string, number
   infernal: { names: ['pavilionTent', 'pavilionTent'], scale: { pavilionTent: 0.5 } },
 };
 
-/** The holds whose bridges take their sheet's painted bridge pieces along their edges (the Moonlit Shrine's vermilion bridge). */
-const BRIDGE_RAILS = new Set(['yokai']);
+/** The holds whose bridges take their sheet's painted bridge pieces along their edges: every hold whose sheet 12 paints its bridge's posts and
+ *  ends (the Moonlit Shrine's paper lanterns, Bonefire Crag's tusks with torches, Brimstone Gate's spiked braziers, the Iron Foundry's
+ *  furnace lamps, the Necropolis's teal lanterns, the Den's rope anchors, Elder Root's root lanterns, the Maze's piers with braziers).
+ *  Bloodtusk Hold's sheet paints no posts for its bridge. */
+export const BRIDGE_RAILS = new Set(['yokai', 'ogres', 'infernal', 'golems', 'undead', 'beasts', 'wildwood', 'labyrinth']);
 
 /**
- * A bridge's rails, from the hold's painted bridge pieces (sheet 12): its lantern posts (`pier`) stand along both long edges, where the
- * deck meets the water, every third tile; the bridge's end (`deckEnd`, the stone lantern and the first of the railing) stands on the bank
- * at each corner. A piece on the edge sorts with the water tile beside it, so a post on the near edge stands in front of the fighters on
- * the deck and one on the far edge behind them. The planks stay as the deck under them.
+ * A bridge's rails, from the hold's painted bridge pieces (sheet 12): its posts (`pier`) stand along both long edges, where the deck meets
+ * the water, on the second tile of each stretch and every third after; the bridge's end (`deckEnd`, its first post and railing) stands on
+ * the bank at each corner. A piece on the edge sorts with the water tile beside it, so a post on the near edge stands in front of the
+ * fighters on the deck and one on the far edge behind them. The planks stay as the deck under them.
  */
 export function bridgeRails(b: Board): Placement[] {
   const { w, d } = b;
   const out: Placement[] = [];
   const bridge = (u: number, v: number) => u >= 0 && v >= 0 && u < w && v < d && !!b.tiles[v * w + u].bridge;
+  // (each edge's runs of water-side tiles, along the edge's own axis: a post on the second tile of a run and every third after, so a short
+  //  run still takes one)
+  const edges = new Map<string, { u: number; v: number; du: number; dv: number; along: number }[]>();
   for (let v = 0; v < d; v++)
     for (let u = 0; u < w; u++) {
       if (!bridge(u, v)) continue;
@@ -634,20 +640,33 @@ export function bridgeRails(b: Board): Placement[] {
         const x = u + du;
         const y = v + dv;
         if (x < 0 || y < 0 || x >= w || y >= d || bridge(x, y) || !isWater(b.tiles[y * w + x])) return;
-        // (the run's place along its edge: every third tile, counted along the edge's own axis)
-        const along = du ? v : u;
-        if (along % 3) return;
-        out.push({ name: 'pier', u: u + du * 0.45, v: v + dv * 0.45, front: y * w + x, scale: 0.8 });
+        const key = `${du},${dv},${du ? u : v}`;
+        if (!edges.has(key)) edges.set(key, []);
+        edges.get(key)!.push({ u, v, du, dv, along: du ? v : u });
       });
     }
+  for (const list of edges.values()) {
+    list.sort((p, q) => p.along - q.along);
+    let i = 0;
+    list.forEach((e, k) => {
+      i = k && e.along === list[k - 1].along + 1 ? i + 1 : 0;
+      const last = k === list.length - 1 || list[k + 1].along !== e.along + 1;
+      if (i % 3 === 1 || (i === 0 && last)) out.push({ name: 'pier', u: e.u + e.du * 0.45, v: e.v + e.dv * 0.45, front: (e.v + e.dv) * w + e.u + e.du, scale: 0.8 });
+    });
+  }
   // (the ends: the bridge tiles whose neighbour along the run is open dry land, gathered into each end of each bridge (a staggered run's end
-  //  steps over a row or two), and a piece at the end's two outer lanes, its corners)
-  // (the run's axis is its longer extent: a staggered run's sides step across the other way, and those steps are not its ends)
-  let [u0, u1, v0, v1] = [w, -1, d, -1];
+  //  steps over up to four rows), and a piece at the end's two outer lanes, its corners)
+  // (the run's axis: its sides face the water and its ends the land, so the axis whose sides touch more water; a staggered run's sides step
+  //  across the other way, and those steps are not its ends)
+  let [wu, wv] = [0, 0];
   for (let v = 0; v < d; v++)
     for (let u = 0; u < w; u++)
-      if (bridge(u, v)) [u0, u1, v0, v1] = [Math.min(u0, u), Math.max(u1, u), Math.min(v0, v), Math.max(v1, v)];
-  const alongV = v1 - v0 > u1 - u0;
+      if (bridge(u, v))
+        SIDES.forEach(([du, dv]) => {
+          const t = b.tiles[(v + dv) * w + u + du];
+          if (t && !bridge(u + du, v + dv) && isWater(t)) du ? wu++ : wv++;
+        });
+  const alongV = wu > wv;
   const ends: { u: number; v: number; du: number; dv: number; group: number }[] = [];
   for (let v = 0; v < d; v++)
     for (let u = 0; u < w; u++) {
@@ -666,7 +685,7 @@ export function bridgeRails(b: Board): Placement[] {
     changed = false;
     for (const p of ends)
       for (const q of ends)
-        if (p.du === q.du && p.dv === q.dv && q.group > p.group && Math.abs(lane(p) - lane(q)) <= 1 && Math.abs(row(p) - row(q)) <= 3) {
+        if (p.du === q.du && p.dv === q.dv && q.group > p.group && Math.abs(lane(p) - lane(q)) <= 1 && Math.abs(row(p) - row(q)) <= 4) {
           q.group = p.group;
           changed = true;
         }

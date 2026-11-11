@@ -187,9 +187,18 @@ export async function loadHoldArt(army = 'orcs'): Promise<void> {
       grass.height = gr[3];
       const gg = grass.getContext('2d')!;
       gg.drawImage(sprites, gr[0], gr[1], gr[2], gr[3], 0, 0, gr[2], gr[3]);
-      gg.globalCompositeOperation = 'source-atop';
-      gg.fillStyle = 'rgba(122,108,62,0.68)';
-      gg.fillRect(0, 0, gr[2], gr[3]);
+      if (army === 'orcs') {
+        gg.globalCompositeOperation = 'source-atop';
+        gg.fillStyle = 'rgba(122,108,62,0.68)';
+        gg.fillRect(0, 0, gr[2], gr[3]);
+      } else {
+        // (a painted hold's: the tufts keep their own light and shade and take the hue of the hold's heath, then their own outline again)
+        gg.globalCompositeOperation = 'color';
+        gg.fillStyle = grassTone(ground);
+        gg.fillRect(0, 0, gr[2], gr[3]);
+        gg.globalCompositeOperation = 'destination-in';
+        gg.drawImage(sprites, gr[0], gr[1], gr[2], gr[3], 0, 0, gr[2], gr[3]);
+      }
     }
     const shaded = (k: number) => {
       const c = document.createElement('canvas');
@@ -207,6 +216,21 @@ export async function loadHoldArt(army = 'orcs'): Promise<void> {
     hold = null;
   }
   await loadVfxArt().catch(() => undefined);
+}
+
+/** The hue of a painted hold's tall grass: the colour of its own heath (the ground the tall grass grows on, `MAT.heath`), laid on the tufts
+ *  as a colour blend, so they read as the hold's grass grown long and not as the kit's straw, which shows lime on the darker painted
+ *  grounds. */
+function grassTone(ground: HTMLImageElement): string {
+  const c = document.createElement('canvas');
+  c.width = c.height = 8;
+  const g = c.getContext('2d')!;
+  g.drawImage(ground, (MAT.heath % 4) * 256, Math.floor(MAT.heath / 4) * 256, 256, 256, 0, 0, 8, 8);
+  const px = g.getImageData(0, 0, 8, 8).data;
+  const sum = [0, 0, 0];
+  for (let i = 0; i < px.length; i += 4) for (let k = 0; k < 3; k++) sum[k] += px[i + k];
+  const [r, gr, b] = sum.map((x) => Math.min(255, Math.round((x / 64) * 1.25)));
+  return `rgb(${r},${gr},${b})`;
 }
 
 /** A standing sprite of the hold's atlas, cut once. */

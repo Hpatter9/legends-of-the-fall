@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.479.0',
+    date: '2026-11-11',
+    title: 'Every hold\'s bridge has its posts',
+    notes: ['Eight holds\' bridges now stand between their own painted posts and ends, and each hold\'s tall grass takes the colour of its own ground.'],
+  },
+  {
     version: '0.478.0',
     date: '2026-11-11',
     title: 'Every hold is fully painted',
