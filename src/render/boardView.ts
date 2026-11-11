@@ -882,13 +882,14 @@ export class BoardView {
       const [x, y] = project(f, r.u, r.v, r.h);
       const col = new Sprite(lease.value);
       col.position.set(x - TW / 2, y - TH / 2);
-      col.alpha = r.alpha;
       const z = depthIn(f, r.u, r.v);
       const moves = (p: RimPiece) => !!p.drift || !!p.light || (!!p.sway && (r.u === -1 || r.v === -1 || !far));
       const live = r.pieces.filter(moves);
       if (far && this.renderer) {
         const c = new Container();
         c.zIndex = z;
+        // (a far ring thins away with everything on it, as into a haze)
+        c.alpha = r.alpha;
         c.addChild(col);
         for (const p of r.pieces) if (!moves(p)) stand(c, { ...p, sway: false }, x, y);
         still.addChild(c);
@@ -897,6 +898,7 @@ export class BoardView {
       if (!far || !this.renderer || live.length) {
         const c = new Container();
         c.zIndex = z;
+        c.alpha = r.alpha;
         if (!far || !this.renderer) {
           built.tex.push(lease);
           c.addChild(col);

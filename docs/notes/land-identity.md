@@ -129,6 +129,16 @@ which ring they may stand on, and whether they sway, drift or glow), and its lig
   and its dark).
 - Shots: `batch1-crystal-swamp.jpg`, `batch1-dungeon-forge.jpg` (before | deployed | mid-fight), `batch1-sizes-360.jpg`, `-412.jpg`.
 
+## The fourth push: the open lands thin into their backdrops
+
+The mire's lesson applied to every open land: what surrounds the board must read as the place and run out into the backdrop, never
+lie as a mat with a straight edge. Every open land's rim is now three rings deep (the ashlands' four, so its river of lava stays
+whole) and `fades`: the ring beside the board is solid, the next is at 0.72, the outermost at 0.4 and broken up by a noise, and
+each ring thins with everything standing on it, so far trees, tents and stones go into the backdrop as into a haze. A wall never
+fades (a test holds both). Shots, each land before | deployed | mid-fight at 393 wide: `batch2-*` (graveyard, snows, ashlands,
+shrine), `batch3-*` (wood, autumn wood, meadows, highlands), `batch4-*` (dunes, oasis, ruins, temple, war camp);
+`open-lands-sizes-360.jpg` and `-412.jpg` (graveyard, snows, ashlands, meadows, dunes, deployed and mid-fight).
+
 ## Not built: needs art, or the owner's call
 
 - **Art the sheets do not have** (`docs/notes/land-identity-art-prompts.md`): cacti and palms, hedgerows, a fence, haystacks and a
