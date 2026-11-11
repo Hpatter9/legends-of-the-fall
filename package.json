@@ -22,6 +22,7 @@
     "level-pace": "node tools/levelPace.mjs",
     "war-sim": "node tools/nemesis/warSim.mjs",
     "music": "node tools/epic-music/render.mjs && node tools/epic-music/manifest.mjs",
+    "blender-fx": "python3 tools/blender-fx/build.py",
     "assault-bench": "node tools/assault/bench.mjs"
   },
   "license": "UNLICENSED",
