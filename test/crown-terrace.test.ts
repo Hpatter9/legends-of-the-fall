@@ -5,7 +5,7 @@ import { newMeta } from '../src/sim/meta';
 import { BUILDING_IDS, ROOM_BUILDING_IDS, siteTop, startBuild, settleWorks } from '../src/sim/castle';
 import { RULERS } from '../src/rulerRules';
 import { ALL_HEROES } from '../src/sim/units';
-import { RULER_COURTS, TERRACE_LANDMARKS, courtGuardKinds, changeCourtGuard, landmarkState } from '../src/crownTerrace';
+import { RULER_COURTS, TERRACE_LANDMARKS, TERRACE_GUARDS, courtGuardKinds, changeCourtGuard, landmarkState, terraceCharacterAt } from '../src/crownTerrace';
 
 test('every ruler has a distinct complete court painting and every site has three landmark stages', () => {
   assert.deepEqual(Object.keys(RULER_COURTS).sort(), RULERS.map(r=>r.id).sort());
@@ -64,4 +64,15 @@ test('changing a companion swaps occupied places and leaves the battle party unt
   assert.deepEqual(changeCourtGuard(current,3,'cleric'),['knight','archer','wizard','cleric']);
   assert.deepEqual(current,['knight','archer','wizard','samurai']);
   assert.deepEqual(meta.party,['knight','archer']);
+});
+
+test('painted faces and feet are tappable and a companion in front of the throne takes the tap', () => {
+  const widths=[80,80,80,80];
+  TERRACE_GUARDS.forEach((spot,index)=>{
+    assert.equal(terraceCharacterAt(spot.x,spot.y-spot.height+15,widths,195),index);
+    assert.equal(terraceCharacterAt(spot.x,spot.y-5,widths,195),index);
+  });
+  assert.equal(terraceCharacterAt(685,650,widths,195),1,'guard in front of throne');
+  assert.equal(terraceCharacterAt(622,505,widths,195),'ruler');
+  assert.equal(terraceCharacterAt(400,1100,widths,195),null);
 });

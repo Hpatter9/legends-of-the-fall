@@ -14,6 +14,17 @@ export const TERRACE_GUARDS = [
   { x: 400, y: 930, height: 238, faceRight: false },
 ] as const;
 
+/** Hit the same painted rectangles in front-to-back floor order, including faces and headdresses. */
+export function terraceCharacterAt(x: number, y: number, heroWidths: readonly number[], rulerWidth: number): number | 'ruler' | null {
+  const order = TERRACE_GUARDS.map((spot,index)=>({spot,index})).sort((a,b)=>b.spot.y-a.spot.y);
+  for (const {spot,index} of order) {
+    const width = heroWidths[index];
+    if (width > 0 && Math.abs(x-spot.x) <= width/2+6 && y >= spot.y-spot.height-6 && y <= spot.y+8) return index;
+  }
+  if (rulerWidth > 0 && Math.abs(x-TERRACE_KING.x) <= rulerWidth/2 && y >= TERRACE_KING.y-TERRACE_KING.h && y <= TERRACE_KING.y+8) return 'ruler';
+  return null;
+}
+
 export const RULER_COURTS: Record<RulerId, { name: string; detail: string; light: number; shade: string; weather: 'motes' | 'snow' | 'embers' | 'stars' | 'rain' }> = {
   iron_stag: { name: 'The Crown Terrace', detail: 'Sunlit stone, crimson standards and a kingdom worth defending.', light: 0xffcb77, shade: '#8c6239', weather: 'motes' },
   sun_viper: { name: 'The Serpent Palace', detail: 'Emerald silks, serpent-carved sandstone and an oasis kingdom.', light: 0xffdb85, shade: '#b48b48', weather: 'motes' },
@@ -45,7 +56,7 @@ export const TERRACE_LANDMARKS: readonly { id: SiteId; x: number; y: number; w: 
 export function landmarkState(meta: Meta, id: SiteId): { level: number; stage: 0 | 1 | 2 | 3; scale: number; working: boolean } {
   const level = Math.max(0, Math.min(siteTop(id), siteLevel(meta.castle, id, chapelBuilt(meta))));
   const share = level / siteTop(id);
-  return { level, stage: !level ? 0 : share <= 1 / 3 ? 1 : share <= 2 / 3 ? 2 : 3, scale: level ? .65 + share * .35 : 0, working: meta.works?.id === id };
+  return { level, stage: !level ? 0 : level === 1 ? 1 : share <= 2 / 3 ? 2 : 3, scale: level ? .65 + share * .35 : 0, working: meta.works?.id === id };
 }
 
 /** Court choices never add unowned heroes or duplicates, and never change the battle party. Empty slots stay empty. */

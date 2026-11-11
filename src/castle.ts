@@ -1,4 +1,4 @@
-// The Keep: an animated throne hall and a separate building ledger. Presentation only; upgrades use the castle simulation.
+// The Keep: an animated royal terrace and a separate building ledger. Presentation only; upgrades use the castle simulation.
 
 import {
   BUILDING_IDS,
@@ -37,7 +37,7 @@ import { TrophyWallModal } from './trophyWall';
 import { settings, setSetting, onSettings } from './settings';
 import { RULERS, rulerOf, rulerWords } from './rulerRules';
 import { CrownTerracePainter } from './render/crownTerracePaint';
-import { RULER_COURTS, TERRACE_WIDTH, TERRACE_HEIGHT, TERRACE_KING as KING_SPOT, TERRACE_GUARDS as GUARD_SPOTS, TERRACE_GOAT, TERRACE_LANDMARKS, courtGuardKinds, changeCourtGuard, terraceArtUrl } from './crownTerrace';
+import { RULER_COURTS, TERRACE_WIDTH, TERRACE_HEIGHT, TERRACE_KING as KING_SPOT, TERRACE_GUARDS as GUARD_SPOTS, TERRACE_GOAT, TERRACE_LANDMARKS, courtGuardKinds, changeCourtGuard, landmarkState, terraceArtUrl, terraceCharacterAt } from './crownTerrace';
 import { ornateMenu, menuSection, menuChoice, menuNote, menuFoot, type OrnateMenu } from './ornateMenu';
 
 // High-res chamber & architectural sprites (bundled as data URLs by esbuild)
@@ -503,12 +503,19 @@ export class CastleScene {
     }
 
     // Distant landmarks open the same standard building card as the ledger.
-    const plot = TERRACE_LANDMARKS.find(p => Math.abs(cx-p.x)<p.w*.45 && cy<=p.y+8 && cy>=p.y-p.w);
+    const plot = TERRACE_LANDMARKS.find(p => {
+      const state = this.meta && landmarkState(this.meta,p.id);
+      return state && (state.level > 0 || state.working) && Math.abs(cx-p.x)<p.w*.45 && cy<=p.y+8 && cy>=p.y-p.w;
+    });
     if (plot) { this.onPick(plot.id); return; }
 
     // 2. Check if King on the High Throne is tapped
-    const kingDist = Math.hypot(cx - KING_SPOT.x, cy - (KING_SPOT.y - 45));
-    if (kingDist < 85) {
+    const royalArt = this.terrace.rulers.get(settings().ruler);
+    const actor = terraceCharacterAt(cx,cy,GUARD_SPOTS.map((spot,i) => {
+      const image = this.terrace.heroes.get(this.heroKinds[i]);
+      return image ? spot.height*image.naturalWidth/image.naturalHeight : 0;
+    }),royalArt ? KING_SPOT.h*royalArt.naturalWidth/royalArt.naturalHeight : 0);
+    if (actor === 'ruler') {
       play('levelUp');
       this.kingDecreeUntil = this.now + 1600;
       for (let i = 0; i < 4; i++) this.heroFlourishUntil[i] = this.now + 1200 + i * 110;
@@ -526,15 +533,7 @@ export class CastleScene {
     }
 
     // 4. Check nearest Royal Guard
-    let nearestIdx = -1;
-    let bestDist = 78;
-    GUARD_SPOTS.forEach((spot, idx) => {
-      const d = Math.hypot(cx - spot.x, cy - (spot.y - spot.height * 0.45));
-      if (d < bestDist) {
-        bestDist = d;
-        nearestIdx = idx;
-      }
-    });
+    const nearestIdx = typeof actor === 'number' ? actor : -1;
 
     play('sparkle');
     if (nearestIdx >= 0) {

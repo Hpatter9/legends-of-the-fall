@@ -146,3 +146,11 @@ Repository legends-of-the-fall; branch art/crown-terrace; file art-source/crown-
 Repository legends-of-the-fall; branch art/crown-terrace; file art-source/crown-terrace/landmarks-2.png. 1536×1024 transparent background, edit of grand atlas, exact 4-column × 3-row cell layout and order, same painterly style, no labels, generous gutters. MIDDLE upgraded versions, materially between a modest starter and these grand final buildings. Reduce every building to two-thirds architectural complexity: treasury medium bank with copper dome and one wing; barracks medium fortified garrison with one square tower; armoury medium arsenal with one turret and shields; mage tower medium elegant arcane tower with violet tip; stable medium half-timber stables with paddock; library two-storey domed study; chapel medium church with short spire; smithy medium forge with two chimneys; watchtower medium stone lookout with pennant; hall medium columned hall with small statues; drill yard medium stone-walled training square; construction site mid-height masonry with scaffold and small crane. Keep complete useful buildings and add clear architectural improvements over first level, fewer floors and wings than grand final.
 ```
 
+
+## Alpha repairs
+
+The first versions of companion atlases 2 and 8 and Duchess had opaque pale backgrounds. They were repaired with the same image tool using this prompt; the retained source files are the repaired results.
+
+```
+Remove the opaque pale/white background completely from this sprite atlas. Keep exactly the same eight subjects, same 4-column 2-row layout, positions, scale, poses, identities, colours, anatomy and all accessories. Output genuine fully transparent alpha background with alpha zero between and around the subjects. No white, grey or checkerboard backdrop, vignette, floor or scenery. Preserve fine hair, white fur, wings, feathers, pale cloth and silhouettes with clean antialiased alpha edges. Keep the canvas 1536x1024 and every subject within its original equal cell. Production background removal for legends-of-the-fall, branch art/crown-terrace; art-source/crown-terrace/heroes-2.png, heroes-8.png and duchess.png. Do not change or remove the subjects.
+```
