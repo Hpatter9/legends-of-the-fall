@@ -1,7 +1,7 @@
 // The ultimate's showcase (ULT-SHOW, docs/notes/ult-showcase-design.md, `src/ultShowRules.ts`): when the long version plays (the first use, every
 // Nth after, never with Shorter ultimates), the x1 rule, the queue's show phase, and the pilot's three plans read from real casts.
 import { test } from 'node:test';
-import { stagesFor } from '../src/ultStageRules';
+import { stagesFor, ULT_LIMITS } from '../src/ultStageRules';
 import { ULT_EPIC } from '../src/ultEpicRules';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
@@ -9,18 +9,17 @@ import { addUnit, startBattle, stepBattle, type Battle, type BattleEvent, type U
 import { CHARGE_MAX, ULT_LEVEL, keyOf, ultimateOf } from '../src/sim/abilities';
 import { ULT_MOMENT, UltQueue, ultShape } from '../src/ultMomentRules';
 import { ALL_HEROES } from '../src/sim/units';
-import { hasShowcase, momentSpeed, noteSeen, planShow, posesAt, readCast, seenOf, SHOW, SHOWCASES, showDue, wantsShow, type ShowPlan } from '../src/ultShowRules';
+import { hasShowcase, momentSpeed, noteSeen, planShow, posesAt, readCast, seenOf, SHOW, SHOWCASES, wantsShow, type ShowPlan } from '../src/ultShowRules';
 import { parseSettings } from '../src/settings';
 
-test('the long version plays on the first use and every Nth after it, never with Shorter ultimates', () => {
-  // (with 10: the 1st, 11th, 21st uses; seen counts the full moments already played)
-  const due = [...Array(25).keys()].filter((seen) => showDue(seen, 10)).map((seen) => seen + 1);
-  assert.deepEqual(due, [1, 11, 21]);
-  assert.deepEqual([...Array(12).keys()].filter((seen) => showDue(seen, 0)), [0]);
-  assert.ok(wantsShow('kunoichi', { full: true, short: false, seen: 0, every: 10 }));
-  assert.ok(!wantsShow('kunoichi', { full: true, short: true, seen: 0, every: 10 }), 'Shorter ultimates: never');
-  assert.ok(!wantsShow('kunoichi', { full: false, short: false, seen: 0, every: 10 }), 'the short scene (or Auto): never');
-  assert.ok(!wantsShow('skeleton', { full: true, short: false, seen: 0, every: 10 }), 'a kind with no showcase');
+// (ULT-EPIC 3 changed the owner's requirement: the showcase played on a hero's first use and every Nth after it (a setting); now every
+// ultimate fired by hand plays it, and the "Showcase again" setting is gone)
+test('the long version plays on every use fired by hand, never with Shorter ultimates or on Auto', () => {
+  assert.ok(wantsShow('kunoichi', { full: true, short: false }));
+  assert.ok(!wantsShow('kunoichi', { full: true, short: true }), 'Shorter ultimates: never');
+  assert.ok(!wantsShow('kunoichi', { full: false, short: false }), 'the short scene (or Auto): never');
+  assert.ok(!wantsShow('skeleton', { full: true, short: false }), 'a kind with no showcase');
+  // (the save still counts the full moments seen of each hero's ultimate)
   const m: { ultSeen?: Record<string, number> } = {};
   noteSeen(m, 'kunoichi');
   noteSeen(m, 'kunoichi');
@@ -28,13 +27,12 @@ test('the long version plays on the first use and every Nth after it, never with
   assert.equal(seenOf(m, 'wizard'), 0);
 });
 
-test('the settings: Shorter ultimates off and every 10th by default; a wrong count falls back', () => {
+test('the settings: Shorter ultimates is off by default; an old save\'s "every Nth" choice is read without harm and kept nowhere', () => {
   const d = parseSettings(null);
   assert.equal(d.ultShort, false);
-  assert.equal(d.ultEvery, 10);
-  assert.equal(parseSettings(JSON.stringify({ ultEvery: 5, ultShort: true })).ultEvery, 5);
-  assert.equal(parseSettings(JSON.stringify({ ultEvery: 7 })).ultEvery, 10);
-  assert.equal(parseSettings(JSON.stringify({ ultEvery: 0 })).ultEvery, 0);
+  const old = parseSettings(JSON.stringify({ ultEvery: 5, ultShort: true }));
+  assert.equal(old.ultShort, true);
+  assert.ok(!('ultEvery' in old));
 });
 
 test('the x1 rule: a full moment or call plays at x1, the short versions keep the speed', () => {
@@ -104,20 +102,28 @@ function fire(kind: string): { b: Battle; me: Unit; plan: ShowPlan; events: Batt
 }
 
 // (ULT-EPIC 2: the whole moment is counted now, the freeze and the beat after the blow included (they were left out of this sum before),
-// with the wind-up and the aftermath giving way to a long showcase: `stagesFor`)
-test('every showcase runs 4 to 6 s with its wind-up, the blow and its aftermath', () => {
+// with the wind-up and the aftermath giving way to a long showcase: `stagesFor`. ULT-EPIC 3, the owner's call: a showcase whose salvo is
+// still in the air when it ends may run to about 7 s, so its wind-up and aftermath are not squeezed; every other stays 4 to 6 s.)
+test('every showcase runs 4 to 6 s with its wind-up, the blow and its aftermath; one with a salvo to land after it, up to about 7 s', () => {
+  let salvos = 0;
   for (const kind of Object.keys(SHOWCASES)) {
     const { me, plan, events } = fire(kind);
-    // (a salvo still in the air when the showcase ends lands inside the strike too; the showcase is then played a little quicker to fit)
     const shape = ultShape(ultimateOf(me)!, me.id, events, []);
-    const st = stagesFor(kind, { show: plan.ms, wait: shape.shape === 'delayed' ? shape.ms : 0 });
+    const salvo = shape.shape === 'delayed';
+    const st = stagesFor(kind, { show: plan.ms, wait: salvo ? shape.ms : 0 });
     const total = st.total;
-    assert.ok(st.strike.ms >= st.show! + ULT_EPIC.HIT_STOP_MS, `${kind}: the showcase and the freeze are inside the strike`);
-    assert.ok(plan.ms / st.show! <= 1.3, `${kind}: quickened by ${(plan.ms / st.show!).toFixed(2)} at most`);
-    if (shape.shape !== 'delayed') assert.equal(st.show, plan.ms, kind);
-    assert.ok(total >= 4000 && total <= 6000, `${kind}: ${total} ms`);
-    if (process.env.SHOW_MS) console.log(kind, total);
+    assert.ok(st.strike.ms >= st.show! + (salvo ? shape.ms : 0) + ULT_EPIC.HIT_STOP_MS, `${kind}: the showcase, the salvo's wait and the freeze are inside the strike`);
+    assert.equal(st.show, plan.ms, `${kind}: every showcase plays at its own pace`);
+    if (salvo) {
+      salvos++;
+      assert.ok(total > 6000 || st.windup.ms >= 1200, `${kind}: given the room (${total} ms)`);
+      assert.ok(total <= ULT_LIMITS.SALVO_MAX, `${kind}: ${total} ms`);
+      // (the squeeze is gone: a real wind-up and a real aftermath)
+      assert.ok(st.windup.ms >= 900 && st.aftermath.ms >= 700, `${kind}: wind-up ${st.windup.ms}, aftermath ${st.aftermath.ms}`);
+    } else assert.ok(total >= 4000 && total <= 6000, `${kind}: ${total} ms`);
+    if (process.env.SHOW_MS) console.log(kind, shape.shape, plan.ms, JSON.stringify(st));
   }
+  assert.ok(salvos >= 5, 'the multi-volley ultimates are met');
 });
 
 test("Ayame's showcase: she cuts each foe she struck, in turn, and ends where the sim left her", () => {
