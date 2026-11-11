@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.495.0',
+    date: '2026-11-11',
+    title: 'Ultimates and Eidolons take their time',
+    notes: ['An ultimate cast by hand now runs 4 to 6 seconds in three stages (wind-up, strike, aftermath), and an Eidolon\'s call 5 to 10. The game drops to x1 for it.', 'On Auto, ultimates keep their short banner and an Eidolon\'s call is the short one, except its very first.'],
+  },
+  {
     version: '0.494.0',
     date: '2026-11-11',
     title: 'More ice on the snows',
