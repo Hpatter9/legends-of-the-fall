@@ -39,7 +39,7 @@ test('the staged sheets are in the game with the frames they say, fit a phone te
   assert.ok(bytes / Object.keys(STAGED).length < 200_000, `${bytes} bytes`);
   for (const id of Object.keys(STAGED)) assert.ok(eidolonById(id), id);
   // (played as strips on the page, they are a single row; the ground's sheets are cut by the board's renderer)
-  for (const l of Object.values(STAGED)) for (const s of [l.pillar, l.blast, l.fire, l.smoke]) assert.equal(s.cols, s.n, s.sheet);
+  for (const l of Object.values(STAGED)) for (const s of [l.pillar, l.fire, l.smoke]) assert.equal(s.cols, s.n, s.sheet);
 });
 
 test('the sheets are credited and kept for offline play', () => {

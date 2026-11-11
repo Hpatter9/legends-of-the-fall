@@ -2,9 +2,9 @@
 
 Run: python3 tools/blender-fx/eidolons/parts_finish.py <parts dir> [<sheets dir>]      (default src/art/eidolons/fx)
 
-Each frame is shrunk to the heroes' pixels, cut to 24 colours shared by all six pieces, and its alpha hardened (bright pixels are there or
+Each frame is shrunk to the heroes' pixels, cut to 24 colours shared by all five pieces, and its alpha hardened (bright pixels are there or
 not; the dark smoke and scorch keep three flat steps of see-through). The sheets are lossless WebP: a single row of frames for the pieces
-the page plays as strips (pillar, blast, fire, scorch, smoke), six to a row for the sigil. `src/eidolonStage.ts` holds each sheet's
+the page plays as strips (pillar, fire, scorch, smoke), six to a row for the sigil. `src/eidolonStage.ts` holds each sheet's
 frame size and count, and a test checks them against the files. A contact sheet of every frame is written beside the parts.
 """
 import glob, os, sys
@@ -16,7 +16,7 @@ SRC = args[0]
 OUT = args[1] if len(args) > 1 else 'src/art/eidolons/fx'
 COLOURS = 24
 # (name: frame width, height, frames to a row)
-PARTS = {'sigil': (160, 96, 6), 'pillar': (120, 288, 16), 'blast': (176, 176, 12), 'fire': (64, 112, 14), 'scorch': (88, 48, 8), 'smoke': (72, 128, 12)}
+PARTS = {'sigil': (160, 96, 6), 'pillar': (120, 288, 16), 'fire': (64, 112, 14), 'scorch': (88, 48, 8), 'smoke': (72, 128, 12)}
 LUM = np.array([0.3, 0.59, 0.11], dtype=np.float32)
 
 

@@ -50,7 +50,7 @@ effects as they were shown to the owner (smooth against pixelated: `docs/samples
 
 ## Eidolons
 
-`eidolons/parts.py` renders an Eidolon's ground show as six small pieces and `eidolons/parts_finish.py` packs them as the sheets the game
+`eidolons/parts.py` renders an Eidolon's ground show as five small pieces and `eidolons/parts_finish.py` packs them as the sheets the game
 loads (`src/art/eidolons/fx/askel-stage-*.webp`, played by `src/eidolonStage.ts`); `eidolons/cast_samples.py` builds the samples from
 `eidolons/shots.mjs`'s pictures of the real game. The trial that came first:
 

@@ -3,12 +3,11 @@
 Run: python3 tools/blender-fx/eidolons/parts.py <out dir>        (PART=sigil,fire picks some; then parts_finish.py)
 
 The trial (askel.py) was one scene for one fight. In the game the board turns, its ground rises and falls and the fighters must stand
-over what lies on the ground, so the show is cut into six small pieces the page lays tile by tile (`src/eidolonStage.ts`):
+over what lies on the ground, so the show is cut into five small pieces the page lays tile by tile (`src/eidolonStage.ts`):
 
   sigil    lies on the ground: burns on round its ring and inward, glows, then cools and fades
   pillar   the pillar of flame the painted hound leaps out of (and the firestorm on the foes' middle)
-  blast    the great burst on the foes' middle
-  fire     a tile catching fire: bursts up, burns, dies down
+  fire     a tile catching fire: thin tongues lick up, burn, die down (the lead-in to the painted blow)
   scorch   the burnt ground with its coals, cooling and fading
   smoke    a puff of smoke climbing off the burnt ground
 
@@ -29,7 +28,6 @@ rnd = random.Random(23)
 PARTS = {
     'sigil': (160, 96, 22, 0.25),
     'pillar': (120, 288, 16, 4.7),
-    'blast': (176, 176, 12, 1.7),
     'fire': (64, 112, 14, 1.75),
     'scorch': (88, 48, 8, 0.0),
     'smoke': (72, 128, 12, 2.2),
@@ -136,53 +134,35 @@ def pillar():
     render(sc, 'pillar', n, step)
 
 
-def blast():
-    sc, n = scene('blast')
-    fire, clock = A.fire_mat()
-    balls = [(tongue(fire), rnd.uniform(-0.5, 0.5), rnd.uniform(-0.5, 0.5), rnd.uniform(0.75, 1.15), rnd.uniform(0, 0.12), rnd.uniform(0, math.tau)) for _ in range(7)]
-    em, _ = flat_mat((1.0, 0.75, 0.25, 1), 2.0)
-    embers = []
-    for _ in range(30):
-        a = rnd.uniform(0, math.tau)
-        embers.append((ball(None, em, sub=1, smooth=False), math.cos(a) * rnd.uniform(1.4, 3.2), math.sin(a) * rnd.uniform(1.4, 3.2), rnd.uniform(3.0, 6.5)))
-
-    def step(i):
-        t = i / (n - 1)
-        clock.outputs[0].default_value = i * 0.3
-        for o, x, y, s, lag, ph in balls:
-            g = clamp((t - lag) / (1 - lag))
-            gg = 1 - (1 - g) ** 3
-            r = 0.45 + 1.75 * gg * s
-            o.scale = (r, r, r * 1.1)
-            o.location = (x * (0.5 + 1.6 * gg), y * (0.5 + 1.6 * gg), 0.7 + 1.5 * g * s)
-            o.rotation_euler = (g * 1.2, g * 0.7, ph)
-            tint(o, 0.02 + 0.98 * g ** 1.6, 0.7 * (1 - g) ** 3)
-        for o, vx, vy, vz in embers:
-            o.location = (vx * t, vy * t, 0.5 + vz * t - 5.0 * t * t)
-            k = 0.07 * max(0.0, 1 - t * 1.05)
-            o.scale = (k, k, k)
-
-    render(sc, 'blast', n, step)
-
-
 def fire():
+    """A tile catching fire: thin pointed tongues that lick up one after another, lean and die down (cones, so each has a sharp tip)."""
     sc, n = scene('fire')
     m, clock = A.fire_mat()
-    parts = [(tongue(m), 0.0, 0.0, 0.8, 1.75, 0.0), (tongue(m), 0.5, -0.35, 0.58, 1.2, 1.3), (tongue(m), -0.5, 0.3, 0.6, 1.3, 2.6), (tongue(m), 0.1, 0.5, 0.5, 1.0, 4.1), (tongue(m), -0.15, -0.5, 0.5, 0.95, 5.2)]
+    tongues = []
+    for x, y, r, h, ph in ((0.0, 0.0, 0.34, 3.0, 0.0), (0.38, -0.25, 0.26, 2.1, 1.3), (-0.4, 0.2, 0.28, 2.4, 2.6), (0.12, 0.4, 0.22, 1.7, 4.1), (-0.15, -0.42, 0.24, 1.9, 5.2), (0.55, 0.2, 0.2, 1.4, 0.7), (-0.6, -0.15, 0.2, 1.5, 3.4)):
+        bpy.ops.mesh.primitive_cone_add(vertices=20, radius1=1, radius2=0, depth=1)
+        o = bpy.context.object
+        o.data.materials.append(m)
+        for p in o.data.polygons:
+            p.use_smooth = True
+        tint(o, 1)
+        tongues.append((o, x, y, r, h, ph))
     em, _ = flat_mat((1.0, 0.75, 0.25, 1), 2.0)
-    sparks = [(ball(None, em, sub=1, smooth=False), rnd.uniform(-0.6, 0.6), rnd.uniform(-0.6, 0.6), rnd.uniform(1.5, 3.6), rnd.uniform(0, 0.5)) for _ in range(10)]
+    sparks = [(ball(None, em, sub=1, smooth=False), rnd.uniform(-0.6, 0.6), rnd.uniform(-0.6, 0.6), rnd.uniform(1.8, 3.8), rnd.uniform(0, 0.5)) for _ in range(12)]
 
     def step(i):
-        clock.outputs[0].default_value = i * 0.4
+        clock.outputs[0].default_value = i * 0.45
         up = out3(seg(i, -0.6, 2))                                          # bursting up
-        over = 1 + 0.3 * math.sin(seg(i, 0, 3) * math.pi)                   # taller for a moment as it bursts
         die = seg(i, 8.5, 13.5)
-        for o, x, y, r, h, ph in parts:
-            k = up * (1 - 0.55 * die) * (0.9 + 0.16 * math.sin(i * 2.3 + ph))
-            o.location = (x, y, h * 0.92 * k * over)
-            o.scale = (r * k, r * k, h * k * over)
-            o.rotation_euler = (0, 0, ph + i * 0.2)
-            tint(o, die ** 1.3, 0.9 * (1 - seg(i, 0, 4)))
+        for o, x, y, r, h, ph in tongues:
+            lick = 0.72 + 0.34 * math.sin(i * 2.6 + ph)                      # each tongue licks up and falls back on its own beat
+            hh = h * up * lick * (1 - 0.6 * die) * (1.15 if i <= 2 else 1)
+            rr = r * up * (1 - 0.35 * die) * (1.1 - 0.2 * lick)
+            lean = 0.16 * math.sin(i * 1.7 + ph * 2)
+            o.scale = (rr, rr, max(0.01, hh))
+            o.rotation_euler = (lean * 0.6, lean, ph)
+            o.location = (x + 0.5 * hh * math.sin(lean), y, hh * 0.5)
+            tint(o, die ** 1.3, 0.85 * (1 - seg(i, 0, 4)))
         for o, x, y, v, late in sparks:
             g = seg(i / 13, late, late + 0.5)
             k = 0.05 * math.sin(g * math.pi) ** 0.5 if 0 < g < 1 else 0
@@ -247,6 +227,6 @@ def smoke():
     render(sc, 'smoke', n, step)
 
 
-ALL = {'sigil': sigil, 'pillar': pillar, 'blast': blast, 'fire': fire, 'scorch': scorch, 'smoke': smoke}
+ALL = {'sigil': sigil, 'pillar': pillar, 'fire': fire, 'scorch': scorch, 'smoke': smoke}
 for key in (os.environ.get('PART') or ','.join(ALL)).split(','):
     ALL[key]()

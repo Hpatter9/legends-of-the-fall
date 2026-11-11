@@ -1,7 +1,8 @@
 // The Eidolon's staged ground show (EIDOLON-BLENDER, docs/notes/eidolon-blender.md). The owner chose the hybrid: each Eidolon keeps its
 // painting for the figure, its name and its line, and everything round it is staged in Blender from the game's camera and given the
-// heroes' pixels: a sigil that burns onto the ground, the pillar of flame the painting leaps out of, and a strike that crosses the foes'
-// ground tile by tile (a blast, each tile catching fire, the ground left scorched, smoke climbing off it).
+// heroes' pixels: a sigil that burns onto the ground, the pillar of flame the painting leaps out of, fire that crosses the foes' ground
+// tile by tile as the lead-in to the painted blow (the painted walls and bursts are kept: they are the stronger), the ground left scorched
+// under it and smoke climbing off it.
 //
 // The show is cut into small sheets (`tools/blender-fx/eidolons/parts.py`) the page lays by the board's own tiles, so it follows a board
 // that is turned or not flat, and in two layers: the sigil and the scorch lie on the tiles' ground, under every fighter; the pillar, the
@@ -33,7 +34,6 @@ export interface StagedLook {
   /** On the ground: frames `draw` burn it on, `glow` flicker while it stands, `cool` dull and fade it. */
   sigil: StageSheet & { draw: number; glow: number; cool: number };
   pillar: StageSheet;
-  blast: StageSheet;
   fire: StageSheet;
   /** On the ground: the first `hot` frames are its coals cooling, the rest it fading. */
   scorch: StageSheet & { hot: number };
@@ -48,7 +48,6 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
   askel: {
     sigil: { ...sheet('askel-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
     pillar: sheet('askel-stage-pillar', 120, 288, 16, 16, 1250, 274, 5),
-    blast: sheet('askel-stage-blast', 176, 176, 12, 12, 760, 135, 5),
     fire: sheet('askel-stage-fire', 64, 112, 14, 14, 1250, 104, 5),
     scorch: { ...sheet('askel-stage-scorch', 88, 48, 8, 8, 0, 24, 3), hot: 5 },
     smoke: sheet('askel-stage-smoke', 72, 128, 12, 12, 1500, 125, 5),
@@ -57,7 +56,7 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
 };
 
 /** Every sheet the staged shows load (for the tests and the credits). */
-export const STAGE_SHEETS: readonly StageSheet[] = Object.values(STAGED).flatMap((l) => [l.sigil, l.pillar, l.blast, l.fire, l.scorch, l.smoke]);
+export const STAGE_SHEETS: readonly StageSheet[] = Object.values(STAGED).flatMap((l) => [l.sigil, l.pillar, l.fire, l.scorch, l.smoke]);
 export const stageUrl = (s: StageSheet): string => `eidolons/fx/${s.sheet}.webp`;
 
 /** A call with no time for the sigil to be drawn (the short one: the painting is on at once) shows it already burnt on. */
@@ -134,13 +133,13 @@ export function risePass(spec: PassSpec, x: number, y: number, ground: number): 
   return { ...spec, path: [[x, y - ground], ...spec.path.slice(1)], hops: Math.max(2, Math.round(spec.hops * share)) };
 }
 
-/** How much of the strike is laid: the tiles that catch fire beside the foes' own, and how many of them smoke. Battery saver and the
- *  short call lay less. */
+/** How much of the lead-in is laid: the tiles that catch fire beside the foes' own (few: the painted blow is the strike), and how many
+ *  of them smoke. Battery saver and the short call lay less. */
 export function stageBudget(saver: boolean, short: boolean): { tiles: number; smokes: number } {
-  return saver ? { tiles: 5, smokes: 3 } : short ? { tiles: 7, smokes: 4 } : { tiles: 14, smokes: 8 };
+  return saver ? { tiles: 2, smokes: 2 } : short ? { tiles: 4, smokes: 3 } : { tiles: 7, smokes: 6 };
 }
 
-/** How long the fire takes to cross the foes' ground (ms; the short call's is scaled by the page). */
+/** The crossing's length in the plan's own time (ms): the page stretches it over the build-up, the last tile catching just before the blow. */
 export const WAVE_MS = 340;
 /** How far from a foe's tile the ground catches (tiles). */
 const WAVE_REACH = 2;
