@@ -88,7 +88,6 @@ export const BACK_LAYERS: readonly BackLayer[] = [
   { sel: '.ecnLayer', kind: 'overlay', file: 'eidolonChainView.ts' },
   { sel: '.qcWrap', kind: 'overlay', file: 'questCard.ts' },
   { sel: '.ulBack', kind: 'overlay', act: ['.ulClose'], file: 'rankUpList.ts' },
-  { sel: '.ruBack', kind: 'overlay', file: 'rankUpView.ts' },
   { sel: '.rvCard', kind: 'overlay', file: 'revealCard.ts' },
   { sel: '#shop', kind: 'overlay', act: ['.shopClose'], file: 'shopView.ts' },
   { sel: '#stall', kind: 'overlay', act: ['.hsBack'], file: 'stallView.ts' },

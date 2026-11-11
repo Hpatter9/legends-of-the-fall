@@ -797,81 +797,7 @@ button.danger:active:not(:disabled) {
 /* --------------------------------------------------------------------------
    8. HERO MANAGEMENT, DOSSIER & MODALS
    -------------------------------------------------------------------------- */
-/* Rank Up / Awakening Modal (.ruBack, .ruCard) */
-.ruBack {
-  background: radial-gradient(circle at center, rgba(16, 20, 15, 0.78), rgba(5, 7, 5, 0.94));
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  z-index: 100;
-}
-
-.ruCard {
-  width: min(380px, calc(100vw - 32px));
-  max-width: 100%;
-  padding: 20px 16px 16px;
-  background: radial-gradient(ellipse at 50% 0%, #3e483533 0%, transparent 75%),
-              linear-gradient(180deg, #242720fa 0%, #151812fd 100%),
-              url(ui/page.png);
-  border: var(--ornate-border-double);
-  border-radius: 6px;
-  box-shadow: var(--ornate-shadow);
-  text-align: center;
-  box-sizing: border-box;
-}
-
-.ruCard h3 {
-  margin: 0 0 8px;
-  font-family: var(--display);
-  font-size: 22px;
-  color: var(--ornate-brass);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9), 0 0 10px rgba(219, 193, 139, 0.3);
-  letter-spacing: 0.05em;
-}
-
-.ruPic {
-  width: 96px;
-  height: 96px;
-  margin: 0 auto 10px;
-  border: 2px solid var(--ornate-brass-mid);
-  border-radius: 6px;
-  background: radial-gradient(circle at center, #424939, #171b13);
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 12px rgba(219, 193, 139, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.ruStats {
-  background: #0f130ecc;
-  border: 1px solid #4a3e29;
-  border-radius: 4px;
-  padding: 10px;
-  box-shadow: var(--ornate-well);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.ruStats > div {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: #dfd7c5;
-}
-
-.ruStats em {
-  font-style: normal;
-  font-weight: 700;
-  color: #8ce49a;
-}
-
-.ruCard button.primary {
-  min-height: 48px;
-  font-size: 16px;
-  width: 100%;
-}
+/* (the Rank up / Awakening card is a standard ornate menu now: section 25) */
 
 /* the talent box's picture (now in a standard ornate menu, INT-386) */
 .tBig {
@@ -1657,7 +1583,6 @@ body #spellbook h2 {
   #ask,
   #autoSum,
   .spOverlay,
-  .ruBack,
   .cxOverlay,
   .cvVeil,
   .turnUpMedallion {
@@ -2395,3 +2320,62 @@ body #spellbook h2 {
 .uiCard .fsClose { width: auto; min-width: 64px; min-height: 44px; padding: 0 10px; font: 700 13px var(--body); }
 /* the full artwork viewer on the standard double brass rim and shadow */
 dialog.heroArtViewer { border: var(--ornate-border-double); box-shadow: var(--ornate-shadow); }
+
+/* --------------------------------------------------------------------------
+   25. STAT ROWS AND THE RANK UP CARD (src/statRows.ts, src/rankUpView.ts; RANKUP-LAYOUT, docs/notes/rankup-layout.md)
+   A stat going up is one row: its icon and name, the old value, an arrow, the new value, the gain. The rows share the table's five
+   columns (`subgrid`; a browser without it gets fixed columns that hold as well), numbers right-aligned in tabular figures, and
+   nothing wraps. The card: the look, the rank's marks old to new, what the step gives, the stats, what earned it.
+   -------------------------------------------------------------------------- */
+.srTable {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  column-gap: 8px;
+  font: 400 var(--om-text, 14.5px)/1.2 var(--body);
+  font-variant-numeric: tabular-nums lining-nums;
+  text-align: left;
+}
+.srRow {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5ch 1.2ch 5ch 6ch;
+  column-gap: 8px;
+  align-items: center;
+  min-height: 30px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(156, 132, 84, 0.22);
+}
+@supports (grid-template-columns: subgrid) { .srRow { grid-template-columns: subgrid; } }
+.srRow:last-child { border-bottom: 0; }
+.srRow > * { white-space: nowrap; }
+.srName { display: flex; align-items: center; gap: 7px; min-width: 0; color: #d9cfb4; }
+.srName > span { overflow: hidden; text-overflow: ellipsis; }
+.srIco { flex: none; width: 18px; height: 18px; background: center / contain no-repeat; }
+.srIco.srPip { position: relative; }
+.srIco.srPip::before { content: ''; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%) rotate(45deg); background: var(--ornate-brass-mid, #9c8454); }
+.srFrom, .srTo, .srGain { text-align: right; }
+.srFrom { color: #b8af9a; }
+.srArrow { color: #9c8454; text-align: center; }
+.srTo { color: #fff2cf; font-weight: 700; }
+.srGain { min-width: 3.2ch; color: #8ce49a; font-weight: 700; }
+.srStars .srFrom, .srStars .srTo { font-family: var(--display); letter-spacing: 0.04em; }
+
+#rankUp .omBody { gap: 10px; text-align: center; }
+.ruLooks { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.ruPic {
+  position: relative; flex: none; width: 96px; height: 96px; overflow: hidden;
+  border: 2px solid var(--ornate-brass-mid); border-radius: 6px;
+  background: radial-gradient(circle at center, #424939, #171b13);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 12px rgba(219, 193, 139, 0.25);
+}
+.ruPic canvas { position: absolute; left: 50%; bottom: 4px; image-rendering: pixelated; }
+.ruPic.new { border-color: var(--ornate-brass-hi, #f2dc9f); box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 0 0 14px rgba(242, 220, 159, 0.55); }
+.ruArrow { flex: none; font: 400 20px var(--display); color: var(--ornate-brass); }
+.ruRanks { display: flex; align-items: center; justify-content: center; gap: 10px; font: 400 18px/1.2 var(--display); letter-spacing: 0.06em; white-space: nowrap; }
+.ruRankOld { color: #b8af9a; }
+.ruRankNew { color: #ffe39a; text-shadow: 0 0 8px rgba(242, 191, 90, 0.45); }
+.ruGives { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 3px; font: 400 var(--om-small)/1.35 var(--body); color: #c4ba9f; }
+.ruGives .ruGift { font-size: var(--om-text); color: #ffe39a; }
+.ruStats.omWell { padding: 4px 12px; }
+.ruEarned.omNote { font-size: var(--om-small); color: #b8af9a; }
+
