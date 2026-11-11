@@ -32,7 +32,9 @@ export interface StageSheet {
 /** A sheet's pixel is a hero's: about 1.414 of the board's own (a tile's side is 32 of them, its diamond 64 board px across). */
 export const STAGE_PX = Math.SQRT2;
 
-/** One Eidolon's staged show. */
+/** One Eidolon's staged show. The names are Askel's (the first), but each is a place in the call, filled by the Eidolon's own element:
+ *  `fire` is the piece a tile takes as the lead-in crosses it, `scorch` what is left on the ground, `smoke` what climbs off it and
+ *  `embers` what falls. */
 export interface StagedLook {
   /** On the ground: frames `draw` burn it on, `glow` flicker while it stands, `cool` dull and fade it. */
   sigil: StageSheet & { draw: number; glow: number; cool: number };
@@ -49,6 +51,9 @@ export interface StagedLook {
   smoke: StageSheet;
   /** The side of the screen the painting comes from (its sigil lies there). */
   from: 'left' | 'right';
+  /** A longer call builds more: the ground under the foes breaks (freezes, splits) once already as the build-up begins, ahead of the
+   *  blow's own break. */
+  front?: boolean;
 }
 
 const sheet = (name: string, fw: number, fh: number, n: number, cols: number, ms: number, foot: number, hold: number): StageSheet => ({ sheet: name, fw, fh, n, cols, ms, foot, hold });
@@ -64,6 +69,22 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
     scorch: { ...sheet('askel-stage-scorch', 88, 48, 8, 8, 0, 24, 3), hot: 5 },
     smoke: sheet('askel-stage-smoke', 128, 176, 16, 16, 1900, 160, 6),
     from: 'right',
+  },
+  // Nivra, ice: the same places in the call, her own show (`tools/blender-fx/eidolons/nivra_parts.py`). The sigil is a six-armed rune
+  // freezing on, the pillar a cluster of ice spires driven up and shattered, the blow a cold white core and a wall of spires that
+  // stands a moment and then breaks all at once; the ground piece is the freezing front (a ring racing out, frost ferns behind it),
+  // the tile piece small spires bursting up, the mark a sheet of ice melting back, with mist climbing and ice motes falling.
+  nivra: {
+    sigil: { ...sheet('nivra-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
+    pillar: { ...sheet('nivra-stage-pillar', 144, 352, 16, 16, 1150, 320, 6), lit: true },
+    explosion: { ...sheet('nivra-stage-explosion', 320, 300, 16, 8, 1700, 250, 8), lit: true },
+    cracks: { ...sheet('nivra-stage-cracks', 256, 136, 12, 6, 0, 68, 4), open: 4 },
+    embers: sheet('nivra-stage-embers', 160, 200, 12, 12, 1800, 190, 0),
+    fire: sheet('nivra-stage-fire', 64, 112, 14, 14, 1350, 104, 5),
+    scorch: { ...sheet('nivra-stage-scorch', 88, 48, 8, 8, 0, 24, 2), hot: 5 },
+    smoke: sheet('nivra-stage-smoke', 128, 176, 16, 16, 2000, 160, 6),
+    from: 'left',
+    front: true,
   },
 };
 

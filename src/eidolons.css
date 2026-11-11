@@ -395,7 +395,7 @@ body[data-phase='fight'] #panel > .ehFight { display: flex; }
 @keyframes ecFxRows { from { background-position-y: 0%; } to { background-position-y: 100%; } }
 .ecLayer.still .ecFx.ecStage { background-position-y: var(--holdY, 0%); }
 .ecFx.ecStageGlow { image-rendering: auto; filter: blur(3px) brightness(1.2); }
-.ecFx.ecEmbers { filter: drop-shadow(0 0 3px rgb(255 170 60 / 0.9)); }
+.ecFx.ecEmbers { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--glow) 90%, transparent)); }
 .ecLayer.still .ecFx.ecEmbers { display: none; }
 .ecLayer[data-stage='out'] .ecFx:is(.ecEmbers, .ecSmokeUp) { opacity: 0 !important; transition: opacity 1.1s ease; }
 .ecLayer.staged:not(.still)[data-stage='build'] .ecDim { opacity: 1; background: radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--deep) 78%, transparent), color-mix(in srgb, var(--deep) 70%, black)); }

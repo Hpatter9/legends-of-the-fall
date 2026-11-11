@@ -1,6 +1,6 @@
 """The pixelated finish for Askel's pieces (parts.py), packed as the sheets the game loads (docs/notes/eidolon-blender.md).
 
-Run: python3 tools/blender-fx/eidolons/parts_finish.py <parts dir> [<sheets dir>]      (default src/art/eidolons/fx)
+Run: [ID=nivra] python3 tools/blender-fx/eidolons/parts_finish.py <parts dir> [<sheets dir>]      (default askel, src/art/eidolons/fx)
 
 Each frame is shrunk to the heroes' pixels, cut to 32 colours shared by all the pieces, and its alpha hardened (bright pixels are there or
 not; the dark smoke and scorch keep three flat steps of see-through). The sheets are lossless WebP: a single row of frames for the pieces
@@ -16,13 +16,24 @@ args = sys.argv[1:]
 SRC = args[0]
 OUT = args[1] if len(args) > 1 else 'src/art/eidolons/fx'
 COLOURS = 32
-# (name: frame width, height, frames to a row)
-PARTS = {'sigil': (160, 96, 6), 'pillar': (144, 352, 16), 'explosion': (320, 300, 8), 'cracks': (256, 136, 6), 'fire': (64, 112, 14), 'scorch': (88, 48, 8), 'smoke': (128, 176, 16), 'embers': (160, 200, 12)}
-# (the big pieces keep a soft glow under their brightest parts: its own sheet, a quarter of the size, the same frames in the same places)
-GLOW = ('pillar', 'explosion')
-# (the explosion is rendered as 20 frames and shipped as 16: every frame of the blast itself, two in three of the long burn and the
-# smoke after it, where one frame is much like the next; it takes a fifth off the largest sheet)
-KEEP = {'explosion': [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 17, 19]}
+ID = os.environ.get('ID', 'askel')
+# (each Eidolon's pieces: name: frame width, height, frames to a row; which keep a glow sheet under their brightest parts (a quarter of
+# the size, the same frames in the same places); and which ship fewer frames than were rendered)
+SHOWS = {
+    'askel': {
+        'parts': {'sigil': (160, 96, 6), 'pillar': (144, 352, 16), 'explosion': (320, 300, 8), 'cracks': (256, 136, 6), 'fire': (64, 112, 14), 'scorch': (88, 48, 8), 'smoke': (128, 176, 16), 'embers': (160, 200, 12)},
+        'glow': ('pillar', 'explosion'),
+        # (the explosion is rendered as 20 frames and shipped as 16: every frame of the blast itself, two in three of the long burn and
+        # the smoke after it, where one frame is much like the next; it takes a fifth off the largest sheet)
+        'keep': {'explosion': [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 17, 19]},
+    },
+    'nivra': {
+        'parts': {'sigil': (160, 96, 6), 'pillar': (144, 352, 16), 'explosion': (320, 300, 8), 'cracks': (256, 136, 6), 'fire': (64, 112, 14), 'scorch': (88, 48, 8), 'smoke': (128, 176, 16), 'embers': (160, 200, 12)},
+        'glow': ('pillar', 'explosion'),
+        'keep': {},
+    },
+}
+PARTS, GLOW, KEEP = SHOWS[ID]['parts'], SHOWS[ID]['glow'], SHOWS[ID]['keep']
 LUM = np.array([0.3, 0.59, 0.11], dtype=np.float32)
 
 
@@ -66,7 +77,7 @@ for name, (w, h, cols) in PARTS.items():
         px = np.dstack([np.asarray(q), (aa * 255).astype(np.uint8)])
         px[aa == 0] = 0
         sheet.paste(Image.fromarray(px, 'RGBA'), ((i % cols) * w, (i // cols) * h))
-    path = os.path.join(OUT, f'askel-stage-{name}.webp')
+    path = os.path.join(OUT, f'{ID}-stage-{name}.webp')
     sheet.save(path, lossless=True, method=6)
     size = os.path.getsize(path)
     total += size
@@ -81,7 +92,7 @@ for name, (w, h, cols) in PARTS.items():
             ga = g.max(axis=2)
             grgb = np.where(ga[..., None] > 0.004, g / np.maximum(ga[..., None], 0.004), 0)
             gsheet.paste(Image.fromarray((np.dstack([np.clip(grgb, 0, 1), np.clip(ga * 1.25, 0, 1)]) * 255).astype(np.uint8), 'RGBA'), ((i % cols) * gw, (i // cols) * gh))
-        gpath = os.path.join(OUT, f'askel-stage-{name}-glow.webp')
+        gpath = os.path.join(OUT, f'{ID}-stage-{name}-glow.webp')
         gsheet.save(gpath, quality=78, alpha_quality=80, method=6)
         total += os.path.getsize(gpath)
         print(f'{name}-glow: {gsheet.width} x {gsheet.height}, {os.path.getsize(gpath)} bytes')
