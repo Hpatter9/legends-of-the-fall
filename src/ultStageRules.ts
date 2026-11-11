@@ -14,6 +14,8 @@
 
 import { ULT_EPIC } from './ultEpicRules';
 import { SHOWCASES, type ShowStyle } from './ultShowRules';
+import { bfxClip, ultBfx } from './render/blenderFxRules';
+import { BFX_DENSITY } from './render/blenderFxData';
 
 export type StageName = 'windup' | 'strike' | 'aftermath';
 export const STAGE_NAMES: readonly StageName[] = ['windup', 'strike', 'aftermath'];
@@ -178,9 +180,21 @@ export interface StageArt {
   loopMs?: number;
 }
 
-/** The sheets attached so far, by hero kind (or Eidolon id) and stage. Empty until the art lands: the page then plays what the game has
- *  (the band, the gathering, the bursts, the afterglow). */
-export const STAGE_ART: Readonly<Record<string, Partial<Record<StageName, StageArt>>>> = {};
+/** The sheets attached, by hero kind (or Eidolon id) and stage. BLENDER-FX (docs/notes/blender-fx.md) hangs every hero's ultimate here: its
+ *  wind-up on the caster, its strike and its aftermath over what was struck, each a Blender-rendered clip named by `sheet` (its key in
+ *  `blenderFxData.ts`; `Fx.ultGather`, `ultImpact` and `ultAfter` play them). A kind with none plays what the game has (the band, the
+ *  gathering, the bursts, the afterglow): the Eidolons, until their batch. */
+export const STAGE_ART: Readonly<Record<string, Partial<Record<StageName, StageArt>>>> = Object.fromEntries(
+  Object.keys(SHOWCASES).flatMap((kind) => {
+    const arts: Partial<Record<StageName, StageArt>> = {};
+    for (const stage of STAGE_NAMES) {
+      const sheet = ultBfx(kind, stage, ultWeight(kind));
+      const clip = sheet ? bfxClip(sheet) : undefined;
+      if (sheet && clip) arts[stage] = { sheet, frames: clip.n, on: stage === 'windup' ? 'caster' : 'struck', tiles: clip.w / BFX_DENSITY };
+    }
+    return Object.keys(arts).length ? [[kind, arts]] : [];
+  }),
+);
 
 /** The art for a stage of a kind's show, if any has been attached. */
 export const stageArt = (kind: string, stage: StageName): StageArt | undefined => STAGE_ART[kind]?.[stage];
