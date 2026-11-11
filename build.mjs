@@ -73,6 +73,12 @@ mkdirSync(`${out}/fonts`, { recursive: true });
 for (const [pkgName, f] of FONTS) copyFileSync(`node_modules/@fontsource/${pkgName}/files/${f}`, `${out}/fonts/${f}`);
 // (the pixel UI's frames, as files the CSS 9-slices by URL: ui/<name>.png; the tab icons are bundled into game.js instead)
 const UI_FILES = [];
+// Crown Terrace: eight ruler environments and independent landmark stages, all available offline.
+mkdirSync(`${out}/ui/crown-terrace`, { recursive: true });
+for (const f of readdirSync('src/art/crown-terrace').filter((f) => f.endsWith('.webp'))) {
+  copyFileSync(`src/art/crown-terrace/${f}`, `${out}/ui/crown-terrace/${f}`);
+  UI_FILES.push(`ui/crown-terrace/${f}`);
+}
 mkdirSync(`${out}/ui`, { recursive: true });
 for (const f of readdirSync('src/art/ui').filter((f) => f.endsWith('.png') && !f.startsWith('tab-'))) {
   copyFileSync(`src/art/ui/${f}`, `${out}/ui/${f}`);
@@ -237,7 +243,7 @@ const writeIndexHtml = () => {
             readFileSync('src/eidolonChains.css', 'utf8') +
             readFileSync('src/stall.css', 'utf8'),
         )
-        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/jrpgRecap.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8') + readFileSync('src/oneEach.css', 'utf8') + readFileSync('src/guest.css', 'utf8') + readFileSync('src/secret.css', 'utf8') + readFileSync('src/relicCard.css', 'utf8') + readFileSync('src/stats.css', 'utf8') + readFileSync('src/tactics.css', 'utf8') + readFileSync('src/ornateMenus.css', 'utf8') + readFileSync('src/nemesis.css', 'utf8') + readFileSync('src/houses.css', 'utf8') + readFileSync('src/paintedCombat.css', 'utf8') + readFileSync('src/paintedBattlePopups.css', 'utf8') + readFileSync('src/paintedBattleReports.css', 'utf8') + readFileSync('src/paintedDeployment.css', 'utf8') + readFileSync('src/runeBench.css', 'utf8') + readFileSync('src/runeBenchArt.css', 'utf8') + readFileSync('src/paintedTavern.css', 'utf8') + readFileSync('src/paintedSpells.css', 'utf8') + readFileSync('src/alive.css', 'utf8') + readFileSync('src/castleRemake.css', 'utf8') + readFileSync('src/duelShow.css', 'utf8') + readFileSync('src/paintedButtonsSlices.css', 'utf8') + readFileSync('src/paintedButtons.css', 'utf8'))
+        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/jrpgRecap.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8') + readFileSync('src/oneEach.css', 'utf8') + readFileSync('src/guest.css', 'utf8') + readFileSync('src/secret.css', 'utf8') + readFileSync('src/relicCard.css', 'utf8') + readFileSync('src/stats.css', 'utf8') + readFileSync('src/tactics.css', 'utf8') + readFileSync('src/ornateMenus.css', 'utf8') + readFileSync('src/nemesis.css', 'utf8') + readFileSync('src/houses.css', 'utf8') + readFileSync('src/paintedCombat.css', 'utf8') + readFileSync('src/paintedBattlePopups.css', 'utf8') + readFileSync('src/paintedBattleReports.css', 'utf8') + readFileSync('src/paintedDeployment.css', 'utf8') + readFileSync('src/runeBench.css', 'utf8') + readFileSync('src/runeBenchArt.css', 'utf8') + readFileSync('src/paintedTavern.css', 'utf8') + readFileSync('src/paintedSpells.css', 'utf8') + readFileSync('src/alive.css', 'utf8') + readFileSync('src/castleRemake.css', 'utf8') + readFileSync('src/duelShow.css', 'utf8') + readFileSync('src/warRoom.css', 'utf8') + readFileSync('src/paintedButtonsSlices.css', 'utf8') + readFileSync('src/paintedButtons.css', 'utf8'))
         .replace('__VERSION__', version),
     ),
   );

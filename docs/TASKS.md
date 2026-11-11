@@ -1,3 +1,10 @@
+### ARMY-WAR-ROOM — Painted campaign room and party strength
+
+- **Owner / branch / worktree:** Codex; `feature/army-war-room`; `/workspace/legends-of-the-fall`.
+- **Scope:** approved War Room army selection/briefings, Party Strength on built parties, estimated challenge suggestions, art/credits/offline integration and focused tests. Preserve battle balance, tier gates, rewards and saves.
+- **Completion:** three portrait sizes reviewed; relevant tests, typecheck/build and offline checks; open PR for owner review. No merge or deployment.
+- **Status:** complete; [PR #545](https://github.com/Hpatter9/legends-of-the-fall/pull/545) open. Painted room/banner selection, Party Strength and live challenge suggestions implemented. Typecheck/build, focused tests, all three portrait layouts and all 28 integrated browser checks (including reduced motion, tier gating and offline artwork) passed. [Handoff](notes/army-war-room.md); [screen](samples/war-room/armies-393.png). No merge, deployment or version bump.
+
 ### BLOODTUSK-STRUCTURES — Cohesive walls and buildings
 
 - **Owner / branch / worktree:** Codex; `fix/bloodtusk-structures`; `/workspace/legends-of-the-fall`.
@@ -105,6 +112,15 @@ The manager maintains the integrated board. Workers propose their task updates i
 - Run tests for the changed behaviour and affected callers. Full suites and unrelated balance sweeps are not required; retain typecheck/build and affected portrait checks for implementation work. Documentation-only updates require diff, link and consistency review.
 
 ## Active work
+
+### CROWN-TERRACE — Ruler courts and a growing kingdom
+
+- **Owner / branch / worktree:** Codex; `art/crown-terrace`; `/workspace/legends-of-the-fall`.
+- **Authorisation:** owner approved the fourth Crown Terrace mockup and requested implementation, all necessary art and a PR.
+- **Scope:** animated selectable court heroes; eight distinct ruler terraces; eleven background landmarks reflecting completed levels and active construction; relevant UI, persistence, artwork, offline caching and tests. Preserve battle parties, castle costs, timings and saves.
+- **Completion:** generated production art, functional ruler/hero selection, independent building growth, focused tests, typecheck/build, three portrait sizes, reduced motion and offline browser checks; open a PR without merging.
+- **Status:** implemented and ready for review on main 0.484.0. Eight ruler environments, 70 selectable painted companions, independent growth for all eleven sites and 130 cached art assets. Typecheck/build and all 18 affected test files pass; real browser checks pass at 393×852, 360×780 and 412×915, including reduced motion and offline changes. Actual screenshots and a 5.22-second animation clip retained. [PR #547](https://github.com/Hpatter9/legends-of-the-fall/pull/547) is open and ready for review; no merge or deployment.
+- **Handoff:** [Crown Terrace](notes/crown-terrace.md).
 
 ### CASTLE-TAB-RENEWAL — Redesign the whole Castle tab
 

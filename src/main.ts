@@ -536,7 +536,7 @@ class Game {
           }
           this.startRun(next);
           if (auto) this.beginAuto({ army: id, tier }, auto);
-        });
+        }, { army: id, tier });
         if (marching)
           this.party.setOrders({
             line: () => marchLine(picks),
