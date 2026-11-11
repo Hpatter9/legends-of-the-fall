@@ -1,3 +1,4 @@
+import { LAND_TERRAIN, layLandTerrain } from './landTerrain';
 import { isMythic } from './mythicRules';
 import { mythicBlow, mythicDamage, mythicSpare, mythicWound, tickMythics, type MythicState } from './mythicCombat';
 // One fight, King God Castle style: the heroes are placed on the near rows while the foes wait on the far ones, then
@@ -699,6 +700,8 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   const board = stage.board ? cloneBoard(stage.board) : makeBoard(seed, stage.area, stage.size?.w, stage.size?.d, stage.layout);
   const tw = stage.twist;
   if (tw) twistBoard(board, tw, seed);
+  // (LAND-IDENTITY: a land's own terrain laid thicker, behind its own switch and from its own side stream; off, nothing is laid)
+  if (LAND_TERRAIN.on && !stage.board) layLandTerrain(board, seed);
   // (LIVING-FIELDS: the land's traps and hazards, by their own side stream of the seed: nothing else of the fight moves with them)
   if (stage.hazards) layFieldHazards(board, seed, stage.hazards);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(tw?.mana ? (stage.mana ?? 1) * tw.mana : stage.mana) };

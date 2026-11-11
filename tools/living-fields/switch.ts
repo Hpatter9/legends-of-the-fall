@@ -5,8 +5,11 @@
 // Unset: a run's fights as the game lays them (`hazardLevel`, by wave and tier). The hero value table plays fights made outside a run,
 // which have none of their own: `sweepLevel` is the level it lays them at (1 when the set is on, or the number given).
 import { FIELD_HAZARDS } from '../../src/sim/fieldTraps';
+import { LAND_TERRAIN } from '../../src/sim/landTerrain';
 
 const raw = process.env.FIELD_HAZARDS;
 if (raw === '0') FIELD_HAZARDS.on = false;
+// (LAND-IDENTITY: and the lands' own terrain laid thicker, `src/sim/landTerrain.ts`: LAND_TERRAIN=0 plays without it)
+if (process.env.LAND_TERRAIN === '0') LAND_TERRAIN.on = false;
 /** The level the hero sweep's fights are laid at. */
 export const sweepLevel = (): number => (!FIELD_HAZARDS.on ? 0 : raw !== undefined && Number(raw) > 0 ? Number(raw) : 1);
