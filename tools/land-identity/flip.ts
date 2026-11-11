@@ -23,6 +23,13 @@ const LEVEL = hazardLevel(STAGE, 0);
 //  change read is the terrain's alone, on top of the traps as the game now has them)
 if (has('--force')) for (const a of LANDS) if (FLOODS[a]) FLOODS[a]!.on = true;
 const BASE_HAZARDS = val('--base') === 'hazards';
+// (`--set volcano=1,1,1,2`: try a land's patches at other numbers: pools min,max and size min,max; several with `;`)
+for (const part of (val('--set') ?? '').split(';').filter(Boolean)) {
+  const [a, nums] = part.split('=');
+  const [p0, p1, s0, s1] = nums.split(',').map(Number);
+  const fl = FLOODS[a as Area];
+  if (fl) Object.assign(fl, { pools: [p0, p1], size: [s0, s1] });
+}
 
 // (`--boards`: how much of each land's own ground its boards carry, as `makeBoard` lays them and with the land's terrain laid thicker)
 if (has('--boards')) {
