@@ -4032,7 +4032,8 @@ class Game {
       if (won && fixed && !run.cleared && !run.over && !this.auto) this.startWalk(stage);
       const openBefore = army ? ARMIES.filter((a) => armyUnlocked(this.meta, a.id)).map((a) => a.id) : [];
       // (an army pays by wave, and its last boss a clear; any other run pays as it always did)
-      this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars) : null;
+      // (TIER-CLEARS: on the tier the run is fought on, so a harder tier keeps its own waves won, its clears and its pay)
+      this.pay = army ? settleWave(this.meta, army.id, stage, won, rating.stars, tierOfRun(run)) : null;
       // (DEPTH-BUILD: the march orders' crowns, applied once to what the wave paid)
       if (this.pay) marchCrowns(this.meta, this.pay, run.orders);
       // (Dynasties, phase 7: the Legend Oath pays half again)

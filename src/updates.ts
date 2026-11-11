@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.476.0',
+    date: '2026-11-11',
+    title: 'Auto on harder tiers, and heavier snow',
+    notes: ['A cleared Hard, Elite, Legendary or Mythic army now shows Auto and x3, and pays its own crowns. Tiers you already cleared are fixed on load.', 'The loading screen has much heavier snowfall, and no rising sparks.'],
+  },
+  {
     version: '0.475.0',
     date: '2026-11-10',
     title: 'The phone\'s Back button stays in the game',
