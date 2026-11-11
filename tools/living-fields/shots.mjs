@@ -50,14 +50,16 @@ for (const [w, h] of sizes) {
     if (only && !only.includes(land)) continue;
     // (`--one`: only each land's first shape)
     for (const { seed, layout } of args.includes('--one') ? list.slice(0, 1) : list) {
-      await page.evaluate(([area, seed, party, army, stage, noLife]) => {
+      await page.evaluate(([area, seed, party, army, stage, noLife, hazards]) => {
         const g = window.__game;
         const r = JSON.parse(JSON.stringify(g.run));
         Object.assign(r, { ...(army ? { mode: { kind: 'army', army }, tier: 0, stage, area: undefined } : { mode: { kind: 'run' }, stage: 3, area }), seed, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
         document.getElementById('home').hidden = true;
         if (noLife) g.life.on = false;
+        // (`--hazards`: the land's traps and hazards laid whatever the set's switch says; `--no-hazards`: none)
+        if (hazards !== null) g.fieldHazards(hazards);
         g.startRun(r);
-      }, [land, seed, PARTY, army, stage, args.includes('--no-life')]);
+      }, [land, seed, PARTY, army, stage, args.includes('--no-life'), args.includes('--hazards') ? true : args.includes('--no-hazards') ? false : null]);
       await page.waitForTimeout(500);
       await page.evaluate(() => window.__game.autoArrange(true));
       await page.waitForTimeout(400);
@@ -86,6 +88,11 @@ for (const [w, h] of sizes) {
           requestAnimationFrame(tick);
         });
         await page.waitForTimeout(+(flag('--ms') ?? 8000));
+        // (`--root`: every hero is held as a snare holds it, to see the mark on a snared fighter)
+        if (args.includes('--root')) {
+          await page.evaluate(() => { const b = window.__game.b; for (const x of b.units) if (x.side === 'hero') x.rootUntil = b.t + 60000; });
+          await page.waitForTimeout(700);
+        }
         if (args.includes('--bench')) console.log(land, layout, JSON.stringify(await page.evaluate(() => {
           const f = window.__frames.slice(5).sort((a, b) => a - b);
           const g = window.__game;

@@ -16,6 +16,7 @@ import { birdOf, fallFrames, FALL_FRAMES, glow } from './roadArt';
 import { FLOORS } from './floorRules';
 import { floorArt, loadFloorArt } from './floorArt';
 import { loadImage } from './loadImage';
+import { statusFrames } from './statusArt';
 import type { PackKey } from './fxRules';
 import { critterSpots, DECAL_NAMES, edgeFalls, FLEE_MS, landDecals, markOf, MARK_MS, MARKS_MAX, RETURN_MS, scaredBy, shaftsFor, SMOKE_EVERY, STEP_EVERY, stepPuff, type Critter, type DecalName, type Spot } from './boardLifeRules';
 import lifeUrl from '../art/living-fields/life.png';
@@ -35,6 +36,9 @@ const paintedOf = (kind: string): Texture[] | null => {
   const name = kind === 'bird' ? 'crow' : kind;
   return Array.from({ length: 8 }, (_, k) => cells[`${name}${k}`]).filter(Boolean).map(([x, y, w, h]) => new Texture({ source: lifeSheet!.source, frame: new Rectangle(x, y, w, h) }));
 };
+
+/** The colour of a snare's mark on the fighter it holds (rope). */
+const ROOT_TINT = 0xd8b060;
 
 /** A small picture drawn once (a stand-in until the painted sheet lands). */
 const drawn = new Map<string, Texture[]>();
@@ -142,6 +146,8 @@ export class BoardLife {
   private smokeAt = 0;
   private stepAt = 0;
   private seen = new Map<number, number>();
+  /** The mark on each snared fighter (by its id): a ring at its feet and an icon over its head, while the snare holds it. */
+  private roots = new Map<number, { ring: Sprite | null; icon: Sprite | null }>();
   private calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** Ms spent in `step` over the frames so far (the bench reads it). */
   cost = { ms: 0, frames: 0 };
@@ -157,6 +163,7 @@ export class BoardLife {
     this.marks = [];
     this.fires = [];
     this.seen.clear();
+    this.roots.clear();
     this.board = b;
     if (!this.on || b.w * b.d > 400) return;
     const saver = !!settings().saver;
@@ -295,10 +302,50 @@ export class BoardLife {
     }
   }
 
-  /** Each frame: `fighters` are the fighters' feet on the screen (world px). */
-  step(dt: number, b: Battle, fighters: readonly { x: number; y: number }[]): void {
+  /** A snared fighter is marked while the snare holds its feet (`Unit.rootUntil`, `sim/fieldTraps.ts`): an icon over its
+   *  head. A stand-in from the status art (the weakening's icon, tinted rope) until a root has its own; the status art's ground rings are
+   *  all too dark to tint to rope, so there is none at its feet yet. */
+  private markRoots(b: Battle, where: ReadonlyMap<number, { x: number; y: number; tall: number }>): void {
+    for (const x of b.units) {
+      const held = x.alive && (x.rootUntil ?? 0) > b.t;
+      const have = this.roots.get(x.id);
+      if (held && !have) {
+        const at2 = where.get(x.id);
+        if (!at2) continue;
+        const make = (key: string, scale: number, px: number, py: number, parent: Container, z?: number): Sprite | null => {
+          const frames = statusFrames(key);
+          if (!frames.length) return null;
+          const sp = new Sprite(frames[0]);
+          sp.anchor.set(0.5);
+          // (`scale` is how wide it is drawn, in px: the status art's cells are of more than one size)
+          sp.scale.set(scale / Math.max(1, frames[0].width));
+          sp.tint = ROOT_TINT;
+          sp.position.set(px, py);
+          if (z !== undefined) sp.zIndex = z;
+          parent.addChild(sp);
+          return sp;
+        };
+        this.roots.set(x.id, { ring: null, icon: make('weak.icon', 14, at2.x, at2.y - at2.tall - 14, this.view.root, 4600) });
+      } else if (!held && have) {
+        for (const sp of [have.ring, have.icon]) if (sp && !sp.destroyed) sp.destroy();
+        this.roots.delete(x.id);
+      } else if (held && have && !this.calm) {
+        // (the ring turns through its frames; the icon bobs a little)
+        const ring = have.ring;
+        const frames = statusFrames('curse.ground');
+        if (ring && !ring.destroyed && frames.length) ring.texture = frames[Math.floor(this.clock / 110) % frames.length];
+        const at2 = where.get(x.id);
+        if (have.icon && !have.icon.destroyed && at2) have.icon.position.set(at2.x, at2.y - at2.tall - 14 + Math.sin(this.clock / 260) * 1.5);
+      }
+    }
+  }
+
+  /** Each frame: `where` is each fighter's feet on the screen (world px) and its height, by its id. */
+  step(dt: number, b: Battle, where: ReadonlyMap<number, { x: number; y: number; tall: number }>): void {
     if (!this.on || this.board !== b.board) return;
     const t0 = performance.now();
+    const fighters = [...where.values()];
+    this.markRoots(b, where);
     const saver = !!settings().saver;
     const calm = this.calm;
     this.clock += dt;

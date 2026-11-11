@@ -192,3 +192,23 @@ test('each land\'s floor is its own land\'s colour: no darker than the tops it r
     if (s.tint!.path !== undefined) assert.ok(apart(s.tint!.ground!, s.tint!.path) >= 40, `${area}: its path does not show`);
   }
 });
+
+test('a fighter reads on every land\'s ground: a dark foe and a mid-toned hero both stand out from each ground\'s colour', () => {
+  // (measured, not judged: the contrast ratio of relative luminance, as WCAG defines it, between a ground's colour under the board's own
+  //  wash at two steps up and (a) the mean colour of the darkest foes' sheets, #281f21, (b) a mid-toned hero's, the median sheet's
+  //  brightness, #505050. A dark foe must stand at 1.5 or more from the ground, a hero at 1.25 or more: so a ground is either clearly
+  //  lighter than a hero or dark enough that the hero is the lighter thing, and never as dark as the foe)
+  const lin = (c: number) => (c / 255 <= 0.04045 ? c / 255 / 12.92 : ((c / 255 + 0.055) / 1.055) ** 2.4);
+  const L = (rgb: number) => 0.2126 * lin((rgb >> 16) & 255) + 0.7152 * lin((rgb >> 8) & 255) + 0.0722 * lin(rgb & 255);
+  const wash = (rgb: number, h = 2) => {
+    const a = 0.03 + h * 0.035;
+    return (Math.floor(((rgb >> 16) & 255) * (1 - a) + 255 * a) << 16) | (Math.floor(((rgb >> 8) & 255) * (1 - a) + 248 * a) << 8) | Math.floor((rgb & 255) * (1 - a) + 220 * a);
+  };
+  const ratio = (a: number, b: number) => (Math.max(L(a), L(b)) + 0.05) / (Math.min(L(a), L(b)) + 0.05);
+  for (const area of AREAS)
+    for (const [role, rgb] of Object.entries(FLOORS[area].tint ?? {})) {
+      const g = wash(rgb);
+      assert.ok(ratio(g, 0x281f21) >= 1.5, `${area} ${role}: a dark foe is lost on it (${ratio(g, 0x281f21).toFixed(2)})`);
+      assert.ok(ratio(g, 0x505050) >= 1.25, `${area} ${role}: a hero is lost on it (${ratio(g, 0x505050).toFixed(2)})`);
+    }
+});
