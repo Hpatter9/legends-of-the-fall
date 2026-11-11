@@ -47,15 +47,19 @@
 /* the level-up: the row warms to gold, a burst of light once from the face, the stats that rose slide open below */
 .jrBody .jrRow.up { border-color: #e9c76c; box-shadow: 0 0 0 1px #6b4a12, 0 0 14px #e9c36b55; }
 .jrBody .jrRow.up::after { content: ''; position: absolute; left: 30px; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, #fff6cfcc, #f6c75a66 40%, transparent 70%); animation: jrBurst .8s ease-out forwards; }
-.jrBody .jrGrowth { grid-column: 1 / -1; display: none; flex-wrap: wrap; gap: 4px 6px; padding: 5px 2px 1px; border-top: 1px dashed #9c845455; }
-.jrBody .jrRow.up .jrGrowth { display: flex; animation: jrArrive .35s ease-out .15s both; }
-.jrBody .jrStat { display: inline-flex; align-items: baseline; gap: 4px; padding: 2px 7px; border-radius: 3px; background: #0a1510cc; box-shadow: inset 0 0 0 1px #3b5442; color: #d7cfb6; font: 400 12px var(--body); font-variant-numeric: tabular-nums; }
-.jrBody .jrStat small { color: #c6b180; font: 700 10px var(--body); letter-spacing: .08em; }
-.jrBody .jrStat b { font-weight: 400; }
+/* (RANKUP-LAYOUT: the stats that rose are the rows of one table, as on the Rank up card (`statRows.ts`): the name, the old value, an
+   arrow, the new value and the gain, in columns that line up down the hero's box, numbers right-aligned; a score's note takes the room
+   on the right. Each `.jrStat` gives its cells to the table (`display: contents`), and its name starts a new row.) */
+.jrBody .jrGrowth { grid-column: 1 / -1; display: none; grid-template-columns: auto auto auto auto auto minmax(0, 1fr); align-items: baseline; gap: 2px 7px; padding: 5px 4px 1px; border-top: 1px dashed #9c845455; color: #d7cfb6; font: 400 12px/1.35 var(--body); font-variant-numeric: tabular-nums lining-nums; }
+.jrBody .jrRow.up .jrGrowth { display: grid; animation: jrArrive .35s ease-out .15s both; }
+.jrBody .jrStat { display: contents; }
+.jrBody .jrStat > * { white-space: nowrap; }
+.jrBody .jrStat > small:first-child { grid-column: 1; color: #c6b180; font: 700 10px var(--body); letter-spacing: .08em; }
+.jrBody .jrStat b { font-weight: 400; text-align: right; }
 .jrBody .jrStat b.to { color: #fff2cf; font-weight: 700; }
-.jrBody .jrStat i { font-style: normal; color: #9c8454; }
-.jrBody .jrStat em { color: var(--jr-up); font: 700 12px var(--body); font-style: normal; text-shadow: 0 0 6px #4fd06a55; }
-.jrBody .jrLearn { flex-basis: 100%; color: #ffe39a; font: 700 12px/1.3 var(--body); text-shadow: 0 0 8px #f2bf5a66; }
+.jrBody .jrStat i { font-style: normal; color: #9c8454; text-align: center; }
+.jrBody .jrStat em { color: var(--jr-up); font: 700 12px var(--body); font-style: normal; text-align: right; text-shadow: 0 0 6px #4fd06a55; }
+.jrBody .jrLearn { grid-column: 1 / -1; color: #ffe39a; font: 700 12px/1.3 var(--body); text-shadow: 0 0 8px #f2bf5a66; }
 .jrBody .jrLearn.ult { color: #ffd0f4; text-shadow: 0 0 8px #e07ad966; }
 .jrBody .jrLearn.talent, .jrBody .jrLearn.badge { color: #c9e6ff; text-shadow: none; }
 .jrBody .jrRow.fell .jrFace canvas { filter: grayscale(.7) brightness(.8); }
@@ -68,7 +72,8 @@
 .jrBody.compact .jrBar { height: 6px; }
 .jrBody.compact .jrNums { font-size: 10px; }
 .jrBody.compact .jrGrowth { padding-top: 3px; }
-.jrBody.compact .jrStat { padding: 1px 5px; font-size: 11px; }
+.jrBody.compact .jrGrowth { font-size: 11px; row-gap: 1px; }
+.jrBody.compact .jrStat em { font-size: 11px; }
 .jrBody.compact .jrRow.up::after { left: 22px; }
 
 /* the MVP, the spoils, the lines */
