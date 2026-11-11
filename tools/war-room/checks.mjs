@@ -34,7 +34,8 @@ for (const [width,height] of (process.argv.includes('--final') ? [[412,915]] : [
  await page.waitForFunction(()=>!!window.__game?.home,null,{timeout:120000});
  await page.evaluate(()=>{document.getElementById('tipSkip')?.click();window.__game.home.open();window.__game.home.openArmies('undead');});
  await page.waitForTimeout(900);
- const active=page.locator('.asCard[data-army="undead"]');
+ // (ARMIES-SWIPE: the card and its information are apart now; both carry the army)
+ const active=page.locator('.asRoot:has(.asInfo[data-army="undead"])');
  await active.locator('img').evaluateAll(imgs=>Promise.all(imgs.map(i=>i.decode())));
  await page.screenshot({path:`docs/samples/war-room/armies-${width}.png`});
  check(`party strength ${width}`,(await active.locator('.wrStrength').innerText()).includes('Party Strength'));
@@ -59,7 +60,7 @@ for (const [width,height] of (process.argv.includes('--final') ? [[412,915]] : [
  if (width === 412) {
   await page.evaluate(()=>window.__game.home.openArmies('orcs'));
   await page.waitForTimeout(500);
-  const orcs = page.locator('.asCard[data-army="orcs"]');
+  const orcs = page.locator('.asInfo[data-army="orcs"]');
   await orcs.locator('.asTier').nth(1).click();
   check('tier selection updates estimate', await orcs.locator('.asTier').nth(1).getAttribute('aria-pressed') === 'true');
   await orcs.locator('.asTier').nth(4).click({force:true});
@@ -68,7 +69,7 @@ for (const [width,height] of (process.argv.includes('--final') ? [[412,915]] : [
   check('suggested tier remains available', await orcs.locator('.asTier.on').getAttribute('aria-disabled') === 'false');
   await page.evaluate(()=>window.__game.home.openArmies('golems'));
   await page.waitForTimeout(300);
-  check('locked army cannot prepare', await page.locator('.asCard[data-army="golems"] .asFight').isDisabled());
+  check('locked army cannot prepare', await page.locator('.asInfo[data-army="golems"] .asFight').isDisabled());
   await page.waitForFunction(()=>!!navigator.serviceWorker.controller,null,{timeout:120000});
   check('room is precached', await page.evaluate(async()=>!!(await caches.match('ui/war-room.png'))));
   await context.setOffline(true);
