@@ -178,3 +178,24 @@ test('timber gate feet meet the outer opening plane with the matching axis', () 
     }
   }
 });
+
+test('the Moonlit Shrine\'s bridge takes its painted rails: lantern posts on its water edges, a lantern at each corner of its two ends', () => {
+  const ybp = blueprintOf('yokai')!;
+  const ymap = holdMapOf('yokai')!;
+  const yb = ymap.board;
+  const list = placementsOf(yb, ymap.zone, ybp, ymap.forts);
+  const posts = list.filter((p) => p.name === 'pier');
+  const ends = list.filter((p) => p.name === 'deckEnd');
+  assert.ok(posts.length >= 6, `${posts.length} posts`);
+  for (const p of posts) {
+    const t = yb.tiles[p.front];
+    assert.ok(t.ground === 'water' || t.ground === 'deep', 'a post stands at the water\'s edge');
+    // (half a tile out from a bridge tile)
+    assert.ok([[0.45, 0], [-0.45, 0], [0, 0.45], [0, -0.45]].some(([du, dv]) => yb.tiles[Math.round(p.v - dv) * yb.w + Math.round(p.u - du)]?.bridge), `post at ${p.u}, ${p.v}`);
+  }
+  // (two ends, two corners each)
+  assert.equal(ends.length, 4);
+  for (const p of ends) assert.ok(!yb.tiles[p.front].bridge && yb.tiles[p.front].ground !== 'water' && yb.tiles[p.front].ground !== 'deep');
+  // (Bloodtusk Hold's bridge keeps its plain planks)
+  assert.ok(!placementsOf(b, map.zone, bp, map.forts).some((p) => p.name === 'pier' || p.name === 'deckEnd'));
+});

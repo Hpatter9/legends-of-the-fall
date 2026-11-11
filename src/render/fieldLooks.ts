@@ -354,7 +354,7 @@ export function mazePiece(tiles: readonly Spot[], p: Spot): { name: string; flip
   return { name: 'mazeRun', flip: !ul && !lr };
 }
 
-export const THIN = new Set(['crenel', 'wallBrazier', 'smallBanner', 'pennantPole', 'spearSign', 'skullTorch', 'wolfTotem', 'tuskTotem', 'greatBanner', 'brazier', 'wallBrazier', 'ladder', 'throne']);
+export const THIN = new Set(['pier', 'deckEnd', 'crenel', 'wallBrazier', 'smallBanner', 'pennantPole', 'spearSign', 'skullTorch', 'wolfTotem', 'tuskTotem', 'greatBanner', 'brazier', 'wallBrazier', 'ladder', 'throne']);
 
 /** The low clutter of a tile, if any (looks only, never on a road, a stair or water; two tiles apart at most one). */
 export function clutterOf(b: Board, zone: Uint8Array, mats: Uint8Array, u: number, v: number): string | null {
@@ -567,9 +567,12 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
         if (z === Z('B')) {
           // (every hold but Bloodtusk pitches its own tents, `campTent`, the tent of its ruins sheet, drawn smaller; the Orc's conical tent
           //  until that sheet is painted, `lookOf` in fieldView.ts)
-          const tents = [orcs ? 'conicalTent' : 'campTent', orcs ? 'conicalTent' : 'campTent', 'leanTo', 'hideFrame'];
+          //  Brimstone Gate's square tent reads small and boxy at half size: its camp pitches its great horned tent instead, 2 x 2 at half
+          //  size, as large as one tile holds, `CAMP_TENTS`)
+          const own = CAMP_TENTS[bp.army];
+          const tents = own ? [...own.names, 'leanTo', 'hideFrame'] : [orcs ? 'conicalTent' : 'campTent', orcs ? 'conicalTent' : 'campTent', 'leanTo', 'hideFrame'];
           const name = tents[Math.floor(hash(u, v, 33) * tents.length)];
-          out.push({ name, u, v, front: i, scale: name === 'campTent' ? 0.5 : 0.85 });
+          out.push({ name, u, v, front: i, scale: own?.scale[name] ?? (name === 'campTent' ? 0.5 : 0.85) });
           continue;
         }
         const tree = r < (z === Z('K') || z === Z('T') ? 0.35 : z === Z('N') || z === Z('V') ? 0.3 : 0);
@@ -587,6 +590,7 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
       out.push({ name, u, v, front: i, low: true, scale: 0.7 + hash(u, v, 73) * 0.3 });
     }
   }
+  if (BRIDGE_RAILS.has(bp.army)) out.push(...bridgeRails(b));
   // a banner at each post outside the walls; the plan's new landmarks (poles and stones, no walls)
   for (const p of bp.posts) {
     if (p.zone !== 'fields') continue;
@@ -601,6 +605,81 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
   mark('pennantPole', bp.warpath.u + 2, bp.warpath.v + 2);
   mark('smallBanner', 88, 45);
   if (bp.weathered) for (const p of out) if (['smallBanner', 'greatBanner', 'hangingBanner', 'hides', 'hideFrame', 'flag'].includes(p.name)) p.sway = !p.low;
+  return out;
+}
+
+/** A hold's own tents for the outer bailey's camp rows, and their scales, where its tent at half size reads too small (every other hold
+ *  pitches its `campTent` at half size). A row's tents stand one to a tile, so each is drawn no wider than a tile. */
+const CAMP_TENTS: Record<string, { names: string[]; scale: Record<string, number> }> = {
+  infernal: { names: ['pavilionTent', 'pavilionTent'], scale: { pavilionTent: 0.5 } },
+};
+
+/** The holds whose bridges take their sheet's painted bridge pieces along their edges (the Moonlit Shrine's vermilion bridge). */
+const BRIDGE_RAILS = new Set(['yokai']);
+
+/**
+ * A bridge's rails, from the hold's painted bridge pieces (sheet 12): its lantern posts (`pier`) stand along both long edges, where the
+ * deck meets the water, every third tile; the bridge's end (`deckEnd`, the stone lantern and the first of the railing) stands on the bank
+ * at each corner. A piece on the edge sorts with the water tile beside it, so a post on the near edge stands in front of the fighters on
+ * the deck and one on the far edge behind them. The planks stay as the deck under them.
+ */
+export function bridgeRails(b: Board): Placement[] {
+  const { w, d } = b;
+  const out: Placement[] = [];
+  const bridge = (u: number, v: number) => u >= 0 && v >= 0 && u < w && v < d && !!b.tiles[v * w + u].bridge;
+  for (let v = 0; v < d; v++)
+    for (let u = 0; u < w; u++) {
+      if (!bridge(u, v)) continue;
+      SIDES.forEach(([du, dv]) => {
+        const x = u + du;
+        const y = v + dv;
+        if (x < 0 || y < 0 || x >= w || y >= d || bridge(x, y) || !isWater(b.tiles[y * w + x])) return;
+        // (the run's place along its edge: every third tile, counted along the edge's own axis)
+        const along = du ? v : u;
+        if (along % 3) return;
+        out.push({ name: 'pier', u: u + du * 0.45, v: v + dv * 0.45, front: y * w + x, scale: 0.8 });
+      });
+    }
+  // (the ends: the bridge tiles whose neighbour along the run is open dry land, gathered into each end of each bridge (a staggered run's end
+  //  steps over a row or two), and a piece at the end's two outer lanes, its corners)
+  // (the run's axis is its longer extent: a staggered run's sides step across the other way, and those steps are not its ends)
+  let [u0, u1, v0, v1] = [w, -1, d, -1];
+  for (let v = 0; v < d; v++)
+    for (let u = 0; u < w; u++)
+      if (bridge(u, v)) [u0, u1, v0, v1] = [Math.min(u0, u), Math.max(u1, u), Math.min(v0, v), Math.max(v1, v)];
+  const alongV = v1 - v0 > u1 - u0;
+  const ends: { u: number; v: number; du: number; dv: number; group: number }[] = [];
+  for (let v = 0; v < d; v++)
+    for (let u = 0; u < w; u++) {
+      if (!bridge(u, v)) continue;
+      SIDES.forEach(([du, dv]) => {
+        const x = u + du;
+        const y = v + dv;
+        if (x < 0 || y < 0 || x >= w || y >= d || bridge(x, y) || isWater(b.tiles[y * w + x])) return;
+        if (b.tiles[y * w + x].wall || b.tiles[y * w + x].rock || !dv === alongV) return;
+        ends.push({ u, v, du, dv, group: ends.length });
+      });
+    }
+  const lane = (e: { u: number; v: number; du: number }) => (e.du ? e.v : e.u);
+  const row = (e: { u: number; v: number; du: number }) => (e.du ? e.u : e.v);
+  for (let changed = true; changed; ) {
+    changed = false;
+    for (const p of ends)
+      for (const q of ends)
+        if (p.du === q.du && p.dv === q.dv && q.group > p.group && Math.abs(lane(p) - lane(q)) <= 1 && Math.abs(row(p) - row(q)) <= 3) {
+          q.group = p.group;
+          changed = true;
+        }
+  }
+  for (const g of new Set(ends.map((e) => e.group))) {
+    const end = ends.filter((e) => e.group === g).sort((p, q) => lane(p) - lane(q));
+    for (const [e, k] of [[end[0], -1], [end[end.length - 1], 1]] as const) {
+      const side = e.du ? [0, 1] : [1, 0];
+      const x = e.u + e.du;
+      const y = e.v + e.dv;
+      out.push({ name: 'deckEnd', u: x + side[0] * k * 0.2, v: y + side[1] * k * 0.2, front: y * w + x, flip: !e.du, scale: 0.85 });
+    }
+  }
   return out;
 }
 

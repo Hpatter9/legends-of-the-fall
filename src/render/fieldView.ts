@@ -73,6 +73,9 @@ const SKIRT = 10;
 const SKIRT_RES = 0.25;
 /** The shallows' place in the hold's ground textures. */
 const MAT_SHALLOWS = MAT.shallows;
+/** The wash over a hold's bridge planks, where its ground sheet paints them too bright for a deck (the Moonlit Shrine's red lacquer reads as
+ *  a slab beside the pond: toned to the weathered wood of its painted bridge pieces). */
+const PLANK_TONE: Record<string, string> = { yokai: 'rgba(62,48,40,0.62)' };
 /** The pieces that give off firelight, and how high over their foot the flame is (world pixels). */
 const LIGHTS: Record<string, number> = {
   bonfire: 18, bonefire: 22, brazier: 34, firepit: 8, forgeFire: 14, southGate: 40, ironGate: 46, northGate: 40, sallyPort: 30, keep: 40,
@@ -521,6 +524,9 @@ export class FieldView {
           if (m === DEEP) {
             g.setTransform(S, 0, 0, S, ox * S, oy * S);
             this.diamond(g, u, v, t.h, holdArmy === 'infernal' ? 'rgba(120,24,0,0.3)' : 'rgba(18,56,88,0.38)');
+          } else if (m === MAT.planks && PLANK_TONE[holdArmy]) {
+            g.setTransform(S, 0, 0, S, ox * S, oy * S);
+            this.diamond(g, u, v, t.h, PLANK_TONE[holdArmy]);
           }
           for (const fr of fringesOf(b, mats, u, v)) overlay(H.edges[fr.edge][fr.turn], u, v, t.h);
           if (t.ground === 'tall') tall.push(i);
@@ -860,6 +866,10 @@ export class FieldView {
           // (the hold's art: the tile's material, its own quarter of the texture)
           g.setTransform(((TW / 2) / 64) * S, ((TH / 2) / 64) * S, (-(TW / 2) / 64) * S, ((TH / 2) / 64) * S, (x - left) * S, (y - topY) * S);
           g.drawImage(hold.ground, (m % 4) * 256 + (u % 4) * 64, Math.floor(m / 4) * 256 + (v % 4) * 64, 64, 64, 0, 0, 64, 64);
+          if (m === MAT.planks && PLANK_TONE[holdArmy]) {
+            g.setTransform(S, 0, 0, S, -left * S, -topY * S);
+            this.diamond(g, u, v, t.h, PLANK_TONE[holdArmy]);
+          }
         } else {
           const img = this.topOf(t, this.landOf(i));
           g.setTransform(((TW / 2) / img.width) * S, ((TH / 2) / img.width) * S, (-(TW / 2) / img.height) * S, ((TH / 2) / img.height) * S, (x - left) * S, (y - topY) * S);
