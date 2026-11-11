@@ -8,6 +8,7 @@ import { CHARGE_MAX, ULT_LEVEL, keyOf, ultimateOf } from '../src/sim/abilities';
 import { ALL_HEROES } from '../src/sim/units';
 import { fullScene, ULT_MOMENT, UltQueue, ultShape, type UltShape } from '../src/ultMomentRules';
 import { ULT_EPIC } from '../src/ultEpicRules';
+import { stagesFor } from '../src/ultStageRules';
 
 function arena(): Battle {
   const b = startBattle(5);
@@ -156,21 +157,22 @@ test('a tap ends the moment at any point: in the settle of a salvo in the air, a
   assert.equal(q.phase as string, 'open');
 });
 
-test("a hand-fired ultimate's whole moment lasts about 3 s (BATTLE-POLISH, the owner's ask)", () => {
-  // (the freeze on the blow included; the slow beat runs inside the impact's own time)
-  const instant = ULT_MOMENT.OPEN_MS + ULT_EPIC.HIT_STOP_MS + ULT_MOMENT.IMPACT_MS + ULT_MOMENT.FADE_MS;
-  assert.ok(instant >= 2800 && instant <= 3200, String(instant));
-  assert.ok(ULT_MOMENT.SLOW_MS <= ULT_MOMENT.IMPACT_MS);
-  // (and the queue really takes that long, step by step)
-  const q = new UltQueue();
-  q.push({ unit: 1, kind: 'samurai', name: 'Issen', shape: 'instant', ms: 0 });
-  let t = 0;
-  while (q.current && t < 10_000) {
-    q.step(16);
-    t += 16;
+// (ULT-EPIC 2 changed the owner's requirement: a hand-fired ultimate's moment was about 3 s (BATTLE-POLISH); it is now 4 to 6 s, in three
+// stages, each use carrying its own (`ultStageRules.ts`, `test/ult-stages.test.ts`). A moment with no stages still plays the old lengths.)
+test("a hand-fired ultimate's whole moment lasts 4 to 6 s (ULT-EPIC 2, the owner's ask), stepped frame by frame", () => {
+  for (const kind of ['samurai', 'kunoichi', 'knight', 'wizard', 'beastmaster']) {
+    const stages = stagesFor(kind);
+    const q = new UltQueue();
+    q.push({ unit: 1, kind, name: 'X', shape: 'instant', ms: 0, stages });
+    let t = 0;
+    while (q.current && t < 10_000) {
+      q.step(16);
+      t += 16;
+    }
+    assert.ok(Math.abs(t - stages.total) <= 16, `${kind}: ${t} vs ${stages.total}`);
+    assert.ok(t >= 4000 && t <= 6016, `${kind}: ${t}`);
   }
-  assert.ok(Math.abs(t - instant) <= 16, `${t} vs ${instant}`);
-  assert.ok(ULT_MOMENT.OPEN_MS + ULT_MOMENT.MAX_DELAY_MS + ULT_MOMENT.FADE_MS <= 3800);
+  assert.ok(ULT_MOMENT.SLOW_MS <= ULT_MOMENT.IMPACT_MS);
 });
 
 test('with Auto on the moment is always the short banner; the full one needs the setting on and Auto off', () => {

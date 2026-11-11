@@ -16,6 +16,7 @@ import type { Skill } from './sim/abilities';
 import { liftedDim, ULT_EPIC, type UltTargets } from './ultEpicRules';
 import type { Element } from './render/fxRules';
 import type { PlannedCue } from './render/audioRules';
+import type { StageName, UltStages } from './ultStageRules';
 
 /** Whether an ultimate gets the full moment (the hold and the dim): the setting on, and Auto off. With Auto the banner is short. */
 export const fullScene = (setting: boolean, auto: boolean): boolean => setting && !auto;
@@ -46,8 +47,11 @@ export const ULT_MOMENT = {
 /** The sound of the moment's two beats (HOLD-SOUND, docs/notes/hold-sound.md). The opening: the slash's sting and, under it, the power
  *  gathering for the whole of the build-up. The blow: its heavy sting and, once the freeze lets go, the slow beat's drag (none when calm:
  *  reduced motion has no freeze and no slow beat, so nothing to drag). */
-export function ultCues(beat: 'open' | 'impact', calm: boolean): PlannedCue[] {
-  if (beat === 'open') return [{ cue: 'ultSlash' }, { cue: 'ultCharge' }];
+export function ultCues(beat: 'open' | 'impact' | 'echo', calm: boolean, windup: number = ULT_MOMENT.OPEN_MS): PlannedCue[] {
+  // (ULT-EPIC 2: a longer wind-up starts quiet; the charge still climbs for its own length and ends on the blow)
+  if (beat === 'open') return [{ cue: 'ultSlash' }, { cue: 'ultCharge', ...(windup > ULT_MOMENT.OPEN_MS ? { delay: windup - ULT_MOMENT.OPEN_MS } : {}) }];
+  // (a further burst of a flurry or a storm: the blow's sting again, softer)
+  if (beat === 'echo') return [{ cue: 'ultImpact', gain: 0.5 }];
   return calm ? [{ cue: 'ultImpact' }] : [{ cue: 'ultImpact' }, { cue: 'ultSlow', delay: ULT_EPIC.HIT_STOP_MS }];
 }
 
@@ -108,6 +112,9 @@ export interface UltMoment {
   /** ULT-SHOW (`ultShowRules.ts`): the showcase's length (ms) when this use plays the long version; it plays after the opening, the fight
    *  still held, and the blow lands as it ends. */
   show?: number;
+  /** ULT-EPIC 2 (`ultStageRules.ts`): this use's three stages (the wind-up, the strike, the aftermath), which set how long each phase
+   *  lasts, so the whole runs 4 to 6 s. A moment without them plays the old lengths (`ULT_MOMENT`). */
+  stages?: UltStages;
 }
 
 export type UltPhase = 'idle' | 'open' | 'show' | 'impact' | 'settle' | 'fade';
@@ -131,6 +138,15 @@ export class UltQueue {
   since: number | null = null;
   /** The screen kept still (reduced motion, or shake off): no freeze. */
   calm = false;
+  /** ULT-EPIC 2: the stage playing and the real ms into it (the freeze counted); how many further bursts have gone off since the blow
+   *  (the page plays one each time it changes); the wind-up's and the fade's lengths now; a salvo's wait left. */
+  stageName: StageName | null = null;
+  stageT = 0;
+  echoes = 0;
+  private echoAt = 0;
+  private openMs = ULT_MOMENT.OPEN_MS;
+  private fadeMs = ULT_MOMENT.FADE_MS;
+  private waitLeft = 0;
 
   /** An ultimate fired: it plays at once, or after those before it. */
   push(m: UltMoment): void {
@@ -142,10 +158,15 @@ export class UltQueue {
     this.seq++;
     this.current = m;
     this.phase = 'open';
-    this.left = ULT_MOMENT.OPEN_MS;
+    this.openMs = m.stages?.windup.ms ?? ULT_MOMENT.OPEN_MS;
+    this.left = this.openMs;
     this.since = null;
     this.stopLeft = 0;
     this.slowLeft = 0;
+    this.stageName = 'windup';
+    this.stageT = 0;
+    this.echoAt = 0;
+    this.waitLeft = 0;
   }
 
   /** ULT-EPIC: the blow lands (an instant or lingering ultimate as its opening ends; a delayed one when its salvo arrives, `land`): the
@@ -173,10 +194,37 @@ export class UltQueue {
       if (this.stopLeft > 0) {
         const s = Math.min(t, this.stopLeft);
         this.stopLeft -= s;
+        this.stageT += s;
         t -= s;
         continue;
       }
-      if (this.since !== null) this.since += Math.min(t, this.left);
+      // (ULT-EPIC 2: a salvo the page has not seen land by the end of its wait gets its blow then, so the aftermath is never cut short)
+      if (this.phase === 'settle' && this.since === null && this.current.stages) {
+        if (this.waitLeft <= 0) {
+          this.strike();
+          continue;
+        }
+        if (t > this.waitLeft && this.waitLeft < this.left) {
+          const s = this.waitLeft;
+          this.waitLeft = 0;
+          this.left -= s;
+          this.stageT += s;
+          t -= s;
+          continue;
+        }
+        this.waitLeft -= Math.min(t, this.left);
+      }
+      this.stageT += Math.min(t, this.left);
+      if (this.since !== null) {
+        this.since += Math.min(t, this.left);
+        // (the further bursts of a flurry or a storm, while the strike plays)
+        const e = this.current.stages?.echoes;
+        if (e && this.stageName === 'strike')
+          while (this.echoAt < e.length && this.since >= e[this.echoAt]) {
+            this.echoAt++;
+            this.echoes++;
+          }
+      }
       // (the slow beat spends real time alongside the phase's own)
       if (this.slowLeft > 0) this.slowLeft = Math.max(0, this.slowLeft - Math.min(t, this.left));
       if (t < this.left) {
@@ -192,19 +240,28 @@ export class UltQueue {
 
   private next(): void {
     const m = this.current!;
+    const st = m.stages;
+    // (ULT-EPIC 2: the strike begins as the wind-up ends; a showcase is the first part of it)
+    if (this.phase === 'open') this.stage('strike');
     // (ULT-SHOW: the showcase follows the opening, and the blow lands as it ends)
     if (this.phase === 'open' && m.show) return this.to('show', m.show);
     if (this.phase === 'open' || this.phase === 'show') {
       // (the blow lands as the opening ends, unless it is a salvo still in the air)
       if (m.shape !== 'delayed') this.strike();
-      if (m.shape === 'instant') return this.to('impact', ULT_MOMENT.IMPACT_MS);
-      if (m.shape === 'delayed') return this.to('settle', m.ms);
-      return this.to('fade', ULT_MOMENT.FADE_MS);
+      // (with stages, what is left of the strike after a showcase and the freeze on the blow: the freeze spends its own real time)
+      const rest = st ? Math.max(0, st.strike.ms - (this.phase === 'show' ? m.show ?? 0 : 0) - (this.calm ? 0 : ULT_EPIC.HIT_STOP_MS)) : 0;
+      if (m.shape === 'instant') return this.to('impact', st ? rest : ULT_MOMENT.IMPACT_MS);
+      if (m.shape === 'delayed') {
+        this.waitLeft = m.ms;
+        return this.to('settle', st ? rest : m.ms);
+      }
+      // (lingering: the fight runs again at once; with stages its strike plays out live under the dim before the aftermath)
+      return st ? this.to('settle', rest) : this.fade(ULT_MOMENT.FADE_MS);
     }
     if (this.phase === 'impact' || this.phase === 'settle') {
       // (a salvo the page never saw land still gets its impact, as the wait ends)
       if (m.shape === 'delayed' && this.since === null) this.strike();
-      return this.to('fade', ULT_MOMENT.FADE_MS);
+      return this.fade(st ? st.aftermath.ms : ULT_MOMENT.FADE_MS);
     }
     // (the fade is over: the next queued moment, or none)
     const after = this.queue.shift();
@@ -213,6 +270,7 @@ export class UltQueue {
       this.current = null;
       this.phase = 'idle';
       this.left = 0;
+      this.stageName = null;
     }
   }
 
@@ -221,10 +279,22 @@ export class UltQueue {
     this.left = ms;
   }
 
+  private stage(name: StageName): void {
+    this.stageName = name;
+    this.stageT = 0;
+  }
+
+  /** The aftermath: the fight runs again, the dim fades over `ms`. */
+  private fade(ms: number): void {
+    this.fadeMs = ms;
+    this.stage('aftermath');
+    this.to('fade', ms);
+  }
+
   /** A tap: the moment playing goes straight to its fade (its effects then run as they would); a tap in the fade ends it at once.
    *  SWEEP-1110 (the director's call): a tap ends it at any point, the settle of a salvo in the air included. */
   skip(): void {
-    if (this.current && this.phase !== 'fade') this.to('fade', ULT_MOMENT.FADE_MS);
+    if (this.current && this.phase !== 'fade') this.fade(ULT_MOMENT.FADE_MS);
     else if (this.current) this.left = 0;
     this.stopLeft = 0;
     this.slowLeft = 0;
@@ -239,6 +309,8 @@ export class UltQueue {
     this.stopLeft = 0;
     this.slowLeft = 0;
     this.since = null;
+    this.stageName = null;
+    this.stageT = 0;
   }
 
   /** BATTLE-POLISH: how fast the fight and the effects move now, as a share of x1: slowed through the beat after the blow, else 1 (the
@@ -249,7 +321,16 @@ export class UltQueue {
 
   /** BATTLE-POLISH: how far through the opening it is, 0 to 1 (0 outside it): the camera's lean builds with it. */
   get openT(): number {
-    return this.phase === 'open' ? 1 - this.left / ULT_MOMENT.OPEN_MS : 0;
+    return this.phase === 'open' ? 1 - this.left / this.openMs : 0;
+  }
+
+  /** ULT-EPIC 2: the stage playing now and how far through it (0 to 1), for the page to draw and for art to be played against; null
+   *  when no moment plays. */
+  get stageNow(): { name: StageName; k: number; ms: number } | null {
+    const m = this.current;
+    if (!m || !this.stageName) return null;
+    const len = m.stages ? m.stages[this.stageName].ms : this.stageName === 'windup' ? this.openMs : this.stageName === 'aftermath' ? this.fadeMs : 0;
+    return { name: this.stageName, k: len > 0 ? Math.min(1, this.stageT / len) : 1, ms: this.stageT };
   }
 
   /** Whether the battle is held now (the opening, a showcase, an instant one's effects playing, and the freeze on any blow). */
@@ -272,8 +353,8 @@ export class UltQueue {
    *  fade. */
   get dim(): number {
     if (this.phase === 'idle') return 0;
-    const lifted = liftedDim(this.since);
-    if (this.phase === 'fade') return lifted * Math.max(0, this.left / ULT_MOMENT.FADE_MS);
+    const lifted = this.current?.stages ? liftedDim(this.since, ULT_EPIC.STAGED_LIFT, ULT_EPIC.STAGED_LIFT_MS) : liftedDim(this.since);
+    if (this.phase === 'fade') return lifted * Math.max(0, this.left / this.fadeMs);
     return lifted;
   }
 

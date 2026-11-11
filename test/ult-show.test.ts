@@ -1,11 +1,13 @@
 // The ultimate's showcase (ULT-SHOW, docs/notes/ult-showcase-design.md, `src/ultShowRules.ts`): when the long version plays (the first use, every
 // Nth after, never with Shorter ultimates), the x1 rule, the queue's show phase, and the pilot's three plans read from real casts.
 import { test } from 'node:test';
+import { stagesFor } from '../src/ultStageRules';
+import { ULT_EPIC } from '../src/ultEpicRules';
 import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { CHARGE_MAX, ULT_LEVEL, keyOf, ultimateOf } from '../src/sim/abilities';
-import { ULT_MOMENT, UltQueue } from '../src/ultMomentRules';
+import { ULT_MOMENT, UltQueue, ultShape } from '../src/ultMomentRules';
 import { ALL_HEROES } from '../src/sim/units';
 import { hasShowcase, momentSpeed, noteSeen, planShow, posesAt, readCast, seenOf, SHOW, SHOWCASES, showDue, wantsShow, type ShowPlan } from '../src/ultShowRules';
 import { parseSettings } from '../src/settings';
@@ -101,10 +103,18 @@ function fire(kind: string): { b: Battle; me: Unit; plan: ShowPlan; events: Batt
   throw new Error(`${kind}: the ultimate never fired`);
 }
 
-test('every showcase runs about 4 to 6 s with its opening and fade', () => {
+// (ULT-EPIC 2: the whole moment is counted now, the freeze and the beat after the blow included (they were left out of this sum before),
+// with the wind-up and the aftermath giving way to a long showcase: `stagesFor`)
+test('every showcase runs 4 to 6 s with its wind-up, the blow and its aftermath', () => {
   for (const kind of Object.keys(SHOWCASES)) {
-    const { plan } = fire(kind);
-    const total = ULT_MOMENT.OPEN_MS + plan.ms + ULT_MOMENT.FADE_MS;
+    const { me, plan, events } = fire(kind);
+    // (a salvo still in the air when the showcase ends lands inside the strike too; the showcase is then played a little quicker to fit)
+    const shape = ultShape(ultimateOf(me)!, me.id, events, []);
+    const st = stagesFor(kind, { show: plan.ms, wait: shape.shape === 'delayed' ? shape.ms : 0 });
+    const total = st.total;
+    assert.ok(st.strike.ms >= st.show! + ULT_EPIC.HIT_STOP_MS, `${kind}: the showcase and the freeze are inside the strike`);
+    assert.ok(plan.ms / st.show! <= 1.3, `${kind}: quickened by ${(plan.ms / st.show!).toFixed(2)} at most`);
+    if (shape.shape !== 'delayed') assert.equal(st.show, plan.ms, kind);
     assert.ok(total >= 4000 && total <= 6000, `${kind}: ${total} ms`);
     if (process.env.SHOW_MS) console.log(kind, total);
   }
