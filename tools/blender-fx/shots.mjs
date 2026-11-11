@@ -121,39 +121,54 @@ async function runThenHold(page, ms) {
   await page.waitForTimeout(250);
 }
 
-// GROUND=1: the ground loops instead of the spells. A 3x3 patch of each element is laid round a hero in the thick of the fight (the
-// renderer's own `alivePatch`, as an area's warning or a spell's tiles lay it), then burning ground (`zone`), and each is photographed.
+// GROUND=1: the ground loops instead of the spells. A 3x3 patch of each element is laid on open ground beside a placed hero before the
+// fight begins (the renderer's own `alivePatch`, as an area's warning or a spell's tiles lay it), then burning ground (`zone`), and each
+// is photographed.
 const ELEMENTS = [['fire', 0xff5a2a], ['ice', 0x8ae8ff], ['lightning', 0xbfe6ff], ['light', 0xfff2a0], ['dark', 0xb06aff], ['forest', 0x7dff8a], ['poison', 0x8aff5a], ['earth', 0xb88a5a], ['wind', 0xdff8ff], ['blood', 0xf65563]];
 if (process.env.GROUND) {
-  for (const [w, h] of SIZES) {
+  const all = [...ELEMENTS, ['zone', 0]];
+  // (three patches a fight: a fresh fight each time, so every patch is photographed in a fight's first seconds)
+  for (const [w, h] of SIZES) for (let from = 0; from < all.length; from += 3) {
     const size = `${w}x${h}`;
     const { ctx, page } = await open(w, h);
-    await fight(page, 2);
-    await page.waitForTimeout(600);
-    for (const [el, colour] of [...ELEMENTS, ['zone', 0]]) {
-      await page.evaluate(() => { window.__game.sceneHold = 0; });
+    // (a first wave on the open ground of the Orcs' land, with the heroes placed and the fight not yet begun: open ground, nothing in the
+    // way. Each patch is a 3x3 in the middle of the board with one hero's tile in it, so it shows on open ground and under a fighter.)
+    await page.evaluate(([party]) => {
+      const g = window.__game;
+      const r = JSON.parse(JSON.stringify(g.run));
+      Object.assign(r, { mode: { kind: 'army', army: 'orcs' }, stage: 1, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+      document.getElementById('home').hidden = true;
+      g.startRun(r);
+      g.autoArrange(true);
+    }, [PARTY]);
+    await page.waitForTimeout(1200);
+    // (the fight is begun, since the effects only move while it runs; the patches are photographed in its first seconds, before the lines meet)
+    await page.evaluate(() => document.getElementById('fight').click());
+    await page.waitForTimeout(400);
+    for (const [el, colour] of all.slice(from, from + 3)) {
       await page.evaluate(([el, colour, zoom]) => {
         const g = window.__game;
         const b = g.b;
-        const live = b.units.filter((x) => x.alive && x.id !== 0);
-        const near = (x) => live.filter((y) => Math.abs(y.u - x.u) <= 1 && Math.abs(y.v - x.v) <= 1).length;
-        const at = live.filter((x) => x.side === 'hero').sort((x, y) => near(y) - near(x) || x.id - y.id)[0];
+        const heroes = b.units.filter((x) => x.alive && x.side === 'hero' && x.id !== 0);
+        // (the hero nearest the far rows: the patch runs from its tile out over the open ground ahead of it)
+        const at = window.__at ?? (window.__at = (() => { const h = heroes.sort((x, y) => x.v - y.v || x.id - y.id)[0]; return { id: h.id, u: h.u, v: h.v }; })());
         window.__patch?.destroy();
         window.__patch = undefined;
-        if (el === 'zone') g.fx.zone(b, at.u, Math.min(b.board.d - 2, at.v + 1), 3000);
+        const mid = { u: Math.max(1, Math.min(b.board.w - 2, at.u)), v: Math.max(1, at.v - 1) };
+        if (el === 'zone') g.fx.zone(b, mid.u, mid.v, 60000);
         else {
           const tiles = [];
-          // (a row nearer than the hero, so half the patch is open ground and half is under the fighters)
-          for (let du = -1; du <= 1; du++) for (let dv = 0; dv <= 2; dv++) if (at.u + du >= 0 && at.u + du < b.board.w && at.v + dv < b.board.d) tiles.push({ u: at.u + du, v: at.v + dv });
+          for (let du = -1; du <= 1; du++) for (let dv = -1; dv <= 1; dv++) tiles.push({ u: mid.u + du, v: mid.v + dv });
           window.__patch = g.fx.alivePatch(b, tiles, colour, el);
         }
-        const s = g.sprites.get(at.id);
+        // (the camera on the patch's middle tile, wherever the heroes have walked to)
+        const [px, py] = g.fx.tilePos(b, mid.u, mid.v);
         g.manualCam = true;
-        g.tx = g.cx = s.x;
-        g.ty = g.cy = s.y;
+        g.tx = g.cx = px;
+        g.ty = g.cy = py - 45;
         g.zoom = g.tzoom = zoom;
-      }, [el, colour, Number(process.env.ZOOM ?? 1.7)]);
-      await runThenHold(page, 260);
+      }, [el, colour, Number(process.env.ZOOM ?? 2)]);
+      await page.waitForTimeout(450);
       await page.screenshot({ path: `${OUT}/ground-${el}-${size}${REDUCED ? '-still' : ''}.png` });
       console.log(size, 'ground', el);
     }

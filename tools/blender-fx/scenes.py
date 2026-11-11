@@ -1034,7 +1034,8 @@ def smoke(c, r=0.7, h=1.2, puffs=5):
 
     def step(t):
         c.tick(t, 1.2)
-        cut.inputs[1].default_value = 0.1 + 0.55 * t * t
+        # (it is ragged from the start and tears open as it rises, so it never sits as one solid mass over the fighters)
+        cut.inputs[1].default_value = 0.2 + 0.6 * t * t
         for o, a, rad, s, lag in parts:
             g = win(t, lag, 1)
             put(o, (math.cos(a) * rad * (0.5 + g), math.sin(a) * rad * (0.5 + g), 0.2 + h * g * s), r * s * (0.35 + 0.55 * ease(g)), (g, g * 0.5, a))
@@ -1470,7 +1471,7 @@ def siphon(c, r=0.6, h=1.9, n=5):
     return step
 
 
-# 52. Tile: one tile of ground taken by an element (a loop): a moving pattern across the whole tile, with the element's
+# 52. Tile: one tile of ground taken by an element (a loop): a moving pattern across the whole tile, edge to edge, with the element's
 # own small things standing in it (tongues of flame, crystals, bubbles, motes, wisps, swirls, stones, sprouts).
 def tile(c, things='flames', n=4, fill=0.85, lift=1.0):
     m, nt = c.mat('tile')
@@ -1478,15 +1479,13 @@ def tile(c, things='flames', n=4, fill=0.85, lift=1.0):
     sep = nt.nodes.new('ShaderNodeSeparateXYZ')
     nt.links.new(tc.outputs['Object'], sep.inputs[0])
     nz, _ = c.noise(nt, 5.0, 3, 0.55)
-    # (strong to within a little of the tile's edge, so a patch of tiles reads as one ground and not as a grid of blocks)
-    ex = c.math(nt, 'SUBTRACT', 1.0, c.math(nt, 'POWER', c.math(nt, 'MULTIPLY', c.math(nt, 'ABSOLUTE', sep.outputs['X']), 2.0), 6.0))
-    ey = c.math(nt, 'SUBTRACT', 1.0, c.math(nt, 'POWER', c.math(nt, 'MULTIPLY', c.math(nt, 'ABSOLUTE', sep.outputs['Y']), 2.0), 6.0))
-    body = c.math(nt, 'MULTIPLY', c.math(nt, 'MULTIPLY', ex, ey), c.math(nt, 'ADD', c.math(nt, 'MULTIPLY', nz.outputs['Fac'], 1.5), -0.35 + (fill - 0.5)))
+    # (the pattern runs right to the tile's edge, so a patch of tiles joins into one ground with no borders between them)
+    body = c.math(nt, 'ADD', c.math(nt, 'MULTIPLY', nz.outputs['Fac'], 1.5), -0.35 + (fill - 0.5))
     a = c.math(nt, 'MULTIPLY', body, 1.0)
     c.emit(nt, c.pal_ramp(nt, nz.outputs['Fac'], (0.3, 0.45, 0.6, 0.78)), a, 1.1)
-    ground = c.plane(1.0, m)
+    ground = c.plane(1.02, m)
     ground.location = (0, 0, 0.02)
-    spots = [(c.rnd.uniform(-0.34, 0.34), c.rnd.uniform(-0.34, 0.34), c.rnd.uniform(0.6, 1.0), c.rnd.uniform(0, 1)) for _ in range(n)]
+    spots = [(c.rnd.uniform(-0.4, 0.4), c.rnd.uniform(-0.4, 0.4), c.rnd.uniform(0.6, 1.0), c.rnd.uniform(0, 1)) for _ in range(n)]
     parts, rise, extra = [], None, []
     if things == 'flames':
         fm, cut = c.flame(3.0, 0.45, 1.3, stretch=(1, 1, 0.5))
