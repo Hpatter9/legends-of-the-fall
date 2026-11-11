@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.477.0',
+    date: '2026-11-11',
+    title: 'The Moonlit Shrine, fully painted',
+    notes: ['The Moonlit Shrine is fully painted. Bonefire Crag, Brimstone Gate and the Iron Foundry gain their painted walls, camps and props.', 'The Council\'s count sits on a red wax seal, and the duel bar\'s fills have their texture back.'],
+  },
+  {
     version: '0.476.0',
     date: '2026-11-11',
     title: 'Auto on harder tiers, and heavier snow',

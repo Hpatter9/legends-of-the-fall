@@ -565,8 +565,11 @@ export function placementsOf(b: Board, zone: Uint8Array, bp: Blueprint, forts: r
         const rocks = z === Z('K') || z === Z('T') || z === Z('L') ? [orcs ? 'landBoulder' : 'wetBoulders'] : ['darkRocks', 'darkRocksB'];
         // (the outer bailey's solid tiles are the war camp's tents in rows)
         if (z === Z('B')) {
-          const tents = ['conicalTent', 'conicalTent', 'leanTo', 'hideFrame'];
-          out.push({ name: tents[Math.floor(hash(u, v, 33) * tents.length)], u, v, front: i, scale: 0.85 });
+          // (every hold but Bloodtusk pitches its own tents, `campTent`, the tent of its ruins sheet, drawn smaller; the Orc's conical tent
+          //  until that sheet is painted, `lookOf` in fieldView.ts)
+          const tents = [orcs ? 'conicalTent' : 'campTent', orcs ? 'conicalTent' : 'campTent', 'leanTo', 'hideFrame'];
+          const name = tents[Math.floor(hash(u, v, 33) * tents.length)];
+          out.push({ name, u, v, front: i, scale: name === 'campTent' ? 0.5 : 0.85 });
           continue;
         }
         const tree = r < (z === Z('K') || z === Z('T') ? 0.35 : z === Z('N') || z === Z('V') ? 0.3 : 0);

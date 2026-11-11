@@ -48,8 +48,9 @@ PLATES = [
     ('plates-frames', 2, ['plaque', 'plaque-ready', 'plaque-locked'], (72, 64, 72, 64)),
     ('plates-frames', 3, ['switch-off', 'switch-on', 'switch-off-dim'], None),
 ]
-# Single medallions painted later, one 256 x 256 file each (BATTLE-POLISH's Auto ultimates, off and lit; `art/battle-polish`).
-SINGLES = ['auto-ult', 'auto-ult-lit']
+# Single medallions painted later, one file each: BATTLE-POLISH's Auto ultimates, off and lit (`art/battle-polish`); the red count seal, the Council's
+# number on the Battle tab in the Daily's red wax (`art/ui-extras`, docs/notes/council-button.md).
+SINGLES = ['auto-ult', 'auto-ult-lit', 'badge-count-red']
 MEDAL = 96
 GLYPH = 48
 SWITCH_W = 120

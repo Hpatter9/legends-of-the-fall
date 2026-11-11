@@ -260,6 +260,16 @@ export async function startAssaultBench(): Promise<void> {
     }
   };
 
+  // (the same for the structure of a kind nearest a tile, for the ring wall's segments, whose ids name their face and tile)
+  (window as unknown as { __benchStrikeNear: (kind: string, u: number, v: number, share: number) => void }).__benchStrikeNear = (kind, u, v, share) => {
+    const h = b.field?.hold;
+    if (!h) return;
+    const w = b.board.w;
+    const dist = (t: number) => Math.abs((t % w) - u) + Math.abs(Math.floor(t / w) - v);
+    const near = h.forts.filter((f) => f.spec.kind === kind).sort((x, y) => Math.min(...x.spec.tiles.map(dist)) - Math.min(...y.spec.tiles.map(dist)))[0];
+    if (near) (window as unknown as { __benchStrike: (id: string, share: number) => void }).__benchStrike(near.spec.id, share);
+  };
+
   /** The heavy works' looks (phase 2): a volley's or a keg's blast, a barrel lifted from its tile. */
   const heavy = (hold: readonly HoldEvent[]) => {
     const w = b.board.w;
