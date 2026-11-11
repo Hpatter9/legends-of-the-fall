@@ -53,6 +53,8 @@ menuFoot(menu, { back: { word: 'close' }, primary: { label: 'Set orders', onClic
   "How the altar works" (`altarHelp.ts`), a finished build's card (`builtCard.ts`), the tome sheet (`tomeView.ts`), the relic card
   (`relicCard.ts`), the talent box and its Auto-spend confirm (`talentView.ts`) and a ware's drawer at Hester's Stall (`stallView.ts`; the
   stall page itself is still its own).
+- **The Rank up and Awakening card** (`rankUpView.ts`; RANKUP-LAYOUT, `docs/notes/rankup-layout.md`): the stats before and after are
+  the shared stat rows (`statRows.ts`: name, old, arrow, new, gain, in columns that line up), in a slate well.
 
 ## Not on it yet (the list in the test)
 

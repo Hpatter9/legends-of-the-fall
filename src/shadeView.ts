@@ -37,7 +37,7 @@ export const shadeName = (s: Pick<Shade, 'bearer'>): string => `${s.bearer.name}
 
 /** The Shades' card: each Shade, its gift and its slayer; a tap chooses the one that answers the horn. */
 export function openShades(m: Meta, save: () => void, done?: () => void): OrnateMenu {
-  const menu = ornateMenu({ id: 'shadesCard', eyebrow: 'The War Horn', title: 'The Shades', sub: 'the fallen, and the elders who wait on the horn', onClose: done });
+  const menu = ornateMenu({ id: 'shadesCard', eyebrow: 'The War Horn', title: 'The Shades', sub: 'the fallen, and the elders who wait on the horn', onClose: done, asked: true });
   menu.card.classList.add('hsCard', 'shCard');
   const list = shadesOf(m);
   const chosen = shadeChosen(m);

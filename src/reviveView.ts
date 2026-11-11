@@ -25,7 +25,8 @@ export function burnHeart(box: HTMLElement, heart: HTMLImageElement, ms: number)
   flame.animate([{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 1, offset: 0.8 }, { opacity: 0 }], { duration: ms, fill: 'forwards' });
 }
 
-/** The line that says what happened ("A heart burns. The party rises."): it fades in, holds, and fades out over `ms`, then goes. A tap sends it away early (`.dismiss()`). */
+/** The line that says what happened ("A heart burns. The party rises."): it fades in, holds, and fades out over `ms`, then goes (`.dismiss()` sends it
+ *  away early; a tap no longer does, POPUP-GUARD). */
 export function reviveLine(text: string, ms: number): { dismiss: () => void } {
   const line = document.createElement('div');
   line.className = 'reviveLine';
