@@ -154,13 +154,52 @@ shrine), `batch3-*` (wood, autumn wood, meadows, highlands), `batch4-*` (dunes, 
   withdraw them. **Still not measured:** a real phone's GPU, where covering fewer pixels is what matters; that is what this trim
   is for.
 
+## The terrain proposal: the mire floods (built, switched OFF, for the owner to decide)
+
+Everything above is looks only. This is the one part that changes how a fight plays, so it is a rule of its own
+(`src/sim/landTerrain.ts`), behind its own switch (`LAND_TERRAIN.on`, **false**: nothing is laid and every fight is exactly as it
+was; a test holds it) and laid from its own side stream of the seed (`TERRAIN_SALT`), at the fight's start, before the traps. With
+it on a flooded fight has the same foes in the same places and the same fight stream as before (a test holds that too).
+
+- **The rule.** On the mire, two or three pools of shallow water are laid on the lowest open ground (plain tiles no more than one
+  step over the board's lowest), two to four tiles each, never past 30% of a board's standable tiles. Shallow water is the rule the
+  game already has (a step into it takes twice as long; fliers do not mind). Nothing is deep, so nobody is cut off.
+- **The boards** (`node tools/land-identity/mire.mjs`, 500 seeds): shallow water goes from 6.2% of the standable tiles to 13.7%
+  (5.0 tiles a board to 11.0; the wettest board 30%); every tile of all 500 flooded boards can still be walked to.
+- **The fights** (the same tool: 3,000 random five-hero teams, the nine field bands in turn, stage 5 foes, on the mire; the same
+  seeds, teams and bands with the switch off and then on). Heroes' wins:
+
+  | Band | As it is | Flooded | Change |
+  | --- | --- | --- | --- |
+  | skeletons | 44.6% | 37.1% | -7.5 |
+  | werewolves | 61.4% | 61.1% | -0.3 |
+  | minotaurs | 59.3% | 64.1% | +4.8 |
+  | gorgons | 63.7% | 65.5% | +1.8 |
+  | satyrs | 68.8% | 68.8% | 0.0 |
+  | mixed | 65.2% | 63.1% | -2.1 |
+  | orcs | 61.3% | 62.5% | +1.2 |
+  | demons | 47.7% | 45.0% | -2.7 |
+  | ogres | 63.1% | 61.3% | -1.8 |
+  | all | 59.4% | 58.7% | -0.7 |
+
+  One standard error is about 0.9 points over all 3,000 fights and about 2.7 over a band's 333. So the whole is inside the noise;
+  the skeletons' fall (-7.5, about 2.8 errors) is the one figure that looks real: their archers get more shots at heroes wading
+  toward them. The minotaurs' rise (+4.8, 1.8 errors) may be the same thing the other way (chargers slowed), or noise.
+- **Not measured:** the armies' roads (they bring their own boards, which this does not touch), the daily and whole runs (the mire
+  is one land in seventeen there), and how it plays with the traps on (both switches are off).
+- **To see it:** `__game.landTerrain(true)` then start a run on the mire, or `tools/living-fields/shots.mjs ... --flood`.
+  `docs/samples/land-identity/mire-flood-proposal.jpg`: three of the mire's boards, as they are and flooded.
+- **Owner's calls:** whether to turn it on; whether the skeletons' fights on the mire want easing if so; and whether the other
+  lands should get the same (more ice on the snows, more lava in the ashlands, more rock in the highlands). `FLOODS` takes a land
+  a line; the lava and ice would each need their own measure, because they hurt and slide where water only slows.
+
 ## Not built: needs art, or the owner's call
 
 - **Art the sheets do not have** (`docs/notes/land-identity-art-prompts.md`): cacti and palms, hedgerows, a fence, haystacks and a
   windmill for the meadows, cobwebs and candles, icicles, a torii of full size, deer, rats, falling leaves and petals as painted
   frames. Stand-ins are in where the sheets have something near (acacia and olive for the palms, tinted sparkles for leaves).
-- **More swamp water as terrain** (and more ice, lava, rock on their lands): this changes how fights play, so it is still to be
-  proposed separately, behind its own switch and side stream, with balance numbers. What is here is looks only.
+- **More ice, lava and rock as terrain** on their lands: not built; the mire's flooding (above) is the pattern, and each would need
+  its own balance measure.
 - **Heat shimmer** over the dunes: not built (it needs a filter over the board, which costs more than this layer may).
 
 ## Shots

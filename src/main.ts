@@ -171,6 +171,7 @@ import { BoardView, loadBoardArt } from './render/boardView';
 import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
 import { BoardLife } from './render/boardLife';
+import { LAND_TERRAIN } from './sim/landTerrain';
 import { FIELD_HAZARDS } from './sim/fieldTraps';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
@@ -1188,6 +1189,12 @@ class Game {
    *  screenshots: `__game.fieldHazards(true)`, then start a run). Nothing in the game calls it. */
   fieldHazards(on: boolean): void {
     FIELD_HAZARDS.on = on;
+  }
+
+  /** LAND-IDENTITY: lay a land's own terrain thicker or not, whatever its switch says (`sim/landTerrain.ts`: the mire floods; for
+   *  previews and the screenshots: `__game.landTerrain(true)`, then start a run). Nothing in the game calls it. */
+  landTerrain(on: boolean): void {
+    LAND_TERRAIN.on = on;
   }
 
   /** Show a weather on this board whatever the fight rolled (for previews and the screenshots: `__game.previewWeather('rain')`). */
