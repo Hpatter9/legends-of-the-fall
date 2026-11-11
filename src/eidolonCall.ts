@@ -74,6 +74,8 @@ export interface EidolonCallOpts {
   cheer?: (b: Battle, text: string) => void;
   /** The board's picture (the page's canvas): the cinematic's camera frames it (a scale about a point), and puts it back after. */
   stage?: () => HTMLElement | null;
+  /** ULT-EPIC 2: whether Auto is on (the ultimates fire by themselves): a call is then the short one, after an Eidolon's first. */
+  auto?: () => boolean;
   /** EIDOLON-CHAINS: open the Pact Gallery (from the horn's card at the camp). */
   gallery?: () => void;
 }
@@ -456,7 +458,8 @@ export class EidolonCall {
   private board: HTMLElement = el('div', 'ecBoard');
 
   private start(e: Eidolon, first: boolean): void {
-    const m = momentOf(first, settings().eidolonFull);
+    // (ULT-EPIC 2: in full it is this Eidolon's own length, 4 to 10 s by its weight; with Auto on, the short call)
+    const m = momentOf(first, settings().eidolonFull, e.id, !!this.opts.auto?.());
     this.longCall = !!m.BARS;
     const calls = this.opts.meta().eidolons?.calls ?? 0;
     const spec = PASS[e.id] ?? PASS.askel;
@@ -620,6 +623,8 @@ export class EidolonCall {
     if (shot !== p.shot) {
       p.shot = shot;
       this.layer.dataset.stage = shot;
+      // (ULT-EPIC 2: which of the three stages the shot belongs to, for art hung on a stage: `eidolonStages`)
+      this.layer.dataset.act = shot === 'strike' ? 'strike' : shot === 'after' || shot === 'resume' ? 'aftermath' : 'windup';
       if (shot === 'pass') play(p.src.passSound);
       if (shot === 'sprite' && p.mon) play(p.mon.comes === 'fly' ? 'windGust' : 'dash');
       this.frameBoard(BOARD_ZOOM[shot], null, shot === 'build' ? Math.max(200, p.m.STRIKE - p.m.BUILD) : 400);

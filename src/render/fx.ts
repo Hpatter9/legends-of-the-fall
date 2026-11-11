@@ -627,7 +627,7 @@ export class Fx {
   /** The blow lands (ULT-EPIC): a huge burst of the element on each spot (the kit's painted burst when there, else the strongest painted
    *  burst of the element the game has, or the pack's, drawn big), a shock ring along the ground, and a hard shake once the freeze lets go
    *  (none with the screen kept still). Spots are fighters (by id) or tiles. */
-  ultImpact(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[]): void {
+  ultImpact(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[], size = 1): void {
     const tint = ULT_TINT[el];
     const has = (key: string) => spellFrames(key).length > 0;
     const part = burstPart(el, has);
@@ -644,13 +644,36 @@ export class Fx {
         lift = 18;
       }
       // (the painted burst, about four tiles across, standing on the ground when it is painted that way)
-      if (part) this.paintMoment(part, x, part.startsWith('ult-burst') ? y - lift : y - (spellAnchorY(part) > 0.8 ? 0 : lift), part.startsWith('ult-burst') ? 4 : 3.2, { foot: spellAnchorY(part) > 0.8, frameMs: 65 });
-      else impactBurst(this.moment, el, x, y - lift, 3.2, true);
+      // (`size`: a further burst of a flurry or a storm is drawn smaller, ULT-EPIC 2)
+      if (part) this.paintMoment(part, x, part.startsWith('ult-burst') ? y - lift : y - (spellAnchorY(part) > 0.8 ? 0 : lift), (part.startsWith('ult-burst') ? 4 : 3.2) * size, { foot: spellAnchorY(part) > 0.8, frameMs: 65 });
+      else impactBurst(this.moment, el, x, y - lift, 3.2 * size, true);
       // (the pack's nova and its ring on the ground under it, in the element's colour)
-      play(this.moment, packKey(el, 'nova'), x, y - lift, { scale: 3.4, frameMs: 70, alpha: 0.75, tint });
-      play(this.moment, packKey(el, 'wave'), x, y, { scale: 5, frameMs: 80, add: false, alpha: 0.7, tint });
+      play(this.moment, packKey(el, 'nova'), x, y - lift, { scale: 3.4 * size, frameMs: 70, alpha: 0.75, tint });
+      play(this.moment, packKey(el, 'wave'), x, y, { scale: 5 * size, frameMs: 80, add: false, alpha: 0.7, tint });
     }
-    this.trauma = Math.max(this.trauma, ULT_EPIC.SHAKE);
+    this.trauma = Math.max(this.trauma, ULT_EPIC.SHAKE * size);
+  }
+
+  /** ULT-EPIC 2: the aftermath of an ultimate's blow, on the moment's layer: dust rolling off each spot along the ground and motes of the
+   *  element drifting up from it for `ms`, so the board settles rather than snapping back. Still with the screen kept calm: a single
+   *  soft puff at each spot. */
+  ultAfter(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[], ms: number): void {
+    const tint = ULT_TINT[el];
+    const calm = this.calm();
+    for (const s of spots) {
+      let x: number;
+      let y: number;
+      if ('unit' in s) {
+        const sp = this.sprites.get(s.unit);
+        if (!sp) continue;
+        [x, y] = [sp.x, sp.y];
+      } else [x, y] = this.tilePos(b, s.u, s.v);
+      this.moment.spawn({ frames: VFX.dustWhite, x, y: y - 4, scale: 1.5, life: ms * 0.7, vy: -0.008, grow: calm ? 0 : 0.0006, alpha: 0.5 });
+      if (calm) continue;
+      for (const dir of [-1, 1]) this.moment.spawn({ frames: VFX.dustWhite, x: x + dir * 10, y: y - 2, scale: 1.1, life: ms * 0.6, vx: dir * 0.03, vy: -0.004, grow: 0.0008, alpha: 0.45 });
+      for (let i = 0; i < 5; i++)
+        this.moment.spawn({ frames: VFX.sparkleLight, x: x + jitter(26), y: y - 6 + jitter(8), scale: 0.6, delay: (i * ms) / 8, life: ms * 0.45, vy: -0.035, tint, add: true, alpha: 0.85 });
+    }
   }
 
   /** ULT-SHOW (`ultShow.ts`): one beat of an ultimate's showcase, drawn on the moment's layer (it runs while the fight is held), in the
