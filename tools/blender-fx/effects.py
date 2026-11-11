@@ -143,5 +143,89 @@ for i, (el, (pal, things)) in enumerate(GROUND.items()):
 # Burning ground (the fire a skill leaves on a 3x3): the same tile with tall flames.
 fx('zone-fire', 'tile', 'fire', 1.3, 2.0, 0.8, frames=10, ms=800, loop=True, seed=31, things='flames', n=6, lift=1.4, fill=0.7)
 
+# ---- the ultimates (docs/notes/blender-fx.md, src/ultStageRules.ts): each hero's ultimate plays in three stages. Its
+# strike is its own: two scenes staged one into the other, in its element (no two heroes share the pair and the
+# element). Its wind-up (on the caster) is by its weight and element, its aftermath (where it struck) by its element. ----
+
+# A scene at an ultimate's size: its options, how far it reaches on the ground and how tall it stands.
+BIG = dict(
+    arc=(dict(r=1.5, z=1.0, sparks=18), 2.5, 2.8), shockwave=(dict(r=1.9, forks=8), 2.1, 0.6), rain=(dict(r=1.6, h=3.4, n=22), 2.4, 4.0),
+    burst=(dict(r=1.5, h=1.4, embers=26), 3.2, 3.4), halo=(dict(r=0.8, h=2.8, rays=9), 1.9, 3.3), dome=(dict(r=1.6), 1.8, 1.9),
+    vines=(dict(r=1.5, h=1.7, n=8), 1.8, 2.3), sigil=(dict(r=1.7, points=7, skip=3, motes=14), 1.9, 1.5), spiral=(dict(r=0.9, h=2.4, bands=3), 1.6, 2.8),
+    cross=(dict(r=1.2, z=1.0), 1.7, 2.6), smoke=(dict(r=1.1, h=1.5, puffs=7), 2.0, 2.4), claws=(dict(r=1.3, z=1.1), 1.8, 2.8),
+    sparks=(dict(r=1.2, n=12, z=0.7), 1.9, 2.2), bolt=(dict(h=3.6, r=1.6, forks=3), 2.3, 4.1), trail=(dict(length=3.2, w=0.34), 3.0, 1.0),
+    gust=(dict(r=1.7, n=5, turn=1.5708), 3.2, 3.0), crack=(dict(r=2.2, arms=7, rubble=18), 2.6, 1.4), chains=(dict(r=1.4, n=5, links=10, h=1.8), 1.7, 2.3),
+    ring=(dict(r=1.8, n=4, thick=0.07), 2.0, 0.5), flare=(dict(r=0.9, h=2.2, tongues=8), 2.0, 3.6), nova=(dict(r=1.7, n=22, h=1.1), 2.2, 1.6),
+    strike=(dict(h=3.4, r=1.3, w=0.36), 2.2, 6.6), vortex=(dict(r=1.5, h=3.0, coils=5), 1.9, 3.4), eye=(dict(r=1.2, z=1.8), 2.0, 3.4),
+    crystal=(dict(r=0.7, h=2.1, shards=8), 1.8, 2.6), spikes=(dict(r=1.5, h=2.2, n=9), 2.0, 2.6), geyser=(dict(r=0.6, h=2.8, drops=30), 2.2, 3.4),
+    siphon=(dict(r=0.9, h=2.2, n=7), 1.7, 3.4), cloud=(dict(r=1.6, h=0.9, puffs=10), 2.0, 1.8), souls=(dict(r=1.4, h=2.4, n=8), 2.0, 3.4),
+    veil=(dict(r=1.0, h=2.0, panes=9), 1.6, 2.6), portal=(dict(r=1.0, z=1.2), 1.8, 3.2), pillar=(dict(r=0.9, h=3.2, sparks=30), 1.8, 3.6),
+    shout=(dict(r=1.8, h=1.6, n=5), 2.2, 3.2), swarm=(dict(r=1.5, h=2.0, n=30), 1.9, 2.6), motes=(dict(r=1.6, h=2.2, n=34, crosses=7), 2.0, 2.6),
+    implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
+)
+
+# Each ultimate: its palette, its strike's two scenes, and its showcase's style (which sets its weight, as `ultStageRules.ts` does).
+ULTS = dict(
+    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'burst', 'sky'), ilyra=('holy', 'halo', 'dome', 'bless'),
+    orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'smoke', 'blinks'),
+    wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'claws', 'smoke', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
+    arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
+    minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'burst', 'leap'), ninjaMonk=('wind', 'sparks', 'gust', 'blows'),
+    buccaneer=('shadow', 'chains', 'cross', 'hooks'), archer=('wind', 'rain', 'ring', 'sky'), dreadPirate=('shadow', 'rain', 'burst', 'sky'),
+    siegeBot=('fire', 'burst', 'shockwave', 'sky'), lightningMage=('lightning', 'bolt', 'shockwave', 'shots'), gunslinger=('fire', 'sparks', 'cross', 'shots'),
+    rifleBot=('lightning', 'sparks', 'ring', 'shots'), dragoon=('fire', 'flare', 'burst', 'shots'), ranger=('forest', 'vines', 'ring', 'burst'),
+    knight=('holy', 'shout', 'dome', 'burst'), paladin=('holy', 'nova', 'strike', 'burst'), yamabushi=('wind', 'vortex', 'gust', 'burst'),
+    gorgon=('poison', 'eye', 'crystal', 'burst'), juggernaut=('earth', 'crack', 'spikes', 'burst'), kraken=('water', 'vortex', 'geyser', 'burst'),
+    mummy=('earth', 'vortex', 'chains', 'burst'), warlock=('shadow', 'sigil', 'siphon', 'burst'), tyrant=('blood', 'shout', 'spikes', 'burst'),
+    shambler=('poison', 'crack', 'cloud', 'burrow'), reaper=('shadow', 'arc', 'souls', 'burst'), druid=('forest', 'vines', 'spikes', 'pack'),
+    illusionist=('arcane', 'veil', 'portal', 'pack'), priestess=('holy', 'pillar', 'halo', 'bless'), werewolf=('blood', 'claws', 'shout', 'change'),
+    demonSwordsman=('fire', 'chains', 'flare', 'change'), kitsune=('fire', 'spiral', 'burst', 'burst'), karasu=('wind', 'swarm', 'vortex', 'sky'),
+    timeWitch=('holy', 'sigil', 'crystal', 'burst'), wanderer=('holy', 'motes', 'ring', 'bless'), satyr=('forest', 'swarm', 'spiral', 'bless'),
+    samuraiCommander=('fire', 'shout', 'flare', 'bless'), sage=('lightning', 'sigil', 'dome', 'bless'), cleric=('holy', 'souls', 'motes', 'bless'),
+    peasant=('earth', 'shout', 'smoke', 'bless'), wolfBard=('wind', 'shout', 'spiral', 'bless'), vampireLord=('blood', 'implode', 'siphon', 'burst'),
+    hemomancer=('blood', 'siphon', 'rain', 'burst'), nightstalker=('shadow', 'swarm', 'claws', 'blinks'), bloodGargoyle=('earth', 'shockwave', 'slab', 'burst'),
+    dhampir=('holy', 'rain', 'cross', 'shots'), warDrummer=('lightning', 'shout', 'bolt', 'burst'), geomancer=('earth', 'slab', 'spikes', 'bless'),
+    bellWarden=('shadow', 'shockwave', 'crystal', 'burst'), falconer=('wind', 'swarm', 'claws', 'sky'), banneret=('fire', 'veil', 'ring', 'bless'),
+    astralSphinx=('arcane', 'eye', 'sigil', 'burst'), mirageDancer=('wind', 'veil', 'cross', 'blinks'), plagueDoctor=('poison', 'cloud', 'smoke', 'burst'),
+    bombardier=('fire', 'rain', 'burst', 'sky'), astrologer=('holy', 'implode', 'burst', 'sky'), inquisitor=('holy', 'strike', 'ring', 'shots'),
+    seraph=('holy', 'shaft', 'shockwave', 'sky'), corsairSurgeon=('forest', 'geyser', 'motes', 'bless'), harpooner=('ice', 'chains', 'spikes', 'hooks'),
+    seaReaver=('water', 'geyser', 'gust', 'line'),
+)
+STYLE_WEIGHT = dict(line='blow', leap='blow', blinks='flurry', blows='flurry', hooks='flurry', burrow='flurry', burst='wave', bless='wave', change='wave',
+                    sky='storm', shots='storm', pack='summon')
+OWN_WEIGHT = dict(minotaur='flurry', rifleBot='flurry', priestess='summon')
+# What gathers on the caster, by weight: a blow winds a spiral up the body, a flurry drags power in, a wave draws a circle,
+# a storm turns a funnel, a summoning calls wisps up out of the ground.
+WIND = dict(blow=[('ring', 0, 0.5), ('spiral', 0.15, 1)], flurry=[('implode', 0, 1)], wave=[('sigil', 0, 1), ('motes', 0.2, 1)],
+            storm=[('vortex', 0, 1)], summon=[('sigil', 0, 0.7), ('souls', 0.25, 1)])
+WIND_SIZE = dict(ring=dict(r=1.0, n=3), spiral=dict(r=0.6, h=2.0, bands=3), implode=dict(r=1.3, n=14, z=0.8), sigil=dict(r=1.2, points=6, skip=2),
+                 motes=dict(r=1.0, h=1.8, n=20, crosses=4), vortex=dict(r=1.0, h=2.2, coils=4, motes=18), souls=dict(r=0.9, h=2.0, n=6))
+
+
+def canvas(scenes):
+    """One canvas that holds every scene of a staged effect at an ultimate's size."""
+    return box(max(BIG[s][1] for s in scenes), max(BIG[s][2] for s in scenes), 0.5)
+
+
+def ult_weight(kind):
+    return OWN_WEIGHT.get(kind) or STYLE_WEIGHT[ULTS[kind][3]]
+
+
+_wound, _after = set(), set()
+for kind, (pal, first, second, style) in ULTS.items():
+    # (the strike: the first scene opens it, the second lands as the first is at its height)
+    fx(f'ult-{kind}-strike', None, pal, **canvas((first, second)), frames=16, ms=1300, seed=40 + len(EFFECTS),
+       stages=[stage(first, 0, 0.7, **BIG[first][0]), stage(second, 0.25, 1, **BIG[second][0])])
+    weight = ult_weight(kind)
+    if (weight, pal) not in _wound:
+        _wound.add((weight, pal))
+        fx(f'ultwind-{weight}-{pal}', None, pal, **box(1.5, 2.6, 0.5), frames=14, ms=1800, seed=7,
+           stages=[stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]])
+    if pal not in _after:
+        _after.add(pal)
+        # (the aftermath: the element's fumes rolling low where it struck and its motes lifting off, thinning to nothing)
+        fx(f'ultafter-{pal}', None, pal, **box(1.9, 2.4, 0.5), frames=12, ms=1700, seed=9,
+           stages=[stage('cloud', 0, 1, r=0.95, h=0.36, puffs=5, bubbles=0), stage('motes', 0, 1, r=1.3, h=1.9, n=22, crosses=0)])
+
 # What the game ships: everything but the library's own previews.
 SHIPPED = [k for k in EFFECTS if not k.startswith('lib-')]

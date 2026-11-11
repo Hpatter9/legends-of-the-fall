@@ -76,8 +76,9 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TIN
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx } from './blenderFxArt';
-import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ZONE_BFX, bfxAlpha, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
+import { ultWeight } from '../ultStageRules';
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
 import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinematicArt';
 import { flicker } from './cinematicRules';
@@ -628,14 +629,48 @@ export class Fx {
     const budget = particleBudget(settings().saver);
     this.moment.density = budget.density;
     this.moment.cap = budget.cap;
+    // (BLENDER-FX: the hero's own rendered wind-up, played across the whole stage, in place of the painted gathering and the pack's)
+    if (this.bfxUlt(by.unit.def, 'windup', by.x, by.y, ms)) return;
     this.paintMoment(KIT.gather, by.x, by.y, 2.5, { frameMs: ms / 8, foot: true, alpha: 0.9 });
     windUp(this.moment, el, by.x, by.y, ms, by.tall, true);
+  }
+
+  /** BLENDER-FX: a stage of a hero kind's ultimate as its rendered sheet on the moment's layer (which runs while the fight is held), the
+   *  middle of its tile at (x, y), played once across `ms` (the stage's length; a strike plays at its own pace when none is given). A light's
+   *  soft glow goes under it. Reduced motion holds its one readable frame. False when the kind has no sheet or it has not loaded. */
+  private bfxUlt(kind: string, stage: UltStageName, x: number, y: number, ms?: number, size = 1): boolean {
+    const key = ultBfx(kind, stage, ultWeight(kind));
+    const c = key ? bfxClip(key) : undefined;
+    const frames = key ? bfxFrames(key) : [];
+    if (!key || !c || !frames.length) return false;
+    const life = ms ?? c.ms;
+    const held = this.reduced ? [frames[c.hold]] : frames;
+    const [cx, cy] = bfxCentre(c, x, y, size);
+    const glows = bfxBudget(settings().saver).glow ? bfxGlows(key) : [];
+    if (c.g && glows.length) {
+      const k = BFX_GLOW_SCALE * size;
+      this.moment.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: x + (c.g.w / 2 - c.g.ax) * k, y: y + (c.g.h / 2 - c.g.ay) * k, scale: k, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA, prio: true, half: 1 });
+    }
+    // (the aftermath lies over those it struck for a second or two, so it is drawn thinner: they show through it)
+    this.moment.spawn({ frames: held, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: life / held.length, life, prio: true, alpha: stage === 'aftermath' ? ULT_BFX.AFTER_ALPHA : 1, half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42 });
+    return true;
   }
 
   /** The blow lands (ULT-EPIC): a huge burst of the element on each spot (the kit's painted burst when there, else the strongest painted
    *  burst of the element the game has, or the pack's, drawn big), a shock ring along the ground, and a hard shake once the freeze lets go
    *  (none with the screen kept still). Spots are fighters (by id) or tiles. */
-  ultImpact(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[], size = 1): void {
+  ultImpact(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[], size = 1, kind?: string): void {
+    // (BLENDER-FX: the hero's own rendered strike on each spot, in place of the painted burst, the pack's nova and its ring)
+    if (kind && ultBfx(kind, 'strike', ultWeight(kind)) && bfxFrames(ultBfx(kind, 'strike', ultWeight(kind))!).length) {
+      for (const s of spots.slice(0, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS)) {
+        const at = 'unit' in s ? this.sprites.get(s.unit) : undefined;
+        if ('unit' in s && !at) continue;
+        const [x, y] = at ? [at.x, at.y] : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v);
+        this.bfxUlt(kind, 'strike', x, y, undefined, Math.max(ULT_BFX.ECHO_MIN, size));
+      }
+      this.trauma = Math.max(this.trauma, ULT_EPIC.SHAKE * size);
+      return;
+    }
     const tint = ULT_TINT[el];
     const has = (key: string) => spellFrames(key).length > 0;
     const part = burstPart(el, has);
@@ -665,7 +700,17 @@ export class Fx {
   /** ULT-EPIC 2: the aftermath of an ultimate's blow, on the moment's layer: dust rolling off each spot along the ground and motes of the
    *  element drifting up from it for `ms`, so the board settles rather than snapping back. Still with the screen kept calm: a single
    *  soft puff at each spot. */
-  ultAfter(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[], ms: number): void {
+  ultAfter(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[], ms: number, kind?: string): void {
+    // (BLENDER-FX: the element's rendered aftermath where it struck, thinning across the stage, in place of the dust and the motes)
+    if (kind && ultBfx(kind, 'aftermath', ultWeight(kind)) && bfxFrames(ultBfx(kind, 'aftermath', ultWeight(kind))!).length) {
+      for (const s of spots.slice(0, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS)) {
+        const at = 'unit' in s ? this.sprites.get(s.unit) : undefined;
+        if ('unit' in s && !at) continue;
+        const [x, y] = at ? [at.x, at.y] : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v);
+        this.bfxUlt(kind, 'aftermath', x, y, ms);
+      }
+      return;
+    }
     const tint = ULT_TINT[el];
     const calm = this.calm();
     for (const s of spots) {

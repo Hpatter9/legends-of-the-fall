@@ -343,7 +343,7 @@ export class UltMoments {
     const el = m.el ?? 'light';
     const t = m.landing ?? m.targets ?? NONE;
     const spots = burstSpots(t, m.unit, settings().saver);
-    this.opts.fx?.ultImpact(b, el, spots);
+    this.opts.fx?.ultImpact(b, el, spots, 1, m.kind);
     playAll(ultCues('impact', this.queue.calm));
     const at = spots.map((s) => ('unit' in s ? this.opts.anchor(s.unit) : this.opts.tile?.(s.u, s.v) ?? null)).filter((p): p is Pt => !!p);
     const c = at.length ? { x: at.reduce((n, p) => n + p.x, 0) / at.length, y: at.reduce((n, p) => n + p.y, 0) / at.length } : { x: innerWidth / 2, y: innerHeight * 0.45 };
@@ -365,7 +365,7 @@ export class UltMoments {
     if (!all.length) return;
     const n = settings().saver ? 1 : Math.min(2, all.length);
     const spots = Array.from({ length: n }, (_, j) => all[(i * n + j + 1) % all.length]);
-    this.opts.fx?.ultImpact(b, m.el ?? 'light', spots, 0.6);
+    this.opts.fx?.ultImpact(b, m.el ?? 'light', spots, 0.6, m.kind);
     playAll(ultCues('echo', this.queue.calm));
   }
 
@@ -375,7 +375,7 @@ export class UltMoments {
     const el = m.el ?? 'light';
     const t = m.landing ?? m.targets ?? NONE;
     const spots = burstSpots(t, m.unit, settings().saver);
-    this.opts.fx?.ultAfter(b, el, spots, ms);
+    this.opts.fx?.ultAfter(b, el, spots, ms, m.kind);
     const at = spots.map((s) => ('unit' in s ? this.opts.anchor(s.unit) : this.opts.tile?.(s.u, s.v) ?? null)).filter((p): p is Pt => !!p);
     const c = at.length ? { x: at.reduce((n, p) => n + p.x, 0) / at.length, y: at.reduce((n, p) => n + p.y, 0) / at.length } : { x: innerWidth / 2, y: innerHeight * 0.45 };
     this.layer.querySelector('.umAfter')?.remove();
