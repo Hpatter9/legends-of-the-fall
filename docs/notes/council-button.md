@@ -51,3 +51,11 @@ is pictured too.
   - with Continue showing;
   - pressed;
   - the Daily cleared.
+
+## The red count seal (art-wire-10)
+
+The owner painted a red count seal to match the Daily's red wax (`art-source/ui/buttons/badge-count-red.png`, 96 x 96, on `art/ui-extras`). It is
+transparent round its rim, centred, and has a plain dark red middle that a number reads on. `tools/painted-buttons/cut.py` cuts it with the
+kit (`SINGLES`) to `ui/buttons/badge-count-red.webp`, and the Council's count now stands on it in place of the tabs' dark seal. The number
+is white, and gold with the seal glowing gold while the Muster is open, as before. The tabs keep their own dark seal.
+Pictures: `docs/samples/art-wire-10/council-red-seal.png`.

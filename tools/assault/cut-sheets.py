@@ -145,7 +145,7 @@ SHEETS['undead'] = {
     'faces': (UNDEAD_FILES[_orc['faces'][0]], _orc['faces'][1]),
     'fallback': ('orc', {v: k for k, v in UNDEAD_FILES.items()}),
     # (our own siege works serve every hold: always the Orc sheet's, never recoloured)
-    'shared': {'ladder', 'ram', 'trebuchet'},
+    'shared': {'ladder', 'ram', 'trebuchet', 'conicalTent'},
     'kits': {
         **_orc['kits'],
         'kitSpikedWall': 'liches/bone_wall_run', 'kitSpikedCorner': 'liches/bone_wall_corner', 'kitSkullGate': 'liches/gatehouse',
@@ -209,7 +209,7 @@ SHEETS['beasts'] = {
     'decals': (BEASTS_FILES[_orc['decals'][0]], _orc['decals'][1]),
     'faces': (BEASTS_FILES[_orc['faces'][0]], _orc['faces'][1]),
     'fallback': ('orc', {v: k for k, v in BEASTS_FILES.items()}),
-    'shared': {'ladder', 'ram', 'trebuchet'},
+    'shared': {'ladder', 'ram', 'trebuchet', 'conicalTent'},
     'tint': lambda a, sheet, slot=None: den_tint(a, sheet, slot),
     'kits': {
         **_orc['kits'],
@@ -326,7 +326,7 @@ SHEETS['wildwood'] = {
     'decals': (WILDWOOD_FILES[_orc['decals'][0]], _orc['decals'][1]),
     'faces': (WILDWOOD_FILES[_orc['faces'][0]], _orc['faces'][1]),
     'fallback': ('orc', {v: k for k, v in WILDWOOD_FILES.items()}),
-    'shared': {'ladder', 'ram', 'trebuchet'},
+    'shared': {'ladder', 'ram', 'trebuchet', 'conicalTent'},
     'tint': lambda a, sheet, slot=None: forest(a),
     'kits': {
         **_orc['kits'],
@@ -398,7 +398,7 @@ SHEETS['labyrinth'] = {
     'decals': (LABYRINTH_FILES[_orc['decals'][0]], _orc['decals'][1]),
     'faces': (LABYRINTH_FILES[_orc['faces'][0]], _orc['faces'][1]),
     'fallback': ('orc', {v: k for k, v in LABYRINTH_FILES.items()}),
-    'shared': {'ladder', 'ram', 'trebuchet'},
+    'shared': {'ladder', 'ram', 'trebuchet', 'conicalTent'},
     'tint': lambda a, sheet, slot=None: sandstone(a),
     # (SWEEP-1110: the Knights kit's buildings and stonework take the hold's sand, bronze and terracotta, `maze_kit`; its trees and bushes
     # are left as they are)
@@ -493,7 +493,7 @@ SHEETS['ogres'] = {
     'decals': (OGRES_FILES[_orc['decals'][0]], _orc['decals'][1]),
     'faces': (OGRES_FILES[_orc['faces'][0]], _orc['faces'][1]),
     'fallback': ('orc', {v: k for k, v in OGRES_FILES.items()}),
-    'shared': {'ladder', 'ram', 'trebuchet'},
+    'shared': {'ladder', 'ram', 'trebuchet', 'conicalTent'},
     'tint': lambda a, sheet, slot=None: highland(a),
     'kits': {
         **_orc['kits'],
@@ -551,7 +551,7 @@ SHEETS['infernal'] = {
     'decals': (INFERNAL_FILES[_orc['decals'][0]], _orc['decals'][1]),
     'faces': (INFERNAL_FILES[_orc['faces'][0]], _orc['faces'][1]),
     'fallback': ('orc', {v: k for k, v in INFERNAL_FILES.items()}),
-    'shared': {'ladder', 'ram', 'trebuchet'},
+    'shared': {'ladder', 'ram', 'trebuchet', 'conicalTent'},
     'tint': lambda a, sheet, slot=None: lava(a) if slot == 'shallows' else crust(a) if slot == 'shingle' else pit(a),
     'kits': {
         **_orc['kits'],
@@ -636,7 +636,7 @@ SHEETS['yokai'] = {
     'decals': (YOKAI_FILES[_orc['decals'][0]], _orc['decals'][1]),
     'faces': (YOKAI_FILES[_orc['faces'][0]], _orc['faces'][1]),
     'fallback': ('orc', {v: k for k, v in YOKAI_FILES.items()}),
-    'shared': {'ladder', 'ram', 'trebuchet'},
+    'shared': {'ladder', 'ram', 'trebuchet', 'conicalTent'},
     'tint': lambda a, sheet, slot=None: moonlit(a),
     'kits': {
         **_orc['kits'],
@@ -693,7 +693,7 @@ SHEETS['golems'] = {
     'decals': (GOLEMS_FILES[_orc['decals'][0]], _orc['decals'][1]),
     'faces': (GOLEMS_FILES[_orc['faces'][0]], _orc['faces'][1]),
     'fallback': ('orc', {v: k for k, v in GOLEMS_FILES.items()}),
-    'shared': {'ladder', 'ram', 'trebuchet'},
+    'shared': {'ladder', 'ram', 'trebuchet', 'conicalTent'},
     'tint': lambda a, sheet, slot=None: foundry(a),
     'kits': {
         **_orc['kits'],
@@ -811,34 +811,48 @@ def pack(sprites, width=2048):
 # in their own order. A hold sheet that is painted is cut by its own layout below; an Orc slot it does not paint (a camp prop, the siege
 # works) is cut from the Orc sheet in the same slot, recoloured as a stand-in (the siege works in their own colours). A sheet not painted
 # yet is the Orc sheet, recoloured, slot for slot, as before.
-def hold_layouts(files, totem=None, lean=None):
-    """The layouts of a hold's sheets 08 to 12, by its file names. `totem` and `lean` name the prop cells (1 to 16) the field's totems and
-    lean-tos take, where the hold painted one."""
+def hold_layouts(files, cells=None):
+    """The layouts of a hold's sheets 08 to 12, by its file names. `cells` names the prop cells (1 to 16 of sheet 10) that take the field's
+    camp pieces where the hold painted one: its totems (`totem`), lean-to (`leanTo`), drying frame (`hideFrame`), camp fire (`bonefire`) and
+    pennant pole (`pennantPole`). The small banner is the hold's hanging banner (sheet 08), and the camp's rows of tents (`campTent`) its tent
+    (sheet 11); so a hold whose sheets are all painted draws none of the Orc camp's pieces (art-wire-10)."""
+    cells = cells or {}
     d10 = props([f'prop{i}' for i in range(1, 17)])
-    if totem:
-        d10['tuskTotem'] = d10['wolfTotem'] = d10[f'prop{totem}']
-    if lean:
-        d10['leanTo'] = d10[f'prop{lean}']
+    for name, cell in cells.items():
+        for n in (['tuskTotem', 'wolfTotem'] if name == 'totem' else [name]):
+            d10[n] = d10[f'prop{cell}']
+    d08 = props([
+        'crenel', 'crenelBroken', 'crenelInner', 'wallBrazier', 'wallLight', 'hangingBanner', 'hoarding', 'spearRack',
+        'stairUp', 'stairDown', 'wallLadder', 'cauldron', 'wallGoods', 'wallHorn', 'wallTrap', 'wallDrift'])
+    d08['smallBanner'] = d08['hangingBanner']
+    d11 = buildings([('warTent', 2, 1), ('burntHeap', 2, 1), ('pavilionTent', 2, 2), ('pavilionBurnt', 2, 2), ('ruinA', 2, 2), ('ruinB', 2, 2)])
+    d11['campTent'] = d11['warTent']
     return {
-        files['orc-08-wall-dressing.png']: props([
-            'crenel', 'crenelBroken', 'crenelInner', 'wallBrazier', 'wallLight', 'hangingBanner', 'hoarding', 'spearRack',
-            'stairUp', 'stairDown', 'wallLadder', 'cauldron', 'wallGoods', 'wallHorn', 'wallTrap', 'wallDrift']),
+        files['orc-08-wall-dressing.png']: d08,
         files['orc-09-camp.png']: buildings([
             ('drumStruck', 2, 2), ('drumSilenced', 2, 2), ('landmarkA', 2, 2), ('landmarkB', 2, 2), ('landmarkC', 3, 3), ('landmarkD', 3, 3)]),
         files['orc-10-camp-props.png']: d10,
-        files['orc-11-siege-ruins.png']: buildings([
-            ('warTent', 2, 1), ('burntHeap', 2, 1), ('pavilionTent', 2, 2), ('pavilionBurnt', 2, 2), ('ruinA', 2, 2), ('ruinB', 2, 2)]),
+        files['orc-11-siege-ruins.png']: d11,
         files['orc-12-river.png']: props([
             'deck', 'deckBroken', 'deckEnd', 'pier', 'fordStones', 'waterPlants', 'sunkenLog', 'waterFlowers',
             'wetBoulders', 'waterProp10', 'boat', 'mist', 'waterProp13', 'waterProp14', 'waterProp15', 'waterSteps']),
     }
 
 
-# (the prop cells each hold painted a totem and a lean-to in, on sheet 10)
-for _army, _files, _totem, _lean in (('undead', UNDEAD_FILES, 2, None), ('beasts', BEASTS_FILES, 7, 1), ('wildwood', WILDWOOD_FILES, 7, 1),
-                                     ('labyrinth', LABYRINTH_FILES, 7, None), ('ogres', OGRES_FILES, None, None), ('infernal', INFERNAL_FILES, None, None),
-                                     ('yokai', YOKAI_FILES, 6, None), ('golems', GOLEMS_FILES, None, None)):
-    SHEETS[_army]['layouts'] = hold_layouts(_files, _totem, _lean)
+# (the prop cells of each hold's sheet 10 that take the field's camp pieces, by the prompts: docs/notes/assault-4-*-art-prompts.md)
+HOLD_CELLS = {
+    'undead': {'totem': 2, 'leanTo': 6, 'hideFrame': 7, 'bonefire': 11, 'pennantPole': 14},
+    'beasts': {'totem': 7, 'leanTo': 1, 'hideFrame': 2, 'bonefire': 11, 'pennantPole': 9},
+    'wildwood': {'totem': 7, 'leanTo': 1, 'hideFrame': 2, 'bonefire': 11, 'pennantPole': 9},
+    'labyrinth': {'totem': 7, 'leanTo': 12, 'hideFrame': 9, 'bonefire': 11, 'pennantPole': 5},
+    'ogres': {'totem': 7, 'leanTo': 1, 'hideFrame': 2, 'bonefire': 6, 'pennantPole': 11},
+    'infernal': {'totem': 5, 'leanTo': 1, 'hideFrame': 6, 'bonefire': 7, 'pennantPole': 15},
+    'yokai': {'totem': 6, 'leanTo': 7, 'hideFrame': 9, 'bonefire': 11, 'pennantPole': 8},
+    'golems': {'totem': 5, 'leanTo': 1, 'hideFrame': 2, 'bonefire': 11, 'pennantPole': 15},
+}
+for _army, _files in (('undead', UNDEAD_FILES), ('beasts', BEASTS_FILES), ('wildwood', WILDWOOD_FILES), ('labyrinth', LABYRINTH_FILES),
+                      ('ogres', OGRES_FILES), ('infernal', INFERNAL_FILES), ('yokai', YOKAI_FILES), ('golems', GOLEMS_FILES)):
+    SHEETS[_army]['layouts'] = hold_layouts(_files, HOLD_CELLS[_army])
 
 def cut(army, report_only=False):
     spec = SHEETS[army]
@@ -898,7 +912,7 @@ def cut(army, report_only=False):
         jobs.append((sheet, cells, tint(a, sheet) if borrowed else a, a, borrowed))
     for sheet, cells, a, plain, borrowed in jobs:
         for name, (cx, cy, cw, ch, fx, fy, fu, fv) in cells.items():
-            # (the shared pieces, our own siege works, keep their own colours)
+            # (the shared pieces, our own siege works and our camp's tents at the Landing, keep their own colours)
             src_a = plain if borrowed and name in spec.get('shared', ()) else a
             cell = src_a[cy:cy + ch, cx:cx + cw]
             bb = bbox(cell)
