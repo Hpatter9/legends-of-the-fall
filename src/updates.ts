@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.492.0',
+    date: '2026-11-11',
+    title: 'The open lands fade into the distance',
+    notes: ['The graveyard, snows, ashlands, shrine, woods, meadows, highlands, dunes, oasis, ruins, temple and war camp each gain a deeper rim of their own scenery.', 'The far edge of every open land thins away like haze instead of ending in a straight line.'],
+  },
+  {
     version: '0.491.0',
     date: '2026-11-11',
     title: 'Spell slots open one at a time',

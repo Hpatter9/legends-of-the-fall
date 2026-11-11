@@ -78,21 +78,21 @@ export const RIMS: Record<Area, RimSpec> = {
   // (the forge: stone walls hung with pipes, gears and furnaces)
   forge: { far: 2, near: 0, rise: [6, 9], role: 'outcrop', second: 'high' },
   // (open country: the land's own ground runs on past the far edges, and carries what grows and stands there)
-  highlands: { far: 2, near: 0, follow: [0, 2], role: 'outcrop', second: 'high' },
-  forest: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'high' },
-  snow: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'high' },
-  desert: { far: 2, near: 0, follow: [0, 2], role: 'ground', second: 'outcrop' },
-  oasis: { far: 2, near: 0, follow: [0, 1], role: 'shore', second: 'ground' },
-  plains: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'second' },
-  autumn: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'second' },
-  graveyard: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'high' },
-  ruins: { far: 2, near: 0, follow: [0, 2], role: 'outcrop', second: 'high' },
+  highlands: { far: 3, near: 0, fades: true, follow: [0, 2], role: 'outcrop', second: 'high' },
+  forest: { far: 3, near: 0, fades: true, follow: [0, 1], role: 'ground', second: 'high' },
+  snow: { far: 3, near: 0, fades: true, follow: [0, 1], role: 'ground', second: 'high' },
+  desert: { far: 3, near: 0, fades: true, follow: [0, 2], role: 'ground', second: 'outcrop' },
+  oasis: { far: 3, near: 0, fades: true, follow: [0, 1], role: 'shore', second: 'ground' },
+  plains: { far: 3, near: 0, fades: true, follow: [0, 1], role: 'ground', second: 'second' },
+  autumn: { far: 3, near: 0, fades: true, follow: [0, 1], role: 'ground', second: 'second' },
+  graveyard: { far: 3, near: 0, fades: true, follow: [0, 1], role: 'ground', second: 'high' },
+  ruins: { far: 3, near: 0, fades: true, follow: [0, 2], role: 'outcrop', second: 'high' },
   // (the temple: a raised terrace of pale stone behind the lawns)
-  temple: { far: 2, near: 0, follow: [1, 2], role: 'high', second: 'outcrop' },
-  shrine: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'high' },
-  warcamp: { far: 2, near: 0, follow: [0, 1], role: 'ground', second: 'second' },
+  temple: { far: 3, near: 0, fades: true, follow: [1, 2], role: 'high', second: 'outcrop' },
+  shrine: { far: 3, near: 0, fades: true, follow: [0, 1], role: 'ground', second: 'high' },
+  warcamp: { far: 3, near: 0, fades: true, follow: [0, 1], role: 'ground', second: 'second' },
   // (the ashlands: black rock at the edge, and a river of lava beyond it)
-  volcano: { far: 3, near: 0, follow: [0, 1], role: 'outcrop', second: 'lava', secondLevel: 0 },
+  volcano: { far: 4, near: 0, fades: true, follow: [0, 1], role: 'outcrop', second: 'lava', secondLevel: 0 },
 };
 
 /** A wall's torches: one about every this many columns along a far edge. */
@@ -552,3 +552,15 @@ export const washFor = (area: Area, weather: string): LandWash | null => (weathe
  *  tile has one. */
 export const PUDDLE_SHARE = 0.65;
 export const puddleOn = (b: Board, i: number): boolean => wetLow(b, i) && hash(i % b.w, Math.floor(i / b.w), (b.seed & 0xffff) + 933) < PUDDLE_SHARE;
+
+/** A dark land's dark as a tint (what multiplying a picture by it does is near what laying the dark over it does): the walls take it
+ *  this way, so the dark layer need only cover the board's floor. White for a land that is not dark. */
+export function darkTint(area: Area): number {
+  const spec = LAND_LIGHT[area];
+  if (!spec) return 0xffffff;
+  const a = Math.min(MAX_DARK, spec.dark);
+  const ch = (shift: number) => Math.round(255 * (1 - a) + ((spec.colour >> shift) & 255) * a);
+  return (ch(16) << 16) | (ch(8) << 8) | ch(0);
+}
+/** How far past the board's own tiles the dark layer reaches (tiles): the walls beyond are darkened by `darkTint` instead. */
+export const DARK_MARGIN = 1;
