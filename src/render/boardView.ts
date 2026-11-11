@@ -18,6 +18,9 @@ import { sceneDepth } from '../sim/armyRoad';
 import { mixSeed } from '../sim/rng';
 import { fadeTall, loadZoneArt, noMotion, ZoneAir, zoneProps, type ZoneMotion } from './zoneLife';
 import { flicker, sway } from './ambient';
+import { faceOf, FACE_NAMES, FLOORS, floorRoles, fringesOf, pathOf, ROLES, seamsOf, slotOf, type Fringe, type Role } from './floorRules';
+import { floorArt, loadFloorArt, type FloorArt } from './floorArt';
+import { turnTile } from '../sim/turn';
 import gateUrl from '../art/camp/gate.png';
 import towerUrl from '../art/camp/tower.png';
 // (the duel's ring of standing stones, cut from art-source/expansion/duel-ring.png by tools/expansion/duel-ring.py)
@@ -139,6 +142,8 @@ interface Built {
    *  their tile marks (a boss's windup, a hazard's tell, a burning ground), so a fighter standing in one shows over it. */
   grounds: Container[];
   tex: ColumnLease<Texture>[];
+  /** LIVING-FIELDS: each column's sprite painted again (when its land's floor sheet arrives, or a tile's ground changes). */
+  redo: (() => void)[];
   /** The powder barrels still standing (by tile index), so a blast can take one away. */
   barrels: Map<number, Sprite>;
   /** What moves on its own (an army's road): swaying growth, flickering lights, running water, falls. */
@@ -174,12 +179,33 @@ function rippleOf(): Texture {
   }
   return (rippleTex = Texture.from(c));
 }
+/** LIVING-FIELDS: one small canvas, used over and over, where a neighbour's ground is cut to a ragged edge before it is laid on a tile. */
+let scratchCanvas: HTMLCanvasElement | null = null;
+function scratch(): HTMLCanvasElement {
+  if (!scratchCanvas) {
+    scratchCanvas = document.createElement('canvas');
+    scratchCanvas.width = scratchCanvas.height = SRC;
+  }
+  return scratchCanvas;
+}
+
 /** A finished section baked into one texture, and where its top left lies against the section's own origin. */
 interface Baked {
   tex: Texture;
   x: number;
   y: number;
 }
+/** LIVING-FIELDS: what a tile's top and faces are painted from (`floorRules.ts`): its ground's role, the ragged edges its neighbours lay
+ *  over it, which of its sides show a line, and where it lies on the screen's grid (the textures run on from tile to tile by it). */
+interface FloorTile {
+  role: Role;
+  fringes: Fringe[];
+  seams: boolean[];
+  U: number;
+  V: number;
+}
+const mod4 = (n: number) => ((Math.round(n) % 4) + 4) % 4;
+
 /** What a section looks like beyond its board: a boss arena is drawn on flagstones with a gilded lip and a deeper plinth. */
 export interface Look {
   boss?: boolean;
@@ -267,6 +293,9 @@ export class BoardView {
       this.root.addChild(...this.keep);
     }
     this.freeBuilt();
+    // (the land's floor sheet is fetched the first time its land is shown; the board is painted again when it lands)
+    const hold = FLOORS[b.area].hold;
+    if (!floorArt(hold)) void loadFloorArt(hold).then((got) => got && this.board === b && this.repaint());
     this.built = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
     this.marks = this.built.marks;
     this.rings = this.built.rings;
@@ -417,11 +446,24 @@ export class BoardView {
 
   /** Bake one waiting section (called each frame, so a long map comes up a section a frame). */
   pump(): void {
-    const s = this.toBake.shift();
+    const s = this.toBake[0];
     if (!s || !art) return;
+    // (a section is baked once, so it waits a moment for its land's floor sheet: `floorArt.ts`)
+    const hold = FLOORS[s.board.area].hold;
+    if (!floorArt(hold) && !this.floorMissing.has(hold)) {
+      if (!this.floorAsked.has(hold)) {
+        this.floorAsked.add(hold);
+        void loadFloorArt(hold).then((got) => !got && this.floorMissing.add(hold));
+      }
+      return;
+    }
+    this.toBake.shift();
     this.bake(s);
     this.place(s);
   }
+
+  private floorAsked = new Set<string>();
+  private floorMissing = new Set<string>();
 
   /** A conservative projected board rectangle, excluding destinations which retired sections never draw. */
   private inView(s: Scene, view: { x0: number; x1: number; y0: number; y1: number }): boolean {
@@ -499,12 +541,16 @@ export class BoardView {
     const rings: Graphics[] = [];
     const grounds: Container[] = [];
     const tex: ColumnLease<Texture>[] = [];
+    const redo: (() => void)[] = [];
     const barrels = new Map<number, Sprite>();
     const live = noLive();
     const zone = noMotion();
     // (an army's road: the land beside it sinks a little and its far edge is left ragged, so a section reads as a road through the land, not a slab)
     const depth = b.tiles.some((t) => t.scene) ? sceneDepth(b) : null;
     const held = new Set((b.pieces ?? []).map((p) => p.v * b.w + p.u));
+    // (LIVING-FIELDS: the land's painted floor, once its sheet is here; `repaint` lays it when it arrives later)
+    let floor = this.floorOf(b, f);
+    redo.push(() => (floor = this.floorOf(b, f)));
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
         const raw = tileAt(b, u, v)!;
@@ -526,15 +572,32 @@ export class BoardView {
           continue;
         }
         const sink = raw.scene ? Math.min(2, Math.max(0, far - 1)) : 0;
-        const t: Tile = raw.scene === 'water' || raw.scene === 'lava' ? { ...raw, h: raw.h - sink, ground: raw.scene === 'water' ? 'deep' : 'lava' } : sink ? { ...raw, h: raw.h - sink } : raw;
+        // (the tile as it is drawn; read again when it is repainted, for a tile whose ground has changed in the fight)
+        const shown = (): Tile => {
+          const raw = tileAt(b, u, v)!;
+          return raw.scene === 'water' || raw.scene === 'lava' ? { ...raw, h: raw.h - sink, ground: raw.scene === 'water' ? 'deep' : 'lava' } : sink ? { ...raw, h: raw.h - sink } : raw;
+        };
+        const t = shown();
         const [x, y] = project(f, u, v, t.h);
         // (a Calamity zone's chasm draws no column: the void shows through, `zoneLife.ts` lights it from below)
         if (!t.chasm) {
-          const ct = this.column(t, u, v, b.area, depth ? !!t.paved : !!look.boss, !!depth);
+          const paint = () => {
+            const now = shown();
+            return this.column(now, u, v, b.area, depth ? !!now.paved : !!look.boss, !!depth, floor?.[v * b.w + u]);
+          };
+          const ct = paint();
+          const slot = tex.length;
           tex.push(ct);
           const col = new Sprite(ct.value);
           col.position.set(x - TW / 2, y - TH / 2);
           tile.addChild(col);
+          redo.push(() => {
+            if (col.destroyed) return;
+            const next = paint();
+            col.texture = next.value;
+            tex[slot].release();
+            tex[slot] = next;
+          });
         }
         const mark = new Graphics();
         mark.position.set(x, y);
@@ -710,7 +773,38 @@ export class BoardView {
         landmark.addChild(sp);
       }
     }
-    return { tiles, marks, rings, grounds, tex, barrels, landmark, live, zone };
+    return { tiles, marks, rings, grounds, tex, redo, barrels, landmark, live, zone };
+  }
+
+  /** LIVING-FIELDS: every tile's floor (`floorRules.ts`), worked out on the board as it lies on the screen (a section of an army's road may
+   *  lie turned), so the textures and the ragged edges run on across the tiles as they are seen. Null until the land's sheet is loaded. */
+  private floorOf(b: Board, f: Frame): FloorTile[] | null {
+    if (!floorArt(FLOORS[b.area].hold)) return null;
+    const rot = f.rot;
+    const [W, D] = footDims(rot, b.w, b.d);
+    const tiles: Tile[] = new Array(W * D);
+    const from = new Int32Array(W * D);
+    const to = new Int32Array(W * D);
+    for (let v = 0; v < b.d; v++)
+      for (let u = 0; u < b.w; u++) {
+        const [U, V] = turnTile(rot, u, v, b.w, b.d);
+        tiles[V * W + U] = b.tiles[v * b.w + u];
+        from[V * W + U] = v * b.w + u;
+        to[v * b.w + u] = V * W + U;
+      }
+    const tb: Board = { ...b, w: W, d: D, tiles };
+    // (the path is walked on the board as the fight has it, from the heroes' edge to the foes')
+    const roles = floorRoles(tb, new Set([...pathOf(b)].map((i) => to[i])));
+    const out: FloorTile[] = new Array(W * D);
+    for (let V = 0; V < D; V++)
+      for (let U = 0; U < W; U++) out[from[V * W + U]] = { role: ROLES[roles[V * W + U]], fringes: fringesOf(tb, roles, U, V), seams: seamsOf(tb, U, V), U: U + f.ou, V: V + f.ov };
+    return out;
+  }
+
+  /** LIVING-FIELDS: paint the host's columns again, in place: when its land's floor sheet has arrived, or a tile's ground has changed in the
+   *  fight (thin ice breaking, a brazier's coals). Nothing else on the board is touched. */
+  repaint(): void {
+    for (const built of [this.built, this.old]) if (built) for (const f of built.redo) f();
   }
 
   /** ALIVE: a tile's own life (looks only): light shimmering on still water, a breathing glow over lava or coals, a pulse over a
@@ -872,17 +966,20 @@ export class BoardView {
   private ringStones: Sprite[] = [];
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */
-  private column(t: Tile, u: number, v: number, area: Area, boss = false, road = false): ColumnLease<Texture> {
+  private column(t: Tile, u: number, v: number, area: Area, boss = false, road = false, fl?: FloorTile): ColumnLease<Texture> {
     const set = art?.areas[area];
     const top = (!road && t.h >= STONY) || boss || t.perch ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
     const skirt = road ? Math.min(t.h, ROAD_SKIRT) : -1;
-    const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v, !!t.perch, !!t.ramp, road ? `skirt${skirt}` : undefined);
+    // (LIVING-FIELDS: a painted floor's column is its own: its ground, its place in the texture, its neighbours' edges and its seams)
+    const floor = fl ? `floor:${fl.role}:${mod4(fl.U)}${mod4(fl.V)}:${fl.fringes.map((x) => `${x.role}${x.turn}${x.corner ? 'c' : ''}${x.foam ? 'f' : ''}`).join(',')}:${fl.seams.map((x) => +x).join('')}` : '';
+    const extra = (road ? `skirt${skirt}` : '') + floor;
+    const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v, !!t.perch, !!t.ramp, extra || undefined);
     const bytes = TW * (TH + (road ? skirt : t.h) * HH + FOOT + (boss && !road ? HH : 0)) * 4;
-    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss, road ? skirt : -1));
+    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss, road ? skirt : -1, fl));
   }
 
   /** Original full-resolution painter; reuse only columns whose appearance inputs match. */
-  private paintColumn(t: Tile, u: number, v: number, area: Area, boss = false, skirt = -1): Texture {
+  private paintColumn(t: Tile, u: number, v: number, area: Area, boss = false, skirt = -1, fl?: FloorTile): Texture {
     const set = art?.areas[area];
     // (a boss arena stands on a plinth one step deeper; an army road's tile has a short skirt instead of a cliff to the foot)
     const road = skirt >= 0;
@@ -926,8 +1023,47 @@ export class BoardView {
       }
       g.restore();
     };
-    side(0, TW / 2, TH / 2, TH, 'rgba(60,40,20,0.12)');
-    side(TW / 2, TW, TH, TH / 2, 'rgba(8,6,14,0.45)');
+    // (LIVING-FIELDS: the land's painted floor, `floorRules.ts`: a boss's arena is paved, whatever the land)
+    const fa: FloorArt | null = fl ? floorArt(FLOORS[area].hold) : null;
+    const fset = FLOORS[area];
+    const role: Role = !fl ? 'ground' : boss && (fl.role === 'ground' || fl.role === 'second' || fl.role === 'path' || fl.role === 'outcrop' || fl.role === 'shore' || fl.role === 'high') ? 'dais' : fl.role;
+    if (fa) {
+      // the faces: the sheet's face for this top, a lip on the top step, a foot on the lowest, the body's four steps between
+      const col = FACE_NAMES.indexOf(faceOf(fset, role, t.h));
+      const sx = (col % 6) * 64;
+      const sy = Math.floor(col / 6) * 120;
+      const steps = Math.ceil(deep / HH);
+      const sheetFace = (img: HTMLCanvasElement, x0: number, y0: number, x1: number, y1: number) => {
+        g.save();
+        g.beginPath();
+        g.moveTo(x0, y0);
+        g.lineTo(x1, y1);
+        g.lineTo(x1, y1 + deep);
+        g.lineTo(x0, y0 + deep);
+        g.closePath();
+        g.clip();
+        g.imageSmoothingEnabled = true;
+        for (let k = 0; k < steps; k++) {
+          const part = k === 0 ? (fset.lip ? 0 : 20) : k === steps - 1 && steps >= 3 ? 100 : 20 + ((k - 1) % 4) * 20;
+          g.setTransform((x1 - x0) / 64, (y1 - y0) / 64, 0, HH / 20, x0, y0 + k * HH);
+          g.drawImage(img, sx, sy + part, 64, 20, 0, 0, 64, 20.6);
+        }
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        if (fset.tone) {
+          g.fillStyle = fset.tone;
+          g.fillRect(0, 0, TW, TH + deep);
+        }
+        g.restore();
+      };
+      // (behind the face, the old rock: the sheet's lip is ragged, and nothing should show through it)
+      side(0, TW / 2, TH / 2, TH, 'rgba(10,8,6,0.55)');
+      side(TW / 2, TW, TH, TH / 2, 'rgba(8,6,14,0.7)');
+      sheetFace(fa.faces.left, 0, TH / 2, TW / 2, TH);
+      sheetFace(fa.faces.right, TW / 2, TH, TW, TH / 2);
+    } else {
+      side(0, TW / 2, TH / 2, TH, 'rgba(60,40,20,0.12)');
+      side(TW / 2, TW, TH, TH / 2, 'rgba(8,6,14,0.45)');
+    }
     if (road && deep > 3 * HH) {
       // (the skirt fades out below its first steps: the land goes on into the haze rather than ending in a wall)
       g.save();
@@ -939,17 +1075,17 @@ export class BoardView {
       g.fillRect(0, TH / 2 + 2.2 * HH, TW, deep + TH);
       g.restore();
     }
-    // faint lines at each step
+    // faint lines at each step (a painted face has its own courses)
     g.strokeStyle = 'rgba(0,0,0,0.2)';
     g.lineWidth = 1;
-    for (let k = HH; k < deep; k += HH) {
+    for (let k = HH; k < deep && !fa; k += HH) {
       g.beginPath();
       g.moveTo(0, TH / 2 + k);
       g.lineTo(TW / 2, TH + k);
       g.lineTo(TW, TH / 2 + k);
       g.stroke();
     }
-    face([[0, TH / 2], [TW / 2, TH], [TW, TH / 2], [TW, TH / 2 + 3], [TW / 2, TH + 3], [0, TH / 2 + 3]], lip);
+    if (!fa || boss) face([[0, TH / 2], [TW / 2, TH], [TW, TH / 2], [TW, TH / 2 + 3], [TW / 2, TH + 3], [0, TH / 2 + 3]], lip);
     // the top: the tile's ground laid onto the diamond
     g.save();
     g.beginPath();
@@ -959,7 +1095,53 @@ export class BoardView {
     g.lineTo(0, TH / 2);
     g.closePath();
     g.clip();
-    if (art && set) {
+    if (art && fa && fl) {
+      const a = TW / (2 * SRC);
+      const b = TH / (2 * SRC);
+      g.imageSmoothingEnabled = true;
+      // (a role's picture laid on the tile's square: its quarter of the sheet's 4 x 4 tile texture, by where the tile lies, so the
+      //  ground runs on from tile to tile; or a shared picture for what the sheet does not paint)
+      const lay = (c: CanvasRenderingContext2D, r: Role): boolean => {
+        const slot = slotOf(fset, r);
+        if (slot >= 0) c.drawImage(fa.ground, (slot % 4) * 256 + mod4(fl.U) * 64, Math.floor(slot / 4) * 256 + mod4(fl.V) * 64, 64, 64, 0, 0, SRC, SRC);
+        else if (r === 'ice') c.drawImage(art!.ice, 0, 0, SRC, SRC);
+        else if (r === 'lava' || r === 'coals') c.drawImage(art!.lava, 0, 0, SRC, SRC);
+        else if (r === 'water' || r === 'deep') c.drawImage(art!.water, 0, 0, SRC, SRC);
+        else return false;
+        return true;
+      };
+      g.setTransform(a, b, -a, b, TW / 2, 0);
+      lay(g, role);
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      const wash = role === 'water' ? fset.waterTone : role === 'deep' ? fset.deepTone : undefined;
+      for (const tone of [wash, role === 'lava' && t.ground === 'deep' ? fset.deepTone : undefined, fset.tone]) {
+        if (!tone) continue;
+        g.fillStyle = tone;
+        g.fillRect(0, 0, TW, TH);
+      }
+      // the ragged edges of the grounds beside it, and the waterline
+      for (const fr of fl.fringes) {
+        let pic: HTMLCanvasElement;
+        if (fr.foam) pic = (fr.corner ? fa.foamCorner : fa.foam)[fr.turn];
+        else {
+          const c = scratch();
+          const sg = c.getContext('2d')!;
+          sg.globalCompositeOperation = 'source-over';
+          sg.clearRect(0, 0, SRC, SRC);
+          if (!lay(sg, fr.role)) continue;
+          if (fset.tone) {
+            sg.fillStyle = fset.tone;
+            sg.fillRect(0, 0, SRC, SRC);
+          }
+          sg.globalCompositeOperation = 'destination-in';
+          sg.drawImage((fr.corner ? fa.raggedCorner : fa.ragged)[fr.turn], 0, 0);
+          pic = c;
+        }
+        g.setTransform(a, b, -a, b, TW / 2, 0);
+        g.drawImage(pic, 0, 0);
+        g.setTransform(1, 0, 0, 1, 0, 0);
+      }
+    } else if (art && set) {
       const a = TW / (2 * SRC);
       const b = TH / (2 * SRC);
       g.imageSmoothingEnabled = true;
@@ -1009,7 +1191,8 @@ export class BoardView {
       g.fillRect(0, 0, TW, TH);
     } else if (t.ground === 'deep') {
       // (deep water: the shallows' texture, darkened, with a few long ripples; on a volcano a lake of lava, darkened to a crust)
-      g.fillStyle = LAVA_LANDS.includes(area) ? 'rgba(30,6,0,0.4)' : 'rgba(6,22,66,0.5)';
+      // (a painted floor has its own deep tone already, `FloorSet.deepTone`)
+      g.fillStyle = fa ? 'rgba(0,0,0,0)' : LAVA_LANDS.includes(area) ? 'rgba(30,6,0,0.4)' : 'rgba(6,22,66,0.5)';
       g.fillRect(0, 0, TW, TH);
       g.strokeStyle = LAVA_LANDS.includes(area) ? 'rgba(255,170,80,0.45)' : 'rgba(160,200,255,0.4)';
       for (const [x, y] of [[TW * 0.4, TH * 0.4], [TW * 0.62, TH * 0.62]]) {
@@ -1056,6 +1239,22 @@ export class BoardView {
     g.restore();
     g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground === 'deep' && LAVA_LANDS.includes(area) ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : t.perch ? 'rgba(245,220,150,0.85)' : t.ramp ? 'rgba(215,185,135,0.75)' : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
     g.lineWidth = t.bridge || (t.ground && t.ground !== 'tall') || t.perch || t.ramp ? 2 : 1;
+    if (fa && fl && !boss && !t.perch && !t.ramp) {
+      // (a painted floor: a tile's line is drawn only on the sides where something changes, a height or a kind of ground the rules care
+      //  about; between two tiles of one ground at one height there is only the faintest grid, so a field reads as a field)
+      const pts = [[TW / 2, 0.5], [TW - 0.5, TH / 2], [TW / 2, TH - 0.5], [0.5, TH / 2]];
+      const strong = g.strokeStyle;
+      const wide = g.lineWidth;
+      fl.seams.forEach((seam, k) => {
+        g.strokeStyle = seam ? strong : 'rgba(20,14,8,0.1)';
+        g.lineWidth = seam ? wide : 1;
+        g.beginPath();
+        g.moveTo(pts[k][0], pts[k][1]);
+        g.lineTo(pts[(k + 1) % 4][0], pts[(k + 1) % 4][1]);
+        g.stroke();
+      });
+      return Texture.from(c);
+    }
     g.beginPath();
     g.moveTo(TW / 2, 0.5);
     g.lineTo(TW - 0.5, TH / 2);

@@ -9,9 +9,12 @@ import { spawnSync } from 'node:child_process';
 const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
 const args = process.argv.slice(2);
 const flag = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : undefined);
-const [root = 'out/web', out = 'docs/samples/living-fields', tag = 'before'] = args.filter((a, i) => !a.startsWith('--') && !(args[i - 1] ?? '').match(/^--(sizes|lands|port|dsf)$/));
+const [root = 'out/web', out = 'docs/samples/living-fields', tag = 'before'] = args.filter((a, i) => !a.startsWith('--') && !(args[i - 1] ?? '').match(/^--(sizes|lands|port|dsf|army|stage)$/));
 const sizes = (flag('--sizes') ?? '393x852').split(',').map((s) => s.split('x').map(Number));
 const only = flag('--lands')?.split(',');
+// (`--army orcs [--stage 2]`: an army's wave on its road instead, one shot a size: <tag>-army-<army>-<stage>.png)
+const army = flag('--army');
+const stage = +(flag('--stage') ?? 2);
 const port = +(flag('--port') ?? 8137);
 mkdirSync(out, { recursive: true });
 const plan = JSON.parse(spawnSync(process.execPath, ['tools/living-fields/plan.mjs', '--shots'], { encoding: 'utf8' }).stdout);
@@ -43,16 +46,16 @@ for (const [w, h] of sizes) {
   await page.waitForTimeout(1200);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
   await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
-  for (const [land, list] of Object.entries(plan)) {
+  for (const [land, list] of army ? [[`army-${army}`, [{ seed: 4242, layout: String(stage) }]]] : Object.entries(plan)) {
     if (only && !only.includes(land)) continue;
     for (const { seed, layout } of list) {
-      await page.evaluate(([area, seed, party]) => {
+      await page.evaluate(([area, seed, party, army, stage]) => {
         const g = window.__game;
         const r = JSON.parse(JSON.stringify(g.run));
-        Object.assign(r, { mode: { kind: 'run' }, seed, stage: 3, area, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+        Object.assign(r, { ...(army ? { mode: { kind: 'army', army }, tier: 0, stage, area: undefined } : { mode: { kind: 'run' }, stage: 3, area }), seed, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
         document.getElementById('home').hidden = true;
         g.startRun(r);
-      }, [land, seed, PARTY]);
+      }, [land, seed, PARTY, army, stage]);
       await page.waitForTimeout(500);
       await page.evaluate(() => window.__game.autoArrange(true));
       await page.waitForTimeout(400);

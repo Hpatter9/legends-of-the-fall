@@ -81,10 +81,89 @@ The numbers are a board's average, and the share of boards with any, over 200 se
   rim) where water meets land.
 - The side face under each kind of top: earth under grass, rock under stone, and so on.
 - A worn path across the middle ground, by a side stream of the seed (looks only).
-- Shrines, walls and barrels re-skinned by land from the packs.
+- Shrines, walls and barrels by land: looked at in Step 2, left for Step 3 (they want new art).
+
 
 ### What Steps 3 and 4 will add
 
 Only the timed strikes of an army's boss arena (`hazards.ts`: rockfall, flares, geysers, spikes, grasping hands, stampede, a spring, a
 river's current) act on their own today; a plain board has none. Step 3 adds a set of traps and hazards to plain boards, by land.
 Step 4 adds the life: today a clear day on most lands has swaying grass, shimmering water and nothing else.
+
+## Step 2: floors that fit
+
+Looks only: no height, no ground and no rule of a tile is changed (`test/living-fields-floor.test.ts` checks the board is byte for byte
+the same after its floor is worked out). The old tops stay in the build as the fallback while a land's sheet loads.
+
+**Where the art comes from.** Each land takes its floor from one of the nine painted hold sheets already in the repo
+(`src/art/assault/<hold>/ground.webp`, `edges.webp`, `faces.webp`): the hold whose army fights on that land. A sheet has sixteen ground
+textures (each 4 x 4 tiles, so no single-tile repeat shows), ragged edge shapes, a waterline, and twelve cliff faces (a lip, four body
+steps, a foot). Nothing new was copied from the packs, so the game is no bigger; the sheets are fetched by URL the first time a land is
+shown and are already in the service worker's list, so they are there offline.
+
+| Land | Sheet | Ground and second ground | Path | Raised ground | Shore | Water | Faces |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Highlands | Bloodtusk (orc) | grass, grass in flower | packed dirt | grass, heather showing through | shingle | the sheet's, toned blue | earth, grey cliff when high |
+| Greenwood | Elder Root (wildwood) | grass, ferns | leaf mould | moss, roots showing through | shingle | lily water | earth, cliff |
+| Snowfields | Howling Den (beasts) | snow with tracks, patchy snow | trodden snow | snow, iced rock | trodden snow | icy water | snow-capped stone |
+| Dunes | Heart of the Maze (labyrinth) | sand, cracked clay | pebbles | sand, sandstone blocks | shingle | green pool | banked earth |
+| Ashlands | Brimstone Gate (infernal) | ash, scorched shards | trodden ash | cracked ground, basalt | none | lava from the sheet; shallows dark | lava-cracked cliff; a lava fall under lava |
+| Crypt | Barrow Necropolis (undead) | brick, mossed flags | cobbles | brick (a land of stone) | none | dark still water | stone wall |
+| Meadows | Bloodtusk, toned brighter | grass in flower, grass | packed dirt | grass in flower, trampled grass | shingle | toned blue | earth |
+| Autumn Wood | Howling Den, toned warmer | russet grass, bracken | leaf litter | russet grass | shingle | grey-blue | earth |
+| Mire | Elder Root | glowing moss, sodden grass | mud | mushroom moss | wet mud | murky lily water | mud bank |
+| Graveyard | Barrow Necropolis | grey grass in two kinds | packed earth | trampled grass, old flags | gravel | dark | earth, grave mound |
+| City Ruins | Heart of the Maze | block paving, rubble | ash | carved flags (stone) | shingle | green pool | broken stone wall |
+| Ancient Temple | Heart of the Maze | scrub, dry grass | sand | carved flags (stone) | shingle | green pool | earth, carved terrace |
+| Crystal Caves | Iron Foundry (golems), toned violet | bare rock, cobbled rock | gravel | bare rock (stone) | none | dark iridescent | cliff |
+| Forge | Iron Foundry | cobbles, packed dirt | iron plate | iron-banded flags (stone) | none | dark oily | stone wall |
+| Moonlit Shrine | Moonlit Shrine (yokai) | blue grass, grass with petals | raked gravel | mossed flags (stone) | gravel | moonlit lily pond; a red bridge | earth, stone wall |
+| War Camp | Bloodtusk | trampled grass, churned mud | packed dirt | trampled grass | wet mud | brown and murky | earth, log rampart when high |
+| Oasis | Heart of the Maze | sand; green scrub beside water | pebbles | sand, sandstone blocks | scrub | green pool | banked earth |
+
+**How it is laid** (`src/render/floorRules.ts`, pure; `floorArt.ts` loads; `boardView.ts` paints):
+
+- **Patches, not a scatter.** The second ground is laid by a smooth noise of the board's seed, so grass and heather lie in drifts. In the
+  tests fewer than one plain tile in five stands alone among another ground.
+- **Raised ground is not paved unless the land is stone.** A tile three steps up keeps the land's own ground, with rock showing through on
+  about a fifth of them. On the crypt, the ruins, the temple, the caves, the forge and the shrine it is the land's stone, as before.
+- **Ragged edges where two grounds meet.** At one height, the higher-ranked ground (`RANK`) lays a ragged edge of its own texture over its
+  neighbour, with a corner piece for a diagonal. The shape is the sheet's own; the texture is the neighbour's, so every pair of grounds
+  matches. The land's growth creeps back over a path or a bank here and there.
+- **Banks.** Water takes its bank's ground over its edge, then the sheet's line of foam, facing the land. Lands with a shore (mud in the
+  mire and the camp, shingle elsewhere) lay it on the tiles beside the water. The oasis is green wherever a tile touches water, ragged a
+  tile further out, and sand beyond.
+- **A worn path** (`pathOf`): the cheapest walk for a fighter that climbs one level, from the middle of the heroes' edge to the foes',
+  wandering by its own side stream of the seed (`0xf100a`), drawn in the middle ground only. Looks only: the fight's walking costs do not
+  read it. An army's road keeps its own track (`Tile.trail`).
+- **Faces that fit the top** (`faceOf`): earth under grass, a cliff under raised ground, stone under stone, a wet bank under water. On the
+  ashlands a lava tile at the board's edge pours down its face.
+- **A line only where something changes** (`seamsOf`). A tile's side is outlined only where its neighbour stands at another height or is
+  another kind of ground the rules care about (water, ice, lava, tall growth, a shrine, a bridge). Between two tiles of one ground at one
+  height there is only a very faint grid line (alpha 0.1), so a field reads as a field and a pond is outlined round its shore, not tile
+  by tile. The deploy marks, the hover mark and every effect's tile mark are unchanged.
+- **Turned sections.** An army's road section may lie turned: the floor is worked out on the board as it lies on the screen, so the
+  textures and edges run on across the tiles as they are seen.
+- **`BoardView.repaint()`** paints the columns again in place (used when a sheet arrives; Step 3 uses it when a tile's ground changes).
+
+**Each audit finding, and what became of it:**
+
+1. Paved high ground: fixed, as above.
+2. Two grounds on a hard line: fixed (patches and ragged edges). The oasis is laid by its water.
+3. Every tile boxed: fixed (`seamsOf`).
+4. One water for every land: fixed. Each land has its sheet's own water or a tone over it, and every bank has foam.
+5. Faces that do not match their tops: fixed (`faceOf`).
+6. The same props everywhere: **not done in this step.** The shrine crystal, the three ruined walls and the barrel are still the same
+   pictures on every land. The walls are near-black and cannot be lightened by a tint; they want new art or a pack search, which belongs
+   with Step 3's props (see the art prompts there).
+7. Bushes drawn only on the highlands: not done here; Step 4 (life) grows each land's own.
+8. No path: fixed.
+9. The bare edge: partly (the faces are now the land's own, and lava pours off the ashlands' edge); waterfalls and growth on the edge
+   are Step 4.
+
+**For the owner to look at:** the painted sheets are richer and a little darker than the old recoloured pixel tops, so the boards look
+more painted and less blocky. The meadows and the autumn wood are toned brighter to keep their old mood. The tile grid is now faint on
+flat ground; if placing heroes feels harder to read, the faint line's strength is one number (`0.1` in `boardView.ts`).
+
+**Shots:** `docs/samples/living-fields/floor-<land>-<layout>.png` (the same 51 boards as `before-*`), and `-360` and `-412` for the mire,
+the ruins and the oasis. No page errors at any size.
