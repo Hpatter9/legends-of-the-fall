@@ -1,7 +1,7 @@
 // CAM-SAFE (docs/notes/cam-safe.md): the room the camera frames the fight in is the canvas less every part of the page over it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CAM_COVERS, easeRect, SAFE, safeRect, type Rect } from '../src/render/safeRectRules';
+import { CAM_COVERS, easeRect, isCorner, SAFE, safeRect, type Rect } from '../src/render/safeRectRules';
 import { camCovers, registerCamCover, onCamCover } from '../src/camSafe';
 import { FIGHT_HUD, HORN_CORNER } from '../src/hudClear';
 
@@ -21,7 +21,13 @@ const clear = (r: Rect, c: Rect) => r.x1 <= c.x0 || c.x1 <= r.x0 || r.y1 <= c.y0
 const inside = (r: Rect, v: Rect) => r.x0 >= v.x0 && r.y0 >= v.y0 && r.x1 <= v.x1 && r.y1 <= v.y1;
 const check = (covers: Rect[]) => {
   const r = safeRect(VIEW, covers);
-  for (const c of covers) assert.ok(clear(r, c), `the safe rect ${JSON.stringify(r)} lies clear of ${JSON.stringify(c)}`);
+  for (const c of covers) {
+    // (HUD-EVEN: a small cover in a corner may lie over the room's corner, by no more than half its height less the margin)
+    if (isCorner(VIEW, c) && !clear(r, c)) {
+      const under = Math.min(r.y1, c.y1) - Math.max(r.y0, c.y0);
+      assert.ok(under <= (c.y1 - c.y0) * SAFE.CORNER - M + 0.01, `the corner cover ${JSON.stringify(c)} hides no more than half its height of ${JSON.stringify(r)}`);
+    } else assert.ok(clear(r, c), `the safe rect ${JSON.stringify(r)} lies clear of ${JSON.stringify(c)}`);
+  }
   assert.ok(inside(r, VIEW));
   return r;
 };
@@ -44,8 +50,9 @@ test('a fight with spells: the spell row is kept clear of, one row or the two of
 test('a boss wave: the boss bar under the spells is kept clear of too, and so are the combo bar and the tactic button', () => {
   const r = check([TOP, SPELLS_1, BOSS, COMBO, TACTIC, ROWS]);
   assert.equal(r.y0, 174 + M);
-  // (the tactic button in the corner over the hero rows trims the room's foot, not a strip down its side: it stays centred across)
-  assert.equal(r.y1, TACTIC.y0 - M);
+  // (a button in the corner over the hero rows trims the room's foot, not a strip down its side: it stays centred across; and, a corner
+  // cover, only half way into it: HUD-EVEN)
+  assert.equal(r.y1, (TACTIC.y0 + TACTIC.y1) / 2 - M);
   assert.equal(r.x0, M);
   assert.equal(r.x1, 393 - M);
 });
@@ -84,15 +91,22 @@ test('the tactic plaque under the spell row trims the room\'s top, the War Horn 
   const r = check([TOP, SPELLS_1, ROWS, PLAQUE, HORN]);
   assert.equal(r.x0, M);
   assert.equal(r.x1, 393 - M);
-  assert.equal(r.y0, 249 + M);
-  assert.equal(r.y1, 534 - M);
-  // (a boss's bar beside the plaque, no taller than it, costs no more room)
+  // (corner covers: each trims only half way into itself, since it hides a corner and not a band across the room)
+  assert.equal(r.y0, (178 + 249) / 2 + M);
+  assert.equal(r.y1, (534 + 590) / 2 - M);
+  // (so the plaque costs the room 40 px less than a full band under it would, and the horn 28 px less)
+  const band = safeRect(VIEW, [TOP, SPELLS_1, ROWS, { ...PLAQUE, x0: 8 }, { ...HORN, x0: 8 }]);
+  assert.equal(r.y1 - r.y0 - (band.y1 - band.y0), 35.5 + 28);
+  // (a boss's bar beside the plaque is a bar, not a corner: the room starts under it, or under the plaque's half, whichever is lower)
   const boss: Rect = { x0: 12, y0: 178, x1: 284, y1: 212 };
-  assert.deepEqual(check([TOP, SPELLS_1, boss, ROWS, PLAQUE, HORN]), r);
+  assert.equal(check([TOP, SPELLS_1, boss, ROWS, PLAQUE, HORN]).y0, Math.max(212, (178 + 249) / 2) + M);
   // (the horn alone in the corner cuts from the foot, not a strip down the side)
   const alone = check([TOP, SPELLS_1, ROWS, HORN]);
-  assert.equal(alone.y1, 534 - M);
+  assert.equal(alone.y1, (534 + 590) / 2 - M);
   assert.equal(alone.x1, 393 - M);
+  // (a cover as wide as a bar, or one away from the sides, is not a corner cover)
+  assert.ok(isCorner(VIEW, PLAQUE) && isCorner(VIEW, HORN));
+  assert.ok(!isCorner(VIEW, boss) && !isCorner(VIEW, { x0: 150, y0: 300, x1: 240, y1: 360 }));
   // (a toast and a quip keep clear of it too)
   assert.ok(FIGHT_HUD.includes(HORN_CORNER));
   registerCamCover(HORN_CORNER);
