@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.486.0',
+    date: '2026-11-11',
+    title: 'More of the board in view',
+    notes: ['The camera now treats corner buttons as corners, so the fight gets back the room the top-right tactic plaque had taken.'],
+  },
+  {
     version: '0.485.0',
     date: '2026-11-11',
     title: 'An even spell bar, and the tactic up top',
