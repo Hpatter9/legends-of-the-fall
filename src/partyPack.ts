@@ -1,4 +1,5 @@
-// HEROES-FILTER, job 2 (docs/notes/heroes-filter.md): the War Council's pack, a drawer that slides out from the right edge of the party page
+// HEROES-FILTER, job 2 (docs/notes/heroes-filter.md): the War Council's supplies ("pack" in the code's names only: the tab says
+// "Supplies", as the owner found "Pack" misleading on a button), a drawer that slides out from the right edge of the party page
 // with two tabs, the Satchel (the remedies the run takes) and the Plan (the March orders). The owner: "The satchel and plan should be on a
 // different screen in the party formation screen. Maybe a button or a slide out menu." It is a standard ornate menu (`ornateMenu`, kind
 // 'side'), pulled by a painted tab on the page's right edge, of the same family as the rune bench's pull bar (`benchSlide.ts`, and its rules
@@ -12,7 +13,8 @@ import { ELIXIR_MAX, REMEDY_LIST, SATCHEL_MAX, pickSatchel, satchelFor } from '.
 import { REMEDY_ICON } from './gearUiArt';
 import { saveMeta, type Meta } from './sim/meta';
 import { gripLanding, gripProgress, type BenchSide } from './benchSideRules';
-import { firstTab, packLine, packMarks, packShown, satchelShown, type PackState, type PackTab } from './partyPackRules';
+import { firstTab, packLine, packMarks, packShown, planChanged, satchelShown, type PackState, type PackTab } from './partyPackRules';
+import { setSetting, settings } from './settings';
 import { play } from './render/sound';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -38,14 +40,15 @@ export class PartyPack {
   readonly line = el('button', 'pbPlate ptPackLine');
   private menu: OrnateMenu | null = null;
   private which: PackTab = 'satchel';
-  private planSeen = false;
+  /** The Plan's line as the War Council opened (the default orders), to tell when they are first changed. */
+  private planOpened: string | null = null;
   private plan: PackPlan | null = null;
   private reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   constructor(private meta: Meta) {
     this.tab.id = 'ptPackTab';
     this.tab.type = 'button';
-    this.tab.append(el('i', 'gripArrow'), el('span', 'gripWord', 'Pack'));
+    this.tab.append(el('i', 'gripArrow'), el('span', 'gripWord', 'Supplies'));
     this.line.id = 'ptPackLine';
     this.line.type = 'button';
     this.line.addEventListener('click', () => this.open());
@@ -53,10 +56,10 @@ export class PartyPack {
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
   }
 
-  /** The War Council opens afresh: the drawer shut, the Plan not yet looked at. */
+  /** The War Council opens afresh: the drawer shut, no orders yet. */
   reset(): void {
     this.close(true);
-    this.planSeen = false;
+    this.planOpened = null;
     this.plan = null;
     this.refresh();
   }
@@ -64,12 +67,15 @@ export class PartyPack {
   /** The Plan for this march (`null`: no orders are open). */
   setPlan(p: PackPlan | null): void {
     this.plan = p;
+    if (p && this.planOpened === null) this.planOpened = p.line();
+    // (the orders first changed from the plain default: the Plan's mark is not shown again)
+    if (p && !settings().planChosen && planChanged(this.planOpened, p.line())) setSetting('planChosen', true);
     this.refresh();
   }
 
   private state(): PackState {
     const m = this.meta;
-    return { owned: m.satchel, pick: satchelFor(m), auto: !!m.autoRemedies, plan: this.plan ? this.plan.line() : null, planSeen: this.planSeen };
+    return { owned: m.satchel, pick: satchelFor(m), auto: !!m.autoRemedies, plan: this.plan ? this.plan.line() : null, planChosen: !!settings().planChosen };
   }
 
   /** Redraw the page's pieces: the tab (and its mark) and the line; both go while there is nothing to pack. */
@@ -83,13 +89,14 @@ export class PartyPack {
     setBadge(this.tab, marks.length ? { kind: 'new' } : null);
     const words = packLine(s);
     const wants = marks.length ? ` ${marks.map((t) => (t === 'satchel' ? 'The satchel has room for more.' : 'The plan is not yet chosen.')).join(' ')}` : '';
-    this.tab.setAttribute('aria-label', `Open the pack: ${words}.${wants}`);
+    this.tab.setAttribute('aria-label', `Open the supplies: ${words}.${wants}`);
     this.tab.setAttribute('aria-expanded', String(!!this.menu));
     if (this.line.dataset.line !== words) {
       this.line.dataset.line = words;
-      this.line.replaceChildren(medal('satchel'), el('span', '', words), el('i', 'ptPackGo'));
+      // (the satchel's medallion, or the orders' when there is only a plan)
+      this.line.replaceChildren(medal(satchelShown(s) ? 'satchel' : 'march-orders'), el('span', '', words), el('i', 'ptPackGo'));
     }
-    this.line.setAttribute('aria-label', `${words}. Open the pack`);
+    this.line.setAttribute('aria-label', `${words}. Open the supplies`);
   }
 
   /** Open the drawer (on `tab`, else the one that wants attention). `pulled` leaves it where the finger has it; else it slides in. */
@@ -98,13 +105,13 @@ export class PartyPack {
     const s = this.state();
     if (!packShown(s)) return;
     this.which = firstTab(s, tab);
-    const menu = ornateMenu({ id: 'ptPack', kind: 'side', eyebrow: 'The War Council', title: 'Satchel', sub: ' ', label: 'The pack: satchel and plan', onClose: () => this.shut() });
+    const menu = ornateMenu({ id: 'ptPack', kind: 'side', eyebrow: 'The War Council', title: 'Satchel', sub: ' ', label: 'Supplies: satchel and plan', onClose: () => this.shut() });
     this.menu = menu;
     // (the tab rides the drawer's edge while it is out: a tap or a pull to the right puts it away)
     const grip = el('button', 'ptPackTab ptPackGrip');
     grip.type = 'button';
-    grip.setAttribute('aria-label', 'Close the pack');
-    grip.append(el('i', 'gripArrow'), el('span', 'gripWord', 'Pack'));
+    grip.setAttribute('aria-label', 'Close the supplies');
+    grip.append(el('i', 'gripArrow'), el('span', 'gripWord', 'Supplies'));
     menu.card.append(grip);
     this.pull(grip, 'runes');
     // (a tap on the page beside the drawer puts it away too)
@@ -210,7 +217,6 @@ export class PartyPack {
   private draw(): void {
     const menu = this.menu;
     if (!menu) return;
-    if (this.which === 'plan' && this.plan) this.planSeen = true;
     const s = this.state();
     const marks = packMarks(s);
     const top = menu.body.scrollTop;
@@ -301,7 +307,12 @@ export class PartyPack {
     b.type = 'button';
     b.append(el('small', '', 'March orders'), el('b', '', 'Change the orders'), el('i', 'ptOrdersGo', '›'));
     b.setAttribute('aria-label', `March orders: ${p.line()}. Change them`);
-    b.addEventListener('click', () => p.open(() => this.draw()));
+    b.addEventListener('click', () =>
+      p.open(() => {
+        this.setPlan(this.plan);
+        this.draw();
+      }),
+    );
     menu.body.append(b);
     menuNote(menu.body, 'The orders hold for the whole run. March starts it with them as they stand.');
   }
