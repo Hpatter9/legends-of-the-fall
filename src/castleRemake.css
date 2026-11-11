@@ -1,6 +1,8 @@
 /* Approved Castle tab renewal: one calm header, a live throne hall and a readable building ledger. */
 .ctBar[hidden], .crPage [hidden] { display:none !important; }
-.crPage .crScroll { display:block; background:#0b1612; }
+.crPage .crScroll { display:block; background:#0b1612; isolation:isolate; }
+/* (CODEX-TOPBAR: the header's z-index is for the Castle's own scroller, which is a layer of its own (`isolation`, above). Without that it
+   was weighed against the whole home screen, and stood over the Codex and the Achievements pages (#hmSub, z-index 5).) */
 .crStage { width:100%; min-height:100%; padding:0 0 12px; color:#f4e1b8; background:radial-gradient(ellipse at 50% 0,#203027,#0b1612 70%); }
 .crStage *, .crStage *::before, .crStage *::after { box-sizing:border-box; }
 .crNavigation { position:sticky; top:0; z-index:6; background:#14211a; box-shadow:0 5px 12px #0006; }

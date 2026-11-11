@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.480.0',
+    date: '2026-11-11',
+    title: 'The War Horn moves; the Codex stays put',
+    notes: ['The War Horn now sits at the bottom left of the fight, and the spell row fits on one line.', 'The Castle\'s header no longer shows over the Codex, Achievements or quest log, and the Codex tabs keep their words whole.'],
+  },
+  {
     version: '0.479.0',
     date: '2026-11-11',
     title: 'Every hold\'s bridge has its posts',

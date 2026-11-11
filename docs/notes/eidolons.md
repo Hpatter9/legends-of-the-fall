@@ -53,7 +53,7 @@ the owner can try the call. `bindEidolon` is the call the chains will make.
 `src/eidolonCall.ts` (the horn, the sheets, the cinematic), `src/eidolonRules.ts` (pure: the shots and timings, the looks, the
 choreography, the lines, the horn's look), `src/eidolons.css`.
 
-- **The horn** (`HornView`): in the fight at the left end of the spell orbs row (`#hudSpells`, the Last Stand's `.stOrbs`), at the camp
+- **The horn** (`HornView`): in the fight in the board's bottom-left corner, on the panel's top edge (HORN-CORNER, `horn-corner.md`; it was at the left end of the spell orbs row, `#hudSpells`, and the Last Stand's is still in its `.stOrbs`), at the camp
   beside the stones (`Home` `onTopBar`). The four paintings line up exactly: `horn-empty` dimmed, `horn-light` revealed from the mouthpiece
   to the bell by the fill with a gold glow along the horn's own shape (the painted glow alone only covers the runes), `horn-ready` when
   full with a warm aura of turning runes and a sheen crossing it (eased, never blinking), its words in a small pill ("640/1000", "Full",
