@@ -2341,3 +2341,11 @@ body #spellbook h2 {
 .uiCard .fsClose { width: auto; min-width: 64px; min-height: 44px; padding: 0 10px; font: 700 13px var(--body); }
 /* the full artwork viewer on the standard double brass rim and shadow */
 dialog.heroArtViewer { border: var(--ornate-border-double); box-shadow: var(--ornate-shadow); }
+
+/* --------------------------------------------------------------------------
+   POPUP-GUARD (docs/notes/popup-guard.md): a popup that has only just appeared ignores taps for a moment. Its buttons are dimmed
+   while it does (`pgWait`), then light (`pgReady`); with reduced motion they change at once, with no fade.
+   -------------------------------------------------------------------------- */
+.pgWait :is(button, .omChoice, [role='button']) { opacity: 0.45; filter: saturate(0.4); cursor: default; }
+.pgReady :is(button, .omChoice, [role='button']) { transition: opacity 0.25s ease-out, filter 0.25s ease-out; }
+@media (prefers-reduced-motion: reduce) { .pgReady :is(button, .omChoice, [role='button']) { transition: none; } }

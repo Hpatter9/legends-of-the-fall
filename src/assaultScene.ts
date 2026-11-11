@@ -15,6 +15,7 @@
 // the battle only through the sim's own calls (`orderPlatoon`, `setFormation`, `orderUltimate`, `castSpell`, `stepAssault`). It runs as its
 // own layer over the game, with its own renderer, and gives the game back when the assault ends.
 
+import { readMs } from './popupGuardRules';
 import { Application } from 'pixi.js';
 import type { Battle, BattleEvent } from './sim/battle';
 import { TICK_MS } from './sim/battle';
@@ -253,10 +254,19 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   toast.hidden = true;
   host.append(toast);
   let toastUntil = 0;
-  const say = (text: string) => {
-    toast.textContent = text;
+  // (POPUP-GUARD: the field's lines wait their turn rather than push each other off, and each stays long enough to read)
+  const lines: { text: string; ms: number }[] = [];
+  const showLine = (l: { text: string; ms: number }) => {
+    toast.textContent = l.text;
     toast.hidden = false;
-    toastUntil = performance.now() + 2600;
+    toastUntil = performance.now() + l.ms;
+  };
+  const say = (text: string, ms = Math.max(2600, readMs(text))) => {
+    if (!toastUntil) return showLine({ text, ms });
+    // (the same line twice over is said once; a long queue drops its oldest, so the news stays current)
+    if (toast.textContent === text || lines.some((l) => l.text === text)) return;
+    lines.push({ text, ms });
+    if (lines.length > 3) lines.shift();
   };
 
   // the platoon bar
@@ -694,7 +704,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   pauseBtn.addEventListener('click', () => openPause());
   const openPause = () => {
     paused = true;
-    const menu = ornateMenu({ id: 'assaultPause', eyebrow: 'The assault', title: 'Paused', sub: `${clockWords(b.t)} of battle`, onClose: () => (paused = false) });
+    const menu = ornateMenu({ asked: true, id: 'assaultPause', eyebrow: 'The assault', title: 'Paused', sub: `${clockWords(b.t)} of battle`, onClose: () => (paused = false) });
     const grid = menuSection(menu.body, 'Battle detail', 'Lite caps the frames at 30 a second', 2);
     let now = lite;
     menuPick(grid, [false, true], lite, (x) => ({ title: x ? 'Lite' : 'Full', icon: x ? '◔' : '●' }), (x) => {
@@ -837,8 +847,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
           if (e.kind === 'weakness') {
             const weak = h.forts.find((x) => x.spec.id === e.fort)?.spec.weakness;
             if (weak) {
-              say(`Weak point discovered: ${weak.name}. ${weak.hint}`);
-              toastUntil = performance.now() + 9000;
+              say(`Weak point discovered: ${weak.name}. ${weak.hint}`, 9000);
             }
           }
           if (e.kind === 'breach') say(e.fort === 'wall' ? `The ${wallWords} is breached!` : 'The way is open!');
@@ -913,6 +922,8 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     if (toastUntil && now > toastUntil) {
       toast.hidden = true;
       toastUntil = 0;
+      const next = lines.shift();
+      if (next) showLine(next);
     }
     void ring;
   };

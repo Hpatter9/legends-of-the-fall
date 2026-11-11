@@ -81,7 +81,7 @@ export function openMarchOrders(meta: Meta, army: string, tier: number, seed: nu
   const a = armyById(army);
   const tierName = ['Normal', 'Hard', 'Elite', 'Legendary', 'Mythic'][tier] ?? 'Normal';
   const p: MarchPicks = { ...now };
-  const menu = ornateMenu({ id: 'marchOrders', eyebrow: 'The War Council', title: 'March orders', sub: `${a?.name ?? army} · ${tierName} · one order for the whole run`, kind: 'sheet' });
+  const menu = ornateMenu({ asked: true, id: 'marchOrders', eyebrow: 'The War Council', title: 'March orders', sub: `${a?.name ?? army} · ${tierName} · one order for the whole run`, kind: 'sheet' });
   const body = menu.body;
   // (the march: each order's cost and reward; a locked one says what opens it. Cursed names this run's curse; Scouted gives the report)
   const grid = menuSection(body, 'The march', 'one for the whole run', 2);
