@@ -16,7 +16,7 @@ import { SPELL_IDS, SPELLS, WALLS } from '../src/sim/spells';
 import { spellTiles } from '../src/render/fxPlace';
 import { TW } from '../src/render/iso';
 import { makeBoard } from '../src/sim/board';
-import { STAGE_ART, STAGE_NAMES, ultWeight } from '../src/ultStageRules';
+import { STAGE_ART, STAGE_NAMES, ULT_STAGES, ultWeight } from '../src/ultStageRules';
 import { SHOWCASES } from '../src/ultShowRules';
 
 const PARTS: SpellPartName[] = ['cast', 'hit', 'fly', 'land', 'stand'];
@@ -236,8 +236,9 @@ test('every hero\'s ultimate has its three stages hung on STAGE_ART: its own str
     assert.equal(arts.strike!.sheet, `ult-${kind}-strike`);
     // (the strike is two scenes staged one into the other; the wind-up's weight is the show's own)
     assert.equal(bfxClip(arts.strike!.sheet)!.cuts?.length, 2, kind);
-    assert.ok(arts.windup!.sheet.startsWith(`ultwind-${ultWeight(kind)}-`), `${kind} winds up as a ${ultWeight(kind)}`);
-    assert.equal(arts.windup!.sheet.split('-')[2], bfxClip(arts.strike!.sheet)!.el, `${kind}: one element through its three stages`);
+    // (its own wind-up once its turn has come, else the one its weight and element share)
+    assert.ok(arts.windup!.sheet === `ult-${kind}-windup` || arts.windup!.sheet.startsWith(`ultwind-${ultWeight(kind)}-`), `${kind} winds up as a ${ultWeight(kind)}`);
+    for (const stage of STAGE_NAMES) assert.equal(bfxClip(arts[stage]!.sheet)!.el, bfxClip(arts.strike!.sheet)!.el, `${kind}: one element through its three stages`);
   }
   // (a kind with no show has none, and plays what the game has)
   assert.equal(STAGE_ART.skeleton, undefined);
@@ -269,4 +270,31 @@ test('a sheet on the moment\'s layer is put by its frame\'s middle so its tile\'
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /if \(this\.bfxUlt\(by\.unit\.def, 'windup', by\.x, by\.y, ms\)\) return;/);
   assert.match(fx, /const held = this\.reduced \? \[frames\[c\.hold\]\] : frames;/, 'reduced motion holds the one frame');
+});
+
+test('a hero whose turn has come has its own wind-up and aftermath, like no other hero\'s, and a great strike', () => {
+  const own = Object.keys(SHOWCASES).filter((kind) => bfxClip(`ult-${kind}-windup`));
+  assert.ok(own.length >= 15, `${own.length} heroes done`);
+  const seen = new Map<string, string>();
+  for (const kind of own) {
+    const [wind, strike, after] = STAGE_NAMES.map((stage) => bfxClip(`ult-${kind}-${stage}`)!);
+    assert.ok(wind && strike && after, `${kind} has all three of its own`);
+    assert.equal(STAGE_ART[kind].windup!.sheet, `ult-${kind}-windup`);
+    assert.equal(STAGE_ART[kind].aftermath!.sheet, `ult-${kind}-aftermath`);
+    // (no two wind-ups and no two aftermaths are the same scenes in the same element)
+    for (const [stage, c] of [['windup', wind], ['aftermath', after]] as const) {
+      const look = `${stage}:${c.el}:${c.sc!.join('+')}`;
+      assert.ok(!seen.has(look), `${kind} and ${seen.get(look)} share ${look}`);
+      seen.set(look, kind);
+    }
+    // (epic: the strike is three tiles and more across or high, far larger than a spell's touch, and each stage has the frames for its length)
+    assert.ok(Math.max(strike.w, strike.h) >= 140 && strike.w * strike.h >= 16000, `${kind}'s strike is ${strike.w}x${strike.h}`);
+    assert.ok(strike.n >= 18 && wind.n >= 15 && after.n >= 12, `${kind}: ${wind.n}, ${strike.n}, ${after.n} frames`);
+    // (the wind-up builds: more than one scene, the hero's own part joining the weight's)
+    assert.ok(wind.sc!.length >= 2 && after.sc!.length === 2, kind);
+    // (about a tenth of a second a frame over the stage's own length)
+    const st = ULT_STAGES[kind];
+    assert.ok(Math.abs(wind.ms - st.windup.ms) <= 1 && wind.ms / wind.n >= 90 && wind.ms / wind.n <= 125, `${kind}: wind-up ${wind.ms} ms in ${wind.n}`);
+    assert.ok(Math.abs(after.ms - st.aftermath.ms) <= 1, `${kind}: aftermath ${after.ms} against ${st.aftermath.ms}`);
+  }
 });

@@ -2,6 +2,7 @@
 import { menuWell } from './ornateMenu';
 import { trophyPicture } from './trophyArt';
 import { armyChallenge, suggestedArmyTier } from './sim/armyChallenge';
+import { FADE_MS, SLIDE_MS, arrowsAt, dragShift, infoArmy, settleOn, stepTo, swipeAxis } from './armySwipeRules';
 import { powerText } from './sim/power';
 import { glyphWord } from './paintedButton';
 import { blueprintOf } from './sim/assault/assault';
@@ -61,21 +62,17 @@ export function crewOf(a: Army): string[] {
   return [...new Set(a.waves.flatMap((w) => w.foes).filter((k) => !bosses.has(k)))];
 }
 
-// Painted boss keepsakes sit on selectable campaign banners over the room painting.
-function buildScene(a: Army, locked: boolean) {
-  const root = el('div', 'asScene');
-  root.append(el('small', 'wrEyebrow', 'THE WAR ROOM'), el('h1', 'wrTitle', 'Armies'));
-  const banners = el('div', 'wrBanners');
-  const centre = ARMIES.indexOf(a);
-  for (let offset = -1; offset <= 1; offset++) {
-    const army = ARMIES[(centre + offset + ARMIES.length) % ARMIES.length];
-    const banner = el('button', `wrBanner${offset === 0 ? ' selected' : ''}`);
-    banner.dataset.armyIndex = String(ARMIES.indexOf(army));
-    banner.append(trophyPicture(bossOf(army), !locked && offset === 0), el('b', '', offset === 0 && !locked ? army.name : offset === 0 ? 'Sealed army' : 'View army'));
-    banner.setAttribute('aria-label', offset === 0 ? 'Selected army' : offset < 0 ? 'Previous army' : 'Next army');
-    banners.append(banner);
-  }
-  root.append(banners);
+// ARMIES-SWIPE: the army's card, the one thing that slides: its boss's painted keepsake on a banner, its name, and its stars (or,
+// sealed, what opens it).
+function buildCard(a: Army, m: Meta): HTMLElement {
+  const open = armyUnlocked(m, a.id);
+  const root = el('section', `asCard${open ? '' : ' locked'}${armyCleared(m, a.id) ? ' done' : ''}${armyIsNew(m, a.id) ? ' fresh' : ''}${conquered(m, a.id) ? ' conquered' : ''}`);
+  root.dataset.army = a.id;
+  const banner = el('div', 'wrBanner selected');
+  banner.append(trophyPicture(bossOf(a), open), el('b', '', open ? a.name : 'Sealed army'));
+  if (open) banner.append(el('small', 'wrBannerStars', `★ ${armyStars(m, a).got}/${ARMY_STARS}${conquered(m, a.id) ? ' · Conquered' : ''}`));
+  else banner.append(el('small', 'wrBannerLock', unlockLine(a, m)), el('small', 'wrBannerNeed', progressLine(m, armyNeed(a.id))));
+  root.append(banner);
   return root;
 }
 
@@ -84,94 +81,150 @@ function buildScene(a: Army, locked: boolean) {
 /** The tier last picked on each army's card, kept while the page lives. */
 const picked: Record<string, number> = {};
 
-/** The Armies screen's body: the carousel of full-screen cards, opening on the furthest army unlocked. */
+/** The Armies screen's body: the War Room, with one army's card in it and that army's information under it, opening on the furthest
+ *  army unlocked. ARMIES-SWIPE (`armySwipeRules.ts`): only the card slides, with the finger or an arrow; the room, the arrows and
+ *  the information stay where they are, and the information changes once the card has settled. */
 export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void {
   body.classList.add('asBody', 'wrBody');
   const root = el('div', 'asRoot');
   body.append(root);
+  const n = ARMIES.length;
   const focus = ARMIES.findIndex((a) => a.id === hooks.focus);
-  let index = focus >= 0 ? focus : Math.max(0, ARMIES.map((a) => armyUnlocked(m, a.id)).lastIndexOf(true));
-  const track = el('div', 'asTrack');
-  const dots = el('div', 'asDots');
-  const cards: { root: HTMLElement }[] = [];
+  /** The army the card is on (or sliding to), and the one the information shows. */
+  let card = focus >= 0 ? focus : Math.max(0, ARMIES.map((a) => armyUnlocked(m, a.id)).lastIndexOf(true));
+  let shown = card;
+  let moving = false;
+  const still = (): boolean => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const render = (): void => {
-    track.replaceChildren();
-    dots.replaceChildren();
-    cards.length = 0;
-    ARMIES.forEach((a, i) => {
-      const c = card(a, i, m, hooks);
-      c.root.querySelectorAll<HTMLButtonElement>('.wrBanner').forEach((b) => {
-        const target = Number(b.dataset.armyIndex);
-        const other = ARMIES[target];
-        const open = armyUnlocked(m, other.id);
-        b.replaceChildren(trophyPicture(bossOf(other), open), el('b', '', open ? other.name : 'Sealed army'));
-        b.setAttribute('aria-label', open ? other.name : 'Sealed army');
-        b.setAttribute('aria-pressed', String(target === i));
-        b.addEventListener('click', () => go(target));
-      });
-      cards.push(c);
-      track.append(c.root);
-      const d = el('button', 'asDot');
-      d.setAttribute('aria-label', a.name);
-      d.addEventListener('click', () => go(i));
-      dots.append(d);
-    });
-    mark();
-  };
-  const go = (i: number): void => {
-    const to = Math.max(0, Math.min(ARMIES.length - 1, i));
-    track.scrollTo({ left: to * track.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
-  };
-  const mark = (): void => {
-    [...dots.children].forEach((d, i) => d.classList.toggle('on', i === index));
-    cards.forEach((c, i) => {
-      c.root.classList.toggle('near', Math.abs(i - index) <= 1);
-      c.root.inert = i !== index;
-    });
-    prev.hidden = index === 0;
-    next.hidden = index === ARMIES.length - 1;
-    // (a dot is dark when its army is locked)
-    [...dots.children].forEach((d, i) => d.classList.toggle('shut', !armyUnlocked(m, ARMIES[i].id)));
-  };
+  const scene = el('div', 'asScene');
+  scene.append(el('small', 'wrEyebrow', 'THE WAR ROOM'), el('h1', 'wrTitle', 'Armies'));
+  const track = el('div', 'asTrack');
+  const strip = el('div', 'asStrip');
+  const cards = ARMIES.map((a) => buildCard(a, m));
+  strip.append(...cards);
+  track.append(strip);
+  const dots = el('div', 'asDots');
+  ARMIES.forEach((a, i) => {
+    const d = el('button', `asDot${armyUnlocked(m, a.id) ? '' : ' shut'}`);
+    d.setAttribute('aria-label', armyUnlocked(m, a.id) ? a.name : 'Sealed army');
+    d.addEventListener('click', () => go(i));
+    dots.append(d);
+  });
   const prev = el('button', 'asArrow left', '‹');
   const next = el('button', 'asArrow right', '›');
   prev.setAttribute('aria-label', 'Previous army');
   next.setAttribute('aria-label', 'Next army');
-  prev.addEventListener('click', () => go(index - 1));
-  next.addEventListener('click', () => go(index + 1));
+  prev.addEventListener('click', () => go(card - 1));
+  next.addEventListener('click', () => go(card + 1));
   const back = el('button', 'asBack', '‹ Back');
   glyphWord(back);
   back.addEventListener('click', () => hooks.onBack());
+  // (the arrows stand beside the card's window, so they are centred on the card whatever the room's height)
+  const stage = el('div', 'asStage');
+  stage.append(track, prev, next);
+  scene.append(stage, dots);
+  const host = el('div', 'asInfoHost');
+  root.append(scene, host, back);
 
-  track.addEventListener('scroll', () => {
-    const w = track.clientWidth || 1;
-    const now = Math.round(track.scrollLeft / w);
-    cards.forEach((c, i) => {
-      if (Math.abs(i - track.scrollLeft / w) < 1.2) c.root.style.setProperty('--par', String(((i * w - track.scrollLeft) / w).toFixed(3)));
-    });
-    if (now !== index) {
-      index = now;
-      mark();
+  /** Where the strip of cards is drawn: on an army, and `shift` px off it (a drag). */
+  const lay = (i: number, shift: number, slide: boolean): void => {
+    strip.style.transition = slide ? `transform ${SLIDE_MS}ms cubic-bezier(0.2, 0.8, 0.2, 1)` : 'none';
+    strip.style.transform = `translate3d(calc(${-i * 100}% + ${shift.toFixed(1)}px), 0, 0)`;
+  };
+  const mark = (): void => {
+    [...dots.children].forEach((d, i) => d.classList.toggle('on', i === card));
+    cards.forEach((c, i) => c.setAttribute('aria-hidden', String(i !== card)));
+    const on = arrowsAt(card, n);
+    prev.disabled = !on.prev;
+    next.disabled = !on.next;
+  };
+  /** The information of the army shown: a new well laid over the old, which fades away under it (at once with reduced motion). */
+  const showInfo = (fade: boolean): void => {
+    const old = [...host.children] as HTMLElement[];
+    const well = infoOf(ARMIES[shown], m, hooks, host);
+    if (!fade || still()) {
+      old.forEach((o) => o.remove());
+      return;
     }
-  });
-  root.append(track, dots, prev, next, back);
-  render();
-  // (the first look: on the furthest army, without a slide)
-  // (the dots and arrows sit over the scenes: they follow the scene's height, which takes the page's slack)
-  const fit = () => {
-    const h = track.querySelector<HTMLElement>('.asScene')?.offsetHeight;
-    if (h) root.style.setProperty('--sceneH', `${h}px`);
+    old.forEach((o) => (o.inert = true));
+    well.classList.add('in');
+    setTimeout(() => {
+      old.forEach((o) => o.remove());
+      well.classList.remove('in');
+    }, FADE_MS);
   };
-  const place = () => {
-    fit();
-    track.scrollLeft = index * track.clientWidth;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  /** The card has come to rest: only now may the information change, and only if the card rests on another army. */
+  const settle = (): void => {
+    clearTimeout(timer);
+    timer = undefined;
+    moving = false;
+    scene.classList.remove('sliding');
+    const to = infoArmy(shown, card, moving);
+    if (to === shown) return;
+    shown = to;
+    showInfo(true);
+  };
+  /** Send the card to an army (an arrow, a dot, a drag let go): it slides there, then settles. */
+  const go = (i: number): void => {
+    card = stepTo(i, n);
     mark();
+    if (still()) {
+      lay(card, 0, false);
+      settle();
+      return;
+    }
+    moving = true;
+    scene.classList.add('sliding');
+    lay(card, 0, true);
+    clearTimeout(timer);
+    // (the transition's own end is the signal; the timer is for a slide that had nowhere to go, or a page in the background)
+    timer = setTimeout(settle, SLIDE_MS + 80);
   };
-  const observer = new ResizeObserver(() => place());
-  observer.observe(track);
-  requestAnimationFrame(place);
+  strip.addEventListener('transitionend', (e) => {
+    if (e.target === strip && e.propertyName === 'transform' && moving) settle();
+  });
 
+  // (the drag: a finger on the room takes the card with it; a touch going up or down is left to the page)
+  let drag: { id: number; x: number; y: number; axis: 'x' | 'y' | null; dx: number; trail: { t: number; x: number }[] } | null = null;
+  scene.addEventListener('pointerdown', (e) => {
+    if (drag || moving || !e.isPrimary || (e.target as HTMLElement).closest('button')) return;
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, axis: null, dx: 0, trail: [{ t: e.timeStamp, x: e.clientX }] };
+  });
+  scene.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x;
+    if (!drag.axis) {
+      drag.axis = swipeAxis(dx, e.clientY - drag.y);
+      if (drag.axis === 'x') {
+        scene.setPointerCapture(e.pointerId);
+        scene.classList.add('dragging');
+      }
+    }
+    if (drag.axis !== 'x') return;
+    drag.dx = dx;
+    drag.trail.push({ t: e.timeStamp, x: e.clientX });
+    if (drag.trail.length > 6) drag.trail.shift();
+    if (!still()) lay(card, dragShift(card, n, dx, track.clientWidth || 1), false);
+  });
+  const lift = (e: PointerEvent, dropped: boolean): void => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag;
+    drag = null;
+    scene.classList.remove('dragging');
+    if (d.axis !== 'x') return;
+    // (the finger's speed over its last moments, px a millisecond: a flick turns the card too)
+    const then = d.trail.find((s) => e.timeStamp - s.t <= 100) ?? d.trail[d.trail.length - 1];
+    const span = e.timeStamp - then.t;
+    const speed = span > 0 ? (e.clientX - then.x) / span : 0;
+    go(dropped ? card : settleOn(card, n, d.dx, track.clientWidth || 1, speed, still()));
+  };
+  scene.addEventListener('pointerup', (e) => lift(e, false));
+  scene.addEventListener('pointercancel', (e) => lift(e, true));
+
+  lay(card, 0, false);
+  mark();
+  showInfo(false);
 }
 
 const crowns = (n: number): HTMLElement => {
@@ -183,31 +236,18 @@ const crowns = (n: number): HTMLElement => {
 /** What the Auto toggle was last set to (it is kept while the cards are redrawn). */
 const autoPick = { on: false, count: 3 as number };
 
-function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElement } {
+/** An army's information, under its card: a well of its own, put in `host`. */
+function infoOf(a: Army, m: Meta, hooks: ArmiesHooks, host: HTMLElement): HTMLElement {
   const open = armyUnlocked(m, a.id);
   const rec = recordOf(m, a.id);
   const done = armyCleared(m, a.id);
-  const fresh = armyIsNew(m, a.id);
   const boss = UNITS[bossOf(a)];
-  const root = el('section', `asCard${open ? '' : ' locked'}${done ? ' done' : ''}${fresh ? ' fresh' : ''}`);
-  root.dataset.army = a.id;
-  const scene = buildScene(a, !open);
-  const rib = el('div', 'asRib');
-  // (the Assault: a conquered army's card turns to our colours, its waves the "Remnants" still to farm)
+  // (the Assault: a conquered army's waves are the "Remnants" still to farm)
   const fallen = conquered(m, a.id);
-  rib.append(el('b', '', open ? (fallen ? `${a.name} · Conquered` : a.name) : '???'));
-  if (fallen) root.classList.add('conquered');
-  scene.append(rib);
-  if (fresh) scene.append(el('i', 'armyNew', 'NEW'));
-  if (!open) {
-    const lock = el('div', 'asLock');
-    lock.append(el('b', '', unlockLine(a, m)), el('small', '', `${progressLine(m, armyNeed(a.id))} · ${a.waves.length} waves · ${landsOf(a).map((l) => AREA_NAMES[l]).join(' and ')}`));
-    scene.append(lock);
-  }
-  const info = menuWell(root);
+  const info = menuWell(host);
   info.classList.add('asInfo');
+  info.dataset.army = a.id;
   if (!open) info.classList.add('shut');
-  root.append(scene, info);
   const running = hooks.running?.army === a.id ? hooks.running : null;
   const stars = armyStars(m, a);
   const tiers = TIERS.map((_, t) => ({ open: open && tierOpen(m, a, t), got: tierStars(rec, t) }));
@@ -221,7 +261,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
     summary.title = `Estimated target strength ${powerText(advice.target)}. Formation, bonds, spells and castle bonuses can change the outcome.`;
     info.append(el('h3', 'wrArmyName', open ? a.name : 'Sealed campaign'), summary, el('p', 'asHint', 'Challenge estimate · review your party before marching'));
     const bosses = bossesOf(a);
-    info.append(el('p', 'asBlurb', fallen ? `Remnants of the ${a.name.replace(/^The /, '')}: its waves still march, and its hold pays tribute.` : a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ''}`));
+    info.append(el('p', 'asBlurb', fallen ? `Remnants of the ${a.name.replace(/^The /, '')}: its waves still march, and its hold pays tribute.` : a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ` · ${landsOf(a).map((l) => AREA_NAMES[l]).join(' and ')}`}`));
     // the tier picks
     const picks = el('div', 'asTiers');
     TIERS.forEach((t, ti) => {
@@ -380,7 +420,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
     }
   };
   draw();
-  return { root };
+  return info;
 }
 
 /** A button that asks first: the first tap changes its words, the second does it (and a pause puts it back). */

@@ -41,6 +41,8 @@ export interface BfxClip {
   el: string;
   /** A staged effect's stages, each its first and last frame (a wind-up, a strike, an aftermath). */
   cuts?: number[][];
+  /** A staged effect's scenes, in order (the library's names: what the effect is made of). */
+  sc?: string[];
   /** Its soft glow's frames (a light effect only). */
   g?: BfxGlow;
 }
@@ -158,7 +160,10 @@ export type UltStageName = 'windup' | 'strike' | 'aftermath';
 export function ultBfx(kind: string, stage: UltStageName, weight: string): string | undefined {
   const strike = BFX_CLIPS[`ult-${kind}-strike`];
   if (!strike) return undefined;
-  const key = stage === 'strike' ? `ult-${kind}-strike` : stage === 'windup' ? `ultwind-${weight}-${strike.el}` : `ultafter-${strike.el}`;
+  // (a hero whose turn has come has its own wind-up and aftermath, `ult-<kind>-windup` and `-aftermath`; the rest share one by weight and
+  // element, and one by element, until theirs are made)
+  if (BFX_CLIPS[`ult-${kind}-${stage}`]) return `ult-${kind}-${stage}`;
+  const key = stage === 'windup' ? `ultwind-${weight}-${strike.el}` : `ultafter-${strike.el}`;
   return BFX_CLIPS[key] ? key : undefined;
 }
 

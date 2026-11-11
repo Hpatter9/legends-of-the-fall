@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.504.0',
+    date: '2026-11-11',
+    title: 'Armies: only the card swipes',
+    notes: ['On the Armies page only the army\'s card slides; the details under it stay put and change once the card has settled.', 'The left and right arrows are matching painted orbs, centred on the card and dimmed at the first and last army.'],
+  },
+  {
+    version: '0.503.0',
+    date: '2026-11-11',
+    title: 'Fuller ground, bigger ultimates',
+    notes: ['Burning, frozen and other elemental ground now fills each tile edge to edge, so patches join with no gaps.', 'Fifteen ultimates gain their own wind-up and aftermath and a strike half as large again. The rest follow in batches.'],
+  },
+  {
     version: '0.502.0',
     date: '2026-11-11',
     title: 'Askel\'s call, a little lighter',
