@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.501.0',
+    date: '2026-11-11',
+    title: 'Askel strikes with force',
+    notes: ['Askel\'s call is remade to hit hard: a taller pillar that cracks the ground, a white flash, a wall of fire wider than the screen, then two more blasts.', 'Smoke columns, falling embers and glowing cracks linger on the field as the fight carries on.'],
+  },
+  {
+    version: '0.500.0',
+    date: '2026-11-11',
+    title: 'Seventy ultimates, each its own strike',
+    notes: ['Every hero\'s ultimate has a new animated strike of its own in its element, with a rendered wind-up on the caster and an aftermath where it lands.', 'The effects fill the longer, three-stage ultimates. The download grows by about 1.6 MB.'],
+  },
+  {
     version: '0.499.0',
     date: '2026-11-11',
     title: 'Askel\'s call, staged in fire',
