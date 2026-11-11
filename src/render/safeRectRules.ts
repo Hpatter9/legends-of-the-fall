@@ -8,7 +8,8 @@
 // The rule: start from the room (the canvas), then take each cover away, biggest first. A cover that lies over the room cuts it back from
 // one side: from the top (to the cover's bottom), the bottom (to its top), the left or the right, whichever keeps the most room, so a bar
 // across the top cuts from the top and a column down the side from that side. A button in a corner cuts from the top or the bottom unless
-// a side costs clearly less (`LEVEL`), so the room stays centred across the upright screen. A cut
+// a side costs clearly less (`LEVEL`), so the room stays centred across the upright screen. A small cover in a corner (`isCorner`) is cut
+// only half way into from the top or the bottom (`CORNER`): it hides a corner, not a band. A cut
 // that would leave less than `MIN` across or down is not made (the cover is then too big to frame round, as a sheet over the whole
 // screen; the room is kept as it was). Then a small margin all round, so the fight never sits right against a bar.
 
@@ -27,10 +28,21 @@ export const SAFE = {
   MIN_H: 140,
   /** How much more a cut from the top or the bottom is worth than one from a side. */
   LEVEL: 1.15,
+  /** HUD-EVEN: a corner cover is one against a side edge of the view (within `EDGE` px) and no wider than this share of the view. */
+  CORNER_W: 1 / 3,
+  EDGE: 16,
+  /** How far into a corner cover a cut from the top or the bottom goes (a share of the cover's height). */
+  CORNER: 0.5,
 };
 
 const area = (r: Rect): number => Math.max(0, r.x1 - r.x0) * Math.max(0, r.y1 - r.y0);
 const overlaps = (a: Rect, b: Rect): boolean => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+
+/** Whether a cover is a corner cover of `view`: against its left or right edge and no wider than a third of it. */
+export function isCorner(view: Rect, c: Rect): boolean {
+  const side = c.x0 - view.x0 <= SAFE.EDGE || view.x1 - c.x1 <= SAFE.EDGE;
+  return side && c.x1 - c.x0 <= (view.x1 - view.x0) * SAFE.CORNER_W;
+}
 
 /** The room left once `covers` are taken from `view`, with the margin. Covers with no size are skipped. */
 export function safeRect(view: Rect, covers: readonly Rect[], o: { margin?: number; minW?: number; minH?: number } = {}): Rect {
@@ -43,9 +55,13 @@ export function safeRect(view: Rect, covers: readonly Rect[], o: { margin?: numb
     if (!overlaps(r, c)) continue;
     // (a cut from the top or the bottom is worth a little more: on an upright phone the room had best stay centred across, so a button in a
     // corner trims the room's foot rather than a strip down its whole side, unless that costs clearly more)
+    // (HUD-EVEN: a small cover in a corner (the tactic button's plaque under the spell row, the War Horn over the hero rows) hides only that
+    // corner, not a band across the whole room: a cut from the top or the bottom goes only half way into it. The fight is centred and
+    // framed in the room, so what stands in a corner of it is the far edge of the frame, inside the frame's own padding)
+    const deep = isCorner(view, c) ? (c.y1 - c.y0) * (1 - SAFE.CORNER) : 0;
     const cuts = [
-      { r: { ...r, y0: Math.max(r.y0, c.y1) }, k: SAFE.LEVEL },
-      { r: { ...r, y1: Math.min(r.y1, c.y0) }, k: SAFE.LEVEL },
+      { r: { ...r, y0: Math.max(r.y0, c.y1 - deep) }, k: SAFE.LEVEL },
+      { r: { ...r, y1: Math.min(r.y1, c.y0 + deep) }, k: SAFE.LEVEL },
       { r: { ...r, x0: Math.max(r.x0, c.x1) }, k: 1 },
       { r: { ...r, x1: Math.min(r.x1, c.x0) }, k: 1 },
     ].filter(({ r: k }) => k.x1 - k.x0 >= minW && k.y1 - k.y0 >= minH);

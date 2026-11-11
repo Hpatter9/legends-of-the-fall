@@ -1,6 +1,6 @@
 # HUD-EVEN: the spell row across the whole screen, the tactic button in the Formation button's corner
 
-Branch `claude/hud-even`, from main 0.482.0. The owner: "Let's even out the spell bar across the whole screen. No gap that way. And move
+Branch `claude/hud-even`, from main 0.482.0, with main 0.484.0 merged in. The owner: "Let's even out the spell bar across the whole screen. No gap that way. And move
 the tactics button up to where the formation button usually is in between waves." The version is unchanged.
 
 ## 1. The spell row spans the screen
@@ -65,18 +65,26 @@ turned to face the field, as HORN-RIGHT made them (`tools/horn-corner/shots.mjs`
 
 - The covers are the same selectors (`#hudSpells`, `#tacticBtn`, `#bossBar`, `#panel > .ehFight`), measured where they now are; the
   dock is watched for size (`watchTopHud`). The room is cut from the top to the plaque's foot and from the foot to the horn's top.
-- **The cost.** The plaque under the row is taller than a boss's bar, so the camera's room now always starts at y 257 (it started at 182
-  with no boss and 220 with one), and the horn alone cuts the foot 10 px lower than the tactic button did:
+- **A corner cover hides a corner, not a band** (`isCorner`, `SAFE.CORNER`, `src/render/safeRectRules.ts`; the director's ask: "trim only
+  what it truly hides, not a full-width band"). The room is a rectangle, so a cover in a corner used to cost a band across the whole
+  room as deep as the cover. Now a cover against a side edge and no wider than a third of the screen (the plaque, the War Horn, the combo
+  bar) is cut only half way into from the top or the bottom. The fight is centred and framed in the room with its own padding, so what
+  can stand in that corner of the room is the far edge of the frame: at most 27 px of the room's corner lies under the plaque and 20 px
+  under the horn. A bar across the top or the foot, and a column cut from the side, are cut in full as before.
+- **The room, measured** (px tall; 0.482 is main before this branch, with the tactic button at the bottom):
 
-| Size | The room before (no boss / boss) | The room after | Lost |
+| Size | 0.482, no boss / boss | HUD-EVEN, any wave | Change |
 | --- | --- | --- | --- |
-| 393x852 | 337 px / 299 px tall | 272 px | 65 / 27 px |
-| 360x780 | 265 / 227 | 200 | 65 / 27 |
-| 412x915 | 400 / 362 | 335 | 65 / 27 |
+| 393x852 | 337 / 299 (y 182 or 220 to 519) | 335 (y 222 to 557) | −2 / +36 |
+| 360x780 | 265 / 227 (to 447) | 263 (y 222 to 485) | −2 / +36 |
+| 412x915 | 400 / 362 (to 582) | 398 (y 222 to 620) | −2 / +36 |
 
-  The action still sits at the room's middle (within 4 px across and 7 px down in every case and size). At 360 the room is now 200 px
-  tall, which is the tightest it has been; if that reads cramped, a shorter plaque in the fight (one line: icon and word, 44 px) would
-  give 27 px back, at the price of not matching Formation's size.
+  Without the corner rule the plaque would have cost a full band: the room was 272, 200 and 335 px (65 px less than 0.482 with no boss).
+  With it the room starts under the plaque's middle (which is where a boss's bar ends too, so a boss no longer changes the room) and
+  ends at the horn's middle. A duel's room is taller than before (its foot was cut by the tactic button, which is now up beside the
+  duel's bar): y 258 to 787 at 393, where it ended at 711.
+- The action sits at the room's middle: within 6 px across and 5 px down in every case and size. (One duel reading at 393 in the full
+  run was 12 px down: the shot caught the camera still easing. Three re-runs of that case gave 2, 3 and 5 px.)
 - A toast's lane in a fight starts under the plaque too (`fightToastTop`), and a quip keeps clear of it (`FIGHT_HUD`).
 
 ## Checks (`tools/hud-even/shots.mjs`, shots in `docs/samples/hud-even/`)
@@ -85,8 +93,9 @@ turned to face the field, as HORN-RIGHT made them (`tools/horn-corner/shots.mjs`
 fight), every count of orbs from none to four with and without ULT, a boss wave, the tactic's word after a tap, a twist's banner (shown
 by hand: the modes with twists are hidden), and a duel. It checks: the gaps even to 1 px, the margins equal, edge to edge or a centred
 group of four pieces or fewer, one line; the plaque out of the panel, on Formation's right edge, at Formation's size, under the row,
-over no other part; the boss's bar short of it; the horn in the corner over nothing; the camera's room below the plaque and above the
-horn; the action at the room's middle; the word under the plaque clear of it, the bar and the row. 651 checks, no page error.
+over no other part; the boss's bar short of it; the horn in the corner over nothing; the camera's room from the plaque's middle to the
+horn's middle (corner covers); the action at the room's middle; the word under the plaque clear of it, the bar and the row. 651 checks,
+no page error; 650 passed in the full run and the one duel reading above passed on each of three re-runs.
 `ROOT=<a build of main> TAG=before` takes the "before" shots.
 
 - `before-*`, `after-*`: `handover-deploy`, `handover-fight`, `spells-0` to `spells-4`, `spells-0-noult` to `spells-4-noult`, `boss`,
@@ -99,5 +108,6 @@ horn; the action at the room's middle; the word under the plaque clear of it, th
 
 - `test/fight-hud.test.ts`: `spellRowGap` and `spellRowSpans` at the three sizes: three or four orbs run edge to edge, one or none stand
   as a group, a full row at 360 fits at 3 px, a row too full keeps the least gap.
-- `test/safe-rect.test.ts`: the plaque under the row trims the room's top, the horn in the corner its foot, a boss's bar beside the
-  plaque costs no more, and the room stays centred across.
+- `test/safe-rect.test.ts`: the plaque and the horn are corner covers and each trims the room only half way into itself (63.5 px less
+  than two full bands), a boss's bar beside the plaque is a bar and is cut in full, a cover as wide as a bar or away from the sides is
+  not a corner cover, and the room stays centred across.

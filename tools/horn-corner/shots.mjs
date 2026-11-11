@@ -120,7 +120,7 @@ function report(name, w, i, wantHorn) {
     check(!i.tactic || i.tactic[3] < i.horn[1] - 100, `${name}-${w}: the tactic button is up under the spell row, far above it`);
     check(!i.hits.length, `${name}-${w}: the horn lies over no other part`);
     check(i.cutLeft + Math.min(200, w * 0.56) <= i.horn[0], `${name}-${w}: a skill's banner stops short of the horn`);
-    check(i.safe[3] <= i.horn[1], `${name}-${w}: the camera's room ends above the horn`);
+    check(i.safe[3] <= Math.ceil((i.horn[1] + i.horn[3]) / 2) - 7, `${name}-${w}: the camera's room ends no lower than half way up the horn (a corner cover)`);
   }
   if (i.rowH && w >= 393) check(i.rowH <= 56, `${name}-${w}: the spell row is one line (${i.rowH} px)`);
   check(i.cutLeft === 0, `${name}-${w}: a skill's banner comes in at the left edge`);
