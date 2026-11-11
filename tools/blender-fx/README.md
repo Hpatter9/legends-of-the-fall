@@ -13,7 +13,11 @@ pixel size (about 90 px across for a two-tile effect), cut to about 14 colours s
 the alpha, and keep a soft glow underneath for light effects (heals, holy, lightning). See
 `docs/samples/blender-fx/` for smooth against pixelated.
 
-## Eidolons (a trial)
+## Eidolons
+
+`eidolons/parts.py` renders an Eidolon's ground show as six small pieces and `eidolons/parts_finish.py` packs them as the sheets the game
+loads (`src/art/eidolons/fx/askel-stage-*.webp`, played by `src/eidolonStage.ts`); `eidolons/cast_samples.py` builds the samples from
+`eidolons/shots.mjs`'s pictures of the real game. The trial that came first:
 
 `eidolons/askel.py` stages the fire Eidolon's whole summoning (8 seconds, 96 frames) in one scene; `eidolons/finish.py` gives it the
 pixelated finish and lays it over a real fight; `eidolons/shots.mjs` takes today's cast and the plate. See `docs/notes/eidolon-blender.md`

@@ -59,6 +59,12 @@ import smokeDark from './art/fx/vfx/smoke_dark.png';
 import darkCircle from './art/fx/magic/dark_circle.png';
 import { faultLine, fxBudget, FX_CELL, jagged, pillarOrder, RING, spreadShocks, STRIKE_FX, type FxStrip, type StrikeLook } from './eidolonFx';
 import type { Fx } from './render/fx';
+import type { Sprite as GroundSprite } from 'pixi.js';
+import { at as tileTop, depth as tileDepth, TW } from './render/iso';
+import { tileAt } from './sim/board';
+import { GroundSheet, groundDecal, groundFrames, loadGroundSheet, type GroundTile } from './render/groundSheet';
+import { pillarAt, pillarMs, riseIn, risePass, scorchFrame, sigilEnd, sigilFrame, sigilSpot, stageBudget, STAGED, wavePlan, type StagedLook, type StageTile } from './eidolonStage';
+import { stageEl, stageScale } from './stageSheet';
 import { play, duck } from './render/sound';
 import { settings } from './settings';
 
@@ -239,6 +245,24 @@ interface Playing {
   monFrom: { x: number; y: number } | null;
   monStand: { x: number; y: number } | null;
   buildT: number;
+  /** EIDOLON-BLENDER: its staged ground show (the sigil, the pillar, the strike across the tiles), for an Eidolon that has one. */
+  stage: StageRun | null;
+}
+
+/** EIDOLON-BLENDER: one call's staged show. Its clock is the call's while it plays (so it freezes on the blow and follows a skip) and
+ *  runs on by itself afterwards, while the sigil and the scorched ground cool under the fight. */
+interface StageRun {
+  look: StagedLook;
+  m: MomentTimes;
+  t: number;
+  /** The sigil's tile and its place on the page; the board's scale (screen px to one of its own). */
+  spot: StageTile | null;
+  k: number;
+  sigil: GroundSheet | null;
+  glow: HTMLElement | null;
+  pillar: boolean;
+  /** The scorched tiles: each patch and when it was burnt (on the show's clock). */
+  scorch: { sp: GroundSprite; at: number }[];
 }
 
 export class EidolonCall {
@@ -289,6 +313,13 @@ export class EidolonCall {
     this.refresh(b);
     // (the figure loaded before it is needed, so the cinematic never waits on it)
     if (id && hornReady(m)) new Image().src = figureUrl(id);
+    // (EIDOLON-BLENDER: and its staged sheets: the ground's for the board, the standing ones for the page)
+    const st = id && hornReady(m) ? STAGED[id] : undefined;
+    if (st) {
+      void loadGroundSheet(st.sigil);
+      void loadGroundSheet(st.scorch);
+      for (const sh of [st.pillar, st.blast, st.fire, st.smoke]) new Image().src = `eidolons/fx/${sh.sheet}.webp`;
+    }
   }
 
   /** Each frame: the page's battle (a new wave's deploy shows the horn as the save holds it, not the last fight's blown one). */
@@ -447,6 +478,7 @@ export class EidolonCall {
 
   /** The fight is over or left: the cinematic and the sheet go. */
   clear(): void {
+    this.dropStage();
     if (this.p) this.end();
     this.closeSheet();
     this.b = null;
@@ -456,13 +488,17 @@ export class EidolonCall {
 
   /** The board's layer (the trail, the runs, the walls, the aftermath): framed with the board's picture. */
   private board: HTMLElement = el('div', 'ecBoard');
+  /** EIDOLON-BLENDER: what stands in front of the painting (the flames at the pillar's foot). */
+  private front: HTMLElement = el('div', 'ecBoard ecFront');
+  /** The staged show playing, or still cooling under the fight after its call. */
+  private stageRun: StageRun | null = null;
 
   private start(e: Eidolon, first: boolean): void {
     // (ULT-EPIC 2: in full it is this Eidolon's own length, 4 to 10 s by its weight; with Auto on, the short call)
     const m = momentOf(first, settings().eidolonFull, e.id, !!this.opts.auto?.());
     this.longCall = !!m.BARS;
     const calls = this.opts.meta().eidolons?.calls ?? 0;
-    const spec = PASS[e.id] ?? PASS.askel;
+    let spec = PASS[e.id] ?? PASS.askel;
     const src = SOURCES[e.id] ?? SOURCES.askel;
     const look = LOOKS[e.element];
     const L = this.layer;
@@ -478,6 +514,11 @@ export class EidolonCall {
     // (the ground line it runs along: the foes' rows on the board, so its prints fall among them)
     const ground = this.foeGround();
     this.board = el('div', 'ecBoard');
+    // (EIDOLON-BLENDER: a staged Eidolon's sigil lies where its painting comes on, and the painting leaps out of the pillar there)
+    this.dropStage();
+    const stage = this.stageFor(e, m, ground);
+    if (stage?.spot) spec = risePass(spec, stage.spot.x / W, stage.spot.y / H, ground);
+    this.stageRun = stage;
     // (the trail, laid down as it passes: a pool of the element's light and the mark's strip at each)
     const marks = marksOf(spec, ground).map((mark) => {
       const x = mark.x * W;
@@ -538,11 +579,12 @@ export class EidolonCall {
     }
     const flash = el('i', 'ecFlash');
     const skip = el('small', 'ecSkip', first ? '' : 'Tap to skip');
-    L.append(dim, wash, this.board, shadow, fig, hornBlast, bars, name, say, flash, skip);
+    this.front = el('div', 'ecBoard ecFront');
+    L.append(dim, wash, this.board, shadow, fig, this.front, hornBlast, bars, name, say, flash, skip);
     this.p = {
       e, m, first, t: 0, beats: beatTimes(m, CHOREO[e.id]?.length ?? 3), beatsDone: 0, struck: [], releasing: false, struckDone: false, stopLeft: 0, shot: '', snapLeft: 0, calls,
       spec, src, ground, marks, exit, fig, shadow, wakeOwed: 0, built: false, runs: [],
-      mon: null, monEl: null, breathEl: null, monAim: null, monFrom: null, monStand: null, buildT: m.SPRITE,
+      mon: null, monEl: null, breathEl: null, monAim: null, monFrom: null, monStand: null, buildT: m.SPRITE, stage,
     };
     // (the owner's addition: the sprite that comes onto the board and performs the attack, when a pack has one)
     const mon = MONS[e.id] ?? null;
@@ -603,6 +645,11 @@ export class EidolonCall {
   /** Each frame: move the cinematic on by `dt` real ms (unless `paused`: a scene holds everything). */
   frame(dt: number, paused = false): void {
     const p = this.p;
+    // (EIDOLON-BLENDER: after a call the sigil and the scorched ground go on cooling under the fight)
+    if (!p && !paused && this.stageRun) {
+      this.stageRun.t += Math.min(dt, 120);
+      this.stepStage(this.stageRun);
+    }
     if (!p || paused) return;
     let step = Math.min(dt, 120);
     // (the freeze on the first blow: everything of the cinematic stands still)
@@ -630,6 +677,10 @@ export class EidolonCall {
       this.frameBoard(BOARD_ZOOM[shot], null, shot === 'build' ? Math.max(200, p.m.STRIKE - p.m.BUILD) : 400);
     }
     this.pass(p, was, step);
+    if (p.stage) {
+      p.stage.t = p.t;
+      this.stepStage(p.stage);
+    }
     this.sprite(p);
     if (!p.built && p.t >= p.buildT) this.build(p);
     // (the runs due start now)
@@ -659,6 +710,11 @@ export class EidolonCall {
       if (this.reduced) {
         const k = passShare(m, p.t);
         p.fig.style.opacity = String(Math.min(1, k * 5, (1 - k) * 5));
+      } else if (p.stage?.spot) {
+        // (EIDOLON-BLENDER: out of the pillar: first the fire's own white, then itself)
+        const k = riseIn(m, p.t);
+        p.fig.style.opacity = k.toFixed(2);
+        p.fig.style.filter = k < 1 ? `brightness(${(1 + 2.5 * (1 - k)).toFixed(2)})` : '';
       }
       const gy = spec.gait === 'swoop' || spec.gait === 'float' ? (p.ground + 0.03) * H : pose.y * H;
       // (the shadow shrinks as a leap lifts it off the ground)
@@ -984,6 +1040,12 @@ export class EidolonCall {
       ring.style.animation = `ecFxPlay ${RING.ms}ms steps(${RING.n}, jump-none) -60ms both, ecFxEnd 300ms ease-in ${RING.ms - 200}ms forwards`;
       L.append(ring);
     }
+    // (EIDOLON-BLENDER: a staged Eidolon's strike is its own: the blast, the fire crossing the tiles, the scorched ground, the smoke)
+    if (p.stage) {
+      this.stagedStrike(p, p.stage, mid, mouth, k);
+      this.shakeBoard(sig);
+      return;
+    }
     // (the Eidolon's own extra layers: each is one-shot, and held still with reduced motion)
     this.signature(p, look, mid, mouth, spots, { W, H, k, put, timed, saver });
     // (the one huge burst on their middle: already blazing in the frozen frame, or late, where the blow is something else coming first)
@@ -1026,13 +1088,158 @@ export class EidolonCall {
     });
     // (the board shaken as the freeze lets go: the cinematic's layer with the board's picture, which the fight's own shake moves; Gorm's
     // is deep and long, Nivra's light)
-    if (!this.reduced && settings().shake) {
-      L.style.setProperty('--shk', String(sig.shake.amp));
-      L.style.setProperty('--shkMs', `${sig.shake.ms}ms`);
-      L.classList.remove('shake');
-      void L.offsetWidth;
-      L.classList.add('shake');
+    this.shakeBoard(sig);
+  }
+
+  /** The cinematic's board layer shaken with the board's picture. */
+  private shakeBoard(sig: StrikeLook['sig']): void {
+    const L = this.board;
+    if (this.reduced || !settings().shake) return;
+    L.style.setProperty('--shk', String(sig.shake.amp));
+    L.style.setProperty('--shkMs', `${sig.shake.ms}ms`);
+    L.classList.remove('shake');
+    void L.offsetWidth;
+    L.classList.add('shake');
+  }
+
+  /* ------------------------------------------------------------------ EIDOLON-BLENDER: the staged ground show */
+
+  /** A staged Eidolon's show for this call: where its sigil lies (the tile nearest where its painting comes on), the board's scale, and
+   *  the sigil itself laid on the ground under the fighters (where the board has ground layers and the sheet has loaded). */
+  private stageFor(e: Eidolon, m: MomentTimes, ground: number): StageRun | null {
+    const look = STAGED[e.id];
+    const b = this.b;
+    if (!look || !b) return null;
+    const tiles: StageTile[] = [];
+    for (let v = 0; v < b.board.d; v++)
+      for (let u = 0; u < b.board.w; u++) {
+        const at = this.opts.tile(u, v);
+        if (at) tiles.push({ u, v, ...at });
+      }
+    const spot = sigilSpot(tiles, innerWidth, innerHeight, ground, look.from);
+    // (the board's scale: two tiles side by side are half a tile's width apart on the page)
+    const a = this.opts.tile(0, 0);
+    const c = this.opts.tile(1, 0);
+    const k = a && c && a.x !== c.x ? Math.abs(c.x - a.x) / (TW / 2) : 1;
+    const run: StageRun = { look, m, t: 0, spot, k, sigil: null, glow: null, pillar: false, scorch: [] };
+    if (!spot) return run;
+    const fx = this.opts.fx;
+    const frames = groundFrames(look.sigil);
+    const h0 = tileAt(b.board, spot.u, spot.v)?.h ?? 0;
+    if (fx && frames && fx.groundAt(spot.u, spot.v)) {
+      const under: GroundTile[] = [];
+      for (let du = -3; du <= 3; du++)
+        for (let dv = -3; dv <= 3; dv++) {
+          const t = tileAt(b.board, spot.u + du, spot.v + dv);
+          if (!t) continue;
+          const [x, y] = tileTop(spot.u + du, spot.v + dv, t.h);
+          under.push({ depth: tileDepth(spot.u + du, spot.v + dv), x, y, h: t.h });
+        }
+      const [x, y] = tileTop(spot.u, spot.v, h0);
+      run.sigil = new GroundSheet(look.sigil, frames, under, x, y, h0, (d) => fx.groundRow(d));
+      run.sigil.show(0, 0);
     }
+    // (its light on the page: the sigil lies under the call's dim, so the glow is put back over it)
+    const glow = el('i', 'ecSigil');
+    glow.style.left = `${Math.round(spot.x)}px`;
+    glow.style.top = `${Math.round(spot.y)}px`;
+    glow.style.width = `${Math.round(look.sigil.fw * stageScale(k) * 1.25)}px`;
+    this.board.append(glow);
+    run.glow = glow;
+    return run;
+  }
+
+  /** Move a staged show to its clock: the sigil's frame and light, the pillar going up, the scorched ground cooling; dropped when all of
+   *  it has gone. */
+  private stepStage(run: StageRun): void {
+    const { look, m, t } = run;
+    const f = sigilFrame(look, m, t, this.reduced);
+    if (run.sigil) {
+      if (f) run.sigil.show(f.frame, f.alpha);
+      else run.sigil.destroy();
+    }
+    if (run.glow) {
+      const s = look.sigil;
+      const lit = !f ? 0 : f.frame < s.draw ? (f.frame + 1) / s.draw : f.frame < s.draw + s.glow ? 1 : 1 - (f.frame - s.draw - s.glow + 1) / s.cool;
+      run.glow.style.opacity = (lit * (f?.alpha ?? 0)).toFixed(2);
+    }
+    // (the pillar: once, as the painting is about to show; a skip that lands after it leaves it out)
+    const p = this.p;
+    if (!run.pillar && run.spot && p && p.stage === run && t >= pillarAt(m)) {
+      run.pillar = true;
+      const ms = pillarMs(look, m);
+      const late = t - pillarAt(m);
+      if (late < ms * 0.6) {
+        const sc = stageScale(run.k);
+        this.board.append(stageEl(look.pillar, run.spot.x, run.spot.y + 6, sc, { ms, delay: -late, cls: 'ecPillarUp' }));
+        // (flames at its foot, in front of the painting, so the hound comes out of the fire and not from before it)
+        if (!this.reduced) {
+          for (const dx of [-0.9, 0, 0.9]) this.front.append(stageEl(look.fire, run.spot.x + dx * 30 * run.k, run.spot.y + 10 + Math.abs(dx) * 4, sc, { delay: 60 + Math.abs(dx) * 90 - late, mul: 0.7, flip: dx < 0 }));
+        }
+        if (!this.reduced && settings().shake) this.opts.fx?.rumble(0.3);
+      }
+    }
+    let live = false;
+    for (const c of run.scorch) {
+      if (c.sp.destroyed) continue;
+      const i = scorchFrame(look, t - c.at, this.reduced);
+      const waiting = t < c.at;
+      if (i < 0 && !waiting) {
+        c.sp.destroy();
+        continue;
+      }
+      live = true;
+      c.sp.visible = !waiting;
+      const frames = groundFrames(look.scorch);
+      if (!waiting && frames) c.sp.texture = frames[i];
+    }
+    if (!live && t >= sigilEnd(m) && this.stageRun === run && !this.p) this.dropStage();
+  }
+
+  /** Take a staged show's pieces off the board. */
+  private dropStage(): void {
+    const run = this.stageRun;
+    this.stageRun = null;
+    if (!run) return;
+    run.sigil?.destroy();
+    for (const c of run.scorch) if (!c.sp.destroyed) c.sp.destroy();
+    run.scorch = [];
+    run.glow?.remove();
+  }
+
+  /** The staged strike: the blast on the foes' middle (already blazing in the frozen frame), the fire crossing their ground tile by tile
+   *  from the hound's jaws, each tile bursting up and burning down, the firestorm rising on their middle after it, the ground left
+   *  scorched under them (on the tiles' own ground, under the fighters) and smoke climbing off it. `k` scales the times for a short call. */
+  private stagedStrike(p: Playing, run: StageRun, mid: { x: number; y: number }, mouth: { x: number; y: number } | null, k: number): void {
+    const b = this.b;
+    if (!b) return;
+    const { look } = run;
+    const L = this.board;
+    const sc = stageScale(run.k);
+    const fx = this.opts.fx;
+    const ids = p.struck.length ? p.struck : b.units.filter((u) => u.side === 'foe' && u.alive).map((u) => u.id);
+    const foes = ids.map((id) => b.units.find((u) => u.id === id)).filter((u): u is NonNullable<typeof u> => !!u).map((u) => ({ u: u.u, v: u.v }));
+    const plan = wavePlan(foes, (u, v) => this.opts.tile(u, v), mouth, stageBudget(settings().saver, !p.m.BARS));
+    L.append(stageEl(look.blast, mid.x, mid.y + 12, sc, { delay: -110, mul: 1.7, cls: 'ecBlast' }));
+    const scorch = groundFrames(look.scorch);
+    // (the farther tiles first, so a nearer tile's fire stands in front of a farther one's)
+    for (const t of [...plan].sort((a, c) => a.y - c.y)) {
+      const delay = t.delay * k;
+      const odd = (t.u * 7 + t.v * 13) % 2 === 1;
+      // (a foe's own tile burns taller and longer than the ground round it)
+      L.append(stageEl(look.fire, t.x, t.y + 5, sc, { delay, ms: look.fire.ms * (t.foe ? 1.4 : 1.1), mul: t.foe ? 1.3 : 0.7 + ((t.u * 5 + t.v * 3) % 3) * 0.1, flip: odd, cls: 'ecTileFire' }));
+      if (t.smoke && !this.reduced) L.append(stageEl(look.smoke, t.x, t.y - 4, sc, { delay: delay + look.fire.ms * 0.95, mul: 0.85, flip: !odd, cls: 'ecSmokeUp' }));
+      const tile = tileAt(b.board, t.u, t.v);
+      const layer = fx?.groundAt(t.u, t.v);
+      if (scorch && tile && layer) {
+        const [x, y] = tileTop(t.u, t.v, tile.h);
+        const sp = groundDecal(look.scorch, scorch, layer, x, y, odd);
+        sp.visible = false;
+        run.scorch.push({ sp, at: run.t + delay + 140 });
+      }
+    }
+    // (the firestorm on their middle, after the wave has passed)
+    if (!this.reduced) L.append(stageEl(look.pillar, mid.x, mid.y + 18, sc, { delay: 300 * k, ms: 1300, mul: 1, cls: 'ecStorm' }));
   }
 
   /** EIDOLON-FX, each one's own layers (`docs/notes/eidolon-fx.md`, "each one's signature"): Askel's wave of fire along the rows and the

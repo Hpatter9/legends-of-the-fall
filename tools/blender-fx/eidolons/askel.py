@@ -15,7 +15,7 @@ import math, os, random, sys
 import bpy
 from mathutils import Vector
 
-OUT = sys.argv[-1]
+OUT = sys.argv[-1]                                                        # (parts.py borrows this file's looks and sets its own)
 FPS = 12
 SECONDS = 8.0
 N = int(FPS * SECONDS)
@@ -50,7 +50,9 @@ def out3(x):
     return 1 - (1 - x) ** 3
 
 
-def reset():
+def reset(fw=None, fh=None, aim=None):
+    """An empty scene seen by the game's camera: `fw` x `fh` hero pixels, looking at `aim` (tiles)."""
+    fw, fh, aim = fw or FW, fh or FH, aim or AIM
     bpy.ops.wm.read_factory_settings(use_empty=True)
     sc = bpy.context.scene
     sc.render.engine = 'CYCLES'
@@ -60,8 +62,8 @@ def reset():
     sc.cycles.max_bounces = 3
     sc.cycles.transparent_max_bounces = 64
     sc.render.film_transparent = True
-    sc.render.resolution_x = round(FW * SS)
-    sc.render.resolution_y = round(FH * SS)
+    sc.render.resolution_x = round(fw * SS)
+    sc.render.resolution_y = round(fh * SS)
     sc.render.resolution_percentage = 100
     sc.render.image_settings.file_format = 'PNG'
     sc.render.image_settings.color_mode = 'RGBA'
@@ -70,13 +72,13 @@ def reset():
     cam = bpy.data.cameras.new('cam')
     cam.type = 'ORTHO'
     cam.sensor_fit = 'VERTICAL'
-    cam.ortho_scale = FH / PX
+    cam.ortho_scale = fh / PX
     ob = bpy.data.objects.new('cam', cam)
     sc.collection.objects.link(ob)
     rx, rz = math.radians(60), math.radians(45)
     ob.rotation_euler = (rx, 0, rz)
     d = 30
-    ob.location = (AIM[0] + d * math.sin(rx) * math.sin(rz), AIM[1] - d * math.sin(rx) * math.cos(rz), AIM[2] + d * math.cos(rx))
+    ob.location = (aim[0] + d * math.sin(rx) * math.sin(rz), aim[1] - d * math.sin(rx) * math.cos(rz), aim[2] + d * math.cos(rx))
     sc.camera = ob
     return sc
 
@@ -782,4 +784,5 @@ def main():
         print('frame', f, flush=True)
 
 
-main()
+if __name__ == '__main__':
+    main()

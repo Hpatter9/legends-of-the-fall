@@ -1,9 +1,98 @@
-# The fire Eidolon, staged in Blender (EIDOLON-BLENDER, a trial)
+# The Eidolons' ground show, staged in Blender (EIDOLON-BLENDER)
+
+The owner, after the trial below: **the hybrid**. Each Eidolon keeps its painting for the figure, its name stamp and its line; Blender
+stages everything round it (the sigil, the pillar, the strike across the ground, the scorch, the aftermath). Askel the Cinderhound is
+the first, in the game from this branch (`claude/eidolon-blender`, with main 0.496.0 merged in). The other five follow, one push each:
+Nivra, Gorm, Voltara, Aurelan, Vaelkhar.
+
+## Askel in the game
+
+The trial was one scene for one fight. In the game the board turns, its ground rises and falls, and the fighters must stand over what
+lies on the ground, so the show is cut into **six small sheets** the page lays by the board's own tiles
+(`tools/blender-fx/eidolons/parts.py`, finished by `parts_finish.py`: the heroes' pixels, 24 colours shared by all six, hard alpha):
+
+| Sheet | Frames | What it is | Layer |
+|---|---|---|---|
+| `askel-stage-sigil` | 22 of 160 x 96 | burns on round its ring and inward (12), glows (3), cools and fades (7) | the ground, under the fighters |
+| `askel-stage-scorch` | 8 of 88 x 48 | a patch of burnt ground, its coals cooling, then fading | the ground, under the fighters |
+| `askel-stage-pillar` | 16 of 120 x 288 | the pillar of flame: up, burning, torn away | over the fighters |
+| `askel-stage-blast` | 12 of 176 x 176 | the great burst | over the fighters |
+| `askel-stage-fire` | 14 of 64 x 112 | a tile catching fire: bursts up, burns, dies | over the fighters |
+| `askel-stage-smoke` | 12 of 72 x 128 | a puff of smoke climbing | over the fighters |
+
+**140,276 bytes** for all six (the largest sheet is 2112 x 176, so each fits any phone's texture). They load by URL from
+`src/art/eidolons/fx/`, which `build.mjs` already copies and lists in the service worker's `FILES`, so they play offline. The painted
+`askel-pillar` and `askel-after` strips (162,746 bytes) are no longer drawn in Askel's call but are still shipped: `STRIKE_FX.askel` and
+its test still name them. Dropping them is a separate, small change if the director wants the bytes back.
+
+**What plays** (Askel's 5.0 s call from ULT-EPIC, `fullOf('askel')`; nothing in its beats, the sim or the speed rule changed):
+
+| Stage | Today's, kept | Blender's, new |
+|---|---|---|
+| Wind-up, the horn (0 to 0.46 s) | the horn blown, the dim | the **sigil** burns onto the ground where the hound will come on, under the fighters, its light put back over the dim |
+| Wind-up, the pass (0.46 to 2.06 s) | the painted Askel, its name, title and line, its bounding run and paw-prints, out to the left | the **pillar** goes up from the sigil a moment before, and the painting **leaps out of it** (white-hot, then itself, flames at the pillar's foot in front of it) instead of coming in from off the screen |
+| Wind-up, the sprite and the build-up (2.06 to 3.26 s) | the sprite hound runs on and breathes, the charge closes on the foes | the sigil glows on |
+| Strike (3.26 s, with the 0.26 s freeze) | the flash, the bloom, the shockwave ring, the hit-stop, the shake, the snap zoom, the embers flung, the sound | the **blast** on the foes' middle (already blazing in the frozen frame), the **fire crossing their ground tile by tile** from the hound's jaws (every foe's tile, taller and longer, and up to 14 tiles round them), the **firestorm** on their middle, the ground left **scorched** under them |
+| Aftermath (4.13 s on) | the wash, the drifting embers | **smoke** climbs off the burnt tiles; the sigil cools and fades 0.7 s into the fight; the scorch's coals cool for 2.4 s and fade under the fight (beside the sim's own burning ground) |
+
+Left out of Askel's call now: the painted fire walls over each foe, the painted great burst, the aftershock bursts and the painted wall
+left burning.
+
+**Two layers, following the board.** The sigil is laid like the game's painted ground loops (`GroundPaint`): once for each diagonal row
+of tiles it covers, cut to that row's tile tops and drawn just after them, so the fighters stand over it and nearer columns cover it.
+New here (`render/groundSheet.ts`): tiles of another height take their own copy, moved up or down by their height, so the sigil bends
+over a hill or a pit instead of floating. Each scorch patch lies on its tile's own ground layer at that tile's height. The pillar, the
+fires and the smoke are strips on the call's own layer (`stageSheet.ts`), each standing on its tile's place on the page, so they follow
+the heights too, and they need no facing: the fire crosses whichever way the foes lie, on a board turned any way.
+
+**The short call** (2.2 s, on Auto or with full calls off): the sigil is there from the start (never half drawn), the pillar burns in
+0.75 s, half as many tiles catch fire and smoke. **Battery saver**: fewer still. **Reduced motion**: the sigil is one steady frame
+faded in and out, the pillar, the fires and the blast each hold their steady frame and fade (the layer's own rule for strips), the
+painting fades in held still as before, no smoke, no flames in front of the painting, no rumble.
+
+**Where things are.** `src/eidolonStage.ts` (pure: the sheets' shapes, `sigilFrame`, `sigilSpot`, `risePass`, `wavePlan`,
+`scorchFrame`, the budgets; `STAGED` has Askel only, so the other five play exactly as before). `src/render/groundSheet.ts` (the ground
+player) and `src/stageSheet.ts` (the strip player): small and apart, so the general frame-sheet player (`claude/blender-fx`) can take
+them over. `src/eidolonCall.ts`: `stageFor`, `stepStage`, `stagedStrike`, `dropStage`, and the painting's rise in `pass`.
+`test/eidolon-stage.test.ts` (nine tests).
+
+**Honestly.**
+- The strike is plainer than main's painted fire walls in one way: the tile fires are round-topped flames of one shape, mirrored and
+  sized three ways. They read as a field on fire; they do not have the painted walls' licking detail.
+- The sigil is dim while the horn sounds: it lies under the call's dim (as the fighters do). A glow is put back over it, but it reads
+  best from the pass on, and best of all cooling under the fight afterwards.
+- The Last Stand's hall has no tile ground layers, so there the sigil and scorch are left out and only the standing pieces play.
+- The staged strike lays up to about 30 strips at once on the full call (a strip for each burning tile, the smokes, the blast and the
+  firestorm); the short call and battery saver lay about half.
+- Seen in passing, in main too: a raw label, "eidolonWarm", shows over the heroes during the strike (the warmth's status name).
+
+**Checked.** `npm run typecheck`, the full suite, `npm run web`, and the whole cast captured in a real fight (the Orc Warband's last
+wave) at 393 x 852, 360 x 780 and 412 x 915, with the short call and reduced motion at 393 x 852 (`docs/samples/eidolon-blender/`):
+
+- `askel-game-393.webp`, `-360`, `-412`: the whole cast, animated; `askel-game-<size>-strip.webp`: twelve stills of each.
+- `askel-game-before-after.webp`: main's call above, the staged one below, at the same moments.
+- `askel-game-short-strip.webp`, `askel-game-reduced-strip.webp`.
+
+```bash
+pip install bpy
+python3 tools/blender-fx/eidolons/parts.py <parts>                     # the six pieces, about two minutes
+python3 tools/blender-fx/eidolons/parts_finish.py <parts>              # the sheets, into src/art/eidolons/fx/
+npm run web && STEP=84 END=6720 PORT=9071 OUT=<shots> node tools/blender-fx/eidolons/shots.mjs [--size 360x780] [--short] [--reduced]
+python3 tools/blender-fx/eidolons/cast_samples.py <shots> <main's shots> docs/samples/eidolon-blender
+```
+
+**For the next five.** Each needs its own six sheets (its sigil's design, its element's pillar, blast, tile piece, ground mark and
+what drifts off it) and one entry in `STAGED`; `stagedStrike` and the players are shared. Ice, stone and light need a second material
+beside the fire's (solid shards and rock that catch the light; the prototype has both).
+
+---
+
+# The trial that led to it: the fire Eidolon as one Blender scene
 
 The owner: "lets try a pass with the eidolons in blender too to see if we can improve them. start with the fire one." And the casts are
 to feel epic and last 4 to 10 seconds (the timing and the slow-down are another builder's, ULT-EPIC; nothing here touches them).
 
-**This is a trial to look at, not a release.** Nothing is wired into the game: no change to `src/`, the version or the updates list.
+**This was a trial to look at.** Nothing in it is wired into the game; the hybrid above is what shipped.
 Branch `claude/eidolon-blender`, from `claude/blender-fx` (the Blender prototype and the pixelated finish the owner chose).
 
 ## What to look at (`docs/samples/eidolon-blender/`)

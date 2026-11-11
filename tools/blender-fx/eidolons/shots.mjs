@@ -101,7 +101,8 @@ const shot = (page, name) => page.screenshot({ path: `${OUT}/today-${name}${TAG}
 
 // (a frame every 150 ms across the whole call, and a little of the fight running again)
 const FRAMES = [];
-for (let t = 0; t <= 5100; t += 150) FRAMES.push([String(t).padStart(4, '0'), Math.max(t, 16)]);
+const STEP = Number(process.env.STEP ?? 150);
+for (let t = 0; t <= Number(process.env.END ?? 7200); t += STEP) FRAMES.push([String(t).padStart(4, '0'), Math.max(t, 16)]);
 for (const pick of PICKS) {
   try {
     const { ctx, page } = await open({ horn: 1000, bound: [pick], chosen: pick, confirmed: true, ...(SHORT ? { seen: [pick] } : {}) }, true);
