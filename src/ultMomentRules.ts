@@ -142,6 +142,8 @@ export class UltQueue {
    *  (the page plays one each time it changes); the wind-up's and the fade's lengths now; a salvo's wait left. */
   stageName: StageName | null = null;
   stageT = 0;
+  /** ULT-CAMERA: the real ms since the moment playing began (the freeze counted): the camera's clock (`ultCameraRules.ts`). */
+  clock = 0;
   echoes = 0;
   private echoAt = 0;
   private openMs = ULT_MOMENT.OPEN_MS;
@@ -164,6 +166,7 @@ export class UltQueue {
     this.stopLeft = 0;
     this.slowLeft = 0;
     this.stageName = 'windup';
+    this.clock = 0;
     this.stageT = 0;
     this.echoAt = 0;
     this.waitLeft = 0;
@@ -195,6 +198,7 @@ export class UltQueue {
         const s = Math.min(t, this.stopLeft);
         this.stopLeft -= s;
         this.stageT += s;
+        this.clock += s;
         t -= s;
         continue;
       }
@@ -209,12 +213,14 @@ export class UltQueue {
           this.waitLeft = 0;
           this.left -= s;
           this.stageT += s;
+          this.clock += s;
           t -= s;
           continue;
         }
         this.waitLeft -= Math.min(t, this.left);
       }
       this.stageT += Math.min(t, this.left);
+      this.clock += Math.min(t, this.left);
       if (this.since !== null) {
         this.since += Math.min(t, this.left);
         // (the further bursts of a flurry or a storm, while the strike plays)

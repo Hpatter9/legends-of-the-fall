@@ -188,7 +188,10 @@ import { burnHeart, reducedMotion, reviveLine } from './reviveView';
 import { Fx, loadFx } from './render/fx';
 import { lookSheet } from './render/awakenLook';
 import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
-import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS, settle, type View } from './render/cameraRules';
+import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS, settle, type Spot, type View } from './render/cameraRules';
+import { spellGlance, spellView, ULT_CAM, type Room } from './ultCameraRules';
+import { bfxClip, spellBfx } from './render/blenderFxRules';
+import { spellTiles } from './render/fxPlace';
 import { coverElements, measureSafe, onCamCover, registerCamCover } from './camSafe';
 import { easeRect, type Rect } from './render/safeRectRules';
 import { engagedAt, followView, heatOf, manualHeld, returnEase, tileKey, type HotSpot } from './render/followCamRules';
@@ -1711,8 +1714,33 @@ class Game {
     // (ULT-EPIC: the camera leans in on the hero through an ultimate's opening, and the follow takes it back to the view it held as it fires;
     // a camera the player has moved is left alone)
     const uf = b.phase === 'fight' && !this.manualCam ? this.ultm.focus : null;
-    const us = uf ? this.sprites.get(uf.unit) : undefined;
-    if (uf && us) {
+    const us = uf && 'unit' in uf ? this.sprites.get(uf.unit) : undefined;
+    // (ULT-CAMERA: once the casting has been seen the camera travels to where the effect lands, frames the whole of it for the strike and
+    // holds it through the aftermath; the travel's own length is its ease, so it arrives just before the blow. When the show is over,
+    // however it ended, the follow glides the camera back to the fight's frame)
+    let shotEase = 0;
+    if (uf && 'view' in uf) {
+      this.tx = uf.view.cx;
+      this.ty = uf.view.cy;
+      this.tzoom = uf.view.zoom;
+      shotEase = uf.ms;
+    }
+    // (a king's spell cast by hand: a glance at its target and back, never over a show or a camera the player moved)
+    const glance = this.spellCam;
+    if (glance) {
+      glance.left -= dt;
+      if (glance.left <= 0 || b.phase !== 'fight' || !spellGlance({ manual: this.manualCam, show: !!this.ultm.queue.current || this.eid.playing, reduced: reducedMotion() })) this.spellCam = null;
+      else {
+        this.tx = glance.view.cx;
+        this.ty = glance.view.cy;
+        this.tzoom = glance.view.zoom;
+        shotEase = ULT_CAM.SPELL_EASE;
+      }
+    }
+    const framed = shotEase > 0;
+    if (this.camFramed && !framed && !this.manualCam) this.camFreedAt = performance.now();
+    this.camFramed = framed;
+    if (uf && 'unit' in uf && us) {
       this.tx = us.x;
       this.ty = us.y - us.tall * 0.5;
       this.tzoom = (this.held?.zoom ?? this.tzoom) * uf.zoom;
@@ -1730,7 +1758,7 @@ class Game {
     if (!this.drag?.pan) {
       const f = b.phase === 'fight' && !this.intro;
       // (BATTLE-POLISH: gentler for a moment after a held camera is let go, so it glides back to the fight)
-      const ease = returnEase(this.camFreedAt, performance.now(), { move: EASE_MOVE_MS, zoom: EASE_ZOOM_MS });
+      const ease = shotEase > 0 ? { move: shotEase, zoom: shotEase } : returnEase(this.camFreedAt, performance.now(), { move: EASE_MOVE_MS, zoom: EASE_ZOOM_MS });
       this.cx = f ? easeTo(this.cx, this.tx, dt, ease.move) : this.cx + (this.tx - this.cx) * Math.min(1, dt / 220);
       this.cy = f ? easeTo(this.cy, this.ty, dt, ease.move) : this.cy + (this.ty - this.cy) * Math.min(1, dt / 220);
       if (f) this.zoom = easeTo(this.zoom, this.tzoom, dt, ease.zoom);
@@ -1928,6 +1956,36 @@ class Game {
   private touches = new Map<number, { x: number; y: number }>();
   private pinch: { d0: number; z0: number; mx: number; my: number } | null = null;
   private bbox = { x0: 0, x1: 0, y0: 0, y1: 0 };
+
+  /** ULT-CAMERA: a show's frame (or a spell's glance) had the camera last frame, so its end is seen and the follow glides back; and the
+   *  glance of a king's spell cast by hand (its view and the ms it has left). */
+  private camFramed = false;
+  private spellCam: { view: View; left: number } | null = null;
+
+  /** ULT-CAMERA: the room a show's camera frames in: the safe rectangle and the follow's own zoom limits. */
+  private camRoom(): Room {
+    const lo = this.minZoom();
+    return { w: this.safe.w, h: this.safe.h, base: this.scale, lo, hi: Math.max(lo, Math.min(FOLLOW_IN, 3 / this.scale)) };
+  }
+
+  /** ULT-CAMERA: a king's spell was cast by hand on a tile: a quick ease to frame its target and what it touches, and back (no dim, no
+   *  slowdown). Not for a spell over the whole field, which has no one place to look at. */
+  private glanceAt(id: SpellId, u: number, v: number): void {
+    if (SPELLS[id].target !== 'tile') return;
+    const ground = (x: number, y: number): Spot | null => {
+      const t = tileAt(this.b.board, x, y);
+      if (!t) return null;
+      const [wx, wy] = at(x, y, t.h);
+      return { x: wx, y: wy, tall: 0 };
+    };
+    const target = ground(u, v);
+    if (!target) return;
+    const key = spellBfx(id, 'cast');
+    const c = key ? bfxClip(key) : undefined;
+    const tiles = spellTiles(this.b.board, id, u, v).map((p) => ground(p.u, p.v)).filter((x): x is Spot => !!x);
+    const view = spellView(target, tiles, c ? { w: c.w, h: c.h, ax: c.ax, ay: c.ay } : null, this.camRoom(), this.held?.zoom ?? this.tzoom);
+    if (view) this.spellCam = { view, left: ULT_CAM.SPELL_MS };
+  }
 
   /** The fight camera: frame the living fighters, zoomed in as far as fits, holding still for small moves. A manual pan pauses it for a few seconds. */
   private follow(): void {
@@ -2481,6 +2539,7 @@ class Game {
       },
       seen: (kind) => seenOf(this.meta, kind),
       toClient: (x, y) => this.toClient(x, y),
+      room: () => ({ room: this.camRoom(), held: this.held?.zoom ?? this.tzoom }),
       saw: (kind) => {
         noteSeen(this.meta, kind);
         saveMeta(this.meta);
@@ -2521,6 +2580,13 @@ class Game {
     this.eid = new EidolonCall({
       meta: () => this.meta,
       auto: () => this.ultAutoOn(),
+      // (ULT-CAMERA: the room the player really sees, on the page: the call's strike is framed in it)
+      safe: () => {
+        // (by the canvas's own place in the layout, which a frame on it does not move)
+        const c = this.app.canvas;
+        const k = (c.offsetWidth || this.app.screen.width) / this.app.screen.width;
+        return { x0: c.offsetLeft + this.safe.x * k, y0: c.offsetTop + this.safe.y * k, x1: c.offsetLeft + (this.safe.x + this.safe.w) * k, y1: c.offsetTop + (this.safe.y + this.safe.h) * k };
+      },
       save: () => saveMeta(this.meta),
       fx: this.fx,
       anchor: (id) => {
@@ -3536,7 +3602,11 @@ class Game {
     // (a tap on the board with a spell chosen casts it there)
     if (this.b.phase === 'fight' && this.spell && !d.moved && (e.target as HTMLElement) === this.app.canvas) {
       const tile = this.tileAtScreen(e.clientX, e.clientY);
-      if (tile && castSpell(this.b, this.spell, ...snapSpell(this.b, this.spell, ...tile))) this.spell = null;
+      const to = tile && snapSpell(this.b, this.spell, ...tile);
+      if (to && castSpell(this.b, this.spell, ...to)) {
+        this.glanceAt(this.spell, ...to);
+        this.spell = null;
+      }
       return this.endDrag();
     }
     if (this.b.phase !== 'deploy' || (d.pan && d.moved)) return this.endDrag();
@@ -4022,7 +4092,8 @@ class Game {
     if (!d) return;
     if (d.moved) {
       const tile = ok ? this.spellTile(e.clientX, e.clientY) : null;
-      if (tile && this.b.phase === 'fight') castSpell(this.b, d.id, ...snapSpell(this.b, d.id, ...tile));
+      const to = tile && this.b.phase === 'fight' ? snapSpell(this.b, d.id, ...tile) : null;
+      if (to && castSpell(this.b, d.id, ...to)) this.glanceAt(d.id, ...to);
       this.spell = null;
       this.hover = null;
       this.spellDragged = true;
