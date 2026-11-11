@@ -1,3 +1,43 @@
+## ULT-EPIC 3: the showcase on every use, and room for the multi-volley ultimates
+
+Branch `claude/ult-epic-2` (main 0.496.0 merged in). The owner's answers to two of round 2's questions (below), and nothing else changed:
+an Eidolon's first call on Auto still plays in full, and the weights and the Eidolons' lengths are as they were.
+
+1. **Every ultimate fired by hand plays its full showcase** (the hero seen doing what the words say), not only a hero's first use and
+   every tenth. `wantsShow` no longer reads the count or a setting; the "Showcase again" row (First / 5th / 10th / 20th) is gone from
+   Settings, and an old save's choice is read without harm and kept nowhere. **Shorter ultimates** is still the way out (the three
+   staged parts without the showcase, round 2's table), and Auto's are still the 1.5 s banner. `Meta.ultSeen` is still counted.
+2. **A showcase with a salvo to land after it may run to about 7 s** (`ULT_LIMITS.SALVO_MAX`), so its wind-up and aftermath are not
+   squeezed; every other use stays 4 to 6 s. No showcase is quickened any more.
+
+Since the showcase now plays every time, a showcase use's whole length goes by the ultimate's weight too (`SHOW_TOTAL`), so a single
+blow is still the shortest:
+
+| Weight | A showcase use (the showcase at its shortest, 2.5 s) | With a salvo to land after it |
+| --- | --- | --- |
+| blow | 5.0 s | none has one |
+| flurry | 5.4 s | 6.4 s (Overclock, Leviathan Line) |
+| wave | 5.7 s | 6.7 s (four of the Mythics) |
+| storm | 6.0 s | 7.0 s (Meteor Swarm, Hail of Arrows, Ghost Fleet, Orbital Strike, High Noon, Silver Requiem, Sky Hunt, Shell Storm, Supernova Alignment, Heavenfall) |
+| summon | 6.0 s | none has one |
+
+A longer showcase takes what it needs, up to the limit, and its weight's length is then a floor rather than a target: Issen's showcase
+is 2.9 s (the crouch and the sheathe are in it), so in the captured fight it is 0.9 / 3.44 / 0.66 = 5.0 s (measured 4.96 s). Meteor
+Swarm in the captured fight is a 1.35 s wind-up, a 4.54 s strike (the 2.5 s showcase, then the meteors falling live for up to 1.5 s,
+the freeze and a beat) and a 1.11 s aftermath: 7.0 s (measured 6.96 s). In round 2 that same use was 0.9 / 4.54 / 0.56 = 6.0 s. The
+tightest now is Shell Storm (0.97 / 5.24 / 0.79). The speed read ×2 before, ×1 on every captured frame and ×2 after, as before.
+
+Files: `src/ultShowRules.ts` (`wantsShow`; `showDue`, `EVERY_CHOICES` and `DEFAULT_EVERY` removed), `src/ultStageRules.ts`
+(`SALVO_MAX`, `SHOW_TOTAL`, `stagesFor`), `src/settings.ts` (the row and `ultEvery` removed, the toggle's words), `src/ultMoment.ts`.
+**Tests changed to the owner's new requirement**: `test/ult-show.test.ts` (the showcase on every use, where it was the first and every
+Nth; the setting's test; a showcase with a salvo up to 7 s, each at its own pace, with a wind-up of 0.9 s and an aftermath of 0.7 s at
+least) and `test/ult-stages.test.ts` (the 7 s limit for a showcase with a salvo; a showcase use keeps its weight's order).
+The strips in `docs/samples/ult-epic/` were retaken on this build at the three sizes: `samurai-<W>.jpg` (Issen: the showcase, 5.0 s),
+`wizard-<W>.jpg` (Meteor Swarm: 7.0 s), `gorm-<W>.jpg`, `reduced-wizard-393.jpg`, `reduced-askel-393.jpg`; `first-kunoichi-393.jpg`
+was dropped (every use is that now).
+
+---
+
 ## ULT-EPIC 2: longer shows in three stages (ultimates 4 to 6 s, Eidolons 4 to 10 s)
 
 Branch `claude/ult-epic` (from main 0.492.0). The owner: "the ultimates still feel off. I want them to feel epic... I want the ultimates
@@ -125,9 +165,9 @@ wind-up and are not moved; a tap anywhere skips, as before. Checked at 393x852, 
   `tools/ult-epic/stage-strips.py`.
 - Captures (`docs/samples/ult-epic/`): `samurai-<W>.jpg` (Issen, a blow), `wizard-<W>.jpg` (Meteor Swarm, a storm with its salvo) and
   `gorm-<W>.jpg` (the Quarry Titan) at 393, 360 and 412 wide; `reduced-wizard-393.jpg`, `reduced-askel-393.jpg`;
-  `first-kunoichi-393.jpg` (a first use: the showcase inside the strike).
+  `first-kunoichi-393.jpg` (a first use: the showcase inside the strike; dropped in ULT-EPIC 3, where every use is one).
 
-### For the owner to decide
+### For the owner to decide (answered: see ULT-EPIC 3 at the top; 1 and 4 were taken up, 2, 3 and 5 left as they are)
 
 1. **Should every hand-fired use play the showcase** (the hero really doing what the words say), not only the first and every 10th? The
    other uses now have the three stages and the right length, but the showcase is still the strongest version. It is one more choice in

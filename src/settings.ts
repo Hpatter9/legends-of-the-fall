@@ -12,7 +12,6 @@ import { closePicker, openPicker } from './settingsPicker';
 import type { DevGift } from './sim/devGrant';
 import { appUpdate } from './appUpdate';
 import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
-import { DEFAULT_EVERY, EVERY_CHOICES } from './ultShowRules';
 import { CUT_MODES, type CutMode } from './tauntCutRules';
 import { SLIDER_STEP, curvedVolume } from './render/audioRules';
 import { cleanView, viewActive, type RosterView } from './heroFilterRules';
@@ -50,10 +49,9 @@ export interface Settings {
   /** Whether a hero's ultimate plays its full moment (ULT-CUTIN, docs/notes/battle-hud.md): the fight pauses, a slash of the hero's art crosses
    *  the screen with the ultimate's name and the board dims round the caster. Off, the short one: a quick banner while the fight runs on. */
   ultFull: boolean;
-  /** ULT-SHOW (`ultShowRules.ts`): Shorter ultimates, never the long showcase (a hero's first use included); and how often the showcase comes
-   *  back after a hero's first use (every Nth use; 0: the first only). */
+  /** ULT-SHOW (`ultShowRules.ts`): Shorter ultimates, never the long showcase. Off (the default), every ultimate fired by
+   *  hand plays it (ULT-EPIC 3; the "Showcase again" choice of every Nth use is gone). */
   ultShort: boolean;
-  ultEvery: number;
   /** Whether an Eidolon's call plays its full cinematic (EIDOLONS, `eidolonCall.ts`): the horn, the circle, the sky torn open, the figure, the
    *  name and the attack in beats. Off, the short one (about two seconds). An Eidolon's first call always plays in full. */
   eidolonFull: boolean;
@@ -68,7 +66,7 @@ export interface Settings {
   planChosen?: boolean;
 }
 
-export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, volCurve: true, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, ultShort: false, ultEvery: DEFAULT_EVERY, eidolonFull: true, duchessHat: 'none', nemesisCut: 'full' };
+export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, volCurve: true, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, ultShort: false, eidolonFull: true, duchessHat: 'none', nemesisCut: 'full' };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -104,7 +102,6 @@ export function parseSettings(raw: string | null): Settings {
     cinematics: flag(saved.cinematics, DEFAULTS.cinematics),
     ultFull: flag(saved.ultFull, DEFAULTS.ultFull),
     ultShort: flag(saved.ultShort, DEFAULTS.ultShort),
-    ultEvery: EVERY_CHOICES.includes(saved.ultEvery as never) ? (saved.ultEvery as number) : DEFAULTS.ultEvery,
     eidolonFull: flag(saved.eidolonFull, DEFAULTS.eidolonFull),
     duchessHat: validHat(saved.duchessHat),
     nemesisCut: CUT_MODES.includes(saved.nemesisCut as CutMode) ? (saved.nemesisCut as CutMode) : DEFAULTS.nemesisCut,
@@ -232,8 +229,7 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
         toggleRow('Hero quips', 'Heroes (and now and then Duchess) say the odd word in a small speech bubble', 'quips', s.quips),
         toggleRow('Cinematics', 'Short scenes at big moments. Off, none play by themselves; the Scenes list in the codex still plays them', 'cinematics', s.cinematics),
         toggleRow('Full ultimate scenes', 'On, the fight pauses as an ultimate fires: the hero slashes across the screen, its name shows and the board dims round the caster. Off, a quick banner while the fight runs on. With Auto on, always the quick banner', 'ultFull', s.ultFull),
-        toggleRow('Shorter ultimates', 'On, a hero\'s ultimate never plays its long showcase (the hero seen doing what the ultimate says, about five seconds at x1). Off, the first time each hero\'s ultimate fires it plays the showcase, and again now and then (below)', 'ultShort', s.ultShort),
-        everyRow(s.ultEvery, s.ultShort),
+        toggleRow('Shorter ultimates', 'On, a hero\'s ultimate never plays its long showcase (the hero seen doing what the ultimate says, about six seconds at x1). Off, every ultimate fired by hand plays its showcase', 'ultShort', s.ultShort),
         cutRow(s.nemesisCut),
         toggleRow('Full Eidolon calls', 'On, an Eidolon called by the War Horn plays its whole scene: the horn, the summoning circle, the sky torn open and its attack in beats. Off, a short version of about two seconds. The first call of each Eidolon always plays in full', 'eidolonFull', s.eidolonFull),
         resetTipsRow(),
@@ -514,27 +510,6 @@ function cutRow(value: CutMode): HTMLElement {
     b.classList.toggle('on', n === value);
     b.addEventListener('click', () => {
       setSetting('nemesisCut', n);
-      draw();
-    });
-    pair.append(b);
-  }
-  r.append(pair);
-  return r;
-}
-
-/** ULT-SHOW: how often an ultimate's long showcase comes back after the hero's first use. */
-function everyRow(value: number, off: boolean): HTMLElement {
-  const [r] = row('Showcase again', off ? 'Shorter ultimates is on: no showcases' : 'After a hero\'s first ultimate, its showcase plays again on every Nth use (First: only the first time)');
-  const pair = document.createElement('div');
-  pair.className = 'pair';
-  for (const n of EVERY_CHOICES) {
-    const b = document.createElement('button');
-    b.textContent = n === 0 ? 'First' : `${n}th`;
-    b.disabled = off;
-    b.setAttribute('aria-pressed', String(n === value));
-    b.classList.toggle('on', n === value);
-    b.addEventListener('click', () => {
-      setSetting('ultEvery', n);
       draw();
     });
     pair.append(b);

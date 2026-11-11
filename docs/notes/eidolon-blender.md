@@ -1,0 +1,212 @@
+# The Eidolons' ground show, staged in Blender (EIDOLON-BLENDER)
+
+The owner, after the trial below: **the hybrid**. Each Eidolon keeps its painting for the figure, its name stamp and its line; Blender
+stages everything round it (the sigil, the pillar, the strike across the ground, the scorch, the aftermath). Askel the Cinderhound is
+the first, in the game from this branch (`claude/eidolon-blender`, with main 0.496.0 merged in). The other five follow, one push each:
+Nivra, Gorm, Voltara, Aurelan, Vaelkhar.
+
+## Askel in the game
+
+The trial was one scene for one fight. In the game the board turns, its ground rises and falls, and the fighters must stand over what
+lies on the ground, so the show is cut into **five small sheets** the page lays by the board's own tiles
+(`tools/blender-fx/eidolons/parts.py`, finished by `parts_finish.py`: the heroes' pixels, 24 colours shared by all five, hard alpha):
+
+| Sheet | Frames | What it is | Layer |
+|---|---|---|---|
+| `askel-stage-sigil` | 22 of 160 x 96 | burns on round its ring and inward (12), glows (3), cools and fades (7) | the ground, under the fighters |
+| `askel-stage-scorch` | 8 of 88 x 48 | a patch of burnt ground, its coals cooling, then fading | the ground, under the fighters |
+| `askel-stage-pillar` | 16 of 120 x 288 | the pillar of flame: up, burning, torn away | over the fighters |
+| `askel-stage-fire` | 14 of 64 x 112 | a tile catching fire: thin pointed tongues lick up, burn, die | over the fighters, under the painted walls |
+| `askel-stage-smoke` | 12 of 72 x 128 | a puff of smoke climbing | over the fighters |
+
+**120,138 bytes** for all five (the largest sheet is 1920 x 288, so each fits any phone's texture). They load by URL from
+`src/art/eidolons/fx/`, which `build.mjs` already copies and lists in the service worker's `FILES`, so they play offline.
+
+**The director's review of the first push** (the strike was a loss: round-topped tile flames and a Blender blast had replaced the
+painted fire walls and great burst, and read as soft blobs): hybrid means keeping the paintings where they are stronger. So the
+painted walls, great burst, aftershocks and lingering wall are back, the Blender blast and firestorm are gone, and the tile fire is
+now the **lead-in** under them: fewer tiles, and redrawn as thin, pointed, licking tongues.
+
+**What plays** (Askel's 5.0 s call from ULT-EPIC, `fullOf('askel')`; nothing in its beats, the sim or the speed rule changed):
+
+| Stage | Today's, kept | Blender's, new |
+|---|---|---|
+| Wind-up, the horn (0 to 0.46 s) | the horn blown, the dim | the **sigil** burns onto the ground where the hound will come on, under the fighters, its light put back over the dim |
+| Wind-up, the pass (0.46 to 2.06 s) | the painted Askel, its name, title and line, its bounding run and paw-prints, out to the left | the **pillar** goes up from the sigil a moment before, and the painting **leaps out of it** (white-hot, then itself, flames at the pillar's foot in front of it) instead of coming in from off the screen |
+| Wind-up, the sprite and the build-up (2.06 to 3.26 s) | the sprite hound runs on and breathes, the charge closes on the foes | the sigil glows on; as the hound breathes, **fire crosses the foes' ground tile by tile** from its jaws (every foe's tile and up to 7 round them), the last catching just before the blow |
+| Strike (3.26 s, with the 0.26 s freeze) | all of it: the flash, the bloom, the shockwave ring, the hit-stop, the shake, the snap zoom, the painted great burst, the painted walls of fire over each foe, the wave and firestorm, the aftershocks, the embers flung | the walls rise out of ground already burning; the ground is left **scorched** under the foes |
+| Aftermath (4.13 s on) | the painted wall left burning, the wash, the drifting embers | **smoke** climbs off the burnt tiles; the sigil cools and fades 0.7 s into the fight; the scorch's coals cool for 2.4 s and fade under the fight (beside the sim's own burning ground) |
+
+Nothing of main's call is left out; only the painting's entry changed (out of the pillar, not from off the screen).
+
+**Two layers, following the board.** The sigil is laid like the game's painted ground loops (`GroundPaint`): once for each diagonal row
+of tiles it covers, cut to that row's tile tops and drawn just after them, so the fighters stand over it and nearer columns cover it.
+New here (`render/groundSheet.ts`): tiles of another height take their own copy, moved up or down by their height, so the sigil bends
+over a hill or a pit instead of floating. Each scorch patch lies on its tile's own ground layer at that tile's height. The pillar, the
+tile fires and the smoke are strips on the call's own layer (`stageSheet.ts`), each standing on its tile's place on the page, so they follow
+the heights too, and they need no facing: the fire crosses whichever way the foes lie, on a board turned any way.
+
+**The short call** (2.2 s, on Auto or with full calls off): the sigil is there from the start (never half drawn), the pillar burns in
+0.75 s, about half as many tiles catch fire and smoke. **Battery saver**: fewer still. **Reduced motion**: the sigil is one steady frame
+faded in and out, the pillar and the tile fires each hold their steady frame and fade (the layer's own rule for strips), the
+painting fades in held still as before, no smoke, no flames in front of the painting, no rumble.
+
+**Where things are.** `src/eidolonStage.ts` (pure: the sheets' shapes, `sigilFrame`, `sigilSpot`, `risePass`, `wavePlan`,
+`scorchFrame`, the budgets; `STAGED` has Askel only, so the other five play exactly as before). `src/render/groundSheet.ts` (the ground
+player) and `src/stageSheet.ts` (the strip player): small and apart, so the general frame-sheet player (`claude/blender-fx`) can take
+them over. `src/eidolonCall.ts`: `stageFor`, `stepStage`, `stagedLead` (at the build-up), `stagedStrike`, `dropStage`, and the painting's rise in
+`pass`. `src/render/fx.ts`: the Eidolons' riders now show their names over the heroes ("Kindled", "Stone skin", "Life drain") where
+the raw keys ("eidolonWarm"...) showed before.
+`test/eidolon-stage.test.ts` (nine tests).
+
+**Honestly.**
+- The tile fire is a modest lead-in, not a second strike: thin tongues about a tile wide, mostly hidden once the painted walls
+  rise. It is there to make the ground burn before the blow, and it does; it adds little force of its own.
+- The sigil is dim while the horn sounds: it lies under the call's dim (as the fighters do). A glow is put back over it, but it reads
+  best from the pass on, and best of all cooling under the fight afterwards.
+- The Last Stand's hall has no tile ground layers, so there the sigil and scorch are left out and only the standing pieces play.
+- It adds up to about 20 strips to the full call (a tile fire for each foe's tile and 7 more, 6 smokes), on top of the painted
+  strike's own; the short call and battery saver add about half.
+
+**Checked.** `npm run typecheck`, the full suite, `npm run web`, and the whole cast captured in a real fight (the Orc Warband's last
+wave) at 393 x 852, 360 x 780 and 412 x 915, with the short call and reduced motion at 393 x 852 (`docs/samples/eidolon-blender/`):
+
+- `askel-game-393.webp`, `-360`, `-412`: the whole cast, animated; `askel-game-<size>-strip.webp`: twelve stills of each.
+- `askel-game-before-after.webp`: main's call above, the staged one below, at the same moments.
+- `askel-game-short-strip.webp`, `askel-game-reduced-strip.webp`.
+
+```bash
+pip install bpy
+python3 tools/blender-fx/eidolons/parts.py <parts>                     # the five pieces, about two minutes
+python3 tools/blender-fx/eidolons/parts_finish.py <parts>              # the sheets, into src/art/eidolons/fx/
+npm run web && STEP=84 END=6720 PORT=9071 OUT=<shots> node tools/blender-fx/eidolons/shots.mjs [--size 360x780] [--short] [--reduced]
+python3 tools/blender-fx/eidolons/cast_samples.py <shots> <main's shots> docs/samples/eidolon-blender
+```
+
+**For the next five.** Each needs its own five sheets (its sigil's design, its element's pillar, tile piece, ground mark and what
+drifts off it) and one entry in `STAGED`; the lead-in, the scorch and the players are shared, and each keeps its painted strike. Ice, stone and light need a second material
+beside the fire's (solid shards and rock that catch the light; the prototype has both).
+
+---
+
+# The trial that led to it: the fire Eidolon as one Blender scene
+
+The owner: "lets try a pass with the eidolons in blender too to see if we can improve them. start with the fire one." And the casts are
+to feel epic and last 4 to 10 seconds (the timing and the slow-down are another builder's, ULT-EPIC; nothing here touches them).
+
+**This was a trial to look at.** Nothing in it is wired into the game; the hybrid above is what shipped.
+Branch `claude/eidolon-blender`, from `claude/blender-fx` (the Blender prototype and the pixelated finish the owner chose).
+
+## What to look at (`docs/samples/eidolon-blender/`)
+
+- `askel-cast.webp`: the whole cast, 8 seconds at 12 frames a second, laid over a real fight at 393 x 852 (the Orc Warband's last wave).
+- `askel-stages.png`: eight stills of its stages, at twice the size so the pixels show.
+- `askel-today-vs-blender.png`: today's Askel against this one, the figure and the strike.
+- `askel-today-frames.png`: today's cast frame by frame (every 300 ms of its 4 seconds), for reference; `plate.png` is the fight the
+  frames are laid over.
+- `askel-sheet.webp` and `askel-glow-sheet.webp`: what would ship (below).
+
+## Today's fire Eidolon
+
+Askel the Cinderhound (`docs/notes/eidolons.md`, `eidolon-call-2.md`, `eidolon-fx.md`): about 4 seconds. The horn, the painted figure
+passing over the board with its name and line, a small sprite of the hound running in, its breath, then the great burst, the walls of
+fire over each foe and the fire left on their ground. Its pieces are a painting (900 px), a 24-frame sprite sheet and painted spell
+sheets, moved by the page.
+
+## The Blender show (8 seconds, one scene)
+
+`tools/blender-fx/eidolons/askel.py` stages it all in one scene, from the game's camera (orthographic, 30 degrees down, turned 45), in the
+game's tiles, so everything lies on the ground as the board does:
+
+| Time | Stage |
+|---|---|
+| 0.15 to 2.25 s | **The wind-up.** A sigil (two rings, runes, three fangs, a hound's eye) burns onto the ground round its ring and inward, white-hot where it is being drawn; small flames catch along it; embers spiral in to the middle; the ground's glow grows. |
+| 2.25 to 3.45 s | **The arrival.** A pillar of flame nine tiles tall with a ring of force; the hound comes up out of the ground inside it, rearing, as the pillar thins. |
+| 3.45 s | **The slam.** Its forefeet come down: a white flash, a second ring, sparks thrown. |
+| 3.65 to 4.3 s | **The howl.** Head thrown back, jaws open, the cracks in its hide blazing. |
+| 4.45 to 5.8 s | **The strike.** It braces and breathes a torrent of fire, swept across the foes' ground from one side to the other; the ground blackens under it and catches fire behind it. |
+| 6.15 to 8 s | **The aftermath.** The hound burns away to embers from the edges in; smoke climbs off the burnt ground; embers fall; the fires die, the coals cool and the sigil dulls and fades. The last frame is empty. |
+
+The hound is modelled from simple shapes (about four and a half tiles to its ears, so it towers over the heroes): black rock, cracked,
+the cracks running with lava and blazing harder as it howls and breathes (lit from within), a mane and a tail of flame, burning eyes,
+fangs and a fire in its throat.
+
+**The finish** (`finish.py`, the owner's choice from `tools/blender-fx/README.md`): frames are rendered at 450 x 630 and shrunk to
+300 x 420, the heroes' pixel size (a hero's pixel is about 1.4 of the board's); cut to 24 colours shared by the whole show; the alpha
+hardened (bright pixels are there or not; the dark smoke and scorch keep three flat steps of see-through so the ground shows); and the
+brightest parts keep a soft glow underneath, as light on the screen.
+
+**Looked at and redone** (the first render is never the good one): three quick passes of ten frames and two full renders. What changed
+between them: the hound was a third of its size and its hide a mesh of white cracks (a giraffe); it stood with its jaws already over
+the foes, so the breath left the screen; the scorched ground was a hard wedge and showed before the breath; the ground's glow became a
+solid disc that hid the heroes; the rock speckled (the render is now denoised); the head was too small to read; the smoke was peppered.
+
+## Honestly: better and worse than today's
+
+**Better**
+- **It is a show with a shape.** Wind-up, arrival, slam, howl, strike, aftermath: eight seconds that build, where today's four are
+  separate pieces cut together. This is what the owner asked the casts to be.
+- **It belongs to the board.** The sigil, the rings, the breath, the burnt fan and the fires all lie on the ground at the board's own
+  angle, and the fire lights the hound. Today's figure and bursts are flat pictures laid over the screen.
+- **One hound.** The same creature rises, howls, breathes and burns away. Today a painting passes and a small sprite does the work.
+- **Things today's has none of:** the sigil being drawn, the rising out of the pillar, the hound burning away, the scorch and coals.
+- **Cheap to change.** A time or a size is a number in the script; all 96 frames re-render in about ten minutes on four CPU cores.
+
+**Worse**
+- **The hound is a worse drawing.** Today's painted Askel is a far better picture of a hound: fur of cinders, a real snarl, weight.
+  This one is built from balls and cones; it reads as a great beast with ears, jaws and a tail of flame, but closer to a hyena or a big
+  cat, and its hide is busier than the painting's (too much orange line, not enough black). At hero pixel size its face is a few pixels.
+- **The strike has less force.** Today's blow fills the foes' half with a white flash, a bloom, a great burst, walls of fire and
+  numbers. The Blender breath is a rolling cloud that reads as soft, lumpy fire, and it has no flash, hit-stop, shake or snap zoom
+  (those are the page's, and would be added when wired).
+- **No close-up, name or line.** The name stamp and the spoken line are today's best beat; this trial does not replace them, and the
+  painting should stay for them.
+- **Fire made of noisy shells, not simulated flame.** Good as pixels, but the pillar and breath are blobby in places.
+- **It hides the heroes.** The sigil lies under the heroes' feet and the hound stands just behind them, drawn over everything as
+  today's cast is. Wired in properly it would be two layers (the ground's under the fighters, the hound and fire over them).
+- **The ground is flat.** The scene assumes level ground; this battlefield is a low dome, so the far edge of the sigil floats a few
+  pixels. A tall hill or a pit under it would show.
+- **One facing.** It is rendered for this fight's lie (the foes down and to the right). An army section turned another way would need
+  the sheet mirrored, or a second render.
+
+## If it shipped
+
+- `askel-sheet.webp`: the 96 pixel frames, 3600 x 3360, lossless: **818,260 bytes**. `askel-glow-sheet.webp`: the glow at a quarter
+  size: **30,626 bytes**. About 849 KB together, against about 523 KB for today's six Askel files, and about 1.1 MB for everything
+  under `src/art/eidolons/` today. Six Eidolons at this size would be about 5 MB more for the offline cache.
+- Ways to make it smaller: 10 frames a second (a sixth off), cropping each stage to its own box (the wind-up and aftermath are mostly
+  empty), or splitting the hound (a small loop) from the ground effects.
+- A 3600 x 3360 texture is large for a phone's GPU; it would be cut into two or three sheets or drawn on a 2D canvas.
+- Wiring is its own job (and needs ULT-EPIC's timing): the frames drawn at the hound's tile through the board's projection in two
+  layers, the page's flash, hit-stop and shake at 3.45 s and 4.45 s, the sim's strike let through at the breath, the name and line kept
+  over the howl, a short version for the setting, and a still one for reduced motion.
+
+## What the other five would take
+
+The stage (camera, sigil, embers, rings, scorch, smoke, the finish and the samples) is shared; each Eidolon needs its own figure, its own
+element's material and its own strike. Roughly a half to a full day each at this quality, most of it on the figure:
+
+- **Nivra the Rime Wyrm** (ice): a long body along a curve is easy; ice is solid and catches light, which Cycles does well (the
+  prototype's ice spikes were its best effect). Likely the strongest of the six.
+- **Gorm the Quarry Titan** (earth): blocks of rock are what simple shapes do best; stone spires and dust. Easy and should look good.
+- **Voltara the Copper Goddess** (lightning): bolts are easy (the prototype has them); a human figure is the hardest thing to model
+  from simple shapes. The risk is the figure.
+- **Aurelan the Lion of Dawn** (light): a lion has the hound's problem (a face and a mane to read at a few pixels); light shafts are easy.
+- **Vaelkhar the Dragon King** (dark): wings, horns and a long neck: the most modelling. Dark fire is the fire here recoloured.
+
+**A suggestion.** The weak part is the modelled figure and the strong part is the staged ground show. A mix may be the best of both:
+keep each Eidolon's painting (and its sprite) for the figure, the name and the line, and use Blender for what it does well: the sigil,
+the pillar, the breath on the ground, the scorch and the aftermath, lit and laid at the board's angle. Or have the figures painted
+(a ChatGPT sheet per Eidolon from the game's camera angle) and the ground show rendered round them.
+
+## Re-rendering
+
+```bash
+pip install bpy
+npm run web && PORT=9071 OUT=<shots> node tools/blender-fx/eidolons/shots.mjs      # today's cast, the plate and plate.json
+python3 tools/blender-fx/eidolons/askel.py <frames>                                 # about ten minutes; STEP=8 SS=1 for a quick look
+python3 tools/blender-fx/eidolons/finish.py <frames> <shots> docs/samples/eidolon-blender
+```
+
+What ran for this trial: the three scripts above (two full renders and three quick passes), and the samples looked at by eye. No
+typecheck, build check or tests were needed: nothing in `src/` changed (`npm run web` was run only to take today's pictures).

@@ -213,8 +213,8 @@ export interface Meta {
   /** BATTLE-POLISH: whether the ruler's equipped spells are cast on their own (the fight's Auto spells button). Unset: as `ultAuto`, the one
    *  switch that covered both before Auto was split (`spellAutoSaved`). */
   spellAuto?: boolean;
-  /** ULT-SHOW: how many full moments of each hero kind's ultimate the player has seen (only heroes with a showcase are counted; the first
-   *  and every Nth play the long showcase: `ultShowRules.ts`). Saves from before have none: every showcase still to see. */
+  /** ULT-SHOW: how many full moments of each hero kind's ultimate the player has seen (only heroes with a showcase are counted).
+   *  It once chose which uses played the long showcase (the first and every Nth); every use fired by hand plays it now (ULT-EPIC 3). */
   ultSeen?: Record<string, number>;
   /** The day (yyyymmdd) each Mythic was last paid rank shards for a replay of its trial won (`mythicEcho.ts`); saves from before have none. */
   trialShards?: Record<string, number>;

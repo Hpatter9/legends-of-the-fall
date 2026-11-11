@@ -47,7 +47,14 @@ export interface UltStages extends Stages {
 }
 
 /** The owner's limits for a show played by hand (ms), and what plays on Auto: the short banner over a fight that never stops (as before). */
-export const ULT_LIMITS = { MIN: 4000, MAX: 6000, AUTO: 1500 };
+export const ULT_LIMITS = {
+  MIN: 4000,
+  MAX: 6000,
+  AUTO: 1500,
+  /** ULT-EPIC 3 (the owner's call): a showcase whose salvo is still in the air when it ends (Meteor Swarm and the like: the volleys fall
+   *  live after it) may run to about 7 s, so its wind-up and aftermath are not squeezed to nothing. Everything else stays within `MAX`. */
+  SALVO_MAX: 7000,
+};
 export const EIDOLON_LIMITS = { MIN: 4000, MAX: 10000, AUTO: 2200 };
 
 /** Each weight's stages (ms): the wind-up, the strike (the freeze on the blow is inside it) and the aftermath, and its echoes. */
@@ -109,18 +116,31 @@ const STRIKE_TAIL = 300;
 const WINDUP_MIN = 900;
 const AFTERMATH_MIN = 560;
 
+/** ULT-EPIC 3: every use fired by hand plays its showcase, so a showcase use's whole length goes by the ultimate's weight too: a single
+ *  blow's is still the shortest, a storm's and a summoning's the longest (ms; a long showcase takes what it needs, up to the limit). */
+const SHOW_TOTAL: Readonly<Record<UltWeight, number>> = { blow: 5000, flurry: 5400, wave: 5700, storm: 6000, summon: 6000 };
+
+/** What a showcase with a salvo keeps for its wind-up and aftermath together, where the limit allows (ms). */
+const SALVO_ROOM = 2000;
+
 /** One use of a hero kind's ultimate. A salvo still in the air (`wait`: the longest it is waited for, the fight running under the dim) is
  *  inside the strike, and so is a showcase (`show`: its length, the fight held; a salvo's wait follows it); the wind-up and the aftermath
- *  give way so the whole stays within the owner's 4 to 6 s, and a showcase too long to fit with its salvo is played a little quicker
- *  (the result's `show`). A showcase's own staging is the strike, so it has no echoes; nor has a salvo, whose own blows land live. */
+ *  give way so the whole stays within the owner's 4 to 6 s, or about 7 s for a showcase with a salvo to land after it (`SALVO_MAX`). A
+ *  showcase that still could not fit would be played a little quicker (the result's `show`); none of the game's does. A showcase's own
+ *  staging is the strike, so it has no echoes; nor has a salvo, whose own blows land live. */
 export function stagesFor(kind: string, use: { wait?: number; show?: number } = {}): UltStages {
   const base = ultStages(kind);
   const tail = ULT_EPIC.HIT_STOP_MS + STRIKE_TAIL;
   const wait = use.wait ?? 0;
   if (use.show) {
-    const show = Math.min(use.show, ULT_LIMITS.MAX - WINDUP_MIN - AFTERMATH_MIN - tail - wait);
+    const most = wait ? ULT_LIMITS.SALVO_MAX : ULT_LIMITS.MAX;
+    const show = Math.min(use.show, most - WINDUP_MIN - AFTERMATH_MIN - tail - wait);
     const strike = show + wait + tail;
-    const rest = ULT_LIMITS.MAX - strike;
+    // (its weight's length, a second more with a salvo to wait for; never under what the strike needs, never over the limit)
+    // (and with a salvo, room for a wind-up and an aftermath worth the name round a long strike)
+    const room = wait ? SALVO_ROOM : WINDUP_MIN + AFTERMATH_MIN;
+    const total = Math.min(most, Math.max(SHOW_TOTAL[base.weight] + (wait ? 1000 : 0), strike + room));
+    const rest = total - strike;
     const windup = Math.max(WINDUP_MIN, Math.min(base.windup.ms, Math.round(rest * 0.55)));
     const aftermath = Math.max(AFTERMATH_MIN, Math.min(base.aftermath.ms, rest - windup));
     return { ...lay(windup, strike, aftermath), weight: base.weight, echoes: [], show };

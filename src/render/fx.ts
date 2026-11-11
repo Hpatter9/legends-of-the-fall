@@ -152,6 +152,8 @@ const MARK_WORDS: Record<string, string> = {
   parry: 'Parry', smoke: 'Smoke', pinned: 'Pinned', charged: 'Charged', vow: "Martyr's Vow", hunter: 'Hunter', brute: 'Brute', dance: 'Dancing',
   stone: 'Stone', puppet: 'Puppet', siege: 'Anchored', angel: 'Warded', rewind: 'Rewound', prey: 'Prey', suppressed: 'Pinned down',
   dirge: 'Dirge', anthem: 'Anthem', bounty: 'Bounty', condemned: 'Bane',
+  // (the Eidolons' riders on the heroes: Askel's warmth, Gorm's stone skin, Vaelkhar's drain)
+  eidolonWarm: 'Kindled', eidolonSkin: 'Stone skin', eidolonDrain: 'Life drain',
 };
 
 /** A small random offset (the renderer's own, not the sim's). */

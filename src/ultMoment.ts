@@ -142,10 +142,10 @@ export class UltMoments {
       const ult = ultimateOf(u)!;
       const { shape, ms } = ultShape(ult, u.id, events, born);
       const m: UltMoment = { unit: u.id, kind: u.def, name: ult.name, shape, ms, el: skillElement(keyOf(ult)), targets: ultTargets(events, u.id) };
-      // (ULT-SHOW: the hero's first use, and every Nth after, plays the long version; every full moment of a hero with a showcase is counted)
+      // (ULT-EPIC 3: every use fired by hand plays the showcase; every full moment of a hero with a showcase is still counted)
       if (this.show && hasShowcase(u.def)) {
         const s = settings();
-        if (wantsShow(u.def, { full: true, short: s.ultShort, seen: this.opts.seen?.(u.def) ?? 0, every: s.ultEvery })) {
+        if (wantsShow(u.def, { full: true, short: s.ultShort })) {
           const tileOf = (id: number) => b.units.find((x) => x.id === id);
           // (where a fighter the cast moved stood before it: the page's note of the tick before, else its step begun on this tick)
           const originOf = (id: number) => {

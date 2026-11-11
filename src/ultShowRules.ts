@@ -6,9 +6,9 @@
 // held while the showcase plays, and the showcase reads that tick's events (the blinks, the blows, the meteors' aims, the fighters called up)
 // to stage the real sprites: where the caster stood at each hop, which foe was cut and when. So the fight comes out exactly as it would have.
 //
-// When it plays: the full ultimate scenes on, Auto off, Shorter ultimates off, and the hero's ultimate has a showcase; then the hero's first
-// use, and every Nth use after it (the setting, 10 by default; 0: the first only). The uses counted are the full moments the player saw,
-// per hero kind, kept in the save (`Meta.ultSeen`).
+// When it plays: the full ultimate scenes on, Auto off, Shorter ultimates off, and the hero's ultimate has a showcase: then every use
+// (ULT-EPIC 3, the owner's call; it was the hero's first use and every Nth after it). The full moments the player saw are still counted,
+// per hero kind, in the save (`Meta.ultSeen`).
 //
 // The x1 rule (the owner's): an ultimate's full moment, its showcase and an Eidolon's full call always play at x1 speed, whatever the fight's
 // speed; the short versions keep the fight's speed (`momentSpeed`).
@@ -127,23 +127,16 @@ export const SHOWCASES: Record<string, Showcase> = {
 
 export const hasShowcase = (kind: string): boolean => kind in SHOWCASES;
 
-/** The setting's choices for how often the long version comes back (0: the first use only). */
-export const EVERY_CHOICES = [0, 5, 10, 20] as const;
-export const DEFAULT_EVERY = 10;
-
-/** Whether this use plays the long version: `seen` full moments of this hero's ultimate already played (0: this is the first), `every` the
- *  setting. The first use always does; then every `every`th after it (with 10: the 1st, 11th, 21st...). */
-export const showDue = (seen: number, every: number): boolean => seen <= 0 || (every > 0 && seen % every === 0);
-
 /** The save's count of full moments seen of a hero kind's ultimate, and one more (`Meta.ultSeen`). */
 export const seenOf = (m: { ultSeen?: Record<string, number> }, kind: string): number => m.ultSeen?.[kind] ?? 0;
 export function noteSeen(m: { ultSeen?: Record<string, number> }, kind: string): void {
   (m.ultSeen ??= {})[kind] = seenOf(m, kind) + 1;
 }
 
-/** Whether an ultimate that just fired gets its showcase. */
-export function wantsShow(kind: string, o: { full: boolean; short: boolean; seen: number; every: number }): boolean {
-  return o.full && !o.short && hasShowcase(kind) && showDue(o.seen, o.every);
+/** Whether an ultimate that just fired gets its showcase. ULT-EPIC 3 (the owner's call): every ultimate fired by hand plays it, not only
+ *  the hero's first and every tenth after; "Shorter ultimates" is still the way out, and Auto's are always the short banner. */
+export function wantsShow(kind: string, o: { full: boolean; short: boolean }): boolean {
+  return o.full && !o.short && hasShowcase(kind);
 }
 
 /** The fight's speed while a moment plays (`moment`: an ultimate's full moment or showcase, or an Eidolon's full call, is on): x1 then. */

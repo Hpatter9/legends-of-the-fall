@@ -4,8 +4,8 @@
 //
 //   npm run web && PORT=8693 OUT=out/ult-stages node tools/ult-epic/stages.mjs [--size 393x852] [--picks samurai,wizard] [--eidolons gorm] [--reduced] [--first]
 //
-// For each pick: two frames in each stage, at shares of that use's own stages (read from the page). `--first` leaves the save with no
-// ultimate seen, so the first use's showcase plays inside the strike. Writes <OUT>/<pick>-<W>-<n>-<stage>.png; `stage-strips.py` joins them.
+// For each pick: two frames in each stage, at shares of that use's own stages (read from the page). Every use fired by hand plays its
+// showcase, inside the strike (ULT-EPIC 3). Writes <OUT>/<pick>-<W>-<n>-<stage>.png; `stage-strips.py` joins them.
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';

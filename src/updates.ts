@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.499.0',
+    date: '2026-11-11',
+    title: 'Askel\'s call, staged in fire',
+    notes: ['The Cinderhound\'s call gains a sigil burning onto the ground, a pillar of flame Askel leaps from, and fire crossing the foes\' ground before the blow.', 'The ground is left scorched and smoking, with coals that cool under the fight. A bigger strike is in the works.'],
+  },
+  {
+    version: '0.498.0',
+    date: '2026-11-11',
+    title: 'The king\'s spells, rendered anew',
+    notes: ['Every king\'s spell has a new, fully animated pixel effect of its own: domes, pillars, vortexes, storms and rings, each in its element\'s colours.', 'Burning, frozen and poisoned ground is redrawn to match, and light spells keep a soft glow. The game\'s download is a little smaller.'],
+  },
+  {
+    version: '0.497.0',
+    date: '2026-11-11',
+    title: 'Every ultimate gets its showcase',
+    notes: ['Every ultimate you fire by hand now plays its full showcase, not only the first and every tenth. \'Shorter ultimates\' in Settings still turns it off.', 'Ultimates with volleys still to land, like Meteor Swarm, may run to about 7 seconds so nothing is rushed.'],
+  },
+  {
     version: '0.496.0',
     date: '2026-11-11',
     title: 'The snows\' ice shows up',
