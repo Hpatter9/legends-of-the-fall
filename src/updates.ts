@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.488.0',
+    date: '2026-11-11',
+    title: 'Fighters stand out on every floor',
+    notes: ['Six lands\' grounds are adjusted so heroes and dark foes read clearly against them, and the mire is wetter with more puddles.'],
+  },
+  {
     version: '0.487.0',
     date: '2026-11-11',
     title: 'Living battlefields: floors and life',
