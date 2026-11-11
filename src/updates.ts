@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.504.0',
+    date: '2026-11-11',
+    title: 'Armies: only the card swipes',
+    notes: ['On the Armies page only the army\'s card slides; the details under it stay put and change once the card has settled.', 'The left and right arrows are matching painted orbs, centred on the card and dimmed at the first and last army.'],
+  },
+  {
     version: '0.503.0',
     date: '2026-11-11',
     title: 'Fuller ground, bigger ultimates',
