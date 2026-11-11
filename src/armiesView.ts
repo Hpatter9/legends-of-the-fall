@@ -1,9 +1,8 @@
-// The Armies screen (opened by the Battle tab's big button). The screen is a swipeable carousel, one army a card, each card filling the page between the top bar and the tab bar: a cinematic scene of the army
-// (its land's backdrop, its troops in ranks and its boss large at the back, with a lighting mood and a slow parallax),
-// and below it the army's 11-star track with its chests, the difficulty picks, the conditions, the rewards and the Fight!
-// button. A locked army shows its scene as a silhouette. The rules are in `src/sim/armies.ts`, `armyStars.ts` and
-// `tiers.ts`; this only draws them.
-
+// Painted War Room campaign selection. Battle rules, rewards and tier gates remain in sim/.
+import { menuWell } from './ornateMenu';
+import { trophyPicture } from './trophyArt';
+import { armyChallenge, suggestedArmyTier } from './sim/armyChallenge';
+import { powerText } from './sim/power';
 import { glyphWord } from './paintedButton';
 import { blueprintOf } from './sim/assault/assault';
 import { ASSAULT_STARS, canAssault, conquered, regrouped, tributeDue, tributeOf } from './sim/assault/economy';
@@ -16,8 +15,6 @@ import { armyRules, chestKind, chestsOf, type StarResult } from './sim/armyStars
 import { ARMY_STARS, MILESTONES, TIERS, tierRange } from './sim/tiers';
 import { UNITS } from './sim/units';
 import type { Meta } from './sim/meta';
-import { backdropFiles } from './render/backdrop';
-import { figureOf, sprite } from './render/sheets';
 import { AREA_NAMES, ICONS, icon } from './menuArt';
 import { CHEST_NAME, chestPicture } from './chestStash';
 import { clearHeroWaits } from './sim/clearHero';
@@ -58,167 +55,28 @@ export const unlockLine = (a: Army, m: Meta): string => {
   return armyCleared(m, before.id) ? `Opens at ${armyNeed(a.id)} stars` : `Beat ${who} · ${armyNeed(a.id)} stars`;
 };
 
-// ---- the scenes -------------------------------------------------------------------------------------------------------
-
-type Mood = 'embers' | 'souls' | 'snow' | 'leaves' | 'fog' | 'sparks' | 'lanterns' | 'dust';
-/** The light of each army's scene: drifting particles and a colour laid over the land. */
-const MOODS: Record<string, { moods: Mood[]; tint: string }> = {
-  orcs: { moods: ['embers', 'dust'], tint: 'rgb(var(--e6-rgb) / 0.16)' },
-  undead: { moods: ['fog', 'souls'], tint: 'rgb(var(--b2-rgb) / 0.18)' },
-  beasts: { moods: ['snow', 'fog'], tint: 'rgb(var(--b5-rgb) / 0.14)' },
-  wildwood: { moods: ['leaves', 'fog'], tint: 'rgb(var(--g3-rgb) / 0.14)' },
-  labyrinth: { moods: ['fog', 'dust'], tint: 'rgb(var(--p3-rgb) / 0.18)' },
-  ogres: { moods: ['dust', 'embers'], tint: 'rgb(var(--e5-rgb) / 0.14)' },
-  infernal: { moods: ['embers', 'embers'], tint: 'rgb(var(--r4-rgb) / 0.22)' },
-  yokai: { moods: ['lanterns', 'souls'], tint: 'rgb(var(--p3-rgb) / 0.18)' },
-  golems: { moods: ['sparks', 'dust'], tint: 'rgb(var(--e7-rgb) / 0.16)' },
-};
-const PARTICLE: Record<Mood, { colours: string[]; size: [number, number]; n: number; fall: boolean; time: [number, number] }> = {
-  embers: { colours: ['var(--e6)', 'var(--e7)', 'var(--e5)'], size: [3, 6], n: 16, fall: false, time: [5, 9] },
-  souls: { colours: ['var(--b4)', 'var(--g6)', 'var(--b3)'], size: [4, 8], n: 12, fall: false, time: [7, 12] },
-  snow: { colours: ['var(--white)', 'var(--b6)'], size: [3, 6], n: 24, fall: true, time: [5, 9] },
-  leaves: { colours: ['var(--g3)', 'var(--e4)', 'var(--g2)'], size: [4, 7], n: 14, fall: true, time: [7, 12] },
-  fog: { colours: [], size: [0, 0], n: 3, fall: false, time: [26, 40] },
-  sparks: { colours: ['var(--e8)', 'var(--e6)', 'var(--white)'], size: [3, 5], n: 16, fall: false, time: [3, 6] },
-  lanterns: { colours: ['var(--p4)', 'var(--p5)', 'var(--p4)'], size: [5, 8], n: 10, fall: false, time: [9, 14] },
-  dust: { colours: ['var(--s13)', 'var(--e5)'], size: [3, 5], n: 14, fall: false, time: [8, 13] },
-};
-
-/** A small deterministic stream for the scene's look (the same each visit). */
-function lcg(seed: string): () => number {
-  let s = 2166136261;
-  for (const ch of seed) s = Math.imul(s ^ ch.charCodeAt(0), 16777619);
-  return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
-}
-
-/** The foes of an army's field waves, in order of first appearance, then back to the start to fill the ranks. */
+/** The field troops, kept available to previews and army inspection tools. */
 export function crewOf(a: Army): string[] {
-  const boss = new Set(bossesOf(a).map((b) => b.id));
-  const seen: string[] = [];
-  for (const w of a.waves) for (const f of w.foes) if (!boss.has(f) && !seen.includes(f)) seen.push(f);
-  return seen;
+  const bosses = new Set(bossesOf(a).map((b) => b.id));
+  return [...new Set(a.waves.flatMap((w) => w.foes).filter((k) => !bosses.has(k)))];
 }
 
-/** The height a troop is drawn at, in px (each troop's scale is the whole number that comes nearest). */
-const TROOP_PX = 84;
-/** The whole-number scale that draws a boss at about `ratio` times a troop's height (1.5 to 2), the troop height being the crew's mean once scaled. */
-function bossScale(kind: string, crew: string[], ratio = 1.75): number {
-  const fig = (k: string) => figureOf(UNITS[k].sheet);
-  const troop = crew.reduce((n, k) => n + fig(k) * Math.max(1, Math.round(TROOP_PX / fig(k))), 0) / Math.max(1, crew.length);
-  let best = 1;
-  for (let k = 1; k <= 5; k++) if (Math.abs((fig(kind) * k) / troop - ratio) < Math.abs((fig(kind) * best) / troop - ratio)) best = k;
-  return best;
-}
-
-/** Where the troops stand: (x across, y up from the bottom, both in percent), front rank first. */
-const SLOTS: [number, number][] = [
-  [20, 8],
-  [40, 5],
-  [60, 5],
-  [80, 8],
-  [9, 21],
-  [31, 22],
-  [69, 22],
-  [91, 21],
-];
-
-interface Figure {
-  sheet: string;
-  s: ReturnType<typeof sprite>;
-  /** Where it stands, as a percentage of the scene (from the left, and up from the ground). */
-  x: number;
-  y: number;
-}
-
-/** Put a card's figures on whole pixels: a percentage of the scene is a fraction of a pixel, and scaled pixel art sitting between pixels shimmers. */
-function snapFigures(c: { root: HTMLElement; figures: Figure[] }): void {
-  const scene = c.root.querySelector<HTMLElement>('.asScene');
-  if (!scene || !scene.clientWidth) return;
-  for (const f of c.figures) {
-    const cv = f.s.canvas;
-    cv.style.left = `${Math.round((f.x / 100) * scene.clientWidth - cv.offsetWidth / 2)}px`;
-    cv.style.bottom = `${Math.round((f.y / 100) * scene.clientHeight)}px`;
-    cv.classList.add('snapped');
-  }
-}
-
-/** An army's scene: the backdrop layers, the ground, the troops in ranks (front ones lower and in front), the mid-bosses and the boss large at the back. Returns the scene and the figures to animate. */
-function buildScene(a: Army, locked: boolean): { root: HTMLElement; figures: Figure[] } {
+// Painted boss keepsakes sit on selectable campaign banners over the room painting.
+function buildScene(a: Army, locked: boolean) {
   const root = el('div', 'asScene');
-  const sky = el('div', 'asSky');
-  backdropFiles(a.area).forEach((file, i, all) => {
-    const layer = el('div', 'asLayer');
-    layer.style.backgroundImage = `url(${file})`;
-    if (i === 0) layer.style.backgroundSize = '100% 100%';
-    layer.style.setProperty('--k', String(i * 7));
-    layer.style.setProperty('--drift', `${i * 5}px`);
-    layer.style.animationDuration = `${44 - (i * 28) / Math.max(1, all.length - 1)}s`;
-    sky.append(layer);
-  });
-  root.append(sky, el('div', 'asGround'));
-  const crowd = el('div', 'asCrowd');
-  const figures: Figure[] = [];
-  const stand = (kind: string, x: number, y: number, scale: number, n: number) => {
-    const def = UNITS[kind];
-    const s = sprite(def.sheet, 0, scale);
-    s.canvas.className = 'asFig';
-    s.canvas.style.left = `${x}%`;
-    s.canvas.style.bottom = `${y}%`;
-    // (nearer to the viewer, higher in the stack)
-    s.canvas.style.zIndex = String(100 - Math.round(y));
-    s.canvas.style.setProperty('--flip', s.faceRight ? '-1' : '1');
-    s.tick(n % 4);
-    crowd.append(s.canvas);
-    figures.push({ sheet: def.sheet, s, x, y });
-  };
-  // troops stand at one figure height (whole-number scales, the nearest to `TROOP_PX`), the boss at 1.5 to 2 times a troop, a mid-boss between
-  const scaleFor = (kind: string, px: number, max: number) => {
-    const fig = figureOf(UNITS[kind].sheet);
-    return Math.max(1, Math.min(max, Math.round(px / fig)));
-  };
-  const crew = crewOf(a);
-  const boss = bossOf(a);
-  const mids = bossesOf(a).filter((b) => b.id !== boss);
-  stand(boss, 50, 22, bossScale(boss, crew), 0);
-  mids.slice(0, 2).forEach((m, i) => stand(m.id, i ? 78 : 22, 25, bossScale(m.id, crew, 1.4), i + 1));
-  const slots = mids.length ? SLOTS.filter((s) => !(s[1] > 20 && (s[0] === 31 || s[0] === 69))) : SLOTS;
-  slots.forEach(([x, y], i) => stand(crew[i % crew.length], x, y, scaleFor(crew[i % crew.length], TROOP_PX, 4), i));
-  root.append(crowd);
-  // (the lighting: a colour over the land, drifting particles, and a vignette)
-  const mood = MOODS[a.id] ?? { moods: [], tint: 'rgb(var(--black-rgb) / 0)' };
-  const tint = el('div', 'asTint');
-  tint.style.background = mood.tint;
-  const air = el('div', 'asAir');
-  const rnd = lcg(a.id);
-  mood.moods.forEach((m, mi) => {
-    const p = PARTICLE[m];
-    if (m === 'fog') {
-      for (let i = 0; i < p.n; i++) {
-        const f = el('i', 'asFog');
-        f.style.setProperty('--y', `${30 + i * 22}%`);
-        f.style.setProperty('--t', `${p.time[0] + rnd() * (p.time[1] - p.time[0])}s`);
-        f.style.setProperty('--d', `${-rnd() * 30}s`);
-        air.append(f);
-      }
-      return;
-    }
-    for (let i = 0; i < p.n; i++) {
-      const e = el('i', `asP ${p.fall ? 'fall' : 'rise'}`);
-      e.style.setProperty('--x', `${Math.round(rnd() * 100)}%`);
-      const dx = Math.round((rnd() - 0.5) * (p.fall ? 90 : 60));
-      e.style.setProperty('--dx', `${dx}px`);
-      e.style.setProperty('--n', String(Math.max(1, Math.abs(dx))));
-      const sz = Math.round(p.size[0] + rnd() * (p.size[1] - p.size[0]));
-      e.style.setProperty('--s', `${sz}px`);
-      e.style.setProperty('--c', p.colours[(i + mi) % p.colours.length]);
-      e.style.setProperty('--t', `${(p.time[0] + rnd() * (p.time[1] - p.time[0])).toFixed(1)}s`);
-      e.style.setProperty('--d', `${(-rnd() * 12).toFixed(1)}s`);
-      air.append(e);
-    }
-  });
-  root.append(tint, air, el('div', 'asVig'));
-  if (locked) root.classList.add('asDark');
-  return { root, figures };
+  root.append(el('small', 'wrEyebrow', 'THE WAR ROOM'), el('h1', 'wrTitle', 'Armies'));
+  const banners = el('div', 'wrBanners');
+  const centre = ARMIES.indexOf(a);
+  for (let offset = -1; offset <= 1; offset++) {
+    const army = ARMIES[(centre + offset + ARMIES.length) % ARMIES.length];
+    const banner = el('button', `wrBanner${offset === 0 ? ' selected' : ''}`);
+    banner.dataset.armyIndex = String(ARMIES.indexOf(army));
+    banner.append(trophyPicture(bossOf(army), !locked && offset === 0), el('b', '', offset === 0 && !locked ? army.name : offset === 0 ? 'Sealed army' : 'View army'));
+    banner.setAttribute('aria-label', offset === 0 ? 'Selected army' : offset < 0 ? 'Previous army' : 'Next army');
+    banners.append(banner);
+  }
+  root.append(banners);
+  return root;
 }
 
 // ---- the screen -------------------------------------------------------------------------------------------------------
@@ -228,14 +86,14 @@ const picked: Record<string, number> = {};
 
 /** The Armies screen's body: the carousel of full-screen cards, opening on the furthest army unlocked. */
 export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void {
-  body.classList.add('asBody');
+  body.classList.add('asBody', 'wrBody');
   const root = el('div', 'asRoot');
   body.append(root);
   const focus = ARMIES.findIndex((a) => a.id === hooks.focus);
   let index = focus >= 0 ? focus : Math.max(0, ARMIES.map((a) => armyUnlocked(m, a.id)).lastIndexOf(true));
   const track = el('div', 'asTrack');
   const dots = el('div', 'asDots');
-  const cards: { root: HTMLElement; figures: Figure[] }[] = [];
+  const cards: { root: HTMLElement }[] = [];
 
   const render = (): void => {
     track.replaceChildren();
@@ -243,6 +101,15 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
     cards.length = 0;
     ARMIES.forEach((a, i) => {
       const c = card(a, i, m, hooks);
+      c.root.querySelectorAll<HTMLButtonElement>('.wrBanner').forEach((b) => {
+        const target = Number(b.dataset.armyIndex);
+        const other = ARMIES[target];
+        const open = armyUnlocked(m, other.id);
+        b.replaceChildren(trophyPicture(bossOf(other), open), el('b', '', open ? other.name : 'Sealed army'));
+        b.setAttribute('aria-label', open ? other.name : 'Sealed army');
+        b.setAttribute('aria-pressed', String(target === i));
+        b.addEventListener('click', () => go(target));
+      });
       cards.push(c);
       track.append(c.root);
       const d = el('button', 'asDot');
@@ -251,15 +118,17 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
       dots.append(d);
     });
     mark();
-    requestAnimationFrame(() => cards.forEach(snapFigures));
   };
   const go = (i: number): void => {
     const to = Math.max(0, Math.min(ARMIES.length - 1, i));
-    track.scrollTo({ left: to * track.clientWidth, behavior: 'smooth' });
+    track.scrollTo({ left: to * track.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
   };
   const mark = (): void => {
     [...dots.children].forEach((d, i) => d.classList.toggle('on', i === index));
-    cards.forEach((c, i) => c.root.classList.toggle('near', Math.abs(i - index) <= 1));
+    cards.forEach((c, i) => {
+      c.root.classList.toggle('near', Math.abs(i - index) <= 1);
+      c.root.inert = i !== index;
+    });
     prev.hidden = index === 0;
     next.hidden = index === ARMIES.length - 1;
     // (a dot is dark when its army is locked)
@@ -275,7 +144,6 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
   glyphWord(back);
   back.addEventListener('click', () => hooks.onBack());
 
-  let frame = 0;
   track.addEventListener('scroll', () => {
     const w = track.clientWidth || 1;
     const now = Math.round(track.scrollLeft / w);
@@ -294,31 +162,16 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
   const fit = () => {
     const h = track.querySelector<HTMLElement>('.asScene')?.offsetHeight;
     if (h) root.style.setProperty('--sceneH', `${h}px`);
-    cards.forEach(snapFigures);
   };
-  window.addEventListener('resize', fit);
   const place = () => {
     fit();
     track.scrollLeft = index * track.clientWidth;
-    track.dispatchEvent(new Event('scroll'));
+    mark();
   };
+  const observer = new ResizeObserver(() => place());
+  observer.observe(track);
   requestAnimationFrame(place);
-  requestAnimationFrame(() => requestAnimationFrame(place));
-  // (the troops idle while the page shows; the timer ends with the page)
-  const timer = window.setInterval(() => {
-    if (!root.isConnected || !root.offsetParent) {
-      if (!root.isConnected) {
-        clearInterval(timer);
-        window.removeEventListener('resize', fit);
-      }
-      return;
-    }
-    frame++;
-    cards.forEach((c, i) => {
-      if (Math.abs(i - index) > 1) return;
-      c.figures.forEach((f, k) => f.s.tick(frame + (k % 3)));
-    });
-  }, 160);
+
 }
 
 const crowns = (n: number): HTMLElement => {
@@ -330,7 +183,7 @@ const crowns = (n: number): HTMLElement => {
 /** What the Auto toggle was last set to (it is kept while the cards are redrawn). */
 const autoPick = { on: false, count: 3 as number };
 
-function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElement; figures: Figure[] } {
+function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLElement } {
   const open = armyUnlocked(m, a.id);
   const rec = recordOf(m, a.id);
   const done = armyCleared(m, a.id);
@@ -338,7 +191,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
   const boss = UNITS[bossOf(a)];
   const root = el('section', `asCard${open ? '' : ' locked'}${done ? ' done' : ''}${fresh ? ' fresh' : ''}`);
   root.dataset.army = a.id;
-  const { root: scene, figures } = buildScene(a, !open);
+  const scene = buildScene(a, !open);
   const rib = el('div', 'asRib');
   // (the Assault: a conquered army's card turns to our colours, its waves the "Remnants" still to farm)
   const fallen = conquered(m, a.id);
@@ -351,7 +204,9 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
     lock.append(el('b', '', unlockLine(a, m)), el('small', '', `${progressLine(m, armyNeed(a.id))} · ${a.waves.length} waves · ${landsOf(a).map((l) => AREA_NAMES[l]).join(' and ')}`));
     scene.append(lock);
   }
-  const info = el('div', `asInfo${open ? '' : ' shut'}`);
+  const info = menuWell(root);
+  info.classList.add('asInfo');
+  if (!open) info.classList.add('shut');
   root.append(scene, info);
   const running = hooks.running?.army === a.id ? hooks.running : null;
   const stars = armyStars(m, a);
@@ -360,12 +215,20 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
   if (tier < 0 || !tiers[tier]?.open) tier = Math.max(0, tiers.map((t) => t.open).lastIndexOf(true));
   const draw = (): void => {
     info.replaceChildren();
+    const advice = armyChallenge(m, a, tier);
+    const summary = el('div', 'wrStrength');
+    summary.append(el('span', '', 'Party Strength'), el('b', '', powerText(advice.strength)), el('strong', 'wrAssessment', open ? advice.label : 'Sealed'));
+    summary.title = `Estimated target strength ${powerText(advice.target)}. Formation, bonds, spells and castle bonuses can change the outcome.`;
+    info.append(el('h3', 'wrArmyName', open ? a.name : 'Sealed campaign'), summary, el('p', 'asHint', 'Challenge estimate · review your party before marching'));
     const bosses = bossesOf(a);
-    info.append(el('p', 'asBlurb', fallen ? `Remnants of the ${a.name.replace(/^The /, '')}: its waves still march, and its hold pays tribute.` : a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ''}`), el('p', 'asMeta', `Recommended: Lv ${a.level} (Normal)`));
+    info.append(el('p', 'asBlurb', fallen ? `Remnants of the ${a.name.replace(/^The /, '')}: its waves still march, and its hold pays tribute.` : a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ''}`));
     // the tier picks
     const picks = el('div', 'asTiers');
     TIERS.forEach((t, ti) => {
       const b = el('button', `asTier${ti === tier ? ' on' : ''}${tiers[ti].open ? '' : ' shut'}`);
+      b.setAttribute('aria-pressed', String(ti === tier));
+      b.setAttribute('aria-disabled', String(!tiers[ti].open));
+      b.title = tiers[ti].open ? `${t.name}: ${armyChallenge(m, a, ti).label}` : `Requires ${t.need} stars`;
       b.append(el('b', '', t.name), el('small', '', tiers[ti].open ? `${tiers[ti].got}/${t.stars} ★` : `needs ${t.need} ★`));
       b.addEventListener('click', () => {
         if (!tiers[ti].open) return;
@@ -375,6 +238,12 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
       picks.append(b);
     });
     info.append(picks);
+    if (open && m.party.length) {
+      const suggested = suggestedArmyTier(m, a);
+      const suggest = el('button', 'wrSuggest', `Suggested challenge · ${TIERS[suggested].name} · ${armyChallenge(m, a, suggested).label}`);
+      suggest.addEventListener('click', () => { picked[a.id] = tier = suggested; draw(); });
+      info.append(suggest);
+    }
     // the 11-star track, with a chest under the 3rd, 5th, 10th and 11th star
     const track = el('div', 'asStars');
     const chests = chestsOf(m, a);
@@ -424,7 +293,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
     // (also with a run of this army going, on any tier: Auto then starts afresh, after a second tap to say the run in progress is lost)
     const farm = open && canAutoReplay(m, a.id, tier);
     const auto = farm && autoPick.on;
-    const go = el('button', open ? 'primary asFight' : 'asFight', !open ? 'Locked' : running ? `Continue · wave ${running.stage}` : rec.best > 0 || done ? `Fight again · ${t.name}` : 'Fight!');
+    const go = el('button', open ? 'primary asFight' : 'asFight', !open ? 'Locked' : running ? `Continue · wave ${running.stage}` : rec.best > 0 || done ? `Prepare Battle · ${t.name}` : 'Prepare Battle');
     // (starting another army while a run is going would lose it: a second tap says yes)
     // (auto runs are limited to AUTO_TICKETS a day: the count asked for is cut to what is left)
     const left = farm ? ticketsLeft(m, todayKey()) : 0;
@@ -500,6 +369,10 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
         info.append(storm);
       } else info.append(el('p', 'asHint asSeal', `${ASSAULT_STARS} stars on this army open its Assault · storm ${bp.name}`));
     }
+    info.insertBefore(pay, track);
+    const action = info.querySelector('.asGo') ?? go;
+    info.insertBefore(action, track);
+    info.querySelectorAll('.asBlurb, .asMeta').forEach((line) => info.insertBefore(line, track));
     if (running) {
       const again = el('button', 'small armyAgain', 'Restart from wave 1');
       twoTap(again, 'Lose this run and restart?', () => hooks.onFight(a.id, tier));
@@ -507,7 +380,7 @@ function card(a: Army, _i: number, m: Meta, hooks: ArmiesHooks): { root: HTMLEle
     }
   };
   draw();
-  return { root, figures };
+  return { root };
 }
 
 /** A button that asks first: the first tap changes its words, the second does it (and a pause puts it back). */

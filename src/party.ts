@@ -30,6 +30,8 @@ import { secretFigure } from './secretView';
 import { drawHeroSheet, starsOf } from './menuHeroes';
 import { upMark } from './rankUpList';
 import { markReady } from './sim/upgradesReady';
+import { armyChallenge } from './sim/armyChallenge';
+import { armyById } from './sim/armies';
 import { kindPower, partyPower, powerText } from './sim/power';
 import { partyTableau } from './partyScene';
 import { awakenedStep } from './render/awakenRig';
@@ -57,6 +59,7 @@ const PADLOCK = '<svg viewBox="0 0 12 14" width="12" height="14" aria-hidden="tr
 export class Party {
   /** The draft: the kinds picked so far (saved only by Start or Done). */
   private picked: string[] = [];
+  private campaign: { army: string; tier: number } | null = null;
   private note = '';
   /** HEROES-FILTER: the Reinforcements' Sort and Filter, the roster's own (`heroFilterView.ts`): one saved choice for both lists. */
   private bar: RosterTools;
@@ -103,7 +106,8 @@ export class Party {
   }
 
   /** Open the screen on the saved party. `then` runs once the party is saved: a new run starts, or the hub returns. */
-  open(mode: 'start' | 'edit', then: () => void): void {
+  open(mode: 'start' | 'edit', then: () => void, campaign?: { army: string; tier: number }): void {
+    this.campaign = campaign ?? null;
     this.quest = null;
     document.getElementById('party')?.classList.remove('questParty');
     this.picked = [...this.meta.party];
@@ -125,6 +129,7 @@ export class Party {
   openQuest(cast: readonly string[], title: string, rule: string, fits: (kind: string) => boolean, then: (picked: string[]) => void): void {
     this.open('start', () => {});
     this.quest = { cast, title, rule, fits, then };
+    this.campaign = null;
     $('party').classList.add('questParty');
     this.picked = [...cast, ...this.meta.party.filter((k) => !cast.includes(k) && fits(k))].slice(0, this.slots);
     $('ptGo').textContent = '⚔  To the quest';
@@ -347,7 +352,16 @@ export class Party {
     $('ptStatus').textContent = full ? 'Ready · summons draw from this company' : `${slots - this.picked.length} more ${slots - this.picked.length === 1 ? 'hero' : 'heroes'} needed`;
     $('ptSceneTitle').textContent = this.quest ? this.quest.title : full ? `${slots === 5 ? 'Five' : slots} heroes. One last stand.` : this.picked.length ? 'A company worth fighting for.' : 'Your legend begins here.';
     // (the company's combined power: the same number each hero's card shows, added up, and moving as heroes are swapped)
-    $('ptCount').textContent = `${this.picked.length} / ${slots} ready · Party power ${powerText(partyPower(m, this.picked))}`;
+    $('ptCount').textContent = `${this.picked.length} / ${slots} ready · Party Strength ${powerText(partyPower(m, this.picked))}`;
+    document.getElementById('ptChallenge')?.remove();
+    const army = this.campaign && armyById(this.campaign.army);
+    if (army && this.campaign) {
+      const advice = armyChallenge(m, army, this.campaign.tier, this.picked);
+      const line = el('p', '', `${army.name} · ${advice.label} · estimated target ${powerText(advice.target)}`);
+      line.id = 'ptChallenge';
+      line.setAttribute('aria-live', 'polite');
+      $('ptCompanyHeading').after(line);
+    }
     $('ptAvailable').textContent = `${m.unlocked.length} available`;
     this.drawWear();
     this.drawOrders();
