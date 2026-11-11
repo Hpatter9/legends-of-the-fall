@@ -1,7 +1,8 @@
 // COMBAT-HUD (docs/notes/combat-hud.md): the fight screen's fixed parts that a passing message (a toast, a quip's bubble) must not cover,
 // and the lane under the top ones where a toast shows in a fight. The page only: it reads the DOM, never the battle.
 
-/** HORN-CORNER (docs/notes/horn-corner.md): the War Horn in a fight, on the panel's top edge at the left (the board's bottom-left corner). */
+/** HORN-CORNER (docs/notes/horn-corner.md): the War Horn in a fight, on the panel's top edge at the right, beside the tactic button (the board's bottom-right
+ *  corner; it was the bottom-left until 0.480). */
 export const HORN_CORNER = '#panel > .ehFight';
 
 /** The fight's parts kept clear: the top bar, the spell row (orbs, Auto), the boss's bar, a twist's banner, the combo bar,
