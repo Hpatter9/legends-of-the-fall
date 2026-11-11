@@ -329,7 +329,8 @@ export function faceOf(set: FloorSet, role: Role, h: number): FaceName {
  *  field. Four flags, in the order of `SIDES` (-v, +u, +v, -u); the board's own edge counts as a change. */
 export function seamsOf(b: Board, u: number, v: number): boolean[] {
   const t = b.tiles[v * b.w + u];
-  const kind = (x: Tile) => (x.bridge ? 'bridge' : x.ground ?? '');
+  // (a trap or a strike's tile is outlined too, so its patch reads as one: LIVING-FIELDS step 3)
+  const kind = (x: Tile) => (x.bridge ? 'bridge' : x.ground ?? '') + (x.trap ?? '') + (x.risk ? 'risk' : '');
   return SIDES.map(([du, dv]) => {
     const x = u + du;
     const y = v + dv;

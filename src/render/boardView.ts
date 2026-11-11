@@ -4,7 +4,7 @@
 // `column`).
 
 import { Container, Graphics, Rectangle, Sprite, Texture, type Renderer } from 'pixi.js';
-import { LAVA_LANDS, tileAt, type Area, type Board, type Tile } from '../sim/board';
+import { LAVA_LANDS, tileAt, type Area, type Board, type HazardKind, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
 import { ColumnTextures, columnKey, type ColumnLease } from './columnTextures';
 import { depthIn, FOOT, HH, project, rawAt, TH, TW, type Frame } from './iso';
@@ -16,7 +16,10 @@ import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow
 import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
 import { mixSeed } from '../sim/rng';
-import { fadeTall, loadZoneArt, noMotion, ZoneAir, zoneProps, type ZoneMotion } from './zoneLife';
+import { fadeTall, loadZoneArt, noMotion, runeFrames, totemFrames, ZoneAir, zoneProps, type ZoneMotion } from './zoneLife';
+import { propCell, RISK_RIM, TRAP_LOOKS, trapCell } from './trapLooks';
+import { hasTrapArt, loadTrapArt, TRAP_ART_SCALE, trapTexture } from './trapArt';
+import { HAZARD_LOOKS } from './hazardLooks';
 import { flicker, sway } from './ambient';
 import { faceOf, FACE_NAMES, FLOORS, floorRoles, fringesOf, pathOf, ROLES, seamsOf, slotOf, type Fringe, type Role } from './floorRules';
 import { floorArt, loadFloorArt, type FloorArt } from './floorArt';
@@ -126,7 +129,7 @@ export async function loadBoardArt(): Promise<void> {
   const [gate, tower, ringStones] = await all([gateUrl, towerUrl, ringStonesUrl]);
   const stoneSheet = Texture.from(ringStones);
   const stones = RING_STONES.map((s) => ({ tex: new Texture({ source: stoneSheet.source, frame: new Rectangle(s.x, s.y, s.w, s.h) }), fx: s.fx, fy: s.fy, du: s.du, dv: s.dv }));
-  await Promise.all([loadRoadArt(), loadZoneArt()]);
+  await Promise.all([loadRoadArt(), loadZoneArt(), loadTrapArt()]);
   artEpoch++;
   art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks, gate: Texture.from(gate), tower: Texture.from(tower), stones };
 }
@@ -146,6 +149,8 @@ interface Built {
   redo: (() => void)[];
   /** The powder barrels still standing (by tile index), so a blast can take one away. */
   barrels: Map<number, Sprite>;
+  /** LIVING-FIELDS: what stands on a trap's tile (brambles, a totem, a ward's rune, a brazier and its light), so it goes when the trap does. */
+  traps: Map<number, { made: Container[]; again: () => Container[] }>;
   /** What moves on its own (an army's road): swaying growth, flickering lights, running water, falls. */
   live: Live;
   /** A Calamity zone's things that move (`zoneLife.ts`). */
@@ -395,6 +400,10 @@ export class BoardView {
     for (const live of [this.built?.live, this.old?.live]) {
       if (!live) continue;
       // (ALIVE: the shared motion, `ambient.ts`: growth sways and gusts, a flame's glow breathes and gutters, never going out)
+      // (LIVING-FIELDS: a spent trap's things are gone from the stage; they are dropped from these lists here)
+      if (live.sway.some((s) => s.sp.destroyed)) live.sway = live.sway.filter((s) => !s.sp.destroyed);
+      if (live.lights.some((l) => l.sp.destroyed)) live.lights = live.lights.filter((l) => !l.sp.destroyed);
+      if (live.loops.some((l) => l.sp.destroyed)) live.loops = live.loops.filter((l) => !l.sp.destroyed);
       for (const s of live.sway) s.sp.skew.x = sway(t, Math.round(s.ph * 1000), 1.2) * s.amp;
       for (const l of live.lights) {
         const k = flicker(t, Math.round(l.ph * 1000), l.kind ?? 'torch');
@@ -543,6 +552,10 @@ export class BoardView {
     const tex: ColumnLease<Texture>[] = [];
     const redo: (() => void)[] = [];
     const barrels = new Map<number, Sprite>();
+    const traps = new Map<number, { made: Container[]; again: () => Container[] }>();
+    // (LIVING-FIELDS: which timed strike comes down on each marked tile, for its tell)
+    const strikes = new Map<number, HazardKind>();
+    for (const h of b.hazards ?? []) for (const i of h.tiles) if (b.tiles[i]?.risk) strikes.set(i, h.kind);
     const live = noLive();
     const zone = noMotion();
     // (an army's road: the land beside it sinks a little and its far edge is left ragged, so a section reads as a road through the land, not a slab)
@@ -583,7 +596,7 @@ export class BoardView {
         if (!t.chasm) {
           const paint = () => {
             const now = shown();
-            return this.column(now, u, v, b.area, depth ? !!now.paved : !!look.boss, !!depth, floor?.[v * b.w + u]);
+            return this.column(now, u, v, b.area, depth ? !!now.paved : !!look.boss, !!depth, floor?.[v * b.w + u], strikes.get(v * b.w + u));
           };
           const ct = paint();
           const slot = tex.length;
@@ -650,24 +663,28 @@ export class BoardView {
           r.position.set(x, y);
           tile.addChild(r);
         } else if (t.wall && art) {
-          // (a ruined wall: a piece of ruin, the three kinds by the tile's own number)
-          const w = art.walls[t.deco % art.walls.length];
-          const r = new Sprite(w);
-          r.anchor.set(0.5, 0.85);
-          r.position.set(x, y + 4);
+          // (a ruined wall: a piece of ruin, the three kinds by the tile's own number; the land's own once the painted sheet has it, `trapArt.ts`)
+          const own = trapTexture(propCell('wall', b.area, t.deco));
+          const r = new Sprite(own ? own.tex : art.walls[t.deco % art.walls.length]);
+          if (own) r.scale.set(TRAP_ART_SCALE);
+          r.anchor.set(own ? own.ax : 0.5, own ? own.ay : 0.85);
+          r.position.set(x, own ? y : y + 4);
           tile.addChild(r);
         } else if (t.barrel && art) {
-          const r = new Sprite(art.barrel);
-          r.anchor.set(0.5, 0.85);
-          r.scale.set(2);
-          r.position.set(x, y + 2);
+          const own = trapTexture(propCell('barrel', b.area));
+          const r = new Sprite(own ? own.tex : art.barrel);
+          r.anchor.set(own ? own.ax : 0.5, own ? own.ay : 0.85);
+          r.scale.set(own ? TRAP_ART_SCALE : 2);
+          r.position.set(x, own ? y : y + 2);
           tile.addChild(r);
           barrels.set(v * b.w + u, r);
         } else if (t.ground === 'shrine' && art) {
           // (the shrine's crystal, a little behind the tile's middle)
-          const r = new Sprite(art.crystal);
-          r.anchor.set(0.5, 0.82);
-          r.position.set(x, y + 3);
+          const own = trapTexture(propCell('shrine', b.area));
+          const r = new Sprite(own ? own.tex : art.crystal);
+          if (own) r.scale.set(TRAP_ART_SCALE);
+          r.anchor.set(own ? own.ax : 0.5, own ? own.ay : 0.82);
+          r.position.set(x, own ? y : y + 3);
           tile.addChild(r);
         } else if (t.ground === 'tall' && set) {
           // (tall growth: a clump of tufts that stands in front of the tile's top, hiding it from shots)
@@ -689,6 +706,12 @@ export class BoardView {
           s.position.set(x + ((t.deco >> 3) % 2 ? 12 : -12), y - 5);
           tile.addChild(s);
           live.sway.push({ sp: s, ph: (x * 0.071 + y * 0.113) % (Math.PI * 2), amp: 0.03 });
+        }
+        // (LIVING-FIELDS: what stands on a trap's tile; its mark on the ground is painted with the column)
+        if (!t.scene && (t.trap || t.brazier || strikes.has(v * b.w + u))) {
+          // (made again from the tile as it then is, when the trap changes: thin ice cracks, a brazier falls)
+          const again = () => this.trapProps(tile, tileAt(b, u, v)!, b.area, x, y, live, strikes.get(v * b.w + u));
+          traps.set(v * b.w + u, { made: again(), again });
         }
         // (an army's road: small things growing on it now and then)
         const flair = depth && !t.scene && !t.ground && !t.bridge && !t.rock && !t.wall && !t.barrel && !t.paved ? flairOf(b.area, t.deco) : null;
@@ -773,7 +796,7 @@ export class BoardView {
         landmark.addChild(sp);
       }
     }
-    return { tiles, marks, rings, grounds, tex, redo, barrels, landmark, live, zone };
+    return { tiles, marks, rings, grounds, tex, redo, barrels, traps, landmark, live, zone };
   }
 
   /** LIVING-FIELDS: every tile's floor (`floorRules.ts`), worked out on the board as it lies on the screen (a section of an army's road may
@@ -799,6 +822,101 @@ export class BoardView {
     for (let V = 0; V < D; V++)
       for (let U = 0; U < W; U++) out[from[V * W + U]] = { role: ROLES[roles[V * W + U]], fringes: fringesOf(tb, roles, U, V), seams: seamsOf(tb, U, V), U: U + f.ou, V: V + f.ov };
     return out;
+  }
+
+  /** LIVING-FIELDS: what stands on a trap's tile (`sim/fieldTraps.ts`), from the art the game has: the graveyard's thorns for brambles, the
+   *  Calamity's skull totem and rune, the road's brazier with its light. Spikes, a snare, mud, a bog and thin ice are marks on the ground
+   *  (`paintTrap`). Returns what it made, so it can be taken away when the trap is gone. */
+  private trapProps(tile: Container, t: Tile, area: Area, x: number, y: number, live: Live, strike?: HazardKind): Container[] {
+    const out: Container[] = [];
+    const ph = (x * 0.071 + y * 0.113) % (Math.PI * 2);
+    const put = (sp: Sprite) => {
+      tile.addChild(sp);
+      out.push(sp);
+      return sp;
+    };
+    // (the painted sheet's cell, once it has one: it stands on the tile in the stand-in's place, `trapArt.ts`)
+    const painted = trapTexture(trapCell(t, area, strike));
+    if (painted) {
+      const sp = put(new Sprite(painted.tex));
+      sp.anchor.set(painted.ax, painted.ay);
+      sp.scale.set(TRAP_ART_SCALE);
+      sp.position.set(x, y);
+      if (t.brazier) {
+        const g = put(new Sprite(glow()));
+        g.anchor.set(0.5);
+        g.tint = TRAP_LOOKS.brazier.colour;
+        g.blendMode = 'add';
+        g.position.set(x, y - 22);
+        live.lights.push({ sp: g, ph, base: 0.55 });
+      }
+      return out;
+    }
+    if (t.brazier) {
+      const before = tile.children.length;
+      addPic(tile, setPiece('brazier', area), x, y, live);
+      out.push(...(tile.children.slice(before) as Container[]));
+    } else if (t.trap === 'brambles' && art) {
+      // (two low tangles, one behind the tile's middle and one before it: whoever stands there shows between them)
+      const thorns = art.areas.graveyard.tall;
+      for (const [k, dx, dy] of [[0, -9, -3], [1, 10, 7]] as const) {
+        const sp = put(new Sprite(thorns[k % thorns.length]));
+        sp.anchor.set(0.5, 1);
+        sp.scale.set(k ? 0.34 : 0.5);
+        sp.tint = area === 'graveyard' ? 0xffffff : area === 'oasis' ? 0xd8c890 : 0xb8c890;
+        sp.position.set(x + dx, y + dy + 4);
+        live.sway.push({ sp, ph: ph + k, amp: 0.03 });
+      }
+    } else if (t.trap === 'totem') {
+      const frames = totemFrames();
+      if (frames) {
+        const sp = put(new Sprite(frames[0]));
+        sp.anchor.set(0.5, 0.94);
+        sp.scale.set(0.5);
+        sp.position.set(x, y - 2);
+        live.loops.push({ sp, frames, ph: t.deco % frames.length, ms: 150 });
+      }
+      const g = put(new Sprite(glow()));
+      g.anchor.set(0.5);
+      g.tint = TRAP_LOOKS.totem.colour;
+      g.blendMode = 'add';
+      g.scale.set(TW / 40, TH / 34);
+      g.position.set(x, y);
+      live.lights.push({ sp: g, ph, base: 0.4, kind: 'magic' });
+    } else if (t.trap === 'ward') {
+      const frames = runeFrames(area === 'shrine' || area === 'crystal' ? 'moon' : 'crystal');
+      if (frames) {
+        const sp = put(new Sprite(frames[0]));
+        sp.anchor.set(0.5);
+        sp.scale.set(1.5, 0.75);
+        sp.blendMode = 'add';
+        sp.position.set(x, y);
+        live.loops.push({ sp, frames, ph: t.deco % frames.length, ms: 130 });
+      }
+      const g = put(new Sprite(glow()));
+      g.anchor.set(0.5);
+      g.tint = TRAP_LOOKS.ward.colour;
+      g.blendMode = 'add';
+      g.scale.set(TW / 44, TH / 38);
+      g.position.set(x, y);
+      live.lights.push({ sp: g, ph, base: 0.38, kind: 'magic' });
+    }
+    return out;
+  }
+
+  /** LIVING-FIELDS: a trap has sprung or changed (`fieldTrap`): what stood on its tile goes if it is gone, and the ground is painted again
+   *  (its mark is gone, thin ice is cracked or water, a brazier's coals lie round it). */
+  trapChanged(u: number, v: number, gone: boolean): void {
+    const b = this.board;
+    if (!b || !this.built) return;
+    const i = v * b.w + u;
+    const had = this.built.traps.get(i);
+    if (had) {
+      for (const c of had.made) if (!c.destroyed) c.destroy();
+      // (a trap that is spent leaves nothing standing; one that has changed stands as it now is)
+      had.made = gone && !tileAt(b, u, v)?.trap ? [] : had.again();
+    }
+    this.repaint();
   }
 
   /** LIVING-FIELDS: paint the host's columns again, in place: when its land's floor sheet has arrived, or a tile's ground has changed in the
@@ -966,20 +1084,22 @@ export class BoardView {
   private ringStones: Sprite[] = [];
 
   /** One tile's column: its top laid on the diamond, its two sides down to the foot. */
-  private column(t: Tile, u: number, v: number, area: Area, boss = false, road = false, fl?: FloorTile): ColumnLease<Texture> {
+  private column(t: Tile, u: number, v: number, area: Area, boss = false, road = false, fl?: FloorTile, strike?: HazardKind): ColumnLease<Texture> {
     const set = art?.areas[area];
     const top = (!road && t.h >= STONY) || boss || t.perch ? -1 : set ? (t.deco + u + v) % set.tops.length : -1;
     const skirt = road ? Math.min(t.h, ROAD_SKIRT) : -1;
     // (LIVING-FIELDS: a painted floor's column is its own: its ground, its place in the texture, its neighbours' edges and its seams)
     const floor = fl ? `floor:${fl.role}:${mod4(fl.U)}${mod4(fl.V)}:${fl.fringes.map((x) => `${x.role}${x.turn}${x.corner ? 'c' : ''}${x.foam ? 'f' : ''}`).join(',')}:${fl.seams.map((x) => +x).join('')}` : '';
-    const extra = (road ? `skirt${skirt}` : '') + floor;
+    // (and a trap's mark, or a strike's)
+    const trap = t.trap || strike ? `trap:${t.trap ?? ''}:${strike ?? ''}:${t.deco % 4}` : '';
+    const extra = (road ? `skirt${skirt}` : '') + floor + trap;
     const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v, !!t.perch, !!t.ramp, extra || undefined);
     const bytes = TW * (TH + (road ? skirt : t.h) * HH + FOOT + (boss && !road ? HH : 0)) * 4;
-    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss, road ? skirt : -1, fl));
+    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss, road ? skirt : -1, fl, strike));
   }
 
   /** Original full-resolution painter; reuse only columns whose appearance inputs match. */
-  private paintColumn(t: Tile, u: number, v: number, area: Area, boss = false, skirt = -1, fl?: FloorTile): Texture {
+  private paintColumn(t: Tile, u: number, v: number, area: Area, boss = false, skirt = -1, fl?: FloorTile, strike?: HazardKind): Texture {
     const set = art?.areas[area];
     // (a boss arena stands on a plinth one step deeper; an army road's tile has a short skirt instead of a cliff to the foot)
     const road = skirt >= 0;
@@ -1236,9 +1356,11 @@ export class BoardView {
         g.stroke();
       }
     }
+    // (LIVING-FIELDS: a trap's mark on the ground, or the mark of a strike that comes down here: its tell before the fight)
+    if ((t.trap || strike) && !hasTrapArt(trapCell(t, area, strike))) paintTrap(g, t, area, strike);
     g.restore();
-    g.strokeStyle = t.bridge ? BRIDGE_RIM : t.ground === 'deep' && LAVA_LANDS.includes(area) ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : t.perch ? 'rgba(245,220,150,0.85)' : t.ramp ? 'rgba(215,185,135,0.75)' : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
-    g.lineWidth = t.bridge || (t.ground && t.ground !== 'tall') || t.perch || t.ramp ? 2 : 1;
+    g.strokeStyle = t.trap && t.trap !== 'thin' ? TRAP_LOOKS[t.trap].rim : strike && RISK_RIM[strike] ? RISK_RIM[strike]! : t.bridge ? BRIDGE_RIM : t.ground === 'deep' && LAVA_LANDS.includes(area) ? 'rgba(255,120,30,0.95)' : t.ground ? RIM[t.ground] : t.perch ? 'rgba(245,220,150,0.85)' : t.ramp ? 'rgba(215,185,135,0.75)' : boss ? 'rgba(255,226,140,0.75)' : 'rgba(20,14,8,0.35)';
+    g.lineWidth = t.bridge || (t.ground && t.ground !== 'tall') || t.perch || t.ramp || t.trap || strike ? 2 : 1;
     if (fa && fl && !boss && !t.perch && !t.ramp) {
       // (a painted floor: a tile's line is drawn only on the sides where something changes, a height or a kind of ground the rules care
       //  about; between two tiles of one ground at one height there is only the faintest grid, so a field reads as a field)
@@ -1264,4 +1386,157 @@ export class BoardView {
     g.stroke();
     return Texture.from(c);
   }
+}
+
+/** LIVING-FIELDS: a trap's mark painted on its tile's top (the canvas is clipped to the diamond): the tell every fighter and the player can
+ *  see before the fight. Plain stand-ins, drawn here, until the painted sheet lands (`docs/notes/living-fields-art-prompts.md`); brambles,
+ *  totems, wards and braziers also have something standing on the tile (`trapProps`). */
+function paintTrap(g: CanvasRenderingContext2D, t: Tile, area: Area, strike?: HazardKind): void {
+  const cx = TW / 2;
+  const cy = TH / 2;
+  const blob = (rx: number, ry: number, fill: string) => {
+    g.fillStyle = fill;
+    g.beginPath();
+    g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    g.fill();
+  };
+  const ring = (rx: number, ry: number, stroke: string, width = 1.5) => {
+    g.strokeStyle = stroke;
+    g.lineWidth = width;
+    g.beginPath();
+    g.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    g.stroke();
+  };
+  const sandy = area === 'desert' || area === 'oasis';
+  switch (t.trap) {
+    case 'spikes': {
+      // (a stone plate with its holes, the spikes' tips just showing)
+      blob(TW * 0.3, TH * 0.3, 'rgba(60,54,48,0.85)');
+      ring(TW * 0.3, TH * 0.3, 'rgba(224,200,144,0.9)');
+      g.fillStyle = 'rgba(236,230,214,0.95)';
+      for (const [dx, dy] of [[-10, 0], [0, -4], [10, 0], [0, 4], [-5, 3], [5, -3]]) {
+        g.beginPath();
+        g.moveTo(cx + dx - 2, cy + dy + 1.5);
+        g.lineTo(cx + dx, cy + dy - 4);
+        g.lineTo(cx + dx + 2, cy + dy + 1.5);
+        g.closePath();
+        g.fill();
+      }
+      break;
+    }
+    case 'snare': {
+      // (a loop of rope on the ground, pegged)
+      ring(TW * 0.24, TH * 0.24, 'rgba(60,40,16,0.9)', 4);
+      ring(TW * 0.24, TH * 0.24, 'rgba(214,176,104,0.95)', 2);
+      g.strokeStyle = 'rgba(214,176,104,0.95)';
+      g.lineWidth = 2;
+      g.beginPath();
+      g.moveTo(cx + TW * 0.24, cy);
+      g.lineTo(cx + TW * 0.38, cy - 3);
+      g.stroke();
+      g.fillStyle = 'rgba(90,60,30,1)';
+      g.fillRect(cx + TW * 0.37, cy - 6, 3, 6);
+      break;
+    }
+    case 'ward': {
+      // (a ring of runes: the rune itself glows over it, `trapProps`)
+      blob(TW * 0.3, TH * 0.3, 'rgba(120,90,220,0.28)');
+      ring(TW * 0.3, TH * 0.3, 'rgba(200,170,255,0.95)');
+      ring(TW * 0.19, TH * 0.19, 'rgba(200,170,255,0.7)', 1);
+      break;
+    }
+    case 'brambles':
+      blob(TW * 0.34, TH * 0.34, 'rgba(40,26,14,0.4)');
+      break;
+    case 'mud': {
+      // (deep mud; on sand, quicksand: a paler sink with its rings)
+      blob(TW * 0.36, TH * 0.36, sandy ? 'rgba(150,116,70,0.75)' : 'rgba(58,40,24,0.8)');
+      ring(TW * 0.24, TH * 0.24, sandy ? 'rgba(232,206,150,0.7)' : 'rgba(120,92,60,0.75)', 1);
+      ring(TW * 0.12, TH * 0.12, sandy ? 'rgba(232,206,150,0.7)' : 'rgba(120,92,60,0.75)', 1);
+      break;
+    }
+    case 'bog': {
+      blob(TW * 0.36, TH * 0.36, 'rgba(52,70,26,0.85)');
+      g.strokeStyle = 'rgba(170,230,90,0.9)';
+      g.lineWidth = 1;
+      for (const [dx, dy, r] of [[-9, -1, 3], [5, 3, 2.2], [9, -3, 1.6], [-2, 4, 1.6]]) {
+        g.beginPath();
+        g.ellipse(cx + dx, cy + dy, r, r * 0.6, 0, 0, Math.PI * 2);
+        g.stroke();
+      }
+      break;
+    }
+    case 'thin':
+    case 'cracked': {
+      // (thin ice: hairline cracks; cracked: dark water showing through them)
+      const deep = t.trap === 'cracked';
+      g.strokeStyle = deep ? 'rgba(20,60,110,0.95)' : 'rgba(90,150,200,0.8)';
+      g.lineWidth = deep ? 2 : 1;
+      g.beginPath();
+      for (const line of [[-14, -2, -4, 1, 2, -3, 12, 2], [-4, 1, -7, 6], [2, -3, 5, -7], [2, -3, 6, 5, 3, 8]]) {
+        g.moveTo(cx + line[0], cy + line[1]);
+        for (let k = 2; k < line.length; k += 2) g.lineTo(cx + line[k], cy + line[k + 1]);
+      }
+      g.stroke();
+      break;
+    }
+    case 'totem':
+      ring(TW * 0.3, TH * 0.3, 'rgba(230,150,60,0.9)');
+      break;
+    default:
+      break;
+  }
+  if (!strike || t.trap) return;
+  // a timed strike's tile: a mark of what comes down here, in the strike's own colour
+  const c = HAZARD_LOOKS[strike].colour;
+  const css = (a: number) => `rgba(${(c >> 16) & 255},${(c >> 8) & 255},${c & 255},${a})`;
+  if (strike === 'geyser') {
+    blob(TW * 0.16, TH * 0.16, 'rgba(20,16,14,0.9)');
+    ring(TW * 0.2, TH * 0.2, css(0.85));
+    ring(TW * 0.3, TH * 0.3, css(0.35), 1);
+  } else if (strike === 'rockfall') {
+    g.fillStyle = 'rgba(96,84,70,0.9)';
+    for (const [dx, dy, r] of [[-10, 1, 3], [-2, -4, 2.2], [7, 2, 3.4], [2, 5, 2], [12, -2, 1.8]]) {
+      g.beginPath();
+      g.ellipse(cx + dx, cy + dy, r, r * 0.7, 0, 0, Math.PI * 2);
+      g.fill();
+    }
+    ring(TW * 0.34, TH * 0.34, css(0.5), 1);
+  } else if (strike === 'grasp') {
+    blob(TW * 0.3, TH * 0.3, 'rgba(30,22,34,0.6)');
+    g.strokeStyle = css(0.85);
+    g.lineWidth = 1.5;
+    g.beginPath();
+    g.moveTo(cx - 10, cy + 1);
+    g.lineTo(cx - 3, cy - 2);
+    g.lineTo(cx + 3, cy + 2);
+    g.lineTo(cx + 10, cy - 1);
+    g.stroke();
+  } else if (strike === 'blades') {
+    // (the slot the blade swings in)
+    g.strokeStyle = 'rgba(16,14,18,0.9)';
+    g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(cx - TW * 0.3, cy);
+    g.lineTo(cx + TW * 0.3, cy);
+    g.stroke();
+    g.strokeStyle = css(0.9);
+    g.lineWidth = 1;
+    g.beginPath();
+    g.moveTo(cx - TW * 0.3, cy - 2);
+    g.lineTo(cx + TW * 0.3, cy - 2);
+    g.stroke();
+  } else if (strike === 'lightning') {
+    // (a scorched star where it has struck before)
+    blob(TW * 0.2, TH * 0.2, 'rgba(30,26,20,0.6)');
+    g.strokeStyle = css(0.85);
+    g.lineWidth = 1.5;
+    g.beginPath();
+    for (let k = 0; k < 5; k++) {
+      const a = (k / 5) * Math.PI * 2 + 0.3;
+      g.moveTo(cx, cy);
+      g.lineTo(cx + Math.cos(a) * TW * 0.26, cy + Math.sin(a) * TH * 0.26);
+    }
+    g.stroke();
+  } else ring(TW * 0.3, TH * 0.3, css(0.6));
 }

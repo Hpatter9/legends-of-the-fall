@@ -20,5 +20,8 @@ export const HAZARD_LOOKS: Record<HazardKind, HazardLook> = {
   grasp: { colour: 0xa98aff, word: 'The dead stir', go: [{ key: 'dark-spikes', scale: 1.1 }] },
   stampede: { colour: 0xe8b860, word: 'Stampede!', go: [{ key: 'earth-wave', scale: 1.2 }, { key: 'earth-puff', scale: 1 }] },
   spring: { colour: 0x7dff8a, word: 'Healing spring', go: [{ key: 'forest-aura', scale: 1 }] },
+  // (LIVING-FIELDS)
+  blades: { colour: 0xd8dce8, word: 'Swinging blades', go: [{ key: 'wind-strike', scale: 1.2 }] },
+  lightning: { colour: 0xfff0a0, word: 'Lightning!', go: [{ key: 'light-pillar', scale: 1.4 }, { key: 'light-puff', scale: 1 }] },
   current: { colour: 0x9fd8ff, word: '', go: [{ key: 'ice-puff', scale: 0.7 }] },
 };

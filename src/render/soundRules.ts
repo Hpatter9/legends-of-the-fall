@@ -310,9 +310,20 @@ export function cuesFor(b: Battle, e: BattleEvent, casts?: ReadonlyMap<number, s
       return e.what === 'flare' ? [{ cue: 'fireWhoosh', gain: 0.7 }]
         : e.what === 'rockfall' || e.what === 'stampede' ? [{ cue: 'boom', gain: 0.7 }]
         : e.what === 'geyser' ? [{ cue: 'poisonHiss', gain: 0.7 }]
-        : e.what === 'spikes' ? [{ cue: 'block', gain: 0.6 }]
+        : e.what === 'spikes' || e.what === 'blades' ? [{ cue: 'block', gain: 0.6 }]
+        : e.what === 'lightning' ? [{ cue: 'thunder', gain: 0.8 }]
         : e.what === 'grasp' ? [{ cue: 'shadowHum', gain: 0.6 }]
         : e.what === 'spring' ? [{ cue: 'holyChime', gain: 0.5 }]
+        : [];
+    // (LIVING-FIELDS: a trap springs, `fieldTraps.ts`; deep mud and a totem are quiet)
+    case 'fieldTrap':
+      return e.what === 'spikes' || e.what === 'snare' ? [{ cue: 'trap', gain: 0.8 }]
+        : e.what === 'ward' ? [{ cue: 'crackle', gain: 0.8 }]
+        : e.what === 'brambles' ? [{ cue: 'rustle', gain: 0.6 }]
+        : e.what === 'bog' ? [{ cue: 'poisonHiss', gain: 0.5 }]
+        : e.what === 'cracked' ? [{ cue: 'frostCrack', gain: 0.7 }]
+        : e.what === 'thin' ? [{ cue: 'frostShatter', gain: 0.8 }]
+        : e.what === 'brazier' ? [{ cue: 'fireBoom', gain: 0.7 }]
         : [];
     // (STATUS-FX: a frozen fighter's ice shatters)
     case 'shatter':

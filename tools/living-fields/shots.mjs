@@ -1,5 +1,5 @@
 // LIVING-FIELDS: every land's battlefield at an upright phone size, on three layouts and seeds each (the plan is tools/living-fields/plan.mjs --shots):
-//   node tools/living-fields/shots.mjs <web dir> <out dir> <tag> [--sizes 393x852,360x780] [--lands swamp,forge] [--fight]
+//   node tools/living-fields/shots.mjs <web dir> <out dir> <tag> [--sizes 393x852,360x780] [--lands swamp,forge] [--fight] [--one]
 // Writes <out dir>/<tag>-<land>-<layout>[-<w>].png: the whole board, stood back, as the fight is deployed (`--fight`: four seconds in).
 // The run is the plain kind (`mode.kind === 'run'`) with its land and seed set, so the board is `makeBoard(boardSeedOf(run, 3), land)`.
 import { createRequire } from 'node:module';
@@ -9,7 +9,7 @@ import { spawnSync } from 'node:child_process';
 const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
 const args = process.argv.slice(2);
 const flag = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : undefined);
-const [root = 'out/web', out = 'docs/samples/living-fields', tag = 'before'] = args.filter((a, i) => !a.startsWith('--') && !(args[i - 1] ?? '').match(/^--(sizes|lands|port|dsf|army|stage)$/));
+const [root = 'out/web', out = 'docs/samples/living-fields', tag = 'before'] = args.filter((a, i) => !a.startsWith('--') && !(args[i - 1] ?? '').match(/^--(sizes|lands|port|dsf|army|stage|ms)$/));
 const sizes = (flag('--sizes') ?? '393x852').split(',').map((s) => s.split('x').map(Number));
 const only = flag('--lands')?.split(',');
 // (`--army orcs [--stage 2]`: an army's wave on its road instead, one shot a size: <tag>-army-<army>-<stage>.png)
@@ -48,7 +48,8 @@ for (const [w, h] of sizes) {
   await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
   for (const [land, list] of army ? [[`army-${army}`, [{ seed: 4242, layout: String(stage) }]]] : Object.entries(plan)) {
     if (only && !only.includes(land)) continue;
-    for (const { seed, layout } of list) {
+    // (`--one`: only each land's first shape)
+    for (const { seed, layout } of args.includes('--one') ? list.slice(0, 1) : list) {
       await page.evaluate(([area, seed, party, army, stage]) => {
         const g = window.__game;
         const r = JSON.parse(JSON.stringify(g.run));
@@ -60,8 +61,22 @@ for (const [w, h] of sizes) {
       await page.evaluate(() => window.__game.autoArrange(true));
       await page.waitForTimeout(400);
       if (args.includes('--fight')) {
-        await page.evaluate(() => document.getElementById('auto').click());
-        await page.waitForTimeout(4000);
+        // (`--fight`: the fight is begun and played for `--ms` (8000) before the shot; what the traps did is printed)
+        await page.evaluate(() => {
+          const g = window.__game;
+          window.__trapLog = [];
+          if (!g.__logged) {
+            g.__logged = true;
+            const was = g.fx.show.bind(g.fx);
+            g.fx.show = (b, events, ...rest) => {
+              for (const e of events) if (e.kind === 'fieldTrap' || (e.kind === 'hazard' && e.phase === 'go')) window.__trapLog.push(e.what);
+              return was(b, events, ...rest);
+            };
+          }
+          document.getElementById('fight').click();
+        });
+        await page.waitForTimeout(+(flag('--ms') ?? 8000));
+        console.log(land, layout, 'phase', await page.evaluate(() => window.__game.b.phase), 'sprung:', (await page.evaluate(() => window.__trapLog)).join(' ') || 'none');
       }
       // (the camera stands back over the whole board)
       await page.evaluate(() => {

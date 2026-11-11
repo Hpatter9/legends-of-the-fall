@@ -1559,6 +1559,8 @@ class Game {
         this.fx.show(b, events);
         this.noteHeat(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
+        // (LIVING-FIELDS: a trap sprung or changed: its tile is painted again, and what stood on it goes if it is spent)
+        for (const e of events) if (e.kind === 'fieldTrap' && (e.gone || e.what === 'cracked')) this.boardView.trapChanged(e.u, e.v, !!e.gone);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);

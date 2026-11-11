@@ -15,6 +15,7 @@ import type { Rift } from './rift';
 import { CAL_CASTLE_EXTRA } from './calamity';
 import { buildChain, type Section } from './chain';
 import { isScenario, planScenario, scenarioForArmy, type ScenarioId } from './scenario';
+import { hazardLevel } from './fieldTraps';
 import { BOSS_BANDS, FIELD_BANDS } from './foes';
 import { armyById, armyIndex, armyWaveBand, landOf, waveBoost, waveFoes, type Army } from './armies';
 import { readRunNemesis, type RunNemesis } from './nemesis';
@@ -563,6 +564,10 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...(run.rift ? { rift: { ...run.rift }, riftBoss: run.tower?.cur?.kind === 'boss' } : {}),
     area: run.area ?? base.area ?? areaFor(run.stage),
     board: section?.board ?? base.board,
+    // (LIVING-FIELDS: the land's traps and hazards, sparse on the first waves, more later and on the harder tiers: `fieldTraps.ts`)
+    // (none on a boss's wave: a boss feels only a third of a trap, which would tilt its fight against the heroes; an army's boss arena has
+    //  its own strikes already, `hazards.ts`)
+    hazards: isBossRun(run) ? 0 : hazardLevel(run.stage, tierOfRun(run)),
     foes: { hp: base.foes!.hp! * foes * (ans?.hp ?? 1) * thin * march.foeHp, atk: base.foes!.atk! * foes * (ans?.atk ?? 1), speed: base.foes!.speed, prof: foeProfOf(run) },
     heroes: { hp: castle.hp! * (hp ?? 1) * (run.buff?.hp ?? 1), atk: castle.atk! * (atk ?? 1) * (run.buff?.atk ?? 1) },
     mana: manaRate(run.castle) * (mana ?? 1),

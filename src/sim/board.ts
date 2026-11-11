@@ -65,6 +65,17 @@ export const SHRINE_HEAL = 0.05;
 /** What a barrel's blast takes from each fighter within a tile of it (a share of the fighter's hp). */
 export const BARREL_BLAST = 0.12;
 
+/** LIVING-FIELDS (`fieldTraps.ts`): a trap or a hazard on a tile, over whatever ground it has. `spikes`, `snare` and `ward` spring once on
+ *  the first walker to end a step there and are gone; `brambles`, `mud` and `bog` stay; `thin` is thin ice (it cracks under the first
+ *  walker, `cracked`, and breaks under the next); a `totem` strengthens whoever stands on it. Fliers pass over all of them. */
+export type Trap = 'spikes' | 'snare' | 'ward' | 'brambles' | 'mud' | 'bog' | 'thin' | 'cracked' | 'totem';
+/** What a walker's way-finding adds for a step onto each (in steps of walking): a fighter takes another way of the same length when
+ *  there is one, and steps on a trap that lies on its only straight line (going round a single tile is two steps more, and a spike trap
+ *  costs less than that; a bog and deep mud cost enough to be walked round). A totem is worth walking to. */
+export const TRAP_COST: Record<Trap, number> = { spikes: 0.75, snare: 0.75, ward: 0.75, brambles: 1, mud: 2, bog: 2.5, thin: 0, cracked: 0.75, totem: 0 };
+/** How much longer the step itself takes (as `GROUND_COST`): mud and quicksand drag, brambles and a bog slow a little. */
+export const TRAP_SLOW: Partial<Record<Trap, number>> = { mud: 2, brambles: 1, bog: 1 };
+
 /** How many patches of each ground an area lays (min, max), each patch of one to three tiles. */
 const TERRAIN: Record<Area, Partial<Record<Ground, [number, number]>>> = {
   highlands: { water: [0, 1], tall: [1, 2] },
@@ -117,6 +128,12 @@ export interface Tile {
   wall?: boolean;
   /** A powder barrel stands here: nobody can stand on it; a blow on a fighter beside it sets it off (it is gone after). */
   barrel?: boolean;
+  /** LIVING-FIELDS: a brazier stands here: nobody can stand on it; a blow on a fighter beside it tips it over (it is gone, and its coals lie on the tiles round it). */
+  brazier?: boolean;
+  /** LIVING-FIELDS: a trap or a hazard on the tile (`Trap`). */
+  trap?: Trap;
+  /** LIVING-FIELDS: a timed strike of the land comes down here (`Board.hazards`): a fighter does not stand here by choice. */
+  risk?: boolean;
   /** A raised wall of the movement toolkit stands here (`toolkit/walls.ts`): ice, thorns or light. Nobody walks through it (it does not
    *  block shots or sight), except the side `barSide` names: a Wall of Light lets its caster's side through. */
   bar?: 'ice' | 'thorns' | 'light';
@@ -173,7 +190,7 @@ export interface Piece {
 }
 
 /** The living land's kinds (`hazards.ts`): strikes told a moment before, a spring that mends, a river's current. */
-export type HazardKind = 'flare' | 'rockfall' | 'geyser' | 'spikes' | 'grasp' | 'stampede' | 'spring' | 'current';
+export type HazardKind = 'flare' | 'rockfall' | 'geyser' | 'spikes' | 'grasp' | 'stampede' | 'spring' | 'current' | 'blades' | 'lightning';
 /** One of the land's hazards: its tiles (by index), and its clock: it goes off at `offset` and every `period` ms after, told `tell` ms before. */
 export interface Hazard {
   kind: HazardKind;
@@ -272,11 +289,14 @@ export function easeRelief(b: Board, limit = CLIMB_MAX): void {
 export const areaScale = (b: Pick<Board, 'w' | 'd'>): number => (b.w * b.d) / BASE_AREA;
 
 /** Whether something solid stands on the tile (a boulder, a wall, a barrel, a raised wall): not even a flier passes it. */
-export const solid = (t: Tile | null): boolean => !t || !!t.rock || !!t.wall || !!t.barrel || !!t.bar;
+export const solid = (t: Tile | null): boolean => !t || !!t.rock || !!t.wall || !!t.barrel || !!t.brazier || !!t.bar;
 /** The same, for a walker of `side`: a raised wall that lets its side through (`barSide`) is open to it. */
-export const solidFor = (t: Tile | null, side?: 'hero' | 'foe'): boolean => !t || !!t.rock || !!t.wall || !!t.barrel || (!!t.bar && (side === undefined || t.barSide !== side));
+export const solidFor = (t: Tile | null, side?: 'hero' | 'foe'): boolean => !t || !!t.rock || !!t.wall || !!t.barrel || !!t.brazier || (!!t.bar && (side === undefined || t.barSide !== side));
 /** Whether a fighter on foot can stand on the tile at all (deep water is only for fliers, and so is the land beside an army's road, `Tile.scene`). */
 export const standable = (t: Tile | null): t is Tile => !solid(t) && t!.ground !== 'deep' && !t!.scene;
+
+/** What way-finding adds for a step onto a tile a timed strike comes down on (`Tile.risk`). */
+export const RISK_COST = 0.75;
 
 /** A jump this high is flight: no height stops it. */
 export const FLY_JUMP = 9;
@@ -292,7 +312,7 @@ export function canStep(from: Tile, to: Tile, jump: number, side?: 'hero' | 'foe
   // (up or down a siege ladder: slow, a climb each step of it)
   if (from.ladder && from.ladder === to.ladder) return 1 + Math.abs(rise) * CLIMB_COST;
   if (rise > jump || -rise > jump + DROP_EXTRA) return null;
-  return 1 + (rise > 0 ? rise * CLIMB_COST : 0) + (to.ground ? GROUND_COST[to.ground] : 0);
+  return 1 + (rise > 0 ? rise * CLIMB_COST : 0) + (to.ground ? GROUND_COST[to.ground] : 0) + (to.trap ? TRAP_COST[to.trap] : 0) + (to.risk ? RISK_COST : 0);
 }
 
 /** Whether a shot flies from one tile to the other: no tile between stands over the line from the shooter's eye to

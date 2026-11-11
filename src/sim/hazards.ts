@@ -8,10 +8,13 @@ import { mendUnit } from './abilities';
 import { defOf, hurt, tileOf, unitAt, type Battle, type BattleEvent, type Unit } from './battle';
 import { DEPLOY_ROWS, DIRS, standable, tileAt, type Board, type Hazard, type HazardKind } from './board';
 import { mixSeed, Rng } from './rng';
-import { AIL, AILMENT_SWITCH, burnFor, chillFor, putOut } from './ailments';
+import { AIL, AILMENT_SWITCH, burnFor, chillFor, putOut, stunFor } from './ailments';
 
 /** What each strike does: the share of a fighter's hp it takes, whether it reaches a flier, and how long it slows (ms). */
-export const STRIKES: Record<Exclude<HazardKind, 'spring' | 'current'>, { share: number; fliers: boolean; slowMs?: number }> = {
+export const STRIKES: Record<Exclude<HazardKind, 'spring' | 'current'>, { share: number; fliers: boolean; slowMs?: number; stunMs?: number }> = {
+  // (LIVING-FIELDS, `fieldTraps.ts`: a ruin's swinging blades, and lightning in the rain)
+  blades: { share: 0.1, fliers: false },
+  lightning: { share: 0.12, fliers: true, stunMs: 500 },
   flare: { share: 0.1, fliers: true },
   rockfall: { share: 0.12, fliers: true },
   geyser: { share: 0.08, fliers: true },
@@ -50,6 +53,7 @@ export function tickHazards(b: Battle, out: BattleEvent[]): void {
       if (!s.fliers && defOf(x).flies) continue;
       hurt(b, x, x, Math.max(1, Math.round(x.maxHp * s.share * feel)), false, false, out, 'dot');
       if (s.slowMs && x.alive) chillFor(b, x, s.slowMs);
+      if (s.stunMs && x.alive) stunFor(b, x, Math.round(s.stunMs * feel));
       // (a lava flare sets it burning; a steam geyser puts a fire out: STATUS-FX)
       if (h.kind === 'flare' && x.alive) burnFor(b, x, x, AIL.BURN_MS, 0.04);
       else if (h.kind === 'geyser' && AILMENT_SWITCH.on) putOut(x);

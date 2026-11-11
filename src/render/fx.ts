@@ -68,6 +68,7 @@ import { arcStyle, bits, FLASH_MAX, FLASH_MS, GLOW, HealPool, SPELL_ELEMENT, num
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
+import { TRAP_LOOKS } from './trapLooks';
 import { loadShowArt, showArt, type ShowArt } from './showArt';
 import { MOVE_LOOKS, PAINT, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
 import { KING_SHEET, KING_WALL } from './kingArt';
@@ -395,6 +396,7 @@ export class Fx {
       } else if (e.kind === 'relic') this.relicMark(e.to, e.id);
       else if (e.kind === 'boom') this.boom(b, e.u, e.v);
       else if (e.kind === 'hazard') this.hazard(b, e);
+      else if (e.kind === 'fieldTrap') this.fieldTrap(b, e);
       else if (e.kind === 'bossSig') this.bossFx.show(b, e);
       else if (e.kind === 'dash' || e.kind === 'blink') this.streak(b, e, slashes.get(e));
       else if (e.kind === 'phase') this.phaseShock(e.by);
@@ -2568,6 +2570,19 @@ export class Fx {
     }
     for (const [x, y] of spots) for (const fx of look.go) play(this.particles, fx.key, x, y - 6, { scale: fx.scale, frameMs: 70, add: e.what !== 'rockfall' && e.what !== 'stampede' });
     if (e.what === 'rockfall' || e.what === 'stampede') this.trauma = Math.min(1, this.trauma + 0.2);
+  }
+
+  /** LIVING-FIELDS: a trap springs (`sim/fieldTraps.ts`): its word once over the tile, and its strips. */
+  private fieldTrap(b: Battle, e: Extract<BattleEvent, { kind: 'fieldTrap' }>): void {
+    const look = TRAP_LOOKS[e.what];
+    const [x, y] = this.tilePos(b, e.u, e.v);
+    if (look.word) {
+      const c = look.colour;
+      const pale = (((((c >> 16) & 255) + 255) >> 1) << 16) | (((((c >> 8) & 255) + 255) >> 1) << 8) | (((c & 255) + 255) >> 1);
+      this.label(look.word, x, y - 30, pale, 14, 1100);
+    }
+    for (const fx of look.go) play(this.particles, fx.key, x, y - 6, { scale: fx.scale, frameMs: 70, add: e.what === 'ward' });
+    if (e.what === 'brazier' || e.what === 'thin') this.trauma = Math.min(1, this.trauma + 0.2);
   }
 
   /** A powder barrel goes off: a burst of fire and a ring of smoke on its tile, a shake (once, no loop). */

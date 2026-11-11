@@ -167,3 +167,120 @@ flat ground; if placing heroes feels harder to read, the faint line's strength i
 
 **Shots:** `docs/samples/living-fields/floor-<land>-<layout>.png` (the same 51 boards as `before-*`), and `-360` and `-412` for the mire,
 the ruins and the oasis. No page errors at any size.
+
+## Step 3: hazards and traps
+
+Sim rules, in `src/sim/fieldTraps.ts` (pure), with a test for every one (`test/living-fields-traps.test.ts`, 17 tests). The tells are
+drawn by `boardView.ts` (`paintTrap`, `trapProps`), the effects and sounds by `fx.ts` and `soundRules.ts`, the codex's lines are in
+`terrainInfo.ts`.
+
+### What was chosen
+
+Eleven new ones, and three of the army arenas' timed strikes laid on plain boards for the first time (steam vents, falling rocks,
+grasping hands). Shares are of the fighter's own health; a boss feels a third.
+
+| | What it does | Numbers |
+| --- | --- | --- |
+| **Spike trap** | Springs once on the first walker to end a step there, then is spent | 10% |
+| **Snare** | Springs once: rooted (no step; it still strikes what is in reach) | 2.5 s, 3% |
+| **Rune ward** | Springs once: a zap and a stun | 10%, 0.7 s |
+| **Brambles** | Scratch on every entry; the step is slower | 3%, the step takes twice as long |
+| **Deep mud** (quicksand on sand) | Drags | the step takes three times as long; no harm |
+| **Poison bog** | Bites on entry and each second stood in it, and poisons | 3%, then 2% a second |
+| **Thin ice** | Lies on the land's own ice. Cracks under the first walker, breaks under the next: shallow water after, and a cold bath | 6%, chilled 2.5 s |
+| **War totem** | Whoever holds its tile strikes harder, friend or foe | +15% attack while standing on it |
+| **Brazier** | In the way like a barrel. A blow on a fighter beside it tips it: everyone within a tile is seared, and hot coals (the ground the rules already had) lie round it for the rest of the fight | 6% |
+| **Swinging blades** (timed) | Sweep 2 or 3 tiles every 6 s, told 1.2 s before; fliers pass over | 10% |
+| **Lightning** (timed, only in the rain) | Strikes a tile and its neighbours every 11 s, told 1.5 s before; fliers too | 12%, stunned 0.5 s |
+| Steam vent, falling rocks, grasping hands (timed) | As in the armies' boss arenas (`hazards.ts`), every 8 to 10 s, told 1.2 to 1.5 s before | 8%, 12%, 6% and slowed 2 s |
+
+**Left out, and why:** a collapsing bridge (it can cut a board in two, and `boardOk` promises it never is); a nest that wakes something
+(it adds a fighter to one side, which is not fair to both); oil that can be lit (the brazier's coals do that job with ground the rules
+already had); a pit trap (a spike trap with different art).
+
+**By land** (two or three each, `LAND_HAZARDS`): Highlands falling rocks, brambles, lightning. Greenwood snare, brambles, lightning.
+Snowfields thin ice, falling rocks. Dunes quicksand, falling rocks. Ashlands steam vents, braziers. Crypt spike traps, swinging blades,
+braziers. Meadows snare, totem, lightning. Autumn Wood snare, brambles. Mire deep mud, poison bog. Graveyard grasping hands, poison bog,
+brambles. City Ruins swinging blades, rune wards, spike traps. Ancient Temple rune wards, spike traps, braziers. Crystal Caves rune
+wards, thin ice, falling rocks. Forge steam vents, braziers. Moonlit Shrine rune wards, totem. War Camp spike traps, braziers, totem.
+Oasis quicksand, thorn scrub.
+
+### The rules that keep it fair
+
+- **Both sides, in plain sight.** Every one hits heroes and foes alike and is on the board before the fight: a mark painted on its tile
+  with its own coloured rim, and for brambles, a totem, a ward and a brazier something standing there. The codex's Terrain tab has a
+  line for each, its numbers read from the rules' constants.
+- **Fliers** pass over every trap and under-foot strike; falling rocks, steam and lightning reach them, as in the arenas.
+- **The way-finding knows them** (`TRAP_COST`, `RISK_COST` in `canStep`; `trapScore` where a fighter picks where to stand). A fighter
+  takes another way of the same length when there is one, and walks round a bog or deep mud. A one-shot trap costs less than the two
+  steps round a single tile, so a trap on a fighter's only straight line is stepped on. Nobody chooses to stand on a trap or under a
+  strike; a totem is worth walking to.
+- **Not on a boss's wave.** A boss feels a third of a trap and the heroes all of it, so on a boss's wave the set tilted the fight
+  against the player (measured: the Golem Forge at level 80 cleared 13 of 40 attempts without the set and 5 of 40 with it, the loss all
+  on the last wave). `startStage` lays none there; an army's boss arena keeps its own strikes. With that, 12 of 40.
+- **Only the ordinary battlefields** (`fieldOk`): the 8 x 11 boards and an army's road sections. Not the Assault's field, the Last
+  Stand's keep, a Calamity zone or a rift's court.
+- **Sparse** (`PIECES`, `hazardLevel`): one or two pieces a board (a piece is a patch of 1 to 4 tiles, a brazier, or one strike); two or
+  three from the fifth wave; a third level from the Elite tier. An army's bigger road section gets up to one and a half times as many.
+- **Never in a side's rows**, never on water, a bridge, a ramp or a perch, and a brazier only where everyone can still get round it.
+
+### Deterministic, and behind one switch
+
+- Everything is laid by `layFieldHazards(board, seed, level)` from one side stream, `new Rng(mixSeed(seed, 0xf1e1d, landIndex))`. The
+  fight's own stream and its skill stream are untouched (a test compares them, and the rest of the board tile for tile, on every land).
+  A trap springs on a step with no roll; a strike goes by the board's clock.
+- A fight made outside a run has none (`Stage.hazards` unset). `startStage` sets the level.
+- **The switch is `FIELD_HAZARDS.on`.** With it off no board is given anything and every fight plays as it did.
+- **Pinned recordings: none re-recorded.** Three files pin whole fights and turn the switch off at their top:
+  `test/ailments-identical.test.ts`, `test/nemesis-regression.test.ts`, `test/spells-identity.test.ts`. They pass unchanged.
+- One test was updated for the changed requirement: `test/long-map.test.ts` compared an army fight's tiles with its section's, tile
+  for tile; the fight's own copy now also carries traps, so it compares them with the set's three fields left out, and checks the
+  section on the long map is never given any.
+
+### Balance, before and after
+
+The tools take `FIELD_HAZARDS=0` to play a table without the set (`tools/living-fields/switch.ts`); the hero table's fights are made
+outside a run, so the tool lays them at level 1. `tools/living-fields/compare.py` and `compare-heroes.py` lay two runs side by side.
+
+| Table | Without | With | |
+| --- | --- | --- | --- |
+| Armies, `npm run balance -- --armies-only --attempts 20`: mean share of attempts that won a wave (1080 cells) | 22.31% | 22.30% | |
+| The same: mean clear rate (72 rows) | 15.07% | 15.35% | |
+| Hero sweep, `--heroes-only --games 2000`: mean win rate | 58.9% | 59.4% | a second sample without the set read 59.8% |
+| The same: how far a hero's "vs avg" moved | | mean 2.6 points, at most 10.4 | between two samples without the set: mean 4.1, at most 13.7 |
+| Daily, `npm run daily-rate -- --days 200`, with the hearts | 83% | 81% | |
+| The same, no hearts | 70% | 68% | |
+| Golem Forge at level 80, 40 attempts (the army-pace test's party) | 13 cleared | 12 cleared | |
+
+Every figure is inside the sample's noise, and no balance band was changed. Two band tests sit close to their edge and are worth
+knowing about: the daily's (56 fixed dates, band 50 to 85%, 84% on main, 82% now) and the Golem Forge's (it must clear within three
+tries on one of two saves).
+
+**What I found on the way, which changed the design twice.** First, with the way-finding cost of a trap set at two steps, no one-shot
+trap ever sprang: every fighter walked round it and the traps were scenery. The costs are now below the price of walking round a
+single tile. Second, the boss finding above.
+
+### How it looks, and the art
+
+Stand-ins until the painted sheet lands: marks drawn on the tile (a spike plate, a rope loop, a rune ring, a mud sink, a bubbling bog,
+cracks in ice, a vent, rubble, a blade's slot, a scorch), the graveyard's thorns for brambles, the Calamity's skull totem and rune,
+the road's brazier. One sheet covers all of them plus each land's own shrine, ruined wall and powder barrel (audit finding 6):
+`docs/notes/living-fields-art-prompts.md`, cut by `tools/living-fields/import-art.py traps` into `src/art/living-fields/`. A painted
+cell replaces its stand-in with no code change (`trapArt.ts`, `trapLooks.ts`); a test checks every cell the board asks for is one the
+importer cuts.
+
+When a trap springs: its word once over the tile ("Spikes!", "Snared!", "The ice breaks!"), a strip from the effects pack, a cue, and
+the tile is painted again without it. Shots: `docs/samples/living-fields/traps-<land>-<layout>.png` (one board a land, level 1, before
+the fight), `-360` and `-412` for the crypt and the mire, and `traps-fight-*` 14 s into a fight on four lands. In those fights spike
+traps, wards, braziers, thin ice, a bog, blades, vents and rocks all went off, with no page errors.
+
+### For the owner's call
+
+1. **Which were chosen** (the table above), and the four left out.
+2. **Fights do play differently** wherever a board has one: that is the point, and it is within noise on every table, but a given seed's
+   fight is not the fight it was.
+3. **None on boss waves.** If the owner wants traps in boss fights too, the fair way is to let a boss feel them in full, which makes
+   them strong against bosses; that is a balance decision.
+4. **A snare roots rather than stuns**, so a snared archer still shoots. This is a new status (`Unit.rootUntil`); it has no icon over
+   the fighter yet beyond the trap's own effect.
+5. **The numbers** start gentle. The level's thresholds (wave 5, Elite) and the piece counts are in one place (`PIECES`, `hazardLevel`).

@@ -233,7 +233,10 @@ test('an army run fights each wave on its section of the long map, in the board\
   for (let w = 1; w <= 4; w++) {
     run.stage = w;
     const b = startStage(run);
-    assert.deepEqual(b.board.tiles, c[w - 1].board.tiles);
+    // (LIVING-FIELDS: the fight's own copy also carries the land's traps and hazards, `fieldTraps.ts`; under them it is the section, tile for
+    //  tile, and the section on the long map is never given any)
+    assert.deepEqual(b.board.tiles.map(({ trap, brazier, risk, ...t }) => (void trap, void brazier, void risk, t)), c[w - 1].board.tiles);
+    assert.ok(c[w - 1].board.tiles.every((t) => !t.trap && !t.brazier && !t.risk));
     assert.notEqual(b.board, c[w - 1].board);
     // (the fight is as ever: foes in the rows at v = 0, heroes to deploy at the rows from v = 6)
     for (const u of b.units) assert.ok(u.v < DEPLOY_ROWS);
