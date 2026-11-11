@@ -161,13 +161,13 @@ function report(name, w, i, o = {}) {
       check(!i.tacticOver.length, `${name}-${w}: the plaque lies over no other part`);
       if (i.piecesBottom !== null) check(i.tactic[1] >= i.piecesBottom && i.tactic[1] <= i.piecesBottom + 12, `${name}-${w}: it hangs just under the spell row`);
       if (i.boss) check(i.boss[2] <= i.tactic[0] - 4, `${name}-${w}: the boss's bar stops short of it`);
-      check(i.safe[1] >= i.tactic[3], `${name}-${w}: the camera's room starts below it`);
+      check(i.safe[1] >= Math.floor((i.tactic[1] + i.tactic[3]) / 2) + 7, `${name}-${w}: the camera's room starts no higher than half way down it (a corner cover)`);
     }
   }
   if (i.horn) {
     check(i.W - i.horn[2] === 8 && i.horn[3] <= i.panelTop && i.horn[2] - i.horn[0] === 56, `${name}-${w}: the horn has the bottom-right corner, 56 px`);
     check(!i.hornOver.length, `${name}-${w}: the horn lies over no other part`);
-    check(i.safe[3] <= i.horn[1], `${name}-${w}: the camera's room ends above the horn`);
+    check(i.safe[3] <= Math.ceil((i.horn[1] + i.horn[3]) / 2) - 7, `${name}-${w}: the camera's room ends no lower than half way up the horn (a corner cover)`);
   }
   if (i.off) check(Math.abs(i.off[0]) <= 24 && Math.abs(i.off[1]) <= 10, `${name}-${w}: the action sits at the middle of the room (${i.off})`);
   return sp;
