@@ -19,7 +19,7 @@ export const PB_ICONS = {
   actions: ['hire', 'satchel', 'auto-place', 'fight', 'auto-merge', 'auto-pick', 'march-battle', 'next-stage', 'leave', 'reveal-all', 'return', 'retain', 'recycle', 'pull-1', 'pull-10', 'skip'],
   tavern: ['all-heroes', 'gwen', 'upgrades', 'quests', 'hester', 'elders', 'quest-board', 'tav-trophies', 'stall-books', 'stall-gear', 'stall-tomes', 'stall-chests', 'stall-sell', 'stall-repair', 'stall-enchant', 'stall-caravan'],
   // (single medallions painted later, one file each: the fight's Auto ultimates button off and lit, UI-ART-WIRE)
-  singles: ['auto-ult', 'auto-ult-lit'],
+  singles: ['auto-ult', 'auto-ult-lit', 'badge-count-red'],
   glyphs: ['g-back', 'g-close', 'g-right', 'g-plus', 'g-minus', 'g-lock', 'g-star', 'g-star-empty', 'g-tick', 'g-cross', 'g-info', 'g-search', 'g-up', 'g-down', 'g-alert', 'g-help'],
 } as const;
 export type PbIcon = (typeof PB_ICONS)[keyof typeof PB_ICONS][number];
