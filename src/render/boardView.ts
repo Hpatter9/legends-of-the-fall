@@ -12,7 +12,8 @@ import { footDims, liesBehind, type Rot } from '../sim/turn';
 import { AREA_URLS, BUSH_URLS, GROUND_URLS } from './areaArt';
 import { TERRAIN_URLS } from './terrainArt';
 import { LIT_PROPS } from './weatherRules';
-import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow, loadRoadArt, piece, sceneryPictures, setPiece, type Pic } from './roadArt';
+import { birdOf, fallFrames, FALL_FRAMES, flairOf, flowFrames, FLOW_FRAMES, glow, growthOf, loadRoadArt, piece, sceneryPictures, setPiece, type Pic } from './roadArt';
+import { loadLifeArt } from './boardLife';
 import { settings } from '../settings';
 import { sceneDepth } from '../sim/armyRoad';
 import { mixSeed } from '../sim/rng';
@@ -129,7 +130,7 @@ export async function loadBoardArt(): Promise<void> {
   const [gate, tower, ringStones] = await all([gateUrl, towerUrl, ringStonesUrl]);
   const stoneSheet = Texture.from(ringStones);
   const stones = RING_STONES.map((s) => ({ tex: new Texture({ source: stoneSheet.source, frame: new Rectangle(s.x, s.y, s.w, s.h) }), fx: s.fx, fy: s.fy, du: s.du, dv: s.dv }));
-  await Promise.all([loadRoadArt(), loadZoneArt(), loadTrapArt()]);
+  await Promise.all([loadRoadArt(), loadZoneArt(), loadTrapArt(), loadLifeArt()]);
   artEpoch++;
   art = { areas, water, ice, lava, bushes, barrel: Texture.from(barrel), walls, crystal: Texture.from(crystal), planks, gate: Texture.from(gate), tower: Texture.from(tower), stones };
 }
@@ -706,6 +707,9 @@ export class BoardView {
           s.position.set(x + ((t.deco >> 3) % 2 ? 12 : -12), y - 5);
           tile.addChild(s);
           live.sway.push({ sp: s, ph: (x * 0.071 + y * 0.113) % (Math.PI * 2), amp: 0.03 });
+        } else if (t.bush && !depth && !t.trap && !t.risk && !t.ground && !t.bridge) {
+          // (LIVING-FIELDS, step 4: every land grows its own on the tiles the board marked: the audit's finding 7)
+          addPic(tile, growthOf(b.area, t.deco), x, y, live);
         }
         // (LIVING-FIELDS: what stands on a trap's tile; its mark on the ground is painted with the column)
         if (!t.scene && (t.trap || t.brazier || strikes.has(v * b.w + u))) {

@@ -29,7 +29,7 @@ const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromi
 let errors = 0;
 const PARTY = ['knight', 'archer', 'cleric', 'paladin', 'wizard'];
 for (const [w, h] of sizes) {
-  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: +(flag('--dsf') ?? 1) });
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: +(flag('--dsf') ?? 1), reducedMotion: args.includes('--calm') ? 'reduce' : 'no-preference' });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => { errors++; console.log('PAGE ERROR', e.message); });
   page.on('console', (m) => { if (m.type() === 'error') { errors++; console.log('CONSOLE ERROR', m.text()); } });
@@ -41,7 +41,7 @@ for (const [w, h] of sizes) {
     localStorage.setItem('lotf-tips-off', '1');
     localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false, speed: 1, saver: location.hash === '#saver' }));
   }, [PARTY]);
-  await page.goto(`http://localhost:${port}/`, { timeout: 180000 });
+  await page.goto(`http://localhost:${port}/${args.includes('--saver') ? '#saver' : ''}`, { timeout: 180000 });
   await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 60000 });
   await page.waitForTimeout(1200);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
@@ -50,13 +50,14 @@ for (const [w, h] of sizes) {
     if (only && !only.includes(land)) continue;
     // (`--one`: only each land's first shape)
     for (const { seed, layout } of args.includes('--one') ? list.slice(0, 1) : list) {
-      await page.evaluate(([area, seed, party, army, stage]) => {
+      await page.evaluate(([area, seed, party, army, stage, noLife]) => {
         const g = window.__game;
         const r = JSON.parse(JSON.stringify(g.run));
         Object.assign(r, { ...(army ? { mode: { kind: 'army', army }, tier: 0, stage, area: undefined } : { mode: { kind: 'run' }, stage: 3, area }), seed, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
         document.getElementById('home').hidden = true;
+        if (noLife) g.life.on = false;
         g.startRun(r);
-      }, [land, seed, PARTY, army, stage]);
+      }, [land, seed, PARTY, army, stage, args.includes('--no-life')]);
       await page.waitForTimeout(500);
       await page.evaluate(() => window.__game.autoArrange(true));
       await page.waitForTimeout(400);
@@ -75,7 +76,22 @@ for (const [w, h] of sizes) {
           }
           document.getElementById('fight').click();
         });
+        // (`--bench`: the frames' times over the fight, and what the life layer's own step cost; `--no-life` plays it with the layer off)
+        if (args.includes('--bench')) await page.evaluate(() => {
+          const g = window.__game;
+          g.life.cost = { ms: 0, frames: 0 };
+          window.__frames = [];
+          let last = performance.now();
+          const tick = (now) => { window.__frames.push(now - last); last = now; if (window.__frames.length < 4000) requestAnimationFrame(tick); };
+          requestAnimationFrame(tick);
+        });
         await page.waitForTimeout(+(flag('--ms') ?? 8000));
+        if (args.includes('--bench')) console.log(land, layout, JSON.stringify(await page.evaluate(() => {
+          const f = window.__frames.slice(5).sort((a, b) => a - b);
+          const g = window.__game;
+          const mean = f.reduce((a, b) => a + b, 0) / f.length;
+          return { frames: f.length, meanMs: +mean.toFixed(2), p95Ms: +f[Math.floor(f.length * 0.95)].toFixed(2), lifeStepMs: +(g.life.cost.ms / Math.max(1, g.life.cost.frames)).toFixed(4), units: g.b.units.filter((x) => x.alive).length };
+        })));
         console.log(land, layout, 'phase', await page.evaluate(() => window.__game.b.phase), 'sprung:', (await page.evaluate(() => window.__trapLog)).join(' ') || 'none');
       }
       // (the camera stands back over the whole board)

@@ -199,6 +199,13 @@ export function flairOf(area: Area, deco: number): Pic | null {
   return { name: list[(deco >> 3) % list.length], scale: 0.5, dx: (deco >> 5) % 2 ? 14 : -14, dy: -3, sway: true };
 }
 
+/** LIVING-FIELDS, step 4: the land's own small growth on a plain battlefield's `bush` tiles (flowers, ferns, mushrooms, bones, by land:
+ *  the road's flair, on every tile the board marked, at the tile's back corner behind whoever stands there). */
+export function growthOf(area: Area, deco: number): Pic {
+  const list = FLAIR[area] ?? MEADOW;
+  return { name: list[(deco >> 3) % list.length], scale: 0.5, dx: (deco >> 5) % 2 ? 13 : -13, dy: -4, sway: true };
+}
+
 /** An arena's set piece: its picture and size, by the land where one kind can look different. */
 export function setPiece(kind: PieceKind, area: Area): Pic {
   const p = (name: string, scale: number): Pic => ({ name, scale, ay: 0.84, dx: 0, dy: 6, light: lit(name) });

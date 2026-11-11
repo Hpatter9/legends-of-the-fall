@@ -16,6 +16,8 @@ export interface FloorArt {
   /** The waterline's foam along an edge and in a corner, turned four ways. */
   foam: HTMLCanvasElement[];
   foamCorner: HTMLCanvasElement[];
+  /** The decals, 4 x 4, each 128 px (2 x 2 tiles): what lies about a land, and the marks a fight leaves (`boardLifeRules.ts`). */
+  decals: HTMLImageElement;
 }
 
 /** How much deeper than the sheet's own fringe a ragged edge reaches into a tile (the sheet's is a thin strip, made for a far camera). */
@@ -44,8 +46,8 @@ export function loadFloorArt(hold: Hold): Promise<FloorArt | null> {
   if (got) return Promise.resolve(got);
   let p = loading.get(hold);
   if (!p) {
-    p = Promise.all(['ground', 'edges', 'faces'].map((f) => loadImage(`assault/${hold}/${f}.webp`)))
-      .then(([ground, edges, faces]) => {
+    p = Promise.all(['ground', 'edges', 'faces', 'decals'].map((f) => loadImage(`assault/${hold}/${f}.webp`)))
+      .then(([ground, edges, faces, decals]) => {
         const shaded = (k: number) => {
           const c = document.createElement('canvas');
           c.width = faces.width;
@@ -59,7 +61,7 @@ export function loadFloorArt(hold: Hold): Promise<FloorArt | null> {
         };
         const four = (cell: number, reach = 1) => [0, 1, 2, 3].map((q) => turned(edges, cell, q, reach));
         // (the edges sheet: 0 mud, 1 its corner ... 14 water, 15 its corner; the mud's shape is the mask)
-        const art: FloorArt = { ground, faces: { left: shaded(0.04), right: shaded(0.3) }, ragged: four(0, REACH), raggedCorner: four(1, REACH), foam: four(14), foamCorner: four(15) };
+        const art: FloorArt = { ground, faces: { left: shaded(0.04), right: shaded(0.3) }, ragged: four(0, REACH), raggedCorner: four(1, REACH), foam: four(14), foamCorner: four(15), decals };
         ready.set(hold, art);
         return art;
       })

@@ -284,3 +284,52 @@ traps, wards, braziers, thin ice, a bog, blades, vents and rocks all went off, w
 4. **A snare roots rather than stuns**, so a snared archer still shoots. This is a new status (`Unit.rootUntil`); it has no icon over
    the fighter yet beyond the trap's own effect.
 5. **The numbers** start gentle. The level's thresholds (wave 5, Elite) and the piece counts are in one place (`PIECES`, `hazardLevel`).
+
+## Step 4: life and effects
+
+Looks only: `src/render/boardLifeRules.ts` (pure: what, where and when), `src/render/boardLife.ts` (draws it), eight tests in
+`test/living-fields-life.test.ts`. The layer reads the battle and never changes it; where things are is a hash of the board's seed and
+the tile, never a stream of the fight.
+
+| | What | Where it comes from |
+| --- | --- | --- |
+| **Birds** | Two or three on most lands, pecking on open middle ground. A fighter within about a tile and a half sends one up and away; it comes back when its ground has been quiet for six seconds | The road's pecking birds (`src/art/road/birds.png`), by land |
+| **Butterflies** | Over the meadows, the temple, the wood and the oasis; they flutter about their tile and flee the same way | A stand-in drawn in code (two frames) |
+| **Fish** | In about four water tiles in ten (five a board at most), circling; they dart off when a fighter wades in | A stand-in drawn in code |
+| **Fireflies** | By night on most lands; at any hour in the mire, the caves, the crypt and at the shrine. They dim near a fighter rather than flee | The shared glow |
+| **Growth** | Every land now grows its own on the tiles the board marks `bush` (about six a board): flowers, ferns, mushrooms, bones, by land. It sways | The road's flair pieces (the audit's finding 7) |
+| **What lies about** | Two to five decals a board, by land: bones among the graves and in the crypt, cracks in dry ground, straw and boot tracks in the camp, rubble in the ruins, puddles in the mire (and anywhere in the rain) | Each hold sheet's own `decals.webp` |
+| **Marks a fight leaves** | Scorch where a barrel blew or lightning struck, rubble where rocks fell, cracks where the ground was struck, a puddle where steam burst or ice broke, embers where a brazier fell. They fade over 24 s; a board keeps 14 at most | The same decals |
+| **Falls** | Water (or lava) pours off the board's two near edges wherever a water tile reaches them | The road's fall strips |
+| **Shafts of light** | Two or three over the wood, the autumn wood, the temple, the ruins and the caves, one in the crypt, on a clear day; they breathe slowly | Drawn once |
+| **Smoke** | A puff off a brazier, lava or hot coals about once a second during a fight | The effects pack's `fire-smoke` |
+| **Dust and splashes** | Under a walking fighter's step: dust on earth (sand-coloured on the dunes, ash-grey on the ashlands), a flurry on snow, a splash in the shallows, leaves in tall grass. Seven a second at most over the whole board | The effects pack's puffs |
+| **A clear day's motes** | The land's own drift (pollen, petals at the shrine, snow flecks, dust, embers by lava, crystal motes), sixteen at most. This existed for an army's road only; it now shows on every battlefield | `ambientOf` in `weatherRules.ts` |
+
+**Tied to the weather** (`lifeFor`, `landDecals`, `shaftsFor`): birds, butterflies and rabbits keep out of rain, snow and ash; fog halves
+the birds; night has one bird at most and no butterflies, and brings the fireflies out; frogs like the rain; rain adds puddles; shafts
+of light only on a clear day (or falling leaves).
+
+**Reduced motion:** nothing drifts or moves. Creatures sit still and simply are not there while a fighter is near; one still shaft; no
+dust, smoke or motes. **Battery saver:** half the creatures (rounded up), no shafts, no dust or smoke, half the motes.
+
+**Frame cost.** The layer's own step costs 0.01 to 0.02 ms a frame in a nine-fighter fight (`BoardLife.cost`; nothing is made in a
+frame, only moved, faded or re-framed). What it adds to draw is small and capped: at most 15 creatures, 7 decals and 14 marks, a fall
+strip per edge water tile, 3 shafts, and a handful of puffs a second. Whole-frame times with the layer on and off, three runs each on
+the same board (`node tools/living-fields/shots.mjs ... --fight --bench [--no-life]`): on 40.7, 41.8 and 32.5 ms; off 41.2, 32.8 and
+43.3 ms. That is the same within the run-to-run spread. **This was measured in the build machine's software renderer, which has no
+GPU, so it shows the layer is not a CPU cost and says little about a phone's fill rate; I could not measure on a phone.**
+
+**Not done, or only partly:**
+- **Rabbits and frogs are in the rules but not on the board yet.** There is no pack art for them, so they appear only once the painted
+  sheet lands (`docs/notes/living-fields-art-prompts.md`, sheet 2; `python3 -I tools/living-fields/import-art.py life`). The same sheet
+  replaces the stand-in butterfly and fish and gives the birds a proper take-off.
+- **Banners in the wind:** not done. The plain boards have no banner prop, and a pole on an open tile would hide a fighter.
+- **Swaying trees:** the plain boards have no trees (`Tile.tree` is only set on roads and the Stand). The growth, tall grass and
+  brambles sway.
+- **Footprints:** a step raises dust or a splash, and boot or wolf tracks lie about as decals, but a walker leaves no lasting trail.
+- **Torches:** braziers flicker and smoke (Step 3); the crypt has no wall torches of its own.
+
+**Shots:** `docs/samples/living-fields/life-<land>-<layout>.png` (one board a land), `-360` and `-412` for the meadows and the mire,
+`life-fight-*` twelve seconds into a fight on three lands. Reduced motion and battery saver were each played through a fight with no
+page errors.
