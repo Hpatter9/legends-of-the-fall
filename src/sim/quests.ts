@@ -1,3 +1,4 @@
+import { spellsOpen } from './castle';
 import { questShown } from './hiddenModes';
 import { welcomeMythic } from './mythicProgression';
 // Quests (batch 1 of the quests and Eidolons design, `docs/notes/quests-summons-design.md`, and batch 1b: repeats, drops, the hundred
@@ -176,6 +177,8 @@ export function needMet(m: Meta, n: Need): boolean {
       return !!(m.duchessTaps || m.duchessLucky || m.duchessHay);
     case 'spell':
       return !!m.spellbook?.owned.includes(n.id as never);
+    case 'spellbook':
+      return spellsOpen(m);
     case 'ascension':
       return ascCleared(m) >= n.n;
     case 'bestiary':

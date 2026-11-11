@@ -43,6 +43,9 @@
 .sbBody .sbSlot b { display: block; margin: 0; font: 600 12px/1.15 var(--body); overflow-wrap: anywhere; }
 .sbSlot em { color: #afd5e9; font: 11px/1.2 var(--body); }
 .sbBody .sbSlot .spIcon { zoom: 1; width: 64px; height: 64px; margin: -4px -6px; transform: scale(.78); }
+.sbBody .sbSlot.sbShut { background: #171a17; color: #a89f86; cursor: default; }
+.sbSlot .sbLock { width: 44px; height: 44px; margin: 6px 0; filter: saturate(.75) drop-shadow(0 1px 1px #000a); }
+.sbSlot.sbShut em { color: #d9c489; font-size: 10px; line-height: 1.25; }
 .sbEmpty { display: flex; align-items: center; justify-content: center; width: 52px; height: 56px; font: 34px/1 var(--body); color: #aa9b70; }
 .sbHint { margin: 5px 0 0; color: #c4b994; text-align: center; font: 12px/1.4 var(--body); }
 .sbSchool { border-bottom: 1px solid #77643c; padding: 0 6px; color: #dbcdac; }

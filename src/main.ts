@@ -79,6 +79,7 @@ import { levelBadge } from './levelBadge';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
 import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from './sim/featureUnlocks';
+import { spellSlots, tellSlots } from './sim/spellSlots';
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
@@ -663,7 +664,8 @@ class Game {
     const fit = () => {
       if (school === settings().ruler && this.meta.spellbook.school === school) return;
       school = settings().ruler;
-      fitSchool(this.meta.spellbook, school);
+      // (SPELL-SLOTS: a new school fills no more slots than the save has open)
+      fitSchool(this.meta.spellbook, school, spellSlots(this.meta));
       saveMeta(this.meta);
     };
     fit();
@@ -2684,11 +2686,23 @@ class Game {
 
   /** The one-time notice of an earned deploy helper (Auto merge, Auto place), shown on the deploy screen after its army falls (DEPLOY-ZOOM). */
   private tellUnlocks(): void {
+    this.tellSpellSlots();
     const due = featuresToTell(this.meta);
     if (!due.length) return;
     markTold(this.meta, due);
     saveMeta(this.meta);
     toastLines(due.map((f) => FEATURES[f].line));
+  }
+
+  /** SPELL-SLOTS: a spell slot the stars have just opened is told once, by the standard notice (a toast, which the run's recap lists in
+   *  its news). While the spellbook is shut the slot takes its default spell (`tellSlots`), so the orbs are drawn again. */
+  private tellSpellSlots(): void {
+    const lines = tellSlots(this.meta, settings().ruler);
+    if (!lines.length) return;
+    saveMeta(this.meta);
+    this.buildSpells();
+    this.home.refresh();
+    toastLines(lines);
   }
 
   /** Starts an auto-replay of the army just begun (the run is on wave 1 already). Only cleared armies and tiers take it. */
@@ -3371,6 +3385,8 @@ class Game {
     const results = runResult(this.meta, recapOf(run), head, { cleared: recapOf(run).cleared, hearts: heartsBurned(recapOf(run)) }, run);
     // (RUN-GEAR: the pieces the run brought home, and Sell the Commons)
     const found = foundRow(this.meta, run.foundHome, todayKey(), () => saveMeta(this.meta));
+    // (SPELL-SLOTS: a slot the run's stars opened is told here, so the recap's news has its line)
+    this.tellSpellSlots();
     showRecap($('recap'), recapOf(run), { ...head, joke, results, found, notices: toldNotices(), equipmentStep: (kind) => awakenedOf(this.meta, kind) }, () => void this.revealEarned().then(() => this.afterResult()), advice);
   }
 

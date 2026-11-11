@@ -27,7 +27,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   deploy: { text: 'Drag your heroes onto the blue tiles. High ground hits harder; blows from behind hit hardest.', page: 'game', during: 'deploy' },
   fight: { text: 'Press Fight! Your heroes fight on their own.', page: 'game', during: 'deploy' },
   // (FIRST-HOUR: the king's spells decide the early fights (`tools/first-hour/pace.mjs`: about 2 tries to clear the first army with them, 6 without), so the tip says so and names the Auto switch)
-  mana: { text: 'Your king has spells, and they win fights. The SPELL switch casts them for you; tap a spell, then a tile, to cast one yourself.', page: 'game', during: 'fight' },
+  mana: { text: 'Your king\'s magic wins fights. You begin with Heal, and more spell slots open as you win stars. The SPELL switch casts for you; or tap a spell, then a tile.', page: 'game', during: 'fight' },
   skill: { text: 'Heroes cast their skills on their own, paid from the blue mana or gold stamina bar under each portrait.', page: 'game', during: 'fight' },
   ult: { text: 'A glowing portrait means its ultimate is ready: tap it to fire. The Auto ultimates button fires them for you; Auto spells casts your spells.', page: 'game', during: 'fight' },
   summon: { text: 'Spend gold to Hire a hero. Drag a hero onto another of the same kind and grade to merge them into a stronger one (up to grade four), or tap one then the other. Beating the second army unlocks Auto merge.', page: 'game', during: 'deploy' },
@@ -36,7 +36,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   tower: { text: 'Last Stand: guard your ruler on the keep as wave after wave comes in from every side. It never ends.', page: 'home' },
   talents: { text: 'Spend talent points here to change how this hero fights. Each hero has its own tree.', page: 'any' },
   castle: { text: 'Each build takes real time, and the builders do one at a time. It carries on while the game is closed.', page: 'home' },
-  spellbook: { text: 'The Chapel holds your spells: three of your ruler\'s school and one of any. Spare mana fills your Decree.', page: 'home' },
+  spellbook: { text: 'Your spells: up to four as stars open slots, three of your ruler\'s school and one of any. Spare mana fills your Decree.', page: 'home' },
   stash: { text: 'Chests from army stars wait on the cart. Tap one to open it.', page: 'home' },
   equipment: { text: 'Equip best puts the strongest spare gear on this hero. Chests drop more.', page: 'any' },
   recycle: { text: 'Drag a spare hero off the bench and a Recycle spot appears: drop it there to turn it back into gold.', page: 'game', during: 'deploy' },

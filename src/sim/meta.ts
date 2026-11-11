@@ -8,6 +8,7 @@ import { oneMythic, validMythicSquad } from './mythicRules';
 import { readAssault } from './assault/economy';
 import { newCastle, readCastle, readChapel, readWorks, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
+import { spellSlots } from './spellSlots';
 import { DAILY_WAVES } from './daily';
 import { dailyStarsMax } from './dailyThemes';
 import { Rng } from './rng';
@@ -225,6 +226,9 @@ export interface Meta {
   bossCards?: string[];
   /** The deploy bar's earned helpers whose unlocking has been told (`featureUnlocks.ts`): once a save. Saves from before have none. */
   featuresTold?: string[];
+  /** SPELL-SLOTS: how many spell slots' opening has been told (`spellSlots.ts`): one on a new save (the slot it starts with). A save
+   *  from before the slots has no such key, and is told none of the slots it already holds. */
+  slotsTold?: number;
   /** The quests: the offers on the board, the ones taken and their counts, the ones handed in (`quests.ts`). Saves from before have none: nothing begun. */
   quests?: QuestState;
   /** EIDOLONS: the War Horn's fill, the Eidolons bound and the one chosen to answer it (`warHorn.ts`). Saves from before have none: an empty horn. */
@@ -308,7 +312,7 @@ export interface Pull {
 /** A brand-new save: no hero yet, only the two starter packs to pick from (`pickStarter`). */
 // (FIRST-HOUR 2: a new save starts with Auto spells on, the director's call: the king's spells decide the first army, and a new player
 // who never casts one meets a wall. A save made before has no `spellAuto` key and keeps what it had, `spellAutoSaved`.)
-export const newMeta = (seed: number): Meta => ({ spellAuto: true, seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {}, gearV: GEAR_V });
+export const newMeta = (seed: number): Meta => ({ spellAuto: true, slotsTold: 1, seed, crowns: 0, stones: 0, unlocked: [], party: [], starter: { packs: starterPacks(), pick: null }, pulls: 0, sinceNew: 0, shards: {}, stars: {}, xp: {}, castle: newCastle(), chapel: false, spellbook: newLoadout(), bestStage: 1, tower: 0, daily: {}, bosses: [], armies: {}, armySeen: [], heroesSeen: [], opened: [], achievements: [], claimed: [], stash: [], ranked: {}, gearV: GEAR_V });
 
 /** A save past the pick with the old starting five unlocked and in the party: what the saves from before the pick have, and what the tests and tools play with. */
 export function startedMeta(seed: number): Meta {
@@ -318,6 +322,8 @@ export function startedMeta(seed: number): Meta {
   m.unlocked = [...HEROES];
   m.party = [...HEROES];
   m.heroesSeen = [...HEROES];
+  // (SPELL-SLOTS: a save from before the slots: the starting three in the slots and all four slots open, as every table was measured)
+  m.spellbook = { ...readLoadout(undefined), slots: 4 };
   return m;
 }
 
@@ -648,6 +654,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the earned deploy helpers have told none: `featureUnlocks.ts`)
       if (Array.isArray(m.featuresTold)) m.featuresTold = m.featuresTold.filter((x) => typeof x === 'string');
       else delete m.featuresTold;
+      // (SPELL-SLOTS: a save from before the slots is not told of the slots it already holds; a new save's first is never told)
+      m.slotsTold = Math.max(1, Math.min(4, typeof m.slotsTold === 'number' ? Math.floor(m.slotsTold) : spellSlots(m)));
       // (saves from before the quests have none: nothing begun, and the day's offers are drawn when the page next looks)
       m.quests = readQuests(m.quests);
       if (!m.quests) delete m.quests;
