@@ -13,10 +13,14 @@ import { armyRun, finish, noteFight, startStage } from '../src/sim/run';
 import { autoDeploy, autoRound } from '../src/sim/autoplay';
 import { maybeSpells, savedAt } from '../tools/autoplay';
 import { FIELD_HAZARDS } from '../src/sim/fieldTraps';
+import { LAND_TERRAIN } from '../src/sim/landTerrain';
 
 // (LIVING-FIELDS: these fights were recorded before the land's traps and hazards, `fieldTraps.ts`; the set's one switch is off here, so every
 // fight is laid as it was and plays as recorded)
 FIELD_HAZARDS.on = false;
+// (LAND-IDENTITY: nor had the lands' own terrain been laid thicker, `landTerrain.ts`: the mire's pools are off here for the same reason.
+//  What the two switches do to a fight is held by their own tests, `living-fields-traps` and `land-terrain`.)
+LAND_TERRAIN.on = false;
 
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 

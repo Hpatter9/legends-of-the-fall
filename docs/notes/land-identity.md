@@ -154,13 +154,181 @@ shrine), `batch3-*` (wood, autumn wood, meadows, highlands), `batch4-*` (dunes, 
   withdraw them. **Still not measured:** a real phone's GPU, where covering fewer pixels is what matters; that is what this trim
   is for.
 
+## The terrain rule: the mire floods (ON since the owner's call; see "Both switches on" below)
+
+Everything above is looks only. This is the one part that changes how a fight plays, so it is a rule of its own
+(`src/sim/landTerrain.ts`), behind its own switch (`LAND_TERRAIN.on`; it was built off, and with it off nothing is laid and every fight is exactly as it
+was; a test holds it) and laid from its own side stream of the seed (`TERRAIN_SALT`), at the fight's start, before the traps. With
+it on a flooded fight has the same foes in the same places and the same fight stream as before (a test holds that too).
+
+- **The rule.** On the mire, two or three pools of shallow water are laid on the lowest open ground (plain tiles no more than one
+  step over the board's lowest), two to four tiles each, never past 30% of a board's standable tiles. Shallow water is the rule the
+  game already has (a step into it takes twice as long; fliers do not mind). Nothing is deep, so nobody is cut off.
+- **The boards** (`node tools/land-identity/mire.mjs`, 500 seeds): shallow water goes from 6.2% of the standable tiles to 13.7%
+  (5.0 tiles a board to 11.0; the wettest board 30%); every tile of all 500 flooded boards can still be walked to.
+- **The fights** (the same tool: 3,000 random five-hero teams, the nine field bands in turn, stage 5 foes, on the mire; the same
+  seeds, teams and bands with the switch off and then on). Heroes' wins:
+
+  | Band | As it is | Flooded | Change |
+  | --- | --- | --- | --- |
+  | skeletons | 44.6% | 37.1% | -7.5 |
+  | werewolves | 61.4% | 61.1% | -0.3 |
+  | minotaurs | 59.3% | 64.1% | +4.8 |
+  | gorgons | 63.7% | 65.5% | +1.8 |
+  | satyrs | 68.8% | 68.8% | 0.0 |
+  | mixed | 65.2% | 63.1% | -2.1 |
+  | orcs | 61.3% | 62.5% | +1.2 |
+  | demons | 47.7% | 45.0% | -2.7 |
+  | ogres | 63.1% | 61.3% | -1.8 |
+  | all | 59.4% | 58.7% | -0.7 |
+
+  One standard error is about 0.9 points over all 3,000 fights and about 2.7 over a band's 333. So the whole is inside the noise;
+  the skeletons' fall (-7.5, about 2.8 errors) is the one figure that looks real: their archers get more shots at heroes wading
+  toward them. The minotaurs' rise (+4.8, 1.8 errors) may be the same thing the other way (chargers slowed), or noise.
+- **Not measured:** the armies' roads (they bring their own boards, which this does not touch), the daily and whole runs (the mire
+  is one land in seventeen there), and how it plays with the traps on (both switches are off).
+- **To see it:** `__game.landTerrain(true)` then start a run on the mire, or `tools/living-fields/shots.mjs ... --flood`.
+  `docs/samples/land-identity/mire-flood-proposal.jpg`: three of the mire's boards, as they are and flooded.
+- **Owner's calls:** whether to turn it on; whether the skeletons' fights on the mire want easing if so; and whether the other
+  lands should get the same (more ice on the snows, more lava in the ashlands, more rock in the highlands). `FLOODS` takes a land
+  a line; the lava and ice would each need their own measure, because they hurt and slide where water only slows.
+
+## Both switches on (the owner's call, 2026-11-11)
+
+The owner decided: swamp water on, hazards on. `LAND_TERRAIN.on` and `FIELD_HAZARDS.on` are both **true**. No traps on a boss's
+wave, as designed (`run.ts`); the skeletons on the mire are not eased (the owner's word).
+
+**Measured** with `node tools/land-identity/flip.mjs` (the hero sweep's fights on each land's own boards: random five-hero teams,
+the nine field bands in turn, stage 5 foes, the traps at the level a run lays them on that wave, 2; the same seeds, teams and bands
+with both switches off and then both on). Heroes' wins:
+
+| Over all 17 lands (900 fights a land, 1,700 a band) | Both off | Both on | Change |
+| --- | --- | --- | --- |
+| skeletons | 47.6% | 49.5% | +1.9 |
+| werewolves | 54.2% | 58.3% | +4.1 |
+| minotaurs | 60.4% | 63.5% | +3.1 |
+| gorgons | 66.2% | 66.4% | +0.2 |
+| satyrs | 68.5% | 70.5% | +2.0 |
+| mixed | 66.1% | 69.2% | +3.1 |
+| orcs | 59.7% | 63.6% | +3.9 |
+| demons | 48.7% | 47.6% | -1.1 |
+| ogres | 64.6% | 64.4% | -0.2 |
+| **all** | **59.6%** | **61.5%** | **+1.9** |
+
+One standard error is about 0.4 points for the whole and 1.2 for a band over all lands, so the whole's +1.9 is real: the traps
+help the heroes a little on balance (the foes cross more ground to reach them, and walk into more). By land (1.7 an error): from
+-3.6 (the autumn wood) to +6.0 (the temple) and +5.8 (the ruins); eleven of the seventeen within two errors. A band on one land
+is only 100 fights (5 an error), so those cells are too noisy to read one by one.
+
+| The mire alone, flooded and trapped (3,000 fights, 333 a band) | Both off | Both on | Change |
+| --- | --- | --- | --- |
+| skeletons | 44.6% | 45.8% | +1.2 |
+| werewolves | 61.4% | 74.0% | +12.6 |
+| minotaurs | 59.3% | 70.7% | +11.4 |
+| gorgons | 63.7% | 55.3% | -8.4 |
+| satyrs | 68.8% | 73.3% | +4.5 |
+| mixed | 65.2% | 71.2% | +6.0 |
+| orcs | 61.3% | 69.1% | +7.8 |
+| demons | 47.7% | 48.0% | +0.3 |
+| ogres | 63.1% | 67.6% | +4.5 |
+| **all** | **59.4%** | **63.9%** | **+4.4** |
+
+(0.9 an error for the whole, 2.7 for a band.) On the mire the two together favour the heroes more than elsewhere: the bands that
+run in (werewolves, minotaurs, orcs) wade through pools, mud and bog to get there, and lose by it; the gorgons, who stand off and
+shoot, gain. The skeletons' fall under flooding alone (-7.5) is cancelled by the traps (+1.2 with both). Nothing was eased.
+
+- **The first hour** (`node tools/first-hour/pace.mjs`, 40 new saves a starter pack on the first army, Normal): Sword and Shield
+  cleared in a mean 2.1 tries before and 2.2 after; Blade and Spell 1.8 and 1.8; every save of both packs cleared within 12 tries
+  before and after; nobody lost on wave 1 either way. No move beyond noise, so the first army keeps its hazards.
+- **What the flip broke: three tests, all recordings of other systems** (`spells-identity`, `ailments-identical`; each "plays
+  exactly as recorded before <that system>"). They already turn the traps off for that reason; they failed because the mire's
+  fights were now flooded. They now turn the flooding off the same way, and say why. Nothing was re-recorded and no test was
+  loosened; what the two switches themselves do is held by `living-fields-traps` and `land-terrain` (whose first test now holds
+  that the switch is on, that off is still the old board, and that a fight on the mire is fought flooded). Every balance band test
+  passed unchanged with both on.
+- `tools/living-fields/switch.ts` reads `FIELD_HAZARDS=0` and `LAND_TERRAIN=0`, so any balance tool and the pace tool can be played
+  as before the flip.
+- Shots with both on: `docs/samples/land-identity/switches-on-393.jpg` (mire, crypt, meadows, snows; deployed and mid-fight),
+  `switches-on-360.jpg`, `switches-on-412.jpg`. No page errors.
+- **Not measured:** whole runs, the daily and the armies' own tables with both on (the armies' table was measured for the traps
+  alone in LIVING-FIELDS: 22.31% then 22.30%); fights above stage 5 or above the Normal tier, where the traps lie thicker (level 3).
+
+## The other three lands (the owner said yes; each shipped only if its measure allowed)
+
+The owner's rule, through the director: a land's own terrain ships ON only if its numbers are within noise overall and no band
+moves by more than about 8 points; otherwise it stays off and the numbers are reported. `FLOODS` now has four lands, each with its
+own `on`, laid by the same rule as the mire's pools (`kind`: water, ice, lava or rock).
+
+- **The boards** (`node tools/land-identity/flip.mjs --boards --lands swamp,snow,volcano,highlands`, 500 seeds a land; every tile
+  of every board can still be walked to in all four):
+
+  | Land | Laid | As `makeBoard` lays it | Laid thicker | Most on a board |
+  | --- | --- | --- | --- | --- |
+  | Mire | shallow water | 6.2% of the open tiles (5.0 a board) | 13.7% (11.0) | 30% |
+  | Snows | ice | 3.0% (2.5) | 12.1% (10.1) | 23% |
+  | Ashlands | lava (middle ground only) | 3.1% (2.5) | 7.7% (6.2) | 17% |
+  | Highlands | boulders (middle ground only, kept only if the board can still be walked) | 2.0% (1.7) | 6.3% (5.3) | 11% |
+
+- **The fights** (`node tools/land-identity/flip.mjs --lands snow,volcano,highlands --games 3000 --only terrain --base hazards
+  --force`: 3,000 fights a land, the traps on in both passes, so the change is the terrain's alone on top of the game as it now
+  is; 0.9 points an error for a land, 2.7 for a band on a land). Heroes' wins:
+
+  | Land | Without | With | Change | The bands that moved most | Shipped |
+  | --- | --- | --- | --- | --- | --- |
+  | Snows (ice) | 57.9% | 58.4% | +0.5 | orcs +3.9, demons -3.6, skeletons +2.7 | **ON** |
+  | Ashlands (lava) | 66.9% | 70.2% | +3.4 | werewolves +12.3, ogres +10.2, skeletons +4.8, demons -4.2 | **off** |
+  | Highlands (boulders) | 60.9% | 65.4% | +4.6 | minotaurs +13.5, demons +10.2, werewolves +7.8, ogres +6.3, gorgons -5.4 | **off** |
+
+  The snows' ice is inside the noise overall and no band moves by more than 3.9, so it is on. The ashlands' lava and the
+  highlands' boulders each move the whole by several errors and two bands by more than 10 points, both in the heroes' favour (the
+  foes that run in burn in the lava, or queue up round the boulders), so both are off, as the rule says. They are built and
+  tested (a test turns each on to hold its rule) and can be turned on by one word each in `FLOODS`.
+- **If the owner wants them anyway**, the lever is lighter settings (fewer or smaller patches), measured again: not tried, because
+  the instruction was to report and leave them off.
+- The first hour with the snows' ice on: unchanged (2.2 and 1.8 tries, 40 of 40 saves of both packs cleared).
+- A test caught one slip while this was built: a boulder that could not stay left a stray field on its tile; a rejected tile is
+  now put back exactly as it was found.
+- Shots: `docs/samples/land-identity/snows-ice.jpg` (three of the snows' boards, before and now), `snows-ice-sizes.jpg` (360 and
+  412 wide, deployed and mid-fight). On the snows the ice is pale on pale: a few more glinting tiles a board, easy to miss at
+  phone size. No page errors.
+
+## Lighter lava and boulders tried; the snows' ice made easier to see
+
+The director's ask: try lighter settings for the ashlands and the highlands until each meets the same rule, and ship each on if
+a setting meets it **and still shows at phone size**; and make the snows' extra ice easier to see (looks only).
+
+- **Tried** (`flip.mjs ... --set "volcano=1,1,1,2;highlands=1,1,1,1"`: a land's patches at other numbers; 3,000 fights a land,
+  traps on in both passes; 0.9 an error for a land, 2.7 for a band):
+
+  | Land | Patches x tiles | On a board | Heroes' wins | Largest band moves | Meets the balance rule |
+  | --- | --- | --- | --- | --- | --- |
+  | Ashlands, as first built | 1 to 2 x 2 to 3 | 2.5 lava tiles to 6.2 | 66.9% to 70.2% (+3.4) | werewolves +12.3, ogres +10.2 | no |
+  | Ashlands | 1 x 2 | 2.5 to about 4.5 | 68.6% (+1.7) | skeletons +6.9, werewolves +6.3, demons -6.3 | yes, just |
+  | **Ashlands** | **1 x 1 to 2** | **2.5 to 4.0** | **68.5% (+1.6)** | werewolves +6.0, skeletons +5.7, demons -4.5 | **yes** |
+  | Highlands, as first built | 2 to 3 x 1 to 2 | 1.7 boulders to 5.3 | 60.9% to 65.4% (+4.6) | minotaurs +13.5, demons +10.2 | no |
+  | Highlands | 2 x 1 | about 3.5 | 61.6% (+0.8) | minotaurs +9.6, gorgons -6.9 | no |
+  | Highlands | 1 to 2 x 1 | 3.2 | 61.9% (+1.1) | minotaurs +8.4 | no (the minotaurs) |
+  | Highlands | 1 x 1 to 2 | 3.1 | 62.4% (+1.5) | minotaurs +8.1, gorgons -5.7 | on the line |
+  | **Highlands** | **1 x 1** | **1.7 to 2.7** | **60.7% (-0.1)** | minotaurs +4.5, gorgons -4.2 | **yes** |
+
+  The minotaurs are what boulders hurt: every setting with more than one boulder moves them by 8 or more.
+- **Both are left OFF.** The settings that meet the balance rule are a tile or two more of lava and one more boulder a board, and
+  in the shots at phone size I cannot pick either out (`docs/samples/land-identity/volcano-terrain.jpg`, `highlands-terrain.jpg`:
+  three boards each, 0.494.0 beside the lighter setting on). The ashlands already have a river of lava round them and the
+  highlands their boulders on the rim, which is where those lands' look comes from. So neither meets "still shows", and a rule of
+  the fight that cannot be seen is not worth having. `FLOODS` keeps the lighter numbers, with `on: false`, so either can be turned
+  on by one word if the owner would rather have it.
+- **The snows' ice** is bluer on the snows (a blue wash over the tile and a bright rim of light along its two far edges, in the
+  tile's painter; other lands' ice is as it was). Looks only: no rule, and no test of the fight, is touched.
+  `docs/samples/land-identity/snows-ice-bluer.jpg` (three boards, 0.494.0 beside now), `snows-ice-bluer-sizes.jpg` (360 and 412
+  wide, and mid-fight at 393). No page errors.
+- The first hour: unchanged (2.2 and 1.8 tries; 40 of 40 saves of both packs clear).
+
 ## Not built: needs art, or the owner's call
 
 - **Art the sheets do not have** (`docs/notes/land-identity-art-prompts.md`): cacti and palms, hedgerows, a fence, haystacks and a
   windmill for the meadows, cobwebs and candles, icicles, a torii of full size, deer, rats, falling leaves and petals as painted
   frames. Stand-ins are in where the sheets have something near (acacia and olive for the palms, tinted sparkles for leaves).
-- **More swamp water as terrain** (and more ice, lava, rock on their lands): this changes how fights play, so it is still to be
-  proposed separately, behind its own switch and side stream, with balance numbers. What is here is looks only.
 - **Heat shimmer** over the dunes: not built (it needs a filter over the board, which costs more than this layer may).
 
 ## Shots

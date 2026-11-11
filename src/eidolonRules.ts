@@ -5,6 +5,7 @@
 
 import { HORN_FULL } from './sim/warHorn';
 import type { EidolonElement } from './sim/eidolons';
+import { eidolonMs } from './ultStageRules';
 
 /** The beats of the call, ms from the tap (EIDOLON-CALL-2: the arrival from a rift became the pass across the screen, and the strike waits
  *  for the figure to have gone). The fight is held from the tap; the sim's strike is let through on the first attack beat, so the foes fall
@@ -37,10 +38,29 @@ export interface MomentTimes {
   BARS: boolean;
 }
 
-/** In full: about four seconds. */
+/** In full, as first built: about four seconds. ULT-EPIC 2: this is the shape every Eidolon's own full call is stretched from (`fullOf`);
+ *  none plays it as it stands. */
 export const FULL: MomentTimes = { HORN: 0, PASS: 380, EXIT: 1720, SPRITE: 1720, BUILD: 2250, STRIKE: 2720, BEAT: 240, AFTER: 3450, RESUME: 3950, HIT_STOP: 250, SHAKE: 1, DIM: 0.8, BARS: true };
 /** The short one (the setting off, after the first call): a quicker pass, no horn shot or letterbox; about two seconds. */
 export const SHORT: MomentTimes = { HORN: 0, PASS: 0, EXIT: 850, SPRITE: 850, BUILD: 1150, STRIKE: 1450, BEAT: 220, AFTER: 1800, RESUME: 2200, HIT_STOP: 160, SHAKE: 0.75, DIM: 0.65, BARS: false };
+/** ULT-EPIC 2 (the owner: "4-10 seconds for the casting"): an Eidolon's own full call, the shape above stretched evenly to its weight
+ *  (`eidolonMs`: the hound about 5 s, the Dragon King just under 10), so a heavier one crosses more slowly, gathers longer, strikes in
+ *  slower, heavier beats and leaves a longer aftermath. The freeze on its first blow grows with it and is counted in its length. */
+const FULL_OF = new Map<string, MomentTimes>();
+export function fullOf(id: string): MomentTimes {
+  const had = FULL_OF.get(id);
+  if (had) return had;
+  const total = eidolonMs(id);
+  const stop = Math.round(Math.min(360, FULL.HIT_STOP * (0.8 + 0.2 * (total / FULL.RESUME))));
+  const k = (total - stop) / FULL.RESUME;
+  const at = (ms: number) => Math.round(ms * k);
+  const m: MomentTimes = { ...FULL, PASS: at(FULL.PASS), EXIT: at(FULL.EXIT), SPRITE: at(FULL.SPRITE), BUILD: at(FULL.BUILD), STRIKE: at(FULL.STRIKE), BEAT: Math.floor(FULL.BEAT * k), AFTER: at(FULL.AFTER), RESUME: total - stop, HIT_STOP: stop };
+  FULL_OF.set(id, m);
+  return m;
+}
+/** How long a call lasts in real time: its beats and the freeze on its first blow. */
+export const callMs = (m: MomentTimes): number => m.RESUME + m.HIT_STOP;
+
 /** When the build-up begins: with a sprite, as it attacks; without one, as soon as the painting has gone. */
 export const buildAt = (m: MomentTimes, sprite: boolean): number => (sprite ? m.BUILD : m.SPRITE);
 
@@ -97,8 +117,10 @@ export const reactionOf = (el: EidolonElement, calls: number): string => REACTIO
 /** A tap skips once this much has played (never on an Eidolon's first call). */
 export const SKIP_AFTER_MS = 600;
 
-/** Which cinematic plays: the first call of each Eidolon always in full; after that the setting says. */
-export const momentOf = (firstCall: boolean, fullSetting: boolean): MomentTimes => (firstCall || fullSetting ? FULL : SHORT);
+/** Which cinematic plays: the first call of each Eidolon always in full; after that the setting says, and with Auto on it is the short
+ *  one (ULT-EPIC 2, the owner: as an ultimate's show runs shorter on Auto). In full it is the Eidolon's own length (`fullOf`). */
+export const momentOf = (firstCall: boolean, fullSetting: boolean, id?: string, auto = false): MomentTimes =>
+  firstCall || (fullSetting && !auto) ? (id ? fullOf(id) : FULL) : SHORT;
 
 /** Whether a tap may skip now. */
 export const canSkip = (ms: number, firstCall: boolean): boolean => !firstCall && ms >= SKIP_AFTER_MS;
@@ -110,7 +132,7 @@ export const skipTarget = (m: MomentTimes, ms: number): number => Math.max(ms, m
 
 /** How many of the attack's beats play (the short one plays two), and their times. */
 export function beatTimes(m: MomentTimes, beats: number): number[] {
-  const n = m === SHORT ? Math.min(2, beats) : beats;
+  const n = m.BARS ? beats : Math.min(2, beats);
   return Array.from({ length: n }, (_, i) => m.STRIKE + i * m.BEAT);
 }
 

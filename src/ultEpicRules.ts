@@ -27,6 +27,9 @@ export const ULT_EPIC = {
   /** The dim after the blow lands, as a share of its full strength, and how long it takes to ease there. */
   LIFT: 0.3,
   LIFT_MS: 420,
+  /** ULT-EPIC 2: a staged moment's strike is longer, so its veil is kept deeper and lifts more slowly; the aftermath takes it out from there. */
+  STAGED_LIFT: 0.55,
+  STAGED_LIFT_MS: 700,
   /** The shake as the freeze lets go (the fight's trauma, 0 to 1). */
   SHAKE: 0.75,
   /** At most this many bursts (battery saver: fewer). */
@@ -168,9 +171,9 @@ export const ease = (k: number): number => {
 };
 
 /** The dim's strength `since` ms after the blow landed (null: not yet): full, then eased down to `LIFT`, never a step. */
-export function liftedDim(since: number | null): number {
+export function liftedDim(since: number | null, to: number = ULT_EPIC.LIFT, ms: number = ULT_EPIC.LIFT_MS): number {
   if (since === null) return 1;
-  return 1 - (1 - ULT_EPIC.LIFT) * ease(since / ULT_EPIC.LIFT_MS);
+  return 1 - (1 - to) * ease(since / ms);
 }
 
 /** The camera's zoom over the view it holds: leaning in through the opening (none with the screen kept still), back as the ultimate fires. */

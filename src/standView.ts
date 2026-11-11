@@ -342,6 +342,7 @@ export class StandView {
     // (EIDOLONS: the War Horn at the row's left end; the Last Stand is one long fight, so it is blown once a run)
     this.eid = new EidolonCall({
       meta: () => this.host.meta(),
+      auto: () => !!this.host.meta().ultAuto,
       save: () => saveMeta(this.host.meta()),
       fx: this.fx,
       anchor: (id) => {

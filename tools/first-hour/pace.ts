@@ -4,6 +4,8 @@
 // and prints the wave each try ended on and the tries to the first clear.
 //
 //   node tools/first-hour/pace.mjs [--saves 40] [--tries 12]
+// (FIELD_HAZARDS=0 and LAND_TERRAIN=0 play it without the battlefield's traps and the lands' thicker terrain)
+import '../living-fields/switch';
 import { FIXED_PACKS } from '../../src/sim/starter';
 import { levelOfKind } from '../../src/sim/levels';
 import { newSaveMeta, playArmy } from '../autoplay';

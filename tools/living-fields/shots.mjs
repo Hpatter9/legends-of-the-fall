@@ -50,7 +50,7 @@ for (const [w, h] of sizes) {
     if (only && !only.includes(land)) continue;
     // (`--one`: only each land's first shape)
     for (const { seed, layout } of args.includes('--one') ? list.slice(0, 1) : list) {
-      await page.evaluate(([area, seed, party, army, stage, noLife, hazards]) => {
+      await page.evaluate(([area, seed, party, army, stage, noLife, hazards, flood]) => {
         const g = window.__game;
         const r = JSON.parse(JSON.stringify(g.run));
         Object.assign(r, { ...(army ? { mode: { kind: 'army', army }, tier: 0, stage, area: undefined } : { mode: { kind: 'run' }, stage: 3, area }), seed, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
@@ -58,8 +58,10 @@ for (const [w, h] of sizes) {
         if (noLife) g.life.on = false;
         // (`--hazards`: the land's traps and hazards laid whatever the set's switch says; `--no-hazards`: none)
         if (hazards !== null) g.fieldHazards(hazards);
+        // (`--flood`: a land's own terrain laid thicker, whatever its switch says: the mire's pools)
+        g.landTerrain?.(flood);
         g.startRun(r);
-      }, [land, seed, PARTY, army, stage, args.includes('--no-life'), args.includes('--hazards') ? true : args.includes('--no-hazards') ? false : null]);
+      }, [land, seed, PARTY, army, stage, args.includes('--no-life'), args.includes('--hazards') ? true : args.includes('--no-hazards') ? false : null, args.includes('--flood')]);
       await page.waitForTimeout(500);
       await page.evaluate(() => window.__game.autoArrange(true));
       await page.waitForTimeout(400);
