@@ -12,6 +12,9 @@ import { TERRAIN_INFO } from '../src/sim/terrainInfo';
 import { weatherFor } from '../src/sim/weather';
 import { cloneBoard } from '../src/sim/chain';
 
+// (the set ships off until the owner agrees the list: these tests are about the set, so they turn it on)
+FIELD_HAZARDS.on = true;
+
 const flat = (extra: Partial<Tile> = {}): Tile => ({ h: 0, deco: 0, ...extra });
 function arena(): Battle {
   const b = startBattle(3);
