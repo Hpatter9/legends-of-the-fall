@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.503.0',
+    date: '2026-11-11',
+    title: 'Fuller ground, bigger ultimates',
+    notes: ['Burning, frozen and other elemental ground now fills each tile edge to edge, so patches join with no gaps.', 'Fifteen ultimates gain their own wind-up and aftermath and a strike half as large again. The rest follow in batches.'],
+  },
+  {
     version: '0.502.0',
     date: '2026-11-11',
     title: 'Askel\'s call, a little lighter',

@@ -122,6 +122,7 @@ def pack(items, art_dir, manifest_path):
                     layer=s.get('layer', 'over'), el=s['element'])
         if 'stages' in s:
             clip['cuts'] = [[round(st['at'][0] * (n - 1)), round(st['at'][1] * (n - 1))] for st in s['stages']]
+            clip['sc'] = [st['scene'] for st in s['stages']]
         g = soft_by.get(s['id'])
         if g:
             clip['g'] = dict(a=g['page'], x=g['x'], y=g['y'], w=g['w'], h=g['h'], cols=g['cols'], ax=round(W / 2 / GLOW_SHRINK, 2), ay=round(s['oy'] * H / GLOW_SHRINK, 2))
