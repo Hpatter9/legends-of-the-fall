@@ -59,7 +59,7 @@ test('every hero ultimate has its three stages, 4 to 6 s in all, a single blow t
   assert.ok(ultStages('samurai').echoes.length === 0 && ultStages('wizard').echoes.length >= 2);
 });
 
-test('a salvo in the air and a showcase are inside the strike, and the whole stays within 4 to 6 s whatever they take', () => {
+test('a salvo in the air and a showcase are inside the strike, and the whole stays within 4 to 6 s whatever they take (about 7 s for a showcase with a salvo)', () => {
   for (const h of Object.keys(SHOWCASES)) {
     for (let wait = 150; wait <= ULT_MOMENT.MAX_DELAY_MS; wait += 150) {
       const s = stagesFor(h, { wait });
@@ -75,16 +75,28 @@ test('a salvo in the air and a showcase are inside the strike, and the whole sta
       assert.ok(s.total >= ULT_LIMITS.MIN && s.total <= ULT_LIMITS.MAX, `${h} show ${show}: ${s.total}`);
       assert.ok(s.strike.ms >= show + ULT_EPIC.HIT_STOP_MS);
       assert.equal(s.show, show, 'a showcase alone plays at its own pace');
-      // (with a salvo to land after it, both are inside the strike; the showcase is quickened by a third at most to fit)
+      // (ULT-EPIC 3, the owner's call: with a salvo to land after it, both are inside the strike and the whole may run to about 7 s, so
+      // the wind-up and the aftermath keep some room and the showcase plays at its own pace)
       for (const wait of [450, 900, 1500]) {
         const d = stagesFor(h, { show, wait });
         whole(d, `${h} show ${show} wait ${wait}`);
-        assert.ok(d.total >= ULT_LIMITS.MIN && d.total <= ULT_LIMITS.MAX, `${h} show ${show} wait ${wait}: ${d.total}`);
+        assert.ok(d.total >= ULT_LIMITS.MIN && d.total <= ULT_LIMITS.SALVO_MAX, `${h} show ${show} wait ${wait}: ${d.total}`);
         assert.ok(d.strike.ms >= d.show! + wait + ULT_EPIC.HIT_STOP_MS);
-        if (show <= 3200) assert.ok(show / d.show! <= 1.34, `${h} show ${show} wait ${wait}: played ${d.show}`);
+        // (the longest showcase the game makes with a salvo is 3.8 s: none is quickened)
+        if (show + wait <= 5000) assert.equal(d.show, show, `${h} show ${show} wait ${wait}`);
+        // (the squeeze is gone for the multi-volley ones: a real wind-up and aftermath round a 2.5 to 3.2 s showcase)
+        if (show <= 3200) assert.ok(d.windup.ms >= 900 && d.aftermath.ms >= 700, `${h} show ${show} wait ${wait}: ${d.windup.ms}, ${d.aftermath.ms}`);
       }
     }
   }
+});
+
+test('a showcase use keeps its weight: a single blow is still the shortest, a storm or a summoning the longest', () => {
+  const len = (kind: string) => stagesFor(kind, { show: 2500 }).total;
+  assert.ok(len('samurai') < len('kunoichi') && len('kunoichi') < len('knight') && len('knight') < len('wizard') && len('wizard') <= len('beastmaster'));
+  assert.ok(len('samurai') <= 5000 && len('beastmaster') === ULT_LIMITS.MAX);
+  // (a long showcase takes what it needs)
+  assert.ok(stagesFor('samurai', { show: 3900 }).total > len('samurai') && stagesFor('samurai', { show: 3900 }).total <= ULT_LIMITS.MAX);
 });
 
 test('the queue plays a use for exactly its stages, whatever its shape, with the screen kept still too; the stages come in order', () => {
@@ -125,7 +137,7 @@ test('the queue plays a use for exactly its stages, whatever its shape, with the
         if (q.phase === 'settle' && u.land && (settleT += 16) >= u.land) q.land();
       });
       assert.ok(took >= stages.total - 16 && took <= stages.total + 16, `${what}: ${took} vs ${stages.total}`);
-      assert.ok(took >= ULT_LIMITS.MIN - 16 && took <= ULT_LIMITS.MAX + 16, `${what}: ${took}`);
+      assert.ok(took >= ULT_LIMITS.MIN - 16 && took <= (u.show && u.shape === 'delayed' ? ULT_LIMITS.SALVO_MAX : ULT_LIMITS.MAX) + 16, `${what}: ${took}`);
       assert.deepEqual(seen, ['windup', 'strike', 'aftermath'], what);
       assert.equal(q.strikes, 1, `${what}: one blow`);
       assert.equal(q.stageNow, null);
