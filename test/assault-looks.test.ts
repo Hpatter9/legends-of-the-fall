@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { holdMapOf, blueprintOf } from '../src/sim/assault/assault';
 import { standable } from '../src/sim/board';
-import { clutterOf, decalOf, DEEP, faceOf, fortLook, timberGateLook, timberGateFoot, contourTimber, fringesOf, MAT, materialsOf, placementsOf, THIN } from '../src/render/fieldLooks';
+import { clutterOf, decalOf, DEEP, faceOf, fortLook, timberGateLook, timberGateFoot, contourTimber, fringesOf, MAT, materialsOf, placementsOf, THIN, BRIDGE_RAILS } from '../src/render/fieldLooks';
 import { DECALS, EDGES, FACES, GROUND, SPRITES } from '../src/render/assaultOrcAtlas';
 
 const bp = blueprintOf('orcs')!;
@@ -179,23 +179,26 @@ test('timber gate feet meet the outer opening plane with the matching axis', () 
   }
 });
 
-test('the Moonlit Shrine\'s bridge takes its painted rails: lantern posts on its water edges, a lantern at each corner of its two ends', () => {
-  const ybp = blueprintOf('yokai')!;
-  const ymap = holdMapOf('yokai')!;
-  const yb = ymap.board;
-  const list = placementsOf(yb, ymap.zone, ybp, ymap.forts);
-  const posts = list.filter((p) => p.name === 'pier');
-  const ends = list.filter((p) => p.name === 'deckEnd');
-  assert.ok(posts.length >= 6, `${posts.length} posts`);
-  for (const p of posts) {
-    const t = yb.tiles[p.front];
-    assert.ok(t.ground === 'water' || t.ground === 'deep', 'a post stands at the water\'s edge');
-    // (half a tile out from a bridge tile)
-    assert.ok([[0.45, 0], [-0.45, 0], [0, 0.45], [0, -0.45]].some(([du, dv]) => yb.tiles[Math.round(p.v - dv) * yb.w + Math.round(p.u - du)]?.bridge), `post at ${p.u}, ${p.v}`);
+test('every painted hold\'s bridge takes its painted rails: posts on its water edges, a piece at each corner of its two ends', () => {
+  for (const army of BRIDGE_RAILS) {
+    const ybp = blueprintOf(army as Parameters<typeof blueprintOf>[0])!;
+    const ymap = holdMapOf(army as Parameters<typeof holdMapOf>[0])!;
+    const yb = ymap.board;
+    const list = placementsOf(yb, ymap.zone, ybp, ymap.forts);
+    const posts = list.filter((p) => p.name === 'pier');
+    const ends = list.filter((p) => p.name === 'deckEnd');
+    assert.ok(posts.length >= 2, `${army}: ${posts.length} posts`);
+    for (const p of posts) {
+      const t = yb.tiles[p.front];
+      assert.ok(t.ground === 'water' || t.ground === 'deep', `${army}: a post stands at the water's edge`);
+      // (half a tile out from a bridge tile)
+      assert.ok([[0.45, 0], [-0.45, 0], [0, 0.45], [0, -0.45]].some(([du, dv]) => yb.tiles[Math.round(p.v - dv) * yb.w + Math.round(p.u - du)]?.bridge), `${army}: post at ${p.u}, ${p.v}`);
+    }
+    // (two ends, two corners each)
+    assert.equal(ends.length, 4, army);
+    for (const p of ends) assert.ok(!yb.tiles[p.front].bridge && yb.tiles[p.front].ground !== 'water' && yb.tiles[p.front].ground !== 'deep', army);
   }
-  // (two ends, two corners each)
-  assert.equal(ends.length, 4);
-  for (const p of ends) assert.ok(!yb.tiles[p.front].bridge && yb.tiles[p.front].ground !== 'water' && yb.tiles[p.front].ground !== 'deep');
   // (Bloodtusk Hold's bridge keeps its plain planks)
+  assert.ok(!BRIDGE_RAILS.has('orcs'));
   assert.ok(!placementsOf(b, map.zone, bp, map.forts).some((p) => p.name === 'pier' || p.name === 'deckEnd'));
 });
