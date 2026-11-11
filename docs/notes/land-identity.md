@@ -253,13 +253,50 @@ shoot, gain. The skeletons' fall under flooding alone (-7.5) is cancelled by the
 - **Not measured:** whole runs, the daily and the armies' own tables with both on (the armies' table was measured for the traps
   alone in LIVING-FIELDS: 22.31% then 22.30%); fights above stage 5 or above the Normal tier, where the traps lie thicker (level 3).
 
+## The other three lands (the owner said yes; each shipped only if its measure allowed)
+
+The owner's rule, through the director: a land's own terrain ships ON only if its numbers are within noise overall and no band
+moves by more than about 8 points; otherwise it stays off and the numbers are reported. `FLOODS` now has four lands, each with its
+own `on`, laid by the same rule as the mire's pools (`kind`: water, ice, lava or rock).
+
+- **The boards** (`node tools/land-identity/flip.mjs --boards --lands swamp,snow,volcano,highlands`, 500 seeds a land; every tile
+  of every board can still be walked to in all four):
+
+  | Land | Laid | As `makeBoard` lays it | Laid thicker | Most on a board |
+  | --- | --- | --- | --- | --- |
+  | Mire | shallow water | 6.2% of the open tiles (5.0 a board) | 13.7% (11.0) | 30% |
+  | Snows | ice | 3.0% (2.5) | 12.1% (10.1) | 23% |
+  | Ashlands | lava (middle ground only) | 3.1% (2.5) | 7.7% (6.2) | 17% |
+  | Highlands | boulders (middle ground only, kept only if the board can still be walked) | 2.0% (1.7) | 6.3% (5.3) | 11% |
+
+- **The fights** (`node tools/land-identity/flip.mjs --lands snow,volcano,highlands --games 3000 --only terrain --base hazards
+  --force`: 3,000 fights a land, the traps on in both passes, so the change is the terrain's alone on top of the game as it now
+  is; 0.9 points an error for a land, 2.7 for a band on a land). Heroes' wins:
+
+  | Land | Without | With | Change | The bands that moved most | Shipped |
+  | --- | --- | --- | --- | --- | --- |
+  | Snows (ice) | 57.9% | 58.4% | +0.5 | orcs +3.9, demons -3.6, skeletons +2.7 | **ON** |
+  | Ashlands (lava) | 66.9% | 70.2% | +3.4 | werewolves +12.3, ogres +10.2, skeletons +4.8, demons -4.2 | **off** |
+  | Highlands (boulders) | 60.9% | 65.4% | +4.6 | minotaurs +13.5, demons +10.2, werewolves +7.8, ogres +6.3, gorgons -5.4 | **off** |
+
+  The snows' ice is inside the noise overall and no band moves by more than 3.9, so it is on. The ashlands' lava and the
+  highlands' boulders each move the whole by several errors and two bands by more than 10 points, both in the heroes' favour (the
+  foes that run in burn in the lava, or queue up round the boulders), so both are off, as the rule says. They are built and
+  tested (a test turns each on to hold its rule) and can be turned on by one word each in `FLOODS`.
+- **If the owner wants them anyway**, the lever is lighter settings (fewer or smaller patches), measured again: not tried, because
+  the instruction was to report and leave them off.
+- The first hour with the snows' ice on: unchanged (2.2 and 1.8 tries, 40 of 40 saves of both packs cleared).
+- A test caught one slip while this was built: a boulder that could not stay left a stray field on its tile; a rejected tile is
+  now put back exactly as it was found.
+- Shots: `docs/samples/land-identity/snows-ice.jpg` (three of the snows' boards, before and now), `snows-ice-sizes.jpg` (360 and
+  412 wide, deployed and mid-fight). On the snows the ice is pale on pale: a few more glinting tiles a board, easy to miss at
+  phone size. No page errors.
+
 ## Not built: needs art, or the owner's call
 
 - **Art the sheets do not have** (`docs/notes/land-identity-art-prompts.md`): cacti and palms, hedgerows, a fence, haystacks and a
   windmill for the meadows, cobwebs and candles, icicles, a torii of full size, deer, rats, falling leaves and petals as painted
   frames. Stand-ins are in where the sheets have something near (acacia and olive for the palms, tinted sparkles for leaves).
-- **More ice, lava and rock as terrain** on their lands: not built; the mire's flooding (above) is the pattern, and each would need
-  its own balance measure.
 - **Heat shimmer** over the dunes: not built (it needs a filter over the board, which costs more than this layer may).
 
 ## Shots
