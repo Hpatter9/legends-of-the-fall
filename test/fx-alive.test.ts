@@ -2,9 +2,14 @@
 // its own beat, thinned under a fighter, still and fainter with reduced motion.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { ALIVE, breath, edgeQuarter, stripFrame, tileLook, tilePhase } from '../src/render/fxAlive';
+import { existsSync, readFileSync } from 'node:fs';
+import { ALIVE, breath, stripFrame, tileLook, tilePhase } from '../src/render/fxAlive';
+import { ZONE_BFX, bfxClip, groundBfx } from '../src/render/blenderFxRules';
+import { BFX_DENSITY } from '../src/render/blenderFxData';
 import { OVER_FIGHTER_STATUS_ALPHA } from '../src/render/overFighter';
+
+/** The game's elements (`fxRules.ts`): each has its ground loop. */
+const ELEMENTS = ['fire', 'ice', 'lightning', 'light', 'dark', 'forest', 'poison', 'earth', 'wind', 'blood'];
 
 test('the edge carries the area: the rim is bright and the fill faint', () => {
   for (let t = 0; t < ALIVE.BREATH_MS; t += 100) {
@@ -52,28 +57,45 @@ test('with reduced motion a patch holds still and fainter; its strength scales e
   assert.deepEqual(tileLook(300, 0.2, false, false, 0), { fill: 0, rim: 0, strip: 0 });
 });
 
-test('the marks in front of a fighter are drawn at half their strength; the living-ground atlas is ready for its sheet', () => {
+// BLENDER-FX (docs/notes/blender-fx.md): the owner's call is that every battle effect is a Blender-rendered pixel sheet, the ground loops too.
+// These three tests held the painted sheets (`src/art/fx/alive/`: the framed edge cut into quarters, the borderless fill); they now hold the
+// rendered loops that took their place.
+test('the marks in front of a fighter are drawn at half their strength; every element has its rendered ground loop', () => {
   assert.equal(OVER_FIGHTER_STATUS_ALPHA, 0.5);
-  const m = JSON.parse(readFileSync('src/art/fx/alive/atlas.json', 'utf8')) as { cell: number[]; rows: Record<string, number[]> };
-  assert.deepEqual(m.cell, [128, 64], 'a 2:1 tile, as the prompt asks');
-  for (const [el, row] of Object.entries(m.rows)) assert.ok(row.length === 2 && row[1] > 1, el);
+  for (const el of ELEMENTS) {
+    const key = groundBfx(el);
+    assert.ok(key, `${el} has no ground loop`);
+    const c = bfxClip(key)!;
+    assert.ok(c.loop && c.n >= 8, `${el}: a loop of ${c.n} frames`);
+    // (one tile's worth: no wider than a tile and a little, its tile's middle inside its frames)
+    assert.ok(c.w <= BFX_DENSITY * 1.2, `${el}: ${c.w} px wide`);
+    assert.ok(c.ax > 0 && c.ax < c.w && c.ay > 0 && c.ay <= c.h + 2, `${el}: anchor ${c.ax}, ${c.ay}`);
+  }
+  // (the lights keep their glow on the ground too)
+  assert.ok(bfxClip(groundBfx('light')!)!.g && bfxClip(groundBfx('lightning')!)!.g);
+  assert.ok(!bfxClip(groundBfx('fire')!)!.g && !bfxClip(groundBfx('poison')!)!.g);
 });
 
-test('a painted loop shows only the quarters on the patch outer edges: each side of the diamond lies in its own quarter of the frame', () => {
-  // (the corners from the top going round to the right: up-right, down-right, down-left, up-left)
-  assert.deepEqual(edgeQuarter([0, 1]), [1, 0]);
-  assert.deepEqual(edgeQuarter([1, 2]), [1, 1]);
-  assert.deepEqual(edgeQuarter([2, 3]), [0, 1]);
-  assert.deepEqual(edgeQuarter([3, 0]), [0, 0]);
-  const m = JSON.parse(readFileSync('src/art/fx/alive/atlas.json', 'utf8')) as { rows: Record<string, number[]> };
-  assert.deepEqual(Object.keys(m.rows).sort(), ['dark', 'earth', 'fire', 'forest', 'ice', 'light', 'poison', 'wind']);
+test('the painted ground sheets are gone: nothing of them is left in the game, and no element falls back to an older look', () => {
+  assert.ok(!existsSync('src/art/fx/alive'), 'the painted atlases');
+  assert.ok(!existsSync('src/render/aliveArt.ts'));
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.doesNotMatch(fx, /aliveFill|aliveQuarters|ALIVE_CELL|edgeQuarter/);
+  assert.match(fx, /const key = el && !settings\(\)\.saver \? groundBfx\(el\) : undefined;/, 'the battery saver leaves the loops out');
+  // (no two elements' loops are the same thing in another colour: each has its own things standing in it)
+  const recipe = readFileSync('tools/blender-fx/effects.py', 'utf8');
+  const things = [...recipe.matchAll(/(\w+)=\('\w+', '(\w+)'\)/g)].map((m) => m[2]);
+  assert.equal(things.length, ELEMENTS.length);
+  assert.equal(new Set(things).size, ELEMENTS.length);
 });
 
-test('the borderless fill is cut beside the edge: all eight elements, the same 2:1 tile', () => {
-  const m = JSON.parse(readFileSync('src/art/fx/alive/fill.json', 'utf8')) as { cell: number[]; rows: Record<string, number[]> };
-  assert.deepEqual(m.cell, [128, 64]);
-  assert.deepEqual(Object.keys(m.rows).sort(), ['dark', 'earth', 'fire', 'forest', 'ice', 'light', 'poison', 'wind']);
-  for (const row of Object.values(m.rows)) assert.equal(row[1], 8);
-  // (it lies on every tile, so under a fighter it thins with the strip)
-  assert.ok(ALIVE.PAINTED_FILL * tileLook(0, 0, true, false).strip < 0.3);
+test('the rendered loop lies on every tile, a little over the strip\'s strength, and thins under a fighter', () => {
+  const open = ALIVE.RENDERED * tileLook(400, 0, false, false).strip;
+  const under = ALIVE.RENDERED * tileLook(400, 0, true, false).strip;
+  assert.ok(open > 0.45 && open <= 1, `open ground ${open}`);
+  assert.ok(under < 0.4, `under a fighter ${under}`);
+  assert.ok(ALIVE.RENDERED_GLOW < 0.5, 'a patch\'s glows overlap, so each tile keeps a share');
+  // (burning ground is its own, taller loop)
+  const zone = bfxClip(ZONE_BFX)!;
+  assert.ok(zone.loop && zone.h > bfxClip(groundBfx('fire')!)!.h);
 });

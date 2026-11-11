@@ -16,13 +16,17 @@ ORDER = ['heal', 'meteor', 'haste', 'shield', 'smite', 'chain', 'poison', 'frost
          'venom', 'mirage', 'drain', 'bonewall', 'raisedead']
 
 
+GROUND = ['ground-fire', 'ground-ice', 'ground-lightning', 'ground-light', 'ground-dark', 'ground-forest', 'ground-poison', 'ground-earth', 'ground-wind',
+          'ground-blood', 'ground-zone']
+
+
 def main(src, out, size, cols=5):
     w, h = (int(v) for v in size.split('x'))
     # (the middle of the board's part of the screen, where the camera put the spell's tile)
     top, bottom = round(h * 0.35), round(h * 0.35) + 250
     crop = ((w - 300) // 2, top, (w + 300) // 2, bottom)
     cw, ch = 300, bottom - top
-    strips = sorted(f for f in os.listdir(src) if re.fullmatch(rf'\w+-{size}-\d+\.png', f))
+    strips = sorted(f for f in os.listdir(src) if re.fullmatch(rf'[\w-]+-{size}-\d+\.png', f))
     cells = []
     if strips:
         n = 1 + max(int(f.rsplit('-', 1)[1][:-4]) for f in strips)
@@ -36,7 +40,7 @@ def main(src, out, size, cols=5):
             cells.append((sid, row))
         cols = int(cols) if len(sys.argv) > 4 else 2
     else:
-        for sid in ORDER:
+        for sid in ORDER + GROUND:
             f = os.path.join(src, f'{sid}-{size}.png')
             if os.path.exists(f):
                 cells.append((sid, Image.open(f).convert('RGB').crop(crop)))

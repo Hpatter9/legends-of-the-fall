@@ -1,5 +1,9 @@
 # FX-ALIVE: the effects over heroes live, and let them show
 
+> **Superseded in part by BLENDER-FX** (`docs/notes/blender-fx.md`): the painted ground sheets (`src/art/fx/alive/`) and the pack's rune strip
+> are no longer drawn. Each tile of a patch carries the element's Blender-rendered loop instead. The living patch's rules below (the faint
+> fill, the rim, each tile's own beat, thinning under a fighter, reduced motion, the battery saver) all still hold.
+
 Branch `claude/fx-alive` (from main 0.460.0). The owner: "Effects covering heroes are not animated and block them too much visually.
 Animate the effects or give me the prompt for ChatGPT to animate them." Renderer only: the sim is unchanged, and `fxPlace`'s tiles are
 exactly as they were (`test/fx-place.test.ts` passes untouched). The version and `UPDATES` are untouched.

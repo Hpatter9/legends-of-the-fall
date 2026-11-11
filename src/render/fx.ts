@@ -5,8 +5,7 @@
 import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { GroundPaint, GroundSet, patchRims, patchTile, reachOfWidth } from './groundMarks';
 import { AREA_REACH, areaSkill, areaTiles, auraTiles, spellTiles, tilesWithin } from './fxPlace';
-import { ALIVE, edgeQuarter, stripFrame, tileLook, tilePhase } from './fxAlive';
-import { ALIVE_CELL, aliveFill, aliveQuarters, loadAliveArt } from './aliveArt';
+import { ALIVE, stripFrame, tileLook, tilePhase } from './fxAlive';
 import { TERRAIN_URLS } from './terrainArt';
 import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
@@ -77,7 +76,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TIN
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx } from './blenderFxArt';
-import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, bfxAlpha, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ZONE_BFX, bfxAlpha, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
 import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinematicArt';
@@ -121,7 +120,7 @@ export async function loadFx(): Promise<void> {
   await loadVfxArt();
   await loadPackArt();
   magic.pinkHeart = { frames: VFX.pinkHeart };
-  await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt(), loadAliveArt()]);
+  await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt()]);
   // (RPG-SPELLS: the painted spell effects load by URL behind the game; until they have, the placeholders show)
   void loadSpellArt();
   // (BLENDER-FX: the Blender-rendered effect sheets, behind the game too; until they have loaded the older looks play)
@@ -2433,52 +2432,27 @@ export class Fx {
   }
 
   /** FX-PLACE, FX-ALIVE: a living patch on `tiles` (`fxAlive.ts`), each piece on its own tile's top and ground (so it sits on raised and sunken
-   *  tiles alike, under whoever stands in it): a faint fill, a bright rim round the patch, and the element's painted loop along the patch's
-   *  outer edges (FX-ALIVE-ART), or the pack's rune strip on each tile for an element the sheet lacks (neither on the battery saver), each tile breathing and turning on its own beat, its fill and strip thinned under a fighter. The
-   *  caller sets its `strength` (0 to 1) as it lasts and destroys it when done. */
+   *  tiles alike, under whoever stands in it): a faint fill, a bright rim round the patch, and the element's rendered ground loop standing on
+   *  each tile (BLENDER-FX: `ground-<element>`; not on the battery saver), each tile breathing and turning its frames on its own beat, its fill
+   *  and its loop thinned under a fighter. The caller sets its `strength` (0 to 1) as it lasts and destroys it when done. */
   private alivePatch(b: Battle, tiles: readonly { u: number; v: number }[], colour: number, el?: Element): AlivePatch {
     const set = new GroundSet();
     const withH = tiles.map((t) => ({ u: t.u, v: t.v, h: tileAt(b.board, t.u, t.v)?.h ?? 0 }));
     const rimOf = patchRims(withH);
-    // (the painted living-ground loop when the sheet holds the element (`aliveArt.ts`): only the quarters of each frame on the patch's outer
-    // edges, so the patch is ringed by a moving painted edge and its inside stays clear; else the pack's rune for the element on each tile)
-    // REPAINTS-2: and the borderless painted fill on every tile under it, each tile a few frames from its neighbours, thinned under a fighter
-    const quarters = el && !settings().saver ? aliveQuarters(el) : [];
-    const fills = el && !settings().saver ? aliveFill(el) : [];
-    const rune = el && !settings().saver && !quarters.length && !fills.length ? PACK[packKey(el, 'rune')] : undefined;
-    const scale = TW / ALIVE_CELL[0];
+    const key = el && !settings().saver ? groundBfx(el) : undefined;
+    const frames = key ? bfxFrames(key) : [];
+    const glows = key ? bfxGlows(key) : [];
     const pieces = withH.map((t) => {
       const [x, y] = this.tilePos(b, t.u, t.v);
       const layer = this.groundOf(t.u, t.v);
       const rims = rimOf(t.u, t.v);
       const fill = set.add(patchTile(new Graphics(), x, y, [], { colour, fill: 1, edge: 0, inset: 0 }), layer);
-      const sps: { sp: Sprite; q: number }[] = [];
-      if (fills.length) {
-        const sp = set.add(new Sprite(fills[0]), layer);
-        sp.scale.set(scale);
-        sp.position.set(x - TW / 2, y - (ALIVE_CELL[1] * scale) / 2);
-        sps.push({ sp, q: -2 });
-      }
       const rim = set.add(patchTile(new Graphics(), x, y, rims, { colour, fill: 0, edge: 1, width: 2.5, inset: 0 }), layer);
-      if (quarters.length) {
-        for (const edge of rims) {
-          const [qx, qy] = edgeQuarter(edge);
-          const q = qy * 2 + qx;
-          const sp = set.add(new Sprite(quarters[0][q]), layer);
-          sp.scale.set(scale);
-          sp.position.set(x - TW / 2 + (qx * TW) / 2, y - (ALIVE_CELL[1] * scale) / 2 + (qy * ALIVE_CELL[1] * scale) / 2);
-          sps.push({ sp, q });
-        }
-      } else if (rune?.length) {
-        // (the pack's 32 px rune lies on most of the tile, squashed to the ground's slope, brightening rather than covering)
-        const sp = set.add(new Sprite(rune[0]), layer);
-        sp.anchor.set(0.5);
-        sp.scale.set((TW * 0.8) / 32, (TW * 0.4) / 32);
-        sp.blendMode = 'add';
-        sp.position.set(x, y);
-        sps.push({ sp, q: -1 });
-      }
-      return { u: t.u, v: t.v, phase: tilePhase(t.u, t.v), fill, rim, sps };
+      // (the element's ground loop stands on the tile over its fill and rim, under whoever stands there; a light's keeps its soft glow)
+      const made = key && frames.length ? this.bfxSprites(key) : null;
+      if (made?.glow) set.add(made.glow, layer).position.set(x, y);
+      if (made) set.add(made.sp, layer).position.set(x, y);
+      return { u: t.u, v: t.v, phase: tilePhase(t.u, t.v), fill, rim, loop: made?.sp ?? null, glow: made?.glow ?? null };
     });
     const patch: AlivePatch = {
       strength: 1,
@@ -2499,21 +2473,15 @@ export class Fx {
           const occupied = b.units.some((x) => x.alive && x.u === p.u && x.v === p.v);
           const look = tileLook(t, p.phase, occupied, calm, patch.strength);
           p.fill.alpha = look.fill;
-          // (where the moving painted edge rings the patch, the drawn rim steps back to a thin line under it; held still with reduced motion,
-          // the paint alone is too faint to carry the warning, so the rim keeps its own)
-          p.rim.alpha = !calm && quarters.length ? look.rim * ALIVE.PAINTED_RIM : look.rim;
-          for (const { sp, q } of p.sps) {
-            if (q === -2) {
-              sp.alpha = look.strip * ALIVE.PAINTED_FILL;
-              sp.texture = fills[stripFrame(t, p.phase, fills.length, calm)];
-            } else if (q === -1 && rune) {
-              sp.alpha = look.strip;
-              sp.texture = rune[stripFrame(t, p.phase, rune.length, calm)];
-            } else if (q >= 0) {
-              // (the painted edge is the patch's own rim: it breathes with the rim, and stays under a fighter as the rim does)
-              sp.alpha = Math.min(1, look.rim * ALIVE.PAINTED);
-              sp.texture = quarters[stripFrame(t, p.phase, quarters.length, calm)][q];
-            }
+          p.rim.alpha = look.rim;
+          if (!p.loop) continue;
+          // (each tile a few frames on from its neighbours; held on its first frame with reduced motion, thinned under a fighter)
+          const f = stripFrame(t, p.phase, frames.length, calm);
+          p.loop.texture = frames[f];
+          p.loop.alpha = Math.min(1, look.strip * ALIVE.RENDERED);
+          if (p.glow) {
+            p.glow.texture = glows[f] ?? glows[0];
+            p.glow.alpha = Math.min(1, look.strip * ALIVE.RENDERED) * BFX_GLOW_ALPHA * ALIVE.RENDERED_GLOW;
           }
         }
         return true;
@@ -2979,6 +2947,22 @@ export class Fx {
 
   /** Burning ground: flames over a 3x3 of tiles for `ms`. */
   private zone(b: Battle, u: number, v: number, ms: number): void {
+    // (BLENDER-FX: the rendered tile of tall flames on each tile's own ground, each a few frames from its neighbours, lower under a fighter so
+    // the one standing in the fire still shows; it carries its own sparks)
+    if (bfxFrames(ZONE_BFX).length) {
+      const until = b.t + ms;
+      const n = bfxClip(ZONE_BFX)?.n ?? 1;
+      for (let du = -1; du <= 1; du++)
+        for (let dv = -1; dv <= 1; dv++) {
+          const tu = u + du;
+          const tv = v + dv;
+          if (!tileAt(b.board, tu, tv)) continue;
+          const [x, y] = this.tilePos(b, tu, tv);
+          const dim = () => (b.units.some((f) => f.alive && f.u === tu && f.v === tv) ? ALIVE.OCCUPIED + 0.15 : 1);
+          this.bfxStand(ZONE_BFX, this.groundOf(tu, tv), x, y, () => b.t < until, { phase: standPhase(tu, tv, n), dim, rise: true });
+        }
+      return;
+    }
     // (each flame stands on its own tile's ground: under whoever stands in the fire, behind whoever stands in front of it)
     const view = new GroundSet();
     const flames: Sprite[] = [];

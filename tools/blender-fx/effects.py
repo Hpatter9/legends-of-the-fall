@@ -133,5 +133,15 @@ spell('bonewall', 'stand', 'ribs', 'bone', 1.0, 1.9, pad=0.5, **LOOP)
 spell('raisedead', 'cast', 'souls', 'shadow', 1.9, 3.4, r=1.2, h=2.2, **ONCE)
 spell('raisedead', 'hit', 'pillar', 'shadow', 0.9, 2.2, r=0.42, h=1.8, sparks=8, seed=12, **HIT)
 
+# ---- the ground loops (docs/notes/fx-alive.md): one tile of ground taken by an element, laid on every tile of a
+# marked patch (an area's warning, a spell's tiles, an aura), each tile a few frames on from its neighbours. Keyed by
+# the game's own element names. ----
+GROUND = dict(fire=('fire', 'flames'), ice=('ice', 'crystals'), lightning=('lightning', 'sparks'), light=('holy', 'motes'), dark=('shadow', 'wisps'),
+              forest=('forest', 'sprouts'), poison=('poison', 'bubbles'), earth=('earth', 'stones'), wind=('wind', 'swirls'), blood=('blood', 'drops'))
+for i, (el, (pal, things)) in enumerate(GROUND.items()):
+    fx(f'ground-{el}', 'tile', pal, 1.3, 1.5, 0.74, frames=10, ms=950, loop=True, seed=20 + i, things=things, n=5, lift=1.0, fill=0.3)
+# Burning ground (the fire a skill leaves on a 3x3): the same tile with tall flames.
+fx('zone-fire', 'tile', 'fire', 1.3, 2.0, 0.8, frames=10, ms=800, loop=True, seed=31, things='flames', n=6, lift=1.4, fill=0.7)
+
 # What the game ships: everything but the library's own previews.
 SHIPPED = [k for k in EFFECTS if not k.startswith('lib-')]

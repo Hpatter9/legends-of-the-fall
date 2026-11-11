@@ -137,3 +137,12 @@ export const BFX_WALL_SPELL: Partial<Record<string, SpellId>> = { fire: 'firewal
  *  the slant its sheet was rendered at; and the longest its flight takes (a later star of a shower waits, then falls as fast as the first). */
 export const BFX_FLY_FROM: readonly [number, number] = [300, -333];
 export const BFX_FLY_MS = 900;
+
+/* ------------------------------------------------------------------ the ground loops */
+
+/** An element's ground loop (`ground-<element>`): one tile of ground taken by the element, laid on every tile of a marked patch
+ *  (`alivePatch`: an area's warning, a spell's tiles, an aura, a Mythic's diamond). Undefined for an element the pipeline has not made. */
+export const groundBfx = (el: string): string | undefined => (BFX_CLIPS[`ground-${el}`] ? `ground-${el}` : undefined);
+
+/** Burning ground's loop (the fire a skill leaves on a 3x3): a tile of tall flames. */
+export const ZONE_BFX = 'zone-fire';

@@ -13,7 +13,7 @@ Renderer and tools only: the sim is untouched, `fxPlace`'s tiles are as they wer
 | --- | --- |
 | The pipeline (`tools/blender-fx/`) | Done: 52 scenes, 13 palettes, render, pixelate, pack, manifest, one command |
 | The king's 35 spells | Done: each its own scene, element and size (the table below) |
-| The ground loops (`fx-alive.md`: fire, frost, poison and the rest) | Next |
+| The ground loops (`fx-alive.md`: all ten elements, and burning ground) | Done: a rendered tile loop an element; the painted sheets are removed |
 | The 45 ultimates and the Eidolons | Waiting for ULT-EPIC (their length and stages are changing); the staged effects are ready for them |
 | Skills, hit sparks, projectiles; statuses, auras, hazards, boss entrances | After the ultimates |
 
@@ -44,7 +44,7 @@ each batch replaces them, which will take far more out of the download than the 
 - **Reproducible**: the scripts are the source; the rendered frames live in `out/` and are made again by the command. Seeds are
   fixed, so a second run on the same machine gives the same files.
 
-**Bytes added**: 59 effects, 756 frames, 5 pixel atlases and 1 glow atlas: 417 KB in all (417,070 bytes) (`src/art/fx/blender/`), fetched by
+**Bytes added** (the pipeline and the king's spells): 59 effects, 756 frames, 5 pixel atlases and 1 glow atlas: 417 KB in all (417,070 bytes) (`src/art/fx/blender/`), fetched by
 URL behind the game and kept by the service worker for offline play (`build.mjs`: `BLENDER_FX_FILES` in `FILES`). The manifest
 adds about 14 KB to game.js.
 
@@ -122,6 +122,43 @@ A spell whose sheets have loaded plays them in place of every older layer of its
 and impact, the pack's strips, the frost's spikes, the lance's pillars, the cloud's puffs). Its tiles' marks, its words ("Haste",
 "Frozen"), its shake and its sounds are as they were.
 
+## The ground loops
+
+A marked patch of ground (`alivePatch`: an area's warning, a spell's tiles, an aura, a Mythic's diamond) was a faint fill, a
+bright rim and the owner's painted sheets (`src/art/fx/alive/`: a framed edge cut into quarters, and a borderless fill, eight
+elements). The painted sheets are gone. Each tile of a patch now carries the element's rendered loop (`ground-<element>`, the
+`tile` scene): mostly open ground with a moving scatter of the element's colour and its own things standing in it.
+
+| Element | What stands in its tile |
+| --- | --- |
+| fire | tongues of flame and sparks |
+| ice | crystals that glint |
+| lightning | crackles that jump across the ground (glow) |
+| light | motes rising (glow) |
+| dark | wisps that waver |
+| forest | sprouts swaying, motes |
+| poison | bubbles swelling and bursting |
+| earth | stones, and dust glinting |
+| wind | swirls turning |
+| blood | drops leaping |
+
+- All ten of the game's elements have one (the painted sheets had eight; lightning and blood fell back to the pack's rune).
+- A tile's loop stands on the tile's own ground over its fill and rim, under whoever stands there. It breathes with the tile
+  (`tileLook`'s strip, at `ALIVE.RENDERED` of it), thins under a fighter (`ALIVE.OCCUPIED`), runs a few frames on from its
+  neighbours (`stripFrame`), holds its first frame with reduced motion, and is left out on the battery saver, as the paint was.
+  A light's tile keeps a share of its glow (`ALIVE.RENDERED_GLOW`: a patch's glows overlap).
+- The drawn fill and rim are as they were, and so are the tiles (`fxPlace`).
+- **Burning ground** (`zone`: the fire a skill leaves on a 3x3) is `zone-fire`, the same tile with tall flames, on each tile's
+  own ground (so it sorts with the fighters), lower under a fighter, carrying its own sparks. The painted flame, its sway and
+  its ember particles are no longer drawn once the sheets have loaded.
+- **Bytes**: the eleven loops add 25 KB to the atlases (442,064 bytes in all now: 70 effects, 866 frames). Removing the painted sheets takes 518 KB of PNG out
+  of game.js (they were bundled as data URLs, about 690 KB of the script).
+
+`test/fx-alive.test.ts`: three tests held the painted sheets (the atlas's cell and rows, the quarters, the fill). They now hold
+the rendered loops instead: every element has one, a tile's worth, the lights with their glow; the painted files and their
+loader are gone; the loop's strength on open ground and under a fighter. This is the owner's decision changing a requirement,
+not a test loosened. `tools/fx-alive/cut.py` (which cut the painted sheet) is kept for the record; its output is no longer used.
+
 ## Tests
 
 `test/blender-fx.test.ts`: the manifest holds together (every frame inside its atlas, no blocks overlapping, anchors and
@@ -139,6 +176,8 @@ in the game as the look that plays until the rendered sheets have loaded, so the
 - `docs/samples/blender-fx/spells-360x780.jpg`, `spells-412x915.jpg`: every spell in a fight at the other two phone sizes, one moment each.
 - `docs/samples/blender-fx/spells-frames.png`: the spells' own frames (a contact sheet from the pipeline).
 - `docs/samples/blender-fx/library.png`: one of each of the 52 scenes.
+- `docs/samples/blender-fx/ground-frames.png`: the ground loops' frames.
+- `docs/samples/blender-fx/ground-in-fight-393x852.jpg` (and `-360x780`, `-412x915`): patches of each element and burning ground in a real fight.
 - `docs/samples/blender-fx/reduced-motion-393x852.jpg`: seven spells with reduced motion asked for (each holds its one readable frame).
 
 `node tools/blender-fx/shots.mjs` takes them (after `npm run web`), and `tools/blender-fx/shots_sheet.py` joins them.

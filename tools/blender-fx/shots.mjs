@@ -2,6 +2,7 @@
 // the fight's own fighters), the fight held still at the moment that shows it, and the board photographed. After `npm run web`:
 //   node tools/blender-fx/shots.mjs <out dir>            every size      SIZES=393x852 ... one      ONLY=heal,frost ... some spells
 //   STRIP=6 ... six pictures of each spell as it plays      REDUCED=1 ... with reduced motion asked for
+//   GROUND=1 ... the ground loops (a patch of each element round a hero, and burning ground) instead of the spells
 // `tools/blender-fx/shots_sheet.py` joins a size's pictures into one sheet.
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
@@ -116,6 +117,49 @@ async function runThenHold(page, ms) {
   await page.waitForFunction((until) => window.__game.b.t >= until || window.__game.b.phase !== 'fight', until, { timeout: 8000, polling: 'raf' }).catch(() => {});
   await page.evaluate(() => { window.__game.sceneHold = 1; });
   await page.waitForTimeout(250);
+}
+
+// GROUND=1: the ground loops instead of the spells. A 3x3 patch of each element is laid round a hero in the thick of the fight (the
+// renderer's own `alivePatch`, as an area's warning or a spell's tiles lay it), then burning ground (`zone`), and each is photographed.
+const ELEMENTS = [['fire', 0xff5a2a], ['ice', 0x8ae8ff], ['lightning', 0xbfe6ff], ['light', 0xfff2a0], ['dark', 0xb06aff], ['forest', 0x7dff8a], ['poison', 0x8aff5a], ['earth', 0xb88a5a], ['wind', 0xdff8ff], ['blood', 0xf65563]];
+if (process.env.GROUND) {
+  for (const [w, h] of SIZES) {
+    const size = `${w}x${h}`;
+    const { ctx, page } = await open(w, h);
+    await fight(page, 2);
+    await page.waitForTimeout(600);
+    for (const [el, colour] of [...ELEMENTS, ['zone', 0]]) {
+      await page.evaluate(() => { window.__game.sceneHold = 0; });
+      await page.evaluate(([el, colour, zoom]) => {
+        const g = window.__game;
+        const b = g.b;
+        const live = b.units.filter((x) => x.alive && x.id !== 0);
+        const near = (x) => live.filter((y) => Math.abs(y.u - x.u) <= 1 && Math.abs(y.v - x.v) <= 1).length;
+        const at = live.filter((x) => x.side === 'hero').sort((x, y) => near(y) - near(x) || x.id - y.id)[0];
+        window.__patch?.destroy();
+        window.__patch = undefined;
+        if (el === 'zone') g.fx.zone(b, at.u, Math.min(b.board.d - 2, at.v + 1), 3000);
+        else {
+          const tiles = [];
+          // (a row nearer than the hero, so half the patch is open ground and half is under the fighters)
+          for (let du = -1; du <= 1; du++) for (let dv = 0; dv <= 2; dv++) if (at.u + du >= 0 && at.u + du < b.board.w && at.v + dv < b.board.d) tiles.push({ u: at.u + du, v: at.v + dv });
+          window.__patch = g.fx.alivePatch(b, tiles, colour, el);
+        }
+        const s = g.sprites.get(at.id);
+        g.manualCam = true;
+        g.tx = g.cx = s.x;
+        g.ty = g.cy = s.y;
+        g.zoom = g.tzoom = zoom;
+      }, [el, colour, Number(process.env.ZOOM ?? 1.7)]);
+      await runThenHold(page, 260);
+      await page.screenshot({ path: `${OUT}/ground-${el}-${size}${REDUCED ? '-still' : ''}.png` });
+      console.log(size, 'ground', el);
+    }
+    await ctx.close();
+  }
+  await browser.close();
+  console.log(errors ? `${errors} page errors` : 'no page errors');
+  process.exit(errors ? 1 : 0);
 }
 
 for (const [w, h] of SIZES) {
