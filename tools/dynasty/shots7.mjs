@@ -96,6 +96,9 @@ for (const [w, h] of sizes) {
         await scrollTo(page, '.ptMourning');
         await shoot(page, `${OUT}/party-mourning-card-${w}.png`);
       }
+      // (HEROES-FILTER: the orders are the Plan of the War Council's pack now)
+      await page.evaluate(() => { document.getElementById('ptPackTab')?.click(); [...document.querySelectorAll('.ptPackTabs button')].find((b) => /Plan/.test(b.textContent))?.click(); });
+      await page.waitForTimeout(500);
       await page.click('#ptOrders');
       await page.waitForTimeout(500);
       await page.evaluate(() => [...document.querySelectorAll('#marchOrders .omSectionHead')].find((e) => /Legend Oath/.test(e.textContent))?.scrollIntoView({ block: 'start' }));

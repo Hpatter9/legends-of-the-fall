@@ -273,7 +273,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       sheet.append(el('p', 'hsLine', hasAbility(it.rarity) ? `${stats.abilities[0]?.name}: ${describeAbility(base.ability, stats.abilities[0]?.s ?? 1)}` : `Epic and up: ${base.ability.name}`));
       sheet.append(el('p', 'hsLine', `Durability ${maxDurability(it)}: it loses a point for each wave it is worn in.`));
     } else if (w.type === 'tome') sheet.append(el('p', 'hsLine', `${TOMES[w.size].xp.toLocaleString('en-GB')} XP for one hero, read from its page.`));
-    else if (w.type === 'remedy') sheet.append(el('p', 'hsLine', `A remedy: ${REMEDIES[w.remedy].text}, used between waves from the run's pack. You own ${m.satchel?.[w.remedy] ?? 0}; a run takes up to five (one Elixir), chosen on the party screen.`));
+    else if (w.type === 'remedy') sheet.append(el('p', 'hsLine', `A remedy: ${REMEDIES[w.remedy].text}, used between waves from the run's pack. You own ${m.satchel?.[w.remedy] ?? 0}; a run takes up to five (one Elixir), chosen in the War Council’s pack (the Pack tab on its right edge).`));
     const why = trader ? whyNotBuyFrom(m, trader, w as TradeWare, todayKey()) : whyNotBuy(m, w as Ware, todayKey());
     if (why) menuNote(sheet, why).classList.add('hsWhy');
     const { primary: buy } = menuFoot(menu, {

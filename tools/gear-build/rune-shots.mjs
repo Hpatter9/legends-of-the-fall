@@ -74,8 +74,9 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     g.party.open('edit', () => {});
   });
   await wait(page, 700);
-  await page.evaluate(() => document.getElementById('ptSatchel')?.scrollIntoView({ block: 'center' }));
-  await wait(page, 200);
+  // (HEROES-FILTER: the satchel is in the War Council's pack now)
+  await page.evaluate(() => document.getElementById('ptPackTab')?.click());
+  await wait(page, 600);
   await page.screenshot({ path: `docs/samples/gear-build-satchel-${w}x${h}.png` });
   const wide = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   console.log(`${w}x${h}`, 'pull bar:', label, '· side scroll', wide);

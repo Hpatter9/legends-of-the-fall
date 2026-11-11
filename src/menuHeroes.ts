@@ -1,7 +1,10 @@
 // The hero detail sheet (opened from a tap on a hero in the tavern): portrait, rank stars, level, XP bar, role, stats and
 // skills. Reads the meta only.
 
-import { glyphWord } from './paintedButton';
+import { glyphWord, plateButton, setBadge } from './paintedButton';
+import { SORT_INFO, cleanView, filterCount, rosterRows, viewActive, viewLine, viewRows, type RosterRow, type RosterView } from './heroFilterRules';
+import { openRosterFilter, openRosterSort } from './heroFilterView';
+import { setSetting, settings } from './settings';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { keyOf, KITS, type Skill } from './sim/abilities';
 import { levelLine as skillLevelLine, levelShare, useOf } from './sim/skillLevels';
@@ -581,15 +584,40 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   search.autocomplete = 'off';
   label.append(search);
   box.append(label);
-  const searchable: { element: HTMLElement; text: string }[] = [];
-  const remember = (element: HTMLElement, kind: string, named = true) => {
-    searchable.push({ element, text: named ? `${heroName(kind)} ${UNITS[kind].name} ${CLASS_NAMES[CLASS_OF[kind]]} ${CARD_CLASSES[CLASS_OF[kind]].name}`.toLowerCase() : '' });
+  // (HEROES-FILTER: the painted Sort and Filter buttons, each opening its sheet; what is chosen is kept with the settings, and the
+  // rules are in heroFilterRules.ts)
+  let view: RosterView = cleanView(settings().roster);
+  const rows = rosterRows(meta, (kind) => CLASS_NAMES[CLASS_OF[kind]]);
+  const keep = (v: RosterView): void => {
+    view = cleanView(v);
+    setSetting('roster', viewActive(view) ? view : undefined);
+    render();
   };
-  const result = el('p', 'rosterResult');
+  const tools = el('div', 'rosTools');
+  const sortBtn = plateButton({ label: 'Sort', icon: 'g-down', cls: 'rosSortBtn', onClick: () => openRosterSort(view, keep) });
+  const filterBtn = plateButton({ label: 'Filter', icon: 'auto-pick', cls: 'rosFilterBtn', onClick: () => openRosterFilter(rows, view, keep, (v) => shownOf(v).length) });
+  tools.append(sortBtn, filterBtn);
+  box.append(tools);
+  // (the list's head: what is chosen, and one tap to clear it)
+  const active = el('div', 'rosActive');
+  const activeLine = el('span');
+  const clearAll = (): void => {
+    search.value = '';
+    keep({});
+  };
+  const clear = plateButton({ label: 'Clear', icon: 'g-cross', cls: 'rosClear', onClick: clearAll });
+  active.append(activeLine, clear);
+  box.append(active);
+  // (the count is in the head's line; this says it to a reader as it changes)
+  const result = el('p', 'rosterResult srOnly');
   result.setAttribute('role', 'status');
   box.append(result);
-  const grid = el('div', 'rosGrid');
-  for (const kind of have) {
+  // (the roster shows the heroes owned, the secret ones and those whose shards are begun; a hero not begun is only counted, as before)
+  const begun = toCollect(meta).filter((k) => haveOf(meta, k) > 0).sort((a, b) => haveOf(meta, b) - haveOf(meta, a));
+  const secrets = secretsOf(meta);
+  const listed = new Set([...have, ...secrets, ...begun]);
+  const shownOf = (v: RosterView): RosterRow[] => viewRows(rows.filter((r) => listed.has(r.kind)), v, search.value);
+  const card = (kind: string): HTMLElement => {
     const card = el('button', 'hcard');
     card.type = 'button';
     card.dataset.kind = kind;
@@ -627,10 +655,8 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     // (TALENT-ARROWS: talent points to spend wear the chevron too)
     else if (talentPointsReady(meta, kind)) card.append(el('small', 'rankTag', 'Talents'), upMark('upCorner'));
     card.addEventListener('click', () => pick(kind));
-    remember(card, kind);
-    grid.append(card);
-  }
-  box.append(grid);
+    return card;
+  };
   const row = (kind: string): HTMLElement => {
     const lock = lockInfo(meta, kind)!;
     const r = el('button', 'rosRow');
@@ -654,28 +680,54 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     }
     r.append(pic, text);
     r.addEventListener('click', () => pick(kind));
-    remember(r, kind, lock.named);
     return r;
   };
-  const section = (title: string, kinds: string[], note = ''): void => {
-    if (!kinds.length && !note) return;
-    box.append(el('h3', 'rosHead', title));
-    for (const k of kinds) box.append(row(k));
-    if (note) box.append(el('p', 'hint', note));
+  // (each hero's card or row is built once and kept: a new sort or filter only puts them back in their new order)
+  const built = new Map<string, HTMLElement>();
+  const piece = (kind: string): HTMLElement => {
+    let e = built.get(kind);
+    if (!e) built.set(kind, (e = meta.unlocked.includes(kind) ? card(kind) : row(kind)));
+    return e;
   };
-  section('Secret heroes', secretsOf(meta));
-  const begun = toCollect(meta).filter((k) => haveOf(meta, k) > 0).sort((a, b) => haveOf(meta, b) - haveOf(meta, a));
+  const grid = el('div', 'rosGrid');
+  // (nothing left: a friendly line and the way back)
+  const empty = el('div', 'rosEmpty');
+  empty.append(el('p', '', 'No hero answers that call. Loosen the search or the filters, or clear them.'), plateButton({ label: 'Clear', icon: 'g-cross', cls: 'rosClear', onClick: clearAll }));
+  const locked = el('div', 'rosLocked');
+  box.append(grid, empty, locked);
   const rest = toCollect(meta).length - begun.length;
-  section('Gathering shards', begun, rest ? `${rest} more to find: summoning stones give their shards.` : '');
-  search.addEventListener('input', () => {
-    const query = search.value.trim().toLowerCase();
-    let shown = 0;
-    for (const row of searchable) {
-      row.element.hidden = !!query && !row.text.includes(query);
-      if (!row.element.hidden) shown++;
-    }
-    result.textContent = query ? `${shown} ${shown === 1 ? 'hero' : 'heroes'} found` : '';
-  });
+  const render = (): void => {
+    const shown = shownOf(view);
+    const kinds = shown.map((r) => r.kind);
+    grid.replaceChildren(...kinds.filter((k) => meta.unlocked.includes(k)).map(piece));
+    grid.hidden = !grid.childElementCount;
+    locked.replaceChildren();
+    const section = (title: string, list: string[], note = ''): void => {
+      if (!list.length && !note) return;
+      locked.append(el('h3', 'rosHead', title), ...list.map(piece));
+      if (note) locked.append(el('p', 'hint', note));
+    };
+    // (SECRET-HEROES: the secret heroes keep their own order whatever the sort; the shard gatherers keep theirs, most shards first, until a
+    // sort is chosen)
+    section('Secret heroes', secrets.filter((k) => kinds.includes(k)));
+    const plain = !filterCount(view) && !search.value.trim();
+    const sorted = view.sort ? kinds : begun;
+    section('Gathering shards', sorted.filter((k) => begun.includes(k) && kinds.includes(k)), plain && rest ? `${rest} more to find: summoning stones give their shards.` : '');
+    empty.hidden = !!shown.length;
+    const on = viewActive(view, search.value);
+    // (the empty list has its own Clear, so the head's is left out there)
+    active.hidden = !on || !shown.length;
+    activeLine.textContent = `${viewLine(view) || 'Searching by name'} · ${shown.length} found`;
+    const n = filterCount(view);
+    sortBtn.classList.toggle('on', !!view.sort);
+    filterBtn.classList.toggle('on', n > 0);
+    setBadge(filterBtn, n ? { kind: 'count', n } : null);
+    sortBtn.setAttribute('aria-label', view.sort ? `Sort: by ${SORT_INFO[view.sort].word}` : 'Sort');
+    filterBtn.setAttribute('aria-label', n ? `Filter: ${n} on` : 'Filter');
+    result.textContent = on ? `${shown.length} ${shown.length === 1 ? 'hero' : 'heroes'} found` : '';
+  };
+  search.addEventListener('input', render);
+  render();
   const done = el('button', 'primary', 'Visit tavern');
   done.addEventListener('click', close);
   box.append(done);

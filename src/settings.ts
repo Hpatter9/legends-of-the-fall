@@ -15,6 +15,7 @@ import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
 import { DEFAULT_EVERY, EVERY_CHOICES } from './ultShowRules';
 import { CUT_MODES, type CutMode } from './tauntCutRules';
 import { SLIDER_STEP, curvedVolume } from './render/audioRules';
+import { cleanView, viewActive, type RosterView } from './heroFilterRules';
 
 const KEY = 'legends.settings';
 
@@ -59,6 +60,8 @@ export interface Settings {
   /** The Nemesis War's taunt cut-ins (`tauntCutRules.ts`): full, short (the name plate only) or off. A nemesis's first meeting plays in full
    *  unless they are off. */
   nemesisCut: CutMode;
+  /** HEROES-FILTER: the roster's sort and filters (`heroFilterRules.ts`); missing is the list as it always was. */
+  roster?: RosterView;
 }
 
 export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, volCurve: true, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, ultShort: false, ultEvery: DEFAULT_EVERY, eidolonFull: true, duchessHat: 'none', nemesisCut: 'full' };
@@ -100,6 +103,7 @@ export function parseSettings(raw: string | null): Settings {
     eidolonFull: flag(saved.eidolonFull, DEFAULTS.eidolonFull),
     duchessHat: validHat(saved.duchessHat),
     nemesisCut: CUT_MODES.includes(saved.nemesisCut as CutMode) ? (saved.nemesisCut as CutMode) : DEFAULTS.nemesisCut,
+    ...(viewActive(cleanView(saved.roster)) ? { roster: cleanView(saved.roster) } : {}),
   };
 }
 

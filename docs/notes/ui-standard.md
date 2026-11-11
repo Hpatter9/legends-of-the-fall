@@ -9,7 +9,8 @@ with its own card, rim and buttons is not to be added again. `test/ui-standard.t
 - **The veil** (`.omVeil`): a light dim over the page under the menu, with no blur, so the page still reads through it (MENU-POLISH,
   `docs/notes/menu-polish.md`). `kind: 'card'` (the default) centres the card; `kind: 'sheet'` (`.omSheet`) rises from the foot of the
   screen, up to nine tenths of it; `kind: 'drawer'` (`.omDrawer`) slides up from the foot, stops at two thirds of the screen and dims only
-  the lower part, for a sheet over a page that should stay in sight (a ware at Hester's Stall). Text in the body is `--om-text` (14.5 px)
+  the lower part, for a sheet over a page that should stay in sight (a ware at Hester's Stall); `kind: 'side'` (`.omSide`) slides in from
+  the right edge and stands the height of the screen (the War Council's pack, `docs/notes/heroes-filter.md`). Text in the body is `--om-text` (14.5 px)
   and `--om-small` (13 px).
 - **The card** (`.om`): the double brass rim (`--ornate-border-double`), slate and parchment (`ui/page.png`), `--ornate-shadow`, and a brass
   stud in each top corner.
