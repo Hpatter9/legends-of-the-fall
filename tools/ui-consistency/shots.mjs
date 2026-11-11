@@ -128,8 +128,9 @@ const SCENES = {
   'armies': async (p) => { await home(p); await ev(p, () => window.__game.home.openArmies()); await wait(p, 900); },
   'party': async (p) => { await home(p); await ev(p, () => window.__game.home.hooks.onArmy('orcs', 0)); await wait(p, 900); },
   'march': async (p) => { await home(p); await ev(p, () => window.__game.home.hooks.onArmy('orcs', 0)); await wait(p, 900); await ev(p, () => document.getElementById('ptGo')?.click()); await wait(p, 700); },
-  'party-orders': async (p) => { await SCENES.party(p); await ev(p, () => document.getElementById('ptOrders')?.scrollIntoView({ block: 'center' })); await wait(p, 300); },
-  'march-orders': async (p) => { await SCENES.party(p); await ev(p, () => document.getElementById('ptOrders')?.click()); await wait(p, 700); },
+  'party-orders': async (p) => { await SCENES.party(p); await ev(p, () => { document.getElementById('ptPackTab')?.click(); [...document.querySelectorAll('.ptPackTabs button')].find((b) => /Plan/.test(b.textContent))?.click(); }); await wait(p, 500); },
+  // (HEROES-FILTER: the orders are the Plan of the War Council's pack now: its drawer is opened first)
+  'march-orders': async (p) => { await SCENES['party-orders'](p); await ev(p, () => document.getElementById('ptOrders')?.click()); await wait(p, 700); },
   'march-orders-foot': async (p) => { await SCENES['march-orders'](p); await scrollIn(p, '.omBody'); },
   'march-orders-scouted': async (p) => { await SCENES['march-orders'](p); await clickText(p, '.omChoice', 'Scouted'); await wait(p, 400); await ev(p, () => document.querySelector('.omWell:not([hidden])')?.scrollIntoView({ block: 'center' })); await wait(p, 300); },
   'march-orders-set': async (p) => { await SCENES['march-orders'](p); await clickText(p, '.omChoice', 'Cursed'); await clickText(p, '.omPrimary', 'Set orders'); await wait(p, 500); await ev(p, () => document.getElementById('ptOrders')?.scrollIntoView({ block: 'center' })); await wait(p, 300); },
