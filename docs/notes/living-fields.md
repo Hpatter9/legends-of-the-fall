@@ -14,8 +14,8 @@ The work is in four steps, each pushed on its own: **1** the audit (this section
 **How it was made.** `node tools/living-fields/plan.mjs` counts what `makeBoard` lays on each land over 200 seeds (the numbers below);
 `node tools/living-fields/shots.mjs out/web docs/samples/living-fields before` takes each land's board at 393 x 852 on its three
 commonest shapes (a clear day; the camera stood back over the whole board; a party of five deployed). The shots are
-`docs/samples/living-fields/before-<land>-<layout>.png`, 51 of them, with no page errors. `tools/living-fields/sheet.py` lays a land's
-three side by side for looking at closely.
+`docs/samples/living-fields/before-<land>-<layout>.png`. The audit looked at all 51 (three shapes a land, no page errors); the folder keeps
+each land's commonest shape, seventeen in all. `tools/living-fields/sheet.py` lays a land's three side by side for looking at closely.
 
 **How a floor is drawn today** (`boardView.ts` `paintColumn`, `areaArt.ts`). Each land has five pictures: two tops (`top1`, `top2`),
 a "high" top, one side strip and its boulders. A tile's top is one of the two tops, picked by `(deco + u + v) % 2`, which is a random
@@ -164,8 +164,8 @@ shown and are already in the service worker's list, so they are there offline.
 **For the owner to look at:** the floors are painted textures now, graded to each land's own colours (see "Step 2, redone" below), so
 the boards look more painted and less blocky. The tile grid is now faint on flat ground; if placing heroes feels harder to read, the faint line's strength is one number (`0.1` in `boardView.ts`).
 
-**Shots:** `docs/samples/living-fields/floor-<land>-<layout>.png` (the same 51 boards as `before-*`), and `-360` and `-412` for the mire,
-the ruins and the oasis. No page errors at any size.
+**Shots:** the floors as they are now are in `colour-before-after-1.jpg` to `-3.jpg` (see "Step 2, redone"). The first cut's own shots
+were taken at all three sizes with no page errors and are no longer kept.
 
 ## Step 2, redone: the colour (the director's review)
 
@@ -188,8 +188,7 @@ land the sheet already fitted.
 - **On their backdrops.** `docs/samples/living-fields/colour-before-after-1.jpg` to `-3.jpg`: all seventeen lands, the old floor beside
   the new, each on its own backdrop (`tools/living-fields/pairs.py`).
 - The dunes and the oasis take the sheet's sandstone wall for their faces (the banked red earth read as brick).
-- Step 3's tile marks and Step 4's life sit on the recoloured floors (the `floor-*`, `traps-*` and `life-*` shots were taken before the
-  redo and show the first cut's colours; the `colour-*` sheets are the floors as they are now).
+- Step 3's tile marks and Step 4's life sit on the recoloured floors; every shot in the folder was retaken on them.
 
 ## Step 3: hazards and traps
 
@@ -293,9 +292,9 @@ cell replaces its stand-in with no code change (`trapArt.ts`, `trapLooks.ts`); a
 importer cuts.
 
 When a trap springs: its word once over the tile ("Spikes!", "Snared!", "The ice breaks!"), a strip from the effects pack, a cue, and
-the tile is painted again without it. Shots: `docs/samples/living-fields/traps-<land>-<layout>.png` (one board a land, level 1, before
-the fight), `-360` and `-412` for the crypt and the mire, and `traps-fight-*` 14 s into a fight on four lands. In those fights spike
-traps, wards, braziers, thin ice, a bog, blades, vents and rocks all went off, with no page errors.
+the tile is painted again without it. Shots: `docs/samples/living-fields/life-<land>-<layout>.png` show each land's board with its traps
+(level 1) and its life, before the fight, and `fight-*` twelve seconds into a fight on four lands. In the fights played while building
+this, spike traps, wards, braziers, thin ice, a bog, blades, vents and rocks all went off, with no page errors.
 
 ### For the owner's call
 
@@ -353,6 +352,30 @@ GPU, so it shows the layer is not a CPU cost and says little about a phone's fil
 - **Footprints:** a step raises dust or a splash, and boot or wolf tracks lie about as decals, but a walker leaves no lasting trail.
 - **Torches:** braziers flicker and smoke (Step 3); the crypt has no wall torches of its own.
 
-**Shots:** `docs/samples/living-fields/life-<land>-<layout>.png` (one board a land), `-360` and `-412` for the meadows and the mire,
-`life-fight-*` twelve seconds into a fight on three lands. Reduced motion and battery saver were each played through a fight with no
+**Shots:** `docs/samples/living-fields/life-<land>-<layout>.png` (one board a land, with its traps and its life), `-360` and `-412` for the
+meadows and the mire, `fight-*` twelve seconds into a fight on four lands. Reduced motion and battery saver were each played through a fight with no
 page errors.
+
+## After the first release (0.487.0): four follow-ups
+
+The director released the floors and the life with the hazards' switch off by default, to wait for the owner's nod on the list.
+
+1. **The shots were retaken on the recoloured floors, and the folder thinned** from 21 MB to 6.5 MB: one `before-*` a land, the three
+   `colour-before-after-*` sheets, one `life-*` a land (traps and life together), two lands at the other two sizes, four `fight-*`.
+   `shots.mjs` takes `--hazards` and `--no-hazards` (through a preview hook, `__game.fieldHazards(on)`, which nothing in the game calls),
+   so the shots do not depend on the switch's default.
+2. **The mire.** It has more standing water now (five decals a board, two in three of them puddles). Its ground was **not** made
+   darker: by the measure in (4) a ground between the dark foes' brightness and a hero's hides one or the other, and the mire's old
+   dark teal sat in that gap. It is as dark as it can be while a hero still reads on it.
+3. **A snared fighter is marked**: a small rope-coloured icon over its head for as long as the snare holds it (`BoardLife.markRoots`;
+   the status art's weakening icon, tinted, until a root has its own). There is no ring at its feet: the status art's ground rings are
+   all too dark to tint to rope.
+4. **Fighters read on every ground, measured.** `test/living-fields-floor.test.ts` computes the contrast ratio of relative luminance
+   (as WCAG defines it) between each ground colour, under the board's own wash at two steps up, and (a) the mean colour of the darkest
+   foes' sheets (`#281f21`, measured over `src/art/units/`: the eight darkest average a brightness of 21 to 36 of 255) and (b) a
+   mid-toned hero's (`#505050`: the median sheet's brightness is 74). A dark foe must stand at 1.5 or more from the ground and a hero
+   at 1.25 or more. Eleven colours failed and were moved to the nearest shade that passes: the ashlands' ground, second ground, raised
+   ground, path and rock; the forge's ground, second ground and path; the shrine's ground and second ground; the caves' second ground;
+   the mire's path and shore. The ashlands' ground went darker (the hero is the lighter thing there) and its raised ground a hotter
+   red; the forge went warmer and a little lighter. **The measure is a proxy**: it uses one mean colour for a dark foe and one for a
+   hero, and takes no account of the sprites' outlines or their own colours.

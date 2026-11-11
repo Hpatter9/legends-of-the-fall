@@ -171,6 +171,7 @@ import { BoardView, loadBoardArt } from './render/boardView';
 import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
 import { BoardLife } from './render/boardLife';
+import { FIELD_HAZARDS } from './sim/fieldTraps';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { isScenario } from './sim/scenario';
@@ -1183,6 +1184,12 @@ class Game {
     }
   }
 
+  /** LIVING-FIELDS: lay the land's traps and hazards or not, whatever the set's switch says (`sim/fieldTraps.ts`; for previews and the
+   *  screenshots: `__game.fieldHazards(true)`, then start a run). Nothing in the game calls it. */
+  fieldHazards(on: boolean): void {
+    FIELD_HAZARDS.on = on;
+  }
+
   /** Show a weather on this board whatever the fight rolled (for previews and the screenshots: `__game.previewWeather('rain')`). */
   previewWeather(w: Weather): void {
     this.weather.set(w, this.b.board.area, this.boardView.litSpots());
@@ -1669,7 +1676,7 @@ class Game {
     this.boardView.step(dt);
     // (a Calamity zone's pillars and statues fade while a fighter stands behind them, `zoneLife.ts`)
     this.boardView.fadeOver([...this.sprites.values()], dt);
-    this.life.step(dt, b, [...this.sprites.values()]);
+    this.life.step(dt, b, this.sprites);
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();

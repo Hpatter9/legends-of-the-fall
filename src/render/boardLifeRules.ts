@@ -161,7 +161,7 @@ export const LAND_DECALS: Record<Area, { names: DecalName[]; n: number }> = {
   dungeon: { names: ['bones', 'cracks', 'bloodSmear'], n: 4 },
   plains: { names: ['bootTracks', 'ruts'], n: 2 },
   autumn: { names: ['timber', 'wolfTracks'], n: 3 },
-  swamp: { names: ['puddle', 'mudSplash'], n: 4 },
+  swamp: { names: ['puddle', 'puddle', 'mudSplash'], n: 5 },
   graveyard: { names: ['bones', 'cracks'], n: 4 },
   ruins: { names: ['rubble', 'cracks', 'timber'], n: 5 },
   temple: { names: ['rubble', 'cracks'], n: 3 },
