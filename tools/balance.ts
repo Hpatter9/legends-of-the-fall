@@ -28,6 +28,7 @@
 // runs (a greedy player on fresh saves, carrying the hero levels from run to run). Every fight is seeded, so the same
 // numbers come out again on the same code.
 
+import { sweepLevel } from './living-fields/switch';
 import { PROVISIONS } from '../src/sim/calJourney';
 import './joint/off';
 import './tactics/off';
@@ -75,7 +76,7 @@ import { standTable } from './stand-balance';
 import { ratingOf } from '../src/sim/stars';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { ALL_HEROES, HEROES, UNITS } from '../src/sim/units';
-import { deploySpots, fieldBoost, pickTeam, play } from './heroSweep';
+import { deploySpots, fieldBoost, pickTeam, play, SWEEP } from './heroSweep';
 import { CLASS_NAMES, CLASS_OF, type StarterClass } from '../src/sim/starter';
 import { heroStats, learn, tierNodes } from '../src/sim/talents';
 import { writeFileSync } from 'node:fs';
@@ -101,6 +102,8 @@ if (process.argv.includes('--eidolon')) {
   eidolonAt.wave = Number(w) | 0;
   if (id) eidolonAt.id = id;
 }
+// (LIVING-FIELDS: the hero table's fights are laid with the land's traps and hazards, as a run's first waves are)
+SWEEP.hazards = sweepLevel();
 const RUNS_ONLY = process.argv.includes('--runs-only');
 const ARMIES_ONLY = process.argv.includes('--armies-only');
 const HEROES_ONLY = process.argv.includes('--heroes-only');

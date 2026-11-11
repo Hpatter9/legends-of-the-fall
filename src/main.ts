@@ -170,6 +170,7 @@ import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
+import { BoardLife } from './render/boardLife';
 import { ChainView } from './render/chainView';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { isScenario } from './sim/scenario';
@@ -327,6 +328,8 @@ class Game {
     return { left: 8, bottom: panel.getBoundingClientRect().top + 4, face: 1 };
   });
   private fx = new Fx(this.sprites);
+  /** LIVING-FIELDS: the life of the battlefield (creatures, decals, falls, light, smoke and dust: `render/boardLife.ts`; looks only). */
+  private life = new BoardLife(this.boardView, this.fx);
   private ghost = new Sprite();
   private b!: Battle;
   private run!: Run;
@@ -821,10 +824,12 @@ class Game {
     this.setSpeed(this.speed);
     this.fx.clear();
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+    this.life.build(this.b.board, weatherOf(this.b.board));
     this.syncChain();
     setBackdrop(this.b.board.area, this.b.board.riftWorld);
     this.weather.resize(this.app.screen.width, this.app.screen.height);
-    this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), this.b.board.tiles.some((t) => t.scene));
+    // (LIVING-FIELDS: a clear day's own motes drift over every battlefield, not only an army's road: `ambientOf`)
+    this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), true);
     showTwistBanner(this.run.tower?.cur?.fight?.twist ?? this.run.buff?.twist);
     this.showTheme();
     this.syncSprites(true);
@@ -883,6 +888,7 @@ class Game {
       this.placeSquad();
       const section = chainOf(this.run)?.[this.run.stage - 1];
       this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+    this.life.build(this.b.board, weatherOf(this.b.board));
       this.syncChain();
       this.syncSprites(true);
       this.layout();
@@ -899,6 +905,7 @@ class Game {
     this.b = startDuel(this.run, o, heroId, this.boostFor(h));
     const section = chainOf(this.run)?.[this.run.stage - 1];
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+    this.life.build(this.b.board, weatherOf(this.b.board));
     this.boardView.ring(this.b.duel!);
     document.body.classList.add('inDuel');
     this.syncChain();
@@ -969,6 +976,7 @@ class Game {
     this.placeSquad();
     const section = chainOf(this.run)?.[this.run.stage - 1];
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+    this.life.build(this.b.board, weatherOf(this.b.board));
     this.syncChain();
     showTwistBanner(this.run.tower?.cur?.fight?.twist ?? this.run.buff?.twist);
     this.syncSprites(true);
@@ -1577,6 +1585,9 @@ class Game {
         this.fx.show(b, events);
         this.noteHeat(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
+        // (LIVING-FIELDS: a trap sprung or changed: its tile is painted again, and what stood on it goes if it is spent)
+        for (const e of events) if (e.kind === 'fieldTrap' && (e.gone || e.what === 'cracked')) this.boardView.trapChanged(e.u, e.v, !!e.gone);
+        this.life.events(b, events);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
@@ -1658,6 +1669,7 @@ class Game {
     this.boardView.step(dt);
     // (a Calamity zone's pillars and statues fade while a fighter stands behind them, `zoneLife.ts`)
     this.boardView.fadeOver([...this.sprites.values()], dt);
+    this.life.step(dt, b, [...this.sprites.values()]);
     this.weather.step(dt);
     // (the camera eases to where it is sent, unless a finger is holding the board)
     if (this.phaseBoss && (!b.pause || b.phase !== 'fight')) this.endPhase();

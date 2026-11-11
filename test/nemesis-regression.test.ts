@@ -12,6 +12,11 @@ import { fight, playOut } from '../src/sim/battle';
 import { armyRun, finish, noteFight, startStage } from '../src/sim/run';
 import { autoDeploy, autoRound } from '../src/sim/autoplay';
 import { maybeSpells, savedAt } from '../tools/autoplay';
+import { FIELD_HAZARDS } from '../src/sim/fieldTraps';
+
+// (LIVING-FIELDS: these fights were recorded before the land's traps and hazards, `fieldTraps.ts`; the set's one switch is off here, so every
+// fight is laid as it was and plays as recorded)
+FIELD_HAZARDS.on = false;
 
 const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 

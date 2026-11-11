@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.487.0',
+    date: '2026-11-11',
+    title: 'Living battlefields: floors and life',
+    notes: ['Every land\'s floor fits its theme: grounds in patches, its own water with banks, a worn path, cliff faces that match, and no grid on flat ground.', 'Birds scatter, fish swim, fireflies glow, fights leave scorch marks, and water pours off the board\'s edge.'],
+  },
+  {
     version: '0.486.0',
     date: '2026-11-11',
     title: 'More of the board in view',

@@ -54,6 +54,9 @@ export function deploySpots(b: Battle, rng: Rng): [number, number][] {
   return spots;
 }
 
+/** What the sweep's fights are laid with beyond their stage: the level of the land's traps and hazards (0, none, unless a tool sets it). */
+export const SWEEP = { hazards: 0 };
+
 export interface Played {
   won: boolean;
   /** Damage each hero kind dealt, and took, in this fight. */
@@ -66,7 +69,8 @@ export interface Played {
  * `grade` (1 = plain, 2 = merged once) and `level` (a hero's ultimate unlocks at `ULT_LEVEL`). The placing draws from a side stream of the seed, so it is the same every time.
  */
 export function play(seed: number, band: string, foes: Stage, team: string[], grade = 1, level = 1): Played {
-  const b = startBattle(seed, band, foes);
+  // (LIVING-FIELDS: a fight made outside a run has no traps or hazards; the balance tools set a level so the table sees them: `tools/living-fields/switch.ts`)
+  const b = startBattle(seed, band, SWEEP.hazards ? { ...foes, hazards: SWEEP.hazards } : foes);
   const spots = deploySpots(b, new Rng(mixSeed(seed, 0xba1a)));
   team.forEach((id, i) => place(b, id, spots[i][0], spots[i][1], undefined, sweepBoost(grade, level)));
   const out: Played = { won: false, dealt: new Map(), taken: new Map() };

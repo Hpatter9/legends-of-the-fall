@@ -11,7 +11,8 @@ import { mythicBlow, mythicDamage, mythicSpare, mythicWound, tickMythics, type M
 import type { Rift } from './rift';
 import { startRift, tickRift } from './riftBattle';
 import { tickHazards } from './hazards';
-import { BARREL_BLAST, boardOk, canStep, CLIMB_COST, COALS_BURN, COALS_STAND, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, tileAt, type Area, type At, type Board, type HazardKind, type Tile } from './board';
+import { layFieldHazards, rooted, tipBrazier, totemStep, trapScore, trapSecond, trapStep, trapsTick } from './fieldTraps';
+import { BARREL_BLAST, boardOk, canStep, CLIMB_COST, COALS_BURN, COALS_STAND, D, DEPLOY_ROWS, DROP_EXTRA, GROUND_COST, LAVA_BURN, LAVA_STAND, makeBoard, SHRINE_HEAL, sightClear, standable, tileAt, type Area, type At, type Board, type HazardKind, type Tile, type Trap as FieldTrap, TRAP_SLOW } from './board';
 import { cloneBoard } from './chain';
 import { weatherOf } from './weather';
 import type { LayoutId } from './layouts';
@@ -150,6 +151,10 @@ export interface Unit {
   shield?: { hp: number; until: number };
   /** Stunned, held or frozen until then (only the look reads it; `busyUntil` is what holds the fighter). */
   stunUntil?: number;
+  /** LIVING-FIELDS (`fieldTraps.ts`): a snare holds its feet until then (it takes no step; it still strikes what is in reach). */
+  rootUntil?: number;
+  /** LIVING-FIELDS: it stands on a totem: its attack is multiplied by this while it does. */
+  totem?: number;
   /** Fighters a skill has called up so far this fight (a Lich King raises only so many). */
   raised?: number;
   /** Slowed (Frost Nova) until then. */
@@ -406,6 +411,9 @@ export type BattleEvent =
   | { kind: 'mark'; to: number; by: number; what: string; ms: number }
   /** The land acts (`hazards.ts`): a strike is told (`tell`, `ms` before it comes) or goes off, a spring wells up, the current carries walkers (`tiles` where they now stand). `id` is the hazard's place in the board's list. */
   | { kind: 'hazard'; id: number; what: HazardKind; phase: 'tell' | 'go'; tiles: number[]; ms: number }
+  /** LIVING-FIELDS (`fieldTraps.ts`): a trap has sprung on fighter `to` (or thin ice cracked under it, or it walked into brambles or a bog);
+   *  `gone`: the trap is no longer there; a brazier's `tiles` are where its coals now lie. */
+  | { kind: 'fieldTrap'; what: FieldTrap | 'brazier'; u: number; v: number; to?: number; gone?: boolean; tiles?: number[] }
   /** A boss's signature attack (BOSS-BIG, `bossAttacks.ts`): its windup begins with its tiles marked for `ms` (`warn`), it lands (`land`; the
    *  hits follow), or it fizzles, its boss fallen first. `n` ties the three together. */
   | { kind: 'bossSig'; phase: 'warn' | 'land' | 'fizzle'; by: number; n: number; key: string; name: string; el: SigElement; tiles: number[]; ms: number; rage: boolean }
@@ -491,6 +499,9 @@ export interface Battle {
   walk?: number;
   /** The tiles (by index) where a powder barrel still stands. */
   barrels?: number[];
+  /** LIVING-FIELDS: the tiles where a brazier still stands, and whether a bog or a totem acts each second (`fieldTraps.ts`). */
+  braziers?: number[];
+  trapFx?: boolean;
   /** Whether the board has ground that acts each second (a shrine, lava). */
   groundFx?: boolean;
   /** How many tiles the weather takes off every shooter's range (fog; `weatherOf(board)`). */
@@ -560,7 +571,7 @@ function nemDef(u: Unit): UnitDef {
   return d;
 }
 /** A fighter's attack: its kind's, times its own multiplier. */
-export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u) * (u.bondAtk ?? 1) * (u.bondFury ?? 1);
+export const atkOf = (u: Unit): number => UNITS[u.def].atk * (u.power ?? 1) * rageOf(u) * (u.bondAtk ?? 1) * (u.bondFury ?? 1) * (u.totem ?? 1);
 /** A fighter's defence: its kind's, plus what its equipment adds. */
 export const defenceOf = (u: Unit): number => UNITS[u.def].def + (u.eq?.def ?? 0) + (u.kx?.tree ? kitDefence(u) : 0);
 /** Per-fighter stat multipliers: hp and attack, and how much bigger it is drawn. */
@@ -633,6 +644,9 @@ export interface Stage {
   duchess?: DuchessWish;
   /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
   layout?: LayoutId;
+  /** LIVING-FIELDS: how thickly the land's traps and hazards are laid (`fieldTraps.ts`: 0 none, to 3); none when unset, so a fight made
+   *  outside a run has none. `startStage` sets it by the wave and the tier. */
+  hazards?: number;
   /** A themed daily's featured trait: its woken bonus counts double (`dailyThemes.ts`). */
   featured?: string;
   /** QUESTS-3 (Q5): a quest battle's own rules (`questRules.ts`). */
@@ -685,6 +699,8 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   const board = stage.board ? cloneBoard(stage.board) : makeBoard(seed, stage.area, stage.size?.w, stage.size?.d, stage.layout);
   const tw = stage.twist;
   if (tw) twistBoard(board, tw, seed);
+  // (LIVING-FIELDS: the land's traps and hazards, by their own side stream of the seed: nothing else of the fight moves with them)
+  if (stage.hazards) layFieldHazards(board, seed, stage.hazards);
   const b: Battle = { seed, board, units: [], phase: 'deploy', t: 0, rng: mixSeed(seed, 0xf167), pending: [], skillRng: mixSeed(seed, 0x5c111), zones: [], nextId: 1, spells: freshSpells(tw?.mana ? (stage.mana ?? 1) * tw.mana : stage.mana) };
   if (tw) b.twist = tw;
   noteTerrain(b);
@@ -773,6 +789,12 @@ export function noteTerrain(b: Battle): void {
   b.board.tiles.forEach((t, i) => t.barrel && barrels.push(i));
   if (barrels.length) b.barrels = barrels;
   else delete b.barrels;
+  const braziers: number[] = [];
+  b.board.tiles.forEach((t, i) => t.brazier && braziers.push(i));
+  if (braziers.length) b.braziers = braziers;
+  else delete b.braziers;
+  if (trapsTick(b.board)) b.trapFx = true;
+  else delete b.trapFx;
   // (with the ailments on, standing still on ice chills, once a second: STATUS-FX)
   if (b.board.tiles.some((t) => t.ground === 'shrine' || t.ground === 'lava' || t.ground === 'coals' || (AILMENT_SWITCH.on && t.ground === 'ice'))) b.groundFx = true;
   else delete b.groundFx;
@@ -1080,6 +1102,7 @@ function stepOnce(b: Battle): BattleEvent[] {
   if (b.walls?.length || b.auras) tickToolkit(b, out);
   tickRift(b, out);
   if (b.groundFx && b.t % 1000 === 0) groundTick(b, out);
+  if (b.trapFx && b.t % 1000 === 0) trapSecond(b, out);
   if (b.board.hazards) tickHazards(b, out);
   if (b.tactic) tickTactic(b, out);
   // (the Assault's field: its own tick, and the cheap minds of its soldiers and rank and file)
@@ -1403,6 +1426,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     kitDeath(b, to, by, out);
   }
   // (a blow beside a powder barrel sets it off)
+  // (LIVING-FIELDS: and tips a brazier over)
+  if (b.braziers && src !== 'dot') for (const i of b.braziers.filter((i) => Math.max(Math.abs((i % b.board.w) - to.u), Math.abs(Math.floor(i / b.board.w) - to.v)) <= 1)) tipBrazier(b, i, out);
   if (b.barrels && src !== 'dot') for (const i of b.barrels.filter((i) => Math.max(Math.abs((i % b.board.w) - to.u), Math.abs(Math.floor(i / b.board.w) - to.v)) <= 1)) blast(b, i, out);
   return true;
 }
@@ -1457,6 +1482,8 @@ const perchValue = (def: UnitDef, h: number, hf: number): number => (def.shot ? 
  *  away that stands over where it is and still holds the target (a fighter never goes down, so it comes to rest). The tile's
  *  index, or -1 to stay and strike. */
 /** What the ground under a tile is worth to a fighter standing on it, in steps of walking (below zero is good): lava burns a walker, tall growth hides a shooter, a shrine mends a hurt fighter, ice may slide it off. */
+/** LIVING-FIELDS: the same for a trap or a strike's tile (`fieldTraps.ts`); nothing for a tile with neither. */
+const trapOf = (def: UnitDef, t: Tile): number => (t.trap || t.risk ? trapScore(!!def.flies, !!def.shot, t) : 0);
 function groundScore(def: UnitDef, wound: number, g: Tile['ground']): number {
   if (g === 'lava') return def.flies ? 0 : 3;
   if (g === 'coals') return def.flies ? 0 : 2;
@@ -1484,13 +1511,13 @@ function perchFor(b: Battle, me: Unit, def: UnitDef, target: Unit): number {
   const walk = walkFrom(board, me, def.jump, blocked, me.side);
   const ht = tileOf(b, target).h;
   const wound = 1 - me.hp / me.maxHp;
-  const now = perchValue(def, here, ht) + groundScore(def, wound, tileOf(b, me).ground);
+  const now = perchValue(def, here, ht) + groundScore(def, wound, tileOf(b, me).ground) + trapOf(def, tileOf(b, me));
   let goal = -1;
   let best = 0;
   for (let i = 0; i < walk.cost.length; i++) {
     const cost = walk.cost[i];
     if (cost === 0 || cost > PERCH_HOP || board.tiles[i].h <= here) continue;
-    const gain = perchValue(def, board.tiles[i].h, ht) + groundScore(def, wound, board.tiles[i].ground) - now - cost;
+    const gain = perchValue(def, board.tiles[i].h, ht) + groundScore(def, wound, board.tiles[i].ground) + trapOf(def, board.tiles[i]) - now - cost;
     if (gain <= best || !canStrike(board, def, { u: i % board.w, v: Math.floor(i / board.w) }, target)) continue;
     best = gain;
     goal = i;
@@ -1719,7 +1746,7 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     let best = Infinity;
     for (const i of spots) {
       if (walk.cost[i] > nearest + PERCH_DETOUR) continue;
-      let score = walk.cost[i] - perchValue(def, b.board.tiles[i].h, hf) + groundScore(def, wound, b.board.tiles[i].ground);
+      let score = walk.cost[i] - perchValue(def, b.board.tiles[i].h, hf) + groundScore(def, wound, b.board.tiles[i].ground) + trapOf(def, b.board.tiles[i]);
       for (const m of menace) if (apart({ u: i % b.board.w, v: Math.floor(i / b.board.w) }, m) <= 2) score += MENACE_COST;
       if (flank) score -= flankValue({ u: i % b.board.w, v: Math.floor(i / b.board.w) }, f);
       if (score < best) {
@@ -1797,10 +1824,15 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
     me.busyUntil = b.t + WAIT_MS;
     return;
   }
+  // (LIVING-FIELDS: a snare holds its feet: it waits where it is)
+  if (me.rootUntil && rooted(b, me)) {
+    me.busyUntil = b.t + WAIT_MS;
+    return;
+  }
   const from = tileOf(b, me);
   let to = tileOf(b, next);
   // (a sure-footed fighter climbs at no extra cost)
-  let cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h) * CLIMB_COST) + (to.ground ? GROUND_COST[to.ground] : 0);
+  let cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h) * CLIMB_COST) + (to.ground ? GROUND_COST[to.ground] : 0) + (to.trap ? TRAP_SLOW[to.trap] ?? 0 : 0);
   // (ice: a walker who steps onto it may slide one tile on, if that tile is free and no higher, and not lava; a hash of the moment says, so no stream moves)
   if (to.ground === 'ice' && !def.flies && !(b.stand && me.post) && !b.duel && (mixSeed(b.seed, 0x1ce, b.t, me.id) >>> 0) / 4294967296 < ICE_SLIDE) {
     const on = { u: next.u + next.u - me.u, v: next.v + next.v - me.v };
@@ -1832,6 +1864,9 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
   if (to.ground === 'lava' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * LAVA_BURN * (AILMENT_SWITCH.on ? 0.5 : 1))), false, false, out, 'dot');
   else if (to.ground === 'coals' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * COALS_BURN)), false, false, out, 'dot');
   if (me.alive) groundStep(b, me);
+  // (LIVING-FIELDS: a trap under the step springs; a totem's strength is held only while standing on it)
+  if (me.alive && to.trap) trapStep(b, me, out);
+  if (me.totem || to.trap === 'totem') totemStep(b, me);
 }
 
 /** A feared fighter's step: a free tile next to it, further from the foes (none: it cowers where it is). */

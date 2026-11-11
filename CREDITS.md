@@ -792,3 +792,16 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 - Living ground loops (`art-source/fx-alive/ground-loops.png`, runtime `src/art/fx/alive/atlas.png`): original artwork painted for this game by the owner with ChatGPT image generation from the FX-ALIVE prompt (`docs/notes/fx-alive-art-prompts.md`): eight elements' eight-frame tile loops. Cut by `tools/fx-alive/cut.py`; drawn as the moving edge of a marked patch by `src/render/fx.ts` (`docs/notes/fx-alive-art.md`).
 
 - Borderless living ground fills and seamless duel bar fills (REPAINTS-2, `art-source/fx-alive/ground-fill-loops.png`, runtime `src/art/fx/alive/fill.png`; `art-source/duel-show/duel-bar-fill-green.png` and `-red.png`, runtime `src/art/duel/bar-fill-*.webp`): original artwork repainted for this game by the owner with ChatGPT image generation. Cut by `tools/fx-alive/cut.py` and `tools/duel-show/import-art.py` (`docs/notes/repaints-2.md`). The duel bar's fills were repainted again with a soft texture (`art/ui-extras`), still seamless, and cut the same way (`docs/notes/art-wire-10.md`).
+
+## LIVING-FIELDS: the lands' floors
+
+- The ground, edges and cliff faces of the seventeen lands' battlefields are the nine painted hold sheets above
+  (`src/art/assault/<hold>/ground.webp`, `edges.webp`, `faces.webp`, cut by `tools/assault/cut-sheets.py`): original art made for this
+  game, used again for the land each hold's army fights on (`src/render/floorRules.ts`). No new file was added and nothing was copied
+  from the packs for it.
+- The battlefield's life (LIVING-FIELDS step 4, `src/render/boardLife.ts`) uses art already credited above: the road's pecking birds,
+  growth and fall strips (`src/art/road/`), the hold sheets' decals (`src/art/assault/<hold>/decals.webp`) and the Pixel Effects
+  pack's puffs and smoke. The butterfly and the fish are plain stand-ins drawn in code until `art-source/living-fields/life.png` is painted.
+- The traps' stand-ins (LIVING-FIELDS step 3) use the graveyard's thorns (`src/art/areas/graveyard/tall*.png`), the Calamity's skull
+  totem and runes (`src/art/calzones/`) and the road's brazier; the rest are marks drawn in code until
+  `art-source/living-fields/traps.png` is painted.
