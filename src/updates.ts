@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.496.0',
+    date: '2026-11-11',
+    title: 'The snows\' ice shows up',
+    notes: ['Ice on the snows takes a blue wash and a bright rim, so it stands out from the snow round it.', 'Extra lava for the ashlands and boulders for the highlands stay off: the amounts that kept fights fair were too small to see.'],
+  },
+  {
     version: '0.495.0',
     date: '2026-11-11',
     title: 'Ultimates and Eidolons take their time',

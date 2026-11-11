@@ -1513,6 +1513,19 @@ export class BoardView {
         g.stroke();
       }
     } else if (t.ground === 'ice') {
+      if (area === 'snow') {
+        // (LAND-IDENTITY: on the snows ice is pale on pale, so it lies bluer there, with a bright rim of light along its far edges: looks only)
+        g.fillStyle = 'rgba(24,104,222,0.5)';
+        g.fillRect(0, 0, TW, TH);
+        g.strokeStyle = 'rgba(235,250,255,0.9)';
+        g.lineWidth = 1.5;
+        g.beginPath();
+        g.moveTo(3, TH / 2);
+        g.lineTo(TW / 2, 1.5);
+        g.lineTo(TW - 3, TH / 2);
+        g.stroke();
+        g.lineWidth = 1;
+      }
       g.strokeStyle = 'rgba(255,255,255,0.85)';
       for (const [x, y] of [[TW * 0.38, TH * 0.42], [TW * 0.64, TH * 0.6]]) {
         g.beginPath();
