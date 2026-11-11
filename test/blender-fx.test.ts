@@ -8,13 +8,16 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import '../src/sim/battle';
 import { BFX_CLIPS, BFX_DENSITY, BFX_GLOW_SHRINK, BFX_PX, BFX_SOFT } from '../src/render/blenderFxData';
 import {
-  BFX_FADE_MS, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, bfxAlpha, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, bfxRect, bfxStage, spellBfx, standPhase,
+  BFX_FADE_MS, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, bfxAlpha, bfxBox, bfxBudget, bfxCentre, bfxClip, bfxFrame, bfxLife, bfxRect, bfxStage, spellBfx,
+  standPhase, ultBfx,
   type BfxClip, type SpellPartName,
 } from '../src/render/blenderFxRules';
 import { SPELL_IDS, SPELLS, WALLS } from '../src/sim/spells';
 import { spellTiles } from '../src/render/fxPlace';
 import { TW } from '../src/render/iso';
 import { makeBoard } from '../src/sim/board';
+import { STAGE_ART, STAGE_NAMES, ultWeight } from '../src/ultStageRules';
+import { SHOWCASES } from '../src/ultShowRules';
 
 const PARTS: SpellPartName[] = ['cast', 'hit', 'fly', 'land', 'stand'];
 const clips = Object.entries(BFX_CLIPS);
@@ -209,4 +212,61 @@ test('the renderer plays the sheets through the effects\' own paths, and never t
     assert.doesNotMatch(src, /from 'pixi\.js'|document\.|window\./, `${f} is pure`);
     assert.doesNotMatch(src, /Math\.random|Date\.now/, f);
   }
+});
+
+// ---- the ultimates (the second batch after the spells and the ground loops) ----
+
+test('every hero\'s ultimate has its three stages hung on STAGE_ART: its own strike, a wind-up by its weight, an aftermath by its element', () => {
+  const kinds = Object.keys(SHOWCASES);
+  assert.equal(kinds.length, 70);
+  for (const kind of kinds) {
+    const arts = STAGE_ART[kind];
+    assert.ok(arts, `${kind} has no sheets`);
+    for (const stage of STAGE_NAMES) {
+      const art = arts[stage];
+      assert.ok(art, `${kind}.${stage}`);
+      const c = bfxClip(art.sheet)!;
+      assert.equal(art.sheet, ultBfx(kind, stage, ultWeight(kind)));
+      assert.equal(art.frames, c.n);
+      assert.equal(art.on, stage === 'windup' ? 'caster' : 'struck');
+      assert.ok(!c.loop && c.n >= 10, `${art.sheet}: played once across its stage`);
+      // (a show's sheets are drawn big: a wind-up wraps the caster, a strike covers two tiles and more)
+      assert.ok(art.tiles >= (stage === 'strike' ? 1.6 : 1.2) && art.tiles <= 5.5, `${art.sheet}: ${art.tiles} tiles`);
+    }
+    assert.equal(arts.strike!.sheet, `ult-${kind}-strike`);
+    // (the strike is two scenes staged one into the other; the wind-up's weight is the show's own)
+    assert.equal(bfxClip(arts.strike!.sheet)!.cuts?.length, 2, kind);
+    assert.ok(arts.windup!.sheet.startsWith(`ultwind-${ultWeight(kind)}-`), `${kind} winds up as a ${ultWeight(kind)}`);
+    assert.equal(arts.windup!.sheet.split('-')[2], bfxClip(arts.strike!.sheet)!.el, `${kind}: one element through its three stages`);
+  }
+  // (a kind with no show has none, and plays what the game has)
+  assert.equal(STAGE_ART.skeleton, undefined);
+  assert.equal(ultBfx('skeleton', 'strike', 'wave'), undefined);
+});
+
+test('no two ultimates strike alike: each pairs two scenes in its element, and no other hero has that pair and element', () => {
+  const recipe = readFileSync('tools/blender-fx/effects.py', 'utf8');
+  const rows = [...recipe.matchAll(/(\w+)=\('(\w+)', '(\w+)', '(\w+)', '(\w+)'\)/g)].map((m) => ({ kind: m[1], look: `${m[2]}/${m[3]}+${m[4]}`, style: m[5] }));
+  assert.deepEqual(rows.map((r) => r.kind).sort(), Object.keys(SHOWCASES).sort());
+  assert.equal(new Set(rows.map((r) => r.look)).size, rows.length);
+  // (the recipe's style for each is the showcase's own, so its weight is the page's)
+  for (const r of rows) assert.equal(r.style, SHOWCASES[r.kind].style, r.kind);
+  // (a strike's two scenes differ)
+  for (const r of rows) assert.notEqual(r.look.split('/')[1].split('+')[0], r.look.split('+')[1], r.kind);
+});
+
+test('a sheet on the moment\'s layer is put by its frame\'s middle so its tile\'s middle lands on the spot; the moment hands the hero\'s kind on', () => {
+  const c = clip({ w: 100, h: 80, ax: 50, ay: 60 });
+  const [x, y] = bfxCentre(c, 200, 300);
+  assert.ok(Math.abs(x - 200) < 1e-9 && Math.abs(y - (300 - 20 * BFX_SCALE)) < 1e-9);
+  const [x2, y2] = bfxCentre(clip({ w: 100, h: 80, ax: 30, ay: 60 }), 0, 0, 2);
+  assert.ok(Math.abs(x2 - 40 * BFX_SCALE) < 1e-9 && Math.abs(y2 + 40 * BFX_SCALE) < 1e-9);
+  assert.ok(ULT_BFX.SPOTS_SAVER < ULT_BFX.SPOTS && ULT_BFX.ECHO_MIN <= 1);
+  const moment = readFileSync('src/ultMoment.ts', 'utf8');
+  assert.match(moment, /ultImpact\(b, el, spots, 1, m\.kind\)/);
+  assert.match(moment, /ultImpact\(b, m\.el \?\? 'light', spots, 0\.6, m\.kind\)/);
+  assert.match(moment, /ultAfter\(b, el, spots, ms, m\.kind\)/);
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.match(fx, /if \(this\.bfxUlt\(by\.unit\.def, 'windup', by\.x, by\.y, ms\)\) return;/);
+  assert.match(fx, /const held = this\.reduced \? \[frames\[c\.hold\]\] : frames;/, 'reduced motion holds the one frame');
 });

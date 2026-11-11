@@ -146,3 +146,29 @@ export const groundBfx = (el: string): string | undefined => (BFX_CLIPS[`ground-
 
 /** Burning ground's loop (the fire a skill leaves on a 3x3): a tile of tall flames. */
 export const ZONE_BFX = 'zone-fire';
+
+/* ------------------------------------------------------------------ the ultimates */
+
+/** An ultimate's three stages (`ultStageRules.ts`). */
+export type UltStageName = 'windup' | 'strike' | 'aftermath';
+
+/** The sheet a hero kind's ultimate plays in a stage. Its strike is its own (`ult-<kind>-strike`); its wind-up is by its weight and its
+ *  element's palette (`ultwind-<weight>-<palette>`), its aftermath by the palette (`ultafter-<palette>`); the palette is its strike's.
+ *  `weight` is `ultWeight(kind)`. Undefined for a kind the pipeline has not made. */
+export function ultBfx(kind: string, stage: UltStageName, weight: string): string | undefined {
+  const strike = BFX_CLIPS[`ult-${kind}-strike`];
+  if (!strike) return undefined;
+  const key = stage === 'strike' ? `ult-${kind}-strike` : stage === 'windup' ? `ultwind-${weight}-${strike.el}` : `ultafter-${strike.el}`;
+  return BFX_CLIPS[key] ? key : undefined;
+}
+
+/** Where a sheet on the moment's layer is put so the middle of its tile is at (x, y): the layer's bits are held by their own middle, so
+ *  this is the frame's middle, `mult` times its size. */
+export function bfxCentre(c: BfxClip, x: number, y: number, mult = 1): [number, number] {
+  const s = BFX_SCALE * mult;
+  return [x + (c.w / 2 - c.ax) * s, y + (c.h / 2 - c.ay) * s];
+}
+
+/** How large a further burst of a flurry or a storm is drawn beside the first (`ultImpact`'s `size`), the most strikes drawn at once, and how strong
+ *  an aftermath is drawn (it lies over those it struck, so they must show through it). */
+export const ULT_BFX = { ECHO_MIN: 0.6, SPOTS: 5, SPOTS_SAVER: 2, AFTER_ALPHA: 0.7 } as const;

@@ -94,6 +94,8 @@ const cast = (page, id, aim, zoom) => page.evaluate(([id, aim, zoom]) => {
     const h = live.filter((x) => x.side === 'hero').sort((x, y) => x.hp - y.hp)[0];
     h.hp = 0; h.alive = false; u = h.u; v = h.v;
   }
+  // (the spell is cast on the fallen hero's own tile, not on the one the camera first chose)
+  const aim_ = id === 'resurrect' ? { u, v } : at;
   if (id === 'raisedead') { const f = pool[0]; f.hp = 0; f.alive = false; (b.fallen ??= []); }
   b.spells.mana = 10;
   b.spells.ready[id] = 0;
@@ -101,8 +103,8 @@ const cast = (page, id, aim, zoom) => page.evaluate(([id, aim, zoom]) => {
   const spots = id === 'blink' || id === 'wolves' || id.endsWith('wall') ? [[0, 1], [0, -1], [1, 0], [-1, 0], [0, 2], [0, -2], [1, 1], [-1, -1], [0, 0]] : [[0, 0]];
   let ok = false;
   for (const [du, dv] of spots) {
-    ok = window.__castSpell(b, id, at.u + du, at.v + dv);
-    if (ok) { u = at.u + du; v = at.v + dv; break; }
+    ok = window.__castSpell(b, id, aim_.u + du, aim_.v + dv);
+    if (ok) { u = aim_.u + du; v = aim_.v + dv; break; }
   }
   const s = g.sprites.get(at.id);
   g.manualCam = true;

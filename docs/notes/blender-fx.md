@@ -14,7 +14,8 @@ Renderer and tools only: the sim is untouched, `fxPlace`'s tiles are as they wer
 | The pipeline (`tools/blender-fx/`) | Done: 52 scenes, 13 palettes, render, pixelate, pack, manifest, one command |
 | The king's 35 spells | Done: each its own scene, element and size (the table below) |
 | The ground loops (`fx-alive.md`: all ten elements, and burning ground) | Done: a rendered tile loop an element; the painted sheets are removed |
-| The 45 ultimates and the Eidolons | Waiting for ULT-EPIC (their length and stages are changing); the staged effects are ready for them |
+| The ultimates (all 70 heroes with a show) | Done: each its own staged strike, a wind-up by weight and element, an aftermath by element |
+| The Eidolons | Not yet: they still play what the game has |
 | Skills, hit sparks, projectiles; statuses, auras, hazards, boss entrances | After the ultimates |
 
 Until a batch is made, its effects play their older looks (the painted atlases are still in the game). They are to be removed as
@@ -158,6 +159,113 @@ elements). The painted sheets are gone. Each tile of a patch now carries the ele
 the rendered loops instead: every element has one, a tile's worth, the lights with their glow; the painted files and their
 loader are gone; the loop's strength on open ground and under a fighter. This is the owner's decision changing a requirement,
 not a test loosened. `tools/fx-alive/cut.py` (which cut the painted sheet) is kept for the record; its output is no longer used.
+
+## The ultimates
+
+ULT-EPIC (0.495.0, `src/ultStageRules.ts`, `docs/notes/ult-epic.md`) plays an ultimate fired by hand in three stages over 4 to 6
+seconds and left `STAGE_ART[kind][stage]` as the place to hang a sheet. Every hero kind with a show (70 of them: the five Mythics,
+the 45, and the twenty that joined) now has all three hung there:
+
+- **Wind-up** (on the caster, across the whole stage): `ultwind-<weight>-<palette>`. What gathers depends on the show's weight: a
+  blow winds a spiral up the body, a flurry drags power in to a knot, a wave draws a circle with motes rising, a storm turns a
+  funnel, a summoning calls wisps up out of a circle. In the hero's element: 30 sheets cover the weights and elements in use.
+- **Strike** (on each spot it struck, up to five; two on the battery saver): `ult-<kind>-strike`, the hero's own. Each is two
+  scenes staged one into the other in its element (the table below), and no two heroes have the same pair and element. A further
+  burst of a flurry or a storm plays the same sheet smaller.
+- **Aftermath** (where it struck, across the stage): `ultafter-<palette>`: the element's fumes rolling low and its motes lifting
+  off, thinning to nothing. Drawn at 0.7 so those it struck show through. 12 sheets.
+
+So a hero's ultimate is its own strike and its own combination of the three; the wind-ups and aftermaths are shared between
+heroes of the same weight and element, which keeps the download down. `Fx.ultGather`, `ultImpact` and `ultAfter` play them on the
+moment's layer (`bfxUlt`), which runs while the fight is held, in place of the painted gathering, burst, nova, ring, dust and
+motes. `ultMoment.ts` hands the hero's kind on to them. Reduced motion holds each sheet's one readable frame; a light keeps its
+glow (not on the battery saver). The stages' lengths, the band, the dim, the camera, the freeze, the shake and the sounds are
+ULT-EPIC's and are untouched. The Eidolons' calls are not in this batch.
+
+**Bytes**: the ultimates add 112 sheets and 1,684 frames: 1,575,798 bytes (the atlases are 2,017,862 bytes in all now: 26 pixel
+atlases and 2 glow atlases). The older painted ultimate kit is still in the game for the Eidolons and for the moment before the
+sheets have loaded; it can go when the Eidolons are done.
+
+| Hero | Element | Weight | Its strike |
+| --- | --- | --- | --- |
+| vael | shadow | wave | a sweeping arc, then a clap of force |
+| astrax | holy | storm | a rain from above, then a great burst |
+| ilyra | holy | wave | a halo descending, then a ward closing |
+| orrun | forest | wave | vines climbing, then a ward closing |
+| nyxara | lightning | wave | a circle drawn, then a spiral rising |
+| kunoichi | shadow | flurry | a cross cut, then rolling smoke |
+| wizard | fire | storm | a great burst, then the ground splitting |
+| beastmaster | forest | summon | raking claws, then rolling smoke |
+| mercenary | blood | flurry | a cross cut, then a spray of sparks |
+| arcBlade | lightning | flurry | a forked bolt, then a cross cut |
+| samurai | holy | blow | a sweeping arc, then a spray of sparks |
+| lancer | wind | blow | a streak along the ground, then a sweeping gust |
+| minotaur | earth | flurry | the ground splitting, then rolling smoke |
+| barbarian | blood | blow | the ground splitting, then a great burst |
+| ninjaMonk | wind | flurry | a spray of sparks, then a sweeping gust |
+| buccaneer | shadow | flurry | chains closing, then a cross cut |
+| archer | wind | storm | a rain from above, then rings thrown out |
+| dreadPirate | shadow | storm | a rain from above, then a great burst |
+| siegeBot | fire | storm | a great burst, then a clap of force |
+| lightningMage | lightning | storm | a forked bolt, then a clap of force |
+| gunslinger | fire | storm | a spray of sparks, then a cross cut |
+| rifleBot | lightning | flurry | a spray of sparks, then rings thrown out |
+| dragoon | fire | storm | a rush of flame, then a great burst |
+| ranger | forest | wave | vines climbing, then rings thrown out |
+| knight | holy | wave | arcs of force, then a ward closing |
+| paladin | holy | wave | a ring of shards, then a spear from the sky |
+| yamabushi | wind | wave | a funnel turning, then a sweeping gust |
+| gorgon | poison | wave | an eye opening, then a crystal closing |
+| juggernaut | earth | wave | the ground splitting, then spikes bursting up |
+| kraken | water | wave | a funnel turning, then a jet thrown up |
+| mummy | earth | wave | a funnel turning, then chains closing |
+| warlock | shadow | wave | a circle drawn, then streams drawn up |
+| tyrant | blood | wave | arcs of force, then spikes bursting up |
+| shambler | poison | flurry | the ground splitting, then a boiling bank |
+| reaper | shadow | wave | a sweeping arc, then wisps winding up |
+| druid | forest | summon | vines climbing, then spikes bursting up |
+| illusionist | arcane | summon | a wavering curtain, then a portal tearing open |
+| priestess | holy | summon | a pillar of light, then a halo descending |
+| werewolf | blood | wave | raking claws, then arcs of force |
+| demonSwordsman | fire | wave | chains closing, then a rush of flame |
+| kitsune | fire | wave | a spiral rising, then a great burst |
+| karasu | wind | storm | a wheeling swarm, then a funnel turning |
+| timeWitch | holy | wave | a circle drawn, then a crystal closing |
+| wanderer | holy | wave | motes rising, then rings thrown out |
+| satyr | forest | wave | a wheeling swarm, then a spiral rising |
+| samuraiCommander | fire | wave | arcs of force, then a rush of flame |
+| sage | lightning | wave | a circle drawn, then a ward closing |
+| cleric | holy | wave | wisps winding up, then motes rising |
+| peasant | earth | wave | arcs of force, then rolling smoke |
+| wolfBard | wind | wave | arcs of force, then a spiral rising |
+| vampireLord | blood | wave | power dragged in, then streams drawn up |
+| hemomancer | blood | wave | streams drawn up, then a rain from above |
+| nightstalker | shadow | flurry | a wheeling swarm, then raking claws |
+| bloodGargoyle | earth | wave | a clap of force, then slabs slammed up |
+| dhampir | holy | storm | a rain from above, then a cross cut |
+| warDrummer | lightning | wave | arcs of force, then a forked bolt |
+| geomancer | earth | wave | slabs slammed up, then spikes bursting up |
+| bellWarden | shadow | wave | a clap of force, then a crystal closing |
+| falconer | wind | storm | a wheeling swarm, then raking claws |
+| banneret | fire | wave | a wavering curtain, then rings thrown out |
+| astralSphinx | arcane | wave | an eye opening, then a circle drawn |
+| mirageDancer | wind | flurry | a wavering curtain, then a cross cut |
+| plagueDoctor | poison | wave | a boiling bank, then rolling smoke |
+| bombardier | fire | storm | a rain from above, then a great burst |
+| astrologer | holy | storm | power dragged in, then a great burst |
+| inquisitor | holy | storm | a spear from the sky, then rings thrown out |
+| seraph | holy | storm | a shaft from the sky, then a clap of force |
+| corsairSurgeon | forest | wave | a jet thrown up, then motes rising |
+| harpooner | ice | flurry | chains closing, then spikes bursting up |
+| seaReaver | water | blow | a jet thrown up, then a sweeping gust |
+
+`test/blender-fx.test.ts` adds three tests: every kind with a show has its three stages on `STAGE_ART` (the right sheet, on the
+caster or the struck, played once, the wind-up of its own weight, one element through all three); no two strikes pair the same
+scenes in the same element, and the recipe's styles are the showcases' own; a sheet on the moment's layer is placed by its
+frame's middle, the moment hands on the kind, and reduced motion holds one frame. `test/ult-stages.test.ts` passes untouched.
+
+Pictures: `docs/samples/blender-fx/ult-<hero>-<width>.jpg` (two moments in each stage, in a real fight, taken with ULT-EPIC's own
+`tools/ult-epic/stages.mjs`), and `ult-frames.png` (the strikes' own frames).
 
 ## Tests
 
