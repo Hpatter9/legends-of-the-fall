@@ -770,6 +770,8 @@ class Game {
     };
     // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
+    // (BLENDER-FX: the king's spells' own cast, for `tools/blender-fx/shots.mjs` to stage each spell in a real fight; the game never calls it from here)
+    (window as unknown as { __castSpell: typeof castSpell }).__castSpell = castSpell;
     // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
     (window as unknown as { __settleFinds: typeof settleFinds }).__settleFinds = settleFinds;
     // (the screenshot tool draws the wave card's lines from given moments)
