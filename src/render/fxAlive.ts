@@ -4,7 +4,8 @@
 //
 // - is mostly see-through: a faint fill, and a bright rim round the patch that carries it (the edge marks the area, not the fill);
 // - breathes on its own beat, out of step with its neighbours (`tilePhase`), so the patch shimmers instead of pulsing as one block;
-// - carries the element's own animated strip from the pack (its rune), lying on the tile, each tile a few frames apart;
+// - carries the element's own rendered ground loop (BLENDER-FX, docs/notes/blender-fx.md: a tile of flames, crystals, bubbles and so on, in hard
+//   pixels like every other effect), standing on the tile, each tile a few frames apart;
 // - dims under a fighter standing in it (`ALIVE.OCCUPIED`), so the hero over it reads;
 // - holds still and fainter with reduced motion, and leaves its strips out on the battery saver.
 //
@@ -24,12 +25,11 @@ export const ALIVE = {
   STRIP_MS: 95,
   /** What a tile keeps of its fill and its strip while a fighter stands on it. */
   OCCUPIED: 0.4,
-  /** FX-ALIVE-ART: a painted edge's strength, of the rim's (the painted loops are soft, so they are drawn a little over the rim's own), and
-   *  what the drawn rim keeps of its own under a painted edge. */
-  PAINTED: 1.6,
-  PAINTED_RIM: 0.6,
-  /** REPAINTS-2: the painted fill's strength, of the strip's (the fill is dense, so it lies lighter than the rune did). */
-  PAINTED_FILL: 1.3,
+  /** BLENDER-FX: the rendered ground loop's strength, of the strip's (hard pixels read stronger than the old soft paint, and the loop is
+   *  mostly open ground, so it lies a little over the strip's own), and the share of its glow a light's tile keeps (a patch is many tiles,
+   *  and their glows overlap). */
+  RENDERED: 1.8,
+  RENDERED_GLOW: 0.35,
   /** With reduced motion: the patch's share of its strength, held still (mid-breath). */
   CALM: 0.75,
 } as const;
@@ -63,8 +63,3 @@ export function tileLook(t: number, phase: number, occupied: boolean, calm: bool
 /** Which frame of an `n`-frame strip a tile shows at time `t` (ms): each tile a few frames on from its neighbours; the first, held, with
  *  reduced motion. */
 export const stripFrame = (t: number, phase: number, n: number, calm: boolean): number => (calm || n <= 1 ? 0 : Math.floor(t / ALIVE.STRIP_MS + phase * n) % n);
-
-/** FX-ALIVE-ART: which quarter of a painted tile's frame holds a diamond edge (`[a, b]`, the corners from the top going round to the right,
- *  as `rimEdges` gives them): its column and row, 0 or 1. The painted loops frame their whole diamond, so a patch shows only the quarters on
- *  its outer edges: inside, the frames would meet as a lattice of separate blocks. */
-export const edgeQuarter = (edge: readonly [number, number]): [number, number] => [[1, 0], [1, 1], [0, 1], [0, 0]][edge[0]] as [number, number];

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.498.0',
+    date: '2026-11-11',
+    title: 'The king\'s spells, rendered anew',
+    notes: ['Every king\'s spell has a new, fully animated pixel effect of its own: domes, pillars, vortexes, storms and rings, each in its element\'s colours.', 'Burning, frozen and poisoned ground is redrawn to match, and light spells keep a soft glow. The game\'s download is a little smaller.'],
+  },
+  {
     version: '0.497.0',
     date: '2026-11-11',
     title: 'Every ultimate gets its showcase',

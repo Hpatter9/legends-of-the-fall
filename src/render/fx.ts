@@ -5,8 +5,7 @@
 import { Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { GroundPaint, GroundSet, patchRims, patchTile, reachOfWidth } from './groundMarks';
 import { AREA_REACH, areaSkill, areaTiles, auraTiles, spellTiles, tilesWithin } from './fxPlace';
-import { ALIVE, edgeQuarter, stripFrame, tileLook, tilePhase } from './fxAlive';
-import { ALIVE_CELL, aliveFill, aliveQuarters, loadAliveArt } from './aliveArt';
+import { ALIVE, stripFrame, tileLook, tilePhase } from './fxAlive';
 import { TERRAIN_URLS } from './terrainArt';
 import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
@@ -33,7 +32,7 @@ import { skillShown } from '../sim/heroKits';
 import { abilityHeading } from './abilityLooks';
 import { abilityFrames, loadAbilityArt } from './abilityArt';
 import { SPELL_SIGNATURES } from './spellSignatures';
-import { rankOf, SPELLS } from '../sim/spells';
+import { rankOf, SPELLS, type SpellId } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { at, depth, facesRight, TH, TW } from './iso';
@@ -76,6 +75,8 @@ import { KING_SHEET, KING_WALL } from './kingArt';
 import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
+import { bfxFrames, bfxGlows, loadBlenderFx } from './blenderFxArt';
+import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ZONE_BFX, bfxAlpha, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
 import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinematicArt';
@@ -119,9 +120,11 @@ export async function loadFx(): Promise<void> {
   await loadVfxArt();
   await loadPackArt();
   magic.pinkHeart = { frames: VFX.pinkHeart };
-  await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt(), loadAliveArt()]);
+  await Promise.all([loadProps(), loadAbilityArt(), loadAuraArt(), loadStatusArt()]);
   // (RPG-SPELLS: the painted spell effects load by URL behind the game; until they have, the placeholders show)
   void loadSpellArt();
+  // (BLENDER-FX: the Blender-rendered effect sheets, behind the game too; until they have loaded the older looks play)
+  void loadBlenderFx();
   // (ULT-SHOW: the showcases' painted poses and props, behind the game too)
   void loadShowArt();
   // (the hero kits' terrain: a rampart's ruined walls, a statue's stone, a keg's barrel; the pack's own props, as the board draws them)
@@ -203,6 +206,8 @@ export class Fx {
   private heals = new HealPool();
   /** The skills cast this tick, by caster (`show`). */
   private tickCasts = new Map<number, string>();
+  /** BLENDER-FX: how many of a spell's touches have been drawn this tick (the battery saver draws fewer: `bfxBudget`). */
+  private bfxTouches = 0;
   /** The painted loops held over fighters (`movePaint`'s stands), so a state shown once is not shown twice. */
   private standShown = new Set<string>();
   /** The small puffs, sparks and trails (pooled, capped). */
@@ -367,6 +372,7 @@ export class Fx {
     this.particles.cap = budget.cap;
     this.particles.calm = this.calm();
     this.enter(b);
+    this.bfxTouches = 0;
     let royalSky: 'meteor' | 'starfall' | undefined;
     const slashes = slashesOf(events);
     this.healerPaint(events);
@@ -410,7 +416,7 @@ export class Fx {
         const recipients = new Set(events.filter((touch): touch is Extract<BattleEvent, { kind: 'spellfx' }> => touch.kind === 'spellfx' && touch.id === e.id).map(touch => touch.to));
         this.spell(b, e, recipients);
       }
-      else if (e.kind === 'spellfx') this.spellFx(e);
+      else if (e.kind === 'spellfx') this.spellFx(b, e);
       else if (e.kind === 'heal') {
         const to = this.sprites.get(e.to);
         // (BATTLE-FEEL: a small heal, an aura's tick or a drain, waits to be shown with the fighter's other small heals, `HealPool`)
@@ -1485,6 +1491,210 @@ export class Fx {
 
   // ---- the movement toolkit (RPG-SPELLS batch 1): placeholders from the pack (`toolkitLooks.ts`) until the painted effects arrive ----
 
+  // ---- BLENDER-FX (docs/notes/blender-fx.md): the Blender-rendered, pixelated frame sheets. Each helper plays a clip when its atlas has
+  // loaded and says so; false means it has not (or the pipeline has not made it), and the caller plays its older look. A clip's frames
+  // carry its own motion, so nothing here poses or tweens them: reduced motion holds a clip's one readable frame (`bfxFrame`), the battery
+  // saver drops the soft glow and steps the loops at half their rate (`bfxBudget`). ----
+
+  /** A clip's sprite, anchored where the middle of its tile sits in its frames, and its soft glow when it is a light (not on the battery saver). */
+  private bfxSprites(key: string, mult = 1, flip = false): { sp: Sprite; glow: Sprite | null } | null {
+    const c = bfxClip(key);
+    const frames = bfxFrames(key);
+    if (!c || !frames.length) return null;
+    const dir = flip ? -1 : 1;
+    const sp = new Sprite(frames[0]);
+    sp.anchor.set(c.ax / c.w, c.ay / c.h);
+    sp.scale.set(BFX_SCALE * mult * dir, BFX_SCALE * mult);
+    const glows = bfxBudget(settings().saver).glow ? bfxGlows(key) : [];
+    let glow: Sprite | null = null;
+    if (c.g && glows.length) {
+      glow = new Sprite(glows[0]);
+      glow.anchor.set(c.g.ax / c.g.w, c.g.ay / c.g.h);
+      glow.scale.set(BFX_GLOW_SCALE * mult * dir, BFX_GLOW_SCALE * mult);
+      glow.blendMode = 'add';
+    }
+    return { sp, glow };
+  }
+
+  /** A clip played once with the middle of its tile at (x, y). A clip that lies on the ground (a ring, a circle, a crack) is laid on the
+   *  tiles' tops under the fighters when `lie` says which tile it is on; any other stands in the effects' layer, thinned where it would
+   *  hide a fighter (FX-CLEAR). `stretch` slows it; `glow` is the share of its glow it keeps. */
+  private bfxOnce(key: string, x: number, y: number, o: { delay?: number; flip?: boolean; mult?: number; stretch?: number; glow?: number; lie?: { b: Battle; u: number; v: number } } = {}): boolean {
+    const c = bfxClip(key);
+    const made = this.bfxSprites(key, (o.mult ?? 1) * (this.boost !== 1 ? Math.min(this.boost, 1.5) : 1), o.flip);
+    if (!c || !made) return false;
+    const { sp, glow } = made;
+    const frames = bfxFrames(key);
+    const glows = bfxGlows(key);
+    const life = bfxLife(c, o.stretch);
+    const paint = c.layer === 'ground' && o.lie ? this.groundPaint(o.lie.b, (copy) => (copy.anchor.copyFrom(sp.anchor), copy.scale.copyFrom(sp.scale))) : null;
+    const view = new Container();
+    if (glow) view.addChild(glow);
+    if (!paint) view.addChild(sp);
+    view.position.set(x, y);
+    view.visible = false;
+    this.root.addChild(view);
+    const reach = reachOfWidth(c.w * Math.abs(sp.scale.x));
+    let own = -1;
+    let t = -(o.delay ?? 0);
+    this.items.push({
+      view: {
+        get destroyed() {
+          return view.destroyed;
+        },
+        destroy: (opt) => {
+          view.destroy(opt);
+          paint?.destroy();
+          if (paint) sp.destroy();
+        },
+      },
+      step: (dt) => {
+        t += dt;
+        if (t < 0) return true;
+        if (t >= life) return false;
+        // (FX-CLEAR: thinned over a fighter, fixed when it first shows; a clip lying on the ground is under them already)
+        if (own < 0) {
+          const [l, top, r, bot] = bfxBox(c, x, y, Math.abs(sp.scale.y) / BFX_SCALE);
+          const half = Math.min(r - l, bot - top) * 0.42;
+          own = paint ? 1 : coverAlpha(1, this.overBody((l + r) / 2, Math.min(y, bot) - half, half));
+        }
+        const f = bfxFrame(c, t, this.reduced, false, o.stretch);
+        const a = bfxAlpha(t, life, this.reduced);
+        view.visible = true;
+        if (paint && o.lie) {
+          paint.alpha = a;
+          paint.place(o.lie.u, o.lie.v, reach, x, y, frames[f]);
+        } else {
+          sp.texture = frames[f];
+          sp.alpha = a * own;
+        }
+        if (glow) {
+          glow.texture = glows[f] ?? glows[0];
+          glow.alpha = a * BFX_GLOW_ALPHA * (o.glow ?? 1) * (own < 1 ? own : 1);
+        }
+        return true;
+      },
+    });
+    return true;
+  }
+
+  /** A looping clip that stays while `live` holds, then fades: on `layer` (a tile's own ground, so it sorts with the fighters by depth:
+   *  whoever stands on the tile is drawn over it) with the middle of its tile at (x, y). `rise` grows it from the ground as it comes (a wall);
+   *  `dim` thins it (a fighter standing in it). */
+  private bfxStand(key: string, layer: Container, x: number, y: number, live: () => boolean, o: { phase?: number; dim?: () => number; rise?: boolean; flip?: boolean } = {}): boolean {
+    const c = bfxClip(key);
+    const made = this.bfxSprites(key, 1, o.flip);
+    if (!c || !made) return false;
+    const { sp, glow } = made;
+    const frames = bfxFrames(key);
+    const glows = bfxGlows(key);
+    const view = new Container();
+    if (glow) view.addChild(glow);
+    view.addChild(sp);
+    view.position.set(x, y);
+    view.alpha = 0;
+    layer.addChild(view);
+    const per = c.ms / c.n;
+    const tall = sp.scale.y;
+    let t = 0;
+    let shown = 0;
+    this.items.push({
+      view,
+      step: (dt) => {
+        t += dt;
+        const on = live() || t < BFX_FADE_MS;
+        shown = Math.max(0, Math.min(1, shown + (on ? dt : -dt) / (on ? BFX_FADE_MS : 300)));
+        if (!on && shown <= 0) return false;
+        const f = bfxFrame(c, t + (o.phase ?? 0) * per, this.reduced, settings().saver);
+        sp.texture = frames[f];
+        if (o.rise && !this.reduced) sp.scale.y = tall * (0.35 + 0.65 * Math.min(1, t / 220));
+        view.alpha = shown * (o.dim?.() ?? 1);
+        if (glow) {
+          glow.texture = glows[f] ?? glows[0];
+          glow.alpha = BFX_GLOW_ALPHA;
+        }
+        return true;
+      },
+    });
+    return true;
+  }
+
+  /** A looping clip flown from (x0, y0) to (x1, y1) over `ms` (a meteor, a falling star), after `delay`; `onLand` when it arrives. It moves
+   *  with reduced motion too (where it is going is the warning), on its one held frame. */
+  private bfxFly(key: string, x0: number, y0: number, x1: number, y1: number, ms: number, delay: number, onLand: () => void): boolean {
+    const c = bfxClip(key);
+    const made = this.bfxSprites(key);
+    if (!c || !made) return false;
+    const { sp, glow } = made;
+    const frames = bfxFrames(key);
+    const glows = bfxGlows(key);
+    const view = new Container();
+    if (glow) view.addChild(glow);
+    view.addChild(sp);
+    view.visible = false;
+    this.root.addChild(view);
+    let t = -delay;
+    this.items.push({
+      view,
+      step: (dt) => {
+        t += dt;
+        if (t < 0) return true;
+        if (t >= ms) {
+          onLand();
+          return false;
+        }
+        const k = t / ms;
+        view.visible = true;
+        view.position.set(x0 + (x1 - x0) * k, y0 + (y1 - y0) * k);
+        const f = bfxFrame(c, t, this.reduced, settings().saver);
+        sp.texture = frames[f];
+        if (glow) {
+          glow.texture = glows[f] ?? glows[0];
+          glow.alpha = BFX_GLOW_ALPHA;
+        }
+        return true;
+      },
+    });
+    return true;
+  }
+
+  /** Whether a king's spell has its Blender-rendered sheets loaded: then they play in place of its older painted layers. */
+  private bfxSpellReady(id: SpellId): boolean {
+    return (['cast', 'hit', 'fly', 'land', 'stand'] as SpellPartName[]).some((part) => {
+      const key = spellBfx(id, part);
+      return !!key && bfxFrames(key).length > 0;
+    });
+  }
+
+  /** A king's spell goes off, in its rendered sheets: its cast where it lands (`centre`), or on each tile it touches in turn for the ones laid
+   *  along a line (`SPELL_LAY`: the Lance's column, the Sunbeam's row), and its standing loop on each of its tiles while it lasts (the Poison
+   *  Cloud; the walls' are raised by their own `wall` events). False when the spell's sheets have not loaded. */
+  private bfxSpell(b: Battle, e: Extract<BattleEvent, { kind: 'spell' }>, centre: { x: number; y: number }): boolean {
+    if (!this.bfxSpellReady(e.id)) return false;
+    const cast = spellBfx(e.id, 'cast');
+    const lay = SPELL_LAY[e.id];
+    const tiles = spellTiles(b.board, e.id, e.u, e.v, rankOf(b, e.id));
+    if (cast && lay?.tiles) {
+      for (const t of tiles) {
+        const [x, y] = this.tilePos(b, t.u, t.v);
+        // (a line of pieces' glows lie over one another: each keeps a share of its own, so the line glows and does not whiten)
+        this.bfxOnce(cast, x, y, { delay: (lay.flip ? t.v : t.u) * (lay.step ?? 0), flip: !!lay.flip, glow: BFX_LINE_GLOW });
+      }
+    } else if (cast) this.bfxOnce(cast, centre.x, centre.y, SPELLS[e.id].target === 'all' ? {} : { lie: { b, u: e.u, v: e.v } });
+    const stand = spellBfx(e.id, 'stand');
+    if (stand && SPELL_STANDS[e.id] === 'cloud' && e.id !== 'meteor') {
+      const until = b.t + SPELL_GLOW[e.id].ms;
+      const n = bfxClip(stand)?.n ?? 1;
+      for (const t of tiles) {
+        const [x, y] = this.tilePos(b, t.u, t.v);
+        // (FX-ALIVE: the cloud on a fighter's own tile thins, so the one standing in it still shows)
+        const dim = () => (b.units.some((x) => x.alive && x.u === t.u && x.v === t.v) ? ALIVE.OCCUPIED + 0.15 : 0.9);
+        this.bfxStand(stand, this.groundOf(t.u, t.v), x, y, () => b.t < until, { phase: standPhase(t.u, t.v, n), dim });
+      }
+    }
+    return true;
+  }
+
   // RPG-SPELLS painted effects (docs/notes/spell-art.md): each helper draws a painted part when its atlas has loaded and says so;
   // false means none is painted, and the caller draws its placeholder. Normal blending (the brief's rule), and a painting laid over
   // a fighter's body is thinned (FX-CLEAR, `overFighter.ts`). Loops never fade to nothing until they end; reduced motion holds a
@@ -1820,6 +2030,9 @@ export class Fx {
     const dim = () => (b.units.some((x) => x.alive && x.u === u && x.v === v) ? WALL_DIM : 1);
     // (KING-SPELLS batch 5: a wall the king raised, `by` 0, stands as its spell's own painted loop)
     const king = b.walls?.find((w) => w.i === i && w.kind === kind && w.until > b.t)?.by === 0 ? KING_WALL[kind] : undefined;
+    // (BLENDER-FX: the king's wall stands as its spell's rendered loop, on its own tile's ground, so it sorts with the fighters by depth)
+    const stand = king ? spellBfx(BFX_WALL_SPELL[kind] ?? 'firewall', 'stand') : undefined;
+    if (stand && BFX_WALL_SPELL[kind] && this.bfxStand(stand, this.groundOf(u, v), x, y, live, { phase: standPhase(u, v, bfxClip(stand)?.n ?? 1), dim, rise: true })) return;
     if (king && this.paintWall(king, x, y + 2, live, dim)) return;
     if (look.paint && this.paintWall(look.paint, x, y + 2, live, dim)) return;
     this.lookOnce(look, x, y - 8, 1.6);
@@ -2242,52 +2455,27 @@ export class Fx {
   }
 
   /** FX-PLACE, FX-ALIVE: a living patch on `tiles` (`fxAlive.ts`), each piece on its own tile's top and ground (so it sits on raised and sunken
-   *  tiles alike, under whoever stands in it): a faint fill, a bright rim round the patch, and the element's painted loop along the patch's
-   *  outer edges (FX-ALIVE-ART), or the pack's rune strip on each tile for an element the sheet lacks (neither on the battery saver), each tile breathing and turning on its own beat, its fill and strip thinned under a fighter. The
-   *  caller sets its `strength` (0 to 1) as it lasts and destroys it when done. */
+   *  tiles alike, under whoever stands in it): a faint fill, a bright rim round the patch, and the element's rendered ground loop standing on
+   *  each tile (BLENDER-FX: `ground-<element>`; not on the battery saver), each tile breathing and turning its frames on its own beat, its fill
+   *  and its loop thinned under a fighter. The caller sets its `strength` (0 to 1) as it lasts and destroys it when done. */
   private alivePatch(b: Battle, tiles: readonly { u: number; v: number }[], colour: number, el?: Element): AlivePatch {
     const set = new GroundSet();
     const withH = tiles.map((t) => ({ u: t.u, v: t.v, h: tileAt(b.board, t.u, t.v)?.h ?? 0 }));
     const rimOf = patchRims(withH);
-    // (the painted living-ground loop when the sheet holds the element (`aliveArt.ts`): only the quarters of each frame on the patch's outer
-    // edges, so the patch is ringed by a moving painted edge and its inside stays clear; else the pack's rune for the element on each tile)
-    // REPAINTS-2: and the borderless painted fill on every tile under it, each tile a few frames from its neighbours, thinned under a fighter
-    const quarters = el && !settings().saver ? aliveQuarters(el) : [];
-    const fills = el && !settings().saver ? aliveFill(el) : [];
-    const rune = el && !settings().saver && !quarters.length && !fills.length ? PACK[packKey(el, 'rune')] : undefined;
-    const scale = TW / ALIVE_CELL[0];
+    const key = el && !settings().saver ? groundBfx(el) : undefined;
+    const frames = key ? bfxFrames(key) : [];
+    const glows = key ? bfxGlows(key) : [];
     const pieces = withH.map((t) => {
       const [x, y] = this.tilePos(b, t.u, t.v);
       const layer = this.groundOf(t.u, t.v);
       const rims = rimOf(t.u, t.v);
       const fill = set.add(patchTile(new Graphics(), x, y, [], { colour, fill: 1, edge: 0, inset: 0 }), layer);
-      const sps: { sp: Sprite; q: number }[] = [];
-      if (fills.length) {
-        const sp = set.add(new Sprite(fills[0]), layer);
-        sp.scale.set(scale);
-        sp.position.set(x - TW / 2, y - (ALIVE_CELL[1] * scale) / 2);
-        sps.push({ sp, q: -2 });
-      }
       const rim = set.add(patchTile(new Graphics(), x, y, rims, { colour, fill: 0, edge: 1, width: 2.5, inset: 0 }), layer);
-      if (quarters.length) {
-        for (const edge of rims) {
-          const [qx, qy] = edgeQuarter(edge);
-          const q = qy * 2 + qx;
-          const sp = set.add(new Sprite(quarters[0][q]), layer);
-          sp.scale.set(scale);
-          sp.position.set(x - TW / 2 + (qx * TW) / 2, y - (ALIVE_CELL[1] * scale) / 2 + (qy * ALIVE_CELL[1] * scale) / 2);
-          sps.push({ sp, q });
-        }
-      } else if (rune?.length) {
-        // (the pack's 32 px rune lies on most of the tile, squashed to the ground's slope, brightening rather than covering)
-        const sp = set.add(new Sprite(rune[0]), layer);
-        sp.anchor.set(0.5);
-        sp.scale.set((TW * 0.8) / 32, (TW * 0.4) / 32);
-        sp.blendMode = 'add';
-        sp.position.set(x, y);
-        sps.push({ sp, q: -1 });
-      }
-      return { u: t.u, v: t.v, phase: tilePhase(t.u, t.v), fill, rim, sps };
+      // (the element's ground loop stands on the tile over its fill and rim, under whoever stands there; a light's keeps its soft glow)
+      const made = key && frames.length ? this.bfxSprites(key) : null;
+      if (made?.glow) set.add(made.glow, layer).position.set(x, y);
+      if (made) set.add(made.sp, layer).position.set(x, y);
+      return { u: t.u, v: t.v, phase: tilePhase(t.u, t.v), fill, rim, loop: made?.sp ?? null, glow: made?.glow ?? null };
     });
     const patch: AlivePatch = {
       strength: 1,
@@ -2308,21 +2496,15 @@ export class Fx {
           const occupied = b.units.some((x) => x.alive && x.u === p.u && x.v === p.v);
           const look = tileLook(t, p.phase, occupied, calm, patch.strength);
           p.fill.alpha = look.fill;
-          // (where the moving painted edge rings the patch, the drawn rim steps back to a thin line under it; held still with reduced motion,
-          // the paint alone is too faint to carry the warning, so the rim keeps its own)
-          p.rim.alpha = !calm && quarters.length ? look.rim * ALIVE.PAINTED_RIM : look.rim;
-          for (const { sp, q } of p.sps) {
-            if (q === -2) {
-              sp.alpha = look.strip * ALIVE.PAINTED_FILL;
-              sp.texture = fills[stripFrame(t, p.phase, fills.length, calm)];
-            } else if (q === -1 && rune) {
-              sp.alpha = look.strip;
-              sp.texture = rune[stripFrame(t, p.phase, rune.length, calm)];
-            } else if (q >= 0) {
-              // (the painted edge is the patch's own rim: it breathes with the rim, and stays under a fighter as the rim does)
-              sp.alpha = Math.min(1, look.rim * ALIVE.PAINTED);
-              sp.texture = quarters[stripFrame(t, p.phase, quarters.length, calm)][q];
-            }
+          p.rim.alpha = look.rim;
+          if (!p.loop) continue;
+          // (each tile a few frames on from its neighbours; held on its first frame with reduced motion, thinned under a fighter)
+          const f = stripFrame(t, p.phase, frames.length, calm);
+          p.loop.texture = frames[f];
+          p.loop.alpha = Math.min(1, look.strip * ALIVE.RENDERED);
+          if (p.glow) {
+            p.glow.texture = glows[f] ?? glows[0];
+            p.glow.alpha = Math.min(1, look.strip * ALIVE.RENDERED) * BFX_GLOW_ALPHA * ALIVE.RENDERED_GLOW;
           }
         }
         return true;
@@ -2487,6 +2669,12 @@ export class Fx {
     let trailAt = 0;
     ball.visible = false;
     view.addChild(ball);
+    // (BLENDER-FX: the king's meteor and falling stars fly as their rendered sheets: down the same slant, each star in its own last moments
+    // before it lands, so a shower falls one after another)
+    const sky = e.by === 0 && meteor ? royalSky ?? 'meteor' : undefined;
+    const flyKey = sky ? spellBfx(sky, 'fly') : undefined;
+    const flyMs = Math.min(e.ms, BFX_FLY_MS);
+    const flown = !!flyKey && this.bfxFly(flyKey, cx + BFX_FLY_FROM[0], cy + BFX_FLY_FROM[1], cx, cy, flyMs, e.ms - flyMs, () => this.meteorLanding(cx, cy, skyArt, sky));
     let t = 0;
     this.items.push({
       view,
@@ -2508,7 +2696,11 @@ export class Fx {
             this.puffAt(a.x, a.y, 'white', 0.5);
           }
         }
-        if (meteor) {
+        if (meteor && flown) {
+          // (its shadow on the ground swells as it comes)
+          const f = Math.min(1, t / e.ms);
+          g.ellipse(cx, cy, 10 + 34 * f, 5 + 17 * f).fill({ color: 0x000000, alpha: 0.35 * f });
+        } else if (meteor) {
           const f = Math.min(1, t / e.ms);
           ball.visible = f < 1;
           ball.position.set(cx + 150 * (1 - f), cy - 360 * (1 - f));
@@ -2627,9 +2819,16 @@ export class Fx {
   }
 
   /** The meteor lands: a big explosion with a flash, a ring of fire, rubble and smoke, a crater that stays and cools, and a hard shake with a 2-frame hit-stop and micro-thud. */
-  private meteorLanding(cx: number, cy: number, art: string): void {
+  private meteorLanding(cx: number, cy: number, art: string, sky?: 'meteor' | 'starfall'): void {
     if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, 34); // subtle 2-frame hit-stop
     this.microThud(cx, cy, 1.5, 0, 1.2); // localized downward camera micro-thud
+    // (BLENDER-FX: the king's meteor and falling stars land as their rendered burst, in place of the painted blast and its puffs)
+    const land = sky ? spellBfx(sky, 'land') : undefined;
+    if (land && this.bfxOnce(land, cx, cy)) {
+      this.scorch(cx, cy);
+      this.trauma = Math.min(1, this.trauma + (sky === 'starfall' ? 0.35 : 0.6));
+      return;
+    }
     const p = this.particles;
     // (layers kept apart and thinned so the blast stays orange instead of clipping to white)
     const frames = abilityFrames(art, 'explosion');
@@ -2687,16 +2886,21 @@ export class Fx {
     const targetPt = foes[0] ?? (SPELLS[e.id].target === 'all' ? allies[0] : undefined);
     const [svx, svy] = targetPt ? [targetPt.x - centre.x, (targetPt.y - targetPt.tall * 0.5) - (centre.y - 20)] : [0, -1];
     const slen = Math.hypot(svx, svy) || 1;
-    playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: svx / slen, y: svy / slen }, ms: 700, size: 1 });
-    // (KING-SPELLS batch 5: the schools' fourteen spells' painted cast, where the spell lands)
-    const sheet = KING_SHEET[e.id];
-    if (sheet) this.paintOnce(`${sheet}.cast`, centre.x, centre.y);
+    // (BLENDER-FX: the spell's own rendered sheets, in place of every older layer of its look: the signature's release, the painted cast, the pack's
+    // strips, the frost's spikes and the lance's pillars. The tiles' marks under it stay.)
+    const rendered = this.bfxSpell(b, e, centre);
+    if (!rendered) {
+      playSteps(SPELL_SIGNATURES[e.id].cast, { p: this.particles, self: { ...centre, tall: 40 }, foes, allies, dir: { x: svx / slen, y: svy / slen }, ms: 700, size: 1 });
+      // (KING-SPELLS batch 5: the schools' fourteen spells' painted cast, where the spell lands)
+      const sheet = KING_SHEET[e.id];
+      if (sheet) this.paintOnce(`${sheet}.cast`, centre.x, centre.y);
+    }
     if (e.id === 'quake') this.trauma = Math.max(this.trauma, 0.7);
     if (SPELLS[e.id].target === 'all') return;
     const [cx, cy] = this.tilePos(b, e.u, e.v);
-    for (const c of SPELL_CAST[e.id]) play(this.particles, c.key, cx, cy - 2, { scale: c.scale, frameMs: 70 });
+    if (!rendered) for (const c of SPELL_CAST[e.id]) play(this.particles, c.key, cx, cy - 2, { scale: c.scale, frameMs: 70 });
     // (frost ices the ground: spikes of ice rise on each tile of the 3x3)
-    if (e.id === 'frost')
+    if (e.id === 'frost' && !rendered)
       for (let du = -1; du <= 1; du++)
         for (let dv = -1; dv <= 1; dv++)
           if (tileAt(b.board, e.u + du, e.v + dv)) {
@@ -2704,7 +2908,7 @@ export class Fx {
             play(this.particles, 'ice-spikes', tx, ty, { scale: 1.2, frameMs: 80, add: false, delay: (Math.abs(du) + Math.abs(dv)) * 60 });
           }
     // (a lance runs the whole column: a pillar of light on every other tile of it, from the far end in)
-    if (e.id === 'lance')
+    if (e.id === 'lance' && !rendered)
       for (let dv = 0, row = 0; dv < b.board.d; dv++)
         if (tileAt(b.board, e.u, dv)) {
           const [tx, ty] = this.tilePos(b, e.u, dv);
@@ -2722,7 +2926,7 @@ export class Fx {
       step: (dt) => {
         t += dt;
         // (a poison cloud keeps boiling: a puff of green rises from a tile of it now and then, with bubbles over it)
-        if (e.id === 'poison' && t - puffedAt >= 160 && this.particles.rate(1)) {
+        if (e.id === 'poison' && !rendered && t - puffedAt >= 160 && this.particles.rate(1)) {
           puffedAt = t;
           const [px, py] = this.tilePos(b, e.u + Math.round(jitter(1)), e.v + Math.round(jitter(1)));
           this.particles.spawn({ frames: PACK['poison-smoke'], x: px + jitter(12), y: py - 4, scale: 1.1, life: 900, vy: -0.02, grow: 0.0005, alpha: 0.6, add: true });
@@ -2736,14 +2940,27 @@ export class Fx {
   }
 
   /** A spell touches a fighter: its sheet plays on them (and Haste says so). */
-  private spellFx(e: Extract<BattleEvent, { kind: 'spellfx' }>): void {
+  private spellFx(b: Battle, e: Extract<BattleEvent, { kind: 'spellfx' }>): void {
     const s = this.sprites.get(e.to);
-    if (!s || e.id === 'meteor') return;
+    if (e.id === 'meteor') return;
+    if (!s) {
+      // (BLENDER-FX: one the spell has only just called up, a wolf, a decoy or a wraith, has no sprite yet: its touch plays on its tile)
+      const called = b.units.find((x) => x.id === e.to);
+      const hit = spellBfx(e.id, 'hit');
+      if (called && hit && this.bfxTouches++ < bfxBudget(settings().saver).hits) this.bfxOnce(hit, ...this.tilePos(b, called.u, called.v));
+      return;
+    }
     const spot = { x: s.x, y: s.y, tall: s.tall };
-    playSteps(SPELL_SIGNATURES[e.id].hit, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: -1 }, ms: 500, size: 1 });
-    // (KING-SPELLS batch 5: the painted impact on each fighter the spell touches)
-    const sheet = KING_SHEET[e.id];
-    if (sheet) this.paintOnce(`${sheet}.impact`, s.x, s.y - s.tall * 0.4);
+    if (this.bfxSpellReady(e.id)) {
+      // (BLENDER-FX: the spell's rendered touch, standing on the fighter's own tile; the battery saver draws the first few of a crowd)
+      const hit = spellBfx(e.id, 'hit');
+      if (hit && this.bfxTouches++ < bfxBudget(settings().saver).hits) this.bfxOnce(hit, s.x, s.y);
+    } else {
+      playSteps(SPELL_SIGNATURES[e.id].hit, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: -1 }, ms: 500, size: 1 });
+      // (KING-SPELLS batch 5: the painted impact on each fighter the spell touches)
+      const sheet = KING_SHEET[e.id];
+      if (sheet) this.paintOnce(`${sheet}.impact`, s.x, s.y - s.tall * 0.4);
+    }
     if (e.id === 'haste') this.label('Haste', s.x, s.y - s.tall - 20, SPELL_GLOW.haste.color, 12, 900);
     if (e.id === 'rally') this.label('Rally', s.x, s.y - s.tall - 20, SPELL_GLOW.rally.color, 12, 900);
     if (e.id === 'shield') this.label('Shield', s.x, s.y - s.tall - 20, SPELL_GLOW.shield.color, 12, 900);
@@ -2753,6 +2970,22 @@ export class Fx {
 
   /** Burning ground: flames over a 3x3 of tiles for `ms`. */
   private zone(b: Battle, u: number, v: number, ms: number): void {
+    // (BLENDER-FX: the rendered tile of tall flames on each tile's own ground, each a few frames from its neighbours, lower under a fighter so
+    // the one standing in the fire still shows; it carries its own sparks)
+    if (bfxFrames(ZONE_BFX).length) {
+      const until = b.t + ms;
+      const n = bfxClip(ZONE_BFX)?.n ?? 1;
+      for (let du = -1; du <= 1; du++)
+        for (let dv = -1; dv <= 1; dv++) {
+          const tu = u + du;
+          const tv = v + dv;
+          if (!tileAt(b.board, tu, tv)) continue;
+          const [x, y] = this.tilePos(b, tu, tv);
+          const dim = () => (b.units.some((f) => f.alive && f.u === tu && f.v === tv) ? ALIVE.OCCUPIED + 0.15 : 1);
+          this.bfxStand(ZONE_BFX, this.groundOf(tu, tv), x, y, () => b.t < until, { phase: standPhase(tu, tv, n), dim, rise: true });
+        }
+      return;
+    }
     // (each flame stands on its own tile's ground: under whoever stands in the fire, behind whoever stands in front of it)
     const view = new GroundSet();
     const flames: Sprite[] = [];
