@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.481.0',
+    date: '2026-11-11',
+    title: 'Sort and filter your heroes',
+    notes: ['The Heroes roster has Sort and Filter buttons: by level, rank, class, traits, upgrades ready and more. Your choice is remembered.', 'On the party screen, the Satchel and Plan move into a pull-out drawer on the right edge.'],
+  },
+  {
     version: '0.480.0',
     date: '2026-11-11',
     title: 'The War Horn moves; the Codex stays put',
