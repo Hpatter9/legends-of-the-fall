@@ -2,9 +2,10 @@
 
 Run: python3 tools/blender-fx/eidolons/parts_finish.py <parts dir> [<sheets dir>]      (default src/art/eidolons/fx)
 
-Each frame is shrunk to the heroes' pixels, cut to 24 colours shared by all five pieces, and its alpha hardened (bright pixels are there or
+Each frame is shrunk to the heroes' pixels, cut to 32 colours shared by all the pieces, and its alpha hardened (bright pixels are there or
 not; the dark smoke and scorch keep three flat steps of see-through). The sheets are lossless WebP: a single row of frames for the pieces
-the page plays as strips (pillar, fire, scorch, smoke), six to a row for the sigil. `src/eidolonStage.ts` holds each sheet's
+the page plays as strips, rows of them for the explosion and for the ground's sheets (sigil, cracks); the explosion and the pillar
+also get a glow sheet (`-glow`: the light under their brightest parts, a quarter of the size, lossy). `src/eidolonStage.ts` holds each sheet's
 frame size and count, and a test checks them against the files. A contact sheet of every frame is written beside the parts.
 """
 import glob, os, sys
@@ -14,9 +15,11 @@ from PIL import Image, ImageFilter
 args = sys.argv[1:]
 SRC = args[0]
 OUT = args[1] if len(args) > 1 else 'src/art/eidolons/fx'
-COLOURS = 24
+COLOURS = 32
 # (name: frame width, height, frames to a row)
-PARTS = {'sigil': (160, 96, 6), 'pillar': (120, 288, 16), 'fire': (64, 112, 14), 'scorch': (88, 48, 8), 'smoke': (72, 128, 12)}
+PARTS = {'sigil': (160, 96, 6), 'pillar': (144, 352, 16), 'explosion': (320, 300, 10), 'cracks': (256, 136, 6), 'fire': (64, 112, 14), 'scorch': (88, 48, 8), 'smoke': (128, 176, 16), 'embers': (160, 200, 12)}
+# (the big pieces keep a soft glow under their brightest parts: its own sheet, a quarter of the size, the same frames in the same places)
+GLOW = ('pillar', 'explosion')
 LUM = np.array([0.3, 0.59, 0.11], dtype=np.float32)
 
 
@@ -63,6 +66,21 @@ for name, (w, h, cols) in PARTS.items():
     sheet.save(path, lossless=True, method=6)
     size = os.path.getsize(path)
     total += size
+    if name in GLOW:
+        gw, gh = w // 4, h // 4
+        gsheet = Image.new('RGBA', (gw * cols, gh * rows), (0, 0, 0, 0))
+        for i, (rgb, a) in enumerate(fs):
+            lit = rgb * a[..., None]
+            hot = lit * np.clip((lit @ LUM - 0.35) * 2.5, 0, 1)[..., None]
+            g = np.asarray(Image.fromarray((np.clip(hot, 0, 1) * 255).astype(np.uint8), 'RGB').filter(ImageFilter.GaussianBlur(9)).resize((gw, gh), Image.BILINEAR), dtype=np.float32) / 255
+            # (light, not paint: as see-through as it is dim, so it lays over the board without a dark box round it)
+            ga = g.max(axis=2)
+            grgb = np.where(ga[..., None] > 0.004, g / np.maximum(ga[..., None], 0.004), 0)
+            gsheet.paste(Image.fromarray((np.dstack([np.clip(grgb, 0, 1), np.clip(ga * 1.25, 0, 1)]) * 255).astype(np.uint8), 'RGBA'), ((i % cols) * gw, (i // cols) * gh))
+        gpath = os.path.join(OUT, f'askel-stage-{name}-glow.webp')
+        gsheet.save(gpath, quality=78, alpha_quality=80, method=6)
+        total += os.path.getsize(gpath)
+        print(f'{name}-glow: {gsheet.width} x {gsheet.height}, {os.path.getsize(gpath)} bytes')
     contact.append(sheet)
     print(f'{name}: {len(fs)} frames of {w} x {h}, sheet {sheet.width} x {sheet.height}, {size} bytes')
 print('total', total, 'bytes')

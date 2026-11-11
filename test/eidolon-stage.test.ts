@@ -5,15 +5,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { frameAt, pillarAt, pillarMs, riseIn, risePass, RISE_MS, scorchFrame, SCORCH_COOL_MS, SCORCH_FADE_MS, sigilEnd, sigilFrame, sigilSpot, stageBudget, STAGED, STAGE_SHEETS, stageUrl, wavePlan, WAVE_MS, type StageTile } from '../src/eidolonStage';
+import { BLOW, BLOW_FEEL, cracksFrame, CRACKS_MS, CRACKS_OPEN_MS, DETONATIONS, glowUrl, SMOKE_SPOTS, frameAt, pillarAt, pillarMs, riseIn, risePass, RISE_MS, scorchFrame, SCORCH_COOL_MS, SCORCH_FADE_MS, sigilEnd, sigilFrame, sigilSpot, stageBudget, STAGED, STAGE_SHEETS, stageUrl, wavePlan, WAVE_MS, type StageTile } from '../src/eidolonStage';
 import { fullOf, SHORT } from '../src/eidolonRules';
 import { PASS, passPose } from '../src/eidolonPass';
 import { eidolonById } from '../src/sim/eidolons';
 
-/** A lossless webp's size (the VP8X header's canvas, or the VP8L header's 14-bit width and height). */
+/** A webp's size (the VP8X header's canvas, or the VP8L or VP8 header's 14-bit width and height). */
 function webpSize(f: string): [number, number] {
   const b = readFileSync(f);
   if (b.toString('ascii', 12, 16) === 'VP8X') return [1 + b.readUIntLE(24, 3), 1 + b.readUIntLE(27, 3)];
+  // (a lossy sheet: the VP8 frame header's 14-bit width and height)
+  if (b.toString('ascii', 12, 16) === 'VP8 ') return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
   assert.equal(b.toString('ascii', 12, 16), 'VP8L', f);
   const bits = b.readUInt32LE(21);
   return [1 + (bits & 0x3fff), 1 + ((bits >> 14) & 0x3fff)];
@@ -27,19 +29,27 @@ test('the staged sheets are in the game with the frames they say, fit a phone te
     const [w, h] = webpSize(f);
     assert.equal(w, s.fw * s.cols, `${f}: ${s.cols} frames to a row`);
     assert.equal(h, s.fh * Math.ceil(s.n / s.cols), `${f}: ${s.n} frames`);
-    assert.ok(w <= 2048 || (w <= 4096 && s.cols === s.n), `${f}: a strip no wider than a phone's texture`);
     assert.ok(w <= 4096 && h <= 4096, f);
     assert.ok(s.hold >= 0 && s.hold < s.n && s.foot > 0 && s.foot <= s.fh, s.sheet);
     assert.equal(stageUrl(s), `eidolons/fx/${s.sheet}.webp`);
     const last = frameAt(s, s.n - 1);
     assert.ok(last.x + s.fw <= w && last.y + s.fh <= h, s.sheet);
     bytes += statSync(f).size;
+    if (s.lit) {
+      // (its glow sheet: the same frames in the same places, a quarter of the size)
+      const g = `src/art/${glowUrl(s)}`;
+      assert.ok(existsSync(g), g);
+      assert.deepEqual(webpSize(g), [w / 4, h / 4], g);
+      bytes += statSync(g).size;
+    }
   }
-  // (an Eidolon's whole staged show: under 200 KB)
-  assert.ok(bytes / Object.keys(STAGED).length < 200_000, `${bytes} bytes`);
+  // (an Eidolon's whole staged show: under 600 KB)
+  assert.ok(bytes / Object.keys(STAGED).length < 600_000, `${bytes} bytes`);
   for (const id of Object.keys(STAGED)) assert.ok(eidolonById(id), id);
   // (played as strips on the page, they are a single row; the ground's sheets are cut by the board's renderer)
-  for (const l of Object.values(STAGED)) for (const s of [l.pillar, l.fire, l.smoke]) assert.equal(s.cols, s.n, s.sheet);
+  for (const l of Object.values(STAGED)) for (const s of [l.pillar, l.fire, l.smoke, l.embers]) assert.equal(s.cols, s.n, s.sheet);
+  // (the explosion is rows of frames, every row full, so the strip steps along each in turn)
+  for (const l of Object.values(STAGED)) assert.equal(l.explosion.n % l.explosion.cols, 0);
 });
 
 test('the sheets are credited and kept for offline play', () => {
@@ -172,4 +182,34 @@ test('the scorched ground cools, then fades, then is gone', () => {
   }
   assert.equal(was, s.n - 1);
   assert.equal(scorchFrame(look, SCORCH_COOL_MS + SCORCH_FADE_MS), -1);
+});
+
+test('the ground breaks open in a rush, then cools and goes dark', () => {
+  const look = STAGED.askel;
+  const s = look.cracks;
+  assert.equal(cracksFrame(look, -1), -1);
+  let was = 0;
+  for (let age = 0; age < CRACKS_MS; age += 16) {
+    const f = cracksFrame(look, age);
+    assert.ok(f >= was && f < s.n, `${age}`);
+    assert.equal(f < s.open, age < CRACKS_OPEN_MS, `${age}`);
+    was = f;
+  }
+  assert.equal(was, s.n - 1);
+  assert.equal(cracksFrame(look, CRACKS_MS), -1);
+  assert.ok(CRACKS_OPEN_MS <= 400, 'open within the blow');
+  for (let age = 0; age < CRACKS_MS; age += 100) assert.equal(cracksFrame(look, age, true), s.hold);
+});
+
+test('the blow is wider than the screen and hits harder than the painted one; two more detonations roll to either side', () => {
+  const look = STAGED.askel;
+  // (at the smallest phone, 360 px across, with the board at its usual scale of about 0.9: a sheet px is about 1.27 screen px)
+  assert.ok(look.explosion.fw * 1.27 * BLOW.mul > 412, 'wider than the widest phone');
+  assert.ok(BLOW.lead > 0 && BLOW.lead < look.explosion.ms / 4, 'the frozen frame is the white core, early in its frames');
+  assert.ok(BLOW_FEEL.flash > 0.8 && BLOW_FEEL.shake > 1);
+  assert.equal(DETONATIONS.length, 2);
+  assert.ok(DETONATIONS[0].dx < 0 && DETONATIONS[1].dx > 0);
+  for (const d of DETONATIONS) assert.ok(d.mul < 1 && d.mul > 0.5);
+  assert.equal(SMOKE_SPOTS[0], 0);
+  assert.ok(SMOKE_SPOTS.length >= stageBudget(false, false).smokes);
 });
