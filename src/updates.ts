@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.490.0',
+    date: '2026-11-11',
+    title: 'Every land is its own place',
+    notes: ['The caves, crypt and forge sit inside tall lamplit walls; the mire is an island in green swamp water with reeds, lilies and willows.', 'Each land has its own rim of trees, rocks, ruins or lava, its own light and creatures: bats, crows, eagles and falling petals.'],
+  },
+  {
     version: '0.489.0',
     date: '2026-11-11',
     title: 'The War Room and the Crown Terrace',
