@@ -37,6 +37,42 @@ function turned(img: HTMLImageElement, cell: number, q: number, reach = 1): HTML
   return c;
 }
 
+const graded = new Map<string, HTMLCanvasElement>();
+/** How much of a texture's own hue is kept when it is graded to a land's colour (the rest takes the colour; its light and shade are kept whole). */
+const KEEP_HUE = 0.22;
+
+/** One ground texture of a sheet (a slot of its 4 x 4, 256 px) graded to a colour: every pixel keeps its light and shade against the
+ *  texture's own mean and takes the land's hue and brightness, so a hold's trodden siege ground becomes a meadow's green or a dune's sand
+ *  without losing its painting. `rgb` is 0xRRGGBB. Made once and kept. */
+export function gradedGround(hold: Hold, slot: number, rgb: number): HTMLCanvasElement | null {
+  const art = ready.get(hold);
+  if (!art) return null;
+  const key = `${hold}:${slot}:${rgb}`;
+  const have = graded.get(key);
+  if (have) return have;
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d', { willReadFrequently: true })!;
+  g.drawImage(art.ground, (slot % 4) * 256, Math.floor(slot / 4) * 256, 256, 256, 0, 0, 256, 256);
+  const img = g.getImageData(0, 0, 256, 256);
+  const d = img.data;
+  let sum = 0;
+  for (let i = 0; i < d.length; i += 4) sum += d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
+  const mean = sum / (d.length / 4) || 1;
+  const [tr, tg, tb] = [(rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255];
+  const gain = (tr * 0.299 + tg * 0.587 + tb * 0.114) / mean;
+  for (let i = 0; i < d.length; i += 4) {
+    // (its light against the texture's mean, held within bounds so nothing burns out or goes black)
+    const k = Math.max(0.4, Math.min(1.7, (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / mean));
+    d[i] = Math.min(255, d[i] * gain * KEEP_HUE + tr * k * (1 - KEEP_HUE));
+    d[i + 1] = Math.min(255, d[i + 1] * gain * KEEP_HUE + tg * k * (1 - KEEP_HUE));
+    d[i + 2] = Math.min(255, d[i + 2] * gain * KEEP_HUE + tb * k * (1 - KEEP_HUE));
+  }
+  g.putImageData(img, 0, 0);
+  graded.set(key, c);
+  return c;
+}
+
 /** The land's sheet, if it has been loaded. */
 export const floorArt = (hold: Hold): FloorArt | null => ready.get(hold) ?? null;
 

@@ -23,7 +23,7 @@ import { hasTrapArt, loadTrapArt, TRAP_ART_SCALE, trapTexture } from './trapArt'
 import { HAZARD_LOOKS } from './hazardLooks';
 import { flicker, sway } from './ambient';
 import { faceOf, FACE_NAMES, FLOORS, floorRoles, fringesOf, pathOf, ROLES, seamsOf, slotOf, type Fringe, type Role } from './floorRules';
-import { floorArt, loadFloorArt, type FloorArt } from './floorArt';
+import { floorArt, gradedGround, loadFloorArt, type FloorArt } from './floorArt';
 import { turnTile } from '../sim/turn';
 import gateUrl from '../art/camp/gate.png';
 import towerUrl from '../art/camp/tower.png';
@@ -1173,6 +1173,13 @@ export class BoardView {
           g.drawImage(img, sx, sy + part, 64, 20, 0, 0, 64, 20.6);
         }
         g.setTransform(1, 0, 0, 1, 0, 0);
+        if (fset.faceTint) {
+          // (the land's own earth: its hue laid over the sheet's face, the face's light and shade kept)
+          g.globalCompositeOperation = 'color';
+          g.fillStyle = fset.faceTint;
+          g.fillRect(0, 0, TW, TH + deep);
+          g.globalCompositeOperation = 'source-over';
+        }
         if (fset.tone) {
           g.fillStyle = fset.tone;
           g.fillRect(0, 0, TW, TH + deep);
@@ -1227,7 +1234,10 @@ export class BoardView {
       //  ground runs on from tile to tile; or a shared picture for what the sheet does not paint)
       const lay = (c: CanvasRenderingContext2D, r: Role): boolean => {
         const slot = slotOf(fset, r);
-        if (slot >= 0) c.drawImage(fa.ground, (slot % 4) * 256 + mod4(fl.U) * 64, Math.floor(slot / 4) * 256 + mod4(fl.V) * 64, 64, 64, 0, 0, SRC, SRC);
+        // (the land's own colour for this ground, where it has one: the sheet's painting graded to it, `gradedGround`)
+        const own = slot >= 0 && fset.tint?.[r] !== undefined ? gradedGround(fset.hold, slot, fset.tint[r]!) : null;
+        if (own) c.drawImage(own, mod4(fl.U) * 64, mod4(fl.V) * 64, 64, 64, 0, 0, SRC, SRC);
+        else if (slot >= 0) c.drawImage(fa.ground, (slot % 4) * 256 + mod4(fl.U) * 64, Math.floor(slot / 4) * 256 + mod4(fl.V) * 64, 64, 64, 0, 0, SRC, SRC);
         else if (r === 'ice') c.drawImage(art!.ice, 0, 0, SRC, SRC);
         else if (r === 'lava' || r === 'coals') c.drawImage(art!.lava, 0, 0, SRC, SRC);
         else if (r === 'water' || r === 'deep') c.drawImage(art!.water, 0, 0, SRC, SRC);

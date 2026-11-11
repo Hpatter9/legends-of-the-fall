@@ -175,3 +175,20 @@ test('the face under a top fits it: stone under stone, a wet face under water', 
     assert.equal(slotOf(s, 'ice'), -1);
   }
 });
+
+test('each land\'s floor is its own land\'s colour: no darker than the tops it replaced, and its two grounds can be told apart', () => {
+  // (the mean colour of each land's old ground top, `src/art/areas/<land>/top1.png`, measured once: the floor it had before the painted sheets)
+  const OLD: Record<string, number> = { highlands: 0x5c773c, forest: 0x2f6531, desert: 0xbd9557, volcano: 0x362524, dungeon: 0x404053, plains: 0x649738, autumn: 0x96561e, swamp: 0x294d36, graveyard: 0x38453d, ruins: 0x786c54, temple: 0x336f40, crystal: 0x3c3b86, forge: 0x412f27, shrine: 0x453367, warcamp: 0x655a28, oasis: 0xbd9557 };
+  const lum = (c: number) => ((c >> 16) & 255) * 0.299 + ((c >> 8) & 255) * 0.587 + (c & 255) * 0.114;
+  const apart = (a: number, b: number) => Math.abs(((a >> 16) & 255) - ((b >> 16) & 255)) + Math.abs(((a >> 8) & 255) - ((b >> 8) & 255)) + Math.abs((a & 255) - (b & 255));
+  for (const area of AREAS) {
+    const s = FLOORS[area];
+    // (the snowfields keep their sheet's own snow: it is the one land the sheet already fitted)
+    if (area === 'snow') continue;
+    assert.ok(s.tint?.ground !== undefined, `${area} has its own ground colour`);
+    assert.ok(lum(s.tint!.ground!) >= lum(OLD[area]) - 4, `${area}: its ground is darker than the old one`);
+    const second = area === 'oasis' ? s.tint!.shore : s.tint!.second;
+    assert.ok(second !== undefined && apart(s.tint!.ground!, second) >= 40, `${area}: its two grounds are too alike`);
+    if (s.tint!.path !== undefined) assert.ok(apart(s.tint!.ground!, s.tint!.path) >= 40, `${area}: its path does not show`);
+  }
+});

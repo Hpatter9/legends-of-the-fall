@@ -161,12 +161,35 @@ shown and are already in the service worker's list, so they are there offline.
 9. The bare edge: partly (the faces are now the land's own, and lava pours off the ashlands' edge); waterfalls and growth on the edge
    are Step 4.
 
-**For the owner to look at:** the painted sheets are richer and a little darker than the old recoloured pixel tops, so the boards look
-more painted and less blocky. The meadows and the autumn wood are toned brighter to keep their old mood. The tile grid is now faint on
-flat ground; if placing heroes feels harder to read, the faint line's strength is one number (`0.1` in `boardView.ts`).
+**For the owner to look at:** the floors are painted textures now, graded to each land's own colours (see "Step 2, redone" below), so
+the boards look more painted and less blocky. The tile grid is now faint on flat ground; if placing heroes feels harder to read, the faint line's strength is one number (`0.1` in `boardView.ts`).
 
 **Shots:** `docs/samples/living-fields/floor-<land>-<layout>.png` (the same 51 boards as `before-*`), and `-360` and `-412` for the mire,
 the ruins and the oasis. No page errors at any size.
+
+## Step 2, redone: the colour (the director's review)
+
+The first cut of Step 2 (`26ab127f`) was not released. Its structure was kept; its colour was wrong on most lands: the hold sheets are
+dark, trodden siege ground, so the meadows went olive-brown, the wood and the mire yellow-brown, the ashlands flat grey, the crypt one
+grey, and the oasis lost both its sand and its green.
+
+**The fix: each land's own colours, the sheet's painting kept** (`FloorSet.tint`, `gradedGround` in `floorArt.ts`). For each kind of
+ground a land names a colour. The sheet's texture is graded to it once, pixel by pixel: every pixel keeps its light and shade against
+the texture's own mean (held between 0.4 and 1.7 of it, so nothing burns out or goes black) and takes the land's hue and brightness,
+with a fifth of its own hue left in so flowers and leaves still show. The faces take the land's earth as a hue blend where the sheet's
+is not the land's (`FloorSet.faceTint`: the wood, the mire, the ashlands, the crypt, the caves). The snowfields are untouched: the one
+land the sheet already fitted.
+
+- **No darker than before.** Each land's ground colour is at least as bright as the mean of the top it replaced
+  (`src/art/areas/<land>/top1.png`, measured; a test holds it).
+- **Two grounds that can be told apart.** Grass and heather-earth on the moor, grass and leaf mould in the wood, sand and clay on the
+  dunes, sand and green at the oasis, stone and moss in the crypt; a test holds the second ground and the path at least 40 apart from
+  the ground (summed over red, green and blue).
+- **On their backdrops.** `docs/samples/living-fields/colour-before-after-1.jpg` to `-3.jpg`: all seventeen lands, the old floor beside
+  the new, each on its own backdrop (`tools/living-fields/pairs.py`).
+- The dunes and the oasis take the sheet's sandstone wall for their faces (the banked red earth read as brick).
+- Step 3's tile marks and Step 4's life sit on the recoloured floors (the `floor-*`, `traps-*` and `life-*` shots were taken before the
+  redo and show the first cut's colours; the `colour-*` sheets are the floors as they are now).
 
 ## Step 3: hazards and traps
 
