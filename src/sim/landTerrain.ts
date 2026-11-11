@@ -5,8 +5,8 @@
 //
 // - THE MIRE FLOODS: two or three pools of shallow water lie on its lowest open ground, a few tiles each. Shallow water slows a walker
 //   (a step into it takes twice as long) and fliers do not mind, as on any board; nothing is deep, so nobody is cut off.
-// - THE SNOWS (more ice), THE ASHLANDS (more lava) and THE HIGHLANDS (more boulders) are laid the same way, each with its own `on`:
-//   a land's is on only where its measure allowed it (docs/notes/land-identity.md, "The other three lands").
+// - THE SNOWS (more ice), THE ASHLANDS (more lava) and THE HIGHLANDS (more boulders) are laid the same way, each with its own `on`
+//   and its own numbers: the snows' is on; the other two are off (what met the balance rule did not show at phone size) (docs/notes/land-identity.md, "The other three lands").
 
 import { boardOk, DEPLOY_ROWS, DIRS, standable, tileAt, type Area, type Board, type Tile } from './board';
 import { fieldOk } from './fieldTraps';
@@ -33,12 +33,14 @@ export const FLOODS: Partial<Record<Area, Flood>> = {
   swamp: { kind: 'water', on: true, pools: [2, 3], size: [2, 4], over: 1, most: 0.3 },
   // (the snows freeze over: sheets of ice, which a walker slides across)
   snow: { kind: 'ice', on: true, pools: [2, 3], size: [2, 4], over: 99, most: 0.3 },
-  // (the ashlands crack open: more lava in the middle ground, never in either side's rows. OFF: measured, it moved the whole by 3.4
-  //  points and two bands by more than 10)
-  volcano: { kind: 'lava', on: false, pools: [1, 2], size: [2, 3], over: 99, most: 0.22 },
-  // (the high country is strewn with boulders, in the middle ground, kept only where everyone can still get round them. OFF: measured,
-  //  it moved the whole by 4.6 points and two bands by more than 10)
-  highlands: { kind: 'rock', on: false, pools: [2, 3], size: [1, 2], over: 99, most: 0.2 },
+  // (the ashlands crack open: one more run of lava in the middle ground, never in either side's rows. OFF. As first built (one or two
+  //  patches of two to three tiles) it moved the whole by 3.4 points and two bands by more than 10; at these lighter numbers it is
+  //  within the rule (+1.6, no band over 6), but a tile or two more of lava does not show at phone size, so it is not worth a rule)
+  volcano: { kind: 'lava', on: false, pools: [1, 1], size: [1, 2], over: 99, most: 0.22 },
+  // (the high country has one more boulder in the middle ground, kept only where everyone can still get round it. OFF. Two or three
+  //  clumps moved the whole by 4.6 points and the minotaurs by 13.5, and even two boulders moved them by 8; one is within the rule
+  //  (-0.1, no band over 4.5), but one boulder more does not show at phone size)
+  highlands: { kind: 'rock', on: false, pools: [1, 1], size: [1, 1], over: 99, most: 0.2 },
 };
 
 /** Whether a tile can take a patch: plain open ground with nothing on it. */
