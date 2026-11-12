@@ -35,6 +35,9 @@ for _id in ('nivra', 'gorm', 'voltara', 'aurelan', 'vaelkhar'):
 # slabs only stand, to keep his show the size of the others)
 SHOWS['gorm']['parts'].update({'pillar': (144, 352, 14), 'explosion': (320, 300, 7)})
 SHOWS['gorm']['keep'] = {'pillar': [0, 1, 2, 3, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15], 'explosion': [0, 1, 2, 3, 4, 5, 7, 9, 10, 11, 12, 13, 14, 15]}
+# (Aurelan's shaft of rays is busy in every frame: it ships without two of the frames in which it only stands)
+SHOWS['aurelan']['parts'].update({'pillar': (144, 352, 14)})
+SHOWS['aurelan']['keep'] = {'pillar': [0, 1, 2, 3, 4, 5, 7, 9, 10, 11, 12, 13, 14, 15]}
 PARTS, GLOW, KEEP = SHOWS[ID]['parts'], SHOWS[ID]['glow'], SHOWS[ID]['keep']
 LUM = np.array([0.3, 0.59, 0.11], dtype=np.float32)
 
