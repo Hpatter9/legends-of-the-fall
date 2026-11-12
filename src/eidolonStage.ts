@@ -122,6 +122,40 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
     smoke: sheet('voltara-stage-smoke', 128, 176, 16, 16, 1700, 160, 6),
     from: 'left',
   },
+  // Aurelan, light (`aurelan_parts.py`): straight, clean and golden where lightning is jagged and blue. A sun cut in light, lit from
+  // its middle outward; a shaft of dawn from above the screen as his way in, rings of light running down it; the blow a sunburst
+  // (a disc throwing long turning rays), beams descending across the foes' side and a radiant shock racing out along the ground;
+  // the ground piece is a sun of rays and rings, the tile piece a small beam, the mark a disc of gold light, with motes climbing.
+  aurelan: {
+    sigil: { ...sheet('aurelan-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
+    pillar: { ...sheet('aurelan-stage-pillar', 144, 352, 14, 14, 1400, 320, 4), lit: true },
+    explosion: { ...sheet('aurelan-stage-explosion', 320, 300, 16, 8, 1900, 250, 7), lit: true },
+    cracks: { ...sheet('aurelan-stage-cracks', 256, 136, 12, 6, 0, 68, 4), open: 4 },
+    embers: sheet('aurelan-stage-embers', 160, 200, 12, 12, 2200, 190, 0),
+    fire: sheet('aurelan-stage-fire', 64, 112, 14, 14, 1400, 104, 4),
+    scorch: { ...sheet('aurelan-stage-scorch', 88, 48, 8, 8, 0, 24, 2), hot: 5 },
+    smoke: sheet('aurelan-stage-smoke', 128, 176, 16, 16, 2000, 160, 6),
+    from: 'left',
+    front: true,
+  },
+  // Vaelkhar, shadow (`vaelkhar_parts.py`): where the others throw light out, his takes it in. Black fire with a violet edge. A
+  // crown of horns and a slit eye; a tear in the air as his way in, opening to a black lens and snapping shut; the blow a maw on the
+  // foes' middle and two wings of dark swept out across their side, which the maw then drains back into itself, closing on a last
+  // violet spark; the ground piece is the rift (jagged tears, left lying black), the tile piece black tongues, the mark blight, with
+  // dark smoke and violet motes drawn upward.
+  vaelkhar: {
+    sigil: { ...sheet('vaelkhar-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
+    pillar: { ...sheet('vaelkhar-stage-pillar', 144, 352, 14, 14, 1700, 320, 6), lit: true },
+    explosion: { ...sheet('vaelkhar-stage-explosion', 320, 300, 16, 8, 2300, 250, 7), lit: true },
+    cracks: { ...sheet('vaelkhar-stage-cracks', 256, 136, 12, 6, 0, 68, 4), open: 4 },
+    embers: sheet('vaelkhar-stage-embers', 160, 200, 12, 12, 1700, 190, 0),
+    fire: sheet('vaelkhar-stage-fire', 64, 112, 14, 14, 1500, 104, 5),
+    scorch: { ...sheet('vaelkhar-stage-scorch', 88, 48, 8, 8, 0, 24, 3), hot: 5 },
+    smoke: sheet('vaelkhar-stage-smoke', 128, 176, 16, 16, 2200, 160, 6),
+    from: 'right',
+    front: true,
+    aftershock: true,
+  },
 };
 
 /** Every sheet the staged shows load (for the tests and the credits). */
