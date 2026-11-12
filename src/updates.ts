@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.546.0',
+    date: '2026-11-12',
+    title: 'The glow sheet no longer stalls a fight',
+    notes: ['The large glow sheet under light effects is now decoded off the game\'s main thread; handing it to the graphics card was stalling a fight for a moment.'],
+  },
+  {
+    version: '0.545.0',
+    date: '2026-11-12',
+    title: 'The Gorgon\'s gaze',
+    notes: ['The Gorgon\'s gaze is now a row of small eyes opening at head height from her to each foe, the stone rising as the row arrives, not pale discs on the floor.'],
+  },
+  {
     version: '0.544.0',
     date: '2026-11-12',
     title: 'The next battlefield, painted as you fight',
