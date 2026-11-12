@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.514.0',
+    date: '2026-11-12',
+    title: 'Eidolon polish',
+    notes: ['Aurelan\'s beams are woven of bright threads with amber edges, and his sunburst has a ragged crown of turning rays.', 'Gorm\'s flash throws amber rays along the ground, and Voltara\'s white flash is shorter so her forks can be seen.'],
+  },
+  {
     version: '0.513.0',
     date: '2026-11-12',
     title: 'Vaelkhar\'s call, remade in shadow',
