@@ -621,6 +621,62 @@ are taken in the strike's first moments (`EARLY=1`): their blows come at once, a
 - **The Nightstalker**'s strike was a faint smear with the talons late. The talons come first now: three great purple talons
   down across the foe at the blow, then the bats scattering. In the photograph: the talons at the moment of the blow.
 
+### The director's second looks: meteors, the Seraph, the bell, the wave
+
+`docs/samples/blender-fx/audit-later-1-393.jpg` (four moments of each, chosen to catch the thing; the screen's flash off for the
+first two; `AT=` on the photographer picks the strike's moments).
+
+- **The Wizard's meteors** were bright wedges, and not seen in a fight. A new scene, `meteors`: round burning rocks (a dark rock
+  in a hood of flame, a short tail behind) coming down on a slant, each onto its own spot, a flash and a ring where each lands.
+  In the photograph: a burning rock in the sky on its way down with a second behind it; then the flash, smoke and ring where
+  they land; then the field of fire.
+- **The Seraph's column** was pale and see-through and her wings hard to find. The column is drawn solid (`dense`, hers only) and
+  the wings are a third larger than the scene's usual (they were by mistake smaller). In the photograph: a solid golden column
+  over the crowd with a fan of long feathers out to each side of it and rings under.
+- **The Wanderer's hearts** were tiny. Her strike on each friend is two thirds larger. In the photograph: wide pools of gold
+  light with rings on each friend and pale hearts over them. Honest: the pools and rings are what is seen; the hearts are still
+  the smaller part.
+
+
+### The director's second looks, 2: the Gorgon's gaze, the Gunslinger's shots, the Kunoichi's marks
+
+`docs/samples/blender-fx/audit-later-2-393.jpg` (rows: the Gorgon, the Gunslinger, the Kunoichi; six moments each, the first two
+from the blow on with the screen's flash off).
+
+- **The Gorgon's gaze**: each eye of the row is about half a fighter tall now (it was a quarter) and stays open nearly a second
+  (it was 420 ms), so the whole row stands at once; and the pale mist under her stone is all but gone (`crystal`, under stone
+  only). In the photograph's third moment: a row of large purple eyes from her across to the foes, and grey stone standing on
+  them, with no pale discs.
+- **The Gunslinger, High Noon**: each hit is a sharp star of sparks and a puff of smoke (no glowing disc, no ring). In the
+  photograph: the flash at her, and a string of small bright bursts running out to the targets.
+- **The Kunoichi's marks**: the aftermath under each foe is five eighths the size it was (a test holds a floor of 1.2 tiles for
+  any stage, so it is just above that, not smaller). In the photograph: her purple cut on the foe at the blow. NOT SHOWN: I did
+  not catch the smaller marks in a fight frame; they are on the clip's sheet only.
+
+### The rule about things, and three taken out (the director, 2026-11-12)
+
+`docs/samples/blender-fx/audit-later-3-393.jpg` (rows: the Sea Reaver, the Bell Warden, Ilyra; six moments from the blow on).
+
+Three times I built a recognisable object out of plain solids and each failed: a ghost ship (a crude purple model), a wave (a
+smooth pale blob, a jellyfish), a bell (a pale cone, a straw hat). A fourth, a figure of light for Ilyra, I had pushed before the
+director's message reached me. **The rule: this pipeline does not model things.** It is good at energy, particles, cracks, rings,
+fire, smoke, slashes, shards and light. When an ultimate seems to want a thing, show what the ability does with those, or ask for
+painted art with a prompt. The scenes `wave` and `angel` are deleted; `toll` and `broadside` are kept without their objects; a
+test holds that no clip uses the deleted two. (The wolves, the hawks and the spirit guardians are older modelled things the
+director passed; they are small, and are not changed here.)
+
+- **The Sea Reaver, Wrath of the Reef**: no wave. A whirl of water gathers under him in the wind-up; the strike is laid along
+  his line (`line`, running out from him): foam streaking along the ground, spray flung up, rings of wet shine, on each tile and
+  foe of it. In the photograph: the whirl under him; then rings and a swirl of water where he lands and on the foe beside it.
+  Honest: it reads as water bursting at two spots more than as a tide surging across the tiles; the line was short in this fight.
+- **The Bell Warden, Midnight Knell**: no bell. The toll is sound: heavy hoops drop from overhead to the ground, three strokes,
+  and spread wide; the ground cracks and dust jumps. In the photograph: three purple hoops stacked over him, falling, in the
+  wind-up; one thick hoop landing at the blow. Honest: the wind-up reads; the strike at the blow is one small hoop, and the cracks
+  and dust are not seen in these frames. The small ring on each foe as a hoop passes is not built.
+- **Ilyra, Death Denied**: the modelled figure is gone. Her wings are twice the size they were and her halo four rays, not nine,
+  so the wings are not lost among them. In the photograph: wide gold rings over the allies with a fan of feathers above them.
+  A painted figure has its prompt in `docs/notes/ilyra-art-prompts.md`.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in

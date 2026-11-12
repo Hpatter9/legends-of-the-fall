@@ -33,7 +33,7 @@ test('no strike has the great blow under it: each of the eight that had it has a
   // colour over the field; the director's order, 2026-11-12, is that none may be)
   for (const kind of Object.keys(SHOWCASES)) assert.ok(!BFX_CLIPS[`ult-${kind}-strike`].sc?.includes('impact'), `${kind} has the great blow`);
   // (what each of the eight is instead: a cut, a landing, a crash, a shell, meteors, a nova, a column, shells)
-  const own: Record<string, string> = { samurai: 'arc+sparks', barbarian: 'crack+shockwave+gust', bloodGargoyle: 'shockwave+slab+crack', siegeBot: 'shaft+crack+smoke', wizard: 'rain+crack+smoke', astrologer: 'implode+nova+sigil', seraph: 'pillar+wings+ring', bombardier: 'strike+flames' };
+  const own: Record<string, string> = { samurai: 'arc+sparks', barbarian: 'crack+shockwave+gust', bloodGargoyle: 'shockwave+slab+crack', siegeBot: 'shaft+crack+smoke', wizard: 'meteors+crack+smoke', astrologer: 'implode+nova+sigil', seraph: 'pillar+wings+ring', bombardier: 'strike+flames' };
   for (const [kind, look] of Object.entries(own)) assert.equal(BFX_CLIPS[`ult-${kind}-strike`].sc!.join('+'), look, kind);
   // (and none of the eight is a ball of flame: `burst` is the fireball)
   for (const kind of Object.keys(own)) assert.ok(!BFX_CLIPS[`ult-${kind}-strike`].sc!.includes('burst'), kind);
@@ -110,7 +110,8 @@ test('a strike on each one the ability touched finds them: the friends helped (a
   // (High Noon: each of the six shots is a bullet's path of sparks from her to its target, then a small sharp impact there)
   assert.ok(ultLinked('gunslinger'));
   assert.equal(ultLinkClip('gunslinger'), 'blow');
-  assert.deepEqual(BFX_CLIPS['ult-gunslinger-strike'].sc, ['sparks', 'ring']);
+  // (each hit a sharp spark and a puff of smoke: the director's second order, in place of a glowing disc and ring)
+  assert.deepEqual(BFX_CLIPS['ult-gunslinger-strike'].sc, ['sparks', 'smoke']);
   // (no fire is left on the ground by bullets)
   assert.ok(!BFX_CLIPS['ult-gunslinger-aftermath'].sc!.includes('flames'));
 });
@@ -121,7 +122,12 @@ test('Vael\'s totality lasts: a black sun hangs over him for its eight seconds, 
   assert.equal(BFX_CLIPS['ult-vael-strike'].el, 'holy');
   assert.ok(BFX_CLIPS['ult-vael-windup'].sc!.includes('eclipse'));
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /this\.bfxStand\(lasts\.clip, this\.root, \.\.\.over\(\), \(\) => b\.t < until && me\.alive/);
+  // (wings of light and a halo on each ally; a modelled figure was tried and taken out: a thing wants painted art, the director's rule)
   assert.deepEqual(BFX_CLIPS['ult-ilyra-strike'].sc, ['wings', 'halo']);
+  // (the same rule: the Bell Warden's toll is hoops of sound, cracks and dust, no bell; the Sea Reaver's is a tide along his line, no wave)
+  assert.deepEqual(BFX_CLIPS['ult-bellWarden-strike'].sc, ['toll', 'crack', 'gust']);
+  assert.equal(ultPlace('seaReaver'), 'line');
+  for (const c of Object.values(BFX_CLIPS)) for (const sc of c.sc ?? []) assert.ok(!['angel', 'wave'].includes(sc), sc);
   for (const kind of ['ilyra', 'seraph', 'samurai']) assert.ok(!BFX_CLIPS[`ult-${kind}-strike`].sc!.includes('dome'), kind);
   assert.deepEqual(BFX_CLIPS['ult-kunoichi-strike'].sc, ['arc', 'cross', 'ring']);
   assert.ok(ULT_LINK_MS >= 100 && ULT_LINK_MS <= 400);
