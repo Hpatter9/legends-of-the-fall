@@ -9,7 +9,7 @@ import '../src/sim/battle';
 import { BFX_CLIPS, BFX_CORE, BFX_DENSITY, BFX_GLOW_SHRINK, BFX_PX, BFX_SOFT } from '../src/render/blenderFxData';
 import {
   BFX_FADE_MS, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, bfxAlpha, bfxBox, bfxBudget, bfxCentre, bfxClip, bfxFrame, bfxLife, bfxRect, bfxStage, spellBfx,
-  standPhase, ultBfx, beatBfx, beatKeys, beatLine, BEAT_LINE, type BeatClip,
+  standPhase, ultBfx, ultPlace, beatBfx, beatKeys, beatLine, BEAT_LINE, type BeatClip,
   type BfxClip, type SpellPartName,
 } from '../src/render/blenderFxRules';
 import { SPELL_IDS, SPELLS, WALLS } from '../src/sim/spells';
@@ -19,6 +19,9 @@ import { makeBoard } from '../src/sim/board';
 import { STAGE_ART, STAGE_NAMES, ULT_STAGES, ultWeight } from '../src/ultStageRules';
 import { SHOWCASES } from '../src/ultShowRules';
 import { ELEMENTS } from '../src/render/fxRules';
+
+/** ULT-AUDIT: the heroes whose ultimate is one great blow (the recipe's `GREAT`). */
+const GREAT = new Set(/^GREAT = \{([^}]+)\}/m.exec(readFileSync('tools/blender-fx/effects.py', 'utf8'))![1].split(',').map((k) => k.trim().replace(/'/g, '')));
 
 const PARTS: SpellPartName[] = ['cast', 'hit', 'fly', 'land', 'stand'];
 const clips = Object.entries(BFX_CLIPS);
@@ -234,17 +237,22 @@ test('every hero\'s ultimate has its three stages hung on STAGE_ART: its own str
       assert.equal(art.on, stage === 'windup' ? 'caster' : 'struck');
       assert.ok(!c.loop && c.n >= 7, `${art.sheet}: played once across its stage`);
       // (a show's sheets are drawn big: a wind-up wraps the caster, a strike covers two tiles and more)
-      assert.ok(art.tiles >= (stage === 'strike' ? 3 : 1.2) && art.tiles <= 12, `${art.sheet}: ${art.tiles} tiles`);
+      // (ULT-AUDIT: a strike that plays on each fighter the ability touches, or round the caster, is a fighter's size and a little more)
+      assert.ok(art.tiles >= (stage === 'strike' ? (ultPlace(kind) === 'one' ? 3 : 1.2) : 1.2) && art.tiles <= 12, `${art.sheet}: ${art.tiles} tiles`);
     }
     assert.equal(arts.strike!.sheet, `ult-${kind}-strike`);
-    // (the strike is the blow itself, a core, shock rings and debris, under the hero's own two scenes staged one into the other; it is the
-    // biggest thing in the game: four tiles and more across or high for a blow, more for a storm or a summoning)
+    // (ULT-AUDIT: only an ability that IS one great blow has the blow itself under its own scenes (a core, shock rings, rubble); every
+    // other strike is its own scenes alone, two or three of them staged one into the other)
     const strike = bfxClip(arts.strike!.sheet)!;
-    assert.equal(strike.cuts?.length, 3, kind);
-    assert.equal(strike.sc?.[0], 'impact', kind);
-    const most = Math.max(strike.w, strike.h) / BFX_DENSITY;
-    assert.ok(most >= (['storm', 'summon'].includes(ultWeight(kind)) ? 5 : 4), `${kind}'s strike is ${strike.w}x${strike.h}: ${most.toFixed(1)} tiles`);
-    assert.ok(strike.w * strike.h > biggestSpell, `${kind}'s strike is no bigger than a spell`);
+    assert.equal(strike.sc?.[0] === 'impact', GREAT.has(kind), `${kind}: ${strike.sc}`);
+    assert.ok(!strike.sc!.slice(1).includes('impact'));
+    assert.ok(strike.cuts!.length >= 2 && strike.cuts!.length <= 4, kind);
+    if (ultPlace(kind) === 'one') {
+      // (one great thing in the midst of what it struck: four tiles and more across or high, more for a storm or a summoning)
+      const most = Math.max(strike.w, strike.h) / BFX_DENSITY;
+      assert.ok(most >= (GREAT.has(kind) ? (['storm', 'summon'].includes(ultWeight(kind)) ? 5 : 4) : 3), `${kind}'s strike is ${strike.w}x${strike.h}: ${most.toFixed(1)} tiles`);
+      assert.ok(strike.w * strike.h > biggestSpell * (GREAT.has(kind) ? 1 : 0.5), `${kind}'s strike is no bigger than a spell`);
+    }
     // (its own wind-up once its turn has come, else the one its weight and element share)
     assert.ok(arts.windup!.sheet === `ult-${kind}-windup` || arts.windup!.sheet.startsWith(`ultwind-${ultWeight(kind)}-`), `${kind} winds up as a ${ultWeight(kind)}`);
     for (const stage of STAGE_NAMES) assert.equal(bfxClip(arts[stage]!.sheet)!.el, bfxClip(arts.strike!.sheet)!.el, `${kind}: one element through its three stages`);

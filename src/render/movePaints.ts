@@ -234,8 +234,10 @@ export const AURA_ALPHA_OF: Readonly<Record<string, number>> = { 'storm-cloud': 
  *  shoulders, at full strength for as long as the aura lasts (the owner's report, 2026-11-12: they had become too small and faint to see).
  *  `n` (`saver` on the battery saver), `mult` times the painted size, `r` the ring's radius in tiles, `lift` px over the ground, `turn` ms
  *  to a radian. */
-export const AURA_MOTES: Readonly<Record<string, { n: number; saver: number; mult: number; r: number; lift: number; turn: number }>> = {
-  'spirit-guardians': { n: 4, saver: 3, mult: 2.2, r: 1.25, lift: 30, turn: 900 },
+export const AURA_MOTES: Readonly<Record<string, { n: number; saver: number; mult: number; r: number; lift: number; turn: number; bfx?: string }>> = {
+  // (`bfx`: the rendered loop that is the spirits themselves, four ghostly figures a fighter tall circling round and round; the painted
+  // spirits circle in its place until it has loaded)
+  'spirit-guardians': { n: 4, saver: 3, mult: 2.2, r: 1.25, lift: 30, turn: 900, bfx: 'aura-spirits' },
 };
 /** How big a hanging aura (the storm cloud) is drawn, times its brief size: the cloud is painted faint, so it is shown a little larger. */
 export const HANG_MULT = 1.5;
