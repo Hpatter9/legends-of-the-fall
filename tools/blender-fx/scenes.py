@@ -931,9 +931,9 @@ def ribs(c, length=1.0, n=3, h=1.2, hold=True):
 
 
 # 33. Flames: a tile's small fire burning on the ground (a loop): three tongues and their sparks.
-def flames(c, r=0.42, h=0.9, tongues=3):
+def flames(c, r=0.42, h=0.9, tongues=3, slim=1.0):
     m, cut = c.flame(2.8, 0.45, 1.3, stretch=(1, 1, 0.5))
-    parts = [(c.teardrop(m), c.rnd.uniform(0, TAU), c.rnd.uniform(0.0, 0.6) * r, c.rnd.uniform(0.6, 1.0), c.rnd.uniform(0, 1)) for _ in range(tongues)]
+    parts = [(c.teardrop(m), c.rnd.uniform(0, TAU), c.rnd.uniform(0.0, 0.6 if slim == 1.0 else 0.95) * r, c.rnd.uniform(0.6, 1.0), c.rnd.uniform(0, 1)) for _ in range(tongues)]
     rise = _rise(c, 6, r, h * 1.6, 'hot', 0.035, 0.4)
     glow, ga = c.disc('mid', 0.8, r * 1.5)
 
@@ -943,7 +943,8 @@ def flames(c, r=0.42, h=0.9, tongues=3):
         for o, a, rad, s, ph in parts:
             w = math.sin((t + ph) * TAU)
             hh = h * s * (1 + 0.15 * w)
-            put(o, (math.cos(a) * rad, math.sin(a) * rad, hh / 2), (r * 0.75 * s, r * 0.75 * s, hh / 2), (0.08 * w, 0, 0))
+            # (`slim`: a big fire is many narrow tongues, not a few fat ones, which read as a heap of lumps)
+            put(o, (math.cos(a) * rad, math.sin(a) * rad, hh / 2), (r * 0.75 * s * slim, r * 0.75 * s * slim, hh / 2), (0.08 * w, 0, 0))
         ga.inputs[1].default_value = 1.2 + 0.2 * math.sin(t * TAU)
         rise(t)
     return step
@@ -1841,7 +1842,7 @@ def whirlpool(c, r=1.6, arms=5, flecks=16):
 
 
 # 59. Sandstorm: a low wide wall of blown sand, broken bands of it racing round at different heights and speeds, grit carried up.
-def sandstorm(c, r=1.5, h=1.1, bands=6, grit=18):
+def sandstorm(c, r=1.5, h=1.1, bands=6, grit=18, wide=0.16):
     m, a, _ = c.streak('mid', 'bright', 1.1, 1.1, noise=5.0)
     strips = []
     for k in range(bands):
@@ -1849,7 +1850,7 @@ def sandstorm(c, r=1.5, h=1.1, bands=6, grit=18):
         rad = r * c.rnd.uniform(0.75, 1.05)
         a0, span = c.rnd.uniform(0, TAU), c.rnd.uniform(1.6, 2.8)
         pts = [((math.cos(a0 + span * i / 24) * rad, math.sin(a0 + span * i / 24) * rad, z), (0, 0, 1)) for i in range(25)]
-        strips.append((c.ribbon(pts, lambda u: 0.16 * math.sin(u * math.pi) + 0.01, m), c.rnd.uniform(0.7, 1.5) * (1 if k % 2 else -1)))
+        strips.append((c.ribbon(pts, lambda u: wide * math.sin(u * math.pi) + 0.01, m), c.rnd.uniform(0.7, 1.5) * (1 if k % 2 else -1)))
     rise = _rise(c, grit, r, h * 1.2, 'bright', 0.045, 5.0)
     dust, da = c.disc('ramp', 0.7, r * 1.1, noise=5)
 

@@ -177,8 +177,8 @@ BIG = dict(
     siphon=(dict(r=0.9, h=2.2, n=7), 1.7, 3.4), cloud=(dict(r=1.6, h=0.9, puffs=10), 2.0, 1.8), souls=(dict(r=1.4, h=2.4, n=8), 2.0, 3.4),
     veil=(dict(r=1.0, h=2.0, panes=9), 1.6, 2.6), portal=(dict(r=1.0, z=1.2), 1.8, 3.2), pillar=(dict(r=0.9, h=3.2, sparks=30), 1.8, 3.6),
     shout=(dict(r=1.8, h=1.6, n=5), 2.2, 3.2), swarm=(dict(r=1.5, h=2.0, n=30), 1.9, 2.6), motes=(dict(r=1.6, h=2.2, n=34, crosses=7), 2.0, 2.6),
-    hearts=(dict(r=1.0, h=2.0, n=9), 1.5, 2.6), wall=(dict(length=3.0, h=1.7, tongues=9), 2.4, 2.2), flames=(dict(r=1.3, h=1.3, tongues=9), 1.9, 2.2),
-    palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), whirlpool=(dict(r=1.7, arms=5), 2.0, 0.8), sandstorm=(dict(r=1.6, h=1.3), 1.9, 1.8),
+    hearts=(dict(r=1.0, h=2.0, n=9), 1.5, 2.6), wall=(dict(length=3.0, h=1.7, tongues=9), 2.4, 2.2), flames=(dict(r=1.3, h=2.0, tongues=14, slim=0.36), 1.9, 3.0),
+    palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), whirlpool=(dict(r=1.7, arms=5), 2.0, 0.8), sandstorm=(dict(r=2.3, h=2.3, bands=11, grit=44, wide=0.36), 2.8, 3.2),
     wings=(dict(r=1.4, h=2.1), 1.7, 2.9), banner=(dict(h=2.4, w=1.3), 1.7, 2.9), eyes=(dict(r=2.5, n=3, size=3.0), 3.1, 2.7),
     flock=(dict(r=1.4, h=2.6, n=6, size=2.3), 4.0, 5.2),
     implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
@@ -489,8 +489,9 @@ BEATS = dict(
     blow=('sparks', dict(r=0.55, n=10, z=0.55), box(1.0, 1.2), 7, 400, {}),
     # (the dust a run kicks up, laid along it)
     dust=('gust', dict(r=0.6, n=3, h=0.6), box(1.0, 1.0), 8, 400, {}),
-    # (one link of a line thrown out: a hook's reach, a blessing's ribbon)
-    link=('flare', dict(r=0.3, h=0.8, tongues=5), box(0.8, 1.2), 7, 400, {}),
+    # (one link of a line thrown out: a hook's reach, a blessing's ribbon. Sparks of light rising, not a tongue of flame: a row of
+    # those read as a row of lumps)
+    link=('motes', dict(r=0.32, h=0.9, n=10, crosses=2), box(0.8, 1.3), 7, 400, {}),
     # (a landing that cracks the ground)
     crash=(None, [stage('impact', 0, 1, r=1.5, rubble=14, sparks=16), stage('crack', 0.1, 1, r=1.5, arms=6, rubble=8)], box(2.6, 2.4, 0.5), 12, 900, dict(colours=20)),
     # (a storm cloud gathering over the caster)
