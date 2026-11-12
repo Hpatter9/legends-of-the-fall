@@ -47,6 +47,78 @@ def point(o, a, z, ang, ln, w):
     o.location = (x, y, z + math.sin(ang) * ln * 0.5)
 
 
+def membrane_mat():
+    """A wing's skin: the dark itself, veined, with a bright violet rim along its trailing edge, which is eaten ragged by a noise.
+    Across it `u` runs from the wing's root (0) to its edge (1). An object's red is how far it has been dragged away."""
+    m, nt = mat('membrane')
+    tc = nt.nodes.new('ShaderNodeTexCoord')
+    sep = nt.nodes.new('ShaderNodeSeparateXYZ')
+    nt.links.new(tc.outputs['UV'], sep.inputs[0])
+    info = nt.nodes.new('ShaderNodeObjectInfo')
+    rgb = nt.nodes.new('ShaderNodeSeparateColor')
+    nt.links.new(info.outputs['Color'], rgb.inputs[0])
+    tatter = nt.nodes.new('ShaderNodeTexNoise')
+    tatter.inputs['Scale'].default_value = 1.4
+    tatter.inputs['Detail'].default_value = 4
+    nt.links.new(tc.outputs['Object'], tatter.inputs['Vector'])
+    # (how far in from the edge it is eaten: a ragged trailing edge, more of it gone as the maw drags it away)
+    reach = mth(nt, 'SUBTRACT', mth(nt, 'ADD', 0.86, mth(nt, 'MULTIPLY', tatter.outputs['Fac'], 0.24, False), False), mth(nt, 'MULTIPLY', rgb.outputs['Red'], 0.9, False), False)
+    inside = mth(nt, 'SUBTRACT', reach, sep.outputs['X'], False)
+    a = mth(nt, 'MULTIPLY', inside, 40.0)
+    rim = mth(nt, 'SUBTRACT', 1.0, mth(nt, 'MULTIPLY', inside, 9.0))         # 1 at the eaten edge, 0 a little way in
+    veins = nt.nodes.new('ShaderNodeTexVoronoi')
+    veins.feature = 'DISTANCE_TO_EDGE'
+    veins.inputs['Scale'].default_value = 1.1
+    nt.links.new(tc.outputs['Object'], veins.inputs['Vector'])
+    vein = mth(nt, 'MULTIPLY', mth(nt, 'SUBTRACT', 0.05, veins.outputs['Distance']), 8.0)
+    lit = mth(nt, 'MAXIMUM', rim, mth(nt, 'MULTIPLY', vein, 0.45))
+    col = ramp(nt, lit, [(0.0, (0.012, 0.0, 0.035, 1)), (0.3, (0.1, 0.02, 0.26, 1)), (0.55, (0.36, 0.1, 0.8, 1)), (0.8, (0.68, 0.4, 1.0, 1)), (1.0, (0.93, 0.82, 1.0, 1))])
+    glow(nt, col.outputs['Color'], a, 1.3)
+    return m
+
+
+class Membrane:
+    """A wing's skin between its ribs: a fan from the wing's root out to an edge that runs rib tip to rib tip, sagging inward between
+    them (a bat's scallops). Redrawn each frame as the ribs move."""
+    SUB = 6
+
+    def __init__(self, m, ribs):
+        self.k = (ribs - 1) * self.SUB + 1
+        me = bpy.data.meshes.new('membrane')
+        me.from_pydata([(0, 0, 0)] * (self.k + 1), [], [(0, j + 1, j + 2) for j in range(self.k - 1)])
+        uv = me.uv_layers.new(name='uv')
+        for poly in me.polygons:
+            for li in poly.loop_indices:
+                uv.data[li].uv = (0.0 if me.loops[li].vertex_index == 0 else 1.0, 0.5)
+        self.ob = bpy.data.objects.new('membrane', me)
+        bpy.context.scene.collection.objects.link(self.ob)
+        self.ob.data.materials.append(m)
+        tint(self.ob, 0)
+
+    def hide(self):
+        for v in self.ob.data.vertices:
+            v.co = (0, 0, -50)
+
+    def draw(self, root, tips, i, gone):
+        """`root` (a, z) and each rib's (angle, length); the skin lies a little behind the ribs."""
+        def put(v, a, z):
+            x, y = at(a, -0.25)
+            v.co = (x, y, z)
+        vs = self.ob.data.vertices
+        put(vs[0], root[0], root[1])
+        n = 1
+        for r in range(len(tips) - 1):
+            (a0, l0), (a1, l1) = tips[r], tips[r + 1]
+            for q in range(self.SUB + (1 if r == len(tips) - 2 else 0)):
+                t = q / self.SUB
+                ang = a0 + (a1 - a0) * t
+                ln = (l0 + (l1 - l0) * t) * (1 - 0.2 * math.sin(t * math.pi)) * (1 + 0.015 * math.sin(i * 1.7 + n))
+                put(vs[n], root[0] + math.cos(ang) * ln, root[1] + math.sin(ang) * ln)
+                n += 1
+        self.ob.data.update()
+        tint(self.ob, gone)
+
+
 def sigil_image(path, size=512):
     """Vaelkhar's mark, white on black: a ring, a crown of eight horns curving outside it, claw strokes inward, and a slit eye."""
     from PIL import Image, ImageDraw, ImageFilter
@@ -186,12 +258,9 @@ def explosion():
     murk, mclock = N.mist_mat(MURK)
     maw = ball(None, dark, sub=4)
     teeth = [(cone(dark), k / 22 * math.tau, rnd.uniform(0.8, 1.5), rnd.uniform(0, 6)) for k in range(22)]
-    wings = []
-    for s in (-1, 1):
-        for j in range(15):
-            u = j / 14
-            # (the leading fingers long and near the ground when open, the trailing ones short and upright: a wing's shape)
-            wings.append((cone(dark), s, u, (11.5 - 3.0 * u) * rnd.uniform(0.9, 1.08) * (1.0 if j % 2 == 0 else 0.72), rnd.uniform(0.6, 0.95), rnd.uniform(0, 6)))
+    # each wing: six ribs (long cones of black fire, the leading one longest) with a membrane stretched between them
+    RIBS = 6
+    wings = [(s, [(cone(dark), j / (RIBS - 1), (11.5 - 3.6 * j / (RIBS - 1)) * rnd.uniform(0.95, 1.05), rnd.uniform(0.3, 0.42), rnd.uniform(0, 6)) for j in range(RIBS)], Membrane(membrane_mat(), RIBS)) for s in (-1, 1)]
     puffs = [(ball(None, murk, sub=3), rnd.uniform(-5.2, 5.2), rnd.uniform(0.8, 1.3), rnd.uniform(0, 0.3)) for _ in range(14)]
     for o, *_ in puffs:
         tint(o, 1)
@@ -223,16 +292,24 @@ def explosion():
                 continue
             point(o, math.cos(a) * rim, 1.9 + math.sin(a) * rim * 0.92, ang, ln * k * (1.6 - 0.7 * inward), 0.3)
             tint(o, 0.0, 0.1)
-        for o, s, u, ln, w, ph in wings:
-            sweep = out3(seg(i, 1.5 + u * 1.2, 5.5 + u * 1.2))                # they sweep out, the leading finger first
-            fold = drain ** 1.5
-            theta = (0.1 + (1.2 - 1.05 * u) * sweep) * (1 - 0.75 * fold)     # from upright to spread; folding as they are dragged in
-            length = ln * (0.25 + 0.75 * sweep) * (1 - 0.92 * fold) * (0.94 + 0.08 * math.sin(i * 2.0 + ph))
-            if i < 1.5 or length < 0.2:
-                o.scale = (0, 0, 0)
-                continue
-            point(o, s * 1.2 * (1 - fold), 1.7, math.pi / 2 - s * theta, length, w * (0.7 + 0.5 * sweep) * (1 - 0.6 * fold))
-            tint(o, 0.9 * fold ** 2, 0.28 + 0.2 * u)
+        fold = drain ** 1.5
+        for s, ribs, skin in wings:
+            root = (s * 1.2 * (1 - fold), 1.7)
+            tips = []
+            for o, u, ln, w, ph in ribs:
+                sweep = out3(seg(i, 1.5 + u * 1.2, 5.5 + u * 1.2))            # they sweep out, the leading rib first
+                theta = (0.1 + (1.2 - 1.05 * u) * sweep) * (1 - 0.75 * fold)  # from upright to spread; folding as they are dragged in
+                length = ln * (0.25 + 0.75 * sweep) * (1 - 0.92 * fold) * (0.96 + 0.05 * math.sin(i * 2.0 + ph))
+                tips.append((math.pi / 2 - s * theta, length))
+                if i < 1.5 or length < 0.2:
+                    o.scale = (0, 0, 0)
+                    continue
+                point(o, root[0], root[1], math.pi / 2 - s * theta, length, w * (1 - 0.6 * fold))
+                tint(o, 0.9 * fold ** 2, 0.3)
+            if i < 1.5 or max(t[1] for t in tips) < 0.3:
+                skin.hide()
+            else:
+                skin.draw(root, tips, i, 0.9 * fold ** 2)
         for o, a, s, lag in puffs:
             g = seg(i, 3 + lag * 5, 9.5)
             pull = seg(i, 9.5, 14)
