@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.523.0',
+    date: '2026-11-12',
+    title: 'Ultimates that show what they do',
+    notes: ['The great blast now plays under only the nine ultimates that are one blow. The rest show their own effect where it lands: on each ally healed, each foe marked.', 'Spirit Guardians summons spirits that rise from the ground and circle the Cleric, with no blast.'],
+  },
+  {
     version: '0.522.0',
     date: '2026-11-12',
     title: 'Ten lives',
