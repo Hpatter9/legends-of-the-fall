@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.555.0',
+    date: '2026-11-12',
+    title: 'Effects go round your heroes, not over them',
+    notes: ['A heal, shield, haste, rally, banner or frenzy on a fighter is now a pool of light at the feet with wisps of smoke circling, not a column drawn over them.', 'An ultimate\'s effect on a fighter is drawn behind that fighter, with only a thin trace in front, so the hero stays in view.', 'Every such effect is measured: none may cover more than a small part of a fighter\'s body.'],
+  },
+  {
     version: '0.554.0',
     date: '2026-11-12',
     title: 'The party stays on the field between waves',
