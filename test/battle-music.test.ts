@@ -122,8 +122,8 @@ test('victory music only when the whole battle is won; the defeat sting only whe
   const run = armyRun(3, army.id);
   for (let w = 1; w < army.waves.length; w++) assert.equal(endOfFight({ ...run, stage: w }, true), 'next', `wave ${w} won: the battle goes on`);
   assert.equal(endOfFight({ ...run, stage: army.waves.length }, true), 'victory', 'the last wave won');
-  assert.equal(endOfFight(run, false), 'none', 'a fall a heart revives');
-  assert.equal(endOfFight({ ...run, retries: 99 }, false), 'defeat', 'no heart left');
+  // (TEN-LIVES: a fall is raised inside the fight, so a lost fight is lost for good)
+  assert.equal(endOfFight(run, false), 'defeat');
   const d = daily(20261029);
   assert.equal(endOfFight({ ...d, stage: 3 }, true), 'next');
   assert.equal(endOfFight({ ...d, stage: waveArmyOf(d)!.waves.length }, true), 'victory');

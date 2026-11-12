@@ -197,6 +197,8 @@ export function startDuel(run: Run, o: Pick<DuelOffer, 'id'>, heroId: number, bo
   const h = run.roster.find((x) => x.id === heroId);
   if (!h) throw new Error(`no hero ${heroId} in the run`);
   const b = startStage(run);
+  // (TEN-LIVES: a duel's ring has no lives: the duellist does not rise, and a duel lost is not fought again)
+  delete b.lives;
   const nem = b.units.find((u) => u.nem?.id === o.id);
   if (!nem) throw new Error(`nemesis ${o.id} does not stand in wave ${run.stage}`);
   b.units = [nem];

@@ -6,7 +6,7 @@ import { autoButton } from './autoAsk';
 import { canAutoDaily } from './sim/autoReplay';
 import { dailyStatus } from './sim/modes';
 import { dailyArea } from './sim/dailySeed';
-import { MAX_RETRIES } from './sim/run';
+import { LIVES } from './sim/lives';
 import type { Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 import { portrait } from './render/sheets';
@@ -48,7 +48,7 @@ export function showDailyStart(m: Meta, date: number, go: (auto?: number) => voi
     ['Land', AREA_NAMES[dailyArea(date)]],
     ['Run', `${DAILY_WAVES} waves, a mid-boss at ${DAILY_MID}`],
     ['Squad', theme ? "the day's five, and its hires" : 'the starting five'],
-    ['Hearts', `${MAX_RETRIES} retries`],
+    ['Lives', `${LIVES} for the party`],
   ]) {
     const li = el('li');
     li.append(el('span', '', k), el('b', '', v));
@@ -57,7 +57,7 @@ export function showDailyStart(m: Meta, date: number, go: (auto?: number) => voi
   const prize = el('div', 'dayPrize');
   const chest = chestPicture('daily', 2).root;
   chest.classList.add('dayChest');
-  prize.append(chest, el('span', '', played ? 'Practice: no reward this time' : theme ? 'Clear it for a daily chest. No heart spent, a quick win, and the goal each add a bonus star.' : 'Clear it for a daily chest: crowns, summoning stones, maybe gear. A win with no heart spent, or a quick one, adds a bonus star to it.'));
+  prize.append(chest, el('span', '', played ? 'Practice: no reward this time' : theme ? 'Clear it for a daily chest. The party never all down at once, a quick win, and the goal each add a bonus star.' : 'Clear it for a daily chest: crowns, summoning stones, maybe gear. A win with the party never all down at once, or a quick one, adds a bonus star to it.'));
   const status = el('div', 'dayStatus', `Today: ${dailyStatus(m, date)}`);
   const row = el('div', 'dayBtns');
   const fight = el('button', 'primary', played ? 'Practice' : 'Fight!');

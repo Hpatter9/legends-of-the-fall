@@ -24,7 +24,7 @@ import { spellImage } from './render/spellArt';
 import { spellPart } from './render/spellLooks';
 import { settings } from './settings';
 import { whichCast } from './fightHudRules';
-import { ULT_MOMENT, UltQueue, ultCues, ultShape, type UltMoment, type UltPhase } from './ultMomentRules';
+import { oneShow, ULT_MOMENT, UltQueue, ultCues, ultShape, type UltMoment, type UltPhase } from './ultMomentRules';
 import { burstSpots, KIT, KIT_SESSION, litPools, ultLean, ultTargets, type Pt, type UltTargets } from './ultEpicRules';
 import { hasShowcase, planShow, readCast, wantsShow, type ShowPlan } from './ultShowRules';
 import { UltShow } from './ultShow';
@@ -57,6 +57,8 @@ export interface UltMomentOpts {
   /** ULT-CAMERA: the room the page's camera frames in now and the zoom its follow holds (none: this screen's camera is its own, and
    *  the moment only leans in on the caster as before). */
   room?: () => { room: Room; held: number } | null;
+  /** FREEZE-FIX: another show has the screen (an Eidolon's call): an ultimate fired now gets the short banner, not a moment. */
+  busy?: () => boolean;
 }
 
 /** Whether the art a slash was given is a hero's awakened painting (a Mythic's frame then shows its awakened one). */
@@ -83,6 +85,13 @@ export class UltMoments {
   private echoSeen = 0;
   private lastStage = '';
   private ducked = false;
+  /** FREEZE-FIX: the moments the queue has ended by their deadline, as last seen (each is logged once). */
+  private overranSeen = 0;
+  /** FREEZE-FIX: the casters whose ultimates were given a full moment on the tick last noted (the rest get the short banner). */
+  private tookNow = new Set<number>();
+  took(unit: number): boolean {
+    return this.tookNow.has(unit);
+  }
   /** ULT-EPIC 2: where each moment's caster stood before its cast (a dash or a leap has already moved it in the sim): it is seen to
    *  gather there through the wind-up; and the fighter posed so now. */
   private starts = new WeakMap<UltMoment, { u: number; v: number }>();
@@ -140,10 +149,15 @@ export class UltMoments {
    *  It also tells the effects whose events are an ultimate's (drawn at its scale), and sees a delayed ultimate's salvo land. */
   note(b: Battle, events: readonly BattleEvent[], born: readonly Unit[], before?: ReadonlyMap<number, { u: number; v: number }>): boolean {
     const epic = new Set<number>();
+    this.tookNow.clear();
     for (const e of events) {
       if (e.kind !== 'skill') continue;
       const u = b.units.find((x) => x.id === e.by);
       if (!u || u.side !== 'hero' || whichCast(u, e.name) !== 'ult') continue;
+      // (FREEZE-FIX, the director's call: one full show at a time. An ultimate fired while another show plays, an ultimate's or an
+      // Eidolon's call, takes effect at once with the short banner, as on Auto, and is never queued behind it)
+      if (!oneShow(!!this.queue.current, !!this.opts.busy?.())) continue;
+      this.tookNow.add(u.id);
       const ult = ultimateOf(u)!;
       const { shape, ms } = ultShape(ult, u.id, events, born);
       const m: UltMoment = { unit: u.id, kind: u.def, name: ult.name, shape, ms, el: skillElement(keyOf(ult)), targets: ultTargets(events, u.id) };
@@ -277,7 +291,8 @@ export class UltMoments {
     const fx = this.opts.fx;
     const step = Math.min(dt, 250);
     q.calm = this.calm();
-    if (!q.current) {
+    const m0 = q.current;
+    if (!m0) {
       // (the moment's bursts play out after it; no caster's effects are the ultimate's any more)
       if (fx?.epic.size) fx.epic = new Set();
       if (!paused) fx?.stepMoment(step);
@@ -285,6 +300,11 @@ export class UltMoments {
       return;
     }
     if (!paused) q.step(step);
+    // (FREEZE-FIX: a moment ended by its deadline is a fault somewhere, never the player's doing: logged, and the fight goes on)
+    if (q.overran !== this.overranSeen) {
+      this.overranSeen = q.overran;
+      console.warn(`an ultimate's moment ran past its time and was ended (${m0.kind}, ${m0.name})`);
+    }
     // (the moment's own effects stand still through the freeze on the blow)
     // (BATTLE-POLISH: and move slowly through the slow beat after it)
     if (!paused && q.stopLeft <= 0) fx?.stepMoment(step * q.rate);
@@ -390,7 +410,7 @@ export class UltMoments {
     const el = m.el ?? 'light';
     const t = m.landing ?? m.targets ?? NONE;
     const spots = burstSpots(t, m.unit, settings().saver);
-    this.opts.fx?.ultImpact(b, el, spots, 1, m.kind);
+    this.opts.fx?.ultImpact(b, el, spots, 1, m.kind, t);
     playAll(ultCues('impact', this.queue.calm));
     const at = spots.map((s) => ('unit' in s ? this.opts.anchor(s.unit) : this.opts.tile?.(s.u, s.v) ?? null)).filter((p): p is Pt => !!p);
     const c = at.length ? { x: at.reduce((n, p) => n + p.x, 0) / at.length, y: at.reduce((n, p) => n + p.y, 0) / at.length } : { x: innerWidth / 2, y: innerHeight * 0.45 };

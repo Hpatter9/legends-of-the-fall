@@ -205,7 +205,7 @@ export function runResult(meta: Meta, recap: RunRecap, head: { title: string; to
       { label: 'Waves cleared', value: String(figures.cleared) },
       { label: 'Time fought', value: clock(recap.ms) },
       { label: 'Gold spent', value: Math.round(recap.spent).toLocaleString('en-GB') },
-      ...(figures.hearts ? [{ label: 'Hearts burned', value: String(figures.hearts) }] : []),
+      ...(figures.hearts ? [{ label: 'Lives spent', value: String(figures.hearts) }] : []),
     ],
     heroes,
     ...(mvp && t ? { mvp: { face: mvpFace(meta, mvp, t.grade), name: heroTitle(mvp), line: mvpLine(t) } } : {}),

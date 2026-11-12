@@ -61,6 +61,14 @@ export function fullOf(id: string): MomentTimes {
 /** How long a call lasts in real time: its beats and the freeze on its first blow. */
 export const callMs = (m: MomentTimes): number => m.RESUME + m.HIT_STOP;
 
+/** FREEZE-FIX (docs/notes/freeze-fix.md): the cinematic stands on its first blow until the fight's strike has come (the page steps one
+ *  tick for it). The longest it waits there, in real ms the page was free to step the fight: past it the call plays on to its end without
+ *  the strike, so nothing can hold it, and with it the fight's result, for good. */
+export const STRIKE_WAIT_MS = 2500;
+/** FREEZE-FIX: once the fight is over, the most that is left of a call that has struck (real ms). */
+export const CALL_OVER_MS = 1000;
+export const strikeOverdue = (waited: number): boolean => !(waited < STRIKE_WAIT_MS);
+
 /** When the build-up begins: with a sprite, as it attacks; without one, as soon as the painting has gone. */
 export const buildAt = (m: MomentTimes, sprite: boolean): number => (sprite ? m.BUILD : m.SPRITE);
 

@@ -48,7 +48,7 @@ async function loseHome(page) {
       if (b.phase === 'deploy' && document.getElementById('fight').offsetParent) {
         for (let i = 0; i < 3; i++) document.getElementById('summon')?.click();
         // (no heart left: the first loss ends the run)
-        g.run.retries = 99;
+        g.run.retries = 99; if (window.__game.b.lives) window.__game.b.lives.left = 0;
         g.autoArrange(true);
         document.getElementById('fight').click();
         return 'fight';

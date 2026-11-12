@@ -60,7 +60,7 @@ export async function checkBattleReports(page, { prefix, w }) {
   check('victory tap dismisses short card', await page.locator('#result').isHidden());
   await page.evaluate(() => { const g = window.__game; g.sceneHold = 0; g.autoArrange(true); });
   await page.locator('#fight').click();
-  await page.evaluate(() => { const g = window.__game; g.run.retries = 2; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
+  await page.evaluate(() => { const g = window.__game; g.run.retries = 2; if (window.__game.b.lives) window.__game.b.lives.left = 0; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
   await page.locator('#result').waitFor({ state: 'visible', timeout: 60000 });
   await shot('defeat-fixture', '#result #banner', 'combat-crimson.png');
   check('defeat retains Run recap action', await page.locator('#next').textContent() === 'Run recap');

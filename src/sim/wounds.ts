@@ -1,7 +1,7 @@
 // Wounds (SEVEN-SLOT GEAR batch 6, docs/notes/gear-runes-design.md section 8; the owner's ask: a hero who fell comes back after a won wave
 // at about half health, not full). After a won wave of an army, the daily or a quest battle, each hero that fell stands again at
 // `REVIVE_SHARE` of its hp for the next wave (the Ring of Returning brings its wearer back whole); those still standing are whole, as
-// before (the owner's answer to question 2). After a lost wave with hearts left, the wave is fought again with everyone whole. Kept as
+// before (the owner's answer to question 2). (TEN-LIVES: a hero a life raised in the fight stands at its end, so it is not wounded; only those down at the wave's end are.) Kept as
 // `Run.wounds` (roster id to share of hp; a hero not listed is whole) and read as a fight's start share (`hpShare` in `health.ts`), as the
 // spire's are. The spire and the Calamity keep their own wounds (`run.tower.hp`, the fallen at 25%, campfires). Remedies heal them
 // (`remedies.ts`). Pure rules: no Pixi, no DOM, no randomness.

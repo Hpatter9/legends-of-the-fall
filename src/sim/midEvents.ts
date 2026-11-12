@@ -12,7 +12,7 @@
 //   ambush     dig in (foes weaker), spring it (an ambush, and their purse), or slip away (a toll)
 //   healer     salves for two fights, or a blessing for one hero for good
 //   temper     a crossroads smith raises a piece of gear a tier, or quenches it in blood
-//   crown      a cursed crown: a legendary relic for a heart, or its gold from a fence
+//   crown      a cursed crown: a legendary relic for a heart's worth of lives, or its gold from a fence
 //   refugees   share your coin, or walk with them, and they remember (refugeesReturn)
 //   duel       a champion's challenge: send your best (the fight is rolled), refuse, or pay him off
 //   storm      the land's own weather over the next field: march into it for the loot, or pay for shelter
@@ -30,7 +30,8 @@ import { TWISTS } from './twists';
 import { HEROES, UNITS } from './units';
 import { HERO_NAMES, heroName } from './heroNames';
 import { landOf, waveFoes } from './armies';
-import { benchFull, MAX_RETRIES, noteHired, recruit, summonCost, tierOfRun, waveArmyOf, type Buff, type Run } from './run';
+import { HEART_LIVES } from './lives';
+import { benchFull, livesLeft, livesSpent, noteHired, recruit, spendLives, summonCost, tierOfRun, waveArmyOf, type Buff, type Run } from './run';
 import { marketTier } from './market';
 import { EVENT_KINDS, type EventCard, type EventKind, type EventOption } from './events';
 import type { Area } from './board';
@@ -76,7 +77,8 @@ export interface RoadAct {
   gear?: Gear;
   /** A hero kind that joins the bench (the price is paid back if the bench is full). */
   hire?: string;
-  /** +1 gives back a burned heart (or `gold` instead, when none is burned), -1 burns one. */
+  /** +1 gives back a heart's worth of spent lives (`HEART_LIVES`; or `gold` instead, when none is spent), -1 takes as many (TEN-LIVES:
+   *  the field keeps its old name, for a card saved with a run). */
   heart?: 1 | -1;
   /** Lasting bumps to one hero (by roster id). */
   bump?: { hero: number; hp: number; atk: number };
@@ -335,13 +337,15 @@ export function drawRoad(run: Run, stage: number, kind: RoadKind, rng: Rng): Eve
     case 'crown': {
       const great = unowned(run, GREAT_RELIC_IDS);
       const id = great.length ? pick(rng, great) : unowned(run, RELIC_IDS)[0] ?? '';
-      const left = MAX_RETRIES - (run.retries ?? 0);
+      const left = livesLeft(run);
+      // (TEN-LIVES: the crown drank a heart; it drinks a heart's worth of lives, or what is left)
+      const price = Math.min(HEART_LIVES, left);
       const fence = 30 + 5 * s;
       const wear: EventOption[] = !id
         ? []
         : left > 0
-          ? [road('Wear the crown', `${theRelic(id)} (${relicText(id)}); the crown drinks one of your hearts`, 0, { line: `The crown bites. A heart goes out like a candle, and ${theRelic(id)} is yours.`, relic: id, heart: -1 })]
-          : [road('Wear the crown', `${theRelic(id)} (${relicText(id)}); with no heart to drink, the next foes +30% hp and attack, and ${TWISTS.cursed.name}`, 0, { line: `The crown finds no heart to drink, and curses the road instead. ${TheRelic(id)} is yours.`, relic: id, buff: { foes: 1.3, twist: 'cursed' } })];
+          ? [road('Wear the crown', `${theRelic(id)} (${relicText(id)}); the crown drinks ${price === 1 ? 'your last life' : `${price} of your lives`}`, 0, { line: `The crown bites. ${price === 1 ? 'A life goes' : 'Lives go'} out like candles, and ${theRelic(id)} is yours.`, relic: id, heart: -1 })]
+          : [road('Wear the crown', `${theRelic(id)} (${relicText(id)}); with no life to drink, the next foes +30% hp and attack, and ${TWISTS.cursed.name}`, 0, { line: `The crown finds no life to drink, and curses the road instead. ${TheRelic(id)} is yours.`, relic: id, buff: { foes: 1.3, twist: 'cursed' } })];
       return card('A crown in the reeds', 'It lies in black water, its gold gone green, and it is very cold. Something wants it worn. Something always does.', [
         ...wear,
         road('Sell it to a fence', `+${fence} gold, and somebody else's problem`, 0, { line: `The fence does not touch it with bare hands, but pays ${fence} gold.`, gold: fence }),
@@ -358,18 +362,19 @@ export function drawRoad(run: Run, stage: number, kind: RoadKind, rng: Rng): Eve
     case 'refugeesReturn': {
       const due = run.road?.owed?.find((o) => o.kind === 'refugeesReturn');
       const big = !!due?.big;
-      const burned = (run.retries ?? 0) > 0;
+      const burned = livesSpent(run) > 0;
+      const back = Math.min(HEART_LIVES, livesSpent(run));
       const ids = unowned(run, RELIC_IDS);
       const relic = ids.length ? pickRelic(() => rng.next(), ids) : '';
       const gold = 30 + 4 * s;
       const gift: RoadAct = big
         ? burned
-          ? { line: 'Their healer has walked all night to find you. A burned heart kindles again.', heart: 1, gold }
+          ? { line: `Their healer has walked all night to find you. ${back === 1 ? 'A spent life kindles' : `${back} spent lives kindle`} again.`, heart: 1, gold }
           : relic
             ? { line: `They have found something in the ruins of their home: ${theRelic(relic)}.`, relic }
             : { line: `They have pooled what they could: ${gold * 2} gold.`, gold: gold * 2 }
         : { line: `A purse of ${gold} gold, and an old banner to march under.`, gold, buff: { twist: 'glory' } };
-      const what = big ? (burned ? 'a burned heart restored' : relic ? `${theRelic(relic)} (${relicText(relic)})` : `${gold * 2} gold`) : `+${gold} gold, and next fight: ${twistText('glory')}`;
+      const what = big ? (burned ? `${back === 1 ? 'a spent life' : `${back} spent lives`} given back` : relic ? `${theRelic(relic)} (${relicText(relic)})` : `${gold * 2} gold`) : `+${gold} gold, and next fight: ${twistText('glory')}`;
       return card('The refugees remember', "A rider in a patched cloak catches you up on the road. 'From the caravan,' she says. 'We said we would not forget.'", [
         road('Accept their thanks', what, 0, gift),
         leave('Tell them to keep it', 'Move on.'),
@@ -482,12 +487,13 @@ export function applyRoad(run: Run, a: RoadAct, cost = 0): string {
   if (a.drop) run.relics = run.relics?.filter((id) => id !== a.drop);
   if (a.gear) stow(run, a.gear);
   let line = a.line;
-  if (a.heart === -1) run.retries = Math.min(MAX_RETRIES, (run.retries ?? 0) + 1);
+  // (TEN-LIVES: a heart taken or given is `HEART_LIVES` lives: `spendLives` keeps it within what the run has)
+  if (a.heart === -1) spendLives(run, HEART_LIVES);
   if (a.heart === 1) {
-    if ((run.retries ?? 0) > 0) run.retries = run.retries! - 1;
-    else line = `${line} (No heart is burned, so they leave coin instead.)`;
+    if (livesSpent(run) > 0) spendLives(run, -HEART_LIVES);
+    else line = `${line} (No life is spent, so they leave coin instead.)`;
   }
-  // (a heart given back pays its coin only when there was no heart to give)
+  // (lives given back pay their coin only when there was none to give)
   if (a.gold && !(a.heart === 1 && line === a.line)) run.gold += a.gold;
   if (a.bump) {
     const h = run.roster.find((x) => x.id === a.bump!.hero);

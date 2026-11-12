@@ -21,6 +21,15 @@ import type { StageName, UltStages } from './ultStageRules';
 /** Whether an ultimate gets the full moment (the hold and the dim): the setting on, and Auto off. With Auto the banner is short. */
 export const fullScene = (setting: boolean, auto: boolean): boolean => setting && !auto;
 
+/** FREEZE-FIX (the director's call): whether an ultimate that just fired gets a full moment: only when no other show has the screen
+ *  (`playing`: an ultimate's moment; `call`: an Eidolon's call). Otherwise it takes effect at once with the short banner. */
+export const oneShow = (playing: boolean, call: boolean): boolean => !playing && !call;
+
+/** FREEZE-FIX, the page's belt at a fight's end: `over` real ms since the fight ended, `shown` whether anything the player can act on
+ *  is up (the result, a card, a film). Past `BELT_MS` with nothing shown, the page pushes the flow on. */
+export const WAVE_END = { BELT_MS: 10000 };
+export const waveEndStuck = (over: number, shown: boolean): boolean => !shown && !(over < WAVE_END.BELT_MS);
+
 export type UltShape = 'instant' | 'delayed' | 'lingering';
 
 export const ULT_MOMENT = {
@@ -42,7 +51,26 @@ export const ULT_MOMENT = {
   LINGER_MS: 1500,
   /** The short version's banner. */
   SHORT_MS: 1500,
+  /** FREEZE-FIX (docs/notes/freeze-fix.md): the longest a moment may run past its own length before it is ended whatever it was waiting
+   *  for (real ms), so a show can never hold a fight for good. */
+  OVERRUN_MS: 2500,
+  /** FREEZE-FIX: once the fight is over, the most that is left of the show playing: its aftermath, cut to this (real ms). The owner's
+   *  freeze was a wave's end waiting 10 to 20 s for shows with nothing left to strike. */
+  OVER_MS: 1000,
+  /** ULT-AUDIT (the director's decision, 2026-11-12): a fight that ends before the moment's blow has been seen (the ultimate itself
+   *  ended it) is not cut to an aftermath of a blow nobody saw: the blow lands at once, on where the foes fell, for its strike's own run
+   *  and no longer (real ms; a strike sheet is 1.3 s), then the moment ends. The result's own wait is 2 s, so it comes as the blow ends. */
+  OVER_STRIKE_MS: 1300,
 };
+
+/** FREEZE-FIX: the longest a moment may last, start to end (real ms, the freeze on the blow counted): its own length (its stages'; the
+ *  old lengths and its showcase without them), a salvo's longest wait, and `OVERRUN_MS` over. Always a finite number, whatever the
+ *  moment holds. */
+export function momentLimit(m: Pick<UltMoment, 'stages' | 'show'>): number {
+  const own = m.stages?.total ?? ULT_MOMENT.OPEN_MS + (m.show ?? 0) + ULT_MOMENT.IMPACT_MS + ULT_MOMENT.FADE_MS;
+  const most = 20000;
+  return (Number.isFinite(own) && own > 0 ? Math.min(own, most) : most) + ULT_MOMENT.MAX_DELAY_MS + ULT_EPIC.HIT_STOP_MS + ULT_MOMENT.OVERRUN_MS;
+}
 
 /** The sound of the moment's two beats (HOLD-SOUND, docs/notes/hold-sound.md). The opening: the slash's sting and, under it, the power
  *  gathering for the whole of the build-up. The blow: its heavy sting and, once the freeze lets go, the slow beat's drag (none when calm:
@@ -149,6 +177,12 @@ export class UltQueue {
   private openMs = ULT_MOMENT.OPEN_MS;
   private fadeMs = ULT_MOMENT.FADE_MS;
   private waitLeft = 0;
+  /** ULT-AUDIT: the fight ended before this moment's blow was seen, and the blow is playing out its last run (`fightOver`). */
+  private overBlow = false;
+  /** FREEZE-FIX: how many moments were ended by their deadline (`momentLimit`), and how many were dropped still waiting as the fight
+   *  ended (the page logs each when the count changes: neither should happen). */
+  overran = 0;
+  dropped = 0;
 
   /** An ultimate fired: it plays at once, or after those before it. */
   push(m: UltMoment): void {
@@ -163,6 +197,7 @@ export class UltQueue {
     this.openMs = m.stages?.windup.ms ?? ULT_MOMENT.OPEN_MS;
     this.left = this.openMs;
     this.since = null;
+    this.overBlow = false;
     this.stopLeft = 0;
     this.slowLeft = 0;
     this.stageName = 'windup';
@@ -241,7 +276,51 @@ export class UltQueue {
       this.next();
       if (this.phase === 'open') break;
     }
+    // (FREEZE-FIX: a moment that has outlived its own length, whatever it was waiting for, is ended here: the fight is never held for good)
+    if (this.current && !(this.clock <= momentLimit(this.current))) {
+      this.overran++;
+      this.stopLeft = 0;
+      this.slowLeft = 0;
+      this.phase = 'fade';
+      this.next();
+    }
     return this.phase;
+  }
+
+  /** FREEZE-FIX: the fight is over, and no show outlives it: the moments waiting are dropped, and the one playing goes straight to its
+   *  aftermath, `OVER_MS` of it at most; or, when its blow has not been seen yet, to that blow (`OVER_STRIKE_MS`) and then its end.
+   *  Asked every frame while the fight stays over: it only ever shortens. */
+  fightOver(): void {
+    this.dropWaiting();
+    if (!this.current) return;
+    this.stopLeft = 0;
+    this.slowLeft = 0;
+    // (ULT-AUDIT: the blow was not seen before the fight ended: it lands now, plays its strike's run with nothing held, and the
+    // moment then ends at once, with no aftermath. Asked again every frame, this only lets that run finish)
+    if (this.overBlow) {
+      if (this.phase === 'fade') this.left = 0;
+      return;
+    }
+    if (this.since === null) {
+      this.overBlow = true;
+      this.stage('strike');
+      this.strike();
+      this.stopLeft = 0;
+      this.slowLeft = 0;
+      this.to('impact', ULT_MOMENT.OVER_STRIKE_MS);
+      return;
+    }
+    if (this.phase !== 'fade') this.fade(Math.min(ULT_MOMENT.OVER_MS, this.current.stages?.aftermath.ms ?? ULT_MOMENT.FADE_MS));
+    else if (!(this.left <= ULT_MOMENT.OVER_MS)) this.left = ULT_MOMENT.OVER_MS;
+  }
+
+  /** FREEZE-FIX: the fight is over: the moments still waiting their turn are dropped (the one playing finishes), so a won fight's result
+   *  is not kept back by a line of shows with nothing left to strike. Returns how many went. */
+  dropWaiting(): number {
+    const n = this.queue.length;
+    this.queue = [];
+    this.dropped += n;
+    return n;
   }
 
   private next(): void {
@@ -341,7 +420,8 @@ export class UltQueue {
 
   /** Whether the battle is held now (the opening, a showcase, an instant one's effects playing, and the freeze on any blow). */
   get holdsBattle(): boolean {
-    return this.phase === 'open' || this.phase === 'show' || this.phase === 'impact' || this.stopLeft > 0;
+    // (a blow played after the fight has ended holds nothing: there is no fight left to hold)
+    return !this.overBlow && (this.phase === 'open' || this.phase === 'show' || this.phase === 'impact' || this.stopLeft > 0);
   }
 
   /** Whether the effects may move now (frozen through the opening and a showcase, so the cast plays once they are over, and through the

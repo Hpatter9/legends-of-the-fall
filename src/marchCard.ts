@@ -127,8 +127,8 @@ export function openMarchOrders(meta: Meta, army: string, tier: number, seed: nu
       lines: on ? (why ? [[why, 'lock']] : ['A hero who falls twice, or in a wave lost, is slain: the heir carries on with every level', [paid, 'pay']]) : ['The heroes fall and rise as ever'],
     }), (on) => (p.oath = on));
   }
-  // (the Chapel's Vigil, once its room stands: how the party rises when a heart burns)
-  if (p.vigil) menuPick(menuSection(body, 'The Vigil', 'when a heart burns, the party rises'), VIGIL_IDS, p.vigil, (id) => ({ icon: VIGILS[id].icon, title: VIGILS[id].name, lines: [VIGILS[id].line] }), (id) => (p.vigil = id));
+  // (the Chapel's Vigil, once its room stands: how a hero rises when a life raises it, TEN-LIVES)
+  if (p.vigil) menuPick(menuSection(body, 'The Vigil', 'when a life raises a hero, it rises'), VIGIL_IDS, p.vigil, (id) => ({ icon: VIGILS[id].icon, title: VIGILS[id].name, lines: [VIGILS[id].line] }), (id) => (p.vigil = id));
   // (the Watchtower's Far Sight: the road the army is met on, one a land)
   const roads = roadsOf(meta, army);
   if (roads.length) menuPick(menuSection(body, 'The road', 'Far Sight', 2), roads, p.road, (land) => ({ title: `By the ${AREA_NAMES[land]}`, lines: ['Every wave is fought on this land.'] }), (land) => (p.road = land));

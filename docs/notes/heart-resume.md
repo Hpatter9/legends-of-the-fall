@@ -1,5 +1,7 @@
 # Hearts resume the existing fight
 
+> Superseded by [the ten lives](ten-lives.md) (TEN-LIVES): the two hearts are ten lives now, spent inside the fight; what is below is how it was.
+
 HEART-001, branch `fix/heart-resume`, owner Codex.
 
 A heart now raises fallen roster heroes to full health at their current tiles. It keeps the

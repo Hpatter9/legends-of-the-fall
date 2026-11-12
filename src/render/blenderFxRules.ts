@@ -43,6 +43,10 @@ export interface BfxClip {
   cuts?: number[][];
   /** A staged effect's scenes, in order (the library's names: what the effect is made of). */
   sc?: string[];
+  /** ULT-AUDIT: where an ultimate's strike plays. Unset, once at the middle of what it struck (a great blow, a storm); `each`, on every
+   *  fighter the ability touches (a heal on each friend, a mark on each foe, a flurry's cut on each foe cut); `self`, round the caster (an
+   *  aura, a ward, a transformation). */
+  at?: 'each' | 'friends' | 'tiles' | 'self';
   /** Its soft glow's frames (a light effect only). */
   g?: BfxGlow;
 }
@@ -167,6 +171,57 @@ export function ultBfx(kind: string, stage: UltStageName, weight: string): strin
   return BFX_CLIPS[key] ? key : undefined;
 }
 
+/* ------------------------------------------------------------------ the showcase's beats */
+
+/** The clips a showcase's beats are made of (`Fx.showBeat`): most in each of the game's elements (`beat-<clip>-<element>`), the last four
+ *  one element's only (`beat-<clip>`: a bolt, a tongue of flame, a spire of rock, the ground heaving). */
+export type BeatClip = 'puff' | 'appear' | 'cut' | 'blow' | 'dust' | 'link' | 'crash' | 'cloud' | 'snare' | 'smite' | 'nova' | 'call' | 'ring' | 'gather' | 'mark' | 'sky' | 'bolt' | 'flame' | 'rise' | 'tunnel';
+const BEAT_ONLY: readonly BeatClip[] = ['bolt', 'flame', 'rise', 'tunnel'];
+
+/** A beat's clip in an element. Undefined for one the pipeline has not made. */
+export function beatBfx(clip: BeatClip, el: string): string | undefined {
+  const key = BEAT_ONLY.includes(clip) ? `beat-${clip}` : `beat-${clip}-${el}`;
+  return BFX_CLIPS[key] ? key : undefined;
+}
+
+/** Every clip a showcase in `el` may play: its element's, and the four that are one element's only. Asked for as a fight begins
+ *  (`warmBfx`), so they are there when the ultimate is fired. */
+export const beatKeys = (el: string): string[] => Object.keys(BFX_CLIPS).filter((k) => k.startsWith('beat-') && (k.endsWith(`-${el}`) || k.split('-').length === 2));
+
+/** ULT-AUDIT: a hero's own showcase beats on the caster: how long its own wind-up plays again as the showcase's gathering (ms), and how
+ *  large its finish's flare is drawn. */
+export const BEAT_OWN = { GATHER_MS: 1800, FINISH: 0.8 } as const;
+
+/** A line of a showcase (a dash's dust, a hook's reach, a blessing's ribbon) is a row of small clips along it, one every `BEAT_LINE.STEP`
+ *  world px (two at least, `MAX` at most), each `LAG` ms after the one before: the points, with the far end last. */
+export const BEAT_LINE = { STEP: 26, MAX: 9, LAG: 30 } as const;
+export function beatLine(x0: number, y0: number, x1: number, y1: number): [number, number][] {
+  const n = Math.max(2, Math.min(BEAT_LINE.MAX, Math.round(Math.hypot(x1 - x0, y1 - y0) / BEAT_LINE.STEP)));
+  return Array.from({ length: n }, (_, i) => [x0 + ((x1 - x0) * (i + 1)) / n, y0 + ((y1 - y0) * (i + 1)) / n] as [number, number]);
+}
+
+/** ULT-AUDIT: where a hero kind's strike plays (`BfxClip.at`): `one` great thing at the middle of what it struck, on `each` fighter it
+ *  touches, on each of the `friends` it helps (and the caster), on each of the `tiles` it takes, or round the caster (`self`). */
+export const ultPlace = (kind: string): 'one' | 'each' | 'friends' | 'tiles' | 'self' => BFX_CLIPS[`ult-${kind}-strike`]?.at ?? 'one';
+
+/** ULT-AUDIT: the spots a strike plays on, by where it plays, from what the cast touched: the foes it `struck`, the friends it
+ *  `helped`, the `tiles` it took. `each`: the foes struck, else the tiles (what is summoned arrives on them), else the friends, else the
+ *  caster. `friends`: the caster and each friend helped. `tiles`: its tiles first, then the caster and each friend (a wall's slabs along
+ *  the tiles it blocks, and its shield on each friend; a wall that found no line to stand on is its shields alone). At most `cap`. */
+export function ultSpots(place: 'each' | 'friends' | 'tiles', t: { struck: readonly number[]; helped: readonly number[]; tiles: readonly { u: number; v: number }[] }, caster: number, cap: number): ({ unit: number } | { u: number; v: number })[] {
+  const units = (ids: readonly number[]) => ids.map((unit) => ({ unit }));
+  const tiles = t.tiles.map(({ u, v }) => ({ u, v }));
+  const each = t.struck.length ? units(t.struck) : tiles.length ? tiles : t.helped.length ? units(t.helped) : [{ unit: caster }];
+  const friends = units([caster, ...t.helped.filter((id) => id !== caster)]);
+  const got = place === 'friends' ? friends : place === 'tiles' ? [...tiles, ...friends] : each;
+  return got.slice(0, cap);
+}
+
+/** ULT-AUDIT: the kinds whose strike is carried to each spot by a line from the caster (a row of the showcase's `link` clips, the strike
+ *  landing as the line arrives, `ULT_LINK_MS` later): a healer's light running out to each friend, the Gorgon's gaze to each foe. */
+export const ultLinked = (kind: string): boolean => ultPlace(kind) === 'friends' || kind === 'gorgon';
+export const ULT_LINK_MS = 200;
+
 /** Where a sheet on the moment's layer is put so the middle of its tile is at (x, y): the layer's bits are held by their own middle, so
  *  this is the frame's middle, `mult` times its size. */
 export function bfxCentre(c: BfxClip, x: number, y: number, mult = 1): [number, number] {
@@ -178,3 +233,11 @@ export function bfxCentre(c: BfxClip, x: number, y: number, mult = 1): [number, 
  *  is drawn on (and on the battery saver), how strong an aftermath is drawn (it lies over those it struck, so they must show through), and how far
  *  the moment's dim is lifted round a wind-up or a strike, of the sheet's longer side (the dim fades back in over the outer half of that, so the sheet's heart is fully clear and its rim nearly so). */
 export const ULT_BFX = { ECHO: 0.4, SPOTS: 5, SPOTS_SAVER: 2, AFTER_ALPHA: 0.7, LIGHT: 1 } as const;
+
+/** FREEZE-FIX (docs/notes/freeze-fix.md): the ultimates' atlases a fight no longer needs are let go as the next one begins, so the
+ *  graphics memory holds a few fights' worth and not every hero ever fielded. Of the atlases `held`, those to let go: not one every
+ *  fight needs (`core`), not wanted by the fight beginning (`now`), and not by the one before it (`before`: its last effects may
+ *  still be on the board). */
+export function bfxDrop(held: readonly number[], now: ReadonlySet<number>, before: ReadonlySet<number>, core: readonly number[]): number[] {
+  return held.filter((a) => !core.includes(a) && !now.has(a) && !before.has(a));
+}

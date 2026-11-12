@@ -298,7 +298,7 @@ export class StandView {
       // (a tap on a row also takes the camera to that hero)
       onTap: (u) => this.panTo(u.id),
       dockTop: () => this.parts.bottom.getBoundingClientRect().top,
-      ultFull: () => fullScene(settings().ultFull, !!this.host.meta().ultAuto),
+      ultFull: (id) => fullScene(settings().ultFull, !!this.host.meta().ultAuto) && this.ultm.took(id),
       ultArt: (u) => heroArtUrl(u.def, u.awaken ?? 0),
     });
     this.ultm = new UltMoments({
@@ -319,6 +319,7 @@ export class StandView {
       },
       art: (u) => heroArtUrl(u.def, u.awaken ?? 0),
       fx: this.fx,
+      busy: () => this.eid.playing,
       // (ULT-SHOW: the showcase stages the real sprites, and the save counts the full moments seen)
       sprite: (id) => this.sprites.get(id),
       world: (u, v) => {
@@ -1239,11 +1240,22 @@ export class StandView {
     const live = s.phase === 'wave' || s.phase === 'break' || s.phase === 'retreat';
     const fighting = live && !this.hold && !this.paused && !this.hud.holding && !this.info.isOpen && !this.eid.sheetOpen;
     // (EIDOLONS: the call's cinematic moves on in real time, the fight held under it but for the strike's one tick)
-    this.eid.see(s.b);
-    this.eid.frame(dt, !live);
+    // (FREEZE-FIX: a fault in a show's own frame drops that show, and the frame, and the fight, go on)
+    try {
+      this.eid.see(s.b);
+      this.eid.frame(dt, !live);
+    } catch (err) {
+      console.error('a fault in the Eidolon\'s call; it is dropped and the fight goes on', err);
+      this.eid.clear();
+    }
     // (an ultimate's moment (ULT-CUTIN) moves on in real time; while it holds the fight only its effects move)
-    if (live) this.ultm.frame(s.b, dt, !fighting);
-    else if (this.ultm.queue.current) this.ultm.clear();
+    try {
+      if (live) this.ultm.frame(s.b, dt, !fighting);
+      else if (this.ultm.queue.current) this.ultm.clear();
+    } catch (err) {
+      console.error('a fault in the ultimate\'s moment; it is dropped and the fight goes on', err);
+      this.ultm.clear();
+    }
     if (fighting && (this.ultm.queue.holdsBattle || this.eid.holds)) {
       this.acc = 0;
       if (this.ultm.queue.runsEffects) this.fx.step(Math.min(dt, 250) * this.ultm.queue.rate);

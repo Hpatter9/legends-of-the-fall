@@ -22,7 +22,8 @@ const REDUCED = args.includes('--reduced');
 const FIRST = args.includes('--first');
 mkdirSync(OUT, { recursive: true });
 
-const root = 'out/web';
+// (ROOT: another build's folder, to photograph an older version beside this one)
+const root = process.env.ROOT ?? 'out/web';
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css' };
 const srv = createServer((q, r) => {
   const p = `${root}/` + (q.url.split('?')[0].slice(1) || 'index.html');
@@ -58,6 +59,8 @@ async function open(eidolons) {
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
   await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
+  // (NOFLASH=1: without the moment's flash of colour over the field as the blow lands, to see what plays under it)
+  if (process.env.NOFLASH) await page.addStyleTag({ content: '.umFlash { display: none !important; }' });
   await page.evaluate(() => {
     const g = window.__game;
     const seen = new Map();
@@ -98,7 +101,9 @@ async function army(page, party, army = 'beasts', stage = 3) {
 
 const speedNow = (page) => page.evaluate(() => `${document.getElementById('speed').textContent}${document.getElementById('speed').dataset.show ? ' (held)' : ''} set x${window.__game.speed}`);
 /** Two frames in each stage: [stage, share of it]. */
-const FRAMES = [['windup', 0.55], ['windup', 0.95], ['strike', 0.5], ['strike', 0.9], ['aftermath', 0.12], ['aftermath', 0.5]];
+// (EARLY=1: the first moments after the blow lands instead of the strike's middle, for what is over quickly: a line run out from the caster)
+// (SHOW=1: four moments of the showcase itself, which plays through the first part of the strike's stage, before the blow)
+const FRAMES = process.env.SHOW ? [['windup', 0.55], ['windup', 0.95], ['strike', 0.05], ['strike', 0.15], ['strike', 0.3], ['strike', 0.45]] : process.env.EARLY ? [['windup', 0.55], ['windup', 0.95], ['blow', 60], ['blow', 200], ['blow', 400], ['blow', 700]] : [['windup', 0.55], ['windup', 0.95], ['strike', 0.5], ['strike', 0.9], ['aftermath', 0.12], ['aftermath', 0.5]];
 
 for (const pick of PICKS) {
   const { ctx, page } = await open();
@@ -120,8 +125,26 @@ for (const pick of PICKS) {
     if (!st) throw new Error('the ultimate never fired');
     let t = 0;
     const speeds = [];
+    // (CUT=windup or CUT=strike: the fight is ended in the middle of the show, as when the ultimate lands the killing blow, and the next
+    // moments are photographed: what a player sees when a show is cut short (the freeze fix cuts it to a second of aftermath))
+    if (process.env.CUT) {
+      const when = process.env.CUT === 'windup' ? Math.round(st.windup.at + st.windup.ms * 0.6) : Math.round(st.strike.at + st.show + 150);
+      await page.evaluate((d) => window.__step(d), when);
+      await page.screenshot({ path: `${OUT}/${pick}-${W}-1-before.png` });
+      await page.evaluate(() => { window.__game.b.phase = 'won'; });
+      let was = 0;
+      for (const [i, ms] of [80, 350, 700, 1200, 2000].entries()) {
+        await page.evaluate((d) => window.__step(d), ms - was);
+        was = ms;
+        await page.screenshot({ path: `${OUT}/${pick}-${W}-${i + 2}-cut${ms}.png` });
+      }
+      console.log('ok', pick, 'cut in the', process.env.CUT, 'show still playing:', await page.evaluate(() => !!window.__game.ultm.queue.current));
+      await ctx.close();
+      continue;
+    }
     for (const [i, [name, k]] of FRAMES.entries()) {
-      const at = Math.round(st[name].at + st[name].ms * k);
+      // (`blow`: so many ms after the blow itself lands, which is the strike's start and the showcase's length on)
+      const at = name === 'blow' ? Math.round(st.strike.at + st.show + k) : Math.round(st[name].at + st[name].ms * k);
       await page.evaluate((d) => window.__step(d), at - t);
       t = at;
       speeds.push(await speedNow(page));
@@ -137,8 +160,13 @@ for (const pick of PICKS) {
       }
       return n;
     });
+    // (and on into the fight after the show: what the ability leaves lasting, an aura's spirits, a wall, a mark)
+    for (const [i, ms] of [1200, 2600].entries()) {
+      await page.evaluate((d) => window.__step(d), ms);
+      await page.screenshot({ path: `${OUT}/${pick}-${W}-${7 + i}-after.png` });
+    }
     const after = await speedNow(page);
-    console.log('ok', pick, `${W}x${H}`, JSON.stringify({ weight: st.weight, shape: st.shape, show: st.show, windup: st.windup.ms, strike: st.strike.ms, aftermath: st.aftermath.ms, total: st.total, measured: t + rest, before, during: [...new Set(speeds)], after }));
+    console.log('ok', pick, `${W}x${H}`, JSON.stringify({ mem: await page.evaluate(() => window.__bfxMem?.()), weight: st.weight, shape: st.shape, show: st.show, windup: st.windup.ms, strike: st.strike.ms, aftermath: st.aftermath.ms, total: st.total, measured: t + rest, before, during: [...new Set(speeds)], after }));
   } catch (e) {
     console.log('FAILED', pick, String(e.message).split('\n')[0]);
   }

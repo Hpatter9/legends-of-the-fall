@@ -591,8 +591,11 @@ def wall(c, length=1.0, h=1.25, tongues=5):
 
 
 # 22. Crystal: one great faceted block that closes round whoever stands there, glints, and breaks.
-def crystal(c, r=0.5, h=1.7, shards=6):
-    m, av = c.solid('bright', 'mid', 0.7, 0.08, 0.3)
+def crystal(c, r=0.5, h=1.7, shards=6, stone=False):
+    # (`stone`: grey rock lit plainly, whatever the element: what the Gorgon's gaze leaves is stone, not a crystal of her poison's green)
+    if stone:
+        _plain_lights(c)
+    m, av = c.solid((0.4, 0.4, 0.42), (0.09, 0.09, 0.1), 0.25, 0.85, 0.0) if stone else c.solid('bright', 'mid', 0.7, 0.08, 0.3)
     top = c.cone(r, h * 0.45, m, 6)
     body = c.tube(r, h * 0.55, m, 6, caps=True)
     side = []
@@ -1291,8 +1294,12 @@ def shaft(c, r=0.42, h=3.4, slant=0.5):
 
 
 # 46. Slab: thick blocks of stone that slam up out of the ground in a ring and stand as a rampart, then drop.
-def slab(c, r=0.55, n=4, h=1.0):
-    m, av = c.solid('bright', 'mid', 0.15, 0.85, 0.0)
+def slab(c, r=0.55, n=4, h=1.0, dark=False):
+    # (`dark`: heavy stone in stone's own grey-brown, lit plainly whatever the element, and thick, for an ultimate's wall or a planted
+    # slab: it must stand out against pale ground and not take the element's tint)
+    if dark:
+        _plain_lights(c)
+    m, av = c.solid((0.3, 0.27, 0.24), (0.06, 0.055, 0.05), 0.15, 0.9, 0.0) if dark else c.solid('bright', 'mid', 0.15, 0.85, 0.0)
     blocks = []
     for i in range(n):
         ang = i * TAU / n + math.radians(45)
@@ -1306,7 +1313,7 @@ def slab(c, r=0.55, n=4, h=1.0):
         for o, ang, k, lag in blocks:
             g = (ease(win(t, lag, lag + 0.2)) + 0.12 * bell(win(t, lag, lag + 0.28))) * (1 - gone)
             hh = max(0.001, h * k * g)
-            put(o, (math.cos(ang) * r, math.sin(ang) * r, hh / 2), (0.42, 0.16, hh), (0, 0, ang + math.pi / 2))
+            put(o, (math.cos(ang) * r, math.sin(ang) * r, hh / 2), (0.56, 0.26, hh) if dark else (0.42, 0.16, hh), (0, 0, ang + math.pi / 2))
         av.outputs[0].default_value = 1 - 0.5 * gone
         put(ring, scale=(r * (0.6 + 1.6 * ease(t)),) * 2 + (1,))
         rv.outputs[0].default_value = 1 - win(t, 0.35, 0.8)
@@ -1577,7 +1584,7 @@ def tile(c, things='flames', n=4, fill=0.85, lift=1.0):
 def impact(c, r=3.0, rubble=26, sparks=30):
     fm, cut = c.flame(2.4, 0.5, 1.5)
     core = c.sphere(1, fm, 4)
-    flash, fa = c.disc('ramp', 1.6, r * 0.75)
+    flash, fa = c.disc('ramp', 1.6, r * 0.75, noise=3.0)
     rings = [c.ring('hot', 0.09, 1.3), c.ring('bright', 0.06, 1.2)]
     sm, sv = c.solid('mid', 'deep', 0.5, 0.8, 0.0)
     rocks = [(c.cone(c.rnd.uniform(0.09, 0.22), c.rnd.uniform(0.18, 0.42), sm, 4), c.rnd.uniform(0, TAU), c.rnd.uniform(0.35, 1.0) * r, c.rnd.uniform(3.0, 6.5), c.rnd.uniform(0, 0.12), c.rnd.uniform(3, 9))
@@ -1586,11 +1593,13 @@ def impact(c, r=3.0, rubble=26, sparks=30):
 
     def step(t):
         c.tick(t, 2.0)
-        # (the core: up fast in the first frames, the heaviest of the whole effect, then torn open)
-        s = r * (0.12 + 0.42 * ease(win(t, 0, 0.22))) * (1 + 0.25 * win(t, 0.22, 1))
+        # (the core: a fireball up in the first frame or two, the heaviest of the whole effect; then it tears open at once, so the
+        # fighters under it show through the holes, and burns on in rags, growing and thinning, for most of the blow)
+        s = r * (0.12 + 0.42 * ease(win(t, 0, 0.12))) * (1 + 0.35 * win(t, 0.12, 1))
         put(core, (0, 0, 0.5 + 0.5 * r * 0.2 * t), (s, s, s * 0.85), (t * 2, t, 0))
-        cut.inputs[1].default_value = 0.04 + 0.75 * win(t, 0.18, 0.8) ** 1.5
-        fa.inputs[1].default_value = 2.8 * (1 - win(t, 0.05, 0.6))
+        cut.inputs[1].default_value = 0.04 + 0.29 * win(t, 0.08, 0.2) + 0.1 * win(t, 0.2, 0.85) + 0.25 * win(t, 0.82, 1)
+        # (the flash on the ground is broken by noise and gone early: a flat disc of one colour reads as paint)
+        fa.inputs[1].default_value = 2.4 * (1 - win(t, 0.04, 0.4))
         for i, (o, v) in enumerate(rings):
             g = win(t, i * 0.1, 0.75 + i * 0.1)
             put(o, scale=(r * (0.08 + 1.0 * ease(g)),) * 2 + (1 + 3 * (1 - g),))
@@ -1605,8 +1614,328 @@ def impact(c, r=3.0, rubble=26, sparks=30):
     return step
 
 
+# 55. Spirits: ghostly figures (a head, a robed body drawn down to a wisp, two wings), each about a fighter tall, standing in a ring
+# round the middle. `mode`: they `rise` out of the ground, `circle` (a loop turns each exactly into the next one's place, so it runs
+# round for ever), or `fade` upward and away. A faint hoop on the ground shows the ring they keep.
+TOWARDS = (0.612, -0.612, 0.5)
+
+
+def spirits(c, r=1.2, n=4, tall=1.1, mode='circle', turns=0.5, hoop=True):
+    robe_m, robe_a = c.solid('bright', 'mid', 1.2, 0.5, 0.0)
+    hood_m, hood_a = c.solid('mid', 'deep', 0.5, 0.6, 0.0)
+    face_m, face_a = c.flat('deep', 0.25)
+    steel_m, steel_a = c.flat('hot', 1.6)
+    figs = []
+    for k in range(n):
+        robe = c.teardrop(robe_m)
+        hood = c.teardrop(hood_m)
+        face = c.sphere(1.0, face_m, 2)
+        pads = [c.sphere(1.0, robe_m, 2), c.sphere(1.0, robe_m, 2)]
+        spear = c.cone(1.0, 1.0, steel_m, 6, r2=0.6)
+        tip = c.cone(1.0, 1.0, steel_m, 4)
+        wake = [c.sphere(1.0, robe_m, 1) for _ in range(4)]
+        figs.append((robe, hood, face, pads, spear, tip, wake, c.rnd.uniform(0, 1)))
+    ring, rv = c.ring('mid', 0.035) if hoop else (None, None)
+    pool, pa = c.disc('ramp', 0.5, r * 1.15, hole=0.72) if hoop else (None, None)
+
+    def step(t):
+        c.tick(t, 1.0)
+        # (a loop turns one place round the ring; a single pass, `turns` of the way round)
+        turn = (TAU / n if c.loop else TAU * turns) * t
+        for k, (robe, hood, face, pads, spear, tip, wake, ph) in enumerate(figs):
+            lag = 0.45 * k / n
+            grown = ease(win(t, lag, lag + 0.45)) if mode == 'rise' else 1 - win(t, 0.25 + lag * 0.5, 0.85 + lag * 0.3) if mode == 'fade' else 1.0
+            s = tall * max(0.001, grown if mode == 'rise' else 0.4 + 0.6 * grown)
+            ang = k * TAU / n + turn
+            bob = 0.06 * tall * math.sin(TAU * (t * (1 if c.loop else 2) + ph))
+            lift = (0.9 * tall * (1 - grown) if mode == 'fade' else 0.0) + bob
+            x, y = math.cos(ang) * r, math.sin(ang) * r
+            base = 0.1 * tall + lift
+            # (a guardian: a long robe drawn down to a wisp, a hood over a face in shadow on the side the camera sees, a pauldron on each
+            # shoulder, a spear held upright at its side; behind it along the ring, a wake of fading wisps)
+            put(robe, (x, y, base + 0.4 * s), (0.25 * s, 0.25 * s, 0.4 * s), (math.pi, 0, 0))
+            put(hood, (x, y, base + 0.84 * s), (0.17 * s, 0.17 * s, 0.21 * s))
+            put(face, (x + TOWARDS[0] * 0.075 * s, y + TOWARDS[1] * 0.075 * s, base + (0.8 + TOWARDS[2] * 0.075) * s), (0.085 * s, 0.085 * s, 0.1 * s))
+            for side, o in zip((-1, 1), pads):
+                put(o, (x + RIGHT[0] * side * 0.22 * s, y + RIGHT[1] * side * 0.22 * s, base + 0.66 * s), (0.11 * s, 0.11 * s, 0.075 * s))
+            sx, sy = x + RIGHT[0] * 0.31 * s, y + RIGHT[1] * 0.31 * s
+            put(spear, (sx, sy, base + 0.62 * s), (0.02 * s, 0.02 * s, 1.1 * s))
+            put(tip, (sx, sy, base + 1.24 * s), (0.04 * s, 0.04 * s, 0.16 * s))
+            for i, o in enumerate(wake):
+                back = ang - 0.16 * (i + 1) * (1 if mode != 'rise' else 0.3)
+                put(o, (math.cos(back) * r, math.sin(back) * r, base + (0.3 - 0.04 * i) * s), 0.11 * s * (1 - 0.2 * i))
+            for o in (robe, hood, face, *pads, spear, tip, *wake):
+                hide(o, grown <= 0.01)
+        shown = win(t, 0, 0.15) if mode == 'rise' else 1 - win(t, 0.6, 1) if mode == 'fade' else 1.0
+        if hoop:
+            put(ring, scale=(r, r, 1))
+            rv.outputs[0].default_value = 0.9 * shown
+            pa.inputs[1].default_value = 0.9 * shown
+    return step
+
+
+def _plain_lights(c):
+    """Plain light for a thing that keeps its own colours whatever the element (a grey wolf): a white sun, a warm white rim and a grey
+    sky, in place of the element's coloured rim and sky (`Ctx.lights`), which turned grey fur the element's green."""
+    import bpy
+    if c._lit:
+        return
+    c._lit = True
+    for name, energy, colour, rot in (('sun', 4.5, (1, 1, 1), (50, 0, -30)), ('rim', 2.4, (1.0, 0.96, 0.9), (70, 0, 150))):
+        li = bpy.data.lights.new(name, 'SUN')
+        li.energy = energy
+        li.color = colour
+        o = bpy.data.objects.new(name, li)
+        o.rotation_euler = tuple(math.radians(a) for a in rot)
+        c.sc.collection.objects.link(o)
+    world = c.sc.world
+    world.use_nodes = True
+    bg = world.node_tree.nodes.get('Background') or world.node_tree.nodes.new('ShaderNodeBackground')
+    bg.inputs[0].default_value = (0.42, 0.42, 0.46, 1)
+    bg.inputs[1].default_value = 0.7
+
+
+# 56. Beast: a wolf's shape (a long body, a head and snout, two ears, four legs, a tail) bursting out of a puff of smoke in a leap,
+# across the camera's view, and landing. What is summoned, arriving.
+def beast(c, size=1.0, puffs=3):
+    # (a wolf's own colours, whatever the element: grey fur, an amber eye; the smoke it bursts from and the ring it lands in are the
+    # element's, the magic that called it)
+    # (lit plainly: the element's green rim light and sky turned its grey fur green)
+    _plain_lights(c)
+    m, av = c.solid((0.3, 0.29, 0.31), (0.08, 0.075, 0.08), 0.5, 0.8, 0.0)
+    eye_m, _ = c.flat((1.0, 0.72, 0.18), 2.6)
+    body = c.sphere(1.0, m, 2)
+    chest = c.sphere(1.0, m, 2)
+    head = c.sphere(1.0, m, 2)
+    snout = c.cone(1.0, 1.0, m, 6)
+    ears = [c.cone(1.0, 1.0, m, 4), c.cone(1.0, 1.0, m, 4)]
+    legs = [c.cone(1.0, 1.0, m, 5, r2=0.5) for _ in range(4)]
+    tail = c.teardrop(m)
+    eye = c.sphere(1.0, eye_m, 1)
+    sm, cut = c.flame(2.0, 0.55, 0.9)
+    smoke_ = [(c.sphere(1, sm, 3), c.rnd.uniform(0, TAU), c.rnd.uniform(0.1, 0.5), c.rnd.uniform(0.6, 1.0)) for _ in range(puffs)]
+    ring, rv = c.ring('mid', 0.04)
+    F = RIGHT
+
+    def at(o, along, up, scale, rot=None, side=0.0):
+        put(o, (c._bx + F[0] * along + TOWARDS[0] * side, c._by + F[1] * along + TOWARDS[1] * side, c._bz + up), scale, rot)
+
+    def step(t):
+        c.tick(t, 1.2)
+        s = size
+        # (out of the smoke in an arc, from behind the spot to on it, growing as it comes)
+        g = ease(win(t, 0.05, 0.6))
+        c._bx, c._by = -F[0] * 0.5 * s * (1 - g), -F[1] * 0.5 * s * (1 - g)
+        c._bz = 0.22 * s + 0.55 * s * bell(win(t, 0.05, 0.6))
+        k = s * (0.35 + 0.65 * g)
+        tilt = 0.5 * (1 - 2 * win(t, 0.05, 0.6)) * (1 - win(t, 0.6, 0.8))
+        zr = math.atan2(F[1], F[0])
+        at(body, -0.05 * k, 0.0, (0.34 * k, 0.15 * k, 0.16 * k), (0, -tilt * 0.4, zr))
+        at(chest, 0.2 * k, 0.03 * k, (0.2 * k, 0.17 * k, 0.19 * k), (0, 0, zr))
+        at(head, 0.42 * k, 0.16 * k + tilt * 0.1 * k, 0.13 * k)
+        at(snout, 0.56 * k, 0.13 * k + tilt * 0.12 * k, (0.06 * k, 0.06 * k, 0.2 * k), (0, math.pi / 2, zr))
+        for sgn, e in zip((-1, 1), ears):
+            at(e, 0.38 * k, 0.3 * k + tilt * 0.1 * k, (0.04 * k, 0.04 * k, 0.12 * k), None, sgn * 0.06 * k)
+        stride = math.sin(TAU * t * 2)
+        for i, leg in enumerate(legs):
+            fore = i < 2
+            swing = (0.5 if fore else -0.5) * (1 - win(t, 0.6, 0.75)) + 0.15 * stride * (1 if i % 2 else -1)
+            at(leg, (0.24 if fore else -0.26) * k + swing * 0.12 * k, -0.2 * k, (0.035 * k, 0.035 * k, 0.26 * k), (0, swing * (1 if fore else 1), zr), (0.05 if i % 2 else -0.05) * k)
+        at(tail, -0.42 * k, 0.08 * k, (0.05 * k, 0.05 * k, 0.2 * k), (0, -math.pi / 2 - 0.5, zr))
+        at(eye, 0.47 * k, 0.2 * k + tilt * 0.1 * k, 0.03 * k, None, 0.1 * k)
+        gone = win(t, 0.82, 1)
+        av.outputs[0].default_value = 1 - gone
+        for o in (body, chest, head, snout, *ears, *legs, tail, eye):
+            hide(o, t < 0.04 or gone >= 1)
+        # (a small puff, torn open at once: the beast is what is to be seen, not the smoke)
+        cut.inputs[1].default_value = 0.25 + 0.6 * win(t, 0.05, 0.45)
+        for o, a, rad, sc in smoke_:
+            q = win(t, 0, 0.7)
+            put(o, (-F[0] * 0.4 * s + math.cos(a) * rad * s * (0.4 + q), -F[1] * 0.4 * s + math.sin(a) * rad * s * (0.4 + q), 0.2 * s + 0.4 * s * q * sc), 0.24 * s * sc * (0.5 + 0.5 * ease(q)), (q, q * 0.5, a))
+        # (no ring where it lands: a bright ring of the element under each wolf was the loudest thing in the picture; a little dust
+        # kicked up is enough)
+        hide(ring, True)
+    return step
+
+
+# 57. Eyes: pairs of eyes opening one after another in dark brush round the middle, watching, blinking. What is about to be called.
+def eyes(c, r=1.3, n=5, size=1.0):
+    # (wolves' heads lifting out of the dark one after another: a dark grey head with two pricked ears and a snout, and two amber eyes
+    # side by side that open, watch and blink. Animals, plainly, and plainly pairs of eyes)
+    em, ev = c.flat((1.0, 0.55, 0.05), 1.6)
+    _plain_lights(c)
+    fm, fa = c.solid((0.13, 0.125, 0.13), (0.035, 0.03, 0.035), 0.4, 0.9, 0.0)
+    shade, sa = c.disc('deep', 0.9, r * 1.2, noise=3)
+    heads = []
+    for k in range(n):
+        ang = k * TAU / n + c.rnd.uniform(-0.4, 0.4)
+        rad = c.rnd.uniform(0.55, 1.0) * r
+        head = c.sphere(1.0, fm, 2)
+        neck = c.teardrop(fm)
+        snout = c.cone(1.0, 1.0, fm, 6)
+        ears = [c.cone(1.0, 1.0, fm, 4), c.cone(1.0, 1.0, fm, 4)]
+        heads.append((ang, rad, head, neck, snout, ears, [c.sphere(1.0, em, 1), c.sphere(1.0, em, 1)], k / n * 0.6, c.rnd.uniform(0.5, 0.9)))
+
+    k = size
+
+    def step(t):
+        c.tick(t, 0.8)
+        gone = win(t, 0.88, 1)
+        fa.outputs[0].default_value = 1 - gone
+        sa.inputs[1].default_value = 1.6 * win(t, 0, 0.2) * (1 - gone)
+        for n_, (ang, rad, head, neck, snout, ears, pair, lag, blink) in enumerate(heads):
+            x, y = math.cos(ang) * rad, math.sin(ang) * rad
+            g = ease(win(t, lag, lag + 0.3))
+            z = (0.1 + 0.5 * g) * k
+            # (a wolf's head seen from the side, so its outline is a wolf's: a long snout out across the camera's view (to the left for
+            # one, to the right for the next), a brow, two tall ears pricked back, a thick ruff for the neck, and the eye on its near side)
+            f = 1 if n_ % 2 == 0 else -1
+            gk = g * k
+            put(neck, (x - RIGHT[0] * f * 0.06 * gk, y - RIGHT[1] * f * 0.06 * gk, z * 0.5), (0.24 * gk + 0.001, 0.24 * gk + 0.001, 0.36 * gk + 0.001), (math.pi, 0, 0))
+            put(head, (x, y, z), (0.2 * gk + 0.001, 0.2 * gk + 0.001, 0.17 * gk + 0.001))
+            put(snout, (x + RIGHT[0] * f * 0.33 * gk, y + RIGHT[1] * f * 0.33 * gk, z - 0.05 * gk), (0.095 * gk + 0.001, 0.095 * gk + 0.001, 0.5 * gk + 0.001), (0, f * math.radians(100), math.radians(45)))
+            for side, e in zip((-1, 1), ears):
+                put(e, (x - RIGHT[0] * f * (0.07 + side * 0.05) * gk + TOWARDS[0] * side * 0.05 * gk, y - RIGHT[1] * f * (0.07 + side * 0.05) * gk + TOWARDS[1] * side * 0.05 * gk, z + 0.22 * gk), (0.075 * gk + 0.001, 0.075 * gk + 0.001, 0.36 * gk + 0.001), (0, -f * 0.3, math.radians(45)))
+            opened = win(t, lag + 0.2, lag + 0.28) * (0.12 if abs(t - blink) < 0.03 else 1.0)
+            for side, e in zip((-1, 1), pair):
+                # (the near eye, and the far one just seen past the brow)
+                put(e, (x + (TOWARDS[0] * (0.17 if side > 0 else 0.1) + RIGHT[0] * f * (0.09 + (0 if side > 0 else 0.07))) * k, y + (TOWARDS[1] * (0.17 if side > 0 else 0.1) + RIGHT[1] * f * (0.09 + (0 if side > 0 else 0.07))) * k, z + (0.05 + TOWARDS[2] * 0.14) * k), (0.055 * k, 0.055 * k, 0.045 * opened * k + 0.001))
+                hide(e, opened <= 0.01 or gone >= 1)
+            for o in (head, neck, snout, *ears):
+                hide(o, g <= 0.01 or gone >= 1)
+    return step
+
+
+# 58. Whirlpool: water turning on the ground, flat: spiral arms of foam winding in to a dark eye, flecks carried round. A pull, seen
+# from above; not a funnel standing up.
+def whirlpool(c, r=1.6, arms=5, flecks=16):
+    m, a, _ = c.streak('mid', 'hot', 1.3, 1.3)
+    blades = []
+    for k in range(arms):
+        pts = []
+        for i in range(40):
+            u = i / 39
+            ang = k * TAU / arms + u * 3.6
+            rr = r * (1 - 0.86 * u)
+            pts.append(((math.cos(ang) * rr, math.sin(ang) * rr, 0.03 + 0.05 * u), (math.cos(ang), math.sin(ang), 0)))
+        blades.append(c.ribbon(pts, lambda u: 0.13 * (1 - 0.6 * u) + 0.01, m))
+    eye, ea = c.disc('deep', 1.4, r * 0.3)
+    pool, pa = c.disc('ramp', 0.8, r * 1.05, noise=4, hole=0.18)
+    bits = [(o, c.rnd.uniform(0, TAU), c.rnd.uniform(0.3, 1.0), c.rnd.uniform(0, 1)) for o in c.sparks(flecks, 'hot', 0.04)]
+
+    def step(t):
+        c.tick(t, 1.0)
+        shown = win(t, 0, 0.15) * (1 - win(t, 0.8, 1))
+        turn = -TAU * (0.2 + 1.1 * t)
+        for o in blades:
+            put(o, (0, 0, 0), (0.55 + 0.45 * ease(win(t, 0, 0.3)),) * 2 + (1,), (0, 0, turn))
+        a.inputs[1].default_value = 2.2 * shown
+        ea.inputs[1].default_value = 1.8 * shown
+        pa.inputs[1].default_value = 1.3 * shown
+        for o, ang, rad, ph in bits:
+            g = (t * 1.3 + ph) % 1.0
+            rr = r * rad * (1 - 0.8 * g)
+            an = ang + turn * 1.4 - g * 2.5
+            put(o, (math.cos(an) * rr, math.sin(an) * rr, 0.08), shown * bell(g))
+    return step
+
+
+# 59. Sandstorm: a low wide wall of blown sand, broken bands of it racing round at different heights and speeds, grit carried up.
+def sandstorm(c, r=1.5, h=1.1, bands=6, grit=18):
+    m, a, _ = c.streak('mid', 'bright', 1.1, 1.1, noise=5.0)
+    strips = []
+    for k in range(bands):
+        z = h * (0.12 + 0.8 * k / max(1, bands - 1))
+        rad = r * c.rnd.uniform(0.75, 1.05)
+        a0, span = c.rnd.uniform(0, TAU), c.rnd.uniform(1.6, 2.8)
+        pts = [((math.cos(a0 + span * i / 24) * rad, math.sin(a0 + span * i / 24) * rad, z), (0, 0, 1)) for i in range(25)]
+        strips.append((c.ribbon(pts, lambda u: 0.16 * math.sin(u * math.pi) + 0.01, m), c.rnd.uniform(0.7, 1.5) * (1 if k % 2 else -1)))
+    rise = _rise(c, grit, r, h * 1.2, 'bright', 0.045, 5.0)
+    dust, da = c.disc('ramp', 0.7, r * 1.1, noise=5)
+
+    def step(t):
+        c.tick(t, 1.6)
+        shown = win(t, 0, 0.15) * (1 - win(t, 0.8, 1))
+        grow = 0.5 + 0.5 * ease(win(t, 0, 0.35))
+        for o, speed in strips:
+            put(o, (0, 0, 0), (grow, grow, 1), (0, 0, TAU * speed * t))
+        a.inputs[1].default_value = 2.0 * shown
+        da.inputs[1].default_value = 1.2 * shown
+        rise(t)
+    return step
+
+
+# 60. Wings: two great wings of light unfolding out from a point at the shoulders' height, each a fan of long feathers, held open,
+# then folding away upward. Seen face on, across the camera's view.
+def wings(c, r=1.3, h=2.0, feathers=7):
+    m, a, _ = c.streak('bright', 'hot', 1.4, 1.5)
+    root = scr(0, 0, h * 0.42)
+    fans = []
+    for side in (-1, 1):
+        for i in range(feathers):
+            th = math.radians(-12 + 80 * i / (feathers - 1))
+            ln = r * (1.0 - 0.32 * abs(i / (feathers - 1) - 0.35))
+            tip = (math.cos(th) * side * ln, math.sin(th) * ln)
+            nrm = scr(-math.sin(th) * side, math.cos(th))
+            pts = [(scr(tip[0] * u, tip[1] * u + 0.12 * math.sin(u * math.pi) * ln), nrm) for u in [j / 12 for j in range(13)]]
+            o = c.ribbon(pts, lambda u: 0.11 * math.sin(min(1.0, u * 1.25) * math.pi * 0.85) + 0.012, m)
+            fans.append((o, i / (feathers - 1)))
+    core, cv = c.flat('hot', 2.2)
+    orb = c.sphere(1.0, core, 2)
+    ring, rv = c.ring('mid', 0.04)
+
+    def step(t):
+        gone = win(t, 0.78, 1)
+        for o, k in fans:
+            g = ease(win(t, 0.05 + 0.25 * k, 0.4 + 0.25 * k)) * (1 - gone)
+            put(o, (root[0], root[1], root[2] + 0.5 * h * gone), max(0.001, g))
+            hide(o, g <= 0.01)
+        a.inputs[1].default_value = 2.4
+        put(orb, root, 0.14 * (1 - gone) * (0.6 + 0.4 * bell(win(t, 0, 0.5))) + 0.001)
+        put(ring, scale=(r * (0.3 + 0.7 * ease(win(t, 0, 0.5))),) * 2 + (1,))
+        rv.outputs[0].default_value = win(t, 0, 0.1) * (1 - win(t, 0.5, 0.9))
+    return step
+
+
+# 61. Banner: a tall pole planted with a long cloth streaming from its top, snapping in the wind, a ring spreading from its foot.
+# The cloth is four shapes of one wave shown in turn, so it flies.
+def banner(c, h=2.3, w=1.2, tails=2):
+    pole_m, pole_a = c.solid((0.32, 0.26, 0.2), (0.07, 0.06, 0.05), 0.2, 0.8, 0.0)
+    _plain_lights(c)
+    m, a, _ = c.streak('mid', 'bright', 0.6, 1.4)
+    pole = c.tube(0.035, h, pole_m, 8, caps=True)
+    tip_m, _ = c.flat('hot', 2.0)
+    tip = c.cone(0.07, 0.2, tip_m, 4)
+    cloths = []
+    for ph in range(4):
+        shapes = []
+        for j in range(tails):
+            top = h * (0.93 - 0.3 * j)
+            pts = [(scr(x * w, top - 0.06 * x * w + 0.1 * w * x * math.sin(x * 5.0 - ph * TAU / 4 + j)), scr(0, 1)) for x in [i / 16 for i in range(17)]]
+            shapes.append(c.ribbon(pts, lambda u, j=j: (0.16 - 0.03 * j) * (1 - 0.35 * u) + 0.01, m))
+        cloths.append(shapes)
+    ring, rv = c.ring('mid', 0.05)
+
+    def step(t):
+        up = ease(win(t, 0, 0.2)) + 0.06 * bell(win(t, 0, 0.3))
+        gone = win(t, 0.82, 1)
+        k = max(0.001, up * (1 - gone))
+        put(pole, (0, 0, h * 0.5 * k), (1, 1, k))
+        put(tip, (0, 0, (h + 0.1) * k), k)
+        pole_a.outputs[0].default_value = 1 - gone
+        now = int(t * 14) % 4
+        for ph, shapes in enumerate(cloths):
+            for o in shapes:
+                put(o, (0, 0, -h * (1 - k)), (max(0.001, ease(win(t, 0.12, 0.4))), 1, 1))
+                hide(o, ph != now or t < 0.12 or gone >= 1)
+        a.inputs[1].default_value = 2.0 * (1 - gone)
+        put(ring, scale=((0.3 + 1.3 * ease(win(t, 0.1, 0.7))),) * 2 + (1,))
+        rv.outputs[0].default_value = win(t, 0.1, 0.18) * (1 - win(t, 0.45, 0.8))
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner,
 )}

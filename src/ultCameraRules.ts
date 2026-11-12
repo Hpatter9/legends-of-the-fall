@@ -128,8 +128,9 @@ export function strikeViews(spots: readonly Spot[], bursts: readonly Spot[], art
   return views;
 }
 
-/** Which of the strike's frames shows `k` of the way (0 to 1) from the blow to the show's end: each has an even share, in order. */
-export const stepAt = (frames: number, k: number): number => (frames <= 1 ? 0 : Math.min(frames - 1, Math.floor(Math.max(0, Math.min(1, k)) * frames)));
+/** Which of the strike's frames shows `k` of the way (0 to 1) from the blow to the show's end: each has an even share, in order. (A
+ *  share that cannot be told is the first frame: FREEZE-FIX, it used to give no frame at all.) */
+export const stepAt = (frames: number, k: number): number => (frames <= 1 || !(k > 0) ? 0 : Math.min(frames - 1, Math.floor(Math.min(1, k) * frames)));
 
 /** One frame for caster and effect together, when they are close: the box round both fits at no less than `BOTH` of the zoom the fight's
  *  follow holds (`held`), so nothing is made small to do it. Null when they are far apart: the camera travels. */
