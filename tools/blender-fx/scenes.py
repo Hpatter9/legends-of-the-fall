@@ -1614,7 +1614,7 @@ TOWARDS = (0.612, -0.612, 0.5)
 
 
 def spirits(c, r=1.2, n=4, tall=1.1, mode='circle', turns=0.5, hoop=True):
-    robe_m, robe_a = c.solid('bright', 'mid', 0.9, 0.5, 0.0)
+    robe_m, robe_a = c.solid('bright', 'mid', 1.2, 0.5, 0.0)
     hood_m, hood_a = c.solid('mid', 'deep', 0.5, 0.6, 0.0)
     face_m, face_a = c.flat('deep', 0.25)
     steel_m, steel_a = c.flat('hot', 1.6)
@@ -1646,13 +1646,13 @@ def spirits(c, r=1.2, n=4, tall=1.1, mode='circle', turns=0.5, hoop=True):
             base = 0.1 * tall + lift
             # (a guardian: a long robe drawn down to a wisp, a hood over a face in shadow on the side the camera sees, a pauldron on each
             # shoulder, a spear held upright at its side; behind it along the ring, a wake of fading wisps)
-            put(robe, (x, y, base + 0.4 * s), (0.2 * s, 0.2 * s, 0.4 * s), (math.pi, 0, 0))
-            put(hood, (x, y, base + 0.84 * s), (0.15 * s, 0.15 * s, 0.2 * s))
+            put(robe, (x, y, base + 0.4 * s), (0.25 * s, 0.25 * s, 0.4 * s), (math.pi, 0, 0))
+            put(hood, (x, y, base + 0.84 * s), (0.17 * s, 0.17 * s, 0.21 * s))
             put(face, (x + TOWARDS[0] * 0.075 * s, y + TOWARDS[1] * 0.075 * s, base + (0.8 + TOWARDS[2] * 0.075) * s), (0.085 * s, 0.085 * s, 0.1 * s))
             for side, o in zip((-1, 1), pads):
-                put(o, (x + RIGHT[0] * side * 0.19 * s, y + RIGHT[1] * side * 0.19 * s, base + 0.66 * s), (0.09 * s, 0.09 * s, 0.06 * s))
+                put(o, (x + RIGHT[0] * side * 0.22 * s, y + RIGHT[1] * side * 0.22 * s, base + 0.66 * s), (0.11 * s, 0.11 * s, 0.075 * s))
             sx, sy = x + RIGHT[0] * 0.31 * s, y + RIGHT[1] * 0.31 * s
-            put(spear, (sx, sy, base + 0.62 * s), (0.014 * s, 0.014 * s, 1.1 * s))
+            put(spear, (sx, sy, base + 0.62 * s), (0.02 * s, 0.02 * s, 1.1 * s))
             put(tip, (sx, sy, base + 1.24 * s), (0.04 * s, 0.04 * s, 0.16 * s))
             for i, o in enumerate(wake):
                 back = ang - 0.16 * (i + 1) * (1 if mode != 'rise' else 0.3)
@@ -1670,8 +1670,10 @@ def spirits(c, r=1.2, n=4, tall=1.1, mode='circle', turns=0.5, hoop=True):
 # 56. Beast: a wolf's shape (a long body, a head and snout, two ears, four legs, a tail) bursting out of a puff of smoke in a leap,
 # across the camera's view, and landing. What is summoned, arriving.
 def beast(c, size=1.0, puffs=5):
-    m, av = c.solid('bright', 'mid', 0.8, 0.6, 0.0)
-    eye_m, _ = c.flat('hot', 2.2)
+    # (a wolf's own colours, whatever the element: grey fur, an amber eye; the smoke it bursts from and the ring it lands in are the
+    # element's, the magic that called it)
+    m, av = c.solid((0.36, 0.37, 0.42), (0.1, 0.1, 0.12), 0.5, 0.75, 0.0)
+    eye_m, _ = c.flat((1.0, 0.72, 0.18), 2.6)
     body = c.sphere(1.0, m, 2)
     chest = c.sphere(1.0, m, 2)
     head = c.sphere(1.0, m, 2)
