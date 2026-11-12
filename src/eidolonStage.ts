@@ -54,6 +54,8 @@ export interface StagedLook {
   /** A longer call builds more: the ground under the foes breaks (freezes, splits) once already as the build-up begins, ahead of the
    *  blow's own break. */
   front?: boolean;
+  /** An aftershock as the aftermath begins: the tile pieces heave up once more across the foes' ground, with a rumble. */
+  aftershock?: boolean;
 }
 
 const sheet = (name: string, fw: number, fh: number, n: number, cols: number, ms: number, foot: number, hold: number): StageSheet => ({ sheet: name, fw, fh, n, cols, ms, foot, hold });
@@ -85,6 +87,24 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
     smoke: sheet('nivra-stage-smoke', 128, 176, 16, 16, 2000, 160, 6),
     from: 'left',
     front: true,
+  },
+  // Gorm, stone (`gorm_parts.py`): a quarry mark cut into the ground with standing stones rising along it; great slabs thrust up as
+  // his way in, amber in their seams, that grind, tilt apart and fall; the blow an amber flash from under the ground and a ridge of
+  // slabs heaved up across the foes' side, boulders thrown, toppling outward into dust; the ground piece is the split (wide fissures,
+  // amber inside, cooling to black), the tile piece a slab driven up, the mark broken ground, with dust climbing and grit falling.
+  // His rock's grain packs less well, so his two big sheets carry 14 frames.
+  gorm: {
+    sigil: { ...sheet('gorm-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
+    pillar: { ...sheet('gorm-stage-pillar', 144, 352, 14, 14, 1500, 320, 5), lit: true },
+    explosion: { ...sheet('gorm-stage-explosion', 320, 300, 14, 7, 2000, 250, 6), lit: true },
+    cracks: { ...sheet('gorm-stage-cracks', 256, 136, 12, 6, 0, 68, 4), open: 4 },
+    embers: sheet('gorm-stage-embers', 160, 200, 12, 12, 1300, 190, 0),
+    fire: sheet('gorm-stage-fire', 64, 112, 14, 14, 1500, 104, 5),
+    scorch: { ...sheet('gorm-stage-scorch', 88, 48, 8, 8, 0, 24, 2), hot: 5 },
+    smoke: sheet('gorm-stage-smoke', 128, 176, 16, 16, 2200, 160, 6),
+    from: 'left',
+    front: true,
+    aftershock: true,
   },
 };
 
