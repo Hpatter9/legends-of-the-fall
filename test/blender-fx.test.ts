@@ -252,7 +252,12 @@ test('every hero\'s ultimate has its three stages hung on STAGE_ART: its own str
     }
     // (its own wind-up once its turn has come, else the one its weight and element share)
     assert.ok(arts.windup!.sheet === `ult-${kind}-windup` || arts.windup!.sheet.startsWith(`ultwind-${ultWeight(kind)}-`), `${kind} winds up as a ${ultWeight(kind)}`);
-    for (const stage of STAGE_NAMES) assert.equal(bfxClip(arts[stage]!.sheet)!.el, bfxClip(arts.strike!.sheet)!.el, `${kind}: one element through its three stages`);
+    // (one element through its three stages; but Vael's sweep is gold, as his words say, between a dark wind-up and a dark aftermath:
+    // the director's order, 2026-11-12)
+    if (kind === 'vael') {
+      assert.equal(bfxClip(arts.strike!.sheet)!.el, 'holy');
+      assert.equal(bfxClip(arts.windup!.sheet)!.el, bfxClip(arts.aftermath!.sheet)!.el, 'vael: dark before and after his golden sweep');
+    } else for (const stage of STAGE_NAMES) assert.equal(bfxClip(arts[stage]!.sheet)!.el, bfxClip(arts.strike!.sheet)!.el, `${kind}: one element through its three stages`);
   }
   // (a kind with no show has none, and plays what the game has)
   assert.equal(STAGE_ART.skeleton, undefined);
