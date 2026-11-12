@@ -21,6 +21,15 @@ import type { StageName, UltStages } from './ultStageRules';
 /** Whether an ultimate gets the full moment (the hold and the dim): the setting on, and Auto off. With Auto the banner is short. */
 export const fullScene = (setting: boolean, auto: boolean): boolean => setting && !auto;
 
+/** FREEZE-FIX (the director's call): whether an ultimate that just fired gets a full moment: only when no other show has the screen
+ *  (`playing`: an ultimate's moment; `call`: an Eidolon's call). Otherwise it takes effect at once with the short banner. */
+export const oneShow = (playing: boolean, call: boolean): boolean => !playing && !call;
+
+/** FREEZE-FIX, the page's belt at a fight's end: `over` real ms since the fight ended, `shown` whether anything the player can act on
+ *  is up (the result, a card, a film). Past `BELT_MS` with nothing shown, the page pushes the flow on. */
+export const WAVE_END = { BELT_MS: 10000 };
+export const waveEndStuck = (over: number, shown: boolean): boolean => !shown && !(over < WAVE_END.BELT_MS);
+
 export type UltShape = 'instant' | 'delayed' | 'lingering';
 
 export const ULT_MOMENT = {
@@ -45,6 +54,9 @@ export const ULT_MOMENT = {
   /** FREEZE-FIX (docs/notes/freeze-fix.md): the longest a moment may run past its own length before it is ended whatever it was waiting
    *  for (real ms), so a show can never hold a fight for good. */
   OVERRUN_MS: 2500,
+  /** FREEZE-FIX: once the fight is over, the most that is left of the show playing: its aftermath, cut to this (real ms). The owner's
+   *  freeze was a wave's end waiting 10 to 20 s for shows with nothing left to strike. */
+  OVER_MS: 1000,
 };
 
 /** FREEZE-FIX: the longest a moment may last, start to end (real ms, the freeze on the blow counted): its own length (its stages'; the
@@ -266,6 +278,17 @@ export class UltQueue {
       this.next();
     }
     return this.phase;
+  }
+
+  /** FREEZE-FIX: the fight is over, and no show outlives it: the moments waiting are dropped, and the one playing goes straight to its
+   *  aftermath, `OVER_MS` of it at most. Asked every frame while the fight stays over: it only ever shortens. */
+  fightOver(): void {
+    this.dropWaiting();
+    if (!this.current) return;
+    this.stopLeft = 0;
+    this.slowLeft = 0;
+    if (this.phase !== 'fade') this.fade(Math.min(ULT_MOMENT.OVER_MS, this.current.stages?.aftermath.ms ?? ULT_MOMENT.FADE_MS));
+    else if (!(this.left <= ULT_MOMENT.OVER_MS)) this.left = ULT_MOMENT.OVER_MS;
   }
 
   /** FREEZE-FIX: the fight is over: the moments still waiting their turn are dropped (the one playing finishes), so a won fight's result

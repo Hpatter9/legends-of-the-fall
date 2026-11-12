@@ -153,7 +153,8 @@ import { heroFace } from './heroFace';
 import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
-import { fullScene } from './ultMomentRules';
+import { fullScene, waveEndStuck } from './ultMomentRules';
+import { ctxReload } from './contextRules';
 import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { anyUltimate, ultFull } from './sim/heroKits';
 import { armiesFocusAfterClear } from './screenRules';
@@ -274,6 +275,9 @@ const FOLLOW_IN = 1.7;
 const INTRO_ZOOM = 0.25;
 /** How long the board stays on show after the last kill before the wave recap comes up (ms). */
 const END_WAIT_MS = 2000;
+/** FREEZE-FIX: what a page loaded again after a lost graphics context finds in the session: where the player was, and when it was. */
+const CTX_RESUME = 'legends.ctxResume';
+const CTX_RELOADED = 'legends.ctxReloaded';
 /** The king's spell orbs' row under the top bar in a fight (40 px orbs and the gaps round them, BATTLE-HUD): what the boss's bar sits below. */
 const ORBS_ROW = 48;
 /** How long the short wave card stays once the march has arrived, how long with no march at all, and its fade (WAVE-RECAP). */
@@ -685,8 +689,13 @@ class Game {
       homeOpen(...a);
       if (this.heldReveals.length) setTimeout(() => this.flushReveals(), 400);
     };
+    // (FREEZE-FIX: a page loaded again after its graphics context was lost goes straight back to where the player was: the run's wave,
+    // or the Last Stand)
+    const resume = sessionStorage.getItem(CTX_RESUME);
+    sessionStorage.removeItem(CTX_RESUME);
     if (firstSession) saveRun(this.run);
-    else if (!seed) this.home.open(closed ?? undefined);
+    else if (!seed && !(resume === 'run' && loadRun())) this.home.open(closed ?? undefined);
+    if (resume === 'stand') this.openStand();
     // (a fault in one frame's drawing or sound is logged and the next frame goes on: Pixi's ticker stops for good when a
     // listener throws, which froze fights mid-way)
     this.app.ticker.add((tk) => {
@@ -696,10 +705,28 @@ class Game {
         console.error(err);
       }
     });
-    // (FREEZE-FIX: a phone short of graphics memory takes the picture away; Pixi puts it back when the browser gives it back. Logged,
-    // so a report of a frozen picture can be told from a fight that stopped)
-    this.app.canvas.addEventListener('webglcontextlost', () => console.warn('the graphics context was lost'));
-    this.app.canvas.addEventListener('webglcontextrestored', () => console.warn('the graphics context was restored'));
+    // (FREEZE-FIX: a phone short of graphics memory takes the picture away; Pixi puts it back when the browser gives it back. Both are
+    // logged, so a report of a frozen picture can be told from a fight that stopped. A context not given back within a few seconds
+    // would leave the picture dead for good: the page is loaded again, into the same run and wave: `contextRules.ts`)
+    let lostAt: number | null = null;
+    this.app.canvas.addEventListener('webglcontextlost', () => {
+      lostAt ??= performance.now();
+      console.warn('the graphics context was lost');
+    });
+    this.app.canvas.addEventListener('webglcontextrestored', () => {
+      lostAt = null;
+      console.warn('the graphics context was restored');
+    });
+    setInterval(() => {
+      if (lostAt === null) return;
+      const last = Number(sessionStorage.getItem(CTX_RELOADED) ?? NaN);
+      if (!ctxReload(performance.now() - lostAt, this.b.phase, Number.isFinite(last) ? Date.now() - last : null)) return;
+      console.warn('the graphics context was not given back: the page is loaded again');
+      // (the run as it was saved when this wave began comes back; the Last Stand carries on from its own save)
+      sessionStorage.setItem(CTX_RELOADED, String(Date.now()));
+      sessionStorage.setItem(CTX_RESUME, this.standOn ? 'stand' : this.homeUp ? 'home' : 'run');
+      location.reload();
+    }, 1000);
     // (battery saver caps the frame rate at 30)
     onSettings((s) => (this.app.ticker.maxFPS = s.saver ? 30 : 0));
     // (ALIVE: the page's own CSS life, the menus' sheen and glints, rests on a battery saver too)
@@ -1550,6 +1577,43 @@ class Game {
     void this.stand.open();
   }
 
+  /** FREEZE-FIX: a part of the frame that may fault without taking the rest of the frame with it (the page's ticker catches a frame's
+   *  fault, but what came after it in the frame is then never reached: a show's fault every frame would hold the fight for good). The
+   *  fault is logged, a few times at most for each part, and `drop` puts the part away. */
+  private faults = new Map<string, number>();
+  private guard(what: string, fn: () => void, drop?: () => void): void {
+    try {
+      fn();
+    } catch (err) {
+      const n = (this.faults.get(what) ?? 0) + 1;
+      this.faults.set(what, n);
+      if (n <= 3) console.error(`a fault in ${what}; it is dropped and the fight goes on`, err);
+      try {
+        drop?.();
+      } catch {
+        /* (nothing more to do for it) */
+      }
+    }
+  }
+
+  /** FREEZE-FIX, the belt: a fight that is over must reach its result. If it has been over for `WAVE_END.BELT_MS` and nothing the
+   *  player can act on is up, the flow is pushed on: the shows are cleared and the fight is settled as it would have been, so the
+   *  wave's result is never lost. What was pending is logged: this should never be needed. */
+  private overFor = 0;
+  private waveEndBelt(dt: number, over: boolean): void {
+    if (!over) return void (this.overFor = 0);
+    this.overFor += Math.min(dt, 250);
+    const shown = !$('result').hidden || openScreens().length > 0 || this.sceneHold > 0 || !!this.revive || this.homeUp || !!this.resultDone;
+    if (!waveEndStuck(this.overFor, shown)) return;
+    console.warn('a fight was over and its result never came: the flow is pushed on', JSON.stringify({ settled: this.settled, endWait: Math.round(this.endWait), moment: this.ultm.queue.current?.name ?? null, waiting: this.ultm.queue.waiting, call: this.eid.playing, duel: this.duelShow.ending, sceneHold: this.sceneHold }));
+    this.overFor = 0;
+    this.ultm.clear();
+    this.eid.clear();
+    this.duelShow.clear();
+    this.endWait = END_WAIT_MS;
+    this.refresh();
+  }
+
   private frame(dt: number, elapsed = dt): void {
     const b = this.b;
     tips.update();
@@ -1566,13 +1630,21 @@ class Game {
     if (this.duelShow.on && this.duelShow.battle !== b) this.duelShow.clear();
     const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding || this.eid.sheetOpen || this.duelShow.holding;
     // (EIDOLONS: the call's cinematic moves on in real time; it may outlast the fight its strike ended)
-    this.eid.see(b);
-    this.eid.frame(dt, this.sceneHold > 0, !held && !this.ultm.queue.holdsBattle);
-    // (ULT-SHOW: a showcase whose ultimate ended the fight still plays out, and the result waits for it)
-    // (FREEZE-FIX: once the fight is over, the ultimates still waiting their turn are dropped: the result is not kept back for them)
-    if (b.phase !== 'fight' && this.ultm.queue.waiting) this.ultm.queue.dropWaiting();
-    if (b.phase === 'fight' || (b.phase !== 'deploy' && this.ultm.queue.current?.show)) this.ultm.frame(b, dt, !!held);
-    else if (this.ultm.queue.current) this.ultm.clear();
+    // (FREEZE-FIX: no show outlives the fight. The owner's freeze was a wave's end waiting, 10 to 20 s or for good, on shows with
+    // nothing left to strike: once the fight is over the call and the moment playing are cut to a second of aftermath at most, and
+    // the result no longer waits for either. A fault in a show's own frame drops that show and the fight goes on)
+    const over = b.phase !== 'fight' && b.phase !== 'deploy';
+    this.guard('the Eidolon\'s call', () => {
+      this.eid.see(b);
+      if (over) this.eid.fightOver();
+      this.eid.frame(dt, this.sceneHold > 0, !held && !this.ultm.queue.holdsBattle);
+    }, () => this.eid.clear());
+    this.guard('the ultimate\'s moment', () => {
+      if (over) this.ultm.queue.fightOver();
+      if (b.phase !== 'deploy') this.ultm.frame(b, dt, b.phase === 'fight' && !!held);
+      else if (this.ultm.queue.current) this.ultm.clear();
+    }, () => this.ultm.clear());
+    this.waveEndBelt(dt, over);
     // (ULT-EPIC 2: the speed button reads x1 while a show holds the fight to it, and the set speed again the moment it is over; the set
     // speed itself is never touched, so it comes back however the show ends)
     const showing = b.phase === 'fight' && (!!this.ultm.queue.current || this.eid.long);
@@ -1621,7 +1693,7 @@ class Game {
         tally(this.stats, events, b.units);
         tallyNemesis(this.nemTally, events, b.units, b.t);
         this.ultsFired.push(...ultsIn(events, b.units));
-        this.fx.show(b, events);
+        this.guard('the effects', () => this.fx.show(b, events));
         this.noteHeat(b, events);
         for (const e of events) if (e.kind === 'boom') this.boardView.removeBarrel(e.u, e.v);
         // (LIVING-FIELDS: a trap sprung or changed: its tile is painted again, and what stood on it goes if it is spent)
@@ -1671,9 +1743,9 @@ class Game {
       // (the fallen finish falling after the end; the recap comes up once the wait is over)
       this.acc += dt;
       if (!this.ultm.queue.current || this.ultm.queue.runsEffects) this.fx.step(dt);
-      // (EIDOLONS: a strike that ended the fight plays out before the result comes up; ULT-SHOW: so does a showcase)
-      // (DUEL-SHOW: and a duel's crowd erupts and slumps before its outcome)
-      if (this.endWait < END_WAIT_MS && !this.eid.playing && !this.ultm.queue.current && !this.duelShow.ending) {
+      // (DUEL-SHOW: a duel's crowd erupts and slumps before its outcome. FREEZE-FIX: nothing else is waited for: a call or a moment
+      // still playing has a second left at most (above), and fades under the wait every fight's end has)
+      if (this.endWait < END_WAIT_MS && !this.duelShow.ending) {
         this.endWait += dt;
         if (this.endWait >= END_WAIT_MS) this.refresh();
       }
@@ -2530,7 +2602,7 @@ class Game {
       autoOn: () => this.ultAutoOn(),
       useOf: (kind, key) => useOf(this.meta, kind, key),
       dockTop: () => $('panel').getBoundingClientRect().top,
-      ultFull: () => fullScene(settings().ultFull, this.ultAutoOn()),
+      ultFull: (id) => fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.took(id),
       ultArt: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
     });
     this.ultm = new UltMoments({
@@ -2545,6 +2617,7 @@ class Game {
       },
       art: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
       fx: this.fx,
+      busy: () => this.eid.playing,
       // (ULT-SHOW: the showcase stages the real sprites, and the save counts the full moments seen)
       sprite: (id) => this.sprites.get(id),
       world: (u, v) => {

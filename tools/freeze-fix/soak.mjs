@@ -35,6 +35,11 @@ const HELD_MS = Number(opt('--held', '20000'));
 /** The page's clock stepped by hand (the default: thirty frames a second of the game's own time, as fast as the machine can, so a logic freeze
  *  shows whatever the machine's speed), or left to real time (`--real`: slow under a software renderer, but the frames are real). */
 const STEPPED = !args.includes('--real');
+/** Whole runs, wave after wave through the game's own wave-end flow (the default: the owner's freeze was between two waves); `--fresh`
+ *  begins every fight as a new run instead. */
+const RUNS = STEPPED && !args.includes('--fresh');
+/** The longest the wave-end flow may take to show something (the result, or the next deploy), ms of the game's time. */
+const END_MS = Number(opt('--end', '8000'));
 /** One frame's own work (ms, stepped clock) that is kept as a slow frame; and the party: new heroes every fight, or the same five (`--party fixed`). */
 const SLOW_MS = Number(opt('--slow', '250'));
 const FIXED = opt('--party', 'random') === 'fixed';
@@ -65,7 +70,7 @@ let seed = 0x9e3779b9;
 const rnd = () => ((seed = (Math.imul(seed ^ (seed >>> 15), 0x2c1b3c6d) + 0x6d2b79f5) | 0) >>> 0) / 4294967296;
 const pick = (a) => a[Math.floor(rnd() * a.length)];
 
-const totals = { waves: 0, flags: [], slow: [], faults: { failed: 0, late: 0 }, hides: 0, skips: 0, ults: 0, horns: 0, spells: 0 };
+const totals = { waves: 0, flags: [], slow: [], ends: [], faults: { failed: 0, late: 0 }, hides: 0, skips: 0, ults: 0, horns: 0, spells: 0 };
 
 /** The watchdog and the hidden-tab stand-in, put in the page before the game loads. */
 function inPage([STALL, LONG, HELD, SLOW]) {
@@ -115,6 +120,7 @@ function inPage([STALL, LONG, HELD, SLOW]) {
       eidolon: p ? { id: p.e.id, t: Math.round(p.t), releasing: p.releasing, struckDone: p.struckDone, shot: p.shot, stopLeft: Math.round(p.stopLeft), beats: p.beats, resume: p.m.RESUME } : null,
       alive: b ? { heroes: b.units.filter((u) => u.alive && u.side === 'hero').length, foes: b.units.filter((u) => u.alive && u.side === 'foe').length } : null,
       result: !document.getElementById('result')?.hidden, screens: window.__screens?.() ?? [],
+      waveEnd: { settled: g.settled, passing: g.passing ? { ...g.passing } : null, jr: !!g.jr, move: document.body.dataset.move ?? null, reveal: !!g.destinationReveal, resultDone: g.resultDone, heldReveals: g.heldReveals?.length, eidPlaying: g.eid?.playing, duelEnding: g.duelShow?.ending, stage: g.run?.stage, over: g.run?.over, cleared: g.run?.cleared },
     };
   };
   // (the longest single task, which a long frame is nearly always made of)
@@ -250,7 +256,7 @@ async function begin(page, n, mode) {
     const k = pick(HEROES);
     if (!party.includes(k)) party.push(k);
   }
-  const o = { party, army: ARMIES[n % ARMIES.length], stage: 2 + ((n * 7) % 28), speed: 1 + (n % 3), seed: 1000 + Math.floor(rnd() * 1e6), eid: EIDOLONS[n % EIDOLONS.length] };
+  const o = { party, army: ARMIES[n % ARMIES.length], stage: RUNS ? 1 + ((n * 4) % 11) : 2 + ((n * 7) % 28), speed: 1 + (n % 3), seed: 1000 + Math.floor(rnd() * 1e6), eid: EIDOLONS[n % EIDOLONS.length] };
   await page.evaluate((o) => {
     const g = window.__game;
     // (a card that is up is closed by its own button, as a player would)
@@ -317,6 +323,61 @@ async function poke(page, mode) {
   }, [mode, rnd(), rnd(), rnd()]);
 }
 
+/** A wave has ended. The game's own flow must show something within `END_MS` (the result's card, or the next wave's deploy; a fall a
+ *  heart revives resumes the fight). Then the player's part: the card tapped, the way on pressed, whatever card comes up closed by its
+ *  own button, until the next wave's deploy is up. True when the run goes on to another wave. */
+async function waveEnd(page, mode, o, note) {
+  const look = () => page.evaluate(() => {
+    const g = window.__game;
+    const vis = (el) => !!el && !el.hidden && el.offsetParent !== null;
+    return { phase: g.b.phase, result: vis(document.getElementById('result')), screens: window.__screens?.() ?? [], over: !!g.run.over, cleared: !!g.run.cleared, home: !!g.homeUp, queue: g.ultm.queue.waiting + (g.ultm.queue.current ? 1 : 0), call: !!g.eid.playing };
+  });
+  await page.evaluate(() => { window.__endB = window.__game.b; });
+  const first = await look();
+  let ms = 0;
+  let s = first;
+  while (ms < 60000) {
+    s = await look();
+    if (s.result || s.screens.length || s.phase === 'fight' || s.phase === 'deploy' || s.home) break;
+    await page.evaluate(() => window.__run(250));
+    await page.waitForTimeout(5);
+    ms += 250;
+  }
+  totals.ends.push(ms);
+  if (ms > END_MS) await note({ kind: 'waveEnd', ms, message: `nothing shown for ${ms} ms after the fight ended${ms >= 60000 ? ' (never, in a minute)' : ''}; as it ended: ${first.queue} shows playing or waiting, a call ${first.call}`, state: await page.evaluate(() => window.__dump()) }, o);
+  if (s.phase === 'fight') return true;
+  // (the player's part)
+  const seen = new Set();
+  for (let i = 0; i < 60; i++) {
+    const at = await page.evaluate(() => {
+      const g = window.__game;
+      const vis = (el) => !!el && !el.hidden && el.offsetParent !== null;
+      if (g.b !== window.__endB && g.b.phase === 'deploy' && !(window.__screens?.() ?? []).length && !g.homeUp) return { done: true };
+      const did = [];
+      for (const el of document.querySelectorAll('.rvRow button:last-child')) { el.click(); did.push('card'); }
+      const r = document.getElementById('result');
+      if (vis(r)) {
+        r.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        did.push('result');
+        const next = document.getElementById('next');
+        if (vis(next) && !g.passing) { next.click(); did.push('next'); }
+      }
+      return { done: false, did, phase: g.b.phase, same: g.b === window.__endB, screens: window.__screens?.() ?? [], over: !!g.run.over, cleared: !!g.run.cleared, home: !!g.homeUp, result: vis(r) };
+    });
+    if (at.done) return true;
+    for (const x of at.screens) seen.add(x);
+    // (the run is over, or the game has gone somewhere this driver does not play: a new run)
+    if (at.home || ((at.over || at.cleared) && !at.result)) return false;
+    await page.evaluate(() => window.__run(500));
+    await page.waitForTimeout(5);
+    if (i === 59) {
+      const stuck = !at.result && !at.screens.length;
+      await note({ kind: stuck ? 'afterResult' : 'driverLost', message: `no next wave 30 s after the result; cards seen: ${[...seen].join(',') || 'none'}`, state: await page.evaluate(() => window.__dump()) }, o);
+    }
+  }
+  return false;
+}
+
 async function soak(mode) {
   const { ctx, page, errs } = await open(mode);
   const each = Math.ceil(WAVES / MODES.length);
@@ -324,17 +385,25 @@ async function soak(mode) {
   let waves = 0;
   let peak = 0;
   let n = MODES.indexOf(mode) * 3;
+  let fresh = true;
+  let o = null;
   const note = async (f, o) => {
     const id = `${mode}-${totals.flags.length + 1}-${f.kind}`;
     totals.flags.push({ mode, fight: o, ...f, shot: `${OUT}/${id}.png` });
     const st = f.state;
-    console.log(`FLAG ${mode} ${f.kind} ${f.ms ?? ''} ${(f.message ?? '').replace(/\n/g, ' / ')} | ${o.army} stage ${o.stage} x${o.speed} ${o.party.join(',')} | t ${st?.t} phase ${st?.phase} queue ${st?.queue?.phase} left ${st?.queue?.left} waiting ${st?.queue?.waiting}${st?.queue?.current ? ` (${st.queue.current.kind} ${st.queue.stage})` : ''} eidolon ${st?.eidolon ? `${st.eidolon.id} ${st.eidolon.shot} t${st.eidolon.t} releasing ${st.eidolon.releasing}` : '-'} holds ${JSON.stringify({ scene: st?.sceneHold, hud: st?.hudHolding, sheet: st?.eidSheet, duel: st?.duelHolding, revive: st?.revive, pause: st?.pause })} screens ${st?.screens}`);
+    console.log(`FLAG ${mode} ${f.kind} ${f.ms ?? ''} ${(f.message ?? '').replace(/\n/g, ' / ')} | ${o.army} stage ${o.stage} x${o.speed} ${o.party.join(',')} | t ${st?.t} phase ${st?.phase} queue ${st?.queue?.phase} left ${st?.queue?.left} waiting ${st?.queue?.waiting}${st?.queue?.current ? ` (${st.queue.current.kind} ${st.queue.stage})` : ''} eidolon ${st?.eidolon ? `${st.eidolon.id} ${st.eidolon.shot} t${st.eidolon.t} releasing ${st.eidolon.releasing}` : '-'} holds ${JSON.stringify({ scene: st?.sceneHold, hud: st?.hudHolding, sheet: st?.eidSheet, duel: st?.duelHolding, revive: st?.revive, pause: st?.pause })} screens ${st?.screens} waveEnd ${JSON.stringify(st?.waveEnd)}`);
     await page.screenshot({ path: `${OUT}/${id}.png` }).catch(() => {});
     writeFileSync(`${OUT}/flags.json`, JSON.stringify(totals.flags, null, 2));
   };
   try {
     while (waves < each && Date.now() < until) {
-      const o = await begin(page, n++, mode);
+      if (fresh) o = await begin(page, n++, mode);
+      else {
+        // (the next wave of the same run, as a player goes on: set out, and the fight begun)
+        const speed = 1 + (n++ % 3);
+        await page.evaluate((speed) => { const g = window.__game; g.autoArrange(true); window.__run(300); document.getElementById('bossCard')?.click(); document.getElementById('fight').click(); g.speed = speed; g.app.ticker.stop(); }, speed);
+        o = { ...o, speed, stage: await page.evaluate(() => window.__game.run.stage) };
+      }
       const t0 = Date.now();
       let stalled = false;
       let hung = false;
@@ -368,7 +437,9 @@ async function soak(mode) {
         }
       }
       if (hung) throw new Error('the page no longer answers');
-      if (!stalled && STEPPED) {
+      if (!stalled && RUNS) {
+        fresh = !(await waveEnd(page, mode, o, note));
+      } else if (!stalled && STEPPED) {
         // (the end: let what is still playing finish, and see that the result comes up)
         let up = false;
         for (let i = 0; i < 40 && !up; i++) {
@@ -385,6 +456,7 @@ async function soak(mode) {
         if (phase === 'fight') await note({ kind: 'tooLong', state: await page.evaluate(() => window.__dump()) }, o);
         else if (!done) await note({ kind: 'noResult', state: await page.evaluate(() => window.__dump()) }, o);
       }
+      if (stalled) fresh = true;
       waves++;
       totals.waves++;
       if (waves % 5 === 0) {
@@ -410,6 +482,7 @@ const results = await Promise.all(MODES.map((m) => soak(m).catch((e) => ({ mode:
 const sum = { ...totals, results, cpu: CPU, faultsOn: FAULTS };
 writeFileSync(`${OUT}/soak.json`, JSON.stringify(sum, null, 2));
 console.log(`\nslow frames (over ${SLOW_MS} ms of work): ${totals.slow.length}, the worst ${Math.max(0, ...totals.slow.map((x) => x.ms))} ms`);
+if (totals.ends.length) console.log(`wave ends: ${totals.ends.length}; from the fight's end to something shown: ${[...totals.ends].sort((a, b) => a - b)[Math.floor(totals.ends.length / 2)]} ms at the middle, ${Math.max(...totals.ends)} ms at the worst, ${totals.ends.filter((x) => x > END_MS).length} over ${END_MS} ms`);
 console.log(`fights ${totals.waves}; flags ${totals.flags.length} (${[...new Set(totals.flags.map((f) => f.kind))].join(', ') || 'none'}); ultimates by hand ${totals.ults}, horns ${totals.horns}, spells ${totals.spells}, skips ${totals.skips}, tab hidden ${totals.hides} times; sheets failed ${totals.faults.failed}, late ${totals.faults.late}`);
 // (the frame times are only real with `--real`: the stepped clock draws one picture a second)
 for (const r of results) console.log(`  ${r.mode}: ${r.waves} fights, most texture memory ${r.peak} MB, ${STEPPED ? '' : `longest frame ${r.longest} ms, longest task ${r.task} ms, ${r.fps} frames a second in fights, `}page errors ${r.errors.length}`);

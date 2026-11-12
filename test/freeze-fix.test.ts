@@ -1,13 +1,16 @@
 // FREEZE-FIX (docs/notes/freeze-fix.md): nothing may hold a fight for good. An ultimate's moment always ends, whatever its lengths hold
 // and whatever is done to it; the moments still waiting when a fight ends are dropped; an Eidolon's call waits for its strike only so
-// long; and the camera's rules end for any input.
+// long; and the camera's rules end for any input. The owner's freeze was a wave's end that waited on shows (10 to 20 s, or for good), so:
+// one full show at a time, no show outlives the fight by more than a second, a belt pushes a stuck wave's end on, and a graphics context
+// that is not given back has the page loaded again where it is safe to.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ALL_HEROES } from '../src/sim/units';
 import { Rng } from '../src/sim/rng';
-import { momentLimit, ULT_MOMENT, UltQueue, type UltMoment, type UltShape } from '../src/ultMomentRules';
+import { momentLimit, oneShow, ULT_MOMENT, UltQueue, WAVE_END, waveEndStuck, type UltMoment, type UltShape } from '../src/ultMomentRules';
+import { CTX, ctxReload } from '../src/contextRules';
 import { stagesFor } from '../src/ultStageRules';
-import { STRIKE_WAIT_MS, strikeOverdue } from '../src/eidolonRules';
+import { CALL_OVER_MS, STRIKE_WAIT_MS, strikeOverdue } from '../src/eidolonRules';
 import { camAt, camPlan, effectBox, fitView, stepAt, strikeViews, type Room } from '../src/ultCameraRules';
 
 const SHAPES: UltShape[] = ['instant', 'delayed', 'lingering'];
@@ -137,4 +140,61 @@ test('the camera\'s rules end, and give finite views, for any spots', () => {
   const v = fitView({ x0: 0, y0: 0, x1: 0, y1: 0 }, room);
   assert.ok(Number.isFinite(v.cx) && Number.isFinite(v.zoom) && v.zoom <= room.hi);
   for (const k of [NaN, -1, 0, 0.5, 1, 2, Infinity]) for (const f of [0, 1, 3, 7]) assert.ok(stepAt(f, k) >= 0 && stepAt(f, k) <= Math.max(0, f - 1));
+});
+
+test('one full show at a time: an ultimate fired while a moment or a call plays gets the short banner', () => {
+  assert.equal(oneShow(false, false), true);
+  assert.equal(oneShow(true, false), false);
+  assert.equal(oneShow(false, true), false);
+  assert.equal(oneShow(true, true), false);
+});
+
+test('no show outlives the fight: whatever is playing or waiting, a second at most is left once the fight is over', () => {
+  for (const h of ALL_HEROES)
+    for (const shape of SHAPES)
+      for (const at of [0, 400, 1500, 2600, 4200, 5200]) {
+        const q = new UltQueue();
+        q.push(moment(h, shape, { show: 2500, wait: shape === 'delayed' ? 900 : 0 }));
+        q.push(moment('wizard', 'instant', { show: 2500 }));
+        q.push(moment('archer', 'delayed', { wait: 1200 }));
+        for (let t = 0; t < at && q.current; t += 33) q.step(33);
+        // (the page asks every frame while the fight stays over)
+        let took = 0;
+        for (; took < 5000 && q.current; took += 33) {
+          q.fightOver();
+          assert.equal(q.holdsBattle, false);
+          assert.equal(q.waiting, 0);
+          q.step(33);
+        }
+        assert.ok(took <= ULT_MOMENT.OVER_MS + 66, `${h} ${shape} at ${at}: ${took} ms left after the fight`);
+        assert.equal(q.overran, 0);
+      }
+  assert.ok(ULT_MOMENT.OVER_MS <= 1000 && CALL_OVER_MS <= 1000);
+  // (nothing playing: nothing to do)
+  const q = new UltQueue();
+  q.fightOver();
+  assert.equal(q.current, null);
+});
+
+test('the belt: a fight over for ten seconds with nothing shown is pushed on; anything the player can act on stays its hand', () => {
+  assert.equal(waveEndStuck(0, false), false);
+  assert.equal(waveEndStuck(WAVE_END.BELT_MS - 1, false), false);
+  assert.equal(waveEndStuck(WAVE_END.BELT_MS, false), true);
+  assert.equal(waveEndStuck(WAVE_END.BELT_MS * 10, true), false);
+  assert.equal(waveEndStuck(NaN, false), true);
+  assert.ok(WAVE_END.BELT_MS >= 5000 && WAVE_END.BELT_MS <= 12000);
+});
+
+test('a graphics context not given back in four seconds has the page loaded again, where nothing of a wave can be lost', () => {
+  assert.equal(ctxReload(null, 'fight', null), false);
+  assert.equal(ctxReload(CTX.RELOAD_MS - 1, 'fight', null), false);
+  assert.equal(ctxReload(CTX.RELOAD_MS, 'fight', null), true);
+  assert.equal(ctxReload(CTX.RELOAD_MS, 'deploy', null), true);
+  // (a fight that has ended is being counted: the reload waits for the next wave's deploy)
+  assert.equal(ctxReload(60000, 'won', null), false);
+  assert.equal(ctxReload(60000, 'lost', null), false);
+  // (never round in a loop)
+  assert.equal(ctxReload(60000, 'fight', CTX.AGAIN_MS - 1), false);
+  assert.equal(ctxReload(60000, 'fight', CTX.AGAIN_MS), true);
+  assert.equal(CTX.RELOAD_MS, 4000);
 });

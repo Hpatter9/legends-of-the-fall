@@ -41,7 +41,7 @@ export interface FightHudOpts {
   /** The top of the page's bottom panel: the skill's sheet and the cast banners sit just above it. */
   dockTop?: () => number;
   /** Whether ultimates play their full moment (`ultMoment.ts`, the setting): then the row lights but no banner shows, the moment has it all. */
-  ultFull?: () => boolean;
+  ultFull?: (unit: number) => boolean;
   /** The hero's painted art: the short version's banner for an ultimate shows its face. */
   ultArt?: (u: Unit) => string;
 }
@@ -415,7 +415,7 @@ export class FightHud {
       chip.classList.add('fired');
       this.later(1100, () => chip.classList.remove('fired'));
     }
-    if (which === 'ult' && this.opts.ultFull?.()) return;
+    if (which === 'ult' && this.opts.ultFull?.(u.id)) return;
     this.banner(u, s, colour, which === 'ult');
   }
 
