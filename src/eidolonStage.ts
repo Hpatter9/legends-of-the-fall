@@ -122,6 +122,22 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
     smoke: sheet('voltara-stage-smoke', 128, 176, 16, 16, 1700, 160, 6),
     from: 'left',
   },
+  // Aurelan, light (`aurelan_parts.py`): straight, clean and golden where lightning is jagged and blue. A sun cut in light, lit from
+  // its middle outward; a shaft of dawn from above the screen as his way in, rings of light running down it; the blow a sunburst
+  // (a disc throwing long turning rays), beams descending across the foes' side and a radiant shock racing out along the ground;
+  // the ground piece is a sun of rays and rings, the tile piece a small beam, the mark a disc of gold light, with motes climbing.
+  aurelan: {
+    sigil: { ...sheet('aurelan-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
+    pillar: { ...sheet('aurelan-stage-pillar', 144, 352, 14, 14, 1400, 320, 4), lit: true },
+    explosion: { ...sheet('aurelan-stage-explosion', 320, 300, 16, 8, 1900, 250, 7), lit: true },
+    cracks: { ...sheet('aurelan-stage-cracks', 256, 136, 12, 6, 0, 68, 4), open: 4 },
+    embers: sheet('aurelan-stage-embers', 160, 200, 12, 12, 2200, 190, 0),
+    fire: sheet('aurelan-stage-fire', 64, 112, 14, 14, 1400, 104, 4),
+    scorch: { ...sheet('aurelan-stage-scorch', 88, 48, 8, 8, 0, 24, 2), hot: 5 },
+    smoke: sheet('aurelan-stage-smoke', 128, 176, 16, 16, 2000, 160, 6),
+    from: 'left',
+    front: true,
+  },
 };
 
 /** Every sheet the staged shows load (for the tests and the credits). */

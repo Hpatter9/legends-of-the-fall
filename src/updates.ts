@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.511.0',
+    date: '2026-11-12',
+    title: 'Aurelan\'s call, remade in light',
+    notes: ['The Lion of Dawn\'s call is rebuilt: his sun cut in light on the ground, a shaft of dawn he strides out of, a sun racing under the foes, then beams descending.', 'A sunburst and a shock of light roll across the foes, leaving gold motes and columns of light.'],
+  },
+  {
     version: '0.510.0',
     date: '2026-11-12',
     title: 'Voltara\'s call, remade in lightning',
