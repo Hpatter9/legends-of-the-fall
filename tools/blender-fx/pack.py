@@ -16,7 +16,7 @@ from PIL import Image
 from lib import DENSITY
 from pixelate import GLOW_SHRINK
 
-MAX = 1024
+MAX = 2048
 
 
 def trim(frames):
@@ -39,6 +39,8 @@ def grid(n, w, h):
         rows = math.ceil(n / cols)
         if cols * w > MAX:
             break
+        if rows * h > MAX:
+            continue
         score = abs(cols * w - rows * h)
         if best is None or score < best[0]:
             best = (score, cols)
@@ -73,9 +75,29 @@ class Shelves:
         return out
 
 
+HEROES_A_GROUP = 2
+
+
+def group_order(ids):
+    """Which group of atlases each effect goes in. Group 0 is what every fight may need (the spells, the ground loops) and
+    is loaded up front; the ultimates' shared wind-ups and aftermaths are group 1; then each pair of heroes' own
+    ultimates has a group, loaded when one of them is in the fight."""
+    out, heroes = {}, {}
+    for key in ids:
+        if key.startswith('ultwind-') or key.startswith('ultafter-'):
+            out[key] = 1
+        elif key.startswith('ult-'):
+            hero = key.split('-')[1]
+            heroes.setdefault(hero, len(heroes))
+            out[key] = 2 + heroes[hero] // HEROES_A_GROUP
+        else:
+            out[key] = 0
+    return out
+
+
 def pack(items, art_dir, manifest_path):
     """`items`: (spec, frames, glows) for every shipped effect, in catalogue order. Returns the bytes written."""
-    blocks, soft_blocks, warn = [], [], []
+    blocks, soft_blocks, warn, core_pages = [], [], [], []
     for spec, frames, glows in items:
         box, clipped = trim(frames)
         if clipped:
@@ -88,12 +110,24 @@ def pack(items, art_dir, manifest_path):
             gw, gh = glows[0].size
             soft_blocks.append(dict(id=spec['id'], cut=glows, w=gw, h=gh, cols=grid(len(glows), gw, gh)))
     clips = {}
+    order = group_order([b['spec']['id'] for b in blocks])
     for kind, bl in (('px', blocks), ('soft', soft_blocks)):
-        sh = Shelves(pad=1 if kind == 'px' else 2)
-        for b in sorted(bl, key=lambda b: (-math.ceil(len(b['cut']) / b['cols']) * b['h'], b.get('id') or b['spec']['id'])):
-            rows = math.ceil(len(b['cut']) / b['cols'])
-            b['page'], b['x'], b['y'] = sh.place(b['cols'] * b['w'], rows * b['h'])
-        pages = sh.images()
+        # (each group has atlases of its own, so the game can load a group only when a fight needs it; within a group the tallest blocks
+        # are shelved first)
+        pages = []
+        groups = {}
+        for b in bl:
+            groups.setdefault(order[b.get('id') or b['spec']['id']] if kind == 'px' else 0, []).append(b)
+        for g in sorted(groups):
+            sh = Shelves(pad=1 if kind == 'px' else 2)
+            for b in sorted(groups[g], key=lambda b: (-math.ceil(len(b['cut']) / b['cols']) * b['h'], b.get('id') or b['spec']['id'])):
+                rows = math.ceil(len(b['cut']) / b['cols'])
+                page, b['x'], b['y'] = sh.place(b['cols'] * b['w'], rows * b['h'])
+                b['page'] = len(pages) + page
+            got = sh.images()
+            if kind == 'px':
+                core_pages = core_pages + list(range(len(pages), len(pages) + len(got))) if g == 0 else core_pages
+            pages += got
         for b in bl:
             for i, im in enumerate(b['cut']):
                 pages[b['page']].paste(im, (b['x'] + (i % b['cols']) * b['w'], b['y'] + (i // b['cols']) * b['h']))
@@ -121,7 +155,8 @@ def pack(items, art_dir, manifest_path):
                     ax=round(W / 2 - b['x0'], 1), ay=round(s['oy'] * H - b['y0'], 1), ms=s['ms'], loop=bool(s.get('loop')), hold=hold,
                     layer=s.get('layer', 'over'), el=s['element'])
         if 'stages' in s:
-            clip['cuts'] = [[round(st['at'][0] * (n - 1)), round(st['at'][1] * (n - 1))] for st in s['stages']]
+            # (a stage may run past the end of the clip, so it is still at its height on the last frame: its last frame is the clip's)
+            clip['cuts'] = [[min(n - 1, round(st['at'][0] * (n - 1))), min(n - 1, round(st['at'][1] * (n - 1)))] for st in s['stages']]
             clip['sc'] = [st['scene'] for st in s['stages']]
         g = soft_by.get(s['id'])
         if g:
@@ -139,6 +174,8 @@ def pack(items, art_dir, manifest_path):
         '/** The hard pixel atlases\' sizes, then the soft glow atlases\' (`px-<n>.webp`, `soft-<n>.webp`). */',
         f'export const BFX_PX: readonly (readonly [number, number])[] = {json.dumps(px_pages)};',
         f'export const BFX_SOFT: readonly (readonly [number, number])[] = {json.dumps(soft_pages)};',
+        '/** The pixel atlases every fight may need (the spells, the ground loops): loaded up front. The rest are loaded when a fight needs them. */',
+        f'export const BFX_CORE: readonly number[] = {json.dumps(core_pages)};',
         '',
         'export const BFX_CLIPS: Readonly<Record<string, BfxClip>> = {',
     ]

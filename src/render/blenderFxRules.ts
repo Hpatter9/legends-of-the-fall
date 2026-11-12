@@ -174,6 +174,6 @@ export function bfxCentre(c: BfxClip, x: number, y: number, mult = 1): [number, 
   return [x + (c.w / 2 - c.ax) * s, y + (c.h / 2 - c.ay) * s];
 }
 
-/** How large a further burst of a flurry or a storm is drawn beside the first (`ultImpact`'s `size`), the most strikes drawn at once, and how strong
- *  an aftermath is drawn (it lies over those it struck, so they must show through it). */
-export const ULT_BFX = { ECHO_MIN: 0.6, SPOTS: 5, SPOTS_SAVER: 2, AFTER_ALPHA: 0.7 } as const;
+/** How large a further burst of a flurry or a storm is drawn beside the one great strike, the most spots a further burst or an aftermath
+ *  is drawn on (and on the battery saver), and how strong an aftermath is drawn (it lies over those it struck, so they must show through). */
+export const ULT_BFX = { ECHO: 0.4, SPOTS: 5, SPOTS_SAVER: 2, AFTER_ALPHA: 0.7 } as const;

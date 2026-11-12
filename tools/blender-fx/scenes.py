@@ -1572,8 +1572,41 @@ def tile(c, things='flames', n=4, fill=0.85, lift=1.0):
     return step
 
 
+# 53. Impact: the heart of a great blow: a white-hot core that swells and tears, two shock rings racing out along the
+# ground, a wide flash under it, and debris thrown high that tumbles back down. Laid under an ultimate's own scenes.
+def impact(c, r=3.0, rubble=26, sparks=30):
+    fm, cut = c.flame(2.4, 0.5, 1.5)
+    core = c.sphere(1, fm, 4)
+    flash, fa = c.disc('ramp', 1.6, r * 0.75)
+    rings = [c.ring('hot', 0.09, 1.3), c.ring('bright', 0.06, 1.2)]
+    sm, sv = c.solid('mid', 'deep', 0.5, 0.8, 0.0)
+    rocks = [(c.cone(c.rnd.uniform(0.09, 0.22), c.rnd.uniform(0.18, 0.42), sm, 4), c.rnd.uniform(0, TAU), c.rnd.uniform(0.35, 1.0) * r, c.rnd.uniform(3.0, 6.5), c.rnd.uniform(0, 0.12), c.rnd.uniform(3, 9))
+             for _ in range(rubble)]
+    fly = _fly(c, sparks, r * 0.6, r * 1.25, 6.0, 'hot', 0.06, 5.0)
+
+    def step(t):
+        c.tick(t, 2.0)
+        # (the core: up fast in the first frames, the heaviest of the whole effect, then torn open)
+        s = r * (0.12 + 0.42 * ease(win(t, 0, 0.22))) * (1 + 0.25 * win(t, 0.22, 1))
+        put(core, (0, 0, 0.5 + 0.5 * r * 0.2 * t), (s, s, s * 0.85), (t * 2, t, 0))
+        cut.inputs[1].default_value = 0.04 + 0.75 * win(t, 0.18, 0.8) ** 1.5
+        fa.inputs[1].default_value = 2.8 * (1 - win(t, 0.05, 0.6))
+        for i, (o, v) in enumerate(rings):
+            g = win(t, i * 0.1, 0.75 + i * 0.1)
+            put(o, scale=(r * (0.08 + 1.0 * ease(g)),) * 2 + (1 + 3 * (1 - g),))
+            v.outputs[0].default_value = (1 - win(g, 0.55, 1)) if g > 0 else 0
+            hide(o, g <= 0 or g >= 1)
+        for o, ang, rad, vz, lag, spin in rocks:
+            g = win(t, lag, 0.95)
+            z = vz * g - vz * 1.05 * g * g
+            put(o, (math.cos(ang) * rad * g, math.sin(ang) * rad * g, max(0.04, z)), 0 if g <= 0 else 1 - 0.7 * win(g, 0.8, 1), (g * spin, g * spin * 0.6, ang))
+        sv.outputs[0].default_value = 1 - win(t, 0.85, 1)
+        fly(t, 0.3)
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact,
 )}

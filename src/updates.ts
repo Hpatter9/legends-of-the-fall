@@ -27,6 +27,48 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.511.0',
+    date: '2026-11-12',
+    title: 'Aurelan\'s call, remade in light',
+    notes: ['The Lion of Dawn\'s call is rebuilt: his sun cut in light on the ground, a shaft of dawn he strides out of, a sun racing under the foes, then beams descending.', 'A sunburst and a shock of light roll across the foes, leaving gold motes and columns of light.'],
+  },
+  {
+    version: '0.510.0',
+    date: '2026-11-12',
+    title: 'Voltara\'s call, remade in lightning',
+    notes: ['Voltara\'s call is rebuilt: her coil cut in light on the ground, the sky splitting in braided bolts as she arrives, then forks walking across the foes.', 'A thunderclap lands with each, and the ground is left crackling with falling sparks.'],
+  },
+  {
+    version: '0.509.0',
+    date: '2026-11-12',
+    title: 'Gorm\'s call, remade in stone',
+    notes: ['Gorm\'s call is rebuilt: a quarry mark cut in the ground, great slabs thrust up as he strides out, the ground splitting under the foes, then a ridge of stone.', 'An aftershock heaves the ground once more before the ridge topples into rubble and dust.'],
+  },
+  {
+    version: '0.508.0',
+    date: '2026-11-12',
+    title: 'A smaller tactic button',
+    notes: ['The tactic plaque in a wave is now a single line, icon beside the word, about 40% smaller than before.', 'It sits level with the boss\'s bar instead of hanging below it.'],
+  },
+  {
+    version: '0.507.0',
+    date: '2026-11-12',
+    title: 'Ultimates that fill the field',
+    notes: ['Every ultimate\'s strike is now one great blow: a white-hot core that tears open, shock rings along the ground and debris, four to eight tiles across.', 'Wind-ups swell to full height just before the blow. Effects for a fight\'s heroes load as it begins, so memory stays low.'],
+  },
+  {
+    version: '0.506.0',
+    date: '2026-11-12',
+    title: 'Nivra\'s call, remade in ice',
+    notes: ['The Rime Wyrm\'s call is rebuilt: a rune freezes onto the ground, ice spires burst up, a freezing front races under the foes, then a wall of ice.', 'Every spire shatters at once, leaving mist, falling snow and sheets of ice that melt back under the fight.'],
+  },
+  {
+    version: '0.505.0',
+    date: '2026-11-11',
+    title: 'The camera follows the effect',
+    notes: ['An ultimate cast by hand shows the caster for the casting, then the camera travels to where the effect lands and frames all of it before easing back.', 'Eidolon calls do the same, and a king\'s spell cast by hand gets a quick look at its target. Auto and reduced motion get no camera move.'],
+  },
+  {
     version: '0.504.0',
     date: '2026-11-11',
     title: 'Armies: only the card swipes',

@@ -34,6 +34,8 @@ import { showArtUrl } from './render/showArt';
 import { heroEpithet } from './sim/heroNames';
 import type { UnitSprite } from './render/unitView';
 import { depth } from './render/iso';
+import type { Spot, View } from './render/cameraRules';
+import { camAt, camPlan, strikeArt, type CamPlan, type Room } from './ultCameraRules';
 
 export interface UltMomentOpts {
   /** The middle of a fighter's sprite on the page, for the pool of light; null when it cannot be told. */
@@ -52,6 +54,9 @@ export interface UltMomentOpts {
   saw?: (kind: string) => void;
   /** A point in the world on the page (client px): a showcase's props' light. */
   toClient?: (x: number, y: number) => { x: number; y: number } | null;
+  /** ULT-CAMERA: the room the page's camera frames in now and the zoom its follow holds (none: this screen's camera is its own, and
+   *  the moment only leans in on the caster as before). */
+  room?: () => { room: Room; held: number } | null;
 }
 
 /** Whether the art a slash was given is a hero's awakened painting (a Mythic's frame then shows its awakened one). */
@@ -193,8 +198,13 @@ export class UltMoments {
   }
 
   /** Where the page's camera should lean in now (the hero, through the opening), and how far over the view it holds; null: as it was. */
-  get focus(): { unit: number; zoom: number; under?: number } | null {
+  get focus(): { unit: number; zoom: number; under?: number } | { view: View; ms: number } | null {
     const q = this.queue;
+    // (ULT-CAMERA: once the casting has been seen the camera leaves for the effect, frames the whole of it for the strike and holds it
+    // through the aftermath; a moment skipped before its blow goes straight back to the fight)
+    const cam = q.current && !(q.phase === 'fade' && q.since === null) ? this.camOf(q.current) : null;
+    const shot = cam ? camAt(cam, q.clock, q.since) : null;
+    if (shot?.view) return { view: shot.view, ms: shot.ease };
     // (ULT-EPIC 2: the caster is framed just under the band, so the hero is seen gathering rather than hidden behind its own name)
     const band = this.layer.querySelector('.umSlash:not(.out)')?.getBoundingClientRect();
     const under = band ? Math.round(band.bottom + 44) : undefined;
@@ -210,6 +220,43 @@ export class UltMoments {
     // (BATTLE-POLISH: the lean builds through the opening as the power gathers)
     const zoom = ultLean(q.openT, this.calm());
     return zoom === 1 ? null : { unit: q.current.unit, zoom, under };
+  }
+
+  /** ULT-CAMERA (`ultCameraRules.ts`): a moment's camera, laid out once its caster is posed (and again when a salvo's blows show what it
+   *  really struck): where everything it touches stands, the strike sheet's box on each spot it bursts on, and when the blow is due. None
+   *  with reduced motion (no camera travel at all), or on a screen whose camera is its own. */
+  private cams = new WeakMap<UltMoment, { plan: CamPlan | null; landing: UltTargets | undefined }>();
+  private camOf(m: UltMoment): CamPlan | null {
+    const had = this.cams.get(m);
+    if (had && had.landing === m.landing) return had.plan;
+    const room = this.reduced ? null : this.opts.room?.();
+    const me = this.opts.sprite?.(m.unit);
+    const st = m.stages;
+    let plan: CamPlan | null = null;
+    if (room && me && st) {
+      const t = m.targets ?? NONE;
+      const land = m.landing ?? NONE;
+      const of = (id: number): Spot | null => {
+        const s = this.opts.sprite?.(id);
+        return s ? { x: s.x, y: s.y, tall: s.tall } : null;
+      };
+      const tile = (p: { u: number; v: number }): Spot | null => {
+        const w = this.opts.world?.(p.u, p.v);
+        return w ? { x: w[0], y: w[1], tall: 0 } : null;
+      };
+      const real = (x: Spot | null): x is Spot => !!x;
+      const spots = [...new Set([...t.struck, ...t.helped, ...land.struck])].map(of).filter(real).concat(t.tiles.map(tile).filter(real));
+      const bursts = burstSpots(m.landing ?? t, m.unit, settings().saver).map((b) => ('unit' in b ? of(b.unit) : tile(b))).filter(real);
+      const show = this.plans.get(m);
+      // (a showcase lets go of its caster part-way: a staff raised, a burrower sunk; the camera goes on from there)
+      const until = show && Number.isFinite(show.followMs) && m.show ? st.windup.ms + (show.followMs * m.show) / show.ms : undefined;
+      const caster: Spot = { x: me.x, y: me.y, tall: me.tall };
+      plan = camPlan({ caster, from: { cx: me.x, cy: me.y - me.tall * 0.5 }, spots, bursts, art: strikeArt(m.kind), room: room.room, held: room.held, blowAt: st.windup.ms + (m.show ?? 0), endAt: st.total, followUntil: until });
+      // (the travel was timed when the moment began: what a salvo really struck changes where the strike is framed, not when)
+      if (had?.plan && plan) plan = { ...plan, leaveAt: had.plan.leaveAt, travelMs: had.plan.travelMs };
+    }
+    this.cams.set(m, { plan, landing: m.landing });
+    return plan;
   }
 
   /** ULT-EPIC 2: ms into the showcase's own plan (null: none plays): the queue's clock, at the pace this use plays it. */

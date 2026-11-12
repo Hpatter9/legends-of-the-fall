@@ -57,6 +57,7 @@ import earthBurst from './art/fx/magic/earth_burst.png';
 import dustWhite from './art/fx/vfx/dust_white.png';
 import smokeDark from './art/fx/vfx/smoke_dark.png';
 import darkCircle from './art/fx/magic/dark_circle.png';
+import { pictureFrame, ULT_CAM, zoomAboutPt } from './ultCameraRules';
 import { faultLine, fxBudget, FX_CELL, jagged, pillarOrder, RING, spreadShocks, STRIKE_FX, type FxStrip, type StrikeLook } from './eidolonFx';
 import type { Fx } from './render/fx';
 import type { Sprite as GroundSprite } from 'pixi.js';
@@ -80,6 +81,8 @@ export interface EidolonCallOpts {
   cheer?: (b: Battle, text: string) => void;
   /** The board's picture (the page's canvas): the cinematic's camera frames it (a scale about a point), and puts it back after. */
   stage?: () => HTMLElement | null;
+  /** ULT-CAMERA: the room of the page the player really sees (client px), where the call's strike is framed. */
+  safe?: () => { x0: number; y0: number; x1: number; y1: number };
   /** ULT-EPIC 2: whether Auto is on (the ultimates fire by themselves): a call is then the short one, after an Eidolon's first. */
   auto?: () => boolean;
   /** EIDOLON-CHAINS: open the Pact Gallery (from the horn's card at the camp). */
@@ -201,6 +204,8 @@ export class HornView {
 }
 
 interface Playing {
+  /** ULT-CAMERA: the strike's frame on the board's picture, once the camera has left for the foes' side. */
+  strikeFrame?: { zoom: number; tx: number; ty: number };
   e: Eidolon;
   m: MomentTimes;
   first: boolean;
@@ -508,6 +513,8 @@ export class EidolonCall {
   private stageRun: StageRun | null = null;
 
   private start(e: Eidolon, first: boolean): void {
+    // (ULT-CAMERA: the picture's place on the page is read afresh for each call)
+    this.stageAt0 = null;
     // (ULT-EPIC 2: in full it is this Eidolon's own length, 4 to 10 s by its weight; with Auto on, the short call)
     const m = momentOf(first, settings().eidolonFull, e.id, !!this.opts.auto?.());
     this.longCall = !!m.BARS;
@@ -689,7 +696,7 @@ export class EidolonCall {
       this.layer.dataset.act = shot === 'strike' ? 'strike' : shot === 'after' || shot === 'resume' ? 'aftermath' : 'windup';
       if (shot === 'pass') play(p.src.passSound);
       if (shot === 'sprite' && p.mon) play(p.mon.comes === 'fly' ? 'windGust' : 'dash');
-      this.frameBoard(BOARD_ZOOM[shot], null, shot === 'build' ? Math.max(200, p.m.STRIKE - p.m.BUILD) : 400);
+      this.frameShot(p, shot);
     }
     this.pass(p, was, step);
     if (p.stage) {
@@ -703,7 +710,7 @@ export class EidolonCall {
     // (the snap zoom on a blow eases back to the wide shot)
     if (p.snapLeft > 0) {
       p.snapLeft -= step;
-      if (p.snapLeft <= 0) this.frameBoard(BOARD_ZOOM[p.shot as Shot], null, 260);
+      if (p.snapLeft <= 0) this.frameShot(p, p.shot as Shot, 260);
     }
     while (p.beatsDone < p.beats.length && p.t >= p.beats[p.beatsDone] && (p.beatsDone > 0 || p.struckDone)) this.beat(p, p.beatsDone++);
     if (p.t >= p.m.RESUME) this.end();
@@ -954,7 +961,9 @@ export class EidolonCall {
     // (a snap zoom on the first blow, on the foes struck)
     const at = i === 0 && b && p.struck.length ? this.opts.anchor(p.struck[0]) : null;
     if (i === 0) {
-      this.frameBoard(SNAP_ZOOM, at ?? null, SNAP_MS);
+      // (ULT-CAMERA: over the strike's own frame, a little closer about the first foe struck, so the snap never throws the frame away)
+      if (p.strikeFrame && !this.reduced) this.applyFrame(this.snapOnto(p.strikeFrame, at ?? this.foeMid(p.struck), SNAP_ZOOM / 1.1), SNAP_MS, true);
+      else this.frameBoard(SNAP_ZOOM, at ?? null, SNAP_MS);
       p.snapLeft = SNAP_MS + 60;
     }
     play(look.sound);
@@ -1523,25 +1532,87 @@ export class EidolonCall {
   /** The camera on the board's picture: a scale about a point (the board's middle when none), eased over `ms` (0: a cut). Held still with
    *  reduced motion. */
   private frameBoard(zoom: number, at: { x: number; y: number } | null, ms: number): void {
+    this.applyFrame(zoomAboutPt(this.unframed(at ?? this.boardMid()), zoom), ms, true);
+  }
+
+  /** ULT-CAMERA: the board's picture's own place on the page before any frame (it fills the screen, so this is the page's corner unless a
+   *  browser bar has moved it). */
+  private stageAt0: { x: number; y: number } | null = null;
+
+  /** A point on the page as the picture is framed now (what `anchor` and `tile` give while a frame is on, even part-way through an ease),
+   *  back to where it lies on the unframed page: the frames are worked out there. */
+  private unframed(p: { x: number; y: number }): { x: number; y: number } {
+    const c = this.opts.stage?.();
+    const o = this.stageAt0;
+    if (!c || !o || !c.offsetWidth) return p;
+    const r = c.getBoundingClientRect();
+    const z = r.width / c.offsetWidth;
+    return { x: (p.x - (r.left - o.x * z)) / z, y: (p.y - (r.top - o.y * z)) / z };
+  }
+
+  /** Put a frame on the board's picture and on the cinematic's own board layer (so the trail and the runs stay on their tiles), eased over
+   *  `ms` (0: a cut); `snappy` for a zoom, gentle for a travel. Held still with reduced motion. */
+  private applyFrame(f: { zoom: number; tx: number; ty: number }, ms: number, snappy = false): void {
     const c = this.opts.stage?.();
     if (!c) return;
-    // (EIDOLON-CALL-2: the board's layer of the cinematic is framed the same way, so the trail and the runs stay on their tiles)
     const d = this.board;
-    if (this.reduced || zoom === 1) {
-      for (const x of [c, d]) {
-        x.style.transition = this.reduced ? '' : `transform ${ms}ms ease-out`;
-        x.style.transform = '';
-      }
-      return;
-    }
-    const r = c.getBoundingClientRect();
-    const o = at ?? this.boardMid();
-    c.style.transformOrigin = `${Math.round(o.x - r.left)}px ${Math.round(o.y - r.top)}px`;
-    d.style.transformOrigin = `${Math.round(o.x)}px ${Math.round(o.y)}px`;
+    this.stageAt0 ??= (() => {
+      const r = c.getBoundingClientRect();
+      return { x: r.left, y: r.top };
+    })();
+    const o = this.stageAt0;
+    const none = this.reduced || (f.zoom === 1 && f.tx === 0 && f.ty === 0);
+    const ease = this.reduced ? '' : !ms ? 'none' : none ? `transform ${ms}ms ease-out` : snappy ? `transform ${ms}ms cubic-bezier(.2,.8,.3,1)` : `transform ${ms}ms cubic-bezier(.45,0,.25,1)`;
     for (const x of [c, d]) {
-      x.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.8,.3,1)` : 'none';
-      x.style.transform = `scale(${zoom})`;
+      x.style.transformOrigin = '0 0';
+      x.style.transition = ease;
     }
+    // (the picture's own corner may not be the page's: the same frame about the page's top-left, in its own terms)
+    c.style.transform = none ? '' : `translate(${(f.tx + o.x * (f.zoom - 1)).toFixed(1)}px, ${(f.ty + o.y * (f.zoom - 1)).toFixed(1)}px) scale(${f.zoom.toFixed(4)})`;
+    d.style.transform = none ? '' : `translate(${f.tx.toFixed(1)}px, ${f.ty.toFixed(1)}px) scale(${f.zoom.toFixed(4)})`;
+  }
+
+  /** A frame a little closer (`k` times) about a point of the framed page, kept where it is. */
+  private snapOnto(f: { zoom: number; tx: number; ty: number }, at: { x: number; y: number }, k: number): { zoom: number; tx: number; ty: number } {
+    const p = this.unframed(at);
+    const zoom = f.zoom * k;
+    const here = { x: p.x * f.zoom + f.tx, y: p.y * f.zoom + f.ty };
+    const clamp = (t: number, size: number) => Math.min(0, Math.max(size * (1 - zoom), t));
+    return { zoom, tx: clamp(here.x - p.x * zoom, innerWidth), ty: clamp(here.y - p.y * zoom, innerHeight) };
+  }
+
+  /** ULT-CAMERA (`ultCameraRules.ts`): the frame for a shot of the call. In full: the summoning is seen as it was (the horn, the pass,
+   *  the sprite coming on); then through the build-up the camera travels to the foes' side, timed to arrive just before the strike, frames
+   *  the struck there (a strike wider than the screen about its middle) and holds through the aftermath. The short call keeps its
+   *  plain shots. */
+  private frameShot(p: Playing, shot: Shot, ms?: number): void {
+    const full = p.m.BARS && !this.reduced;
+    if (full && (shot === 'build' || shot === 'strike' || shot === 'after')) {
+      const travel = shot === 'build' && !p.strikeFrame;
+      p.strikeFrame ??= this.strikeFrame(!!p.stage);
+      return this.applyFrame(p.strikeFrame, ms ?? (travel ? Math.max(240, p.m.STRIKE - p.t - ULT_CAM.LEAD_MS) : 300), !travel);
+    }
+    this.frameBoard(BOARD_ZOOM[shot], null, ms ?? (shot === 'build' ? Math.max(200, p.m.STRIKE - p.m.BUILD) : 400));
+  }
+
+  /** The strike's frame: the living foes' side of the board, brought to the middle of the room the player sees. An Eidolon's strike falls
+   *  across the foes' whole side (its beats burst well beyond the foes themselves), so the frame is never tighter than most of the
+   *  screen's width; a staged strike (`wide`: Askel's wall of fire) is wider than the screen, and is framed about its middle. */
+  private strikeFrame(wide = false): { zoom: number; tx: number; ty: number } {
+    const b = this.b;
+    const pts = (b?.units.filter((u) => u.side === 'foe' && u.alive) ?? [])
+      .map((u) => this.opts.tile(u.u, u.v))
+      .filter((x): x is { x: number; y: number } => !!x)
+      .map((x) => this.unframed(x));
+    const mid = pts.length ? { x: pts.reduce((a, c) => a + c.x, 0) / pts.length, y: pts.reduce((a, c) => a + c.y, 0) / pts.length } : this.unframed(this.boardMid());
+    const xs = pts.map((q) => q.x);
+    const ys = pts.map((q) => q.y);
+    // (room round them for the strike itself: its pillars and bursts stand well over the foes)
+    const across = innerWidth * (wide ? 1.3 : 0.86);
+    const box = pts.length ? { w: Math.max(across, Math.max(...xs) - Math.min(...xs) + 120), h: Math.max(...ys) - Math.min(...ys) + 190 } : { w: across, h: innerHeight * 0.4 };
+    const safe = this.opts.safe?.() ?? { x0: 0, y0: innerHeight * 0.14, x1: innerWidth, y1: innerHeight * 0.66 };
+    // (the strike stands over the foes: the frame is centred a little above their feet)
+    return pictureFrame({ x: mid.x, y: mid.y - 30 }, box, safe, innerWidth, innerHeight);
   }
 
   private end(): void {
