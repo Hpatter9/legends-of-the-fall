@@ -286,6 +286,13 @@ stand: the moments waiting are dropped, nothing is held, nothing waits, and the 
   150 ms after the Cleric's blow: the strike finishes and the guardians circle on; and the Wizard, whose meteors had not yet landed,
   now gets its fireball.
 
+Confirmed in a real, settled fight (`KILL=1` in the photo tool: every foe is put at one health as the ultimate is fired, so the cast
+itself ends the fight in the sim and the run settles as in play; `docs/samples/blender-fx/audit-killing-blow-393.jpg`). Measured for
+Vael, the Kraken and the Tyrant, the same each time: the fight is over on the frame of the cast; the blow is played on that same
+frame (0 ms after); the moment is gone 1,312 ms after; the result card is up 1,984 ms after. In the Kraken's photographs the header
+reads Victory, the whirlpool and spout are playing 0.3 s and 0.8 s after the fight ended, the board is clear at 1.4 s, and the card
+comes at 2 s. (The Samurai's line did not reach every foe in the staged fight, so his was not a last blow there.)
+
 Not done: an Eidolon's call. Its strike is the other builder's staged show (`eidolonCall.ts`, its own clock and its own cut,
 `CALL_OVER_MS`), not a small change of this kind; it is left as it is.
 
