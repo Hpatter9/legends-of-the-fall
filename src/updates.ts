@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.548.0',
+    date: '2026-11-12',
+    title: 'Eight great blows, each its own shape',
+    notes: ['The eight heaviest ultimates no longer share one great ball that hid the field: each strike now has a shape of its own.', 'The Samurai\'s cut is crescents along his line; the Barbarian\'s landing is cracks and a shock ring; the Siege Bot\'s shell slants down into a crater.', 'The Seraph\'s is a column of light with wings; the Astrologer\'s a star falling to a crowned sigil; the Bombardier\'s a shell and fire on each foe.'],
+  },
+  {
     version: '0.547.0',
     date: '2026-11-12',
     title: 'A fix for the app\'s long stop between waves',
