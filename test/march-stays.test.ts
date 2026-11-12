@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BUILD_ORDER, fightersTakeOver, filmFaults, hostOnShow, marcherAfter, marcherDrawn, stageAfter, standFacing, type BuildStep, type Marcher, type MarchEvent } from '../src/render/marchStayRules';
+import { BUILD_ORDER, fightersTakeOver, filmFaults, hostOnShow, marcherAfter, marcherDrawn, marches, sameView, squadTiles, stageAfter, standFacing, type BuildStep, type Marcher, type MarchEvent } from '../src/render/marchStayRules';
 import { turnDir, type Rot } from '../src/sim/turn';
 
 const EVENTS: MarchEvent[] = ['arrived', 'cut', 'built', 'synced', 'fighters'];
@@ -105,4 +105,77 @@ test('the film\'s measure: a picture short of a marcher, short of a settled tile
   assert.deepEqual(filmFaults([{ heroes: 5, tiles: 88, shown: 40, lifted: 48, settled: false }], 5), { heroGaps: 0, tileGaps: 0, refalls: 0 });
   // (an empty field, a tile missing and a second fall, once it has settled, are)
   assert.deepEqual(filmFaults([{ ...ok, tiles: 0, shown: 0 }, { ...ok, shown: 87 }, { ...ok, lifted: 3 }], 5), { heroGaps: 0, tileGaps: 2, refalls: 1 });
+});
+
+test('a marcher walks to the tile its fighter will take: its old tile when it still fits, else the first free one, in the squad\'s order', () => {
+  // (a rehearsal of the next fight: tile 2,9 has a boulder on it now, and hero 12 stood there)
+  const blocked = new Set(['2,9']);
+  const taken = new Set<string>();
+  const stood: Record<number, [number, number]> = { 11: [1, 9], 12: [2, 9], 13: [3, 10] };
+  const key = (at: [number, number]) => `${at[0]},${at[1]}`;
+  const rows: [number, number][] = [[0, 9], [1, 9], [2, 9], [3, 9], [0, 10], [3, 10]];
+  const run = () =>
+    squadTiles(
+      [11, 12, 13, 14],
+      (id) => stood[id],
+      (_id, at) => !blocked.has(key(at)) && !taken.has(key(at)),
+      () => rows.find((at) => !blocked.has(key(at)) && !taken.has(key(at))) ?? null,
+      (_id, at) => (taken.add(key(at)), true),
+    );
+  const where = run();
+  assert.deepEqual(where.get(11), [1, 9], 'its own tile');
+  assert.deepEqual(where.get(12), [0, 9], 'its tile is blocked: the first free one');
+  assert.deepEqual(where.get(13), [3, 10]);
+  assert.deepEqual(where.get(14), [3, 9], 'a hero with no tile yet takes a free one');
+  // (the deploy asks the same of the real fight, with the tiles the rehearsal gave: every hero keeps the tile it walked to)
+  taken.clear();
+  for (const [id, at] of where) if (at) stood[id] = at;
+  assert.deepEqual([...run()], [...where]);
+  // (nowhere left: null, and the page takes the hero off the squad as it did)
+  taken.clear();
+  const full = squadTiles([1], () => undefined, () => false, () => null, () => true);
+  assert.equal(full.get(1), null);
+  const refused = squadTiles([1], () => [0, 9], () => true, () => null, () => false);
+  assert.equal(refused.get(1), null);
+});
+
+test('the fallen of the squad march with the standing; summons and strangers stay behind', () => {
+  const squad = [11, 12, 13];
+  assert.ok(marches({ side: 'hero', summon: false, tag: 11 }, squad));
+  assert.ok(!marches({ side: 'hero', summon: true, tag: 11 }, squad));
+  assert.ok(!marches({ side: 'hero', summon: false }, squad), 'no place in the run: a summon, a guest of the fight');
+  assert.ok(!marches({ side: 'hero', summon: false, tag: 99 }, squad), 'not of the squad');
+  assert.ok(!marches({ side: 'foe', summon: false, tag: 11 }, squad));
+});
+
+test('the deploy\'s layout starts from the very picture on the screen: no world point moves at the hand-over', () => {
+  // (the march's camera: the world drawn at 1.9, its origin at (120, 310); the deploy fits the board at 1.52 in a smaller room)
+  const was = { k: 1.9, baseX: 120, baseY: 310 };
+  const scale = 1.52;
+  const safe = { x: 0, y: 64, w: 393, h: 420 };
+  const v = sameView(was, scale, safe);
+  // (as the page places the world: `Game.place`)
+  const k = scale * v.zoom;
+  const baseX = safe.x + safe.w / 2 - v.cx * k;
+  const baseY = safe.y + safe.h / 2 - v.cy * k;
+  assert.ok(Math.abs(k - was.k) < 1e-9);
+  for (const [wx, wy] of [[0, 0], [150, -40], [-320, 512]]) {
+    assert.ok(Math.abs(baseX + wx * k - (was.baseX + wx * was.k)) < 1e-6);
+    assert.ok(Math.abs(baseY + wy * k - (was.baseY + wy * was.k)) < 1e-6);
+  }
+});
+
+test('the rim\'s picture is never destroyed while a piece drawn from it is on the stage', () => {
+  // (the march's build left the old board's rim up and destroyed its one picture: every drawing threw, and the canvas showed only the
+  // backdrop for the whole march, on the lands whose rim has such a picture: a daily, a quest battle)
+  const view = readFileSync('src/render/boardView.ts', 'utf8');
+  assert.equal(view.split('rimTex?.destroy').length - 1, 1, 'destroyed in one place only');
+  const drop = view.slice(view.indexOf('  private dropRim(): void {'));
+  const body = drop.slice(0, drop.indexOf('\n  }\n'));
+  assert.ok(body.indexOf('c.destroy(') > 0 && body.indexOf('c.destroy(') < body.indexOf('rimTex?.destroy'), 'the pieces first, then the picture');
+  // (and the host's rim goes as the host is moved aside for the march, and before any build)
+  const demote = view.slice(view.indexOf('  demote(section: Board'), view.indexOf('  /** The old section has done'));
+  assert.ok(demote.includes('this.dropRim()'));
+  const build = view.slice(view.indexOf('  build(b: Board'), view.indexOf('  /** A Calamity zone\'s air'));
+  assert.ok(build.includes('this.dropRim()'));
 });

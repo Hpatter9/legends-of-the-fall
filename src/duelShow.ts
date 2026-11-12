@@ -130,6 +130,16 @@ export class DuelShow {
     if (!this.reduced) play('duelWalk');
   }
 
+  /** MARCH-STAYS: the duel is won and the party marches on: the heroes who watched leave the crowd (their copies are handed back,
+   *  each standing at its place by the ring) so the march can walk them to the next section with the champion. They used to stay by
+   *  the ring and appear at the next deploy. */
+  marchOff(): Unit[] {
+    const gone = this.crowd.filter((w) => w.side === 'heroes');
+    this.crowd = this.crowd.filter((w) => w.side !== 'heroes');
+    for (const w of gone) w.sprite.root.destroy({ children: true });
+    return gone.map((w) => w.unit);
+  }
+
   /** The crowd's places on the screen, for the camera to keep in view (each faint, so the camera still looks at the two). */
   spots(): { x: number; y: number; tall: number }[] {
     return this.crowd.map((w) => ({ x: w.sprite.x, y: w.sprite.y, tall: w.sprite.tall }));

@@ -121,3 +121,56 @@ sums; the `before-393` sheets are from a second, two-wave film of the same build
   a designed moment, and the owner may want to say whether it stays.
 - The second fault was not reproduced, so its fix is by reasoning. If the owner sees the field go again, the Diagnostics log's
   last lines around it will say which build it was.
+
+## Second pass (on 0.554.0): the empty field found, the cut eased, everyone marches
+
+The director asked for the cases not filmed (a duel wave, a quest battle, a wave after a revive, cinematics on) and for the two
+things left alone (the camera's cut at the deploy; a hero who jumps to a free tile; the fallen who appear at the deploy).
+Filming them found the owner's second fault.
+
+### The battleground gone: seen, and its cause
+
+**Reproduced on 0.554.0** in a quest battle and in a daily run: from the moment the march begins the canvas shows nothing but
+the painted backdrop, the heroes and both sections gone, until the next deploy builds the board again. The console had `a fault
+in the drawing TypeError: Cannot read properties of null (reading 'alphaMode')`: a sprite on the stage whose picture had been
+destroyed, which makes every drawing throw (the guarded drawing keeps the loop alive, but nothing is drawn, and the canvas is
+see-through).
+
+The sprite is the rim's. A land's rim (what stands round the two far edges: `layRim`) draws its still pieces into one picture
+(`rimTex`). The march's build of the next section (`BoardView.build(..., keepOld)`) leaves everything on the stage, the old
+board's rim with it, and then did `this.rim = []; this.rimTex?.destroy(true)`: the picture destroyed, its sprite still up. "Sometimes"
+is which roads stand such a rim: the plain roads (a daily, a quest battle, a Muster) on a land with a rim, at rot 0, not a boss's
+arena. An army's scenario road did not in any film here, which is why the first pass never saw it.
+
+The fix (`BoardView.dropRim`): the rim's pieces are taken off the stage first and only then is its picture destroyed, in the one
+place that destroys it; the host's rim goes as the host is moved aside for the march (`demote`), since it stood at the world's
+origin where the next section falls. `test/march-stays.test.ts` holds the order.
+
+The film now counts the loop's turns beside the drawings, so a drawing that faults is seen (it never reached the watcher before,
+which is how a blank march passed as "no march"), and fails on any fault the game writes to the console.
+
+### The camera's cut at the deploy
+
+`newBattle` lays the page out afresh (the bench and the Fight button come up, the board is fitted to the room left) and snapped
+the camera to the deploy's framing. After a march the camera now starts from the very picture that was on the screen
+(`sameView`: the same scale and the same world point under every pixel, in the new layout) and the deploy's own eases carry it to
+the placement rows (the move's 220 ms, the zoom's `EASE_ZOOM_MS`). Three numbers; no work added. Reduced motion keeps the cut.
+
+### Everyone marches, to the tile they will take
+
+- **The tile.** The march's goals came from the section's plain board; the fight's own board has traps, a flood and foes, so a
+  hero whose tile one of them took stood there and jumped to a free tile at the hand-over. `startWalk` now rehearses the next
+  fight (`startStage(run, 'never')`, nothing of the run changed) and sets the squad down on it exactly as the deploy will
+  (`squadTiles`, which `placeSquad` now uses too): each marcher walks to the tile its fighter takes.
+- **The fallen.** A fallen hero of the squad is back for the next wave. It now rises where it fell as the march sets out and
+  walks in with the party (`marches`; `Walker.risen`), where it used to lie on the old section and appear at the deploy.
+- **After a duel.** A duel's battle holds only the champion; the rest of the party watch from beside the ring as copies
+  (`DuelShow`), and stayed there while the champion marched alone, then appeared at the deploy. They now leave the crowd as the
+  march sets out (`DuelShow.marchOff`) and walk on from where they stood.
+
+Still as it was: a hero hired or added between two waves has nowhere to march from and appears at the deploy; a duel's watcher
+with no place by the ring (more heroes than places) does too.
+
+### Numbers (393x852 unless said, CPU x4, x2)
+
+NUMBERS2

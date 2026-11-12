@@ -4,13 +4,16 @@
 //
 //   npm run web && node tools/march-stays/film.mjs [--cpu 4] [--waves 4] [--size 393x852] [--speed 2] [--army wildwood] [--stage 6]
 //                                                  [--tap] [--rebuild] [--shots docs/samples/march-stays/<name>] [--keep]
+//                                                  [--level 22] [--scenes] [--duel] [--quest <battle id>] [--fell] [--daily]
 //
 // It plays an army's waves on a real clock, CPU throttled as a phone's is, and after EVERY picture the page draws, from the last foe's
 // fall to the next wave's deploy, writes down what is on the stage: for each hero who was standing at the fight's end, whether a
 // fighter of that hero is drawn (in the stage's tree, shown, not see-through), and how many of the host section's tiles are drawn,
 // lifted or faded. It FAILS (exit 1) if, in any picture:
 //   - a hero who marched is not drawn (from the fight's end to a second into the deploy), or
-//   - the next section, once every tile of it has fallen into place, shows fewer tiles than it has, or one in the air again.
+//   - the next section, once every tile of it has fallen into place, shows fewer tiles than it has, or one in the air again, or
+//   - the loop turned without a picture being drawn (a drawing that faulted leaves the canvas empty: only the backdrop shows), or
+//     the game wrote a fault to the console, or a fallen hero who returns was not on its feet with the party from the march on.
 // `--tap` taps the card on mid-march (the walk cut short); `--rebuild` has the loop watch's cure build the board afresh while the
 // party stands; `--shots` films it with the browser's screencast and keeps a contact sheet of each hand-over, for the eye (`--keep`: the frames too).
 import { createRequire } from 'node:module';
@@ -33,6 +36,17 @@ const REBUILD = args.includes('--rebuild');
 const SHOTS = opt('--shots', '');
 const EVERY = Number(opt('--every', '1'));
 const KEEP = args.includes('--keep');
+/** The heroes' level (lower it for a wave with falls and lives spent: `--level 22`), cinematics on (`--scenes`), a duel forced on the
+ *  second wave filmed (`--duel`: a nemesis of that wave made Vain, the challenge accepted for the first hero), a quest battle in the
+ *  army's place (`--quest <battle id>`). */
+const LEVEL = Number(opt('--level', '32'));
+const SCENES = args.includes('--scenes');
+const DUEL = args.includes('--duel');
+const QUEST = opt('--quest', '');
+/** `--fell`: one hero is struck down by hand in the fight's last moments, so the wave ends with a fallen hero who returns for the next. */
+const FELL = args.includes('--fell');
+/** `--daily`: the day's daily run in the army's place (its road is the plain kind, whose lands stand a rim round the board). */
+const DAILY = args.includes('--daily');
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css' };
@@ -51,14 +65,17 @@ const ctx = await browser.newContext({ viewport: { width: W, height: H }, device
 const page = await ctx.newPage();
 const errs = [];
 page.on('pageerror', (e) => errs.push(String(e.message)));
-await page.addInitScript(([owned, xp, speed]) => {
+// (the game catches a fault in a frame or a drawing and writes it to the console: those are kept too)
+const faults = [];
+page.on('console', (m) => { if (m.type() === 'error') faults.push(m.text().slice(0, 600)); });
+await page.addInitScript(([owned, xp, speed, scenes]) => {
   if (sessionStorage.getItem('ms-set')) return;
   sessionStorage.setItem('ms-set', '1');
   localStorage.clear();
   localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 99999, unlocked: owned, party: owned.slice(0, 5), pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 1, barracks: 1, armoury: 0, mageTower: 0, stable: 0, library: 0 }, chapel: true, shards: {}, stars: {}, xp: Object.fromEntries(owned.map((k) => [k, xp])), bestStage: 30, tower: 9, daily: {}, bosses: [], achievements: [], armies: {}, armySeen: [], stash: [], opened: ['undead', 'beasts', 'wildwood'], ultAuto: true, spellAuto: true, ultSeen: Object.fromEntries(owned.map((k) => [k, 1])) }));
   localStorage.setItem('lotf-tips-off', '1');
-  localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false, speed, quips: false }));
-}, [OWNED, xpAt(32), SPEED]);
+  localStorage.setItem('legends.settings', JSON.stringify({ cinematics: scenes, speed, quips: false }));
+}, [OWNED, xpAt(LEVEL), SPEED, SCENES]);
 const cdp = await ctx.newCDPSession(page);
 await page.goto(`http://localhost:${PORT}/`, { timeout: 600000 });
 await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 600000 });
@@ -69,7 +86,7 @@ await page.mouse.click(4, 4);
 // (the watcher: after every picture the page draws, what is on the stage. It only reads)
 await page.evaluate(() => {
   const g = window.__game;
-  const ms = (window.__ms = { on: false, frames: [], want: [], endB: null });
+  const ms = (window.__ms = { on: false, frames: [], want: [], fallen: [], endB: null, ticks: 0, draws: 0 });
   /** Whether a thing of the stage is really drawn: in the tree up to the stage, shown all the way, and not see-through. */
   const drawn = (c) => {
     if (!c || c.destroyed) return 0;
@@ -81,18 +98,30 @@ await page.evaluate(() => {
     }
     return 0;
   };
+  // (a drawing that throws never reaches `look`: the loop's turns are counted beside the drawings, and a turn with no drawing is a
+  // picture the player did not get: the canvas keeps nothing, so the backdrop shows through)
+  g.app.ticker.add(() => { if (ms.on && !g.homeUp) ms.ticks++; });
   const look = () => {
-    if (!ms.on) return;
+    // (only the page's own picture: a section or a rim baked into one picture is a drawing too, made in the middle of a build)
+    if (!ms.on || !ms.main) return;
+    ms.draws++;
     const b = g.b;
     const chain = g.chain;
     const act = chain.act;
     // (every fighter's sprite there is: the battle's own, the march's walkers, and the party kept standing after it)
-    const sprites = [...g.sprites.values(), ...(act?.moving ?? []).map((m) => m.sprite), ...(chain.stood ?? []).map((m) => m.sprite)];
-    const heroes = ms.want.map((tag) => {
+    const sprites = [...g.sprites.values(), ...(act?.moving ?? []).map((m) => m.sprite), ...(chain.stood ?? []).map((m) => m.sprite), ...(g.duelShow?.crowd ?? []).map((w) => w.sprite)];
+    const shownOf = (tag) => {
       let best = 0;
       for (const s of sprites) if (s.unit.side === 'hero' && s.unit.tag === tag && s.unit.alive !== false) best = Math.max(best, drawn(s.root));
       return best;
-    });
+    };
+    const heroes = ms.want.map(shownOf);
+    // (the fallen of the squad, who are back for the next wave: on their feet from the march's start)
+    const risen = ms.fallen.map(shownOf);
+    // (the party's middle on the screen, for the camera's jump at the deploy)
+    const party = [...(act?.moving ?? []), ...(chain.stood ?? [])].map((m) => m.sprite).filter((s) => !s.root.destroyed);
+    if (party.length) ms.mid = { x: party.reduce((a, s) => a + s.x, 0) / party.length, y: party.reduce((a, s) => a + s.y, 0) / party.length };
+    const w = g.world;
     const tiles = g.boardView.built?.tiles ?? [];
     let shown = 0;
     let lifted = 0;
@@ -108,24 +137,46 @@ await page.evaluate(() => {
       march: !!act,
       landed: act ? act.landed.filter(Boolean).length : -1,
       heroes,
+      risen,
+      cam: ms.mid ? [Math.round(w.x + ms.mid.x * w.scale.x), Math.round(w.y + ms.mid.y * w.scale.y), Math.round(w.scale.x * 1000) / 1000] : null,
       tiles: tiles.length,
       shown,
       lifted,
+      // (why a tile is not counted, when one is not: the first such tile's own show, alpha and whether it is on the stage)
+      why: shown < tiles.length && tiles.length ? (() => { const t = tiles.find((x) => !(drawn(x) > 0.98)); let up = 0; for (let at = t; at; at = at.parent) up++; return { destroyed: t.destroyed, visible: t.visible, alpha: t.alpha, depth: up, parent: !!t.parent, renderable: t.renderable, drawn: drawn(t) }; })() : undefined,
       card: !document.getElementById('result').hidden,
       fight: (() => { const f = document.getElementById('fight'); return !!f && !f.hidden && f.offsetParent !== null; })(),
     });
   };
+  const render = g.app.render.bind(g.app);
+  g.app.render = () => { ms.main = true; try { render(); } finally { ms.main = false; } };
   g.app.renderer.runners.postrender.add({ postrender: look });
 });
 await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU });
+if (FELL) await page.evaluate(() => (window.__fell = true));
 
-await page.evaluate(([party, army, stage]) => {
+await page.evaluate(([party, army, stage, duel, daily]) => {
   const g = window.__game;
   const r = JSON.parse(JSON.stringify(g.run));
   Object.assign(r, { seed: 4242, mode: { kind: 'army', army }, stage, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+  // (--duel: a Vain nemesis stands in the second wave filmed, so it calls the squad out at that wave's deploy)
+  if (daily) Object.assign(r, { mode: { kind: 'daily', date: '2026-11-12' }, stage: 1 });
+  if (duel) r.nemesis = { members: [{ id: 1, base: duel, name: 'Thornback', epithet: 'the Filmed', rank: 'lieutenant', might: 3, scars: 0, traits: ['scarred'], weak: ['vain'], army }], waves: { [String(stage + 1)]: [1] } };
   document.getElementById('home').hidden = true;
   g.startRun(r);
-}, [OWNED.slice(0, 5), ARMY, STAGE]);
+}, [OWNED.slice(0, 5), ARMY, STAGE, DUEL ? opt('--duel-base', 'groveSatyr1') : '', DAILY]);
+if (QUEST) {
+  // (a quest battle in the army's place: its own run, begun as the quest log's Fight begins it)
+  const ok = await page.evaluate(([id, party]) => {
+    const g = window.__game;
+    // (the battle counted as won and its story told, so the try begins as a replay with no card or story over it; its cast owned)
+    const q = (g.meta.quests ??= {});
+    (q.won ??= []).push(id);
+    (q.told ??= []).push(id);
+    for (const k of ['samuraiCommander']) if (!g.meta.unlocked.includes(k)) { g.meta.unlocked.push(k); g.meta.xp[k] = g.meta.xp[party[0]]; }
+    g.beginQuestTry(id, party); return g.run.mode?.kind === 'quest'; }, [QUEST, OWNED.slice(0, 5)]);
+  if (!ok) { console.log(`the quest battle ${QUEST} could not be begun`); process.exit(2); }
+}
 await page.waitForTimeout(3000);
 
 const rows = [];
@@ -147,9 +198,22 @@ const leaveEvent = () => page.evaluate(() => { for (const el of document.querySe
 for (let wave = 1; wave <= WAVES; wave++) {
   await leaveEvent();
   await page.waitForTimeout(600);
+  // (cinematics on: whatever plays over the deploy is let play out)
+  for (let i = 0; i < 400 && (await page.evaluate(() => window.__game.sceneHold > 0 || !!window.__game.intro)); i++) { await page.evaluate(() => document.getElementById('bossCard')?.click()); await page.waitForTimeout(250); }
+  if (DUEL && wave === 2) {
+    // (the challenge: asked for by a nemesis of this wave made Vain before the hand-over, answered here for the first of the squad)
+    const did = await page.evaluate(async () => {
+      const g = window.__game;
+      for (let i = 0; i < 80 && !g.duelWait; i++) await new Promise((r) => setTimeout(r, 250));
+      if (!g.duelWait) return 'no challenge came';
+      g.answerDuel(g.duelWait, g.run.squad[0]);
+      return g.b.duel ? 'the duel begun' : 'the duel did not begin';
+    });
+    console.log(`wave ${wave}: ${did}`);
+  } else
   await page.evaluate(() => window.__game.autoArrange(true));
   await page.waitForTimeout(1200);
-  await page.evaluate((speed) => { document.getElementById('bossCard')?.click(); document.getElementById('fight').click(); window.__game.setSpeed?.(speed); }, SPEED);
+  await page.evaluate((speed) => { document.getElementById('bossCard')?.click(); if (window.__game.b.phase === 'deploy') document.getElementById('fight').click(); window.__game.setSpeed?.(speed); }, SPEED);
   // (the fight: watched from its last moments, so the fall of the last foe is in the film)
   const began = Date.now();
   let phase = 'fight';
@@ -159,6 +223,10 @@ for (let wave = 1; wave <= WAVES; wave++) {
       const b = g.b;
       document.getElementById('bossCard')?.click();
       const ms = window.__ms;
+      if (window.__fell && window.__fellB !== b && b.phase === 'fight' && b.units.filter((u) => u.side === 'foe' && u.alive).length <= 1) {
+        const h = b.units.filter((u) => u.side === 'hero' && u.alive && u.tag !== undefined && u.owner === undefined).pop();
+        if (h) { h.hp = 0; h.alive = false; window.__fellB = b; }
+      }
       if (!ms.on && b.phase === 'fight' && b.units.filter((u) => u.side === 'foe' && u.alive).length <= 1) {
         ms.on = true;
         ms.frames = [];
@@ -169,6 +237,12 @@ for (let wave = 1; wave <= WAVES; wave++) {
         ms.endB = b;
         // (the heroes who will march: those standing at the fight's end)
         ms.want = b.units.filter((u) => u.side === 'hero' && u.alive && u.tag !== undefined && u.owner === undefined).map((u) => u.tag);
+        // (after a duel the rest of the party watched from beside the ring: they are of the party that marches too)
+        for (const w of g.duelShow?.crowd ?? []) if (w.side === 'heroes' && w.unit.tag !== undefined && !ms.want.includes(w.unit.tag)) ms.want.push(w.unit.tag);
+        ms.fallen = b.units.filter((u) => u.side === 'hero' && !u.alive && u.tag !== undefined && u.owner === undefined && g.run.squad.includes(u.tag)).map((u) => u.tag);
+        ms.mid = null;
+        ms.rim = !!g.boardView.rimTex;
+        ms.land = b.board.area;
       }
       return b.phase;
     });
@@ -214,7 +288,7 @@ for (let wave = 1; wave <= WAVES; wave++) {
     }
   }
   filmDir = '';
-  const frames = await page.evaluate(() => { const ms = window.__ms; ms.on = false; const f = ms.frames; ms.frames = []; return f; });
+  const { frames, undrawn, rim, land } = await page.evaluate(() => { const ms = window.__ms; ms.on = false; const f = ms.frames; ms.frames = []; const undrawn = Math.max(0, ms.ticks - ms.draws - 1); ms.ticks = ms.draws = 0; return { frames: f, undrawn, rim: ms.rim, land: ms.land }; });
   // (the measure)
   const want = frames.length ? frames[frames.length - 1].heroes.length : 0;
   const end = frames.findIndex((f) => f.phase !== 'fight');
@@ -223,6 +297,8 @@ for (let wave = 1; wave <= WAVES; wave++) {
   const deploy = frames.findIndex((f) => f.next && f.phase === 'deploy');
   const settledAt = frames.findIndex((f, i) => i >= marchAt && marchAt >= 0 && ((f.march && f.landed === f.tiles && f.tiles > 0 && f.lifted === 0) || !f.march));
   const from = Math.max(0, end);
+  const fallen = frames.length ? frames[frames.length - 1].risen.length : 0;
+  let risenGaps = 0;
   let heroGaps = 0;
   let heroGapMs = 0;
   let worst = want;
@@ -233,24 +309,32 @@ for (let wave = 1; wave <= WAVES; wave++) {
   for (let i = from; i < frames.length; i++) {
     const f = frames[i];
     const dt = i + 1 < frames.length ? frames[i + 1].t - f.t : 0;
-    const up = f.heroes.filter((a) => a > 0.5).length + (want - f.heroes.length);
+    // (a picture taken before the marchers were named is not judged)
+    const up = f.heroes.length === want ? f.heroes.filter((a) => a > 0.5).length : want;
     if (up < want) { heroGaps++; heroGapMs += dt; worst = Math.min(worst, up); }
+    // (the fallen who return: from the march's first picture they are on their feet with the party)
+    if (marchAt >= 0 && i >= marchAt && f.risen.filter((a) => a > 0.5).length < fallen) risenGaps++;
     if (settledAt >= 0 && i >= settledAt) {
       if (f.shown < f.tiles || f.tiles === 0) { tileGaps++; tileGapMs += dt; fewest = Math.min(fewest, f.shown); }
       if (f.lifted > 0) refalls++;
     }
   }
   const longest = frames.reduce((m, f, i) => (i ? Math.max(m, f.t - frames[i - 1].t) : 0), 0);
+  // (the camera at the deploy: how far the party's middle moved on the screen, and how much the scale changed, in the one picture)
+  const camAt = deploy > 0 && frames[deploy].cam && frames[deploy - 1].cam ? { px: Math.round(Math.hypot(frames[deploy].cam[0] - frames[deploy - 1].cam[0], frames[deploy].cam[1] - frames[deploy - 1].cam[1])), scale: Math.round((frames[deploy].cam[2] / frames[deploy - 1].cam[2]) * 100) / 100, ms: frames[deploy].t - frames[deploy - 1].t } : null;
+  const lives = await page.evaluate(() => window.__game.run.lives ?? 0).catch(() => null);
   const row = {
+    fallen, risenGaps, undrawn, land, rim, cut: camAt, livesSpent: lives,
     wave, frames: frames.length, heroes: want, marched: marchAt >= 0,
     marchMs: marchAt >= 0 && marchEnd >= 0 ? frames[marchEnd].t - frames[marchAt].t : 0,
     standMs: marchEnd >= 0 && deploy >= 0 ? frames[deploy].t - frames[marchEnd].t : 0,
     heroGaps, heroGapMs, fewestHeroes: worst, tileGaps, tileGapMs, fewestTiles: Number.isFinite(fewest) ? fewest : null, refalls, longestFrameMs: longest, tapped, rebuilt,
   };
   rows.push(row);
-  console.log(`wave ${wave} > ${wave + 1}: ${frames.length} pictures, ${want} heroes marched${row.marched ? '' : ' (NO MARCH)'}; the march ${row.marchMs} ms, then ${row.standMs} ms to the deploy; ` +
+  console.log(`wave ${wave} > ${wave + 1} (${land}${rim ? ', a rim picture round the board' : ''}): ${frames.length} pictures, ${want} heroes marched${row.marched ? '' : ' (NO MARCH)'}; the march ${row.marchMs} ms, then ${row.standMs} ms to the deploy; ` +
     `pictures short of a hero: ${heroGaps} (${heroGapMs} ms, as few as ${worst} of ${want}); pictures short of the settled section: ${tileGaps} (${tileGapMs} ms${row.fewestTiles === null ? '' : `, as few as ${row.fewestTiles} tiles`}); ` +
-    `tiles in the air again: ${refalls}; the longest picture ${longest} ms${tapped ? '; tapped on mid-march' : ''}${rebuilt ? '; the board built afresh by the watch' : ''}`);
+    `tiles in the air again: ${refalls}; turns of the loop with no picture drawn (the drawing faulted): ${undrawn}; the fallen who return: ${fallen}, pictures of the march and after without one on its feet: ${risenGaps}; ` +
+    `${camAt ? `the camera at the deploy moved the party ${camAt.px} px and scaled x${camAt.scale} in that one picture (${camAt.ms} ms); ` : ''}the longest picture ${longest} ms${tapped ? '; tapped on mid-march' : ''}${rebuilt ? '; the board built afresh by the watch' : ''}`);
   if (dir) writeFileSync(`${dir}/frames.json`, JSON.stringify(frames));
   await page.waitForTimeout(500);
 }
@@ -277,24 +361,28 @@ if (SHOTS) {
       const t = Number(f.split('-')[1].replace('.jpg', ''));
       let at = frames[0];
       for (const fr of frames) { if (fr.t > t) break; at = fr; }
-      const up = at.heroes.filter((a) => a > 0.5).length + (want - at.heroes.length);
+      const fell = frames[frames.length - 1].risen.length;
+      const back = (at.risen ?? []).filter((a) => a > 0.5).length;
+      const up = at.heroes.length === want ? at.heroes.filter((a) => a > 0.5).length : want;
       const stage = at.phase === 'fight' ? 'the fight' : at.next ? 'the deploy' : at.march ? 'the march' : t >= tEnd ? 'standing' : 'the result';
-      return { f, t, stage, short: up < want || (t >= tEnd && (at.shown < at.tiles || at.lifted > 0)), up, near: t >= tEnd - 500 && t <= tDeploy + 500 };
+      return { f, t, stage, short: up < want || ((at.march || t >= tEnd) && back < fell) || (t >= tEnd && (at.shown < at.tiles || at.lifted > 0)), up: up + ((at.march || t >= tEnd || at.next) ? back : 0), all: want + fell, near: t >= tEnd - 500 && t <= tDeploy + 500 };
     }).filter((x) => x.t >= t0 - 200);
     const thin = (list, n) => (list.length <= n ? list : list.filter((_, i) => Math.floor((i * n) / list.length) !== Math.floor(((i - 1) * n) / list.length)));
     const picked = new Set([...thin(shots.filter((x) => !x.near), 16), ...thin(shots.filter((x) => x.near), 32)]);
-    const cells = shots.filter((x) => picked.has(x)).map((x) => `<figure class="${x.short ? 'short' : ''}"><img src="data:image/jpeg;base64,${readFileSync(`${SHOTS}/${d}/${x.f}`).toString('base64')}"><figcaption>${((x.t - t0) / 1000).toFixed(2)} s · ${x.stage} · ${x.up}/${want}</figcaption></figure>`).join('');
+    const cells = shots.filter((x) => picked.has(x)).map((x) => `<figure class="${x.short ? 'short' : ''}"><img src="data:image/jpeg;base64,${readFileSync(`${SHOTS}/${d}/${x.f}`).toString('base64')}"><figcaption>${((x.t - t0) / 1000).toFixed(2)} s · ${x.stage} · ${x.up}/${x.all}</figcaption></figure>`).join('');
     await sheet.setContent(`<style>body{margin:0;background:#111;color:#ddd;font:10px sans-serif;display:flex;flex-wrap:wrap}figure{margin:2px;width:147px;box-sizing:border-box;border:2px solid #111}figure.short{border-color:#f33}figure.short figcaption{color:#f66}img{width:100%;display:block}figcaption{text-align:center;padding:2px 0}</style>${cells}`);
     await sheet.screenshot({ path: `${SHOTS}/${d}-sheet.jpg`, type: 'jpeg', quality: 72, fullPage: true });
     // (the frames themselves are not kept unless asked for: a hand-over is a hundred of them)
     if (!KEEP) rmSync(`${SHOTS}/${d}`, { recursive: true, force: true });
   }
 }
-const bad = rows.filter((r) => r.heroGaps || r.tileGaps || r.refalls || !r.marched);
+const bad = rows.filter((r) => r.heroGaps || r.tileGaps || r.refalls || r.risenGaps || r.undrawn || !r.marched);
 console.log(`\n${rows.length} hand-overs at ${W}x${H}, CPU x${CPU}, speed x${SPEED}: ${bad.length ? `${bad.length} FAILED` : 'all held'} ` +
-  `(pictures short of a hero ${rows.reduce((s, r) => s + r.heroGaps, 0)}, short of the section ${rows.reduce((s, r) => s + r.tileGaps, 0)}, tiles in the air again ${rows.reduce((s, r) => s + r.refalls, 0)}); page errors: ${errs.length}`);
+  `(pictures short of a hero ${rows.reduce((s, r) => s + r.heroGaps, 0)}, short of the section ${rows.reduce((s, r) => s + r.tileGaps, 0)}, tiles in the air again ${rows.reduce((s, r) => s + r.refalls, 0)}, short of a returning hero ${rows.reduce((s, r) => s + r.risenGaps, 0)}, not drawn at all ${rows.reduce((s, r) => s + r.undrawn, 0)}); page errors: ${errs.length}`);
 for (const e of errs.slice(0, 5)) console.log(`  ${e}`);
+if (faults.length) console.log(`faults written to the console: ${faults.length}`);
+for (const e of [...new Set(faults)].slice(0, 6)) console.log(`  ${e}`);
 if (SHOTS) writeFileSync(`${SHOTS}/film.json`, JSON.stringify({ size: `${W}x${H}`, cpu: CPU, speed: SPEED, rows }, null, 1));
 await browser.close();
 srv.close();
-process.exit(bad.length || errs.length || !rows.length ? 1 : 0);
+process.exit(bad.length || errs.length || faults.length || !rows.length ? 1 : 0);
