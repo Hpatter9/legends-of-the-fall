@@ -77,7 +77,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -387,7 +387,7 @@ export class Fx {
       const kinds = new Set(b.units.filter((x) => x.side === 'hero').map((x) => x.def));
       void warmBfx([...kinds].flatMap((kind) => (['windup', 'strike', 'aftermath'] as UltStageName[]).map((stage) => ultBfx(kind, stage, ultWeight(kind)))));
       // (ULT-AUDIT: but the one small clip a healer's light or the Gorgon's gaze runs out in is: it must be there the first time)
-      warmBfx([...kinds].filter((kind) => ultLinked(kind) && SHOWCASES[kind]).map((kind) => beatBfx('link', SHOWCASES[kind].el)));
+      warmBfx([...kinds].filter((kind) => ultLinked(kind) && SHOWCASES[kind]).map((kind) => beatBfx(ultLinkClip(kind), SHOWCASES[kind].el)));
       // (the beats of their showcases are not asked for here: each loads the first time it is played, the older parts playing that once,
       // so a fight begins with as little held as it can)
     }
@@ -723,7 +723,7 @@ export class Fx {
         const linked = ultLinked(kind) && caster && size >= 1;
         for (const [x, y] of at.slice(0, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS)) {
           const far = linked && Math.hypot(x - caster.x, y - caster.y) > 8;
-          if (far) beatLine(caster.x, caster.y, x, y).forEach(([px, py], i) => this.bfxBeat('link', el, px, py, { delay: i * BEAT_LINE.LAG }));
+          if (far) beatLine(caster.x, caster.y, x, y).forEach(([px, py], i) => this.bfxBeat(ultLinkClip(kind), el, px, py, { delay: i * BEAT_LINE.LAG }));
           this.bfxUlt(kind, 'strike', x, y, undefined, size >= 1 ? 1 : 0.7, far ? ULT_LINK_MS : 0);
         }
       } else if (at.length && size >= 1) {

@@ -494,6 +494,18 @@ the Reaper; the Harpooner and the Buccaneer; the Sage, Ilyra and Orrun; the Samu
 and the Hemomancer; the Sea Reaver, the Corsair Surgeon and the Kraken's spouts; the Wanderer and the Priestess; the Kunoichi and
 the Mercenary; the Mirage Dancer and the Illusionist; the War Drummer and the Bell Warden; the eight great blows.
 
+### The Gorgon's line of gaze
+
+`docs/samples/blender-fx/audit-gorgon-gaze-393.jpg` (five moments from the blow on).
+
+The line from the Gorgon to each foe she petrifies was there all along, and was not seen as one: each link was the blessing's clip
+(first a tongue of flame, then sparks over a pale disc on the ground), so her gaze was a row of pale discs on the floor. It has a
+clip of its own now, `beat-gaze`: a small eye that opens and shuts at a head's height, with no ring under it; a row of them runs
+out from her to each foe, and the stone rises as the row arrives (`ultLinkClip`: `gaze` for her, `link` for a blessing; a test holds
+it). In the photograph's fourth moment four purple eyes stand in a row from her towards the foes. What I have not got is a frame
+with the row complete to every foe: it is staggered and brief (each eye 420 ms, thirty apart), and the pale discs under the foes
+(her strike's own ground) are still the larger thing in the picture.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
