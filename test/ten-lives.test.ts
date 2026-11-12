@@ -247,14 +247,29 @@ test('a fight\'s lives are written back to the run once, and a party fall pays a
   const price = retryGold(r);
   assert.equal(settleLives(r, b), price);
   assert.deepEqual([livesLeft(r), partyFalls(r), r.gold], [9 - heroes.length, 1, gold + price]);
+  // (a second fall pays too, a third does not: two hearts paid twice)
+  const paid: number[] = [];
+  for (const left of [3, 3]) {
+    b.lives!.left = left;
+    for (const h of heroes) fell(b, h);
+    run(b, 100);
+    paid.push(settleLives(r, b));
+  }
+  assert.ok(paid[0] > 0);
+  assert.equal(paid[1], 0, 'the third fall pays nothing');
+  assert.equal(partyFalls(r), 3);
   // (the wave's end tells the run again: nothing is counted twice, and a hero a life raised counts among the fallen)
+  const spent = b.lives!.spent;
+  assert.equal(livesSpent(r), spent);
   b.phase = 'won';
   noteFight(r, b);
-  assert.equal(livesLeft(r), 9 - heroes.length);
-  assert.equal(r.tally!.lost, 1 + heroes.length);
+  assert.equal(livesSpent(r), spent);
+  assert.equal(r.tally!.lost, heroes.reduce((n, h) => n + (h.lifeRises ?? 0) + (h.alive ? 0 : 1), 0));
+  assert.equal(r.tally!.lost >= spent, true);
   // (the next wave starts with what is left)
   finish(r, true);
-  assert.equal(startStage(r).lives!.left, 9 - heroes.length);
+  assert.equal(startStage(r).lives!.left, livesLeft(r));
+  assert.equal(livesLeft(r), Math.max(0, LIVES - spent));
 });
 
 test('the modes: the daily, a quest battle and a duel\'s wave have the lives; the tower, the Calamity and a duel\'s ring have none', () => {

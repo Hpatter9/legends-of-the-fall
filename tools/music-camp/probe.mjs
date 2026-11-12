@@ -152,7 +152,7 @@ if (want(4)) for (const via of ['results', 'homeBtn']) {
 // 5. A run lost (no heart left), then home
 if (want(5)) {
   const { ctx, page } = await boot();
-  await page.evaluate(() => { window.__game.run.retries = 2; });
+  await page.evaluate(() => { window.__game.run.retries = 2; if (window.__game.b.lives) window.__game.b.lives.left = 0; });
   await fightNow(page);
   await strengthen(page);
   await untilEnd(page);

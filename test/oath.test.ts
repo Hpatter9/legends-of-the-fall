@@ -15,10 +15,10 @@ import { nemSpare } from '../src/sim/nemesisTraits';
 import { bearerOf, dayNumber, fieldedOf, lineOf, openDynasty, readDynasty } from '../src/sim/dynasty';
 import { changeHonour, fieldBearer, heirState, nameHeir, passMantle, whyNoHeir, whyNotHonour } from '../src/sim/heirs';
 import {
-  armyParty, canSwear, chooseShade, ghostOf, hasFallen, isLegend, mourning, mourningLeft, noteOathRises, OATH, oathCrowns, oathOpen, oathPay, settleMourning, settleOath, shadeChosen, shadeFight, shadesOf, slainKind, slayBearer,
+  armyParty, canSwear, chooseShade, ghostOf, hasFallen, isLegend, mourning, mourningLeft, OATH, oathCrowns, oathOpen, oathPay, settleMourning, settleOath, shadeChosen, shadeFight, shadesOf, slainKind, slayBearer,
   swearOath, whyNoOath, whyNoShade, whyShadeHonour,
 } from '../src/sim/oath';
-import { armyRun, canJoin, gradeBoost, recruit, type Run } from '../src/sim/run';
+import { armyRun, canJoin, gradeBoost, noteOathRises, recruit, type Run } from '../src/sim/run';
 import { startedMeta, type Meta } from '../src/sim/meta';
 import { xpFor } from '../src/sim/levels';
 import { bondKey, BOND_POINTS } from '../src/sim/bonds';

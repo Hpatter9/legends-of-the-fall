@@ -5,7 +5,7 @@
 //   - **Swearing the Oath.** A toggle on the March orders for an army run on Hard or harder, open from the save's first Passing of the
 //     Mantle. It is the run's alone (`Run.oath`): the next run marches free of it unless it is sworn again. Auto never swears it.
 //   - **Slain, not fallen.** Under the Oath a hero who falls in a wave that is then lost, or who falls a second time in the run (a fall is
-//     counted at a heart's burn and at the wave's end), is **slain**: the bearer dies, and its kind sits out the rest of the run. The run
+//     counted at each rise a life gives it, `noteOathRises` in `run.ts`, and at the wave's end), is **slain**: the bearer dies, and its kind sits out the rest of the run. The run
 //     goes on as normal for the rest of the party.
 //   - **What dies is the person, not the progress.** Every lasting thing stays keyed by the kind (XP and level, ranks, awakening, talents,
 //     books, gear and skills): none of it is touched. If the line has a trained heir, the heir takes up the mantle at once. If not, the line
@@ -107,18 +107,6 @@ function downNow(run: Run, b: Battle): number[] {
     if (h && !h.guest && h.cloneFloors === undefined && !out.includes(h.id)) out.push(h.id);
   }
   return out;
-}
-
-/** TEN-LIVES: lives raised these heroes (roster ids, one entry a rise) under the Oath: each rise was a fall, as a burnt heart's was. */
-export function noteOathRises(run: Run, ids: readonly number[]): void {
-  if (!run.oath) return;
-  for (const id of ids) {
-    const h = run.roster.find((x) => x.id === id);
-    if (!h || h.guest || h.cloneFloors !== undefined) continue;
-    const k = String(id);
-    (run.oathFalls ??= {})[k] = (run.oathFalls[k] ?? 0) + 1;
-    if (!(run.oathWave ??= []).includes(id)) run.oathWave.push(id);
-  }
 }
 
 /** Whether a run hero's kind has been slain under the Oath this run: it sits out the rest of it. */

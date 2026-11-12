@@ -752,19 +752,19 @@ export class UnitSprite {
     if (this.lifeText) this.lifeText.visible = !!key;
     if (!key) return;
     if (!this.lifeText) {
-      this.lifeText = new Text({ text: '', style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: 'bold', fontSize: 11, fill: 0xfff2c0, stroke: { color: 0x1a1008, width: 2 } }, resolution: 3 });
+      this.lifeText = new Text({ text: '', style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: 'bold', fontSize: 17, fill: 0xfff2c0, stroke: { color: 0x1a1008, width: 2 } }, resolution: 3 });
       this.lifeText.anchor.set(0.5);
       this.root.addChild(this.lifeRing, this.lifeText);
     }
-    const r = 9;
-    const y = -24;
+    const r = 15;
+    const y = -30;
     const share = Math.max(0, Math.min(1, ms! / REVIVE_MS));
     g.circle(0, y, r + 1.5).fill({ color: 0x1a1008, alpha: 0.82 });
     g.circle(0, y, r).stroke({ color: 0xffffff, width: 2, alpha: 0.16 });
     const from = -Math.PI / 2;
     g.moveTo(Math.cos(from) * r, y + Math.sin(from) * r)
       .arc(0, y, r, from, from + Math.PI * 2 * share)
-      .stroke({ color: 0xffc861, width: 2.2, cap: 'round' });
+      .stroke({ color: 0xffc861, width: 2.8, cap: 'round' });
     this.lifeText.text = String(secs);
     this.lifeText.position.set(0, y);
   }

@@ -28,14 +28,14 @@ try {
     page.on('pageerror', (e) => { errors.push(e.message); console.log('PAGE ERROR', e.message); });
     const checks = [];
     results.push({ w, h, checks, errors });
-    await page.goto(`http://localhost:${PORT}/?x=${Math.random()}`);
+    await page.goto(`http://localhost:${PORT}/?x=${Math.random()}`, { timeout: 240000 });
     await page.evaluate((party) => {
       localStorage.clear();
       localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 1200, unlocked: party, party, pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 1, barracks: 1, armoury: 0, mageTower: 0, library: 0, stable: 0 }, armies: {}, xp: {}, daily: {}, stats: {} }));
       localStorage.setItem('lotf-tips-off', '1');
       localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false }));
     }, PARTY);
-    await page.goto(`http://localhost:${PORT}/`);
+    await page.goto(`http://localhost:${PORT}/`, { timeout: 240000 });
     await page.waitForFunction(() => window.__game, null, { timeout: 120000 });
     await page.waitForTimeout(800);
     await page.evaluate(() => document.getElementById('tipSkip')?.click());
@@ -82,6 +82,7 @@ try {
     await shot('risen');
     checks.push({ name: 'risen', ...(await state()) });
     assert.equal((await state()).lives.left, 9);
+    await page.waitForTimeout(1200);
     // ---- the whole party down: all rise at once, a life each, with a line saying so
     await page.waitForTimeout(1200);
     await fell();
@@ -105,8 +106,32 @@ try {
     await shot('deploy');
     await page.click('#fight'); await page.waitForTimeout(700);
     await holdFoes();
-    await fell(['knight', 'samurai', 'wizard', 'archer']);
-    await page.waitForFunction(() => window.__game.b.lives.left === 0, null, { timeout: 30000 });
+    // ---- a revive that falls due while an ultimate's show holds the fight: the show plays, the hero rises, the fight goes on
+    // (the cleric is held still meanwhile: her own revive would raise the archer first, and spend no life)
+    await page.evaluate(() => { const g = window.__game; g.b.units.find((u) => u.def === 'cleric').busyUntil = g.b.t + 9000; });
+    await fell(['archer']);
+    await page.waitForFunction(() => { const g = window.__game; const a = g.b.units.find((u) => u.def === 'archer'); return !a.alive && g.b.t - a.diedAt >= 4300; }, null, { timeout: 30000 });
+    const fired = await page.evaluate(() => { const g = window.__game; for (const def of ['wizard', 'samurai', 'knight']) { const k = g.b.units.find((u) => u.def === def); k.charge2 = 1e6; g.hud.tapUlt(k.id); } return { order: !!g.b.orders?.some((o) => o.kind === 'ult'), t: g.b.t, full: g.ultAutoOn?.() }; });
+    // (watched for eight seconds: whether the show was up, and whether the hero rose while it was or just after)
+    const show = await page.evaluate(() => new Promise((done) => {
+      const g = window.__game; const seen = { show: 0, roseAt: -1, heldAt: [] }; let n = 0;
+      const id = setInterval(() => {
+        if (g.ultm.queue.current) { seen.show++; seen.heldAt.push(g.b.t); }
+        if (seen.roseAt < 0 && g.b.units.find((u) => u.def === 'archer').alive) seen.roseAt = g.b.t;
+        if (++n >= 80) { clearInterval(id); seen.heldAt = [seen.heldAt[0], seen.heldAt.at(-1)]; done(seen); }
+      }, 100);
+    }));
+    await page.waitForFunction(() => window.__game.b.units.find((u) => u.def === 'archer').alive, null, { timeout: 60000 });
+    const t1 = await page.evaluate(() => window.__game.b.t);
+    await page.waitForFunction((t) => window.__game.b.t > t + 2000 && !window.__game.ultm.queue.current, t1, { timeout: 60000 });
+    checks.push({ name: 'revive-through-ultimate', fired, show, ults: await page.evaluate(() => window.__game.ultsFired.length), ...(await state()) });
+    assert.ok(fired.order, 'the ultimate was ordered');
+    assert.equal((await state()).lives.left, 3);
+    await page.waitForTimeout(1200);
+    await fell(['knight', 'samurai', 'wizard']);
+    // (the three rise, by a life each or, for one of them now and then, by the cleric's own revive, which spends none; then the last lives go)
+    await page.waitForFunction(() => window.__game.b.units.filter((u) => u.side === 'hero').every((u) => u.alive), null, { timeout: 60000 });
+    await page.evaluate(() => { const g = window.__game; g.b.lives.spent += g.b.lives.left; g.b.lives.left = 0; g.run.lives = 10; g.refresh(); });
     await page.waitForTimeout(1300);
     await fell(['knight', 'archer']);
     await page.waitForTimeout(1500);
@@ -118,9 +143,9 @@ try {
     await shot('lost');
     checks.push({ name: 'lost', banner: await page.textContent('#banner'), next: await page.textContent('#next') });
     await page.click('#next');
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(6500);
     await shot('recap');
-    checks.push({ name: 'recap', text: await page.evaluate(() => (document.body.innerText.match(/Lives spent[^\n]*\n?[^\n]*/) ?? [''])[0]) });
+    checks.push({ name: 'recap', text: await page.evaluate(() => (document.body.innerText.match(/Lives spent[^\n]*\n?[^\n]*/i) ?? [''])[0]) });
     assert.deepEqual(errors, []);
     await ctx.close();
   }

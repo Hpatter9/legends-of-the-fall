@@ -4,7 +4,7 @@
 //
 //   node tools/ten-lives/run.mjs tiers            orcs, labyrinth and golems on every tier, each at the level the tier is for
 //   node tools/ten-lives/run.mjs first            a new save's first tries at the Orc Warband (the starter packs of three)
-//   node tools/ten-lives/run.mjs daily            thirty days of the daily
+//   node tools/ten-lives/run.mjs daily            SAVES days of the daily, a fresh save each
 //
 // Each line is played three ways: `none` (a lost wave ends the try: what the other balance tools measure), `hearts` (the old rule as
 // the page played it: a lost wave burns one of two hearts, the fallen rise whole in the same fight, a Hire's gold is paid) and `lives`
@@ -16,7 +16,7 @@ import { BUILDINGS, maxLevel, newCastle, xpRate, type BuildingId, type Castle } 
 import { dailyRun } from '../../src/sim/modes';
 import { fightXp, gainXp, levelOfKind } from '../../src/sim/levels';
 import { LIVES_RULE } from '../../src/sim/lives';
-import { heroRank, type Meta } from '../../src/sim/meta';
+import { heroRank, startedMeta, type Meta } from '../../src/sim/meta';
 import { armyRun, boostOf, finish, isBossRun, livesSpent, noteFight, partyFalls, startStage, summonCost, type Owned, type Run } from '../../src/sim/run';
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
@@ -163,11 +163,11 @@ if (what === 'tiers') {
   for (const mode of MODES) {
     const t = blank();
     for (let d = 0; d < SAVES; d++) {
-      const meta = savedAt(30, party, 700 + d);
-      const run = dailyRun(20261101 + d);
+      const meta = startedMeta(700 + d);
+      const run = dailyRun(20261101 + (d % 30) + 100 * Math.floor(d / 30));
       play(mode, run, meta, newCastle(), t);
     }
-    line('The daily (Lv30 save)', mode, t);
+    line('The daily (a fresh save)', mode, t);
   }
 }
 void ARMIES;

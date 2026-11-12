@@ -35,7 +35,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     await page.waitForFunction(() => !document.getElementById('result').hidden, null, { timeout: 100000 });
     await page.waitForFunction(() => document.getElementById('result').hidden && document.body.dataset.phase === 'deploy', null, { timeout: 30000 });
     // (the run's end, by losing the next wave with no retries left: the JRPG results screen)
-    await page.evaluate(() => { const g = window.__game; g.run.retries = 2; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
+    await page.evaluate(() => { const g = window.__game; g.run.retries = 2; if (window.__game.b.lives) window.__game.b.lives.left = 0; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
     await page.click('#fight').catch(() => {});
     await page.waitForTimeout(1500);
     await skip(page);

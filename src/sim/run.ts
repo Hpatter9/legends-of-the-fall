@@ -5,8 +5,7 @@ import { mythicFits } from './mythicRules';
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
 import { ritesSpent } from './chapelRooms';
-import { HEART_LIVES, LIVES } from './lives';
-import { noteOathRises } from './oath';
+import { FALL_GOLD_FALLS, HEART_LIVES, LIVES } from './lives';
 import { roomOpen } from './rooms';
 import { heartsLost, marchFx, readOrders, shopShut, skipsWave, type Orders } from './march';
 import { keepSummons, keptBoost, type KeptForm, type KeptSummon } from './carry';
@@ -450,7 +449,20 @@ export function spendLives(run: Run, n: number): void {
   const old = (run.retries ?? 0) * HEART_LIVES;
   run.lives = Math.max(-old, Math.min(livesMax(run) - old, (run.lives ?? 0) + n));
 }
-/** Write a fight's lives back to the run: the lives it spent, its party falls (each pays `retryGold`, for after the wave) and, under
+/** TEN-LIVES: lives raised these heroes (roster ids, one entry a rise) under the Legend Oath (`oath.ts`): each rise was a fall, as a
+ *  burnt heart's was. Here, not in `oath.ts`, which this file must not import (it would load before the dynasties it reads). */
+export function noteOathRises(run: Run, ids: readonly number[]): void {
+  if (!run.oath) return;
+  for (const id of ids) {
+    const h = run.roster.find((x) => x.id === id);
+    if (!h || h.guest || h.cloneFloors !== undefined) continue;
+    const k = String(id);
+    (run.oathFalls ??= {})[k] = (run.oathFalls[k] ?? 0) + 1;
+    if (!(run.oathWave ??= []).includes(id)) run.oathWave.push(id);
+  }
+}
+
+/** Write a fight's lives back to the run: the lives it spent, its party falls (the run's first two each pay `retryGold`, for after the wave) and, under
  *  the Legend Oath, a fall for each hero a life raised. Safe to call as often as the page likes: only what is new since the last call
  *  counts. Returns the gold paid. */
 export function settleLives(run: Run, b: Battle): number {
@@ -461,9 +473,10 @@ export function settleLives(run: Run, b: Battle): number {
   if (l.spent > n.spent) run.lives = (run.lives ?? 0) + l.spent - n.spent;
   noteOathRises(run, l.rose.slice(n.rose));
   let gold = 0;
-  for (let i = 0; i < falls; i++) gold += retryGold(run);
-  if (falls) {
-    run.falls = (run.falls ?? 0) + falls;
+  // (only the run's first `FALL_GOLD_FALLS` falls pay, as its two hearts did)
+  for (let i = 0; i < falls; i++) if (partyFalls(run) + i < FALL_GOLD_FALLS) gold += retryGold(run);
+  if (falls) run.falls = (run.falls ?? 0) + falls;
+  if (gold) {
     run.gold += gold;
     noteGold(run, 'earned', gold);
   }

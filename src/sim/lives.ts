@@ -28,6 +28,9 @@ export const REVIVE_SAFE_MS = 1000;
 export const HEART_LIVES = 5;
 /** A fight that runs out of time spends this many lives (or what is left) for another allowance of time. */
 export const TIMEOUT_LIVES = 3;
+/** A party fall pays a Hire's gold, as a burnt heart did, for this many falls a run (two hearts paid twice): a lone hero falling
+ *  ten times is not ten purses. */
+export const FALL_GOLD_FALLS = 2;
 /** The switch (a tuning tool's: `tools/ten-lives/measure.ts` turns it off to measure the game without lives). */
 export const LIVES_RULE = { on: true };
 
