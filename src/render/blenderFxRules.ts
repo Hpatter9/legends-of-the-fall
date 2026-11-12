@@ -46,7 +46,7 @@ export interface BfxClip {
   /** ULT-AUDIT: where an ultimate's strike plays. Unset, once at the middle of what it struck (a great blow, a storm); `each`, on every
    *  fighter the ability touches (a heal on each friend, a mark on each foe, a flurry's cut on each foe cut); `self`, round the caster (an
    *  aura, a ward, a transformation). */
-  at?: 'each' | 'friends' | 'tiles' | 'self';
+  at?: 'each' | 'friends' | 'tiles' | 'line' | 'self';
   /** Its soft glow's frames (a light effect only). */
   g?: BfxGlow;
 }
@@ -202,18 +202,19 @@ export function beatLine(x0: number, y0: number, x1: number, y1: number): [numbe
 
 /** ULT-AUDIT: where a hero kind's strike plays (`BfxClip.at`): `one` great thing at the middle of what it struck, on `each` fighter it
  *  touches, on each of the `friends` it helps (and the caster), on each of the `tiles` it takes, or round the caster (`self`). */
-export const ultPlace = (kind: string): 'one' | 'each' | 'friends' | 'tiles' | 'self' => BFX_CLIPS[`ult-${kind}-strike`]?.at ?? 'one';
+export const ultPlace = (kind: string): 'one' | 'each' | 'friends' | 'tiles' | 'line' | 'self' => BFX_CLIPS[`ult-${kind}-strike`]?.at ?? 'one';
 
 /** ULT-AUDIT: the spots a strike plays on, by where it plays, from what the cast touched: the foes it `struck`, the friends it
  *  `helped`, the `tiles` it took. `each`: the foes struck, else the tiles (what is summoned arrives on them), else the friends, else the
  *  caster. `friends`: the caster and each friend helped. `tiles`: its tiles first, then the caster and each friend (a wall's slabs along
  *  the tiles it blocks, and its shield on each friend; a wall that found no line to stand on is its shields alone). At most `cap`. */
-export function ultSpots(place: 'each' | 'friends' | 'tiles', t: { struck: readonly number[]; helped: readonly number[]; tiles: readonly { u: number; v: number }[] }, caster: number, cap: number): ({ unit: number } | { u: number; v: number })[] {
+export function ultSpots(place: 'each' | 'friends' | 'tiles' | 'line', t: { struck: readonly number[]; helped: readonly number[]; tiles: readonly { u: number; v: number }[] }, caster: number, cap: number): ({ unit: number } | { u: number; v: number })[] {
   const units = (ids: readonly number[]) => ids.map((unit) => ({ unit }));
   const tiles = t.tiles.map(({ u, v }) => ({ u, v }));
   const each = t.struck.length ? units(t.struck) : tiles.length ? tiles : t.helped.length ? units(t.helped) : [{ unit: caster }];
   const friends = units([caster, ...t.helped.filter((id) => id !== caster)]);
-  const got = place === 'friends' ? friends : place === 'tiles' ? [...tiles, ...friends] : each;
+  // (`line`: the tiles of the line the ability takes, and nothing else; with none, the foes struck)
+  const got = place === 'friends' ? friends : place === 'tiles' ? [...tiles, ...friends] : place === 'line' ? (tiles.length ? tiles : each) : each;
   return got.slice(0, cap);
 }
 

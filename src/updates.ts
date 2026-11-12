@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.536.0',
+    date: '2026-11-12',
+    title: 'Broadsides and dragon\'s breath',
+    notes: ['The Dread Pirate\'s Ghost Fleet now lands shot on each foe it strikes, not one great ball over the field.', 'The Dragoon\'s Inferno Breath is laid along its line from her, not one burst in the middle.'],
+  },
+  {
     version: '0.535.0',
     date: '2026-11-12',
     title: 'Petals for the Kunoichi, shots for the Gunslinger',

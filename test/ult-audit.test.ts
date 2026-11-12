@@ -30,8 +30,9 @@ test('Spirit Guardians shows its guardians: spirits a fighter tall circling the 
 
 test('the great blow is only under abilities that are one great blow; a heal, a blessing, a ward, a mark, a summoning, a change and an aura have none', () => {
   const great = Object.keys(SHOWCASES).filter((kind) => BFX_CLIPS[`ult-${kind}-strike`].sc?.[0] === 'impact');
-  // (a cut, a leap's landing, a crash from on high, shells, meteors, supernovas: nine of the seventy)
-  assert.deepEqual(great.sort(), ['astrologer', 'barbarian', 'bloodGargoyle', 'bombardier', 'dreadPirate', 'samurai', 'seraph', 'siegeBot', 'wizard']);
+  // (a cut, a leap's landing, a crash from on high, shells, meteors, supernovas: eight of the seventy; the Dread Pirate's broadsides
+  // are shot falling among the foes, not one blow)
+  assert.deepEqual(great.sort(), ['astrologer', 'barbarian', 'bloodGargoyle', 'bombardier', 'samurai', 'seraph', 'siegeBot', 'wizard']);
   for (const kind of Object.keys(SHOWCASES)) {
     const style = SHOWCASES[kind].style;
     // (no showcase that blesses, calls a pack or changes its hero is a great blow)
@@ -118,4 +119,13 @@ test('on the caster a showcase gathers with the hero\'s own wind-up, not one cir
   // (every hero has a wind-up of its own to gather with)
   for (const kind of Object.keys(SHOWCASES)) assert.ok(BFX_CLIPS[`ult-${kind}-windup`], kind);
   assert.ok(BEAT_OWN.GATHER_MS >= 1000 && BEAT_OWN.FINISH < 1);
+});
+
+test('breath down a line burns along the line; a fleet\'s broadsides fall among the foes', () => {
+  assert.equal(ultPlace('dragoon'), 'line');
+  assert.equal(ultPlace('dreadPirate'), 'each');
+  // (a line: its tiles and nothing else; with none, the foes struck)
+  const t = { struck: [7, 8], helped: [2], tiles: [{ u: 1, v: 2 }, { u: 1, v: 3 }, { u: 1, v: 4 }] };
+  assert.deepEqual(ultSpots('line', t, 1, 5), [{ u: 1, v: 2 }, { u: 1, v: 3 }, { u: 1, v: 4 }]);
+  assert.deepEqual(ultSpots('line', { struck: [7], helped: [2], tiles: [] }, 1, 5), [{ unit: 7 }]);
 });
