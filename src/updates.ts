@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.538.0',
+    date: '2026-11-12',
+    title: 'Karasu\'s falling blades',
+    notes: ['Karasu\'s Cloud of Daggers is now white blades falling steeply over the foes with feathers among them, not a faint ring of wind.'],
+  },
+  {
     version: '0.537.0',
     date: '2026-11-12',
     title: 'Hawks for the Falconer, stars for Astrax',
