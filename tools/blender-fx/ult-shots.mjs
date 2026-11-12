@@ -22,7 +22,8 @@ const REDUCED = args.includes('--reduced');
 const FIRST = args.includes('--first');
 mkdirSync(OUT, { recursive: true });
 
-const root = 'out/web';
+// (ROOT: another build's folder, to photograph an older version beside this one)
+const root = process.env.ROOT ?? 'out/web';
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css' };
 const srv = createServer((q, r) => {
   const p = `${root}/` + (q.url.split('?')[0].slice(1) || 'index.html');
@@ -137,6 +138,11 @@ for (const pick of PICKS) {
       }
       return n;
     });
+    // (and on into the fight after the show: what the ability leaves lasting, an aura's spirits, a wall, a mark)
+    for (const [i, ms] of [1200, 2600].entries()) {
+      await page.evaluate((d) => window.__step(d), ms);
+      await page.screenshot({ path: `${OUT}/${pick}-${W}-${7 + i}-after.png` });
+    }
     const after = await speedNow(page);
     console.log('ok', pick, `${W}x${H}`, JSON.stringify({ mem: await page.evaluate(() => window.__bfxMem?.()), weight: st.weight, shape: st.shape, show: st.show, windup: st.windup.ms, strike: st.strike.ms, aftermath: st.aftermath.ms, total: st.total, measured: t + rest, before, during: [...new Set(speeds)], after }));
   } catch (e) {
