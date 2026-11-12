@@ -116,6 +116,11 @@ for (const pick of PICKS) {
       const hs = g.b.units.filter((u) => u.side === 'hero' && u.owner === undefined);
       for (const u of hs) u.charge2 = 0;
       const u = hs.find((h) => h.def === pick);
+      // (Ilyra's Death Denied answers an ally who is hurt: it will not fire with everyone whole, so one friend is put at half health)
+      if (pick === 'ilyra') {
+        const friend = hs.find((h) => h.def !== pick);
+        if (friend) friend.hp = Math.round(friend.maxHp * 0.5);
+      }
       u.charge2 = 100;
       document.querySelector(`.fhRow[data-unit="${u.id}"]`).dispatchEvent(new MouseEvent('click', { bubbles: true }));
       for (let i = 0; i < 400 && !g.ultm.queue.current; i++) window.__step(16);
