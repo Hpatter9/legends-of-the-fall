@@ -283,7 +283,7 @@ test('a sheet on the moment\'s layer is put by its frame\'s middle so its tile\'
   // (the blow is one great strike at the middle of what it struck, not one on every spot)
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /this\.bfxUlt\(kind, 'strike', at\.reduce\(\(n, p\) => n \+ p\[0\], 0\) \/ at\.length/);
   const moment = readFileSync('src/ultMoment.ts', 'utf8');
-  assert.match(moment, /ultImpact\(b, el, spots, 1, m\.kind\)/);
+  assert.match(moment, /ultImpact\(b, el, spots, 1, m\.kind, t\)/);
   assert.match(moment, /ultImpact\(b, m\.el \?\? 'light', spots, 0\.6, m\.kind\)/);
   assert.match(moment, /ultAfter\(b, el, spots, ms, m\.kind\)/);
   const fx = readFileSync('src/render/fx.ts', 'utf8');

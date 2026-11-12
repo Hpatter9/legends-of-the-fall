@@ -46,7 +46,7 @@ export interface BfxClip {
   /** ULT-AUDIT: where an ultimate's strike plays. Unset, once at the middle of what it struck (a great blow, a storm); `each`, on every
    *  fighter the ability touches (a heal on each friend, a mark on each foe, a flurry's cut on each foe cut); `self`, round the caster (an
    *  aura, a ward, a transformation). */
-  at?: 'each' | 'self';
+  at?: 'each' | 'friends' | 'tiles' | 'self';
   /** Its soft glow's frames (a light effect only). */
   g?: BfxGlow;
 }
@@ -197,8 +197,24 @@ export function beatLine(x0: number, y0: number, x1: number, y1: number): [numbe
 }
 
 /** ULT-AUDIT: where a hero kind's strike plays (`BfxClip.at`): `one` great thing at the middle of what it struck, on `each` fighter it
- *  touches, or round the caster (`self`). */
-export const ultPlace = (kind: string): 'one' | 'each' | 'self' => BFX_CLIPS[`ult-${kind}-strike`]?.at ?? 'one';
+ *  touches, on each of the `friends` it helps (and the caster), on each of the `tiles` it takes, or round the caster (`self`). */
+export const ultPlace = (kind: string): 'one' | 'each' | 'friends' | 'tiles' | 'self' => BFX_CLIPS[`ult-${kind}-strike`]?.at ?? 'one';
+
+/** ULT-AUDIT: the spots a strike plays on, by where it plays, from what the cast touched: the foes it `struck`, the friends it
+ *  `helped`, the `tiles` it took. `each`: the foes struck, else the tiles (what is summoned arrives on them), else the friends, else the
+ *  caster. `friends`: the caster and each friend helped. `tiles`: its tiles, else as `each`. At most `cap`. */
+export function ultSpots(place: 'each' | 'friends' | 'tiles', t: { struck: readonly number[]; helped: readonly number[]; tiles: readonly { u: number; v: number }[] }, caster: number, cap: number): ({ unit: number } | { u: number; v: number })[] {
+  const units = (ids: readonly number[]) => ids.map((unit) => ({ unit }));
+  const tiles = t.tiles.map(({ u, v }) => ({ u, v }));
+  const each = t.struck.length ? units(t.struck) : tiles.length ? tiles : t.helped.length ? units(t.helped) : [{ unit: caster }];
+  const got = place === 'friends' ? units([caster, ...t.helped.filter((id) => id !== caster)]) : place === 'tiles' && tiles.length ? tiles : each;
+  return got.slice(0, cap);
+}
+
+/** ULT-AUDIT: the kinds whose strike is carried to each spot by a line from the caster (a row of the showcase's `link` clips, the strike
+ *  landing as the line arrives, `ULT_LINK_MS` later): a healer's light running out to each friend, the Gorgon's gaze to each foe. */
+export const ultLinked = (kind: string): boolean => ultPlace(kind) === 'friends' || kind === 'gorgon';
+export const ULT_LINK_MS = 200;
 
 /** Where a sheet on the moment's layer is put so the middle of its tile is at (x, y): the layer's bits are held by their own middle, so
  *  this is the frame's middle, `mult` times its size. */

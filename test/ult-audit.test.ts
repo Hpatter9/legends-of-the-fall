@@ -9,7 +9,7 @@ import '../src/sim/battle';
 import { AURA_MOTES } from '../src/render/movePaints';
 import { auraLook } from '../src/render/toolkitLooks';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
-import { ultPlace } from '../src/render/blenderFxRules';
+import { ULT_LINK_MS, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
 import { SHOWCASES } from '../src/ultShowRules';
 
 test('Spirit Guardians shows its guardians: spirits a fighter tall circling the Cleric for as long as the aura lasts', () => {
@@ -42,15 +42,19 @@ test('the great blow is only under abilities that are one great blow; a heal, a 
 test('a strike plays where the ability lands: on each fighter it touches, round the caster, or once in the midst of what it struck', () => {
   // (a heal lands on each friend healed, a ward on each warded, a mark on each foe marked, a flurry's cut on each foe cut, the called
   // where each arrives)
-  for (const kind of ['wanderer', 'sage', 'ilyra', 'priestess', 'gorgon', 'kitsune', 'timeWitch', 'ranger', 'kunoichi', 'mercenary', 'beastmaster', 'illusionist']) assert.equal(ultPlace(kind), 'each', kind);
+  for (const kind of ['gorgon', 'kitsune', 'timeWitch', 'ranger', 'kunoichi', 'mercenary', 'beastmaster', 'illusionist']) assert.equal(ultPlace(kind), 'each', kind);
+  // (a heal, a blessing, a ward on friends: on the caster and each friend helped, a line of light run out to each)
+  for (const kind of ['wanderer', 'sage', 'ilyra', 'priestess', 'satyr', 'corsairSurgeon']) assert.equal(ultPlace(kind), 'friends', kind);
+  // (a wall stands along the tiles it blocks)
+  assert.equal(ultPlace('geomancer'), 'tiles');
   // (an aura, a ward of his own, a change, a pull towards him: round the caster)
   for (const kind of ['cleric', 'knight', 'banneret', 'warlock', 'werewolf', 'demonSwordsman', 'kraken', 'plagueDoctor']) assert.equal(ultPlace(kind), 'self', kind);
   // (a great blow, a storm on its tiles, a wall where it stands: once)
-  for (const kind of ['samurai', 'barbarian', 'wizard', 'archer', 'lightningMage', 'geomancer', 'druid', 'lancer']) assert.equal(ultPlace(kind), 'one', kind);
+  for (const kind of ['samurai', 'barbarian', 'wizard', 'archer', 'lightningMage', 'druid', 'lancer']) assert.equal(ultPlace(kind), 'one', kind);
   assert.equal(ultPlace('skeleton'), 'one');
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /if \(place === 'self'\) \{/);
-  assert.match(fx, /\} else if \(place === 'each'\) \{/);
+  assert.match(fx, /\} else if \(place !== 'one'\) \{/);
   // (Spirit Guardians' strike is the spirits arriving, with the ring they circle in: no core, no rubble)
   assert.deepEqual(BFX_CLIPS['ult-cleric-strike'].sc, ['souls', 'motes', 'ring']);
 });
@@ -73,4 +77,32 @@ test('with the colour taken out no two heroes strike alike or wind up alike: eac
   assert.deepEqual(BFX_CLIPS['ult-cleric-windup'].sc, ['ring', 'souls']);
   assert.deepEqual(BFX_CLIPS['ult-lightningMage-windup'].sc, ['cloud', 'sparks']);
   assert.deepEqual(BFX_CLIPS['ult-knight-windup'].sc, ['slab', 'dome']);
+});
+
+test('a strike on each one the ability touched finds them: the friends helped (and the caster), the tiles taken, the foes struck', () => {
+  const t = { struck: [7, 8], helped: [2, 3, 1], tiles: [{ u: 4, v: 5 }, { u: 5, v: 5 }] };
+  // (a heal lands on the caster and each friend, whoever it also struck; the caster once)
+  assert.deepEqual(ultSpots('friends', t, 1, 5), [{ unit: 1 }, { unit: 2 }, { unit: 3 }]);
+  assert.deepEqual(ultSpots('friends', { struck: [], helped: [], tiles: [] }, 1, 5), [{ unit: 1 }]);
+  // (a wall's slabs stand on its tiles)
+  assert.deepEqual(ultSpots('tiles', t, 1, 5), [{ u: 4, v: 5 }, { u: 5, v: 5 }]);
+  assert.deepEqual(ultSpots('tiles', { struck: [7], helped: [], tiles: [] }, 1, 5), [{ unit: 7 }]);
+  // (a mark, a cut: the foes struck; with none, the tiles (the called arrive on them); with none, the friends; with none, the caster)
+  assert.deepEqual(ultSpots('each', t, 1, 5), [{ unit: 7 }, { unit: 8 }]);
+  assert.deepEqual(ultSpots('each', { struck: [], helped: [2], tiles: [{ u: 1, v: 1 }] }, 1, 5), [{ u: 1, v: 1 }]);
+  assert.deepEqual(ultSpots('each', { struck: [], helped: [2], tiles: [] }, 1, 5), [{ unit: 2 }]);
+  assert.deepEqual(ultSpots('each', { struck: [], helped: [], tiles: [] }, 1, 5), [{ unit: 1 }]);
+  // (the battery saver's cap holds)
+  assert.equal(ultSpots('each', { struck: [1, 2, 3, 4, 5, 6], helped: [], tiles: [] }, 9, 2).length, 2);
+  // (a healer's light runs out from her hands to each friend, the Gorgon's gaze to each foe; a cut does not)
+  for (const kind of ['wanderer', 'sage', 'priestess', 'gorgon']) assert.ok(ultLinked(kind), kind);
+  for (const kind of ['kunoichi', 'samurai', 'cleric', 'beastmaster']) assert.ok(!ultLinked(kind), kind);
+  assert.ok(ULT_LINK_MS >= 100 && ULT_LINK_MS <= 400);
+  // (what the abilities are: beasts bursting out where each is called, stone creeping over each foe, slabs along the wall's tiles, shields)
+  assert.deepEqual(BFX_CLIPS['ult-beastmaster-strike'].sc, ['beast', 'claws']);
+  assert.deepEqual(BFX_CLIPS['ult-beastmaster-windup'].sc, ['eyes', 'swarm']);
+  assert.deepEqual(BFX_CLIPS['ult-gorgon-strike'].sc, ['crystal', 'smoke']);
+  assert.deepEqual(BFX_CLIPS['ult-gorgon-windup'].sc, ['vines', 'eye']);
+  assert.deepEqual(BFX_CLIPS['ult-geomancer-strike'].sc, ['slab', 'crack']);
+  assert.equal(BFX_CLIPS['ult-sage-strike'].sc![0], 'dome');
 });

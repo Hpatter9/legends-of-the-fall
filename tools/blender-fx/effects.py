@@ -178,7 +178,7 @@ BIG = dict(
     veil=(dict(r=1.0, h=2.0, panes=9), 1.6, 2.6), portal=(dict(r=1.0, z=1.2), 1.8, 3.2), pillar=(dict(r=0.9, h=3.2, sparks=30), 1.8, 3.6),
     shout=(dict(r=1.8, h=1.6, n=5), 2.2, 3.2), swarm=(dict(r=1.5, h=2.0, n=30), 1.9, 2.6), motes=(dict(r=1.6, h=2.2, n=34, crosses=7), 2.0, 2.6),
     hearts=(dict(r=1.0, h=2.0, n=9), 1.5, 2.6), wall=(dict(length=3.0, h=1.7, tongues=9), 2.4, 2.2), flames=(dict(r=1.3, h=1.3, tongues=9), 1.9, 2.2),
-    palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2),
+    palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=1.7), 1.5, 1.7), eyes=(dict(r=1.5, n=6), 2.1, 1.6),
     implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
 )
 
@@ -186,23 +186,23 @@ BIG = dict(
 ULTS = dict(
     vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'flames', 'sky'), ilyra=('holy', 'halo', 'dome', 'bless'),
     orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'swarm', 'blinks'),
-    wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'claws', 'smoke', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
+    wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'beast', 'claws', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
     minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'burst', 'leap'), ninjaMonk=('wind', 'sparks', 'gust', 'blows'),
     buccaneer=('shadow', 'chains', 'cross', 'hooks'), archer=('wind', 'rain', 'ring', 'sky'), dreadPirate=('shadow', 'rain', 'burst', 'sky'),
     siegeBot=('fire', 'burst', 'shockwave', 'sky'), lightningMage=('lightning', 'cloud', 'bolt', 'shots'), gunslinger=('fire', 'sparks', 'cross', 'shots'),
     rifleBot=('lightning', 'sparks', 'ring', 'shots'), dragoon=('fire', 'flare', 'wall', 'shots'), ranger=('forest', 'vines', 'ring', 'burst'),
     knight=('holy', 'shout', 'dome', 'burst'), paladin=('holy', 'nova', 'strike', 'burst'), yamabushi=('wind', 'vortex', 'gust', 'burst'),
-    gorgon=('poison', 'eye', 'crystal', 'burst'), juggernaut=('earth', 'crack', 'spikes', 'burst'), kraken=('water', 'vortex', 'geyser', 'burst'),
+    gorgon=('poison', 'crystal', 'smoke', 'burst'), juggernaut=('earth', 'crack', 'spikes', 'burst'), kraken=('water', 'vortex', 'geyser', 'burst'),
     mummy=('earth', 'vortex', 'chains', 'burst'), warlock=('shadow', 'sigil', 'siphon', 'burst'), tyrant=('blood', 'shout', 'spikes', 'burst'),
     shambler=('poison', 'crack', 'cloud', 'burrow'), reaper=('shadow', 'arc', 'souls', 'burst'), druid=('forest', 'palisade', 'vines', 'pack'),
     illusionist=('arcane', 'veil', 'portal', 'pack'), priestess=('holy', 'pillar', 'halo', 'bless'), werewolf=('blood', 'claws', 'shout', 'change'),
     demonSwordsman=('fire', 'chains', 'flare', 'change'), kitsune=('fire', 'spiral', 'smoke', 'burst'), karasu=('wind', 'swarm', 'vortex', 'sky'),
     timeWitch=('holy', 'sigil', 'crystal', 'burst'), wanderer=('holy', 'hearts', 'motes', 'bless'), satyr=('forest', 'swarm', 'spiral', 'bless'),
-    samuraiCommander=('fire', 'pillar', 'flare', 'bless'), sage=('lightning', 'sigil', 'dome', 'bless'), cleric=('holy', 'souls', 'motes', 'bless'),
+    samuraiCommander=('fire', 'pillar', 'flare', 'bless'), sage=('lightning', 'dome', 'sigil', 'bless'), cleric=('holy', 'souls', 'motes', 'bless'),
     peasant=('earth', 'veil', 'shout', 'bless'), wolfBard=('wind', 'shout', 'spiral', 'bless'), vampireLord=('blood', 'implode', 'siphon', 'burst'),
     hemomancer=('blood', 'siphon', 'rain', 'burst'), nightstalker=('shadow', 'swarm', 'claws', 'blinks'), bloodGargoyle=('earth', 'shockwave', 'slab', 'burst'),
-    dhampir=('holy', 'rain', 'cross', 'shots'), warDrummer=('lightning', 'shout', 'bolt', 'burst'), geomancer=('earth', 'slab', 'spikes', 'bless'),
+    dhampir=('holy', 'rain', 'cross', 'shots'), warDrummer=('lightning', 'shout', 'bolt', 'burst'), geomancer=('earth', 'slab', 'crack', 'bless'),
     bellWarden=('shadow', 'shout', 'ring', 'burst'), falconer=('wind', 'shaft', 'claws', 'sky'), banneret=('fire', 'veil', 'ring', 'bless'),
     astralSphinx=('arcane', 'eye', 'sigil', 'burst'), mirageDancer=('wind', 'veil', 'cross', 'blinks'), plagueDoctor=('poison', 'cloud', 'smoke', 'burst'),
     bombardier=('fire', 'shaft', 'burst', 'sky'), astrologer=('holy', 'implode', 'burst', 'sky'), inquisitor=('holy', 'strike', 'ring', 'shots'),
@@ -213,11 +213,12 @@ ULTS = dict(
 # itself under it (a core, shock rings, rubble): a cut, a leap's landing, a shell, a meteor, a crash from on high.
 GREAT = {'samurai', 'barbarian', 'bloodGargoyle', 'siegeBot', 'wizard', 'astrologer', 'seraph', 'bombardier', 'dreadPirate'}
 # Where a strike plays. Most are one great thing at the middle of what was struck. `each`: a small one on every fighter the ability
-# touches (a heal lands on each friend healed, a mark sits on each foe marked, a flurry's cut on each foe cut, what is summoned arrives
-# where each stands). `self`: round the caster (an aura, a ward, a transformation, a pull towards him).
+# touches (a mark sits on each foe marked, a flurry's cut on each foe cut, what is summoned arrives where each stands). `friends`: on
+# each friend the ability helps, and the caster (a heal, a blessing, a ward on them), with a line of light run out to each from the
+# caster's hands. `tiles`: on each tile the ability takes (a wall stands along the tiles it blocks). `self`: round the caster (an aura, a ward, a transformation, a pull towards him).
 PLACE = dict(
-    wanderer='each', satyr='each', corsairSurgeon='each', sage='each', ilyra='each', orrun='each', nyxara='each', samuraiCommander='each', peasant='each',
-    priestess='each', kunoichi='each', mercenary='each', arcBlade='each', ninjaMonk='each', buccaneer='each', harpooner='each', mirageDancer='each',
+    wanderer='friends', satyr='friends', corsairSurgeon='friends', sage='friends', ilyra='friends', orrun='friends', nyxara='friends', samuraiCommander='friends',
+    peasant='friends', priestess='friends', geomancer='tiles', kunoichi='each', mercenary='each', arcBlade='each', ninjaMonk='each', buccaneer='each', harpooner='each', mirageDancer='each',
     gorgon='each', kitsune='each', timeWitch='each', ranger='each', astralSphinx='each', vampireLord='each', gunslinger='each', dhampir='each',
     inquisitor='each', beastmaster='each', illusionist='each',
     cleric='self', knight='self', wolfBard='self', banneret='self', warlock='self', tyrant='self', bellWarden='self', plagueDoctor='self', kraken='self',
@@ -225,7 +226,7 @@ PLACE = dict(
 )
 # A third scene some strikes have, where two do not say what the ability does (the ring the spirits circle in, the flames a
 # constellation leaves, the halo a nova's healing lands as).
-THIRD = dict(cleric='ring', beastmaster='ring', geomancer='crack', timeWitch='ring', astrax='sigil', dragoon='flames', banneret='flames', paladin='halo',
+THIRD = dict(cleric='ring', wanderer='halo', timeWitch='ring', astrax='sigil', dragoon='flames', banneret='flames', paladin='halo',
              seaReaver='ring', minotaur='trail', shambler='geyser', rifleBot='spiral', demonSwordsman='spiral', werewolf='flare', corsairSurgeon='ring',
              wolfBard='ring', warDrummer='shockwave', lancer='sparks')
 # ULT-AUDIT: every hero's wind-up is the ability itself beginning, in place of a circle and a pillar by its weight: the Cleric's wisps
@@ -234,14 +235,14 @@ THIRD = dict(cleric='ring', beastmaster='ring', geomancer='crack', timeWitch='ri
 WIND_OWN = dict(
     vael=[('halo', 0, 1.4), ('implode', 0.2, 1.3)], astrax=[('sigil', 0, 1.3), ('motes', 0.2, 1.4)], ilyra=[('halo', 0, 1.5), ('ring', 0, 1.2)],
     orrun=[('vines', 0, 1.5), ('ring', 0.1, 1.3)], nyxara=[('sigil', 0, 1.4), ('spiral', 0.3, 1.5)], kunoichi=[('smoke', 0, 1.2), ('swarm', 0.3, 1.4)],
-    wizard=[('vortex', 0, 1.3), ('flames', 0.3, 1.5)], beastmaster=[('shout', 0, 1.3), ('swarm', 0.3, 1.4)], mercenary=[('implode', 0, 1.2), ('sparks', 0.5, 1.5)],
+    wizard=[('vortex', 0, 1.3), ('flames', 0.3, 1.5)], beastmaster=[('eyes', 0, 1.4), ('swarm', 0.3, 1.4)], mercenary=[('implode', 0, 1.2), ('sparks', 0.5, 1.5)],
     arcBlade=[('spiral', 0, 1.3), ('bolt', 0.2, 1.4)], samurai=[('ring', 0, 1.2), ('flare', 0.4, 1.8)], lancer=[('gust', 0, 1.4), ('trail', 0.3, 1.4)],
     minotaur=[('smoke', 0, 1.3), ('crack', 0.3, 1.4)], barbarian=[('flare', 0, 1.5), ('shout', 0.3, 1.4)], ninjaMonk=[('spiral', 0, 1.4), ('sparks', 0.4, 1.5)],
     buccaneer=[('chains', 0, 1.5), ('ring', 0, 1.0)], archer=[('shaft', 0, 1.4), ('gust', 0.2, 1.3)], dreadPirate=[('cloud', 0, 1.4), ('souls', 0.3, 1.5)],
     siegeBot=[('ring', 0, 1.4), ('strike', 0.5, 1.8)], lightningMage=[('cloud', 0, 1.5), ('sparks', 0.4, 1.5)], gunslinger=[('halo', 0, 1.4), ('sparks', 0.6, 1.6)],
     rifleBot=[('sparks', 0, 1.3), ('bolt', 0.5, 1.6)], dragoon=[('flames', 0, 1.4), ('flare', 0.4, 1.7)], ranger=[('vines', 0, 1.4), ('swarm', 0.3, 1.4)],
     knight=[('slab', 0, 1.3), ('dome', 0.4, 1.6)], paladin=[('nova', 0, 1.2), ('pillar', 0.3, 1.7)], yamabushi=[('vortex', 0, 1.5), ('gust', 0.3, 1.5)],
-    gorgon=[('eye', 0, 1.5), ('cloud', 0, 1.2)], juggernaut=[('crack', 0, 1.3), ('slab', 0.3, 1.5)], kraken=[('vortex', 0, 1.4), ('geyser', 0.4, 1.6)],
+    gorgon=[('vines', 0, 1.4), ('eye', 0.2, 1.5)], juggernaut=[('crack', 0, 1.3), ('slab', 0.3, 1.5)], kraken=[('vortex', 0, 1.4), ('geyser', 0.4, 1.6)],
     mummy=[('gust', 0, 1.4), ('chains', 0.3, 1.5)], warlock=[('sigil', 0, 1.4), ('siphon', 0.3, 1.5)], tyrant=[('shout', 0, 1.4), ('flare', 0.4, 1.6)],
     shambler=[('crack', 0, 1.2), ('cloud', 0.2, 1.4)], reaper=[('souls', 0, 1.4), ('arc', 0.5, 1.7)], druid=[('vines', 0, 1.4), ('motes', 0.2, 1.4)],
     illusionist=[('veil', 0, 1.5), ('sparks', 0.4, 1.4)], priestess=[('halo', 0, 1.4), ('pillar', 0.4, 1.7)], werewolf=[('ring', 0, 1.0), ('shout', 0.3, 1.5), ('claws', 0.5, 1.6)],
@@ -258,7 +259,9 @@ WIND_OWN = dict(
     seaReaver=[('geyser', 0, 1.5), ('gust', 0.2, 1.4)],
 )
 # How large a strike is drawn when it plays on each fighter, or round the caster.
-PLACE_SIZE = dict(each=0.8, self=1.25)
+PLACE_SIZE = dict(each=0.8, friends=1.1, tiles=0.85, self=1.25)
+# (a few are drawn larger where they land: a beast is a beast's size, stone creeps over the whole of a foe)
+EACH_SIZE = dict(beastmaster=1.0, gorgon=1.0)
 # How much larger than a scene's own size a strike is drawn, by the show's weight.
 STRIKE_SIZE = dict(blow=1.6, flurry=1.6, wave=1.9, storm=2.3, summon=2.3)
 STYLE_WEIGHT = dict(line='blow', leap='blow', blinks='flurry', blows='flurry', hooks='flurry', burrow='flurry', burst='wave', bless='wave', change='wave',
@@ -373,7 +376,7 @@ OWN = dict(
     astralSphinx=('eye', 'sigil', 'motes'),    # the riddle's eye; glyphs of starlight
     harpooner=('sparks', 'spikes', 'motes'),   # ice glints on the harpoons; ice and frost
 )
-SIZED = ('r', 'h', 'z', 'length', 'w', 'wide', 'tall')
+SIZED = ('r', 'h', 'z', 'length', 'w', 'wide', 'tall', 'size')
 
 
 def grow(opt, k):
@@ -397,7 +400,7 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
     # Under the hero's own two scenes lies the blow itself, the same for all in its element's colours: a white-hot core, two shock
     # rings and debris, its heaviest frames first. The first scene opens it, the second lands as the first is at its height.)
     place = PLACE.get(kind, 'one')
-    k = STRIKE_SIZE[weight] if place == 'one' else PLACE_SIZE[place]
+    k = STRIKE_SIZE[weight] if place == 'one' else EACH_SIZE.get(kind, PLACE_SIZE[place])
     scenes = [first, second] + ([THIRD[kind]] if kind in THIRD else [])
     stages = [stage(first, 0, 0.7, **sized(first, k)), stage(second, 0.25, 1, **sized(second, k))] + ([stage(THIRD[kind], 0.1, 0.9, **sized(THIRD[kind], k))] if kind in THIRD else [])
     reach, tall = max(BIG[sc][1] for sc in scenes) * k, max(BIG[sc][2] for sc in scenes) * k
@@ -488,7 +491,7 @@ for j, (clip, (pal, scene, opt, canvas, n, ms)) in enumerate(BEAT_ONLY.items()):
 
 # ---- ULT-AUDIT: what an ability IS, as a loop that stays for as long as the ability lasts (docs/notes/ult-audit.md). Spirit Guardians:
 # four ghostly figures a fighter tall circling the Cleric, round and round (`paintAura` draws it on her while the aura lives). ----
-fx('aura-spirits', 'spirits', 'wind', **box(2.5, 2.6, 0.4), frames=12, ms=1300, loop=True, seed=71, glow=False, r=1.3, n=4, tall=1.5, mode='circle', hoop=False)
+fx('aura-spirits', 'spirits', 'wind', **box(2.9, 3.2, 0.4), frames=12, ms=1300, loop=True, seed=71, glow=False, r=1.3, n=4, tall=1.5, mode='circle', hoop=False)
 
 # What the game ships: everything but the library's own previews.
 SHIPPED = [k for k in EFFECTS if not k.startswith('lib-')]
