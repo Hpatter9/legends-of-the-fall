@@ -7,6 +7,7 @@ import { FALL_SLOW_MS, fallSlowMs, ultCastBeat } from '../src/render/fxRules';
 import { mayRelease, mayWarm, nextToWarm } from '../src/render/texReadyRules';
 import { COLUMN_ROOM, WARM, warmMore, warmNow } from '../src/render/boardWarmRules';
 import { ColumnTextures } from '../src/render/columnTextures';
+import { LOOP, loopCure, reloadSafe } from '../src/loopRules';
 import { DIAG, diagHead, stepsText, diagText, doingIn, isStop, parseDiag, stopLine, withStop, type DiagStop } from '../src/diagRules';
 
 test('the slow moment for a fall is a boss\'s alone, and none with the screen kept still', () => {
@@ -134,4 +135,53 @@ test('a stop\'s parts: the longest first, how many times each ran, and no time g
   ]);
   assert.equal(stepsText(steps), 'columns painted 88 in 5200 ms; the old board drawn into one picture of 640x480 in 300 ms; columns from the cache 12');
   assert.equal(stepsText(new Map()), '');
+});
+
+test('the loop watched from outside: a stopped loop is started again, a drawing that keeps faulting has the board built afresh, and what is not cured is loaded again', () => {
+  const well = { running: true, hidden: false, sinceFrame: 16, faults: 0, restarts: 0, rebuilt: false };
+  assert.equal(loopCure(well), 'none');
+  // (at rest on the home screen, or the page hidden: nothing is wrong)
+  assert.equal(loopCure({ ...well, running: false, sinceFrame: 99999, faults: 999 }), 'none');
+  assert.equal(loopCure({ ...well, hidden: true, sinceFrame: 99999 }), 'none');
+  // (the loop has not turned: started again, three times; then the page is loaded again)
+  assert.equal(loopCure({ ...well, sinceFrame: LOOP.STALL_MS - 1 }), 'none');
+  assert.equal(loopCure({ ...well, sinceFrame: LOOP.STALL_MS }), 'restart');
+  assert.equal(loopCure({ ...well, sinceFrame: LOOP.STALL_MS, restarts: LOOP.RESTARTS - 1 }), 'restart');
+  assert.equal(loopCure({ ...well, sinceFrame: LOOP.STALL_MS, restarts: LOOP.RESTARTS }), 'reload');
+  assert.equal(loopCure({ ...well, sinceFrame: NaN }), 'restart');
+  // (frames or drawings at fault in a row: the board built afresh once, then the page loaded again)
+  assert.equal(loopCure({ ...well, faults: LOOP.FAULTS - 1 }), 'none');
+  assert.equal(loopCure({ ...well, faults: LOOP.FAULTS }), 'rebuild');
+  assert.equal(loopCure({ ...well, faults: LOOP.FAULTS, rebuilt: true }), 'reload');
+  // (never loaded again where a wave's result is being counted)
+  assert.equal(reloadSafe('fight'), true);
+  assert.equal(reloadSafe('deploy'), true);
+  assert.equal(reloadSafe('won'), false);
+  assert.equal(reloadSafe('lost'), false);
+  assert.ok(LOOP.STALL_MS <= 5000 && LOOP.FAULTS <= 180);
+});
+
+test('a kept column whose texture is no longer alive is never handed out again: it is painted afresh', () => {
+  let painted = 0;
+  const destroyed: number[] = [];
+  const dead = new Set<number>();
+  const cache = new ColumnTextures<number>((v) => destroyed.push(v), 640, 16 * 1024 * 1024);
+  const alive = (v: number): boolean => !dead.has(v);
+  const a = cache.acquire('k', 1000, () => ++painted, alive);
+  assert.equal(a.value, 1);
+  a.release();
+  // (alive: the same one again)
+  const b = cache.acquire('k', 1000, () => ++painted, alive);
+  assert.equal(b.value, 1);
+  // (something else destroyed it while it was kept, and while a board still holds it)
+  dead.add(1);
+  const c = cache.acquire('k', 1000, () => ++painted, alive);
+  assert.equal(c.value, 2, 'painted afresh');
+  assert.equal(cache.stats.dead, 1);
+  // (the dead one goes with its last holder; the new one is the kept one from now on)
+  b.release();
+  assert.deepEqual(destroyed, [1]);
+  c.release();
+  assert.equal(cache.acquire('k', 1000, () => ++painted, alive).value, 2);
+  assert.equal(painted, 2);
 });

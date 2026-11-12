@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.550.0',
+    date: '2026-11-12',
+    title: 'The game can no longer lock with an empty field',
+    notes: ['A fault while drawing no longer stops the game for good: the picture\'s loop is guarded and goes on.', 'The game watches itself: a stopped loop is started again, a field that will not draw is rebuilt, and failing that the page reloads into the same wave.', 'Each such rescue is written to Settings, Diagnostics, so a copy of the log says what happened.'],
+  },
+  {
     version: '0.549.0',
     date: '2026-11-12',
     title: 'Vael\'s black sun; four ultimates remade',
