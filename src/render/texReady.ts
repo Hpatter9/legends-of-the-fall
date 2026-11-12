@@ -2,6 +2,7 @@
 // sheets here (`keepReady`); the page calls `readyStep` each frame with its renderer.
 import type { TextureSource } from 'pixi.js';
 import { mayRelease, mayWarm, nextToWarm } from './texReadyRules';
+import { diagMark, diagTimed } from '../diag';
 
 const KEPT = new Map<string, TextureSource>();
 let released: boolean | null = null;
@@ -32,7 +33,10 @@ export function readyStep(renderer: unknown, fighting: boolean): void {
   try {
     const live = [...KEPT.values()].filter((s) => !s.destroyed);
     const next = nextToWarm(live, (s) => !!(s as unknown as { _gpuData: Record<number, unknown> })._gpuData?.[card.uid]);
-    if (next) card.texture.initSource(next);
+    if (next) {
+      diagMark('a kept sheet handed to the graphics card');
+      diagTimed('a kept sheet handed over', () => card.texture.initSource(next));
+    }
   } catch (err) {
     if (!faulted) console.warn('a sheet could not be handed to the graphics card ahead of its fight', err);
     faulted = true;

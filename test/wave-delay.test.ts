@@ -7,7 +7,7 @@ import { FALL_SLOW_MS, fallSlowMs, ultCastBeat } from '../src/render/fxRules';
 import { mayRelease, mayWarm, nextToWarm } from '../src/render/texReadyRules';
 import { COLUMN_ROOM, WARM, warmMore, warmNow } from '../src/render/boardWarmRules';
 import { ColumnTextures } from '../src/render/columnTextures';
-import { DIAG, diagHead, diagText, doingIn, isStop, parseDiag, stopLine, withStop, type DiagStop } from '../src/diagRules';
+import { DIAG, diagHead, stepsText, diagText, doingIn, isStop, parseDiag, stopLine, withStop, type DiagStop } from '../src/diagRules';
 
 test('the slow moment for a fall is a boss\'s alone, and none with the screen kept still', () => {
   assert.equal(fallSlowMs(true, false), FALL_SLOW_MS);
@@ -57,7 +57,9 @@ test('the stops\' log: a gap of half a second is kept, the page left alone is no
   // (what was said in the gap or just before it, in order, each once)
   const marks = [{ t: 100, what: 'old' }, { t: 5000 - DIAG.NEAR_MS, what: 'the next board built' }, { t: 5400, what: 'a fight begun' }, { t: 5500, what: 'a fight begun' }, { t: 9000, what: 'later' }];
   assert.equal(doingIn(marks, 5000, 6000), 'the next board built; a fight begun');
-  assert.equal(doingIn(marks, 20000, 21000), 'not known');
+  // (nothing said in the gap: the last three things said before it, the newest first, with how long before)
+  assert.equal(doingIn(marks, 20000, 21000), 'not known (before it: later 11.0 s earlier, a fight begun 14.5 s earlier, a fight begun 14.6 s earlier)');
+  assert.equal(doingIn([], 20000, 21000), 'not known');
   // (stored and read back; anything else stored reads as an empty log)
   assert.deepEqual(parseDiag(JSON.stringify(log)), log);
   for (const bad of [null, '', 'x', '{}', '[1, "a", null, {"at":"x"}]']) assert.deepEqual(parseDiag(bad), []);
@@ -122,4 +124,14 @@ test('the log\'s heading says where the game is running, and leaves out what a b
   assert.equal(full, 'Version 0.540.0 · the installed app\nMozilla/5.0 (Linux; Android 14; wv)\ndevice memory 8 GB · 8 cores · heap 470 of 2048 MB · screen 393x852 at 2.75');
   const bare = diagHead({ v: '0.540.0', app: false, agent: 'X', screen: '360x780 at 3' });
   assert.equal(bare, 'Version 0.540.0 · a browser\nX\nscreen 360x780 at 3');
+});
+
+test('a stop\'s parts: the longest first, how many times each ran, and no time given for one that took none', () => {
+  const steps = new Map([
+    ['columns from the cache', { ms: 0, n: 12 }],
+    ['columns painted', { ms: 5200.4, n: 88 }],
+    ['the old board drawn into one picture of 640x480', { ms: 300, n: 1 }],
+  ]);
+  assert.equal(stepsText(steps), 'columns painted 88 in 5200 ms; the old board drawn into one picture of 640x480 in 300 ms; columns from the cache 12');
+  assert.equal(stepsText(new Map()), '');
 });
