@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.540.0',
+    date: '2026-11-12',
+    title: 'Fire that reads as fire; the Mummy\'s sand',
+    notes: ['An ultimate\'s big fire is now tall narrow tongues of flame, not a heap of round lumps (the Banneret, Inquisitor, Kitsune and Samurai Commander).', 'The Mummy\'s sandstorm is broad bands of whirling sand three tiles across, the largest thing on the field.', 'The link from a caster to each friend is rising sparks of light, not a row of lumps (the Priestess and the Wanderer).'],
+  },
+  {
     version: '0.539.0',
     date: '2026-11-12',
     title: 'Auto fights run without pauses',

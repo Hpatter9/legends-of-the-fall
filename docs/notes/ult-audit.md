@@ -412,6 +412,39 @@ Seven read; Karasu did not and is changed and photographed. Three want more and 
 heroes now (the Banneret, the Inquisitor, the Kitsune's wind-up): the `flames` scene at an ultimate's size is a heap of round lumps,
 not fire. Forty-five heroes are judged at full size in this pass.
 
+### Ten more: fire that is fire, a line of sparks, the Mummy's sand
+
+`docs/samples/blender-fx/audit-fullsize-10-393.jpg` (the Priestess, the Sage, the Samurai Commander, the Satyr, the Sea Reaver) and
+`-11` (the Time Witch, the Vampire Lord, the Wanderer, the War Drummer, the Mummy), 0.499 above and now below, `TOUGH=1`.
+
+Three things were wrong across many heroes, and are mended at their root:
+
+- **Big fire was a heap of lumps.** The `flames` scene at an ultimate's size was nine fat tongues. It is now fourteen narrow, tall
+  ones (`slim`, only at that size: a tile's small fire is as it was). The Banneret's Oriflamme, the Inquisitor's pyres, the Kitsune's
+  fox-fire and the Samurai Commander's rallying fire are photographed again and read as fire (sheets 6 and 8 are remade).
+- **The line from a caster to each friend was a row of lumps** (a tongue of flame for each link). Each link is now a few sparks of
+  light rising (`beat-link`, all elements). In the Priestess's and the Wanderer's photographs the row of lumps is gone.
+- **The Mummy's sand** (the director's item): the sandstorm was a tile and a half wide, thin bands, pale against the ground. It is
+  now eleven broad bands of sand whirling well over a hero's height and three tiles across, on him, in the wind-up and the strike.
+  In the photograph it is the largest thing on the field while it turns.
+
+| Hero | 0.499 | Now | Shows the ability? | Mistaken for another? |
+| --- | --- | --- | --- | --- |
+| Priestess, Mass Resurrection | a yellow ball and rings | a pillar and hoops on her; sparks to each friend; a sigil, rays and a pillar on each | yes: light raised on each friend | Ilyra's is a dome on each, hers rays and a pillar |
+| Sage | a yellow ball, a ring | a dome of pale bands on him, then one on each friend | yes: a ward | YES, in shape: Ilyra's and Orrun's are domes on each ally too (gold with rays; green with vines; his pale and banded). Three domes |
+| Samurai Commander, Rallying Cry | a yellow ball, a ring | fire and a banner on him; a banner planted; fire in a ring round it | yes: a banner raised | YES: the Banneret's Oriflamme is also a banner in a ring of orange fire. Two heroes, one picture |
+| Satyr, Bacchanal | a green ball, a ring | puffs and a ring on him; green coils whirling over the friends | the coils read as a revel loosely; nothing says music | no |
+| Sea Reaver | a pale ball, a ring | a wave rearing; a great spout of water where he lands | yes: a waterspout; it is a plain cone, crude | the Corsair Surgeon's spouts are the same cone in green |
+| Time Witch | yellow balls, rings | a star sigil; discs and rings on each foe; crystals standing after | the discs read as dials, the crystals as time stopped | no |
+| Vampire Lord | a red ball, a ring | an orb of blood on him; a ring and drops at the foe; a red mass after | yes: blood taken | YES: the Hemomancer's is also an orb of blood over red rings |
+| Wanderer, Panacea | a yellow ball, a ring | a shaft and a round mass on him; rings and pillars of light on each friend | yes on the friends; the round mass on him in the wind-up reads as nothing | the Priestess's is close (pillars of light on friends) |
+| War Drummer | a pale ball, a ring | hoops over him; hoops and rings spreading low and wide | yes: beats going out | the Bell Warden's are hoops too, purple and upright |
+| Mummy, Curse of the Pharaoh | purple balls and rings | was a faint pale swirl: CHANGED (above) | yes, now: a sandstorm round him | no |
+
+So this ten: all show something of the ability, and five of them have a neighbour they could be taken for with the colour gone
+(the Sage's dome, the Commander's banner, the Vampire Lord's orb, the Sea Reaver's cone, the Wanderer's pillars). Those are not
+fixed here. Fifty-five heroes are judged at full size in this pass; fifteen remain.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
