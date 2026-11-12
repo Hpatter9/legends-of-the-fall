@@ -1,114 +1,115 @@
-## FREEZE-FIX: nothing may hold a fight for good
+## FREEZE-FIX: a wave's end never waits on a show
 
-Branch `claude/freeze-fix` (from main 0.514.0). The owner, on an Android phone (the installed app): "The game is freezing now.
-Seemingly random in a wave". It was new: it did not happen a day before (0.492 and earlier).
+Branch `claude/freeze-fix` (main 0.520.0 merged). The owner, on an Android phone (the installed app): "The game is freezing now.
+Seemingly random in a wave", and then: "The freeze I was getting was usually when one wave ends. Before the next wave begins. The
+little red flags on the heroes on the bottom would move like it wasn't frozen." and "Sometimes it would continue but that was after
+10-20 seconds later." It was new: it did not happen a day before (0.492 and earlier).
 
-### The plain answer
+### The cause
 
-**A fight that stops for good was not reproduced here.** A soak of 189 fights on main raised no true stall, no page error and no
-hang in the simulation. Four real faults were found on the way (one measured, two by the soak, one by a fuzz test), all of them in
-the last day's work, and all are fixed. The first is the best match for "freezing, seemingly random in a wave", but it is a stop of
-a fifth of a second to a second, not one the game never comes back from. If the owner's freeze is the second kind, what would
-settle it is in "Still open" below.
+**The wave's result waited for every ultimate's show still playing or queued, and for an Eidolon's call still open.** Since 0.497
+every ultimate fired by hand plays a show of 4 to 7 s, the shows queued one behind another without limit, and the page did not
+begin its end-of-fight wait until the queue was empty. So with the last foe down the board stood still, the page alive (the hero
+rows are the page's own, and kept moving), until the shows had run out.
 
-### What was found
+Proved on main 0.520.0 by the soak playing whole runs through the game's own wave-end flow, timing from the simulation's
+fight-over to the result's card (or the next deploy) being shown, in the game's own time:
 
-| # | Fault | How it shows | Found by |
-| --- | --- | --- | --- |
-| 1 | An ultimate's atlas was handed to the graphics card on the frame of the blow, and the browser decoded the whole picture (up to 2048 px a side) again to do it. Pixi takes back any texture not drawn for a minute, so it happened again through a session, at the first blow of most ultimates, and several at once when heroes fired together. | The whole page stops at a blow: 200 ms for one atlas at a phone's speed (4x throttle; 44 ms from a decoded bitmap), more for several. New in 0.507 (the atlases grouped and loaded on demand). | Measured (an upload timed in a bare page) |
-| 2 | Ultimates fired by hand queue without limit, each holding the fight 4 to 6 s, and once the last foe had fallen the result waited for every show still queued. | A won fight that seems frozen: seen with 7 shows waiting and no result 40 s after the win. New in 0.497 (every hand-fired use plays its showcase). | The soak (`noResult`) |
-| 3 | An Eidolon's call stands on its first blow until the fight makes the strike. If the strike never came (the board became another fight's mid-call), it stood there for ever, and every later fight's result waited on it for ever. | The call's layer never leaves; no result ever comes up. Only reached by leaving a fight mid-call; in ordinary play the fight is held through the call, so this is unlikely to be what the owner saw. | The soak |
-| 4 | `stepAt` (the camera's step between strike frames) gave no frame for a share that cannot be told (NaN). | Harmless today (the camera fell back to the caster); made total. | The fuzz test |
+| Main 0.520.0, 12 wave ends (hand and horn pages) | |
+| --- | --- |
+| At the middle | 7.0 s |
+| The four worst | 8.25 s (2 shows and a call), 12.75 s (3 shows), 18.0 s (3 shows), 21.0 s (4 shows) |
 
-Read and found sound: `UltQueue.step` and its loops, the camera rules (no loop without a bound), the walk search with the new
-terrain (the cheapest step is 0.5: no negative edge, so no cycle), and the loaders (nothing in a fight awaits a sheet: a sheet
-that is late or fails is skipped and the older look plays; the soak made 149 sheets fail and 401 arrive seconds late). The frame
-rate did not fall against 0.492 (9 against 7.6 frames a second under the software renderer). Texture memory goes up and down
-with the parties fielded (160 to 340 MB with new heroes every fight) rather than climbing.
+Each dump reads the same: the fight won, nothing shown, the queue running down; then the result. That is the owner's "10 to 20
+seconds later".
+
+**The wait that never ends** (the owner's "usually") was not reproduced in ordinary play. One way to it was found and closed: an
+Eidolon's call stands on its first blow until the fight makes the strike, and a call whose strike never came (the board having
+become another fight's) stood there for ever, every later fight's result waiting behind it. Whatever other way there may be, the
+result no longer waits on any show, and the page has a belt (below).
 
 ### The fix
 
-- **Atlases (`src/render/blenderFxArt.ts`, `bfxDrop` in `blenderFxRules.ts`).** Each atlas is decoded once, off the page's thread
-  (`createImageBitmap`; the plain image where a browser has none). A fight's atlases are handed to the graphics card as the fight
-  begins, one at a time with 80 ms between (`bfxUploader`, which `main.ts` gives the renderer's `initSource`), not on the blow.
-  They are kept for as long as a fight wants them (no longer taken back after an idle minute), and those that neither the fight
-  beginning nor the one before it wanted are let go, picture and all (`bfxDrop`: the last fight's are kept one fight more, since
-  its last effects may still be on the board). So the memory holds two fights' worth, never every hero fielded since the game was
-  opened. A sheet not there when its moment comes is still skipped, never waited for.
-- **Every moment has a deadline (`momentLimit`, `UltQueue.step` in `src/ultMomentRules.ts`).** A moment that outlives its own
-  length plus a salvo's longest wait plus 2.5 s is ended, whatever it was waiting for, and the next plays. It is logged
-  (`UltMoments.frame`): it should never happen.
-- **The waiting moments are dropped when the fight ends (`UltQueue.dropWaiting`, called by `main.ts`).** The one playing finishes;
-  the result is not kept back for shows with nothing left to strike.
-- **The call's wait is bounded (`STRIKE_WAIT_MS`, `strikeOverdue` in `src/eidolonRules.ts`; `EidolonCall.frame`, `see`).** It
-  waits 2.5 s at most for its strike, counted only while the page is free to step the fight (not under a sheet or a show), and at
-  once gives up if the fight is over; then it plays on to its end without the strike. A call that has not struck when the board
-  becomes another fight's is dropped; one that has struck plays out as before.
-- **The graphics context.** Pixi already keeps the context's loss from being final and rebuilds on its return. `main.ts` now logs
-  both, so a report of a frozen picture can be told from a fight that stopped.
+- **One full show at a time** (`oneShow` in `src/ultMomentRules.ts`, `UltMoments.note`; the director's call). An ultimate fired
+  while another show has the screen, an ultimate's moment or an Eidolon's call, takes effect at once with the short banner, as on
+  Auto (`FightHud`'s `ultFull` is asked for each caster: `UltMoments.took`). Nothing is queued behind a show any more.
+- **No show outlives the fight** (`UltQueue.fightOver`, `EidolonCall.fightOver`, asked by `main.ts` every frame once the fight is
+  over). The moment playing goes straight to its aftermath, a second of it at most (`ULT_MOMENT.OVER_MS`); a call that has struck
+  keeps its last second (`CALL_OVER_MS`), one that has not goes; and the end-of-fight wait (the 2 s every fight has, for the falls
+  to play) no longer waits for either. So the result is up 2 s after the last foe falls, whatever was playing.
+- **A deadline on every moment** (`momentLimit`, in `UltQueue.step`): one that outlives its own length, a salvo's longest wait
+  and 2.5 s over is ended and logged.
+- **The call's wait for its strike is bounded** (`STRIKE_WAIT_MS`, `strikeOverdue` in `src/eidolonRules.ts`): 2.5 s, counted only
+  while the page is free to step the fight; then it plays on without the strike. A call that has not struck when the board becomes
+  another fight's is dropped.
+- **The belt** (`waveEndStuck`, `Game.waveEndBelt` in `main.ts`): a fight over for 10 s with nothing the player can act on shown
+  (no result, no card, no film, no revive) has its shows cleared and is settled as it would have been, so the wave's result is
+  never lost. What was pending is logged: it should never be needed.
+- **A fault in a show's frame drops the show, not the frame** (`Game.guard`; the same in `standView.ts`): the Eidolon's call, the
+  ultimate's moment and the effects' part of a tick are each caught on their own, logged, and the show put away. Before, the page's
+  ticker caught a frame's fault, but everything after it in the frame, the fight's own step included, was never reached.
+- **A lost graphics context** (`src/contextRules.ts`, wired in `main.ts`). Pixi already rebuilds when the browser gives the context
+  back; both are now logged. One not given back within 4 s has the page loaded again into the same run and wave (the director's
+  call): only while a fight is going or a deploy is up, when the saved run is this wave's start and nothing of the wave has been
+  counted; a fight that has ended is left to its result's card (which is the page's, and works), and the reload comes at the next
+  deploy. Never twice in a minute. The Last Stand comes back to its own save.
+- `stepAt` (the camera's step between strike frames) gave no frame for a share that cannot be told; made total.
+
+The atlas loader is main's (0.519.0, `blenderFxBudget.ts`): an earlier turn of this branch had its own release rule, dropped at the
+merge. That work answered the other thing measured here: an ultimate's atlas handed to the graphics card on the frame of the blow
+cost 200 ms with the page stopped at a phone's speed from an image element, 44 ms from a decoded bitmap, at 2048 px a side.
 
 Nothing under `src/sim` changed: the fights play out the same.
 
-### The test
+### The tests
 
-`test/freeze-fix.test.ts`: every hero's moment of every shape ends inside its limit and is never cut by the deadline; a moment
-with broken lengths (infinite, NaN, negative, huge; each stage in turn, and a showcase with no end) is ended and the next plays;
-300 fuzzed queues (pushes, skips, landings, long and short frames) always drain and never hold the fight past six moments' worth;
-the waiting moments drop and the one playing ends in its own time; the call's wait; the camera rules end and stay in range for
-400 random sets of spots, with NaN and infinite ones among them; and which atlases are let go.
+`test/freeze-fix.test.ts`: every hero's moment of every shape ends inside its limit; broken lengths (infinite, NaN, negative,
+huge) are ended by the deadline and the next moment plays; 300 fuzzed queues always drain; one show at a time; whatever is playing
+or waiting, at any point of it, a second at most is left once the fight is over and the fight is not held; the belt; the context's
+reload (when, where, never in a loop); the call's wait; the camera rules end and stay in range for 400 random sets of spots.
 
-### The soak tool
+### The tools
 
-`node tools/freeze-fix/soak.mjs [--waves 200] [--minutes 40] [--modes auto,hand,horn,spells] [--faults 0] [--real] [--party fixed]`
-(after `npm run web`; `ROOT=<dir>` soaks another build). Four pages at 393x852, one for each way of playing: both Auto switches
-on; ultimates by hand the moment they can be (two at once, often); the War Horn blown each fight; the king's spells by hand with
-the rest. Every fight takes the next army, a stage and a speed (x1, x2, x3) in turn, with five new heroes. The driver hides and
-shows the tab, taps to skip shows, and makes some effect sheets fail (8%) or arrive seconds late (22%). The page's sound is
-started by a real tap, so the sound's own code runs.
+`node tools/freeze-fix/soak.mjs [--minutes 40] [--modes auto,hand,horn,spells] [--faults 0] [--fresh] [--real]` (after
+`npm run web`; `ROOT=<dir>` soaks another build). A page at 393x852 for each way of playing: both Auto switches on; ultimates by
+hand the moment they can be; the War Horn blown each fight; the king's spells by hand with the rest. Each plays whole runs, wave
+after wave, through the game's own wave-end flow (`--fresh` begins every fight as a new run), at x1, x2 and x3 in turn, hiding and
+showing the tab, tapping to skip shows, and making some effect sheets fail or arrive seconds late. The page's clock is stepped by
+hand (33 ms frames of the game's time; `--real` leaves it alone), since the software renderer here is slow. Flags:
 
-By default the page's clock is stepped by hand (frames of 33 ms of the game's time, as fast as the machine can), because under
-the software renderer here real time gives well under ten frames a second with four pages; `--real` leaves the clock alone and
-`--cpu N` throttles it. A watchdog in the page flags:
+- `waveEnd`: nothing shown for 8 s after the fight ended (how long it took is kept for every wave end);
+- `afterResult`: no next wave 30 s after the result with no card up; `stall`: nothing at all moving for 12 s in a fight;
+- `heldLong`, `tooLong`, `frameError`, `hung`, page errors, a lost context.
 
-- `stall`: nothing at all moving (the fight's clock, a show's, a call's) for 12 s while a fight is on and no card is up;
-- `heldLong`: the fight's own clock held for 20 s by shows that are themselves moving;
-- `noResult`: the fight is over and the result is not up 40 s later; `tooLong`: a fight still going after three minutes;
-- `frameError`: a fault thrown by a frame (the page's ticker catches these and goes on, so one that comes back every frame would
-  hold a fight with the page alive); `hung`: the page no longer answers; and page errors, unhandled rejections, a lost context;
-- with `--real`, `longFrame` (a frame over 2 s) and `noFrames`.
+Each flag writes the state (the show, the queue, the call, every hold, the wave-end's own flags) to `out/freeze-fix/flags.json`
+with a screenshot.
 
-On a flag it writes the state (the show, its stage, the queue, the call, every hold) to `out/freeze-fix/flags.json` with a
-screenshot, and begins a new fight. It also prints the graphics memory the textures hold and each frame whose own work took over
-250 ms.
-
-| | Fights | True stalls | Result kept back | Page errors |
+| Hand and horn pages, whole runs | Wave ends | Fight's end to something shown: middle | Worst | Over 8 s |
 | --- | --- | --- | --- | --- |
-| Before (main 0.514.0), four ways, 12 minutes | 189 (auto 76, horn 55, spells 52, hand 6) | 0 | 2 in the hand page's first 5 fights (see below) | 0 |
-| After (this branch), the same | 171 (auto 53, horn 53, spells 55, hand 10) | 0 | 0 | 0 |
+| Before (main 0.520.0) | 12 | 7.0 s | 21.0 s | 4 |
+| After | 20 | 1.75 s | 2.0 s | 0 |
 
-Before the watchdog told a queue of moving shows from a true stall, a short run of the hand page alone on main raised `noResult`
-twice in five fights (7 and 3 shows waiting behind a won fight) and one 12 s hold with 6 waiting: fault 2. After the fix the hand page raised
-neither in 16 fights (10 in the long run, 6 alone).
+All four pages on the fix, with sheets failing and late (a short run, cut by the machine's time): 28 wave ends, 1.75 s at the
+middle, 2.5 s at the worst, none over 8 s; no stall, no fault in a frame. The fights also go quicker by hand: 13 in the time main
+played 8, since shows no longer queue.
 
-Both runs made sheets fail and arrive late throughout (before: 149 failed, 401 late; after: 203 and 523), hid the tab (32 and 46
-times) and tapped to skip (67 and 65 times); 478 and 419 ultimates were fired by hand, the horn blown 53 and 50 times, 128 and 102
-spells cast. The one flag left in both is `tooLong` on the hand page (once before, twice after): the driver sets a hero's charge
-full and fires it about once a second, far faster than a hero's charge fills, so shows queue behind each other (25 waiting at the
-worst) and a fight outlasts the driver's three minutes. Every one of those shows was moving; it is the first question under
-"Still open". Texture memory under this stress (five new heroes every fight) peaked at 340 MB before and 371 MB after: the fix
-holds two fights' atlases where Pixi used to take back whatever had not been drawn for a minute. With the same party fight after
-fight it holds that party's and no more.
+An earlier soak of 189 fights on main 0.514.0, each begun as a new run, raised no stall, no page error and no hang in the
+simulation, with 149 sheets failed and 401 late: a sheet that is late or fails is skipped, never waited for. It missed the freeze
+because it never played from one wave into the next.
 
-What the soak cannot show: a real phone's graphics card and its memory. The software renderer here never loses its context, and
-its uploads are slow in a different way, which is why fault 1 was measured apart.
+`node tools/freeze-fix/context.mjs` takes the graphics context away (`WEBGL_lose_context`) mid-wave, mid-ultimate and mid-call, on
+a real clock, twice each: given back after a second, and never.
 
-### Still open (the director's or the owner's call; nothing here acts on them)
+| Context lost | Given back after 1 s | Never given back |
+| --- | --- | --- |
+| Before (main 0.520.0), all three moments | the picture comes back, the fight goes on | the picture stays dead, the fight going on unseen; nothing logged |
+| After: mid-wave | the picture comes back, no reload | loaded again: stage 6, deploy, crowns and xp as they were |
+| After: mid-ultimate | the same | the same |
+| After: mid-call | the same | the call's strike won the wave before the 4 s were up, so the wave was counted (once) and the page loaded again at stage 7's deploy, as it was saved |
 
-- **A queue of shows.** Five ultimates fired by hand in a row are five shows of 4 to 6 s, the fight held for most of each. That
-  is as designed ("several ultimates queue, each its own moment"), but it reads as a stall. Should a second ultimate fired while
-  a show plays get the short banner?
-- **A lost context that does not come back.** Today the picture would stay as it was. Reload the page after a few seconds?
-- **What the owner sees.** Whether only the picture stops or the buttons too, whether it comes back, and whether Auto is on or
-  the ultimates are fired by hand, would say which of these it was, or that it is something else.
-- **Seen in passing, not touched:** each damage number is its own `Text` (its own texture; thousands are made and collected in a
-  long session), and a board's first frames at deploy take the longest of any frame's work (the forest and the mire most).
+### Still open
+
+- **What the soak cannot show:** a real phone's graphics card and memory.
+- **Seen in passing, not touched:** the page logs "ResizeObserver loop completed with undelivered notifications" now and then
+  (before and after alike); each damage number is its own `Text` and texture; a board's first frames at deploy are the heaviest
+  of any frame's work.

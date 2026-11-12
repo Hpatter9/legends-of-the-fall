@@ -28,7 +28,7 @@ import { shadeChosen, shadeFight, shadesOf } from './sim/oath';
 import { openShades, playShadeCall, shadeGift, shadeName } from './shadeView';
 import { orderEidolon } from './sim/orders';
 import { blowHorn, boundOf, chooseEidolon, chosenOf, HORN, hornHeld, hornOf, hornReady, noteSeen, seenCall } from './sim/warHorn';
-import { beatTimes, buildAt, strikeOverdue, BOARD_ZOOM, canSkip, CHOREO, EYES, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, NO_EIDOLON, reactionOf, shotAt, skipTarget, SNAP_MS, SNAP_ZOOM, SUMMONER_HINT, type MomentTimes, type Shot } from './eidolonRules';
+import { beatTimes, buildAt, CALL_OVER_MS, strikeOverdue, BOARD_ZOOM, canSkip, CHOREO, EYES, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, NO_EIDOLON, reactionOf, shotAt, skipTarget, SNAP_MS, SNAP_ZOOM, SUMMONER_HINT, type MomentTimes, type Shot } from './eidolonRules';
 import { breathReach, exitPoint, hitAt, markTime, marksOf, maxRuns, PASS, passPose, passShare, runFrom, SOURCES, spriteFrame, spritePlace, SPRITES as MONS, wakeRate, type AttackSource, type EidolonSprite, type Mark, type PassSpec, type Sprite } from './eidolonPass';
 import askelSprite from './art/eidolons/sprites/askel.png';
 import askelBreath from './art/eidolons/sprites/askel-breath.png';
@@ -502,6 +502,19 @@ export class EidolonCall {
       this.refresh(b);
     }
     return this.holds;
+  }
+
+  /** FREEZE-FIX: the fight is over, and no show outlives it. A call that has not struck never will: it goes. One whose strike ended the
+   *  fight keeps its last second (`OVER_MS`), its blows all landed. Asked every frame while the fight stays over. */
+  fightOver(): void {
+    const p = this.p;
+    if (!p) return;
+    if (!p.struckDone) {
+      this.dropStage();
+      return this.end();
+    }
+    p.stopLeft = 0;
+    if (p.t < p.m.RESUME - CALL_OVER_MS) p.t = p.m.RESUME - CALL_OVER_MS;
   }
 
   /** The fight is over or left: the cinematic and the sheet go. */

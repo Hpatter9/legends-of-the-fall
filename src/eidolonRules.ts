@@ -65,6 +65,8 @@ export const callMs = (m: MomentTimes): number => m.RESUME + m.HIT_STOP;
  *  tick for it). The longest it waits there, in real ms the page was free to step the fight: past it the call plays on to its end without
  *  the strike, so nothing can hold it, and with it the fight's result, for good. */
 export const STRIKE_WAIT_MS = 2500;
+/** FREEZE-FIX: once the fight is over, the most that is left of a call that has struck (real ms). */
+export const CALL_OVER_MS = 1000;
 export const strikeOverdue = (waited: number): boolean => !(waited < STRIKE_WAIT_MS);
 
 /** When the build-up begins: with a sprite, as it attacks; without one, as soon as the painting has gone. */
