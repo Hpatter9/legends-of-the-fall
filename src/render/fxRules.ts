@@ -364,6 +364,17 @@ export function hitStopMs(heavy: boolean, share: number, killed: boolean, calm: 
   return heavy ? 60 : 0;
 }
 
+/** WAVE-DELAY (docs/notes/wave-delay.md): the slow moment for a fall, ms (the fight runs at about a third of its speed through it):
+ *  a boss's fall alone. It was every foe of 400 health or more, which past the early stages is every ordinary foe, so it came about
+ *  five times a wave and took a sixth of an Auto fight's time. None with the screen kept still. */
+export const FALL_SLOW_MS = 700;
+export const fallSlowMs = (boss: boolean, calm: boolean): number => (boss && !calm ? FALL_SLOW_MS : 0);
+
+/** WAVE-DELAY: the beat an ultimate's nova lands in: a moment of slow motion and a freeze frame (ms). Only inside a full moment
+ *  (fired by hand, the fight already held for its show). The short version, Auto's and a second ultimate's, has none: on Auto nothing
+ *  slows or stops the fight (it keeps its flash, its shake, its dim and the camera's lean). */
+export const ultCastBeat = (full: boolean): { slow: number; stop: number } => (full ? { slow: 450, stop: 70 } : { slow: 0, stop: 0 });
+
 /** BATTLE-FEEL: a heal of this share of its fighter's health or more shows at once, with its ring and its healer's thread; a smaller one (an aura's
  *  tick, a drain, a regrowth) is pooled with the fighter's other small heals and shown as one quieter number at most once in `HEAL_POOL_MS`. */
 export const HEAL_BIG = 0.05;

@@ -169,6 +169,7 @@ import { fightRanks } from './sim/spellRanks';
 import { bindDecree, refreshDecree } from './decreeHud';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
+import { readyStep } from './render/texReady';
 import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
 import { BoardLife } from './render/boardLife';
@@ -1624,6 +1625,8 @@ class Game {
       this.app.ticker.stop();
       return;
     }
+    // (WAVE-DELAY: the large sheets a fight draws from go to the graphics card ahead of it, one a frame: `texReady.ts`)
+    readyStep(this.app.renderer, b.phase === 'fight');
     if (this.auto) this.autoTick(dt);
     // (an ultimate's moment (ULT-CUTIN) moves on in real time, whatever the fight's speed; it stands still while a scene or a sheet is up)
     // (DUEL-SHOW: a duel's show is dropped once the board is another fight's; through its walk-in the fight is held)
