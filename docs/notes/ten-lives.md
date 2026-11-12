@@ -99,7 +99,36 @@ other balance tools measure; "hearts" is the old rule as the page really played 
 "lives" is the new rule. The player is the army-pace bot (the recruits' five at the level shown, talents, gear, the castle of that level,
 Auto casting), one try a fresh save, 24 saves a cell.
 
-TIERS_TABLE
+| army, tier, level | no retries: cleared | hearts: cleared | lives: cleared | hero deaths a run (hearts / lives) | hearts spent | lives spent | party falls (lives) | lives: the run lost |
+|---|---|---|---|---|---|---|---|---|
+| Orc Warband Normal Lv1 | 29% | 96% | 75% | 10.3 / 10.9 | 0.9 | 8.4 | 0.0 | 25% |
+| Orc Warband Hard Lv45 | 100% | 100% | 100% | 0.0 / 0.0 | 0.0 | 0.0 | 0.0 | 0% |
+| Orc Warband Elite Lv60 | 100% | 100% | 100% | 0.0 / 0.0 | 0.0 | 0.0 | 0.0 | 0% |
+| Orc Warband Legendary Lv85 | 100% | 100% | 100% | 1.1 / 1.0 | 0.0 | 1.0 | 0.0 | 0% |
+| Orc Warband Mythic Lv100 | 100% | 100% | 100% | 0.9 / 1.0 | 0.0 | 0.8 | 0.0 | 0% |
+| Undead Legion Normal Lv8 | 29% | 88% | 83% | 10.0 / 8.3 | 1.1 | 6.8 | 0.1 | 17% |
+| Undead Legion Hard Lv45 | 100% | 100% | 100% | 0.0 / 0.0 | 0.0 | 0.0 | 0.0 | 0% |
+| Undead Legion Elite Lv60 | 100% | 100% | 100% | 0.0 / 0.0 | 0.0 | 0.0 | 0.0 | 0% |
+| Undead Legion Legendary Lv85 | 100% | 100% | 100% | 0.5 / 0.7 | 0.0 | 0.7 | 0.0 | 0% |
+| Undead Legion Mythic Lv100 | 100% | 100% | 100% | 0.6 / 0.6 | 0.0 | 0.5 | 0.0 | 0% |
+| The Labyrinth Normal Lv35 | 38% | 100% | 100% | 4.6 / 4.8 | 0.8 | 4.5 | 0.4 | 0% |
+| The Labyrinth Hard Lv45 | 100% | 100% | 100% | 1.0 / 1.3 | 0.0 | 1.0 | 0.0 | 0% |
+| The Labyrinth Elite Lv60 | 67% | 96% | 96% | 5.1 / 6.5 | 0.4 | 5.8 | 0.0 | 4% |
+| The Labyrinth Legendary Lv85 | 71% | 96% | 88% | 5.5 / 6.5 | 0.3 | 5.5 | 0.0 | 13% |
+| The Labyrinth Mythic Lv100 | 21% | 71% | 75% | 9.7 / 11.3 | 1.3 | 8.9 | 0.5 | 25% |
+| Infernal Host Normal Lv58 | 0% | 21% | 21% | 10.3 / 12.5 | 2.0 | 9.9 | 1.5 | 79% |
+| Infernal Host Hard Lv45 | 0% | 4% | 0% | 9.0 / 14.1 | 2.0 | 10.0 | 2.8 | 100% |
+| Infernal Host Elite Lv60 | 4% | 13% | 38% | 9.9 / 13.2 | 1.9 | 9.3 | 1.0 | 63% |
+| Infernal Host Legendary Lv85 | 42% | 88% | 92% | 4.2 / 4.2 | 0.8 | 4.0 | 0.2 | 8% |
+| Infernal Host Mythic Lv100 | 42% | 63% | 92% | 7.0 / 6.0 | 1.0 | 5.3 | 0.4 | 8% |
+| Golem Forge Normal Lv74 | 8% | 25% | 42% | 7.7 / 10.0 | 1.7 | 8.5 | 0.8 | 58% |
+| Golem Forge Hard Lv45 | 0% | 0% | 0% | 8.1 / 12.1 | 2.0 | 10.0 | 3.2 | 100% |
+| Golem Forge Elite Lv60 | 0% | 4% | 8% | 11.0 / 13.5 | 2.0 | 10.0 | 0.9 | 92% |
+| Golem Forge Legendary Lv85 | 0% | 17% | 33% | 11.2 / 10.6 | 1.9 | 9.0 | 0.5 | 67% |
+| Golem Forge Mythic Lv100 | 21% | 71% | 83% | 6.2 / 6.3 | 1.3 | 6.1 | 0.6 | 17% |
+
+(The tool fights Hard at level 45 and Elite at 60 on every army; on the Infernal Host and the Golem Forge that is below the army's own
+Normal level, so those cells are hopeless either way and show only how the lives are spent in a losing run.)
 
 Reading it: the lives clear about as often as the hearts did. They are a little weaker where a party is slowly worn down (the first
 army at level 1: 96% to 75%) and a little stronger where a fight is lost by one sudden wipe late on (the late armies' top tiers). Hero
@@ -107,14 +136,23 @@ deaths a run are about the same; a cleared run spends from none to nine lives. "
 
 **The first hour** (a new save's three starter heroes on the Orc Warband, 40 saves, up to 12 tries):
 
-FIRST_TABLE
+| pack, try | no retries: cleared | hearts: cleared | lives: cleared | hero deaths a run (hearts / lives) | hearts spent | lives spent | party falls (lives) | lives: the run lost |
+|---|---|---|---|---|---|---|---|---|
+| Sword and Shield: first try | 13% | 78% | 73% | 9.6 / 8.9 | 1.4 | 7.2 | 0.0 | 28% |
+| Sword and Shield: later tries | 73% | 100% | 100% | 1.2 / 1.1 | 0.1 | 0.9 | 0.0 | 0% |
+| Blade and Spell: first try | 25% | 95% | 88% | 7.1 / 7.3 | 1.1 | 5.8 | 0.1 | 13% |
+| Blade and Spell: later tries | 91% | 100% | 100% | 0.5 / 1.2 | 0.0 | 1.0 | 0.0 | 0% |
+
+Mean tries to the first clear: Sword and Shield: 2.2 with no retries, 1.2 with the hearts, 1.3 with the lives; Blade and Spell: 1.8 with no retries, 1.1 with the hearts, 1.1 with the lives.
 
 `node tools/first-hour/pace.mjs` (which plays without retries) gives 2.2 and 1.8 tries to the first clear as before; with `LIVES=1` it
 gives 1.3 and 1.1.
 
 **The daily** (60 dates, a fresh save each):
 
-DAILY_TABLE
+|  | no retries: cleared | hearts: cleared | lives: cleared | hero deaths a run (hearts / lives) | hearts spent | lives spent | party falls (lives) | lives: the run lost |
+|---|---|---|---|---|---|---|---|---|
+| The daily (a fresh save) | 62% | 100% | 97% | 6.5 / 6.4 | 0.4 | 5.0 | 0.0 | 3% |
 
 ## Tests touched, and why
 
