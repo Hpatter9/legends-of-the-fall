@@ -139,7 +139,7 @@ def pack(items, art_dir, manifest_path):
             if kind == 'px':
                 im.save(os.path.join(art_dir, f'{kind}-{i}.webp'), lossless=True, quality=100, method=6, exact=False)
             else:
-                im.save(os.path.join(art_dir, f'{kind}-{i}.webp'), quality=82, alpha_quality=85, method=6)
+                im.save(os.path.join(art_dir, f'{kind}-{i}.webp'), quality=80, alpha_quality=85, method=6)
         if kind == 'px':
             px_pages = [im.size for im in pages]
         else:

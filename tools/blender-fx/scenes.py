@@ -105,14 +105,14 @@ def spikes(c, r=1.05, h=2.2, n=7, verts=5, frost=True):
 
 
 # 4. Arc: a ribbon of light swept round, standing in real space so it tilts with the view.
-def arc(c, r=1.25, sweep=250, start=-110, tilt=(28, -12), z=0.9, sparks=14):
+def arc(c, r=1.25, sweep=250, start=-110, tilt=(28, -12), z=0.9, sparks=14, wide=0.42):
     m, a, head = c.streak('mid', 'hot', 1.2, 1.5, tail=0.55)
     pts = []
     for i in range(65):
         u = i / 64
         ang = math.radians(start + sweep * u)
         pts.append(((math.cos(ang) * r, math.sin(ang) * r, 0), (math.cos(ang), math.sin(ang), 0)))
-    blade = c.ribbon(pts, lambda u: 0.42 * math.sin(u * math.pi) ** 0.7 + 0.01, m)
+    blade = c.ribbon(pts, lambda u: wide * math.sin(u * math.pi) ** 0.7 + 0.01, m)
     put(blade, (0, 0, z), rot=(math.radians(tilt[0]), math.radians(tilt[1]), 0))
     bits = [(o, c.rnd.uniform(0.25, 0.95), c.rnd.uniform(0.6, 1.6), c.rnd.uniform(-0.6, 0.9)) for o in c.sparks(sparks, 'hot', 0.04)]
 
@@ -1010,12 +1010,12 @@ def sparks(c, r=0.6, n=8, z=0.5):
 
 
 # 36. Cross: two slashes laid across each other in the air (an X cut), one after the other, facing the screen.
-def cross(c, r=0.8, z=0.8):
+def cross(c, r=0.8, z=0.8, wide=0.16):
     cuts = []
     for sgn, lag in ((1, 0.0), (-1, 0.2)):
         m, a, head = c.streak('mid', 'hot', 1.2, 1.25, tail=0.9)
         pts = [(scr(u * r, sgn * u * r * 0.9, z), scr(0.6, -sgn * 0.65)) for u in [i / 12 * 2 - 1 for i in range(13)]]
-        c.ribbon(pts, lambda u: 0.16 * math.sin(u * math.pi) + 0.004, m)
+        c.ribbon(pts, lambda u: wide * math.sin(u * math.pi) + 0.004, m)
         cuts.append((a, head, lag))
     fly = _fly(c, 10, 0.5, 1.2, 2.0, 'hot', 0.04)
 
@@ -1084,17 +1084,17 @@ def portal(c, r=0.75, z=0.95):
 
 
 # 39. Claws: three raking cuts torn down across the air, side by side, facing the screen.
-def claws(c, r=0.9, z=0.85, n=3):
+def claws(c, r=0.9, z=0.85, n=3, wide=0.13):
     cuts = []
     for k in range(n):
         m, a, head = c.streak('mid', 'hot', 1.2, 1.25, tail=1.0)
-        off = (k - (n - 1) / 2) * 0.36
+        off = (k - (n - 1) / 2) * wide * 2.8
         pts = []
         for i in range(17):
             u = i / 16 * 2 - 1
             bow = 0.22 * (1 - u * u)
             pts.append((scr(off - u * r * 0.35 + bow, -u * r * 0.95, z), scr(0.94, 0.34)))
-        c.ribbon(pts, lambda u: 0.13 * math.sin(u * math.pi) ** 0.8 + 0.004, m)
+        c.ribbon(pts, lambda u: wide * math.sin(u * math.pi) ** 0.8 + 0.004, m)
         cuts.append((a, head, k * 0.07))
     fly = _fly(c, 10, 0.5, 1.2, 2.0, 'hot', 0.04)
 

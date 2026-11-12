@@ -160,6 +160,49 @@ the rendered loops instead: every element has one, a tile's worth, the lights wi
 loader are gone; the loop's strength on open ground and under a fighter. This is the owner's decision changing a requirement,
 not a test loosened. `tools/fx-alive/cut.py` (which cut the painted sheet) is kept for the record; its output is no longer used.
 
+## The ultimates, round 5: the cap lifted
+
+The director lifted the 3 MB cap of round 4 (the built game is about 264 MB; 6 MB of effect atlases is nothing; keep the memory
+low, which the on-demand loading does). So bytes went back where they buy force:
+
+- An ultimate's sheet keeps fourteen colours again (nine left the blow's core a flat dome; fourteen give it its shading back),
+  still cut hard with a dark edge. A strike keeps 13 frames, a wind-up 12, an aftermath 9.
+- The blades are wider with the strike's size (`wide` on the arc, the cross and the claws), so a single blow is one hard, bright
+  cut across the target with the impact on it, not a thin line beside a great core.
+- The atlases are 5,538,276 bytes in all (57 pixel atlases in their groups, loaded as a fight needs them). The test now only
+  catches a runaway (under 9 MB).
+
+## The ultimates, round 4: above the dim, hard edges, three megabytes
+
+The director's review of round 2's pictures (the strike a pale glow under the dim, about three tiles; too many bytes), applied on
+top of round 3 below:
+
+- **Above the dim.** The moment's dim is a layer over the board, and the sheets are drawn on the board, so they were seen through
+  it. `Fx.momentLights()` now gives the circle of each wind-up and strike that is playing, and `ultMoment.ts` leaves those lit in
+  the dim (as it does a showcase's props), so a sheet shows at full strength with its glow.
+- **Full strength to the end.** The moment's particle layer thinned everything over its last third; a wind-up and a strike are now
+  `solid` (their own frames carry their going), so a wind-up is at its height as the blow lands.
+- **The strike opens on the blow.** Its first three rendered frames, in which the core is still forming, are left out (`skip`), so
+  the first frame shown is already the swollen core.
+- **Hard dark edges.** An ultimate's sheet is cut with one hard line (no dither), to nine colours, and given a one-pixel dark edge
+  round everything solid (`edged` in `pixelate.py`), so it reads against the darkened field.
+- **The Kunoichi's purple mass** is gone: her strike is the cross cut and a wheel of petals, not smoke. The smoke scene is also
+  ragged from its first frame now.
+- **Hand-picked** wind-ups and aftermaths for the fifteen (`OWN` in `effects.py`, each with a line saying why).
+- **Bytes: the ultimates are held to about 3 MB.** Their pixel atlases are 3,076,990 bytes (a test holds them under 3.1 MB), their
+  glows about 0.3 MB more; all the atlases together are 3,845,072 bytes (they were 5,953,636 after round 3). How: a strike keeps 11
+  of its 16 rendered frames, a wind-up 9, an aftermath 7 (`take`: evenly spaced, played slower), nine colours instead of fourteen,
+  no dither, and the glows squeezed harder. Nothing was re-rendered for this: the pixelate step picks the frames.
+- **The showpieces.** `docs/samples/blender-fx/ult-showpieces-393.jpg` sets the Wizard, the Samurai and the Barbarian beside the
+  painted versions of 0.499.0, the same six moments of each, taken with the same tool.
+- **Photographed** in fights at 393x852 with these fixes: fourteen of the fifteen (`ult-all-393-1.jpg`); Ilyra's ultimate did not fire
+  in the tool's fight (hers needs its own conditions), so hers is unseen in a fight. Samples at the other sizes: `ult-all-360-1.jpg`,
+  `ult-all-412-1.jpg`; reduced motion: `ult-reduced-393-1.jpg`. The other 55 heroes have the larger strike but were not re-photographed.
+- **Known weakness**: at nine colours with no dither the blow's core reads as a smooth solid dome rather than a textured blast, and for
+  a moment it hides the fighters under it.
+- For the camera builder: a strike is one sprite at scale `BFX_SCALE` with its tile's middle at the middle of what was struck;
+  `bfxBox(clip, x, y)` is its true box.
+
 ## The ultimates, round 3: epic
 
 The director's review of the first release (0.500.0): Meteor Swarm's strike was about two tiles across, no bigger than a king's

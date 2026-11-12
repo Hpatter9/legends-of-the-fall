@@ -39,6 +39,9 @@ export interface Burst {
   add?: boolean;
   /** A big moment (a burst, a death): lets through a fuller cap than the small bits do. */
   prio?: boolean;
+  /** Keep its full strength to the end instead of thinning over its last third (BLENDER-FX: a rendered sheet's own frames carry its
+   *  going, and a wind-up must be at its height as the blow lands). */
+  solid?: boolean;
   /** Its half-size on screen, for the FX-CLEAR cover (default: a 32px frame's at its scale; a painted 96px cell gives its own). */
   half?: number;
 }
@@ -137,7 +140,7 @@ export class Particles {
       sp.texture = b.frames[f];
       // (a fade over the last third, so a puff thins out instead of popping)
       const left = 1 - p.t / p.span;
-      sp.alpha = (b.alpha ?? 1) * p.k * Math.min(1, left * 3);
+      sp.alpha = (b.alpha ?? 1) * p.k * (b.solid ? 1 : Math.min(1, left * 3));
       const pose = paintSprite(sp, p.t, p.span, p.scale, (b.rotation ?? 0) + (this.calm ? 0 : (b.spin ?? 0) * p.t), (b.alpha ?? 1) * p.k, b.loop ?? false, this.calm, flatOf(b));
       if (pose) sp.position.set(p.bx + pose.dx * 32 * p.scale, p.by + pose.dy * 32 * p.scale);
       sp.scale.x *= b.stretchX ?? 1;

@@ -175,5 +175,6 @@ export function bfxCentre(c: BfxClip, x: number, y: number, mult = 1): [number, 
 }
 
 /** How large a further burst of a flurry or a storm is drawn beside the one great strike, the most spots a further burst or an aftermath
- *  is drawn on (and on the battery saver), and how strong an aftermath is drawn (it lies over those it struck, so they must show through). */
-export const ULT_BFX = { ECHO: 0.4, SPOTS: 5, SPOTS_SAVER: 2, AFTER_ALPHA: 0.7 } as const;
+ *  is drawn on (and on the battery saver), how strong an aftermath is drawn (it lies over those it struck, so they must show through), and how far
+ *  the moment's dim is lifted round a wind-up or a strike, of the sheet's longer side (the dim fades back in over the outer half of that, so the sheet's heart is fully clear and its rim nearly so). */
+export const ULT_BFX = { ECHO: 0.4, SPOTS: 5, SPOTS_SAVER: 2, AFTER_ALPHA: 0.7, LIGHT: 1 } as const;
