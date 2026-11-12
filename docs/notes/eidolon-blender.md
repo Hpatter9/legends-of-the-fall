@@ -2,14 +2,14 @@
 
 The owner, after the trial below: **the hybrid**. Each Eidolon keeps its painting for the figure, its name stamp and its line; Blender
 stages everything round it (the sigil, the pillar, the strike across the ground, the scorch, the aftermath). Askel the Cinderhound is
-the first; the other five follow in his style and to his bar, one push each: Nivra, Gorm and Voltara (done, below), Aurelan, Vaelkhar.
+the first; the other five follow in his style and to his bar, one push each: Nivra, Gorm, Voltara and Aurelan (done, below), Vaelkhar.
 Each has its own element's show, not Askel's recoloured, in the same places in the call (`STAGED` in `src/eidolonStage.ts`).
 
 ## For the camera: where each show is
 
 All in the board's own pixels (a sheet pixel is 1.414 of them), the same for every staged Eidolon unless its section says otherwise:
 
-- **The summoning** is at the sigil's tile: the board tile nearest the point 30% (a painting that comes from the left: Nivra, Gorm, Voltara) or 70%
+- **The summoning** is at the sigil's tile: the board tile nearest the point 30% (a painting that comes from the left: Nivra, Gorm, Voltara, Aurelan) or 70%
   (from the right: Askel) across the screen on the foes' ground line, kept between 24% and 76% across (`sigilSpot`). The sigil is
   226 x 136 about that tile; the pillar stands on it, 204 wide and 498 tall (452 above the tile, 46 below); the painting comes out of
   it and leaves by its usual way.
@@ -113,6 +113,37 @@ leaves little behind): crackle, sparks and a wisp. The pillar is her best beat.
 **Samples**: `voltara-game-393.webp`, `-360`, `-412`, their `-strip.webp`, `voltara-game-before-after.webp`,
 `voltara-game-short-strip.webp`, `voltara-game-reduced-strip.webp`. Re-render: `voltara_parts.py <parts>` then `ID=voltara
 parts_finish.py <parts>`; the captures with `--picks voltara` and `END=7600`, and `ID=voltara SPAN=1.16` for `cast_samples.py`.
+
+## Aurelan in the game (light)
+
+His kit: the Dawnbreak Roar strikes every foe, raises the fallen and heals, cleanses and shields the heroes, so his show is dawn
+breaking: straight, clean and golden where Voltara's is jagged and blue, and nothing burns. `aurelan_parts.py` draws rays as straight
+strips of light (white down the middle, gold to amber at the edge) that turn and lengthen, beams that come down from above the screen
+and stand, and motes that climb. His call is **7.4 s** (`EIDOLON_MS`, unchanged); the extra length carries one more beat.
+
+| Stage | Main's, kept | Blender's |
+|---|---|---|
+| The horn (0 to 0.7 s) | the horn blown, the dim | his **sun** is cut in light on the ground, lit from its middle outward as a sun rises (a disc, twelve rays, two rings, a mane of points), small rays standing up along it |
+| The pass (0.7 to 3.1 s) | the painted lion striding across and leaping into the sky, his name, title and line | **a shaft of dawn** from above the screen, many rays wide, rings of light running down it, a sunburst where it lands and a sun of rays on the ground; he strides out of it; it narrows to a thread |
+| The sprite and the build-up (3.1 to 4.9 s) | the lion on the board roars, the light falls from where he vanished | **a sun of rays and rings races out** on the ground under the foes (the extra beat), then **small beams come down tile by tile** to the foes; the field darkens hard |
+| The strike (4.9 s, with the 0.29 s freeze) | the hit-stop, the snap zoom, the painted lances of light onto each foe, the sunburst, the dome and rays, the starbursts | a hard white flash; **the sunburst** (a white-gold disc throwing long rays that turn) in the frozen frame; **beams descending across the foes' whole side** from the middle outward, each standing a moment; **the radiant shock**, two low domes of light racing out along the ground; a second and third sunburst to either side; a harder shake |
+| The aftermath (6.2 s on) | the painted curtain of light left glowing, the wash | the beams thin to threads; **motes of gold drift up** across the field; soft columns of light climb; discs of gold light are left on the tiles, thinning away |
+
+**Bytes: 434,224** for his ten files (the explosion 205,772 and its glow 35,432; the pillar 110,614 and its glow 19,236; the sigil
+22,662; the ground sun 22,422; the tile beam 11,552; the rest under 3 KB each). His shaft of rays is busy in every frame, so his
+pillar ships 14 of its 16 frames (it was 460 KB with all 16).
+
+**Three passes against main** (`aurelan-game-before-after.webp`). One (the sheets alone): the gold was washed to pale yellow and
+the radiant shock barely showed. Two: richer gold with amber edges, the shock a solid low dome, the shaft's rings wider. Three: the
+beams striated (a narrower core with more, wider riders) so they are not flat bars. Bigger than main from the shaft of dawn on.
+
+**Honestly.** His is the flattest of the five so far: light has no texture, so the beams are clean gold bars with pale cores, and
+the sunburst's disc is a plain bright ball. At the blow the screen is mostly gold for about half a second. The painted lances and
+curtain in front carry what detail there is. The sun racing out on the ground is his best beat.
+
+**Samples**: `aurelan-game-393.webp`, `-360`, `-412`, their `-strip.webp`, `aurelan-game-before-after.webp`,
+`aurelan-game-short-strip.webp`, `aurelan-game-reduced-strip.webp`. Re-render: `aurelan_parts.py <parts>` then `ID=aurelan
+parts_finish.py <parts>`; the captures with `--picks aurelan` and `END=9400`, and `ID=aurelan SPAN=1.48` for `cast_samples.py`.
 
 ## Askel in the game
 
