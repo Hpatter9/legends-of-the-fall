@@ -169,6 +169,7 @@ import { fightRanks } from './sim/spellRanks';
 import { bindDecree, refreshDecree } from './decreeHud';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
+import { bfxUploader } from './render/blenderFxArt';
 import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
 import { BoardLife } from './render/boardLife';
@@ -695,6 +696,12 @@ class Game {
         console.error(err);
       }
     });
+    // (FREEZE-FIX: an ultimate's atlas is handed to the graphics card as its fight begins, not on the frame of the blow: `blenderFxArt.ts`)
+    bfxUploader((src) => (this.app.renderer as unknown as { texture: { initSource(s: TextureSource): void } }).texture.initSource(src));
+    // (FREEZE-FIX: a phone short of graphics memory takes the picture away; Pixi puts it back when the browser gives it back. Logged,
+    // so a report of a frozen picture can be told from a fight that stopped)
+    this.app.canvas.addEventListener('webglcontextlost', () => console.warn('the graphics context was lost'));
+    this.app.canvas.addEventListener('webglcontextrestored', () => console.warn('the graphics context was restored'));
     // (battery saver caps the frame rate at 30)
     onSettings((s) => (this.app.ticker.maxFPS = s.saver ? 30 : 0));
     // (ALIVE: the page's own CSS life, the menus' sheen and glints, rests on a battery saver too)
@@ -1560,8 +1567,10 @@ class Game {
     const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding || this.eid.sheetOpen || this.duelShow.holding;
     // (EIDOLONS: the call's cinematic moves on in real time; it may outlast the fight its strike ended)
     this.eid.see(b);
-    this.eid.frame(dt, this.sceneHold > 0);
+    this.eid.frame(dt, this.sceneHold > 0, !held && !this.ultm.queue.holdsBattle);
     // (ULT-SHOW: a showcase whose ultimate ended the fight still plays out, and the result waits for it)
+    // (FREEZE-FIX: once the fight is over, the ultimates still waiting their turn are dropped: the result is not kept back for them)
+    if (b.phase !== 'fight' && this.ultm.queue.waiting) this.ultm.queue.dropWaiting();
     if (b.phase === 'fight' || (b.phase !== 'deploy' && this.ultm.queue.current?.show)) this.ultm.frame(b, dt, !!held);
     else if (this.ultm.queue.current) this.ultm.clear();
     // (ULT-EPIC 2: the speed button reads x1 while a show holds the fight to it, and the set speed again the moment it is over; the set

@@ -178,3 +178,11 @@ export function bfxCentre(c: BfxClip, x: number, y: number, mult = 1): [number, 
  *  is drawn on (and on the battery saver), how strong an aftermath is drawn (it lies over those it struck, so they must show through), and how far
  *  the moment's dim is lifted round a wind-up or a strike, of the sheet's longer side (the dim fades back in over the outer half of that, so the sheet's heart is fully clear and its rim nearly so). */
 export const ULT_BFX = { ECHO: 0.4, SPOTS: 5, SPOTS_SAVER: 2, AFTER_ALPHA: 0.7, LIGHT: 1 } as const;
+
+/** FREEZE-FIX (docs/notes/freeze-fix.md): the ultimates' atlases a fight no longer needs are let go as the next one begins, so the
+ *  graphics memory holds a few fights' worth and not every hero ever fielded. Of the atlases `held`, those to let go: not one every
+ *  fight needs (`core`), not wanted by the fight beginning (`now`), and not by the one before it (`before`: its last effects may
+ *  still be on the board). */
+export function bfxDrop(held: readonly number[], now: ReadonlySet<number>, before: ReadonlySet<number>, core: readonly number[]): number[] {
+  return held.filter((a) => !core.includes(a) && !now.has(a) && !before.has(a));
+}
