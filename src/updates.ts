@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.531.0',
+    date: '2026-11-12',
+    title: 'Stone is stone, wolves are wolves',
+    notes: ['Stone in ultimates is now grey rock, not tinted by the element: the Geomancer\'s standing stones, the rock over the Gorgon\'s victims, the Knight\'s slab.', 'The Beastmaster\'s wolves have proper heads with snouts and ears, and nothing green lies across them.'],
+  },
+  {
     version: '0.530.0',
     date: '2026-11-12',
     title: 'Seventy aftermaths, each its own',
