@@ -34,15 +34,15 @@ After all six were in, the director's list, done in one push:
 
 ## When the strike itself ends the wave
 
-Since the freeze fix (0.525.0) a call is cut to a second of aftermath once the last foe has fallen (,
-). Checked at 0.533.0 for a call whose own strike ends the wave (a plain wave, where every foe falls to it): **the
+Since the freeze fix (0.525.0) a call is cut to a second of aftermath once the last foe has fallen (`EidolonCall.fightOver`,
+`CALL_OVER_MS`). Checked at 0.533.0 for a call whose own strike ends the wave (a plain wave, where every foe falls to it): **the
 blow is shown**, so nothing was changed. The cut moves the call's clock to a second before its end, which is past the strike, so the
 attack's beats all fire in that frame and the whole staged blow is laid: the flash, the core, the wall (or the maw and wings), the
 painted strike in front. It plays for about 0.9 s, the layer fades, and the result card is up about 1.7 s (Askel) and 1.8 s
 (Vaelkhar) after the last foe falls. On the longer calls the second and third detonations go off together with the first, since
 their beats have been skipped past. Photographs, a frame every 100 to 200 ms from just before the strike to the result:
- and 
-(, with  to print the fight's phase and the card at each frame).
+`docs/samples/eidolon-blender/askel-strike-ends-wave.webp` and `vaelkhar-strike-ends-wave.webp`
+(`shots.mjs --stage 3`, with `TRACE=1` to print the fight's phase and the card at each frame).
 
 ## For the camera: where each show is
 
