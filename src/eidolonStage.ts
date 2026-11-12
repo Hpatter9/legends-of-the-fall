@@ -106,6 +106,22 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
     front: true,
     aftershock: true,
   },
+  // Voltara, lightning (`voltara_parts.py`): nothing solid and nothing that lingers. A coil and cog cut in light with arcs hopping
+  // along it; the sky splitting as her way in (a trunk of braided bolts from above the screen, re-forked every frame); the blow a
+  // thunderclap (a white ball of discharge, arcs flung from it) and forks walking out across the foes' side, each a bolt from the
+  // sky, the ground crackling between where they landed; the ground piece is the branching burn a bolt leaves, the tile piece a small
+  // bolt and arcs, the mark a burnt star, with a wisp of smoke and sparks falling.
+  voltara: {
+    sigil: { ...sheet('voltara-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
+    pillar: { ...sheet('voltara-stage-pillar', 144, 352, 16, 16, 1000, 320, 2), lit: true },
+    explosion: { ...sheet('voltara-stage-explosion', 320, 300, 16, 8, 1500, 250, 6), lit: true },
+    cracks: { ...sheet('voltara-stage-cracks', 256, 136, 12, 6, 0, 68, 4), open: 4 },
+    embers: sheet('voltara-stage-embers', 160, 200, 12, 12, 1100, 190, 0),
+    fire: sheet('voltara-stage-fire', 64, 112, 14, 14, 1000, 104, 1),
+    scorch: { ...sheet('voltara-stage-scorch', 88, 48, 8, 8, 0, 24, 3), hot: 5 },
+    smoke: sheet('voltara-stage-smoke', 128, 176, 16, 16, 1700, 160, 6),
+    from: 'left',
+  },
 };
 
 /** Every sheet the staged shows load (for the tests and the credits). */
