@@ -191,6 +191,7 @@ import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFig
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS, settle, type Spot, type View } from './render/cameraRules';
 import { spellGlance, spellView, ULT_CAM, type Room } from './ultCameraRules';
 import { bfxClip, spellBfx } from './render/blenderFxRules';
+import { bfxMem } from './render/blenderFxArt';
 import { spellTiles } from './render/fxPlace';
 import { coverElements, measureSafe, onCamCover, registerCamCover } from './camSafe';
 import { easeRect, type Rect } from './render/safeRectRules';
@@ -776,6 +777,8 @@ class Game {
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (BLENDER-FX: the king's spells' own cast, for `tools/blender-fx/shots.mjs` to stage each spell in a real fight; the game never calls it from here)
     (window as unknown as { __castSpell: typeof castSpell }).__castSpell = castSpell;
+    // (BLENDER-FX: what the effect atlases hold now, for the memory measure: `tools/blender-fx/memory.mjs`)
+    (window as unknown as { __bfxMem: typeof bfxMem }).__bfxMem = bfxMem;
     // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
     (window as unknown as { __settleFinds: typeof settleFinds }).__settleFinds = settleFinds;
     // (the screenshot tool draws the wave card's lines from given moments)

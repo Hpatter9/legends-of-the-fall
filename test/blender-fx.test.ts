@@ -73,8 +73,8 @@ test('the pixels are the heroes\' size: a tile is 45 of an effect\'s pixels, dra
   assert.equal(BFX_GLOW_SHRINK, 4);
   // (the art source is drawn with hard pixels: the loader asks for nearest sampling on the pixel atlases and smooth on the glows)
   const art = readFileSync('src/render/blenderFxArt.ts', 'utf8');
-  assert.match(art, /page\('px', a, 'nearest'\)/);
-  assert.match(art, /page\('soft', i, 'linear'\)/);
+  assert.match(art, /Texture\.from\(pic\);\n\s+base\.source\.style\.scaleMode = 'nearest';/);
+  assert.match(art, /soft-\$\{i\}\.webp`\)\);\n\s+base\.source\.style\.scaleMode = 'linear';/);
 });
 
 const clip = (over: Partial<BfxClip> = {}): BfxClip => ({ a: 0, x: 0, y: 0, w: 40, h: 30, n: 10, cols: 5, ax: 20, ay: 24, ms: 1000, loop: false, hold: 6, layer: 'over', el: 'fire', ...over });
@@ -328,7 +328,7 @@ test('the atlases are held only when needed: a core set up front, each pair of h
   const perHero = Object.keys(SHOWCASES).map((kind) => new Set(STAGE_NAMES.map((stage) => bfxClip(STAGE_ART[kind][stage]!.sheet)!.a)).size);
   assert.ok(Math.max(...perHero) <= 5, `a hero's ultimate spans ${Math.max(...perHero)} atlases`);
   const art = readFileSync('src/render/blenderFxArt.ts', 'utf8');
-  assert.match(art, /return Promise\.all\(BFX_CORE\.map\(need\)\)/, 'only the core loads up front');
+  assert.match(art, /for \(const a of BFX_CORE\) book\.ask\(a, t\);/, 'only the core loads up front');
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /void warmBfx\(/, 'a fight warms its heroes\' ultimates');
 });
 
@@ -347,7 +347,7 @@ test('a strike is held to a least size, not a most (the cap on bytes was lifted)
   assert.match(readFileSync('tools/blender-fx/pixelate.py', 'utf8'), /frames = \[edged\(f, pal\) for f in frames\]/);
 });
 
-test('a showcase\'s beats are rendered clips in its element: every clip in every element, a line a row of small clips, loaded with the fight', () => {
+test('a showcase\'s beats are rendered clips in its element: every clip in every element, a line a row of small clips', () => {
   const each: BeatClip[] = ['puff', 'appear', 'cut', 'blow', 'dust', 'link', 'crash', 'cloud', 'snare', 'smite', 'nova', 'call', 'ring', 'gather', 'mark', 'sky'];
   const only: BeatClip[] = ['bolt', 'flame', 'rise', 'tunnel'];
   for (const el of ELEMENTS) {
@@ -356,9 +356,9 @@ test('a showcase\'s beats are rendered clips in its element: every clip in every
     for (const clip of only) assert.equal(beatBfx(clip, el), `beat-${clip}`);
     const keys = beatKeys(el);
     assert.equal(keys.length, each.length + only.length, `${el}: ${keys.length} clips`);
-    // (an element's beats lie in few atlases, none of them the core's: a fight loads only its heroes' elements)
+    // (an element's beats lie in small atlases of their own, none of them the core's: each loads the first time a beat of it is played)
     const atlases = new Set(keys.filter((k) => k.endsWith(`-${el}`)).map((k) => bfxClip(k)!.a));
-    assert.ok(atlases.size <= 2, `${el}'s beats span ${atlases.size} atlases`);
+    for (const a of atlases) assert.ok(BFX_PX[a][0] <= 1024 && BFX_PX[a][1] <= 1024, `atlas ${a}`);
     for (const a of atlases) assert.ok(!BFX_CORE.includes(a));
   }
   // (what loops, loops: the cloud over a caster and what falls from the sky; the rest play once)
@@ -377,6 +377,5 @@ test('a showcase\'s beats are rendered clips in its element: every clip in every
   const beats = /export type ShowBeat = ([^;]+);/.exec(fx)![1].split('|').map((k) => k.trim().replace(/'/g, ''));
   const body = fx.slice(fx.indexOf('private bfxShowBeat('), fx.indexOf('/** ULT-SHOW: a painted prop'));
   for (const kind of beats) assert.ok(body.includes(`case '${kind}':`), `${kind} has a rendered beat`);
-  assert.match(fx, /flatMap\(\(e\) => beatKeys\(e\)\)/, 'a fight warms its heroes\' beats');
   assert.doesNotMatch(body, /rotation/, 'no clip is turned');
 });

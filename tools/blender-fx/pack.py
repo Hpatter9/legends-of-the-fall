@@ -17,6 +17,10 @@ from lib import DENSITY
 from pixelate import GLOW_SHRINK
 
 MAX = 2048
+# (the side of an atlas loaded as a fight needs it (an ultimate's, a showcase's beats): a quarter of the largest, so one is a small
+# thing to decode and to hand to the graphics card (4 MB, not 16) and a hero's three stages lie in atlases of their own. A clip too big
+# for one has an atlas to itself, cut to its own size.)
+SMALL = 1024
 
 
 def trim(frames):
@@ -32,35 +36,45 @@ def trim(frames):
     return (int(x0), int(y0), int(x1 - x0), int(y1 - y0)), bool(x0 == 0 or y0 == 0 or x1 == w or y1 == h)
 
 
-def grid(n, w, h):
-    """How many columns a block of `n` frames takes to stay roughly square and inside an atlas."""
-    best = None
-    for cols in range(1, n + 1):
-        rows = math.ceil(n / cols)
-        if cols * w > MAX:
-            break
-        if rows * h > MAX:
-            continue
-        score = abs(cols * w - rows * h)
-        if best is None or score < best[0]:
-            best = (score, cols)
-    return best[1] if best else 1
+def grid(n, w, h, limit=MAX):
+    """How many columns a block of `n` frames takes to stay roughly square and inside an atlas of `limit` a side (inside the
+    largest atlas, when it cannot fit the smaller)."""
+    for side in (limit, MAX):
+        best = None
+        for cols in range(1, n + 1):
+            rows = math.ceil(n / cols)
+            if cols * w > side:
+                break
+            if rows * h > side:
+                continue
+            score = abs(cols * w - rows * h)
+            if best is None or score < best[0]:
+                best = (score, cols)
+        if best:
+            return best[1]
+    return 1
 
 
 class Shelves:
     """Atlases filled a shelf at a time, tallest blocks first."""
 
-    def __init__(self, pad=1):
-        self.pages, self.pad = [], pad
+    def __init__(self, pad=1, limit=MAX):
+        self.pages, self.pad, self.limit = [], pad, limit
 
     def place(self, w, h):
+        if w > self.limit or h > self.limit:
+            # (a block too big for this size of atlas has one to itself)
+            self.pages.append(dict(shelves=[dict(x=w, y=0, h=h)], y=h, own=True))
+            return len(self.pages) - 1, 0, 0
         w, h = w + self.pad, h + self.pad
         for i, pg in enumerate(self.pages):
+            if pg.get('own'):
+                continue
             for sh in pg['shelves']:
-                if sh['h'] >= h and sh['x'] + w <= MAX:
+                if sh['h'] >= h and sh['x'] + w <= self.limit:
                     x, sh['x'] = sh['x'], sh['x'] + w
                     return i, x, sh['y']
-            if pg['y'] + h <= MAX:
+            if pg['y'] + h <= self.limit:
                 pg['shelves'].append(dict(x=w, y=pg['y'], h=h))
                 y, pg['y'] = pg['y'], pg['y'] + h
                 return i, 0, y
@@ -106,19 +120,19 @@ def group_order(ids):
 def pack(items, art_dir, manifest_path):
     """`items`: (spec, frames, glows) for every shipped effect, in catalogue order. Returns the bytes written."""
     blocks, soft_blocks, warn, core_pages = [], [], [], []
+    order = group_order([spec['id'] for spec, _, _ in items])
     for spec, frames, glows in items:
         box, clipped = trim(frames)
         if clipped:
             warn.append(spec['id'])
         x0, y0, w, h = box
         cut = [Image.fromarray(np.ascontiguousarray(f[y0:y0 + h, x0:x0 + w]), 'RGBA') for f in frames]
-        cols = grid(len(cut), w, h)
+        cols = grid(len(cut), w, h, MAX if order[spec['id']] == 0 else SMALL)
         blocks.append(dict(spec=spec, cut=cut, w=w, h=h, cols=cols, x0=x0, y0=y0, solid=[int((f[..., 3] > 0).sum()) for f in frames]))
         if glows:
             gw, gh = glows[0].size
             soft_blocks.append(dict(id=spec['id'], cut=glows, w=gw, h=gh, cols=grid(len(glows), gw, gh)))
     clips = {}
-    order = group_order([b['spec']['id'] for b in blocks])
     for kind, bl in (('px', blocks), ('soft', soft_blocks)):
         # (each group has atlases of its own, so the game can load a group only when a fight needs it; within a group the tallest blocks
         # are shelved first)
@@ -127,7 +141,7 @@ def pack(items, art_dir, manifest_path):
         for b in bl:
             groups.setdefault(order[b.get('id') or b['spec']['id']] if kind == 'px' else 0, []).append(b)
         for g in sorted(groups):
-            sh = Shelves(pad=1 if kind == 'px' else 2)
+            sh = Shelves(pad=1 if kind == 'px' else 2, limit=MAX if kind == 'soft' or g == 0 else SMALL)
             for b in sorted(groups[g], key=lambda b: (-math.ceil(len(b['cut']) / b['cols']) * b['h'], b.get('id') or b['spec']['id'])):
                 rows = math.ceil(len(b['cut']) / b['cols'])
                 page, b['x'], b['y'] = sh.place(b['cols'] * b['w'], rows * b['h'])

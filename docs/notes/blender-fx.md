@@ -160,6 +160,42 @@ the rendered loops instead: every element has one, a tile's worth, the lights wi
 loader are gone; the loop's strength on open ground and under a fighter. This is the owner's decision changing a requirement,
 not a test loosened. `tools/fx-alive/cut.py` (which cut the painted sheet) is kept for the record; its output is no longer used.
 
+## Memory: small atlases, a queue and a budget (the freeze on the owner's phone)
+
+The owner's phone began freezing at random in a wave. The effect atlases were the leading suspect: a five-hero fight asked for 14 to 20
+atlases of 2048 a side as it began (127 to 163 MB once decoded), all decoding at once, each 16 MB to hand to the graphics card the first
+time a clip of it was drawn, and none was ever given up, so a session that changed party only grew (541 MB for all of them). Now:
+
+- **Small atlases.** An atlas loaded as a fight needs it is 1024 a side at most (`SMALL` in `pack.py`): 4 MB to decode and upload, not
+  16. A clip too big for one (a great strike) has an atlas to itself, cut to its own size, so a hero's wind-up, strike and aftermath are
+  uploaded only as each is played. The core (the spells and ground loops, loaded up front) keeps its two large atlases. 127 pixel
+  atlases in all, 8,347,362 bytes with the glows.
+- **A queue.** At most two atlases are fetched and decoded at a time (`BFX_MEM.LOADS`); one that something is about to draw goes to the
+  front. They are decoded off the page's own thread (`createImageBitmap`), and a bitmap is closed when its atlas is given up, so its
+  memory comes back at once.
+- **A budget, least recently used first.** The fight-loaded atlases held decoded never pass 12 million pixels (48 MB); a new one is not
+  started until the least recently used have been given up to make room (never one used in the last eight seconds: a clip of it may be on
+  the screen; the frames of a given-up atlas draw nothing, never a destroyed texture). Those drawn, and so on the graphics card, are kept
+  to 6 million pixels (24 MB): the least recently drawn are taken off it (`source.unload()`), staying decoded.
+- **A hung load** is given up after twelve seconds and tried again after five, three tries in all. Nothing ever waits on a load: until a
+  clip's atlas is held, its older look plays.
+- **The beats are not asked for as a fight begins**; each loads the first time it is played (the older parts play that once).
+
+The rule is pure (`src/render/blenderFxBudget.ts`, `BfxPages`; `test/blender-fx-budget.test.ts`), and `blenderFxArt.ts` only carries it
+out. Measured (the test plays the real atlases through the rule; the last line is the real loader in a browser, `window.__bfxMem()`):
+
+| | Atlases held | Decoded | On the graphics card |
+| --- | --- | --- | --- |
+| Before: a five-hero fight (knight, cleric, archer, wizard, samurai) | 14 of 2048 | 127 MB | up to 127 MB (whatever was drawn; unloaded only by Pixi after a minute idle) |
+| Before: the worst five | 20 | 163 MB | up to 163 MB |
+| Before: ten fights with changing parties | every one asked for (98 small atlases' worth) | 331 MB, growing | as drawn |
+| After: a five-hero fight | 17 small (2 the core) | 45.1 MB | 22.1 MB |
+| After: ten fights with changing parties | 14 | 40.5 MB (never over 45.8) | 20.2 MB (never over 22.8) |
+| After, in a browser: one fight, an ultimate fired | 14 | 39 MB | 8 to 10 MB |
+
+Beside these, fixed: the core's two atlases (5.3 million pixels, 21 MB) and the one glow atlas (16 MB). The graphics context being lost
+and restored, and deadlines on shows, are the freeze builder's (`claude/freeze-fix`), not this.
+
 ## The showcase's beats
 
 A hand-fired ultimate plays its showcase (`ultShow.ts`), a string of small beats: she vanishes, appears and cuts; a circle marks each
