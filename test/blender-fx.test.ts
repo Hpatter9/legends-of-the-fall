@@ -20,8 +20,6 @@ import { STAGE_ART, STAGE_NAMES, ULT_STAGES, ultWeight } from '../src/ultStageRu
 import { SHOWCASES } from '../src/ultShowRules';
 import { ELEMENTS } from '../src/render/fxRules';
 
-/** ULT-AUDIT: the heroes whose ultimate is one great blow (the recipe's `GREAT`). */
-const GREAT = new Set(/^GREAT = \{([^}]+)\}/m.exec(readFileSync('tools/blender-fx/effects.py', 'utf8'))![1].split(',').map((k) => k.trim().replace(/'/g, '')));
 
 const PARTS: SpellPartName[] = ['cast', 'hit', 'fly', 'land', 'stand'];
 const clips = Object.entries(BFX_CLIPS);
@@ -241,17 +239,16 @@ test('every hero\'s ultimate has its three stages hung on STAGE_ART: its own str
       assert.ok(art.tiles >= (stage === 'strike' ? (ultPlace(kind) === 'one' ? 3 : 1.2) : 1.2) && art.tiles <= 12, `${art.sheet}: ${art.tiles} tiles`);
     }
     assert.equal(arts.strike!.sheet, `ult-${kind}-strike`);
-    // (ULT-AUDIT: only an ability that IS one great blow has the blow itself under its own scenes (a core, shock rings, rubble); every
-    // other strike is its own scenes alone, two or three of them staged one into the other)
+    // (ULT-AUDIT: no strike has the great blow under it (a core, shock rings, rubble: it made eight heroes one picture); every strike
+    // is its own scenes alone, two or three of them staged one into the other)
     const strike = bfxClip(arts.strike!.sheet)!;
-    assert.equal(strike.sc?.[0] === 'impact', GREAT.has(kind), `${kind}: ${strike.sc}`);
-    assert.ok(!strike.sc!.slice(1).includes('impact'));
+    assert.ok(!strike.sc!.includes('impact'), `${kind}: ${strike.sc}`);
     assert.ok(strike.cuts!.length >= 2 && strike.cuts!.length <= 4, kind);
     if (ultPlace(kind) === 'one') {
-      // (one great thing in the midst of what it struck: four tiles and more across or high, more for a storm or a summoning)
+      // (one thing in the midst of what it struck: three tiles and more across or high)
       const most = Math.max(strike.w, strike.h) / BFX_DENSITY;
-      assert.ok(most >= (GREAT.has(kind) ? (['storm', 'summon'].includes(ultWeight(kind)) ? 5 : 4) : 3), `${kind}'s strike is ${strike.w}x${strike.h}: ${most.toFixed(1)} tiles`);
-      assert.ok(strike.w * strike.h > biggestSpell * (GREAT.has(kind) ? 1 : 0.5), `${kind}'s strike is no bigger than a spell`);
+      assert.ok(most >= 3, `${kind}'s strike is ${strike.w}x${strike.h}: ${most.toFixed(1)} tiles`);
+      assert.ok(strike.w * strike.h > biggestSpell * 0.5, `${kind}'s strike is no bigger than a spell`);
     }
     // (its own wind-up once its turn has come, else the one its weight and element share)
     assert.ok(arts.windup!.sheet === `ult-${kind}-windup` || arts.windup!.sheet.startsWith(`ultwind-${ultWeight(kind)}-`), `${kind} winds up as a ${ultWeight(kind)}`);
