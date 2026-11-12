@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.508.0',
+    date: '2026-11-12',
+    title: 'A smaller tactic button',
+    notes: ['The tactic plaque in a wave is now a single line, icon beside the word, about 40% smaller than before.', 'It sits level with the boss\'s bar instead of hanging below it.'],
+  },
+  {
     version: '0.507.0',
     date: '2026-11-12',
     title: 'Ultimates that fill the field',
