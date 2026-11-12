@@ -11,6 +11,7 @@ import { dropDelay, dropEnd, dropPose, WALK_STEP_MS } from './dropRules';
 import type { Fx } from './fx';
 import { FOOT, HH, inFrame, landmarkBounds, project, TH, TW, type Frame } from './iso';
 import type { BoardView, Look, Scene } from './boardView';
+import { marcherAfter, marcherDrawn, standFacing, type Marcher } from './marchStayRules';
 import { playAll } from './sound';
 import { UnitSprite } from './unitView';
 
@@ -31,6 +32,15 @@ interface Moving {
   freeAt: number;
   startAt: number;
   ms: number;
+  /** MARCH-STAYS: walking, standing where it arrived, or gone (`marchStayRules.ts`). */
+  at: Marcher;
+}
+
+/** MARCH-STAYS: the party standing on the section it marched to, once the walk is over, until the next fight's fighters are made. */
+interface Stand {
+  comp: Board;
+  walkFrame: Frame;
+  t: number;
 }
 
 interface Active {
@@ -63,6 +73,10 @@ export class ChainView {
   private sections: Section[] = [];
   private host = 0;
   private reach: { x0: number; x1: number; y0: number; y1: number } | null = null;
+  /** MARCH-STAYS: the marchers kept on the stage after the walk (`stood`), and what they stand on. They are the board's to keep
+   *  through a build (`BoardView.keep`), and go only by `release`. */
+  private stood: Moving[] = [];
+  private stand: Stand | null = null;
 
   constructor(
     private readonly view: BoardView,
@@ -142,6 +156,8 @@ export class ChainView {
 
   begin(sections: Section[], from: number, walkers: Walker[], done: () => void): void {
     this.finish();
+    // (a party still standing from the march before: its fight was fought, so its fighters were made long ago)
+    this.release();
     this.sections = sections;
     const old = sections[from];
     const next = sections[from + 1];
@@ -163,7 +179,7 @@ export class ChainView {
       const sprite = new UnitSprite(unit);
       this.layer.addChild(sprite.root);
       inFrame(walkFrame, () => sprite.update(comp, 0, true));
-      return { sprite, unit, path, i: 0, moveAt: null, freeAt: 0, startAt: WALK_AT_MS + i * WALK_GAP_MS, ms: WALK_STEP_MS };
+      return { sprite, unit, path, i: 0, moveAt: null, freeAt: 0, startAt: WALK_AT_MS + i * WALK_GAP_MS, ms: WALK_STEP_MS, at: 'walking' as Marcher };
     });
     this.act = { old, next, t: 0, delay, landed: delay.map(() => false), comp, walkFrame, min: { u: minU, v: minV }, moving, end: dropEnd(next.board.w, next.board.d), lastThud: -1000, done };
     this.step(0);
@@ -189,7 +205,7 @@ export class ChainView {
   /** One frame of the move, `dt` ms (real time). */
   step(dt: number): void {
     const a = this.act;
-    if (!a) return;
+    if (!a) return void this.idle(dt);
     a.t += dt;
     const { next } = a;
     const w = next.board.w;
@@ -250,19 +266,73 @@ export class ChainView {
       }
       break;
     }
+    // (MARCH-STAYS: arrived, it turns to face as the deploy's fighter will)
+    if (m.i >= last && m.at === 'walking') {
+      m.at = marcherAfter(m.at, 'arrived');
+      u.facing = standFacing(a.next.rot);
+    }
     inFrame(a.walkFrame, () => m.sprite.update(a.comp, a.t, true));
     return m.i < last;
   }
 
-  /** The move is over (or cut short): every column down, the walkers gone (the next fight puts the heroes on their tiles), the old section a sprite among the others. */
+  /** MARCH-STAYS: each frame after the walk, the party stands (its idle pose moving) on the section it marched to. */
+  private idle(dt: number): void {
+    const s = this.stand;
+    if (!s) return;
+    s.t += dt;
+    for (const m of this.stood) if (!m.sprite.root.destroyed) inFrame(s.walkFrame, () => m.sprite.update(s.comp, s.t, true));
+  }
+
+  /** MARCH-STAYS: how many marchers are on the stage (walking or standing), for the film's measure. */
+  get onStage(): number {
+    return (this.act?.moving ?? this.stood).filter((m) => marcherDrawn(m.at) && !m.sprite.root.destroyed).length;
+  }
+
+  /** MARCH-STAYS: the heroes standing here from the march (their run ids), so the fighters that take their places come up with no
+   *  puff of dust: they were never set down, they walked. */
+  standing(): Set<number> {
+    return new Set(this.stood.flatMap((m) => (m.unit.tag === undefined ? [] : [m.unit.tag])));
+  }
+
+  /** MARCH-STAYS: the next fight's fighters have been made, in this same frame: the marchers go, and not before. */
+  release(): void {
+    for (const m of this.stood) {
+      m.at = marcherAfter(m.at, 'fighters');
+      const at = this.view.keep.indexOf(m.sprite.root);
+      if (at >= 0) this.view.keep.splice(at, 1);
+      if (!m.sprite.root.destroyed) m.sprite.root.destroy({ children: true });
+    }
+    this.stood = [];
+    this.stand = null;
+  }
+
+  /** The move is over (or cut short): every column down, the old section a sprite among the others. MARCH-STAYS: the walkers are
+   *  NOT taken off the stage here, as they were (the owner saw the party vanish until the next round was ready): each stands at the
+   *  tile it walked to, kept through the next board's build, until the next fight's fighters are made (`release`). */
   finish(): void {
     const a = this.act;
     if (!a) return;
     this.act = null;
     for (let i = 0; i < a.delay.length; i++) this.view.lift(i, 0, 1);
-    for (const m of a.moving) m.sprite.root.destroy({ children: true });
-    this.view.retire(look(a.old));
-    this.view.setScenery(this.scenes(this.host));
-    a.done();
+    for (const m of a.moving) {
+      // (a walk cut short: the hero is stood at its tile, where the deploy will set it down)
+      if (m.at === 'walking') {
+        m.at = marcherAfter(m.at, 'cut');
+        const end = m.path[m.path.length - 1];
+        Object.assign(m.unit, { u: end.u, v: end.v, step: undefined, facing: standFacing(a.next.rot) });
+        m.i = m.path.length - 1;
+      }
+      this.view.keep.push(m.sprite.root);
+      inFrame(a.walkFrame, () => m.sprite.update(a.comp, a.t, true));
+    }
+    this.stood = a.moving;
+    this.stand = { comp: a.comp, walkFrame: a.walkFrame, t: a.t };
+    // (a fault in baking the old section must not leave the march unfinished: the card over it waits on `done`)
+    try {
+      this.view.retire(look(a.old));
+      this.view.setScenery(this.scenes(this.host));
+    } finally {
+      a.done();
+    }
   }
 }
