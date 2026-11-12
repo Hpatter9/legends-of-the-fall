@@ -10,7 +10,6 @@ body[data-phase='deploy'] #buttons button,
 body[data-phase='deploy'] #buttons button:not(#fight),
 body[data-phase='deploy'] #benchWrap #mergeAll,
 body[data-phase='deploy'] #formBtn,
-#tacticBtn,
 body[data-phase='deploy'] #bench .card .recycle {
   border: 2px solid transparent;
   border-image: url(ui/combat-skill.png) 28 fill / 6px / 0 stretch;

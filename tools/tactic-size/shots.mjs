@@ -23,8 +23,7 @@ const TAG = process.env.TAG ?? 'after';
 const PIN = process.env.PIN !== '0';
 const SIDE = process.env.SIDE === '1';
 const ONLY = process.env.ONLY ?? '';
-/** The plaque's pinned size, px (src/tactics.css). */
-const SIZE = { w: 92, h: 44 };
+// (TACTIC-ORB: the pin is the Auto buttons' own box, measured in the same frame: the three must match)
 const PORT = 8139;
 const ALL = [[393, 852], [360, 780], [412, 915]];
 const SIZES = process.env.SIZES ? ALL.filter(([w]) => process.env.SIZES.split(',').includes(String(w))) : ALL;
@@ -110,7 +109,12 @@ const seen = (page) => page.evaluate(() => {
   // (what is inside it, and whether its words spill out of its box)
   const inner = e ? [...e.children].map((c) => { const r = c.getBoundingClientRect(); return `${c.tagName.toLowerCase()} ${Math.round(r.width)}x${Math.round(r.height)}`; }) : [];
   const spill = b ? [...e.children].some((c) => { const r = c.getBoundingClientRect(); return r.left < b.left - 0.5 || r.right > b.right + 0.5 || r.top < b.top - 0.5 || r.bottom > b.bottom + 0.5; }) : false;
-  return { ...s, tops: [...s.tops], box: b ? [Math.round(b.left), Math.round(b.top), Math.round(b.right), Math.round(b.bottom)] : null, inner, spill };
+  // (the Auto buttons beside it, as drawn now, and the labels under each)
+  const vis = (x) => { const r = x.getBoundingClientRect(); return !x.hidden && r.width > 0 && getComputedStyle(x).visibility !== 'hidden' ? r : null; };
+  const autos = [...document.querySelectorAll('#hudSpells .fhAuto')].map(vis).filter(Boolean).map((r) => [Math.round(r.width * 10) / 10, Math.round(r.height * 10) / 10, Math.round(r.right), Math.round(r.bottom)]);
+  const lab = (x) => { const m = x && x.querySelector('em'); if (!m) return null; const r = m.getBoundingClientRect(); const cs = getComputedStyle(m); return { text: m.textContent, w: Math.round(r.width * 10) / 10, h: Math.round(r.height * 10) / 10, font: `${cs.fontSize} ${cs.fontFamily.split(',')[0]}`, below: Math.round((r.bottom - x.getBoundingClientRect().bottom) * 10) / 10 }; };
+  const labels = { tactic: lab(e), autos: [...document.querySelectorAll('#hudSpells .fhAuto')].filter(vis).map(lab) };
+  return { ...s, autos, labels, tops: [...s.tops], box: b ? [Math.round(b.left), Math.round(b.top), Math.round(b.right), Math.round(b.bottom)] : null, inner, spill };
 });
 
 function report(name, w, s) {
@@ -120,8 +124,16 @@ function report(name, w, s) {
   check(s.maxW - s.minW < 0.5 && s.maxH - s.minH < 0.5, `${name}-${w}: its box never changed size in the wave`);
   check(!s.bent.length, `${name}-${w}: nothing scales it`);
   if (PIN) {
-    check(Math.abs(s.maxW - SIZE.w) < 0.5 && Math.abs(s.maxH - SIZE.h) < 0.5, `${name}-${w}: the pinned size, ${SIZE.w} x ${SIZE.h} px (${r(s.maxW)} x ${r(s.maxH)})`);
-    check(!s.spill, `${name}-${w}: its icon and word stay inside it`);
+    console.log(`${TAG} ${name}-${w}: the Auto buttons ${JSON.stringify(s.autos.map((a) => `${a[0]} x ${a[1]}`))}; labels ${JSON.stringify(s.labels)}`);
+    if (s.autos.length) {
+      check(s.autos.every((a) => Math.abs(a[0] - s.maxW) < 0.5 && Math.abs(a[1] - s.maxH) < 0.5), `${name}-${w}: the tactic orb is the Auto buttons' size (${r(s.maxW)} x ${r(s.maxH)} against ${s.autos.map((a) => `${a[0]} x ${a[1]}`).join(', ')})`);
+      const t = s.labels.tactic;
+      const a = s.labels.autos[0];
+      check(!!t && !!a && t.font === a.font && t.h === a.h && t.below === a.below, `${name}-${w}: its label is the Auto buttons' label: the same lettering, height and place under the orb`);
+      check(!!t && t.w <= s.maxW + 0.5, `${name}-${w}: its name fits the orb's width (${t && t.text}, ${t && t.w} px)`);
+      check(s.box[1] >= Math.max(...s.autos.map((x) => x[3])), `${name}-${w}: it hangs under the Auto buttons`);
+      check(Math.abs(s.box[2] - Math.max(...s.autos.map((x) => x[2]))) <= 1 || s.box[2] === w - 8, `${name}-${w}: in their corner, on the last one's right edge`);
+    } else check(Math.abs(s.maxW - 48) < 0.5 && Math.abs(s.maxH - 48) < 0.5, `${name}-${w}: with no Auto button shown, the orb is still their size, 48 x 48 (${r(s.maxW)} x ${r(s.maxH)})`);
   }
 }
 
