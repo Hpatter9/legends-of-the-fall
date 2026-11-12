@@ -56,6 +56,8 @@ export interface StagedLook {
   front?: boolean;
   /** An aftershock as the aftermath begins: the tile pieces heave up once more across the foes' ground, with a rumble. */
   aftershock?: boolean;
+  /** The blow's white flash, when not `BLOW_FEEL.flash`: softer where the show is itself white or gold, so its lines can be read. */
+  flash?: number;
 }
 
 const sheet = (name: string, fw: number, fh: number, n: number, cols: number, ms: number, foot: number, hold: number): StageSheet => ({ sheet: name, fw, fh, n, cols, ms, foot, hold });
@@ -121,6 +123,7 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
     scorch: { ...sheet('voltara-stage-scorch', 88, 48, 8, 8, 0, 24, 3), hot: 5 },
     smoke: sheet('voltara-stage-smoke', 128, 176, 16, 16, 1700, 160, 6),
     from: 'left',
+    flash: 0.5,
   },
   // Aurelan, light (`aurelan_parts.py`): straight, clean and golden where lightning is jagged and blue. A sun cut in light, lit from
   // its middle outward; a shaft of dawn from above the screen as his way in, rings of light running down it; the blow a sunburst
@@ -129,7 +132,7 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
   aurelan: {
     sigil: { ...sheet('aurelan-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
     pillar: { ...sheet('aurelan-stage-pillar', 144, 352, 14, 14, 1400, 320, 4), lit: true },
-    explosion: { ...sheet('aurelan-stage-explosion', 320, 300, 16, 8, 1900, 250, 7), lit: true },
+    explosion: { ...sheet('aurelan-stage-explosion', 320, 300, 14, 7, 1700, 250, 7), lit: true },
     cracks: { ...sheet('aurelan-stage-cracks', 256, 136, 12, 6, 0, 68, 4), open: 4 },
     embers: sheet('aurelan-stage-embers', 160, 200, 12, 12, 2200, 190, 0),
     fire: sheet('aurelan-stage-fire', 64, 112, 14, 14, 1400, 104, 4),
@@ -137,6 +140,7 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
     smoke: sheet('aurelan-stage-smoke', 128, 176, 16, 16, 2000, 160, 6),
     from: 'left',
     front: true,
+    flash: 0.55,
   },
   // Vaelkhar, shadow (`vaelkhar_parts.py`): where the others throw light out, his takes it in. Black fire with a violet edge. A
   // crown of horns and a slit eye; a tear in the air as his way in, opening to a black lens and snapping shut; the blow a maw on the
