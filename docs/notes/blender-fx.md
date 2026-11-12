@@ -11,7 +11,7 @@ Renderer and tools only: the sim is untouched, `fxPlace`'s tiles are as they wer
 
 | Batch | State |
 | --- | --- |
-| The pipeline (`tools/blender-fx/`) | Done: 68 scenes, 13 palettes, render, pixelate, pack, manifest, one command |
+| The pipeline (`tools/blender-fx/`) | Done: 69 scenes, 13 palettes, render, pixelate, pack, manifest, one command |
 | The king's 35 spells | Done: each its own scene, element and size (the table below) |
 | The ground loops (`fx-alive.md`: all ten elements, and burning ground) | Done: a rendered tile loop an element; the painted sheets are removed |
 | The ultimates (all 70 heroes with a show) | Done: each its own staged strike, a wind-up by weight and element, an aftermath by element |
@@ -26,7 +26,7 @@ each batch replaces them, which will take far more out of the download than the 
 `npm run blender-fx` renders what has changed, pixelates, packs and writes the manifest. It needs `pip install bpy pillow numpy`
 (Blender as a Python module: Cycles on the CPU, no display).
 
-- **Scenes** (`scenes.py`): a library of 68 effect shapes, each a small Blender scene built in code from the game's camera
+- **Scenes** (`scenes.py`): a library of 69 effect shapes, each a small Blender scene built in code from the game's camera
   (orthographic, 30 degrees down, turned 45; one unit is one tile's side) and returning `step(t)`. Each takes its colours from
   its effect's element (`lib.py`: fire, ice, lightning, earth, blood, forest, poison, holy, shadow, arcane, water, wind, bone)
   and its size from its options, so one scene serves many effects that do not look alike.

@@ -643,6 +643,25 @@ first two; `AT=` on the photographer picks the strike's moments).
   running to the screen's right. In the photograph: a curling wave beside him as he sets off, and a great curl breaking in
   rings where he lands.
 
+### The director's second looks, 2: the Gorgon's gaze, Ilyra's figure, the Gunslinger's shots, the Kunoichi's marks
+
+`docs/samples/blender-fx/audit-later-2-393.jpg` (rows: the Gorgon, Ilyra, the Gunslinger, the Kunoichi; six moments each, the first
+three rows from the blow on with the screen's flash off).
+
+- **The Gorgon's gaze**: each eye of the row is about half a fighter tall now (it was a quarter) and stays open nearly a second
+  (it was 420 ms), so the whole row stands at once; and the pale mist under her stone is all but gone (`crystal`, under stone
+  only). In the photograph's third moment: a row of large purple eyes from her across to the foes, and grey stone standing on
+  them, with no pale discs.
+- **Ilyra, Death Denied**: a new scene, `angel`: a figure of light that comes down behind the one it guards (a robe drawn to a
+  point, a head with a halo, two arms held out to catch, wings opening wide), holds, and rises away. One on each ally. In the
+  photograph: pale haloed figures standing over the allies in gold light. Honest: at this size the arms and wings run together
+  with the rays; it reads as a haloed figure over each ally, which is the point, but not as "catching".
+- **The Gunslinger, High Noon**: each hit is a sharp star of sparks and a puff of smoke (no glowing disc, no ring). In the
+  photograph: the flash at her, and a string of small bright bursts running out to the targets.
+- **The Kunoichi's marks**: the aftermath under each foe is five eighths the size it was (a test holds a floor of 1.2 tiles for
+  any stage, so it is just above that, not smaller). In the photograph: her purple cut on the foe at the blow. NOT SHOWN: I did
+  not catch the smaller marks in a fight frame; they are on the clip's sheet only.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in

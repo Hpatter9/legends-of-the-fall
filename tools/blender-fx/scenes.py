@@ -624,7 +624,8 @@ def crystal(c, r=0.5, h=1.7, shards=6, stone=False):
         for o in star:
             put(o, (0.18, -0.18, h * 0.8), gl * 1.6, (0, 0, math.radians(-45)))
             hide(o, gl <= 0.02)
-        ma.inputs[1].default_value = 2.0 * win(t, 0, 0.2) * (1 - gone)
+        # (under stone the pale mist on the ground is all but gone: it was a row of pale discs louder than the gaze and the stone)
+        ma.inputs[1].default_value = (0.3 if stone else 2.0) * win(t, 0, 0.2) * (1 - gone)
     return step
 
 
@@ -2284,8 +2285,70 @@ def meteors(c, r=1.6, n=3, size=1.0):
     return step
 
 
+# 69. Angel: a figure of light that comes down behind the one it guards and holds there (a robe drawn down to a point, a head
+# with a halo over it, two arms reaching forward and down to catch, two wings of long feathers opening wide), then rises away.
+def angel(c, tall=1.4, r=1.0, feathers=6):
+    import bpy
+    robe_m, ra = c.solid('bright', 'mid', 1.3, 0.5, 0.0)
+    skin_m, sa = c.solid('hot', 'bright', 1.5, 0.4, 0.0)
+    halo_m, _ = c.flat('hot', 2.4)
+    wm, wa, _ = c.streak('bright', 'hot', 1.4, 1.5)
+    root = bpy.data.objects.new('angel', None)
+    c.sc.collection.objects.link(root)
+    s = tall
+    robe = c.teardrop(robe_m)
+    put(robe, (0, 0, 0.5 * s), (0.27 * s, 0.27 * s, 0.5 * s), (math.pi, 0, 0))
+    chest = c.sphere(1.0, robe_m, 2)
+    put(chest, (0, 0, 0.92 * s), (0.2 * s, 0.16 * s, 0.17 * s))
+    head = c.sphere(1.0, skin_m, 2)
+    put(head, (0, 0, 1.18 * s), 0.115 * s)
+    halo = c.torus(0.17 * s, 0.022 * s, halo_m)
+    put(halo, (0, 0, 1.37 * s), 1.0, (math.radians(-20), 0, math.radians(45)))
+    arms = []
+    for side in (-1, 1):
+        arm = c.cone(1.0, 1.0, skin_m, 5, r2=0.6)
+        sx, sy = RIGHT[0] * side * 0.2 * s, RIGHT[1] * side * 0.2 * s
+        # (from the shoulder forward and down, towards the camera: arms held out to catch)
+        put(arm, (sx + TOWARDS[0] * 0.2 * s, sy + TOWARDS[1] * 0.2 * s, 0.78 * s), (0.045 * s, 0.045 * s, 0.46 * s),
+            (math.radians(58) * -TOWARDS[1], math.radians(58) * TOWARDS[0], 0))
+        arms.append(arm)
+    fans = []
+    for side in (-1, 1):
+        for i in range(feathers):
+            th = math.radians(-25 + 95 * i / (feathers - 1))
+            ln = r * (1.0 - 0.3 * abs(i / (feathers - 1) - 0.4))
+            tip = (math.cos(th) * side * ln, math.sin(th) * ln)
+            nrm = scr(-math.sin(th) * side, math.cos(th))
+            pts = [(scr(tip[0] * u, tip[1] * u + 0.1 * math.sin(u * math.pi) * ln), nrm) for u in [j / 10 for j in range(11)]]
+            o = c.ribbon(pts, lambda u: 0.1 * tall / 1.4 * math.sin(min(1.0, u * 1.25) * math.pi * 0.85) + 0.01, wm)
+            o.location = (0, 0, 0.95 * s)
+            fans.append((o, i / (feathers - 1)))
+    for o in (robe, chest, head, halo, *arms, *[f for f, _ in fans]):
+        o.parent = root
+    ring, rv = c.ring('mid', 0.04)
+
+    def step(t):
+        c.tick(t, 1.0)
+        down, gone = ease(win(t, 0, 0.3)), win(t, 0.76, 1)
+        k = down * (1 - gone)
+        # (behind the one it guards, a little above the ground: it hovers)
+        put(root, (-TOWARDS[0] * 0.3 * s, -TOWARDS[1] * 0.3 * s, 0.25 * s + 1.4 * s * (1 - down) + 0.9 * s * gone), max(0.001, 0.6 + 0.4 * down))
+        for o, lag in fans:
+            g = ease(win(t, 0.12 + 0.2 * lag, 0.42 + 0.2 * lag))
+            o.scale = (max(0.001, g),) * 3
+            hide(o, g <= 0.01 or gone >= 1)
+        for o in (robe, chest, head, halo, *arms):
+            hide(o, t <= 0 or gone >= 1)
+        for v in (ra, sa):
+            v.outputs[0].default_value = 1 - gone
+        wa.inputs[1].default_value = 2.4 * (1 - gone)
+        put(ring, scale=(r * (0.3 + 0.6 * ease(win(t, 0.2, 0.7))),) * 2 + (1,))
+        rv.outputs[0].default_value = win(t, 0.2, 0.3) * (1 - win(t, 0.6, 0.9))
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, wave, toll, meteors,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, wave, toll, meteors, angel,
 )}

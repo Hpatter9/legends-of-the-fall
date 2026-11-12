@@ -181,18 +181,18 @@ BIG = dict(
     palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), whirlpool=(dict(r=1.7, arms=5), 2.0, 0.8), sandstorm=(dict(r=2.3, h=2.3, bands=11, grit=44, wide=0.36), 2.8, 3.2),
     wings=(dict(r=1.4, h=2.1), 2.2, 3.4), banner=(dict(h=2.4, w=1.3), 1.7, 2.9), eyes=(dict(r=2.5, n=3, size=3.0), 3.1, 2.7),
     flock=(dict(r=1.4, h=2.6, n=6, size=2.3), 4.0, 5.2),
-    notes=(dict(r=1.3, h=2.3, n=8, size=1.6), 2.8, 6.0), eclipse=(dict(r=0.9, z=2.4), 2.2, 4.6), broadside=(dict(r=1.4, n=7, size=1.0), 3.8, 3.2), bite=(dict(r=1.0, n=6, z=1.0), 1.8, 2.9), toll=(dict(r=1.5, z=1.5), 4.8, 7.6), meteors=(dict(r=1.5, n=3, size=1.0), 5.2, 6.6), wave=(dict(r=1.3, h=1.9), 3.8, 3.4), implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
+    notes=(dict(r=1.3, h=2.3, n=8, size=1.6), 2.8, 6.0), eclipse=(dict(r=0.9, z=2.4), 2.2, 4.6), broadside=(dict(r=1.4, n=7, size=1.0), 3.8, 3.2), bite=(dict(r=1.0, n=6, z=1.0), 1.8, 2.9), toll=(dict(r=1.5, z=1.5), 4.8, 7.6), meteors=(dict(r=1.5, n=3, size=1.0), 5.2, 6.6), angel=(dict(tall=1.5, r=1.15), 2.4, 3.9), wave=(dict(r=1.3, h=1.9), 3.8, 3.4), implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
 )
 
 # Each ultimate: its palette, its strike's two scenes, and its showcase's style (which sets its weight, as `ultStageRules.ts` does).
 ULTS = dict(
-    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'sparks', 'sky'), ilyra=('holy', 'wings', 'halo', 'bless'),
+    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'sparks', 'sky'), ilyra=('holy', 'angel', 'halo', 'bless'),
     orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'arc', 'cross', 'blinks'),
     wizard=('fire', 'meteors', 'crack', 'sky'), beastmaster=('forest', 'beast', 'trail', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
     minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'shockwave', 'leap'), ninjaMonk=('wind', 'claws', 'gust', 'blows'),
     buccaneer=('shadow', 'chains', 'cross', 'hooks'), archer=('wind', 'rain', 'ring', 'sky'), dreadPirate=('shadow', 'broadside', 'crack', 'sky'),
-    siegeBot=('fire', 'shaft', 'crack', 'sky'), lightningMage=('lightning', 'cloud', 'bolt', 'shots'), gunslinger=('fire', 'sparks', 'ring', 'shots'),
+    siegeBot=('fire', 'shaft', 'crack', 'sky'), lightningMage=('lightning', 'cloud', 'bolt', 'shots'), gunslinger=('fire', 'sparks', 'smoke', 'shots'),
     rifleBot=('lightning', 'sparks', 'ring', 'shots'), dragoon=('fire', 'flames', 'flare', 'shots'), ranger=('forest', 'vines', 'ring', 'burst'),
     knight=('holy', 'shout', 'dome', 'burst'), paladin=('holy', 'nova', 'strike', 'burst'), yamabushi=('wind', 'vortex', 'gust', 'burst'),
     gorgon=('poison', 'crystal', 'smoke', 'burst'), juggernaut=('earth', 'crack', 'spikes', 'burst'), kraken=('water', 'whirlpool', 'geyser', 'burst'),
@@ -443,6 +443,8 @@ def canvas_of(scenes, k, pad=0.5):
 
 
 _wound, _after, _own_wind, _own_after = set(), set(), set(), set()
+# An aftermath smaller than the usual (four fifths of an ultimate's size): the Kunoichi's death marks are small and sharp.
+AFTER_SIZE = dict(kunoichi=0.5)
 # A strike in colours that are not its hero's element's: Vael's sweep is gold, as his words say (his wind-up and aftermath stay dark).
 STRIKE_PAL = dict(vael='holy')
 for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
@@ -469,8 +471,9 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
            [stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]] + [stage(extra, 0.3, 1.3, **sized(extra, 0.72))])
         _own_after.add((low, high))
         # (the aftermath lingers: something low where it struck, something lifting off it, both thinning to nothing)
-        fx(f'ult-{kind}-aftermath', None, pal, **canvas_of((low, high), 0.8), frames=round(after_ms / 120), take=AFTER_FRAMES, ms=after_ms, seed=9 + i, ult=True,
-           stages=[stage(low, 0, 0.85, **sized(low, 0.8)), stage(high, 0.1, 1, **sized(high, 0.8))])
+        ak = AFTER_SIZE.get(kind, 0.8)
+        fx(f'ult-{kind}-aftermath', None, pal, **canvas_of((low, high), ak), frames=round(after_ms / 120), take=AFTER_FRAMES, ms=after_ms, seed=9 + i, ult=True,
+           stages=[stage(low, 0, 0.85, **sized(low, ak)), stage(high, 0.1, 1, **sized(high, ak))])
         continue
     if (weight, pal) not in _wound:
         _wound.add((weight, pal))
@@ -529,7 +532,7 @@ BEAT_ONLY = dict(
     tunnel=('earth', 'crack', dict(r=0.8, arms=4, rubble=8), box(1.9, 1.2), 9, 520),
     # (one link of the Gorgon's gaze: a small eye that opens and shuts at a head's height, no ring under it; a row of them runs from
     # her to each foe she petrifies)
-    gaze=('poison', 'eye', dict(r=0.36, z=0.85, ground=0), box(1.0, 1.6), 7, 420),
+    gaze=('poison', 'eye', dict(r=0.62, z=0.95, ground=0), box(1.9, 2.3), 9, 950),
 )
 for j, (clip, (scene, opt, canvas, n, ms, more)) in enumerate(BEATS.items()):
     for i, (el, (pal, _)) in enumerate(GROUND.items()):
