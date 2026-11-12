@@ -854,7 +854,7 @@ def bite(c, r=0.75, n=5, z=0.85):
 
 
 # 31. Eye: a great eye of light that opens over the middle, looks about, and closes.
-def eye(c, r=0.95, z=1.5):
+def eye(c, r=0.95, z=1.5, ground=1.4):
     m, a, _ = c.streak('bright', 'hot', 1.0, 1.7)
     import bpy
     root = bpy.data.objects.new('eye', None)
@@ -891,7 +891,9 @@ def eye(c, r=0.95, z=1.5):
         for i, o in enumerate(rays):
             hide(o, op < 0.6)
         a.inputs[1].default_value = 2.0 * win(t, 0, 0.1) * (1 - win(t, 0.85, 1))
-        put(ring, scale=(1.4 * (0.3 + 0.8 * ease(t)),) * 2 + (1,))
+        # (`ground`: how far the ring under it spreads; none for a small eye that is one of a row, a gaze travelling)
+        put(ring, scale=(max(0.001, ground) * (0.3 + 0.8 * ease(t)),) * 2 + (1,))
+        hide(ring, ground <= 0)
         rv.outputs[0].default_value = 1 - win(t, 0.4, 0.8)
     return step
 
@@ -2011,8 +2013,47 @@ def flock(c, r=1.2, h=2.6, n=5, size=1.0, mode='stoop'):
     return step
 
 
+# 63. Notes: music made visible. Notes (a round head, a stem, a flag) rise out of a ring on the ground, each swaying as it climbs and
+# turning to face the camera, large and plain enough to be read as notes at a glance.
+def notes(c, r=1.2, h=2.2, n=7, size=1.0):
+    import bpy
+    m, v = c.flat('bright', 1.5)
+    m2, _ = c.flat('hot', 1.9)
+    ring, rv = c.ring('mid', 0.05)
+    things = []
+    for i in range(n):
+        root = bpy.data.objects.new('note', None)
+        c.sc.collection.objects.link(root)
+        mm = m if i % 2 else m2
+        head = c.sphere(1.0, mm, 2)
+        stem = c.cone(1.0, 1.0, mm, 6, r2=1.0)
+        flag = c.cone(1.0, 1.0, mm, 3)
+        for o in (head, stem, flag):
+            o.parent = root
+        # (built in the screen's plane: the head low, the stem up its right side, the flag off the stem's top)
+        hp, sp, fp = scr(0, 0), scr(0.11, 0.26), scr(0.2, 0.44)
+        put(head, hp, (0.13, 0.13, 0.095))
+        put(stem, sp, (0.018, 0.018, 0.5))
+        put(flag, fp, (0.05, 0.05, 0.2), (0, math.radians(115), math.radians(45)))
+        a = TAU * i / n + c.rnd.uniform(-0.25, 0.25)
+        things.append((root, a, (0.3 + 0.7 * ((i * 0.618) % 1.0)) * r, 0.6 * i / max(1, n - 1), c.rnd.uniform(0.75, 1.0) * h, c.rnd.uniform(0, TAU)))
+
+    def step(t):
+        for root, a, rad, lag, top, ph in things:
+            g = (t + lag) % 1.0 if c.loop else win(t, lag * 0.55, lag * 0.55 + 0.6)
+            sway = 0.16 * math.sin(TAU * 1.5 * g + ph)
+            put(root, (math.cos(a) * rad + RIGHT[0] * sway, math.sin(a) * rad + RIGHT[1] * sway, 0.25 + top * ease(g)),
+                size * (0.6 + 0.6 * g) * (bell(min(1.0, g * 1.15)) ** 0.5) if 0 < g < 1 else 0.0)
+            for o in (root, *root.children):
+                hide(o, g <= 0 or g >= 1)
+        put(ring, scale=(r * (0.3 + 0.8 * ease(win(t, 0, 0.6))),) * 2 + (1,))
+        rv.outputs[0].default_value = 0 if c.loop else win(t, 0, 0.1) * (1 - win(t, 0.55, 0.95))
+        v.outputs[0].default_value = 1
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes,
 )}

@@ -445,6 +445,67 @@ So this ten: all show something of the ability, and five of them have a neighbou
 (the Sage's dome, the Commander's banner, the Vampire Lord's orb, the Sea Reaver's cone, the Wanderer's pillars). Those are not
 fixed here. Fifty-five heroes are judged at full size in this pass; fifteen remain.
 
+### The last fifteen: music that is notes, the Peasant's banner
+
+`docs/samples/blender-fx/audit-fullsize-12-393.jpg` (the Astrologer, the Barbarian, the Beastmaster, the Blood Gargoyle, the
+Bombardier), `-13` (the Cleric, the Gorgon, the Knight, the Kraken, the Peasant) and `-14` (the Samurai, the Seraph, the Werewolf,
+the Wizard, the Wolf Bard), 0.499 above and now below, `TOUGH=1`. With these, all 70 have been judged at full size.
+
+Changed here, and photographed:
+
+- **A new scene, `notes`**: musical notes (a head, a stem, a flag) rising out of a ring. The Wolf Bard's Battle Hymn was hoops of
+  pale light, the same picture as the War Drummer's beats in the same colour; now large notes rise over his hoops in the wind-up
+  and the strike. The Satyr's Bacchanal said nothing of music; now notes rise from his pipes in the wind-up and over each friend in
+  the strike (sheet 10 is remade).
+- **The Peasant's banner** (the director's item): the banner on each friend was small. It is now half as large again, the tallest
+  thing beside each friend. It is still the earth's pale buff against a buff field: larger, not louder.
+
+| Hero | 0.499 | Now | Shows the ability? | Mistaken for another? |
+| --- | --- | --- | --- | --- |
+| Astrologer | a yellow ring, fire | a star coming down a slant; a great yellow ball that tears open; a sigil after | yes: a star brought down | see the great blows, below |
+| Barbarian | red balls and rings | a hoop of spikes on him; a great red ball; rings and spikes after | a great blow, as his is | see below |
+| Beastmaster | a green ball and ring | three wolves' heads; grey wolves running in among the foes | yes | no |
+| Blood Gargoyle | a dust ball | a shaft down from on high; a great buff ball; slabs thrown up after | yes: a crash from above | see below |
+| Bombardier | fire | a column of fire on him; a shell coming in on a slant; a fireball; fire left on the ground | yes | the Siege Bot's shell is close; his leaves fire |
+| Cleric, Spirit Guardians | a yellow ball and ring | hooded guardians with spears rising and circling him | yes | no |
+| Gorgon | green balls and rings | an eye over writhing snakes; pale discs under the foes; grey stone standing on each | yes: the gaze, and stone | no. Her line of gaze from her to each foe is still not seen (below) |
+| Knight | a dust ball | a dome on him; hoops; a wall of light standing | yes: a bulwark | a dome again, but on himself and with a wall |
+| Kraken | pale balls and rings | a spout over a whirlpool on him; whirlpools under the foes; spouts | yes | the spout is the Sea Reaver's and Corsair Surgeon's cone |
+| Peasant, Call to Arms | a dust ball | hoops on him; a tall banner beside each friend | yes; pale | a third banner (the Banneret's and the Commander's are in fire) |
+| Samurai | a pale ball | tongues round him; a great yellow ball with a crescent cut over it | a great blow, as his is | see below |
+| Seraph | yellow balls | a beam down onto him; a great yellow ball with the beam through it; rings | yes: judgement from above | see below |
+| Werewolf | a purple ball and ring | red hoops; red talons coming down; a ring of spikes | a frenzy of claws; nothing of the wolf | the Nightstalker's talons are purple, his red |
+| Wizard | a fireball | fire gathering on him; a fireball with its ring; a field of fire after | yes | no |
+| Wolf Bard, Battle Hymn | a pale ball and ring | CHANGED (above) | yes, now | was the War Drummer's twin; not now |
+
+**The great blows.** Eight heroes have the great blow under their own scenes (the Samurai, the Barbarian, the Blood Gargoyle, the
+Siege Bot, the Wizard, the Astrologer, the Seraph, the Bombardier). At its height each is a great ball in its element's colour that
+hides the field for a moment. What differs is what comes first (a crescent, a hoop of spikes, a shaft, a shell, a star, a beam) and
+what is left. With the colour gone, the middle half second of these eight is one picture. That is by design (each is one great blow),
+but it is the plainest case of the owner's second test failing, and I say so.
+
+**Where the pass leaves things.** Of the 70: every one now shows something of what its ability does, and none is a ball and a ring in
+a colour, which all were at 0.499. Changed in this pass because they did not read: the Kunoichi's aftermath, the Ninja Monk, the
+Gunslinger, the Dread Pirate, the Dragoon, Astrax, the Falconer, Karasu, the Mummy, the Wolf Bard, the Satyr, the Peasant's banner,
+big fire, the link line. Not yet right, by the first test: the Dread Pirate (bursts, not a broadside), the Dragoon (a short row, not
+a strip of fire), the Ninja Monk (not confirmed in a photograph), the Bell Warden's bell, the Nightstalker's faint strike, the weak
+wind-ups (the Kunoichi, the Mercenary, the Gunslinger, the Wanderer), the Gorgon's line. Not yet right, by the second: Vael and
+the Reaper; the Harpooner and the Buccaneer; the Sage, Ilyra and Orrun; the Samurai Commander and the Banneret; the Vampire Lord
+and the Hemomancer; the Sea Reaver, the Corsair Surgeon and the Kraken's spouts; the Wanderer and the Priestess; the Kunoichi and
+the Mercenary; the Mirage Dancer and the Illusionist; the War Drummer and the Bell Warden; the eight great blows.
+
+### The Gorgon's line of gaze
+
+`docs/samples/blender-fx/audit-gorgon-gaze-393.jpg` (five moments from the blow on).
+
+The line from the Gorgon to each foe she petrifies was there all along, and was not seen as one: each link was the blessing's clip
+(first a tongue of flame, then sparks over a pale disc on the ground), so her gaze was a row of pale discs on the floor. It has a
+clip of its own now, `beat-gaze`: a small eye that opens and shuts at a head's height, with no ring under it; a row of them runs
+out from her to each foe, and the stone rises as the row arrives (`ultLinkClip`: `gaze` for her, `link` for a blessing; a test holds
+it). In the photograph's fourth moment four purple eyes stand in a row from her towards the foes. What I have not got is a frame
+with the row complete to every foe: it is staggered and brief (each eye 420 ms, thirty apart), and the pale discs under the foes
+(her strike's own ground) are still the larger thing in the picture.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in

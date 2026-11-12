@@ -175,8 +175,8 @@ export function ultBfx(kind: string, stage: UltStageName, weight: string): strin
 
 /** The clips a showcase's beats are made of (`Fx.showBeat`): most in each of the game's elements (`beat-<clip>-<element>`), the last four
  *  one element's only (`beat-<clip>`: a bolt, a tongue of flame, a spire of rock, the ground heaving). */
-export type BeatClip = 'puff' | 'appear' | 'cut' | 'blow' | 'dust' | 'link' | 'crash' | 'cloud' | 'snare' | 'smite' | 'nova' | 'call' | 'ring' | 'gather' | 'mark' | 'sky' | 'bolt' | 'flame' | 'rise' | 'tunnel';
-const BEAT_ONLY: readonly BeatClip[] = ['bolt', 'flame', 'rise', 'tunnel'];
+export type BeatClip = 'puff' | 'appear' | 'cut' | 'blow' | 'dust' | 'link' | 'crash' | 'cloud' | 'snare' | 'smite' | 'nova' | 'call' | 'ring' | 'gather' | 'mark' | 'sky' | 'bolt' | 'flame' | 'rise' | 'tunnel' | 'gaze';
+const BEAT_ONLY: readonly BeatClip[] = ['bolt', 'flame', 'rise', 'tunnel', 'gaze'];
 
 /** A beat's clip in an element. Undefined for one the pipeline has not made. */
 export function beatBfx(clip: BeatClip, el: string): string | undefined {
@@ -221,6 +221,9 @@ export function ultSpots(place: 'each' | 'friends' | 'tiles' | 'line', t: { stru
 /** ULT-AUDIT: the kinds whose strike is carried to each spot by a line from the caster (a row of the showcase's `link` clips, the strike
  *  landing as the line arrives, `ULT_LINK_MS` later): a healer's light running out to each friend, the Gorgon's gaze to each foe. */
 export const ultLinked = (kind: string): boolean => ultPlace(kind) === 'friends' || kind === 'gorgon';
+/** What each link of that line is: sparks of light for a blessing carried to a friend; for the Gorgon's gaze, a row of small open eyes
+ *  running out from her to each foe she turns to stone. */
+export const ultLinkClip = (kind: string): BeatClip => (kind === 'gorgon' ? 'gaze' : 'link');
 export const ULT_LINK_MS = 200;
 
 /** Where a sheet on the moment's layer is put so the middle of its tile is at (x, y): the layer's bits are held by their own middle, so
