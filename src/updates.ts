@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.530.0',
+    date: '2026-11-12',
+    title: 'Seventy aftermaths, each its own',
+    notes: ['Every ultimate now leaves its own aftermath: the Wizard\'s cracked ground burning, the Samurai\'s line and a veil, the Werewolf\'s claw marks.', 'No two heroes\' wind-ups, strikes or aftermaths use the same shapes, whatever their colours.'],
+  },
+  {
     version: '0.529.0',
     date: '2026-11-12',
     title: 'The wolves are grey at last',
