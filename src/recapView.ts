@@ -111,9 +111,9 @@ export function showRecap(root: HTMLElement, recap: RunRecap, head: RecapHead, o
     fig('Crowns', `+${num(recap.crowns)}`),
     fig('Chests', String(recap.chests)),
   );
-  // (WAVE-RECAP: the hearts the battle burned, when it burned any)
+  // (WAVE-RECAP: the lives the battle spent, when it spent any; TEN-LIVES: the rows' `hearts` are lives now)
   const hearts = heartsBurned(recap);
-  if (hearts) grid.append(fig('Hearts burned', String(hearts)));
+  if (hearts) grid.append(fig('Lives spent', String(hearts)));
   if (!player) sheet.append(grid);
 
   // the company, and the XP and levels (`recapDetail`)
@@ -171,7 +171,7 @@ export function recapDetail(recap: RunRecap, opts: DetailOpts): HTMLElement[] {
         face.append(portrait(battleSheet(w.mvp!, opts.equipmentStep?.(w.mvp!) ?? 0, 1), 64, 1));
         chip.append(face);
       }
-      if (w.hearts) chip.append(el('em', '', '♥'.repeat(Math.min(3, w.hearts))));
+      if (w.hearts) chip.append(el('em', '', `♥${w.hearts}`));
       strip.append(chip);
     }
     out.push(strip);

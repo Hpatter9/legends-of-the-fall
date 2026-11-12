@@ -5,6 +5,7 @@ import { mythicFits } from './mythicRules';
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
 import { ritesSpent } from './chapelRooms';
+import { FALL_GOLD_FALLS, HEART_LIVES, LIVES } from './lives';
 import { roomOpen } from './rooms';
 import { heartsLost, marchFx, readOrders, shopShut, skipsWave, type Orders } from './march';
 import { keepSummons, keptBoost, type KeptForm, type KeptSummon } from './carry';
@@ -58,8 +59,6 @@ export const SUMMON_STEP = 5;
 export const RECYCLE_SHARE = 0.5;
 /** At most this many heroes wait on the bench (the heroes not chosen for the squad); a Hire that would add an eleventh is refused. */
 export const BENCH_MAX = 10;
-/** A run may retry a wave it lost this many times. */
-export const MAX_RETRIES = 2;
 /** Hp and attack of a hero at each grade (1 to 4), as a multiple of grade 1 (MERGE-TWO, `docs/notes/merge-two.md`). Two of a kind make the
  *  next grade, so grade g holds 2^(g-1) hires (it was three of a kind and 3^(g-1)): the steps are smaller than the old x1.6 a grade so a run
  *  reaches the strength it did at the same gold, and the last step is the biggest, so rank 4 is a prize. Since the skills overhaul's batch 3 a grade
@@ -230,7 +229,12 @@ export interface Run {
   tower?: TowerState;
   /** An army run's tally for its stars (`armyStars.ts`): the battle time so far, heroes lost over the run, heroes lost in the fight with the last boss, and heroes lost in all the boss fights (the mid-bosses too). */
   tally?: { ms: number; lost: number; bossLost: number; bossFell?: number };
-  /** Retries used so far (`MAX_RETRIES` in all). */
+  /** TEN-LIVES (`lives.ts`): the lives spent so far (`LIVES` in all), and how many times the whole party was down at once or the clock
+   *  ran out (what a burnt heart was: the stars and quests that ask for "no heart" ask for none). */
+  lives?: number;
+  falls?: number;
+  /** The hearts an older save's run had burnt before there were lives (each cost `HEART_LIVES` of them, and counts as a fall). Never
+   *  written now. */
   retries?: number;
   /** The whole run's figures for the recap shown when it ends (`runRecap.ts`). */
   recap?: RunRecap;
@@ -301,13 +305,16 @@ export function keepCharges(run: Run, b: Battle): void {
 /** Add a finished fight to an army run's tally: its time, the heroes that fell (summoned helpers do not count), and whether this was the last boss. */
 export function noteFight(run: Run, b: Battle): void {
   addRelicMarks(run, b);
+  // (TEN-LIVES: the lives the fight spent are the run's)
+  settleLives(run, b);
   // (SEVEN-SLOT GEAR batch 6: a won wave's fallen stand again at half, `wounds.ts`)
   settleWounds(run, b);
   // (DEPTH-BUILD: the Chapel's Last Rites comes once a run)
   if (ritesSpent(b)) run.ritesUsed = true;
   const army = waveArmyOf(run);
   if (!army) return;
-  const fell = b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon).length;
+  // (TEN-LIVES: a hero a life raised fell each time, though it stands at the end)
+  const fell = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).reduce((n, u) => n + (u.alive ? 0 : 1) + (u.lifeRises ?? 0), 0);
   const t = (run.tally ??= { ms: 0, lost: 0, bossLost: 0 });
   t.ms += b.t;
   t.lost += fell;
@@ -424,21 +431,58 @@ export function recycle(run: Run, heroId: number): number | null {
 /** Whether a hero is the last of its kind among a quest battle's required cast (it cannot be recycled). */
 export const isCastHero = (run: Run, h: Owned): boolean => run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind) && run.roster.filter((x) => x.kind === h.kind).length <= 1;
 
-/** Retries left in the run. */
-export const retriesLeft = (run: Run): number => Math.max(0, MAX_RETRIES - heartsLost(run.orders) - (run.retries ?? 0));
-/** The gold a retry pays to help the second go: one Hire at the price it stands at. */
+/** TEN-LIVES: whether a run has lives at all: every run but the tower's and the Calamity's, which fail their own way (the Last Stand
+ *  and the Assault are not runs of this kind). */
+export const hasLives = (run: Run): boolean => !run.tower;
+/** The lives a run starts with: `LIVES`, less a cursed march's price. */
+export const livesMax = (run: Run): number => Math.max(0, LIVES - heartsLost(run.orders) * HEART_LIVES);
+/** The lives a run has spent: its own count, and `HEART_LIVES` for each heart an older save's run had burnt. */
+export const livesSpent = (run: Run): number => (run.lives ?? 0) + (run.retries ?? 0) * HEART_LIVES;
+/** The lives left in the run (none in a run without them). */
+export const livesLeft = (run: Run): number => (hasLives(run) ? Math.max(0, livesMax(run) - livesSpent(run)) : 0);
+/** How many times the run's whole party fell at once or ran out of time (an older save's burnt hearts among them). */
+export const partyFalls = (run: Run): number => (run.falls ?? 0) + (run.retries ?? 0);
+/** The gold a party's fall pays to help it on, as a burnt heart did: one Hire at the price it stands at. */
 export const retryGold = (run: Run): number => summonCost(run);
-/** Whether a wave just lost may be tried again: the run is still going, has hearts (retries) left, and is not the tower or the calamity (which have their own way of failing). Armies and the daily lose hearts; with none left the loss is settled by `finish` and the run ends. */
-export const canRetry = (run: Run): boolean => !run.over && !run.tower && retriesLeft(run) > 0;
-/** What a fall brings: a heart burns and the same wave starts again on its own (`retryWave`), or the run ends (no heart left, or a mode with none). */
-export const fallOutcome = (run: Run): 'heart' | 'end' => (canRetry(run) ? 'heart' : 'end');
-/** Retry the wave: the same stage with the same buff, a `retryGold` boost to spend, one retry used. Returns the gold paid, or null when no retry may be had. */
-export function retryWave(run: Run): number | null {
-  if (!canRetry(run)) return null;
-  const gold = retryGold(run);
-  run.retries = (run.retries ?? 0) + 1;
-  run.gold += gold;
-  noteGold(run, 'earned', gold);
+/** Take lives from the run (a road event's price) or give some back (negative): never below none spent, never past the run's all. */
+export function spendLives(run: Run, n: number): void {
+  const old = (run.retries ?? 0) * HEART_LIVES;
+  run.lives = Math.max(-old, Math.min(livesMax(run) - old, (run.lives ?? 0) + n));
+}
+/** TEN-LIVES: lives raised these heroes (roster ids, one entry a rise) under the Legend Oath (`oath.ts`): each rise was a fall, as a
+ *  burnt heart's was. Here, not in `oath.ts`, which this file must not import (it would load before the dynasties it reads). */
+export function noteOathRises(run: Run, ids: readonly number[]): void {
+  if (!run.oath) return;
+  for (const id of ids) {
+    const h = run.roster.find((x) => x.id === id);
+    if (!h || h.guest || h.cloneFloors !== undefined) continue;
+    const k = String(id);
+    (run.oathFalls ??= {})[k] = (run.oathFalls[k] ?? 0) + 1;
+    if (!(run.oathWave ??= []).includes(id)) run.oathWave.push(id);
+  }
+}
+
+/** Write a fight's lives back to the run: the lives it spent, its party falls (the run's first two each pay `retryGold`, for after the wave) and, under
+ *  the Legend Oath, a fall for each hero a life raised. Safe to call as often as the page likes: only what is new since the last call
+ *  counts. Returns the gold paid. */
+export function settleLives(run: Run, b: Battle): number {
+  const l = b.lives;
+  if (!l) return 0;
+  const n = (l.noted ??= { spent: 0, falls: 0, rose: 0 });
+  const falls = l.falls - n.falls;
+  if (l.spent > n.spent) run.lives = (run.lives ?? 0) + l.spent - n.spent;
+  noteOathRises(run, l.rose.slice(n.rose));
+  let gold = 0;
+  // (only the run's first `FALL_GOLD_FALLS` falls pay, as its two hearts did)
+  for (let i = 0; i < falls; i++) if (partyFalls(run) + i < FALL_GOLD_FALLS) gold += retryGold(run);
+  if (falls) run.falls = (run.falls ?? 0) + falls;
+  if (gold) {
+    run.gold += gold;
+    noteGold(run, 'earned', gold);
+  }
+  n.spent = l.spent;
+  n.falls = l.falls;
+  n.rose = l.rose.length;
   return gold;
 }
 
@@ -561,6 +605,8 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...(named?.place.length ? { nemesis: named.place } : {}),
     // (DEPTH-BUILD: the Chapel's Last Rites, in an army run that has not spent it)
     ...(army && run.mode?.kind === 'army' && !run.ritesUsed && roomOpen(run.castle, 'lastRites') ? { rites: true } : {}),
+    // (TEN-LIVES: the run's lives, and how the Chapel's Vigil has the party rise)
+    ...(hasLives(run) ? { lives: livesLeft(run), ...(run.orders?.vigil ? { vigil: run.orders.vigil } : {}) } : {}),
     ...(run.rift ? { rift: { ...run.rift }, riftBoss: run.tower?.cur?.kind === 'boss' } : {}),
     area: run.area ?? base.area ?? areaFor(run.stage),
     board: section?.board ?? base.board,

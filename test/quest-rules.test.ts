@@ -230,7 +230,7 @@ test('every quest has a place at every point of a save where it is open, and the
     assert.equal(p.objective, 1);
     assert.deepEqual(p.dest, { to: 'calamity' });
     assert.deepEqual(p.rules, ['All in one army run', 'No ultimates in this fight (ULT Auto off)', 'Heroes of level 30 or lower']);
-    assert.deepEqual(ruleLines(def('r', { goal: { kind: 'wavesWon', n: 1, noHeart: true, without: ['knight'], exactly: 4, benchBest: true } })), ['No heart spent', 'Your best hero sits out', 'Without Kwame', 'Exactly 4 heroes']);
+    assert.deepEqual(ruleLines(def('r', { goal: { kind: 'wavesWon', n: 1, noHeart: true, without: ['knight'], exactly: 4, benchBest: true } })), ['The whole party never falls', 'Your best hero sits out', 'Without Kwame', 'Exactly 4 heroes']);
   });
   void dayNumber;
 });

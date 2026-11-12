@@ -19,7 +19,7 @@ import { gradeBoost } from '../../src/sim/run';
 import { xpFor } from '../../src/sim/levels';
 import { botSpells, maybeSpells, playArmy, playCalamity, savedAt } from '../autoplay';
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
-import { canRetry, finish, isBossRun, retryWave, startStage } from '../../src/sim/run';
+import { finish, isBossRun, startStage } from '../../src/sim/run';
 import { fight, playOut } from '../../src/sim/battle';
 import { DAILY_ANSWER, dailyRun, dailyScale } from '../../src/sim/modes';
 import { dailyTheme } from '../../src/sim/dailyThemes';
@@ -161,10 +161,7 @@ if (want('daily')) {
         maybeSpells(b, meta);
         playOut(b);
         const ok = b.phase === 'won';
-        if (!ok && canRetry(run)) {
-          retryWave(run);
-          continue;
-        }
+        // (TEN-LIVES: a fall is raised inside the fight now, by the run's lives: a lost wave is lost for good)
         finish(run, ok, ratingOf(b, isBossRun(run)).stars);
       }
       if (run.cleared) clears++;

@@ -68,7 +68,7 @@ try {
     const revived = await page.evaluate(() => ({ result: !document.getElementById('result').hidden, recap: !document.getElementById('recap').hidden, advice: document.querySelectorAll('.rcAdvice').length, over: !!window.__game.run.over }));
     assert.deepEqual(revived, { result: false, recap: false, advice: 0, over: false }, 'a heart revives: no advice');
     // (then the last heart gone)
-    await page.evaluate(() => { window.__game.run.retries = 2; });
+    await page.evaluate(() => { window.__game.run.retries = 2; if (window.__game.b.lives) window.__game.b.lives.left = 0; });
     // (the heroes fall at once: the sim settles the loss as it would any other)
     await page.evaluate(() => { for (const u of window.__game.b.units) if (u.side === 'hero') u.hp = 0; });
     await page.waitForFunction(() => !document.getElementById('result').hidden, null, { timeout: 60000 });

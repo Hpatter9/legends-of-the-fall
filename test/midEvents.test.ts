@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { chooseOption, drawEvent, EVENT_KINDS, type EventCard } from '../src/sim/events';
 import { applyRoad, drawRoad, FOLLOW_KINDS, KEPT_FACES, KEPT_KINDS, kindWeight, OWED_AFTER, pickRoadKind, ROAD_KINDS, scoutReport, type RoadAct, type RoadKind } from '../src/sim/midEvents';
 import { gearPrice, HIRE_EXTRA, MARKET_BUYS, POTIONS, relicPrice, rummagePrice, stockMarket } from '../src/sim/market';
-import { armyRun, BENCH_MAX, finish, loadRun, MAX_RETRIES, newRun, recruit, saveRun, startStage, summonCost, type Run } from '../src/sim/run';
+import { armyRun, BENCH_MAX, finish, loadRun, livesLeft, newRun, recruit, saveRun, startStage, summonCost, type Run } from '../src/sim/run';
 import { dailyRun } from '../src/sim/modes';
 import { makeGear } from '../src/sim/gear';
 import { Rng } from '../src/sim/rng';
@@ -157,28 +157,28 @@ test('the Pale Lady comes back for her due two gaps on, and refusing her curses 
   assert.equal(again.buff?.foes, 1.2);
 });
 
-test('the refugees remember a shared purse: a burned heart kindles again', () => {
+test('the refugees remember a shared purse: spent lives kindle again (a heart\'s worth, TEN-LIVES)', () => {
   const run = army();
   run.gold = 999;
   withCard(run, 'refugees', 2);
   chooseOption(run, 0);
-  run.retries = 1;
+  run.lives = 7;
   assert.equal(pickRoadKind(run, 6), 'refugeesReturn');
   run.event = drawEvent(run, 6);
   chooseOption(run, 0);
-  assert.equal(run.retries, 0);
+  assert.equal(livesLeft(run), 8, 'five of the seven spent come back');
 });
 
-test('the cursed crown burns a heart for a legendary relic, never past the last', () => {
+test('the cursed crown drinks a heart\'s worth of lives for a legendary relic, never past the last', () => {
   const run = army();
   withCard(run, 'crown');
   chooseOption(run, 0);
-  assert.equal(run.retries, 1);
+  assert.equal(livesLeft(run), 5);
   assert.equal(run.relics?.length, 1);
-  run.retries = MAX_RETRIES;
+  run.lives = 10;
   withCard(run, 'crown', 6);
   chooseOption(run, 0);
-  assert.equal(run.retries, MAX_RETRIES);
+  assert.equal(livesLeft(run), 0);
   assert.equal(run.buff?.foes, 1.3);
 });
 
