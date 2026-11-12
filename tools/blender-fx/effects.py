@@ -199,7 +199,7 @@ ULTS = dict(
     mummy=('earth', 'sandstorm', 'chains', 'burst'), warlock=('shadow', 'sigil', 'siphon', 'burst'), tyrant=('blood', 'shout', 'spikes', 'burst'),
     shambler=('poison', 'crack', 'cloud', 'burrow'), reaper=('shadow', 'arc', 'souls', 'burst'), druid=('forest', 'palisade', 'vines', 'pack'),
     illusionist=('arcane', 'veil', 'portal', 'pack'), priestess=('holy', 'wings', 'pillar', 'bless'), werewolf=('blood', 'claws', 'shout', 'change'),
-    demonSwordsman=('fire', 'chains', 'flare', 'change'), kitsune=('fire', 'spiral', 'smoke', 'burst'), karasu=('wind', 'swarm', 'gust', 'sky'),
+    demonSwordsman=('fire', 'chains', 'flare', 'change'), kitsune=('fire', 'spiral', 'smoke', 'burst'), karasu=('wind', 'rain', 'swarm', 'sky'),
     timeWitch=('holy', 'sigil', 'crystal', 'burst'), wanderer=('holy', 'hearts', 'motes', 'bless'), satyr=('forest', 'swarm', 'spiral', 'bless'),
     samuraiCommander=('fire', 'banner', 'flare', 'bless'), sage=('lightning', 'dome', 'sigil', 'bless'), cleric=('holy', 'souls', 'motes', 'bless'),
     peasant=('earth', 'banner', 'shout', 'bless'), wolfBard=('wind', 'shout', 'spiral', 'bless'), vampireLord=('blood', 'implode', 'siphon', 'burst'),
@@ -417,7 +417,9 @@ def grow(opt, k):
 # A scene's own options for one hero's strike, where the ability wants what the scene's usual look is not (ULT-AUDIT): what the Gorgon's
 # gaze leaves on a foe is grey stone, lit plainly, not a crystal in her poison's green.
 # The stars of Astrax's Heavenfall are thick bright streaks, many of them (the usual rain is thin: arrows, needles).
-OWN_OPT = dict(gorgon=dict(crystal=dict(stone=True)), astrax=dict(rain=dict(n=26, w=0.34, slant=0.5, long=2.6)))
+OWN_OPT = dict(gorgon=dict(crystal=dict(stone=True)), astrax=dict(rain=dict(n=26, w=0.34, slant=0.5, long=2.6)),
+               # (Karasu's Cloud of Daggers: many short blades coming down steeply)
+               karasu=dict(rain=dict(n=30, w=0.2, slant=0.15, long=1.5)))
 
 
 def sized(scene, k, kind=None):
