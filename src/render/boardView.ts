@@ -576,6 +576,14 @@ export class BoardView {
   }
 
   /** The tiles of a board, laid as the frame says (turned, and its footprint's corner some tiles from the origin). */
+  /** WAVE-DELAY: everything kept from earlier boards is let go (the painted columns, what was painted ahead, the baked scenery's
+   *  queue), so the next build paints from nothing. For the page's cure when its drawing keeps faulting (`loopRules.ts`). */
+  forget(): void {
+    this.dropWarm();
+    this.toBake.length = 0;
+    this.columns.clear();
+  }
+
   /** WAVE-DELAY (docs/notes/wave-delay.md): the next board's columns painted ahead, a few a frame, so that building it is not one
    *  long stop at the wave's end: `prewarm` names the board, `pump` paints `warmSlice` of it each frame and holds what it painted, and
    *  the build that follows finds every column already there. */
@@ -1349,10 +1357,16 @@ export class BoardView {
     const bytes = TW * (TH + (road ? skirt : t.h) * HH + FOOT + (boss && !road ? HH : 0)) * 4;
     // (WAVE-DELAY: how many columns a frame painted, how long that took, and how many it found already painted, for the stops' log)
     let painted = false;
-    const lease = this.columns.acquire(key, bytes, () => {
-      painted = true;
-      return diagTimed('columns painted', () => this.paintColumn(t, u, v, area, boss, road ? skirt : -1, fl, strike));
-    });
+    const lease = this.columns.acquire(
+      key,
+      bytes,
+      () => {
+        painted = true;
+        return diagTimed('columns painted', () => this.paintColumn(t, u, v, area, boss, road ? skirt : -1, fl, strike));
+      },
+      // (a kept column is used again only while its texture is whole: one destroyed or emptied is painted afresh)
+      (tex) => !tex.destroyed && !!tex.source && !tex.source.destroyed && !!tex.source.resource,
+    );
     if (!painted) diagStep('columns from the cache', 0);
     return lease;
   }

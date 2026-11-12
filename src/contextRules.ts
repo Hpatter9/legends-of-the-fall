@@ -5,8 +5,9 @@
 export const CTX = {
   /** How long a lost context is waited for before the page is loaded again (real ms). */
   RELOAD_MS: 4000,
-  /** No second reload within this long of the last (real ms): a phone that loses it again at once is not sent round in a loop. */
-  AGAIN_MS: 60000,
+  /** No second reload within this long of the last (real ms): a phone that loses it again at once is not sent round in a tight loop.
+   *  (It was a minute; a second loss inside that minute then left the picture dead for good, which is worse than a second reload.) */
+  AGAIN_MS: 15000,
 };
 
 /** Whether to load the page again now. `lostMs`: how long the context has been lost (null: it is not). `phase`: the fight's. A fight
