@@ -87,6 +87,17 @@ function env(): DiagEnv {
   };
 }
 
+/** Something the page did to cure itself (a stopped loop started again, a board built afresh, the page loaded again): written to
+ *  the log as a line of its own, with no length. */
+export function diagEvent(phase: string, what: string): void {
+  log = withStop(load(), { at: Date.now(), ms: 0, phase, v: __GAME_VERSION__, doing: what });
+  try {
+    localStorage.setItem(KEY, JSON.stringify(log));
+  } catch {
+    /* (the log stays in memory) */
+  }
+}
+
 /** The log as text: where the game is running, then the stops, newest first. */
 export const diagShown = (): string => `${diagHead(env())}\n\n${diagText(load())}`;
 

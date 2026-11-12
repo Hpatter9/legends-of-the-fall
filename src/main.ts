@@ -7,7 +7,7 @@ import { heraldPortrait } from './heraldArt';
 import { isAssaultBench, startAssaultBench } from './assaultBench';
 import { socketStrip } from './runeTray';
 import { checkAppUpdate, inApp } from './appUpdate';
-import { Application, Container, Sprite, TextureSource } from 'pixi.js';
+import { Application, Container, Sprite, TextureSource, UPDATE_PRIORITY } from 'pixi.js';
 import { standable, tileAt, type Area } from './sim/board';
 import { PHASE2 } from './sim/bossPhases';
 import * as toolkit from './sim/toolkit';
@@ -153,7 +153,7 @@ import { infoOf, previewUnit } from './unitInfoRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
 import { fullScene, waveEndStuck } from './ultMomentRules';
-import { ctxReload } from './contextRules';
+import { CTX, ctxReload } from './contextRules';
 import { momentSpeed, noteSeen, seenOf } from './ultShowRules';
 import { anyUltimate, ultFull } from './sim/heroKits';
 import { armiesFocusAfterClear } from './screenRules';
@@ -171,7 +171,8 @@ import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { readyStep } from './render/texReady';
 import { warmNow } from './render/boardWarmRules';
-import { diagFrame, diagMark, diagRest, diagStep, diagTimed } from './diag';
+import { diagEvent, diagFrame, diagMark, diagRest, diagStep, diagTimed } from './diag';
+import { loopCure, reloadSafe } from './loopRules';
 import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
 import { BoardLife } from './render/boardLife';
@@ -707,12 +708,38 @@ class Game {
     // (a fault in one frame's drawing or sound is logged and the next frame goes on: Pixi's ticker stops for good when a
     // listener throws, which froze fights mid-way)
     this.app.ticker.add((tk) => {
+      this.loop.frameAt = performance.now();
+      // (the frame is well only once its drawing, below, has run too)
+      let ok = false;
       try {
         this.frame(tk.deltaMS, tk.elapsedMS);
+        ok = true;
       } catch (err) {
-        console.error(err);
+        if (this.loop.faults++ < 3) console.error(err);
       }
+      this.frameOk = ok;
     });
+    // (WAVE-DELAY: the drawing itself is guarded the same way. Pixi's own listener was not: a drawing that threw stopped the loop for
+    // good, with the canvas cleared, and the owner was left with the fight's rows up and no battlefield. A fault is counted, the loop
+    // goes on, and the watch below cures what does not go away: `loopRules.ts`)
+    this.app.ticker.remove(this.app.render, this.app);
+    this.app.ticker.add(
+      () => {
+        try {
+          this.app.render();
+          if (this.frameOk) this.loopWell();
+        } catch (err) {
+          // (a frame at fault whose drawing faults too is one fault, not two)
+          if (!this.frameOk) return;
+          if (this.loop.faults++ < 3) console.error('a fault in the drawing', err);
+        }
+      },
+      undefined,
+      UPDATE_PRIORITY.LOW,
+    );
+    setInterval(() => this.watchLoop(), 1000);
+    // (a page shown again has had no frames while it was hidden: that is not a stopped loop)
+    document.addEventListener('visibilitychange', () => (this.loop.frameAt = performance.now()));
     // (WAVE-DELAY: each picture handed to the graphics card is timed for the stops' log (`diag.ts`): a stop then says how many went
     // up in it and how long that took. Two clock reads a picture; a fault here leaves the renderer as it was)
     try {
@@ -1604,6 +1631,74 @@ class Game {
     if (!modeShown('tower')) return;
     if (!modeOpen(this.meta, 'tower') && !loadStand()) return;
     void this.stand.open();
+  }
+
+  /** WAVE-DELAY (`loopRules.ts`): the loop as the watch sees it: when a frame last began, the frames or drawings at fault in a row,
+   *  the times it was started again, whether the board was built afresh for this trouble, and when it last ran well. */
+  private loop = { frameAt: performance.now(), faults: 0, restarts: 0, rebuilt: false, wellSince: 0 };
+  private watchedAt = performance.now();
+  private frameOk = true;
+  /** A frame ran to its end: after a few seconds of that the trouble is over. */
+  private loopWell(): void {
+    const l = this.loop;
+    if (l.faults) l.wellSince = 0;
+    l.faults = 0;
+    if (!l.restarts && !l.rebuilt) return;
+    if (!l.wellSince) l.wellSince = l.frameAt;
+    else if (l.frameAt - l.wellSince > 5000) Object.assign(l, { restarts: 0, rebuilt: false, wellSince: 0 });
+  }
+  /** Once a second, from a timer of its own: start a stopped loop again, build the board afresh if its drawing keeps faulting, load
+   *  the page again if neither cures it. Each is written to the stops' log, with what was found. */
+  private watchLoop(): void {
+    const l = this.loop;
+    const now = performance.now();
+    // (a watch that came late itself means the whole page was held, by a board being built or a sheet decoded: the loop had no
+    //  chance to turn, and has not stopped)
+    const late = now - this.watchedAt > 1600;
+    this.watchedAt = now;
+    if (late) l.frameAt = now;
+    // (the game stops its own loop under the home screen outside a fight: that one is at rest, not stopped)
+    const running = !(this.homeUp && this.b.phase !== 'fight');
+    const cure = loopCure({ running, hidden: document.hidden, sinceFrame: now - l.frameAt, faults: l.faults, restarts: l.restarts, rebuilt: l.rebuilt });
+    if (cure === 'none') return;
+    const b = this.b;
+    const found = `phase ${b.phase}, t ${b.t}, ${l.faults} faults in a row, started again ${l.restarts} times, context ${(this.app.renderer as unknown as { gl?: WebGL2RenderingContext }).gl?.isContextLost() ? 'lost' : 'there'}`;
+    if (cure === 'restart') {
+      l.restarts++;
+      l.frameAt = performance.now();
+      diagEvent(b.phase, `the picture's loop had stopped and was started again (${found})`);
+      this.app.ticker.stop();
+      this.app.ticker.start();
+      return;
+    }
+    if (cure === 'rebuild') {
+      l.rebuilt = true;
+      l.faults = 0;
+      diagEvent(b.phase, `the drawing kept faulting: the board was built afresh, nothing kept (${found})`);
+      this.guard('the board built afresh', () => {
+        this.ultm.clear();
+        this.eid.clear();
+        this.boardView.forget();
+        const section = chainOf(this.run)?.[this.run.stage - 1];
+        this.boardView.build(b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+        this.life.build(b.board, weatherOf(b.board));
+        this.syncChain();
+        this.syncSprites(true);
+        this.layout();
+      });
+      return;
+    }
+    // (loaded again only where nothing of a wave can be lost, and not straight after another reload)
+    const last = Number(sessionStorage.getItem(CTX_RELOADED) ?? NaN);
+    if (!reloadSafe(b.phase) || (Number.isFinite(last) && Date.now() - last < CTX.AGAIN_MS)) {
+      l.faults = 0;
+      l.restarts = 0;
+      return;
+    }
+    diagEvent(b.phase, `the picture could not be cured: the page was loaded again (${found})`);
+    sessionStorage.setItem(CTX_RELOADED, String(Date.now()));
+    sessionStorage.setItem(CTX_RESUME, this.standOn ? 'stand' : 'run');
+    location.reload();
   }
 
   /** FREEZE-FIX: a part of the frame that may fault without taking the rest of the frame with it (the page's ticker catches a frame's

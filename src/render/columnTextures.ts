@@ -8,10 +8,21 @@ export class ColumnTextures<T> {
   private live = new Set<Entry<T>>();
   private hits = 0;
   private misses = 0;
+  private dead = 0;
   constructor(private destroy: (value: T) => void, readonly maxEntries = 256, readonly maxBytes = 4 * 1024 * 1024) {}
 
-  acquire(key: string, bytes: number, make: () => T): ColumnLease<T> {
+  /** `alive` (WAVE-DELAY): asked of a kept value before it is handed out again; one that is no longer alive (its texture destroyed or
+   *  emptied by something else) is forgotten and made afresh, never reused. */
+  acquire(key: string, bytes: number, make: () => T, alive?: (value: T) => boolean): ColumnLease<T> {
     let entry = this.entries.get(key);
+    if (entry && alive && !alive(entry.value)) {
+      // (forgotten, not destroyed again: whoever still holds it lets it go with their own lease)
+      this.entries.delete(key);
+      this.bytes -= entry.bytes;
+      entry.retained = false;
+      this.dead++;
+      entry = undefined;
+    }
     if (entry) {
       this.hits++;
       // Access order, rather than insertion order, keeps recent terrain useful.
@@ -62,7 +73,7 @@ export class ColumnTextures<T> {
   }
 
   get stats() {
-    return { hits: this.hits, misses: this.misses, retained: this.entries.size, retainedBytes: this.bytes,
+    return { hits: this.hits, misses: this.misses, dead: this.dead, retained: this.entries.size, retainedBytes: this.bytes,
       live: this.live.size, liveBytes: [...this.live].reduce((sum, e) => sum + e.bytes, 0),
       leases: [...this.live].reduce((sum, e) => sum + e.refs, 0) };
   }
