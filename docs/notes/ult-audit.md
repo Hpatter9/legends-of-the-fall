@@ -362,6 +362,32 @@ Tyrant, the Shambler, the Reaper, the Illusionist, the Demon Swordsman); `tools/
 All ten read as their ability, and at 0.499 all ten were a ball and a ring in a colour. One pair is alike: the Reaper and Vael.
 Twenty-five of the 48 are judged; twenty-three remain.
 
+### Ten more: hawks for the Falconer, stars for Astrax
+
+`docs/samples/blender-fx/audit-fullsize-6-393.jpg` (the Arc Blade, the Astral Sphinx, Astrax, the Banneret, the Bell Warden) and `-7`
+(the Corsair Surgeon, the Dhampir, the Druid, the Falconer, the Geomancer), 0.499 above and now below.
+
+A fault in the photographs first, not in the game: the Arc Blade, the Astral Sphinx and Astrax kill every foe of the staged fight, so
+their shows were cut short (the killing blow's rule) and the later frames were an empty field. The photographer has a new staging,
+`TOUGH=1`, which gives the foes health enough to live through the cast; those three and the Falconer are photographed with it.
+
+| Hero | 0.499 | Now | Shows the ability? | Mistaken for another? |
+| --- | --- | --- | --- | --- |
+| Arc Blade, Lightning Storm | pale balls, blue rings | a coil of light round him; forked bolts down onto each foe, a ring under each | yes: a storm of bolts | the Lightning Mage's storm is one great cloud and bolt; his is a bolt on each foe |
+| Astral Sphinx, The Last Riddle | purple balls, purple rings | an eye open over a star sigil; an eye and a sigil on each foe | yes: the riddle's eye on each | the Warlock's is sigils too, but with no eye and round himself |
+| Astrax, Heavenfall | yellow balls, a ring, fire | was thin streaks and round yellow lumps on a sigil: the lumps read as nothing. CHANGED: thick bright stars falling in a slant, a burst where they land on the sigil, cracks after | yes, now: stars falling | no |
+| Banneret, Oriflamme | an orange ball and ring | a banner planted in a ring; flames rising round it | yes: the banner; the flames are a lumpy mass | the Peasant's is also a banner (gold, on his friends); hers is on herself, in fire |
+| Bell Warden, Toll | purple balls and rings | a cone under hoops (the bell); hoops rising and spreading; spikes inside the hoops after | mostly: the hoops read as a toll; the cone does not read as a bell and the spikes after mean nothing | no |
+| Corsair Surgeon, Rum Cask | a green ball, a ring | a spout on him; a tall green spout on each friend, rings under them | yes: a spray on each friend; the spouts are crude, tall plain cones | no |
+| Dhampir, Silver Stakes | yellow balls, rings | stakes raining on each foe; crossed stakes standing in rings | yes: stakes | no |
+| Druid, Wall of Thorns | a green ball and rings | vines round him; a row of tall thorns; vines arching over the row | yes: a hedge of thorns | no |
+| Falconer, Sky Hunt | a pale haze | was a great pale beam and three slashes: NO BIRDS. CHANGED: a new scene, `flock`: four hawks wheel round her in the wind-up; six stoop from the sky onto the foes, wings folded, and climb away; the talons' slashes after | yes, now: hawks, in a hawk's own brown and cream | no |
+| Geomancer, Crags | a dust ball | a slab rising; stone pillars standing on tiles in rings; spikes | yes: crags raised | the Juggernaut's spires are in cracks, hers on tiles in rings |
+
+Eight read as they were; two did not and are changed and photographed (Astrax, the Falconer). Still wanting: the Bell Warden's bell
+and her aftermath's spikes, the Banneret's lumpy flames, the Corsair Surgeon's plain cones. Thirty-five of the 48 judged... and of all
+70, thirty-five are now judged at full size in this pass.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in

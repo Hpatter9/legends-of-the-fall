@@ -272,7 +272,7 @@ def nova(c, r=1.5, n=18, h=0.9):
 
 
 # 9. Rain: streaks falling from above onto the ground, each ending in a little splash ring.
-def rain(c, r=1.4, h=3.2, n=14, slant=0.35, w=0.085):
+def rain(c, r=1.4, h=3.2, n=14, slant=0.35, w=0.085, long=1.0):
     m, a, _ = c.streak('bright', 'hot', 1.6, 1.8)
     sm, sv = c.flat('bright', 1.6)
     drops = []
@@ -287,7 +287,7 @@ def rain(c, r=1.4, h=3.2, n=14, slant=0.35, w=0.085):
             g = win(t, lag, lag + 0.22)
             z = h * (1 - g)
             for o in pair:
-                put(o, (x + slant * z, y - slant * z * 0.4, z), (1, 1, 0.9), (0, math.atan(slant), 0))
+                put(o, (x + slant * z, y - slant * z * 0.4, z), (1, 1, 0.9 * long), (0, math.atan(slant), 0))
                 hide(o, g <= 0 or g >= 1)
             s = win(t, lag + 0.2, lag + 0.42)
             put(hoop, (x, y, 0.03), (0.08 + 0.3 * ease(s),) * 2 + (1 - 0.7 * s,))
@@ -1934,8 +1934,84 @@ def banner(c, h=2.3, w=1.2, tails=2):
     return step
 
 
+# 62. Flock: hawks (a body, a head and beak, a fanned tail, two wings that beat). `stoop`: they come down out of the sky from the
+# upper right, wings folded, each onto its own spot, strike in a puff of dust and climb away beating. `circle`: they wheel round
+# overhead, climbing. A hawk's own colours whatever the element, lit plainly (as the wolf is).
+def flock(c, r=1.2, h=2.6, n=5, size=1.0, mode='stoop'):
+    import bpy
+    _plain_lights(c)
+    m, av = c.solid((0.34, 0.22, 0.13), (0.06, 0.04, 0.02), 0.4, 0.85, 0.0)
+    pale, pv = c.solid((0.86, 0.8, 0.68), (0.1, 0.09, 0.07), 0.4, 0.85, 0.0)
+    beak_m, _ = c.flat((1.0, 0.75, 0.2), 1.6)
+    dm, dv = c.flat('bright', 1.3)
+    birds = []
+    for i in range(n):
+        root = bpy.data.objects.new('hawk', None)
+        c.sc.collection.objects.link(root)
+        body, head, beak, tail = c.sphere(1.0, m, 2), c.sphere(1.0, pale, 2), c.cone(1.0, 1.0, beak_m, 4), c.cone(1.0, 1.0, m, 3)
+        wing = [c.sphere(1.0, m if k < 2 else pale, 2) for k in range(4)]
+        for o in (body, head, beak, tail, *wing):
+            o.parent = root
+        put(body, (0, 0, 0), (0.2, 0.075, 0.07))
+        put(head, (0.2, 0, 0.03), 0.06)
+        put(beak, (0.28, 0, 0.02), (0.022, 0.022, 0.07), (0, math.pi / 2, 0))
+        put(tail, (-0.25, 0, 0), (0.1, 0.02, 0.16), (0, -math.pi / 2, 0))
+        ang = TAU * i / n + c.rnd.uniform(-0.3, 0.3)
+        rad = (0.25 + 0.75 * math.sqrt((i + 0.5) / n)) * r
+        puff = c.torus(1.0, 0.1, dm)
+        birds.append((root, wing, puff, ang, rad, i / max(1, n - 1) * 0.3, c.rnd.uniform(0, 1), c.rnd.uniform(0.85, 1.15)))
+    start, away = scr(1.5, 0, h), scr(-1.3, 0, h * 0.8)
+
+    def pose(root, wing, pos, to, flap, fold, k):
+        d = (to[0] - pos[0], to[1] - pos[1], to[2] - pos[2])
+        flat = math.hypot(d[0], d[1])
+        put(root, pos, k, (0, -math.atan2(d[2], max(flat, 1e-4)), math.atan2(d[1], d[0])))
+        span = 0.27 * (1 - 0.55 * fold)
+        for j, o in enumerate(wing):
+            sgn, tip = (1 if j % 2 == 0 else -1), j >= 2
+            f = flap * (1.5 if tip else 1.0)
+            y = (span * 0.5 if not tip else span * 1.35)
+            put(o, (-0.03 - (0.1 * fold if tip else 0) - (0.03 if tip else 0), sgn * y * math.cos(flap), y * math.sin(flap) + 0.02),
+                (0.1 if not tip else 0.07, span * (0.55 if not tip else 0.45), 0.014), (sgn * f, 0, -sgn * 0.5 * fold))
+
+    def step(t):
+        c.tick(t, 1.0)
+        for root, wing, puff, ang, rad, lag, ph, sc in birds:
+            k = size * sc
+            if mode == 'circle':
+                g = win(t, 0, 1)
+                a = ang + TAU * 0.6 * g
+                rr = rad * (0.6 + 0.4 * ease(win(t, 0, 0.3)))
+                z = h * (0.35 + 0.5 * g) * sc
+                pos = (math.cos(a) * rr, math.sin(a) * rr, z)
+                to = (pos[0] - math.sin(a), pos[1] + math.cos(a), z + 0.25)
+                pose(root, wing, pos, to, 0.55 * math.sin(TAU * (t * 4 + ph)), 0.0, k * env(t, 0.12, 0.85))
+                hide(puff, True)
+                continue
+            tx, ty = math.cos(ang) * rad, math.sin(ang) * rad
+            hit = lag + 0.36
+            g, o = win(t, lag, hit), win(t, hit, hit + 0.34)
+            if o <= 0:
+                e = g * g
+                pos = (tx + start[0] * (1 - e), ty + start[1] * (1 - e), 0.35 * size + start[2] * (1 - e))
+                pose(root, wing, pos, (tx, ty, 0.2 * size), -0.2, 1.0, k)
+            else:
+                e = ease(o)
+                pos = (tx + away[0] * e, ty + away[1] * e, 0.35 * size + away[2] * e)
+                pose(root, wing, pos, (tx + away[0], ty + away[1], away[2] + 0.6), 0.7 * math.sin(TAU * (o * 3 + ph)), 0.0, k * (1 - 0.6 * win(o, 0.7, 1)))
+            for part in (root, *root.children):
+                hide(part, g <= 0 or o >= 1)
+            q = win(t, hit - 0.02, hit + 0.3)
+            put(puff, (tx, ty, 0.04), (0.1 + 0.42 * size * ease(q),) * 2 + (1 - 0.8 * q,))
+            hide(puff, q <= 0 or q >= 1)
+        av.outputs[0].default_value = 1
+        pv.outputs[0].default_value = 1
+        dv.outputs[0].default_value = 1.0
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock,
 )}
