@@ -53,7 +53,7 @@ test('the staged sheets are in the game with the frames they say, fit a phone te
 });
 
 test('the sheets are credited and kept for offline play', () => {
-  assert.match(readFileSync('CREDITS.md', 'utf8'), /askel-stage-/);
+  for (const id of Object.keys(STAGED)) assert.match(readFileSync('CREDITS.md', 'utf8'), new RegExp(`${id}-stage-`), id);
   assert.match(readFileSync('build.mjs', 'utf8'), /EIDOLON_ART_FILES\.push\(`eidolons\/fx\/\$\{f\}`\)/);
 });
 
@@ -212,4 +212,18 @@ test('the blow is wider than the screen and hits harder than the painted one; tw
   for (const d of DETONATIONS) assert.ok(d.mul < 1 && d.mul > 0.5);
   assert.equal(SMOKE_SPOTS[0], 0);
   assert.ok(SMOKE_SPOTS.length >= stageBudget(false, false).smokes);
+});
+
+test('every staged Eidolon has its own sheets, the same places in the call, and comes on from the side its painting does', () => {
+  for (const [id, l] of Object.entries(STAGED)) {
+    for (const s of [l.sigil, l.pillar, l.explosion, l.cracks, l.fire, l.scorch, l.smoke, l.embers]) assert.ok(s.sheet.startsWith(`${id}-stage-`), s.sheet);
+    assert.equal(l.sigil.draw + l.sigil.glow + l.sigil.cool, l.sigil.n, id);
+    assert.ok(l.cracks.open > 0 && l.cracks.open < l.cracks.n && l.scorch.hot > 0 && l.scorch.hot < l.scorch.n, id);
+    // (the sigil lies where the painting comes on: the side its pass starts from)
+    assert.equal(l.from, PASS[id].path[0][0] < 0.5 ? 'left' : 'right', id);
+    const m = fullOf(id);
+    assert.ok(pillarAt(m) + pillarMs(l, m) <= m.EXIT, `${id}: the pillar is done before the painting has left`);
+    assert.ok(l.explosion.ms <= m.RESUME - m.STRIKE + 900, `${id}: the blow is over soon after the fight runs again`);
+    for (let t = 0; t < sigilEnd(m); t += 50) assert.ok(sigilFrame(l, m, t), `${id} ${t}`);
+  }
 });

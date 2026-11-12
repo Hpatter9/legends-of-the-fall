@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.506.0',
+    date: '2026-11-12',
+    title: 'Nivra\'s call, remade in ice',
+    notes: ['The Rime Wyrm\'s call is rebuilt: a rune freezes onto the ground, ice spires burst up, a freezing front races under the foes, then a wall of ice.', 'Every spire shatters at once, leaving mist, falling snow and sheets of ice that melt back under the fight.'],
+  },
+  {
     version: '0.505.0',
     date: '2026-11-11',
     title: 'The camera follows the effect',

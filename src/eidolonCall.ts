@@ -1270,6 +1270,13 @@ export class EidolonCall {
     run.plan = wavePlan(foes, (u, v) => this.opts.tile(u, v), mouth, stageBudget(settings().saver, !p.m.BARS));
     const span = Math.max(0, left - 170);
     // (the farther tiles first, so a nearer tile's fire stands in front of a farther one's)
+    // (a longer call: the ground under the foes breaks once already, ahead of the blow)
+    if (look.front && run.plan.length && !this.reduced) {
+      const mid = this.foeMid();
+      const near = run.plan.reduce((a, t) => (Math.hypot(t.x - mid.x, (t.y - mid.y) * 2) < Math.hypot(a.x - mid.x, (a.y - mid.y) * 2) ? t : a));
+      this.layCracks(run, near.u, near.v);
+      if (settings().shake) this.opts.fx?.rumble(0.35);
+    }
     for (const t of [...run.plan].sort((a, c) => a.y - c.y)) {
       const delay = (t.delay / WAVE_MS) * span;
       const odd = (t.u * 7 + t.v * 13) % 2 === 1;
