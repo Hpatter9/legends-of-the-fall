@@ -160,6 +160,18 @@ the rendered loops instead: every element has one, a tile's worth, the lights wi
 loader are gone; the loop's strength on open ground and under a fighter. This is the owner's decision changing a requirement,
 not a test loosened. `tools/fx-alive/cut.py` (which cut the painted sheet) is kept for the record; its output is no longer used.
 
+## The ultimates, round 5: the cap lifted
+
+The director lifted the 3 MB cap of round 4 (the built game is about 264 MB; 6 MB of effect atlases is nothing; keep the memory
+low, which the on-demand loading does). So bytes went back where they buy force:
+
+- An ultimate's sheet keeps fourteen colours again (nine left the blow's core a flat dome; fourteen give it its shading back),
+  still cut hard with a dark edge. A strike keeps 13 frames, a wind-up 12, an aftermath 9.
+- The blades are wider with the strike's size (`wide` on the arc, the cross and the claws), so a single blow is one hard, bright
+  cut across the target with the impact on it, not a thin line beside a great core.
+- The atlases are 5,538,276 bytes in all (57 pixel atlases in their groups, loaded as a fight needs them). The test now only
+  catches a runaway (under 9 MB).
+
 ## The ultimates, round 4: above the dim, hard edges, three megabytes
 
 The director's review of round 2's pictures (the strike a pale glow under the dim, about three tiles; too many bytes), applied on

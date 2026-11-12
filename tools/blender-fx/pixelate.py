@@ -12,8 +12,8 @@ from PIL import Image, ImageFilter
 from lib import SUPER
 
 COLOURS = 14
-# An ultimate's sheet (hard cut, dark edge) keeps fewer.
-EDGED_COLOURS = 9
+# An ultimate's sheet (hard cut, dark edge) keeps as many: its core is a large shape, and fewer colours left it a flat dome.
+EDGED_COLOURS = 14
 # The glow is kept at a quarter of the pixels' size: the game stretches it smoothly, which is what makes it soft.
 GLOW_SHRINK = 4
 # Alpha below LO is dropped and above HI is solid; between, the fixed 4x4 pattern decides (a dither, not a blur).
@@ -103,7 +103,6 @@ def pixelate(raw, spec):
     keep = range(first, n) if take == n - first else [first + round(i * (n - 1 - first) / (take - 1)) for i in range(take)]
     pms = [load(os.path.join(src, f'{i:02d}.png')) for i in keep]
     hard = [harden(pm, dither=not spec.get('edge')) for pm in pms]
-    # (an ultimate's sheet is large, so it is cut to fewer colours: flatter shapes, which is also what reads against a dark field)
     pal = shared_palette(hard, EDGED_COLOURS if spec.get('edge') else COLOURS)
     frames = [to_palette(rgb, mask, pal) for rgb, mask in hard]
     if spec.get('edge'):

@@ -299,7 +299,7 @@ test('a hero whose turn has come has its own wind-up and aftermath, like no othe
     }
     // (each stage has the frames for its length)
     // (the strike keeps the most frames; the wind-up and the aftermath fewer, played slower: the download's limit)
-    assert.ok(strike.n >= 11 && wind.n >= 9 && after.n >= 7 && strike.n > wind.n && wind.n > after.n, `${kind}: ${wind.n}, ${strike.n}, ${after.n} frames`);
+    assert.ok(strike.n >= 13 && wind.n >= 12 && after.n >= 9 && strike.n > wind.n && wind.n > after.n, `${kind}: ${wind.n}, ${strike.n}, ${after.n} frames`);
     // (the wind-up builds: more than one scene, the hero's own part joining the weight's)
     assert.ok(wind.sc!.length >= 2 && after.sc!.length === 2, kind);
     // (each is made for its stage's own length)
@@ -331,13 +331,14 @@ test('the atlases are held only when needed: a core set up front, each pair of h
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /void warmBfx\(/, 'a fight warms its heroes\' ultimates');
 });
 
-test('the ultimates stay within their download: about 3 MB of atlases for all 70, and the dim is lifted over a playing sheet', () => {
+test('the atlases stay sane in size (the cap on the ultimates was lifted), and the dim is lifted over a playing sheet', () => {
   const dir = 'src/art/fx/blender';
   const core = new Set(BFX_CORE);
   const ult = BFX_PX.map((_, i) => i).filter((i) => !core.has(i)).reduce((n, i) => n + statSync(`${dir}/px-${i}.webp`).size, 0);
-  assert.ok(ult < 3_100_000, `the ultimates' pixel atlases are ${ult} bytes`);
+  // (the director lifted the 3 MB cap on the ultimates: bytes go where they buy force; this only catches a runaway)
+  assert.ok(ult < 8_000_000, `the ultimates' pixel atlases are ${ult} bytes`);
   const all = readdirSync(dir).reduce((n, f) => n + statSync(`${dir}/${f}`).size, 0);
-  assert.ok(all < 4_000_000, `all the atlases are ${all} bytes`);
+  assert.ok(all < 9_000_000, `all the atlases are ${all} bytes`);
   // (a wind-up and a strike play on the board, under the moment's dim: the dim leaves them lit, so they are seen at full strength)
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /if \(stage !== 'aftermath'\) this\.bfxLit\.push\(/);
   assert.match(readFileSync('src/ultMoment.ts', 'utf8'), /for \(const l of this\.opts\.fx\?\.momentLights\(\) \?\? \[\]\)/);

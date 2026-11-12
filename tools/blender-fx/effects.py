@@ -159,10 +159,10 @@ fx('zone-fire', 'tile', 'fire', 1.3, 2.0, 0.8, frames=10, ms=800, loop=True, see
 
 # A scene at an ultimate's size: its options, how far it reaches on the ground and how tall it stands.
 BIG = dict(
-    arc=(dict(r=1.5, z=1.0, sparks=18), 2.5, 2.8), shockwave=(dict(r=1.9, forks=8), 2.1, 0.6), rain=(dict(r=1.6, h=3.4, n=22), 2.4, 4.0),
+    arc=(dict(r=1.5, z=1.0, sparks=18, wide=0.6), 2.5, 2.8), shockwave=(dict(r=1.9, forks=8), 2.1, 0.6), rain=(dict(r=1.6, h=3.4, n=22), 2.4, 4.0),
     burst=(dict(r=1.5, h=1.4, embers=26), 3.2, 3.4), halo=(dict(r=0.8, h=2.8, rays=9), 1.9, 3.3), dome=(dict(r=1.6), 1.8, 1.9),
     vines=(dict(r=1.5, h=1.7, n=8), 1.8, 2.3), sigil=(dict(r=1.7, points=7, skip=3, motes=14), 1.9, 1.5), spiral=(dict(r=0.9, h=2.4, bands=3), 1.6, 2.8),
-    cross=(dict(r=1.9, z=1.5), 2.6, 3.9), smoke=(dict(r=1.15, h=1.6, puffs=8), 2.2, 2.7), claws=(dict(r=1.9, z=1.5), 2.6, 4.0),
+    cross=(dict(r=1.9, z=1.5, wide=0.34), 2.6, 3.9), smoke=(dict(r=1.15, h=1.6, puffs=8), 2.2, 2.7), claws=(dict(r=1.9, z=1.5, wide=0.26), 2.6, 4.0),
     sparks=(dict(r=1.8, n=14, z=0.9), 2.8, 3.0), bolt=(dict(h=3.6, r=1.6, forks=3), 2.3, 4.1), trail=(dict(length=3.6, w=0.5), 3.4, 1.2),
     gust=(dict(r=1.7, n=5, turn=1.5708), 3.2, 3.0), crack=(dict(r=2.2, arms=7, rubble=18), 2.6, 1.4), chains=(dict(r=1.4, n=5, links=10, h=1.8), 1.7, 2.3),
     ring=(dict(r=1.8, n=4, thick=0.07), 2.0, 0.5), flare=(dict(r=0.9, h=2.2, tongues=8), 2.0, 3.6), nova=(dict(r=1.7, n=22, h=1.1), 2.2, 1.6),
@@ -231,9 +231,9 @@ def ult_weight(kind):
 # longer: the ultimates are done about fifteen at a time. The rest keep a wind-up shared by weight and element and an
 # aftermath shared by element until their turn.
 ULT_OWN = 15
-# Frames a stage keeps of those rendered: the strike nearly all of them; the wind-up and the aftermath fewer, played slower, which holds
-# the download down (the director's limit: about 3 MB for all the ultimates).
-WIND_FRAMES, STRIKE_FRAMES, AFTER_FRAMES = 9, 11, 7
+# Frames a stage keeps of those rendered: the strike every one after its opening; the wind-up and the aftermath a few fewer, played
+# slower. (The director first set a limit of about 3 MB for the ultimates, then lifted it: bytes are spent where they buy force.)
+WIND_FRAMES, STRIKE_FRAMES, AFTER_FRAMES = 12, 13, 9
 # A stage's length by weight (ms: `WEIGHTS` in ultStageRules.ts), which sets how many frames it is given.
 STAGE_MS = dict(blow=(1600, 1500), flurry=(1700, 1600), wave=(1900, 1700), storm=(2000, 1800), summon=(2200, 2100))
 # What else may gather with a weight's own wind-up, and what an aftermath may be made of: a hero takes the first pair no
@@ -257,7 +257,7 @@ OWN = dict(
     barbarian=('shout', 'crack', 'motes'),     # his roar; the cracked ground and blood-red motes
     ninjaMonk=('veil', 'ring', 'swarm'),       # a blur round him; rings of wind and leaves
 )
-SIZED = ('r', 'h', 'z', 'length', 'w')
+SIZED = ('r', 'h', 'z', 'length', 'w', 'wide')
 
 
 def grow(opt, k):
