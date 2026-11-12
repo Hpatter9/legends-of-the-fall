@@ -1668,12 +1668,35 @@ def spirits(c, r=1.2, n=4, tall=1.1, mode='circle', turns=0.5, hoop=True):
     return step
 
 
+def _plain_lights(c):
+    """Plain light for a thing that keeps its own colours whatever the element (a grey wolf): a white sun, a warm white rim and a grey
+    sky, in place of the element's coloured rim and sky (`Ctx.lights`), which turned grey fur the element's green."""
+    import bpy
+    if c._lit:
+        return
+    c._lit = True
+    for name, energy, colour, rot in (('sun', 4.5, (1, 1, 1), (50, 0, -30)), ('rim', 2.4, (1.0, 0.96, 0.9), (70, 0, 150))):
+        li = bpy.data.lights.new(name, 'SUN')
+        li.energy = energy
+        li.color = colour
+        o = bpy.data.objects.new(name, li)
+        o.rotation_euler = tuple(math.radians(a) for a in rot)
+        c.sc.collection.objects.link(o)
+    world = c.sc.world
+    world.use_nodes = True
+    bg = world.node_tree.nodes.get('Background') or world.node_tree.nodes.new('ShaderNodeBackground')
+    bg.inputs[0].default_value = (0.42, 0.42, 0.46, 1)
+    bg.inputs[1].default_value = 0.7
+
+
 # 56. Beast: a wolf's shape (a long body, a head and snout, two ears, four legs, a tail) bursting out of a puff of smoke in a leap,
 # across the camera's view, and landing. What is summoned, arriving.
 def beast(c, size=1.0, puffs=3):
     # (a wolf's own colours, whatever the element: grey fur, an amber eye; the smoke it bursts from and the ring it lands in are the
     # element's, the magic that called it)
-    m, av = c.solid((0.36, 0.37, 0.42), (0.1, 0.1, 0.12), 0.5, 0.75, 0.0)
+    # (lit plainly: the element's green rim light and sky turned its grey fur green)
+    _plain_lights(c)
+    m, av = c.solid((0.3, 0.29, 0.31), (0.08, 0.075, 0.08), 0.5, 0.8, 0.0)
     eye_m, _ = c.flat((1.0, 0.72, 0.18), 2.6)
     body = c.sphere(1.0, m, 2)
     chest = c.sphere(1.0, m, 2)
@@ -1733,8 +1756,9 @@ def beast(c, size=1.0, puffs=3):
 def eyes(c, r=1.3, n=5, size=1.0):
     # (wolves' heads lifting out of the dark one after another: a dark grey head with two pricked ears and a snout, and two amber eyes
     # side by side that open, watch and blink. Animals, plainly, and plainly pairs of eyes)
-    em, ev = c.flat((1.0, 0.62, 0.12), 1.5)
-    fm, fa = c.solid((0.16, 0.17, 0.2), (0.05, 0.05, 0.06), 0.4, 0.85, 0.0)
+    em, ev = c.flat((1.0, 0.55, 0.05), 1.6)
+    _plain_lights(c)
+    fm, fa = c.solid((0.2, 0.19, 0.2), (0.05, 0.045, 0.05), 0.4, 0.85, 0.0)
     shade, sa = c.disc('deep', 0.9, r * 1.2, noise=3)
     heads = []
     for k in range(n):
@@ -1764,7 +1788,7 @@ def eyes(c, r=1.3, n=5, size=1.0):
                 put(e, (x + RIGHT[0] * side * 0.11 * g * k, y + RIGHT[1] * side * 0.11 * g * k, z + 0.2 * g * k), (0.06 * g * k + 0.001, 0.06 * g * k + 0.001, 0.2 * g * k + 0.001), (0, side * 0.25, 0))
             opened = win(t, lag + 0.2, lag + 0.28) * (0.12 if abs(t - blink) < 0.03 else 1.0)
             for side, e in zip((-1, 1), pair):
-                put(e, (x + (TOWARDS[0] * 0.17 + RIGHT[0] * side * 0.085) * k, y + (TOWARDS[1] * 0.17 + RIGHT[1] * side * 0.085) * k, z + (0.04 + TOWARDS[2] * 0.17) * k), (0.045 * k, 0.045 * k, 0.04 * opened * k + 0.001))
+                put(e, (x + (TOWARDS[0] * 0.17 + RIGHT[0] * side * 0.085) * k, y + (TOWARDS[1] * 0.17 + RIGHT[1] * side * 0.085) * k, z + (0.04 + TOWARDS[2] * 0.17) * k), (0.06 * k, 0.06 * k, 0.05 * opened * k + 0.001))
                 hide(e, opened <= 0.01 or gone >= 1)
             for o in (head, neck, snout, *ears):
                 hide(o, g <= 0.01 or gone >= 1)
