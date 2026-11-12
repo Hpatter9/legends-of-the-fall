@@ -2,7 +2,7 @@
 
 The owner, after the trial below: **the hybrid**. Each Eidolon keeps its painting for the figure, its name stamp and its line; Blender
 stages everything round it (the sigil, the pillar, the strike across the ground, the scorch, the aftermath). Askel the Cinderhound is
-the first; the other five follow in his style and to his bar, one push each: Nivra, Gorm, Voltara and Aurelan (done, below), Vaelkhar.
+the first; the other five follow in his style and to his bar, one push each: Nivra, Gorm, Voltara, Aurelan and Vaelkhar. All six are done; each has its own section below.
 Each has its own element's show, not Askel's recoloured, in the same places in the call (`STAGED` in `src/eidolonStage.ts`).
 
 ## For the camera: where each show is
@@ -10,7 +10,7 @@ Each has its own element's show, not Askel's recoloured, in the same places in t
 All in the board's own pixels (a sheet pixel is 1.414 of them), the same for every staged Eidolon unless its section says otherwise:
 
 - **The summoning** is at the sigil's tile: the board tile nearest the point 30% (a painting that comes from the left: Nivra, Gorm, Voltara, Aurelan) or 70%
-  (from the right: Askel) across the screen on the foes' ground line, kept between 24% and 76% across (`sigilSpot`). The sigil is
+  (from the right: Askel, Vaelkhar) across the screen on the foes' ground line, kept between 24% and 76% across (`sigilSpot`). The sigil is
   226 x 136 about that tile; the pillar stands on it, 204 wide and 498 tall (452 above the tile, 46 below); the painting comes out of
   it and leaves by its usual way.
 - **The strike's centre** is the foes' middle: the mean of the living foes' tiles' ground points as the blow lands
@@ -144,6 +144,40 @@ curtain in front carry what detail there is. The sun racing out on the ground is
 **Samples**: `aurelan-game-393.webp`, `-360`, `-412`, their `-strip.webp`, `aurelan-game-before-after.webp`,
 `aurelan-game-short-strip.webp`, `aurelan-game-reduced-strip.webp`. Re-render: `aurelan_parts.py <parts>` then `ID=aurelan
 parts_finish.py <parts>`; the captures with `--picks aurelan` and `END=9400`, and `ID=aurelan SPAN=1.48` for `cast_samples.py`.
+
+## Vaelkhar in the game (shadow)
+
+His kit: the Crown of Night strikes every foe, strips the shields and boons from bosses and elites, and lets the heroes drain what
+they deal, so where the others throw light out, his show takes it in. `vaelkhar_parts.py` renders black fire with a violet edge (its
+core is the dark, its rim the light), tears in the air and the ground, and a maw that ends the blow by pulling everything back into
+itself. His call is **9.8 s** (`EIDOLON_MS`, unchanged), the longest, with both extra beats.
+
+| Stage | Main's, kept | Blender's |
+|---|---|---|
+| The horn (0 to 0.91 s) | the horn blown, the dim | his **crown of horns and slit eye** is cut in violet on the ground, black flames standing along it |
+| The pass (0.91 to 4.12 s) | the painted dragon diving in and sweeping over the field, his name, title and line | **a tear in the air** twelve tiles tall rips upward, opens to a black lens with violet fire along its lips, shadow pouring from its foot and the ground torn under it, motes drawn in; he comes out of it; it snaps shut |
+| The sprite and the build-up (4.12 to 6.52 s) | the dragon comes down and pours his torrent | **the rift** tears across the ground under the foes (jagged tears with a violet ring, left lying black: extra beat one), then **black tongues** catch tile by tile; the field darkens hard |
+| The strike (6.52 s, with the 0.33 s freeze) | the hit-stop, the snap zoom, the painted black fire round each foe, the void and the maw, the pouring streams | a hard flash; **a maw opens** on the foes' middle, violet fire thrown from its rim, in the frozen frame; **two wings of dark sweep up and out across the foes' whole side**, the leading fingers first, behind the painted fire, and stand; a second and third maw to either side; a harder shake |
+| The aftermath (8.27 s on) | the painted violet fire left burning, the wash | **the maw drains** (the blow's own ending): the fire on its rim bends inward, streaks of violet are pulled in from everywhere, the wings are dragged back into it and it closes on a last violet spark; then **the aftershock** (extra beat two): black tongues flare once more across the foes' ground with a new tear; dark smoke climbs; violet motes are drawn upward; blight is left on the tiles |
+
+**Bytes: 376,678** for his ten files (the explosion 198,168 and its glow 14,408; the pillar 98,980 and its glow 1,642; the sigil
+22,486; the rift 16,126; the tile tongues 10,894; the rest under 9 KB each). His glow sheets are small because little of him is
+bright. His tear ships 14 of its 16 frames.
+
+**Three passes against main** (`vaelkhar-game-before-after.webp`). One: wired in; the wings were low and spread flat, and all of
+it one mid-violet. Two: wings taller and more upright, the fire's colours shifted so most of it is black and only the thin edge
+violet. Three: a little violet given back to the wings' rims so they do not go dull against a dark field. Bigger than main from the
+tear on.
+
+**Honestly.** Dark on a darkened field is the hardest thing to make hit: his blow is the biggest shape of the six but the least
+bright, and it leans on the page's flash and shake for its impact. The wings are fans of long cones and read as spines or a crown
+as much as wings. The white flash is the same as the others' (main gave him none): if the owner wants his blow to stay dark, that
+is one number (`BLOW_FEEL.flash`, which would need to become per Eidolon). The drain, the maw closing on a spark, is his best beat
+and the one thing no other Eidolon has.
+
+**Samples**: `vaelkhar-game-393.webp`, `-360`, `-412`, their `-strip.webp`, `vaelkhar-game-before-after.webp`,
+`vaelkhar-game-short-strip.webp`, `vaelkhar-game-reduced-strip.webp`. Re-render: `vaelkhar_parts.py <parts>` then `ID=vaelkhar
+parts_finish.py <parts>`; the captures with `--picks vaelkhar` and `END=11500`, and `ID=vaelkhar SPAN=1.96` for `cast_samples.py`.
 
 ## Askel in the game
 
