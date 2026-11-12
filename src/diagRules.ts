@@ -60,5 +60,28 @@ export function stopLine(s: DiagStop): string {
   return `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}  ${(s.ms / 1000).toFixed(1)} s  ${s.phase}  ${s.doing}${s.v ? ` (${s.v})` : ''}`;
 }
 
+/** Where the game is running, for the top of the log: the installed app or a browser, the browser's own name for itself, the device's
+ *  memory as it tells it, the page's JS heap, the screen. Anything a browser does not tell is left out. */
+export interface DiagEnv {
+  v: string;
+  app: boolean;
+  agent: string;
+  memoryGB?: number;
+  heapMB?: number;
+  heapLimitMB?: number;
+  screen: string;
+  cores?: number;
+}
+
+/** The log's heading: two or three plain lines. */
+export function diagHead(e: DiagEnv): string {
+  const parts = [
+    `Version ${e.v} · ${e.app ? 'the installed app' : 'a browser'}`,
+    e.agent,
+    [e.memoryGB !== undefined ? `device memory ${e.memoryGB} GB` : '', e.cores !== undefined ? `${e.cores} cores` : '', e.heapMB !== undefined ? `heap ${e.heapMB}${e.heapLimitMB !== undefined ? ` of ${e.heapLimitMB}` : ''} MB` : '', `screen ${e.screen}`].filter(Boolean).join(' · '),
+  ];
+  return parts.filter(Boolean).join('\n');
+}
+
 /** The whole log as text, newest first, for the page and its Copy button. */
 export const diagText = (log: readonly DiagStop[]): string => (log.length ? [...log].reverse().map(stopLine).join('\n') : 'No stop of half a second or more has been seen.');
