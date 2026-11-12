@@ -677,6 +677,12 @@ director passed; they are small, and are not changed here.)
   so the wings are not lost among them. In the photograph: wide gold rings over the allies with a fan of feathers above them.
   A painted figure has its prompt in `docs/notes/ilyra-art-prompts.md`.
 
+`docs/samples/blender-fx/audit-later-4-393.jpg` (the Bell Warden above, the Kunoichi below; four moments early in the strike, taken
+after the push): the Bell Warden's strike does show at the right moment, purple hoops on the ground with the cracks standing up
+through them; my "one small hoop" was a frame too early. The Kunoichi's row shows her cut, the smoke where she stood, and three
+cuts over rings on the foes; those rings are her strike's own and are still large. Her smaller marks come after and are still
+not in a frame.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
