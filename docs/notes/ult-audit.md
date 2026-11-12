@@ -341,6 +341,53 @@ Kunoichi, the Mercenary, the Gunslinger). Thirty-three heroes remain to be looke
   fire that visibly runs out from her mouth.
 - **Hundred-Hand Strike (the Ninja Monk)**: photographed again, and again another fighter's fire lies over the frame. NOT CONFIRMED.
 
+### The next ten, 0.499 above and now below
+
+`docs/samples/blender-fx/audit-fullsize-4-393.jpg` (the Ranger, the Paladin, Yamabushi, the Juggernaut, the Warlock) and `-5` (the
+Tyrant, the Shambler, the Reaper, the Illusionist, the Demon Swordsman); `tools/blender-fx/full_pass_two.py`.
+
+| Hero | 0.499 | Now | Shows the ability? | Mistaken for another? |
+| --- | --- | --- | --- | --- |
+| Ranger, Entangle | three green balls, then a green ring | vines whipping up round her; vines standing on each foe; a vine dome in a ring on each | yes: a net of vines on every foe | Orrun's vine domes are on allies, hers on foes: alike in shape, different in where |
+| Paladin, Holy Nova | a gold ball, then a gold ring | a pillar of light on him; a ring of gold tongues bursting out round him with a strike from above | yes: a nova from where he kneels | no |
+| Yamabushi, Tempest | two pale balls, then pale rings | a great funnel of wind round him, growing, then breaking into gusts | yes: a gale | the Wizard's wind-up was this funnel until batch 11; now only his |
+| Juggernaut, Fissure | a pale dust ball and ring | a slab under his foot; cracks running out across the ground; rock spires standing in them | yes: the ground splitting, spires rising; the cracks are thin and pale | no |
+| Warlock, Circle of Death | three purple balls, purple rings | an orb over a sigil; sigil circles spreading round him and under the foes | yes: a circle of death | Astral Sphinx and Vael also leave sigils; his are the only ones that are the whole effect |
+| Tyrant, Reign of Terror | two purple balls, purple rings | red spikes and climbing rings round him; rings and spikes bursting out | yes: terror going out from him | no |
+| Shambler, Plague Tide | a green ball, a green ring | a fume where he sinks; cracks; a spout of rot bursting up out of them | yes: bursting out of the grave-earth | no |
+| Reaper, Harvest of Souls | a purple ball, purple rings | wisps round him; a great crescent sweep; rings after | yes: a scythe's sweep | YES: Vael's strike is also a great purple crescent. One of the two wants changing (Vael's should be gold, by his own words) |
+| Illusionist, Hall of Mirrors | a purple ball, a purple ring | upright panes of light standing in a row, then a portal | yes: mirrors | no |
+| Demon Swordsman, Metamorphosis | a red ball, a red ring | a mass of flame on him; a ring of chain round him with a flare and a spiral | yes: chains, and a change on him | no |
+
+All ten read as their ability, and at 0.499 all ten were a ball and a ring in a colour. One pair is alike: the Reaper and Vael.
+Twenty-five of the 48 are judged; twenty-three remain.
+
+### Ten more: hawks for the Falconer, stars for Astrax
+
+`docs/samples/blender-fx/audit-fullsize-6-393.jpg` (the Arc Blade, the Astral Sphinx, Astrax, the Banneret, the Bell Warden) and `-7`
+(the Corsair Surgeon, the Dhampir, the Druid, the Falconer, the Geomancer), 0.499 above and now below.
+
+A fault in the photographs first, not in the game: the Arc Blade, the Astral Sphinx and Astrax kill every foe of the staged fight, so
+their shows were cut short (the killing blow's rule) and the later frames were an empty field. The photographer has a new staging,
+`TOUGH=1`, which gives the foes health enough to live through the cast; those three and the Falconer are photographed with it.
+
+| Hero | 0.499 | Now | Shows the ability? | Mistaken for another? |
+| --- | --- | --- | --- | --- |
+| Arc Blade, Lightning Storm | pale balls, blue rings | a coil of light round him; forked bolts down onto each foe, a ring under each | yes: a storm of bolts | the Lightning Mage's storm is one great cloud and bolt; his is a bolt on each foe |
+| Astral Sphinx, The Last Riddle | purple balls, purple rings | an eye open over a star sigil; an eye and a sigil on each foe | yes: the riddle's eye on each | the Warlock's is sigils too, but with no eye and round himself |
+| Astrax, Heavenfall | yellow balls, a ring, fire | was thin streaks and round yellow lumps on a sigil: the lumps read as nothing. CHANGED: thick bright stars falling in a slant, a burst where they land on the sigil, cracks after | yes, now: stars falling | no |
+| Banneret, Oriflamme | an orange ball and ring | a banner planted in a ring; flames rising round it | yes: the banner; the flames are a lumpy mass | the Peasant's is also a banner (gold, on his friends); hers is on herself, in fire |
+| Bell Warden, Toll | purple balls and rings | a cone under hoops (the bell); hoops rising and spreading; spikes inside the hoops after | mostly: the hoops read as a toll; the cone does not read as a bell and the spikes after mean nothing | no |
+| Corsair Surgeon, Rum Cask | a green ball, a ring | a spout on him; a tall green spout on each friend, rings under them | yes: a spray on each friend; the spouts are crude, tall plain cones | no |
+| Dhampir, Silver Stakes | yellow balls, rings | stakes raining on each foe; crossed stakes standing in rings | yes: stakes | no |
+| Druid, Wall of Thorns | a green ball and rings | vines round him; a row of tall thorns; vines arching over the row | yes: a hedge of thorns | no |
+| Falconer, Sky Hunt | a pale haze | was a great pale beam and three slashes: NO BIRDS. CHANGED: a new scene, `flock`: four hawks wheel round her in the wind-up; six stoop from the sky onto the foes, wings folded, and climb away; the talons' slashes after | yes, now: hawks, in a hawk's own brown and cream | no |
+| Geomancer, Crags | a dust ball | a slab rising; stone pillars standing on tiles in rings; spikes | yes: crags raised | the Juggernaut's spires are in cracks, hers on tiles in rings |
+
+Eight read as they were; two did not and are changed and photographed (Astrax, the Falconer). Still wanting: the Bell Warden's bell
+and her aftermath's spikes, the Banneret's lumpy flames, the Corsair Surgeon's plain cones. Thirty-five heroes are
+now judged at full size in this pass.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
