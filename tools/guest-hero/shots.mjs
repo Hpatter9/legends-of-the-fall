@@ -102,7 +102,7 @@ for (const [w, h] of SIZES) {
   // (a lost wave with no heart left: the run ends, and the guest's farewell is on the last card)
   await page.evaluate(() => {
     const g = window.__game;
-    g.run.retries = 2;
+    g.run.retries = 2; if (window.__game.b.lives) window.__game.b.lives.left = 0;
     g.setSpeed(3);
     g.begin();
     // (the heroes all fall as the fight begins, so it is lost)

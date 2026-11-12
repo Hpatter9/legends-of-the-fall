@@ -1,4 +1,4 @@
-// "How to come back stronger": after a real defeat (no heart left to burn), a few short pointers drawn from the save itself,
+// "How to come back stronger": after a real defeat (no life left), a few short pointers drawn from the save itself,
 // each with a way to the screen that does it. The town's voice, but brief: what is wrong, and what to tap. At most four, the
 // most useful first; never fewer than two (the plain advice fills in when the save has nothing else to say).
 //

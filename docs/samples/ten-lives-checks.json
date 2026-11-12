@@ -1,0 +1,813 @@
+[
+ {
+  "w": 393,
+  "h": 852,
+  "checks": [
+   {
+    "name": "hud",
+    "lives": {
+     "text": "10",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "start",
+    "phase": "fight",
+    "lives": {
+     "left": 10,
+     "spent": 0,
+     "falls": 0,
+     "rose": []
+    },
+    "runLives": 0,
+    "falls": 0,
+    "gold": 500,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "down",
+    "lives": {
+     "text": "10",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "down",
+    "row": [
+     "2"
+    ]
+   },
+   {
+    "name": "risen",
+    "lives": {
+     "text": "9",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "risen",
+    "phase": "fight",
+    "lives": {
+     "left": 9,
+     "spent": 1,
+     "falls": 0,
+     "rose": [
+      4
+     ],
+     "noted": {
+      "spent": 1,
+      "falls": 0,
+      "rose": 1
+     }
+    },
+    "runLives": 1,
+    "falls": 0,
+    "gold": 500,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "all-down",
+    "lives": {
+     "text": "4",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "all-down",
+    "phase": "fight",
+    "lives": {
+     "left": 4,
+     "spent": 6,
+     "falls": 1,
+     "rose": [
+      4,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "noted": {
+      "spent": 6,
+      "falls": 1,
+      "rose": 6
+     }
+    },
+    "runLives": 6,
+    "falls": 1,
+    "gold": 530,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "card",
+    "lives": {
+     "text": "4",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "card",
+    "notes": [
+     "Level up: Kwame Lv 100, Kenji Lv 100, Ravi Lv 100, Natsu Lv 100, Selam Lv 100",
+     "Ultimate unlocked: Kwame, Kenji, Ravi, Natsu, Selam",
+     "6 lives spent · 4 left"
+    ]
+   },
+   {
+    "name": "deploy",
+    "lives": {
+     "text": "4",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "revive-through-ultimate",
+    "fired": {
+     "order": true,
+     "t": 4400,
+     "full": false
+    },
+    "show": {
+     "show": 21,
+     "roseAt": 5100,
+     "heldAt": [
+      6700,
+      6700
+     ]
+    },
+    "ults": 1,
+    "phase": "fight",
+    "lives": {
+     "left": 3,
+     "spent": 1,
+     "falls": 0,
+     "rose": [
+      4
+     ],
+     "noted": {
+      "spent": 1,
+      "falls": 0,
+      "rose": 1
+     }
+    },
+    "runLives": 7,
+    "falls": 1,
+    "gold": 571,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "none-left",
+    "lives": {
+     "text": "0",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "none-left",
+    "rows": 0,
+    "phase": "fight",
+    "lives": {
+     "left": 0,
+     "spent": 4,
+     "falls": 0,
+     "rose": [
+      4,
+      1,
+      2,
+      3
+     ],
+     "noted": {
+      "spent": 4,
+      "falls": 0,
+      "rose": 4
+     }
+    },
+    "runLives": 10,
+    "falls": 1,
+    "gold": 571,
+    "up": [
+     false,
+     true,
+     true,
+     false,
+     true
+    ]
+   },
+   {
+    "name": "lost",
+    "lives": {
+     "text": "0",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "lost",
+    "banner": "Wave 2 of 15 lost",
+    "next": "Run recap"
+   },
+   {
+    "name": "recap",
+    "lives": {
+     "text": "0",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "recap",
+    "text": "LIVES SPENT\n10"
+   }
+  ],
+  "errors": []
+ },
+ {
+  "w": 360,
+  "h": 780,
+  "checks": [
+   {
+    "name": "hud",
+    "lives": {
+     "text": "10",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "start",
+    "phase": "fight",
+    "lives": {
+     "left": 10,
+     "spent": 0,
+     "falls": 0,
+     "rose": []
+    },
+    "runLives": 0,
+    "falls": 0,
+    "gold": 500,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "down",
+    "lives": {
+     "text": "10",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "down",
+    "row": [
+     "2"
+    ]
+   },
+   {
+    "name": "risen",
+    "lives": {
+     "text": "9",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "risen",
+    "phase": "fight",
+    "lives": {
+     "left": 9,
+     "spent": 1,
+     "falls": 0,
+     "rose": [
+      4
+     ],
+     "noted": {
+      "spent": 1,
+      "falls": 0,
+      "rose": 1
+     }
+    },
+    "runLives": 1,
+    "falls": 0,
+    "gold": 500,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "all-down",
+    "lives": {
+     "text": "4",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "all-down",
+    "phase": "fight",
+    "lives": {
+     "left": 4,
+     "spent": 6,
+     "falls": 1,
+     "rose": [
+      4,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "noted": {
+      "spent": 6,
+      "falls": 1,
+      "rose": 6
+     }
+    },
+    "runLives": 6,
+    "falls": 1,
+    "gold": 530,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "card",
+    "lives": {
+     "text": "4",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "card",
+    "notes": [
+     "Level up: Kwame Lv 100, Kenji Lv 100, Ravi Lv 100, Natsu Lv 100, Selam Lv 100",
+     "Ultimate unlocked: Kwame, Kenji, Ravi, Natsu, Selam",
+     "6 lives spent · 4 left"
+    ]
+   },
+   {
+    "name": "deploy",
+    "lives": {
+     "text": "4",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "revive-through-ultimate",
+    "fired": {
+     "order": true,
+     "t": 4500,
+     "full": false
+    },
+    "show": {
+     "show": 65,
+     "roseAt": -1,
+     "heldAt": [
+      5100,
+      5100
+     ]
+    },
+    "ults": 3,
+    "phase": "fight",
+    "lives": {
+     "left": 3,
+     "spent": 1,
+     "falls": 0,
+     "rose": [
+      4
+     ],
+     "noted": {
+      "spent": 1,
+      "falls": 0,
+      "rose": 1
+     }
+    },
+    "runLives": 7,
+    "falls": 1,
+    "gold": 571,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "none-left",
+    "lives": {
+     "text": "0",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "none-left",
+    "rows": 0,
+    "phase": "fight",
+    "lives": {
+     "left": 0,
+     "spent": 4,
+     "falls": 0,
+     "rose": [
+      4,
+      1,
+      2
+     ],
+     "noted": {
+      "spent": 3,
+      "falls": 0,
+      "rose": 3
+     }
+    },
+    "runLives": 10,
+    "falls": 1,
+    "gold": 571,
+    "up": [
+     false,
+     true,
+     true,
+     false,
+     true
+    ]
+   },
+   {
+    "name": "lost",
+    "lives": {
+     "text": "0",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "lost",
+    "banner": "Wave 2 of 15 lost",
+    "next": "Run recap"
+   },
+   {
+    "name": "recap",
+    "lives": {
+     "text": "0",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "recap",
+    "text": "LIVES SPENT\n9"
+   }
+  ],
+  "errors": []
+ },
+ {
+  "w": 412,
+  "h": 915,
+  "checks": [
+   {
+    "name": "hud",
+    "lives": {
+     "text": "10",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "start",
+    "phase": "fight",
+    "lives": {
+     "left": 10,
+     "spent": 0,
+     "falls": 0,
+     "rose": []
+    },
+    "runLives": 0,
+    "falls": 0,
+    "gold": 500,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "down",
+    "lives": {
+     "text": "10",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "down",
+    "row": [
+     "2"
+    ]
+   },
+   {
+    "name": "risen",
+    "lives": {
+     "text": "9",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "risen",
+    "phase": "fight",
+    "lives": {
+     "left": 9,
+     "spent": 1,
+     "falls": 0,
+     "rose": [
+      4
+     ],
+     "noted": {
+      "spent": 1,
+      "falls": 0,
+      "rose": 1
+     }
+    },
+    "runLives": 1,
+    "falls": 0,
+    "gold": 500,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "all-down",
+    "lives": {
+     "text": "4",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "all-down",
+    "phase": "fight",
+    "lives": {
+     "left": 4,
+     "spent": 6,
+     "falls": 1,
+     "rose": [
+      4,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "noted": {
+      "spent": 6,
+      "falls": 1,
+      "rose": 6
+     }
+    },
+    "runLives": 6,
+    "falls": 1,
+    "gold": 530,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "card",
+    "lives": {
+     "text": "4",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "card",
+    "notes": [
+     "Level up: Kwame Lv 100, Kenji Lv 100, Ravi Lv 100, Natsu Lv 100, Selam Lv 100",
+     "Ultimate unlocked: Kwame, Kenji, Ravi, Natsu, Selam",
+     "6 lives spent · 4 left"
+    ]
+   },
+   {
+    "name": "deploy",
+    "lives": {
+     "text": "4",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "revive-through-ultimate",
+    "fired": {
+     "order": true,
+     "t": 4500,
+     "full": false
+    },
+    "show": {
+     "show": 74,
+     "roseAt": -1,
+     "heldAt": [
+      4800,
+      4800
+     ]
+    },
+    "ults": 1,
+    "phase": "fight",
+    "lives": {
+     "left": 3,
+     "spent": 1,
+     "falls": 0,
+     "rose": [
+      4
+     ],
+     "noted": {
+      "spent": 1,
+      "falls": 0,
+      "rose": 1
+     }
+    },
+    "runLives": 7,
+    "falls": 1,
+    "gold": 571,
+    "up": [
+     true,
+     true,
+     true,
+     true,
+     true
+    ]
+   },
+   {
+    "name": "none-left",
+    "lives": {
+     "text": "0",
+     "left": 10,
+     "right": 64,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "none-left",
+    "rows": 0,
+    "phase": "fight",
+    "lives": {
+     "left": 0,
+     "spent": 4,
+     "falls": 0,
+     "rose": [
+      4,
+      1,
+      2
+     ],
+     "noted": {
+      "spent": 3,
+      "falls": 0,
+      "rose": 3
+     }
+    },
+    "runLives": 10,
+    "falls": 1,
+    "gold": 571,
+    "up": [
+     false,
+     true,
+     true,
+     false,
+     true
+    ]
+   },
+   {
+    "name": "lost",
+    "lives": {
+     "text": "0",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "lost",
+    "banner": "Wave 2 of 15 lost",
+    "next": "Run recap"
+   },
+   {
+    "name": "recap",
+    "lives": {
+     "text": "0",
+     "left": 8,
+     "right": 62,
+     "top": 13,
+     "hidden": false
+    }
+   },
+   {
+    "name": "recap",
+    "text": "LIVES SPENT\n9"
+   }
+  ],
+  "errors": []
+ }
+]

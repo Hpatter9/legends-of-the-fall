@@ -41,7 +41,7 @@ for (const [W, H] of sizes) {
   const fight = async (lose = false) => {
     await page.evaluate(() => { window.__game.autoArrange(true); document.getElementById('fight').click(); });
     await wait(page, 700);
-    await page.evaluate((lose) => { const g = window.__game; if (lose) g.run.retries = 99; for (const u of g.b.units) if (u.side === (lose ? 'hero' : 'foe')) u.hp = 1; else if (lose) u.hp = u.maxHp = 1e7; g.setSpeed?.(3); }, lose);
+    await page.evaluate((lose) => { const g = window.__game; if (lose) g.run.retries = 99; if (window.__game.b.lives) window.__game.b.lives.left = 0; for (const u of g.b.units) if (u.side === (lose ? 'hero' : 'foe')) u.hp = 1; else if (lose) u.hp = u.maxHp = 1e7; g.setSpeed?.(3); }, lose);
   };
   await startRun();
   const fightAt = await centre('#fight');

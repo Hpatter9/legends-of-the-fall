@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fallOutcome, MAX_RETRIES, newRun, retryWave } from '../src/sim/run';
+import { newRun } from '../src/sim/run';
+import { endOfFight } from '../src/render/battleMusic';
 import { loadMeta, newMeta, pickStarter, saveMeta } from '../src/sim/meta';
 import { cardDue, cardKey, dueScene, lossMoments, markCard, markSeen } from '../src/sim/sceneRules';
 import { SCENES, SCENE_ORDER, type Moment } from '../src/sim/sceneScripts';
@@ -25,13 +26,10 @@ const store = () => {
   return { getItem: (k: string) => d[k] ?? null, setItem: (k: string, v: string) => void (d[k] = v) };
 };
 
-test('the first-loss scene comes only with a real defeat: not on a fall a heart revives', () => {
+test('the first-loss scene comes with a real defeat, and every lost fight is one (TEN-LIVES: a fall the lives raise never ends the fight)', () => {
   const r = newRun(41);
-  assert.equal(fallOutcome(r), 'heart');
-  assert.deepEqual(lossMoments(fallOutcome(r)), [], 'a heart left: no loss scene');
-  for (let i = 0; i < MAX_RETRIES; i++) retryWave(r);
-  assert.equal(fallOutcome(r), 'end');
-  assert.deepEqual(lossMoments(fallOutcome(r)), [{ kind: 'firstLoss' }], 'no heart left: the loss is real');
+  assert.equal(endOfFight(r, false), 'defeat');
+  assert.deepEqual(lossMoments('end'), [{ kind: 'firstLoss' }], 'the loss is real');
 });
 
 test('every boss and herald scene plays once a save: seen, it is not due again (new runs, retries and days alike)', () => {

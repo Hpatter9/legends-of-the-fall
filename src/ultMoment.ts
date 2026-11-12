@@ -83,6 +83,8 @@ export class UltMoments {
   private echoSeen = 0;
   private lastStage = '';
   private ducked = false;
+  /** FREEZE-FIX: the moments the queue has ended by their deadline, as last seen (each is logged once). */
+  private overranSeen = 0;
   /** ULT-EPIC 2: where each moment's caster stood before its cast (a dash or a leap has already moved it in the sim): it is seen to
    *  gather there through the wind-up; and the fighter posed so now. */
   private starts = new WeakMap<UltMoment, { u: number; v: number }>();
@@ -277,7 +279,8 @@ export class UltMoments {
     const fx = this.opts.fx;
     const step = Math.min(dt, 250);
     q.calm = this.calm();
-    if (!q.current) {
+    const m0 = q.current;
+    if (!m0) {
       // (the moment's bursts play out after it; no caster's effects are the ultimate's any more)
       if (fx?.epic.size) fx.epic = new Set();
       if (!paused) fx?.stepMoment(step);
@@ -285,6 +288,11 @@ export class UltMoments {
       return;
     }
     if (!paused) q.step(step);
+    // (FREEZE-FIX: a moment ended by its deadline is a fault somewhere, never the player's doing: logged, and the fight goes on)
+    if (q.overran !== this.overranSeen) {
+      this.overranSeen = q.overran;
+      console.warn(`an ultimate's moment ran past its time and was ended (${m0.kind}, ${m0.name})`);
+    }
     // (the moment's own effects stand still through the freeze on the blow)
     // (BATTLE-POLISH: and move slowly through the slow beat after it)
     if (!paused && q.stopLeft <= 0) fx?.stepMoment(step * q.rate);

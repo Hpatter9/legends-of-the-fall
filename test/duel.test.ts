@@ -327,13 +327,14 @@ test('a champion for an open challenge, and the duel played out to its end for r
   assert.ok(b.t <= duelMs());
 });
 
-test('a lost duel is never fought again by a heart', async () => {
-  const { reviveParty } = await import('../src/sim/battle');
+test('a lost duel is never fought again: its ring has no lives, and the duellist does not rise (TEN-LIVES)', () => {
   const m = warMeta();
   const n = member(m.war!);
   const run = runWith(m, n);
   const { b } = decided(run, duelOffer(run)!, 'knight', 'lost');
-  assert.equal(reviveParty(b), false);
+  assert.equal(b.lives, undefined);
+  assert.equal(b.units.find((u) => u.id === b.duel!.hero)!.alive, false);
+  assert.notEqual(b.phase, 'fight');
 });
 
 test('the save: the run’s duel round-trips, and nonsense reads as none', () => {

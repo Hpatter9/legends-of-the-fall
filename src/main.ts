@@ -11,10 +11,10 @@ import { Application, Container, Sprite, TextureSource } from 'pixi.js';
 import { standable, tileAt, type Area } from './sim/board';
 import { PHASE2 } from './sim/bossPhases';
 import * as toolkit from './sim/toolkit';
-import { canPlace, fight, reviveParty, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
+import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { isCastHero, canJoin, sitsOut, armyOfRun, armyRun, benchFull, boostOf, canRetry, chainOf, fallOutcome, MAX_RETRIES, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, retriesLeft, retryWave, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
+import { hasLives, livesLeft, livesMax, settleLives, isCastHero, canJoin, sitsOut, armyOfRun, armyRun, benchFull, boostOf, chainOf, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -106,13 +106,12 @@ import { showThemeBanner } from './themeView';
 import { chestPicture } from './chestStash';
 import { clearNotices, noteNotice, toastAchievements, toastLines, toastSpells, toastStones, toldNotices } from './achievementsView';
 import { knownClues, WEAKNESS, weakLines } from './sim/weakness';
-import { farSight, heartsLost, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
+import { farSight, marchCrowns, marchDef, marchPay, ordersLine, routeLand } from './sim/march';
 import { defaultPicks, marchChoice, marchLine, openMarchOrders, ordersOf, showAnvil, showLectern } from './marchCard';
-import { armyParty, noteOathFalls, oathCrowns, oathPay, swearOath } from './sim/oath';
+import { armyParty, oathCrowns, oathPay, swearOath } from './sim/oath';
 import { markedHero } from './sim/march';
 import { repairAll, repairAllCost } from './sim/wear';
 import { lecternDue, lecternSwap } from './sim/lectern';
-import { applyVigil } from './sim/chapelRooms';
 import { journeyBoost, landAt } from './sim/calJourney';
 import { bondLines, bondSnapshot, pairWords, placedPairs } from './sim/bonds';
 import { nemesisLines, type NemNote } from './sim/nemesis';
@@ -182,9 +181,10 @@ import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } fr
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
 import { duoCombosOf } from './sim/duoCombos';
 import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
-import { RISE_MS, setAgeLooks, UnitSprite } from './render/unitView';
+import { setAgeLooks, UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
-import { burnHeart, reducedMotion, reviveLine } from './reviveView';
+import { reducedMotion, reviveLine } from './reviveView';
+import { reviveIn, REVIVE_MS } from './sim/lives';
 import { Fx, loadFx } from './render/fx';
 import { lookSheet } from './render/awakenLook';
 import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
@@ -363,11 +363,12 @@ class Game {
   /** How long the fight has been over (ms): the recap waits `END_WAIT_MS` after the last kill, so the deaths play out. */
   private endWait = 0;
   /** The heart-burn after a fall with hearts left: `t` real ms since it began, `swapped` once the fallen heroes rise, `started` once its fight is on (`fightAt`: when). Nothing is settled until it is over; no prompt. */
-  private revive: { t: number; swapped: boolean; started: boolean; fightAt: number; risenAt?: number; line?: { dismiss: () => void } } | null = null;
   /** This fight's loss has had its cinematic asked for (once a fight: `refresh` runs often). */
   private lossScened = false;
   /** Hearts burned in this wave (WAVE-RECAP: the short card and the end recap's strip say so). */
+  /** TEN-LIVES: the lives spent in the wave being fought (for its card and the recap), and the lives the top bar last showed. */
   private heartsBurned = 0;
+  private livesShown = -1;
   /** A won wave with more to come (WAVE-RECAP): its short card rides over the march, see-through, and goes by itself once the party has arrived. `wait` counts the ms since
    *  nothing held it (the march, a cinematic, the home screen), `marched` whether a march was seen. Null otherwise. */
   private passing: { wait: number; marched: boolean; shown: number; read: number } | null = null;
@@ -696,6 +697,10 @@ class Game {
         console.error(err);
       }
     });
+    // (FREEZE-FIX: a phone short of graphics memory takes the picture away; Pixi puts it back when the browser gives it back. Logged,
+    // so a report of a frozen picture can be told from a fight that stopped)
+    this.app.canvas.addEventListener('webglcontextlost', () => console.warn('the graphics context was lost'));
+    this.app.canvas.addEventListener('webglcontextrestored', () => console.warn('the graphics context was restored'));
     // (battery saver caps the frame rate at 30)
     onSettings((s) => (this.app.ticker.maxFPS = s.saver ? 30 : 0));
     // (ALIVE: the page's own CSS life, the menus' sheen and glints, rests on a battery saver too)
@@ -816,7 +821,6 @@ class Game {
     setFrame(section ? frameOf(section, section) : undefined);
     this.settled = false;
     this.endWait = 0;
-    this.revive = null;
     this.lossScened = false;
     this.heartsBurned = 0;
     this.passing = null;
@@ -1560,11 +1564,13 @@ class Game {
     // (an ultimate's moment (ULT-CUTIN) moves on in real time, whatever the fight's speed; it stands still while a scene or a sheet is up)
     // (DUEL-SHOW: a duel's show is dropped once the board is another fight's; through its walk-in the fight is held)
     if (this.duelShow.on && this.duelShow.battle !== b) this.duelShow.clear();
-    const held = this.sceneHold > 0 || (this.revive && !this.revive.started) || this.hud.holding || this.eid.sheetOpen || this.duelShow.holding;
+    const held = this.sceneHold > 0 || this.hud.holding || this.eid.sheetOpen || this.duelShow.holding;
     // (EIDOLONS: the call's cinematic moves on in real time; it may outlast the fight its strike ended)
     this.eid.see(b);
-    this.eid.frame(dt, this.sceneHold > 0);
+    this.eid.frame(dt, this.sceneHold > 0, !held && !this.ultm.queue.holdsBattle);
     // (ULT-SHOW: a showcase whose ultimate ended the fight still plays out, and the result waits for it)
+    // (FREEZE-FIX: once the fight is over, the ultimates still waiting their turn are dropped: the result is not kept back for them)
+    if (b.phase !== 'fight' && this.ultm.queue.waiting) this.ultm.queue.dropWaiting();
     if (b.phase === 'fight' || (b.phase !== 'deploy' && this.ultm.queue.current?.show)) this.ultm.frame(b, dt, !!held);
     else if (this.ultm.queue.current) this.ultm.clear();
     // (ULT-EPIC 2: the speed button reads x1 while a show holds the fight to it, and the set speed again the moment it is over; the set
@@ -1621,6 +1627,8 @@ class Game {
         // (LIVING-FIELDS: a trap sprung or changed: its tile is painted again, and what stood on it goes if it is spent)
         for (const e of events) if (e.kind === 'fieldTrap' && (e.gone || e.what === 'cracked')) this.boardView.trapChanged(e.u, e.v, !!e.gone);
         this.life.events(b, events);
+        // (TEN-LIVES: lives spent this tick: the run, the top bar and, for a whole party's fall, a line)
+        if (b.lives) this.onLives(b, events);
         // (a fighter a skill called up mid-fight has no sprite yet: make it, with its entrance)
         if (b.units.length !== this.sprites.size) this.syncSprites();
         playEvents(b, events, this.speed);
@@ -1673,7 +1681,6 @@ class Game {
       }
     }
     if (this.intro) this.stepIntro(dt);
-    this.stepRevive(dt);
     this.stepPassing(dt);
     this.refreshBossBar();
     const isWon = b.phase === 'won' || (b.phase !== 'fight' && b.phase !== 'deploy' && !b.units.some((u) => u.side === 'foe' && u.alive));
@@ -1684,7 +1691,11 @@ class Game {
     if (b.duel) this.duelShow.frame(dt, b);
     for (const [id, s] of this.sprites) {
       if (this.walking.has(id)) s.root.visible = false;
-      else s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
+      else {
+        // (TEN-LIVES: the countdown over a fallen hero a life will raise)
+        s.reviveIn = b.lives && b.phase === 'fight' ? reviveIn(b, s.unit) : null;
+        s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
+      }
     }
     if (this.chain.active) {
       this.chain.step(dt);
@@ -2691,7 +2702,6 @@ class Game {
     });
     $('homeBtn').addEventListener('click', () => this.home.open());
     // (a tap anywhere hurries the heart-burn: the wave starts at once; the line stays its time, POPUP-GUARD)
-    document.addEventListener('pointerdown', () => this.skipRevive(), true);
     // (a tap on the short card over the march goes straight on to the next wave)
     // (JRPG-RECAP: a first tap hurries the count-ups to their end; once they are done, a tap between waves goes on, and at a fight's end
     // with one way on, it presses that way)
@@ -3325,109 +3335,62 @@ class Game {
     }
   }
 
-  /** When the heart has burnt and the fight resumes, and when the whole moment ends (real ms; shorter with reduced motion). */
-  private reviveTimes(): { swap: number; end: number } {
-    return reducedMotion() ? { swap: 500, end: 1200 } : { swap: 1100, end: 2000 };
-  }
-
-  /** The party fell with a heart left: no card and no question. A heart burns, a line says so, and the fight resumes by itself. */
-  private beginRevive(): void {
-    this.revive = { t: 0, swapped: false, started: false, fightAt: 0, line: reviveLine(this.reviveWords(), Math.max(this.reviveTimes().end, Math.min(4000, readMs(this.reviveWords())))) };
-    play('sparkle');
+  /** TEN-LIVES: lives were spent in the tick just played (`lives.ts`): the run is told (its lives, a party fall's gold), the top bar
+   *  counts down, and a fall of the whole party, or the clock bought back, has a line saying so. The fight is never held for it. */
+  private onLives(b: Battle, events: readonly BattleEvent[]): void {
+    const lives = events.filter((e): e is Extract<BattleEvent, { kind: 'life' }> => e.kind === 'life');
+    if (!lives.length) return;
+    const before = livesLeft(this.run);
+    const gold = settleLives(this.run, b);
+    const left = livesLeft(this.run);
+    this.heartsBurned += before - left;
+    saveRun(this.run);
     this.drawLives(this.run);
-  }
-
-  /** UX-FIXES: what a lost wave says: which wave, and how many hearts (your lives) are left once this one is spent. */
-  private reviveWords(): string {
-    const left = Math.max(0, retriesLeft(this.run) - 1);
-    return `Wave ${this.run.stage} lost · a heart burns, ${left} ${left === 1 ? 'heart (life)' : 'hearts (lives)'} left. The party rises.`;
-  }
-
-  /** A tap during the burn skips ahead to the wave starting again, and a tap after that to its fight (the line stays to be read). */
-  private skipRevive(): void {
-    const r = this.revive;
-    if (!r) return;
-    if (!r.swapped) r.t = Math.max(r.t, this.reviveTimes().swap);
-    else {
-      // (but not before the fallen are on their feet: they would slide about lying down)
-      r.fightAt = Math.min(r.fightAt, r.risenAt ?? 0);
-      // (POPUP-GUARD: the line stays its time: a tap hurries the burn, and no longer sends away what it said)
-    }
-  }
-
-  /** The burn's clock: at its midpoint the heart is spent and the fight resumes with the retry's gold, the heroes rising in a pillar of light. */
-  private stepRevive(dt: number): void {
-    const r = this.revive;
-    if (!r) return;
-    r.t += dt;
-    const at = this.reviveTimes();
-    if (!r.swapped && r.t >= at.swap) {
-      r.swapped = true;
-      if (!canRetry(this.run)) return void (this.revive = null);
-      // (the heart burning now stays grey from the next draw of the lives)
-      const gold = retryWave(this.run)!;
-      this.heartsBurned++;
+    play('sparkle');
+    if (gold) {
       play('coinRecycle');
-      saveRun(this.run);
-      // (the fallen get up off the ground where they lay, their death played backwards: no burst of light, no fresh arrival, FIGHT-FIXES)
-      const fallen = this.b.units.filter((u) => u.side === 'hero' && !u.alive && !UNITS[u.def].summon);
-      // (Dynasties, phase 7: under the Legend Oath each of them has fallen once; the wave's end decides who is slain)
-      noteOathFalls(this.run, this.b);
-      reviveParty(this.b);
-      // (DEPTH-BUILD: the Chapel's Vigil: how the party rises, chosen on the march card)
-      applyVigil(this.b, fallen, this.run.orders?.vigil);
-      // (DARK-WAVE: no dim from the fall is left on over the wave starting again)
-      this.fx.undim();
-      this.acc = 0;
-      this.endWait = 0;
-      for (const u of fallen) if (u.alive) this.sprites.get(u.id)?.getUp();
       flyUp(`+${gold} gold`, $('gold'));
-      // (once they are on their feet the fight is on, with no Fight! tap)
-      r.risenAt = r.t + (reducedMotion() ? 0 : RISE_MS);
-      r.fightAt = r.t + (reducedMotion() ? 200 : RISE_MS + 80);
     }
-    if (r.swapped && !r.started && r.t >= r.fightAt) {
-      r.started = true;
-      if (this.b.phase === 'fight') {
-        this.acc = 0;
-        startFight(trackOfRun(this.run));
-        this.refresh();
-        // (the party is back on its feet: one of them says so)
-        if (!this.auto) revivedQuip(this.b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), (k) => this.anchorOfKind(k));
-      }
+    const lifeWords = (n: number) => `${n} ${n === 1 ? 'life' : 'lives'}`;
+    for (const e of lives) {
+      if (e.why === 'timer') continue;
+      const words = e.why === 'all' ? `The whole party fell · ${lifeWords(e.to.length)} spent, ${e.left} left. The party rises.` : `Out of time · ${lifeWords(before - left)} spent for more, ${e.left} left.`;
+      reviveLine(words, Math.max(reducedMotion() ? 1200 : 2000, Math.min(4000, readMs(words))));
+      // (the party is back on its feet: one of them says so)
+      if (e.why === 'all' && !this.auto) revivedQuip(b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def), (k) => this.anchorOfKind(k));
     }
-    if (r.t >= at.end && r.started) this.revive = null;
   }
 
-  /** The lives at the top (an army's and the daily's hearts, `MAX_RETRIES` of them): full while left, grey once spent, the next one burning during a revive. Only runs that can retry
-   *  show them (not the tower or the calamity, which fail their own way). */
+  /** The lives at the top (TEN-LIVES: the party's ten, where the two hearts were): the heart and the number left, grey once none is.
+   *  The number jumps when a life is spent. Only runs with lives show them (not the tower or the calamity, which fail their own way). */
   private drawLives(run: Run): void {
     const box = $('lives');
-    box.hidden = !!run.tower;
+    box.hidden = !hasLives(run);
     if (box.hidden) return;
-    const left = retriesLeft(run);
-    // (a fall with a heart left: the last full heart burns until the fight resumes and spends it)
-    const burning = this.revive && !this.revive.swapped ? left - 1 : -1;
-    const key = `${left}:${burning}:${run.orders?.mod ?? ''}`;
+    // (in a fight the fight's own count is the freshest: a life spent this tick shows at once)
+    const left = this.b?.lives && this.b.phase !== 'deploy' ? this.b.lives.left : livesLeft(run);
+    const key = `${left}:${run.orders?.mod ?? ''}`;
     if (box.dataset.key === key) return;
     box.dataset.key = key;
     box.replaceChildren();
-    box.title = `${left} ${left === 1 ? 'life' : 'lives'} left`;
+    box.title = `${left} of ${livesMax(run)} ${livesMax(run) === 1 ? 'life' : 'lives'} left. A fallen hero rises after ${REVIVE_MS / 1000} seconds for one life.`;
     box.setAttribute('aria-label', box.title);
-    // (DEPTH-BUILD: a cursed march has one heart instead of two; the orders' badge sits beside them, a tap says what they are)
-    for (let i = 0; i < MAX_RETRIES - heartsLost(run.orders); i++) {
-      const img = document.createElement('img');
-      img.src = heartUrl;
-      img.alt = '';
-      img.className = i < left ? 'full' : 'spent';
-      if (i === burning) {
-        const heart = document.createElement('span');
-        heart.className = 'heart';
-        heart.append(img);
-        box.append(heart);
-        burnHeart(heart, img, this.reviveTimes().swap);
-      } else box.append(img);
+    const img = document.createElement('img');
+    img.src = heartUrl;
+    img.alt = '';
+    img.className = left > 0 ? 'full' : 'spent';
+    const n = document.createElement('b');
+    n.className = 'livesLeft';
+    n.textContent = String(left);
+    box.append(img, n);
+    box.classList.toggle('low', left > 0 && left <= 3);
+    box.classList.toggle('none', left <= 0);
+    // (a life just spent: the count jumps once; not on the first draw, nor with reduced motion)
+    if (this.livesShown >= 0 && left < this.livesShown && !reducedMotion()) {
+      img.animate([{ transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
+      n.animate([{ transform: 'scale(1.6)', color: '#ff8a7a' }, { transform: 'scale(1)' }], { duration: 520, easing: 'ease-out' });
     }
+    this.livesShown = left;
     const line = ordersLine(run.orders);
     if (line && run.orders?.mod) {
       const badge = document.createElement('button');
@@ -4176,16 +4139,14 @@ class Game {
       this.settled = true;
       return this.endDuel();
     }
-    // (the first defeat has its cinematic as the loss shows, but only a real one: a fall a heart revives is not a defeat)
-    // (checked before a heart burns: with one left the moments are none, and the check waits for the next fall)
-    if (ready && b.phase === 'lost' && !this.lossScened && !this.auto && !this.revive) {
-      const moments = lossMoments(fallOutcome(run));
+    // (the first defeat has its cinematic as the loss shows; TEN-LIVES: a fall the lives raise never ends the fight, so a lost fight is
+    // a real defeat)
+    if (ready && b.phase === 'lost' && !this.lossScened && !this.auto) {
+      const moments = lossMoments('end');
       if (moments.length) this.lossScened = true;
       for (const m of moments) void this.queueScene(m);
     }
-    // (a wave lost with a heart left is not settled: a heart burns and the fight resumes by itself. With none left, or in a mode with none, the loss is settled and the run ends)
-    if (ready && b.phase === 'lost' && !this.settled && fallOutcome(run) === 'heart' && !this.revive) this.beginRevive();
-    if (ready && !this.settled && !this.revive) {
+    if (ready && !this.settled) {
       this.settled = true;
       const won = b.phase === 'won';
       const stage = run.stage;
@@ -4346,7 +4307,7 @@ class Game {
       const nextSnap = next && offerSnap(run, next);
       const ahead = next && nextSnap ? duelAhead(next, nextSnap) : undefined;
       noteSpoils(recapOf(run), waveGains);
-      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: run.tower ? 0 : retriesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], risen: won ? risenLine(run, heroName) : null, gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}), ...(nemesisLines(this.nemNote).length || ahead ? { nemesis: [...nemesisLines(this.nemNote), ...(ahead ? [ahead] : [])] } : {}) };
+      this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: livesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], risen: won ? risenLine(run, heroName) : null, gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}), ...(nemesisLines(this.nemNote).length || ahead ? { nemesis: [...nemesisLines(this.nemNote), ...(ahead ? [ahead] : [])] } : {}) };
       if (!this.auto) {
         const fought = b.units.filter((u) => u.side === 'hero' && !UNITS[u.def].summon).map((u) => u.def);
         endingQuip(fought, won, (k) => this.anchorOfKind(k));
@@ -4439,7 +4400,7 @@ class Game {
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0 || !!this.questBlock();
     $('clock').textContent = b.phase === 'deploy' ? '' : clock(b.t);
     const result = $('result');
-    result.hidden = this.resultDone || !ready || this.towerView.isOpen || !!this.auto || !!this.revive;
+    result.hidden = this.resultDone || !ready || this.towerView.isOpen || !!this.auto;
     // (CLOSE-SCREENS: the card is one step of the fight's end: in the screen stack while it is up, so the next screen closes it)
     if (!result.hidden && !this.resultCloser) this.resultCloser = openScreen('result', () => this.dropResult());
     if (!result.hidden) {
@@ -4487,7 +4448,7 @@ class Game {
       $('next').textContent = qrun && run.over ? (run.cleared ? 'Onward' : 'Try again') : run.over && !run.tower ? 'Run recap' : run.cleared && run.tower ? 'See the summary' : b.phase === 'won' ? (fixed ? `Next wave (${run.stage})` : run.rift?.expedition ? 'Return to sanctuary' : run.tower ? 'To the map' : `Next stage (${run.stage})`) : run.tower ? 'See the summary' : 'Home';
     }
     this.refreshAuto();
-    if (b.phase === 'deploy' && !this.auto && !(this.revive && !this.revive.started)) tips.atDeploy(n, run.stage, () => this.deployBox(), run.roster.length, block === null);
+    if (b.phase === 'deploy' && !this.auto) tips.atDeploy(n, run.stage, () => this.deployBox(), run.roster.length, block === null);
     this.buildBench();
     this.markTiles();
     this.refreshBench();

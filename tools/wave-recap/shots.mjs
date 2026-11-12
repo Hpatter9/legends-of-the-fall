@@ -105,7 +105,7 @@ try {
     // ---- wave 3: lost with no hearts left: the short defeat card, then the full recap
     await page.locator('#fight').waitFor({ state: 'visible' });
     await page.click('#fight'); await page.waitForTimeout(600);
-    await page.evaluate(() => { const g = window.__game; g.run.retries = 2; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
+    await page.evaluate(() => { const g = window.__game; g.run.retries = 2; if (window.__game.b.lives) window.__game.b.lives.left = 0; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
     await page.locator('#next').waitFor({ state: 'visible', timeout: 30000 });
     await page.waitForTimeout(800);
     await shot('defeat', '#result');

@@ -18,7 +18,7 @@ import { NEW_BATTLES, castOf, forgetQuestArmies, type QuestBattle } from '../../
 import { QUESTS } from '../../src/sim/questData';
 import { openLevel, starsOf } from '../../src/sim/questStars';
 import { startQuestBattle } from '../../src/sim/questRun';
-import { boostOf, canRetry, finish, retryWave, startStage, summon, type Owned } from '../../src/sim/run';
+import { boostOf, finish, startStage, summon, type Owned } from '../../src/sim/run';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
 import { ARMIES } from '../../src/sim/armies';
 import { savedAt, maybeSpells } from '../autoplay';
@@ -78,10 +78,7 @@ function rate(qb: QuestBattle, level: number): number {
       maybeSpells(b, m, m.castle ?? newCastle());
       playOut(b);
       const ok = b.phase === 'won';
-      if (!ok && canRetry(run)) {
-        retryWave(run);
-        continue;
-      }
+      // (TEN-LIVES: a fall is raised inside the fight now, by the run's lives: a lost wave is lost for good)
       finish(run, ok);
     }
     if (run.cleared) wins++;

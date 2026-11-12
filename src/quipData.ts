@@ -263,7 +263,7 @@ export const HERO_QUIPS: Record<string, HeroQuips> = {
     lost: ['They guessed the right one! One in three chance, honestly!', 'That wasn\'t me falling over! It was... performance art!', 'My decoys downed tools and left me to take the hit!'],
     levelUp: ['Finer decoys! Now with convincing banter!', 'Even I am not entirely sure which one of me is real anymore!', 'More smoke! Larger mirrors!'],
     ultimate: ['WHICH ONE OF US IS HOLDING THE KNIFE?!', 'EYES ON THE LADY! ALL SIX OF HER!', 'SMOKE, MIRRORS, AND MURDER!'],
-    revived: ['Aha! You only killed my stunt double!', 'Presto! Back in the room! Did you miss me?', 'A cheap trick? Darling, that trick cost a whole heart.'],
+    revived: ['Aha! You only killed my stunt double!', 'Presto! Back in the room! Did you miss me?', 'A cheap trick? Darling, that trick cost a whole life.'],
     lowHp: ['My illusions are flickering! And so is my consciousness!', 'Stop hitting the solid one! Hit the sparkly ones!', 'I need a distraction! Look, a three-headed goat!'],
   },
   gunslinger: {
@@ -964,7 +964,7 @@ export const LOADING_TIPS: readonly string[] = [
   'Tip: the Treasury adds starting gold to every run. The coins do not multiply, but they do get counted twice.',
   'Tip: the Barracks add health and the Armoury adds attack for every hero. The builders argue about the roofs.',
   'Tip: castle builds take real time, one at a time, and carry on while the game is closed. Duchess supervises.',
-  'Tip: if the party falls, a heart burns and the wave starts again with bonus gold. No hearts left, no second chance.',
+  'Tip: a fallen hero rises after 5 seconds for one of the party\'s ten lives. No lives left, no second chance.',
   'Tip: the Last Stand never ends. Foes come from every side, and a boss arrives every fifth wave.',
   'Tip: between Last Stand waves you can spend gold to level heroes, heal the king or buy relics. The king pays up, grumbling.',
   'Tip: in the Last Stand, a wave that drags on makes its foes angrier. Finish them before they lose their patience.',

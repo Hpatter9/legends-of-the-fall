@@ -157,8 +157,8 @@ export const GWEN_RETUNE: Readonly<Record<string, Retune>> = {
     length: 'long',
     goal: { kind: 'clearArmy', n: 3, tier: 1, noHeart: true },
     within: 7,
-    text: 'Clear armies on Hard 3 times, no heart spent in any, within 7 days',
-    offer: ["Business sense: the Hard roads pay better than the easy ones. So should my quests. Clear three Hard armies in a week without burning a heart and I'll pay like I mean it; leave the Normal ones for the children."],
+    text: 'Clear armies on Hard 3 times, the whole party never falling in any, within 7 days',
+    offer: ["Business sense: the Hard roads pay better than the easy ones. So should my quests. Clear three Hard armies in a week without the whole party falling and I'll pay like I mean it; leave the Normal ones for the children."],
   },
   twosCompany: {
     stars: 4,

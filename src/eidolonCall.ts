@@ -28,7 +28,7 @@ import { shadeChosen, shadeFight, shadesOf } from './sim/oath';
 import { openShades, playShadeCall, shadeGift, shadeName } from './shadeView';
 import { orderEidolon } from './sim/orders';
 import { blowHorn, boundOf, chooseEidolon, chosenOf, HORN, hornHeld, hornOf, hornReady, noteSeen, seenCall } from './sim/warHorn';
-import { beatTimes, buildAt, BOARD_ZOOM, canSkip, CHOREO, EYES, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, NO_EIDOLON, reactionOf, shotAt, skipTarget, SNAP_MS, SNAP_ZOOM, SUMMONER_HINT, type MomentTimes, type Shot } from './eidolonRules';
+import { beatTimes, buildAt, strikeOverdue, BOARD_ZOOM, canSkip, CHOREO, EYES, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, NO_EIDOLON, reactionOf, shotAt, skipTarget, SNAP_MS, SNAP_ZOOM, SUMMONER_HINT, type MomentTimes, type Shot } from './eidolonRules';
 import { breathReach, exitPoint, hitAt, markTime, marksOf, maxRuns, PASS, passPose, passShare, runFrom, SOURCES, spriteFrame, spritePlace, SPRITES as MONS, wakeRate, type AttackSource, type EidolonSprite, type Mark, type PassSpec, type Sprite } from './eidolonPass';
 import askelSprite from './art/eidolons/sprites/askel.png';
 import askelBreath from './art/eidolons/sprites/askel-breath.png';
@@ -216,6 +216,8 @@ interface Playing {
   struck: number[];
   /** Waiting for the strike's tick (the page steps one), and whether it has come. */
   releasing: boolean;
+  /** FREEZE-FIX: how long it has waited for that tick (real ms, `STRIKE_WAIT_MS` at most). */
+  waited: number;
   struckDone: boolean;
   stopLeft: number;
   shot: Shot | '';
@@ -344,7 +346,14 @@ export class EidolonCall {
   /** Each frame: the page's battle (a new wave's deploy shows the horn as the save holds it, not the last fight's blown one). */
   see(b: Battle): void {
     if (this.b === b) return;
-    if (this.p) return;
+    // (a call that has struck plays out over the next board as it always did, and this is asked again once it is over. One that has
+    // not struck never can now, the board being another fight's: it is dropped (FREEZE-FIX: it used to stand waiting for a strike the
+    // new fight would never make, and the new fight's result waited on it for good))
+    if (this.p?.struckDone) return;
+    if (this.p) {
+      this.dropStage();
+      this.end();
+    }
     this.b = b;
     this.closeSheet();
     // (a fight already going, as a Last Stand carried on from its save: armed now)
@@ -604,7 +613,7 @@ export class EidolonCall {
     this.front = el('div', 'ecBoard ecFront');
     L.append(dim, wash, this.board, shadow, fig, this.front, hornBlast, bars, name, say, flash, skip);
     this.p = {
-      e, m, first, t: 0, beats: beatTimes(m, CHOREO[e.id]?.length ?? 3), beatsDone: 0, struck: [], releasing: false, struckDone: false, stopLeft: 0, shot: '', snapLeft: 0, calls,
+      e, m, first, t: 0, beats: beatTimes(m, CHOREO[e.id]?.length ?? 3), beatsDone: 0, struck: [], releasing: false, waited: 0, struckDone: false, stopLeft: 0, shot: '', snapLeft: 0, calls,
       spec, src, ground, marks, exit, fig, shadow, wakeOwed: 0, built: false, runs: [],
       mon: null, monEl: null, breathEl: null, monAim: null, monFrom: null, monStand: null, buildT: m.SPRITE, stage,
     };
@@ -665,7 +674,8 @@ export class EidolonCall {
   }
 
   /** Each frame: move the cinematic on by `dt` real ms (unless `paused`: a scene holds everything). */
-  frame(dt: number, paused = false): void {
+  /** `free`: the page could step the fight this frame (nothing else holds it): only then does the wait for the strike's tick count. */
+  frame(dt: number, paused = false, free = true): void {
     const p = this.p;
     // (EIDOLON-BLENDER: after a call the sigil and the scorched ground go on cooling under the fight)
     if (!p && !paused && this.stageRun) {
@@ -685,6 +695,16 @@ export class EidolonCall {
     if (!p.struckDone && p.t + step >= firstBeat) {
       step = Math.max(0, firstBeat - p.t);
       if (!p.releasing && p.t + step >= firstBeat) p.releasing = true;
+    }
+    // (FREEZE-FIX: the strike is waited for only so long; if the fight never made it (it ended, or the order was lost), the call plays
+    // on to its end without it rather than stand on its first blow for good, the fight's result waiting behind it)
+    if (p.releasing && !p.struckDone) {
+      if (free) p.waited += Math.min(dt, 120);
+      if (strikeOverdue(p.waited) || this.b?.phase !== 'fight') {
+        console.warn(`the Eidolon's strike never came (${p.e.id}): the call plays on without it`);
+        p.releasing = false;
+        p.struckDone = true;
+      }
     }
     const was = p.t;
     p.t += step;
