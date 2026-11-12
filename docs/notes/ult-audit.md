@@ -150,6 +150,19 @@ Wanderer 60 to 700 ms after the blow with the moment's flash turned off, `EARLY=
   friend, and the hearts and the halo rise there as it arrives. For the Gorgon I cannot pick her line out against the foes' own
   effects in these frames; hers is the same code in her own colour.
 
+## Batch 6: wolves' heads in the dark, a heavy wall
+
+`docs/samples/blender-fx/audit-batch6-393-1.jpg`. From the director's look at batch 4: the Beastmaster's wind-up and strike were round
+green blobs, the Geomancer's slabs small and pale.
+
+- **Conjure Animals, the wind-up**: the dark round brush read as green blobs with dots. It is now wolves' heads lifting out of a patch
+  of shadow one after another: a dark grey head, two pricked ears, a snout, and two amber eyes side by side that open and blink
+  (`eyes` in `scenes.py`), with leaves kicked up round them. On the frame sheet they are plainly animals. In the fight at a phone's
+  size they are small (a head is about a third of a fighter) and sit in a clump; they read as creatures with eyes, not yet at a glance
+  as wolves. They want to be larger and further apart.
+- **Mountain's Embrace**: an ultimate's slabs are heavy stone now (`dark` in `slab`: deep in colour, thicker, with the sheet's dark
+  edge) and a fifth larger. In the fight: dark standing stones in rings on five spots, strong against the pale ground.
+
 ## The audit of all 70
 
 To come, in batches: for each ultimate, what it does in the sim, what 0.499 showed, what main shows now, and the verdict; then the ten
