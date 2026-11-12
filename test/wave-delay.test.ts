@@ -7,7 +7,7 @@ import { FALL_SLOW_MS, fallSlowMs, ultCastBeat } from '../src/render/fxRules';
 import { mayRelease, mayWarm, nextToWarm } from '../src/render/texReadyRules';
 import { COLUMN_ROOM, WARM, warmMore } from '../src/render/boardWarmRules';
 import { ColumnTextures } from '../src/render/columnTextures';
-import { DIAG, diagText, doingIn, isStop, parseDiag, stopLine, withStop, type DiagStop } from '../src/diagRules';
+import { DIAG, diagHead, diagText, doingIn, isStop, parseDiag, stopLine, withStop, type DiagStop } from '../src/diagRules';
 
 test('the slow moment for a fall is a boss\'s alone, and none with the screen kept still', () => {
   assert.equal(fallSlowMs(true, false), FALL_SLOW_MS);
@@ -101,4 +101,11 @@ test('the painted columns of three boards are kept: a board built again is not p
   for (const l of [...x, ...y]) l.release();
   sb(2);
   assert.ok(old > 260, 'the old room painted the second board again');
+});
+
+test('the log\'s heading says where the game is running, and leaves out what a browser does not tell', () => {
+  const full = diagHead({ v: '0.540.0', app: true, agent: 'Mozilla/5.0 (Linux; Android 14; wv)', memoryGB: 8, cores: 8, heapMB: 470, heapLimitMB: 2048, screen: '393x852 at 2.75' });
+  assert.equal(full, 'Version 0.540.0 · the installed app\nMozilla/5.0 (Linux; Android 14; wv)\ndevice memory 8 GB · 8 cores · heap 470 of 2048 MB · screen 393x852 at 2.75');
+  const bare = diagHead({ v: '0.540.0', app: false, agent: 'X', screen: '360x780 at 3' });
+  assert.equal(bare, 'Version 0.540.0 · a browser\nX\nscreen 360x780 at 3');
 });
