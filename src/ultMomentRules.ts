@@ -42,7 +42,19 @@ export const ULT_MOMENT = {
   LINGER_MS: 1500,
   /** The short version's banner. */
   SHORT_MS: 1500,
+  /** FREEZE-FIX (docs/notes/freeze-fix.md): the longest a moment may run past its own length before it is ended whatever it was waiting
+   *  for (real ms), so a show can never hold a fight for good. */
+  OVERRUN_MS: 2500,
 };
+
+/** FREEZE-FIX: the longest a moment may last, start to end (real ms, the freeze on the blow counted): its own length (its stages'; the
+ *  old lengths and its showcase without them), a salvo's longest wait, and `OVERRUN_MS` over. Always a finite number, whatever the
+ *  moment holds. */
+export function momentLimit(m: Pick<UltMoment, 'stages' | 'show'>): number {
+  const own = m.stages?.total ?? ULT_MOMENT.OPEN_MS + (m.show ?? 0) + ULT_MOMENT.IMPACT_MS + ULT_MOMENT.FADE_MS;
+  const most = 20000;
+  return (Number.isFinite(own) && own > 0 ? Math.min(own, most) : most) + ULT_MOMENT.MAX_DELAY_MS + ULT_EPIC.HIT_STOP_MS + ULT_MOMENT.OVERRUN_MS;
+}
 
 /** The sound of the moment's two beats (HOLD-SOUND, docs/notes/hold-sound.md). The opening: the slash's sting and, under it, the power
  *  gathering for the whole of the build-up. The blow: its heavy sting and, once the freeze lets go, the slow beat's drag (none when calm:
@@ -149,6 +161,10 @@ export class UltQueue {
   private openMs = ULT_MOMENT.OPEN_MS;
   private fadeMs = ULT_MOMENT.FADE_MS;
   private waitLeft = 0;
+  /** FREEZE-FIX: how many moments were ended by their deadline (`momentLimit`), and how many were dropped still waiting as the fight
+   *  ended (the page logs each when the count changes: neither should happen). */
+  overran = 0;
+  dropped = 0;
 
   /** An ultimate fired: it plays at once, or after those before it. */
   push(m: UltMoment): void {
@@ -241,7 +257,24 @@ export class UltQueue {
       this.next();
       if (this.phase === 'open') break;
     }
+    // (FREEZE-FIX: a moment that has outlived its own length, whatever it was waiting for, is ended here: the fight is never held for good)
+    if (this.current && !(this.clock <= momentLimit(this.current))) {
+      this.overran++;
+      this.stopLeft = 0;
+      this.slowLeft = 0;
+      this.phase = 'fade';
+      this.next();
+    }
     return this.phase;
+  }
+
+  /** FREEZE-FIX: the fight is over: the moments still waiting their turn are dropped (the one playing finishes), so a won fight's result
+   *  is not kept back by a line of shows with nothing left to strike. Returns how many went. */
+  dropWaiting(): number {
+    const n = this.queue.length;
+    this.queue = [];
+    this.dropped += n;
+    return n;
   }
 
   private next(): void {
