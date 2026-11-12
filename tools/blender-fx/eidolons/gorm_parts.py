@@ -260,7 +260,8 @@ def explosion():
     E = (math.sqrt(0.5), -math.sqrt(0.5))
     at = lambda a, c: (a * D[0] + c * E[0], a * D[1] + c * E[1])
     core = ball(None, amber, sub=4)
-    spikes = [(P.cone(amber), (i + rnd.uniform(-0.3, 0.3)) / 21 * math.pi, rnd.uniform(3.0, 6.5), rnd.uniform(0.3, 0.65)) for i in range(22)]
+    # (the flash has a shape: long rays thrown low and wide from a ragged core, the longest nearest the ground)
+    spikes = [(P.cone(amber), (i + rnd.uniform(-0.3, 0.3)) / 33 * math.pi, rnd.uniform(4.0, 7.0) * (1.0 + 0.9 * abs(math.cos((i + 0.5) / 34 * math.pi)) ** 2), rnd.uniform(0.35, 0.8)) for i in range(34)]
     ridge = []
     for k in range(38):
         a = rnd.uniform(-5.3, 5.3)
@@ -280,9 +281,9 @@ def explosion():
         c = out3(seg(i, -0.5, 2.5))
         gone = seg(i, 2.5, 5)
         r = (0.6 + 2.9 * c) * (1 - 0.3 * gone)
-        core.scale = (r * 1.25, r * 1.25, r * 0.7)                          # (low and wide: it comes from under the ground)
+        core.scale = (r * 1.05, r * 1.05, r * 0.62)                         # (low and wide: it comes from under the ground)
         core.location = (0, 0, 0.8 + 0.5 * c)
-        tint(core, gone ** 1.4, 0.6)
+        tint(core, 0.2 + 0.8 * gone ** 1.4, 0.3)                            # (torn at its edge, never a smooth ball)
         for o, ang, ln, w in spikes:
             g = out3(seg(i, -0.3, 3.5))
             fade = seg(i, 2.5, 6)
@@ -290,7 +291,7 @@ def explosion():
             o.scale = (w * (1 - 0.7 * fade), w * (1 - 0.7 * fade), max(0.01, ln * g))
             o.rotation_euler = (0, math.pi / 2 - ang, math.atan2(D[1], D[0]))
             o.location = (x, y, 0.9 + math.sin(ang) * (1.0 + ln * g * 0.5))
-            tint(o, fade ** 1.3, 0.8 * (1 - fade))
+            tint(o, fade ** 1.3, 0.25 * (1 - fade))                           # (amber rays with pale hearts, not a white fan)
         fall = seg(i, 9.6, 14.5)                                             # the ridge topples outward
         for o, a, cdep, rr, h, lean, turn in ridge:
             start = 0.8 + abs(a) * 0.55                                      # heaved up from the middle outward: the quake rolling

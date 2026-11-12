@@ -39,6 +39,34 @@ RAY = [(0.0, (0.7, 0.3, 0.02, 1)), (0.4, (1.0, 0.55, 0.05, 1)), (0.62, (1.0, 0.7
 HAZE = [(0.25, (0.6, 0.35, 0.05, 1)), (0.45, (0.95, 0.7, 0.2, 1)), (0.7, (1.0, 0.92, 0.6, 1))]
 
 
+def beam_mat():
+    """A beam of light with a grain: bright threads and darker gaps running its length (a noise across its width, its own for each
+    beam), amber at its edges. An object's red is how far it has faded."""
+    m, nt = mat('beam')
+    tc = nt.nodes.new('ShaderNodeTexCoord')
+    sep = nt.nodes.new('ShaderNodeSeparateXYZ')
+    nt.links.new(tc.outputs['UV'], sep.inputs[0])
+    info = nt.nodes.new('ShaderNodeObjectInfo')
+    rgb = nt.nodes.new('ShaderNodeSeparateColor')
+    nt.links.new(info.outputs['Color'], rgb.inputs[0])
+    off = mth(nt, 'ABSOLUTE', mth(nt, 'SUBTRACT', sep.outputs['Y'], 0.5, False))
+    core = mth(nt, 'SUBTRACT', 1.0, mth(nt, 'MULTIPLY', off, 2.0))
+    across = nt.nodes.new('ShaderNodeCombineXYZ')
+    nt.links.new(mth(nt, 'ADD', mth(nt, 'MULTIPLY', sep.outputs['Y'], 9.0, False), mth(nt, 'MULTIPLY', info.outputs['Random'], 60.0, False), False).outputs[0], across.inputs['X'])
+    nt.links.new(mth(nt, 'MULTIPLY', sep.outputs['X'], 0.6, False).outputs[0], across.inputs['Y'])   # (the threads wander a little along it)
+    grain = nt.nodes.new('ShaderNodeTexNoise')
+    grain.inputs['Scale'].default_value = 1.0
+    grain.inputs['Detail'].default_value = 2
+    nt.links.new(across.outputs[0], grain.inputs['Vector'])
+    thread = mth(nt, 'MULTIPLY', mth(nt, 'SUBTRACT', grain.outputs['Fac'], 0.36), 4.0)        # 0 in a gap, 1 on a thread
+    hot = mth(nt, 'MULTIPLY', mth(nt, 'POWER', core, 0.7), mth(nt, 'ADD', 0.3, mth(nt, 'MULTIPLY', thread, 0.7)))
+    # (the gaps are see-through, so the field shows dark between the threads)
+    a = mth(nt, 'MULTIPLY', mth(nt, 'MULTIPLY', mth(nt, 'MULTIPLY', mth(nt, 'POWER', core, 0.25), 3.0), mth(nt, 'ADD', 0.12, thread)), mth(nt, 'SUBTRACT', 1.0, rgb.outputs['Red']))
+    col = ramp(nt, hot, RAY)
+    glow(nt, col.outputs['Color'], a, 1.6)
+    return m
+
+
 def ray(b, a0, z0, a1, z1, width, depth=0.0, fade=0.0):
     """A straight ray (a bolt with no kinks)."""
     b.draw(None, a0, z0, a1, z1, width, 0.0, depth, fade)
@@ -125,7 +153,8 @@ def pillar():
     sc, n = scene('pillar')
     rm = V.bolt_mat(RAY)
     dawn, clock = P.hero_fire(DAWN)
-    rays = [Bolt(rm, 2) for _ in range(22)]
+    bm = beam_mat()
+    rays = [Bolt(bm if k % 3 == 0 else rm, 2) for k in range(22)]
     rings = [ball(None, dawn, sub=3) for _ in range(4)]                      # rings of light running down the shaft
     core = ball(None, dawn, sub=3)
     burst = [Bolt(rm, 2) for _ in range(16)]                                 # the sunburst where it lands
@@ -144,13 +173,13 @@ def pillar():
                 b.hide()
                 continue
             a = off * 1.25 * wide
-            ray(b, a * 0.6, 12.6, a, 12.6 * (1 - down), w * k * 1.4, dep, seg(i, 12, 16))
+            ray(b, a * 0.6, 12.6, a, 12.6 * (1 - down), w * k * (2.6 if b.ob.data.materials[0].name.startswith('beam') else 1.2), dep, seg(i, 12, 16))
         for k, o in enumerate(rings):
             g = ((i * 0.11 + k / 4) % 1.0)
             live = wide * (1 - seg(i, 10, 14))
             o.location = (0, 0, 11.5 * (1 - g))
-            q = 1.9 * wide * (0.6 + 0.4 * math.sin(g * math.pi))
-            o.scale = (q, q, 0.22)
+            q = 1.55 * wide * (0.6 + 0.4 * math.sin(g * math.pi))
+            o.scale = (q, q, 0.1)
             tint(o, 1 if live <= 0.05 else 0.2, 0.3)
         k = 1 - seg(i, 3, 8)
         up = out3(seg(i, 0.5, 2.5))
@@ -180,16 +209,18 @@ def explosion():
     dawn, clock = P.hero_fire(DAWN)
     haze, hclock = N.mist_mat(HAZE)
     core = ball(None, dawn, sub=4)
+    bm = beam_mat()
     sun = [Bolt(rm, 2) for _ in range(28)]                                   # the sunburst's rays
+    corona = [Bolt(rm, 2) for _ in range(40)]                                # and a ragged crown of short ones round its disc
     spots = [s * (0.7 + 1.15 * k) for k in range(5) for s in (-1, 1)]
-    beams = [[Bolt(rm, 2) for _ in range(9)] for _ in spots]
+    beams = [[Bolt(bm if j == 0 else rm, 2) for j in range(6)] for _ in spots]
     feet = [ball(None, dawn, sub=3) for _ in spots]
     dome = [ball(None, dawn, sub=4) for _ in range(2)]                       # the radiant shock, a low dome racing out
     puffs = [(ball(None, haze, sub=3), rnd.uniform(-5.0, 5.0), rnd.uniform(0.6, 1.0), rnd.uniform(0, 0.3)) for _ in range(10)]
     for o, *_ in puffs:
         tint(o, 1)
     mo, _ = flat_mat((1.0, 0.92, 0.6, 1), 2.2)
-    motes = [(ball(None, mo, sub=1, smooth=False), rnd.uniform(-5.4, 5.4), rnd.uniform(-0.6, 0.6), rnd.uniform(3.0, 8.5), rnd.uniform(0, 0.45)) for _ in range(70)]
+    motes = [(ball(None, mo, sub=1, smooth=False), rnd.uniform(-5.4, 5.4), rnd.uniform(-0.6, 0.6), rnd.uniform(3.0, 8.5), rnd.uniform(0, 0.45)) for _ in range(95)]                                                      # (motes caught in the beams)
     r = random.Random(13)
     lens = [r.uniform(0.6, 1.0) for _ in sun]
 
@@ -202,14 +233,22 @@ def explosion():
         rr = (0.6 + 2.6 * c) * (1 - 0.35 * gone)
         core.scale = (rr, rr, rr)
         core.location = (0, 0, 1.6 + 0.6 * c)
-        tint(core, 0.1 + 0.9 * gone ** 1.3, 0.3)
+        tint(core, 0.17 + 0.83 * gone ** 1.3, 0.3)                           # (torn at its edge)
+        for k, b in enumerate(corona):
+            f = seg(i, 3, 6.5)
+            if f >= 1:
+                b.hide()
+                continue
+            ang = k / len(corona) * math.tau - 0.11 * i
+            ln = rr * (1.25 + 0.45 * ((k * 7) % 5) / 4 + 0.15 * math.sin(i * 2.1 + k))
+            ray(b, math.cos(ang) * rr * 0.7, 1.9 + math.sin(ang) * rr * 0.7, math.cos(ang) * ln, 1.9 + math.sin(ang) * ln, 0.13 * (1 - 0.5 * f), 0.02, f)
         for k, b in enumerate(sun):
             g = out3(seg(i, -0.3, 3.5))
             f = seg(i, 4, 8.5)
             if f >= 1:
                 b.hide()
                 continue
-            ang = k / len(sun) * math.tau + 0.07 * i
+            ang = k / len(sun) * math.tau + 0.16 * i                          # (the rays turn as they lengthen)
             reach = (1.5 + 6.5 * g) * lens[k] * (1.0 if k % 2 == 0 else 0.6)
             ray(b, math.cos(ang) * rr * 0.5, 1.9 + math.sin(ang) * rr * 0.5, math.cos(ang) * reach, 1.9 + math.sin(ang) * reach, (0.3 if k % 2 == 0 else 0.16) * (1 - 0.6 * f), 0.0, f)
         # the beams, descending across the foes' side from the middle outward: each comes down, stands three frames, thins
@@ -218,10 +257,10 @@ def explosion():
             age = i - at_i
             if 0 <= age < 6:
                 down = out3(seg(age, 0, 1))
-                w = 0.34 * (1 - 0.85 * seg(age, 3, 6)) * (0.9 + 0.15 * math.sin(i * 2.3 + k))
+                w = 0.62 * (1 - 0.85 * seg(age, 3, 6)) * (0.9 + 0.15 * math.sin(i * 2.3 + k))   # (a wide beam of threads)
                 for j, b in enumerate(bs):
                     off = (0 if j == 0 else r.uniform(-1, 1) * 0.9)
-                    ray(b, a + off, 9.8, a + off * 0.85, 9.8 * (1 - down), w if j == 0 else w * r.uniform(0.2, 0.55), 0.2 * (k % 3 - 1) + 0.04 * j, seg(age, 4, 6))
+                    ray(b, a + off, 9.8, a + off * 0.85, 9.8 * (1 - down), w if j == 0 else w * r.uniform(0.06, 0.16), 0.2 * (k % 3 - 1) + 0.04 * j, seg(age, 4, 6))
             else:
                 for b in bs:
                     b.hide()
@@ -314,7 +353,8 @@ def fire():
     sc, n = scene('fire')
     rm = V.bolt_mat(RAY)
     dawn, clock = P.hero_fire(DAWN)
-    bs = [Bolt(rm, 2) for _ in range(7)]
+    bm = beam_mat()
+    bs = [Bolt(bm if j == 0 else rm, 2) for j in range(7)]
     foot = ball(None, dawn, sub=3)
     mo, _ = flat_mat((1.0, 0.92, 0.6, 1), 2.2)
     motes = [(ball(None, mo, sub=1, smooth=False), rnd.uniform(-0.5, 0.5), rnd.uniform(1.5, 3.4), rnd.uniform(0, 0.5)) for _ in range(9)]
@@ -324,12 +364,12 @@ def fire():
     def step(i):
         clock.outputs[0].default_value = i * 0.4
         down = out3(seg(i, -0.5, 1.5))
-        w = 0.17 * (1 - 0.9 * seg(i, 7, 13)) * (0.9 + 0.15 * math.sin(i * 2.4))
+        w = 0.3 * (1 - 0.9 * seg(i, 7, 13)) * (0.9 + 0.15 * math.sin(i * 2.4))
         for j, b in enumerate(bs):
             if i >= 13:
                 b.hide()
                 continue
-            ray(b, offs[j], 3.95, offs[j] * 0.85, 3.95 * (1 - down), w if j == 0 else w * 0.45, 0.04 * j, seg(i, 10, 14))
+            ray(b, offs[j], 3.95, offs[j] * 0.85, 3.95 * (1 - down), w if j == 0 else w * 0.14, 0.04 * j, seg(i, 10, 14))
         f = seg(i, 0.8, 2) * (1 - seg(i, 4, 11))
         foot.scale = (0.8 * f, 0.8 * f, 0.4 * f)
         foot.location = (0, 0, 0.28 * f)
