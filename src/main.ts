@@ -170,6 +170,7 @@ import { bindDecree, refreshDecree } from './decreeHud';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { readyStep } from './render/texReady';
+import { warmNow } from './render/boardWarmRules';
 import { diagFrame, diagMark, diagRest } from './diag';
 import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
@@ -1610,6 +1611,7 @@ class Game {
    *  player can act on is up, the flow is pushed on: the shows are cleared and the fight is settled as it would have been, so the
    *  wave's result is never lost. What was pending is logged: this should never be needed. */
   private warmedFor: Battle | null = null;
+  private warmedAs = '';
   private clockShown = '';
   private overFor = 0;
   private waveEndBelt(dt: number, over: boolean): void {
@@ -1662,12 +1664,14 @@ class Game {
       else if (this.ultm.queue.current) this.ultm.clear();
     }, () => this.ultm.clear());
     this.waveEndBelt(dt, over);
-    // (WAVE-DELAY: a wave won with a march to come: the next section's columns are painted ahead while the falls play out, so the
-    // march's build at the result is not one long stop)
-    if (b.phase === 'won' && this.warmedFor !== b) {
+    // (WAVE-DELAY: a wave with a march to come: the next section's columns are painted ahead, a tile a frame through the fight and the
+    // rest hurried as it is won, so the march's build at the result has nothing left to paint)
+    const warmKey = b.phase === 'won' ? 'won' : 'fight';
+    if (warmNow(b.phase, b.t) && (this.warmedFor !== b || this.warmedAs !== warmKey)) {
       this.warmedFor = b;
+      this.warmedAs = warmKey;
       const c = chainOf(this.run);
-      if (c && this.run.stage < c.length) this.chain.prewarm(c, this.run.stage - 1);
+      if (c && this.run.stage < c.length) this.chain.prewarm(c, this.run.stage - 1, b.phase === 'fight');
     }
     // (ULT-EPIC 2: the speed button reads x1 while a show holds the fight to it, and the set speed again the moment it is over; the set
     // speed itself is never touched, so it comes back however the show ends)

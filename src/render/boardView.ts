@@ -577,7 +577,11 @@ export class BoardView {
    *  the build that follows finds every column already there. */
   private warm: { b: Board; look: Look; rot: Rot; at: number; leases: ColumnLease<Texture>[] } | null = null;
   private warmFloor: { b: Board; floor: FloorTile[] | null } | null = null;
-  prewarm(b: Board, look: Look = {}, rot: Rot = 0): void {
+  /** `slow`: the fight is still on (a tile a frame); once it is won the page asks again without it, and the rest is hurried. */
+  warmSlow = false;
+  private warmAt = 0;
+  prewarm(b: Board, look: Look = {}, rot: Rot = 0, slow = false): void {
+    this.warmSlow = slow;
     if (this.warm?.b === b) return;
     this.dropWarm();
     this.warm = { b, look, rot, at: 0, leases: [] };
@@ -603,9 +607,11 @@ export class BoardView {
       return;
     }
     const t0 = performance.now();
+    const gap = t0 - this.warmAt;
+    this.warmAt = t0;
     let done = 0;
-    while (w.at < n && warmMore(done, performance.now() - t0)) {
-      const to = Math.min(n, w.at + WARM.LEAST);
+    while (w.at < n && warmMore(done, performance.now() - t0, this.warmSlow, gap)) {
+      const to = Math.min(n, w.at + (this.warmSlow ? WARM.FIGHT_LEAST : WARM.LEAST));
       this.section(w.b, w.look, { rot: w.rot, ou: 0, ov: 0, w: w.b.w, d: w.b.d }, { from: w.at, to, out: w.leases });
       done += to - w.at;
       w.at = to;

@@ -135,9 +135,9 @@ export class ChainView {
 
   /** Set the move from section `from` to the one after it going: the new columns up in the sky, the heroes at the start of their paths. The finished fight's tiles stay on show where they lie against the new section. */
   /** WAVE-DELAY: the section after `from` will be marched to: its columns are painted ahead, a few a frame (`BoardView.prewarm`). */
-  prewarm(sections: readonly Section[], from: number): void {
+  prewarm(sections: readonly Section[], from: number, slow = false): void {
     const next = sections[from + 1];
-    if (next) this.view.prewarm(next.board, look(next), next.rot);
+    if (next) this.view.prewarm(next.board, look(next), next.rot, slow);
   }
 
   begin(sections: Section[], from: number, walkers: Walker[], done: () => void): void {

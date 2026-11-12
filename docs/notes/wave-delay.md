@@ -96,6 +96,10 @@ What was changed:
 - **The next board is painted ahead** (`BoardView.prewarm`, `pumpWarm`; `ChainView.prewarm`; asked by `main.ts` as a wave is won):
   a few columns a frame (`warmMore`: four at least, more while the frame has 10 ms to give) through the two seconds the falls play
   out, so the march's build finds them there.
+- **And through the fight itself** (`warmNow`, `WARM.FIGHT_*`): from a second and a half into a fight the next board is painted a
+  tile a frame (2 ms of a frame, or a twentieth of a frame already long), so on a phone it is all there long before the wave ends
+  and the falls' two seconds have nothing left to do. On the throttled test machine a fight has too few frames for that, so the
+  measured wave's end did not fall further (0.6 to 0.8 s); what is left in that task is the result itself and the march.
 - **The window's size is kept** (`src/viewport.ts`), read again when the window changes, not every frame.
 - **The hero rows, the clock and the goat's place are written or measured only when they change** (`fightHud.ts` `setText`,
   `setWidth`, `setAttr`; `main.ts`): writing the same words again still made the browser lay the page out.
