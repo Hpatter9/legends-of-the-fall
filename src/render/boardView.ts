@@ -302,6 +302,13 @@ export class BoardView {
 
   /** Build the board's columns (again, for a new board). `keepOld` leaves everything on the stage (the section handed to `demote`, the fighters walking off it) and only adds the new columns. */
   build(b: Board, look: Look = {}, rot: Rot = 0, keepOld = false): void {
+    // (the land's floor sheet is fetched the first time its land is shown; the board is painted again when it lands)
+    const hold = FLOORS[b.area].hold;
+    if (!floorArt(hold)) void loadFloorArt(hold).then((got) => got && this.board === b && this.repaint());
+    // (MARCH-STAYS: the new columns are made FIRST, while the picture on show still stands; only then is the old one taken down, and
+    // the new goes up in the same frame (`BUILD_ORDER`, `marchStayRules.ts`). A fault while making leaves the old picture standing:
+    // it was taken down first, so a fault here left the field empty for good)
+    const made = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
     this.board = b;
     this.rot = rot;
     if (!keepOld) {
@@ -312,10 +319,7 @@ export class BoardView {
       this.root.addChild(...this.keep);
     }
     this.freeBuilt();
-    // (the land's floor sheet is fetched the first time its land is shown; the board is painted again when it lands)
-    const hold = FLOORS[b.area].hold;
-    if (!floorArt(hold)) void loadFloorArt(hold).then((got) => got && this.board === b && this.repaint());
-    this.built = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
+    this.built = made;
     // (WAVE-DELAY: what was painted ahead for this build is the section's own now)
     this.dropWarm();
     // (LAND-IDENTITY: what stands round the board and on it, once the land's pieces are here: `landRimRules.ts`)
