@@ -67,7 +67,7 @@ export const WANTED_QUESTS: readonly QuestDef[] = [
     needs: { kind: 'army', army: 'beasts' },
     stars: 3,
     length: 'short',
-    text: 'Fell the Alpha Werewolf with a hero left on a quarter of their health or less, and no heart spent',
+    text: 'Fell the Alpha Werewolf with a hero left on a quarter of their health or less, and the whole party never falling',
     offer: [
       "WANTED: the ALPHA WEREWOLF. The village wants him gone, but we are told the story must have 'a bit of peril in it'.",
       'So: one of yours must end the fight barely standing. No retries. The peril has to be real. (The village bard, who insists.)',

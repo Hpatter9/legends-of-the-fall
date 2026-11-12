@@ -84,7 +84,7 @@ try {
     await page.locator('#fight').waitFor({ state: 'visible' });
     await page.evaluate(() => { window.__forceDrop = undefined; });
     await page.click('#fight'); await page.waitForTimeout(600);
-    await page.evaluate(() => { const g = window.__game; g.run.retries = 9; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
+    await page.evaluate(() => { const g = window.__game; g.run.retries = 9; if (window.__game.b.lives) window.__game.b.lives.left = 0; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
     await page.locator('#next').waitFor({ state: 'visible', timeout: 120000 });
     await page.waitForTimeout(800);
     await page.click('#next');

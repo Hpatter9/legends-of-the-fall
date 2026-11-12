@@ -47,7 +47,7 @@ export const ROOMS: readonly Room[] = [
   R('readingRoom', 'library', 2, 'Reading Room', 'Each student can queue a second book; it starts when the first is learnt.', 'books'),
   R('archive', 'library', 4, 'Archive', 'Every boss weakness clue you find is written in full at once.', 'scroll'),
   R('scriptorium', 'library', 5, 'Scriptorium', 'Read a book to a hero of another calling, at three quarters of its strength.', 'quill'),
-  R('vigil', 'chapel', 2, 'Vigil', 'Choose how the party rises when a heart burns: Shielded, Swift or Cleansed.', 'candle'),
+  R('vigil', 'chapel', 2, 'Vigil', 'Choose how a hero rises when a life raises it: Shielded, Swift or Cleansed.', 'candle'),
   R('lastRites', 'chapel', 3, 'Last Rites', 'Once a run, the first hero to fall in a wave rises at 15% of health after 10 s.', 'cross'),
   R('lookout', 'watchtower', 1, 'Lookout', 'Opens the Scouted march: see the final boss and every wave\'s foes before they come.', 'eye'),
   R('nightWatch', 'watchtower', 2, 'Night Watch', 'Opens the Night march: shorter shots below the heights, a moonlit chest.', 'moon'),

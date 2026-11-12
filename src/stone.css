@@ -21,18 +21,17 @@ button:disabled, button.primary:disabled, .hmBig:disabled { color: var(--off-ink
 #summary { background: rgb(var(--s1-rgb) / 0.82); box-shadow: 0 0 0 2px var(--s7); padding: 6px 10px; color: var(--text); }
 #summary b, #summary em { color: var(--accent-hi); }
 
-/* The lives (an army's retries) beside the gold: the DawnLike heart at twice its size, grey once spent; the one just spent
-   shrinks and fades once (no flashing). */
+/* The lives (TEN-LIVES: the party's ten) beside the gold: the DawnLike heart at twice its size with the number left beside it, grey once
+   none is. */
 #lives { display: flex; gap: 2px; align-items: center; }
 #lives[hidden] { display: none; }
 #lives img { width: 32px; height: 32px; image-rendering: pixelated; }
 #lives img.spent { filter: grayscale(1) brightness(0.55); opacity: 0.6; }
-#lives img.lost { animation: heartLost 0.6s ease-out both; }
-@keyframes heartLost { from { filter: none; opacity: 1; transform: scale(1.25); } to { filter: grayscale(1) brightness(0.55); opacity: 0.6; transform: none; } }
-@media (prefers-reduced-motion: reduce) { #lives img.lost { animation: none; } }
 /* the heart that burns when the party falls: a flame strip plays once over it (reviveView.ts) */
-#lives .heart { position: relative; display: inline-block; width: 32px; height: 32px; }
-#lives .flame { position: absolute; left: -8px; top: -12px; width: 48px; height: 48px; image-rendering: pixelated; pointer-events: none; }
+/* (TEN-LIVES: the party's lives: the heart and the number left; amber when three or fewer are left, grey with none) */
+#lives .livesLeft { min-width: 20px; font: 700 18px var(--body); color: #ffe9c4; text-shadow: 0 1px 2px #000, 0 0 4px rgba(0, 0, 0, 0.8); text-align: left; display: inline-block; transform-origin: left center; }
+#lives.low .livesLeft { color: #ffb24a; }
+#lives.none .livesLeft { color: #b0a8a0; }
 /* the line that says what happened: a slate plate over the board, never a prompt (it takes no taps) */
 .reviveLine { position: fixed; left: 0; right: 0; margin: 0 auto; width: max-content; top: 30%; z-index: 30; max-width: calc(100vw - 32px); padding: 8px 16px; font: 400 24px/30px var(--body); color: var(--text); background: rgb(var(--s1-rgb) / 0.88); box-shadow: 0 0 0 2px var(--s7); text-align: center; pointer-events: none; }
 

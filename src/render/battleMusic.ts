@@ -12,7 +12,7 @@
 // - the Last Stand: the whole run, until the king falls (it never wins, so it never has victory music);
 // - a plain stage run (a field fight, from an old save): each stage.
 
-import { fallOutcome, isBossRun, waveArmyOf, type Run } from '../sim/run';
+import { isBossRun, waveArmyOf, type Run } from '../sim/run';
 import type { MusicId, Place } from './epicMusic';
 
 /** The one battle track, played in every battle (every army at every tier, the daily, a spire floor, a Calamity spot, the Last
@@ -61,12 +61,12 @@ export function crossfadeOf(from: MusicId | null, to: MusicId): number {
 
 /** What the music does as a fight ends: `victory` when the battle is won (the fanfare, then the triumph loop under the results),
  *  `defeat` when it is lost for good (the defeat sting, as before), `next` when a wave is won with more to come (the battle track
- *  plays on; after a boss wave it comes back from the boss track), `none` when a fall is revived by a heart (whatever was playing
- *  plays on, the boss track through a boss wave fought again). Asked at the fight's `end` event, before the run is settled
+ *  plays on; after a boss wave it comes back from the boss track), `none` for an end that changes nothing (a duel lost: the wave is
+ *  still to fight). TEN-LIVES: a fall is raised inside the fight now (`lives.ts`), so a lost fight is always lost for good. Asked at the fight's `end` event, before the run is settled
  *  (`run.stage` is still the wave just fought). */
 export type BattleEnd = 'victory' | 'defeat' | 'next' | 'none';
 export function endOfFight(run: Run, won: boolean): BattleEnd {
-  if (!won) return fallOutcome(run) === 'heart' ? 'none' : 'defeat';
+  if (!won) return 'defeat';
   if (run.tower) return 'victory';
   const army = waveArmyOf(run);
   return !army || run.stage >= army.waves.length ? 'victory' : 'next';

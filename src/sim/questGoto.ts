@@ -113,7 +113,7 @@ export function ruleLines(q: QuestDef, goal: Goal = q.goal): string[] {
   if (c.noUlts) out.push('No ultimates in this fight (ULT Auto off)');
   if (c.noSpells) out.push("No king's spells (SPELL Auto off)");
   if (c.noHires) out.push('No sellsword hired at the cart');
-  if (c.noHeart) out.push('No heart spent');
+  if (c.noHeart) out.push('The whole party never falls');
   if (c.flawless) out.push('No hero falls');
   if (c.quick !== undefined) out.push(`Win within ${c.quick} seconds`);
   if (c.levelCap !== undefined) out.push(`Heroes of level ${c.levelCap} or lower`);

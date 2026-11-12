@@ -52,7 +52,8 @@ test('the short card says only the notable moments: levels, an ultimate, finds, 
   assert.equal(notes[0].text, `Level up: ${heroName('knight')} Lv 6, ${heroName('cleric')} Lv ${ULT_LEVEL}`);
   assert.equal(notes[1].text, `Ultimate unlocked: ${heroName('cleric')}`);
   assert.equal(notes[3].text, `Fell: ${heroName('archer')} ×2`);
-  assert.equal(notes[4].text, 'A heart burned · 2 left');
+  // (TEN-LIVES: the hearts are lives now)
+  assert.equal(notes[4].text, 'A life spent · 2 left');
 });
 
 test('a spire floor\'s and a Calamity fight\'s card are headed by what fell', () => {

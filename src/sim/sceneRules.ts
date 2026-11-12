@@ -38,8 +38,8 @@ export function dueScene(m: Meta, moment: Moment): string | null {
   return null;
 }
 
-/** The moments a fight lost brings: the first-loss scene only on a real, final defeat (no heart left, or a mode with none), never
- *  on a fall a heart then revives (`fallOutcome` in `run.ts`). */
+/** The moments a fight lost brings: the first-loss scene only on a real, final defeat (TEN-LIVES: a fall the run's lives raise never ends the fight,
+ *  so every lost fight is one; the parameter is kept for the callers). */
 export const lossMoments = (outcome: 'heart' | 'end'): Moment[] => (outcome === 'end' ? [{ kind: 'firstLoss' }] : []);
 
 /* ------------------------------------------------------------ the boss's card */

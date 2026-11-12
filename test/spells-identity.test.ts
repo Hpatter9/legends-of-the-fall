@@ -158,6 +158,8 @@ function recordedStrengths<T>(fn: () => T): T {
 // field1Others 433f0011, field30Others 760831e8, heroes1Others 7941ba32, heroes10Others 563b72ce, heroes30Others fb2fb4a1)
 // (HEROES-JOIN, the owner's ask that nine of the twenty new heroes join the roster, docs/notes/heroes-join.md, re-recorded every scenario from the
 // tests' own output: the roster's pool means move every hero's pools, and the new heroes join the pool the fights draw on.)
+// (TEN-LIVES, the owner's ask for ten lives in place of the two hearts, docs/notes/ten-lives.md, re-recorded `daily` alone (b33a60fc): it is the
+// one scenario played with the hearts, which are the run's lives now, spent inside the fight; every other scenario keeps its hash)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)

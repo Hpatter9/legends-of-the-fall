@@ -1128,7 +1128,7 @@ export class Home {
     const top = siteTop(id);
     const menu = this.castleCard(id, siteName(id), this.cardSub(id, level, top));
     this.cardArt(menu.body, id, level);
-    const blurb = id === 'chapel' ? 'A place to study the ruler\'s spells; its higher levels watch over the party when a heart burns.' : ROOM_BUILDINGS[id as keyof typeof ROOM_BUILDINGS].blurb;
+    const blurb = id === 'chapel' ? 'A place to study the ruler\'s spells; its higher levels watch over a hero that a life raises.' : ROOM_BUILDINGS[id as keyof typeof ROOM_BUILDINGS].blurb;
     menuNote(menu.body, blurb);
     const strip = roomsStrip(id, level);
     if (strip) this.cardSection(menu.body, 'Rooms', strip);

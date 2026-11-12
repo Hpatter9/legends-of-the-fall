@@ -1,5 +1,7 @@
 # Lives: the retries shown as hearts
 
+> Superseded by [the ten lives](ten-lives.md) (TEN-LIVES): the two hearts are ten lives now, spent inside the fight; what is below is how it was.
+
 The owner's ask: two hearts at the top of army battles, the lives left for retries. Losing a wave spends one to try again,
 with enough gold to buy one more hero. The rule was already there (`MAX_RETRIES` 2, `retryWave`, `retryGold` = the
 current hire price in `src/sim/run.ts`; see `battle-flow.md`); this shows it.

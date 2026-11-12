@@ -149,7 +149,7 @@ try {
     // ---- wave 3 lost with no hearts left: the simple last card, then the run's end recap as the results screen
     await page.locator('#fight').waitFor({ state: 'visible' });
     await page.click('#fight'); await page.waitForTimeout(600);
-    await page.evaluate(() => { const g = window.__game; g.run.retries = 2; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
+    await page.evaluate(() => { const g = window.__game; g.run.retries = 2; if (window.__game.b.lives) window.__game.b.lives.left = 0; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
     await page.locator('#next').waitFor({ state: 'visible', timeout: 30000 });
     await page.waitForTimeout(800);
     await shot(page, w, checks, 'loss-card', '#result');
@@ -247,7 +247,7 @@ try {
     await page.waitForTimeout(900);
     await page.evaluate((party) => { const g = window.__game; g.run.roster = party.map((kind, i) => ({ id: i + 1, kind, grade: 1, paid: 5 })); g.run.squad = party.map((_, i) => i + 1); g.run.nextId = 6; g.newBattle(); g.refresh(); }, PARTY);
     await page.click('#fight'); await page.waitForTimeout(600);
-    await page.evaluate(() => { const g = window.__game; g.run.retries = 2; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
+    await page.evaluate(() => { const g = window.__game; g.run.retries = 2; if (window.__game.b.lives) window.__game.b.lives.left = 0; for (const u of g.b.units) if (u.side === 'hero') { u.hp = 0; u.alive = false; } });
     await page.locator('#next').waitFor({ state: 'visible', timeout: 60000 });
     await page.click('#next');
     await page.locator('.rcSheet').waitFor({ state: 'visible' });

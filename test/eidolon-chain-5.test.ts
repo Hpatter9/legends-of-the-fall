@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { recordOf } from '../src/sim/armies';
 import { loadMeta, saveMeta, startedMeta, type Meta } from '../src/sim/meta';
 import { settleRun } from '../src/sim/modes';
-import { finish, startStage, canRetry, retryWave } from '../src/sim/run';
+import { finish, startStage } from '../src/sim/run';
 import { FIXED_PACKS } from '../src/sim/starter';
 import { bindEidolon, boundOf, chosenOf } from '../src/sim/warHorn';
 import { castOf, CHAIN_BATTLES, QUEST_BATTLES, questBattleById } from '../src/sim/questBattles';
@@ -216,10 +216,7 @@ function fightTrial(level: number, seed: number): { won: boolean; events: string
     const au = b.units.find((u) => u.def === 'gormTitan');
     if (au) boss = { phased: !!au.phase?.done, called: b.units.filter((u) => u.owner === au.id && u.def === 'stoneGolem').length };
     const ok = b.phase === 'won';
-    if (!ok && canRetry(run)) {
-      retryWave(run);
-      continue;
-    }
+    // (TEN-LIVES: a fall is raised inside the fight now, by the run's lives: a lost wave is lost for good)
     finish(run, ok);
   }
   return { won: !!run.cleared, events, boss };

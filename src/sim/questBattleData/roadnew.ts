@@ -87,7 +87,7 @@ export const ROADNEW_BATTLES: readonly QuestBattle[] = [
   {
     id: 'whatWaitsUnder',
     title: 'What Waits Under',
-    blurb: 'It has climbed out of the sixth door and stands in the world. There are no hearts to spend.',
+    blurb: 'It has climbed out of the sixth door and stands in the world. There are no lives to spend.',
     land: 'crystal',
     like: { army: 'golems', wave: 15 },
     ease: 1.1,

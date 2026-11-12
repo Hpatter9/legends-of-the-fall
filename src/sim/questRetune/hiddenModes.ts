@@ -88,8 +88,8 @@ export const HIDDEN_PATCH: Readonly<Record<string, HiddenPatch>> = {
   },
   'mythic-astrax-rite': {
     needs: { kind: 'all', of: [armies(7), tier(3), { kind: 'level', n: 75 }] },
-    text: 'Clear 2 armies on Legendary or harder without spending a heart or using a Mythic',
-    going: 'The lens is still clouded. Only an army broken without a heart lost will polish it.',
+    text: 'Clear 2 armies on Legendary or harder without the whole party falling or using a Mythic',
+    going: 'The lens is still clouded. Only an army broken without the whole party falling will polish it.',
     goal: army({ kind: 'clearArmy', n: 2, tier: 3, noHeart: true, without: MYTHIC_KINDS }),
   },
   'mythic-astrax-trial': { needs: { kind: 'all', of: [armies(7), tier(3), { kind: 'level', n: 75 }] } },

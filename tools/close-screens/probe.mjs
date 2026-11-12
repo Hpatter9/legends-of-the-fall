@@ -50,7 +50,7 @@ await page.evaluate(() => window.__game.autoArrange(true));
 await page.waitForTimeout(300);
 await page.evaluate(() => document.getElementById('fight').click());
 await page.waitForTimeout(600);
-await page.evaluate(() => { window.__game.run.retries = 99; for (const u of window.__game.b.units) if (u.side === 'hero') u.hp = 0; });
+await page.evaluate(() => { window.__game.run.retries = 99; if (window.__game.b.lives) window.__game.b.lives.left = 0; for (const u of window.__game.b.units) if (u.side === 'hero') u.hp = 0; });
 console.log('state', await page.evaluate(() => JSON.stringify({ph: window.__game.b.phase, n: window.__game.b.units.filter(u=>u.side==='hero').length, home: document.getElementById('home').hidden, party: document.getElementById('party').hidden})));
 await skipFilms(); await page.waitForTimeout(1000); await page.evaluate(() => { for (const u of window.__game.b.units) if (u.side === 'hero') u.hp = 0; }); console.log('dbg', await page.evaluate(() => JSON.stringify({ hold: window.__game.sceneHold, tip: document.getElementById('tip').hidden, top: [...document.body.children].filter((e) => getComputedStyle(e).display !== 'none' && !e.hidden).map((e) => e.id || e.className).join(',') })));
 for (let i = 0; i < 30 && (await page.evaluate(() => document.getElementById('result').hidden)); i++) { await page.waitForTimeout(3000); console.log('wait', await page.evaluate(() => JSON.stringify({ ph: window.__game.b.phase, t: window.__game.b.t, ew: window.__game.endWait, alive: window.__game.b.units.filter((u) => u.side === 'hero' && u.alive).length }))); await page.evaluate(() => { for (const u of window.__game.b.units) if (u.side === 'hero') u.hp = 0; }); await skipFilms(); }

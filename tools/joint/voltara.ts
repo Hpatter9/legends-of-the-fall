@@ -3,7 +3,7 @@
 import './off';
 import { ARMIES } from '../../src/sim/armies';
 import { startedMeta } from '../../src/sim/meta';
-import { finish, startStage, canRetry, retryWave, summon } from '../../src/sim/run';
+import { finish, startStage, summon } from '../../src/sim/run';
 import { startQuestBattle } from '../../src/sim/questRun';
 import { fight, playOut } from '../../src/sim/battle';
 import { autoDeploy, autoEvent, pickSquad } from '../../src/sim/autoplay';
@@ -34,10 +34,7 @@ for (let seed = 2003; seed < 2003 + N; seed++) {
     fight(b);
     playOut(b);
     const ok = b.phase === 'won';
-    if (!ok && canRetry(run)) {
-      retryWave(run);
-      continue;
-    }
+    // (TEN-LIVES: a fall is raised inside the fight now, by the run's lives: a lost wave is lost for good)
     finish(run, ok);
   }
   if (run.cleared) {

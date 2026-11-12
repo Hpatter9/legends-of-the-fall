@@ -1,5 +1,7 @@
 # Heart revive (no give-up)
 
+> Superseded by [the ten lives](ten-lives.md) (TEN-LIVES): the two hearts are ten lives now, spent inside the fight; what is below is how it was.
+
 The restart behaviour below is superseded by [hearts resuming the existing fight](heart-resume.md). The heart animation and automatic flow remain.
 
 ## What was wrong
