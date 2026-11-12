@@ -160,6 +160,14 @@ the rendered loops instead: every element has one, a tile's worth, the lights wi
 loader are gone; the loop's strength on open ground and under a fighter. This is the owner's decision changing a requirement,
 not a test loosened. `tools/fx-alive/cut.py` (which cut the painted sheet) is kept for the record; its output is no longer used.
 
+## The ultimates, round 6: every hero's own wind-up and aftermath
+
+All 70 heroes now have their own `ult-<kind>-windup` and `ult-<kind>-aftermath` as well as their own strike (`ULT_OWN = 70`). Each
+is picked by hand to fit the ultimate (`OWN` in `tools/blender-fx/effects.py`, with a line beside each saying why), and the recipe
+refuses a pair another hero of the same element already has. The shared sheets (`ultwind-*`, `ultafter-*`) are gone; `ultBfx` still
+falls back to them by name should a new hero be added before its own are made. The atlases are 6,539,942 bytes in all: 280 effects,
+3,243 frames, 56 pixel atlases in their groups (a core of two, then one group for each pair of heroes), loaded as a fight needs them.
+
 ## The ultimates, round 5: the cap lifted
 
 The director lifted the 3 MB cap of round 4 (the built game is about 264 MB; 6 MB of effect atlases is nothing; keep the memory

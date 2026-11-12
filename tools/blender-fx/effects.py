@@ -230,7 +230,7 @@ def ult_weight(kind):
 # How many heroes (in the table's order) have had their own wind-up and aftermath made, and their strike made larger and
 # longer: the ultimates are done about fifteen at a time. The rest keep a wind-up shared by weight and element and an
 # aftermath shared by element until their turn.
-ULT_OWN = 15
+ULT_OWN = 70
 # Frames a stage keeps of those rendered: the strike every one after its opening; the wind-up and the aftermath a few fewer, played
 # slower. (The director first set a limit of about 3 MB for the ultimates, then lifted it: bytes are spent where they buy force.)
 WIND_FRAMES, STRIKE_FRAMES, AFTER_FRAMES = 12, 13, 9
@@ -256,6 +256,62 @@ OWN = dict(
     minotaur=('smoke', 'crack', 'smoke'),      # he paws up dust; cracked ground and dust
     barbarian=('shout', 'crack', 'motes'),     # his roar; the cracked ground and blood-red motes
     ninjaMonk=('veil', 'ring', 'swarm'),       # a blur round him; rings of wind and leaves
+    # (the other fifty-five)
+    buccaneer=('chains', 'cloud', 'souls'),    # his hooks' chains rattle out; a dark haze and the taken
+    dreadPirate=('souls', 'crack', 'souls'),   # the ghost fleet's dead gather; broken ground and ghosts
+    warlock=('souls', 'ring', 'souls'),        # what he will drink comes to him; the circle of death and its souls
+    reaper=('swarm', 'cloud', 'motes'),        # the dark wheels round the scythe; a haze where it reaped
+    nightstalker=('swarm', 'ring', 'swarm'),   # the bats lift; they scatter after
+    bellWarden=('shout', 'ring', 'veil'),      # the bell's toll rings out; its rings and a stillness
+    archer=('swarm', 'ring', 'motes'),         # arrows nocked in a whirl of wind; the marks' rings and dust
+    yamabushi=('spiral', 'cloud', 'spiral'),   # the gale winds into his hands; dust and eddies
+    karasu=('veil', 'cloud', 'veil'),          # feathers curtain him; a cloud of them hangs
+    wolfBard=('shout', 'ring', 'spiral'),      # the opening chord; the hymn's rings carry
+    falconer=('sparks', 'ring', 'veil'),       # the flock goes up in a flash of wings; rings where they stooped
+    mirageDancer=('swarm', 'sigil', 'veil'),   # sand spins up; her mirages' shimmer stays
+    siegeBot=('sparks', 'crack', 'motes'),     # the lock-on crackles; a crater and embers
+    gunslinger=('ring', 'ring', 'smoke'),      # high noon's stillness; gunsmoke
+    dragoon=('swarm', 'cloud', 'smoke'),       # embers draw to her breath; the ground alight and smoking
+    demonSwordsman=('chains', 'crack', 'souls'),  # the hellfire chains; split ground and what the demon took
+    kitsune=('swarm', 'ring', 'swarm'),        # fox fires wheel; they scatter
+    samuraiCommander=('shout', 'ring', 'motes'),  # the banner raised and the cry; embers on the air
+    banneret=('veil', 'sigil', 'veil'),        # the Oriflamme unfurls; its light stays over them
+    bombardier=('smoke', 'cloud', 'motes'),    # rocket smoke; smoke and embers over the field
+    lightningMage=('cloud', 'crack', 'spiral'),  # the storm cloud gathers; scorched lines, the air still turning
+    rifleBot=('ring', 'ring', 'motes'),        # it overclocks; rings of heat and sparks
+    sage=('veil', 'sigil', 'motes'),           # arcane threads; the circle and its motes
+    warDrummer=('shout', 'ring', 'veil'),      # ten thousand drums; the rolling of them after
+    ranger=('swarm', 'vines', 'motes'),        # leaves whirl to her net; the vines hold
+    druid=('vines', 'vines', 'veil'),          # the hedge begins to grow; it stands, green light in it
+    satyr=('spiral', 'ring', 'swarm'),         # the notes wind up; they dance off
+    corsairSurgeon=('flare', 'cloud', 'motes'),  # the rum cask's spray; a healing mist
+    knight=('shout', 'ring', 'pillar'),        # his roar; the shield's light closing
+    paladin=('spiral', 'sigil', 'pillar'),     # light winds up him as he kneels; the nova's circle and its pillar
+    priestess=('halo', 'sigil', 'motes'),      # light comes down to her; the circle and its motes where the fallen rose
+    timeWitch=('ring', 'sigil', 'spiral'),     # the clock's rings; its face and its hands still turning
+    wanderer=('swarm', 'cloud', 'motes'),      # the dawn wind; its light lingering
+    cleric=('souls', 'ring', 'souls'),         # the spirits come; they circle and go
+    dhampir=('sparks', 'crack', 'motes'),      # silver glints; the stakes' marks
+    astrologer=('implode', 'ring', 'spiral'),  # the planets draw in; their orbits after
+    inquisitor=('ring', 'sigil', 'souls'),     # the sun discs; the Tribunal's circle and the judged
+    seraph=('swarm', 'cloud', 'veil'),         # feathers of light; a curtain of them falling
+    gorgon=('eye', 'spikes', 'smoke'),         # her eyes open; stone and its dust
+    shambler=('cloud', 'crack', 'smoke'),      # grave-earth fumes; the heaved ground
+    plagueDoctor=('cloud', 'cloud', 'motes'),  # the censer's smoke; the plague hangs
+    juggernaut=('smoke', 'spikes', 'smoke'),   # dust off his stamp; the spires and their dust
+    mummy=('swarm', 'cloud', 'swarm'),         # the sand-wind; sand settling
+    peasant=('shout', 'ring', 'smoke'),        # his call; the dust of the charge
+    bloodGargoyle=('spiral', 'crack', 'motes'),  # he winds down from the spire; cracked ground, stone dust
+    geomancer=('ring', 'spikes', 'motes'),     # the ground's rings; the crags stand
+    kraken=('spiral', 'ring', 'motes'),        # the whirlpool begins; its rings and spray
+    seaReaver=('swarm', 'cloud', 'motes'),     # spray off the wave; surf and mist
+    tyrant=('shout', 'crack', 'smoke'),        # his roar from the throne; the ground it broke
+    werewolf=('swarm', 'ring', 'souls'),       # the moon's pull; the howl's rings
+    vampireLord=('souls', 'sigil', 'souls'),   # the eclipse draws blood; the goblet's circle
+    hemomancer=('spiral', 'ring', 'motes'),    # drops wind up to the bowl; the offering poured
+    illusionist=('veil', 'sigil', 'veil'),     # mirrors shimmer; the copies' shimmer
+    astralSphinx=('eye', 'sigil', 'motes'),    # the riddle's eye; glyphs of starlight
+    harpooner=('sparks', 'spikes', 'motes'),   # ice glints on the harpoons; ice and frost
 )
 SIZED = ('r', 'h', 'z', 'length', 'w', 'wide')
 
