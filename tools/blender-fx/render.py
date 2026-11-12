@@ -35,7 +35,8 @@ def scene_sources():
 def stamp(spec):
     """What an effect's frames depend on: its recipe, its scenes' code and the shared code."""
     src = scene_sources()
-    h = hashlib.sha256(json.dumps(spec, sort_keys=True).encode())
+    # (what only the later steps read, how many frames are kept and whether they are edged, does not change the render)
+    h = hashlib.sha256(json.dumps({k: v for k, v in spec.items() if k not in ('take', 'edge', 'skip')}, sort_keys=True).encode())
     for f in ('lib.py', 'render.py'):
         h.update(open(os.path.join(HERE, f), 'rb').read())
     h.update(src[''].encode())
