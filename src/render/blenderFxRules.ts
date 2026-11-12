@@ -228,6 +228,20 @@ export function lineRun(at: readonly (readonly [number, number])[], cx: number, 
   return order.map(({ i }, n) => ({ i, delay: n * ULT_LINE.LAG, size: Math.min(ULT_LINE.MAX, ULT_LINE.FROM + n * ULT_LINE.GROW) }));
 }
 
+/** ULT-AUDIT: what a strike adds beyond its own clip, as small clips of the showcase's (`beat-*`) in its element:
+ *  - `touch`: on each foe struck by a strike that plays round its caster, as the strike's ring reaches it (`TOUCH_MS` for each
+ *    hundred px it stands from the caster): the Bell Warden's toll shakes each foe with a ring as the hoop of sound passes;
+ *  - `wake`: along the ground from the first spot of a line to its last, a row of them, ahead of the strike on each spot: the foam
+ *    of the Sea Reaver's tide surging down his line;
+ *  - `land`: on the caster as the strike begins, large: the spray where the Sea Reaver lands. */
+export const ULT_EXTRA: Readonly<Record<string, { touch?: BeatClip; wake?: BeatClip; land?: BeatClip }>> = {
+  bellWarden: { touch: 'ring' },
+  seaReaver: { wake: 'dust', land: 'puff' },
+};
+export const ULT_EXTRA_AT = { TOUCH_MS: 220, WAKE_SIZE: 1.5, LAND_SIZE: 1.7 } as const;
+/** When the ring reaches a foe `d` px from the caster (ms after the strike begins). */
+export const touchDelay = (d: number): number => Math.round((Math.max(0, d) / 100) * ULT_EXTRA_AT.TOUCH_MS);
+
 /** ULT-AUDIT: the kinds whose strike is carried to each spot by a line from the caster (a row of the showcase's `link` clips, the strike
  *  landing as the line arrives, `ULT_LINK_MS` later): a healer's light running out to each friend, the Gorgon's gaze to each foe. */
 export const ultLinked = (kind: string): boolean => ultPlace(kind) === 'friends' || kind === 'gorgon' || kind === 'gunslinger';

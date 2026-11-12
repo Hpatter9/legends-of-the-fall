@@ -9,7 +9,7 @@ import '../src/sim/battle';
 import { AURA_MOTES } from '../src/render/movePaints';
 import { auraLook } from '../src/render/toolkitLooks';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
-import { BEAT_OWN, ULT_LASTS, ULT_LINE, ULT_LINK_MS, beatBfx, lineRun, ultLinkClip, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
+import { BEAT_OWN, ULT_EXTRA, ULT_EXTRA_AT, ULT_LASTS, ULT_LINE, ULT_LINK_MS, beatBfx, lineRun, touchDelay, ultLinkClip, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
 import { SHOWCASES } from '../src/ultShowRules';
 
 test('Spirit Guardians shows its guardians: spirits a fighter tall circling the Cleric for as long as the aura lasts', () => {
@@ -129,7 +129,8 @@ test('Vael\'s totality lasts: a black sun hangs over him for its eight seconds, 
   assert.equal(ultPlace('seaReaver'), 'line');
   for (const c of Object.values(BFX_CLIPS)) for (const sc of c.sc ?? []) assert.ok(!['angel', 'wave'].includes(sc), sc);
   for (const kind of ['ilyra', 'seraph', 'samurai']) assert.ok(!BFX_CLIPS[`ult-${kind}-strike`].sc!.includes('dome'), kind);
-  assert.deepEqual(BFX_CLIPS['ult-kunoichi-strike'].sc, ['arc', 'cross', 'ring']);
+  // (one cut on each foe and nothing under it: a large ring lay under each cut and made her marks a mass; the director's order)
+  assert.deepEqual(BFX_CLIPS['ult-kunoichi-strike'].sc, ['arc', 'cross']);
   assert.ok(ULT_LINK_MS >= 100 && ULT_LINK_MS <= 400);
   // (what the abilities are: beasts bursting out where each is called, stone creeping over each foe, slabs along the wall's tiles, shields)
   assert.deepEqual(BFX_CLIPS['ult-beastmaster-strike'].sc, ['beast', 'trail']);
@@ -176,5 +177,21 @@ test('a strike along a line runs out from its caster: nearest first, each later 
   assert.equal(ultPlace('dragoon'), 'line');
   assert.equal(ultPlace('dreadPirate'), 'one');
   assert.deepEqual(BFX_CLIPS['ult-dreadPirate-strike'].sc, ['broadside', 'crack']);
-  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /for \(const r of lineRun\(shown, caster\.x, caster\.y\)\)/);
+  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /const run = lineRun\(shown, caster\.x, caster\.y\);/);
+});
+
+test('what a strike adds beyond its clip: a ring on each foe as the Bell Warden\'s toll reaches it, foam down the Sea Reaver\'s line and spray where he lands', () => {
+  assert.deepEqual(ULT_EXTRA.bellWarden, { touch: 'ring' });
+  assert.deepEqual(ULT_EXTRA.seaReaver, { wake: 'dust', land: 'puff' });
+  // (every clip named is one the pipeline has made, in the hero's element)
+  assert.ok(beatBfx('ring', 'dark') && beatBfx('dust', 'ice') && beatBfx('puff', 'ice'));
+  // (the ring reaches a nearer foe sooner: nothing at the caster, `TOUCH_MS` for each hundred px)
+  assert.equal(touchDelay(0), 0);
+  assert.equal(touchDelay(100), ULT_EXTRA_AT.TOUCH_MS);
+  assert.ok(touchDelay(60) < touchDelay(180));
+  assert.equal(touchDelay(-5), 0);
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.match(fx, /this\.bfxBeat\(touch, el, x, y, \{ delay: touchDelay\(/);
+  assert.match(fx, /this\.bfxBeat\(extra\.wake!, el, px, py,/);
+  assert.match(fx, /if \(extra\?\.land\) this\.bfxBeat\(extra\.land, el, caster\.x, caster\.y,/);
 });

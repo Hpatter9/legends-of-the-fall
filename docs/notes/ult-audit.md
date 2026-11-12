@@ -677,6 +677,25 @@ director passed; they are small, and are not changed here.)
   so the wings are not lost among them. In the photograph: wide gold rings over the allies with a fan of feathers above them.
   A painted figure has its prompt in `docs/notes/ilyra-art-prompts.md`.
 
+### Three made to show: the toll's strike, the tide, the Kunoichi's marks
+
+`docs/samples/blender-fx/audit-later-4-393.jpg` (rows: the Bell Warden and the Sea Reaver from the blow on, the Kunoichi as her
+strike ends; four moments each, the screen's flash off). A strike can add small clips of its showcase's beyond its own
+(`ULT_EXTRA` in `blenderFxRules.ts`, a pure rule with a test): a `touch` on each foe struck as the strike's ring reaches it, a
+`wake` along the ground down a line, a `land` on the caster.
+
+- **The Bell Warden**: each foe his toll strikes is shaken by a small ring as the hoop of sound reaches it (sooner for a nearer
+  foe: `touchDelay`). In the photograph's first moment: wide purple hoops on the ground round him, the cracks standing up through
+  them, and small rings on the foes inside. (My earlier "one small hoop" was a frame too early.)
+- **The Sea Reaver**: foam runs along the ground from him down the whole line ahead of the strike on each spot, and a puff of
+  spray bursts where he lands. In the photograph's first moment: a pale cloud of spray where he lands and a streak of foam and
+  dust running from it to the foe he strikes. Honest: one moment only; it is quick, and the line in this fight was two tiles.
+- **The Kunoichi**: the large ring that lay under each of her cuts is gone (her strike is the crescent and the crossed cut
+  alone), so the small marks are seen. In the photograph's first moment: three purple cuts with a small sigil under each.
+
+The photographer has `TRACE=1` now (each stage's clip as it is asked for: where, and whether its frames were held); it showed
+the Kunoichi's marks were drawn all along and hidden under the rings.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in

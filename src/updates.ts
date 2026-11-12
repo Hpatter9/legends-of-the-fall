@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.553.0',
+    date: '2026-11-12',
+    title: 'Cuts and marks, a toll that shakes each foe',
+    notes: ['The Kunoichi\'s death marks are seen at last: three cuts with a small sigil under each, no large ring hiding them.', 'The Bell Warden\'s toll shakes each foe with a small ring as its hoop reaches them, the nearer foe first.', 'The Sea Reaver\'s foam runs along the ground down his line and spray bursts where he lands.'],
+  },
+  {
     version: '0.552.0',
     date: '2026-11-12',
     title: 'Meteors, a column of light, a tide',

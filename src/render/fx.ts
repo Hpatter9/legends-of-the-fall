@@ -77,7 +77,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -388,6 +388,8 @@ export class Fx {
       void warmBfx([...kinds].flatMap((kind) => (['windup', 'strike', 'aftermath'] as UltStageName[]).map((stage) => ultBfx(kind, stage, ultWeight(kind)))));
       // (ULT-AUDIT: but the one small clip a healer's light or the Gorgon's gaze runs out in is: it must be there the first time)
       warmBfx([...kinds].filter((kind) => ultLinked(kind) && SHOWCASES[kind]).map((kind) => beatBfx(ultLinkClip(kind), SHOWCASES[kind].el)));
+      // (and the small clips a strike adds: a ring on each foe, foam down a line, spray where the caster lands)
+      warmBfx([...kinds].filter((kind) => ULT_EXTRA[kind] && SHOWCASES[kind]).flatMap((kind) => Object.values(ULT_EXTRA[kind]).map((clip) => beatBfx(clip, SHOWCASES[kind].el))));
       // (the beats of their showcases are not asked for here: each loads the first time it is played, the older parts playing that once,
       // so a fight begins with as little held as it can)
     }
@@ -726,6 +728,9 @@ export class Fx {
       if (place === 'self') {
         // (ULT-AUDIT: an aura, a ward, a transformation, a pull: it plays round the caster, once; its further bursts add nothing there)
         if (caster && size >= 1) this.bfxUlt(kind, 'strike', caster.x, caster.y);
+        // (and each foe it struck is shaken by a small ring as the strike's own ring reaches it: `ULT_EXTRA.touch`)
+        const touch = ULT_EXTRA[kind]?.touch;
+        if (touch && caster && size >= 1) for (const [x, y] of at) this.bfxBeat(touch, el, x, y, { delay: touchDelay(Math.hypot(x - caster.x, y - caster.y)) });
       } else if (place !== 'one') {
         // (ULT-AUDIT: a heal on each friend healed, a mark on each foe marked, a flurry's cut on each foe cut, a wall's slab on each tile
         // it blocks: a strike on every one the ability touched, not one great one in their midst. Where the ability is carried from the
@@ -734,7 +739,15 @@ export class Fx {
         const shown = at.slice(0, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS);
         if (place === 'line' && caster && size >= 1) {
           // (a breath or a cut down a line runs out from the caster: the nearest spot first, each a little later and larger)
-          for (const r of lineRun(shown, caster.x, caster.y)) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay);
+          const run = lineRun(shown, caster.x, caster.y);
+          // (`ULT_EXTRA`: foam along the ground down the whole line ahead of the strike, and a burst of spray where the caster lands)
+          const extra = ULT_EXTRA[kind];
+          if (extra?.wake && run.length) {
+            const a1 = shown[run[run.length - 1].i];
+            beatLine(caster.x, caster.y, a1[0], a1[1]).forEach(([px, py], i) => this.bfxBeat(extra.wake!, el, px, py, { delay: i * BEAT_LINE.LAG, mult: ULT_EXTRA_AT.WAKE_SIZE }));
+          }
+          if (extra?.land) this.bfxBeat(extra.land, el, caster.x, caster.y, { mult: ULT_EXTRA_AT.LAND_SIZE });
+          for (const r of run) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay);
         } else for (const [x, y] of shown) {
           const far = linked && Math.hypot(x - caster.x, y - caster.y) > 8;
           if (far) beatLine(caster.x, caster.y, x, y).forEach(([px, py], i) => this.bfxBeat(ultLinkClip(kind), el, px, py, { delay: i * BEAT_LINE.LAG }));
