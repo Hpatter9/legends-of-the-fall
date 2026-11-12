@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.529.0',
+    date: '2026-11-12',
+    title: 'The wolves are grey at last',
+    notes: ['The Beastmaster\'s wolves now show as grey wolves with amber eyes, in her wind-up and as they leap out. They were rendering green.', 'A hero\'s ultimate showcase now gathers with that hero\'s own wind-up, not the same circle and ring for everyone.'],
+  },
+  {
     version: '0.528.0',
     date: '2026-11-12',
     title: 'Taller guardians, grey wolves',
