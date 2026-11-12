@@ -357,10 +357,10 @@ test('a strike is held to a least size, not a most (the cap on bytes was lifted)
 
 test('a showcase\'s beats are rendered clips in its element: every clip in every element, a line a row of small clips', () => {
   const each: BeatClip[] = ['puff', 'appear', 'cut', 'blow', 'dust', 'link', 'crash', 'cloud', 'snare', 'smite', 'nova', 'call', 'ring', 'gather', 'mark', 'sky'];
-  const only: BeatClip[] = ['bolt', 'flame', 'rise', 'tunnel'];
+  const only: BeatClip[] = ['bolt', 'flame', 'rise', 'tunnel', 'gaze'];
   for (const el of ELEMENTS) {
     for (const clip of each) assert.equal(beatBfx(clip, el), `beat-${clip}-${el}`, `${clip} in ${el}`);
-    // (the four that are one element's only are the same clip whatever the showcase's element)
+    // (the few that are one element's only are the same clip whatever the showcase's element)
     for (const clip of only) assert.equal(beatBfx(clip, el), `beat-${clip}`);
     const keys = beatKeys(el);
     assert.equal(keys.length, each.length + only.length, `${el}: ${keys.length} clips`);

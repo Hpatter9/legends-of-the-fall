@@ -854,7 +854,7 @@ def bite(c, r=0.75, n=5, z=0.85):
 
 
 # 31. Eye: a great eye of light that opens over the middle, looks about, and closes.
-def eye(c, r=0.95, z=1.5):
+def eye(c, r=0.95, z=1.5, ground=1.4):
     m, a, _ = c.streak('bright', 'hot', 1.0, 1.7)
     import bpy
     root = bpy.data.objects.new('eye', None)
@@ -891,7 +891,9 @@ def eye(c, r=0.95, z=1.5):
         for i, o in enumerate(rays):
             hide(o, op < 0.6)
         a.inputs[1].default_value = 2.0 * win(t, 0, 0.1) * (1 - win(t, 0.85, 1))
-        put(ring, scale=(1.4 * (0.3 + 0.8 * ease(t)),) * 2 + (1,))
+        # (`ground`: how far the ring under it spreads; none for a small eye that is one of a row, a gaze travelling)
+        put(ring, scale=(max(0.001, ground) * (0.3 + 0.8 * ease(t)),) * 2 + (1,))
+        hide(ring, ground <= 0)
         rv.outputs[0].default_value = 1 - win(t, 0.4, 0.8)
     return step
 

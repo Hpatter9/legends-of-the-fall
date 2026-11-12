@@ -9,7 +9,7 @@ import '../src/sim/battle';
 import { AURA_MOTES } from '../src/render/movePaints';
 import { auraLook } from '../src/render/toolkitLooks';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
-import { BEAT_OWN, ULT_LINK_MS, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
+import { BEAT_OWN, ULT_LINK_MS, beatBfx, ultLinkClip, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
 import { SHOWCASES } from '../src/ultShowRules';
 
 test('Spirit Guardians shows its guardians: spirits a fighter tall circling the Cleric for as long as the aura lasts', () => {
@@ -99,6 +99,10 @@ test('a strike on each one the ability touched finds them: the friends helped (a
   // (a healer's light runs out from her hands to each friend, the Gorgon's gaze to each foe; a cut does not)
   for (const kind of ['wanderer', 'sage', 'priestess', 'gorgon']) assert.ok(ultLinked(kind), kind);
   for (const kind of ['kunoichi', 'samurai', 'cleric', 'beastmaster']) assert.ok(!ultLinked(kind), kind);
+  // (a blessing's line is sparks of light; the Gorgon's is her gaze, a row of eyes, a clip of its own that the pipeline has made)
+  assert.equal(ultLinkClip('priestess'), 'link');
+  assert.equal(ultLinkClip('gorgon'), 'gaze');
+  assert.equal(beatBfx('gaze', 'poison'), 'beat-gaze');
   assert.ok(ULT_LINK_MS >= 100 && ULT_LINK_MS <= 400);
   // (what the abilities are: beasts bursting out where each is called, stone creeping over each foe, slabs along the wall's tiles, shields)
   assert.deepEqual(BFX_CLIPS['ult-beastmaster-strike'].sc, ['beast', 'trail']);
