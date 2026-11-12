@@ -265,6 +265,30 @@ again (`audit-grey.jpg`).
   did not show (the cut does not reach the aftermath's stage from the wind-up), so I took the change out rather than leave it
   unseen. Nothing lingers, nothing waits, no errors.
 
+## The killing blow is seen (the director's decision, 2026-11-12)
+
+The cut-short photographs showed that an ultimate which itself ended the fight was never seen to land: the freeze fix (0.525.0) cut a
+show to a second of aftermath the moment the fight was over, and from the wind-up that left nothing. The director's decision: when the
+fight is over and the blow has NOT been seen, the last beat is the strike, its own run of 1.3 s at most, on where the foes fell; then
+the moment ends and the result comes. When the blow has been seen, it is the second of aftermath as before. The freeze fix's limits
+stand: the moments waiting are dropped, nothing is held, nothing waits, and the result's own two-second wait is not lengthened.
+
+- `UltQueue.fightOver` (`src/ultMomentRules.ts`): a moment whose blow has not landed lands it at once (`strike`, its stage the strike,
+  `OVER_STRIKE_MS` = 1300 of the `impact` phase with nothing held), and its fade is then ended at once. `holdsBattle` is false through
+  it.
+- `Fx.ultImpact`: a foe that has fallen and gone from the board is struck where it fell (its tile), so the blow has somewhere to land.
+- Tests (`test/freeze-fix.test.ts`): cut in the wind-up or the showcase gives the blow and ends within the strike's run, for every
+  shape; cut after the blow gives the aftermath and no second blow; a queue of several still drops the ones waiting; no cut point from
+  0 to 7 s takes longer than the strike's run; the next moment starts clean. The freeze fix's own test, which held "a second at most",
+  now holds "the blow's run or a second, whichever applies": a requirement the director changed, not a test loosened.
+- Photographed (`docs/samples/blender-fx/audit-cut-short-393.jpg`, `CUT=windup` and `CUT=strike`): the fight ended 60% through the
+  Kraken's and the Samurai's wind-ups: the whirlpool and spout, and the Samurai's great blow, play in full and are gone by 2 s; ended
+  150 ms after the Cleric's blow: the strike finishes and the guardians circle on; and the Wizard, whose meteors had not yet landed,
+  now gets its fireball.
+
+Not done: an Eidolon's call. Its strike is the other builder's staged show (`eidolonCall.ts`, its own clock and its own cut,
+`CALL_OVER_MS`), not a small change of this kind; it is left as it is.
+
 ## The audit of all 70
 
 To come, in batches: for each ultimate, what it does in the sim, what 0.499 showed, what main shows now, and the verdict; then the ten

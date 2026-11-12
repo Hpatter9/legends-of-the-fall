@@ -166,10 +166,13 @@ test('no show outlives the fight: whatever is playing or waiting, a second at mo
           assert.equal(q.waiting, 0);
           q.step(33);
         }
-        assert.ok(took <= ULT_MOMENT.OVER_MS + 66, `${h} ${shape} at ${at}: ${took} ms left after the fight`);
+        // (ULT-AUDIT, the director's decision: a moment whose blow had not been seen plays that blow, its strike's own run, and ends;
+        // one whose blow had been seen has its second of aftermath. Either way far inside the two seconds the result waits)
+        assert.ok(took <= Math.max(ULT_MOMENT.OVER_MS, ULT_MOMENT.OVER_STRIKE_MS) + 66, `${h} ${shape} at ${at}: ${took} ms left after the fight`);
         assert.equal(q.overran, 0);
       }
   assert.ok(ULT_MOMENT.OVER_MS <= 1000 && CALL_OVER_MS <= 1000);
+  assert.ok(ULT_MOMENT.OVER_STRIKE_MS <= 1500, 'the blow played after a fight ends is short');
   // (nothing playing: nothing to do)
   const q = new UltQueue();
   q.fightOver();
@@ -197,4 +200,61 @@ test('a graphics context not given back in four seconds has the page loaded agai
   assert.equal(ctxReload(60000, 'fight', CTX.AGAIN_MS - 1), false);
   assert.equal(ctxReload(60000, 'fight', CTX.AGAIN_MS), true);
   assert.equal(CTX.RELOAD_MS, 4000);
+});
+
+test('ULT-AUDIT: a fight that ends before the blow was seen gets the blow, then the end; one that ends after it gets its second of aftermath', () => {
+  /** A queue stepped to `at` ms, then the fight ends: the strikes it had counted, the phases it goes through after, and how long it takes. */
+  const cut = (shape: UltShape, at: number, extra = 0) => {
+    const q = new UltQueue();
+    q.push(moment('wizard', shape, { show: 2500, wait: shape === 'delayed' ? 900 : 0 }));
+    for (let i = 0; i < extra; i++) q.push(moment('archer', 'instant', { show: 2500 }));
+    for (let t = 0; t < at && q.current; t += 33) q.step(33);
+    const before = q.strikes;
+    const phases: string[] = [];
+    let took = 0;
+    for (; took < 6000 && q.current; took += 33) {
+      q.fightOver();
+      assert.equal(q.holdsBattle, false, 'nothing is held once the fight is over');
+      assert.equal(q.waiting, 0, 'the moments waiting are dropped');
+      if (phases[phases.length - 1] !== q.phase) phases.push(q.phase);
+      q.step(33);
+    }
+    return { q, before, phases, took };
+  };
+  for (const shape of SHAPES) {
+    // (cut in the wind-up, 400 ms in: the blow had not been seen. It lands at once, plays its strike's run, and the moment ends)
+    const early = cut(shape, 400);
+    assert.equal(early.before, 0);
+    assert.equal(early.q.strikes, 1, `${shape}: the blow lands`);
+    assert.equal(early.phases[0], 'impact', `${shape}: straight to the blow`);
+    assert.ok(!early.phases.includes('open') && !early.phases.includes('show'), `${shape}: ${early.phases}`);
+    assert.ok(early.took >= ULT_MOMENT.OVER_STRIKE_MS - 66 && early.took <= ULT_MOMENT.OVER_STRIKE_MS + 66, `${shape}: the strike's own run, ${early.took} ms`);
+    // (cut in the showcase, before the blow: the same)
+    const show = cut(shape, 2600);
+    assert.equal(show.before, 0);
+    assert.equal(show.q.strikes, 1);
+    assert.ok(show.took <= ULT_MOMENT.OVER_STRIKE_MS + 66);
+  }
+  // (cut after the blow was seen: no second blow, a second of aftermath at most, as the freeze fix has it)
+  const late = cut('instant', 5200);
+  assert.equal(late.before, 1, 'the blow had landed');
+  assert.equal(late.q.strikes, 1, 'it does not land twice');
+  assert.deepEqual(late.phases, ['fade']);
+  assert.ok(late.took <= ULT_MOMENT.OVER_MS + 66, `${late.took} ms`);
+  // (a queue of several: the waiting ones are dropped, only the one playing has its blow)
+  const many = cut('instant', 400, 3);
+  assert.equal(many.q.strikes, 1);
+  assert.equal(many.q.dropped, 3);
+  assert.ok(many.took <= ULT_MOMENT.OVER_STRIKE_MS + 66);
+  // (no path is longer than the blow's run, and the blow's run is well inside the two seconds every fight's end waits for its result)
+  for (const shape of SHAPES) for (let at = 0; at <= 7000; at += 250) assert.ok(cut(shape, at).took <= ULT_MOMENT.OVER_STRIKE_MS + 66, `${shape} at ${at}`);
+  assert.ok(ULT_MOMENT.OVER_STRIKE_MS < 2000);
+  // (the next moment starts clean: a blow played at a fight's end does not carry over)
+  const q = new UltQueue();
+  q.push(moment('wizard', 'instant', { show: 2500 }));
+  q.step(400);
+  q.fightOver();
+  drain(q);
+  q.push(moment('samurai', 'instant', { show: 2500 }));
+  assert.equal(q.holdsBattle, true, 'a new moment holds its fight through its opening as ever');
 });
