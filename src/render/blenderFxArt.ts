@@ -2,169 +2,155 @@
 // (`fx/blender/px-<n>.webp`) are drawn with hard pixels; the glow atlases (`soft-<n>.webp`) are small and drawn smoothed, which is what makes
 // them soft. They load by URL behind the game (build.mjs copies them and lists them in the service worker, so they play offline).
 //
-// An atlas is only held in the graphics memory once something needs it. The atlases every fight may need (`BFX_CORE`: the king's spells,
-// the ground loops) and the glows load up front. The ultimates' are large and many (a strike is the biggest thing in the game), so each
-// loads when a fight has a hero whose ultimate is in it (`warmBfx`, as the fight begins), or the first time one of its clips is asked for.
-// Until a clip's atlas has loaded, `bfxFrames` is empty and the caller keeps its older look: nothing ever waits on one.
-//
-// FREEZE-FIX (docs/notes/freeze-fix.md): an atlas drawn for the first time had to be handed to the graphics card in the middle of the
-// fight, on the frame of the blow, and the browser decoded the whole picture again to do it (a fifth of a second and more on a phone,
-// the page stopped for it); and one not drawn for a minute was taken back, so it happened again and again. So now: each is decoded once,
-// off the page's thread (`createImageBitmap`); a fight's atlases are handed over as the fight begins, one at a time with a breath
-// between (`bfxUploader`); they are kept for as long as a fight wants them; and those neither this fight nor the last wanted are let go
-// (`bfxDrop`), so the memory holds a few fights' worth, never every hero fielded since the game was opened.
+// What is held is kept small, for a phone's sake (`blenderFxBudget.ts` has the rules, and this file only carries them out). The atlases every
+// fight may need (`BFX_CORE`: the king's spells, the ground loops) and the glows load up front and stay. The rest (an ultimate's stages, a
+// showcase's beats) are small atlases loaded as a fight needs them: two at a time, never past a budget of decoded pixels, the least
+// recently used given up first; and taken off the graphics card when too many have been drawn. A load that hangs is given up and tried
+// again later. Until a clip's atlas is held, `bfxFrames` is empty and the caller keeps its older look: nothing ever waits on a load.
 
-import { Rectangle, Texture, type TextureSource } from 'pixi.js';
+import { Rectangle, Texture } from 'pixi.js';
 import { loadImage } from './loadImage';
 import { BFX_CLIPS, BFX_CORE, BFX_PX, BFX_SOFT } from './blenderFxData';
-import { bfxDrop, bfxRect } from './blenderFxRules';
+import { bfxRect } from './blenderFxRules';
+import { BFX_MEM, BfxPages } from './blenderFxBudget';
 
 const FRAMES = new Map<string, Texture[]>();
 const GLOWS = new Map<string, Texture[]>();
-/** Each atlas's load, once asked for: 'px' pages by their number, the glows together. */
-const PAGES = new Map<number, Promise<void>>();
-/** The pixel atlases held now, and which of them have been handed to the graphics card. */
-const BASES = new Map<number, Texture>();
-const UPLOADED = new Set<number>();
+/** The clips that lie in each pixel atlas. */
+const IN = new Map<number, string[]>();
+for (const [key, c] of Object.entries(BFX_CLIPS)) IN.set(c.a, [...(IN.get(c.a) ?? []), key]);
+const CORE = new Set(BFX_CORE);
+/** A held atlas: its texture, and its picture when that is one this file may close (a bitmap). */
+const HELD = new Map<number, { base: Texture; bitmap: ImageBitmap | null }>();
+const book = new BfxPages(
+  (a) => (BFX_PX[a]?.[0] ?? 0) * (BFX_PX[a]?.[1] ?? 0),
+  (a) => CORE.has(a),
+);
 let soft: Promise<(Texture | null)[]> | null = null;
-/** The atlases the fight going on wants, and those the one before it wanted. */
-let wantNow: ReadonlySet<number> = new Set();
-let wantBefore: ReadonlySet<number> = new Set();
-/** The atlases never let go: those every fight may need, and any other that holds a clip that is not an ultimate's (a spell's, a
- *  ground loop's: asked for at any time, by any fight). */
-const ALWAYS: readonly number[] = [...new Set([...BFX_CORE, ...Object.entries(BFX_CLIPS).filter(([key]) => !key.startsWith('ult-')).map(([, c]) => c.a)])];
-/** Hands a texture to the graphics card ahead of its first drawing (the page gives its renderer's; none: it goes up when first drawn). */
-let uploader: ((s: TextureSource) => void) | null = null;
-/** A breath between two atlases handed to the graphics card (ms), so no one frame carries more than one. */
-const UPLOAD_GAP_MS = 80;
-export function bfxUploader(fn: (s: TextureSource) => void): void {
-  uploader = fn;
-  // (what has already arrived goes up now, one at a time)
-  [...BASES.keys()].forEach((a, i) => setTimeout(() => upload(a), i * UPLOAD_GAP_MS));
-}
+let clock: ReturnType<typeof setInterval> | null = null;
+const now = (): number => performance.now();
+let pumped = 0;
 
-/** The picture decoded once, off the page's thread, where the browser can; else the ordinary image. */
-async function picture(url: string): Promise<ImageBitmap | HTMLImageElement> {
-  if (typeof createImageBitmap === 'function' && typeof fetch === 'function') {
-    try {
-      const res = await fetch(url);
-      if (res.ok) return await createImageBitmap(await res.blob());
-    } catch {
-      /* (no bitmap here: the image element below) */
-    }
-  }
-  return loadImage(url);
-}
-
-async function page(name: string, i: number, mode: 'nearest' | 'linear'): Promise<Texture | null> {
+/** A glow atlas (small, smoothed; they load once and stay). */
+async function glowPage(i: number): Promise<Texture | null> {
   try {
-    const base = Texture.from(await picture(`fx/blender/${name}-${i}.webp`));
-    base.source.style.scaleMode = mode;
-    // (kept on the graphics card while it is held here: taken back only by `drop`, never in the middle of a fight)
-    base.source.autoGarbageCollect = false;
+    const base = Texture.from(await loadImage(`fx/blender/soft-${i}.webp`));
+    base.source.style.scaleMode = 'linear';
     return base;
   } catch (err) {
-    console.warn(`blender effects ${name}-${i} did not load`, err);
+    console.warn(`blender effects soft-${i} did not load`, err);
     return null;
   }
 }
 
-/** Hand atlas `a` to the graphics card now, if the page gave a way and it has not gone yet. A fault here is not the fight's: it is
- *  logged, and the atlas goes up when it is first drawn, as before. */
-function upload(a: number): void {
-  const base = BASES.get(a);
-  if (!base || !uploader || UPLOADED.has(a)) return;
-  UPLOADED.add(a);
+/** A pixel atlas's picture, fetched and decoded off the page's own thread where the browser can (a bitmap, which can be closed again to
+ *  give its memory back at once); given up after `TIMEOUT_MS`. */
+async function picture(a: number): Promise<ImageBitmap | HTMLImageElement> {
+  const url = `fx/blender/px-${a}.webp`;
+  if (typeof createImageBitmap !== 'function' || typeof fetch !== 'function') return loadImage(url);
+  const stop = new AbortController();
+  const timer = setTimeout(() => stop.abort(), BFX_MEM.TIMEOUT_MS);
   try {
-    uploader(base.source);
-  } catch (err) {
-    console.warn(`blender effects px-${a} could not be sent ahead`, err);
+    const res = await fetch(url, { signal: stop.signal });
+    if (!res.ok) throw new Error(`${url}: ${res.status}`);
+    return await createImageBitmap(await res.blob());
+  } finally {
+    clearTimeout(timer);
   }
 }
 
-/** Let atlas `a` go: its clips are forgotten (asked for again, it loads again), its texture and its decoded picture freed. */
-function drop(a: number): void {
-  const base = BASES.get(a);
-  if (!base) return;
-  BASES.delete(a);
-  UPLOADED.delete(a);
-  PAGES.delete(a);
-  for (const [key, c] of Object.entries(BFX_CLIPS)) {
-    if (c.a !== a) continue;
-    for (const t of FRAMES.get(key) ?? []) t.destroy(false);
-    for (const t of GLOWS.get(key) ?? []) t.destroy(false);
-    FRAMES.delete(key);
-    GLOWS.delete(key);
-  }
-  const pic = base.source.resource as { close?: () => void } | null;
-  base.destroy(true);
-  pic?.close?.();
-}
-
-/** Load pixel atlas `a` once and cut the clips that lie in it (and their glows). A failed atlas is left out: its clips keep their older looks. */
-function need(a: number): Promise<void> {
-  let job = PAGES.get(a);
-  if (!job) {
-    job = (async () => {
-      soft ??= Promise.all(BFX_SOFT.map((_, i) => page('soft', i, 'linear')));
-      const [base, glows] = await Promise.all([page('px', a, 'nearest'), soft]);
-      if (!base) return;
-      BASES.set(a, base);
-      for (const [key, c] of Object.entries(BFX_CLIPS)) {
-        if (c.a !== a) continue;
+/** Begin atlas `a`'s load. When it is in, its clips are cut (unless the book gave it up meanwhile: then its picture is thrown away). */
+function start(a: number): void {
+  soft ??= Promise.all(BFX_SOFT.map((_, i) => glowPage(i)));
+  void Promise.all([picture(a), soft]).then(
+    ([pic, glows]) => {
+      if (!book.done(a, true, now())) {
+        if ('close' in pic) pic.close();
+        return;
+      }
+      const base = Texture.from(pic);
+      base.source.style.scaleMode = 'nearest';
+      HELD.set(a, { base, bitmap: 'close' in pic ? pic : null });
+      for (const key of IN.get(a) ?? []) {
+        const c = BFX_CLIPS[key];
         FRAMES.set(key, Array.from({ length: c.n }, (_, i) => new Texture({ source: base.source, frame: new Rectangle(...bfxRect(c, i)) })));
         const g = c.g;
         const glow = g ? glows[g.a] : null;
-        if (g && glow) GLOWS.set(key, Array.from({ length: c.n }, (_, i) => new Texture({ source: glow.source, frame: new Rectangle(...bfxRect(g, i)) })));
+        if (g && glow && !GLOWS.has(key)) GLOWS.set(key, Array.from({ length: c.n }, (_, i) => new Texture({ source: glow.source, frame: new Rectangle(...bfxRect(g, i)) })));
       }
-    })();
-    PAGES.set(a, job);
-  }
-  return job;
+      pump();
+    },
+    (err) => {
+      console.warn(`blender effects px-${a} did not load`, err);
+      book.done(a, false, now());
+      pump();
+    },
+  );
 }
 
-/** A clip's frames (empty until its atlas has loaded, or when the pipeline has not made it). Asking for a clip whose atlas has not been
- *  asked for yet starts it loading, so it is there the next time. */
-export function bfxFrames(key: string): Texture[] {
-  const got = FRAMES.get(key);
-  if (got) return got;
-  const c = BFX_CLIPS[key];
-  if (c && c.a < BFX_PX.length) {
-    // (asked for outside a fight's own list, a guest's or a summon's: it counts as wanted by this fight, so it is not let go under it)
-    if (!wantNow.has(c.a)) wantNow = new Set([...wantNow, c.a]);
-    void need(c.a);
+/** Give atlas `a` up altogether: its clips are forgotten (anything still holding one of their frames draws nothing, not a dead texture),
+ *  its texture destroyed and its picture closed. It loads again, from the service worker's copy, if asked for. */
+function drop(a: number): void {
+  const held = HELD.get(a);
+  if (!held) return;
+  for (const key of IN.get(a) ?? []) {
+    for (const t of FRAMES.get(key) ?? []) {
+      t.source = Texture.EMPTY.source;
+      t.update();
+    }
+    FRAMES.delete(key);
   }
-  return [];
+  HELD.delete(a);
+  held.base.destroy(true);
+  held.bitmap?.close();
+}
+
+/** Carry out what the book says: start loads, give atlases up, take atlases off the graphics card. The clock runs while anything waits. */
+function pump(): void {
+  pumped = now();
+  const act = book.step(now());
+  for (const a of act.drop) drop(a);
+  for (const a of act.unload) HELD.get(a)?.base.source.unload();
+  for (const a of act.start) start(a);
+  if (book.busy() && !clock) clock = setInterval(pump, 1000);
+  else if (!book.busy() && clock) {
+    clearInterval(clock);
+    clock = null;
+  }
+}
+
+/** A clip's frames (empty until its atlas is held, or when the pipeline has not made it). Asking for a clip whose atlas is not held asks
+ *  for the atlas, ahead of the others, so it is there the next time. */
+export function bfxFrames(key: string): Texture[] {
+  const c = BFX_CLIPS[key];
+  if (!c || c.a >= BFX_PX.length) return [];
+  const t = now();
+  const ready = book.use(c.a, t);
+  // (the book is looked over when something is missing, and a few times a second otherwise: this is asked many times a frame)
+  if (!ready || t - pumped > 250) pump();
+  return ready ? (FRAMES.get(key) ?? []) : [];
 }
 /** A light clip's glow frames (empty for a hard one, or before its atlas has loaded). */
 export const bfxGlows = (key: string): Texture[] => GLOWS.get(key) ?? [];
 
-/** Load the atlases these clips lie in, ahead of their being played (a fight's heroes' ultimates, as it begins), and hand each to the
- *  graphics card as it arrives, one at a time. The atlases neither this fight nor the last one wanted are let go. */
-export function warmBfx(keys: readonly (string | undefined)[]): Promise<void> {
-  const pages = new Set<number>();
+/** Ask for the atlases these clips lie in, ahead of their being played (a fight's heroes' ultimates, as it begins): they load two at a
+ *  time, inside the budget. Nothing waits on them. */
+export function warmBfx(keys: readonly (string | undefined)[]): void {
+  const t = now();
   for (const key of keys) {
     const c = key ? BFX_CLIPS[key] : undefined;
-    if (c) pages.add(c.a);
+    if (c) book.ask(c.a, t);
   }
-  wantBefore = wantNow;
-  wantNow = pages;
-  for (const a of bfxDrop([...BASES.keys()], wantNow, wantBefore, ALWAYS)) drop(a);
-  let line: Promise<void> = Promise.resolve();
-  for (const a of pages) {
-    const ready = need(a);
-    line = line
-      .then(() => ready)
-      .then(() => {
-        if (UPLOADED.has(a) || !BASES.has(a)) return;
-        upload(a);
-        return new Promise<void>((ok) => setTimeout(ok, UPLOAD_GAP_MS));
-      });
-  }
-  return line;
+  pump();
 }
 
-/** Load the atlases every fight may need (the spells, the ground loops), once. */
-export function loadBlenderFx(): Promise<void> {
-  return Promise.all(BFX_CORE.map(need)).then(() => BFX_CORE.forEach((a, i) => setTimeout(() => upload(a), i * UPLOAD_GAP_MS)));
+/** Ask for the atlases every fight may need (the spells, the ground loops), once: they are pinned, and stay. */
+export function loadBlenderFx(): void {
+  const t = now();
+  for (const a of BFX_CORE) book.ask(a, t);
+  pump();
 }
+
+/** What is held now, for a measure (`window.__bfxMem`): atlases, and megabytes decoded and on the graphics card (the fight-loaded ones;
+ *  the core and the glows are fixed, beside them). */
+export const bfxMem = (): { held: number; decodedMB: number; uploadedMB: number } => ({ held: book.held(), decodedMB: (book.decodedPx() * 4) / 1048576, uploadedMB: (book.uploadedPx() * 4) / 1048576 });

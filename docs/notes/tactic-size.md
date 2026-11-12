@@ -75,3 +75,44 @@ width, height and direction.
 - `tools/tactic-size/shots.mjs` on this branch, on 0.502.0 and on 0.486.0 (`PIN=0` for the releases), at 393x852, 360x780 and 412x915.
 - Shots in `docs/samples/tactic-size/`: `v486-*` and `v502-*` (before), `after-*`: `late-wave5`, `late-boss`, `late-boss-ultimate`,
   `fresh-wave1`, `bigtext`, `duel`, and `after-size-a`, `after-size-b`; the top of the screen, one pixel a point.
+
+## TACTIC-ORB: the tactic button is an orb the size of the Auto buttons (after 0.508.0)
+
+Branch `claude/tactic-orb`, from main 0.513.0. The owner, on the 92 x 44 one-line plaque: "tactic button should be the size of the auto
+buttons next to it." The version is unchanged. This replaces the plaque described above; the Formation button is untouched.
+
+- **What it is now.** An orb of the Auto buttons' make: round, 48 x 48 px, the tactic's painted medallion (`ui/tactics/<id>.png`) filling
+  it as the Auto buttons' medallions fill theirs, and the tactic's name as the small label under it in their lettering ("ADVANCE",
+  "HOLD", "CHARGE": 9 px, the same pill, 5 px below the orb, as "SPELL" and "ULT"). "ADVANCE", the longest, is 47.8 px wide and fits the
+  orb's 48, so no name is shortened or shrunk. A tap still steps to the next tactic and shows its word; the screen-reader label still
+  says "Tactic: Advance together. Tap for the next".
+- **One size, by construction.** The orb is not sized by a rule of its own: `#tacticDock #tacticBtn` stands in the Auto buttons' size
+  rule in `src/paintedButtons.css` (one selector list), and its label in theirs. The plate rules it shared with the Formation button
+  (HUD-EVEN) are given back to the Formation button alone.
+- **Where: under the Auto buttons, not in line.** In line was measured first. With all four spell slots open the row holds the mana
+  (54 px), four orbs (44 each) and the two Auto buttons (48 each): 326 px. An eighth piece makes 374 px, and with seven gaps of at
+  least 3 px, 395 px. The row's room is 344 px at 360 wide, 377 at 393 and 396 at 412: 51 px short at 360, 18 short at 393, a fit by
+  1 px at 412. (With one slot open it would fit everywhere.) Not a close call, and a button in the row on some saves and under it on
+  others would move as slots open. So it hangs in the same corner, directly under the row's last Auto button, 4 px under the row, its
+  right edge on that button's right edge (`--dock-right`, set by the page in `placeTopHud`). When the row is a short centred group
+  (one or two slots) it keeps the corner's own 8 px margin.
+- **Round it.** The boss's bar still stops 6 px short of it; its word after a tap rises under its label; the camera's corner rule
+  still applies (a 48 px corner cover, cut half way).
+
+### So the three always match
+
+- `test/tactic-size.test.ts` (rewritten for the new requirement): the rule that sizes `.fhAuto` must name the tactic button in the same
+  selector list and be 48 x 48 and round; the tactic's label must share the Auto buttons' label rule; no other rule in any style sheet
+  may size or scale the tactic button (the press it shares with the Auto buttons is allowed); nothing may scale the dock.
+- `tools/tactic-size/shots.mjs`: in each wave it measures the Auto buttons' boxes and the tactic's in the same frame and fails unless
+  they are equal, the labels have the same lettering, height and place, the name fits the orb, the orb hangs under the Auto buttons on
+  the last one's right edge, and the box never changes through the wave (an ultimate's scene included). 111 checks, no page error, at
+  393x852, 360x780 and 412x915: 48 x 48 against the Auto buttons' 48 x 48 in every case.
+- `tools/hud-even/shots.mjs` expects the Auto buttons' size where it expected the plaque's: 650 of 651 checks in the full run. The one
+  miss was the camera's centring in the four-spell case at 412 (25 px across against a limit of 24, the shot taken 2.5 s into the
+  fight); three re-runs of that case read 2 to 3 px.
+
+Shots in `docs/samples/tactic-orb/`: `before-*` (0.513.0, the plaque) and `after-*`: `late-wave5` (a normal wave), `late-boss`,
+`late-boss-ultimate` (mid-ultimate), and after only `fresh-wave1` (one spell slot), `bigtext`, `duel`; the top of the screen, one pixel
+a point.
+

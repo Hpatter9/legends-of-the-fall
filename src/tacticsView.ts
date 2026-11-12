@@ -68,8 +68,8 @@ export class TacticsView {
 
   constructor(private opts: TacticsViewOpts) {
     // (HUD-EVEN (docs/notes/hud-even.md; the owner: "move the tactics button up to where the formation button usually is in between
-    // waves"): the fight's tactic button is a plaque at the board's upper right, the Formation button's corner, in its style (and, since
-    // TACTIC-SIZE, a compact size of its own: one line, 92 x 44 px), so
+    // waves"): the fight's tactic button sits at the board's upper right, the Formation button's corner (since TACTIC-ORB an orb of the
+    // Auto buttons' size and make, under the row's last Auto button), so
     // the corner holds Formation while placing and the tactic in the fight. It hangs just under the spell row, which now spans the screen
     // (the page sets the dock's top, `placeTopHud`). Its word rises under it.)
     this.dock = el('div');
@@ -140,8 +140,10 @@ export class TacticsView {
     if (this.shown === t) return;
     this.shown = t;
     const w = TACTIC_WORDS[t];
-    // (TACTIC-SIZE: one line, the icon and the tactic's word; the button's label for a reader says it is the tactic)
-    this.button.innerHTML = `<span class="fhTacticFace">${icon(t)}</span><b>${w.short}</b>`;
+    // (TACTIC-ORB, docs/notes/tactic-size.md; the owner: "tactic button should be the size of the auto buttons next to it": an orb of the
+    // Auto buttons' make and size, the tactic's medallion with its name as the small label under it; the button's own label for a
+    // reader says it is the tactic)
+    this.button.innerHTML = `${icon(t)}<em>${w.short.toUpperCase()}</em>`;
     this.button.dataset.tactic = t;
     this.button.setAttribute('aria-label', `Tactic: ${w.name}. Tap for the next`);
     this.button.title = `${w.name}: ${w.line} Tap for the next tactic.`;

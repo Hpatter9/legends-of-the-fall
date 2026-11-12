@@ -133,7 +133,11 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
   };
   const mark = (): void => {
     [...dots.children].forEach((d, i) => d.classList.toggle('on', i === card));
-    cards.forEach((c, i) => c.setAttribute('aria-hidden', String(i !== card)));
+    // (the card's own army stands full size and lit; its neighbours, peeking in at the sides, are smaller and dimmed)
+    cards.forEach((c, i) => {
+      c.setAttribute('aria-hidden', String(i !== card));
+      c.classList.toggle('cur', i === card);
+    });
     const on = arrowsAt(card, n);
     prev.disabled = !on.prev;
     next.disabled = !on.next;
@@ -205,7 +209,7 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
     drag.dx = dx;
     drag.trail.push({ t: e.timeStamp, x: e.clientX });
     if (drag.trail.length > 6) drag.trail.shift();
-    if (!still()) lay(card, dragShift(card, n, dx, track.clientWidth || 1), false);
+    if (!still()) lay(card, dragShift(card, n, dx, strip.clientWidth || 1), false);
   });
   const lift = (e: PointerEvent, dropped: boolean): void => {
     if (!drag || e.pointerId !== drag.id) return;
@@ -217,7 +221,7 @@ export function drawArmies(body: HTMLElement, m: Meta, hooks: ArmiesHooks): void
     const then = d.trail.find((s) => e.timeStamp - s.t <= 100) ?? d.trail[d.trail.length - 1];
     const span = e.timeStamp - then.t;
     const speed = span > 0 ? (e.clientX - then.x) / span : 0;
-    go(dropped ? card : settleOn(card, n, d.dx, track.clientWidth || 1, speed, still()));
+    go(dropped ? card : settleOn(card, n, d.dx, strip.clientWidth || 1, speed, still()));
   };
   scene.addEventListener('pointerup', (e) => lift(e, false));
   scene.addEventListener('pointercancel', (e) => lift(e, true));

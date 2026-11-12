@@ -1,6 +1,6 @@
 // FREEZE-FIX (docs/notes/freeze-fix.md): nothing may hold a fight for good. An ultimate's moment always ends, whatever its lengths hold
 // and whatever is done to it; the moments still waiting when a fight ends are dropped; an Eidolon's call waits for its strike only so
-// long; the camera's rules end for any input; and the atlases a fight no longer needs are let go.
+// long; and the camera's rules end for any input.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ALL_HEROES } from '../src/sim/units';
@@ -8,7 +8,6 @@ import { Rng } from '../src/sim/rng';
 import { momentLimit, ULT_MOMENT, UltQueue, type UltMoment, type UltShape } from '../src/ultMomentRules';
 import { stagesFor } from '../src/ultStageRules';
 import { STRIKE_WAIT_MS, strikeOverdue } from '../src/eidolonRules';
-import { bfxDrop } from '../src/render/blenderFxRules';
 import { camAt, camPlan, effectBox, fitView, stepAt, strikeViews, type Room } from '../src/ultCameraRules';
 
 const SHAPES: UltShape[] = ['instant', 'delayed', 'lingering'];
@@ -138,15 +137,4 @@ test('the camera\'s rules end, and give finite views, for any spots', () => {
   const v = fitView({ x0: 0, y0: 0, x1: 0, y1: 0 }, room);
   assert.ok(Number.isFinite(v.cx) && Number.isFinite(v.zoom) && v.zoom <= room.hi);
   for (const k of [NaN, -1, 0, 0.5, 1, 2, Infinity]) for (const f of [0, 1, 3, 7]) assert.ok(stepAt(f, k) >= 0 && stepAt(f, k) <= Math.max(0, f - 1));
-});
-
-test('the atlases neither this fight nor the last one wanted are let go; the ones every fight needs never are', () => {
-  const core = [0, 1];
-  assert.deepEqual(bfxDrop([0, 1, 5, 6, 7, 8], new Set([5]), new Set([6]), core), [7, 8]);
-  // (the same party fight after fight: nothing goes)
-  assert.deepEqual(bfxDrop([0, 1, 5, 6], new Set([5, 6]), new Set([5, 6]), core), []);
-  // (a new party: the old one's go a fight later, not under the last effects of the fight before)
-  assert.deepEqual(bfxDrop([0, 1, 5, 6], new Set([9]), new Set([5, 6]), core), []);
-  assert.deepEqual(bfxDrop([0, 1, 5, 6, 9], new Set([9]), new Set([9]), core), [5, 6]);
-  assert.deepEqual(bfxDrop([], new Set(), new Set(), core), []);
 });

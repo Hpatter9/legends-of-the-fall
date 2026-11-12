@@ -169,7 +169,6 @@ import { fightRanks } from './sim/spellRanks';
 import { bindDecree, refreshDecree } from './decreeHud';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
-import { bfxUploader } from './render/blenderFxArt';
 import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
 import { BoardLife } from './render/boardLife';
@@ -192,6 +191,7 @@ import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFig
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS, settle, type Spot, type View } from './render/cameraRules';
 import { spellGlance, spellView, ULT_CAM, type Room } from './ultCameraRules';
 import { bfxClip, spellBfx } from './render/blenderFxRules';
+import { bfxMem } from './render/blenderFxArt';
 import { spellTiles } from './render/fxPlace';
 import { coverElements, measureSafe, onCamCover, registerCamCover } from './camSafe';
 import { easeRect, type Rect } from './render/safeRectRules';
@@ -221,7 +221,7 @@ import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
 import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
 import { fightToastTop, HORN_CORNER } from './hudClear';
-import { laySpellRow, watchSpellRow } from './spellRow';
+import { laySpellRow, spellRowPieces, watchSpellRow } from './spellRow';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/ui/combat-heart.png';
@@ -696,8 +696,6 @@ class Game {
         console.error(err);
       }
     });
-    // (FREEZE-FIX: an ultimate's atlas is handed to the graphics card as its fight begins, not on the frame of the blow: `blenderFxArt.ts`)
-    bfxUploader((src) => (this.app.renderer as unknown as { texture: { initSource(s: TextureSource): void } }).texture.initSource(src));
     // (FREEZE-FIX: a phone short of graphics memory takes the picture away; Pixi puts it back when the browser gives it back. Logged,
     // so a report of a frozen picture can be told from a fight that stopped)
     this.app.canvas.addEventListener('webglcontextlost', () => console.warn('the graphics context was lost'));
@@ -783,6 +781,8 @@ class Game {
     (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
     // (BLENDER-FX: the king's spells' own cast, for `tools/blender-fx/shots.mjs` to stage each spell in a real fight; the game never calls it from here)
     (window as unknown as { __castSpell: typeof castSpell }).__castSpell = castSpell;
+    // (BLENDER-FX: what the effect atlases hold now, for the memory measure: `tools/blender-fx/memory.mjs`)
+    (window as unknown as { __bfxMem: typeof bfxMem }).__bfxMem = bfxMem;
     // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
     (window as unknown as { __settleFinds: typeof settleFinds }).__settleFinds = settleFinds;
     // (the screenshot tool draws the wave card's lines from given moments)
@@ -2069,6 +2069,11 @@ class Game {
     laySpellRow(row);
     const dock = this.tactics.dock;
     dock.style.setProperty('--dock-top', `${Math.round(rowBottom + 4)}px`);
+    // (TACTIC-ORB: the tactic's orb hangs under the row's last piece when the row runs edge to edge (its right edge on that piece's), so
+    // it reads as one of the Auto buttons' column; with a short, centred row it keeps the corner's own margin)
+    const last = row.dataset.spread === 'span' ? spellRowPieces(row).at(-1) : undefined;
+    if (last) dock.style.setProperty('--dock-right', `${Math.max(8, Math.round(innerWidth - last.getBoundingClientRect().right))}px`);
+    else dock.style.removeProperty('--dock-right');
     const plaque = dock.getBoundingClientRect();
     bar.style.right = plaque.width > 0 ? `${Math.round(innerWidth - plaque.left + 6)}px` : '12px';
     bar.style.top = `${rowBottom + 4}px`;
