@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.549.0',
+    date: '2026-11-12',
+    title: 'Vael\'s black sun; four ultimates remade',
+    notes: ['Vael\'s ultimate opens with an eclipse, his sweep is gold, and a black sun hangs over him for the eight seconds of totality.', 'The Kunoichi vanishes in smoke, cuts each foe she backstabs and leaves a mark under each; the Gunslinger has muzzle flash, spark trails and small impacts.', 'Ilyra\'s Death Denied is wings of light and a halo on each ally, not a dome.'],
+  },
+  {
     version: '0.548.0',
     date: '2026-11-12',
     title: 'Eight great blows, each its own shape',
