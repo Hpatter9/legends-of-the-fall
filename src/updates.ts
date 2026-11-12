@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.521.0',
+    date: '2026-11-12',
+    title: 'No more waiting after a wave',
+    notes: ['A won wave no longer waits for ultimates still queued to play out: they are dropped when the fight ends, so the next wave comes up promptly.', 'Every ultimate show and Eidolon call now has a hard time limit, so none can hold a fight up for good.'],
+  },
+  {
     version: '0.520.0',
     date: '2026-11-12',
     title: 'Spirit Guardians you can see',
