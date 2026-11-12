@@ -2,7 +2,7 @@
 // a frame by the page's own loop and costs two comparisons when nothing is wrong; `diagMark` is called where the page begins something
 // heavy; the log is written to storage only when a stop is added.
 import { inApp } from './appUpdate';
-import { diagHead, diagText, doingIn, isStop, parseDiag, withStop, type DiagEnv, type DiagMark, type DiagStop } from './diagRules';
+import { diagHead, diagText, doingIn, isStop, parseDiag, stepsText, withStop, type DiagEnv, type DiagMark, type DiagStep, type DiagStop } from './diagRules';
 
 declare const __GAME_VERSION__: string;
 const KEY = 'legends.diag';
@@ -27,9 +27,31 @@ export function diagMark(what: string): void {
   if (marks.length > 40) marks = marks.slice(-20);
 }
 
+/** A part of this frame's work took `ms` (and ran once more): kept until the frame's end, and written into a stop's line if the frame
+ *  turns out to be one, so a long stop says which part of it was long. Costs a map's update. */
+const steps = new Map<string, DiagStep>();
+export function diagStep(name: string, ms: number): void {
+  const s = steps.get(name);
+  if (s) {
+    s.ms += ms;
+    s.n++;
+  } else steps.set(name, { ms, n: 1 });
+}
+
+/** Do `fn`, and keep how long it took as a part of this frame's work. */
+export function diagTimed<T>(name: string, fn: () => T): T {
+  const t0 = performance.now();
+  try {
+    return fn();
+  } finally {
+    diagStep(name, performance.now() - t0);
+  }
+}
+
 /** The frames stopped on purpose (the page hidden, the home screen up with the board's loop at rest): the next gap is not a stop. */
 export function diagRest(): void {
   last = 0;
+  steps.clear();
 }
 
 /** Once a frame: a gap of half a second or more since the last frame is kept. */
@@ -38,8 +60,10 @@ export function diagFrame(phase: string): void {
   const gap = last ? now - last : 0;
   const from = last;
   last = now;
+  const parts = steps.size ? stepsText(steps) : '';
+  steps.clear();
   if (!isStop(gap)) return;
-  log = withStop(load(), { at: Date.now() - Math.round(gap), ms: Math.round(gap), phase, v: __GAME_VERSION__, doing: doingIn(marks, from, now) });
+  log = withStop(load(), { at: Date.now() - Math.round(gap), ms: Math.round(gap), phase, v: __GAME_VERSION__, doing: `${doingIn(marks, from, now)}${parts ? ` [${parts}]` : ''}` });
   try {
     localStorage.setItem(KEY, JSON.stringify(log));
   } catch {

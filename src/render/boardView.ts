@@ -3,6 +3,8 @@
 // Fields tileset's own. The column sprite is drawn as in Chronos's raid board (tacticsView.ts
 // `column`).
 
+import { diagStep, diagTimed } from '../diag';
+import { SOFT } from './softCanvas';
 import { COLUMN_ROOM, WARM, warmMore } from './boardWarmRules';
 import { Container, Graphics, Rectangle, Sprite, Texture, type Renderer } from 'pixi.js';
 import { LAVA_LANDS, tileAt, type Area, type Board, type HazardKind, type Tile } from '../sim/board';
@@ -179,7 +181,7 @@ function rippleOf(): Texture {
   const c = document.createElement('canvas');
   c.width = TW;
   c.height = TH;
-  const g = c.getContext('2d')!;
+  const g = c.getContext('2d', SOFT)!;
   g.strokeStyle = 'rgba(235,248,255,0.85)';
   g.lineWidth = 1;
   for (const [x, y, w] of [[0.3, 0.42, 6], [0.62, 0.32, 5], [0.5, 0.62, 7], [0.72, 0.56, 4], [0.36, 0.7, 4]] as const) {
@@ -538,7 +540,9 @@ export class BoardView {
     const bounds = c.getLocalBounds();
     let tex: Texture;
     try {
+      const t0 = performance.now();
       tex = this.renderer.generateTexture({ target: c, resolution: s.board.w >= 12 ? 0.5 : 1 });
+      diagStep(`the old board drawn into one picture of ${Math.round(bounds.width)}x${Math.round(bounds.height)}`, performance.now() - t0);
     } finally {
       c.destroy({ children: true });
       for (const x of built.tex) x.release();
@@ -977,7 +981,7 @@ export class BoardView {
     if (still.children.length && this.renderer) {
       const bounds = still.getLocalBounds();
       try {
-        this.rimTex = this.renderer.generateTexture({ target: still, resolution: 1 });
+        this.rimTex = diagTimed('the rim drawn into one picture', () => this.renderer!.generateTexture({ target: still, resolution: 1 }));
       } finally {
         still.destroy({ children: true });
         for (const l of leases) l.release();
@@ -1343,7 +1347,14 @@ export class BoardView {
     const extra = (road ? `skirt${skirt}` : '') + floor + trap;
     const key = columnKey(area, boss, t.h, !!t.bridge, t.ground, top, artEpoch, u, v, !!t.perch, !!t.ramp, extra || undefined);
     const bytes = TW * (TH + (road ? skirt : t.h) * HH + FOOT + (boss && !road ? HH : 0)) * 4;
-    return this.columns.acquire(key, bytes, () => this.paintColumn(t, u, v, area, boss, road ? skirt : -1, fl, strike));
+    // (WAVE-DELAY: how many columns a frame painted, how long that took, and how many it found already painted, for the stops' log)
+    let painted = false;
+    const lease = this.columns.acquire(key, bytes, () => {
+      painted = true;
+      return diagTimed('columns painted', () => this.paintColumn(t, u, v, area, boss, road ? skirt : -1, fl, strike));
+    });
+    if (!painted) diagStep('columns from the cache', 0);
+    return lease;
   }
 
   /** Original full-resolution painter; reuse only columns whose appearance inputs match. */
@@ -1355,7 +1366,7 @@ export class BoardView {
     const c = document.createElement('canvas');
     c.width = TW;
     c.height = TH + deep;
-    const g = c.getContext('2d')!;
+    const g = c.getContext('2d', SOFT)!;
     g.imageSmoothingEnabled = false;
     // (a boss arena is all flagstone, with a gilded lip; on an army's road only the paved tiles are, whatever the height)
     const stony = road ? boss : t.h >= STONY || boss;
@@ -1512,7 +1523,7 @@ export class BoardView {
         if (fr.foam) pic = (fr.corner ? fa.foamCorner : fa.foam)[fr.turn];
         else {
           const c = scratch();
-          const sg = c.getContext('2d')!;
+          const sg = c.getContext('2d', SOFT)!;
           sg.globalCompositeOperation = 'source-over';
           sg.clearRect(0, 0, SRC, SRC);
           if (!lay(sg, fr.role)) continue;

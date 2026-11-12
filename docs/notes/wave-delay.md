@@ -133,6 +133,32 @@ frames is kept (when, how long, the fight's phase, and what the page had just be
 with Copy and Clear. A gap of a minute or more is the phone left alone, not kept; the page hidden or at rest on the home screen
 starts the count afresh. It costs two comparisons a frame.
 
+### The app's first Diagnostics copy (0.544.0, a Galaxy S24 Ultra, WebView 157, pixel ratio 3.75)
+
+"the next board built" was ONE gap of 7.0 and 10.5 s in the app, where the same phone's browser is fine and this machine at a
+sixth of its speed takes 0.4 to 2 s. That is not the processor: something in that task is far slower in a WebView. Nothing here
+can run one, so what follows is reasoned from the code, not measured.
+
+- **Every canvas the board is painted on is now a software canvas** (`src/render/softCanvas.ts`, `SOFT`, in `boardView.ts`,
+  `floorArt.ts`, `sheets.ts`, `boardLife.ts`: the columns, the floor pieces cut for them, the scratch canvas, the portraits, the
+  field's lights). A board is about ninety columns, each painted by several `drawImage` calls from other canvases and then handed
+  to WebGL. Where a browser keeps a canvas on the graphics card, each of those is a read-back from the card; `willReadFrequently`
+  keeps the canvas in ordinary memory in every browser. This is the most likely cause that the code shows, and the least risky
+  change.
+- Checked and left: the bake and the rim are drawn at a resolution of 1 (0.5 for a large field), not at the screen's pixel ratio;
+  nothing in the board's build is sized by `devicePixelRatio` (the game's own canvas is capped at 3).
+- **The log now says which part of a stop was long** (`diagStep`, `diagTimed` in `diag.ts`; `stepsText` in `diagRules.ts`): for
+  the frame of a stop, each part's time and count, the longest first: columns painted and columns found in the cache, the board
+  laid, the old board drawn into one picture (with its size), the rim drawn, the field's life, the fighters made, the page laid
+  out, the page refreshed (bench, portraits), pictures handed to the graphics card (every `texImage2D`, timed), a kept sheet
+  handed over. So the next copy names the culprit whether or not the change above was it.
+- **"not known" says what came before**: the last three things the page began and how long before the stop each was. New names:
+  "the march begun", "a kept sheet handed to the graphics card".
+
+Seen on this machine with the new log: a kept sheet handed over in a deploy is itself a stop of half a second to a second and a
+half under the software renderer. It is in the deploy by design (not in the fight), but if the app's log shows a run of them at
+the first deploy, they should be handed over more slowly or decoded as bitmaps first.
+
 ### The tests
 
 `test/wave-delay.test.ts`: the fall's slow moment (a boss's alone, none when calm); the short version's beat (none) and the full
