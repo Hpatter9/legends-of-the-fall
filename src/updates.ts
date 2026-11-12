@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.516.0',
+    date: '2026-11-12',
+    title: 'Vaelkhar\'s wings',
+    notes: ['Vaelkhar\'s wings of dark now have ribs with membranes stretched between them, a bright violet rim and a ragged trailing edge.', 'His painted violet fire stands in front, and his flash is violet-white.'],
+  },
+  {
     version: '0.515.0',
     date: '2026-11-12',
     title: 'Armies: neighbours peek in',
