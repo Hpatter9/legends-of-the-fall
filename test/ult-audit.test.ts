@@ -33,7 +33,7 @@ test('no strike has the great blow under it: each of the eight that had it has a
   // colour over the field; the director's order, 2026-11-12, is that none may be)
   for (const kind of Object.keys(SHOWCASES)) assert.ok(!BFX_CLIPS[`ult-${kind}-strike`].sc?.includes('impact'), `${kind} has the great blow`);
   // (what each of the eight is instead: a cut, a landing, a crash, a shell, meteors, a nova, a column, shells)
-  const own: Record<string, string> = { samurai: 'arc+sparks', barbarian: 'crack+shockwave+gust', bloodGargoyle: 'shockwave+slab+crack', siegeBot: 'shaft+crack+smoke', wizard: 'rain+crack+smoke', astrologer: 'implode+nova+sigil', seraph: 'pillar+wings+ring', bombardier: 'strike+flames' };
+  const own: Record<string, string> = { samurai: 'arc+sparks', barbarian: 'crack+shockwave+gust', bloodGargoyle: 'shockwave+slab+crack', siegeBot: 'shaft+crack+smoke', wizard: 'meteors+crack+smoke', astrologer: 'implode+nova+sigil', seraph: 'pillar+wings+ring', bombardier: 'strike+flames' };
   for (const [kind, look] of Object.entries(own)) assert.equal(BFX_CLIPS[`ult-${kind}-strike`].sc!.join('+'), look, kind);
   // (and none of the eight is a ball of flame: `burst` is the fireball)
   for (const kind of Object.keys(own)) assert.ok(!BFX_CLIPS[`ult-${kind}-strike`].sc!.includes('burst'), kind);

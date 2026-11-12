@@ -179,16 +179,16 @@ BIG = dict(
     shout=(dict(r=1.8, h=1.6, n=5), 2.2, 3.2), swarm=(dict(r=1.5, h=2.0, n=30), 1.9, 2.6), motes=(dict(r=1.6, h=2.2, n=34, crosses=7), 2.0, 2.6),
     hearts=(dict(r=1.0, h=2.0, n=9), 1.5, 2.6), wall=(dict(length=3.0, h=1.7, tongues=9), 2.4, 2.2), flames=(dict(r=1.3, h=2.0, tongues=14, slim=0.36), 1.9, 3.0),
     palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), whirlpool=(dict(r=1.7, arms=5), 2.0, 0.8), sandstorm=(dict(r=2.3, h=2.3, bands=11, grit=44, wide=0.36), 2.8, 3.2),
-    wings=(dict(r=1.4, h=2.1), 1.7, 2.9), banner=(dict(h=2.4, w=1.3), 1.7, 2.9), eyes=(dict(r=2.5, n=3, size=3.0), 3.1, 2.7),
+    wings=(dict(r=1.4, h=2.1), 2.2, 3.4), banner=(dict(h=2.4, w=1.3), 1.7, 2.9), eyes=(dict(r=2.5, n=3, size=3.0), 3.1, 2.7),
     flock=(dict(r=1.4, h=2.6, n=6, size=2.3), 4.0, 5.2),
-    notes=(dict(r=1.3, h=2.3, n=8, size=1.6), 2.8, 6.0), eclipse=(dict(r=0.9, z=2.4), 2.2, 4.6), broadside=(dict(r=1.4, n=7, size=1.0), 3.8, 3.2), bite=(dict(r=1.0, n=6, z=1.0), 1.8, 2.9), toll=(dict(r=0.75, z=2.0), 2.6, 4.4), wave=(dict(r=1.5, h=1.8), 3.6, 3.4), implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
+    notes=(dict(r=1.3, h=2.3, n=8, size=1.6), 2.8, 6.0), eclipse=(dict(r=0.9, z=2.4), 2.2, 4.6), broadside=(dict(r=1.4, n=7, size=1.0), 3.8, 3.2), bite=(dict(r=1.0, n=6, z=1.0), 1.8, 2.9), toll=(dict(r=1.5, z=1.5), 4.8, 7.6), meteors=(dict(r=1.5, n=3, size=1.0), 5.2, 6.6), wave=(dict(r=1.3, h=1.9), 3.8, 3.4), implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
 )
 
 # Each ultimate: its palette, its strike's two scenes, and its showcase's style (which sets its weight, as `ultStageRules.ts` does).
 ULTS = dict(
     vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'sparks', 'sky'), ilyra=('holy', 'wings', 'halo', 'bless'),
     orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'arc', 'cross', 'blinks'),
-    wizard=('fire', 'rain', 'crack', 'sky'), beastmaster=('forest', 'beast', 'trail', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
+    wizard=('fire', 'meteors', 'crack', 'sky'), beastmaster=('forest', 'beast', 'trail', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
     minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'shockwave', 'leap'), ninjaMonk=('wind', 'claws', 'gust', 'blows'),
     buccaneer=('shadow', 'chains', 'cross', 'hooks'), archer=('wind', 'rain', 'ring', 'sky'), dreadPirate=('shadow', 'broadside', 'crack', 'sky'),
@@ -430,8 +430,8 @@ OWN_OPT = dict(gorgon=dict(crystal=dict(stone=True)), astrax=dict(rain=dict(n=26
                # (Karasu's Cloud of Daggers: many short blades coming down steeply)
                karasu=dict(rain=dict(n=30, w=0.2, slant=0.15, long=1.5)),
                wolfBard=dict(notes=dict(size=3.0, n=7, h=3.2, r=1.5)),
-               # (the Wizard's Meteor Swarm: three great meteors, not a rain)
-               wizard=dict(rain=dict(n=3, w=1.7, slant=0.55, long=5.5, r=2.6)))
+               # (the Seraph's column is the thing itself: solid; her wings are large)
+               seraph=dict(pillar=dict(dense=2.6), wings=dict(r=4.8, h=5.2, feathers=9)))
 
 
 def sized(scene, k, kind=None):

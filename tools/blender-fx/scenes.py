@@ -50,7 +50,7 @@ def burst(c, r=1.3, h=1.3, balls=5, embers=22):
 
 
 # 2. Pillar: a column of light climbing in streaks, a ring spreading on the ground, sparks up a spiral.
-def pillar(c, r=0.75, h=3.2, sparks=26):
+def pillar(c, r=0.75, h=3.2, sparks=26, dense=1.0):
     m, nt = c.mat('pillar')
     tc = nt.nodes.new('ShaderNodeTexCoord')
     sep = nt.nodes.new('ShaderNodeSeparateXYZ')
@@ -69,7 +69,8 @@ def pillar(c, r=0.75, h=3.2, sparks=26):
     def step(t):
         c.tick(t, 1.0, (0, 0, -2.5))
         out = win(t, 0.7, 1)
-        fade.inputs[1].default_value = 2.2 * win(t, 0, 0.33) * (1 - out)
+        # (`dense`: a column that is the thing itself, not a veil of light over something else, is drawn that much more solid)
+        fade.inputs[1].default_value = 2.2 * dense * win(t, 0, 0.33) * (1 - out)
         w = 1 - 0.35 * out
         col.scale = (w, w, 1)
         put(ring, scale=(r * (0.4 + 1.7 * ease(t)),) * 2 + (1,))
@@ -2178,28 +2179,31 @@ def toll(c, r=0.7, z=2.2, tolls=3):
     return step
 
 
-# 67. Wave: a wall of water rearing up and curling over as it runs towards the camera, a sheet of ribbons side by
-# side each bent into the curl, foam thrown off its crest, and a wash of foam left where it breaks.
-def wave(c, r=1.5, h=1.7, strands=13):
-    import bpy
-    m, a, _ = c.streak('mid', 'bright', 0.45, 1.2, noise=3.0)
+# 67. Wave: a wave rearing up and curling over as it runs to the screen's right, one sheet of water bent into the curl with a
+# bright lip, foam thrown off its crest, and a wash of foam left where it breaks.
+def wave(c, r=1.5, h=1.7):
+    m, a, _ = c.streak('mid', 'bright', 0.35, 1.25, noise=2.5)
+    lm, la, _ = c.streak('bright', 'hot', 0.5, 1.6)
     fm, fv = c.flat('hot', 1.7)
+    import bpy
     root = bpy.data.objects.new('wave', None)
     c.sc.collection.objects.link(root)
-    # (it spans the screen from left to right and runs towards the camera, so its face and its curl are seen)
-    fwd = (0.7071, -0.7071, 0.0)
-    for k in range(strands):
-        off = (k / (strands - 1) - 0.5) * 2 * r
-        tall = h * (0.7 + 0.3 * math.cos(off / r * math.pi / 2))
+    # (it runs to the screen's right and is as deep as it is wide, so the camera sees its curl from the side and a little above)
+    deep = (-RIGHT[1], RIGHT[0], 0.0)
+
+    def curl(scale, u0=0.0, u1=1.0, n=22):
         pts = []
-        for i in range(19):
-            u = i / 18
-            # (up the face of the wave, then over in a curl)
-            th = math.radians(-80 + 260 * u)
-            rad = tall * 0.5 * (1 - 0.3 * u)
-            x, zz = rad * math.cos(th) * (0.6 if u < 0.4 else 1.0), tall * 0.5 + rad * math.sin(th) + tall * 0.1 * u
-            pts.append(((fwd[0] * x + RIGHT[0] * off, fwd[1] * x + RIGHT[1] * off, max(0.02, zz)), RIGHT))
-        o = c.ribbon(pts, lambda u: r / (strands - 1) * 1.7, m)
+        for i in range(n):
+            u = u0 + (u1 - u0) * i / (n - 1)
+            # (up the back of the wave, over the crest, and down into the hollow of the curl)
+            th = math.radians(200 - 290 * u)
+            rad = h * 0.55 * scale * (1 - 0.25 * u)
+            x, zz = rad * math.cos(th) + h * 0.5 * u, h * 0.55 * scale + rad * math.sin(th)
+            pts.append(((RIGHT[0] * x, RIGHT[1] * x, max(0.02, zz)), deep))
+        return pts
+    body = c.ribbon(curl(1.0), lambda u: r * (1 - 0.15 * u), m)
+    lip = c.ribbon(curl(1.02, 0.55, 1.0, 12), lambda u: r * 0.92, lm)
+    for o in (body, lip):
         o.parent = root
     foam = [(c.sphere(1.0, fm, 1), c.rnd.uniform(-1, 1), c.rnd.uniform(0, 1), c.rnd.uniform(0.6, 1.2)) for _ in range(18)]
     wash, wv = c.ring('bright', 0.07, 1.2)
@@ -2207,23 +2211,71 @@ def wave(c, r=1.5, h=1.7, strands=13):
     def step(t):
         c.tick(t, 1.4)
         up, gone = ease(win(t, 0, 0.3)), win(t, 0.62, 0.95)
-        run = -0.8 * r + 1.5 * r * ease(win(t, 0, 0.75))
-        put(root, (fwd[0] * run, fwd[1] * run, -h * 0.9 * gone), (1, 1, max(0.001, (0.25 + 0.75 * up) * (1 - 0.6 * gone))))
-        a.inputs[1].default_value = 2.3 * win(t, 0, 0.08) * (1 - win(t, 0.8, 1))
+        run = -1.0 * r + 1.6 * r * ease(win(t, 0, 0.75))
+        put(root, (RIGHT[0] * run, RIGHT[1] * run, 0), (1, 1, max(0.001, (0.25 + 0.75 * up) * (1 - 0.85 * gone))))
+        for v in (a, la):
+            v.inputs[1].default_value = 2.3 * win(t, 0, 0.08) * (1 - win(t, 0.8, 1))
         for o, across, lag, sc in foam:
             g = win(t, 0.2 + lag * 0.5, 0.55 + lag * 0.45)
-            x = run + h * 0.3 + 0.7 * g
-            put(o, (fwd[0] * x + RIGHT[0] * across * r, fwd[1] * x + RIGHT[1] * across * r, max(0.05, h * (0.95 - 1.1 * g * g) + 0.3 * bell(g))), 0.085 * sc * bell(g) + 0.001)
+            x = run + h * 0.8 + 0.7 * g
+            put(o, (RIGHT[0] * x + deep[0] * across * r, RIGHT[1] * x + deep[1] * across * r, max(0.05, h * (0.9 - 1.1 * g * g) + 0.3 * bell(g))), 0.085 * sc * bell(g) + 0.001)
             hide(o, g <= 0 or g >= 1)
         q = win(t, 0.55, 1)
-        put(wash, (fwd[0] * r * 0.6, fwd[1] * r * 0.6, 0.03), (r * (0.3 + 0.9 * ease(q)),) * 2 + (1,))
+        put(wash, (RIGHT[0] * r * 0.8, RIGHT[1] * r * 0.8, 0.03), (r * (0.3 + 0.9 * ease(q)),) * 2 + (1,))
         wv.outputs[0].default_value = (1 - win(q, 0.5, 1)) if q > 0 else 0
         fv.outputs[0].default_value = 1
+    return step
+
+
+# 68. Meteors: round burning rocks (a dark rock in a hood of flame, a short tail behind it) coming down on a slant, each onto its own
+# spot, with a flash and a ring where each lands.
+def meteors(c, r=1.6, n=3, size=1.0):
+    rm, rv = c.solid('deep', 'mid', 1.4, 0.9, 0.0)
+    fm, cut = c.flame(2.6, 0.5, 1.5, stretch=(1, 1, 1))
+    tm, ta, _ = c.streak('mid', 'hot', 1.1, 1.6, noise=3.5)
+    hot_m, _ = c.flat('hot', 2.2)
+    d = (0.55, 0.55, 1.0)
+    rocks = []
+    for i in range(n):
+        ang = TAU * i / n + 0.6
+        rad = r * (0.35 + 0.45 * ((i * 0.618) % 1.0)) if n > 1 else 0.0
+        rock = c.sphere(0.3, rm, 2)
+        for vtx in rock.data.vertices:
+            vtx.co *= c.rnd.uniform(0.82, 1.15)
+        hood = c.sphere(0.46, fm, 3)
+        tail = c.cross_ribbon([(0, 0, 0)] * 9, 0.1, tm)
+        flash = c.sphere(1.0, hot_m, 2)
+        hoop = c.torus(1.0, 0.09, hot_m)
+        rocks.append((rock, hood, tail, flash, hoop, math.cos(ang) * rad, math.sin(ang) * rad, 0.05 + 0.3 * i / max(1, n)))
+    far = 3.6
+
+    def step(t):
+        c.tick(t, 2.2)
+        cut.inputs[1].default_value = 0.08
+        ta.inputs[1].default_value = 2.4
+        rv.outputs[0].default_value = 1
+        for rock, hood, tail, flash, hoop, x, y, lag in rocks:
+            g = win(t, lag, lag + 0.34) ** 1.6
+            dist = far * size * (1 - g)
+            pos = (x + d[0] * dist, y + d[1] * dist, 0.3 * size + d[2] * dist)
+            put(rock, pos, size, (t * TAU, t * TAU * 1.3, 0))
+            put(hood, pos, size, (0, t * TAU, 0))
+            line = [(pos[0] + d[0] * 1.5 * size * k / 8, pos[1] + d[1] * 1.5 * size * k / 8, pos[2] + d[2] * 1.5 * size * k / 8) for k in range(9)]
+            for o, sd in zip(tail, ((0.7, -0.7, 0), (0.4, 0.4, -0.5))):
+                c.move_ribbon(o, line, lambda u: 0.34 * size * (1 - u) ** 0.7 + 0.01, sd)
+                hide(o, g <= 0 or g >= 1)
+            for o in (rock, hood):
+                hide(o, g <= 0 or g >= 1)
+            q = win(t, lag + 0.33, lag + 0.6)
+            put(flash, (x, y, 0.3 * size), 0.55 * size * bell(q) + 0.001)
+            hide(flash, q <= 0 or q >= 1)
+            put(hoop, (x, y, 0.04), (0.15 + 0.9 * size * ease(q),) * 2 + (1 - 0.8 * q,))
+            hide(hoop, q <= 0 or q >= 1)
     return step
 
 
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, wave, toll,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, wave, toll, meteors,
 )}

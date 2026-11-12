@@ -621,6 +621,24 @@ are taken in the strike's first moments (`EARLY=1`): their blows come at once, a
 - **The Nightstalker**'s strike was a faint smear with the talons late. The talons come first now: three great purple talons
   down across the foe at the blow, then the bats scattering. In the photograph: the talons at the moment of the blow.
 
+### The director's second looks: meteors, the Seraph, the bell, the wave
+
+`docs/samples/blender-fx/audit-later-1-393.jpg` (four moments of each, chosen to catch the thing; the screen's flash off for the
+first two; `AT=` on the photographer picks the strike's moments).
+
+- **The Wizard's meteors** were bright wedges, and not seen in a fight. A new scene, `meteors`: round burning rocks (a dark rock
+  in a hood of flame, a short tail behind) coming down on a slant, each onto its own spot, a flash and a ring where each lands.
+  In the photograph: a burning rock in the sky on its way down with a second behind it; then the flash, smoke and ring where
+  they land; then the field of fire.
+- **The Seraph's column** was pale and see-through and her wings hard to find. The column is drawn solid (`dense`, hers only) and
+  the wings are a third larger than the scene's usual (they were by mistake smaller). In the photograph: a solid golden column
+  over the crowd with a fan of long feathers out to each side of it and rings under.
+- **The Bell Warden's bell** was small beside its hoops. It is twice the size, lower, and the largest thing in his wind-up and
+  strike. In the photograph: a great solid bell over him, its rim bright, wide hoops spreading under it.
+- **The Sea Reaver's wave** was a striped wall. It is one sheet of water bent into a curl, seen from its side, with a bright lip,
+  running to the screen's right. In the photograph: a curling wave beside him as he sets off, and a great curl breaking in
+  rings where he lands.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
