@@ -189,9 +189,9 @@ ULTS = dict(
     orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'swarm', 'blinks'),
     wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'beast', 'trail', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
-    minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'burst', 'leap'), ninjaMonk=('wind', 'sparks', 'gust', 'blows'),
+    minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'burst', 'leap'), ninjaMonk=('wind', 'claws', 'gust', 'blows'),
     buccaneer=('shadow', 'chains', 'cross', 'hooks'), archer=('wind', 'rain', 'ring', 'sky'), dreadPirate=('shadow', 'rain', 'burst', 'sky'),
-    siegeBot=('fire', 'burst', 'shockwave', 'sky'), lightningMage=('lightning', 'cloud', 'bolt', 'shots'), gunslinger=('fire', 'sparks', 'cross', 'shots'),
+    siegeBot=('fire', 'burst', 'shockwave', 'sky'), lightningMage=('lightning', 'cloud', 'bolt', 'shots'), gunslinger=('fire', 'sparks', 'flare', 'shots'),
     rifleBot=('lightning', 'sparks', 'ring', 'shots'), dragoon=('fire', 'flare', 'wall', 'shots'), ranger=('forest', 'vines', 'ring', 'burst'),
     knight=('holy', 'shout', 'dome', 'burst'), paladin=('holy', 'nova', 'strike', 'burst'), yamabushi=('wind', 'vortex', 'gust', 'burst'),
     gorgon=('poison', 'crystal', 'smoke', 'burst'), juggernaut=('earth', 'crack', 'spikes', 'burst'), kraken=('water', 'whirlpool', 'geyser', 'burst'),
@@ -265,7 +265,7 @@ WIND_COLOURS = dict(beastmaster=22)
 # ground loops' pairs out of this file by their shape.)
 AFTER_OWN = dict(
     vael=['sigil', 'souls'], astrax=['flames', 'motes'], ilyra=['ring', 'halo'], orrun=['vines', 'swarm'],
-    nyxara=['sigil', 'spiral'], kunoichi=['cloud', 'swarm'], wizard=['crack', 'flames'], beastmaster=['gust', 'motes'],
+    nyxara=['sigil', 'spiral'], kunoichi=['gust', 'swarm'], wizard=['crack', 'flames'], beastmaster=['gust', 'motes'],
     mercenary=['crack', 'sparks'], arcBlade=['crack', 'bolt'], samurai=['trail', 'veil'], lancer=['trail', 'gust'],
     minotaur=['crack', 'smoke'], barbarian=['crack', 'flare'], ninjaMonk=['ring', 'gust'], buccaneer=['cloud', 'chains'],
     archer=['ring', 'shaft'], dreadPirate=['crack', 'souls'], siegeBot=['crack', 'cloud'], lightningMage=['cloud', 'bolt'],

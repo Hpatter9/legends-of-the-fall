@@ -110,12 +110,19 @@ for (const pick of PICKS) {
   try {
     await army(page, PARTY_OF(pick));
     const before = await speedNow(page);
+    if (process.env.KILL) await page.evaluate(() => { window.__killAll = true; });
     const st = await page.evaluate((pick) => {
       const g = window.__game;
       g.app.ticker.stop();
       const hs = g.b.units.filter((u) => u.side === 'hero' && u.owner === undefined);
       for (const u of hs) u.charge2 = 0;
       const u = hs.find((h) => h.def === pick);
+      // (Ilyra's Death Denied answers an ally who is hurt: it will not fire with everyone whole, so one friend is put at half health)
+      if (pick === 'ilyra') {
+        const friend = hs.find((h) => h.def !== pick);
+        if (friend) friend.hp = Math.round(friend.maxHp * 0.5);
+      }
+      if (window.__killAll) for (const f of g.b.units) if (f.side === 'foe' && f.alive) f.hp = 1;
       u.charge2 = 100;
       document.querySelector(`.fhRow[data-unit="${u.id}"]`).dispatchEvent(new MouseEvent('click', { bubbles: true }));
       for (let i = 0; i < 400 && !g.ultm.queue.current; i++) window.__step(16);
@@ -123,6 +130,35 @@ for (const pick of PICKS) {
       return m ? { ...m.stages, shape: m.shape, show: m.show ?? 0 } : null;
     }, pick);
     if (!st) throw new Error('the ultimate never fired');
+    // (KILL=1: the ultimate lands the last blow of a real fight. Every foe is put at one health as it is fired, so the cast itself ends
+    // the fight in the sim and the run settles as it does in play; then it is watched frame by frame: when the fight ended, when the
+    // blow was played, when the result card came up; and photographed on the way)
+    if (process.env.KILL) {
+      const watch = (ms) => page.evaluate((ms) => {
+        const g = window.__game;
+        const w = (window.__watch ??= { t: 0, over: -1, blow: -1, result: -1, gone: -1 });
+        for (const end = w.t + ms; w.t < end && w.result < 0; w.t += 16) {
+          window.__step(16);
+          if (w.over < 0 && g.b.phase !== 'fight') w.over = w.t;
+          if (w.blow < 0 && g.ultm.queue.strikes > 0) w.blow = w.t;
+          if (w.gone < 0 && w.over >= 0 && !g.ultm.queue.current) w.gone = w.t;
+          const card = document.getElementById('result');
+          if (w.result < 0 && card && !card.hidden) w.result = w.t;
+        }
+        return { ...w, phase: g.b.phase };
+      }, ms);
+      let seen = await watch(320);
+      await page.screenshot({ path: `${OUT}/${pick}-${W}-1-blow300.png` });
+      seen = await watch(500);
+      await page.screenshot({ path: `${OUT}/${pick}-${W}-2-blow800.png` });
+      seen = await watch(600);
+      await page.screenshot({ path: `${OUT}/${pick}-${W}-3-at1400.png` });
+      seen = await watch(10000);
+      console.log('ok', pick, 'the last blow of the fight:', JSON.stringify(seen), seen.over >= 0 ? `blow ${seen.blow - seen.over} ms and result ${seen.result - seen.over} ms after the fight ended` : 'the fight did not end');
+      await page.screenshot({ path: `${OUT}/${pick}-${W}-9-result.png` });
+      await ctx.close();
+      continue;
+    }
     let t = 0;
     const speeds = [];
     // (CUT=windup or CUT=strike: the fight is ended in the middle of the show, as when the ultimate lands the killing blow, and the next
