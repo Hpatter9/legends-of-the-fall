@@ -40,7 +40,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   stash: { text: 'Chests from army stars wait on the cart. Tap one to open it.', page: 'home' },
   equipment: { text: 'Equip best puts the strongest spare gear on this hero. Chests drop more.', page: 'any' },
   recycle: { text: 'Drag a spare hero off the bench and a Recycle spot appears: drop it there to turn it back into gold.', page: 'game', during: 'deploy' },
-  retry: { text: 'Hearts: when your party falls, a heart burns and the wave starts again with bonus gold. With none left, the run ends.', page: 'game' },
+  retry: { text: 'Lives: the party shares ten. A fallen hero rises after 5 seconds for one life. If everyone falls, they all rise at once, a life each. With none left, the fallen stay down.', page: 'game' },
   // (FIRST-HOUR: the first rune came with no word; the bench that holds it is shut behind its pull bar)
   runes: { text: 'You hold a rune. Tap Runes to open the rune bench: drag a rune onto a hero to set it, or onto its twin to merge.', page: 'game', during: 'deploy' },
   autoReplay: { text: 'Switch Auto on to repeat a cleared army by itself, for as many runs as you set.', page: 'home' },

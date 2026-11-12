@@ -93,6 +93,6 @@ export function rulesWords(r: QuestRules | undefined, guestName?: (kind: string)
   if (r.spare) out.push('One foe must be spared');
   if (r.hasten) out.push('The foes are hasted');
   if (r.noHeal) out.push('No healing');
-  if (r.noHearts) out.push('No hearts');
+  if (r.noHearts) out.push('No lives');
   return out;
 }

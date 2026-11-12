@@ -1,7 +1,7 @@
 // DEPTH-BUILD (docs/notes/depth-build.md): march orders before an army run.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { armyRun, finish, loadRun, retriesLeft, startStage, type Run } from '../src/sim/run';
+import { armyRun, finish, loadRun, livesLeft, startStage, type Run } from '../src/sim/run';
 import { ARMIES } from '../src/sim/armies';
 import { CURSES, MARCH, curseFor, marchCrowns, marchFx, marchOpen, marchPay, ordersFor, readOrders, skipsWave, ordersLine } from '../src/sim/march';
 import { newCastle } from '../src/sim/castle';
@@ -35,10 +35,10 @@ test('the curse is fixed by the seed, and every curse is drawn by some seed', ()
   assert.equal(ordersFor('plain', 1), undefined);
 });
 
-test('a cursed run has one heart, tougher foes, and its curse in the fight', () => {
-  assert.equal(retriesLeft(run()), 2);
+test('a cursed run has five lives of the ten (one heart of the two, before TEN-LIVES), tougher foes, and its curse in the fight', () => {
+  assert.equal(livesLeft(run()), 10);
   const c = run('cursed');
-  assert.equal(retriesLeft(c), 1);
+  assert.equal(livesLeft(c), 5);
   const plain = startStage(run());
   const cursed = startStage(c);
   const hp = (b: ReturnType<typeof startStage>) => b.units.filter((u) => u.side === 'foe').reduce((n, u) => n + u.maxHp, 0);

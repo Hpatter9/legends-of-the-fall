@@ -16,7 +16,8 @@ import { newCastle, xpRate, type Castle } from '../src/sim/castle';
 import { newMeta, pickStarter, startedMeta, type Meta } from '../src/sim/meta';
 import { STARTER_PACKS } from '../src/sim/starter';
 import { ARMIES, armyById, armyCleared } from '../src/sim/armies';
-import { armyRun, canRetry, finish, isBossRun, noteFight, retryWave, squadLimit, startStage, summon, tierOfRun, waveArmyOf, type Owned, type Run } from '../src/sim/run';
+import { LIVES_RULE } from '../src/sim/lives';
+import { partyFalls, armyRun, finish, isBossRun, noteFight, squadLimit, startStage, summon, tierOfRun, waveArmyOf, type Owned, type Run } from '../src/sim/run';
 import { autoMerge } from '../src/sim/merge';
 import { heroLevel, localBoost } from '../src/sim/climb';
 import { armyRules } from '../src/sim/armyStars';
@@ -46,6 +47,10 @@ export { strengthOf };
  *  the armies are tuned for a player who casts), so every table and difficulty test is measured with spells cast. `BOT_SPELLS=0` in the
  *  environment turns it off (the spell-less bot every table before 0.292 was measured with); `BOT_LOADOUT=heal,meteor,haste` fixes the
  *  loadout. Otherwise each fight casts the loadout a player owns at that stage of the game (`botLoadout`). */
+// (TEN-LIVES: the bot plays without the run's lives unless LIVES=1, as it always played without the hearts: every figure in the notes, and
+// every band a test holds, is "a lost wave ends the try". `tools/ten-lives/measure.ts` plays both ways.)
+if (typeof process === 'undefined' || process.env?.LIVES !== '1') LIVES_RULE.on = false;
+
 export const botSpells: { on: boolean; loadout?: SpellId[] } = {
   on: typeof process === 'undefined' || process.env?.BOT_SPELLS !== '0',
   loadout: typeof process !== 'undefined' && process.env?.BOT_LOADOUT ? (process.env.BOT_LOADOUT.split(',') as SpellId[]) : undefined,
@@ -195,11 +200,13 @@ export function playWaves(meta: Meta, run: Run, castle: Castle = run.castle ?? n
 }
 
 /**
- * A date's daily as a greedy player: the starting five and the day's gold, summoning and fielding as `playArmy` does, with the two hearts
- * spent (when `hearts`) on a lost wave: the wave is tried again with the retry's gold, hired at once. Returns the waves won, whether the boss
- * of the day fell, the hearts used and the bonus stars of the clear.
+ * A date's daily as a greedy player: the starting five and the day's gold, summoning and fielding as `playArmy` does, with the run's lives
+ * (when `hearts`, as the page plays it: TEN-LIVES) or without them (a lost wave ends it). Returns the waves won, whether the boss
+ * of the day fell, the party's falls (what burnt a heart) and the bonus stars of the clear.
  */
 export function playDaily(meta: Meta, date: number, hearts = true, gear = true): { won: number; cleared: boolean; hearts: number; bonus: number; stars: boolean[]; ms: number; lost: number; bossFell: number; bossLost: number } {
+  const was = LIVES_RULE.on;
+  LIVES_RULE.on = hearts;
   const run: Run = dailyRun(date);
   let won = 0;
   while (!run.over) {
@@ -210,17 +217,15 @@ export function playDaily(meta: Meta, date: number, hearts = true, gear = true):
     maybeSpells(b, meta);
     playOut(b);
     const ok = b.phase === 'won';
-    if (!ok && hearts && canRetry(run)) {
-      retryWave(run);
-      continue;
-    }
+    // (TEN-LIVES: a fall is raised inside the fight now, by the run's lives: a lost wave is lost for good)
     if (ok) won = run.stage;
     noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(newCastle())));
   }
   settleFinds(meta, run);
-  return { won, cleared: !!run.cleared, hearts: run.retries ?? 0, bonus: dailyBonus(run).filter((r) => r.earned).length, stars: dailyBonus(run).map((r) => r.earned), ms: run.tally?.ms ?? 0, lost: run.tally?.lost ?? 0, bossFell: run.tally?.bossFell ?? 0, bossLost: run.tally?.bossLost ?? 0 };
+  LIVES_RULE.on = was;
+  return { won, cleared: !!run.cleared, hearts: partyFalls(run), bonus: dailyBonus(run).filter((r) => r.earned).length, stars: dailyBonus(run).map((r) => r.earned), ms: run.tally?.ms ?? 0, lost: run.tally?.lost ?? 0, bossFell: run.tally?.bossFell ?? 0, bossLost: run.tally?.bossLost ?? 0 };
 }
 
 /** An army's last wave (its final boss) alone, as a greedy player with a party at the level of `meta`: whether it was won. The waves before it are walked over (their foes made frail), so the gold they pay and the heroes it buys are the campaign's. For tuning the final bosses. */

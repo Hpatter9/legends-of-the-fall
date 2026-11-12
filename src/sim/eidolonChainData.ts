@@ -450,7 +450,7 @@ export const HEARTH_BRAND: PieceDef = {
 export const FROZEN_TEAR: PieceDef = {
   id: 'frozenTear',
   name: 'The Frozen Tear',
-  lines: ['One drop of the mere, caught before it fell and frozen as it hung. It was left for whoever came through the pack with every heart still in hand.', 'It is not sad. It is only very cold, and very exact.'],
+  lines: ['One drop of the mere, caught before it fell and frozen as it hung. It was left for whoever came through the pack without once falling whole.', 'It is not sad. It is only very cold, and very exact.'],
   art: 'sapphireRing',
 };
 export const WYRM_LULLABY: PieceDef = {
@@ -551,9 +551,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'askel4',
         title: "The Long Run",
-        text: "Clear the Orc Warband whole on Hard with no heart spent",
+        text: "Clear the Orc Warband whole on Hard with the whole party never falling",
         goal: { kind: 'clearArmy', n: 1, army: 'orcs', tier: 1, noHeart: true },
-        begin: "The bell is not the end of it. A hound does not come for a keep that gives up a wave at the first bite. Run the Warband from its first gate to its last, on Hard, and do not spend a heart on the way. He is counting.",
+        begin: "The bell is not the end of it. A hound does not come for a keep that gives up a wave at the first bite. Run the Warband from its first gate to its last, on Hard, and do not let the whole party fall on the way. He is counting.",
         piece: HUNT_WHISTLE,
         reward: { chest: 'bronze' },
       },
@@ -613,9 +613,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'nivra4',
         title: "Through the Pack",
-        text: "Clear the Beast Packs whole on Hard with no heart spent",
+        text: "Clear the Beast Packs whole on Hard with the whole party never falling",
         goal: { kind: 'clearArmy', n: 1, army: 'beasts', tier: 1, noHeart: true },
-        begin: "One tear, they say, and she lets it fall for a keep that crosses her whole country without once turning back. All of the Packs, then, on Hard. Do not spend a heart. She will know.",
+        begin: "One tear, they say, and she lets it fall for a keep that crosses her whole country without once turning back. All of the Packs, then, on Hard. Do not let the whole party fall. She will know.",
         piece: FROZEN_TEAR,
         reward: { chest: 'bronze' },
       },
@@ -674,9 +674,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'aurelan4',
         title: "The Whole Wood",
-        text: "Clear the Wildwood whole on Hard with no heart spent",
+        text: "Clear the Wildwood whole on Hard with the whole party never falling",
         goal: { kind: 'clearArmy', n: 1, army: 'wildwood', tier: 1, noHeart: true },
-        begin: "The lamp wants to see a whole night through, and a night in that wood is fifteen fights long. Take the Wildwood from end to end, on Hard, and do not spend a heart. If you do, the lamp goes out, and I will have to say I told you so.",
+        begin: "The lamp wants to see a whole night through, and a night in that wood is fifteen fights long. Take the Wildwood from end to end, on Hard, and do not let the whole party fall. If you do, the lamp goes out, and I will have to say I told you so.",
         piece: MORNING_RING,
         reward: { chest: 'bronze' },
       },
@@ -738,9 +738,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'voltara4',
         title: "The Straight Road",
-        text: "Clear the Labyrinth whole on Hard with no heart spent",
+        text: "Clear the Labyrinth whole on Hard with the whole party never falling",
         goal: { kind: 'clearArmy', n: 1, army: 'labyrinth', tier: 1, noHeart: true },
-        begin: "The rod only hums for a party that walks the Labyrinth straight through: every turn, every gate, no going back for a heart. It is on Hard now, I am told. Even the walls are in a mood.",
+        begin: "The rod only hums for a party that walks the Labyrinth straight through: every turn, every gate, no falling in a heap. It is on Hard now, I am told. Even the walls are in a mood.",
         piece: STORM_ROD,
         reward: { chest: 'bronze' },
       },
@@ -799,9 +799,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'gorm4',
         title: "The Pit, End to End",
-        text: "Clear the Infernal Host whole on Hard with no heart spent",
+        text: "Clear the Infernal Host whole on Hard with the whole party never falling",
         goal: { kind: 'clearArmy', n: 1, army: 'infernal', tier: 1, noHeart: true },
-        begin: "Mehh. (Her bell is in the Host's hall, at the very back. She wants the whole of it cleared in one go, on Hard, and no hearts spent: a goat does not go back for a second try.)",
+        begin: "Mehh. (Her bell is in the Host's hall, at the very back. She wants the whole of it cleared in one go, on Hard, and the party never all down: a goat does not get up twice.)",
         piece: QUARRY_BELL,
         reward: { chest: 'bronze' },
       },
@@ -860,9 +860,9 @@ export const CHAINS: readonly ChainDef[] = [
       {
         id: 'vaelkhar4',
         title: "The Gate, Properly",
-        text: "Clear the Calamity whole with no heart spent and no king's spell cast",
+        text: "Clear the Calamity whole with the whole party never falling and no king's spell cast",
         goal: { kind: 'calClear', n: 1, noHeart: true, noSpells: true },
-        begin: "the seal is on the last gate. it comes away when the gate is cleared properly: every map, no heart spent, and the king's own spells left in the cupboard. you have done it once with help. do it once more without.",
+        begin: "the seal is on the last gate. it comes away when the gate is cleared properly: every map, the whole party never falling, and the king's own spells left in the cupboard. you have done it once with help. do it once more without.",
         piece: VIOLET_SEAL,
         reward: { chest: 'bronze' },
       },

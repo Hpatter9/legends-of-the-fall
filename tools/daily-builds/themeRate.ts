@@ -9,7 +9,7 @@ import { autoDeploy, autoRound, dressSquad, strengthOf } from '../../src/sim/aut
 import { DAILY_THEMES, DAILY_THEMES_FROM, dailyTheme, dayNumber, featuredCount, type DailyTheme } from '../../src/sim/dailyThemes';
 import { dailyBonus, dailyRun } from '../../src/sim/modes';
 import { startedMeta, type Meta } from '../../src/sim/meta';
-import { canRetry, finish, isBossRun, noteFight, retryWave, startStage, type Run } from '../../src/sim/run';
+import { partyFalls, finish, isBossRun, noteFight, startStage, type Run } from '../../src/sim/run';
 import { ratingOf } from '../../src/sim/stars';
 import { fightXp, gainXp } from '../../src/sim/levels';
 import { newCastle, xpRate } from '../../src/sim/castle';
@@ -72,17 +72,14 @@ function play(date: number, seed: number, themed: boolean) {
     fight(b);
     playOut(b);
     const ok = b.phase === 'won';
-    if (!ok && canRetry(run)) {
-      retryWave(run);
-      continue;
-    }
+    // (TEN-LIVES: a fall is raised inside the fight now, by the run's lives: a lost wave is lost for good)
     if (ok) won = run.stage;
     if (isBossRun(run) && run.stage === 10) featured = featuredCount(t, b.units.filter((u) => u.side === 'hero').map((u) => u.def));
     noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(newCastle())));
   }
-  return { cleared: !!run.cleared, won, goal: !!run.themeMet, featured, hearts: run.retries ?? 0, stars: dailyBonus(run).filter((s) => s.earned).length };
+  return { cleared: !!run.cleared, won, goal: !!run.themeMet, featured, hearts: partyFalls(run), stars: dailyBonus(run).filter((s) => s.earned).length };
 }
 
 const pct = (n: number, of: number) => `${Math.round((100 * n) / Math.max(1, of))}%`.padStart(4);

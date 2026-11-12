@@ -15,7 +15,7 @@ import { nemSpare } from '../src/sim/nemesisTraits';
 import { bearerOf, dayNumber, fieldedOf, lineOf, openDynasty, readDynasty } from '../src/sim/dynasty';
 import { changeHonour, fieldBearer, heirState, nameHeir, passMantle, whyNoHeir, whyNotHonour } from '../src/sim/heirs';
 import {
-  armyParty, canSwear, chooseShade, ghostOf, hasFallen, isLegend, mourning, mourningLeft, noteOathFalls, OATH, oathCrowns, oathOpen, oathPay, settleMourning, settleOath, shadeChosen, shadeFight, shadesOf, slainKind, slayBearer,
+  armyParty, canSwear, chooseShade, ghostOf, hasFallen, isLegend, mourning, mourningLeft, noteOathRises, OATH, oathCrowns, oathOpen, oathPay, settleMourning, settleOath, shadeChosen, shadeFight, shadesOf, slainKind, slayBearer,
   swearOath, whyNoOath, whyNoShade, whyShadeHonour,
 } from '../src/sim/oath';
 import { armyRun, canJoin, gradeBoost, recruit, type Run } from '../src/sim/run';
@@ -116,15 +116,15 @@ test('slain only under the Oath and only by its two rules: a second fall in the 
   assert.deepEqual(n.slain.map((s) => s.kind), ['knight']);
   assert.equal(lineOf(m, 'knight')!.bearers[0].fate, 'fallen');
   assert.equal(bearerOf(m, 'samurai')!.fate, undefined, 'a first fall is not');
-  // (a wave lost: every hero who fell in it is slain, the falls before a heart burned among them)
+  // (a wave lost: every hero who fell in it is slain, the falls a life raised among them: TEN-LIVES)
   const run2 = oathRun(m);
-  noteOathFalls(run2, board(run2, ['samurai']).b);
+  noteOathRises(run2, [run2.roster.find((h) => h.kind === 'samurai')!.id]);
   n = settle(m, run2, ['wizard'], false);
   assert.deepEqual(n.slain.map((s) => s.kind).sort(), ['samurai', 'wizard']);
-  // (a heart's burn counts a fall: the second, at the wave's end, slays even in a wave won)
+  // (a life's rise counts a fall: the second, at the wave's end, slays even in a wave won)
   const m2 = sworn();
   const run3 = oathRun(m2);
-  noteOathFalls(run3, board(run3, ['wizard']).b);
+  noteOathRises(run3, [run3.roster.find((h) => h.kind === 'wizard')!.id]);
   assert.deepEqual(settle(m2, run3, ['wizard'], true).slain.map((s) => s.kind), ['wizard']);
 });
 

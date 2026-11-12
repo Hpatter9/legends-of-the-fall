@@ -109,10 +109,12 @@ function downNow(run: Run, b: Battle): number[] {
   return out;
 }
 
-/** A heart burns under the Oath: the heroes down are counted a fall each (they rise for the wave again, but it was a fall). */
-export function noteOathFalls(run: Run, b: Battle): void {
+/** TEN-LIVES: lives raised these heroes (roster ids, one entry a rise) under the Oath: each rise was a fall, as a burnt heart's was. */
+export function noteOathRises(run: Run, ids: readonly number[]): void {
   if (!run.oath) return;
-  for (const id of downNow(run, b)) {
+  for (const id of ids) {
+    const h = run.roster.find((x) => x.id === id);
+    if (!h || h.guest || h.cloneFloors !== undefined) continue;
     const k = String(id);
     (run.oathFalls ??= {})[k] = (run.oathFalls[k] ?? 0) + 1;
     if (!(run.oathWave ??= []).includes(id)) run.oathWave.push(id);

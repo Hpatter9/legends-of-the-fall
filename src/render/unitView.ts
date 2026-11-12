@@ -5,6 +5,7 @@ import { type ColorMatrix, ColorMatrixFilter, Container, Graphics, Sprite, Text,
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
 import { formOf, UNITS } from '../sim/units';
+import { REVIVE_MS } from '../sim/lives';
 import { RANK_BADGE } from '../expansionArt';
 import { AwakenAura } from './awakenAura';
 import { auraOf } from './auraStyles';
@@ -62,7 +63,7 @@ const ULT_FILL = 0xb06aff;
 const ULT_READY = 0xffd24a;
 /** How long the evolve burst lasts (ms). */
 const BURST_MS = 800;
-/** How long a fallen hero takes to get up when a heart raises it (its dead row played backwards, FIGHT-FIXES). */
+/** How long a fallen hero takes to get up when a life raises it (its dead row played backwards, FIGHT-FIXES). */
 export const RISE_MS = 720;
 
 /** The colour grade of a hero above the first: richer tones; grade 3 lifts red and green together and trims blue, so
@@ -165,7 +166,7 @@ export class UnitSprite {
   /** An awakened hero's class aura (null for the rest). */
   private awakenAura: AwakenAura | null;
   private burstAt = -1;
-  /** When a heart raised this fighter (Date.now ms; -1 when it is not getting up), and how it fell (for its tint going back). */
+  /** When a life raised this fighter (Date.now ms; -1 when it is not getting up), and how it fell (for its tint going back). */
   private riseAt = -1;
   private readonly grade: number;
   private sheet: string;
@@ -189,6 +190,12 @@ export class UnitSprite {
   /** ULT-SHOW (`ultShow.ts`): a pose the page stages over what the sim says while an ultimate's showcase plays (world px, its depth, how
    *  solid, a row and how far through it, the way it faces on the screen); null: drawn as the sim says. */
   stage: { x: number; y: number; z: number; alpha: number; row: Row; p: number; face: 1 | -1; art?: Texture } | null = null;
+  /** TEN-LIVES (`sim/lives.ts`): how long until a life raises this fallen hero, in ms of the fight's time (null: none will); the page
+   *  sets it each frame, and a countdown is drawn over where it lies. */
+  reviveIn: number | null = null;
+  private lifeRing = new Graphics();
+  private lifeText: Text | null = null;
+  private lifeKey = '';
   /** DUEL-SHOW (`duelShow.ts`): a bystander watching a duel from outside the ring: no health bar over it, it takes no part. */
   bystander = false;
 
@@ -434,7 +441,7 @@ export class UnitSprite {
       anim = 'dead';
       frame = Math.floor((t - (u.diedAt ?? 0)) / 120);
     }
-    // (raised by a heart: it gets up off the ground where it lay, its dead row backwards, then stands; at once with reduced motion)
+    // (raised by a life: it gets up off the ground where it lay, its dead row backwards, then stands; at once with reduced motion)
     const rising = this.rising();
     if (u.alive && rising < 1) {
       anim = 'dead';
@@ -509,7 +516,7 @@ export class UnitSprite {
     this.root.zIndex = z;
     this.x = x;
     this.y = y;
-    // Fallen heroes stay where they fell so a heart can raise them; foes fade away.
+    // Fallen heroes stay where they fell so a life can raise them; foes fade away.
     const dead = u.alive || (u.side === 'hero' && !def.summon) ? 0 : t - (u.diedAt ?? 0);
     this.root.alpha = dead > FADE_FROM ? Math.max(0, 1 - (dead - FADE_FROM) / FADE_MS) : this.solid;
     // (a burrower underground is not seen: the page draws its mound instead, RPG-SPELLS)
@@ -519,6 +526,7 @@ export class UnitSprite {
     this.drawBar(u.alive, t);
     if (this.plate) this.plate.visible = u.alive;
     this.drawClock(fighting ? t : -1);
+    this.drawRevive(fighting);
     this.drawSparks(u.alive);
     this.drawPillar(u.alive);
     if (this.popAt >= 0) this.root.scale.set(this.baseSize * this.popScale());
@@ -637,7 +645,7 @@ export class UnitSprite {
     paintSprite(this.pillar, burst * BURST_MS, BURST_MS, this.tall / 26, 0, 0.65, false, this.reduced?.matches ?? false);
   }
 
-  /** A heart has raised this fallen hero: it gets up from where it lay (`RISE_MS`), with no burst or light; at once with reduced motion. */
+  /** A life (or a healer) has raised this fallen hero: it gets up from where it lay (`RISE_MS`), with no burst or light; at once with reduced motion. */
   getUp(): void {
     this.riseAt = this.reduced?.matches ? -1 : Date.now();
   }
@@ -729,6 +737,36 @@ export class UnitSprite {
     g.moveTo(x + Math.cos(from) * r, y + Math.sin(from) * r)
       .arc(x, y, r, from, to)
       .stroke({ color: low ? 0xff7a4a : timer!.shape ? 0xffc861 : 0x6fd8c8, width: 1.8, cap: 'round' });
+  }
+
+  /** TEN-LIVES: the countdown over a fallen hero a life will raise: a dark disc, a gold ring emptying as the seconds go, and the
+   *  seconds left in it. Redrawn only when its step changes; gone once the hero stands, or when no life is left for it. */
+  private drawRevive(fighting: boolean): void {
+    const ms = fighting && !this.unit.alive ? this.reviveIn : null;
+    const secs = ms === null ? 0 : Math.max(1, Math.ceil(ms / 1000));
+    const key = ms === null ? '' : `${secs}:${Math.ceil((ms / REVIVE_MS) * 30)}`;
+    if (key === this.lifeKey) return;
+    this.lifeKey = key;
+    const g = this.lifeRing;
+    g.clear();
+    if (this.lifeText) this.lifeText.visible = !!key;
+    if (!key) return;
+    if (!this.lifeText) {
+      this.lifeText = new Text({ text: '', style: { fontFamily: "'Alegreya Sans', 'Trebuchet MS', sans-serif", fontWeight: 'bold', fontSize: 11, fill: 0xfff2c0, stroke: { color: 0x1a1008, width: 2 } }, resolution: 3 });
+      this.lifeText.anchor.set(0.5);
+      this.root.addChild(this.lifeRing, this.lifeText);
+    }
+    const r = 9;
+    const y = -24;
+    const share = Math.max(0, Math.min(1, ms! / REVIVE_MS));
+    g.circle(0, y, r + 1.5).fill({ color: 0x1a1008, alpha: 0.82 });
+    g.circle(0, y, r).stroke({ color: 0xffffff, width: 2, alpha: 0.16 });
+    const from = -Math.PI / 2;
+    g.moveTo(Math.cos(from) * r, y + Math.sin(from) * r)
+      .arc(0, y, r, from, from + Math.PI * 2 * share)
+      .stroke({ color: 0xffc861, width: 2.2, cap: 'round' });
+    this.lifeText.text = String(secs);
+    this.lifeText.position.set(0, y);
   }
 
   /** What the health bar last showed (a fighter with no skill meter, which is most of a crowd's foes, redraws it only when this changes). */

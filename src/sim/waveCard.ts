@@ -13,7 +13,7 @@ export interface WaveMoments {
   ups: readonly { kind: string; from: number; to: number }[];
   /** Hero kinds on the field that ended the fight down (a won wave's fallen). */
   fell: readonly string[];
-  /** Hearts burned in the wave, and how many are left after. */
+  /** TEN-LIVES: the lives spent in the wave, and how many are left after (the fields keep the hearts' names). */
   hearts: number;
   heartsLeft: number;
   /** A guest hero's farewell as the run ends (GUEST-HERO, `guest.ts`); none for any other card. */
@@ -90,7 +90,7 @@ export function waveNotes(m: WaveMoments): WaveNote[] {
   if (m.risen) out.push({ kind: 'risen', head: RISEN_HEAD, text: m.risen });
   if (m.farewell) out.push({ kind: 'guest', text: m.farewell });
   if (m.fell.length) out.push({ kind: 'fell', text: `Fell: ${names(m.fell)}` });
-  if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} hearts` : 'A heart'} burned · ${m.heartsLeft} left` });
+  if (m.hearts > 0) out.push({ kind: 'heart', text: `${m.hearts > 1 ? `${m.hearts} lives` : 'A life'} spent · ${m.heartsLeft} left` });
   for (const w of m.wear ?? []) out.push({ kind: 'wear', text: w });
   if (m.waiting) out.push({ kind: 'pack', text: m.waiting > 1 ? `${m.waiting} finds wait in the satchel` : 'A find waits in the satchel' });
   for (const s of m.study ?? []) if (!s.learned) out.push({ kind: 'study', text: s.text });

@@ -7,7 +7,7 @@ import { dailyArmy, dailyBoss, dailyBossName, dailyChestSeed, dailyCrowns, daily
 import { dailyBonus, dailyLine, dailyRun, settleDaily, settleRun, startDaily, DAILY_TIME_MS } from '../src/sim/modes';
 import { bestChest, openChest, peekChest, readStash, rollDailyChest, DAILY_BONUS_CROWNS, DAILY_CHEST_CROWNS } from '../src/sim/armyStars';
 import { bossOf } from '../src/sim/armies';
-import { canRetry, loadRun, saveRun, chainOf, finish, isBossRun, noteFight, retryWave, startStage, waveArmyOf, MAX_RETRIES } from '../src/sim/run';
+import { livesLeft, loadRun, saveRun, chainOf, finish, isBossRun, noteFight, startStage, waveArmyOf } from '../src/sim/run';
 import { isBoss } from '../src/sim/foes';
 import { loadMeta, saveMeta, startedMeta } from '../src/sim/meta';
 import { DAILY_CHEST_STONES } from '../src/sim/unlockRules';
@@ -104,12 +104,10 @@ test('a fall after the hearts are spent ends the daily with a smaller consolatio
     settleDaily(m, run, { won: true, stage });
   }
   assert.equal(run.stage, 6);
-  // wave 6 is lost: the hearts are spent one by one, then the run ends
-  for (let heart = 0; heart < MAX_RETRIES; heart++) {
-    assert.equal(canRetry(run), true);
-    assert.ok(retryWave(run));
-  }
-  assert.equal(canRetry(run), false, 'no heart left');
+  // wave 6 is lost: the lives are all spent in its fight, then the run ends (TEN-LIVES)
+  assert.equal(livesLeft(run), 10);
+  run.lives = 10;
+  assert.equal(livesLeft(run), 0, 'no life left');
   finish(run, false);
   const pay = settleDaily(m, run, { won: false, stage: 6 });
   assert.equal(run.over, true);
@@ -144,13 +142,13 @@ test('the bonus stars: no heart spent and a quick clear, and they add to the che
   const m = startedMeta(8);
   const run = startDaily(m, 20261021);
   winAll(m, run);
-  // (the fights here are not fought: no battle time, no hearts, so both stars are earned)
+  // (the fights here are not fought: no battle time, no party fall, so both stars are earned)
   assert.deepEqual(dailyBonus(run).map((r) => r.earned), [true, true]);
   assert.equal(m.daily['20261021'].stars, 2);
   const slow = dailyRun(20261022);
   slow.cleared = true;
   slow.tally = { ms: DAILY_TIME_MS + 1, lost: 0, bossLost: 0 };
-  slow.retries = 1;
+  slow.falls = 1;
   assert.deepEqual(dailyBonus(slow).map((r) => r.earned), [false, false]);
   const fell = dailyRun(20261022);
   assert.deepEqual(dailyBonus(fell).map((r) => r.earned), [false, false], 'no stars without a clear');

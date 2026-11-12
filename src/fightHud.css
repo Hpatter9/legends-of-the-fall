@@ -70,6 +70,10 @@ body[data-phase='fight'] #panel { padding-top: 6px; padding-bottom: calc(env(saf
 .fhRow.queued .fhPearl { opacity: 0.5; }
 .fhRow.fallen { filter: grayscale(1) brightness(0.6); }
 .fhRow.fallen .fhPearl { display: none; }
+/* (TEN-LIVES: a fallen hero a life will raise: its row says in how many seconds) */
+.fhRow.fallen.rising { filter: grayscale(0.7) brightness(0.8); }
+.fhRow.fallen.rising::after { content: '\2665  ' attr(data-revive) 's'; position: absolute; z-index: 4; right: 4px; top: 50%; transform: translateY(-50%); padding: 1px 6px; border-radius: 8px;
+  background: rgb(26 16 8 / 0.88); border: 1px solid #ffc861; color: #ffe9a8; font: 700 12px/16px var(--body); pointer-events: none; }
 
 /* (the cast: the row lights in the skill's element and its name rises over it, then both ease away) */
 .fhCast { position: absolute !important; z-index: 3 !important; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; opacity: 0; pointer-events: none; color: #fff;

@@ -69,6 +69,8 @@ import { statMults, type StatMults } from './statPower';
 import { blastThrows, type Throws } from './kits/ranged';
 import { swapPlaces } from './toolkit/blink';
 import { FEEL } from './feel';
+import { fightLives, LIVES_RULE, outOfTime, partyFell, tickLives, type FightLives } from './lives';
+import type { VigilId } from './chapelRooms';
 import { airborne, erupt, shotWall, tickToolkit, WALL, type Aura, type Burrowing, type Wall, type WallKind } from './toolkit';
 
 export const TICK_MS = 100;
@@ -216,6 +218,10 @@ export interface Unit {
   fx?: Record<string, number>;
   /** Cannot be targeted until then (a Shadowcloak). */
   hideUntil?: number;
+  /** TEN-LIVES: a hero a life has just raised takes no hurt until this time (`lives.ts`). */
+  safeUntil?: number;
+  /** TEN-LIVES: how many times a life has raised this hero in this fight (it fell each time, for the tallies and a flawless wave). */
+  lifeRises?: number;
   /** What this fighter did, for its XP (`levels.ts`): damage dealt, healing done, kills made, and the XP its kills are worth. */
   dealt?: number;
   healed?: number;
@@ -406,6 +412,9 @@ export type BattleEvent =
   | { kind: 'aura'; by: number; at: At | null; reach: number; what: string; ms: number }
   /** A healer raised a fallen hero (RPG-SPELLS batch 2): the page plays its getting up. */
   | { kind: 'revive'; by: number; to: number; hp: number }
+  /** TEN-LIVES: lives were spent: the heroes they raised (none for a clock bought back), the lives left, and why (a fallen hero's
+   *  timer, the whole party down at once, or the time run out). */
+  | { kind: 'life'; to: number[]; left: number; why: 'timer' | 'all' | 'time' }
   /** A fighter a skill called up fades away (a wraith, a standard). */
   | { kind: 'fade'; to: number }
   /** A kit marks a fighter (a bounty, a condemnation, a charge, a pin, a stance) for `ms`. */
@@ -466,6 +475,8 @@ export interface Battle {
   revived?: boolean;
   /** DEPTH-BUILD (`chapelRooms.ts`): the Chapel's Last Rites, ready in this fight: the hero it marked to rise, when, and whether it has. */
   rites?: { id?: number; at?: number; done?: boolean };
+  /** TEN-LIVES: the run's lives, as this fight has them (`lives.ts`); a fight without them plays as it always did. */
+  lives?: FightLives;
   /** DEPTH-BUILD (`bonds.ts`): the bonded and rival pairs on the board, fixed as the fight starts, and the snapshot they came from. */
   bonds?: BondPair[];
   bondSnap?: Record<string, number>;
@@ -639,6 +650,9 @@ export interface Stage {
   night?: boolean;
   /** DEPTH-BUILD (`chapelRooms.ts`): the Chapel's Last Rites is ready in this fight. */
   rites?: boolean;
+  /** TEN-LIVES: the lives the run has left for this fight, and the Chapel's Vigil its orders chose (`lives.ts`). */
+  lives?: number;
+  vigil?: VigilId;
   /** DEPTH-BUILD (`bonds.ts`): the run's snapshot of the bonds (each pair's level, -1 rivals), read as the fight starts. */
   bonds?: Record<string, number>;
   /** Whether Duchess the goat may join (`duchessFight.ts`): rolled on the seed, always, or never (the default, so a fight made outside a run never has her). */
@@ -724,6 +738,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (stage.foeHeal && stage.foeHeal !== 1) b.foeHeal = stage.foeHeal;
   if (stage.night) b.night = true;
   if (stage.rites) b.rites = {};
+  if (stage.lives !== undefined && LIVES_RULE.on) b.lives = fightLives(stage.lives, stage.vigil);
   if (stage.bonds && Object.keys(stage.bonds).length) b.bondSnap = stage.bonds;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
@@ -973,26 +988,6 @@ function startKits(b: Battle): void {
   }
 }
 
-/** Raise the fallen party in the same fight. Enemies, charges and spent abilities stay as they were. */
-export function reviveParty(b: Battle): boolean {
-  // (a duel lost is not fought again: the champion falls, `duel.ts`)
-  if (b.phase !== 'lost' || !heroesPlaced(b) || b.duel) return false;
-  for (const u of b.units) {
-    if (u.side !== 'hero' || defOf(u).summon || u.alive) continue;
-    u.alive = true;
-    u.hp = u.maxHp;
-    u.diedAt = undefined;
-    u.step = undefined;
-    u.swing = undefined;
-    u.cast = undefined;
-    u.hurtAt = undefined;
-    u.busyUntil = b.t;
-  }
-  if (b.t >= (b.timeLimit ?? TIME_LIMIT_MS)) b.timeLimit = b.t + TIME_LIMIT_MS;
-  b.phase = 'fight';
-  return true;
-}
-
 /** Fix the placed heroes' trait bonuses: attack and health now, the rest read by the hooks as the fight goes. */
 function applyTraits(b: Battle): void {
   let fx = mergeEffects(traitEffects(kindsOf(b.units)), b.relics?.team ?? {});
@@ -1099,6 +1094,8 @@ function stepOnce(b: Battle): BattleEvent[] {
   tickStatus(b, out);
   tickMythics(b, out);
   if (b.rites?.id !== undefined) tickRites(b, out);
+  // (TEN-LIVES: a fallen hero whose five seconds are up rises, a life spent)
+  if (b.lives) tickLives(b, out);
   if (b.bonds) tickBonds(b);
   if (b.warnings) tickWeakness(b, out);
   if (b.warnings) tickSignatures(b, out);
@@ -1138,7 +1135,9 @@ function stepOnce(b: Battle): BattleEvent[] {
     if (duelEnd(b)) out.push({ kind: 'end', won: (b.phase as Phase) === 'won' });
     return out;
   }
-  const heroes = b.units.some((x) => x.alive && realHero(x));
+  let heroes = b.units.some((x) => x.alive && realHero(x));
+  // (TEN-LIVES: every hero down at once: they all rise now, a life each, and the fight goes on; with no life left it is lost below)
+  if (!heroes && b.lives && partyFell(b, out)) heroes = true;
   // (QUESTS-3, Q5: a quest battle's rules may end the fight: a guest fallen, a clock run out, a spared foe felled)
   if (b.rules) {
     const end = ruleEnd(b, heroes);
@@ -1148,6 +1147,8 @@ function stepOnce(b: Battle): BattleEvent[] {
     }
   }
   const foes = b.units.some((x) => x.alive && x.side === 'foe' && !b.spared?.includes(x.id));
+  // (TEN-LIVES: the clock run out with both sides standing: lives buy another allowance of time, as a heart did)
+  if (heroes && foes && b.t >= (b.timeLimit ?? TIME_LIMIT_MS) && b.lives && outOfTime(b, TIME_LIMIT_MS, out)) return out;
   if (!heroes || !foes || b.t >= (b.timeLimit ?? TIME_LIMIT_MS)) {
     b.phase = heroes && !foes ? 'won' : 'lost';
     b.pending = [];
@@ -1245,6 +1246,8 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
 /** Apply a hit; return whether it reached health, including a lethal hit or revival. */
 export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean, splash: boolean, out: BattleEvent[], src: HitSrc = 'blow'): boolean {
   if (!to.alive) return false;
+  // (TEN-LIVES: a hero a life has just raised is safe for a moment)
+  if (to.safeUntil !== undefined && to.safeUntil > b.t) return false;
   // (a burrower underground is struck by nothing but its own ailments, RPG-SPELLS)
   if (to.under && src !== 'dot') return false;
   const left = onStrike(b, by, to, dmg, src, splash, out);
