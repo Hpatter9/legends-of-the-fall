@@ -181,18 +181,18 @@ BIG = dict(
     palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), whirlpool=(dict(r=1.7, arms=5), 2.0, 0.8), sandstorm=(dict(r=2.3, h=2.3, bands=11, grit=44, wide=0.36), 2.8, 3.2),
     wings=(dict(r=1.4, h=2.1), 1.7, 2.9), banner=(dict(h=2.4, w=1.3), 1.7, 2.9), eyes=(dict(r=2.5, n=3, size=3.0), 3.1, 2.7),
     flock=(dict(r=1.4, h=2.6, n=6, size=2.3), 4.0, 5.2),
-    notes=(dict(r=1.3, h=2.3, n=8, size=1.6), 2.8, 6.0), implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
+    notes=(dict(r=1.3, h=2.3, n=8, size=1.6), 2.8, 6.0), eclipse=(dict(r=0.9, z=2.4), 2.2, 4.6), implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
 )
 
 # Each ultimate: its palette, its strike's two scenes, and its showcase's style (which sets its weight, as `ultStageRules.ts` does).
 ULTS = dict(
-    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'sparks', 'sky'), ilyra=('holy', 'wings', 'dome', 'bless'),
-    orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'swarm', 'blinks'),
+    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'sparks', 'sky'), ilyra=('holy', 'wings', 'halo', 'bless'),
+    orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'arc', 'cross', 'blinks'),
     wizard=('fire', 'rain', 'crack', 'sky'), beastmaster=('forest', 'beast', 'trail', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
     minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'shockwave', 'leap'), ninjaMonk=('wind', 'claws', 'gust', 'blows'),
     buccaneer=('shadow', 'chains', 'cross', 'hooks'), archer=('wind', 'rain', 'ring', 'sky'), dreadPirate=('shadow', 'rain', 'burst', 'sky'),
-    siegeBot=('fire', 'shaft', 'crack', 'sky'), lightningMage=('lightning', 'cloud', 'bolt', 'shots'), gunslinger=('fire', 'sparks', 'flare', 'shots'),
+    siegeBot=('fire', 'shaft', 'crack', 'sky'), lightningMage=('lightning', 'cloud', 'bolt', 'shots'), gunslinger=('fire', 'sparks', 'ring', 'shots'),
     rifleBot=('lightning', 'sparks', 'ring', 'shots'), dragoon=('fire', 'flare', 'wall', 'shots'), ranger=('forest', 'vines', 'ring', 'burst'),
     knight=('holy', 'shout', 'dome', 'burst'), paladin=('holy', 'nova', 'strike', 'burst'), yamabushi=('wind', 'vortex', 'gust', 'burst'),
     gorgon=('poison', 'crystal', 'smoke', 'burst'), juggernaut=('earth', 'crack', 'spikes', 'burst'), kraken=('water', 'whirlpool', 'geyser', 'burst'),
@@ -237,18 +237,18 @@ PLACE = dict(
 # constellation leaves, the halo a nova's healing lands as).
 THIRD = dict(cleric='ring', wanderer='halo', timeWitch='ring', astrax='sigil', dragoon='flames', banneret='flames',              seaReaver='ring', minotaur='trail', shambler='geyser', rifleBot='spiral', demonSwordsman='spiral', werewolf='flare', corsairSurgeon='ring',
              wolfBard='ring', warDrummer='shockwave', lancer='sparks',
-             barbarian='gust', bloodGargoyle='crack', siegeBot='smoke', wizard='smoke', astrologer='sigil', seraph='ring')
+             vael='eclipse', kunoichi='ring', barbarian='gust', bloodGargoyle='crack', siegeBot='smoke', wizard='smoke', astrologer='sigil', seraph='ring')
 # ULT-AUDIT: every hero's wind-up is the ability itself beginning, in place of a circle and a pillar by its weight: the Cleric's wisps
 # rise inside the ring the spirits will keep, the Lightning Mage's cloud gathers, the Knight plants a slab and a dome closes, the Kraken's
 # whirlpool turns. No two heroes have the same scenes in the same order, whatever their colours.
 WIND_OWN = dict(
-    vael=[('halo', 0, 1.4), ('implode', 0.2, 1.3)], astrax=[('sigil', 0, 1.3), ('motes', 0.2, 1.4)], ilyra=[('halo', 0, 1.5), ('ring', 0, 1.2)],
-    orrun=[('vines', 0, 1.5), ('ring', 0.1, 1.3)], nyxara=[('sigil', 0, 1.4), ('spiral', 0.3, 1.5)], kunoichi=[('smoke', 0, 1.2), ('swarm', 0.3, 1.4)],
+    vael=[('eclipse', 0, 1.5), ('implode', 0.2, 1.3)], astrax=[('sigil', 0, 1.3), ('motes', 0.2, 1.4)], ilyra=[('halo', 0, 1.5), ('ring', 0, 1.2)],
+    orrun=[('vines', 0, 1.5), ('ring', 0.1, 1.3)], nyxara=[('sigil', 0, 1.4), ('spiral', 0.3, 1.5)], kunoichi=[('smoke', 0, 1.3), ('veil', 0.2, 1.3)],
     wizard=[('cloud', 0, 1.3), ('flames', 0.3, 1.5)], beastmaster=[('eyes', 0, 1.4), ('swarm', 0.3, 1.4)], mercenary=[('implode', 0, 1.2), ('sparks', 0.5, 1.5)],
     arcBlade=[('spiral', 0, 1.3), ('bolt', 0.2, 1.4)], samurai=[('ring', 0, 1.2), ('flare', 0.4, 1.8)], lancer=[('gust', 0, 1.4), ('trail', 0.3, 1.4)],
     minotaur=[('smoke', 0, 1.3), ('crack', 0.3, 1.4)], barbarian=[('flare', 0, 1.5), ('shout', 0.3, 1.4)], ninjaMonk=[('spiral', 0, 1.4), ('sparks', 0.4, 1.5)],
     buccaneer=[('chains', 0, 1.5), ('ring', 0, 1.0)], archer=[('shaft', 0, 1.4), ('gust', 0.2, 1.3)], dreadPirate=[('cloud', 0, 1.4), ('souls', 0.3, 1.5)],
-    siegeBot=[('ring', 0, 1.4), ('strike', 0.5, 1.8)], lightningMage=[('cloud', 0, 1.5), ('sparks', 0.4, 1.5)], gunslinger=[('halo', 0, 1.4), ('sparks', 0.6, 1.6)],
+    siegeBot=[('ring', 0, 1.4), ('strike', 0.5, 1.8)], lightningMage=[('cloud', 0, 1.5), ('sparks', 0.4, 1.5)], gunslinger=[('sparks', 0, 1.2), ('smoke', 0.3, 1.5)],
     rifleBot=[('sparks', 0, 1.3), ('bolt', 0.5, 1.6)], dragoon=[('flames', 0, 1.4), ('flare', 0.4, 1.7)], ranger=[('vines', 0, 1.4), ('swarm', 0.3, 1.4)],
     knight=[('slab', 0, 1.3), ('dome', 0.4, 1.6)], paladin=[('nova', 0, 1.2), ('pillar', 0.3, 1.7)], yamabushi=[('vortex', 0, 1.5), ('gust', 0.3, 1.5)],
     gorgon=[('vines', 0, 1.4), ('eye', 0.2, 1.5)], juggernaut=[('crack', 0, 1.3), ('slab', 0.3, 1.5)], kraken=[('whirlpool', 0, 1.4), ('geyser', 0.4, 1.6)],
@@ -278,11 +278,11 @@ WIND_OPT = dict(falconer=dict(flock=dict(mode='circle', n=4, size=2.2, r=1.3)),
 # ground loops' pairs out of this file by their shape.)
 AFTER_OWN = dict(
     vael=['sigil', 'souls'], astrax=['crack', 'motes'], ilyra=['ring', 'halo'], orrun=['vines', 'swarm'],
-    nyxara=['sigil', 'spiral'], kunoichi=['gust', 'swarm'], wizard=['crack', 'flames'], beastmaster=['gust', 'motes'],
+    nyxara=['sigil', 'spiral'], kunoichi=['sigil', 'cross'], wizard=['crack', 'flames'], beastmaster=['gust', 'motes'],
     mercenary=['crack', 'sparks'], arcBlade=['crack', 'bolt'], samurai=['trail', 'veil'], lancer=['trail', 'gust'],
     minotaur=['crack', 'smoke'], barbarian=['crack', 'flare'], ninjaMonk=['ring', 'gust'], buccaneer=['cloud', 'chains'],
     archer=['ring', 'shaft'], dreadPirate=['crack', 'souls'], siegeBot=['crack', 'cloud'], lightningMage=['cloud', 'bolt'],
-    gunslinger=['ring', 'smoke'], rifleBot=['ring', 'sparks'], dragoon=['flames', 'smoke'], ranger=['vines', 'motes'],
+    gunslinger=['smoke', 'sparks'], rifleBot=['ring', 'sparks'], dragoon=['flames', 'smoke'], ranger=['vines', 'motes'],
     knight=['ring', 'pillar'], paladin=['sigil', 'pillar'], yamabushi=['cloud', 'spiral'], gorgon=['spikes', 'smoke'],
     juggernaut=['crack', 'spikes'], kraken=['ring', 'geyser'], mummy=['cloud', 'gust'], warlock=['sigil', 'siphon'],
     tyrant=['spikes', 'flare'], shambler=['cloud', 'geyser'], reaper=['ring', 'souls'], druid=['vines', 'veil'],
@@ -299,7 +299,7 @@ AFTER_OWN = dict(
 # How large a strike is drawn when it plays on each fighter, or round the caster.
 PLACE_SIZE = dict(each=0.8, friends=1.1, tiles=0.85, line=0.7, self=1.25)
 # (a few are drawn larger where they land: a beast is a beast's size, stone creeps over the whole of a foe)
-EACH_SIZE = dict(samurai=1.3, bombardier=1.0, peasant=1.6, beastmaster=1.0, gorgon=1.0, geomancer=1.15, dreadPirate=1.2)
+EACH_SIZE = dict(kunoichi=0.75, gunslinger=0.6, samurai=1.3, bombardier=1.0, peasant=1.6, beastmaster=1.0, gorgon=1.0, geomancer=1.15, dreadPirate=1.2)
 # How much larger than a scene's own size a strike is drawn, by the show's weight.
 STRIKE_SIZE = dict(blow=1.6, flurry=1.6, wave=1.9, storm=2.3, summon=2.3)
 STYLE_WEIGHT = dict(line='blow', leap='blow', blinks='flurry', blows='flurry', hooks='flurry', burrow='flurry', burst='wave', bless='wave', change='wave',
@@ -442,6 +442,8 @@ def canvas_of(scenes, k, pad=0.5):
 
 
 _wound, _after, _own_wind, _own_after = set(), set(), set(), set()
+# A strike in colours that are not its hero's element's: Vael's sweep is gold, as his words say (his wind-up and aftermath stay dark).
+STRIKE_PAL = dict(vael='holy')
 for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
     weight = ult_weight(kind)
     own = i < ULT_OWN
@@ -452,7 +454,7 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
     scenes = [first, second] + ([THIRD[kind]] if kind in THIRD else [])
     stages = [stage(first, 0, 0.7, **sized(first, k, kind)), stage(second, 0.25, 1, **sized(second, k, kind))] + ([stage(THIRD[kind], 0.1, 0.9, **sized(THIRD[kind], k))] if kind in THIRD else [])
     reach, tall = max(BIG[sc][1] for sc in scenes) * k, max(BIG[sc][2] for sc in scenes) * k
-    fx(f'ult-{kind}-strike', None, pal, **box(reach, tall, 0.6), frames=16, take=STRIKE_FRAMES, skip=1, colours=STRIKE_COLOURS, ms=1300, seed=40 + 2 * i + 59, ult=True,
+    fx(f'ult-{kind}-strike', None, STRIKE_PAL.get(kind, pal), **box(reach, tall, 0.6), frames=16, take=STRIKE_FRAMES, skip=1, colours=STRIKE_COLOURS, ms=1300, seed=40 + 2 * i + 59, ult=True,
        at=place, stages=stages)
     if own:
         wind_ms, after_ms = STAGE_MS[weight]
@@ -539,6 +541,8 @@ for j, (clip, (pal, scene, opt, canvas, n, ms)) in enumerate(BEAT_ONLY.items()):
 
 # ---- ULT-AUDIT: what an ability IS, as a loop that stays for as long as the ability lasts (docs/notes/ult-audit.md). Spirit Guardians:
 # four ghostly figures a fighter tall circling the Cleric, round and round (`paintAura` draws it on her while the aura lives). ----
+# Vael's totality: the black sun that hangs over him for its eight seconds (`ULT_LASTS` in the renderer's rules).
+fx('aura-eclipse', 'eclipse', 'shadow', **box(2.6, 4.4, 0.4), frames=10, ms=1200, loop=True, seed=72, glow=False, r=0.8, z=2.9)
 fx('aura-spirits', 'spirits', 'wind', **box(3.3, 4.2, 0.4), frames=12, ms=1300, loop=True, seed=71, glow=False, r=1.5, n=4, tall=2.3, mode='circle', hoop=False)
 
 # What the game ships: everything but the library's own previews.

@@ -531,6 +531,30 @@ wedges falling into a crater; a crowned sigil; a column with wings; small bursts
 Two honest notes: the Wizard's meteors are thick bright wedges, not round burning rocks; and the Barbarian's and the Juggernaut's
 strikes are both cracks in the ground (red against pale, a ring against spires).
 
+### The director's list: Vael, Ilyra, the Kunoichi, the Gunslinger
+
+`docs/samples/blender-fx/audit-list-1-393.jpg` (0.499 above, now below) and `audit-list-1-seven-moments.jpg` (seven moments of each,
+the last two after the show is over), `TOUGH=1`.
+
+- **Vael, Kneel Before Night.** A new scene, `eclipse`: a black sun, a dark disc turned to the camera with a thin golden corona and
+  flickering rays, its shadow a ring on the ground; black and gold whatever the element. It opens his wind-up; his sweep is gold
+  now (the strike alone is rendered in the gold palette, `STRIKE_PAL`; a test that every hero's three stages share an element makes
+  him the one exception, by the director's order); and for the eight seconds of totality a black sun hangs over him
+  (`ULT_LASTS` in `blenderFxRules.ts`, a looped clip `aura-eclipse` that follows him until the eight seconds of the fight are up or
+  he falls). In the photograph: the black sun over him in the wind-up, a gold crescent across the foes, and the black sun still
+  hanging over him in the sixth moment, after the show. This also parts him from the Reaper, whose sweep is purple and who has no sun.
+- **Ilyra, Death Denied.** No dome. On each ally: wings of light opening behind them and a halo of rays over them. In the
+  photograph: sparks run out to each friend, then a crown of rays and rings on each. Honest: the wings are hard to pick out among
+  the rays; it reads as light crowning each ally more than as a figure catching them. Orrun keeps his dome of vines.
+- **The Kunoichi, Assassinate.** She vanishes (a curtain, then a puff of smoke where she stood); one cut on each foe she
+  backstabs (the ability is four backstabs in turn, so there is a cut on each, three quarters the size it was); a mark left under
+  each (a sigil with crossed strokes). In the photograph: the smoke where she was, three purple cuts, three marks. Honest: the
+  marks on the ground are large, larger than "small and sharp"; the ribcage of gusts is gone.
+- **The Gunslinger, High Noon.** Muzzle flash and smoke at her; each shot a row of sparks from her to its target (the line that
+  carries a blessing, with the bullet's spark for its link: `ultLinkClip`), then a small sharp impact there; gunsmoke after. No
+  fire on the ground (a test holds that). In the photograph: the puff and flash at her, sparks strung out towards the foes, two
+  small bright impacts. Honest: the impacts are glowing discs with a ring, which read as hits but not strongly as bullets.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in

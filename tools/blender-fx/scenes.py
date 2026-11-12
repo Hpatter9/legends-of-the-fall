@@ -2052,8 +2052,50 @@ def notes(c, r=1.2, h=2.2, n=7, size=1.0):
     return step
 
 
+# 64. Eclipse: a black sun hanging over the field: a dark disc turned to the camera, a thin golden corona round it with rays that
+# flicker, and a ring of its shadow on the ground under it. Its own colours whatever the element (black and gold: Vael's totality).
+def eclipse(c, r=0.8, z=2.6, rays=14):
+    import bpy
+    root = bpy.data.objects.new('sun', None)
+    c.sc.collection.objects.link(root)
+    dm, dv = c.flat((0.012, 0.008, 0.02), 1.0)
+    gm, gv = c.flat((1.0, 0.78, 0.28), 2.2)
+    hm, hv = c.flat((1.0, 0.95, 0.7), 2.6)
+    disc = c.sphere(1.0, dm, 3)
+    rim = c.torus(1.0, 0.07, gm)
+    inner = c.torus(1.0, 0.03, hm)
+    for o in (disc, rim, inner):
+        o.parent = root
+    spokes = []
+    for i in range(rays):
+        ang = TAU * i / rays
+        d = (math.cos(ang), 0, math.sin(ang))
+        o = c.ribbon([((d[0] * 1.12, 0, d[2] * 1.12), (-d[2], 0, d[0])), ((d[0] * (1.5 + 0.35 * (i % 3)), 0, d[2] * (1.5 + 0.35 * (i % 3))), (-d[2], 0, d[0]))], lambda u: 0.05 * (1 - u) + 0.006, gm)
+        o.parent = root
+        spokes.append((o, c.rnd.uniform(0, TAU)))
+    shade, sv = c.ring((0.012, 0.008, 0.02), 0.09, 1.0)
+    glint, lv = c.ring((1.0, 0.78, 0.28), 0.03, 1.6)
+
+    def step(t):
+        k = 1.0 if c.loop else ease(win(t, 0, 0.3)) * (1 - win(t, 0.8, 1))
+        # (it faces the camera, as the eye does)
+        put(root, (0, 0, z), max(0.001, r * k), (math.radians(-30), 0, math.radians(45)))
+        put(disc, (0, 0, 0), (1.0, 0.04, 1.0))
+        put(rim, (0, 0, 0), 1.0, (math.radians(90), 0, 0))
+        put(inner, (0, 0.01, 0), 1.0 + 0.03 * math.sin(TAU * t * 2), (math.radians(90), 0, 0))
+        for o, ph in spokes:
+            put(o, None, 0.75 + 0.25 * math.sin(TAU * t * (1 if c.loop else 3) + ph))
+        for o, v, wide in ((shade, sv, 1.5), (glint, lv, 1.7)):
+            put(o, scale=(r * wide * (0.4 + 0.6 * k),) * 2 + (1,))
+            v.outputs[0].default_value = k
+        dv.outputs[0].default_value = 1
+        gv.outputs[0].default_value = 1
+        hv.outputs[0].default_value = 1
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse,
 )}

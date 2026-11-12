@@ -9,7 +9,7 @@ import '../src/sim/battle';
 import { AURA_MOTES } from '../src/render/movePaints';
 import { auraLook } from '../src/render/toolkitLooks';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
-import { BEAT_OWN, ULT_LINK_MS, beatBfx, ultLinkClip, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
+import { BEAT_OWN, ULT_LASTS, ULT_LINK_MS, beatBfx, ultLinkClip, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
 import { SHOWCASES } from '../src/ultShowRules';
 
 test('Spirit Guardians shows its guardians: spirits a fighter tall circling the Cleric for as long as the aura lasts', () => {
@@ -107,6 +107,23 @@ test('a strike on each one the ability touched finds them: the friends helped (a
   assert.equal(ultLinkClip('priestess'), 'link');
   assert.equal(ultLinkClip('gorgon'), 'gaze');
   assert.equal(beatBfx('gaze', 'poison'), 'beat-gaze');
+  // (High Noon: each of the six shots is a bullet's path of sparks from her to its target, then a small sharp impact there)
+  assert.ok(ultLinked('gunslinger'));
+  assert.equal(ultLinkClip('gunslinger'), 'blow');
+  assert.deepEqual(BFX_CLIPS['ult-gunslinger-strike'].sc, ['sparks', 'ring']);
+  // (no fire is left on the ground by bullets)
+  assert.ok(!BFX_CLIPS['ult-gunslinger-aftermath'].sc!.includes('flames'));
+});
+
+test('Vael\'s totality lasts: a black sun hangs over him for its eight seconds, his sweep is gold; Ilyra\'s is wings and a halo, not a dome; the Kunoichi\'s one cut and a mark', () => {
+  assert.deepEqual(ULT_LASTS.vael, { clip: 'aura-eclipse', ms: 8000 });
+  assert.ok(BFX_CLIPS['aura-eclipse'].loop);
+  assert.equal(BFX_CLIPS['ult-vael-strike'].el, 'holy');
+  assert.ok(BFX_CLIPS['ult-vael-windup'].sc!.includes('eclipse'));
+  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /this\.bfxStand\(lasts\.clip, this\.root, \.\.\.over\(\), \(\) => b\.t < until && me\.alive/);
+  assert.deepEqual(BFX_CLIPS['ult-ilyra-strike'].sc, ['wings', 'halo']);
+  for (const kind of ['ilyra', 'seraph', 'samurai']) assert.ok(!BFX_CLIPS[`ult-${kind}-strike`].sc!.includes('dome'), kind);
+  assert.deepEqual(BFX_CLIPS['ult-kunoichi-strike'].sc, ['arc', 'cross', 'ring']);
   assert.ok(ULT_LINK_MS >= 100 && ULT_LINK_MS <= 400);
   // (what the abilities are: beasts bursting out where each is called, stone creeping over each foe, slabs along the wall's tiles, shields)
   assert.deepEqual(BFX_CLIPS['ult-beastmaster-strike'].sc, ['beast', 'trail']);

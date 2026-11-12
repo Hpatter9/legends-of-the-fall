@@ -220,10 +220,14 @@ export function ultSpots(place: 'each' | 'friends' | 'tiles' | 'line', t: { stru
 
 /** ULT-AUDIT: the kinds whose strike is carried to each spot by a line from the caster (a row of the showcase's `link` clips, the strike
  *  landing as the line arrives, `ULT_LINK_MS` later): a healer's light running out to each friend, the Gorgon's gaze to each foe. */
-export const ultLinked = (kind: string): boolean => ultPlace(kind) === 'friends' || kind === 'gorgon';
+export const ultLinked = (kind: string): boolean => ultPlace(kind) === 'friends' || kind === 'gorgon' || kind === 'gunslinger';
 /** What each link of that line is: sparks of light for a blessing carried to a friend; for the Gorgon's gaze, a row of small open eyes
- *  running out from her to each foe she turns to stone. */
-export const ultLinkClip = (kind: string): BeatClip => (kind === 'gorgon' ? 'gaze' : 'link');
+ *  running out from her to each foe she turns to stone; for the Gunslinger's High Noon, the sparks of a bullet's path to each target. */
+export const ultLinkClip = (kind: string): BeatClip => (kind === 'gorgon' ? 'gaze' : kind === 'gunslinger' ? 'blow' : 'link');
+
+/** ULT-AUDIT: what an ultimate leaves hanging over its caster for as long as the ability itself lasts (ms of the fight), beyond its
+ *  aftermath: Vael's Kneel Before Night is eight seconds of totality, and a black sun hangs over him for all eight. A looped clip. */
+export const ULT_LASTS: Readonly<Record<string, { clip: string; ms: number }>> = { vael: { clip: 'aura-eclipse', ms: 8000 } };
 export const ULT_LINK_MS = 200;
 
 /** Where a sheet on the moment's layer is put so the middle of its tile is at (x, y): the layer's bits are held by their own middle, so
