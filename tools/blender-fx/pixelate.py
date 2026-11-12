@@ -103,7 +103,7 @@ def pixelate(raw, spec):
     keep = range(first, n) if take == n - first else [first + round(i * (n - 1 - first) / (take - 1)) for i in range(take)]
     pms = [load(os.path.join(src, f'{i:02d}.png')) for i in keep]
     hard = [harden(pm, dither=not spec.get('edge')) for pm in pms]
-    pal = shared_palette(hard, EDGED_COLOURS if spec.get('edge') else COLOURS)
+    pal = shared_palette(hard, spec.get('colours') or (EDGED_COLOURS if spec.get('edge') else COLOURS))
     frames = [to_palette(rgb, mask, pal) for rgb, mask in hard]
     if spec.get('edge'):
         frames = [edged(f, pal) for f in frames]

@@ -167,6 +167,31 @@ export function ultBfx(kind: string, stage: UltStageName, weight: string): strin
   return BFX_CLIPS[key] ? key : undefined;
 }
 
+/* ------------------------------------------------------------------ the showcase's beats */
+
+/** The clips a showcase's beats are made of (`Fx.showBeat`): most in each of the game's elements (`beat-<clip>-<element>`), the last four
+ *  one element's only (`beat-<clip>`: a bolt, a tongue of flame, a spire of rock, the ground heaving). */
+export type BeatClip = 'puff' | 'appear' | 'cut' | 'blow' | 'dust' | 'link' | 'crash' | 'cloud' | 'snare' | 'smite' | 'nova' | 'call' | 'ring' | 'gather' | 'mark' | 'sky' | 'bolt' | 'flame' | 'rise' | 'tunnel';
+const BEAT_ONLY: readonly BeatClip[] = ['bolt', 'flame', 'rise', 'tunnel'];
+
+/** A beat's clip in an element. Undefined for one the pipeline has not made. */
+export function beatBfx(clip: BeatClip, el: string): string | undefined {
+  const key = BEAT_ONLY.includes(clip) ? `beat-${clip}` : `beat-${clip}-${el}`;
+  return BFX_CLIPS[key] ? key : undefined;
+}
+
+/** Every clip a showcase in `el` may play: its element's, and the four that are one element's only. Asked for as a fight begins
+ *  (`warmBfx`), so they are there when the ultimate is fired. */
+export const beatKeys = (el: string): string[] => Object.keys(BFX_CLIPS).filter((k) => k.startsWith('beat-') && (k.endsWith(`-${el}`) || k.split('-').length === 2));
+
+/** A line of a showcase (a dash's dust, a hook's reach, a blessing's ribbon) is a row of small clips along it, one every `BEAT_LINE.STEP`
+ *  world px (two at least, `MAX` at most), each `LAG` ms after the one before: the points, with the far end last. */
+export const BEAT_LINE = { STEP: 26, MAX: 9, LAG: 30 } as const;
+export function beatLine(x0: number, y0: number, x1: number, y1: number): [number, number][] {
+  const n = Math.max(2, Math.min(BEAT_LINE.MAX, Math.round(Math.hypot(x1 - x0, y1 - y0) / BEAT_LINE.STEP)));
+  return Array.from({ length: n }, (_, i) => [x0 + ((x1 - x0) * (i + 1)) / n, y0 + ((y1 - y0) * (i + 1)) / n] as [number, number]);
+}
+
 /** Where a sheet on the moment's layer is put so the middle of its tile is at (x, y): the layer's bits are held by their own middle, so
  *  this is the frame's middle, `mult` times its size. */
 export function bfxCentre(c: BfxClip, x: number, y: number, mult = 1): [number, number] {

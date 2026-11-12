@@ -4,12 +4,12 @@
 // own rendered sheets, no two of them the same scene in the same element.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import '../src/sim/battle';
 import { BFX_CLIPS, BFX_CORE, BFX_DENSITY, BFX_GLOW_SHRINK, BFX_PX, BFX_SOFT } from '../src/render/blenderFxData';
 import {
   BFX_FADE_MS, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, bfxAlpha, bfxBox, bfxBudget, bfxCentre, bfxClip, bfxFrame, bfxLife, bfxRect, bfxStage, spellBfx,
-  standPhase, ultBfx,
+  standPhase, ultBfx, beatBfx, beatKeys, beatLine, BEAT_LINE, type BeatClip,
   type BfxClip, type SpellPartName,
 } from '../src/render/blenderFxRules';
 import { SPELL_IDS, SPELLS, WALLS } from '../src/sim/spells';
@@ -18,6 +18,7 @@ import { TW } from '../src/render/iso';
 import { makeBoard } from '../src/sim/board';
 import { STAGE_ART, STAGE_NAMES, ULT_STAGES, ultWeight } from '../src/ultStageRules';
 import { SHOWCASES } from '../src/ultShowRules';
+import { ELEMENTS } from '../src/render/fxRules';
 
 const PARTS: SpellPartName[] = ['cast', 'hit', 'fly', 'land', 'stand'];
 const clips = Object.entries(BFX_CLIPS);
@@ -72,8 +73,8 @@ test('the pixels are the heroes\' size: a tile is 45 of an effect\'s pixels, dra
   assert.equal(BFX_GLOW_SHRINK, 4);
   // (the art source is drawn with hard pixels: the loader asks for nearest sampling on the pixel atlases and smooth on the glows)
   const art = readFileSync('src/render/blenderFxArt.ts', 'utf8');
-  assert.match(art, /page\('px', a, 'nearest'\)/);
-  assert.match(art, /page\('soft', i, 'linear'\)/);
+  assert.match(art, /Texture\.from\(pic\);\n\s+base\.source\.style\.scaleMode = 'nearest';/);
+  assert.match(art, /soft-\$\{i\}\.webp`\)\);\n\s+base\.source\.style\.scaleMode = 'linear';/);
 });
 
 const clip = (over: Partial<BfxClip> = {}): BfxClip => ({ a: 0, x: 0, y: 0, w: 40, h: 30, n: 10, cols: 5, ax: 20, ay: 24, ms: 1000, loop: false, hold: 6, layer: 'over', el: 'fire', ...over });
@@ -313,7 +314,7 @@ test('the atlases are held only when needed: a core set up front, each pair of h
   // (the core: every spell and ground loop, and nothing of the ultimates)
   const core = new Set(BFX_CORE);
   assert.ok(core.size >= 1 && core.size <= 4, `${core.size} core atlases`);
-  for (const [key, c] of clips) assert.equal(core.has(c.a), !key.startsWith('ult'), `${key} in atlas ${c.a}`);
+  for (const [key, c] of clips) assert.equal(core.has(c.a), !key.startsWith('ult') && !key.startsWith('beat-'), `${key} in atlas ${c.a}`);
   // (a hero's three stages of its own lie in one group; no atlas holds more than two heroes' own sheets)
   const byAtlas = new Map<number, Set<string>>();
   for (const [key, c] of clips) {
@@ -327,22 +328,54 @@ test('the atlases are held only when needed: a core set up front, each pair of h
   const perHero = Object.keys(SHOWCASES).map((kind) => new Set(STAGE_NAMES.map((stage) => bfxClip(STAGE_ART[kind][stage]!.sheet)!.a)).size);
   assert.ok(Math.max(...perHero) <= 5, `a hero's ultimate spans ${Math.max(...perHero)} atlases`);
   const art = readFileSync('src/render/blenderFxArt.ts', 'utf8');
-  assert.match(art, /return Promise\.all\(BFX_CORE\.map\(need\)\)/, 'only the core loads up front');
+  assert.match(art, /for \(const a of BFX_CORE\) book\.ask\(a, t\);/, 'only the core loads up front');
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /void warmBfx\(/, 'a fight warms its heroes\' ultimates');
 });
 
-test('the atlases stay sane in size (the cap on the ultimates was lifted), and the dim is lifted over a playing sheet', () => {
-  const dir = 'src/art/fx/blender';
-  const core = new Set(BFX_CORE);
-  const ult = BFX_PX.map((_, i) => i).filter((i) => !core.has(i)).reduce((n, i) => n + statSync(`${dir}/px-${i}.webp`).size, 0);
-  // (the director lifted the 3 MB cap on the ultimates: bytes go where they buy force; this only catches a runaway)
-  assert.ok(ult < 8_000_000, `the ultimates' pixel atlases are ${ult} bytes`);
-  const all = readdirSync(dir).reduce((n, f) => n + statSync(`${dir}/${f}`).size, 0);
-  assert.ok(all < 9_000_000, `all the atlases are ${all} bytes`);
+test('a strike is held to a least size, not a most (the cap on bytes was lifted), and the dim is lifted over a playing sheet', () => {
+  // (the director withdrew the cap on bytes: they go where they buy force. What is held is the least a strike may be: its full count of
+  // frames, and colours enough for a great core of fire, ice or light not to band flat)
+  const recipe = readFileSync('tools/blender-fx/effects.py', 'utf8');
+  assert.ok(Number(/^STRIKE_COLOURS = (\d+)$/m.exec(recipe)?.[1]) >= 16, 'a strike has sixteen colours or more');
+  assert.ok(Number(/^WIND_FRAMES, STRIKE_FRAMES, AFTER_FRAMES = \d+, (\d+), \d+$/m.exec(recipe)?.[1]) >= 13, 'a strike keeps thirteen frames or more');
+  for (const kind of Object.keys(SHOWCASES)) assert.ok(bfxClip(`ult-${kind}-strike`)!.n >= 13, `${kind}'s strike has ${bfxClip(`ult-${kind}-strike`)!.n} frames`);
   // (a wind-up and a strike play on the board, under the moment's dim: the dim leaves them lit, so they are seen at full strength)
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /if \(stage !== 'aftermath'\) this\.bfxLit\.push\(/);
   assert.match(readFileSync('src/ultMoment.ts', 'utf8'), /for \(const l of this\.opts\.fx\?\.momentLights\(\) \?\? \[\]\)/);
   assert.ok(ULT_BFX.LIGHT >= 0.8);
   // (an ultimate's sheet is cut hard with a dark edge, in fewer colours: the recipe marks them, the pixelate step does it)
   assert.match(readFileSync('tools/blender-fx/pixelate.py', 'utf8'), /frames = \[edged\(f, pal\) for f in frames\]/);
+});
+
+test('a showcase\'s beats are rendered clips in its element: every clip in every element, a line a row of small clips', () => {
+  const each: BeatClip[] = ['puff', 'appear', 'cut', 'blow', 'dust', 'link', 'crash', 'cloud', 'snare', 'smite', 'nova', 'call', 'ring', 'gather', 'mark', 'sky'];
+  const only: BeatClip[] = ['bolt', 'flame', 'rise', 'tunnel'];
+  for (const el of ELEMENTS) {
+    for (const clip of each) assert.equal(beatBfx(clip, el), `beat-${clip}-${el}`, `${clip} in ${el}`);
+    // (the four that are one element's only are the same clip whatever the showcase's element)
+    for (const clip of only) assert.equal(beatBfx(clip, el), `beat-${clip}`);
+    const keys = beatKeys(el);
+    assert.equal(keys.length, each.length + only.length, `${el}: ${keys.length} clips`);
+    // (an element's beats lie in small atlases of their own, none of them the core's: each loads the first time a beat of it is played)
+    const atlases = new Set(keys.filter((k) => k.endsWith(`-${el}`)).map((k) => bfxClip(k)!.a));
+    for (const a of atlases) assert.ok(BFX_PX[a][0] <= 1024 && BFX_PX[a][1] <= 1024, `atlas ${a}`);
+    for (const a of atlases) assert.ok(!BFX_CORE.includes(a));
+  }
+  // (what loops, loops: the cloud over a caster and what falls from the sky; the rest play once)
+  for (const el of ELEMENTS) for (const clip of each) assert.equal(bfxClip(beatBfx(clip, el)!)!.loop, clip === 'cloud' || clip === 'sky', `${clip}`);
+  // (a line: two clips at least and nine at most, evenly along it, the far end last; never a clip turned to lie along it)
+  assert.deepEqual(beatLine(0, 0, 10, 0), [[5, 0], [10, 0]]);
+  const long = beatLine(0, 0, 600, 300);
+  assert.equal(long.length, BEAT_LINE.MAX);
+  assert.deepEqual(long[long.length - 1], [600, 300]);
+  const mid = beatLine(0, 0, 0, BEAT_LINE.STEP * 4);
+  assert.equal(mid.length, 4);
+  assert.deepEqual(mid[0], [0, BEAT_LINE.STEP]);
+  // (every beat the showcases plan has a rendered path, tried before the painted parts and the pack's; the fight warms them)
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.match(fx, /if \(this\.bfxShowBeat\(kind, x, y, el, o\.to, o\.how\)\) return;/);
+  const beats = /export type ShowBeat = ([^;]+);/.exec(fx)![1].split('|').map((k) => k.trim().replace(/'/g, ''));
+  const body = fx.slice(fx.indexOf('private bfxShowBeat('), fx.indexOf('/** ULT-SHOW: a painted prop'));
+  for (const kind of beats) assert.ok(body.includes(`case '${kind}':`), `${kind} has a rendered beat`);
+  assert.doesNotMatch(body, /rotation/, 'no clip is turned');
 });
