@@ -477,6 +477,14 @@ export class UltMoments {
         const e = to(l.x + l.r, l.y);
         if (c && e) pools.push({ x: c.x, y: c.y, r: Math.max(20, Math.abs(e.x - c.x)) });
       }
+    // (BLENDER-FX: the light round an ultimate's rendered wind-up and strike while they play: they are drawn on the board under this dim,
+    // so the dim is lifted over them and they show at full strength)
+    if (to)
+      for (const l of this.opts.fx?.momentLights() ?? []) {
+        const c = to(l.x, l.y);
+        const e = to(l.x + l.r, l.y);
+        if (c && e) pools.push({ x: c.x, y: c.y, r: Math.max(20, Math.abs(e.x - c.x)) });
+      }
     for (const p of pools) {
       const r = p.r * k;
       const grad = g.createRadialGradient(p.x * k, p.y * k, r * 0.45, p.x * k, p.y * k, r);

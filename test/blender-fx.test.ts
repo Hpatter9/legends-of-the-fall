@@ -4,9 +4,9 @@
 // own rendered sheets, no two of them the same scene in the same element.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import '../src/sim/battle';
-import { BFX_CLIPS, BFX_DENSITY, BFX_GLOW_SHRINK, BFX_PX, BFX_SOFT } from '../src/render/blenderFxData';
+import { BFX_CLIPS, BFX_CORE, BFX_DENSITY, BFX_GLOW_SHRINK, BFX_PX, BFX_SOFT } from '../src/render/blenderFxData';
 import {
   BFX_FADE_MS, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, bfxAlpha, bfxBox, bfxBudget, bfxCentre, bfxClip, bfxFrame, bfxLife, bfxRect, bfxStage, spellBfx,
   standPhase, ultBfx,
@@ -57,7 +57,8 @@ test('the atlases are in the repo, small enough for a phone, and the build lists
   const dir = 'src/art/fx/blender';
   const files = readdirSync(dir).filter((f) => f.endsWith('.webp')).sort();
   assert.deepEqual(files, [...BFX_PX.map((_, i) => `px-${i}.webp`), ...BFX_SOFT.map((_, i) => `soft-${i}.webp`)].sort());
-  for (const [w, h] of [...BFX_PX, ...BFX_SOFT]) assert.ok(w <= 1024 && h <= 1024, `an atlas of ${w}x${h}`);
+  // (2048 a side at most: what every phone's graphics can hold; an ultimate's strike is too large a block for 1024)
+  for (const [w, h] of [...BFX_PX, ...BFX_SOFT]) assert.ok(w <= 2048 && h <= 2048, `an atlas of ${w}x${h}`);
   const build = readFileSync('build.mjs', 'utf8');
   assert.match(build, /BLENDER_FX_FILES\.push\(`fx\/blender\/\$\{f\}`\)/);
   assert.match(build, /\$\{BLENDER_FX_FILES\.map/, 'the service worker\'s FILES list them');
@@ -71,7 +72,7 @@ test('the pixels are the heroes\' size: a tile is 45 of an effect\'s pixels, dra
   assert.equal(BFX_GLOW_SHRINK, 4);
   // (the art source is drawn with hard pixels: the loader asks for nearest sampling on the pixel atlases and smooth on the glows)
   const art = readFileSync('src/render/blenderFxArt.ts', 'utf8');
-  assert.match(art, /page\('px', i, 'nearest'\)/);
+  assert.match(art, /page\('px', a, 'nearest'\)/);
   assert.match(art, /page\('soft', i, 'linear'\)/);
 });
 
@@ -219,6 +220,7 @@ test('the renderer plays the sheets through the effects\' own paths, and never t
 test('every hero\'s ultimate has its three stages hung on STAGE_ART: its own strike, a wind-up by its weight, an aftermath by its element', () => {
   const kinds = Object.keys(SHOWCASES);
   assert.equal(kinds.length, 70);
+  const biggestSpell = Math.max(...clips.filter(([key]) => key.startsWith('spell-')).map(([, c]) => c.w * c.h));
   for (const kind of kinds) {
     const arts = STAGE_ART[kind];
     assert.ok(arts, `${kind} has no sheets`);
@@ -229,13 +231,19 @@ test('every hero\'s ultimate has its three stages hung on STAGE_ART: its own str
       assert.equal(art.sheet, ultBfx(kind, stage, ultWeight(kind)));
       assert.equal(art.frames, c.n);
       assert.equal(art.on, stage === 'windup' ? 'caster' : 'struck');
-      assert.ok(!c.loop && c.n >= 10, `${art.sheet}: played once across its stage`);
+      assert.ok(!c.loop && c.n >= 7, `${art.sheet}: played once across its stage`);
       // (a show's sheets are drawn big: a wind-up wraps the caster, a strike covers two tiles and more)
-      assert.ok(art.tiles >= (stage === 'strike' ? 1.6 : 1.2) && art.tiles <= 5.5, `${art.sheet}: ${art.tiles} tiles`);
+      assert.ok(art.tiles >= (stage === 'strike' ? 3 : 1.2) && art.tiles <= 12, `${art.sheet}: ${art.tiles} tiles`);
     }
     assert.equal(arts.strike!.sheet, `ult-${kind}-strike`);
-    // (the strike is two scenes staged one into the other; the wind-up's weight is the show's own)
-    assert.equal(bfxClip(arts.strike!.sheet)!.cuts?.length, 2, kind);
+    // (the strike is the blow itself, a core, shock rings and debris, under the hero's own two scenes staged one into the other; it is the
+    // biggest thing in the game: four tiles and more across or high for a blow, more for a storm or a summoning)
+    const strike = bfxClip(arts.strike!.sheet)!;
+    assert.equal(strike.cuts?.length, 3, kind);
+    assert.equal(strike.sc?.[0], 'impact', kind);
+    const most = Math.max(strike.w, strike.h) / BFX_DENSITY;
+    assert.ok(most >= (['storm', 'summon'].includes(ultWeight(kind)) ? 5 : 4), `${kind}'s strike is ${strike.w}x${strike.h}: ${most.toFixed(1)} tiles`);
+    assert.ok(strike.w * strike.h > biggestSpell, `${kind}'s strike is no bigger than a spell`);
     // (its own wind-up once its turn has come, else the one its weight and element share)
     assert.ok(arts.windup!.sheet === `ult-${kind}-windup` || arts.windup!.sheet.startsWith(`ultwind-${ultWeight(kind)}-`), `${kind} winds up as a ${ultWeight(kind)}`);
     for (const stage of STAGE_NAMES) assert.equal(bfxClip(arts[stage]!.sheet)!.el, bfxClip(arts.strike!.sheet)!.el, `${kind}: one element through its three stages`);
@@ -262,7 +270,9 @@ test('a sheet on the moment\'s layer is put by its frame\'s middle so its tile\'
   assert.ok(Math.abs(x - 200) < 1e-9 && Math.abs(y - (300 - 20 * BFX_SCALE)) < 1e-9);
   const [x2, y2] = bfxCentre(clip({ w: 100, h: 80, ax: 30, ay: 60 }), 0, 0, 2);
   assert.ok(Math.abs(x2 - 40 * BFX_SCALE) < 1e-9 && Math.abs(y2 + 40 * BFX_SCALE) < 1e-9);
-  assert.ok(ULT_BFX.SPOTS_SAVER < ULT_BFX.SPOTS && ULT_BFX.ECHO_MIN <= 1);
+  assert.ok(ULT_BFX.SPOTS_SAVER < ULT_BFX.SPOTS && ULT_BFX.ECHO < 1);
+  // (the blow is one great strike at the middle of what it struck, not one on every spot)
+  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /this\.bfxUlt\(kind, 'strike', at\.reduce\(\(n, p\) => n \+ p\[0\], 0\) \/ at\.length/);
   const moment = readFileSync('src/ultMoment.ts', 'utf8');
   assert.match(moment, /ultImpact\(b, el, spots, 1, m\.kind\)/);
   assert.match(moment, /ultImpact\(b, m\.el \?\? 'light', spots, 0\.6, m\.kind\)/);
@@ -287,14 +297,51 @@ test('a hero whose turn has come has its own wind-up and aftermath, like no othe
       assert.ok(!seen.has(look), `${kind} and ${seen.get(look)} share ${look}`);
       seen.set(look, kind);
     }
-    // (epic: the strike is three tiles and more across or high, far larger than a spell's touch, and each stage has the frames for its length)
-    assert.ok(Math.max(strike.w, strike.h) >= 140 && strike.w * strike.h >= 16000, `${kind}'s strike is ${strike.w}x${strike.h}`);
-    assert.ok(strike.n >= 18 && wind.n >= 15 && after.n >= 12, `${kind}: ${wind.n}, ${strike.n}, ${after.n} frames`);
+    // (each stage has the frames for its length)
+    // (the strike keeps the most frames; the wind-up and the aftermath fewer, played slower: the download's limit)
+    assert.ok(strike.n >= 11 && wind.n >= 9 && after.n >= 7 && strike.n > wind.n && wind.n > after.n, `${kind}: ${wind.n}, ${strike.n}, ${after.n} frames`);
     // (the wind-up builds: more than one scene, the hero's own part joining the weight's)
     assert.ok(wind.sc!.length >= 2 && after.sc!.length === 2, kind);
-    // (about a tenth of a second a frame over the stage's own length)
+    // (each is made for its stage's own length)
     const st = ULT_STAGES[kind];
-    assert.ok(Math.abs(wind.ms - st.windup.ms) <= 1 && wind.ms / wind.n >= 90 && wind.ms / wind.n <= 125, `${kind}: wind-up ${wind.ms} ms in ${wind.n}`);
+    assert.ok(Math.abs(wind.ms - st.windup.ms) <= 1, `${kind}: wind-up ${wind.ms} ms against ${st.windup.ms}`);
     assert.ok(Math.abs(after.ms - st.aftermath.ms) <= 1, `${kind}: aftermath ${after.ms} against ${st.aftermath.ms}`);
   }
+});
+
+test('the atlases are held only when needed: a core set up front, each pair of heroes\' ultimates in atlases of their own', () => {
+  // (the core: every spell and ground loop, and nothing of the ultimates)
+  const core = new Set(BFX_CORE);
+  assert.ok(core.size >= 1 && core.size <= 4, `${core.size} core atlases`);
+  for (const [key, c] of clips) assert.equal(core.has(c.a), !key.startsWith('ult'), `${key} in atlas ${c.a}`);
+  // (a hero's three stages of its own lie in one group; no atlas holds more than two heroes' own sheets)
+  const byAtlas = new Map<number, Set<string>>();
+  for (const [key, c] of clips) {
+    if (!key.startsWith('ult-')) continue;
+    const set = byAtlas.get(c.a) ?? new Set<string>();
+    set.add(key.split('-')[1]);
+    byAtlas.set(c.a, set);
+  }
+  for (const [a, heroes] of byAtlas) assert.ok(heroes.size <= 2, `atlas ${a} holds ${[...heroes].join(', ')}`);
+  // (a fight of five heroes holds at most its core, the shared sheets and five heroes' groups: far from all of them)
+  const perHero = Object.keys(SHOWCASES).map((kind) => new Set(STAGE_NAMES.map((stage) => bfxClip(STAGE_ART[kind][stage]!.sheet)!.a)).size);
+  assert.ok(Math.max(...perHero) <= 5, `a hero's ultimate spans ${Math.max(...perHero)} atlases`);
+  const art = readFileSync('src/render/blenderFxArt.ts', 'utf8');
+  assert.match(art, /return Promise\.all\(BFX_CORE\.map\(need\)\)/, 'only the core loads up front');
+  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /void warmBfx\(/, 'a fight warms its heroes\' ultimates');
+});
+
+test('the ultimates stay within their download: about 3 MB of atlases for all 70, and the dim is lifted over a playing sheet', () => {
+  const dir = 'src/art/fx/blender';
+  const core = new Set(BFX_CORE);
+  const ult = BFX_PX.map((_, i) => i).filter((i) => !core.has(i)).reduce((n, i) => n + statSync(`${dir}/px-${i}.webp`).size, 0);
+  assert.ok(ult < 3_100_000, `the ultimates' pixel atlases are ${ult} bytes`);
+  const all = readdirSync(dir).reduce((n, f) => n + statSync(`${dir}/${f}`).size, 0);
+  assert.ok(all < 4_000_000, `all the atlases are ${all} bytes`);
+  // (a wind-up and a strike play on the board, under the moment's dim: the dim leaves them lit, so they are seen at full strength)
+  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /if \(stage !== 'aftermath'\) this\.bfxLit\.push\(/);
+  assert.match(readFileSync('src/ultMoment.ts', 'utf8'), /for \(const l of this\.opts\.fx\?\.momentLights\(\) \?\? \[\]\)/);
+  assert.ok(ULT_BFX.LIGHT >= 0.8);
+  // (an ultimate's sheet is cut hard with a dark edge, in fewer colours: the recipe marks them, the pixelate step does it)
+  assert.match(readFileSync('tools/blender-fx/pixelate.py', 'utf8'), /frames = \[edged\(f, pal\) for f in frames\]/);
 });

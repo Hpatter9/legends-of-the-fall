@@ -75,7 +75,7 @@ import { KING_SHEET, KING_WALL } from './kingArt';
 import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
-import { bfxFrames, bfxGlows, loadBlenderFx } from './blenderFxArt';
+import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
 import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
@@ -209,6 +209,8 @@ export class Fx {
   private heals = new HealPool();
   /** The skills cast this tick, by caster (`show`). */
   private tickCasts = new Map<number, string>();
+  /** BLENDER-FX: the battles whose heroes' ultimates have been asked for (`warmBfx`). */
+  private bfxWarmed = new WeakSet<Battle>();
   /** BLENDER-FX: how many of a spell's touches have been drawn this tick (the battery saver draws fewer: `bfxBudget`). */
   private bfxTouches = 0;
   /** The painted loops held over fighters (`movePaint`'s stands), so a state shown once is not shown twice. */
@@ -376,6 +378,12 @@ export class Fx {
     this.particles.calm = this.calm();
     this.enter(b);
     this.bfxTouches = 0;
+    // (BLENDER-FX: a fight's heroes' ultimates are large sheets, loaded as the fight begins rather than all held at once)
+    if (!this.bfxWarmed.has(b)) {
+      this.bfxWarmed.add(b);
+      const kinds = new Set(b.units.filter((x) => x.side === 'hero').map((x) => x.def));
+      void warmBfx([...kinds].flatMap((kind) => (['windup', 'strike', 'aftermath'] as UltStageName[]).map((stage) => ultBfx(kind, stage, ultWeight(kind)))));
+    }
     let royalSky: 'meteor' | 'starfall' | undefined;
     const slashes = slashesOf(events);
     this.healerPaint(events);
@@ -608,7 +616,16 @@ export class Fx {
   stepMoment(dt: number): void {
     this.moment.calm = this.calm();
     this.moment.step(dt);
+    for (const l of this.bfxLit) l.left -= dt;
+    this.bfxLit = this.bfxLit.filter((l) => l.left > 0);
   }
+
+  /** BLENDER-FX: where an ultimate's rendered wind-up or strike is playing on the moment's layer now, each a circle in world px. The
+   *  moment's dim (`ultMoment.ts`, a layer over the board) leaves these lit, so the sheet shows above the dim at full strength. */
+  momentLights(): { x: number; y: number; r: number }[] {
+    return this.bfxLit.map(({ x, y, r }) => ({ x, y, r }));
+  }
+  private bfxLit: { x: number; y: number; r: number; left: number }[] = [];
 
   /** A painted part on the moment's layer, `tiles` across, its foot (`foot`) or its middle at (x, y). False when no atlas has it. */
   private paintMoment(key: string, x: number, y: number, tiles: number, o: { frameMs?: number; foot?: boolean; alpha?: number } = {}): boolean {
@@ -652,7 +669,9 @@ export class Fx {
       this.moment.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: x + (c.g.w / 2 - c.g.ax) * k, y: y + (c.g.h / 2 - c.g.ay) * k, scale: k, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA, prio: true, half: 1 });
     }
     // (the aftermath lies over those it struck for a second or two, so it is drawn thinner: they show through it)
-    this.moment.spawn({ frames: held, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: life / held.length, life, prio: true, alpha: stage === 'aftermath' ? ULT_BFX.AFTER_ALPHA : 1, half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42 });
+    this.moment.spawn({ frames: held, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: life / held.length, life, prio: true, solid: stage !== 'aftermath', alpha: stage === 'aftermath' ? ULT_BFX.AFTER_ALPHA : 1, half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42 });
+    // (the moment's dim is lifted over a wind-up and a strike while they play, so they are seen at full strength and not through it: `momentLights`)
+    if (stage !== 'aftermath') this.bfxLit.push({ x: cx, y: cy, r: Math.max(c.w, c.h) * BFX_SCALE * size * ULT_BFX.LIGHT, left: life });
     return true;
   }
 
@@ -662,11 +681,19 @@ export class Fx {
   ultImpact(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[], size = 1, kind?: string): void {
     // (BLENDER-FX: the hero's own rendered strike on each spot, in place of the painted burst, the pack's nova and its ring)
     if (kind && ultBfx(kind, 'strike', ultWeight(kind)) && bfxFrames(ultBfx(kind, 'strike', ultWeight(kind))!).length) {
-      for (const s of spots.slice(0, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS)) {
-        const at = 'unit' in s ? this.sprites.get(s.unit) : undefined;
-        if ('unit' in s && !at) continue;
-        const [x, y] = at ? [at.x, at.y] : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v);
-        this.bfxUlt(kind, 'strike', x, y, undefined, Math.max(ULT_BFX.ECHO_MIN, size));
+      const at: [number, number][] = [];
+      for (const s of spots) {
+        const sp = 'unit' in s ? this.sprites.get(s.unit) : undefined;
+        if ('unit' in s && !sp) continue;
+        at.push(sp ? [sp.x, sp.y] : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v));
+      }
+      if (at.length && size >= 1) {
+        // (the blow itself is one great strike, four tiles and more across, at the middle of what it struck: it covers them all, where a
+        // strike on each would be five of them piled on one another)
+        this.bfxUlt(kind, 'strike', at.reduce((n, p) => n + p[0], 0) / at.length, at.reduce((n, p) => n + p[1], 0) / at.length);
+      } else {
+        // (a further burst of a flurry or a storm: the same strike, smaller, on each of the next few it struck)
+        for (const [x, y] of at.slice(0, settings().saver ? 1 : ULT_BFX.SPOTS)) this.bfxUlt(kind, 'strike', x, y, undefined, ULT_BFX.ECHO);
       }
       this.trauma = Math.max(this.trauma, ULT_EPIC.SHAKE * size);
       return;
