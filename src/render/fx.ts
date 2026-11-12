@@ -75,7 +75,7 @@ import { KING_SHEET, KING_WALL } from './kingArt';
 import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
-import { bfxFrames, bfxGlows, loadBlenderFx } from './blenderFxArt';
+import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
 import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
@@ -209,6 +209,8 @@ export class Fx {
   private heals = new HealPool();
   /** The skills cast this tick, by caster (`show`). */
   private tickCasts = new Map<number, string>();
+  /** BLENDER-FX: the battles whose heroes' ultimates have been asked for (`warmBfx`). */
+  private bfxWarmed = new WeakSet<Battle>();
   /** BLENDER-FX: how many of a spell's touches have been drawn this tick (the battery saver draws fewer: `bfxBudget`). */
   private bfxTouches = 0;
   /** The painted loops held over fighters (`movePaint`'s stands), so a state shown once is not shown twice. */
@@ -376,6 +378,12 @@ export class Fx {
     this.particles.calm = this.calm();
     this.enter(b);
     this.bfxTouches = 0;
+    // (BLENDER-FX: a fight's heroes' ultimates are large sheets, loaded as the fight begins rather than all held at once)
+    if (!this.bfxWarmed.has(b)) {
+      this.bfxWarmed.add(b);
+      const kinds = new Set(b.units.filter((x) => x.side === 'hero').map((x) => x.def));
+      void warmBfx([...kinds].flatMap((kind) => (['windup', 'strike', 'aftermath'] as UltStageName[]).map((stage) => ultBfx(kind, stage, ultWeight(kind)))));
+    }
     let royalSky: 'meteor' | 'starfall' | undefined;
     const slashes = slashesOf(events);
     this.healerPaint(events);
@@ -662,11 +670,19 @@ export class Fx {
   ultImpact(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[], size = 1, kind?: string): void {
     // (BLENDER-FX: the hero's own rendered strike on each spot, in place of the painted burst, the pack's nova and its ring)
     if (kind && ultBfx(kind, 'strike', ultWeight(kind)) && bfxFrames(ultBfx(kind, 'strike', ultWeight(kind))!).length) {
-      for (const s of spots.slice(0, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS)) {
-        const at = 'unit' in s ? this.sprites.get(s.unit) : undefined;
-        if ('unit' in s && !at) continue;
-        const [x, y] = at ? [at.x, at.y] : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v);
-        this.bfxUlt(kind, 'strike', x, y, undefined, Math.max(ULT_BFX.ECHO_MIN, size));
+      const at: [number, number][] = [];
+      for (const s of spots) {
+        const sp = 'unit' in s ? this.sprites.get(s.unit) : undefined;
+        if ('unit' in s && !sp) continue;
+        at.push(sp ? [sp.x, sp.y] : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v));
+      }
+      if (at.length && size >= 1) {
+        // (the blow itself is one great strike, four tiles and more across, at the middle of what it struck: it covers them all, where a
+        // strike on each would be five of them piled on one another)
+        this.bfxUlt(kind, 'strike', at.reduce((n, p) => n + p[0], 0) / at.length, at.reduce((n, p) => n + p[1], 0) / at.length);
+      } else {
+        // (a further burst of a flurry or a storm: the same strike, smaller, on each of the next few it struck)
+        for (const [x, y] of at.slice(0, settings().saver ? 1 : ULT_BFX.SPOTS)) this.bfxUlt(kind, 'strike', x, y, undefined, ULT_BFX.ECHO);
       }
       this.trauma = Math.max(this.trauma, ULT_EPIC.SHAKE * size);
       return;
