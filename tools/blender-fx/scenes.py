@@ -1752,9 +1752,9 @@ def beast(c, size=1.0, puffs=3):
         for o, a, rad, sc in smoke_:
             q = win(t, 0, 0.7)
             put(o, (-F[0] * 0.4 * s + math.cos(a) * rad * s * (0.4 + q), -F[1] * 0.4 * s + math.sin(a) * rad * s * (0.4 + q), 0.2 * s + 0.4 * s * q * sc), 0.24 * s * sc * (0.5 + 0.5 * ease(q)), (q, q * 0.5, a))
-        put(ring, scale=(0.75 * s * (0.3 + 0.7 * ease(win(t, 0.5, 0.9))),) * 2 + (1,))
-        rv.outputs[0].default_value = win(t, 0.5, 0.6) * (1 - win(t, 0.75, 1))
-        hide(ring, t < 0.5)
+        # (no ring where it lands: a bright ring of the element under each wolf was the loudest thing in the picture; a little dust
+        # kicked up is enough)
+        hide(ring, True)
     return step
 
 
@@ -1764,7 +1764,7 @@ def eyes(c, r=1.3, n=5, size=1.0):
     # side by side that open, watch and blink. Animals, plainly, and plainly pairs of eyes)
     em, ev = c.flat((1.0, 0.55, 0.05), 1.6)
     _plain_lights(c)
-    fm, fa = c.solid((0.2, 0.19, 0.2), (0.05, 0.045, 0.05), 0.4, 0.85, 0.0)
+    fm, fa = c.solid((0.13, 0.125, 0.13), (0.035, 0.03, 0.035), 0.4, 0.9, 0.0)
     shade, sa = c.disc('deep', 0.9, r * 1.2, noise=3)
     heads = []
     for k in range(n):
@@ -1793,9 +1793,9 @@ def eyes(c, r=1.3, n=5, size=1.0):
             gk = g * k
             put(neck, (x - RIGHT[0] * f * 0.06 * gk, y - RIGHT[1] * f * 0.06 * gk, z * 0.5), (0.24 * gk + 0.001, 0.24 * gk + 0.001, 0.36 * gk + 0.001), (math.pi, 0, 0))
             put(head, (x, y, z), (0.2 * gk + 0.001, 0.2 * gk + 0.001, 0.17 * gk + 0.001))
-            put(snout, (x + RIGHT[0] * f * 0.27 * gk, y + RIGHT[1] * f * 0.27 * gk, z - 0.045 * gk), (0.085 * gk + 0.001, 0.085 * gk + 0.001, 0.36 * gk + 0.001), (0, f * math.radians(100), math.radians(45)))
+            put(snout, (x + RIGHT[0] * f * 0.33 * gk, y + RIGHT[1] * f * 0.33 * gk, z - 0.05 * gk), (0.095 * gk + 0.001, 0.095 * gk + 0.001, 0.5 * gk + 0.001), (0, f * math.radians(100), math.radians(45)))
             for side, e in zip((-1, 1), ears):
-                put(e, (x - RIGHT[0] * f * (0.07 + side * 0.05) * gk + TOWARDS[0] * side * 0.05 * gk, y - RIGHT[1] * f * (0.07 + side * 0.05) * gk + TOWARDS[1] * side * 0.05 * gk, z + 0.22 * gk), (0.055 * gk + 0.001, 0.055 * gk + 0.001, 0.26 * gk + 0.001), (0, -f * 0.3, math.radians(45)))
+                put(e, (x - RIGHT[0] * f * (0.07 + side * 0.05) * gk + TOWARDS[0] * side * 0.05 * gk, y - RIGHT[1] * f * (0.07 + side * 0.05) * gk + TOWARDS[1] * side * 0.05 * gk, z + 0.22 * gk), (0.075 * gk + 0.001, 0.075 * gk + 0.001, 0.36 * gk + 0.001), (0, -f * 0.3, math.radians(45)))
             opened = win(t, lag + 0.2, lag + 0.28) * (0.12 if abs(t - blink) < 0.03 else 1.0)
             for side, e in zip((-1, 1), pair):
                 # (the near eye, and the far one just seen past the brow)

@@ -238,6 +238,33 @@ cracks under them remain.
   (`aftermath(b, m, Math.max(300, q.left))`), so all its frames play in that second: it reads, faster. A wind-up or strike sheet
   already playing finishes its own run (1.3 s at most) on the board, under the result card; nothing waits on it.
 
+## Batch 11: a whirlpool, a sandstorm, wings, a banner; three wolves; a show cut short, photographed
+
+`docs/samples/blender-fx/audit-batch11-1.jpg` and `-2.jpg` (0.499 above, now below: the Kraken, the Mummy, the Priestess, the Peasant,
+the Samurai Commander, the Banneret, Karasu), `audit-batch11-beastmaster-393.jpg`, `audit-cut-short-393.jpg`, and the grey sheet
+again (`audit-grey.jpg`).
+
+- **Four new scenes** in place of shapes too many heroes shared. `whirlpool`: water turning flat on the ground, spiral arms of foam
+  winding in to a dark eye (the Kraken's Maelstrom was a standing funnel, the same as the Mummy's, Yamabushi's and Karasu's).
+  `sandstorm`: a low wide wall of blown sand, broken bands racing round at different heights (the Mummy). `wings`: two fans of light
+  unfolding from the shoulders (Ilyra, the Priestess; the Seraph's aftermath). `banner`: a planted pole with two pennants streaming
+  (the Peasant, the Samurai Commander, the Banneret, whose strikes were a veil or a pillar over a ring). Karasu's cloud of daggers is
+  feathers and gusts; the Wizard winds up under a gathering cloud, not a funnel; the Paladin's third scene (a third barred ring) is
+  gone. In the sheets the Kraken's whirlpool and spout are the clearest gain over 0.499's two pale balls.
+- Not as good as it should be: the Peasant's banner is small and pale in the earth's tan against the ground; the Mummy's sand is pale.
+  Ilyra is still unphotographed (her ultimate does not fire in the tool).
+- **The Beastmaster's wind-up** is three wolves' heads, larger than a fighter, set apart, darker, each in profile with a long snout and
+  tall ears: in the photograph they are wolves at a glance. **No ring** is left where a wolf lands; the aftermath is a low swirl and
+  motes at the Beastmaster's feet. Standing wolves have nothing green under them.
+- **A show cut short**, staged and photographed (`CUT=strike` and `CUT=windup` in `tools/blender-fx/ult-shots.mjs`: the fight is ended
+  150 ms after the blow, or 60% through the wind-up, and the next 2 s are photographed). Cut after the blow (the Cleric): the strike
+  finishes, and the guardians go on circling; it reads. Cut during the wind-up (the Kraken, the Samurai): the wind-up sheet plays on
+  for about a third of a second and is gone; NO strike and NO aftermath sheet is seen, the show simply ends. That is the case of an
+  ultimate that itself ends the fight: the player sees its wind-up and then the result. Whether that last second should show the
+  blow is a question for the freeze fix's rule (one second of aftermath); I tried playing the strike in the aftermath's turn and it
+  did not show (the cut does not reach the aftermath's stage from the wind-up), so I took the change out rather than leave it
+  unseen. Nothing lingers, nothing waits, no errors.
+
 ## The audit of all 70
 
 To come, in batches: for each ultimate, what it does in the sim, what 0.499 showed, what main shows now, and the verdict; then the ten
