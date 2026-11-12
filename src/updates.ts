@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.537.0',
+    date: '2026-11-12',
+    title: 'Hawks for the Falconer, stars for Astrax',
+    notes: ['The Falconer\'s Sky Hunt now has hawks: four wheel round her, then six stoop out of the sky onto the foes and climb away.', 'Astrax\'s Heavenfall is thick bright stars falling in a slant, with a burst where each lands.'],
+  },
+  {
     version: '0.536.0',
     date: '2026-11-12',
     title: 'Broadsides and dragon\'s breath',

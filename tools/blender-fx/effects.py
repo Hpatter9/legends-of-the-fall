@@ -180,12 +180,13 @@ BIG = dict(
     hearts=(dict(r=1.0, h=2.0, n=9), 1.5, 2.6), wall=(dict(length=3.0, h=1.7, tongues=9), 2.4, 2.2), flames=(dict(r=1.3, h=1.3, tongues=9), 1.9, 2.2),
     palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), whirlpool=(dict(r=1.7, arms=5), 2.0, 0.8), sandstorm=(dict(r=1.6, h=1.3), 1.9, 1.8),
     wings=(dict(r=1.4, h=2.1), 1.7, 2.9), banner=(dict(h=2.4, w=1.3), 1.7, 2.9), eyes=(dict(r=2.5, n=3, size=3.0), 3.1, 2.7),
+    flock=(dict(r=1.4, h=2.6, n=6, size=2.3), 4.0, 5.2),
     implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
 )
 
 # Each ultimate: its palette, its strike's two scenes, and its showcase's style (which sets its weight, as `ultStageRules.ts` does).
 ULTS = dict(
-    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'flames', 'sky'), ilyra=('holy', 'wings', 'dome', 'bless'),
+    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'sparks', 'sky'), ilyra=('holy', 'wings', 'dome', 'bless'),
     orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'swarm', 'blinks'),
     wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'beast', 'trail', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
@@ -204,7 +205,7 @@ ULTS = dict(
     peasant=('earth', 'banner', 'shout', 'bless'), wolfBard=('wind', 'shout', 'spiral', 'bless'), vampireLord=('blood', 'implode', 'siphon', 'burst'),
     hemomancer=('blood', 'siphon', 'rain', 'burst'), nightstalker=('shadow', 'swarm', 'claws', 'blinks'), bloodGargoyle=('earth', 'shockwave', 'slab', 'burst'),
     dhampir=('holy', 'rain', 'cross', 'shots'), warDrummer=('lightning', 'shout', 'bolt', 'burst'), geomancer=('earth', 'slab', 'crack', 'bless'),
-    bellWarden=('shadow', 'shout', 'ring', 'burst'), falconer=('wind', 'shaft', 'claws', 'sky'), banneret=('fire', 'banner', 'ring', 'bless'),
+    bellWarden=('shadow', 'shout', 'ring', 'burst'), falconer=('wind', 'flock', 'claws', 'sky'), banneret=('fire', 'banner', 'ring', 'bless'),
     astralSphinx=('arcane', 'eye', 'sigil', 'burst'), mirageDancer=('wind', 'veil', 'cross', 'blinks'), plagueDoctor=('poison', 'cloud', 'smoke', 'burst'),
     bombardier=('fire', 'shaft', 'burst', 'sky'), astrologer=('holy', 'implode', 'burst', 'sky'), inquisitor=('holy', 'strike', 'ring', 'shots'),
     seraph=('holy', 'shaft', 'shockwave', 'sky'), corsairSurgeon=('forest', 'geyser', 'motes', 'bless'), harpooner=('ice', 'chains', 'spikes', 'hooks'),
@@ -254,19 +255,21 @@ WIND_OWN = dict(
     peasant=[('banner', 0, 1.5), ('shout', 0.3, 1.4)], wolfBard=[('shout', 0, 1.5), ('motes', 0.2, 1.4)], vampireLord=[('siphon', 0, 1.5), ('swarm', 0.2, 1.3)],
     hemomancer=[('siphon', 0, 1.4), ('ring', 0, 1.2), ('rain', 0.4, 1.5)], nightstalker=[('swarm', 0, 1.4), ('smoke', 0.2, 1.3)], bloodGargoyle=[('gust', 0, 1.2), ('shaft', 0.4, 1.7)],
     dhampir=[('halo', 0, 1.2), ('cross', 0.5, 1.6)], warDrummer=[('shout', 0, 1.5), ('sparks', 0.3, 1.5)], geomancer=[('slab', 0, 1.5), ('motes', 0.2, 1.3)],
-    bellWarden=[('shout', 0, 1.4), ('crystal', 0.4, 1.6)], falconer=[('swarm', 0, 1.4), ('shaft', 0.4, 1.6)], banneret=[('banner', 0, 1.5), ('ring', 0.1, 1.3)],
+    bellWarden=[('shout', 0, 1.4), ('crystal', 0.4, 1.6)], falconer=[('flock', 0, 1.6), ('gust', 0.2, 1.3)], banneret=[('banner', 0, 1.5), ('ring', 0.1, 1.3)],
     astralSphinx=[('eye', 0, 1.5), ('sigil', 0, 1.3)], mirageDancer=[('veil', 0, 1.4), ('gust', 0.2, 1.4)], plagueDoctor=[('cloud', 0, 1.5), ('siphon', 0.3, 1.4)],
     bombardier=[('flames', 0, 1.2), ('geyser', 0.3, 1.6)], astrologer=[('implode', 0, 1.4), ('motes', 0.2, 1.4)], inquisitor=[('halo', 0, 1.3), ('strike', 0.4, 1.7)],
     seraph=[('halo', 0, 1.4), ('shaft', 0.4, 1.7)], corsairSurgeon=[('geyser', 0, 1.4), ('ring', 0.1, 1.2)], harpooner=[('chains', 0, 1.4), ('geyser', 0.3, 1.5)],
     seaReaver=[('geyser', 0, 1.5), ('gust', 0.2, 1.4)],
 )
 # A wind-up that holds colours outside its element's (grey fur, amber eyes) has more of them, so the palette step keeps them.
-WIND_COLOURS = dict(beastmaster=22)
+WIND_COLOURS = dict(beastmaster=22, falconer=22)
+# A wind-up scene's own options for one hero: the Falconer's hawks wheel overhead before they stoop.
+WIND_OPT = dict(falconer=dict(flock=dict(mode='circle', n=4, size=2.2, r=1.3)))
 # ULT-AUDIT: every hero's aftermath is what its ability leaves, low where it struck and something lifting off it: no two heroes have
 # the same two scenes, whatever their colours (about forty did, in different colours). (Lists, not pairs in brackets: a test reads the
 # ground loops' pairs out of this file by their shape.)
 AFTER_OWN = dict(
-    vael=['sigil', 'souls'], astrax=['flames', 'motes'], ilyra=['ring', 'halo'], orrun=['vines', 'swarm'],
+    vael=['sigil', 'souls'], astrax=['crack', 'motes'], ilyra=['ring', 'halo'], orrun=['vines', 'swarm'],
     nyxara=['sigil', 'spiral'], kunoichi=['gust', 'swarm'], wizard=['crack', 'flames'], beastmaster=['gust', 'motes'],
     mercenary=['crack', 'sparks'], arcBlade=['crack', 'bolt'], samurai=['trail', 'veil'], lancer=['trail', 'gust'],
     minotaur=['crack', 'smoke'], barbarian=['crack', 'flare'], ninjaMonk=['ring', 'gust'], buccaneer=['cloud', 'chains'],
@@ -413,7 +416,8 @@ def grow(opt, k):
 
 # A scene's own options for one hero's strike, where the ability wants what the scene's usual look is not (ULT-AUDIT): what the Gorgon's
 # gaze leaves on a foe is grey stone, lit plainly, not a crystal in her poison's green.
-OWN_OPT = dict(gorgon=dict(crystal=dict(stone=True)))
+# The stars of Astrax's Heavenfall are thick bright streaks, many of them (the usual rain is thin: arrows, needles).
+OWN_OPT = dict(gorgon=dict(crystal=dict(stone=True)), astrax=dict(rain=dict(n=26, w=0.34, slant=0.5, long=2.6)))
 
 
 def sized(scene, k, kind=None):
@@ -451,7 +455,7 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
         assert (low, high) not in _own_after, kind
         # (the wind-up builds: the weight's own gathering, then the hero's own part joins it and swells to the blow)
         fx(f'ult-{kind}-windup', None, pal, **box(max(BIG[sc][1] for sc in ([w[0] for w in WIND_OWN[kind]] if kind in WIND_OWN else base + [extra])) * 0.72, max(3.4, max(BIG[w[0]][2] for w in WIND_OWN.get(kind, [('ring',)])) * 0.72), 0.5), frames=round(wind_ms / 105), take=WIND_FRAMES, colours=WIND_COLOURS.get(kind, 0), ms=wind_ms, seed=7 + i, ult=True,
-           stages=[stage(sc, a, b, **sized(sc, 0.72)) for sc, a, b in WIND_OWN[kind]] if kind in WIND_OWN else
+           stages=[stage(sc, a, b, **{**sized(sc, 0.72), **WIND_OPT.get(kind, {}).get(sc, {})}) for sc, a, b in WIND_OWN[kind]] if kind in WIND_OWN else
            [stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]] + [stage(extra, 0.3, 1.3, **sized(extra, 0.72))])
         _own_after.add((low, high))
         # (the aftermath lingers: something low where it struck, something lifting off it, both thinning to nothing)

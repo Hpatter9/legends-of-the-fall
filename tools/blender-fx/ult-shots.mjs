@@ -111,6 +111,7 @@ for (const pick of PICKS) {
     await army(page, PARTY_OF(pick));
     const before = await speedNow(page);
     if (process.env.KILL) await page.evaluate(() => { window.__killAll = true; });
+    if (process.env.TOUGH) await page.evaluate(() => { window.__tough = true; });
     const st = await page.evaluate((pick) => {
       const g = window.__game;
       g.app.ticker.stop();
@@ -123,6 +124,8 @@ for (const pick of PICKS) {
         if (friend) friend.hp = Math.round(friend.maxHp * 0.5);
       }
       if (window.__killAll) for (const f of g.b.units) if (f.side === 'foe' && f.alive) f.hp = 1;
+      // (TOUGH=1: the foes are given health enough to live through the cast, so a strong hero's whole show is photographed, not its cut-short)
+      if (window.__tough) for (const f of g.b.units) if (f.side === 'foe' && f.alive) { f.maxHp *= 60; f.hp = f.maxHp; }
       u.charge2 = 100;
       document.querySelector(`.fhRow[data-unit="${u.id}"]`).dispatchEvent(new MouseEvent('click', { bubbles: true }));
       for (let i = 0; i < 400 && !g.ultm.queue.current; i++) window.__step(16);
