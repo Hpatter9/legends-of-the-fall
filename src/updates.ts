@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.519.0',
+    date: '2026-11-12',
+    title: 'Lighter on your phone\'s memory',
+    notes: ['Ultimate effects now load in small pieces only when played and are released afterwards, cutting their memory use from over 120 MB to about 45 MB.', 'This is the first fix for the game freezing mid-wave. More protection against freezes follows.'],
+  },
+  {
     version: '0.518.0',
     date: '2026-11-12',
     title: 'Cinematics off',
