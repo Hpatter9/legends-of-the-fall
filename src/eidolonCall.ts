@@ -975,7 +975,10 @@ export class EidolonCall {
       g.classList.toggle('big', i === 0);
       // (each Eidolon's own flash: none at all for Gorm, Nivra and Vaelkhar, a gold or copper-blue one for the rest)
       const sg = STRIKE_FX[p.e.id]?.sig;
-      if (sg && p.stage) g.style.setProperty('--flashA', String(BLOW_FEEL.flash));
+      if (sg && p.stage) {
+        g.style.setProperty('--flashA', String(p.stage.look.flash ?? BLOW_FEEL.flash));
+        if (p.stage.look.flashTint) g.style.setProperty('--flashC', p.stage.look.flashTint);
+      }
       else if (sg) {
         if (sg.flash <= 0) g.style.display = 'none';
         g.style.setProperty('--flashA', String(sg.flash));

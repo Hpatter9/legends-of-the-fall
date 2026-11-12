@@ -5,6 +5,33 @@ stages everything round it (the sigil, the pillar, the strike across the ground,
 the first; the other five follow in his style and to his bar, one push each: Nivra, Gorm, Voltara, Aurelan and Vaelkhar. All six are done; each has its own section below.
 Each has its own element's show, not Askel's recoloured, in the same places in the call (`STAGED` in `src/eidolonStage.ts`).
 
+## The polish pass over all six
+
+After all six were in, the director's list, done in one push:
+
+- **Gorm's flash has a shape.** The amber flash was a flattened ball. It is now a ragged core (torn at its edge) throwing 34 amber
+  rays low and wide, the longest nearest the ground, with pale hearts rather than white. His show is now **447,596 bytes** (the
+  explosion 237,032; a re-finish shifts the shared palette, so his other sheets changed by a few hundred bytes each).
+- **Voltara's white-out is shorter.** Her blow's white flash is 0.5 where the others' is 0.95 (`flash` on her entry in `STAGED`,
+  a new optional number), so the forks' lines show through from the first frame after the freeze. Her sheets are unchanged.
+- **Aurelan's light has a grain.** His beams are now wide beams of threads: a noise across each beam's width gives bright threads
+  and see-through gaps, amber at the edges, with thin riders beside them (`beam_mat` in `aurelan_parts.py`), in the shaft of dawn
+  and the tile beams too. His sunburst has a shape: a torn disc, a ragged crown of 40 short rays turning one way, and the long rays
+  turning the other as they lengthen. More motes rise in the beams. His flash is 0.55. His explosion ships 14 of 16 frames (the last
+  two were nearly empty). His show is now **461,350 bytes** (the explosion 248,704, the pillar 99,172): 11 KB over the 450 KB mark,
+  because threads pack less well than flat bars.
+- **Under main's camera** (0.505.0: the push-in on the summoning, the strike frame on the foes' side): all six were captured again
+  and the samples in `docs/samples/eidolon-blender/` replaced. Nothing is cut off: each sigil, pillar and painting stays in the
+  summoning's frame (the pillars' tops run off the top by design) and each blow, its second and third detonations and its aftermath
+  stay in the strike's.
+- **Vaelkhar's wings are wings.** They were flat fans of violet spikes. Each is now six ribs (long cones of black fire, the leading
+  one longest) with a **membrane** stretched between them (`Membrane` and `membrane_mat` in `vaelkhar_parts.py`): a fan from the
+  wing's root to an edge that runs rib tip to rib tip and sags inward between them like a bat's, the dark itself with faint veins,
+  a bright violet rim along the trailing edge, and that edge eaten ragged by a noise; as the maw drains, the edge is eaten further
+  in and the ribs fold. His painted violet fire still stands in front of them. His flash keeps its strength but is **violet-white**
+  (`flashTint` on his entry). His show is now **379,906 bytes** (the explosion 190,488 and its glow 25,236).
+- All six together: 60 sheets, **2,532,628 bytes**.
+
 ## For the camera: where each show is
 
 All in the board's own pixels (a sheet pixel is 1.414 of them), the same for every staged Eidolon unless its section says otherwise:
@@ -106,7 +133,7 @@ blue edges fell below the hard-alpha cut). Two: bolts thicker with a solid blue 
 given blue turbulence so it is not a plain white disc, more ground crackle. Three: the walking forks thinned a little so the curtain
 keeps its lines. Bigger and harder than main from the sky splitting on.
 
-**Honestly.** Her strike is very bright: main's painted bolts, the flash and her forks stack to near white for about a quarter of a
+**Honestly** (her flash was softened in the polish pass above). Her strike is very bright: main's painted bolts, the flash and her forks stack to near white for about a quarter of a
 second, which is the thunderclap but leaves little to read in that moment. Her aftermath is the thinnest of the four (lightning
 leaves little behind): crackle, sparks and a wisp. The pillar is her best beat.
 
@@ -137,7 +164,7 @@ pillar ships 14 of its 16 frames (it was 460 KB with all 16).
 the radiant shock barely showed. Two: richer gold with amber edges, the shock a solid low dome, the shaft's rings wider. Three: the
 beams striated (a narrower core with more, wider riders) so they are not flat bars. Bigger than main from the shaft of dawn on.
 
-**Honestly.** His is the flattest of the five so far: light has no texture, so the beams are clean gold bars with pale cores, and
+**Honestly** (before the polish pass above, which gave his beams a grain and his sunburst a shape). His was the flattest of the five so far: light has no texture, so the beams are clean gold bars with pale cores, and
 the sunburst's disc is a plain bright ball. At the blow the screen is mostly gold for about half a second. The painted lances and
 curtain in front carry what detail there is. The sun racing out on the ground is his best beat.
 
@@ -170,9 +197,8 @@ violet. Three: a little violet given back to the wings' rims so they do not go d
 tear on.
 
 **Honestly.** Dark on a darkened field is the hardest thing to make hit: his blow is the biggest shape of the six but the least
-bright, and it leans on the page's flash and shake for its impact. The wings are fans of long cones and read as spines or a crown
-as much as wings. The white flash is the same as the others' (main gave him none): if the owner wants his blow to stay dark, that
-is one number (`BLOW_FEEL.flash`, which would need to become per Eidolon). The drain, the maw closing on a spark, is his best beat
+bright, and it leans on the page's flash and shake for its impact. The wings were fans of long cones and read as spines or a crown
+as much as wings, and the flash was plain white (both changed in the polish pass above: membranes between ribs, a violet-white flash). The drain, the maw closing on a spark, is his best beat
 and the one thing no other Eidolon has.
 
 **Samples**: `vaelkhar-game-393.webp`, `-360`, `-412`, their `-strip.webp`, `vaelkhar-game-before-after.webp`,

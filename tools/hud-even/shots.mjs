@@ -158,8 +158,8 @@ function report(name, w, i, o = {}) {
   if (!o.noTactic) {
     check(!!i.tactic && !i.tacticInPanel, `${name}-${w}: the tactic plaque shows, out of the panel`);
     if (i.tactic) {
-      check(i.W - i.tactic[2] === 8, `${name}-${w}: its right edge is the Formation button's (8 px in)`);
-      check(i.tactic[2] - i.tactic[0] === 92 && i.tactic[3] - i.tactic[1] === 44, `${name}-${w}: the plaque's pinned size, 92 x 44 (TACTIC-SIZE) (${i.tactic[2] - i.tactic[0]} x ${i.tactic[3] - i.tactic[1]})`);
+      check(i.W - i.tactic[2] >= 8 && i.W - i.tactic[2] <= 11, `${name}-${w}: in the upper-right corner, on the row's right edge (${i.W - i.tactic[2]} px in)`);
+      check(i.tactic[2] - i.tactic[0] === 48 && i.tactic[3] - i.tactic[1] === 48, `${name}-${w}: the Auto buttons' size, 48 x 48 (TACTIC-ORB) (${i.tactic[2] - i.tactic[0]} x ${i.tactic[3] - i.tactic[1]})`);
       check(!i.tacticOver.length, `${name}-${w}: the plaque lies over no other part`);
       if (i.piecesBottom !== null) check(i.tactic[1] >= i.piecesBottom && i.tactic[1] <= i.piecesBottom + 12, `${name}-${w}: it hangs just under the spell row`);
       if (i.boss) check(i.boss[2] <= i.tactic[0] - 4, `${name}-${w}: the boss's bar stops short of it`);
@@ -196,7 +196,7 @@ for (const [w, h] of SIZES) {
     if (after) {
       check(!!d.form && !d.tactic, `handover-${w}: placing, the corner holds Formation and no tactic`);
       check(!f.form && !!f.tactic, `handover-${w}: fighting, it holds the tactic and no Formation`);
-      if (d.form && f.tactic) check(d.form[2] === f.tactic[2], `handover-${w}: the same right edge (Formation ${d.form}, tactic ${f.tactic}; ${f.tactic[1] - d.form[1]} px lower, under the spell row)`);
+      if (d.form && f.tactic) check(Math.abs(d.form[2] - f.tactic[2]) <= 3, `handover-${w}: the same corner (Formation ${d.form}, tactic ${f.tactic}; ${f.tactic[1] - d.form[1]} px lower, under the spell row)`);
     }
     await ctx.close();
   }

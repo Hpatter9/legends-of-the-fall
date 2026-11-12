@@ -27,6 +27,30 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.517.0',
+    date: '2026-11-12',
+    title: 'The tactic button is an orb',
+    notes: ['The tactic button in a wave is now a round orb exactly the size of the Auto buttons, with the tactic\'s name as a small label under it.', 'It sits under the Auto buttons in the same corner.'],
+  },
+  {
+    version: '0.516.0',
+    date: '2026-11-12',
+    title: 'Vaelkhar\'s wings',
+    notes: ['Vaelkhar\'s wings of dark now have ribs with membranes stretched between them, a bright violet rim and a ragged trailing edge.', 'His painted violet fire stands in front, and his flash is violet-white.'],
+  },
+  {
+    version: '0.515.0',
+    date: '2026-11-12',
+    title: 'Armies: neighbours peek in',
+    notes: ['The armies either side of the centred card peek in again, smaller and dimmed, and slide with it.', 'The arriving army grows and lights as the card settles.'],
+  },
+  {
+    version: '0.514.0',
+    date: '2026-11-12',
+    title: 'Eidolon polish',
+    notes: ['Aurelan\'s beams are woven of bright threads with amber edges, and his sunburst has a ragged crown of turning rays.', 'Gorm\'s flash throws amber rays along the ground, and Voltara\'s white flash is shorter so her forks can be seen.'],
+  },
+  {
     version: '0.513.0',
     date: '2026-11-12',
     title: 'Vaelkhar\'s call, remade in shadow',
