@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.525.0',
+    date: '2026-11-12',
+    title: 'The wave ends when the last foe falls',
+    notes: ['The result now comes up about 2 seconds after the last foe falls, whatever ultimates or Eidolon calls are playing or queued. Before, it could wait 20 seconds.', 'Only one full ultimate show plays at a time; one fired during another takes effect at once with the short banner. A stuck wave end now frees itself.'],
+  },
+  {
     version: '0.524.0',
     date: '2026-11-12',
     title: 'Seventy wind-ups, each its own',
