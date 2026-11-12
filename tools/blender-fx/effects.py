@@ -181,7 +181,7 @@ BIG = dict(
     palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), whirlpool=(dict(r=1.7, arms=5), 2.0, 0.8), sandstorm=(dict(r=2.3, h=2.3, bands=11, grit=44, wide=0.36), 2.8, 3.2),
     wings=(dict(r=1.4, h=2.1), 1.7, 2.9), banner=(dict(h=2.4, w=1.3), 1.7, 2.9), eyes=(dict(r=2.5, n=3, size=3.0), 3.1, 2.7),
     flock=(dict(r=1.4, h=2.6, n=6, size=2.3), 4.0, 5.2),
-    notes=(dict(r=1.3, h=2.3, n=8, size=1.6), 2.8, 6.0), eclipse=(dict(r=0.9, z=2.4), 2.2, 4.6), broadside=(dict(r=1.4, n=7, size=1.0), 3.6, 4.6), bite=(dict(r=1.0, n=6, z=1.0), 1.8, 2.9), toll=(dict(r=0.75, z=2.0), 2.6, 4.4), wave=(dict(r=1.5, h=1.8), 3.6, 3.4), implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
+    notes=(dict(r=1.3, h=2.3, n=8, size=1.6), 2.8, 6.0), eclipse=(dict(r=0.9, z=2.4), 2.2, 4.6), broadside=(dict(r=1.4, n=7, size=1.0), 3.8, 3.2), bite=(dict(r=1.0, n=6, z=1.0), 1.8, 2.9), toll=(dict(r=0.75, z=2.0), 2.6, 4.4), wave=(dict(r=1.5, h=1.8), 3.6, 3.4), implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
 )
 
 # Each ultimate: its palette, its strike's two scenes, and its showcase's style (which sets its weight, as `ultStageRules.ts` does).

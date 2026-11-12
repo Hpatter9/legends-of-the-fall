@@ -2094,69 +2094,44 @@ def eclipse(c, r=0.8, z=2.6, rays=14):
     return step
 
 
-# 65. Broadside: a ghost ship's side stands pale behind the spot (a long hull, three masts, sails), its guns flash along it, and
-# cannon shot arcs in from them to fall across the ground in front, each ball bursting in a puff and a ring where it lands.
+# 65. Broadside: guns flash in a row from off the field's far edge, each with a puff of powder smoke, and cannon shot arcs in from
+# them to fall across the ground in front, each ball bursting in a puff and a ring where it lands. No ship is drawn: the fleet is
+# out of sight, and what is seen is its fire. (A ship was modelled here and taken out: a hull and sails built of plain solids read
+# as a crude model beside the game's painted art.)
 def broadside(c, r=1.5, n=6, size=1.0):
-    import bpy
-    hull_m, ha = c.solid('mid', 'deep', 0.9, 0.7, 0.0)
-    sail_m, sa = c.solid('bright', 'mid', 1.1, 0.6, 0.0)
     hot_m, _ = c.flat('hot', 2.2)
     ball_m, _ = c.flat('bright', 1.6)
-    ship = bpy.data.objects.new('ship', None)
-    c.sc.collection.objects.link(ship)
-    parts = []
-    hull = c.sphere(1.0, hull_m, 3)
-    put(hull, (0, 0, 0), (1.9, 0.34, 0.36))
-    stern = c.sphere(1.0, hull_m, 2)
-    put(stern, (-1.65, 0, 0.3), (0.42, 0.3, 0.4))
-    bow = c.cone(1.0, 1.0, hull_m, 4)
-    put(bow, (2.2, 0, 0.28), (0.1, 0.1, 0.9), (0, math.radians(68), 0))
-    parts += [hull, stern, bow]
-    for k, x in enumerate((-0.95, 0.05, 1.05)):
-        tall = 1.9 if k == 1 else 1.5
-        mast = c.cone(1.0, 1.0, hull_m, 5, r2=0.6)
-        put(mast, (x, 0, 0.3 + tall / 2), (0.035, 0.035, tall))
-        parts.append(mast)
-        for j, zz in enumerate((0.72, 1.3) if k != 1 else (0.72, 1.3, 1.8)):
-            # (a square of cloth: a four-sided column, turned so a flat face is to the ship's side)
-            sail = c.cone(1.0, 1.0, sail_m, 4, r2=1.0)
-            # (drawn broad, as a sail is seen from the ship's side in a picture, not edge-on as it would truly be)
-            put(sail, (x + 0.04, 0.02, 0.3 + zz), (0.4 - 0.08 * j, 0.05, 0.4), (0, 0, math.radians(45)))
-            parts.append(sail)
-    for o in parts:
-        o.parent = ship
-    # (the ship lies along the screen's right, its side to the camera, back from the spot and a little off the ground: it is a ghost)
-    yaw = math.atan2(RIGHT[1], RIGHT[0])
-    back = (-TOWARDS[0] * 2.1 * size, -TOWARDS[1] * 2.1 * size, 0.75 * size)
+    sm, cut = c.flame(2.0, 0.55, 0.9)
+    # (the guns stand in a row along the screen's right, back from the spot at the far edge and low to the ground)
+    back = (-TOWARDS[0] * 2.6 * size, -TOWARDS[1] * 2.6 * size, 0.35 * size)
     shots = []
     for i in range(n):
-        port = -1.5 + 3.0 * (i + 0.5) / n
-        frm = (back[0] + RIGHT[0] * port * size, back[1] + RIGHT[1] * port * size, back[2] + 0.1 * size)
+        port = -1.7 + 3.4 * (i + 0.5) / n
+        frm = (back[0] + RIGHT[0] * port * size, back[1] + RIGHT[1] * port * size, back[2])
         ang, rad = TAU * ((i * 0.618) % 1.0), (0.35 + 0.65 * ((i * 0.37) % 1.0)) * r
         to = (math.cos(ang) * rad, math.sin(ang) * rad, 0.1)
         ball = c.sphere(1.0, ball_m, 2)
         flash = c.sphere(1.0, hot_m, 2)
+        smoke_ = c.sphere(1.0, sm, 3)
         puff = c.sphere(1.0, hot_m, 2)
         hoop = c.torus(1.0, 0.1, ball_m)
-        shots.append((ball, flash, puff, hoop, frm, to, 0.08 + 0.4 * i / n))
+        shots.append((ball, flash, smoke_, puff, hoop, frm, to, 0.04 + 0.42 * i / n))
 
     def step(t):
         c.tick(t, 1.0)
-        k = ease(win(t, 0, 0.2)) * (1 - win(t, 0.78, 1))
-        put(ship, back, max(0.001, size * (0.85 + 0.15 * k)), (0, 0, yaw))
-        ha.outputs[0].default_value = 0.72 * k
-        sa.outputs[0].default_value = 0.6 * k
-        for o in parts:
-            hide(o, k <= 0.01)
-        for ball, flash, puff, hoop, frm, to, lag in shots:
-            g = win(t, lag, lag + 0.26)
-            f = win(t, lag - 0.03, lag + 0.07)
-            put(flash, frm, 0.16 * size * bell(f) + 0.001)
+        cut.inputs[1].default_value = 0.3 + 0.5 * win(t, 0.3, 1)
+        for ball, flash, smoke_, puff, hoop, frm, to, lag in shots:
+            g = win(t, lag, lag + 0.28)
+            f = win(t, lag - 0.03, lag + 0.09)
+            put(flash, frm, 0.3 * size * bell(f) + 0.001)
             hide(flash, f <= 0 or f >= 1)
-            arc = 1.5 * size * bell(g)
-            put(ball, (frm[0] + (to[0] - frm[0]) * g, frm[1] + (to[1] - frm[1]) * g, frm[2] + (to[2] - frm[2]) * g + arc), 0.085 * size)
+            w = win(t, lag, lag + 0.5)
+            put(smoke_, (frm[0], frm[1], frm[2] + 0.5 * size * w), 0.3 * size * (0.4 + 0.6 * ease(w)), (w, w * 0.5, 0))
+            hide(smoke_, w <= 0 or w >= 1)
+            arc = 1.7 * size * bell(g)
+            put(ball, (frm[0] + (to[0] - frm[0]) * g, frm[1] + (to[1] - frm[1]) * g, frm[2] + (to[2] - frm[2]) * g + arc), 0.1 * size)
             hide(ball, g <= 0 or g >= 1)
-            q = win(t, lag + 0.25, lag + 0.52)
+            q = win(t, lag + 0.27, lag + 0.54)
             put(puff, (to[0], to[1], 0.2 * size + 0.3 * size * q), 0.34 * size * bell(q) + 0.001)
             hide(puff, q <= 0 or q >= 1)
             put(hoop, (to[0], to[1], 0.04), (0.1 + 0.55 * size * ease(q),) * 2 + (1 - 0.8 * q,))

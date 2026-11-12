@@ -81,9 +81,12 @@ async function open(eidolons) {
       const frame = g.frame.bind(g);
       g.frame = (a, b) => {
         const t0 = performance.now();
+        const u0 = window.__cost.ups.length;
         frame(a, b);
         const ms = performance.now() - t0;
-        if (ms > 30) window.__cost.frames.push({ ms: +ms.toFixed(1), fight: !!g.b && g.b.phase === 'fight', show: !!g.ultm?.queue?.current });
+        // (a slow frame says how much of it was pictures going to the graphics card, and which)
+        const ups = window.__cost.ups.slice(u0);
+        if (ms > 30) window.__cost.frames.push({ ms: +ms.toFixed(1), fight: !!g.b && g.b.phase === 'fight', show: !!g.ultm?.queue?.current, upMs: +ups.reduce((n, u) => n + u.ms, 0).toFixed(1), ups: ups.map((u) => `${u.w}x${u.h} ${u.of} ${u.ms}`) });
       };
     });
   }
@@ -131,7 +134,8 @@ const speedNow = (page) => page.evaluate(() => `${document.getElementById('speed
 /** Two frames in each stage: [stage, share of it]. */
 // (EARLY=1: the first moments after the blow lands instead of the strike's middle, for what is over quickly: a line run out from the caster)
 // (SHOW=1: four moments of the showcase itself, which plays through the first part of the strike's stage, before the blow)
-const FRAMES = process.env.SHOW ? [['windup', 0.55], ['windup', 0.95], ['strike', 0.05], ['strike', 0.15], ['strike', 0.3], ['strike', 0.45]] : process.env.EARLY ? [['windup', 0.55], ['windup', 0.95], ['blow', 60], ['blow', 200], ['blow', 400], ['blow', 700]] : [['windup', 0.55], ['windup', 0.95], ['strike', 0.5], ['strike', 0.9], ['aftermath', 0.12], ['aftermath', 0.5]];
+// (AT=0.18,0.22,0.26,0.3: four moments of the strike by how far through it, to catch a clip that is over between the usual frames)
+const FRAMES = process.env.AT ? [['windup', 0.55], ['windup', 0.95], ...process.env.AT.split(',').map((x) => ['strike', Number(x)])] : process.env.SHOW ? [['windup', 0.55], ['windup', 0.95], ['strike', 0.05], ['strike', 0.15], ['strike', 0.3], ['strike', 0.45]] : process.env.EARLY ? [['windup', 0.55], ['windup', 0.95], ['blow', 60], ['blow', 200], ['blow', 400], ['blow', 700]] : [['windup', 0.55], ['windup', 0.95], ['strike', 0.5], ['strike', 0.9], ['aftermath', 0.12], ['aftermath', 0.5]];
 
 for (const pick of PICKS) {
   const { ctx, page } = await open();
@@ -251,7 +255,7 @@ for (const pick of PICKS) {
       return window.__cost;
     });
     const big = cost.ups.filter((u) => u.w * u.h >= 200 * 200);
-    console.log('cost', pick, JSON.stringify({ uploads: big.length, inFight: big.filter((u) => u.fight), slowFrames: cost.frames.length, worst: cost.frames.sort((a, b) => b.ms - a.ms).slice(0, 6), cut400: cost.cut }));
+    console.log('cost', pick, JSON.stringify({ uploads: big.length, plain: big.filter((u) => u.of === 'HTMLImageElement').map((u) => `${u.w}x${u.h} ${u.ms}${u.fight ? ' F' : ''}`), bitmaps: big.filter((u) => u.of === 'ImageBitmap').map((u) => `${u.w}x${u.h} ${u.ms}${u.fight ? ' F' : ''}`), inFight: big.filter((u) => u.fight).length, slowFrames: cost.frames.length, worst: cost.frames.sort((a, b) => b.ms - a.ms).slice(0, 6), cut400: cost.cut }));
     }
     console.log('ok', pick, `${W}x${H}`, JSON.stringify({ mem: await page.evaluate(() => window.__bfxMem?.()), weight: st.weight, shape: st.shape, show: st.show, windup: st.windup.ms, strike: st.strike.ms, aftermath: st.aftermath.ms, total: st.total, measured: t + rest, before, during: [...new Set(speeds)], after }));
   } catch (e) {

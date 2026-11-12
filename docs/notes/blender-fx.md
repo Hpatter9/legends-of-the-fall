@@ -503,6 +503,20 @@ card made to finish) and every frame's own work. What it found, for this loader:
 - A browser with no `createImageBitmap` falls back to a plain image and pays the decode at the hand-over (about 0.2 ms a thousand
   pixels at this throttle: some 200 ms for a 1024 x 1024 atlas). Every phone browser the game supports has it.
 
-Not this loader's, but the largest stops the measure saw in a fight: the painted spell sheets (`fx/spells/*.webp`, plain images):
-`f-martial` 551 to 576 ms, `a-toolkit` 396 to 439 ms, `c-healers` 243 to 256 ms, `d-casters`/`e-moves`/`b-auras` 165 to 252 ms each,
-on the frame each is first drawn. The same cure would serve them.
+**The painted spell sheets** (`src/render/spellArt.ts`, `fx/spells/*.webp`; the director's order, since their loader had the same
+fault): they were plain images, decoded on the frame each was handed to the graphics card, and since the freeze builder's
+`keepReady` hands all ten over in a deploy, one a frame, those decodes were a wave's start stopping. They are fetched and made
+bitmaps now, as this loader's atlases are (a browser without `createImageBitmap`, or a failed fetch, has the plain image as
+before; `spellImage()` gives the moment's band whichever it is, and a canvas draws either). Measured with `COST=1` at six times
+throttle, before and after:
+
+| Sheet | Pixels | Before (plain image) | After (bitmap) |
+| --- | --- | --- | --- |
+| `f-martial` | 1536 x 2880 | 551 to 576 ms | 95 ms |
+| `a-toolkit` | 1536 x 1632 | 396 to 439 ms | 39 to 60 ms |
+| `c-healers` | 1536 x 864 | 243 to 256 ms | 28 ms |
+| `d-casters`, `e-moves`, `b-auras` | 1536 x 960 | 165 to 252 ms | 24 to 39 ms |
+
+**The one long frame at a deploy** (760 to 1670 ms in the first measure, 1180 to 1300 ms in this one): about 610 ms of it is 220
+small pictures (64 x 102 canvases, the board's columns) handed to the graphics card one after another in that one frame, some
+2.8 ms each; the rest is the frame's own work building the board. Neither is this loader's.

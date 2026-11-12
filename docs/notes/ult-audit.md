@@ -557,14 +557,19 @@ the last two after the show is over), `TOUGH=1`.
 
 ### The director's list: the Dread Pirate's fleet, the Dragoon's breath, the Ninja Monk seen
 
-`docs/samples/blender-fx/audit-list-2-393.jpg` (0.499 above, now below) and `audit-ghost-fleet-393.jpg` (four moments).
+`docs/samples/blender-fx/audit-list-2-393.jpg` (0.499 above, now below: the Dragoon and the Ninja Monk) and
+`audit-ghost-fleet-393.jpg` (four moments, as it is now).
 
-- **Ghost Fleet (the Dread Pirate)** has its own scene, `broadside`: a ghost ship's side stands behind the foes (a long hull, a
-  bowsprit, three masts with square sails), its guns flash along it, and cannon shot arcs in to burst in puffs and rings across
-  the ground in front; cracks are left. It is one picture in the midst of what it struck (no longer a burst on each foe). In the
-  photograph: the ship hangs over the far side of the crowd, three masts and their sails plain to see, and white shot bursts in
-  rings among the foes under it. Honest: the ship is a solid purple, not pale and see-through as a ghost might be; and it is one
-  ship, where the ability says a fleet.
+- **Ghost Fleet (the Dread Pirate)** has its own scene, `broadside`: guns flash in a row from the field's far edge, each with a
+  puff of powder smoke, and cannon shot arcs in from them to burst in puffs and rings among the foes; cracks are left. It is one
+  picture in the midst of what it struck (no longer a burst on each foe). **No ship is drawn.** A ship was modelled first (a hull,
+  masts, square sails) and the director rejected it, rightly: built of plain solids it was a crude model, solid purple, hanging
+  over the crowd, the largest thing on the screen and nothing like the game's painted art. A ghost ship worth showing (pale and
+  see-through, planks, gun ports, tattered sails, rigging, an outline, standing behind the foes) is painted art, not something
+  this pipeline's solids make in a pass; it wants a ChatGPT prompt and a painted sheet if it is wanted. In the photograph
+  (`audit-ghost-fleet-393.jpg`, four moments close together, the screen's flash off): a white gun flash and purple powder smoke
+  at the far side, pink shot in the air on its way down, then purple splashes among the foes. Honest: it is small and brief, the
+  flashes stand a tile above the far foes rather than off the field, and the rings of the bursts fall between two of the frames.
 - **Inferno Breath (the Dragoon)** runs out from her: the strike on each tile of its line plays nearest first, each seventy
   milliseconds after the one before and a little larger (`lineRun`, `ULT_LINE` in `blenderFxRules.ts`; a test), so the fire is
   seen to leave her and widen; and the clip on each tile is tall narrow tongues, not the round clump it was. The Samurai's cut
