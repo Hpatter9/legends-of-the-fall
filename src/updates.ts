@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.547.0',
+    date: '2026-11-12',
+    title: 'A fix for the app\'s long stop between waves',
+    notes: ['The battlefield is now painted on plain memory canvases, which the Android app\'s web view should handle far faster than before.', 'Diagnostics now breaks a stop down: columns painted, how many were reused, pictures sent to the graphics card, and the time of each part.', 'A stop with no name now lists the last three things the game began, so fewer entries read \'not known\'.'],
+  },
+  {
     version: '0.546.0',
     date: '2026-11-12',
     title: 'The glow sheet no longer stalls a fight',
