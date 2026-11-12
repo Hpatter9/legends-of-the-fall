@@ -1669,7 +1669,7 @@ def spirits(c, r=1.2, n=4, tall=1.1, mode='circle', turns=0.5, hoop=True):
 
 # 56. Beast: a wolf's shape (a long body, a head and snout, two ears, four legs, a tail) bursting out of a puff of smoke in a leap,
 # across the camera's view, and landing. What is summoned, arriving.
-def beast(c, size=1.0, puffs=5):
+def beast(c, size=1.0, puffs=3):
     # (a wolf's own colours, whatever the element: grey fur, an amber eye; the smoke it bursts from and the ring it lands in are the
     # element's, the magic that called it)
     m, av = c.solid((0.36, 0.37, 0.42), (0.1, 0.1, 0.12), 0.5, 0.75, 0.0)
@@ -1717,10 +1717,11 @@ def beast(c, size=1.0, puffs=5):
         av.outputs[0].default_value = 1 - gone
         for o in (body, chest, head, snout, *ears, *legs, tail, eye):
             hide(o, t < 0.04 or gone >= 1)
-        cut.inputs[1].default_value = 0.15 + 0.7 * win(t, 0.1, 0.7)
+        # (a small puff, torn open at once: the beast is what is to be seen, not the smoke)
+        cut.inputs[1].default_value = 0.25 + 0.6 * win(t, 0.05, 0.45)
         for o, a, rad, sc in smoke_:
             q = win(t, 0, 0.7)
-            put(o, (-F[0] * 0.4 * s + math.cos(a) * rad * s * (0.4 + q), -F[1] * 0.4 * s + math.sin(a) * rad * s * (0.4 + q), 0.25 * s + 0.5 * s * q * sc), 0.42 * s * sc * (0.5 + 0.5 * ease(q)), (q, q * 0.5, a))
+            put(o, (-F[0] * 0.4 * s + math.cos(a) * rad * s * (0.4 + q), -F[1] * 0.4 * s + math.sin(a) * rad * s * (0.4 + q), 0.2 * s + 0.4 * s * q * sc), 0.24 * s * sc * (0.5 + 0.5 * ease(q)), (q, q * 0.5, a))
         put(ring, scale=(0.75 * s * (0.3 + 0.7 * ease(win(t, 0.5, 0.9))),) * 2 + (1,))
         rv.outputs[0].default_value = win(t, 0.5, 0.6) * (1 - win(t, 0.75, 1))
         hide(ring, t < 0.5)
