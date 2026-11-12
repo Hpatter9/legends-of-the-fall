@@ -161,6 +161,7 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
     from: 'right',
     front: true,
     aftershock: true,
+    flash: 0.6,
     flashTint: '#e9d9ff',
   },
 };

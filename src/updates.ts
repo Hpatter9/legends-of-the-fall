@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.534.0',
+    date: '2026-11-12',
+    title: 'Vaelkhar\'s flash, softened',
+    notes: ['Vaelkhar\'s violet flash at the blow is a little softer, so his wings and maw show through it.'],
+  },
+  {
     version: '0.533.0',
     date: '2026-11-12',
     title: 'The killing blow is seen',
