@@ -173,4 +173,24 @@ with no place by the ring (more heroes than places) does too.
 
 ### Numbers (393x852 unless said, CPU x4, x2)
 
-NUMBERS2
+| case | build | hand-overs | what the film found |
+| --- | --- | --- | --- |
+| a daily run (desert, a rim) | 0.554.0 | 2 | FAILED: 66 turns of the loop with no picture drawn, 121 faults written; no march was drawn at all |
+| a daily run | now | 2 | held: 0 not drawn, 0 faults |
+| a quest battle (bridgeBlades: shrine, a rim) | 0.554.0 | 1 | FAILED: 70 turns with no picture; the camera cut 231 px at the deploy |
+| a quest battle | now | 1 | held (the second wave was lost by the film's two heroes, so one hand-over); the cut 8 px |
+| a hero fallen at the wave's end (`--fell`) | 0.554.0 | 2 | FAILED: 98 pictures of the march and after without the returning hero |
+| a hero fallen at the wave's end | now | 2 | held: it marches from the first picture of the march |
+| a duel wave (`--duel`) | 0.554.0 | 2 | passed the count (the watchers were still drawn, by the ring) but by eye the champion marched alone and four appeared at the deploy; 1 fault written at the hand-over (the crowd posed after the build had destroyed it) |
+| a duel wave | now | 2 | held: 5 of 5 march; 0 faults (the crowd is put away as the next fight is made) |
+| a wave after a revive (`--level 14`: a life spent) | now | 3 | held |
+| cinematics on (`--scenes`, waves 4 to 7) | now | 3 | held; no fault |
+| 393x852 / 360x780 / 412x915 | now | 3 / 2 / 2 | held |
+
+The camera at the deploy, the party's middle on the screen in the one picture the deploy comes up in (pictures here are 230 to
+500 ms apart, so one step of the ease is most of the way; on a phone at 30 to 60 pictures a second it is many small steps):
+0.554.0 moved it 41 to 65 px (231 in the quest battle); now 6 to 30 px, the scale unchanged in both.
+
+Not filmed: a hero whose tile is blocked on the next board (no seed found that blocks one; `squadTiles` and its test hold the
+rule), the Muster, reduced motion. Sheets: `docs/samples/march-stays/` `ease-*`, `fell-393`, `duel-393`, `daily-393`,
+`quest-393`, `revive-393`, `scenes-393`, and `0554-*` for the build before.

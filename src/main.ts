@@ -891,6 +891,9 @@ class Game {
     // (Duchess the goat may join one fight in a thousand: the test page's `?duchess=1` always brings her, `duchessFight.ts`)
     diagMark('the next board built');
     this.b = startStage(this.run, this.duchessWish());
+    // (MARCH-STAYS: a duel's crowd stands in the board's own layer, which the build below empties: it is put away here, not on the
+    // next frame, or this frame's pose for it faulted on sprites already gone and the rest of the hand-over's frame was lost)
+    if (this.duelShow.on) this.duelShow.clear();
     hideDuchessCard();
     // (QUEST-POSSIBLE: a taken quest that bars spells or ultimates holds that Auto switch off for a fight it would count for, and says why)
     const run0 = this.run;
