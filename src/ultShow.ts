@@ -287,7 +287,8 @@ export class UltShow {
         fx.showBeat('land', p[0], p[1], { tall: b.foe !== undefined ? this.opts.sprite(b.foe)?.tall : tall, el });
         return;
       default:
-        fx.showBeat(b.kind, p[0], p[1], { tall, el });
+        // (ULT-AUDIT: the hero's kind goes with a beat on the caster, so its gathering is the hero's own wind-up and not one circle for all)
+        fx.showBeat(b.kind, p[0], p[1], { tall, el, hero: plan.kind });
     }
   }
 

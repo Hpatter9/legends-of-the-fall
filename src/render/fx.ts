@@ -76,7 +76,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, ultPlace, ultSpots, ultLinked, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -793,7 +793,7 @@ export class Fx {
   /** ULT-SHOW (`ultShow.ts`): one beat of an ultimate's showcase, drawn on the moment's layer (it runs while the fight is held), in the
    *  colours of its element (`el`). (x, y) is a fighter's feet or a tile's ground, `tall` its height; `to` a foe (a cut, a blow) or the far
    *  end (a dash, a hook). The painted toolkit's parts when they are there, else the pack's. */
-  showBeat(kind: ShowBeat, x: number, y: number, o: { tall?: number; to?: { x: number; y: number; tall: number }; el?: Element; how?: 'bolt' | 'flame' | 'bullet' } = {}): void {
+  showBeat(kind: ShowBeat, x: number, y: number, o: { tall?: number; to?: { x: number; y: number; tall: number }; el?: Element; how?: 'bolt' | 'flame' | 'bullet'; hero?: string } = {}): void {
     const m = this.moment;
     const el = o.el ?? 'dark';
     const tint = ULT_TINT[el];
@@ -802,7 +802,7 @@ export class Fx {
     m.density = budget.density;
     m.cap = budget.cap;
     // (BLENDER-FX: the beat as rendered clips, when its element's are loaded; else the painted parts and the pack's, below)
-    if (this.bfxShowBeat(kind, x, y, el, o.to, o.how)) return;
+    if (this.bfxShowBeat(kind, x, y, el, o.to, o.how, o.hero)) return;
     const smoke = (n: number, s: number) => {
       for (let i = 0; i < n; i++) m.spawn({ frames: VFX.smokeDark, x: x + jitter(14), y: y - lift + jitter(10), scale: s, life: 650, vy: -0.035, grow: 0.0009, alpha: 0.85, delay: i * 25 });
     };
@@ -1006,7 +1006,11 @@ export class Fx {
   /** BLENDER-FX: a beat of a showcase as rendered clips (`beat-*`, `tools/blender-fx/effects.py`), in the showcase's element. A clip
    *  stands on its tile's ground, so it is put at the feet. A line (a dash, a hook, a blessing) is a row of small clips. False when the
    *  beat's first clip is not loaded: the older parts play then. The shakes are the beats' own, as they were. */
-  private bfxShowBeat(kind: ShowBeat, x: number, y: number, el: Element, to?: { x: number; y: number; tall: number }, how?: 'bolt' | 'flame' | 'bullet'): boolean {
+  private bfxShowBeat(kind: ShowBeat, x: number, y: number, el: Element, to?: { x: number; y: number; tall: number }, how?: 'bolt' | 'flame' | 'bullet', hero?: string): boolean {
+    // (ULT-AUDIT: on the caster, a showcase's gathering, its call and its finish were one circle, one ring and one burst for every hero
+    // in its colour. A hero with a wind-up of its own gathers with THAT (its ability beginning, played again through the showcase); its
+    // call is only the dust it kicks up and its finish a small flare, so nothing shared stands in front of what the ability is)
+    const own = hero && ultBfx(hero, 'windup', ultWeight(hero)) === `ult-${hero}-windup` ? hero : undefined;
     const B = (clip: BeatClip, px: number, py: number, o: Parameters<Fx['bfxBeat']>[4] = {}, e: Element = el) => this.bfxBeat(clip, e, px, py, o);
     const line = (clip: BeatClip, x0: number, y0: number, x1: number, y1: number, lag: number = BEAT_LINE.LAG) => {
       let any = false;
@@ -1092,6 +1096,7 @@ export class Fx {
         shake(0.04);
         return true;
       case 'gather':
+        if (own && this.bfxUlt(own, 'windup', x, y, BEAT_OWN.GATHER_MS)) return true;
         return B('gather', x, y, { lit: true });
       case 'mark':
         if (!B('mark', x, y, { lit: true })) return false;
@@ -1101,6 +1106,7 @@ export class Fx {
         // (what falls, seen high over the mark and coming down the slant its sheet was rendered at)
         return B('sky', x + 80, y - 200, { life: 900, mult: 1.3, vx: -0.07, vy: 0.078 });
       case 'call':
+        if (own) return B('dust', x, y);
         if (!B('call', x, y)) return false;
         B('nova', x, y, { delay: 60 });
         return true;
@@ -1110,7 +1116,7 @@ export class Fx {
         shake(0.08);
         return true;
       case 'finish':
-        return B('nova', x, y);
+        return own ? B('appear', x, y, { mult: BEAT_OWN.FINISH }) : B('nova', x, y);
     }
   }
 

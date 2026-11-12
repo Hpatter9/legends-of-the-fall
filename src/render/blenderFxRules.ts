@@ -188,6 +188,10 @@ export function beatBfx(clip: BeatClip, el: string): string | undefined {
  *  (`warmBfx`), so they are there when the ultimate is fired. */
 export const beatKeys = (el: string): string[] => Object.keys(BFX_CLIPS).filter((k) => k.startsWith('beat-') && (k.endsWith(`-${el}`) || k.split('-').length === 2));
 
+/** ULT-AUDIT: a hero's own showcase beats on the caster: how long its own wind-up plays again as the showcase's gathering (ms), and how
+ *  large its finish's flare is drawn. */
+export const BEAT_OWN = { GATHER_MS: 1800, FINISH: 0.8 } as const;
+
 /** A line of a showcase (a dash's dust, a hook's reach, a blessing's ribbon) is a row of small clips along it, one every `BEAT_LINE.STEP`
  *  world px (two at least, `MAX` at most), each `LAG` ms after the one before: the points, with the far end last. */
 export const BEAT_LINE = { STEP: 26, MAX: 9, LAG: 30 } as const;

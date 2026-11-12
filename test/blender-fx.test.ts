@@ -381,7 +381,7 @@ test('a showcase\'s beats are rendered clips in its element: every clip in every
   assert.deepEqual(mid[0], [0, BEAT_LINE.STEP]);
   // (every beat the showcases plan has a rendered path, tried before the painted parts and the pack's; the fight warms them)
   const fx = readFileSync('src/render/fx.ts', 'utf8');
-  assert.match(fx, /if \(this\.bfxShowBeat\(kind, x, y, el, o\.to, o\.how\)\) return;/);
+  assert.match(fx, /if \(this\.bfxShowBeat\(kind, x, y, el, o\.to, o\.how, o\.hero\)\) return;/);
   const beats = /export type ShowBeat = ([^;]+);/.exec(fx)![1].split('|').map((k) => k.trim().replace(/'/g, ''));
   const body = fx.slice(fx.indexOf('private bfxShowBeat('), fx.indexOf('/** ULT-SHOW: a painted prop'));
   for (const kind of beats) assert.ok(body.includes(`case '${kind}':`), `${kind} has a rendered beat`);
