@@ -203,9 +203,9 @@ ULTS = dict(
     peasant=('earth', 'veil', 'shout', 'bless'), wolfBard=('wind', 'shout', 'spiral', 'bless'), vampireLord=('blood', 'implode', 'siphon', 'burst'),
     hemomancer=('blood', 'siphon', 'rain', 'burst'), nightstalker=('shadow', 'swarm', 'claws', 'blinks'), bloodGargoyle=('earth', 'shockwave', 'slab', 'burst'),
     dhampir=('holy', 'rain', 'cross', 'shots'), warDrummer=('lightning', 'shout', 'bolt', 'burst'), geomancer=('earth', 'slab', 'spikes', 'bless'),
-    bellWarden=('shadow', 'shout', 'ring', 'burst'), falconer=('wind', 'swarm', 'claws', 'sky'), banneret=('fire', 'veil', 'ring', 'bless'),
+    bellWarden=('shadow', 'shout', 'ring', 'burst'), falconer=('wind', 'shaft', 'claws', 'sky'), banneret=('fire', 'veil', 'ring', 'bless'),
     astralSphinx=('arcane', 'eye', 'sigil', 'burst'), mirageDancer=('wind', 'veil', 'cross', 'blinks'), plagueDoctor=('poison', 'cloud', 'smoke', 'burst'),
-    bombardier=('fire', 'rain', 'burst', 'sky'), astrologer=('holy', 'implode', 'burst', 'sky'), inquisitor=('holy', 'strike', 'ring', 'shots'),
+    bombardier=('fire', 'shaft', 'burst', 'sky'), astrologer=('holy', 'implode', 'burst', 'sky'), inquisitor=('holy', 'strike', 'ring', 'shots'),
     seraph=('holy', 'shaft', 'shockwave', 'sky'), corsairSurgeon=('forest', 'geyser', 'motes', 'bless'), harpooner=('ice', 'chains', 'spikes', 'hooks'),
     seaReaver=('water', 'geyser', 'gust', 'line'),
 )
@@ -228,9 +228,35 @@ PLACE = dict(
 THIRD = dict(cleric='ring', beastmaster='ring', geomancer='crack', timeWitch='ring', astrax='sigil', dragoon='flames', banneret='flames', paladin='halo',
              seaReaver='ring', minotaur='trail', shambler='geyser', rifleBot='spiral', demonSwordsman='spiral', werewolf='flare', corsairSurgeon='ring',
              wolfBard='ring', warDrummer='shockwave', lancer='sparks')
-# A wind-up that is the ability itself beginning, in place of its weight's gathering (ULT-AUDIT): Spirit Guardians' spirits rise out of
-# the ground round the Cleric inside the ring they will circle in; no circle of power, no pillar.
-WIND_OWN = dict(cleric=[('ring', 0, 1.4), ('souls', 0.1, 1.5)])
+# ULT-AUDIT: every hero's wind-up is the ability itself beginning, in place of a circle and a pillar by its weight: the Cleric's wisps
+# rise inside the ring the spirits will keep, the Lightning Mage's cloud gathers, the Knight plants a slab and a dome closes, the Kraken's
+# whirlpool turns. No two heroes have the same scenes in the same order, whatever their colours.
+WIND_OWN = dict(
+    vael=[('halo', 0, 1.4), ('implode', 0.2, 1.3)], astrax=[('sigil', 0, 1.3), ('motes', 0.2, 1.4)], ilyra=[('halo', 0, 1.5), ('ring', 0, 1.2)],
+    orrun=[('vines', 0, 1.5), ('ring', 0.1, 1.3)], nyxara=[('sigil', 0, 1.4), ('spiral', 0.3, 1.5)], kunoichi=[('smoke', 0, 1.2), ('swarm', 0.3, 1.4)],
+    wizard=[('vortex', 0, 1.3), ('flames', 0.3, 1.5)], beastmaster=[('shout', 0, 1.3), ('swarm', 0.3, 1.4)], mercenary=[('implode', 0, 1.2), ('sparks', 0.5, 1.5)],
+    arcBlade=[('spiral', 0, 1.3), ('bolt', 0.2, 1.4)], samurai=[('ring', 0, 1.2), ('flare', 0.4, 1.8)], lancer=[('gust', 0, 1.4), ('trail', 0.3, 1.4)],
+    minotaur=[('smoke', 0, 1.3), ('crack', 0.3, 1.4)], barbarian=[('flare', 0, 1.5), ('shout', 0.3, 1.4)], ninjaMonk=[('spiral', 0, 1.4), ('sparks', 0.4, 1.5)],
+    buccaneer=[('chains', 0, 1.5), ('ring', 0, 1.0)], archer=[('shaft', 0, 1.4), ('gust', 0.2, 1.3)], dreadPirate=[('cloud', 0, 1.4), ('souls', 0.3, 1.5)],
+    siegeBot=[('ring', 0, 1.4), ('strike', 0.5, 1.8)], lightningMage=[('cloud', 0, 1.5), ('sparks', 0.4, 1.5)], gunslinger=[('halo', 0, 1.4), ('sparks', 0.6, 1.6)],
+    rifleBot=[('sparks', 0, 1.3), ('bolt', 0.5, 1.6)], dragoon=[('flames', 0, 1.4), ('flare', 0.4, 1.7)], ranger=[('vines', 0, 1.4), ('swarm', 0.3, 1.4)],
+    knight=[('slab', 0, 1.3), ('dome', 0.4, 1.6)], paladin=[('nova', 0, 1.2), ('pillar', 0.3, 1.7)], yamabushi=[('vortex', 0, 1.5), ('gust', 0.3, 1.5)],
+    gorgon=[('eye', 0, 1.5), ('cloud', 0, 1.2)], juggernaut=[('crack', 0, 1.3), ('slab', 0.3, 1.5)], kraken=[('vortex', 0, 1.4), ('geyser', 0.4, 1.6)],
+    mummy=[('gust', 0, 1.4), ('chains', 0.3, 1.5)], warlock=[('sigil', 0, 1.4), ('siphon', 0.3, 1.5)], tyrant=[('shout', 0, 1.4), ('flare', 0.4, 1.6)],
+    shambler=[('crack', 0, 1.2), ('cloud', 0.2, 1.4)], reaper=[('souls', 0, 1.4), ('arc', 0.5, 1.7)], druid=[('vines', 0, 1.4), ('motes', 0.2, 1.4)],
+    illusionist=[('veil', 0, 1.5), ('sparks', 0.4, 1.4)], priestess=[('halo', 0, 1.4), ('pillar', 0.4, 1.7)], werewolf=[('ring', 0, 1.0), ('shout', 0.3, 1.5), ('claws', 0.5, 1.6)],
+    demonSwordsman=[('chains', 0, 1.3), ('flames', 0.3, 1.6)], kitsune=[('spiral', 0, 1.4), ('flames', 0.3, 1.4)], karasu=[('swarm', 0, 1.5), ('gust', 0.3, 1.4)],
+    timeWitch=[('sigil', 0, 1.5), ('ring', 0.2, 1.2), ('motes', 0.3, 1.4)], wanderer=[('geyser', 0, 1.3), ('hearts', 0.3, 1.5)], satyr=[('swarm', 0, 1.4), ('hearts', 0.4, 1.5)],
+    samuraiCommander=[('veil', 0, 1.5), ('flare', 0.4, 1.6)], sage=[('spiral', 0, 1.4), ('dome', 0.4, 1.6)], cleric=[('ring', 0, 1.4), ('souls', 0.1, 1.5)],
+    peasant=[('shout', 0, 1.4), ('slab', 0.3, 1.5)], wolfBard=[('shout', 0, 1.5), ('motes', 0.2, 1.4)], vampireLord=[('siphon', 0, 1.5), ('swarm', 0.2, 1.3)],
+    hemomancer=[('siphon', 0, 1.4), ('ring', 0, 1.2), ('rain', 0.4, 1.5)], nightstalker=[('swarm', 0, 1.4), ('smoke', 0.2, 1.3)], bloodGargoyle=[('gust', 0, 1.2), ('shaft', 0.4, 1.7)],
+    dhampir=[('halo', 0, 1.2), ('cross', 0.5, 1.6)], warDrummer=[('shout', 0, 1.5), ('sparks', 0.3, 1.5)], geomancer=[('slab', 0, 1.5), ('motes', 0.2, 1.3)],
+    bellWarden=[('shout', 0, 1.4), ('crystal', 0.4, 1.6)], falconer=[('swarm', 0, 1.4), ('shaft', 0.4, 1.6)], banneret=[('veil', 0, 1.5), ('ring', 0.1, 1.3)],
+    astralSphinx=[('eye', 0, 1.5), ('sigil', 0, 1.3)], mirageDancer=[('veil', 0, 1.4), ('gust', 0.2, 1.4)], plagueDoctor=[('cloud', 0, 1.5), ('siphon', 0.3, 1.4)],
+    bombardier=[('flames', 0, 1.2), ('geyser', 0.3, 1.6)], astrologer=[('implode', 0, 1.4), ('motes', 0.2, 1.4)], inquisitor=[('halo', 0, 1.3), ('strike', 0.4, 1.7)],
+    seraph=[('halo', 0, 1.4), ('shaft', 0.4, 1.7)], corsairSurgeon=[('geyser', 0, 1.4), ('ring', 0.1, 1.2)], harpooner=[('chains', 0, 1.4), ('geyser', 0.3, 1.5)],
+    seaReaver=[('geyser', 0, 1.5), ('gust', 0.2, 1.4)],
+)
 # How large a strike is drawn when it plays on each fighter, or round the caster.
 PLACE_SIZE = dict(each=0.8, self=1.25)
 # How much larger than a scene's own size a strike is drawn, by the show's weight.
@@ -386,10 +412,9 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
         wind_ms, after_ms = STAGE_MS[weight]
         base = [sc for sc, _, _ in WIND[weight]]
         extra, low, high = OWN[kind]
-        assert (pal, weight, extra) not in _own_wind and (pal, low, high) not in _own_after, kind
-        _own_wind.add((pal, weight, extra))
+        assert (pal, low, high) not in _own_after, kind
         # (the wind-up builds: the weight's own gathering, then the hero's own part joins it and swells to the blow)
-        fx(f'ult-{kind}-windup', None, pal, **box(max(BIG[sc][1] for sc in base + [extra]) * 0.72, 3.4, 0.5), frames=round(wind_ms / 105), take=WIND_FRAMES, ms=wind_ms, seed=7 + i, ult=True,
+        fx(f'ult-{kind}-windup', None, pal, **box(max(BIG[sc][1] for sc in ([w[0] for w in WIND_OWN[kind]] if kind in WIND_OWN else base + [extra])) * 0.72, max(3.4, max(BIG[w[0]][2] for w in WIND_OWN.get(kind, [('ring',)])) * 0.72), 0.5), frames=round(wind_ms / 105), take=WIND_FRAMES, ms=wind_ms, seed=7 + i, ult=True,
            stages=[stage(sc, a, b, **sized(sc, 0.72)) for sc, a, b in WIND_OWN[kind]] if kind in WIND_OWN else
            [stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]] + [stage(extra, 0.3, 1.3, **sized(extra, 0.72))])
         _own_after.add((pal, low, high))
