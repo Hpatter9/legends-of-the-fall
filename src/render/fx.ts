@@ -76,9 +76,10 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TIN
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, beatBfx, beatKeys, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
+import { SHOWCASES } from '../ultShowRules';
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
 import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinematicArt';
 import { flicker } from './cinematicRules';
@@ -383,6 +384,8 @@ export class Fx {
       this.bfxWarmed.add(b);
       const kinds = new Set(b.units.filter((x) => x.side === 'hero').map((x) => x.def));
       void warmBfx([...kinds].flatMap((kind) => (['windup', 'strike', 'aftermath'] as UltStageName[]).map((stage) => ultBfx(kind, stage, ultWeight(kind)))));
+      // (and the beats of their showcases, by each one's element)
+      void warmBfx([...new Set([...kinds].map((kind) => SHOWCASES[kind]?.el).filter((e): e is Element => !!e))].flatMap((e) => beatKeys(e)));
     }
     let royalSky: 'meteor' | 'starfall' | undefined;
     const slashes = slashesOf(events);
@@ -767,6 +770,8 @@ export class Fx {
     const budget = particleBudget(settings().saver);
     m.density = budget.density;
     m.cap = budget.cap;
+    // (BLENDER-FX: the beat as rendered clips, when its element's are loaded; else the painted parts and the pack's, below)
+    if (this.bfxShowBeat(kind, x, y, el, o.to, o.how)) return;
     const smoke = (n: number, s: number) => {
       for (let i = 0; i < n; i++) m.spawn({ frames: VFX.smokeDark, x: x + jitter(14), y: y - lift + jitter(10), scale: s, life: 650, vy: -0.035, grow: 0.0009, alpha: 0.85, delay: i * 25 });
     };
@@ -948,6 +953,133 @@ export class Fx {
         play(m, packKey(el, 'nova'), x, y - lift, { scale: 2.2, frameMs: 60, alpha: 0.8 });
         if (el === 'dark') smoke(5, 1.6);
         return;
+    }
+  }
+
+  /** BLENDER-FX: one of a showcase's clips on the moment's layer, the middle of its tile at (x, y). `life` plays it for longer than one
+   *  pass (a loop goes round; another holds), `lit` lifts the moment's dim over it. False when its sheet is not loaded. */
+  private bfxBeat(clip: BeatClip, el: Element, x: number, y: number, o: { delay?: number; mult?: number; life?: number; loop?: boolean; vx?: number; vy?: number; lit?: boolean } = {}): boolean {
+    const key = beatBfx(clip, el);
+    const c = key ? bfxClip(key) : undefined;
+    const frames = key ? bfxFrames(key) : [];
+    if (!c || !frames.length) return false;
+    const size = o.mult ?? 1;
+    const loop = (o.loop ?? c.loop) && !this.reduced;
+    const life = o.life ?? c.ms;
+    const [cx, cy] = bfxCentre(c, x, y, size);
+    this.moment.spawn({ frames: this.reduced ? [frames[c.hold]] : frames, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: this.reduced ? life : (loop ? c.ms : life) / c.n, life, loop, prio: true, solid: true, half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42, ...(o.delay ? { delay: o.delay } : {}), ...(o.vx ? { vx: o.vx } : {}), ...(o.vy ? { vy: o.vy } : {}) });
+    if (o.lit) this.bfxLit.push({ x: cx, y: cy, r: Math.max(c.w, c.h) * BFX_SCALE * size * ULT_BFX.LIGHT, left: life + (o.delay ?? 0) });
+    return true;
+  }
+
+  /** BLENDER-FX: a beat of a showcase as rendered clips (`beat-*`, `tools/blender-fx/effects.py`), in the showcase's element. A clip
+   *  stands on its tile's ground, so it is put at the feet. A line (a dash, a hook, a blessing) is a row of small clips. False when the
+   *  beat's first clip is not loaded: the older parts play then. The shakes are the beats' own, as they were. */
+  private bfxShowBeat(kind: ShowBeat, x: number, y: number, el: Element, to?: { x: number; y: number; tall: number }, how?: 'bolt' | 'flame' | 'bullet'): boolean {
+    const B = (clip: BeatClip, px: number, py: number, o: Parameters<Fx['bfxBeat']>[4] = {}, e: Element = el) => this.bfxBeat(clip, e, px, py, o);
+    const line = (clip: BeatClip, x0: number, y0: number, x1: number, y1: number, lag: number = BEAT_LINE.LAG) => {
+      let any = false;
+      beatLine(x0, y0, x1, y1).forEach(([px, py], i) => (any = B(clip, px, py, { delay: i * lag }) || any));
+      return any;
+    };
+    const shake = (by: number) => (this.trauma = Math.min(1, this.trauma + by));
+    switch (kind) {
+      case 'vanish':
+        return B('puff', x, y);
+      case 'appear':
+        return B('appear', x, y);
+      case 'cut':
+        if (!to || !B('cut', to.x, to.y, { lit: true })) return false;
+        B('blow', to.x, to.y, { delay: 40 });
+        shake(0.22);
+        return true;
+      case 'blow':
+        if (!to || !B('blow', to.x + jitter(6), to.y + jitter(6))) return false;
+        shake(0.06);
+        return true;
+      case 'dash':
+        return !!to && line('dust', x, y, to.x, to.y);
+      case 'crash':
+        if (!B('crash', x, y, { lit: true })) return false;
+        shake(0.5);
+        return true;
+      case 'hook':
+        if (!to || !line('link', x, y, to.x, to.y)) return false;
+        B('ring', to.x, to.y, { delay: 180 });
+        return true;
+      case 'shot':
+        if (!to) return false;
+        if (how === 'bolt') {
+          if (!B('bolt', to.x, to.y, { lit: true })) return false;
+          B('blow', to.x, to.y, { delay: 60 }, 'lightning');
+          shake(0.2);
+        } else if (how === 'flame') {
+          if (!line('flame', x, y, to.x, to.y, 35)) return false;
+          B('nova', to.x, to.y, { delay: 220, mult: 0.7 }, 'fire');
+        } else {
+          if (!B('blow', to.x, to.y, { delay: 70 })) return false;
+          B('blow', x + Math.sign(to.x - x || 1) * 10, y, { mult: 0.6 }, 'fire');
+          shake(0.1);
+        }
+        return true;
+      case 'cloud':
+        if (!B('cloud', x, y - 110, { life: 2400 })) return false;
+        B('smite', x + 18, y, { delay: 500, mult: 0.8 });
+        return true;
+      case 'burn':
+        return B('flame', x, y, { life: 2200, loop: true });
+      case 'snare':
+        return !!to && B('snare', to.x, to.y);
+      case 'stone':
+        if (!to || !B('rise', to.x, to.y)) return false;
+        B('puff', to.x, to.y, { delay: 150, mult: 0.7 });
+        return true;
+      case 'smite':
+        if (!to || !B('smite', to.x, to.y, { lit: true })) return false;
+        shake(0.07);
+        return true;
+      case 'taunt':
+        if (!to || !line('link', to.x, to.y, x, y)) return false;
+        B('ring', to.x, to.y);
+        return true;
+      case 'bless':
+        if (!to || !line('link', x, y, to.x, to.y)) return false;
+        B('ring', to.x, to.y, { delay: 120 });
+        B('appear', to.x, to.y, { delay: 120, mult: 0.7 });
+        return true;
+      case 'transform':
+        if (!B('nova', x, y, { mult: 1.4, lit: true })) return false;
+        B('puff', x, y, { mult: 1.4, delay: 60 });
+        shake(0.35);
+        return true;
+      case 'rise':
+        if (!B('rise', x, y)) return false;
+        shake(0.05);
+        return true;
+      case 'tunnel':
+        if (!B('tunnel', x, y)) return false;
+        shake(0.04);
+        return true;
+      case 'gather':
+        return B('gather', x, y, { lit: true });
+      case 'mark':
+        if (!B('mark', x, y, { lit: true })) return false;
+        shake(0.12);
+        return true;
+      case 'sky':
+        // (what falls, seen high over the mark and coming down the slant its sheet was rendered at)
+        return B('sky', x + 80, y - 200, { life: 900, mult: 1.3, vx: -0.07, vy: 0.078 });
+      case 'call':
+        if (!B('call', x, y)) return false;
+        B('nova', x, y, { delay: 60 });
+        return true;
+      case 'land':
+        if (!B('ring', x, y)) return false;
+        B('dust', x, y);
+        shake(0.08);
+        return true;
+      case 'finish':
+        return B('nova', x, y);
     }
   }
 

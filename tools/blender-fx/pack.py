@@ -81,7 +81,7 @@ HEROES_A_GROUP = 2
 def group_order(ids):
     """Which group of atlases each effect goes in. Group 0 is what every fight may need (the spells, the ground loops) and
     is loaded up front; the ultimates' shared wind-ups and aftermaths are group 1; then each pair of heroes' own
-    ultimates has a group, loaded when one of them is in the fight."""
+    ultimates has a group, loaded when one of them is in the fight; then the showcase's beats, a group for each element."""
     out, heroes = {}, {}
     for key in ids:
         if key.startswith('ultwind-') or key.startswith('ultafter-'):
@@ -90,8 +90,16 @@ def group_order(ids):
             hero = key.split('-')[1]
             heroes.setdefault(hero, len(heroes))
             out[key] = 2 + heroes[hero] // HEROES_A_GROUP
-        else:
+        elif not key.startswith('beat-'):
             out[key] = 0
+    # (the showcase's beats: a group for each element, after the heroes'; a beat of one element only goes with that element's)
+    base = 2 + -(-len(heroes) // HEROES_A_GROUP)
+    only = dict(bolt='lightning', flame='fire', rise='earth', tunnel='earth')
+    els = {}
+    for key in ids:
+        if key.startswith('beat-'):
+            el = only.get(key.split('-')[1]) if key.count('-') == 1 else key.split('-')[2]
+            out[key] = base + els.setdefault(el, len(els))
     return out
 
 

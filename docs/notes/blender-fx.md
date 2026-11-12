@@ -160,6 +160,48 @@ the rendered loops instead: every element has one, a tile's worth, the lights wi
 loader are gone; the loop's strength on open ground and under a fighter. This is the owner's decision changing a requirement,
 not a test loosened. `tools/fx-alive/cut.py` (which cut the painted sheet) is kept for the record; its output is no longer used.
 
+## The showcase's beats
+
+A hand-fired ultimate plays its showcase (`ultShow.ts`), a string of small beats: she vanishes, appears and cuts; a circle marks each
+crowd; one called up lands. Every one of the 24 kinds of beat (`Fx.showBeat`) is now rendered clips, in the showcase's element:
+
+| Clip | What it is | The beats that play it |
+| --- | --- | --- |
+| `puff` | a puff of smoke | vanish, stone, transform |
+| `appear` | a flare leaping up | appear, bless |
+| `cut` | two crossed strokes, hard and bright | cut |
+| `blow` | a spray of sparks | blow, cut, shot (a bullet) |
+| `dust` | the dust of a run | dash, land |
+| `link` | one link of a line | hook, taunt, bless |
+| `crash` | the blow's core, rings and rubble, small, over a crack | crash |
+| `cloud` | a storm cloud (a loop) | cloud |
+| `snare` | vines snapping tight | snare |
+| `smite` | a pillar of the element | smite, cloud |
+| `nova` | a burst out of the caster | transform, finish, call, shot (flame) |
+| `call` | a shock along the ground | call |
+| `ring` | a ring on the ground | land, hook, taunt, bless |
+| `gather` | a sigil and what is drawn into it | gather |
+| `mark` | a great sigil and a thin pillar | mark |
+| `sky` | what falls, high over a mark (a loop, drifting down) | sky |
+| `bolt`, `flame`, `rise`, `tunnel` | one element's only: a bolt, a tongue of flame, a spire of rock, the ground heaving | shot, burn, stone, rise, tunnel |
+
+The first sixteen are made in each of the game's ten elements (`beat-<clip>-<element>`), the last four once (`beat-<clip>`): 164 clips.
+A line (a dash, a hook's reach, a blessing running to an ally) is a row of small clips along it (`beatLine`: one every 26 world px, each
+30 ms after the last), so no clip is ever turned to lie along a line: pixels stay square. The clips stand on a tile's ground, so a beat
+is put at the feet. They play on the moment's layer, above its dim; the big ones (a cut, a crash, a mark, a smite) lift the dim over
+themselves as the strikes do. Each element's beats are a group of atlases of their own, asked for as a fight begins for the elements of
+its heroes' showcases (`beatKeys`, `warmBfx`); until they are in, or for a beat with no clip, the older painted parts play, as before.
+Reduced motion holds each clip's one frame. The beats' shakes are unchanged.
+
+## The ultimates, round 7: the core flashes up and tears open
+
+From the director's shots of 0.512.0: Meteor Swarm's blow frame had lost its fireball (a flat disc of orange on the ground with the
+ring), and the Samurai's dome covered his target for the whole strike. The blow's core (`impact` in `scenes.py`) now swells in the first
+tenth of its time, a whole fireball for a frame or two, then tears open at once and burns on in rags for most of the blow, so the
+fighters show through its holes; the flash on the ground under it is broken by noise and gone early. A strike has 20 colours of its own
+(`STRIKE_COLOURS`; the shared count is 14), so a great core of fire, ice or light keeps its texture. The test that held the atlases
+under a count of bytes now holds a strike to a least size instead (13 frames, 16 colours), as the director asked.
+
 ## The ultimates, round 6: every hero's own wind-up and aftermath
 
 All 70 heroes now have their own `ult-<kind>-windup` and `ult-<kind>-aftermath` as well as their own strike (`ULT_OWN = 70`). Each
