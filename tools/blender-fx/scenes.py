@@ -2209,8 +2209,42 @@ def meteors(c, r=1.6, n=3, size=1.0):
     return step
 
 
+# 68. Wisp: one wisp of smoke travelling to the screen's right (a loop): a small bright head and a tail of shrinking puffs that
+# trails behind it and curls up, flickering. What circles a fighter while a status holds (ON-FIGHTER): small, so the fighter is seen.
+def wisp(c, r=0.16, tail=0.55, puffs=5):
+    m, cut = c.flame(3.2, 0.5, 1.5)
+    hm, _ = c.flat('hot', 2.0)
+    head = c.sphere(1.0, hm, 2)
+    parts = [(c.sphere(1.0, m, 3), k / puffs, c.rnd.uniform(0, TAU)) for k in range(1, puffs + 1)]
+
+    def step(t):
+        c.tick(t, 1.6)
+        cut.inputs[1].default_value = 0.22
+        put(head, scr(tail * 0.5, 0, 0.3), r * 0.55 * (1 + 0.12 * math.sin(TAU * t * 2)))
+        for o, u, ph in parts:
+            wob = 0.035 * math.sin(TAU * (t + u) + ph)
+            put(o, scr(tail * (0.5 - u), 0.12 * u * u + wob, 0.3), r * (1 - 0.62 * u), (t * TAU, ph, 0))
+    return step
+
+
+# 69. Pool: light lying on the ground at a fighter's feet (a loop): a faint broken disc and two thin rings that breathe. It lies
+# under the fighter, so it never covers them.
+def pool(c, r=0.6):
+    disc, da = c.disc('ramp', 0.8, r * 0.95, noise=4)
+    rings = [c.ring('bright', 0.035, 1.3), c.ring('mid', 0.025, 1.1)]
+
+    def step(t):
+        c.tick(t, 1.0)
+        da.inputs[1].default_value = 0.9 + 0.25 * math.sin(TAU * t)
+        for i, (o, v) in enumerate(rings):
+            k = r * ((1.0, 0.72)[i] + 0.05 * math.sin(TAU * t + i * 1.7))
+            put(o, scale=(k, k, 1))
+            v.outputs[0].default_value = 0.9
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, toll, meteors,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, toll, meteors, wisp, pool,
 )}

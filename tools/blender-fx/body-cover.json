@@ -1,0 +1,954 @@
+{
+"aura-eclipse": [
+0.213,
+0.198
+],
+"aura-spirits": [
+0.849,
+0.524
+],
+"spell-blink-cast": [
+0.545,
+0.334
+],
+"spell-bulwark-hit": [
+0.324,
+0.241
+],
+"spell-chain-cast": [
+0.308,
+0.083
+],
+"spell-chain-hit": [
+0.279,
+0.11
+],
+"spell-charm-cast": [
+0.317,
+0.102
+],
+"spell-charm-hit": [
+0.229,
+0.107
+],
+"spell-cleanse-cast": [
+0.096,
+0.05
+],
+"spell-cleanse-hit": [
+0.639,
+0.418
+],
+"spell-deepfreeze-cast": [
+0.362,
+0.115
+],
+"spell-deepfreeze-hit": [
+0.88,
+0.714
+],
+"spell-drain-hit": [
+0.197,
+0.105
+],
+"spell-foresight-cast": [
+0.291,
+0.204
+],
+"spell-frost-cast": [
+0.445,
+0.333
+],
+"spell-frost-hit": [
+0.217,
+0.151
+],
+"spell-gale-cast": [
+0.169,
+0.064
+],
+"spell-haste-cast": [
+0.431,
+0.188
+],
+"spell-haste-hit": [
+0.451,
+0.15
+],
+"spell-heal-cast": [
+0.241,
+0.158
+],
+"spell-heal-hit": [
+0.562,
+0.396
+],
+"spell-hex-cast": [
+0.602,
+0.364
+],
+"spell-hex-hit": [
+0.552,
+0.409
+],
+"spell-lance-cast": [
+0.379,
+0.285
+],
+"spell-lance-hit": [
+0.212,
+0.063
+],
+"spell-mirage-hit": [
+0.775,
+0.572
+],
+"spell-poison-cast": [
+0.916,
+0.469
+],
+"spell-quake-cast": [
+0.286,
+0.14
+],
+"spell-quake-hit": [
+0.158,
+0.116
+],
+"spell-raisedead-cast": [
+0.464,
+0.291
+],
+"spell-raisedead-hit": [
+0.62,
+0.432
+],
+"spell-rally-cast": [
+0.676,
+0.288
+],
+"spell-rally-hit": [
+0.494,
+0.326
+],
+"spell-renewal-cast": [
+0.39,
+0.221
+],
+"spell-renewal-hit": [
+0.05,
+0.022
+],
+"spell-resurrect-cast": [
+0.208,
+0.159
+],
+"spell-resurrect-hit": [
+0.746,
+0.538
+],
+"spell-shatter-cast": [
+0.493,
+0.142
+],
+"spell-shatter-hit": [
+0.256,
+0.123
+],
+"spell-shield-cast": [
+0.762,
+0.628
+],
+"spell-shield-hit": [
+0.254,
+0.208
+],
+"spell-smite-cast": [
+0.233,
+0.089
+],
+"spell-smite-hit": [
+0.612,
+0.367
+],
+"spell-snare-cast": [
+0.304,
+0.232
+],
+"spell-snare-hit": [
+0.164,
+0.118
+],
+"spell-sunbeam-cast": [
+0.288,
+0.215
+],
+"spell-sunbeam-hit": [
+0.226,
+0.067
+],
+"spell-thunderclap-hit": [
+0.128,
+0.077
+],
+"spell-venom-hit": [
+0.515,
+0.261
+],
+"spell-warcry-cast": [
+0.681,
+0.339
+],
+"spell-warcry-hit": [
+0.658,
+0.302
+],
+"spell-wolves-cast": [
+0.283,
+0.151
+],
+"spell-wolves-hit": [
+0.347,
+0.157
+],
+"ult-arcBlade-aftermath": [
+0.705,
+0.369
+],
+"ult-arcBlade-strike": [
+0.665,
+0.395
+],
+"ult-arcBlade-windup": [
+0.939,
+0.653
+],
+"ult-archer-aftermath": [
+0.619,
+0.45
+],
+"ult-archer-windup": [
+0.566,
+0.454
+],
+"ult-astralSphinx-aftermath": [
+0.754,
+0.518
+],
+"ult-astralSphinx-strike": [
+0.687,
+0.449
+],
+"ult-astralSphinx-windup": [
+0.733,
+0.686
+],
+"ult-astrax-aftermath": [
+0.496,
+0.276
+],
+"ult-astrax-windup": [
+0.471,
+0.363
+],
+"ult-astrologer-aftermath": [
+0.511,
+0.31
+],
+"ult-astrologer-windup": [
+0.645,
+0.442
+],
+"ult-banneret-aftermath": [
+0.97,
+0.806
+],
+"ult-banneret-strike": [
+1.0,
+0.83
+],
+"ult-banneret-windup": [
+0.681,
+0.531
+],
+"ult-barbarian-aftermath": [
+0.884,
+0.501
+],
+"ult-barbarian-windup": [
+0.96,
+0.754
+],
+"ult-beastmaster-aftermath": [
+0.475,
+0.279
+],
+"ult-beastmaster-strike": [
+0.648,
+0.314
+],
+"ult-beastmaster-windup": [
+0.939,
+0.67
+],
+"ult-bellWarden-aftermath": [
+0.905,
+0.665
+],
+"ult-bellWarden-strike": [
+0.885,
+0.411
+],
+"ult-bellWarden-windup": [
+0.937,
+0.636
+],
+"ult-bloodGargoyle-aftermath": [
+0.888,
+0.614
+],
+"ult-bloodGargoyle-windup": [
+0.567,
+0.395
+],
+"ult-bombardier-aftermath": [
+0.786,
+0.593
+],
+"ult-bombardier-strike": [
+0.935,
+0.9
+],
+"ult-bombardier-windup": [
+1.0,
+0.868
+],
+"ult-buccaneer-aftermath": [
+0.938,
+0.726
+],
+"ult-buccaneer-strike": [
+0.877,
+0.561
+],
+"ult-buccaneer-windup": [
+0.948,
+0.834
+],
+"ult-cleric-aftermath": [
+0.529,
+0.323
+],
+"ult-cleric-strike": [
+0.946,
+0.594
+],
+"ult-cleric-windup": [
+0.844,
+0.549
+],
+"ult-corsairSurgeon-aftermath": [
+0.849,
+0.518
+],
+"ult-corsairSurgeon-strike": [
+1.0,
+0.639
+],
+"ult-corsairSurgeon-windup": [
+1.0,
+0.996
+],
+"ult-demonSwordsman-aftermath": [
+0.977,
+0.826
+],
+"ult-demonSwordsman-strike": [
+0.89,
+0.606
+],
+"ult-demonSwordsman-windup": [
+0.977,
+0.819
+],
+"ult-dhampir-aftermath": [
+0.81,
+0.468
+],
+"ult-dhampir-strike": [
+0.753,
+0.386
+],
+"ult-dhampir-windup": [
+0.992,
+0.874
+],
+"ult-dragoon-aftermath": [
+0.907,
+0.602
+],
+"ult-dragoon-windup": [
+0.833,
+0.729
+],
+"ult-dreadPirate-aftermath": [
+0.812,
+0.42
+],
+"ult-dreadPirate-windup": [
+0.921,
+0.624
+],
+"ult-druid-aftermath": [
+0.96,
+0.627
+],
+"ult-druid-windup": [
+0.71,
+0.487
+],
+"ult-falconer-aftermath": [
+0.433,
+0.161
+],
+"ult-falconer-windup": [
+0.844,
+0.668
+],
+"ult-geomancer-aftermath": [
+0.785,
+0.524
+],
+"ult-geomancer-windup": [
+0.813,
+0.698
+],
+"ult-gorgon-aftermath": [
+0.901,
+0.597
+],
+"ult-gorgon-strike": [
+1.0,
+0.708
+],
+"ult-gorgon-windup": [
+0.773,
+0.604
+],
+"ult-gunslinger-aftermath": [
+0.84,
+0.372
+],
+"ult-gunslinger-strike": [
+0.525,
+0.268
+],
+"ult-gunslinger-windup": [
+0.71,
+0.556
+],
+"ult-harpooner-aftermath": [
+1.0,
+0.868
+],
+"ult-harpooner-strike": [
+0.728,
+0.591
+],
+"ult-harpooner-windup": [
+1.0,
+0.848
+],
+"ult-hemomancer-aftermath": [
+0.563,
+0.325
+],
+"ult-hemomancer-windup": [
+0.879,
+0.716
+],
+"ult-illusionist-aftermath": [
+0.89,
+0.636
+],
+"ult-illusionist-strike": [
+0.972,
+0.662
+],
+"ult-illusionist-windup": [
+0.918,
+0.783
+],
+"ult-ilyra-aftermath": [
+0.968,
+0.752
+],
+"ult-ilyra-strike": [
+0.785,
+0.56
+],
+"ult-ilyra-windup": [
+0.99,
+0.901
+],
+"ult-inquisitor-aftermath": [
+1.0,
+0.838
+],
+"ult-inquisitor-strike": [
+0.712,
+0.445
+],
+"ult-inquisitor-windup": [
+0.992,
+0.871
+],
+"ult-juggernaut-aftermath": [
+0.628,
+0.477
+],
+"ult-juggernaut-windup": [
+0.781,
+0.524
+],
+"ult-karasu-aftermath": [
+0.923,
+0.695
+],
+"ult-karasu-windup": [
+0.6,
+0.34
+],
+"ult-kitsune-aftermath": [
+0.563,
+0.369
+],
+"ult-kitsune-strike": [
+0.828,
+0.523
+],
+"ult-kitsune-windup": [
+0.968,
+0.748
+],
+"ult-knight-aftermath": [
+0.995,
+0.694
+],
+"ult-knight-strike": [
+1.0,
+0.699
+],
+"ult-knight-windup": [
+0.798,
+0.683
+],
+"ult-kraken-aftermath": [
+1.0,
+0.855
+],
+"ult-kraken-strike": [
+1.0,
+0.869
+],
+"ult-kraken-windup": [
+1.0,
+0.719
+],
+"ult-kunoichi-aftermath": [
+0.515,
+0.266
+],
+"ult-kunoichi-strike": [
+0.626,
+0.273
+],
+"ult-kunoichi-windup": [
+0.966,
+0.829
+],
+"ult-lancer-aftermath": [
+0.301,
+0.101
+],
+"ult-lancer-windup": [
+0.289,
+0.211
+],
+"ult-lightningMage-aftermath": [
+0.78,
+0.525
+],
+"ult-lightningMage-windup": [
+0.666,
+0.473
+],
+"ult-mercenary-aftermath": [
+0.782,
+0.325
+],
+"ult-mercenary-strike": [
+0.926,
+0.388
+],
+"ult-mercenary-windup": [
+0.68,
+0.529
+],
+"ult-minotaur-aftermath": [
+0.769,
+0.359
+],
+"ult-minotaur-windup": [
+0.792,
+0.543
+],
+"ult-mirageDancer-aftermath": [
+0.507,
+0.297
+],
+"ult-mirageDancer-strike": [
+0.599,
+0.337
+],
+"ult-mirageDancer-windup": [
+0.567,
+0.401
+],
+"ult-mummy-aftermath": [
+0.53,
+0.311
+],
+"ult-mummy-strike": [
+0.993,
+0.641
+],
+"ult-mummy-windup": [
+0.967,
+0.724
+],
+"ult-nightstalker-aftermath": [
+0.883,
+0.553
+],
+"ult-nightstalker-windup": [
+0.714,
+0.494
+],
+"ult-ninjaMonk-aftermath": [
+0.653,
+0.337
+],
+"ult-ninjaMonk-strike": [
+0.67,
+0.3
+],
+"ult-ninjaMonk-windup": [
+0.925,
+0.672
+],
+"ult-nyxara-aftermath": [
+0.898,
+0.427
+],
+"ult-nyxara-strike": [
+0.825,
+0.392
+],
+"ult-nyxara-windup": [
+0.935,
+0.537
+],
+"ult-orrun-aftermath": [
+0.759,
+0.416
+],
+"ult-orrun-strike": [
+0.853,
+0.632
+],
+"ult-orrun-windup": [
+0.659,
+0.467
+],
+"ult-paladin-aftermath": [
+1.0,
+0.7
+],
+"ult-paladin-strike": [
+0.965,
+0.648
+],
+"ult-paladin-windup": [
+0.93,
+0.621
+],
+"ult-peasant-aftermath": [
+0.862,
+0.59
+],
+"ult-peasant-strike": [
+0.845,
+0.543
+],
+"ult-peasant-windup": [
+0.899,
+0.677
+],
+"ult-plagueDoctor-aftermath": [
+0.71,
+0.481
+],
+"ult-plagueDoctor-strike": [
+1.0,
+0.697
+],
+"ult-plagueDoctor-windup": [
+0.967,
+0.768
+],
+"ult-priestess-aftermath": [
+0.964,
+0.677
+],
+"ult-priestess-strike": [
+1.0,
+0.804
+],
+"ult-priestess-windup": [
+0.999,
+0.879
+],
+"ult-ranger-aftermath": [
+0.753,
+0.402
+],
+"ult-ranger-strike": [
+0.9,
+0.5
+],
+"ult-ranger-windup": [
+0.737,
+0.465
+],
+"ult-reaper-aftermath": [
+0.851,
+0.434
+],
+"ult-reaper-strike": [
+0.701,
+0.391
+],
+"ult-reaper-windup": [
+0.832,
+0.503
+],
+"ult-rifleBot-aftermath": [
+0.784,
+0.364
+],
+"ult-rifleBot-strike": [
+1.0,
+0.589
+],
+"ult-rifleBot-windup": [
+0.697,
+0.59
+],
+"ult-sage-aftermath": [
+0.861,
+0.657
+],
+"ult-sage-strike": [
+0.933,
+0.599
+],
+"ult-sage-windup": [
+0.924,
+0.711
+],
+"ult-samurai-aftermath": [
+0.899,
+0.583
+],
+"ult-samurai-windup": [
+0.823,
+0.558
+],
+"ult-samuraiCommander-aftermath": [
+0.869,
+0.554
+],
+"ult-samuraiCommander-strike": [
+1.0,
+0.501
+],
+"ult-samuraiCommander-windup": [
+0.93,
+0.604
+],
+"ult-satyr-aftermath": [
+0.711,
+0.315
+],
+"ult-satyr-strike": [
+0.809,
+0.304
+],
+"ult-satyr-windup": [
+0.533,
+0.384
+],
+"ult-seaReaver-aftermath": [
+0.365,
+0.194
+],
+"ult-seaReaver-windup": [
+0.498,
+0.389
+],
+"ult-seraph-aftermath": [
+0.901,
+0.613
+],
+"ult-seraph-windup": [
+0.98,
+0.848
+],
+"ult-shambler-aftermath": [
+1.0,
+0.871
+],
+"ult-shambler-windup": [
+0.589,
+0.49
+],
+"ult-siegeBot-aftermath": [
+0.438,
+0.309
+],
+"ult-siegeBot-windup": [
+0.714,
+0.487
+],
+"ult-timeWitch-aftermath": [
+0.894,
+0.712
+],
+"ult-timeWitch-strike": [
+0.908,
+0.697
+],
+"ult-timeWitch-windup": [
+0.551,
+0.429
+],
+"ult-tyrant-aftermath": [
+0.943,
+0.602
+],
+"ult-tyrant-strike": [
+0.953,
+0.783
+],
+"ult-tyrant-windup": [
+0.937,
+0.769
+],
+"ult-vael-aftermath": [
+0.893,
+0.433
+],
+"ult-vael-windup": [
+0.997,
+0.849
+],
+"ult-vampireLord-aftermath": [
+0.616,
+0.375
+],
+"ult-vampireLord-strike": [
+0.91,
+0.477
+],
+"ult-vampireLord-windup": [
+0.724,
+0.397
+],
+"ult-wanderer-aftermath": [
+0.699,
+0.331
+],
+"ult-wanderer-strike": [
+0.842,
+0.501
+],
+"ult-wanderer-windup": [
+0.682,
+0.434
+],
+"ult-warDrummer-aftermath": [
+0.808,
+0.551
+],
+"ult-warDrummer-windup": [
+0.914,
+0.755
+],
+"ult-warlock-aftermath": [
+0.682,
+0.451
+],
+"ult-warlock-strike": [
+0.687,
+0.35
+],
+"ult-warlock-windup": [
+0.745,
+0.526
+],
+"ult-werewolf-aftermath": [
+0.805,
+0.427
+],
+"ult-werewolf-strike": [
+0.959,
+0.683
+],
+"ult-werewolf-windup": [
+0.921,
+0.675
+],
+"ult-wizard-aftermath": [
+0.97,
+0.936
+],
+"ult-wizard-windup": [
+0.696,
+0.604
+],
+"ult-wolfBard-aftermath": [
+0.9,
+0.409
+],
+"ult-wolfBard-strike": [
+0.994,
+0.688
+],
+"ult-wolfBard-windup": [
+0.835,
+0.564
+],
+"ult-yamabushi-aftermath": [
+0.918,
+0.452
+],
+"ult-yamabushi-strike": [
+0.987,
+0.568
+],
+"ult-yamabushi-windup": [
+1.0,
+0.953
+]
+}

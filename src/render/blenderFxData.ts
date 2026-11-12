@@ -14,7 +14,17 @@ export const BFX_CORE: readonly number[] = [0, 1];
 
 export const BFX_CLIPS: Readonly<Record<string, BfxClip>> = {
   'aura-eclipse': {"a": 0, "x": 501, "y": 556, "w": 93, "h": 146, "n": 10, "cols": 4, "ax": 48.0, "ay": 123.8, "ms": 1200, "loop": true, "hold": 0, "layer": "over", "el": "shadow"},
+  'aura-pool-blood': {"a": 1, "x": 1005, "y": 641, "w": 41, "h": 22, "n": 8, "cols": 2, "ax": 20.5, "ay": 12.0, "ms": 1600, "loop": true, "hold": 0, "layer": "ground", "el": "blood"},
+  'aura-pool-fire': {"a": 1, "x": 1088, "y": 641, "w": 41, "h": 22, "n": 8, "cols": 2, "ax": 20.5, "ay": 12.0, "ms": 1600, "loop": true, "hold": 0, "layer": "ground", "el": "fire"},
+  'aura-pool-forest': {"a": 1, "x": 1171, "y": 641, "w": 41, "h": 22, "n": 8, "cols": 2, "ax": 20.5, "ay": 12.0, "ms": 1600, "loop": true, "hold": 0, "layer": "ground", "el": "forest"},
+  'aura-pool-light': {"a": 1, "x": 1254, "y": 641, "w": 41, "h": 22, "n": 8, "cols": 2, "ax": 20.5, "ay": 12.0, "ms": 1600, "loop": true, "hold": 0, "layer": "ground", "el": "holy"},
+  'aura-pool-wind': {"a": 1, "x": 1337, "y": 641, "w": 41, "h": 22, "n": 8, "cols": 2, "ax": 20.5, "ay": 12.0, "ms": 1600, "loop": true, "hold": 0, "layer": "ground", "el": "wind"},
   'aura-spirits': {"a": 0, "x": 439, "y": 0, "w": 145, "h": 136, "n": 12, "cols": 3, "ax": 72.0, "ay": 116.4, "ms": 1300, "loop": true, "hold": 0, "layer": "over", "el": "wind"},
+  'aura-wisp-blood': {"a": 1, "x": 1972, "y": 500, "w": 22, "h": 11, "n": 8, "cols": 2, "ax": 10.5, "ay": 14.5, "ms": 640, "loop": true, "hold": 0, "layer": "over", "el": "blood"},
+  'aura-wisp-fire': {"a": 1, "x": 1420, "y": 641, "w": 22, "h": 11, "n": 8, "cols": 2, "ax": 10.5, "ay": 14.5, "ms": 640, "loop": true, "hold": 0, "layer": "over", "el": "fire"},
+  'aura-wisp-forest': {"a": 1, "x": 1465, "y": 641, "w": 22, "h": 11, "n": 8, "cols": 2, "ax": 10.5, "ay": 14.5, "ms": 640, "loop": true, "hold": 0, "layer": "over", "el": "forest"},
+  'aura-wisp-light': {"a": 1, "x": 1510, "y": 641, "w": 22, "h": 11, "n": 8, "cols": 2, "ax": 10.5, "ay": 14.5, "ms": 640, "loop": true, "hold": 0, "layer": "over", "el": "holy"},
+  'aura-wisp-wind': {"a": 1, "x": 1555, "y": 641, "w": 22, "h": 11, "n": 8, "cols": 2, "ax": 10.5, "ay": 14.5, "ms": 640, "loop": true, "hold": 0, "layer": "over", "el": "wind"},
   'beat-appear-blood': {"a": 89, "x": 424, "y": 0, "w": 75, "h": 68, "n": 9, "cols": 3, "ax": 37.5, "ay": 48.3, "ms": 450, "loop": false, "hold": 4, "layer": "over", "el": "blood"},
   'beat-appear-dark': {"a": 78, "x": 386, "y": 774, "w": 75, "h": 65, "n": 9, "cols": 3, "ax": 37.5, "ay": 45.3, "ms": 450, "loop": false, "hold": 4, "layer": "over", "el": "shadow"},
   'beat-appear-earth': {"a": 85, "x": 0, "y": 0, "w": 75, "h": 69, "n": 9, "cols": 3, "ax": 37.5, "ay": 49.3, "ms": 450, "loop": false, "hold": 4, "layer": "over", "el": "earth"},
