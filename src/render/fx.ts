@@ -705,8 +705,10 @@ export class Fx {
       const at: [number, number][] = [];
       for (const s of own) {
         const sp = 'unit' in s ? this.sprites.get(s.unit) : undefined;
-        if ('unit' in s && !sp) continue;
-        at.push(sp ? [sp.x, sp.y] : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v));
+        // (one that has fallen and gone from the board is struck where it fell: the blow that ended the fight lands on the fallen)
+        const fell = 'unit' in s && !sp ? b.units.find((u) => u.id === s.unit) : undefined;
+        if ('unit' in s && !sp && !fell) continue;
+        at.push(sp ? [sp.x, sp.y] : fell ? this.tilePos(b, fell.u, fell.v) : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v));
       }
       if (place === 'self') {
         // (ULT-AUDIT: an aura, a ward, a transformation, a pull: it plays round the caster, once; its further bursts add nothing there)
