@@ -1,4 +1,5 @@
-"""Askel's ground show in pieces, for the game (EIDOLON-BLENDER, docs/notes/eidolon-blender.md).
+"""Askel's ground show in pieces, for the game (EIDOLON-BLENDER, docs/notes/eidolon-blender.md). The other Eidolons' pieces
+(nivra_parts.py and so on) borrow this file's scene, camera and helpers.
 
 Run: python3 tools/blender-fx/eidolons/parts.py <out dir>        (PART=sigil,fire picks some; then parts_finish.py)
 
@@ -113,8 +114,12 @@ def sigil():
     render(sc, 'sigil', n, step)
 
 
-def hero_fire():
-    """Fire for the big pieces: turbulence at two scales warped by a third, a hard white core, and dark smoky edges where it thins."""
+HERO_FIRE = [(0.2, (0.05, 0.02, 0.015, 1)), (0.27, (0.4, 0.02, 0.0, 1)), (0.35, (0.9, 0.12, 0.0, 1)), (0.46, (1.0, 0.42, 0.02, 1)), (0.58, (1.0, 0.78, 0.2, 1)), (0.74, (1.0, 0.97, 0.7, 1)), (0.88, (1, 1, 1, 1))]
+
+
+def hero_fire(stops=HERO_FIRE):
+    """Fire for the big pieces: turbulence at two scales warped by a third, a hard white core, and dark smoky edges where it thins.
+    `stops` are its colours from its thin edge to its core (another element's cold or dark fire takes its own)."""
     m, nt = mat('herofire')
     tc = nt.nodes.new('ShaderNodeTexCoord')
     info = nt.nodes.new('ShaderNodeObjectInfo')
@@ -155,7 +160,7 @@ def hero_fire():
     # (the cut is high, so the turbulence tears the outline: ragged tongues with holes in them, not a clean shape)
     cut = mth(nt, 'ADD', 0.23, mth(nt, 'MULTIPLY', rgb.outputs['Red'], 0.6))
     alpha = mth(nt, 'MULTIPLY', mth(nt, 'SUBTRACT', heat, cut), 12.0)
-    col = ramp(nt, hot, [(0.2, (0.05, 0.02, 0.015, 1)), (0.27, (0.4, 0.02, 0.0, 1)), (0.35, (0.9, 0.12, 0.0, 1)), (0.46, (1.0, 0.42, 0.02, 1)), (0.58, (1.0, 0.78, 0.2, 1)), (0.74, (1.0, 0.97, 0.7, 1)), (0.88, (1, 1, 1, 1))])
+    col = ramp(nt, hot, stops)
     glow(nt, col.outputs['Color'], alpha, 1.3)
     return m, clock
 
@@ -495,5 +500,13 @@ def embers():
 
 
 ALL = {'sigil': sigil, 'pillar': pillar, 'explosion': explosion, 'cracks': cracks, 'fire': fire, 'scorch': scorch, 'smoke': smoke, 'embers': embers}
-for key in (os.environ.get('PART') or ','.join(ALL)).split(','):
-    ALL[key]()
+
+
+def run(parts):
+    """Render the pieces asked for (PART=sigil,fire picks some)."""
+    for key in (os.environ.get('PART') or ','.join(parts)).split(','):
+        parts[key]()
+
+
+if __name__ == '__main__':
+    run(ALL)

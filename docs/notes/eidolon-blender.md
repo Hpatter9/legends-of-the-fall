@@ -2,8 +2,53 @@
 
 The owner, after the trial below: **the hybrid**. Each Eidolon keeps its painting for the figure, its name stamp and its line; Blender
 stages everything round it (the sigil, the pillar, the strike across the ground, the scorch, the aftermath). Askel the Cinderhound is
-the first, in the game from this branch (`claude/eidolon-blender`, with main 0.496.0 merged in). The other five follow, one push each:
-Nivra, Gorm, Voltara, Aurelan, Vaelkhar.
+the first; the other five follow in his style and to his bar, one push each: Nivra (done, below), Gorm, Voltara, Aurelan, Vaelkhar.
+Each has its own element's show, not Askel's recoloured, in the same places in the call (`STAGED` in `src/eidolonStage.ts`).
+
+## For the camera: where each show is
+
+All in the board's own pixels (a sheet pixel is 1.414 of them), the same for every staged Eidolon unless its section says otherwise:
+
+- **The summoning** is at the sigil's tile: the board tile nearest the point 30% (a painting that comes from the left: Nivra) or 70%
+  (from the right: Askel) across the screen on the foes' ground line, kept between 24% and 76% across (`sigilSpot`). The sigil is
+  226 x 136 about that tile; the pillar stands on it, 204 wide and 498 tall (452 above the tile, 46 below); the painting comes out of
+  it and leaves by its usual way.
+- **The strike's centre** is the foes' middle: the mean of the living foes' tiles' ground points as the blow lands
+  (`EidolonCall.foeMid`). The blow is drawn about it 566 wide (283 each side, along the screen, whichever way the board lies) and
+  530 tall (442 above the centre, 88 below); it is meant to run off the screen's sides. The ground break is 362 x 192 about the tile
+  nearest the centre. The second and third detonations are 27% of the screen's width to the left and to the right of the centre, at
+  0.72 and 0.78 of the blow's size. The lead-in's tile pieces stand on the foes' tiles and up to two tiles round them.
+
+## Nivra in the game (ice)
+
+Her kit: the Frozen Deep strikes every foe and leaves them frozen 5 s (a boss slowed), so her show is ice that seizes the field
+and breaks: solid crystal, not Askel's fire in blue. `tools/blender-fx/eidolons/nivra_parts.py` renders faceted spires (flat-shaded,
+lit by a white sun and a blue rim, with pale veins and bright tips inside so a large face is never one flat blue), cold white-blue
+light for the flashes, and pale mist. Her call is **6.6 s** (`EIDOLON_MS`, unchanged); the longer wind-up is used to build more.
+
+| Stage | Main's, kept | Blender's |
+|---|---|---|
+| The horn (0 to 0.61 s) | the horn blown, the dim | her **sigil**, a six-armed rune, freezes onto the ground round its ring and inward, crystals growing along it |
+| The pass (0.61 to 2.75 s) | the painted wyrm, her name, title and line, gliding out to the right | a cold white burst and a **cluster of ice spires driven up twelve tiles in two frames**, the ground freezing under it; the painting slides out of it; the cluster stands, then shatters |
+| The sprite and the build-up (2.75 to 4.35 s) | the wyrm comes onto the board and breathes | **the freezing front** races out over the ground under the foes (a ring, frost ferns spreading behind it: the extra beat a longer call has room for), then **small spires burst up** tile by tile from her jaws to the foes; the field darkens hard |
+| The strike (4.35 s, with the 0.28 s freeze) | the hit-stop, the snap zoom, the painted spears of ice under each foe and their shatter, the frost nova, the creeping frost and mist | a hard white flash; a **cold white core** blown out in the frozen frame, then **a wall of ice spires racing out across the foes' whole side**, behind the painted spears; it **stands** a moment, glinting; the ground freezes again under the foes; a second and third burst to either side; a harder, longer shake |
+| The aftermath (5.52 s on) | the painted ice left standing, the wash | **the shatter**: every spire breaks at once, shards thrown, **mist** rolling up along the line; ice motes and snow fall; sheets of ice are left on the tiles, melting back from their edges under the fight |
+
+**Bytes: 393,812** for her ten files (the explosion 187,296 and its glow 38,820; the pillar 67,522 and its glow 19,224; the sigil
+32,472; the freezing front 28,944; the rest under 10 KB each).
+
+**Three passes against main** (`nivra-game-before-after.webp`). One: the pieces wired in; the ice was pale and washed, the spires
+thin as grass. Two: deeper blue with real contrast between lit and shaded faces, thicker spires, bigger shards, and the freezing
+front added to the build-up. Three: veins of light and bright tips inside the crystal, so the wall's large faces have detail. Bigger
+and harder than main from the pillar on.
+
+**Honestly.** The wall's spires are plain faceted cones: they read as crystal and catch the light, but they are simpler shapes than
+the painted spears, which stand in front and carry the fine detail. The mist is flat pale puffs. Her shatter is the best beat.
+
+**Samples** (`docs/samples/eidolon-blender/`): `nivra-game-393.webp`, `-360`, `-412` (animated), their `-strip.webp`,
+`nivra-game-before-after.webp`, `nivra-game-short-strip.webp`, `nivra-game-reduced-strip.webp`. Re-render:
+`python3 tools/blender-fx/eidolons/nivra_parts.py <parts>` then `ID=nivra python3 tools/blender-fx/eidolons/parts_finish.py <parts>`;
+the captures as Askel's with `--picks nivra`, and `ID=nivra SPAN=1.32` for `cast_samples.py`.
 
 ## Askel in the game
 
