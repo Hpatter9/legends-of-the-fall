@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BODY, ROUND, STATUS_ROUND, frontCover, onFighterClip, overAlpha, wispAt, wispsOf } from '../src/render/onFighterRules';
+import { BODY, ROUND, STATUS_ROUND, UNDER, frontCover, onFighterClip, overAlpha, wispAt, wispsOf } from '../src/render/onFighterRules';
 import { BODY_COVER } from '../src/render/bodyCover';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
 import { STATUS_LOOKS, maxStatuses } from '../src/render/fxRules';
@@ -51,6 +51,8 @@ test('however many statuses hold, the smoke in front of the body is under the ce
   }
   assert.deepEqual(wispsOf(0, 3), []);
   assert.deepEqual(wispsOf(2, 3), [0, 1, 0]);
+  // (the smoke is to be seen: more than three wisps, and behind the body each is large and at full strength)
+  assert.ok(ROUND.N >= 5 && ROUND.SIZE >= 0.8 && ROUND.BACK_ALPHA === 1);
 });
 
 test('the unit view draws a status by the rule: nothing of it over the body but the front wisps, the rest under the body', () => {
@@ -82,7 +84,15 @@ test('every rendered clip that plays on a fighter is measured, and drawn over th
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /const thin = cover === undefined \? 1 : overAlpha\(cover\);/);
   assert.match(fx, /const host = on && thin < 1 \? this\.sprites\.get\(on\.id\) : undefined;/);
-  assert.match(fx, /this\.underAt\(host\.underLayer\(\)\)\.spawn\(/);
+  assert.match(fx, /const under = this\.underAt\(host\.underLayer\(\)\);/);
+  // (presence without cover: behind the body it is larger and keeps its glow; a ring lands at the feet under the fighter; and the
+  // clip is over the body at full strength only for the rule's brief flash)
+  assert.ok(UNDER.SIZE > 1 && UNDER.RING >= 1);
+  assert.equal(UNDER.FLASH_MS, BODY.FLASH_MS);
+  assert.ok(BODY.FLASH_MS <= 150);
+  assert.match(fx, /const grown = \(UNDER\.SIZE \* BFX_SCALE \* size\) \/ k;/);
+  assert.match(fx, /const ring = stage === 'strike' && SHOWCASES\[kind\] \? beatBfx\('ring', SHOWCASES\[kind\]\.el\) : undefined;/);
+  assert.match(fx, /life: UNDER\.FLASH_MS, alpha: base, solid: true \}\);/);
   assert.match(readFileSync('src/render/unitView.ts', 'utf8'), /this\.root\.addChildAt\(this\.underFx, this\.root\.getChildIndex\(this\.body\)\);/);
   assert.match(fx, /this\.moment\.spawn\(\{ \.\.\.bit, alpha: base \* thin \}\);/);
 });

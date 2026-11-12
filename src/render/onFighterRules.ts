@@ -26,8 +26,9 @@ export const STATUS_ROUND: Readonly<Record<string, { el: 'light' | 'wind' | 'fir
  *  among the statuses on it (`wispsOf`), so three statuses do not put three times the smoke in front of it; each going
  *  round once in `TURN_MS` and climbing from `LOW` to `HIGH` up the body in `CLIMB_MS`, on an oval `RX` wide and `RY` deep. A wisp is
  *  `SIZE` across; in front of the body it is `FRONT` of that and `FRONT_ALPHA` strong, behind it `BACK_ALPHA`. The pool at the feet is
- *  `POOL` across and `POOL_ALPHA` strong. */
-export const ROUND = { N: 3, SAVER: 2, TURN_MS: 2400, CLIMB_MS: 3600, LOW: 0.12, HIGH: 0.8, RX: 0.52, RY: 0.16, SIZE: 0.56, FRONT: 0.5, FRONT_ALPHA: 0.4, BACK_ALPHA: 0.95, POOL: 1.25, POOL_ALPHA: 0.85 } as const;
+ *  `POOL` across and `POOL_ALPHA` strong. The smoke is what is to be seen (the owner: "a wispy smoke that circles around them"), the
+ *  pool second: behind the body a wisp is large and at full strength, which costs the body nothing. */
+export const ROUND = { N: 5, SAVER: 3, TURN_MS: 2400, CLIMB_MS: 3600, LOW: 0.12, HIGH: 0.85, RX: 0.56, RY: 0.16, SIZE: 0.82, FRONT: 0.3, FRONT_ALPHA: 0.35, BACK_ALPHA: 1, POOL: 1.25, POOL_ALPHA: 0.7 } as const;
 
 export interface Wisp {
   /** Its place from the fighter's feet, in shares of the fighter's height (x to the right, y up). */
@@ -88,3 +89,10 @@ export function onFighterClip(key: string, at?: string): boolean {
  *  where it covers little, else thinned so that what lies over the body is `BODY.CEILING` of it at most. The clip is drawn again at
  *  its full strength UNDER the fighter (on its tile's ground layer), so it is still seen all round the body, and behind it. */
 export const overAlpha = (cover: number): number => (cover <= BODY.CEILING ? 1 : BODY.CEILING / cover);
+
+/** What makes a clip on a fighter land with force though it is thin over the body, none of it over the body:
+ *  - `SIZE`: how much larger the layer UNDER the body is drawn than the clip's own size, and it keeps its glow;
+ *  - `FLASH_MS`: how long the clip is over the body at full strength as it begins (the rule's brief flash);
+ *  - `RING`: a bright ring of the element on the ground at the fighter's feet, under it, as a strike lands on it (the showcase's
+ *    `ring` clip), this much its own size. */
+export const UNDER = { SIZE: 1.15, FLASH_MS: BODY.FLASH_MS, RING: 1.5 } as const;

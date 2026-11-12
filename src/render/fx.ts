@@ -86,7 +86,7 @@ import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinemati
 import { flicker } from './cinematicRules';
 import { coverAlpha, overFighter } from './overFighter';
 import { BODY_COVER } from './bodyCover';
-import { overAlpha } from './onFighterRules';
+import { overAlpha, UNDER } from './onFighterRules';
 import { BossFx } from './bossFx';
 import type { Element, Family } from './fxRules';
 
@@ -396,6 +396,8 @@ export class Fx {
       // (ULT-AUDIT: but the one small clip a healer's light or the Gorgon's gaze runs out in is: it must be there the first time)
       warmBfx([...kinds].filter((kind) => ultLinked(kind) && SHOWCASES[kind]).map((kind) => beatBfx(ultLinkClip(kind), SHOWCASES[kind].el)));
       // (and the small clips a strike adds: a ring on each foe, foam down a line, spray where the caster lands)
+      // (ON-FIGHTER: and the ring that lands at a struck fighter's feet, in each hero's element)
+      warmBfx([...kinds].filter((kind) => SHOWCASES[kind]).map((kind) => beatBfx('ring', SHOWCASES[kind].el)));
       warmBfx([...kinds].filter((kind) => ULT_EXTRA[kind] && SHOWCASES[kind]).flatMap((kind) => Object.values(ULT_EXTRA[kind]).map((clip) => beatBfx(clip, SHOWCASES[kind].el))));
       // (the beats of their showcases are not asked for here: each loads the first time it is played, the older parts playing that once,
       // so a fight begins with as little held as it can)
@@ -710,7 +712,28 @@ export class Fx {
     const host = on && thin < 1 ? this.sprites.get(on.id) : undefined;
     if (host) {
       const k = host.root.scale.x || 1;
-      this.underAt(host.underLayer()).spawn({ ...bit, x: (cx - host.root.x) / k, y: (cy - host.root.y) / k, scale: bit.scale / k, half: bit.half / k, alpha: base });
+      const under = this.underAt(host.underLayer());
+      // (behind the body it is a little larger than itself and keeps its glow: strength there costs the body nothing, `UNDER`)
+      const grown = (UNDER.SIZE * BFX_SCALE * size) / k;
+      const [ux, uy] = bfxCentre(c, x, y, size * UNDER.SIZE);
+      if (c.g && glows.length) {
+        const gk = (BFX_GLOW_SCALE * size * UNDER.SIZE) / k;
+        under.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: (x - host.root.x) / k + (c.g.w / 2 - c.g.ax) * gk, y: (y - host.root.y) / k + (c.g.h / 2 - c.g.ay) * gk, scale: gk, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA, prio: true, half: 1, ...(delay ? { delay } : {}) });
+      }
+      under.spawn({ ...bit, x: (ux - host.root.x) / k, y: (uy - host.root.y) / k, scale: grown, half: bit.half / k, alpha: base });
+      // (a strike lands with a bright ring of its element on the ground at the fighter's feet, under the fighter)
+      const ring = stage === 'strike' && SHOWCASES[kind] ? beatBfx('ring', SHOWCASES[kind].el) : undefined;
+      const rc = ring ? bfxClip(ring) : undefined;
+      const rf = ring ? bfxFrames(ring) : [];
+      if (rc && rf.length) {
+        const rs = (UNDER.RING * BFX_SCALE) / k;
+        under.spawn({ frames: this.reduced ? [rf[rc.hold]] : rf, x: (rc.w / 2 - rc.ax) * rs, y: (rc.h / 2 - rc.ay) * rs, scale: rs, frameMs: rc.ms / rf.length, life: rc.ms, prio: true, solid: true, half: 1, alpha: 1, ...(delay ? { delay } : {}) });
+      }
+      // (and for its first moment the clip is over the body at full strength: the rule's brief flash, `UNDER.FLASH_MS`)
+      if (!this.reduced) {
+        const n = Math.max(1, Math.ceil(UNDER.FLASH_MS / (life / held.length)));
+        this.moment.spawn({ ...bit, frames: held.slice(0, n), frameMs: UNDER.FLASH_MS / n, life: UNDER.FLASH_MS, alpha: base, solid: true });
+      }
     }
     this.moment.spawn({ ...bit, alpha: base * thin });
     // (the moment's dim is lifted over a wind-up and a strike while they play, so they are seen at full strength and not through it: `momentLights`)
