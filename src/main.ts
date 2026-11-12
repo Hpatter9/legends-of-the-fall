@@ -179,6 +179,7 @@ import { BoardLife } from './render/boardLife';
 import { LAND_TERRAIN } from './sim/landTerrain';
 import { FIELD_HAZARDS } from './sim/fieldTraps';
 import { ChainView } from './render/chainView';
+import { fightersTakeOver, hostOnShow } from './render/marchStayRules';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { isScenario } from './sim/scenario';
 import { battleTraitBadge } from './battleTraitArt';
@@ -1336,6 +1337,7 @@ class Game {
       return goal ? [{ unit, goal }] : [];
     });
     this.walking = new Set(walkers.map((w) => w.unit.id));
+    this.marchedFrom = this.b;
     // (the finished fight's fallen are still drawn, where the old section lies against the new one)
     setFrame(frameOf(c[wave - 1], next));
     // (and the camera stays on the same ground, which has moved in the world against the new section)
@@ -1355,6 +1357,10 @@ class Game {
     });
     this.survey = false;
   }
+
+  /** MARCH-STAYS: the finished fight the party marched away from (null with no march since the last fighters were made). While the
+   *  battle on the page is still this one, the marchers stay on the stage and the host on show is the section they marched to. */
+  private marchedFrom: Battle | null = null;
 
   /** Whether the camera is standing back to see the whole map. */
   private survey = false;
@@ -1680,8 +1686,14 @@ class Game {
         this.eid.clear();
         this.boardView.forget();
         const section = chainOf(this.run)?.[this.run.stage - 1];
-        this.boardView.build(b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
-        this.life.build(b.board, weatherOf(b.board));
+        // (MARCH-STAYS: between two waves the host on show is the section the party marched to, not the finished fight's board (the
+        // run has moved on a stage): that section is what is built afresh, with the party left standing on it. It built the old
+        // board in the new one's place: `hostOnShow`)
+        if (section && hostOnShow({ marched: this.marchedFrom === b, hasNext: true }) === 'next section') this.boardView.build(section.board, { boss: !!section.boss }, section.rot);
+        else {
+          this.boardView.build(b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
+          this.life.build(b.board, weatherOf(b.board));
+        }
         this.syncChain();
         this.syncSprites(true);
         this.layout();
@@ -1912,8 +1924,9 @@ class Game {
         s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
       }
     }
+    // (MARCH-STAYS: stepped whether or not a march is on: once it is over the party stands, idling, where it arrived)
+    this.chain.step(dt);
     if (this.chain.active) {
-      this.chain.step(dt);
       const f = this.chain.focus();
       if (f) {
         this.tx = f.x;
@@ -2122,6 +2135,8 @@ class Game {
       for (const s of this.sprites.values()) s.root.destroy({ children: true });
       this.sprites.clear();
     }
+    // (MARCH-STAYS: the heroes who walked here and are standing on these very tiles)
+    const walked = all && fightersTakeOver(this.marchedFrom, this.b) ? this.chain.standing() : new Set<number>();
     const ids = new Set(this.b.units.map((u) => u.id));
     for (const [id, s] of this.sprites)
       if (!ids.has(id)) {
@@ -2139,13 +2154,20 @@ class Game {
         }
         this.boardView.root.addChild(s.root);
         // (a hero set down on a tile puffs its dust)
-        if (u.side === 'hero' && this.b.phase === 'deploy') this.fx.landing(this.b, u.u, u.v);
+        if (u.side === 'hero' && this.b.phase === 'deploy' && !(u.tag !== undefined && walked.has(u.tag))) this.fx.landing(this.b, u.u, u.v);
         else if (this.b.phase === 'fight') this.fx.summoned(this.b, u);
       }
     // (the Nemesis War: a nemesis's plate wears a skull while the hero it dreads stands on the field)
     for (const u of this.b.units) {
       const dread = u.nem ? dreadOf(u.nem.weak) : undefined;
       if (dread) this.sprites.get(u.id)?.setDread(this.b.units.some((h) => h.alive && h.side === 'hero' && h.owner === undefined && h.def === dread));
+    }
+    // (MARCH-STAYS: the party that marched here stood on the section until now: the next fight's fighters are made, on the same
+    // tiles in this same frame, and only now do the marchers go. The finished fight's own fighters made again (the loop watch's
+    // cure) are not the next fight's: `fightersTakeOver`)
+    if (all && fightersTakeOver(this.marchedFrom, this.b)) {
+      this.chain.release();
+      this.marchedFrom = null;
     }
   }
 

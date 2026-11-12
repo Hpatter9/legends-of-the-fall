@@ -1,0 +1,43 @@
+{
+ "size": "393x852",
+ "cpu": 4,
+ "speed": 2,
+ "rows": [
+  {
+   "wave": 1,
+   "frames": 124,
+   "heroes": 5,
+   "marched": true,
+   "marchMs": 14171,
+   "standMs": 2523,
+   "heroGaps": 0,
+   "heroGapMs": 0,
+   "fewestHeroes": 5,
+   "tileGaps": 0,
+   "tileGapMs": 0,
+   "fewestTiles": null,
+   "refalls": 0,
+   "longestFrameMs": 1947,
+   "tapped": false,
+   "rebuilt": true
+  },
+  {
+   "wave": 2,
+   "frames": 127,
+   "heroes": 5,
+   "marched": true,
+   "marchMs": 15460,
+   "standMs": 2569,
+   "heroGaps": 0,
+   "heroGapMs": 0,
+   "fewestHeroes": 5,
+   "tileGaps": 0,
+   "tileGapMs": 0,
+   "fewestTiles": null,
+   "refalls": 0,
+   "longestFrameMs": 1546,
+   "tapped": false,
+   "rebuilt": true
+  }
+ ]
+}
