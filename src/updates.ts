@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.517.0',
+    date: '2026-11-12',
+    title: 'The tactic button is an orb',
+    notes: ['The tactic button in a wave is now a round orb exactly the size of the Auto buttons, with the tactic\'s name as a small label under it.', 'It sits under the Auto buttons in the same corner.'],
+  },
+  {
     version: '0.516.0',
     date: '2026-11-12',
     title: 'Vaelkhar\'s wings',
