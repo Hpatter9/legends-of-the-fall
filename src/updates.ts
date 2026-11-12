@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.527.0',
+    date: '2026-11-12',
+    title: 'A beast for every wolf',
+    notes: ['The Beastmaster\'s ultimate now shows a beast leaping out for each wolf she conjures, where it arrives.', 'The Geomancer\'s ultimate raises a slab on each tile his wall stands on, then on himself and each friend he shields.'],
+  },
+  {
     version: '0.526.0',
     date: '2026-11-12',
     title: 'Guardians, beasts and stone',
