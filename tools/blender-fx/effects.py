@@ -260,6 +260,29 @@ WIND_OWN = dict(
 )
 # A wind-up that holds colours outside its element's (grey fur, amber eyes) has more of them, so the palette step keeps them.
 WIND_COLOURS = dict(beastmaster=22)
+# ULT-AUDIT: every hero's aftermath is what its ability leaves, low where it struck and something lifting off it: no two heroes have
+# the same two scenes, whatever their colours (about forty did, in different colours). (Lists, not pairs in brackets: a test reads the
+# ground loops' pairs out of this file by their shape.)
+AFTER_OWN = dict(
+    vael=['sigil', 'souls'], astrax=['flames', 'motes'], ilyra=['ring', 'halo'], orrun=['vines', 'swarm'],
+    nyxara=['sigil', 'spiral'], kunoichi=['cloud', 'swarm'], wizard=['crack', 'flames'], beastmaster=['trail', 'motes'],
+    mercenary=['crack', 'sparks'], arcBlade=['crack', 'bolt'], samurai=['trail', 'veil'], lancer=['trail', 'gust'],
+    minotaur=['crack', 'smoke'], barbarian=['crack', 'flare'], ninjaMonk=['ring', 'gust'], buccaneer=['cloud', 'chains'],
+    archer=['ring', 'shaft'], dreadPirate=['crack', 'souls'], siegeBot=['crack', 'cloud'], lightningMage=['cloud', 'bolt'],
+    gunslinger=['ring', 'smoke'], rifleBot=['ring', 'sparks'], dragoon=['flames', 'smoke'], ranger=['vines', 'motes'],
+    knight=['ring', 'pillar'], paladin=['sigil', 'pillar'], yamabushi=['cloud', 'spiral'], gorgon=['spikes', 'smoke'],
+    juggernaut=['crack', 'spikes'], kraken=['ring', 'geyser'], mummy=['cloud', 'gust'], warlock=['sigil', 'siphon'],
+    tyrant=['spikes', 'flare'], shambler=['cloud', 'geyser'], reaper=['ring', 'souls'], druid=['vines', 'veil'],
+    illusionist=['sigil', 'veil'], priestess=['sigil', 'halo'], werewolf=['ring', 'claws'], demonSwordsman=['flames', 'chains'],
+    kitsune=['ring', 'swarm'], karasu=['cloud', 'veil'], timeWitch=['sigil', 'crystal'], wanderer=['ring', 'hearts'],
+    satyr=['vines', 'hearts'], samuraiCommander=['ring', 'flare'], sage=['sigil', 'dome'], cleric=['ring', 'motes'],
+    peasant=['slab', 'smoke'], wolfBard=['ring', 'spiral'], vampireLord=['cloud', 'siphon'], hemomancer=['ring', 'rain'],
+    nightstalker=['cloud', 'claws'], bloodGargoyle=['crack', 'slab'], dhampir=['ring', 'cross'], warDrummer=['ring', 'shout'],
+    geomancer=['spikes', 'motes'], bellWarden=['ring', 'veil'], falconer=['trail', 'swarm'], banneret=['flames', 'veil'],
+    astralSphinx=['sigil', 'eye'], mirageDancer=['sigil', 'gust'], plagueDoctor=['cloud', 'motes'], bombardier=['flames', 'cloud'],
+    astrologer=['sigil', 'motes'], inquisitor=['flames', 'halo'], seraph=['nova', 'halo'], corsairSurgeon=['cloud', 'hearts'],
+    harpooner=['spikes', 'chains'], seaReaver=['trail', 'geyser'],
+)
 # How large a strike is drawn when it plays on each fighter, or round the caster.
 PLACE_SIZE = dict(each=0.8, friends=1.1, tiles=0.85, self=1.25)
 # (a few are drawn larger where they land: a beast is a beast's size, stone creeps over the whole of a foe)
@@ -417,12 +440,13 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
         wind_ms, after_ms = STAGE_MS[weight]
         base = [sc for sc, _, _ in WIND[weight]]
         extra, low, high = OWN[kind]
-        assert (pal, low, high) not in _own_after, kind
+        low, high = AFTER_OWN.get(kind, (low, high))
+        assert (low, high) not in _own_after, kind
         # (the wind-up builds: the weight's own gathering, then the hero's own part joins it and swells to the blow)
         fx(f'ult-{kind}-windup', None, pal, **box(max(BIG[sc][1] for sc in ([w[0] for w in WIND_OWN[kind]] if kind in WIND_OWN else base + [extra])) * 0.72, max(3.4, max(BIG[w[0]][2] for w in WIND_OWN.get(kind, [('ring',)])) * 0.72), 0.5), frames=round(wind_ms / 105), take=WIND_FRAMES, colours=WIND_COLOURS.get(kind, 0), ms=wind_ms, seed=7 + i, ult=True,
            stages=[stage(sc, a, b, **sized(sc, 0.72)) for sc, a, b in WIND_OWN[kind]] if kind in WIND_OWN else
            [stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]] + [stage(extra, 0.3, 1.3, **sized(extra, 0.72))])
-        _own_after.add((pal, low, high))
+        _own_after.add((low, high))
         # (the aftermath lingers: something low where it struck, something lifting off it, both thinning to nothing)
         fx(f'ult-{kind}-aftermath', None, pal, **canvas_of((low, high), 0.8), frames=round(after_ms / 120), take=AFTER_FRAMES, ms=after_ms, seed=9 + i, ult=True,
            stages=[stage(low, 0, 0.85, **sized(low, 0.8)), stage(high, 0.1, 1, **sized(high, 0.8))])
