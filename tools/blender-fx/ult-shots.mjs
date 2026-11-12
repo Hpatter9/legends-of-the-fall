@@ -102,7 +102,8 @@ async function army(page, party, army = 'beasts', stage = 3) {
 const speedNow = (page) => page.evaluate(() => `${document.getElementById('speed').textContent}${document.getElementById('speed').dataset.show ? ' (held)' : ''} set x${window.__game.speed}`);
 /** Two frames in each stage: [stage, share of it]. */
 // (EARLY=1: the first moments after the blow lands instead of the strike's middle, for what is over quickly: a line run out from the caster)
-const FRAMES = process.env.EARLY ? [['windup', 0.55], ['windup', 0.95], ['blow', 60], ['blow', 200], ['blow', 400], ['blow', 700]] : [['windup', 0.55], ['windup', 0.95], ['strike', 0.5], ['strike', 0.9], ['aftermath', 0.12], ['aftermath', 0.5]];
+// (SHOW=1: four moments of the showcase itself, which plays through the first part of the strike's stage, before the blow)
+const FRAMES = process.env.SHOW ? [['windup', 0.55], ['windup', 0.95], ['strike', 0.05], ['strike', 0.15], ['strike', 0.3], ['strike', 0.45]] : process.env.EARLY ? [['windup', 0.55], ['windup', 0.95], ['blow', 60], ['blow', 200], ['blow', 400], ['blow', 700]] : [['windup', 0.55], ['windup', 0.95], ['strike', 0.5], ['strike', 0.9], ['aftermath', 0.12], ['aftermath', 0.5]];
 
 for (const pick of PICKS) {
   const { ctx, page } = await open();

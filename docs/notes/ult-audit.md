@@ -163,6 +163,41 @@ green blobs, the Geomancer's slabs small and pale.
 - **Mountain's Embrace**: an ultimate's slabs are heavy stone now (`dark` in `slab`: deep in colour, thicker, with the sheet's dark
   edge) and a fifth larger. In the fight: dark standing stones in rings on five spots, strong against the pale ground.
 
+## Batch 7: the showcase's own sameness
+
+`docs/samples/blender-fx/audit-batch7-show-393-1.jpg` (`SHOW=1`: two moments of the wind-up, then four of the showcase itself, which
+plays through the first part of the strike's stage before the blow).
+
+A hand-fired ultimate plays its showcase, and on the caster every showcase began with the same three beats in its colour: a circle and
+what is drawn into it (`gather`), a ring going out along the ground with a ring of small tongues (`call`), and that ring of tongues
+again at the end (`finish`). That was the "gold circle" seen on the Cleric, and it was the same on every hero. Now, for a hero with a
+wind-up of its own (all 70): the showcase gathers with THAT wind-up, played again over 1.8 s (the Knight's slab and dome, the
+Wanderer's fountain, the wolves' heads); its call is only the dust it kicks up; its finish is a small flare. The hero's kind reaches
+the beat from `ultShow.ts` (`hero`). The beats on foes and friends (a cut, a mark, a blessing's line, a landing) are as they were.
+
+Also in this batch: the Beastmaster's wolves' heads are larger and further apart (four of them, each about a fighter's head and
+shoulders).
+
+## Batch 8: why the wolves were green
+
+`docs/samples/blender-fx/audit-batch8-beastmaster-393.jpg`: the Beastmaster in a fight at full size, four moments (the wind-up, the
+strike, two of the aftermath).
+
+The director's look at batches 5 and 6 found the Beastmaster did not match the report: in the fight the heads and wolves were pale
+green, with no grey and no amber. The shapes were right; the colours were not. The cause was neither a stale clip nor first-use
+loading: every scene's solid things are lit by a rim light and a sky in the ELEMENT's colours (`Ctx.lights`), so grey fur under the
+forest's green rim and sky rendered green, and the palette step then pulled the few amber pixels of the eyes to the nearest green.
+The wolf scenes now light themselves plainly (`_plain_lights` in `scenes.py`: a white sun, a warm white rim, a grey sky), the fur is a
+warmer, darker grey, the eyes larger, and the Beastmaster's wind-up keeps 22 colours so the amber survives (`WIND_COLOURS`).
+
+In the photograph: the wind-up is four grey wolves' heads with pricked ears and yellow-amber eyes, each about a fighter tall, standing
+apart round him; at the strike four grey wolves leap across to where they land. What is still over them: in the aftermath a green
+ring and green cracks in the ground lie across the wolves for a moment (the strike's second scene and the aftermath's ring).
+
+First-use loading was checked as the director asked, since it would touch every hero's first wind-up: a fight asks for each fielded
+hero's wind-up, strike and aftermath as it begins (`warmBfx` in `Fx.show`), two at a time inside the budget, before any ultimate can
+be charged; in every photographed fight the wind-up was the hero's own on its first cast. No change was needed.
+
 ## The audit of all 70
 
 To come, in batches: for each ultimate, what it does in the sim, what 0.499 showed, what main shows now, and the verdict; then the ten

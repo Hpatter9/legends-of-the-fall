@@ -9,7 +9,7 @@ import '../src/sim/battle';
 import { AURA_MOTES } from '../src/render/movePaints';
 import { auraLook } from '../src/render/toolkitLooks';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
-import { ULT_LINK_MS, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
+import { BEAT_OWN, ULT_LINK_MS, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
 import { SHOWCASES } from '../src/ultShowRules';
 
 test('Spirit Guardians shows its guardians: spirits a fighter tall circling the Cleric for as long as the aura lasts', () => {
@@ -100,10 +100,22 @@ test('a strike on each one the ability touched finds them: the friends helped (a
   for (const kind of ['kunoichi', 'samurai', 'cleric', 'beastmaster']) assert.ok(!ultLinked(kind), kind);
   assert.ok(ULT_LINK_MS >= 100 && ULT_LINK_MS <= 400);
   // (what the abilities are: beasts bursting out where each is called, stone creeping over each foe, slabs along the wall's tiles, shields)
-  assert.deepEqual(BFX_CLIPS['ult-beastmaster-strike'].sc, ['beast', 'sparks']);
+  assert.deepEqual(BFX_CLIPS['ult-beastmaster-strike'].sc, ['beast', 'crack']);
   assert.deepEqual(BFX_CLIPS['ult-beastmaster-windup'].sc, ['eyes', 'swarm']);
   assert.deepEqual(BFX_CLIPS['ult-gorgon-strike'].sc, ['crystal', 'smoke']);
   assert.deepEqual(BFX_CLIPS['ult-gorgon-windup'].sc, ['vines', 'eye']);
   assert.deepEqual(BFX_CLIPS['ult-geomancer-strike'].sc, ['slab', 'crack']);
   assert.equal(BFX_CLIPS['ult-sage-strike'].sc![0], 'dome');
+});
+
+test('on the caster a showcase gathers with the hero\'s own wind-up, not one circle for every hero; its call and finish are small', () => {
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  // (the hero's kind reaches the beat from the showcase)
+  assert.match(readFileSync('src/ultShow.ts', 'utf8'), /fx\.showBeat\(b\.kind, p\[0\], p\[1\], \{ tall, el, hero: plan\.kind \}\);/);
+  assert.match(fx, /if \(own && this\.bfxUlt\(own, 'windup', x, y, BEAT_OWN\.GATHER_MS\)\) return true;/);
+  assert.match(fx, /if \(own\) return B\('dust', x, y\);/);
+  assert.match(fx, /return own \? B\('appear', x, y, \{ mult: BEAT_OWN\.FINISH \}\) : B\('nova', x, y\);/);
+  // (every hero has a wind-up of its own to gather with)
+  for (const kind of Object.keys(SHOWCASES)) assert.ok(BFX_CLIPS[`ult-${kind}-windup`], kind);
+  assert.ok(BEAT_OWN.GATHER_MS >= 1000 && BEAT_OWN.FINISH < 1);
 });

@@ -178,7 +178,7 @@ BIG = dict(
     veil=(dict(r=1.0, h=2.0, panes=9), 1.6, 2.6), portal=(dict(r=1.0, z=1.2), 1.8, 3.2), pillar=(dict(r=0.9, h=3.2, sparks=30), 1.8, 3.6),
     shout=(dict(r=1.8, h=1.6, n=5), 2.2, 3.2), swarm=(dict(r=1.5, h=2.0, n=30), 1.9, 2.6), motes=(dict(r=1.6, h=2.2, n=34, crosses=7), 2.0, 2.6),
     hearts=(dict(r=1.0, h=2.0, n=9), 1.5, 2.6), wall=(dict(length=3.0, h=1.7, tongues=9), 2.4, 2.2), flames=(dict(r=1.3, h=1.3, tongues=9), 1.9, 2.2),
-    palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), eyes=(dict(r=1.5, n=6), 2.1, 1.6),
+    palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), eyes=(dict(r=1.9, n=4, size=2.6), 2.6, 2.4),
     implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
 )
 
@@ -186,7 +186,7 @@ BIG = dict(
 ULTS = dict(
     vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'flames', 'sky'), ilyra=('holy', 'halo', 'dome', 'bless'),
     orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'swarm', 'blinks'),
-    wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'beast', 'sparks', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
+    wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'beast', 'crack', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
     minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'burst', 'leap'), ninjaMonk=('wind', 'sparks', 'gust', 'blows'),
     buccaneer=('shadow', 'chains', 'cross', 'hooks'), archer=('wind', 'rain', 'ring', 'sky'), dreadPirate=('shadow', 'rain', 'burst', 'sky'),
@@ -258,6 +258,8 @@ WIND_OWN = dict(
     seraph=[('halo', 0, 1.4), ('shaft', 0.4, 1.7)], corsairSurgeon=[('geyser', 0, 1.4), ('ring', 0.1, 1.2)], harpooner=[('chains', 0, 1.4), ('geyser', 0.3, 1.5)],
     seaReaver=[('geyser', 0, 1.5), ('gust', 0.2, 1.4)],
 )
+# A wind-up that holds colours outside its element's (grey fur, amber eyes) has more of them, so the palette step keeps them.
+WIND_COLOURS = dict(beastmaster=22)
 # How large a strike is drawn when it plays on each fighter, or round the caster.
 PLACE_SIZE = dict(each=0.8, friends=1.1, tiles=0.85, self=1.25)
 # (a few are drawn larger where they land: a beast is a beast's size, stone creeps over the whole of a foe)
@@ -417,7 +419,7 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
         extra, low, high = OWN[kind]
         assert (pal, low, high) not in _own_after, kind
         # (the wind-up builds: the weight's own gathering, then the hero's own part joins it and swells to the blow)
-        fx(f'ult-{kind}-windup', None, pal, **box(max(BIG[sc][1] for sc in ([w[0] for w in WIND_OWN[kind]] if kind in WIND_OWN else base + [extra])) * 0.72, max(3.4, max(BIG[w[0]][2] for w in WIND_OWN.get(kind, [('ring',)])) * 0.72), 0.5), frames=round(wind_ms / 105), take=WIND_FRAMES, ms=wind_ms, seed=7 + i, ult=True,
+        fx(f'ult-{kind}-windup', None, pal, **box(max(BIG[sc][1] for sc in ([w[0] for w in WIND_OWN[kind]] if kind in WIND_OWN else base + [extra])) * 0.72, max(3.4, max(BIG[w[0]][2] for w in WIND_OWN.get(kind, [('ring',)])) * 0.72), 0.5), frames=round(wind_ms / 105), take=WIND_FRAMES, colours=WIND_COLOURS.get(kind, 0), ms=wind_ms, seed=7 + i, ult=True,
            stages=[stage(sc, a, b, **sized(sc, 0.72)) for sc, a, b in WIND_OWN[kind]] if kind in WIND_OWN else
            [stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]] + [stage(extra, 0.3, 1.3, **sized(extra, 0.72))])
         _own_after.add((pal, low, high))
