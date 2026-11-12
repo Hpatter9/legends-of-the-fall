@@ -220,7 +220,7 @@ import { closeCalls, ultimatesCast } from './render/quipRules';
 import { LOADING_TIPS, RECAP_LOSS, RECAP_WIN, RESULT_LOSS, RESULT_WIN } from './quipData';
 import { hideQuip, reclearQuip, showQuip, type Anchor } from './quipView';
 import { fightToastTop, HORN_CORNER } from './hudClear';
-import { laySpellRow, watchSpellRow } from './spellRow';
+import { laySpellRow, spellRowPieces, watchSpellRow } from './spellRow';
 import type { LuckyBleatEffect } from './render/duchessRules';
 import { bleatCabbage, bleatStartle } from './sim/duchessBleat';
 import heartUrl from './art/ui/combat-heart.png';
@@ -2060,6 +2060,11 @@ class Game {
     laySpellRow(row);
     const dock = this.tactics.dock;
     dock.style.setProperty('--dock-top', `${Math.round(rowBottom + 4)}px`);
+    // (TACTIC-ORB: the tactic's orb hangs under the row's last piece when the row runs edge to edge (its right edge on that piece's), so
+    // it reads as one of the Auto buttons' column; with a short, centred row it keeps the corner's own margin)
+    const last = row.dataset.spread === 'span' ? spellRowPieces(row).at(-1) : undefined;
+    if (last) dock.style.setProperty('--dock-right', `${Math.max(8, Math.round(innerWidth - last.getBoundingClientRect().right))}px`);
+    else dock.style.removeProperty('--dock-right');
     const plaque = dock.getBoundingClientRect();
     bar.style.right = plaque.width > 0 ? `${Math.round(innerWidth - plaque.left + 6)}px` : '12px';
     bar.style.top = `${rowBottom + 4}px`;

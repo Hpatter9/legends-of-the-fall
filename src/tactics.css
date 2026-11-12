@@ -13,24 +13,24 @@
 #tacticSheet .tacForm.on { border-color: var(--gold); background: linear-gradient(var(--e4), var(--e1)); }
 #tacticSheet .tacForm.on span { color: var(--ink); }
 #tacticSheet .tacAdvice { margin: -2px 0 2px; font-size: 13px; color: var(--dim); text-align: center; }
-/* (HUD-EVEN, docs/notes/hud-even.md: the fight's tactic button is a plaque at the board's upper right, in the Formation button's corner
-   and make: the same right edge and plate (its size is its own, below). It hangs just under the spell row (`--dock-top`, set by the page as the row and the
-   bars above it move), since the row now spans the screen. Only in a fight.) */
-#tacticDock { position: fixed; z-index: 3; right: max(8px, env(safe-area-inset-right, 0px)); top: var(--dock-top, 180px); display: none; }
+/* (TACTIC-ORB, docs/notes/tactic-size.md; the owner: "tactic button should be the size of the auto buttons next to it"): the fight's
+   tactic button is an orb of the Auto buttons' make: the tactic's painted medallion, round, with its name as the small label under it in
+   the Auto buttons' lettering. Its size is not set here: it is in the Auto buttons' own rule (`paintedButtons.css`, where
+   `#tacticDock #tacticBtn` stands in the same selector list), so the three are always one size. With all four spell slots open the row
+   has no room for an eighth piece at 360 or 393 wide, so the orb hangs in the same corner just under the row's last Auto button
+   (`--dock-top`, `--dock-right`, set by the page as the row moves). Only in a fight.
+   `test/tactic-size.test.ts` and `tools/tactic-size/shots.mjs` pin the size to the Auto buttons'.) */
+#tacticDock { position: fixed; z-index: 3; right: var(--dock-right, max(8px, env(safe-area-inset-right, 0px))); top: var(--dock-top, 180px); display: none; }
 body[data-phase='fight']:not([data-stand]) #tacticDock { display: block; }
-/* (TACTIC-SIZE, docs/notes/tactic-size.md; the owner: "the tactic button is huge now for some reason in a wave": the plaque was the
-   Formation button's size, 95 x 71 px, three lines; it is now one line, its icon and the tactic's word side by side, 92 x 44 px, a thumb's
-   height and no more. The size is fixed here and nowhere else: it does not follow its words, the wave, the camera or an ultimate.
-   `test/tactic-size.test.ts` and `tools/tactic-size/shots.mjs` pin it.) */
-#tacticDock #tacticBtn { position: relative; box-sizing: border-box; width: 92px; height: 44px; min-width: 0; min-height: 0; max-width: 92px; max-height: 44px; padding: 0 8px; overflow: hidden;
-  display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; box-shadow: 0 2px 8px #0009; }
+#tacticDock #tacticBtn.fhTactic { position: relative; display: block; overflow: visible; background: url(ui/buttons/orb-bronze.webp) center / contain no-repeat; color: #f4e1b8; }
 #tacticBtn[hidden] { display: none; }
-#tacticDock #tacticBtn b { font-size: 13px; line-height: 1; }
-#tacticBtn .fhTacticFace { flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; }
-#tacticBtn svg, #tacticBtn .fhTacticArt { width: 20px; height: 20px; object-fit: contain; filter: drop-shadow(0 1px 1px #000); pointer-events: none; }
-/* (the mode's word under it after a tap, right-aligned with it (the boss's bar is at its left and the spell row above): it rises in,
-   stays readable, then fades; it never takes a tap) */
-#tacticDock .fhTacticWord { position: absolute; z-index: 2; right: 0; top: calc(100% + 4px); white-space: nowrap; min-width: 58px; padding: 2px 6px; box-sizing: border-box; text-align: center; pointer-events: none;
+/* (the painted medallion is the whole orb, as the Auto buttons' are; the bronze ring stands behind only the drawn stand-in icon) */
+#tacticDock #tacticBtn.fhTactic:has(.fhTacticArt) { background: none; }
+#tacticBtn .fhTacticArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+#tacticBtn svg { position: absolute; inset: 27%; width: 46%; height: 46%; pointer-events: none; }
+/* (the mode's word under it after a tap, right-aligned with it, under its label (the boss's bar is at its left and the spell row above):
+   it rises in, stays readable, then fades; it never takes a tap) */
+#tacticDock .fhTacticWord { position: absolute; z-index: 2; right: 0; top: calc(100% + 10px); white-space: nowrap; min-width: 58px; padding: 2px 6px; box-sizing: border-box; text-align: center; pointer-events: none;
   font: 700 13px/16px var(--body); color: #fff3d0; background: rgb(0 0 0 / 0.62); border: 1px solid rgb(246 219 145 / 0.5); border-radius: 4px; text-shadow: 0 1px 2px #000;
   opacity: 0; visibility: hidden; }
 #tacticDock .fhTacticWord.up { visibility: visible; animation: tacWord 1.6s ease-out both; }
