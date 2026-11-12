@@ -191,15 +191,21 @@ ULTS = dict(
     seraph=('holy', 'shaft', 'shockwave', 'sky'), corsairSurgeon=('forest', 'geyser', 'motes', 'bless'), harpooner=('ice', 'chains', 'spikes', 'hooks'),
     seaReaver=('water', 'geyser', 'gust', 'line'),
 )
+# How much larger than a scene's own size a strike is drawn, by the show's weight.
+STRIKE_SIZE = dict(blow=1.6, flurry=1.6, wave=1.9, storm=2.3, summon=2.3)
 STYLE_WEIGHT = dict(line='blow', leap='blow', blinks='flurry', blows='flurry', hooks='flurry', burrow='flurry', burst='wave', bless='wave', change='wave',
                     sky='storm', shots='storm', pack='summon')
 OWN_WEIGHT = dict(minotaur='flurry', rifleBot='flurry', priestess='summon')
 # What gathers on the caster, by weight: a blow winds a spiral up the body, a flurry drags power in, a wave draws a circle,
 # a storm turns a funnel, a summoning calls wisps up out of the ground.
-WIND = dict(blow=[('ring', 0, 0.5), ('spiral', 0.15, 1)], flurry=[('implode', 0, 1)], wave=[('sigil', 0, 1), ('motes', 0.2, 1)],
-            storm=[('vortex', 0, 1)], summon=[('sigil', 0, 0.7), ('souls', 0.25, 1)])
-WIND_SIZE = dict(ring=dict(r=1.0, n=3), spiral=dict(r=0.6, h=2.0, bands=3), implode=dict(r=1.3, n=14, z=0.8), sigil=dict(r=1.2, points=6, skip=2),
-                 motes=dict(r=1.0, h=1.8, n=20, crosses=4), vortex=dict(r=1.0, h=2.2, coils=4, motes=18), souls=dict(r=0.9, h=2.0, n=6))
+# (a stage that runs past the end of the clip, to 1.3 or so, is still near its height on the last frame: the wind-up swells right up
+# to the blow instead of dying away before it, and stands twice the hero's height by then)
+WIND = dict(blow=[('ring', 0, 0.5), ('spiral', 0.1, 1.3), ('flare', 0.5, 1.9)], flurry=[('implode', 0, 1.22), ('spiral', 0.45, 1.5)],
+            wave=[('sigil', 0, 1.3), ('motes', 0.15, 1.25), ('pillar', 0.45, 1.7)], storm=[('vortex', 0, 1.3), ('pillar', 0.5, 1.8)],
+            summon=[('sigil', 0, 1.3), ('souls', 0.2, 1.2), ('pillar', 0.5, 1.8)])
+WIND_SIZE = dict(ring=dict(r=1.1, n=3), spiral=dict(r=0.7, h=2.6, bands=3), implode=dict(r=1.5, n=16, z=0.9), sigil=dict(r=1.35, points=6, skip=2),
+                 motes=dict(r=1.1, h=2.2, n=24, crosses=5), vortex=dict(r=1.15, h=2.8, coils=5, motes=20), souls=dict(r=1.0, h=2.5, n=7),
+                 flare=dict(r=0.6, h=2.5, tongues=7), pillar=dict(r=0.6, h=2.9, sparks=22))
 
 
 def canvas(scenes):
@@ -242,19 +248,21 @@ _wound, _after, _own_wind, _own_after = set(), set(), set(), set()
 for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
     weight = ult_weight(kind)
     own = i < ULT_OWN
-    # (the strike: the first scene opens it, the second lands as the first is at its height. A hero whose turn has come has it half
-    # as large again, and longer)
-    k = 1.5 if own else 1.0
-    fx(f'ult-{kind}-strike', None, pal, **canvas_of((first, second), k), frames=18 if own else 16, ms=1500 if own else 1300, seed=40 + 2 * i + 59,
-       stages=[stage(first, 0, 0.7, **sized(first, k)), stage(second, 0.25, 1, **sized(second, k))])
+    # (the strike is the biggest thing in the game: four tiles and more for a blow, most of the foes' side for a storm or a summoning.
+    # Under the hero's own two scenes lies the blow itself, the same for all in its element's colours: a white-hot core, two shock
+    # rings and debris, its heaviest frames first. The first scene opens it, the second lands as the first is at its height.)
+    k = STRIKE_SIZE[weight]
+    reach = max(BIG[first][1], BIG[second][1]) * k
+    fx(f'ult-{kind}-strike', None, pal, **box(max(reach, 2.2 * k * 1.25), max(BIG[first][2], BIG[second][2], 2.4) * k, 0.6), frames=16, ms=1500, seed=40 + 2 * i + 59,
+       stages=[stage('impact', 0.12, 1, r=2.2 * k), stage(first, 0, 0.7, **sized(first, k)), stage(second, 0.25, 1, **sized(second, k))])
     if own:
         wind_ms, after_ms = STAGE_MS[weight]
         base = [sc for sc, _, _ in WIND[weight]]
         extra = next(sc for j in range(len(WIND_ADD)) for sc in [WIND_ADD[(i + j) % len(WIND_ADD)]] if sc not in base and (pal, weight, sc) not in _own_wind)
         _own_wind.add((pal, weight, extra))
         # (the wind-up builds: the weight's own gathering, then the hero's own part joins it and swells to the blow)
-        fx(f'ult-{kind}-windup', None, pal, **canvas_of(base + [extra], 0.72), frames=round(wind_ms / 105), ms=wind_ms, seed=7 + i,
-           stages=[stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]] + [stage(extra, 0.35, 1, **sized(extra, 0.72))])
+        fx(f'ult-{kind}-windup', None, pal, **box(max(BIG[sc][1] for sc in base + [extra]) * 0.72, 3.4, 0.5), frames=round(wind_ms / 105), ms=wind_ms, seed=7 + i,
+           stages=[stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]] + [stage(extra, 0.3, 1.3, **sized(extra, 0.72))])
         low, high = next((lo, hi) for j in range(49) for lo, hi in [(AFTER_LOW[(i + j) % 7], AFTER_HIGH[(i + j // 7) % 7])] if lo != hi and (pal, lo, hi) not in _own_after)
         _own_after.add((pal, low, high))
         # (the aftermath lingers: something low where it struck, something lifting off it, both thinning to nothing)
@@ -263,7 +271,7 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
         continue
     if (weight, pal) not in _wound:
         _wound.add((weight, pal))
-        fx(f'ultwind-{weight}-{pal}', None, pal, **box(1.5, 2.6, 0.5), frames=14, ms=1800, seed=7,
+        fx(f'ultwind-{weight}-{pal}', None, pal, **box(1.9, 3.4, 0.5), frames=16, ms=1800, seed=7,
            stages=[stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]])
     if pal not in _after:
         _after.add(pal)
