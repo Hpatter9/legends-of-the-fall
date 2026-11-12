@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.509.0',
+    date: '2026-11-12',
+    title: 'Gorm\'s call, remade in stone',
+    notes: ['Gorm\'s call is rebuilt: a quarry mark cut in the ground, great slabs thrust up as he strides out, the ground splitting under the foes, then a ridge of stone.', 'An aftershock heaves the ground once more before the ridge topples into rubble and dust.'],
+  },
+  {
     version: '0.508.0',
     date: '2026-11-12',
     title: 'A smaller tactic button',
