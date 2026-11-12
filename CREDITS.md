@@ -392,7 +392,7 @@ After an Eidolon's painting crosses the screen, its sprite comes onto the board 
 - Prompts for Gemini-generated replacements, not yet made (the key's image quota was 0): `art-source/eidolons/fx/PROMPTS.md`.
 - `askel-stage-sigil`, `askel-stage-pillar`, `askel-stage-explosion`, `askel-stage-cracks`, `askel-stage-fire`, `askel-stage-scorch`,
   `askel-stage-smoke`, `askel-stage-embers` and the `-glow` sheets of the pillar and the explosion, and the same ten for Nivra
-  (`nivra-stage-*`, `tools/blender-fx/eidolons/nivra_parts.py`) (EIDOLON-BLENDER,
+  (`nivra-stage-*`, `tools/blender-fx/eidolons/nivra_parts.py`) for Gorm (`gorm-stage-*`, `gorm_parts.py`) and for Voltara (`voltara-stage-*`, `voltara_parts.py`) (EIDOLON-BLENDER,
   `docs/notes/eidolon-blender.md`): original to this game, staged and rendered in Blender from the game's camera
   (`tools/blender-fx/eidolons/parts.py`) and given the heroes' pixels (`parts_finish.py`). No outside art.
 

@@ -29,6 +29,8 @@ const S = await import('../../out/shots/nemsaves4.mjs');
 const TIPS = ['home', 'deploy', 'fight', 'mana', 'skill', 'ult', 'summon', 'crowns', 'calamity', 'tower', 'talents', 'castle', 'spellbook', 'stash', 'equipment', 'recycle', 'retry', 'autoReplay'];
 const PARTY = ['knight', 'cleric', 'archer', 'wizard', 'samurai'];
 const SPELLS = ['heal', 'meteor', 'haste', 'shield', 'chain', 'frost', 'rally', 'quake', 'smite', 'resurrect', 'poison', 'cleanse', 'blink', 'hex', 'lance', 'renewal'];
+// (armies beaten with their stars: the fourth army opens the Formation button, and twenty stars open all four spell slots, SPELL-SLOTS)
+const ARMIES_WON = Object.fromEntries(['orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres'].map((id) => [id, { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 255, 1: 255, 2: 255, 3: 255, 4: 255 }, hard: { 1: { won: 15, clears: 1 }, 2: { won: 15, clears: 1 } } }]));
 const QUIET = '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip, .toast { display: none !important; }';
 
 const srv = serve(ROOT, PORT);
@@ -42,7 +44,7 @@ const after = TAG !== 'before';
  *  beaten (so the Formation button shows), and an Eidolon bound (the War Horn). */
 function metaOf(ult) {
   return { seed: 7, crowns: 0, unlocked: PARTY, party: PARTY, chapel: true, xp: Object.fromEntries(PARTY.map((k) => [k, ult ? 99999 : 0])), spellbook: { owned: SPELLS }, eidolons: { horn: 1000, bound: ['gorm'], chosen: 'gorm', confirmed: true },
-    armies: { wildwood: { waves: 15, best: 15, won: 15, clears: 1 } }, featuresTold: ['autoMerge', 'autoRunes', 'autoPlace'], bestStage: 14, opened: ['undead', 'beasts', 'castle'] };
+    armies: ARMIES_WON, featuresTold: ['autoMerge', 'autoRunes', 'autoPlace'], bestStage: 14, opened: ['undead', 'beasts', 'castle'] };
 }
 
 /** Leave `n` orbs in the row (a save always knows its three starting spells, so the smaller counts are made on the page: the orbs past `n`
@@ -157,7 +159,7 @@ function report(name, w, i, o = {}) {
     check(!!i.tactic && !i.tacticInPanel, `${name}-${w}: the tactic plaque shows, out of the panel`);
     if (i.tactic) {
       check(i.W - i.tactic[2] === 8, `${name}-${w}: its right edge is the Formation button's (8 px in)`);
-      check(i.tactic[2] - i.tactic[0] === 95 && i.tactic[3] - i.tactic[1] === 71, `${name}-${w}: the Formation button's size (${i.tactic[2] - i.tactic[0]} x ${i.tactic[3] - i.tactic[1]})`);
+      check(i.tactic[2] - i.tactic[0] === 92 && i.tactic[3] - i.tactic[1] === 44, `${name}-${w}: the plaque's pinned size, 92 x 44 (TACTIC-SIZE) (${i.tactic[2] - i.tactic[0]} x ${i.tactic[3] - i.tactic[1]})`);
       check(!i.tacticOver.length, `${name}-${w}: the plaque lies over no other part`);
       if (i.piecesBottom !== null) check(i.tactic[1] >= i.piecesBottom && i.tactic[1] <= i.piecesBottom + 12, `${name}-${w}: it hangs just under the spell row`);
       if (i.boss) check(i.boss[2] <= i.tactic[0] - 4, `${name}-${w}: the boss's bar stops short of it`);
@@ -194,7 +196,7 @@ for (const [w, h] of SIZES) {
     if (after) {
       check(!!d.form && !d.tactic, `handover-${w}: placing, the corner holds Formation and no tactic`);
       check(!f.form && !!f.tactic, `handover-${w}: fighting, it holds the tactic and no Formation`);
-      if (d.form && f.tactic) check(d.form[2] === f.tactic[2] && d.form[2] - d.form[0] === f.tactic[2] - f.tactic[0] && d.form[3] - d.form[1] === f.tactic[3] - f.tactic[1], `handover-${w}: the same right edge and size (Formation ${d.form}, tactic ${f.tactic}; ${f.tactic[1] - d.form[1]} px lower, under the spell row)`);
+      if (d.form && f.tactic) check(d.form[2] === f.tactic[2], `handover-${w}: the same right edge (Formation ${d.form}, tactic ${f.tactic}; ${f.tactic[1] - d.form[1]} px lower, under the spell row)`);
     }
     await ctx.close();
   }

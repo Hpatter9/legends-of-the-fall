@@ -2,14 +2,14 @@
 
 The owner, after the trial below: **the hybrid**. Each Eidolon keeps its painting for the figure, its name stamp and its line; Blender
 stages everything round it (the sigil, the pillar, the strike across the ground, the scorch, the aftermath). Askel the Cinderhound is
-the first; the other five follow in his style and to his bar, one push each: Nivra (done, below), Gorm, Voltara, Aurelan, Vaelkhar.
+the first; the other five follow in his style and to his bar, one push each: Nivra, Gorm and Voltara (done, below), Aurelan, Vaelkhar.
 Each has its own element's show, not Askel's recoloured, in the same places in the call (`STAGED` in `src/eidolonStage.ts`).
 
 ## For the camera: where each show is
 
 All in the board's own pixels (a sheet pixel is 1.414 of them), the same for every staged Eidolon unless its section says otherwise:
 
-- **The summoning** is at the sigil's tile: the board tile nearest the point 30% (a painting that comes from the left: Nivra) or 70%
+- **The summoning** is at the sigil's tile: the board tile nearest the point 30% (a painting that comes from the left: Nivra, Gorm, Voltara) or 70%
   (from the right: Askel) across the screen on the foes' ground line, kept between 24% and 76% across (`sigilSpot`). The sigil is
   226 x 136 about that tile; the pillar stands on it, 204 wide and 498 tall (452 above the tile, 46 below); the painting comes out of
   it and leaves by its usual way.
@@ -49,6 +49,70 @@ the painted spears, which stand in front and carry the fine detail. The mist is 
 `nivra-game-before-after.webp`, `nivra-game-short-strip.webp`, `nivra-game-reduced-strip.webp`. Re-render:
 `python3 tools/blender-fx/eidolons/nivra_parts.py <parts>` then `ID=nivra python3 tools/blender-fx/eidolons/parts_finish.py <parts>`;
 the captures as Askel's with `--picks nivra`, and `ID=nivra SPAN=1.32` for `cast_samples.py`.
+
+## Gorm in the game (stone)
+
+His kit: the Landslide strikes every foe, turns the heroes' skin to stone (half damage for 10 s) and stuns a boss, so his show is
+the ground itself rising: heavy, hard-edged, a frame slower to rise than fire and loud to land. `gorm_parts.py` renders solid rock
+(flat-shaded slabs and boulders with a blocky grain, lit warm from the upper left, amber deep in their seams while they are fresh
+from the ground), amber light from under the ground for the flashes, and tan dust. His call is **8.6 s** (`EIDOLON_MS`, unchanged);
+the extra length carries two beats the shorter calls do not have.
+
+| Stage | Main's, kept | Blender's |
+|---|---|---|
+| The horn (0 to 0.8 s) | the horn blown, the dim | his **quarry mark** is cut into the ground (a six-sided ring, chisel strokes, wedges), standing stones rising along it |
+| The pass (0.8 to 3.61 s) | the painted titan, his name, title and line, stomping out to the right | the ground bursts and **great slabs are thrust up twelve tiles**, amber in their seams, rock thrown; the painting strides out of them; they grind, **tilt apart and fall** into rubble and dust |
+| The sprite and the build-up (3.61 to 5.71 s) | the golem walks on and slams the ground | **the ground splits** under the foes (wide fissures racing out with a shock ring, amber inside: the first extra beat), then **slabs drive up tile by tile** from his fists to the foes; the field darkens hard |
+| The strike (5.71 s, with the 0.31 s freeze) | the hit-stop, the snap zoom, the painted stone spires under each foe, the shattering ground, the fault line, the falling boulders | a hard white flash (his painted blow had none); **an amber flash from under the ground**, low and wide, in the frozen frame; **a ridge of slabs heaved up across the foes' whole side**, rolling out from the middle, behind the painted spires; boulders thrown high; the ground splits again; a second and third burst to either side; a harder shake |
+| The aftermath (7.24 s on) | the painted fissure left glowing, the dust | **the aftershock** (the second extra beat): slabs heave up once more across the foes' ground, far tiles first, with a rumble and a new split; the ridge **topples outward**; dust rolls up along it; grit falls; broken ground and rubble are left on the tiles |
+
+**Bytes: 438,320** for his ten files (the explosion 223,594 and its glow 36,856; the pillar 99,528 and its glow 16,014; the sigil
+18,738; the split 18,508; the tile slab 11,254; the rest under 8 KB each). Rock with a grain packs less well than fire or ice (his
+first render was 522 KB), so his two big sheets ship 14 of their 16 frames: the two dropped are ones in which the slabs only stand.
+
+**Three passes against main** (`gorm-game-before-after.webp`). One: wired in; the slabs were streaked like timber (the grain
+stretched with them) and their glowing seams covered them like a net. Two: the grain squeezed back to blocky stone, only the deepest
+of each seam glowing and only while the slab is fresh, fewer and bigger slabs. Three: the rock warmed toward the painted spires'
+brown so the two sit together. Bigger and harder than main from the slabs' entry on.
+
+**Honestly.** His slabs are four-sided blocks: they read as quarried stone, but the painted spires in front are craggier and carry
+the fine detail. With two frames dropped, his ridge stands a little less long than the others' walls. The aftershock is his own best
+beat; the amber flash is the weakest (a flattened ball).
+
+**Samples**: `gorm-game-393.webp`, `-360`, `-412`, their `-strip.webp`, `gorm-game-before-after.webp`,
+`gorm-game-short-strip.webp`, `gorm-game-reduced-strip.webp`. Re-render: `gorm_parts.py <parts>` then `ID=gorm parts_finish.py
+<parts>`; the captures with `--picks gorm` and `END=10500`, and `ID=gorm SPAN=1.72` for `cast_samples.py`.
+
+## Voltara in the game (lightning)
+
+Her kit: the Overload strikes every foe and half fills every hero's ultimate, so her show is a discharge: nothing solid and nothing
+that lingers. `voltara_parts.py` draws jagged bolts as strips of light that are **redrawn every frame**, so they flicker and fork
+anew (white down the middle, a blue rim kept solid so it survives the hard pixels), a ball of blue-white discharge, and copper and
+blue sparks. Her call is **5.8 s** (`EIDOLON_MS`, unchanged), the shortest after Askel's, so she has no extra beats.
+
+| Stage | Main's, kept | Blender's |
+|---|---|---|
+| The horn (0 to 0.53 s) | the horn blown, the dim | her **coil and cog** is cut in light on the ground (copper where it is dull, blue-white where it is live), arcs hopping along its ring |
+| The pass (0.53 to 2.41 s) | the painted goddess floating across, her name, title and line | **the sky splits**: a trunk of four braided bolts from above the screen to the ground, forking, the ground burnt in a branching figure under it, sparks thrown; she comes out of it; it flickers thinner and is gone |
+| The sprite and the build-up (2.41 to 3.81 s) | her sprite and its bolt, the charge | **small bolts strike tile by tile** from her hands to the foes, arcs crackling over each; the field darkens hard |
+| The strike (3.81 s, with the 0.27 s freeze) | the hit-stop, the snap zoom, the painted bolts out of the sky onto each foe, the discharge, the chain arc | a hard white flash; **the thunderclap**, a ball of discharge with arcs flung from it, in the frozen frame; then **forks walking out across the foes' whole side**, each a bolt from the sky with a thinner twin, re-forked for four frames, a flash where it lands; the ground burnt again; a second and third thunderclap to either side; a harder shake |
+| The aftermath (4.83 s on) | the painted sparks, the wash | the ground **crackling** between where the forks landed, fewer arcs each frame; sparks falling; thin wisps of smoke; burnt stars on the tiles with sparks in them, fading |
+
+**Bytes: 390,122** for her ten files (the explosion 178,322 and its glow 45,474; the pillar 82,238 and its glow 24,376; the sigil
+24,776; the burn 24,462; the rest under 6 KB each).
+
+**Three passes against main** (`voltara-game-before-after.webp`). One: wired in; the bolts were thin and washed to white (their
+blue edges fell below the hard-alpha cut). Two: bolts thicker with a solid blue rim, a twin beside each fork, the discharge ball
+given blue turbulence so it is not a plain white disc, more ground crackle. Three: the walking forks thinned a little so the curtain
+keeps its lines. Bigger and harder than main from the sky splitting on.
+
+**Honestly.** Her strike is very bright: main's painted bolts, the flash and her forks stack to near white for about a quarter of a
+second, which is the thunderclap but leaves little to read in that moment. Her aftermath is the thinnest of the four (lightning
+leaves little behind): crackle, sparks and a wisp. The pillar is her best beat.
+
+**Samples**: `voltara-game-393.webp`, `-360`, `-412`, their `-strip.webp`, `voltara-game-before-after.webp`,
+`voltara-game-short-strip.webp`, `voltara-game-reduced-strip.webp`. Re-render: `voltara_parts.py <parts>` then `ID=voltara
+parts_finish.py <parts>`; the captures with `--picks voltara` and `END=7600`, and `ID=voltara SPAN=1.16` for `cast_samples.py`.
 
 ## Askel in the game
 

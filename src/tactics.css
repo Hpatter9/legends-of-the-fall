@@ -14,16 +14,20 @@
 #tacticSheet .tacForm.on span { color: var(--ink); }
 #tacticSheet .tacAdvice { margin: -2px 0 2px; font-size: 13px; color: var(--dim); text-align: center; }
 /* (HUD-EVEN, docs/notes/hud-even.md: the fight's tactic button is a plaque at the board's upper right, in the Formation button's corner
-   and make: the same right edge, size and plate. It hangs just under the spell row (`--dock-top`, set by the page as the row and the
+   and make: the same right edge and plate (its size is its own, below). It hangs just under the spell row (`--dock-top`, set by the page as the row and the
    bars above it move), since the row now spans the screen. Only in a fight.) */
 #tacticDock { position: fixed; z-index: 3; right: max(8px, env(safe-area-inset-right, 0px)); top: var(--dock-top, 180px); display: none; }
 body[data-phase='fight']:not([data-stand]) #tacticDock { display: block; }
-#tacticDock #tacticBtn { position: relative; box-sizing: border-box; width: 95px; height: 71px; min-height: 0; padding: 4px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; box-shadow: 0 2px 8px #0009; }
+/* (TACTIC-SIZE, docs/notes/tactic-size.md; the owner: "the tactic button is huge now for some reason in a wave": the plaque was the
+   Formation button's size, 95 x 71 px, three lines; it is now one line, its icon and the tactic's word side by side, 92 x 44 px, a thumb's
+   height and no more. The size is fixed here and nowhere else: it does not follow its words, the wave, the camera or an ultimate.
+   `test/tactic-size.test.ts` and `tools/tactic-size/shots.mjs` pin it.) */
+#tacticDock #tacticBtn { position: relative; box-sizing: border-box; width: 92px; height: 44px; min-width: 0; min-height: 0; max-width: 92px; max-height: 44px; padding: 0 8px; overflow: hidden;
+  display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; box-shadow: 0 2px 8px #0009; }
 #tacticBtn[hidden] { display: none; }
-#tacticBtn small { font-size: 10px; font-weight: normal; color: var(--gold-hi); }
-#tacticBtn b { font-size: 14px; }
-#tacticBtn .fhTacticFace { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
-#tacticBtn svg, #tacticBtn .fhTacticArt { width: 24px; height: 24px; object-fit: contain; filter: drop-shadow(0 1px 1px #000); pointer-events: none; }
+#tacticDock #tacticBtn b { font-size: 13px; line-height: 1; }
+#tacticBtn .fhTacticFace { flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; }
+#tacticBtn svg, #tacticBtn .fhTacticArt { width: 20px; height: 20px; object-fit: contain; filter: drop-shadow(0 1px 1px #000); pointer-events: none; }
 /* (the mode's word under it after a tap, right-aligned with it (the boss's bar is at its left and the spell row above): it rises in,
    stays readable, then fades; it never takes a tap) */
 #tacticDock .fhTacticWord { position: absolute; z-index: 2; right: 0; top: calc(100% + 4px); white-space: nowrap; min-width: 58px; padding: 2px 6px; box-sizing: border-box; text-align: center; pointer-events: none;

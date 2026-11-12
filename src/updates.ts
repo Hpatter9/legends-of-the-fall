@@ -27,6 +27,30 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.510.0',
+    date: '2026-11-12',
+    title: 'Voltara\'s call, remade in lightning',
+    notes: ['Voltara\'s call is rebuilt: her coil cut in light on the ground, the sky splitting in braided bolts as she arrives, then forks walking across the foes.', 'A thunderclap lands with each, and the ground is left crackling with falling sparks.'],
+  },
+  {
+    version: '0.509.0',
+    date: '2026-11-12',
+    title: 'Gorm\'s call, remade in stone',
+    notes: ['Gorm\'s call is rebuilt: a quarry mark cut in the ground, great slabs thrust up as he strides out, the ground splitting under the foes, then a ridge of stone.', 'An aftershock heaves the ground once more before the ridge topples into rubble and dust.'],
+  },
+  {
+    version: '0.508.0',
+    date: '2026-11-12',
+    title: 'A smaller tactic button',
+    notes: ['The tactic plaque in a wave is now a single line, icon beside the word, about 40% smaller than before.', 'It sits level with the boss\'s bar instead of hanging below it.'],
+  },
+  {
+    version: '0.507.0',
+    date: '2026-11-12',
+    title: 'Ultimates that fill the field',
+    notes: ['Every ultimate\'s strike is now one great blow: a white-hot core that tears open, shock rings along the ground and debris, four to eight tiles across.', 'Wind-ups swell to full height just before the blow. Effects for a fight\'s heroes load as it begins, so memory stays low.'],
+  },
+  {
     version: '0.506.0',
     date: '2026-11-12',
     title: 'Nivra\'s call, remade in ice',
