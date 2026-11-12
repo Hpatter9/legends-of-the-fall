@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.515.0',
+    date: '2026-11-12',
+    title: 'Armies: neighbours peek in',
+    notes: ['The armies either side of the centred card peek in again, smaller and dimmed, and slide with it.', 'The arriving army grows and lights as the card settles.'],
+  },
+  {
     version: '0.514.0',
     date: '2026-11-12',
     title: 'Eidolon polish',

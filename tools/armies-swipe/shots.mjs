@@ -4,7 +4,8 @@ import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 const { chromium } = createRequire(import.meta.url)('playwright');
-const out = 'docs/samples/armies-swipe/after';
+// (the folder the pictures go to can be named: `node tools/armies-swipe/shots.mjs docs/samples/armies-peek/after`)
+const out = process.argv[2] ?? 'docs/samples/armies-swipe/after';
 mkdirSync(out, { recursive: true });
 const types = { html: 'text/html', js: 'text/javascript', css: 'text/css', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', webmanifest: 'application/manifest+json' };
 const server = createServer((q, r) => {
@@ -51,12 +52,26 @@ try {
     // (the checks of the arrows: one size, mirrored, centred on the card, clear of it)
     const geo = await page.evaluate(() => {
       const r = (q) => { const b = document.querySelector(q).getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height, r: b.right, b: b.bottom }; };
-      return { l: r('.asArrow.left'), rt: r('.asArrow.right'), card: r('.asCard[aria-hidden="false"] .wrBanner'), info: r('.asInfoHost'), track: r('.asTrack'), vw: innerWidth, li: getComputedStyle(document.querySelector('.asArrow.left')).backgroundImage, ri: getComputedStyle(document.querySelector('.asArrow.right')).backgroundImage };
+      return { l: r('.asArrow.left'), rt: r('.asArrow.right'), card: r('.asCard[aria-hidden="false"] .wrBanner'), info: r('.asInfoHost'), track: r('.asStrip'), vw: innerWidth, li: getComputedStyle(document.querySelector('.asArrow.left')).backgroundImage, ri: getComputedStyle(document.querySelector('.asArrow.right')).backgroundImage };
     });
     check(`arrows the same size ${width}`, geo.l.w === geo.rt.w && geo.l.h === geo.rt.h && geo.l.w >= 44 && geo.l.h >= 44);
     check(`arrows mirrored ${width}`, Math.abs(geo.l.x - (geo.vw - geo.rt.r)) < 0.6 && geo.l.y === geo.rt.y && /g-back/.test(geo.li) && /g-right/.test(geo.ri));
     check(`arrows centred on the card ${width}`, Math.abs(geo.l.y + geo.l.h / 2 - (geo.card.y + geo.card.h / 2)) <= 4);
-    check(`arrows clear of the card ${width}`, geo.l.r <= geo.card.x && geo.rt.x >= geo.card.r && geo.l.r <= geo.track.x && geo.rt.x >= geo.track.r);
+    check(`arrows clear of the card ${width}`, geo.l.r <= geo.card.x && geo.rt.x >= geo.card.r);
+    // (the neighbours peek in at the sides, smaller and dimmed, and a tap on one does nothing)
+    const peek = await page.evaluate(() => {
+      const cur = document.querySelector('.asCard.cur');
+      const box = (c) => c && c.querySelector('.wrBanner').getBoundingClientRect();
+      const [p, n, c] = [box(cur.previousElementSibling), box(cur.nextElementSibling), box(cur)];
+      const dim = (e) => getComputedStyle(e.querySelector('.wrBanner')).filter;
+      return { left: p && p.right > 20 && p.left < 0 && p.right <= c.left, right: n && n.left < innerWidth - 20 && n.right > innerWidth && n.left >= c.right, small: p && n && p.height < c.height && n.height < c.height, dim: /brightness/.test(dim(cur.previousElementSibling)) && dim(cur) === 'none', nx: n ? n.left + 10 : 0, ny: n ? n.top + 14 : 0 };
+    });
+    check(`the neighbours peek in on both sides ${width}`, peek.left && peek.right);
+    check(`the neighbours are smaller and dimmed ${width}`, peek.small && peek.dim);
+    // (near its top, clear of the arrow that stands over its middle)
+    await page.mouse.click(peek.nx, peek.ny);
+    await page.waitForTimeout(500);
+    check(`a tap on a neighbour does nothing ${width}`, await page.evaluate(() => document.querySelector('.asCard.cur').dataset.army === 'undead' && document.querySelector('.asInfoHost').lastElementChild.dataset.army === 'undead'));
     // (the pressed state, held)
     for (const side of ['left', 'right']) {
       const b = await page.locator(`.asArrow.${side}`).boundingBox();
