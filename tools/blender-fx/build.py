@@ -43,6 +43,8 @@ def main(argv):
     print(f'{len(items)} effects, {sum(len(f) for _, f, _ in items)} frames; {len(px)} pixel atlases {px}, {len(soft)} glow atlases {soft}; {total} bytes')
     for key in warn:
         print(f'  warning: {key} touches its canvas\'s edge (make its canvas larger)')
+    # (ON-FIGHTER: how much of a fighter's body each clip that plays on one covers, for the renderer to thin it by)
+    subprocess.run([sys.executable, os.path.join(HERE, 'body_cover.py'), '0'], check=True, stdout=subprocess.DEVNULL)
 
 
 def render_all(ids, effects, stale):

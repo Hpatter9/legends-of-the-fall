@@ -150,6 +150,30 @@ const speedNow = (page) => page.evaluate(() => `${document.getElementById('speed
 // (AT=0.18,0.22,0.26,0.3: four moments of the strike by how far through it, to catch a clip that is over between the usual frames)
 const FRAMES = process.env.AT ? [['windup', 0.55], ['windup', 0.95], ...process.env.AT.split(',').map((x) => ['strike', Number(x)])] : process.env.SHOW ? [['windup', 0.55], ['windup', 0.95], ['strike', 0.05], ['strike', 0.15], ['strike', 0.3], ['strike', 0.45]] : process.env.EARLY ? [['windup', 0.55], ['windup', 0.95], ['blow', 60], ['blow', 200], ['blow', 400], ['blow', 700]] : [['windup', 0.55], ['windup', 0.95], ['strike', 0.5], ['strike', 0.9], ['aftermath', 0.12], ['aftermath', 0.5]];
 
+// (WATCH=1: no ultimate is fired. The party named by --picks (all of them together) fights the wave on its own, and the field is
+// photographed every WATCH_MS of the fight (600) for WATCH_N frames (40), and once more as the wave ends: for what stands or plays
+// on the fighters in an ordinary fight, a heal over time, a ward, an aura)
+if (process.env.WATCH) {
+  const { ctx, page } = await open();
+  await army(page, PICKS.slice(0, 5));
+  // (TOUGH=<n>: the foes are given n times their health, so the fight lasts and the heroes' heals and wards are seen)
+  await page.evaluate((k) => { const g = window.__game; g.app.ticker.stop(); if (k > 1) for (const f of g.b.units) if (f.side === 'foe' && f.alive) { f.maxHp *= k; f.hp = f.maxHp; } }, Number(process.env.TOUGH ?? 1));
+  const every = Number(process.env.WATCH_MS ?? 600);
+  let ended = 0;
+  for (let i = 0; i < Number(process.env.WATCH_N ?? 40) && ended < 3; i++) {
+    await page.evaluate((d) => window.__step(d), every);
+    const st = await page.evaluate(() => ({ phase: window.__game.b.phase, foes: window.__game.b.units.filter((u) => u.side === 'foe' && u.alive).length }));
+    if (st.phase !== 'fight' || !st.foes) ended++;
+    await page.screenshot({ path: `${OUT}/watch-${W}-${String(i).padStart(2, '0')}${ended ? '-end' : ''}.png` });
+  }
+  console.log('ok watch', PICKS.join(','));
+  await ctx.close();
+  console.log('page errors:', errors);
+  await browser.close();
+  srv.close();
+  process.exit(0);
+}
+
 for (const pick of PICKS) {
   const { ctx, page } = await open();
   try {
@@ -178,6 +202,7 @@ for (const pick of PICKS) {
       return m ? { ...m.stages, shape: m.shape, show: m.show ?? 0 } : null;
     }, pick);
     if (!st) throw new Error('the ultimate never fired');
+    if (process.env.UNDERS) console.log('UNDERS', await page.evaluate(() => { const fx = window.__game.fx; window.__step(100); const p = [...fx.unders.values()][0]; const a = { t: p?.live[0]?.t, span: p?.live[0]?.span, frames: p?.live[0]?.frames }; window.__step(400); return JSON.stringify({ ...a, t2: p?.live[0]?.t, alpha: p?.live[0]?.sp.alpha, vis: p?.live[0]?.sp.visible, tex: p?.live[0]?.sp.texture.frame.x, sc: p?.live[0]?.sp.scale.x, msc: window.__game.fx.moment.live.map((l) => [l.sp.scale.x, l.sp.alpha, l.sp.texture.frame.x]) }); }));
     // (KILL=1: the ultimate lands the last blow of a real fight. Every foe is put at one health as it is fired, so the cast itself ends
     // the fight in the sim and the run settles as it does in play; then it is watched frame by frame: when the fight ended, when the
     // blow was played, when the result card came up; and photographed on the way)

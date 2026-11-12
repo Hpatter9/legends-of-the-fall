@@ -1,0 +1,88 @@
+// ON-FIGHTER (docs/notes/on-fighter.md): what stands or plays on a fighter must leave its body readable (the owner: "effects like
+// this still hide the heroes ... maybe it's a wispy smoke that circles around them").
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { BODY, ROUND, STATUS_ROUND, frontCover, onFighterClip, overAlpha, wispAt, wispsOf } from '../src/render/onFighterRules';
+import { BODY_COVER } from '../src/render/bodyCover';
+import { BFX_CLIPS } from '../src/render/blenderFxData';
+import { STATUS_LOOKS, maxStatuses } from '../src/render/fxRules';
+
+test('a status goes round its fighter: a pool at the feet and wisps that pass behind the body for the back half of each turn', () => {
+  // (every status the fight can put on a fighter has its element's wisp and pool, rendered)
+  assert.deepEqual(Object.keys(STATUS_ROUND).sort(), Object.keys(STATUS_LOOKS).sort());
+  for (const [key, look] of Object.entries(STATUS_ROUND)) {
+    assert.ok(BFX_CLIPS[`aura-wisp-${look.el}`]?.loop, `${key}: no wisp in ${look.el}`);
+    assert.ok(BFX_CLIPS[`aura-pool-${look.el}`]?.loop, `${key}: no pool in ${look.el}`);
+  }
+  // (through a whole turn each wisp is behind the body half the time and in front half; in front it is smaller and fainter)
+  let front = 0;
+  const steps = 240;
+  for (let i = 0; i < steps; i++) {
+    const w = wispAt((i / steps) * ROUND.TURN_MS, 0, ROUND.N);
+    if (w.front) front++;
+    assert.ok(Math.abs(w.x) <= ROUND.RX + 1e-9);
+    assert.equal(w.size, w.front ? ROUND.SIZE * ROUND.FRONT : ROUND.SIZE);
+    assert.ok(w.alpha <= (w.front ? ROUND.FRONT_ALPHA : ROUND.BACK_ALPHA) + 1e-9);
+  }
+  assert.ok(Math.abs(front / steps - 0.5) < 0.02, `in front ${front} of ${steps}`);
+  assert.ok(ROUND.FRONT < 1 && ROUND.FRONT_ALPHA < ROUND.BACK_ALPHA);
+  // (evenly spaced round the turn, so never more than half of them, rounded up, are in front at once)
+  for (let i = 0; i < steps; i++) {
+    const t = (i / steps) * ROUND.TURN_MS;
+    const n = Array.from({ length: ROUND.N }, (_, k) => wispAt(t, k, ROUND.N)).filter((w) => w.front).length;
+    assert.ok(n <= Math.ceil(ROUND.N / 2), `${n} in front at ${t}`);
+  }
+  // (it fades in at the bottom of its climb and out at the top: never a pop)
+  assert.equal(wispAt(0, 0, ROUND.N).alpha, 0);
+});
+
+test('however many statuses hold, the smoke in front of the body is under the ceiling: the wisps are shared out, not multiplied', () => {
+  assert.ok(frontCover() <= BODY.CEILING, `${frontCover()}`);
+  assert.ok(frontCover(1.2, ROUND.SAVER) <= BODY.CEILING);
+  for (const saver of [false, true]) {
+    const n = saver ? ROUND.SAVER : ROUND.N;
+    for (let statuses = 1; statuses <= maxStatuses(saver); statuses++) {
+      const dealt = wispsOf(statuses, n);
+      assert.equal(dealt.length, n);
+      assert.equal(dealt[0], 0);
+      for (const k of dealt) assert.ok(k >= 0 && k < statuses);
+    }
+  }
+  assert.deepEqual(wispsOf(0, 3), []);
+  assert.deepEqual(wispsOf(2, 3), [0, 1, 0]);
+});
+
+test('the unit view draws a status by the rule: nothing of it over the body but the front wisps, the rest under the body', () => {
+  const src = readFileSync('src/render/unitView.ts', 'utf8');
+  // (under the body: its index in the fighter; over: the old overlays' place)
+  assert.match(src, /this\.root\.addChildAt\(sp, this\.root\.getChildIndex\(front \? this\.stars : this\.body\)\);/);
+  assert.match(src, /const pool = take\(false\);/);
+  assert.match(src, /const sp = take\(w\.front\);/);
+  // (the old loop as tall as the fighter over its body is gone from the fighter's drawing)
+  assert.ok(!src.includes('STATUS_LOOKS'));
+});
+
+test('every rendered clip that plays on a fighter is measured, and drawn over the fighter no more strongly than the ceiling allows', () => {
+  const on = Object.keys(BFX_CLIPS).filter((key) => onFighterClip(key, BFX_CLIPS[key].at));
+  assert.ok(on.length > 200, `${on.length}`);
+  assert.deepEqual(Object.keys(BODY_COVER).sort(), on.sort());
+  for (const key of on) {
+    const cover = BODY_COVER[key];
+    assert.ok(cover >= 0 && cover <= 1, key);
+    // (what lies over the body, counting how see-through it is drawn, is the ceiling at most)
+    assert.ok(cover * overAlpha(cover) <= BODY.CEILING + 1e-9, `${key}: ${cover}`);
+    // (a clip that covers little is not thinned at all)
+    if (cover <= BODY.CEILING) assert.equal(overAlpha(cover), 1);
+  }
+  // (the wisps and pools are the rule's own, and an ultimate's one great strike in the midst is not on a fighter)
+  assert.ok(!onFighterClip('aura-wisp-forest') && !onFighterClip('aura-pool-forest'));
+  assert.ok(!onFighterClip('ult-wizard-strike', undefined) && onFighterClip('ult-priestess-strike', 'friends') && onFighterClip('ult-wizard-windup'));
+  // (the renderer draws such a clip under the fighter at full strength and over it thinned)
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.match(fx, /const thin = cover === undefined \? 1 : overAlpha\(cover\);/);
+  assert.match(fx, /const host = on && thin < 1 \? this\.sprites\.get\(on\.id\) : undefined;/);
+  assert.match(fx, /this\.underAt\(host\.underLayer\(\)\)\.spawn\(/);
+  assert.match(readFileSync('src/render/unitView.ts', 'utf8'), /this\.root\.addChildAt\(this\.underFx, this\.root\.getChildIndex\(this\.body\)\);/);
+  assert.match(fx, /this\.moment\.spawn\(\{ \.\.\.bit, alpha: base \* thin \}\);/);
+});

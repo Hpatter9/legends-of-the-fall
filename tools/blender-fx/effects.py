@@ -549,6 +549,12 @@ for j, (clip, (pal, scene, opt, canvas, n, ms)) in enumerate(BEAT_ONLY.items()):
 
 # ---- ULT-AUDIT: what an ability IS, as a loop that stays for as long as the ability lasts (docs/notes/ult-audit.md). Spirit Guardians:
 # four ghostly figures a fighter tall circling the Cleric, round and round (`paintAura` draws it on her while the aura lives). ----
+# ON-FIGHTER (docs/notes/on-fighter.md): what goes round a fighter while a status holds on it, in place of a loop drawn over its
+# body: a wisp of smoke (the renderer sends a few of them circling, behind the body for the back half of the turn) and a pool of
+# light at the feet. In the elements the statuses have.
+for i, (el, pal) in enumerate(dict(light='holy', wind='wind', fire='fire', blood='blood', forest='forest').items()):
+    fx(f'aura-wisp-{el}', 'wisp', pal, **box(0.9, 0.7, 0.4), frames=8, ms=640, loop=True, seed=80 + i, glow=False)
+    fx(f'aura-pool-{el}', 'pool', pal, **box(1.5, 0.5, 0.4), frames=8, ms=1600, loop=True, seed=90 + i, glow=False, layer='ground')
 # Vael's totality: the black sun that hangs over him for its eight seconds (`ULT_LASTS` in the renderer's rules).
 fx('aura-eclipse', 'eclipse', 'shadow', **box(2.6, 4.4, 0.4), frames=10, ms=1200, loop=True, seed=72, glow=False, r=0.8, z=2.9)
 fx('aura-spirits', 'spirits', 'wind', **box(3.3, 4.2, 0.4), frames=12, ms=1300, loop=True, seed=71, glow=False, r=1.5, n=4, tall=2.3, mode='circle', hoop=False)

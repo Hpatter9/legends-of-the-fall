@@ -29,8 +29,9 @@ import { at, depth, facesRight, facesAway, HH } from './iso';
 import { heroLook, rearView, formScale } from './heroFacing';
 import { VFX } from './vfxArt';
 import { paintSprite } from './cinematicArt';
-import { PACK } from './fxSheets';
-import { deathKind, maxStatuses, statusesOf, STATUS_LOOKS } from './fxRules';
+import { deathKind, maxStatuses, statusesOf } from './fxRules';
+import { ROUND, STATUS_ROUND, wispAt, wispsOf } from './onFighterRules';
+import { bfxFrames } from './blenderFxArt';
 import { settings } from '../settings';
 import { badgeOf } from '../sim/levels';
 import { AURA_COLOURS, auraHalo, auraRings } from './levelLook';
@@ -147,6 +148,8 @@ export class UnitSprite {
   private pillar = new Sprite();
   /** The loops of the buffs on it (up to three, made as needed); `stars` only marks where they go in the drawing order. */
   private overlays: Sprite[] = [];
+  /** (ON-FIGHTER: what of a status is drawn under the body: its pool, and its wisps while they pass behind) */
+  private unders: Sprite[] = [];
   private stars = new Graphics();
   /** The Nemesis War: a nemesis's name plate over its health bar (its rank's colour, its name, its scars, a skull while its Dread hero is on the field). */
   private plate: Container | null = null;
@@ -595,30 +598,68 @@ export class UnitSprite {
     return sp;
   }
 
-  /** The loops that stay on it while a buff lasts (a shield's bubble, wind, auras). Its ailments are `ailmentLayer.ts`'s. */
+  /** ON-FIGHTER: a layer inside the fighter, just under its body (made when first asked for), in the fighter's own space: its feet at
+   *  the origin, `root.scale` its size. An effect played on the fighter is drawn here at full strength, so the body stands in front of it. */
+  private underFx: Container | null = null;
+  underLayer(): Container {
+    if (!this.underFx || this.underFx.destroyed) {
+      this.underFx = new Container();
+      this.root.addChildAt(this.underFx, this.root.getChildIndex(this.body));
+    }
+    return this.underFx;
+  }
+
+  /** What stays on it while a buff lasts (ON-FIGHTER, `onFighterRules.ts`): a pool of the status's element at its feet, under it, and
+   *  a few wisps of smoke circling it, under it for the back half of each turn and over it, small and thin, for the front half; so the
+   *  fighter is seen through all of it. (It was one loop as tall as the fighter drawn over its body, and hid it.) Until the wisps' art
+   *  has loaded the status shows nothing here. Its ailments are `ailmentLayer.ts`'s. */
   private drawStatuses(u: Unit, t: number): void {
-    const loops = statusesOf(u, t).slice(0, maxStatuses(settings().saver));
-    for (let i = 0; i < Math.max(loops.length, this.overlays.length); i++) {
-      if (i >= this.overlays.length) {
+    const saver = settings().saver;
+    const loops = statusesOf(u, t).slice(0, maxStatuses(saver));
+    const still = this.reduced?.matches ?? false;
+    const n = saver ? ROUND.SAVER : ROUND.N;
+    let under = 0;
+    let over = 0;
+    const take = (front: boolean): Sprite => {
+      const list = front ? this.overlays : this.unders;
+      const i = front ? over++ : under++;
+      if (i >= list.length) {
         const sp = new Sprite();
         sp.anchor.set(0.5);
-        sp.blendMode = 'add';
-        this.root.addChildAt(sp, this.root.getChildIndex(this.stars));
-        this.overlays.push(sp);
+        // (over the body's place in the fighter for the front, under it for the back)
+        this.root.addChildAt(sp, this.root.getChildIndex(front ? this.stars : this.body));
+        list.push(sp);
       }
-      const sp = this.overlays[i];
-      const look = loops[i] ? STATUS_LOOKS[loops[i]] : undefined;
-      const frames = look ? PACK[look.sheet] : undefined;
-      sp.visible = !!frames?.length;
-      if (!look || !frames?.length) continue;
-      sp.texture = frames[Math.floor(t / look.frameMs) % frames.length];
-      sp.scale.set((this.tall * look.size) / 32);
-      sp.position.set(0, -this.tall * look.at);
-      sp.alpha = look.alpha;
+      list[i].visible = true;
+      return list[i];
+    };
+    // (a pool for each status, one inside the next; the wisps are shared out among the statuses, so the smoke in front of the body
+    // is the same however many hold)
+    loops.forEach((key, k) => {
+      const pools = bfxFrames(`aura-pool-${STATUS_ROUND[key].el}`);
+      if (!pools.length) return;
+      const pool = take(false);
+      pool.texture = pools[still ? 0 : Math.floor(t / 200) % pools.length];
+      pool.scale.set((this.tall * ROUND.POOL * (1 - 0.22 * k)) / pool.texture.width);
+      pool.position.set(0, 0);
+      pool.alpha = ROUND.POOL_ALPHA;
+      pool.tint = STATUS_ROUND[key].tint ?? 0xffffff;
+    });
+    wispsOf(loops.length, n).forEach((k, i) => {
+      const look = STATUS_ROUND[loops[k]];
+      const wisps = bfxFrames(`aura-wisp-${look.el}`);
+      if (!wisps.length) return;
+      const w = wispAt(still ? 0 : t, i, n);
+      const sp = take(w.front);
+      sp.texture = wisps[still ? 0 : (Math.floor(t / 80) + i * 3) % wisps.length];
+      const size = (this.tall * w.size) / sp.texture.width;
+      sp.scale.set(w.left ? -size : size, size);
+      sp.position.set(w.x * this.tall, -w.y * this.tall);
+      sp.alpha = w.alpha;
       sp.tint = look.tint ?? 0xffffff;
-      // Use a held material sample so a persistent status never fades out at a strip boundary.
-      paintSprite(sp, 500, 1000, (this.tall * look.size) / 32, 0, look.alpha, true, this.reduced?.matches ?? false);
-    }
+    });
+    for (let i = under; i < this.unders.length; i++) this.unders[i].visible = false;
+    for (let i = over; i < this.overlays.length; i++) this.overlays[i].visible = false;
   }
 
   /** A charmed fighter's heart beside its bar (the ailments' chips took the old badge's other icons, STATUS-FX; a haste keeps its wind loop). */

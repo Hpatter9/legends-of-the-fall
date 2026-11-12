@@ -85,6 +85,8 @@ import { spellAnchorY, spellPart, spellScale } from './spellLooks';
 import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinematicArt';
 import { flicker } from './cinematicRules';
 import { coverAlpha, overFighter } from './overFighter';
+import { BODY_COVER } from './bodyCover';
+import { overAlpha } from './onFighterRules';
 import { BossFx } from './bossFx';
 import type { Element, Family } from './fxRules';
 
@@ -231,6 +233,9 @@ export class Fx {
   epic: ReadonlySet<number> = new Set();
   private boost = 1;
   readonly moment = new Particles();
+  /** ON-FIGHTER: the moment's layers UNDER the fighters' bodies, one in each fighter that has needed one (`underAt`): where a clip
+   *  played on a fighter is drawn at full strength, behind it. They run with the moment's layer and are thrown away with it. */
+  private unders = new Map<Container, Particles>();
   /** Ms of a slow-motion beat left (a boss falls); `timeScale` slows the fight while it lasts. */
   private slowLeft = 0;
   /** Ms of hit-stop left (a crit or a killing blow freezes the fight for a moment). */
@@ -288,6 +293,8 @@ export class Fx {
     this.gusts.clear();
     this.particles.clear();
     this.moment.clear();
+    for (const p of this.unders.values()) p.root.destroy({ children: true });
+    this.unders.clear();
     this.bossFx.clear();
     this.heals.clear();
     this.epic = new Set();
@@ -626,6 +633,7 @@ export class Fx {
   stepMoment(dt: number): void {
     this.moment.calm = this.calm();
     this.moment.step(dt);
+    for (const p of this.unders.values()) p.step(dt);
     for (const l of this.bfxLit) l.left -= dt;
     this.bfxLit = this.bfxLit.filter((l) => l.left > 0);
   }
@@ -657,15 +665,27 @@ export class Fx {
     this.moment.density = budget.density;
     this.moment.cap = budget.cap;
     // (BLENDER-FX: the hero's own rendered wind-up, played across the whole stage, in place of the painted gathering and the pack's)
-    if (this.bfxUlt(by.unit.def, 'windup', by.x, by.y, ms)) return;
+    if (this.bfxUlt(by.unit.def, 'windup', by.x, by.y, ms, 1, 0, by.unit)) return;
     this.paintMoment(KIT.gather, by.x, by.y, 2.5, { frameMs: ms / 8, foot: true, alpha: 0.9 });
     windUp(this.moment, el, by.x, by.y, ms, by.tall, true);
+  }
+
+  /** ON-FIGHTER: the moment's layer in a fighter's own layer under its body (`UnitView.underLayer`). */
+  private underAt(layer: Container): Particles {
+    let p = this.unders.get(layer);
+    if (!p || p.root.destroyed) {
+      p = new Particles();
+      p.cap = 40;
+      layer.addChild(p.root);
+      this.unders.set(layer, p);
+    }
+    return p;
   }
 
   /** BLENDER-FX: a stage of a hero kind's ultimate as its rendered sheet on the moment's layer (which runs while the fight is held), the
    *  middle of its tile at (x, y), played once across `ms` (the stage's length; a strike plays at its own pace when none is given). A light's
    *  soft glow goes under it. Reduced motion holds its one readable frame. False when the kind has no sheet or it has not loaded. */
-  private bfxUlt(kind: string, stage: UltStageName, x: number, y: number, ms?: number, size = 1, delay = 0): boolean {
+  private bfxUlt(kind: string, stage: UltStageName, x: number, y: number, ms?: number, size = 1, delay = 0, on?: { id: number }): boolean {
     const key = ultBfx(kind, stage, ultWeight(kind));
     const c = key ? bfxClip(key) : undefined;
     const frames = key ? bfxFrames(key) : [];
@@ -673,13 +693,26 @@ export class Fx {
     const life = ms ?? c.ms;
     const held = this.reduced ? [frames[c.hold]] : frames;
     const [cx, cy] = bfxCentre(c, x, y, size);
+    // (ON-FIGHTER: a clip played on a fighter (`on`) must leave its body readable. It is drawn at its full strength
+    // UNDER the fighter's body, in the fighter's own layer, and over the fighter only as thinly as its measured cover of a body allows
+    // (`overAlpha`): so it is seen all round the body and behind it, and the body through it)
+    const cover = on ? BODY_COVER[key] : undefined;
+    const thin = cover === undefined ? 1 : overAlpha(cover);
     const glows = bfxBudget(settings().saver).glow ? bfxGlows(key) : [];
     if (c.g && glows.length) {
       const k = BFX_GLOW_SCALE * size;
-      this.moment.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: x + (c.g.w / 2 - c.g.ax) * k, y: y + (c.g.h / 2 - c.g.ay) * k, scale: k, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA, prio: true, half: 1, ...(delay ? { delay } : {}) });
+      this.moment.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: x + (c.g.w / 2 - c.g.ax) * k, y: y + (c.g.h / 2 - c.g.ay) * k, scale: k, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA * thin, prio: true, half: 1, ...(delay ? { delay } : {}) });
     }
     // (the aftermath lies over those it struck for a second or two, so it is drawn thinner: they show through it)
-    this.moment.spawn({ frames: held, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: life / held.length, life, prio: true, solid: stage !== 'aftermath', alpha: stage === 'aftermath' ? ULT_BFX.AFTER_ALPHA : 1, half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42, ...(delay ? { delay } : {}) });
+    const base = stage === 'aftermath' ? ULT_BFX.AFTER_ALPHA : 1;
+    const bit = { frames: held, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: life / held.length, life, prio: true, solid: stage !== 'aftermath', half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42, ...(delay ? { delay } : {}) };
+    // (the fighter's own layer under its body, in the fighter's space: its feet the origin, its size the scale)
+    const host = on && thin < 1 ? this.sprites.get(on.id) : undefined;
+    if (host) {
+      const k = host.root.scale.x || 1;
+      this.underAt(host.underLayer()).spawn({ ...bit, x: (cx - host.root.x) / k, y: (cy - host.root.y) / k, scale: bit.scale / k, half: bit.half / k, alpha: base });
+    }
+    this.moment.spawn({ ...bit, alpha: base * thin });
     // (the moment's dim is lifted over a wind-up and a strike while they play, so they are seen at full strength and not through it: `momentLights`)
     if (stage !== 'aftermath') this.bfxLit.push({ x: cx, y: cy, r: Math.max(c.w, c.h) * BFX_SCALE * size * ULT_BFX.LIGHT, left: life + delay });
     return true;
@@ -708,12 +741,16 @@ export class Fx {
       };
       const own = place !== 'one' && place !== 'self' && all && me && size >= 1 ? ultSpots(place, all, me.id, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS) : spots;
       const at: [number, number][] = [];
+      const tileOf = new Map<string, { id: number }>();
       for (const s of own) {
         const sp = 'unit' in s ? this.sprites.get(s.unit) : undefined;
         // (one that has fallen and gone from the board is struck where it fell: the blow that ended the fight lands on the fallen)
         const fell = 'unit' in s && !sp ? b.units.find((u) => u.id === s.unit) : undefined;
         if ('unit' in s && !sp && !fell) continue;
         at.push(sp ? [sp.x, sp.y] : fell ? this.tilePos(b, fell.u, fell.v) : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v));
+        // (ON-FIGHTER: the fighter each spot is, for the layer under its body)
+        const [px, py] = at[at.length - 1];
+        if (sp) tileOf.set(`${px},${py}`, sp.unit);
       }
       // (ULT-AUDIT: what the ability leaves hanging over its caster for as long as it lasts: the black sun of Vael's totality)
       const lasts = ULT_LASTS[kind];
@@ -727,7 +764,7 @@ export class Fx {
       }
       if (place === 'self') {
         // (ULT-AUDIT: an aura, a ward, a transformation, a pull: it plays round the caster, once; its further bursts add nothing there)
-        if (caster && size >= 1) this.bfxUlt(kind, 'strike', caster.x, caster.y);
+        if (caster && size >= 1) this.bfxUlt(kind, 'strike', caster.x, caster.y, undefined, 1, 0, caster.unit);
         // (and each foe it struck is shaken by a small ring as the strike's own ring reaches it: `ULT_EXTRA.touch`)
         const touch = ULT_EXTRA[kind]?.touch;
         if (touch && caster && size >= 1) for (const [x, y] of at) this.bfxBeat(touch, el, x, y, { delay: touchDelay(Math.hypot(x - caster.x, y - caster.y)) });
@@ -751,7 +788,7 @@ export class Fx {
         } else for (const [x, y] of shown) {
           const far = linked && Math.hypot(x - caster.x, y - caster.y) > 8;
           if (far) beatLine(caster.x, caster.y, x, y).forEach(([px, py], i) => this.bfxBeat(ultLinkClip(kind), el, px, py, { delay: i * BEAT_LINE.LAG }));
-          this.bfxUlt(kind, 'strike', x, y, undefined, size >= 1 ? 1 : 0.7, far ? ULT_LINK_MS : 0);
+          this.bfxUlt(kind, 'strike', x, y, undefined, size >= 1 ? 1 : 0.7, far ? ULT_LINK_MS : 0, tileOf.get(`${x},${y}`));
         }
       } else if (at.length && size >= 1) {
         // (the blow itself is one great strike, four tiles and more across, at the middle of what it struck: it covers them all, where a
@@ -800,7 +837,7 @@ export class Fx {
         const at = 'unit' in s ? this.sprites.get(s.unit) : undefined;
         if ('unit' in s && !at) continue;
         const [x, y] = at ? [at.x, at.y] : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v);
-        this.bfxUlt(kind, 'aftermath', x, y, ms);
+        this.bfxUlt(kind, 'aftermath', x, y, ms, 1, 0, at?.unit);
       }
       return;
     }
