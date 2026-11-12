@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.551.0',
+    date: '2026-11-12',
+    title: 'Quicker wave starts; ten look-alikes parted',
+    notes: ['The king\'s painted spell sheets are now decoded off the game\'s main thread, which was stalling the start of a wave.', 'The Dread Pirate\'s broadside is gun flashes from the far edge and shot bursting among the foes; the Dragoon\'s fire and the Samurai\'s cut run along their line.', 'Pairs no longer look alike: harpoons for the Harpooner, fangs for the Vampire Lord, a tolling bell for the Bell Warden, a wall of water for the Sea Reaver.', 'Also the Nightstalker\'s talons, the Samurai Commander\'s fire running to each ally, the Wanderer\'s hearts and the Mirage Dancer\'s whirl of cuts.'],
+  },
+  {
     version: '0.550.0',
     date: '2026-11-12',
     title: 'The game can no longer lock with an empty field',

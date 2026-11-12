@@ -555,6 +555,72 @@ the last two after the show is over), `TOUGH=1`.
   fire on the ground (a test holds that). In the photograph: the puff and flash at her, sparks strung out towards the foes, two
   small bright impacts. Honest: the impacts are glowing discs with a ring, which read as hits but not strongly as bullets.
 
+### The director's list: the Dread Pirate's fleet, the Dragoon's breath, the Ninja Monk seen
+
+`docs/samples/blender-fx/audit-list-2-393.jpg` (0.499 above, now below: the Dragoon and the Ninja Monk) and
+`audit-ghost-fleet-393.jpg` (four moments, as it is now).
+
+- **Ghost Fleet (the Dread Pirate)** has its own scene, `broadside`: guns flash in a row from the field's far edge, each with a
+  puff of powder smoke, and cannon shot arcs in from them to burst in puffs and rings among the foes; cracks are left. It is one
+  picture in the midst of what it struck (no longer a burst on each foe). **No ship is drawn.** A ship was modelled first (a hull,
+  masts, square sails) and the director rejected it, rightly: built of plain solids it was a crude model, solid purple, hanging
+  over the crowd, the largest thing on the screen and nothing like the game's painted art. A ghost ship worth showing (pale and
+  see-through, planks, gun ports, tattered sails, rigging, an outline, standing behind the foes) is painted art, not something
+  this pipeline's solids make in a pass; it wants a ChatGPT prompt and a painted sheet if it is wanted. In the photograph
+  (`audit-ghost-fleet-393.jpg`, four moments close together, the screen's flash off): a white gun flash and purple powder smoke
+  at the far side, pink shot in the air on its way down, then purple splashes among the foes. Honest: it is small and brief, the
+  flashes stand a tile above the far foes rather than off the field, and the rings of the bursts fall between two of the frames.
+- **Inferno Breath (the Dragoon)** runs out from her: the strike on each tile of its line plays nearest first, each seventy
+  milliseconds after the one before and a little larger (`lineRun`, `ULT_LINE` in `blenderFxRules.ts`; a test), so the fire is
+  seen to leave her and widen; and the clip on each tile is tall narrow tongues, not the round clump it was. The Samurai's cut
+  runs along his line the same way. In the photograph: a row of fire standing along a stretch of the field, the tile fire the
+  ability itself leaves burning after. Honest: it is still fire standing on tiles in a row. It is not a jet in the air from her
+  mouth; that would want a clip drawn along the line's own direction, which this renderer does not turn.
+- **Hundred-Hand Strike (the Ninja Monk)**: CONFIRMED. The photographer has a quiet party (`QUIET=1`: the pick, the Knight and the
+  Cleric, no one whose fire lies over the picture). In it the strike is seen: pale slash marks, several together, on the foe he is
+  striking, with a burst of sparks under them, and curved gusts after.
+
+### The look-alike pairs, 1: a harpoon, fangs, fire on each ally
+
+`docs/samples/blender-fx/audit-pairs-1-393.jpg` (0.499 above, now below), `TOUGH=1`.
+
+- **The Harpooner and the Buccaneer** were the same cage of chain on each foe hooked, pale blue against purple. The Harpooner's
+  Leviathan Line is harpoons now: a long barbed shaft comes down onto each foe he hauls in, a flare where it lands, ice standing
+  after; no chain anywhere in his three stages. The Buccaneer keeps his chains. In the photograph: tall pale harpoons standing
+  over the foes, then ice.
+- **The Samurai Commander and the Banneret** were both a banner in a ring of orange fire. The Commander raises his banner in the
+  wind-up only; his strike is the fire running to each ally, tongues of it leaping up on each with sparks. The Banneret's banner
+  stands in her strike, on herself. In the photograph: his banner and fire where he stands, then fire on each friend in a ring.
+- **The Vampire Lord and the Hemomancer** were both an orb of blood over red rings. The Vampire Lord's Banquet of Blood is fangs
+  now: two rows of teeth closing, in the wind-up over him and on the foe he drinks from, with the blood drawn up after. The
+  Hemomancer keeps her bowl of blood. In the photograph: pale fangs closing over him, then on the foe.
+- **The Sage's dome** I changed and then put back. A test from the third batch holds that his shield is a dome (the ability forms
+  a shield round each ally), and that was decided with the director; with Ilyra's dome gone there are two domes on allies left,
+  his (pale, banded, in lightning's colours) and Orrun's (wound with vines). I have left both and say so.
+
+### The look-alike pairs, 2: a bell, a wave, hearts, a whirl; and the Nightstalker's talons first
+
+`docs/samples/blender-fx/audit-pairs-2-393.jpg` (0.499 above, now below), `TOUGH=1`. The Bell Warden's and the Nightstalker's rows
+are taken in the strike's first moments (`EARLY=1`): their blows come at once, and the usual later frames were after them.
+
+- **The Bell Warden and the War Drummer** were both hoops. A new scene, `toll`: a great bell hanging in the air (a flared body,
+  a crown, a bright rim, a clapper), swinging, a hoop of sound dropping out of its mouth at each stroke and spreading on the
+  ground. It is his wind-up and his strike (Midnight Knell). In the photograph: the bell over him, hoops under it. Honest: the
+  bell is small beside its hoops, and reads as a bell by its outline, not by any detail.
+- **The Sea Reaver, the Corsair Surgeon and the Kraken** all had the plain cone of spout. A new scene, `wave`: a wall of water
+  rearing across the screen and running towards the camera, foam off its crest, a wash left. It is the Sea Reaver's wind-up and
+  strike (Wrath of the Reef: he rides a wave through the line). In the photograph: a pale blue wall of water behind him as he
+  sets off; where he lands, the wall and a wash of foam, with the old cone from his aftermath still in the frame. Honest: it is a
+  striped wall more than a curling wave. The Corsair Surgeon's spray and the Kraken's spouts keep the cone, green and blue.
+- **The Wanderer and the Priestess** were both pillars of light on friends. The Wanderer's Panacea is hearts rising over a pool
+  of light on each friend now, no pillar, and hearts in her wind-up. In the photograph: a gold pool and small hearts by her, then
+  a pool on each friend. Honest: small.
+- **The Mirage Dancer and the Illusionist** both had upright panes. The Mirage Dancer has none now: a whirl of gusts and a cut
+  on each foe. In the photograph: white curved gusts round her, then a row of them through the foes. The Illusionist keeps her
+  mirrors. Honest: her mirages themselves (seven dancers) are not shown by anything.
+- **The Nightstalker**'s strike was a faint smear with the talons late. The talons come first now: three great purple talons
+  down across the foe at the blow, then the bats scattering. In the photograph: the talons at the moment of the blow.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
