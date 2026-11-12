@@ -1,6 +1,7 @@
 ## FREEZE-FIX: a wave's end never waits on a show
 
-Branch `claude/freeze-fix` (main 0.520.0 merged). The owner, on an Android phone (the installed app): "The game is freezing now.
+Branch `claude/freeze-fix` (main 0.524.0 merged; the branch's first push, the deadlines and the dropped queue, went into main as
+0.521.0). The owner, on an Android phone (the installed app): "The game is freezing now.
 Seemingly random in a wave", and then: "The freeze I was getting was usually when one wave ends. Before the next wave begins. The
 little red flags on the heroes on the bottom would move like it wasn't frozen." and "Sometimes it would continue but that was after
 10-20 seconds later." It was new: it did not happen a day before (0.492 and earlier).
@@ -92,6 +93,12 @@ with a screenshot.
 All four pages on the fix, with sheets failing and late (a short run, cut by the machine's time): 28 wave ends, 1.75 s at the
 middle, 2.5 s at the worst, none over 8 s; no stall, no fault in a frame. The fights also go quicker by hand: 13 in the time main
 played 8, since shows no longer queue.
+
+With main 0.524.0 merged (TEN-LIVES: a fallen hero rises after 5 s for a life): 22 more wave ends by hand, horn and spells, 1.5 s
+at the middle and 2.0 s at the worst. The soak's own runs never ended a wave with a hero down, so those were forced in a page
+(a hero killed, then the last foes): a hero down with its countdown running; the same with an ultimate fired; the same with the
+horn blown; the whole party down on the tick the last foe falls; the whole party down with foes standing (they rise, and the
+fight goes on to its end). All five: the result shown 1.75 to 2.0 s after the fight ended, no fault, the belt never needed.
 
 An earlier soak of 189 fights on main 0.514.0, each begun as a new run, raised no stall, no page error and no hang in the
 simulation, with 149 sheets failed and 401 late: a sheet that is late or fails is skipped, never waited for. It missed the freeze
