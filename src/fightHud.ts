@@ -20,6 +20,7 @@ import { heroFace } from './heroFace';
 import { paintedSkillIcon } from './combatSkillArt';
 import { battleSheet } from './render/awakenLook';
 import { GLOW, skillElement, type Element } from './render/fxRules';
+import { reviveIn } from './sim/lives';
 import { barNumbers, chipLine, chipOf, hudLayout, sheetOf, ultOf, whichCast, type ChipView, type Which } from './fightHudRules';
 
 export interface FightHudOpts {
@@ -256,7 +257,10 @@ export class FightHud {
       const bars = barNumbers(u);
       const chips = ([1, 2, 3] as const).map((n) => chipOf(b, u, n)).filter((c): c is ChipView => !!c);
       const lines = chips.map((c) => chipLine(c, this.compact));
-      const state = `${Math.round(ult.meter * 60)}|${bars.hp}|${bars.pool}|${lines.join(',')}|${chips.map((c) => `${c.chip}${+c.short}${Math.round(c.cd * 24)}${Math.round(c.pay * 24)}`).join()}|${+ult.ready}${+ult.queued}${+ult.locked}${+u.alive}`;
+      // (TEN-LIVES: the seconds until a life raises it, if one will)
+      const back = reviveIn(b, u);
+      const secs = back === null ? '' : String(Math.max(1, Math.ceil(back / 1000)));
+      const state = `${secs}|${Math.round(ult.meter * 60)}|${bars.hp}|${bars.pool}|${lines.join(',')}|${chips.map((c) => `${c.chip}${+c.short}${Math.round(c.cd * 24)}${Math.round(c.pay * 24)}`).join()}|${+ult.ready}${+ult.queued}${+ult.locked}${+u.alive}`;
       if (state === r.last) continue;
       r.last = state;
       const el = r.el;
@@ -265,6 +269,9 @@ export class FightHud {
       el.classList.toggle('queued', ult.queued);
       el.classList.toggle('locked', ult.locked);
       el.classList.toggle('fallen', !u.alive);
+      el.classList.toggle('rising', !!secs);
+      if (secs) el.dataset.revive = secs;
+      else delete el.dataset.revive;
       const plate = el.querySelector('.fhPlate') as HTMLElement;
       plate.textContent = ult.queued ? '…' : 'TAP';
       plate.hidden = !(ult.ready || ult.queued);

@@ -1,6 +1,6 @@
 // The modes beside an ordinary run. The daily challenge is one fixed run a day: a seed from the date, the starting five heroes in
 // the squad, a land that is fixed for the day, ten waves that end in the boss of the day (`daily.ts`). Clearing the boss wins the
-// daily and pays a daily chest; a loss with the hearts spent ends it with a share of the waves' crowns. The first play of a date
+// daily and pays a daily chest; a loss with the lives spent ends it with a share of the waves' crowns. The first play of a date
 // counts; a replay is practice (it pays nothing and does not change the day's record). The endless tower is a map of floors
 // (`tower.ts`) that opens once a run has fought stage 10; its floors are the run's own stages. Pure rules: no Pixi, no DOM; the
 // date is passed in as yyyymmdd.
@@ -15,7 +15,7 @@ import { dailyBossName, dailyChestSeed, dailyWaveCrowns, DAILY_WAVES } from './d
 import { kindPower, powerOf } from './power';
 import { levelOfKind } from './levels';
 import { ULT_LEVEL } from './abilities';
-import { gradeBoost, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, tierOfRun, START_GOLD, SUMMON_BASE, type Run } from './run';
+import { gradeBoost, partyFalls, runTheme, waveArmyOf, bandFor, isBossRun, isBossStage, recruit, tierOfRun, START_GOLD, SUMMON_BASE, type Run } from './run';
 import { bonusGold } from './castle';
 import { ascRules, ascUnlocked } from './ascension';
 import { RIFT_ROWS } from './rift';
@@ -123,12 +123,12 @@ export interface DailyStar {
   text: string;
   earned: boolean;
 }
-/** The two bonus stars of a cleared daily: no heart spent (a hero lost in the run is common: the greedy player loses six on average, so it is not asked), and under `DAILY_TIME_MS` of battle. They add to the chest. */
+/** The two bonus stars of a cleared daily: the whole party never down at once, nor out of time (TEN-LIVES: what "no heart spent" was; a hero lost in the run is common: the greedy player loses six on average, so it is not asked), and under `DAILY_TIME_MS` of battle. They add to the chest. */
 export function dailyBonus(run: Run): DailyStar[] {
   const t = run.tally;
   const won = !!run.cleared;
   const stars = [
-    { text: 'No heart spent', earned: won && !run.retries },
+    { text: 'The whole party never fell', earned: won && partyFalls(run) === 0 },
     { text: `Cleared in ${Math.floor(DAILY_TIME_MS / 60000)}:${String((DAILY_TIME_MS % 60000) / 1000).padStart(2, '0')} of battle`, earned: won && !!t && t.ms <= DAILY_TIME_MS },
   ];
   // (a themed day's third star: its goal, met on the boss of the day's fight, `noteFight`)

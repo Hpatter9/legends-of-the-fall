@@ -31,7 +31,7 @@ import { levelOfKind } from './levels';
 import type { Meta } from './meta';
 import { modeOpen } from './modeUnlock';
 import { Rng, hashSeed, mixSeed } from './rng';
-import { isBossRun, tierOfRun, waveArmyOf } from './run';
+import { isBossRun, partyFalls, tierOfRun, waveArmyOf } from './run';
 import { traitsOf } from './traits';
 import { UNITS } from './units';
 import { grantOres } from './awakenMats';
@@ -550,7 +550,7 @@ export interface QuestFight {
   stand?: { best: number; act: number; held: number };
   /** The quest battle this fight won (its last wave), if it did. */
   battle?: string;
-  /** QUESTS-3: the run this fight was in (its seed), whether the run is over now, the hearts burnt and the outside help (sellswords, guests) hired in it so far. */
+  /** QUESTS-3: the run this fight was in (its seed), whether the run is over now, the party's falls (what burnt a heart before TEN-LIVES) and the outside help (sellswords, guests) hired in it so far. */
   run?: number;
   runOver?: boolean;
   hearts?: number;
@@ -619,7 +619,8 @@ export function questFightOf(c: AchievementCtx, extra: FightExtra = {}): QuestFi
     waves: c.won && b ? 1 : 0,
     boss,
     heroes: heroes.map((u) => u.def),
-    flawless: heroes.length > 0 && heroes.every((u) => u.alive),
+    // (TEN-LIVES: a hero a life raised fell, though it stands at the end)
+    flawless: heroes.length > 0 && heroes.every((u) => u.alive && !u.lifeRises),
     kills: units.filter((u) => u.side === 'foe' && !u.alive).map((u) => u.def),
     dailyCleared: c.won && daily && !!run.cleared,
     ...(mode ? { mode } : {}),
@@ -639,7 +640,8 @@ export function questFightOf(c: AchievementCtx, extra: FightExtra = {}): QuestFi
     ...(run.mode?.kind === 'quest' && c.won && run.cleared ? { battle: run.mode.quest } : {}),
     run: run.seed,
     runOver: run.over || !!run.cleared,
-    hearts: run.retries ?? 0,
+    // (TEN-LIVES: what a burnt heart was: the whole party down at once, or out of time)
+    hearts: partyFalls(run),
     // (QUEST-POSSIBLE: outside help hired, not the party's own heroes put on the board, which every army run buys with Hire)
     hires: run.hired ?? 0,
     levels: Object.fromEntries(heroes.map((u) => [u.def, levelOfKind(c.meta, u.def)])),

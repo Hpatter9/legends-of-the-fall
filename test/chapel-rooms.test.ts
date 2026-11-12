@@ -1,30 +1,31 @@
 // DEPTH-BUILD (docs/notes/depth-build.md): the Chapel's rooms, the Vigil and Last Rites.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fight, hurt, reviveParty, stepBattle, type BattleEvent } from '../src/sim/battle';
+import { fight, hurt, stepBattle } from '../src/sim/battle';
 import { applyVigil, RITES, ritesSpent } from '../src/sim/chapelRooms';
 import { armyRun, noteFight, startStage } from '../src/sim/run';
 import { newCastle } from '../src/sim/castle';
 import { readOrders } from '../src/sim/march';
 import { readyBattle } from './helpers';
 
-test('a heart burns with each Vigil choice: shielded, swift or cleansed', () => {
+test('a life raises the party with each Vigil choice: shielded, swift or cleansed (TEN-LIVES: a heart, before)', () => {
   for (const vigil of ['shielded', 'swift', 'cleansed'] as const) {
-    const b = readyBattle(4, 'skeletons');
+    const b = readyBattle(4, 'skeletons', { lives: 10, vigil });
     fight(b);
     const heroes = b.units.filter((u) => u.side === 'hero');
     for (const h of heroes) {
       h.alive = false;
       h.hp = 0;
+      h.diedAt = b.t;
       h.ail = [{ kind: 'burn', until: 1e9, by: 0 } as never];
     }
-    b.phase = 'lost';
-    assert.ok(reviveParty(b));
-    const out: BattleEvent[] = [];
-    applyVigil(b, heroes, vigil, out);
+    // (every hero down: they all rise at once, a life each, with the Vigil's gift)
+    stepBattle(b);
+    assert.ok(heroes.every((h) => h.alive));
     for (const h of heroes) {
       if (vigil === 'shielded') assert.equal(h.shield!.hp, Math.round(h.maxHp * RITES.SHIELD));
       if (vigil === 'swift') assert.equal(h.hasteUntil, b.t + RITES.HASTE_MS);
+      void applyVigil;
       if (vigil === 'cleansed') assert.ok(!(h.ail ?? []).some((a) => a.kind === 'burn'));
     }
   }

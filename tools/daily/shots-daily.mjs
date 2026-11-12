@@ -87,7 +87,7 @@ await group('cleared', async (page) => {
 });
 await group('loss', async (page) => {
   await startDaily(page);
-  await ev(page, () => { const g = window.__game; g.run.stage = 6; g.run.retries = 2; g.newBattle(); });
+  await ev(page, () => { const g = window.__game; g.run.stage = 6; g.run.retries = 2; if (window.__game.b.lives) window.__game.b.lives.left = 0; g.newBattle(); });
   await page.waitForTimeout(500);
   await ev(page, () => { const g = window.__game; g.b.phase = 'lost'; g.endWait = 99999; g.refresh(); });
   await shot(page, 'loss', 5200);

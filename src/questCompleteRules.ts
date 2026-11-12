@@ -266,7 +266,7 @@ export function battleLines(qb: QuestBattle, how: BattleHow | undefined, cast: r
   const won = n ? `Won on the ${ordinal(n)} try` : 'Won';
   out.push({ kind: 'goal', text: `${qb.title}: ${won.toLowerCase()}${how ? `, in ${clockOf(how.ms)} of battle` : ''}` });
   if (who.length) out.push({ kind: 'battle', text: `Fought by ${andList(who.map(heroName))}${qb.duchess ? ', and Duchess' : ''}` });
-  if (how && how.fights > qb.waves.length) out.push({ kind: 'battle', text: `${how.fights} fights for its ${qb.waves.length} wave${qb.waves.length === 1 ? '' : 's'}: a heart or two burned` });
+  if (how && how.fights > qb.waves.length) out.push({ kind: 'battle', text: `${how.fights} fights for its ${qb.waves.length} wave${qb.waves.length === 1 ? '' : 's'}: the party fell on the way` });
   return out;
 }
 

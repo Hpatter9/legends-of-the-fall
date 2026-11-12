@@ -116,7 +116,7 @@ test('a quest battle\'s recap says who fought and how it went where the save kno
   assert.deepEqual(battleLines(qb, how, ['samurai', 'samuraiCommander']).map((l) => l.text), [
     'Two Blades on the Bridge: won on the second try, in 1:42 of battle',
     'Fought by Hideo and Kenji',
-    `4 fights for its ${qb.waves.length} waves: a heart or two burned`,
+    `4 fights for its ${qb.waves.length} waves: the party fell on the way`,
   ]);
   // (a battle won before the card existed: the tries begun and the cast, no more)
   assert.deepEqual(battleLines(qb, undefined, ['samurai', 'samuraiCommander'], 3).map((l) => l.text), ['Two Blades on the Bridge: won on the third try', 'Fought by Kenji and Hideo']);

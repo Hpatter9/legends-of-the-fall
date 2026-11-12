@@ -18,7 +18,7 @@ export interface Orders {
   curse?: CurseId;
   /** (Later batches: the route, the Chapel's Vigil and the Smithy's marked hero.) */
   route?: string;
-  /** The Chapel's Vigil (`chapelRooms.ts`): how the party rises when a heart burns. */
+  /** The Chapel's Vigil (`chapelRooms.ts`): how a hero rises when a life raises it (TEN-LIVES; a heart, before). */
   vigil?: VigilId;
   marked?: string;
   /** The Mage Tower's Spell Lectern (`lectern.ts`): the spare spell carried, and whether it has been swapped in. */
@@ -39,7 +39,7 @@ export interface MarchDef {
 
 export const MARCHES: readonly MarchDef[] = [
   { id: 'plain', name: 'Plain march', change: 'Nothing changes.', reward: 'As always.', icon: '⚑' },
-  { id: 'cursed', name: 'Cursed', change: 'Foes +20% health, one heart instead of two, and one curse.', reward: 'Crowns and XP x1.4, an extra chest, a laurel.', icon: '☠' },
+  { id: 'cursed', name: 'Cursed', change: 'Foes +20% health, five lives instead of ten, and one curse.', reward: 'Crowns and XP x1.4, an extra chest, a laurel.', icon: '☠' },
   { id: 'scouted', name: 'Scouted', change: 'The final boss and its weakness are shown before wave 1.', reward: 'Crowns x0.9 (the scouts are paid).', icon: '👁', room: 'lookout' },
   { id: 'night', name: 'Night march', change: 'Shots reach one tile less below height 2; foes heal half.', reward: 'A moonlit chest on a clear.', icon: '🌙', room: 'nightWatch' },
   { id: 'forced', name: 'Forced march', change: 'Waves 4, 6, 11 and 13 are skipped (their gold is not paid).', reward: 'XP x0.8, crowns as a full run.', icon: '🥾' },
@@ -110,7 +110,7 @@ export function marchFx(o: Orders | undefined): { foeHp: number; heroHeal: numbe
   };
 }
 
-/** The hearts a run's orders take away (a cursed run has one instead of two). */
+/** The hearts a run's orders take away (a cursed run had one instead of two; TEN-LIVES: each is `HEART_LIVES` lives, so it has five instead of ten). */
 export const heartsLost = (o: Orders | undefined): number => (o?.mod === 'cursed' ? 1 : 0);
 /** Whether a forced march skips this wave. */
 export const skipsWave = (o: Orders | undefined, n: number): boolean => o?.mod === 'forced' && MARCH.SKIP.includes(n);
@@ -147,7 +147,7 @@ export function readOrders(raw: unknown): Orders | undefined {
   return Object.keys(out).length ? out : undefined;
 }
 
-/** The run's badge line (beside the hearts): "Cursed · Withered Hands: the heroes' healing is halved." */
+/** The run's badge line (beside the lives): "Cursed · Withered Hands: the heroes' healing is halved." */
 export function ordersLine(o: Orders | undefined): string | null {
   if (!o?.mod) return null;
   const d = marchDef(o.mod);

@@ -5,7 +5,8 @@ import { makeGear } from '../src/sim/gear';
 import { equipBestRun } from '../src/sim/runGear';
 import { mvpKind, newRecap, noteFightStats, notePayout, recapOf } from '../src/sim/runRecap';
 import { merge } from '../src/sim/merge';
-import { BENCH_MAX, benchFull, benched, canRetry, finish, hireBlock, MAX_RETRIES, newRun, recycle, recycleValue, retriesLeft, retryGold, retryWave, setSquad, summon, summonCost, SUMMON_BASE, type Run } from '../src/sim/run';
+import { LIVES } from '../src/sim/lives';
+import { settleLives, BENCH_MAX, benchFull, benched, finish, hireBlock, newRun, recycle, recycleValue, livesLeft, retryGold, setSquad, summon, summonCost, SUMMON_BASE, type Run } from '../src/sim/run';
 
 /** A run with `n` heroes on the bench and plenty of gold, made by recruiting straight in (no merging). */
 function benchOf(seed: number, n: number): Run {
@@ -77,48 +78,26 @@ test('recycling a hero frees its place on a full bench', () => {
   assert.equal(benchFull(r), false);
 });
 
-test('a lost wave may be retried twice: same stage, a hire of gold to help, and the count shown', () => {
+// (TEN-LIVES: the two retries are the run's ten lives now, spent inside the fight; the rule's own tests are in test/ten-lives.test.ts)
+test('a run starts with its lives, a Hire\'s gold is what a party fall pays, and a lost wave ends the run', () => {
   const r = newRun(11);
-  assert.equal(retriesLeft(r), MAX_RETRIES);
-  assert.equal(MAX_RETRIES, 2);
-  assert.ok(canRetry(r));
+  assert.equal(livesLeft(r), LIVES);
   r.stage = 4;
   r.summons = 3;
-  const gold = r.gold;
-  const price = summonCost(r);
-  assert.equal(retryGold(r), price);
-  assert.equal(retryWave(r), price);
-  assert.equal(r.gold, gold + price);
-  assert.equal(r.stage, 4);
-  assert.equal(r.over, false);
-  assert.equal(retriesLeft(r), 1);
-  assert.ok(retryWave(r) !== null);
-  assert.equal(retriesLeft(r), 0);
-  assert.equal(canRetry(r), false);
-  const g = r.gold;
-  assert.equal(retryWave(r), null);
-  assert.equal(r.gold, g);
-});
-
-test('a retry keeps the next fight\'s buff, and giving up ends the run as before', () => {
-  const r = newRun(12);
+  assert.equal(retryGold(r), summonCost(r));
   r.buff = { hp: 1.2 };
-  retryWave(r);
-  assert.deepEqual(r.buff, { hp: 1.2 });
   finish(r, false);
   assert.equal(r.over, true);
-  assert.equal(canRetry(r), false);
-  assert.equal(retryWave(r), null);
 });
 
-test('retries are saved with the run and a run without the field has both left', () => {
+test('lives spent are saved with the run, and a run without the field has them all', () => {
   const r = newRun(13);
-  retryWave(r);
+  r.lives = 3;
   const back = JSON.parse(JSON.stringify(r)) as Run;
-  assert.equal(retriesLeft(back), 1);
+  assert.equal(livesLeft(back), LIVES - 3);
   const old = JSON.parse(JSON.stringify(newRun(13))) as Run;
-  delete old.retries;
-  assert.equal(retriesLeft(old), 2);
+  delete old.lives;
+  assert.equal(livesLeft(old), LIVES);
 });
 
 test('the pack\'s best gear goes on the fielded heroes, strongest first, and the rest stays in the pack', () => {
@@ -192,7 +171,9 @@ test('the run\'s books count gold earned (waves, recycles, retries) and spent (h
   assert.equal(back, recycleValue(r) === back ? back : recycleValue(r));
   const rc = recapOf(r);
   assert.equal(rc.earned, back);
-  const retry = retryWave(r)!;
+  // (a party fall's gold, paid as the fight's lives are settled: TEN-LIVES)
+  const retry = settleLives(r, { lives: { left: 5, spent: 5, falls: 1, rose: [] } } as never);
+  assert.equal(retry, retryGold(r));
   assert.equal(rc.earned, back + retry);
   const before = r.gold;
   finish(r, true, 0);

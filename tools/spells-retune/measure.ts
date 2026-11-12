@@ -19,7 +19,7 @@ import { BUILDINGS, maxLevel, newCastle, xpRate, type BuildingId, type Castle } 
 import { fightXp, gainXp, levelOfKind } from '../../src/sim/levels';
 import { heroRank, type Meta } from '../../src/sim/meta';
 import { mixSeed } from '../../src/sim/rng';
-import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, startStage, type Owned, type Run } from '../../src/sim/run';
+import { armyRun, boostOf, finish, isBossRun, noteFight, startStage, type Owned, type Run } from '../../src/sim/run';
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
@@ -123,10 +123,7 @@ function attempt(meta: Meta, c: Cell, seed: number): boolean {
     maybeSpells(b, meta, c.castle);
     playOut(b);
     const ok = b.phase === 'won';
-    if (!ok && c.hearts && canRetry(run)) {
-      retryWave(run);
-      continue;
-    }
+    // (TEN-LIVES: a fall is raised inside the fight now, by the run's lives: a lost wave is lost for good)
     if (ok) won = run.stage;
     noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);

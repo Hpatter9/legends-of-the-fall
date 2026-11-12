@@ -76,7 +76,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, ultPlace, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
@@ -689,7 +689,16 @@ export class Fx {
         if ('unit' in s && !sp) continue;
         at.push(sp ? [sp.x, sp.y] : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v));
       }
-      if (at.length && size >= 1) {
+      const place = ultPlace(kind);
+      const caster = place === 'self' ? this.sprites.get(b.units.find((u) => u.side === 'hero' && u.def === kind && u.alive)?.id ?? -1) : undefined;
+      if (place === 'self') {
+        // (ULT-AUDIT: an aura, a ward, a transformation, a pull: it plays round the caster, once; its further bursts add nothing there)
+        if (caster && size >= 1) this.bfxUlt(kind, 'strike', caster.x, caster.y);
+      } else if (place === 'each') {
+        // (ULT-AUDIT: a heal on each friend healed, a mark on each foe marked, a flurry's cut on each foe cut: a small strike on every one
+        // the ability touched, not one great one in their midst)
+        for (const [x, y] of at.slice(0, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS)) this.bfxUlt(kind, 'strike', x, y, undefined, size >= 1 ? 1 : 0.7);
+      } else if (at.length && size >= 1) {
         // (the blow itself is one great strike, four tiles and more across, at the middle of what it struck: it covers them all, where a
         // strike on each would be five of them piled on one another)
         this.bfxUlt(kind, 'strike', at.reduce((n, p) => n + p[0], 0) / at.length, at.reduce((n, p) => n + p[1], 0) / at.length);
@@ -1786,7 +1795,7 @@ export class Fx {
   /** A looping clip that stays while `live` holds, then fades: on `layer` (a tile's own ground, so it sorts with the fighters by depth:
    *  whoever stands on the tile is drawn over it) with the middle of its tile at (x, y). `rise` grows it from the ground as it comes (a wall);
    *  `dim` thins it (a fighter standing in it). */
-  private bfxStand(key: string, layer: Container, x: number, y: number, live: () => boolean, o: { phase?: number; dim?: () => number; rise?: boolean; flip?: boolean } = {}): boolean {
+  private bfxStand(key: string, layer: Container, x: number, y: number, live: () => boolean, o: { phase?: number; dim?: () => number; rise?: boolean; flip?: boolean; follow?: () => [number, number]; over?: boolean } = {}): boolean {
     const c = bfxClip(key);
     const made = this.bfxSprites(key, 1, o.flip);
     if (!c || !made) return false;
@@ -1798,6 +1807,7 @@ export class Fx {
     view.addChild(sp);
     view.position.set(x, y);
     view.alpha = 0;
+    if (o.over) view.zIndex = 9999;
     layer.addChild(view);
     const per = c.ms / c.n;
     const tall = sp.scale.y;
@@ -1808,6 +1818,7 @@ export class Fx {
       step: (dt) => {
         t += dt;
         const on = live() || t < BFX_FADE_MS;
+        if (o.follow) view.position.set(...o.follow());
         shown = Math.max(0, Math.min(1, shown + (on ? dt : -dt) / (on ? BFX_FADE_MS : 300)));
         if (!on && shown <= 0) return false;
         const f = bfxFrame(c, t + (o.phase ?? 0) * per, this.reduced, settings().saver);
@@ -2167,6 +2178,8 @@ export class Fx {
     if (!spellFrames(`${sheet}.motes`).length) return true;
     // (what circles in it: three small motes close in, or the sheet's own (`AURA_MOTES`: Spirit Guardians' spirits, large and clear))
     const own = AURA_MOTES[sheet];
+    // (BLENDER-FX: the rendered loop of what circles, following the caster, rising out of the ground as it comes, over the fighters)
+    if (own?.bfx && this.bfxStand(own.bfx, this.root, ...centre(), live, { rise: true, follow: centre, over: true })) return true;
     const n = own ? (settings().saver ? own.saver : own.n) : settings().saver ? 1 : 3;
     const r = own ? own.r * TW : (reach + 0.5) * TW * 0.35;
     const born = performance.now();

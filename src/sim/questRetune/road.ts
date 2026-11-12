@@ -88,7 +88,7 @@ export const ROAD_RETUNE: Readonly<Record<string, Retune>> = {
     length: 'chain',
     goal: { kind: 'clearArmy', n: 1, army: 'labyrinth', tier: 1, noHeart: true },
     oneRun: true,
-    text: 'Clear the Labyrinth on Hard or harder in one run, burning no heart',
+    text: 'Clear the Labyrinth on Hard or harder in one run, the whole party never falling',
     offer: [
       'My last shrine is at the heart of the Labyrinth. Everyone who has walked there has come back older, or not at all.',
       'I am already quite old, so I lose nothing. But the hard road is the only road that reaches the shrine, and it must be walked in one breath, without turning back. Clear the way and I will walk it, and when I come back I will tell you what I found.',
@@ -167,7 +167,7 @@ export const ROAD_RETUNE: Readonly<Record<string, Retune>> = {
     length: 'short',
     goal: { kind: 'clearArmy', n: 1, army: 'golems', tier: 1, flawless: true, noHeart: true },
     oneRun: true,
-    text: 'Clear the Golem Forge on Hard or harder in one run, no hero falling and no heart burnt',
+    text: 'Clear the Golem Forge on Hard or harder in one run, no hero falling',
     offer: ['Hard news. The Golem Forge has started making golems that make golems. The Crown wants it shut on the hard road, where the second line of furnaces are, in one go and without losing a single soul. I am to stand well back while I say this.'],
   },
   theCensus: {
@@ -235,7 +235,7 @@ export const ROAD_RETUNE: Readonly<Record<string, Retune>> = {
     stars: 4,
     length: 'chain',
     goal: { kind: 'clearArmy', n: 2, army: 'beasts', tier: 1, noHeart: true },
-    text: 'Clear the Beast Packs twice on Hard or harder, burning no heart',
+    text: 'Clear the Beast Packs twice on Hard or harder, the whole party never falling',
     offer: [
       'This is my last hunt. My hands are done. The packs are worse on the hard road, and I have not got the legs for it.',
       'Clear it for me, twice, and without turning back. Then I will go home and sit by a fire and not count anything.',
@@ -388,10 +388,10 @@ export const ROAD_RETUNE: Readonly<Record<string, Retune>> = {
     length: 'short',
     goal: { kind: 'clearArmy', n: 1, tier: 2, flawless: true, noHeart: true, with: { heroes: ['tyrant'] } },
     oneRun: true,
-    text: 'Clear any army on Elite or harder in one run with Edmund on the field, no hero falling and no heart burnt',
+    text: 'Clear any army on Elite or harder in one run with Edmund on the field, no hero falling',
     offer: [
       'Two kings in one castle. It cannot last. I have decided, magnanimously, that it may last, provided I am seen to be useful.',
-      'An army, on the Elite road, broken with me present, in one run and without a soul lost or a heart burnt. That is my verdict on myself. It is unbending. Obviously.',
+      'An army, on the Elite road, broken with me present, in one run and without a soul lost. That is my verdict on myself. It is unbending. Obviously.',
     ],
   },
 };

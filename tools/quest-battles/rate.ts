@@ -9,7 +9,7 @@ import { fight, playOut } from '../../src/sim/battle';
 import { armyById, ARMIES } from '../../src/sim/armies';
 import { autoDeploy, autoEvent, pickSquad } from '../../src/sim/autoplay';
 import { autoMerge } from '../../src/sim/merge';
-import { canRetry, finish, retryWave, summon, startStage } from '../../src/sim/run';
+import { finish, summon, startStage } from '../../src/sim/run';
 import { CHAIN_BATTLES, LOST_BATTLES, QUEST_BATTLES, TALE_BATTLES, castOf, forgetQuestArmies, notReady, type QuestBattle } from '../../src/sim/questBattles';
 import { startQuestBattle } from '../../src/sim/questRun';
 import { traitsOf } from '../../src/sim/traits';
@@ -52,10 +52,7 @@ function rate(qb: QuestBattle): number {
       fight(b);
       playOut(b);
       const ok = b.phase === 'won';
-      if (!ok && canRetry(run)) {
-        retryWave(run);
-        continue;
-      }
+      // (TEN-LIVES: a fall is raised inside the fight now, by the run's lives: a lost wave is lost for good)
       finish(run, ok);
     }
     if (run.cleared) wins++;

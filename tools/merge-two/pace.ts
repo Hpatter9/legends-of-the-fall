@@ -14,7 +14,8 @@ import { BUILDINGS, maxLevel, newCastle, type BuildingId, type Castle } from '..
 import { levelOfKind } from '../../src/sim/levels';
 import { heroRank, type Meta } from '../../src/sim/meta';
 import { mixSeed } from '../../src/sim/rng';
-import { armyRun, boostOf, canRetry, finish, isBossRun, noteFight, retryWave, startStage, gradeBoost, tierOfRun, type Owned } from '../../src/sim/run';
+import { LIVES_RULE } from '../../src/sim/lives';
+import { armyRun, boostOf, finish, isBossRun, noteFight, startStage, gradeBoost, tierOfRun, type Owned } from '../../src/sim/run';
 import { autoDeploy, autoRound } from '../../src/sim/autoplay';
 import { ratingOf } from '../../src/sim/stars';
 import { heroStats, learn, tierNodes } from '../../src/sim/talents';
@@ -42,6 +43,8 @@ const party = ['knight', 'paladin', 'archer', 'warlock', 'cleric'];
 const SAVES = Number(process.env.SAVES ?? 24);
 // (HEARTS=1: a lost wave burns a heart and is fought again, as the page does; by default a loss ends the try, as the notes' figures were measured)
 const HEARTS = process.env.HEARTS === '1';
+// (TEN-LIVES: the hearts are the run's lives now, raised inside the fight: HEARTS=1 plays with them)
+LIVES_RULE.on = HEARTS;
 const SPREAD: BuildingId[] = ['barracks', 'armoury', 'library', 'treasury', 'stable', 'mage'].filter((id) => id in BUILDINGS) as BuildingId[];
 const CASTLE_MAX = (Object.keys(BUILDINGS) as BuildingId[]).reduce((n, id) => n + maxLevel(id), 0);
 const castleLevels = (L: number): number => {
@@ -129,10 +132,7 @@ for (const cell of process.argv.slice(2)) {
       maybeSpells(b, meta, run.castle);
       playOut(b);
       const ok = b.phase === 'won';
-      if (!ok && HEARTS && canRetry(run)) {
-        retryWave(run);
-        continue;
-      }
+      // (TEN-LIVES: a fall is raised inside the fight now, by the run's lives: a lost wave is lost for good)
       if (ok) won = run.stage;
       noteFight(run, b);
       finish(run, ok, ratingOf(b, isBossRun(run)).stars);

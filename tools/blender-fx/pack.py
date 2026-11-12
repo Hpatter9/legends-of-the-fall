@@ -171,8 +171,9 @@ def pack(items, art_dir, manifest_path):
         s = spec = b['spec']
         W, H = round(s['w'] * DENSITY), round(s['h'] * DENSITY)
         n = len(b['cut'])
-        # (the frame that stands for the effect when it is held still: the one asked for, else the fullest)
-        hold = s.get('hold', 0 if s.get('loop') else max(range(n), key=lambda i: b['solid'][i]))
+        # (the frame that stands for the effect when it is held still: the one asked for, else the fullest after its first, which is
+        # where it is still beginning)
+        hold = s.get('hold', 0 if s.get('loop') else max(range(1, n), key=lambda i: b['solid'][i]))
         clip = dict(a=b['page'], x=b['x'], y=b['y'], w=b['w'], h=b['h'], n=n, cols=b['cols'],
                     ax=round(W / 2 - b['x0'], 1), ay=round(s['oy'] * H - b['y0'], 1), ms=s['ms'], loop=bool(s.get('loop')), hold=hold,
                     layer=s.get('layer', 'over'), el=s['element'])
@@ -180,6 +181,8 @@ def pack(items, art_dir, manifest_path):
             # (a stage may run past the end of the clip, so it is still at its height on the last frame: its last frame is the clip's)
             clip['cuts'] = [[min(n - 1, round(st['at'][0] * (n - 1))), min(n - 1, round(st['at'][1] * (n - 1)))] for st in s['stages']]
             clip['sc'] = [st['scene'] for st in s['stages']]
+        if s.get('at'):
+            clip['at'] = s['at']
         g = soft_by.get(s['id'])
         if g:
             clip['g'] = dict(a=g['page'], x=g['x'], y=g['y'], w=g['w'], h=g['h'], cols=g['cols'], ax=round(W / 2 / GLOW_SHRINK, 2), ay=round(s['oy'] * H / GLOW_SHRINK, 2))
