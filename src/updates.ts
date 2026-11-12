@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.520.0',
+    date: '2026-11-12',
+    title: 'Spirit Guardians you can see',
+    notes: ['Spirit Guardians\' spirits are back in sight: four of them, each about a fighter tall, circling the caster for as long as the aura lasts.'],
+  },
+  {
     version: '0.519.0',
     date: '2026-11-12',
     title: 'Lighter on your phone\'s memory',
