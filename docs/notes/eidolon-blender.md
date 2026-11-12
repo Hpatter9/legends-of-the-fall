@@ -28,8 +28,8 @@ After all six were in, the director's list, done in one push:
   one longest) with a **membrane** stretched between them (`Membrane` and `membrane_mat` in `vaelkhar_parts.py`): a fan from the
   wing's root to an edge that runs rib tip to rib tip and sags inward between them like a bat's, the dark itself with faint veins,
   a bright violet rim along the trailing edge, and that edge eaten ragged by a noise; as the maw drains, the edge is eaten further
-  in and the ribs fold. His painted violet fire still stands in front of them. His flash keeps its strength but is **violet-white**
-  (`flashTint` on his entry). His show is now **379,906 bytes** (the explosion 190,488 and its glow 25,236).
+  in and the ribs fold. His painted violet fire still stands in front of them. His flash is **violet-white** and softer, 0.6
+  (`flash` and `flashTint` on his entry). His show is now **379,906 bytes** (the explosion 190,488 and its glow 25,236).
 - All six together: 60 sheets, **2,532,628 bytes**.
 
 ## For the camera: where each show is

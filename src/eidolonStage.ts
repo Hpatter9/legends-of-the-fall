@@ -58,8 +58,11 @@ export interface StagedLook {
   aftershock?: boolean;
   /** The blow's white flash, when not `BLOW_FEEL.flash`: softer where the show is itself white or gold, so its lines can be read. */
   flash?: number;
+<<<<<<< HEAD
   /** And its colour, when not white. */
   flashTint?: string;
+=======
+>>>>>>> origin/main
 }
 
 const sheet = (name: string, fw: number, fh: number, n: number, cols: number, ms: number, foot: number, hold: number): StageSheet => ({ sheet: name, fw, fh, n, cols, ms, foot, hold });
@@ -161,6 +164,7 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
     from: 'right',
     front: true,
     aftershock: true,
+    flash: 0.6,
     flashTint: '#e9d9ff',
   },
 };
