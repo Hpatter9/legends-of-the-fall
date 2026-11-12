@@ -31,8 +31,8 @@ pixels. `measure.py` beside it prints a few numbers for each.
 Milder than those two, worst first. All share the slim, upright, narrow build of the later sheets rather than the
 bold one of the Samurai's:
 
-1. **Tenzin (Geomancer)**: narrow, static, red and orange robes at one lightness, a thin staff; the flattest shading
-   after Minh (spread 44).
+1. **Tenzin (Geomancer)**: narrow, static, red and orange robes at one lightness, a thin staff; little depth of shading
+   (lightness spread 44, among the lowest).
 2. **Itzel (Beastmaster)**: dark browns on brown skin blur into one shape; front and back are hard to tell apart.
 3. **Dorion (Satyr)**: plain and cartoon-flat, bare-chested with nothing in his hands; a small, simple figure.
 4. **Malia (Lightning Mage)**: pale lilac and white with the lightest outline of all (rim 78); washes out on a light floor.
