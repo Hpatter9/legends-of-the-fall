@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.540.0',
+    date: '2026-11-12',
+    title: 'Fire that reads as fire; the Mummy\'s sand',
+    notes: ['An ultimate\'s big fire is now tall narrow tongues of flame, not a heap of round lumps (the Banneret, Inquisitor, Kitsune and Samurai Commander).', 'The Mummy\'s sandstorm is broad bands of whirling sand three tiles across, the largest thing on the field.', 'The link from a caster to each friend is rising sparks of light, not a row of lumps (the Priestess and the Wanderer).'],
+  },
+  {
+    version: '0.539.0',
+    date: '2026-11-12',
+    title: 'Auto fights run without pauses',
+    notes: ['Slow motion on a foe\'s fall is now for real bosses only; it was firing for most ordinary foes and dragging every wave.', 'An ultimate\'s short version on Auto no longer slows or stops the fight.', 'The big effect sheets are made ready before the fight starts, not in the middle of it.'],
+  },
+  {
+    version: '0.538.0',
+    date: '2026-11-12',
+    title: 'Karasu\'s falling blades',
+    notes: ['Karasu\'s Cloud of Daggers is now white blades falling steeply over the foes with feathers among them, not a faint ring of wind.'],
+  },
+  {
     version: '0.537.0',
     date: '2026-11-12',
     title: 'Hawks for the Falconer, stars for Astrax',

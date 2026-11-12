@@ -13,8 +13,20 @@ const STRIPS = new Map<string, Texture[]>();
 const IMAGES = new Map<string, HTMLImageElement>();
 let loading: Promise<void> | null = null;
 
+/** WAVE-DELAY: each part's atlas, and the atlases a part has been asked from this visit: those are kept ready for the fights to come
+ *  (`texReady.ts`), so a sheet is handed to the graphics card in the middle of a fight once a visit at most, not once a minute. */
+const SHEET_OF = new Map<string, Texture>();
+const USED = new Set<Texture>();
+
 /** A painted part's frames (empty before its atlas has loaded, or when none has it). */
-export const spellFrames = (key: string): Texture[] => STRIPS.get(key) ?? [];
+export function spellFrames(key: string): Texture[] {
+  const sheet = SHEET_OF.get(key);
+  if (sheet && !USED.has(sheet)) {
+    USED.add(sheet);
+    keepReady(`spell-sheet-${USED.size}`, sheet.source);
+  }
+  return STRIPS.get(key) ?? [];
+}
 /** A session's atlas picture once it has loaded (none before, or when the session has no atlas: nothing is ever asked for). */
 export const spellImage = (session: string): HTMLImageElement | undefined => IMAGES.get(session);
 
@@ -35,6 +47,7 @@ export function loadSpellArt(): Promise<void> {
           const frames: Texture[] = [];
           for (let i = 0; i < n; i++) frames.push(new Texture({ source: base.source, frame: new Rectangle((col + i) * m.cell, row * m.cell, m.cell, m.cell) }));
           STRIPS.set(key, frames);
+          SHEET_OF.set(key, base);
         }
       } catch (err) {
         console.warn(`spell art ${session} did not load`, err);

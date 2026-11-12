@@ -388,6 +388,63 @@ Eight read as they were; two did not and are changed and photographed (Astrax, t
 and her aftermath's spikes, the Banneret's lumpy flames, the Corsair Surgeon's plain cones. Thirty-five heroes are
 now judged at full size in this pass.
 
+### Ten more: daggers for Karasu
+
+`docs/samples/blender-fx/audit-fullsize-8-393.jpg` (the Harpooner, the Hemomancer, the Inquisitor, Karasu, the Kitsune) and `-9` (the
+Lancer, the Lightning Mage, the Mirage Dancer, the Nightstalker, the Plague Doctor), 0.499 above and now below, all photographed
+with `TOUGH=1`.
+
+| Hero | 0.499 | Now | Shows the ability? | Mistaken for another? |
+| --- | --- | --- | --- | --- |
+| Harpooner | pale blue balls, rings | a spout and chain on her; a cage of pale chain on each foe hooked | yes: hooks and chain | YES, in shape: the Buccaneer's Keelhaul is the same cage of chain, purple against her pale blue. With colour removed they are one effect |
+| Hemomancer | red balls, red rings | an orb of blood over rings; a ring on the ground and drops rising to the orb; rings after | yes: blood drawn up | no |
+| Inquisitor, Tribunal | yellow balls, rings | a pillar and hoops on him; three tall stakes coming down; round yellow lumps in a ring after | the stakes read as judgement falling; the lumps after are the `flames` scene in holy colours and read as nothing | the lumps are the same as the Banneret's |
+| Karasu, Cloud of Daggers | a red ball, a red ring | was a faint ring of wind at one spot: DID NOT READ. CHANGED: white blades falling steeply over the foes, feathers among them | yes, now: blades falling | no |
+| Kitsune | a purple ball, a ring | a fox-fire on her; a coil of fire round the foe changed; a ring after | a coil reads as a change being worked; small | no |
+| Lancer | a dust ball | a crescent as she sets; a long streak along her charge, dust thrown up behind | yes: a charge down a line | the Minotaur's charge is cracks and dust, hers a streak |
+| Lightning Mage | a pale ball, a ring | a cloud gathering on him; a great cloud over the foes; a bolt out of it | yes: a storm cloud; the cloud hides the fighters under it for most of the strike | no |
+| Mirage Dancer | pale balls, rings | tall pale veils round her; a row of pale blades through the foes; a sigil after | reads as a dance of blades; not clearly mirages | the Illusionist's upright panes are close in shape |
+| Nightstalker | a purple ring and ball | shards lifting off him; a low purple smear among the foes; great purple talons and smoke after | the talons read; the strike itself is faint and the talons come late | no |
+| Plague Doctor | green balls, a ring | a purple and green cloud on him; a bank of the same cloud over the foes, hanging | yes: a plague cloud | no |
+
+Seven read; Karasu did not and is changed and photographed. Three want more and are not fixed: the Harpooner against the Buccaneer
+(one of them wants a harpoon, not a cage), the Inquisitor's lumps, the Nightstalker's faint strike. One thing is common to three
+heroes now (the Banneret, the Inquisitor, the Kitsune's wind-up): the `flames` scene at an ultimate's size is a heap of round lumps,
+not fire. Forty-five heroes are judged at full size in this pass.
+
+### Ten more: fire that is fire, a line of sparks, the Mummy's sand
+
+`docs/samples/blender-fx/audit-fullsize-10-393.jpg` (the Priestess, the Sage, the Samurai Commander, the Satyr, the Sea Reaver) and
+`-11` (the Time Witch, the Vampire Lord, the Wanderer, the War Drummer, the Mummy), 0.499 above and now below, `TOUGH=1`.
+
+Three things were wrong across many heroes, and are mended at their root:
+
+- **Big fire was a heap of lumps.** The `flames` scene at an ultimate's size was nine fat tongues. It is now fourteen narrow, tall
+  ones (`slim`, only at that size: a tile's small fire is as it was). The Banneret's Oriflamme, the Inquisitor's pyres, the Kitsune's
+  fox-fire and the Samurai Commander's rallying fire are photographed again and read as fire (sheets 6 and 8 are remade).
+- **The line from a caster to each friend was a row of lumps** (a tongue of flame for each link). Each link is now a few sparks of
+  light rising (`beat-link`, all elements). In the Priestess's and the Wanderer's photographs the row of lumps is gone.
+- **The Mummy's sand** (the director's item): the sandstorm was a tile and a half wide, thin bands, pale against the ground. It is
+  now eleven broad bands of sand whirling well over a hero's height and three tiles across, on him, in the wind-up and the strike.
+  In the photograph it is the largest thing on the field while it turns.
+
+| Hero | 0.499 | Now | Shows the ability? | Mistaken for another? |
+| --- | --- | --- | --- | --- |
+| Priestess, Mass Resurrection | a yellow ball and rings | a pillar and hoops on her; sparks to each friend; a sigil, rays and a pillar on each | yes: light raised on each friend | Ilyra's is a dome on each, hers rays and a pillar |
+| Sage | a yellow ball, a ring | a dome of pale bands on him, then one on each friend | yes: a ward | YES, in shape: Ilyra's and Orrun's are domes on each ally too (gold with rays; green with vines; his pale and banded). Three domes |
+| Samurai Commander, Rallying Cry | a yellow ball, a ring | fire and a banner on him; a banner planted; fire in a ring round it | yes: a banner raised | YES: the Banneret's Oriflamme is also a banner in a ring of orange fire. Two heroes, one picture |
+| Satyr, Bacchanal | a green ball, a ring | puffs and a ring on him; green coils whirling over the friends | the coils read as a revel loosely; nothing says music | no |
+| Sea Reaver | a pale ball, a ring | a wave rearing; a great spout of water where he lands | yes: a waterspout; it is a plain cone, crude | the Corsair Surgeon's spouts are the same cone in green |
+| Time Witch | yellow balls, rings | a star sigil; discs and rings on each foe; crystals standing after | the discs read as dials, the crystals as time stopped | no |
+| Vampire Lord | a red ball, a ring | an orb of blood on him; a ring and drops at the foe; a red mass after | yes: blood taken | YES: the Hemomancer's is also an orb of blood over red rings |
+| Wanderer, Panacea | a yellow ball, a ring | a shaft and a round mass on him; rings and pillars of light on each friend | yes on the friends; the round mass on him in the wind-up reads as nothing | the Priestess's is close (pillars of light on friends) |
+| War Drummer | a pale ball, a ring | hoops over him; hoops and rings spreading low and wide | yes: beats going out | the Bell Warden's are hoops too, purple and upright |
+| Mummy, Curse of the Pharaoh | purple balls and rings | was a faint pale swirl: CHANGED (above) | yes, now: a sandstorm round him | no |
+
+So this ten: all show something of the ability, and five of them have a neighbour they could be taken for with the colour gone
+(the Sage's dome, the Commander's banner, the Vampire Lord's orb, the Sea Reaver's cone, the Wanderer's pillars). Those are not
+fixed here. Fifty-five heroes are judged at full size in this pass; fifteen remain.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
