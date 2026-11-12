@@ -555,6 +555,26 @@ the last two after the show is over), `TOUGH=1`.
   fire on the ground (a test holds that). In the photograph: the puff and flash at her, sparks strung out towards the foes, two
   small bright impacts. Honest: the impacts are glowing discs with a ring, which read as hits but not strongly as bullets.
 
+### The director's list: the Dread Pirate's fleet, the Dragoon's breath, the Ninja Monk seen
+
+`docs/samples/blender-fx/audit-list-2-393.jpg` (0.499 above, now below) and `audit-ghost-fleet-393.jpg` (four moments).
+
+- **Ghost Fleet (the Dread Pirate)** has its own scene, `broadside`: a ghost ship's side stands behind the foes (a long hull, a
+  bowsprit, three masts with square sails), its guns flash along it, and cannon shot arcs in to burst in puffs and rings across
+  the ground in front; cracks are left. It is one picture in the midst of what it struck (no longer a burst on each foe). In the
+  photograph: the ship hangs over the far side of the crowd, three masts and their sails plain to see, and white shot bursts in
+  rings among the foes under it. Honest: the ship is a solid purple, not pale and see-through as a ghost might be; and it is one
+  ship, where the ability says a fleet.
+- **Inferno Breath (the Dragoon)** runs out from her: the strike on each tile of its line plays nearest first, each seventy
+  milliseconds after the one before and a little larger (`lineRun`, `ULT_LINE` in `blenderFxRules.ts`; a test), so the fire is
+  seen to leave her and widen; and the clip on each tile is tall narrow tongues, not the round clump it was. The Samurai's cut
+  runs along his line the same way. In the photograph: a row of fire standing along a stretch of the field, the tile fire the
+  ability itself leaves burning after. Honest: it is still fire standing on tiles in a row. It is not a jet in the air from her
+  mouth; that would want a clip drawn along the line's own direction, which this renderer does not turn.
+- **Hundred-Hand Strike (the Ninja Monk)**: CONFIRMED. The photographer has a quiet party (`QUIET=1`: the pick, the Knight and the
+  Cleric, no one whose fire lies over the picture). In it the strike is seen: pale slash marks, several together, on the foe he is
+  striking, with a burst of sparks under them, and curved gusts after.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in

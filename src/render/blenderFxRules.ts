@@ -218,6 +218,16 @@ export function ultSpots(place: 'each' | 'friends' | 'tiles' | 'line', t: { stru
   return got.slice(0, cap);
 }
 
+/** ULT-AUDIT: a strike laid along a line (a breath, a cut down a row) runs out from its caster: the spots nearest first, each `LAG` ms
+ *  after the one before, and each a little larger than the last (`FROM` of its size at the caster, `GROW` more a spot, `MAX` at
+ *  most), so a breath is seen to leave the mouth and widen. `at` are the spots' places, `cx, cy` the caster's: each spot's place in
+ *  the run, its delay and its size. */
+export const ULT_LINE = { LAG: 70, FROM: 0.75, GROW: 0.09, MAX: 1.35 } as const;
+export function lineRun(at: readonly (readonly [number, number])[], cx: number, cy: number): { i: number; delay: number; size: number }[] {
+  const order = at.map((p, i) => ({ i, d: Math.hypot(p[0] - cx, p[1] - cy) })).sort((a, b) => a.d - b.d || a.i - b.i);
+  return order.map(({ i }, n) => ({ i, delay: n * ULT_LINE.LAG, size: Math.min(ULT_LINE.MAX, ULT_LINE.FROM + n * ULT_LINE.GROW) }));
+}
+
 /** ULT-AUDIT: the kinds whose strike is carried to each spot by a line from the caster (a row of the showcase's `link` clips, the strike
  *  landing as the line arrives, `ULT_LINK_MS` later): a healer's light running out to each friend, the Gorgon's gaze to each foe. */
 export const ultLinked = (kind: string): boolean => ultPlace(kind) === 'friends' || kind === 'gorgon' || kind === 'gunslinger';

@@ -9,7 +9,7 @@ import '../src/sim/battle';
 import { AURA_MOTES } from '../src/render/movePaints';
 import { auraLook } from '../src/render/toolkitLooks';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
-import { BEAT_OWN, ULT_LASTS, ULT_LINK_MS, beatBfx, ultLinkClip, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
+import { BEAT_OWN, ULT_LASTS, ULT_LINE, ULT_LINK_MS, beatBfx, lineRun, ultLinkClip, ultLinked, ultPlace, ultSpots } from '../src/render/blenderFxRules';
 import { SHOWCASES } from '../src/ultShowRules';
 
 test('Spirit Guardians shows its guardians: spirits a fighter tall circling the Cleric for as long as the aura lasts', () => {
@@ -146,11 +146,29 @@ test('on the caster a showcase gathers with the hero\'s own wind-up, not one cir
   assert.ok(BEAT_OWN.GATHER_MS >= 1000 && BEAT_OWN.FINISH < 1);
 });
 
-test('breath down a line burns along the line; a fleet\'s broadsides fall among the foes', () => {
+test('breath down a line burns along the line; a fleet\'s broadside is one picture, the ghost ship and its shot falling in front of it', () => {
   assert.equal(ultPlace('dragoon'), 'line');
-  assert.equal(ultPlace('dreadPirate'), 'each');
+  // (it was three bursts, one on each foe; the director's order, 2026-11-12: its own scene, the ship's side and cannon shot arcing in)
+  assert.equal(ultPlace('dreadPirate'), 'one');
   // (a line: its tiles and nothing else; with none, the foes struck)
   const t = { struck: [7, 8], helped: [2], tiles: [{ u: 1, v: 2 }, { u: 1, v: 3 }, { u: 1, v: 4 }] };
   assert.deepEqual(ultSpots('line', t, 1, 5), [{ u: 1, v: 2 }, { u: 1, v: 3 }, { u: 1, v: 4 }]);
   assert.deepEqual(ultSpots('line', { struck: [7], helped: [2], tiles: [] }, 1, 5), [{ unit: 7 }]);
+});
+
+test('a strike along a line runs out from its caster: nearest first, each later and larger, so a breath leaves the mouth and widens', () => {
+  // (three tiles of a line given out of order; the caster stands at the origin)
+  const run = lineRun([[90, 0], [30, 0], [60, 0]], 0, 0);
+  assert.deepEqual(run.map((r) => r.i), [1, 2, 0]);
+  assert.deepEqual(run.map((r) => r.delay), [0, ULT_LINE.LAG, 2 * ULT_LINE.LAG]);
+  assert.ok(run[0].size < run[1].size && run[1].size < run[2].size);
+  assert.equal(run[0].size, ULT_LINE.FROM);
+  // (a long line stops growing)
+  const long = lineRun(Array.from({ length: 12 }, (_, i) => [i * 10, 0] as const), 0, 0);
+  assert.equal(long[11].size, ULT_LINE.MAX);
+  // (the Dragoon's breath and the Samurai's cut are laid so; the Dread Pirate's broadside is one picture, the ship and its shot)
+  assert.equal(ultPlace('dragoon'), 'line');
+  assert.equal(ultPlace('dreadPirate'), 'one');
+  assert.deepEqual(BFX_CLIPS['ult-dreadPirate-strike'].sc, ['broadside', 'crack']);
+  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /for \(const r of lineRun\(shown, caster\.x, caster\.y\)\)/);
 });

@@ -37,7 +37,8 @@ const browser = await chromium.launch({ ...(existsSync(PINNED) ? { executablePat
 const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 1));
 // (the save owns the picks themselves and a few to stand with them)
 const ALL = [...new Set([...PICKS, 'knight', 'cleric', 'wizard', 'archer', 'samurai'])];
-const PARTY_OF = (pick) => [pick, ...['knight', 'cleric', 'archer', 'wizard', 'samurai'].filter((k) => k !== pick)].slice(0, 5);
+// (QUIET=1: a party with no one whose own fire or arrows cover the picture: the pick, the Knight and the Cleric)
+const PARTY_OF = (pick) => [pick, ...(process.env.QUIET ? ['knight', 'cleric'] : ['knight', 'cleric', 'archer', 'wizard', 'samurai']).filter((k) => k !== pick)].slice(0, 5);
 let errors = 0;
 
 async function open(eidolons) {
