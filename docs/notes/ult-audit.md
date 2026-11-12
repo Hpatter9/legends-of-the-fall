@@ -478,7 +478,7 @@ Changed here, and photographed:
 | Wizard | a fireball | fire gathering on him; a fireball with its ring; a field of fire after | yes | no |
 | Wolf Bard, Battle Hymn | a pale ball and ring | CHANGED (above) | yes, now | was the War Drummer's twin; not now |
 
-**The great blows.** Eight heroes have the great blow under their own scenes (the Samurai, the Barbarian, the Blood Gargoyle, the
+**The great blows (as they were; changed in the next section).** Eight heroes had the great blow under their own scenes (the Samurai, the Barbarian, the Blood Gargoyle, the
 Siege Bot, the Wizard, the Astrologer, the Seraph, the Bombardier). At its height each is a great ball in its element's colour that
 hides the field for a moment. What differs is what comes first (a crescent, a hoop of spikes, a shaft, a shell, a star, a beam) and
 what is left. With the colour gone, the middle half second of these eight is one picture. That is by design (each is one great blow),
@@ -505,6 +505,31 @@ out from her to each foe, and the stone rises as the row arrives (`ultLinkClip`:
 it). In the photograph's fourth moment four purple eyes stand in a row from her towards the foes. What I have not got is a frame
 with the row complete to every foe: it is staggered and brief (each eye 420 ms, thirty apart), and the pale discs under the foes
 (her strike's own ground) are still the larger thing in the picture.
+
+### No great blow: eight strikes of their own (the director's order, 2026-11-12)
+
+`docs/samples/blender-fx/audit-greatblows-1-393.jpg` (the Samurai, the Barbarian, the Blood Gargoyle, the Siege Bot) and `-2` (the
+Wizard, the Astrologer, the Seraph, the Bombardier), 0.499 above and now below, `TOUGH=1`.
+
+The owner's words were "unique and extremely varied", and eight heroes shared one thing: a white-hot core that tore open under
+their own scenes (`impact`), a great ball in a colour that hid the field for half a second. It is under none of them now, and none
+of the eight has the fireball (`burst`) either. A test holds both.
+
+| Hero | Was (under the ball) | Now | In the photograph |
+| --- | --- | --- | --- |
+| Samurai, Issen | a crescent, sparks | his cut lies along his line: a crescent and a spark of light on each foe the dash cuts (`line`) | crescents in a row across the foes; the field is seen throughout |
+| Barbarian, Berserker Leap | cracks, a fireball | cracks running out from where he lands, a shock ring, dust shoved outward | red cracks spreading under the crowd, then the ring; no ball |
+| Blood Gargoyle | a shock ring, slabs | the ring, slabs thrown up, cracks | a pale flash on the ground, rings, grey slabs standing |
+| Siege Bot, Orbital Strike | a fireball, a ring | the shell's line coming down on a slant, a crater of cracks, smoke | the slanting shell, fire and cracks where it lands |
+| Wizard, Meteor Swarm | a fireball, cracks | three meteors coming down, a crater, smoke; the fire is its aftermath | the crater and smoke, then the field of fire. The meteors themselves I have on the clip's sheet, not in a fight frame |
+| Astrologer | drawn-in light, a fireball | light drawn in, a nova of tongues round a sigil | the star coming down, then the sigil with its crown of light; the fighters show through |
+| Seraph | a beam, a ring | a column of light coming down, wings opening out of it, rings | a pale column over the crowd with rings under it; see-through |
+| Bombardier | a beam, a fireball | a shell and its fire on each foe the salvo falls on (`each`) | small shells bursting across the field, fire left on the ground |
+
+With the colour gone the eight are now: crescents in a row; cracks and a ring; a ring and slabs; a slanting beam and a crater;
+wedges falling into a crater; a crowned sigil; a column with wings; small bursts scattered. No two alike, and none hides the field.
+Two honest notes: the Wizard's meteors are thick bright wedges, not round burning rocks; and the Barbarian's and the Juggernaut's
+strikes are both cracks in the ground (red against pale, a ring against spires).
 
 ## The audit of all 70
 
