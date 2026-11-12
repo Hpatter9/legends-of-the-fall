@@ -177,5 +177,9 @@ Changed on the app's side (small, and not built or run here: the Android build i
   Android 8 and later).
 - `AndroidManifest.xml`: `android:hardwareAccelerated="true"` (the default, now said) and `android:largeHeap="true"`.
 
-Not changed: storing `game.js` uncompressed in the APK (a larger download for a quicker start), and leaving the source map out.
+- `android/app/build.gradle`: the page's source map (`*.map`, 19 MB the app never reads) is left out of the APK's assets. It was
+  never in the web build's service worker list.
+
+Not changed: storing `game.js` uncompressed in the APK (a larger download for a quicker start), until the owner's Diagnostics copy
+is in.
 
