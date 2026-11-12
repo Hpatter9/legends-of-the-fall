@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.507.0',
+    date: '2026-11-12',
+    title: 'Ultimates that fill the field',
+    notes: ['Every ultimate\'s strike is now one great blow: a white-hot core that tears open, shock rings along the ground and debris, four to eight tiles across.', 'Wind-ups swell to full height just before the blow. Effects for a fight\'s heroes load as it begins, so memory stays low.'],
+  },
+  {
     version: '0.506.0',
     date: '2026-11-12',
     title: 'Nivra\'s call, remade in ice',
