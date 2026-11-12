@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.518.0',
+    date: '2026-11-12',
+    title: 'Cinematics off',
+    notes: ['The story films (a boss\'s arrival, an army cleared and the like) no longer play: the Cinematics switch is now off, on new and existing saves.', 'You can turn them back on in Settings, Gameplay. Quest stories and the codex\'s Scenes list are unchanged.'],
+  },
+  {
     version: '0.517.0',
     date: '2026-11-12',
     title: 'The tactic button is an orb',

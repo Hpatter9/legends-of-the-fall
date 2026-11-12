@@ -44,7 +44,7 @@ export interface Settings {
   awake: boolean;
   /** Whether heroes pipe up in small speech bubbles (hired, placed, a win or a loss, a bit of banter). */
   quips: boolean;
-  /** Whether cinematics play by themselves (the opening, a boss's arrival, a hero earned, the summoning). Off, they never start, but the codex's Scenes list can still play a seen one. */
+  /** Whether cinematics play by themselves (the opening, a boss's arrival, a hero earned, the summoning). Off (the default since CINE-OFF), they never start, but the codex's Scenes list can still play a seen one. */
   cinematics: boolean;
   /** Whether a hero's ultimate plays its full moment (ULT-CUTIN, docs/notes/battle-hud.md): the fight pauses, a slash of the hero's art crosses
    *  the screen with the ultimate's name and the board dims round the caster. Off, the short one: a quick banner while the fight runs on. */
@@ -64,9 +64,12 @@ export interface Settings {
   roster?: RosterView;
   /** HEROES-FILTER: set once the March orders are first changed from the plain default: the War Council's Plan no longer wears its mark. */
   planChosen?: boolean;
+  /** CINE-OFF (the owner, 2026-11-12: "Turn off the cinematics"): set once a save's settings have had the Cinematics switch turned off this
+   *  one time; after it the switch is the player's own again (turned back on, it stays on). */
+  cineOff?: boolean;
 }
 
-export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, volCurve: true, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: true, ultFull: true, ultShort: false, eidolonFull: true, duchessHat: 'none', nemesisCut: 'full' };
+export const DEFAULTS: Settings = { ruler: DEFAULT_RULER, music: 100, effects: 100, volCurve: true, speed: 1, shake: true, numbers: true, saver: false, awake: true, quips: true, cinematics: false, cineOff: true, ultFull: true, ultShort: false, eidolonFull: true, duchessHat: 'none', nemesisCut: 'full' };
 
 /** The settings from what was saved (`raw`, the stored text or null): anything missing or wrong falls back to the default. */
 export function parseSettings(raw: string | null): Settings {
@@ -99,7 +102,9 @@ export function parseSettings(raw: string | null): Settings {
     saver: flag(saved.saver, DEFAULTS.saver),
     awake: flag(saved.awake, DEFAULTS.awake),
     quips: flag(saved.quips, DEFAULTS.quips),
-    cinematics: flag(saved.cinematics, DEFAULTS.cinematics),
+    // (CINE-OFF: a save from before the switch was turned off for everyone is turned off once, whatever it held; after that it is kept)
+    cinematics: saved.cineOff === true ? flag(saved.cinematics, DEFAULTS.cinematics) : false,
+    cineOff: true,
     ultFull: flag(saved.ultFull, DEFAULTS.ultFull),
     ultShort: flag(saved.ultShort, DEFAULTS.ultShort),
     eidolonFull: flag(saved.eidolonFull, DEFAULTS.eidolonFull),
