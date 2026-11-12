@@ -160,24 +160,6 @@ export const STAGED: Readonly<Record<string, StagedLook>> = {
     front: true,
     aftershock: true,
   },
-  // Vaelkhar, shadow (`vaelkhar_parts.py`): where the others throw light out, his takes it in. Black fire with a violet edge. A
-  // crown of horns and a slit eye; a tear in the air as his way in, opening to a black lens and snapping shut; the blow a maw on the
-  // foes' middle and two wings of dark swept out across their side, which the maw then drains back into itself, closing on a last
-  // violet spark; the ground piece is the rift (jagged tears, left lying black), the tile piece black tongues, the mark blight, with
-  // dark smoke and violet motes drawn upward.
-  vaelkhar: {
-    sigil: { ...sheet('vaelkhar-stage-sigil', 160, 96, 22, 6, 0, 55, 13), draw: 12, glow: 3, cool: 7 },
-    pillar: { ...sheet('vaelkhar-stage-pillar', 144, 352, 14, 14, 1700, 320, 6), lit: true },
-    explosion: { ...sheet('vaelkhar-stage-explosion', 320, 300, 16, 8, 2300, 250, 7), lit: true },
-    cracks: { ...sheet('vaelkhar-stage-cracks', 256, 136, 12, 6, 0, 68, 4), open: 4 },
-    embers: sheet('vaelkhar-stage-embers', 160, 200, 12, 12, 1700, 190, 0),
-    fire: sheet('vaelkhar-stage-fire', 64, 112, 14, 14, 1500, 104, 5),
-    scorch: { ...sheet('vaelkhar-stage-scorch', 88, 48, 8, 8, 0, 24, 3), hot: 5 },
-    smoke: sheet('vaelkhar-stage-smoke', 128, 176, 16, 16, 2200, 160, 6),
-    from: 'right',
-    front: true,
-    aftershock: true,
-  },
 };
 
 /** Every sheet the staged shows load (for the tests and the credits). */
