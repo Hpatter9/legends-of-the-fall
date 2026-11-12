@@ -9,7 +9,7 @@ from lib import PALETTES
 EFFECTS = {}
 
 
-def fx(id, scene, element, cw, ch, oy, frames=16, ms=1000, loop=False, glow=None, layer='over', seed=1, hold=None, stages=None, ult=False, take=None, skip=0, colours=0, **opt):
+def fx(id, scene, element, cw, ch, oy, frames=16, ms=1000, loop=False, glow=None, layer='over', seed=1, hold=None, stages=None, ult=False, take=None, skip=0, colours=0, at=None, **opt):
     spec = dict(id=id, element=element, w=cw, h=ch, oy=oy, frames=frames, ms=ms, loop=loop, layer=layer, seed=seed,
                 glow=PALETTES[element]['glow'] if glow is None else glow)
     if stages:
@@ -23,6 +23,9 @@ def fx(id, scene, element, cw, ch, oy, frames=16, ms=1000, loop=False, glow=None
         # (how many of its first rendered frames are left out: a strike opens on the blow itself, its core already swollen, not on the
         # frames in which it is still forming)
         spec['skip'] = skip
+    if at and at != 'one':
+        # (where the renderer plays it: on each fighter the ability touches, or round the caster; unset, at the middle of what was struck)
+        spec['at'] = at
     if colours:
         # (its own count of colours: a great core of fire, ice or light wants more than the shared count, or it bands flat)
         spec['colours'] = colours
@@ -174,36 +177,62 @@ BIG = dict(
     siphon=(dict(r=0.9, h=2.2, n=7), 1.7, 3.4), cloud=(dict(r=1.6, h=0.9, puffs=10), 2.0, 1.8), souls=(dict(r=1.4, h=2.4, n=8), 2.0, 3.4),
     veil=(dict(r=1.0, h=2.0, panes=9), 1.6, 2.6), portal=(dict(r=1.0, z=1.2), 1.8, 3.2), pillar=(dict(r=0.9, h=3.2, sparks=30), 1.8, 3.6),
     shout=(dict(r=1.8, h=1.6, n=5), 2.2, 3.2), swarm=(dict(r=1.5, h=2.0, n=30), 1.9, 2.6), motes=(dict(r=1.6, h=2.2, n=34, crosses=7), 2.0, 2.6),
+    hearts=(dict(r=1.0, h=2.0, n=9), 1.5, 2.6), wall=(dict(length=3.0, h=1.7, tongues=9), 2.4, 2.2), flames=(dict(r=1.3, h=1.3, tongues=9), 1.9, 2.2),
+    palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2),
     implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
 )
 
 # Each ultimate: its palette, its strike's two scenes, and its showcase's style (which sets its weight, as `ultStageRules.ts` does).
 ULTS = dict(
-    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'burst', 'sky'), ilyra=('holy', 'halo', 'dome', 'bless'),
+    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'flames', 'sky'), ilyra=('holy', 'halo', 'dome', 'bless'),
     orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'swarm', 'blinks'),
     wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'claws', 'smoke', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
     minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'burst', 'leap'), ninjaMonk=('wind', 'sparks', 'gust', 'blows'),
     buccaneer=('shadow', 'chains', 'cross', 'hooks'), archer=('wind', 'rain', 'ring', 'sky'), dreadPirate=('shadow', 'rain', 'burst', 'sky'),
-    siegeBot=('fire', 'burst', 'shockwave', 'sky'), lightningMage=('lightning', 'bolt', 'shockwave', 'shots'), gunslinger=('fire', 'sparks', 'cross', 'shots'),
-    rifleBot=('lightning', 'sparks', 'ring', 'shots'), dragoon=('fire', 'flare', 'burst', 'shots'), ranger=('forest', 'vines', 'ring', 'burst'),
+    siegeBot=('fire', 'burst', 'shockwave', 'sky'), lightningMage=('lightning', 'cloud', 'bolt', 'shots'), gunslinger=('fire', 'sparks', 'cross', 'shots'),
+    rifleBot=('lightning', 'sparks', 'ring', 'shots'), dragoon=('fire', 'flare', 'wall', 'shots'), ranger=('forest', 'vines', 'ring', 'burst'),
     knight=('holy', 'shout', 'dome', 'burst'), paladin=('holy', 'nova', 'strike', 'burst'), yamabushi=('wind', 'vortex', 'gust', 'burst'),
     gorgon=('poison', 'eye', 'crystal', 'burst'), juggernaut=('earth', 'crack', 'spikes', 'burst'), kraken=('water', 'vortex', 'geyser', 'burst'),
     mummy=('earth', 'vortex', 'chains', 'burst'), warlock=('shadow', 'sigil', 'siphon', 'burst'), tyrant=('blood', 'shout', 'spikes', 'burst'),
-    shambler=('poison', 'crack', 'cloud', 'burrow'), reaper=('shadow', 'arc', 'souls', 'burst'), druid=('forest', 'vines', 'spikes', 'pack'),
+    shambler=('poison', 'crack', 'cloud', 'burrow'), reaper=('shadow', 'arc', 'souls', 'burst'), druid=('forest', 'palisade', 'vines', 'pack'),
     illusionist=('arcane', 'veil', 'portal', 'pack'), priestess=('holy', 'pillar', 'halo', 'bless'), werewolf=('blood', 'claws', 'shout', 'change'),
-    demonSwordsman=('fire', 'chains', 'flare', 'change'), kitsune=('fire', 'spiral', 'burst', 'burst'), karasu=('wind', 'swarm', 'vortex', 'sky'),
-    timeWitch=('holy', 'sigil', 'crystal', 'burst'), wanderer=('holy', 'motes', 'ring', 'bless'), satyr=('forest', 'swarm', 'spiral', 'bless'),
-    samuraiCommander=('fire', 'shout', 'flare', 'bless'), sage=('lightning', 'sigil', 'dome', 'bless'), cleric=('holy', 'souls', 'motes', 'bless'),
-    peasant=('earth', 'shout', 'smoke', 'bless'), wolfBard=('wind', 'shout', 'spiral', 'bless'), vampireLord=('blood', 'implode', 'siphon', 'burst'),
+    demonSwordsman=('fire', 'chains', 'flare', 'change'), kitsune=('fire', 'spiral', 'smoke', 'burst'), karasu=('wind', 'swarm', 'vortex', 'sky'),
+    timeWitch=('holy', 'sigil', 'crystal', 'burst'), wanderer=('holy', 'hearts', 'motes', 'bless'), satyr=('forest', 'swarm', 'spiral', 'bless'),
+    samuraiCommander=('fire', 'pillar', 'flare', 'bless'), sage=('lightning', 'sigil', 'dome', 'bless'), cleric=('holy', 'souls', 'motes', 'bless'),
+    peasant=('earth', 'veil', 'shout', 'bless'), wolfBard=('wind', 'shout', 'spiral', 'bless'), vampireLord=('blood', 'implode', 'siphon', 'burst'),
     hemomancer=('blood', 'siphon', 'rain', 'burst'), nightstalker=('shadow', 'swarm', 'claws', 'blinks'), bloodGargoyle=('earth', 'shockwave', 'slab', 'burst'),
     dhampir=('holy', 'rain', 'cross', 'shots'), warDrummer=('lightning', 'shout', 'bolt', 'burst'), geomancer=('earth', 'slab', 'spikes', 'bless'),
-    bellWarden=('shadow', 'shockwave', 'crystal', 'burst'), falconer=('wind', 'swarm', 'claws', 'sky'), banneret=('fire', 'veil', 'ring', 'bless'),
+    bellWarden=('shadow', 'shout', 'ring', 'burst'), falconer=('wind', 'swarm', 'claws', 'sky'), banneret=('fire', 'veil', 'ring', 'bless'),
     astralSphinx=('arcane', 'eye', 'sigil', 'burst'), mirageDancer=('wind', 'veil', 'cross', 'blinks'), plagueDoctor=('poison', 'cloud', 'smoke', 'burst'),
     bombardier=('fire', 'rain', 'burst', 'sky'), astrologer=('holy', 'implode', 'burst', 'sky'), inquisitor=('holy', 'strike', 'ring', 'shots'),
     seraph=('holy', 'shaft', 'shockwave', 'sky'), corsairSurgeon=('forest', 'geyser', 'motes', 'bless'), harpooner=('ice', 'chains', 'spikes', 'hooks'),
     seaReaver=('water', 'geyser', 'gust', 'line'),
 )
+# ULT-AUDIT (docs/notes/ult-audit.md): a strike must show what the ability does. Only an ability that IS one great blow has the blow
+# itself under it (a core, shock rings, rubble): a cut, a leap's landing, a shell, a meteor, a crash from on high.
+GREAT = {'samurai', 'barbarian', 'bloodGargoyle', 'siegeBot', 'wizard', 'astrologer', 'seraph', 'bombardier', 'dreadPirate'}
+# Where a strike plays. Most are one great thing at the middle of what was struck. `each`: a small one on every fighter the ability
+# touches (a heal lands on each friend healed, a mark sits on each foe marked, a flurry's cut on each foe cut, what is summoned arrives
+# where each stands). `self`: round the caster (an aura, a ward, a transformation, a pull towards him).
+PLACE = dict(
+    wanderer='each', satyr='each', corsairSurgeon='each', sage='each', ilyra='each', orrun='each', nyxara='each', samuraiCommander='each', peasant='each',
+    priestess='each', kunoichi='each', mercenary='each', arcBlade='each', ninjaMonk='each', buccaneer='each', harpooner='each', mirageDancer='each',
+    gorgon='each', kitsune='each', timeWitch='each', ranger='each', astralSphinx='each', vampireLord='each', gunslinger='each', dhampir='each',
+    inquisitor='each', beastmaster='each', illusionist='each',
+    cleric='self', knight='self', wolfBard='self', banneret='self', warlock='self', tyrant='self', bellWarden='self', plagueDoctor='self', kraken='self',
+    reaper='self', mummy='self', werewolf='self', demonSwordsman='self', rifleBot='self', paladin='self', yamabushi='self',
+)
+# A third scene some strikes have, where two do not say what the ability does (the ring the spirits circle in, the flames a
+# constellation leaves, the halo a nova's healing lands as).
+THIRD = dict(cleric='ring', beastmaster='ring', geomancer='crack', timeWitch='ring', astrax='sigil', dragoon='flames', banneret='flames', paladin='halo',
+             seaReaver='ring', minotaur='trail', shambler='geyser', rifleBot='spiral', demonSwordsman='spiral', werewolf='flare', corsairSurgeon='ring',
+             wolfBard='ring', warDrummer='shockwave', lancer='sparks')
+# A wind-up that is the ability itself beginning, in place of its weight's gathering (ULT-AUDIT): Spirit Guardians' spirits rise out of
+# the ground round the Cleric inside the ring they will circle in; no circle of power, no pillar.
+WIND_OWN = dict(cleric=[('ring', 0, 1.4), ('souls', 0.1, 1.5)])
+# How large a strike is drawn when it plays on each fighter, or round the caster.
+PLACE_SIZE = dict(each=0.8, self=1.25)
 # How much larger than a scene's own size a strike is drawn, by the show's weight.
 STRIKE_SIZE = dict(blow=1.6, flurry=1.6, wave=1.9, storm=2.3, summon=2.3)
 STYLE_WEIGHT = dict(line='blow', leap='blow', blinks='flurry', blows='flurry', hooks='flurry', burrow='flurry', burst='wave', bless='wave', change='wave',
@@ -318,7 +347,7 @@ OWN = dict(
     astralSphinx=('eye', 'sigil', 'motes'),    # the riddle's eye; glyphs of starlight
     harpooner=('sparks', 'spikes', 'motes'),   # ice glints on the harpoons; ice and frost
 )
-SIZED = ('r', 'h', 'z', 'length', 'w', 'wide')
+SIZED = ('r', 'h', 'z', 'length', 'w', 'wide', 'tall')
 
 
 def grow(opt, k):
@@ -341,10 +370,18 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
     # (the strike is the biggest thing in the game: four tiles and more for a blow, most of the foes' side for a storm or a summoning.
     # Under the hero's own two scenes lies the blow itself, the same for all in its element's colours: a white-hot core, two shock
     # rings and debris, its heaviest frames first. The first scene opens it, the second lands as the first is at its height.)
-    k = STRIKE_SIZE[weight]
-    reach = max(BIG[first][1], BIG[second][1]) * k
-    fx(f'ult-{kind}-strike', None, pal, **box(max(reach, 2.2 * k * 1.25), max(BIG[first][2], BIG[second][2], 2.4) * k, 0.6), frames=16, take=STRIKE_FRAMES, skip=3, colours=STRIKE_COLOURS, ms=1300, seed=40 + 2 * i + 59, ult=True,
-       stages=[stage('impact', 0.12, 1, r=2.2 * k), stage(first, 0, 0.7, **sized(first, k)), stage(second, 0.25, 1, **sized(second, k))])
+    place = PLACE.get(kind, 'one')
+    k = STRIKE_SIZE[weight] if place == 'one' else PLACE_SIZE[place]
+    scenes = [first, second] + ([THIRD[kind]] if kind in THIRD else [])
+    stages = [stage(first, 0, 0.7, **sized(first, k)), stage(second, 0.25, 1, **sized(second, k))] + ([stage(THIRD[kind], 0.1, 0.9, **sized(THIRD[kind], k))] if kind in THIRD else [])
+    reach, tall = max(BIG[sc][1] for sc in scenes) * k, max(BIG[sc][2] for sc in scenes) * k
+    if kind in GREAT:
+        # (a great blow: under the hero's own scenes lies the blow itself, in its element's colours: a white-hot core that tears open,
+        # two shock rings and rubble, its heaviest frames first)
+        stages = [stage('impact', 0.12, 1, r=2.2 * k)] + stages
+        reach, tall = max(reach, 2.2 * k * 1.25), max(tall, 2.4 * k)
+    fx(f'ult-{kind}-strike', None, pal, **box(reach, tall, 0.6), frames=16, take=STRIKE_FRAMES, skip=3 if kind in GREAT else 1, colours=STRIKE_COLOURS, ms=1300, seed=40 + 2 * i + 59, ult=True,
+       at=place, stages=stages)
     if own:
         wind_ms, after_ms = STAGE_MS[weight]
         base = [sc for sc, _, _ in WIND[weight]]
@@ -353,7 +390,8 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
         _own_wind.add((pal, weight, extra))
         # (the wind-up builds: the weight's own gathering, then the hero's own part joins it and swells to the blow)
         fx(f'ult-{kind}-windup', None, pal, **box(max(BIG[sc][1] for sc in base + [extra]) * 0.72, 3.4, 0.5), frames=round(wind_ms / 105), take=WIND_FRAMES, ms=wind_ms, seed=7 + i, ult=True,
-           stages=[stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]] + [stage(extra, 0.3, 1.3, **sized(extra, 0.72))])
+           stages=[stage(sc, a, b, **sized(sc, 0.72)) for sc, a, b in WIND_OWN[kind]] if kind in WIND_OWN else
+           [stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]] + [stage(extra, 0.3, 1.3, **sized(extra, 0.72))])
         _own_after.add((pal, low, high))
         # (the aftermath lingers: something low where it struck, something lifting off it, both thinning to nothing)
         fx(f'ult-{kind}-aftermath', None, pal, **canvas_of((low, high), 0.8), frames=round(after_ms / 120), take=AFTER_FRAMES, ms=after_ms, seed=9 + i, ult=True,
@@ -422,6 +460,10 @@ for j, (clip, (scene, opt, canvas, n, ms, more)) in enumerate(BEATS.items()):
             fx(f'beat-{clip}-{el}', None, pal, **canvas, frames=n, ms=ms, seed=300 + 11 * j + i, ult=True, stages=opt, **more)
 for j, (clip, (pal, scene, opt, canvas, n, ms)) in enumerate(BEAT_ONLY.items()):
     fx(f'beat-{clip}', scene, pal, **canvas, frames=n, ms=ms, seed=500 + j, ult=True, **opt)
+
+# ---- ULT-AUDIT: what an ability IS, as a loop that stays for as long as the ability lasts (docs/notes/ult-audit.md). Spirit Guardians:
+# four ghostly figures a fighter tall circling the Cleric, round and round (`paintAura` draws it on her while the aura lives). ----
+fx('aura-spirits', 'spirits', 'wind', **box(2.5, 2.6, 0.4), frames=12, ms=1300, loop=True, seed=71, glow=False, r=1.3, n=4, tall=1.5, mode='circle', hoop=False)
 
 # What the game ships: everything but the library's own previews.
 SHIPPED = [k for k in EFFECTS if not k.startswith('lib-')]
