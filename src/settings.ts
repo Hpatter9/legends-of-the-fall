@@ -3,7 +3,7 @@
 // and the gear in the top bar. The choices are kept in localStorage (legends.settings, the same keys as before the
 // submenus); `settings()` is what the rest of the page reads, and `onSettings` tells a module when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
-import { diagClear, diagShown } from './diag';
+import { diagClear, diagCopy, diagShown } from './diag';
 import { glyphWord } from './paintedButton';
 import { tips } from './tips';
 import { DEFAULT_RULER, RULERS, rulerOf, type RulerId } from './rulerRules';
@@ -402,12 +402,7 @@ function diagRows(): HTMLElement[] {
   const copy = document.createElement('button');
   copy.textContent = 'Copy';
   copy.addEventListener('click', () => {
-    const done = (ok: boolean): void => void (copy.textContent = ok ? 'Copied' : 'Could not copy');
-    try {
-      void navigator.clipboard.writeText(diagShown()).then(() => done(true), () => done(false));
-    } catch {
-      done(false);
-    }
+    void diagCopy().then((ok) => (copy.textContent = ok ? 'Copied' : 'Select the text below'));
   });
   const clear = document.createElement('button');
   clear.textContent = 'Clear';

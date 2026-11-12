@@ -136,8 +136,42 @@ moment's; the kept sheets (one a frame, in order, held while a fight is on); pai
 columns' room (three boards kept, and the old room shown to paint the second again); the stops' log (what is kept, the newest
 thirty, what the page was doing, stored and read back).
 
-### Still the owner's to say
+### Settled by the owner
 
-- Whether a full show by hand should hold the fight for less: for the wind-up only (about 1.5 s) with the strike played live, or
-  in full only for a hero's first ultimate of a wave. As it stands the shows take half of a hand-played fight.
+- Ultimates fired by hand keep holding the fight for the full show (about 4.7 s each). Not changed.
+- The fall's slow moment is for bosses only; the wave's last foe has none.
 - A boss changing form pauses the fight for 0.9 to 1.6 s (the simulation's own rule, once a boss's wave): left as it is.
+
+### The installed app (0.539: still slow there, where the browser is not)
+
+The Diagnostics page's log now begins with where the game is running: the installed app or a browser (`inApp()`), the WebView's
+own user agent, the device's memory and cores as it tells them, the JS heap and its limit where readable, the screen. Copy works in
+the app too: the browser's clipboard first, a selected text box copied the old way where that is refused, and "Select the text
+below" if both fail (the list can be selected by hand).
+
+What the code shows:
+
+- The app is the same page, served from the APK's assets by Capacitor (`capacitor.config.json`: `webDir: out/web`), with no service
+  worker (`main.ts` registers none when `inApp()`).
+- `game.js` is 208 MB and goes into the APK as an ordinary asset. `android/app/build.gradle` names no extension to store
+  uncompressed, so it is deflated in the APK and inflated through the asset loader each time the app starts; its 19 MB source map
+  is packed too. That is the start, not a fight.
+- The manifest named neither hardware acceleration nor a large heap, and `MainActivity.java` set nothing on the WebView.
+
+What is a guess (nothing here can run a WebView):
+
+- A WebView keeps no compiled-code cache for a script it is handed through the asset loader, so every function is compiled the
+  first time it is called, each time the app is opened: the first use of a skill, the first wave's end, the first board. A browser
+  keeps that cache between visits. This would fit "the app is slow where the browser is not" best.
+- A WebView's renderer has less graphics and tile memory than a browser's, against a JS heap of 450 to 510 MB; and it may be set
+  back in priority by the system.
+- The art decoded from data URLs on first use is the same in both, but slower where the rest is.
+
+Changed on the app's side (small, and not built or run here: the Android build is the workflow's):
+
+- `MainActivity.java`: the WebView's renderer is kept at the app's own priority (`setRendererPriorityPolicy(IMPORTANT, false)`,
+  Android 8 and later).
+- `AndroidManifest.xml`: `android:hardwareAccelerated="true"` (the default, now said) and `android:largeHeap="true"`.
+
+Not changed: storing `game.js` uncompressed in the APK (a larger download for a quicker start), and leaving the source map out.
+
