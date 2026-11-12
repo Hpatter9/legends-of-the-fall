@@ -32,6 +32,18 @@ After all six were in, the director's list, done in one push:
   (`flash` and `flashTint` on his entry). His show is now **379,906 bytes** (the explosion 190,488 and its glow 25,236).
 - All six together: 60 sheets, **2,532,628 bytes**.
 
+## When the strike itself ends the wave
+
+Since the freeze fix (0.525.0) a call is cut to a second of aftermath once the last foe has fallen (,
+). Checked at 0.533.0 for a call whose own strike ends the wave (a plain wave, where every foe falls to it): **the
+blow is shown**, so nothing was changed. The cut moves the call's clock to a second before its end, which is past the strike, so the
+attack's beats all fire in that frame and the whole staged blow is laid: the flash, the core, the wall (or the maw and wings), the
+painted strike in front. It plays for about 0.9 s, the layer fades, and the result card is up about 1.7 s (Askel) and 1.8 s
+(Vaelkhar) after the last foe falls. On the longer calls the second and third detonations go off together with the first, since
+their beats have been skipped past. Photographs, a frame every 100 to 200 ms from just before the strike to the result:
+ and 
+(, with  to print the fight's phase and the card at each frame).
+
 ## For the camera: where each show is
 
 All in the board's own pixels (a sheet pixel is 1.414 of them), the same for every staged Eidolon unless its section says otherwise:

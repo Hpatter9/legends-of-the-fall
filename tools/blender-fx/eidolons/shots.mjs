@@ -16,6 +16,8 @@ const SAVER = args.includes('--saver');
 const SIZE = opt('--size', '393x852');
 const [W, H] = SIZE.split('x').map(Number);
 const PICKS = opt('--picks', 'askel').split(',');
+// (the wave: 15 is the Orc Warband's last boss, who outlives a call; a plain wave such as 3 ends on the strike)
+const STAGE = Number(opt('--stage', '15'));
 const SHORT = args.includes('--short');
 const REDUCED = args.includes('--reduced');
 const HORN = args.includes('--horn');
@@ -85,15 +87,15 @@ async function open(eidolons, confirmed) {
 }
 
 async function intoFight(page, party) {
-  await page.evaluate(([party]) => {
+  await page.evaluate(([party, stage]) => {
     const g = window.__game;
     g.app.ticker.start();
     const r = JSON.parse(JSON.stringify(g.run));
-    Object.assign(r, { seed: 4242, mode: { kind: 'army', army: 'orcs' }, stage: 15, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+    Object.assign(r, { seed: 4242, mode: { kind: 'army', army: 'orcs' }, stage: stage, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
     document.getElementById('home').hidden = true;
     g.startRun(r);
     g.autoArrange(true);
-  }, [party]);
+  }, [party, STAGE]);
   await page.waitForTimeout(800);
 }
 
@@ -137,6 +139,7 @@ for (const pick of PICKS) {
       at = t;
       await page.waitForTimeout(120);
       await shot(page, `${pick}-${name}`);
+      if (process.env.TRACE) console.log('t', name, await page.evaluate(() => JSON.stringify({ phase: window.__game.b.phase, foes: window.__game.b.units.filter((u) => u.side === 'foe' && u.alive).length, stage: document.querySelector('.ecLayer')?.dataset.stage, hidden: document.querySelector('.ecLayer')?.hidden, card: [...document.querySelectorAll('#waveCard, .waveCard, #result, .result')].filter((e) => !e.hidden && e.getBoundingClientRect().height > 0).length })));
       // (what of the cinematic's own layer shows: the elements by class, solid enough to see)
       if (process.env.DEBUG) console.log(name, await page.evaluate(() => { const n = {}; for (const e of document.querySelectorAll('.ecBoard > *')) { const cs = getComputedStyle(e); if (cs.visibility !== 'hidden' && Number(cs.opacity) > 0.05 && e.getBoundingClientRect().width > 0) { const k = e.className.split(' ').filter((c) => c !== 'ecSp' && c !== 'once' && c !== 'loop' && c !== 'mid').join('.') || e.className; n[k] = (n[k] ?? 0) + 1; } } const br = document.querySelector('.ecBreath'); return JSON.stringify({ n, breath: br && { w: br.style.width, h: br.style.height, t: br.style.transform, v: br.style.visibility } }); }));
     }
