@@ -522,6 +522,9 @@ BEAT_ONLY = dict(
     flame=('fire', 'flames', dict(r=0.42, h=0.95, tongues=4), box(0.8, 1.3), 8, 460),
     rise=('earth', 'spikes', dict(r=0.6, h=1.8, n=5, frost=False), box(1.1, 2.2), 10, 700),
     tunnel=('earth', 'crack', dict(r=0.8, arms=4, rubble=8), box(1.9, 1.2), 9, 520),
+    # (one link of the Gorgon's gaze: a small eye that opens and shuts at a head's height, no ring under it; a row of them runs from
+    # her to each foe she petrifies)
+    gaze=('poison', 'eye', dict(r=0.36, z=0.85, ground=0), box(1.0, 1.6), 7, 420),
 )
 for j, (clip, (scene, opt, canvas, n, ms, more)) in enumerate(BEATS.items()):
     for i, (el, (pal, _)) in enumerate(GROUND.items()):
