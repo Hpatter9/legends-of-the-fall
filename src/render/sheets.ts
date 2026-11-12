@@ -1,6 +1,7 @@
 // The fighters' sprite sheets (cut by Chronos's tools/compose-sheets.cjs from the Craftpix packs): one row per
 // animation, frames `w` x `h`, the figure centred with its feet on the frame's bottom, facing right.
 
+import { SOFT } from './softCanvas';
 import { Rectangle, Texture } from 'pixi.js';
 import { loadRulers } from './rulerArt';
 import { loadImage } from './loadImage';
@@ -438,7 +439,7 @@ export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElem
   const img = images.get(sheet);
   const l = LAYOUT[sheet];
   if (!img) return c;
-  const g = c.getContext('2d')!;
+  const g = c.getContext('2d', SOFT)!;
   g.imageSmoothingEnabled = false;
   const idle = l.rows.indexOf('idle');
   // (the top of the figure down to its feet, a square around the middle)
@@ -519,7 +520,7 @@ export function wholeFigure(sheet: string, maxW: number, maxH: number, mirror = 
   // (a pixel of room on each side, so the drop shadow's edge is not cut either)
   c.width = box.w + 2;
   c.height = box.h + 2;
-  const g = c.getContext('2d')!;
+  const g = c.getContext('2d', SOFT)!;
   g.imageSmoothingEnabled = false;
   if (mirror) g.setTransform(-1, 0, 0, 1, c.width, 0);
   g.drawImage(img, box.x, Math.max(0, l.rows.indexOf('idle')) * l.h + box.y, box.w, box.h, 1, 1, box.w, box.h);
@@ -540,7 +541,7 @@ export function sprite(sheet: string, figurePx: number, whole?: number): { canva
   const k = whole ?? figurePx / l.figure;
   c.style.width = `${Math.round(l.w * k)}px`;
   c.style.height = `${Math.round(l.h * k)}px`;
-  const g = c.getContext('2d')!;
+  const g = c.getContext('2d', SOFT)!;
   g.imageSmoothingEnabled = false;
   const row = l.rows.indexOf('idle');
   const count = l.counts.idle ?? 1;

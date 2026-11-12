@@ -2,6 +2,7 @@
 // land takes). A sheet's ground, edges and faces are loaded by URL the first time a board of its land is shown (they are the Assault's
 // own files, `assault/<hold>/*.webp`: `build.mjs` copies them and the service worker keeps them, so they are there offline), and kept.
 
+import { SOFT } from './softCanvas';
 import { loadImage } from './loadImage';
 import type { Hold } from './floorRules';
 
@@ -30,7 +31,7 @@ const loading = new Map<Hold, Promise<FloorArt | null>>();
 function turned(img: HTMLImageElement, cell: number, q: number, reach = 1): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = c.height = 64;
-  const g = c.getContext('2d')!;
+  const g = c.getContext('2d', SOFT)!;
   g.translate(32, 32);
   g.rotate((q * Math.PI) / 2);
   g.drawImage(img, (cell % 4) * 64, Math.floor(cell / 4) * 64, 64, 64, -32, -32, 64 * (cell % 2 ? reach : 1), 64 * reach);
@@ -88,7 +89,7 @@ export function loadFloorArt(hold: Hold): Promise<FloorArt | null> {
           const c = document.createElement('canvas');
           c.width = faces.width;
           c.height = faces.height;
-          const g = c.getContext('2d')!;
+          const g = c.getContext('2d', SOFT)!;
           g.drawImage(faces, 0, 0);
           g.globalCompositeOperation = 'source-atop';
           g.fillStyle = `rgba(0,0,0,${k})`;

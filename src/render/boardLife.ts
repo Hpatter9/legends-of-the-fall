@@ -4,6 +4,7 @@
 // walking feet. Looks only: it reads the battle and never changes it. Everything is made when the board is built; a frame only moves,
 // fades or re-frames what is there. Reduced motion holds it still; a battery saver has half the creatures and none of the rest that moves.
 
+import { SOFT } from './softCanvas';
 import { Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import type { Battle, BattleEvent } from '../sim/battle';
 import { LAVA_LANDS, tileAt, type Board } from '../sim/board';
@@ -51,7 +52,7 @@ function standIn(kind: Critter): Texture[] | null {
     const c = document.createElement('canvas');
     c.width = w;
     c.height = h;
-    paint(c.getContext('2d')!);
+    paint(c.getContext('2d', SOFT)!);
     return Texture.from(c);
   };
   let frames: Texture[] | null = null;
@@ -109,7 +110,7 @@ function shaftOf(): Texture {
   const c = document.createElement('canvas');
   c.width = 48;
   c.height = 256;
-  const g = c.getContext('2d')!;
+  const g = c.getContext('2d', SOFT)!;
   const down = g.createLinearGradient(0, 0, 0, 256);
   down.addColorStop(0, 'rgba(255,255,255,0.9)');
   down.addColorStop(1, 'rgba(255,255,255,0)');
@@ -311,7 +312,7 @@ export class BoardLife {
     const c = document.createElement('canvas');
     c.width = cw;
     c.height = ch;
-    const g = c.getContext('2d')!;
+    const g = c.getContext('2d', SOFT)!;
     const col = spec.colour;
     g.fillStyle = `rgba(${(col >> 16) & 255},${(col >> 8) & 255},${col & 255},${Math.min(MAX_DARK, spec.dark)})`;
     // (the board's own shape: its floor as high as it stands, and its near sides down to the foot; drawn small, so its edge is soft)
@@ -379,7 +380,7 @@ export class BoardLife {
       const c = document.createElement('canvas');
       c.width = cw;
       c.height = ch;
-      const g = c.getContext('2d')!;
+      const g = c.getContext('2d', SOFT)!;
       const rgb = `${(wash.colour >> 16) & 255},${(wash.colour >> 8) & 255},${wash.colour & 255}`;
       if (wash.below) {
         const up = g.createLinearGradient(0, ch, 0, 0);
