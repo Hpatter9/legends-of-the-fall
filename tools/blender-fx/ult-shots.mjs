@@ -125,6 +125,23 @@ for (const pick of PICKS) {
     if (!st) throw new Error('the ultimate never fired');
     let t = 0;
     const speeds = [];
+    // (CUT=windup or CUT=strike: the fight is ended in the middle of the show, as when the ultimate lands the killing blow, and the next
+    // moments are photographed: what a player sees when a show is cut short (the freeze fix cuts it to a second of aftermath))
+    if (process.env.CUT) {
+      const when = process.env.CUT === 'windup' ? Math.round(st.windup.at + st.windup.ms * 0.6) : Math.round(st.strike.at + st.show + 150);
+      await page.evaluate((d) => window.__step(d), when);
+      await page.screenshot({ path: `${OUT}/${pick}-${W}-1-before.png` });
+      await page.evaluate(() => { window.__game.b.phase = 'won'; });
+      let was = 0;
+      for (const [i, ms] of [80, 350, 700, 1200, 2000].entries()) {
+        await page.evaluate((d) => window.__step(d), ms - was);
+        was = ms;
+        await page.screenshot({ path: `${OUT}/${pick}-${W}-${i + 2}-cut${ms}.png` });
+      }
+      console.log('ok', pick, 'cut in the', process.env.CUT, 'show still playing:', await page.evaluate(() => !!window.__game.ultm.queue.current));
+      await ctx.close();
+      continue;
+    }
     for (const [i, [name, k]] of FRAMES.entries()) {
       // (`blow`: so many ms after the blow itself lands, which is the strike's start and the showcase's length on)
       const at = name === 'blow' ? Math.round(st.strike.at + st.show + k) : Math.round(st[name].at + st[name].ms * k);

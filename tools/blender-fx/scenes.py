@@ -1806,8 +1806,136 @@ def eyes(c, r=1.3, n=5, size=1.0):
     return step
 
 
+# 58. Whirlpool: water turning on the ground, flat: spiral arms of foam winding in to a dark eye, flecks carried round. A pull, seen
+# from above; not a funnel standing up.
+def whirlpool(c, r=1.6, arms=5, flecks=16):
+    m, a, _ = c.streak('mid', 'hot', 1.3, 1.3)
+    blades = []
+    for k in range(arms):
+        pts = []
+        for i in range(40):
+            u = i / 39
+            ang = k * TAU / arms + u * 3.6
+            rr = r * (1 - 0.86 * u)
+            pts.append(((math.cos(ang) * rr, math.sin(ang) * rr, 0.03 + 0.05 * u), (math.cos(ang), math.sin(ang), 0)))
+        blades.append(c.ribbon(pts, lambda u: 0.13 * (1 - 0.6 * u) + 0.01, m))
+    eye, ea = c.disc('deep', 1.4, r * 0.3)
+    pool, pa = c.disc('ramp', 0.8, r * 1.05, noise=4, hole=0.18)
+    bits = [(o, c.rnd.uniform(0, TAU), c.rnd.uniform(0.3, 1.0), c.rnd.uniform(0, 1)) for o in c.sparks(flecks, 'hot', 0.04)]
+
+    def step(t):
+        c.tick(t, 1.0)
+        shown = win(t, 0, 0.15) * (1 - win(t, 0.8, 1))
+        turn = -TAU * (0.2 + 1.1 * t)
+        for o in blades:
+            put(o, (0, 0, 0), (0.55 + 0.45 * ease(win(t, 0, 0.3)),) * 2 + (1,), (0, 0, turn))
+        a.inputs[1].default_value = 2.2 * shown
+        ea.inputs[1].default_value = 1.8 * shown
+        pa.inputs[1].default_value = 1.3 * shown
+        for o, ang, rad, ph in bits:
+            g = (t * 1.3 + ph) % 1.0
+            rr = r * rad * (1 - 0.8 * g)
+            an = ang + turn * 1.4 - g * 2.5
+            put(o, (math.cos(an) * rr, math.sin(an) * rr, 0.08), shown * bell(g))
+    return step
+
+
+# 59. Sandstorm: a low wide wall of blown sand, broken bands of it racing round at different heights and speeds, grit carried up.
+def sandstorm(c, r=1.5, h=1.1, bands=6, grit=18):
+    m, a, _ = c.streak('mid', 'bright', 1.1, 1.1, noise=5.0)
+    strips = []
+    for k in range(bands):
+        z = h * (0.12 + 0.8 * k / max(1, bands - 1))
+        rad = r * c.rnd.uniform(0.75, 1.05)
+        a0, span = c.rnd.uniform(0, TAU), c.rnd.uniform(1.6, 2.8)
+        pts = [((math.cos(a0 + span * i / 24) * rad, math.sin(a0 + span * i / 24) * rad, z), (0, 0, 1)) for i in range(25)]
+        strips.append((c.ribbon(pts, lambda u: 0.16 * math.sin(u * math.pi) + 0.01, m), c.rnd.uniform(0.7, 1.5) * (1 if k % 2 else -1)))
+    rise = _rise(c, grit, r, h * 1.2, 'bright', 0.045, 5.0)
+    dust, da = c.disc('ramp', 0.7, r * 1.1, noise=5)
+
+    def step(t):
+        c.tick(t, 1.6)
+        shown = win(t, 0, 0.15) * (1 - win(t, 0.8, 1))
+        grow = 0.5 + 0.5 * ease(win(t, 0, 0.35))
+        for o, speed in strips:
+            put(o, (0, 0, 0), (grow, grow, 1), (0, 0, TAU * speed * t))
+        a.inputs[1].default_value = 2.0 * shown
+        da.inputs[1].default_value = 1.2 * shown
+        rise(t)
+    return step
+
+
+# 60. Wings: two great wings of light unfolding out from a point at the shoulders' height, each a fan of long feathers, held open,
+# then folding away upward. Seen face on, across the camera's view.
+def wings(c, r=1.3, h=2.0, feathers=7):
+    m, a, _ = c.streak('bright', 'hot', 1.4, 1.5)
+    root = scr(0, 0, h * 0.42)
+    fans = []
+    for side in (-1, 1):
+        for i in range(feathers):
+            th = math.radians(-12 + 80 * i / (feathers - 1))
+            ln = r * (1.0 - 0.32 * abs(i / (feathers - 1) - 0.35))
+            tip = (math.cos(th) * side * ln, math.sin(th) * ln)
+            nrm = scr(-math.sin(th) * side, math.cos(th))
+            pts = [(scr(tip[0] * u, tip[1] * u + 0.12 * math.sin(u * math.pi) * ln), nrm) for u in [j / 12 for j in range(13)]]
+            o = c.ribbon(pts, lambda u: 0.11 * math.sin(min(1.0, u * 1.25) * math.pi * 0.85) + 0.012, m)
+            fans.append((o, i / (feathers - 1)))
+    core, cv = c.flat('hot', 2.2)
+    orb = c.sphere(1.0, core, 2)
+    ring, rv = c.ring('mid', 0.04)
+
+    def step(t):
+        gone = win(t, 0.78, 1)
+        for o, k in fans:
+            g = ease(win(t, 0.05 + 0.25 * k, 0.4 + 0.25 * k)) * (1 - gone)
+            put(o, (root[0], root[1], root[2] + 0.5 * h * gone), max(0.001, g))
+            hide(o, g <= 0.01)
+        a.inputs[1].default_value = 2.4
+        put(orb, root, 0.14 * (1 - gone) * (0.6 + 0.4 * bell(win(t, 0, 0.5))) + 0.001)
+        put(ring, scale=(r * (0.3 + 0.7 * ease(win(t, 0, 0.5))),) * 2 + (1,))
+        rv.outputs[0].default_value = win(t, 0, 0.1) * (1 - win(t, 0.5, 0.9))
+    return step
+
+
+# 61. Banner: a tall pole planted with a long cloth streaming from its top, snapping in the wind, a ring spreading from its foot.
+# The cloth is four shapes of one wave shown in turn, so it flies.
+def banner(c, h=2.3, w=1.2, tails=2):
+    pole_m, pole_a = c.solid((0.32, 0.26, 0.2), (0.07, 0.06, 0.05), 0.2, 0.8, 0.0)
+    _plain_lights(c)
+    m, a, _ = c.streak('mid', 'bright', 0.6, 1.4)
+    pole = c.tube(0.035, h, pole_m, 8, caps=True)
+    tip_m, _ = c.flat('hot', 2.0)
+    tip = c.cone(0.07, 0.2, tip_m, 4)
+    cloths = []
+    for ph in range(4):
+        shapes = []
+        for j in range(tails):
+            top = h * (0.93 - 0.3 * j)
+            pts = [(scr(x * w, top - 0.06 * x * w + 0.1 * w * x * math.sin(x * 5.0 - ph * TAU / 4 + j)), scr(0, 1)) for x in [i / 16 for i in range(17)]]
+            shapes.append(c.ribbon(pts, lambda u, j=j: (0.16 - 0.03 * j) * (1 - 0.35 * u) + 0.01, m))
+        cloths.append(shapes)
+    ring, rv = c.ring('mid', 0.05)
+
+    def step(t):
+        up = ease(win(t, 0, 0.2)) + 0.06 * bell(win(t, 0, 0.3))
+        gone = win(t, 0.82, 1)
+        k = max(0.001, up * (1 - gone))
+        put(pole, (0, 0, h * 0.5 * k), (1, 1, k))
+        put(tip, (0, 0, (h + 0.1) * k), k)
+        pole_a.outputs[0].default_value = 1 - gone
+        now = int(t * 14) % 4
+        for ph, shapes in enumerate(cloths):
+            for o in shapes:
+                put(o, (0, 0, -h * (1 - k)), (max(0.001, ease(win(t, 0.12, 0.4))), 1, 1))
+                hide(o, ph != now or t < 0.12 or gone >= 1)
+        a.inputs[1].default_value = 2.0 * (1 - gone)
+        put(ring, scale=((0.3 + 1.3 * ease(win(t, 0.1, 0.7))),) * 2 + (1,))
+        rv.outputs[0].default_value = win(t, 0.1, 0.18) * (1 - win(t, 0.45, 0.8))
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner,
 )}

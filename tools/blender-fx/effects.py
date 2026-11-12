@@ -178,13 +178,14 @@ BIG = dict(
     veil=(dict(r=1.0, h=2.0, panes=9), 1.6, 2.6), portal=(dict(r=1.0, z=1.2), 1.8, 3.2), pillar=(dict(r=0.9, h=3.2, sparks=30), 1.8, 3.6),
     shout=(dict(r=1.8, h=1.6, n=5), 2.2, 3.2), swarm=(dict(r=1.5, h=2.0, n=30), 1.9, 2.6), motes=(dict(r=1.6, h=2.2, n=34, crosses=7), 2.0, 2.6),
     hearts=(dict(r=1.0, h=2.0, n=9), 1.5, 2.6), wall=(dict(length=3.0, h=1.7, tongues=9), 2.4, 2.2), flames=(dict(r=1.3, h=1.3, tongues=9), 1.9, 2.2),
-    palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), eyes=(dict(r=1.9, n=4, size=2.6), 2.6, 2.4),
+    palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), whirlpool=(dict(r=1.7, arms=5), 2.0, 0.8), sandstorm=(dict(r=1.6, h=1.3), 1.9, 1.8),
+    wings=(dict(r=1.4, h=2.1), 1.7, 2.9), banner=(dict(h=2.4, w=1.3), 1.7, 2.9), eyes=(dict(r=1.9, n=4, size=2.6), 2.6, 2.4),
     implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
 )
 
 # Each ultimate: its palette, its strike's two scenes, and its showcase's style (which sets its weight, as `ultStageRules.ts` does).
 ULTS = dict(
-    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'flames', 'sky'), ilyra=('holy', 'halo', 'dome', 'bless'),
+    vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'flames', 'sky'), ilyra=('holy', 'wings', 'dome', 'bless'),
     orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'swarm', 'blinks'),
     wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'beast', 'trail', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
@@ -193,17 +194,17 @@ ULTS = dict(
     siegeBot=('fire', 'burst', 'shockwave', 'sky'), lightningMage=('lightning', 'cloud', 'bolt', 'shots'), gunslinger=('fire', 'sparks', 'cross', 'shots'),
     rifleBot=('lightning', 'sparks', 'ring', 'shots'), dragoon=('fire', 'flare', 'wall', 'shots'), ranger=('forest', 'vines', 'ring', 'burst'),
     knight=('holy', 'shout', 'dome', 'burst'), paladin=('holy', 'nova', 'strike', 'burst'), yamabushi=('wind', 'vortex', 'gust', 'burst'),
-    gorgon=('poison', 'crystal', 'smoke', 'burst'), juggernaut=('earth', 'crack', 'spikes', 'burst'), kraken=('water', 'vortex', 'geyser', 'burst'),
-    mummy=('earth', 'vortex', 'chains', 'burst'), warlock=('shadow', 'sigil', 'siphon', 'burst'), tyrant=('blood', 'shout', 'spikes', 'burst'),
+    gorgon=('poison', 'crystal', 'smoke', 'burst'), juggernaut=('earth', 'crack', 'spikes', 'burst'), kraken=('water', 'whirlpool', 'geyser', 'burst'),
+    mummy=('earth', 'sandstorm', 'chains', 'burst'), warlock=('shadow', 'sigil', 'siphon', 'burst'), tyrant=('blood', 'shout', 'spikes', 'burst'),
     shambler=('poison', 'crack', 'cloud', 'burrow'), reaper=('shadow', 'arc', 'souls', 'burst'), druid=('forest', 'palisade', 'vines', 'pack'),
-    illusionist=('arcane', 'veil', 'portal', 'pack'), priestess=('holy', 'pillar', 'halo', 'bless'), werewolf=('blood', 'claws', 'shout', 'change'),
-    demonSwordsman=('fire', 'chains', 'flare', 'change'), kitsune=('fire', 'spiral', 'smoke', 'burst'), karasu=('wind', 'swarm', 'vortex', 'sky'),
+    illusionist=('arcane', 'veil', 'portal', 'pack'), priestess=('holy', 'wings', 'pillar', 'bless'), werewolf=('blood', 'claws', 'shout', 'change'),
+    demonSwordsman=('fire', 'chains', 'flare', 'change'), kitsune=('fire', 'spiral', 'smoke', 'burst'), karasu=('wind', 'swarm', 'gust', 'sky'),
     timeWitch=('holy', 'sigil', 'crystal', 'burst'), wanderer=('holy', 'hearts', 'motes', 'bless'), satyr=('forest', 'swarm', 'spiral', 'bless'),
-    samuraiCommander=('fire', 'pillar', 'flare', 'bless'), sage=('lightning', 'dome', 'sigil', 'bless'), cleric=('holy', 'souls', 'motes', 'bless'),
-    peasant=('earth', 'veil', 'shout', 'bless'), wolfBard=('wind', 'shout', 'spiral', 'bless'), vampireLord=('blood', 'implode', 'siphon', 'burst'),
+    samuraiCommander=('fire', 'banner', 'flare', 'bless'), sage=('lightning', 'dome', 'sigil', 'bless'), cleric=('holy', 'souls', 'motes', 'bless'),
+    peasant=('earth', 'banner', 'shout', 'bless'), wolfBard=('wind', 'shout', 'spiral', 'bless'), vampireLord=('blood', 'implode', 'siphon', 'burst'),
     hemomancer=('blood', 'siphon', 'rain', 'burst'), nightstalker=('shadow', 'swarm', 'claws', 'blinks'), bloodGargoyle=('earth', 'shockwave', 'slab', 'burst'),
     dhampir=('holy', 'rain', 'cross', 'shots'), warDrummer=('lightning', 'shout', 'bolt', 'burst'), geomancer=('earth', 'slab', 'crack', 'bless'),
-    bellWarden=('shadow', 'shout', 'ring', 'burst'), falconer=('wind', 'shaft', 'claws', 'sky'), banneret=('fire', 'veil', 'ring', 'bless'),
+    bellWarden=('shadow', 'shout', 'ring', 'burst'), falconer=('wind', 'shaft', 'claws', 'sky'), banneret=('fire', 'banner', 'ring', 'bless'),
     astralSphinx=('arcane', 'eye', 'sigil', 'burst'), mirageDancer=('wind', 'veil', 'cross', 'blinks'), plagueDoctor=('poison', 'cloud', 'smoke', 'burst'),
     bombardier=('fire', 'shaft', 'burst', 'sky'), astrologer=('holy', 'implode', 'burst', 'sky'), inquisitor=('holy', 'strike', 'ring', 'shots'),
     seraph=('holy', 'shaft', 'shockwave', 'sky'), corsairSurgeon=('forest', 'geyser', 'motes', 'bless'), harpooner=('ice', 'chains', 'spikes', 'hooks'),
@@ -226,8 +227,7 @@ PLACE = dict(
 )
 # A third scene some strikes have, where two do not say what the ability does (the ring the spirits circle in, the flames a
 # constellation leaves, the halo a nova's healing lands as).
-THIRD = dict(cleric='ring', wanderer='halo', timeWitch='ring', astrax='sigil', dragoon='flames', banneret='flames', paladin='halo',
-             seaReaver='ring', minotaur='trail', shambler='geyser', rifleBot='spiral', demonSwordsman='spiral', werewolf='flare', corsairSurgeon='ring',
+THIRD = dict(cleric='ring', wanderer='halo', timeWitch='ring', astrax='sigil', dragoon='flames', banneret='flames',              seaReaver='ring', minotaur='trail', shambler='geyser', rifleBot='spiral', demonSwordsman='spiral', werewolf='flare', corsairSurgeon='ring',
              wolfBard='ring', warDrummer='shockwave', lancer='sparks')
 # ULT-AUDIT: every hero's wind-up is the ability itself beginning, in place of a circle and a pillar by its weight: the Cleric's wisps
 # rise inside the ring the spirits will keep, the Lightning Mage's cloud gathers, the Knight plants a slab and a dome closes, the Kraken's
@@ -235,24 +235,24 @@ THIRD = dict(cleric='ring', wanderer='halo', timeWitch='ring', astrax='sigil', d
 WIND_OWN = dict(
     vael=[('halo', 0, 1.4), ('implode', 0.2, 1.3)], astrax=[('sigil', 0, 1.3), ('motes', 0.2, 1.4)], ilyra=[('halo', 0, 1.5), ('ring', 0, 1.2)],
     orrun=[('vines', 0, 1.5), ('ring', 0.1, 1.3)], nyxara=[('sigil', 0, 1.4), ('spiral', 0.3, 1.5)], kunoichi=[('smoke', 0, 1.2), ('swarm', 0.3, 1.4)],
-    wizard=[('vortex', 0, 1.3), ('flames', 0.3, 1.5)], beastmaster=[('eyes', 0, 1.4), ('swarm', 0.3, 1.4)], mercenary=[('implode', 0, 1.2), ('sparks', 0.5, 1.5)],
+    wizard=[('cloud', 0, 1.3), ('flames', 0.3, 1.5)], beastmaster=[('eyes', 0, 1.4), ('swarm', 0.3, 1.4)], mercenary=[('implode', 0, 1.2), ('sparks', 0.5, 1.5)],
     arcBlade=[('spiral', 0, 1.3), ('bolt', 0.2, 1.4)], samurai=[('ring', 0, 1.2), ('flare', 0.4, 1.8)], lancer=[('gust', 0, 1.4), ('trail', 0.3, 1.4)],
     minotaur=[('smoke', 0, 1.3), ('crack', 0.3, 1.4)], barbarian=[('flare', 0, 1.5), ('shout', 0.3, 1.4)], ninjaMonk=[('spiral', 0, 1.4), ('sparks', 0.4, 1.5)],
     buccaneer=[('chains', 0, 1.5), ('ring', 0, 1.0)], archer=[('shaft', 0, 1.4), ('gust', 0.2, 1.3)], dreadPirate=[('cloud', 0, 1.4), ('souls', 0.3, 1.5)],
     siegeBot=[('ring', 0, 1.4), ('strike', 0.5, 1.8)], lightningMage=[('cloud', 0, 1.5), ('sparks', 0.4, 1.5)], gunslinger=[('halo', 0, 1.4), ('sparks', 0.6, 1.6)],
     rifleBot=[('sparks', 0, 1.3), ('bolt', 0.5, 1.6)], dragoon=[('flames', 0, 1.4), ('flare', 0.4, 1.7)], ranger=[('vines', 0, 1.4), ('swarm', 0.3, 1.4)],
     knight=[('slab', 0, 1.3), ('dome', 0.4, 1.6)], paladin=[('nova', 0, 1.2), ('pillar', 0.3, 1.7)], yamabushi=[('vortex', 0, 1.5), ('gust', 0.3, 1.5)],
-    gorgon=[('vines', 0, 1.4), ('eye', 0.2, 1.5)], juggernaut=[('crack', 0, 1.3), ('slab', 0.3, 1.5)], kraken=[('vortex', 0, 1.4), ('geyser', 0.4, 1.6)],
-    mummy=[('gust', 0, 1.4), ('chains', 0.3, 1.5)], warlock=[('sigil', 0, 1.4), ('siphon', 0.3, 1.5)], tyrant=[('shout', 0, 1.4), ('flare', 0.4, 1.6)],
+    gorgon=[('vines', 0, 1.4), ('eye', 0.2, 1.5)], juggernaut=[('crack', 0, 1.3), ('slab', 0.3, 1.5)], kraken=[('whirlpool', 0, 1.4), ('geyser', 0.4, 1.6)],
+    mummy=[('sandstorm', 0, 1.4), ('chains', 0.3, 1.5)], warlock=[('sigil', 0, 1.4), ('siphon', 0.3, 1.5)], tyrant=[('shout', 0, 1.4), ('flare', 0.4, 1.6)],
     shambler=[('crack', 0, 1.2), ('cloud', 0.2, 1.4)], reaper=[('souls', 0, 1.4), ('arc', 0.5, 1.7)], druid=[('vines', 0, 1.4), ('motes', 0.2, 1.4)],
     illusionist=[('veil', 0, 1.5), ('sparks', 0.4, 1.4)], priestess=[('halo', 0, 1.4), ('pillar', 0.4, 1.7)], werewolf=[('ring', 0, 1.0), ('shout', 0.3, 1.5), ('claws', 0.5, 1.6)],
     demonSwordsman=[('chains', 0, 1.3), ('flames', 0.3, 1.6)], kitsune=[('spiral', 0, 1.4), ('flames', 0.3, 1.4)], karasu=[('swarm', 0, 1.5), ('gust', 0.3, 1.4)],
     timeWitch=[('sigil', 0, 1.5), ('ring', 0.2, 1.2), ('motes', 0.3, 1.4)], wanderer=[('geyser', 0, 1.3), ('hearts', 0.3, 1.5)], satyr=[('swarm', 0, 1.4), ('hearts', 0.4, 1.5)],
-    samuraiCommander=[('veil', 0, 1.5), ('flare', 0.4, 1.6)], sage=[('spiral', 0, 1.4), ('dome', 0.4, 1.6)], cleric=[('ring', 0, 1.4), ('souls', 0.1, 1.5)],
-    peasant=[('shout', 0, 1.4), ('slab', 0.3, 1.5)], wolfBard=[('shout', 0, 1.5), ('motes', 0.2, 1.4)], vampireLord=[('siphon', 0, 1.5), ('swarm', 0.2, 1.3)],
+    samuraiCommander=[('banner', 0, 1.5), ('flare', 0.4, 1.6)], sage=[('spiral', 0, 1.4), ('dome', 0.4, 1.6)], cleric=[('ring', 0, 1.4), ('souls', 0.1, 1.5)],
+    peasant=[('banner', 0, 1.5), ('shout', 0.3, 1.4)], wolfBard=[('shout', 0, 1.5), ('motes', 0.2, 1.4)], vampireLord=[('siphon', 0, 1.5), ('swarm', 0.2, 1.3)],
     hemomancer=[('siphon', 0, 1.4), ('ring', 0, 1.2), ('rain', 0.4, 1.5)], nightstalker=[('swarm', 0, 1.4), ('smoke', 0.2, 1.3)], bloodGargoyle=[('gust', 0, 1.2), ('shaft', 0.4, 1.7)],
     dhampir=[('halo', 0, 1.2), ('cross', 0.5, 1.6)], warDrummer=[('shout', 0, 1.5), ('sparks', 0.3, 1.5)], geomancer=[('slab', 0, 1.5), ('motes', 0.2, 1.3)],
-    bellWarden=[('shout', 0, 1.4), ('crystal', 0.4, 1.6)], falconer=[('swarm', 0, 1.4), ('shaft', 0.4, 1.6)], banneret=[('veil', 0, 1.5), ('ring', 0.1, 1.3)],
+    bellWarden=[('shout', 0, 1.4), ('crystal', 0.4, 1.6)], falconer=[('swarm', 0, 1.4), ('shaft', 0.4, 1.6)], banneret=[('banner', 0, 1.5), ('ring', 0.1, 1.3)],
     astralSphinx=[('eye', 0, 1.5), ('sigil', 0, 1.3)], mirageDancer=[('veil', 0, 1.4), ('gust', 0.2, 1.4)], plagueDoctor=[('cloud', 0, 1.5), ('siphon', 0.3, 1.4)],
     bombardier=[('flames', 0, 1.2), ('geyser', 0.3, 1.6)], astrologer=[('implode', 0, 1.4), ('motes', 0.2, 1.4)], inquisitor=[('halo', 0, 1.3), ('strike', 0.4, 1.7)],
     seraph=[('halo', 0, 1.4), ('shaft', 0.4, 1.7)], corsairSurgeon=[('geyser', 0, 1.4), ('ring', 0.1, 1.2)], harpooner=[('chains', 0, 1.4), ('geyser', 0.3, 1.5)],
@@ -280,7 +280,7 @@ AFTER_OWN = dict(
     nightstalker=['cloud', 'claws'], bloodGargoyle=['crack', 'slab'], dhampir=['ring', 'cross'], warDrummer=['ring', 'shout'],
     geomancer=['spikes', 'motes'], bellWarden=['ring', 'veil'], falconer=['trail', 'swarm'], banneret=['flames', 'veil'],
     astralSphinx=['sigil', 'eye'], mirageDancer=['sigil', 'gust'], plagueDoctor=['cloud', 'motes'], bombardier=['flames', 'cloud'],
-    astrologer=['sigil', 'motes'], inquisitor=['flames', 'halo'], seraph=['nova', 'halo'], corsairSurgeon=['cloud', 'hearts'],
+    astrologer=['sigil', 'motes'], inquisitor=['flames', 'halo'], seraph=['nova', 'wings'], corsairSurgeon=['cloud', 'hearts'],
     harpooner=['spikes', 'chains'], seaReaver=['trail', 'geyser'],
 )
 # How large a strike is drawn when it plays on each fighter, or round the caster.
