@@ -24,7 +24,13 @@ After all six were in, the director's list, done in one push:
   and the samples in `docs/samples/eidolon-blender/` replaced. Nothing is cut off: each sigil, pillar and painting stays in the
   summoning's frame (the pillars' tops run off the top by design) and each blow, its second and third detonations and its aftermath
   stay in the strike's.
-- All six together: 60 sheets, **2,529,400 bytes**.
+- **Vaelkhar's wings are wings.** They were flat fans of violet spikes. Each is now six ribs (long cones of black fire, the leading
+  one longest) with a **membrane** stretched between them (`Membrane` and `membrane_mat` in `vaelkhar_parts.py`): a fan from the
+  wing's root to an edge that runs rib tip to rib tip and sags inward between them like a bat's, the dark itself with faint veins,
+  a bright violet rim along the trailing edge, and that edge eaten ragged by a noise; as the maw drains, the edge is eaten further
+  in and the ribs fold. His painted violet fire still stands in front of them. His flash keeps its strength but is **violet-white**
+  (`flashTint` on his entry). His show is now **379,906 bytes** (the explosion 190,488 and its glow 25,236).
+- All six together: 60 sheets, **2,532,628 bytes**.
 
 ## For the camera: where each show is
 
@@ -191,9 +197,8 @@ violet. Three: a little violet given back to the wings' rims so they do not go d
 tear on.
 
 **Honestly.** Dark on a darkened field is the hardest thing to make hit: his blow is the biggest shape of the six but the least
-bright, and it leans on the page's flash and shake for its impact. The wings are fans of long cones and read as spines or a crown
-as much as wings. The white flash is the same as the others' (main gave him none): if the owner wants his blow to stay dark, that
-is one number (`BLOW_FEEL.flash`, which would need to become per Eidolon). The drain, the maw closing on a spark, is his best beat
+bright, and it leans on the page's flash and shake for its impact. The wings were fans of long cones and read as spines or a crown
+as much as wings, and the flash was plain white (both changed in the polish pass above: membranes between ribs, a violet-white flash). The drain, the maw closing on a spark, is his best beat
 and the one thing no other Eidolon has.
 
 **Samples**: `vaelkhar-game-393.webp`, `-360`, `-412`, their `-strip.webp`, `vaelkhar-game-before-after.webp`,
