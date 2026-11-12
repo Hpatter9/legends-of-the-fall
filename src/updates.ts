@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.544.0',
+    date: '2026-11-12',
+    title: 'The next battlefield, painted as you fight',
+    notes: ['The next battlefield is now painted a tile a frame during the fight itself, so little is left to do when the wave is won.', 'The Android app no longer carries a 19 MB debugging file it never used.'],
+  },
+  {
     version: '0.543.0',
     date: '2026-11-12',
     title: 'Music you can see',
