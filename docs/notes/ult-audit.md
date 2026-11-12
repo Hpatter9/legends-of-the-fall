@@ -593,6 +593,29 @@ the last two after the show is over), `TOUGH=1`.
   a shield round each ally), and that was decided with the director; with Ilyra's dome gone there are two domes on allies left,
   his (pale, banded, in lightning's colours) and Orrun's (wound with vines). I have left both and say so.
 
+### The look-alike pairs, 2: a bell, a wave, hearts, a whirl; and the Nightstalker's talons first
+
+`docs/samples/blender-fx/audit-pairs-2-393.jpg` (0.499 above, now below), `TOUGH=1`. The Bell Warden's and the Nightstalker's rows
+are taken in the strike's first moments (`EARLY=1`): their blows come at once, and the usual later frames were after them.
+
+- **The Bell Warden and the War Drummer** were both hoops. A new scene, `toll`: a great bell hanging in the air (a flared body,
+  a crown, a bright rim, a clapper), swinging, a hoop of sound dropping out of its mouth at each stroke and spreading on the
+  ground. It is his wind-up and his strike (Midnight Knell). In the photograph: the bell over him, hoops under it. Honest: the
+  bell is small beside its hoops, and reads as a bell by its outline, not by any detail.
+- **The Sea Reaver, the Corsair Surgeon and the Kraken** all had the plain cone of spout. A new scene, `wave`: a wall of water
+  rearing across the screen and running towards the camera, foam off its crest, a wash left. It is the Sea Reaver's wind-up and
+  strike (Wrath of the Reef: he rides a wave through the line). In the photograph: a pale blue wall of water behind him as he
+  sets off; where he lands, the wall and a wash of foam, with the old cone from his aftermath still in the frame. Honest: it is a
+  striped wall more than a curling wave. The Corsair Surgeon's spray and the Kraken's spouts keep the cone, green and blue.
+- **The Wanderer and the Priestess** were both pillars of light on friends. The Wanderer's Panacea is hearts rising over a pool
+  of light on each friend now, no pillar, and hearts in her wind-up. In the photograph: a gold pool and small hearts by her, then
+  a pool on each friend. Honest: small.
+- **The Mirage Dancer and the Illusionist** both had upright panes. The Mirage Dancer has none now: a whirl of gusts and a cut
+  on each foe. In the photograph: white curved gusts round her, then a row of them through the foes. The Illusionist keeps her
+  mirrors. Honest: her mirages themselves (seven dancers) are not shown by anything.
+- **The Nightstalker**'s strike was a faint smear with the talons late. The talons come first now: three great purple talons
+  down across the foe at the blow, then the bats scattering. In the photograph: the talons at the moment of the blow.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
