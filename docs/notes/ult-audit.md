@@ -388,6 +388,30 @@ Eight read as they were; two did not and are changed and photographed (Astrax, t
 and her aftermath's spikes, the Banneret's lumpy flames, the Corsair Surgeon's plain cones. Thirty-five heroes are
 now judged at full size in this pass.
 
+### Ten more: daggers for Karasu
+
+`docs/samples/blender-fx/audit-fullsize-8-393.jpg` (the Harpooner, the Hemomancer, the Inquisitor, Karasu, the Kitsune) and `-9` (the
+Lancer, the Lightning Mage, the Mirage Dancer, the Nightstalker, the Plague Doctor), 0.499 above and now below, all photographed
+with `TOUGH=1`.
+
+| Hero | 0.499 | Now | Shows the ability? | Mistaken for another? |
+| --- | --- | --- | --- | --- |
+| Harpooner | pale blue balls, rings | a spout and chain on her; a cage of pale chain on each foe hooked | yes: hooks and chain | YES, in shape: the Buccaneer's Keelhaul is the same cage of chain, purple against her pale blue. With colour removed they are one effect |
+| Hemomancer | red balls, red rings | an orb of blood over rings; a ring on the ground and drops rising to the orb; rings after | yes: blood drawn up | no |
+| Inquisitor, Tribunal | yellow balls, rings | a pillar and hoops on him; three tall stakes coming down; round yellow lumps in a ring after | the stakes read as judgement falling; the lumps after are the `flames` scene in holy colours and read as nothing | the lumps are the same as the Banneret's |
+| Karasu, Cloud of Daggers | a red ball, a red ring | was a faint ring of wind at one spot: DID NOT READ. CHANGED: white blades falling steeply over the foes, feathers among them | yes, now: blades falling | no |
+| Kitsune | a purple ball, a ring | a fox-fire on her; a coil of fire round the foe changed; a ring after | a coil reads as a change being worked; small | no |
+| Lancer | a dust ball | a crescent as she sets; a long streak along her charge, dust thrown up behind | yes: a charge down a line | the Minotaur's charge is cracks and dust, hers a streak |
+| Lightning Mage | a pale ball, a ring | a cloud gathering on him; a great cloud over the foes; a bolt out of it | yes: a storm cloud; the cloud hides the fighters under it for most of the strike | no |
+| Mirage Dancer | pale balls, rings | tall pale veils round her; a row of pale blades through the foes; a sigil after | reads as a dance of blades; not clearly mirages | the Illusionist's upright panes are close in shape |
+| Nightstalker | a purple ring and ball | shards lifting off him; a low purple smear among the foes; great purple talons and smoke after | the talons read; the strike itself is faint and the talons come late | no |
+| Plague Doctor | green balls, a ring | a purple and green cloud on him; a bank of the same cloud over the foes, hanging | yes: a plague cloud | no |
+
+Seven read; Karasu did not and is changed and photographed. Three want more and are not fixed: the Harpooner against the Buccaneer
+(one of them wants a harpoon, not a cage), the Inquisitor's lumps, the Nightstalker's faint strike. One thing is common to three
+heroes now (the Banneret, the Inquisitor, the Kitsune's wind-up): the `flames` scene at an ultimate's size is a heap of round lumps,
+not fire. Forty-five heroes are judged at full size in this pass.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
