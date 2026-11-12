@@ -24,7 +24,7 @@ import { spellImage } from './render/spellArt';
 import { spellPart } from './render/spellLooks';
 import { settings } from './settings';
 import { whichCast } from './fightHudRules';
-import { ULT_MOMENT, UltQueue, ultCues, ultShape, type UltMoment, type UltPhase } from './ultMomentRules';
+import { oneShow, ULT_MOMENT, UltQueue, ultCues, ultShape, type UltMoment, type UltPhase } from './ultMomentRules';
 import { burstSpots, KIT, KIT_SESSION, litPools, ultLean, ultTargets, type Pt, type UltTargets } from './ultEpicRules';
 import { hasShowcase, planShow, readCast, wantsShow, type ShowPlan } from './ultShowRules';
 import { UltShow } from './ultShow';
@@ -57,6 +57,8 @@ export interface UltMomentOpts {
   /** ULT-CAMERA: the room the page's camera frames in now and the zoom its follow holds (none: this screen's camera is its own, and
    *  the moment only leans in on the caster as before). */
   room?: () => { room: Room; held: number } | null;
+  /** FREEZE-FIX: another show has the screen (an Eidolon's call): an ultimate fired now gets the short banner, not a moment. */
+  busy?: () => boolean;
 }
 
 /** Whether the art a slash was given is a hero's awakened painting (a Mythic's frame then shows its awakened one). */
@@ -85,6 +87,11 @@ export class UltMoments {
   private ducked = false;
   /** FREEZE-FIX: the moments the queue has ended by their deadline, as last seen (each is logged once). */
   private overranSeen = 0;
+  /** FREEZE-FIX: the casters whose ultimates were given a full moment on the tick last noted (the rest get the short banner). */
+  private tookNow = new Set<number>();
+  took(unit: number): boolean {
+    return this.tookNow.has(unit);
+  }
   /** ULT-EPIC 2: where each moment's caster stood before its cast (a dash or a leap has already moved it in the sim): it is seen to
    *  gather there through the wind-up; and the fighter posed so now. */
   private starts = new WeakMap<UltMoment, { u: number; v: number }>();
@@ -142,10 +149,15 @@ export class UltMoments {
    *  It also tells the effects whose events are an ultimate's (drawn at its scale), and sees a delayed ultimate's salvo land. */
   note(b: Battle, events: readonly BattleEvent[], born: readonly Unit[], before?: ReadonlyMap<number, { u: number; v: number }>): boolean {
     const epic = new Set<number>();
+    this.tookNow.clear();
     for (const e of events) {
       if (e.kind !== 'skill') continue;
       const u = b.units.find((x) => x.id === e.by);
       if (!u || u.side !== 'hero' || whichCast(u, e.name) !== 'ult') continue;
+      // (FREEZE-FIX, the director's call: one full show at a time. An ultimate fired while another show plays, an ultimate's or an
+      // Eidolon's call, takes effect at once with the short banner, as on Auto, and is never queued behind it)
+      if (!oneShow(!!this.queue.current, !!this.opts.busy?.())) continue;
+      this.tookNow.add(u.id);
       const ult = ultimateOf(u)!;
       const { shape, ms } = ultShape(ult, u.id, events, born);
       const m: UltMoment = { unit: u.id, kind: u.def, name: ult.name, shape, ms, el: skillElement(keyOf(ult)), targets: ultTargets(events, u.id) };
