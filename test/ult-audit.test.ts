@@ -8,6 +8,9 @@ import { readFileSync } from 'node:fs';
 import '../src/sim/battle';
 import { AURA_MOTES } from '../src/render/movePaints';
 import { auraLook } from '../src/render/toolkitLooks';
+import { BFX_CLIPS } from '../src/render/blenderFxData';
+import { ultPlace } from '../src/render/blenderFxRules';
+import { SHOWCASES } from '../src/ultShowRules';
 
 test('Spirit Guardians shows its guardians: spirits a fighter tall circling the Cleric for as long as the aura lasts', () => {
   const look = auraLook('Spirit Guardians');
@@ -23,4 +26,31 @@ test('Spirit Guardians shows its guardians: spirits a fighter tall circling the 
   assert.match(fx, /const own = AURA_MOTES\[sheet\];/);
   assert.match(fx, /\}, live, \{ tint: o\.tint, \.\.\.\(own \? \{ mult: own\.mult, depthOf: \(\) => 9999 \} : \{\}\) \}\);/);
   assert.match(fx, /this\.reduced \? 0 : \(performance\.now\(\) - born\) \/ \(own\?\.turn \?\? 1400\)/);
+});
+
+test('the great blow is only under abilities that are one great blow; a heal, a blessing, a ward, a mark, a summoning, a change and an aura have none', () => {
+  const great = Object.keys(SHOWCASES).filter((kind) => BFX_CLIPS[`ult-${kind}-strike`].sc?.[0] === 'impact');
+  // (a cut, a leap's landing, a crash from on high, shells, meteors, supernovas: nine of the seventy)
+  assert.deepEqual(great.sort(), ['astrologer', 'barbarian', 'bloodGargoyle', 'bombardier', 'dreadPirate', 'samurai', 'seraph', 'siegeBot', 'wizard']);
+  for (const kind of Object.keys(SHOWCASES)) {
+    const style = SHOWCASES[kind].style;
+    // (no showcase that blesses, calls a pack or changes its hero is a great blow)
+    if (['bless', 'pack', 'change'].includes(style)) assert.ok(!great.includes(kind) || kind === 'seraph', `${kind} (${style}) has the great blow`);
+  }
+});
+
+test('a strike plays where the ability lands: on each fighter it touches, round the caster, or once in the midst of what it struck', () => {
+  // (a heal lands on each friend healed, a ward on each warded, a mark on each foe marked, a flurry's cut on each foe cut, the called
+  // where each arrives)
+  for (const kind of ['wanderer', 'sage', 'ilyra', 'priestess', 'gorgon', 'kitsune', 'timeWitch', 'ranger', 'kunoichi', 'mercenary', 'beastmaster', 'illusionist']) assert.equal(ultPlace(kind), 'each', kind);
+  // (an aura, a ward of his own, a change, a pull towards him: round the caster)
+  for (const kind of ['cleric', 'knight', 'banneret', 'warlock', 'werewolf', 'demonSwordsman', 'kraken', 'plagueDoctor']) assert.equal(ultPlace(kind), 'self', kind);
+  // (a great blow, a storm on its tiles, a wall where it stands: once)
+  for (const kind of ['samurai', 'barbarian', 'wizard', 'archer', 'lightningMage', 'geomancer', 'druid', 'lancer']) assert.equal(ultPlace(kind), 'one', kind);
+  assert.equal(ultPlace('skeleton'), 'one');
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.match(fx, /if \(place === 'self'\) \{/);
+  assert.match(fx, /\} else if \(place === 'each'\) \{/);
+  // (Spirit Guardians' strike is the spirits arriving, with the ring they circle in: no core, no rubble)
+  assert.deepEqual(BFX_CLIPS['ult-cleric-strike'].sc, ['souls', 'motes', 'ring']);
 });

@@ -43,6 +43,10 @@ export interface BfxClip {
   cuts?: number[][];
   /** A staged effect's scenes, in order (the library's names: what the effect is made of). */
   sc?: string[];
+  /** ULT-AUDIT: where an ultimate's strike plays. Unset, once at the middle of what it struck (a great blow, a storm); `each`, on every
+   *  fighter the ability touches (a heal on each friend, a mark on each foe, a flurry's cut on each foe cut); `self`, round the caster (an
+   *  aura, a ward, a transformation). */
+  at?: 'each' | 'self';
   /** Its soft glow's frames (a light effect only). */
   g?: BfxGlow;
 }
@@ -191,6 +195,10 @@ export function beatLine(x0: number, y0: number, x1: number, y1: number): [numbe
   const n = Math.max(2, Math.min(BEAT_LINE.MAX, Math.round(Math.hypot(x1 - x0, y1 - y0) / BEAT_LINE.STEP)));
   return Array.from({ length: n }, (_, i) => [x0 + ((x1 - x0) * (i + 1)) / n, y0 + ((y1 - y0) * (i + 1)) / n] as [number, number]);
 }
+
+/** ULT-AUDIT: where a hero kind's strike plays (`BfxClip.at`): `one` great thing at the middle of what it struck, on `each` fighter it
+ *  touches, or round the caster (`self`). */
+export const ultPlace = (kind: string): 'one' | 'each' | 'self' => BFX_CLIPS[`ult-${kind}-strike`]?.at ?? 'one';
 
 /** Where a sheet on the moment's layer is put so the middle of its tile is at (x, y): the layer's bits are held by their own middle, so
  *  this is the frame's middle, `mult` times its size. */
