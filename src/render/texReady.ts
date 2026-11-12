@@ -1,7 +1,7 @@
 // WAVE-DELAY (docs/notes/wave-delay.md): the sheets kept ready for a fight (`texReadyRules.ts` has the rules). The loaders name their
 // sheets here (`keepReady`); the page calls `readyStep` each frame with its renderer.
 import type { TextureSource } from 'pixi.js';
-import { mayRelease, nextToWarm } from './texReadyRules';
+import { mayRelease, mayWarm, nextToWarm } from './texReadyRules';
 
 const KEPT = new Map<string, TextureSource>();
 let released: boolean | null = null;
@@ -28,6 +28,7 @@ export function readyStep(renderer: unknown, fighting: boolean): void {
     released = free;
     for (const s of KEPT.values()) if (!s.destroyed) s.autoGarbageCollect = free;
   }
+  if (!mayWarm(fighting)) return;
   try {
     const live = [...KEPT.values()].filter((s) => !s.destroyed);
     const next = nextToWarm(live, (s) => !!(s as unknown as { _gpuData: Record<number, unknown> })._gpuData?.[card.uid]);

@@ -170,6 +170,7 @@ import { bindDecree, refreshDecree } from './decreeHud';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { readyStep } from './render/texReady';
+import { diagFrame, diagMark, diagRest } from './diag';
 import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
 import { BoardLife } from './render/boardLife';
@@ -337,8 +338,12 @@ class Game {
   private goat = new PageGoat(() => {
     const panel = document.getElementById('panel');
     if (!panel || panel.hidden) return null;
-    return { left: 8, bottom: panel.getBoundingClientRect().top + 4, face: 1 };
+    // (WAVE-DELAY: the panel's place is measured twice a second at most, not every frame: measuring makes the browser lay the page out)
+    const now = performance.now();
+    if (now - this.goatAt.t > 500) this.goatAt = { t: now, top: panel.getBoundingClientRect().top };
+    return { left: 8, bottom: this.goatAt.top + 4, face: 1 };
   });
+  private goatAt = { t: -1e9, top: 0 };
   private fx = new Fx(this.sprites);
   /** LIVING-FIELDS: the life of the battlefield (creatures, decals, falls, light, smoke and dust: `render/boardLife.ts`; looks only). */
   private life = new BoardLife(this.boardView, this.fx);
@@ -836,6 +841,7 @@ class Game {
     this.chain.finish();
     this.walking.clear();
     // (Duchess the goat may join one fight in a thousand: the test page's `?duchess=1` always brings her, `duchessFight.ts`)
+    diagMark('the next board built');
     this.b = startStage(this.run, this.duchessWish());
     hideDuchessCard();
     // (QUEST-POSSIBLE: a taken quest that bars spells or ultimates holds that Auto switch off for a fight it would count for, and says why)
@@ -928,7 +934,8 @@ class Game {
       saveRun(this.run);
       if (s) toastLines([`${s.name} is Mocking: +5% attack for the rest of the run`]);
       // (the wave's fight is made again with the nemesis Mocking, the squad put back where it stood)
-      this.b = startStage(this.run, this.duchessWish());
+      diagMark('the next board built');
+    this.b = startStage(this.run, this.duchessWish());
       this.placeSquad();
       const section = chainOf(this.run)?.[this.run.stage - 1];
       this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
@@ -1016,6 +1023,7 @@ class Game {
       this.syncSprites();
     }
     if (JSON.stringify(this.run.buff ?? null) === buffWas || this.b.phase !== 'deploy') return;
+    diagMark('the next board built');
     this.b = startStage(this.run, this.duchessWish());
     this.placeSquad();
     const section = chainOf(this.run)?.[this.run.stage - 1];
@@ -1465,6 +1473,7 @@ class Game {
     if (this.duelWait && this.b.phase === 'deploy') return this.openDuel();
     // (QUEST-BATTLES: a quest battle begins only with its required cast on the board, and its rule kept)
     if (this.questBlock()) return void this.refresh();
+    diagMark('a fight begun');
     // (the party's tactic picked for this mode or army, Advance together when none: docs/notes/tactics.md)
     setTactic(this.b, pickedTactic(this.meta.tactics, this.run.mode));
     // (FORMATIONS-FIT: the shape picked is read first, so heroes set out in it stand in it)
@@ -1600,6 +1609,8 @@ class Game {
   /** FREEZE-FIX, the belt: a fight that is over must reach its result. If it has been over for `WAVE_END.BELT_MS` and nothing the
    *  player can act on is up, the flow is pushed on: the shows are cleared and the fight is settled as it would have been, so the
    *  wave's result is never lost. What was pending is logged: this should never be needed. */
+  private warmedFor: Battle | null = null;
+  private clockShown = '';
   private overFor = 0;
   private waveEndBelt(dt: number, over: boolean): void {
     if (!over) return void (this.overFor = 0);
@@ -1622,9 +1633,12 @@ class Game {
     updateAltarHud(this.standOn || this.homeUp ? undefined : b);
     if (this.standOn) return;
     if (this.homeUp && b.phase !== 'fight') {
+      diagRest();
       this.app.ticker.stop();
       return;
     }
+    // (WAVE-DELAY: a gap of half a second or more since the last frame is kept for the Diagnostics page: `diag.ts`)
+    diagFrame(b.phase);
     // (WAVE-DELAY: the large sheets a fight draws from go to the graphics card ahead of it, one a frame: `texReady.ts`)
     readyStep(this.app.renderer, b.phase === 'fight');
     if (this.auto) this.autoTick(dt);
@@ -1648,6 +1662,13 @@ class Game {
       else if (this.ultm.queue.current) this.ultm.clear();
     }, () => this.ultm.clear());
     this.waveEndBelt(dt, over);
+    // (WAVE-DELAY: a wave won with a march to come: the next section's columns are painted ahead while the falls play out, so the
+    // march's build at the result is not one long stop)
+    if (b.phase === 'won' && this.warmedFor !== b) {
+      this.warmedFor = b;
+      const c = chainOf(this.run);
+      if (c && this.run.stage < c.length) this.chain.prewarm(c, this.run.stage - 1);
+    }
     // (ULT-EPIC 2: the speed button reads x1 while a show holds the fight to it, and the set speed again the moment it is over; the set
     // speed itself is never touched, so it comes back however the show ends)
     const showing = b.phase === 'fight' && (!!this.ultm.queue.current || this.eid.long);
@@ -1742,7 +1763,9 @@ class Game {
       this.hud.refresh(b);
       // (BATTLE-POLISH: at x1 while an ultimate's full moment plays, and slowed through its slow beat)
       this.fx.step(Math.min(dt, 250) * momentSpeed(this.speed, !!this.ultm.queue.current) * this.ultm.queue.rate);
-      $('clock').textContent = clock(b.t);
+      // (written when it changes: once a second, not once a frame)
+      const clockNow = clock(b.t);
+      if (clockNow !== this.clockShown) $('clock').textContent = this.clockShown = clockNow;
       this.refreshSpells();
     } else if (b.phase !== 'deploy') {
       // (the fallen finish falling after the end; the recap comes up once the wait is over)
@@ -2609,7 +2632,12 @@ class Game {
       },
       autoOn: () => this.ultAutoOn(),
       useOf: (kind, key) => useOf(this.meta, kind, key),
-      dockTop: () => $('panel').getBoundingClientRect().top,
+      // (WAVE-DELAY: measured twice a second at most, as the goat's place is: a banner at every cast was a layout at every cast)
+      dockTop: () => {
+        const now = performance.now();
+        if (now - this.goatAt.t > 500) this.goatAt = { t: now, top: $('panel').getBoundingClientRect().top };
+        return this.goatAt.top;
+      },
       ultFull: (id) => fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.took(id),
       ultArt: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
     });
@@ -4224,6 +4252,7 @@ class Game {
     }
     if (ready && !this.settled) {
       this.settled = true;
+      diagMark('the result worked out and shown');
       const won = b.phase === 'won';
       const stage = run.stage;
       const army = armyOfRun(run);
