@@ -11,7 +11,7 @@ const war = { v: 1, turn: 12, members: [], fallen: [], nextId: 9, news: [], must
 for (const [w, h] of SIZES) {
   const save = { ...saveOf({ conquered: ARMY_IDS }), war };
   const { ctx, page, log } = await open(browser, w, h, PORT, { save });
-  await page.evaluate(() => localStorage.setItem('legends.settings', JSON.stringify({ cinematics: true, speed: 1 })));
+  await page.evaluate(() => localStorage.setItem('legends.settings', JSON.stringify({ cinematics: true, cineOff: true, speed: 1 })));
   await page.reload();
   await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 60000 });
   await wait(page, 4000);

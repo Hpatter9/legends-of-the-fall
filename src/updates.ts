@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.520.0',
+    date: '2026-11-12',
+    title: 'Spirit Guardians you can see',
+    notes: ['Spirit Guardians\' spirits are back in sight: four of them, each about a fighter tall, circling the caster for as long as the aura lasts.'],
+  },
+  {
+    version: '0.519.0',
+    date: '2026-11-12',
+    title: 'Lighter on your phone\'s memory',
+    notes: ['Ultimate effects now load in small pieces only when played and are released afterwards, cutting their memory use from over 120 MB to about 45 MB.', 'This is the first fix for the game freezing mid-wave. More protection against freezes follows.'],
+  },
+  {
+    version: '0.518.0',
+    date: '2026-11-12',
+    title: 'Cinematics off',
+    notes: ['The story films (a boss\'s arrival, an army cleared and the like) no longer play: the Cinematics switch is now off, on new and existing saves.', 'You can turn them back on in Settings, Gameplay. Quest stories and the codex\'s Scenes list are unchanged.'],
+  },
+  {
     version: '0.517.0',
     date: '2026-11-12',
     title: 'The tactic button is an orb',

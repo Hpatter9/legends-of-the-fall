@@ -6,7 +6,7 @@ const browser = await launch();
 const end = { day: 20261109, turn: 12, army: 'yokai', chief: { name: 'Grashnak the Unbowed', base: 'orcWarlord', warchief: true }, slain: ['Vorga Ironhide'], scattered: [], tries: 2 };
 const save = { ...saveOf({ conquered: ARMY_IDS }), war: { v: 1, turn: 12, members: [], fallen: [], nextId: 9, news: [], musterSince: 0, trophies: 40, end } };
 const { ctx, page, log } = await open(browser, 393, 852, 8918, { save });
-await page.evaluate(() => localStorage.setItem('legends.settings', JSON.stringify({ cinematics: true, speed: 1 })));
+await page.evaluate(() => localStorage.setItem('legends.settings', JSON.stringify({ cinematics: true, cineOff: true, speed: 1 })));
 await page.reload();
 await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 60000 });
 for (let i = 0; i < 14; i++) {

@@ -165,7 +165,7 @@ if (fired && ultUp) {
 await page.evaluate(() => {
   const g = window.__game;
   g.home.open();
-  localStorage.setItem('legends.settings', JSON.stringify({ ...JSON.parse(localStorage.getItem('legends.settings') ?? '{}'), cinematics: true }));
+  localStorage.setItem('legends.settings', JSON.stringify({ ...JSON.parse(localStorage.getItem('legends.settings') ?? '{}'), cinematics: true, cineOff: true }));
 });
 await wait(page, 600);
 const played = await page.evaluate(() => {

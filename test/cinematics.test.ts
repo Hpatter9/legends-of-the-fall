@@ -463,12 +463,18 @@ test('the opening plays before the starter pick with a fixed trio, and each scen
   assert.equal(SCENES.gorvak.music, 'gorvak');
 });
 
-test('the Cinematics setting is on by default and kept when saved', async () => {
+test('the Cinematics setting is off by default; an old save is turned off once, and after that the switch is kept as the player sets it', async () => {
+  // (CINE-OFF: the owner asked for the cinematics to be turned off, 2026-11-12)
   const { DEFAULTS, parseSettings } = await import('../src/settings');
-  assert.equal(DEFAULTS.cinematics, true);
-  assert.equal(parseSettings(null).cinematics, true);
-  assert.equal(parseSettings('{"cinematics":false}').cinematics, false);
-  assert.equal(parseSettings('{"cinematics":1}').cinematics, true);
+  assert.equal(DEFAULTS.cinematics, false);
+  assert.equal(parseSettings(null).cinematics, false);
+  // (a save from before: whatever it held, off once, and marked so it is not turned off again)
+  assert.equal(parseSettings('{"cinematics":true}').cinematics, false);
+  assert.equal(parseSettings('{"cinematics":true}').cineOff, true);
+  // (turned back on afterwards, it stays on; off stays off; a bad value is the default)
+  assert.equal(parseSettings('{"cinematics":true,"cineOff":true}').cinematics, true);
+  assert.equal(parseSettings('{"cinematics":false,"cineOff":true}').cinematics, false);
+  assert.equal(parseSettings('{"cinematics":1,"cineOff":true}').cinematics, false);
 });
 
 test('an old saved settings object with the summoning-scene switch is read without it, and nothing crashes', async () => {
@@ -478,7 +484,8 @@ test('an old saved settings object with the summoning-scene switch is read witho
   // (an old save's volume is moved to the perceptual slider, keeping its loudness: 40 % straight is 60 % on the curve,
   //  docs/notes/sound-pass.md)
   assert.equal(s.music, 60);
-  assert.equal(s.cinematics, true);
+  // (CINE-OFF: an old save's Cinematics switch is turned off once)
+  assert.equal(s.cinematics, false);
   assert.equal('summonScene' in DEFAULTS, false);
 });
 
