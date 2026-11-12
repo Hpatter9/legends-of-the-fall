@@ -698,7 +698,7 @@ export class Fx {
       const called = () => b.units.filter((u) => u.owner === me?.id && u.alive).map((u) => u.id);
       const all = touched && {
         struck: place === 'each' && !touched.struck.length ? called() : touched.struck,
-        helped: place !== 'each' && !touched.helped.length ? friends() : touched.helped,
+        helped: (place === 'friends' || place === 'tiles') && !touched.helped.length ? friends() : touched.helped,
         tiles: place === 'tiles' && !touched.tiles.length ? walled() : touched.tiles,
       };
       const own = place !== 'one' && place !== 'self' && all && me && size >= 1 ? ultSpots(place, all, me.id, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS) : spots;
