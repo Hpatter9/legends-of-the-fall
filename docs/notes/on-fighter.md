@@ -35,6 +35,25 @@ shield, haste, a rally, a banner, a frenzy) were drawn the same way.
   it); the renderer thins the over layer by it. A test holds that every on-fighter clip is measured and that its cover times its
   thinning is under the ceiling.
 
+## Presence without cover (the director's second order)
+
+`docs/samples/blender-fx/on-fighter-regen-393.png` (three rows: before, the first fix, now) and
+`on-fighter-ultimates-2-393.jpg` (the Priestess, the Corsair Surgeon, the Knight, the Gorgon, the Harpooner and the Banneret, five
+moments each from the wind-up on).
+
+- **The smoke is seen.** Five wisps (three on the battery saver), each four fifths of the fighter's height across and at full
+  strength while it is behind the body; in front, three tenths of that and faint. At most three are in front at once, and
+  `frontCover` is still under the ceiling (a test). The pool is fainter: the smoke first, the pool second.
+- **An ultimate's clip on a fighter lands with force, none of it over the body** (`UNDER`): the layer under the body is drawn 15%
+  larger than the clip and keeps its glow; a strike puts a bright ring of its element on the ground at the fighter's feet, under
+  the fighter; and for its first 150 ms the clip is over the body at full strength (the rule's brief flash), then thin.
+- **An under layer inside one fighter still draws over fighters standing farther back.** That is the painter's order (the effect
+  stands where its fighter stands), and it is not cheap to change: a layer under ALL the fighters would also be under the nearer
+  tiles' tops, which are drawn after the farther rows, so a pool at a near fighter's feet would be cut off by its own tile. What
+  it would take: the board giving a layer for each diagonal row that sits over that row's tiles and under every fighter of that
+  row and of the rows behind it, which means moving the farther rows' fighters above the nearer rows' ground in `boardView.ts`
+  (the march-stays builder's file now). Not done.
+
 ## The survey: rendered clips on a fighter, worst first
 
 238 clips on a fighter; over 0.15: 235; over 0.5: 193 (before this change every one of them was drawn over the fighter at full strength).
@@ -85,6 +104,6 @@ These still lie over a fighter and are next, worst first by eye, since they are 
   thinned to six tenths over a fighter (FX-CLEAR, `OVER_FIGHTER_ALPHA`), which is far above the ceiling;
 - the **king's spells' rendered clips on a unit** (`bfxOnce`: the same six tenths) and the standing loops `aura-spirits` and
   `aura-eclipse` (drawn over the fighters; the spirits circle the body, the black sun hangs above it);
-- the **guard's ring** (`unitView.ts`, the earth shield at 0.65 over the body while a guard is raised) and the **ailments' front
-  layers** (`ailmentLayer.ts`, at half strength);
+- the **ailments' front layers** (`ailmentLayer.ts`, at half strength). (The guard's earth-shield ring is already under the body
+  in the fighter's drawing order; I listed it wrongly.)
 - a showcase's beats on the caster (`beat-*`).

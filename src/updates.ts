@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.556.0',
+    date: '2026-11-12',
+    title: 'Smoke you can see; ultimates keep their force',
+    notes: ['The smoke circling a healed or shielded hero is larger and plain to see behind and beside them; the pool at the feet is fainter.', 'An ultimate\'s effect on a fighter is larger behind them, flashes at full strength for an instant, and lands a bright ring on the ground at their feet.'],
+  },
+  {
     version: '0.555.0',
     date: '2026-11-12',
     title: 'Effects go round your heroes, not over them',
