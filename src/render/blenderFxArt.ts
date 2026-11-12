@@ -35,7 +35,9 @@ let pumped = 0;
 /** A glow atlas (small, smoothed; they load once and stay). */
 async function glowPage(i: number): Promise<Texture | null> {
   try {
-    const base = Texture.from(await loadImage(`fx/blender/soft-${i}.webp`));
+    // (decoded off the page's own thread, as the pixel atlases are: as a plain image its two million pixels were decoded on the frame
+    // it was handed to the graphics card, a stop of some 450 ms on a slow phone; as a bitmap the hand-over is a copy)
+    const base = Texture.from(await picture(`fx/blender/soft-${i}.webp`));
     base.source.style.scaleMode = 'linear';
     // (WAVE-DELAY: the glows are drawn in every fight: handed to the graphics card ahead of it, and held there through it)
     keepReady(`bfx-soft-${i}`, base.source);
@@ -46,10 +48,9 @@ async function glowPage(i: number): Promise<Texture | null> {
   }
 }
 
-/** A pixel atlas's picture, fetched and decoded off the page's own thread where the browser can (a bitmap, which can be closed again to
+/** An atlas's picture, fetched and decoded off the page's own thread where the browser can (a bitmap, which can be closed again to
  *  give its memory back at once); given up after `TIMEOUT_MS`. */
-async function picture(a: number): Promise<ImageBitmap | HTMLImageElement> {
-  const url = `fx/blender/px-${a}.webp`;
+async function picture(url: string): Promise<ImageBitmap | HTMLImageElement> {
   if (typeof createImageBitmap !== 'function' || typeof fetch !== 'function') return loadImage(url);
   const stop = new AbortController();
   const timer = setTimeout(() => stop.abort(), BFX_MEM.TIMEOUT_MS);
@@ -65,7 +66,7 @@ async function picture(a: number): Promise<ImageBitmap | HTMLImageElement> {
 /** Begin atlas `a`'s load. When it is in, its clips are cut (unless the book gave it up meanwhile: then its picture is thrown away). */
 function start(a: number): void {
   soft ??= Promise.all(BFX_SOFT.map((_, i) => glowPage(i)));
-  void Promise.all([picture(a), soft]).then(
+  void Promise.all([picture(`fx/blender/px-${a}.webp`), soft]).then(
     ([pic, glows]) => {
       if (!book.done(a, true, now())) {
         if ('close' in pic) pic.close();
