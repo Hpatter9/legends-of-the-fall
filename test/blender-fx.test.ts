@@ -4,7 +4,7 @@
 // own rendered sheets, no two of them the same scene in the same element.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import '../src/sim/battle';
 import { BFX_CLIPS, BFX_CORE, BFX_DENSITY, BFX_GLOW_SHRINK, BFX_PX, BFX_SOFT } from '../src/render/blenderFxData';
 import {
@@ -231,7 +231,7 @@ test('every hero\'s ultimate has its three stages hung on STAGE_ART: its own str
       assert.equal(art.sheet, ultBfx(kind, stage, ultWeight(kind)));
       assert.equal(art.frames, c.n);
       assert.equal(art.on, stage === 'windup' ? 'caster' : 'struck');
-      assert.ok(!c.loop && c.n >= 10, `${art.sheet}: played once across its stage`);
+      assert.ok(!c.loop && c.n >= 7, `${art.sheet}: played once across its stage`);
       // (a show's sheets are drawn big: a wind-up wraps the caster, a strike covers two tiles and more)
       assert.ok(art.tiles >= (stage === 'strike' ? 3 : 1.2) && art.tiles <= 12, `${art.sheet}: ${art.tiles} tiles`);
     }
@@ -298,12 +298,13 @@ test('a hero whose turn has come has its own wind-up and aftermath, like no othe
       seen.set(look, kind);
     }
     // (each stage has the frames for its length)
-    assert.ok(strike.n >= 16 && wind.n >= 15 && after.n >= 12, `${kind}: ${wind.n}, ${strike.n}, ${after.n} frames`);
+    // (the strike keeps the most frames; the wind-up and the aftermath fewer, played slower: the download's limit)
+    assert.ok(strike.n >= 13 && wind.n >= 12 && after.n >= 9 && strike.n > wind.n && wind.n > after.n, `${kind}: ${wind.n}, ${strike.n}, ${after.n} frames`);
     // (the wind-up builds: more than one scene, the hero's own part joining the weight's)
     assert.ok(wind.sc!.length >= 2 && after.sc!.length === 2, kind);
-    // (about a tenth of a second a frame over the stage's own length)
+    // (each is made for its stage's own length)
     const st = ULT_STAGES[kind];
-    assert.ok(Math.abs(wind.ms - st.windup.ms) <= 1 && wind.ms / wind.n >= 90 && wind.ms / wind.n <= 125, `${kind}: wind-up ${wind.ms} ms in ${wind.n}`);
+    assert.ok(Math.abs(wind.ms - st.windup.ms) <= 1, `${kind}: wind-up ${wind.ms} ms against ${st.windup.ms}`);
     assert.ok(Math.abs(after.ms - st.aftermath.ms) <= 1, `${kind}: aftermath ${after.ms} against ${st.aftermath.ms}`);
   }
 });
@@ -328,4 +329,20 @@ test('the atlases are held only when needed: a core set up front, each pair of h
   const art = readFileSync('src/render/blenderFxArt.ts', 'utf8');
   assert.match(art, /return Promise\.all\(BFX_CORE\.map\(need\)\)/, 'only the core loads up front');
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /void warmBfx\(/, 'a fight warms its heroes\' ultimates');
+});
+
+test('the atlases stay sane in size (the cap on the ultimates was lifted), and the dim is lifted over a playing sheet', () => {
+  const dir = 'src/art/fx/blender';
+  const core = new Set(BFX_CORE);
+  const ult = BFX_PX.map((_, i) => i).filter((i) => !core.has(i)).reduce((n, i) => n + statSync(`${dir}/px-${i}.webp`).size, 0);
+  // (the director lifted the 3 MB cap on the ultimates: bytes go where they buy force; this only catches a runaway)
+  assert.ok(ult < 8_000_000, `the ultimates' pixel atlases are ${ult} bytes`);
+  const all = readdirSync(dir).reduce((n, f) => n + statSync(`${dir}/${f}`).size, 0);
+  assert.ok(all < 9_000_000, `all the atlases are ${all} bytes`);
+  // (a wind-up and a strike play on the board, under the moment's dim: the dim leaves them lit, so they are seen at full strength)
+  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /if \(stage !== 'aftermath'\) this\.bfxLit\.push\(/);
+  assert.match(readFileSync('src/ultMoment.ts', 'utf8'), /for \(const l of this\.opts\.fx\?\.momentLights\(\) \?\? \[\]\)/);
+  assert.ok(ULT_BFX.LIGHT >= 0.8);
+  // (an ultimate's sheet is cut hard with a dark edge, in fewer colours: the recipe marks them, the pixelate step does it)
+  assert.match(readFileSync('tools/blender-fx/pixelate.py', 'utf8'), /frames = \[edged\(f, pal\) for f in frames\]/);
 });

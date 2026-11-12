@@ -616,7 +616,16 @@ export class Fx {
   stepMoment(dt: number): void {
     this.moment.calm = this.calm();
     this.moment.step(dt);
+    for (const l of this.bfxLit) l.left -= dt;
+    this.bfxLit = this.bfxLit.filter((l) => l.left > 0);
   }
+
+  /** BLENDER-FX: where an ultimate's rendered wind-up or strike is playing on the moment's layer now, each a circle in world px. The
+   *  moment's dim (`ultMoment.ts`, a layer over the board) leaves these lit, so the sheet shows above the dim at full strength. */
+  momentLights(): { x: number; y: number; r: number }[] {
+    return this.bfxLit.map(({ x, y, r }) => ({ x, y, r }));
+  }
+  private bfxLit: { x: number; y: number; r: number; left: number }[] = [];
 
   /** A painted part on the moment's layer, `tiles` across, its foot (`foot`) or its middle at (x, y). False when no atlas has it. */
   private paintMoment(key: string, x: number, y: number, tiles: number, o: { frameMs?: number; foot?: boolean; alpha?: number } = {}): boolean {
@@ -660,7 +669,9 @@ export class Fx {
       this.moment.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: x + (c.g.w / 2 - c.g.ax) * k, y: y + (c.g.h / 2 - c.g.ay) * k, scale: k, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA, prio: true, half: 1 });
     }
     // (the aftermath lies over those it struck for a second or two, so it is drawn thinner: they show through it)
-    this.moment.spawn({ frames: held, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: life / held.length, life, prio: true, alpha: stage === 'aftermath' ? ULT_BFX.AFTER_ALPHA : 1, half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42 });
+    this.moment.spawn({ frames: held, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: life / held.length, life, prio: true, solid: stage !== 'aftermath', alpha: stage === 'aftermath' ? ULT_BFX.AFTER_ALPHA : 1, half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42 });
+    // (the moment's dim is lifted over a wind-up and a strike while they play, so they are seen at full strength and not through it: `momentLights`)
+    if (stage !== 'aftermath') this.bfxLit.push({ x: cx, y: cy, r: Math.max(c.w, c.h) * BFX_SCALE * size * ULT_BFX.LIGHT, left: life });
     return true;
   }
 

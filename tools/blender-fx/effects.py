@@ -9,7 +9,7 @@ from lib import PALETTES
 EFFECTS = {}
 
 
-def fx(id, scene, element, cw, ch, oy, frames=16, ms=1000, loop=False, glow=None, layer='over', seed=1, hold=None, stages=None, **opt):
+def fx(id, scene, element, cw, ch, oy, frames=16, ms=1000, loop=False, glow=None, layer='over', seed=1, hold=None, stages=None, ult=False, take=None, skip=0, **opt):
     spec = dict(id=id, element=element, w=cw, h=ch, oy=oy, frames=frames, ms=ms, loop=loop, layer=layer, seed=seed,
                 glow=PALETTES[element]['glow'] if glow is None else glow)
     if stages:
@@ -19,6 +19,16 @@ def fx(id, scene, element, cw, ch, oy, frames=16, ms=1000, loop=False, glow=None
         spec['opt'] = opt
     if hold is not None:
         spec['hold'] = hold
+    if skip:
+        # (how many of its first rendered frames are left out: a strike opens on the blow itself, its core already swollen, not on the
+        # frames in which it is still forming)
+        spec['skip'] = skip
+    if take:
+        # (how many of its rendered frames are kept, evenly spaced: fewer frames, played slower, for a smaller download)
+        spec['take'] = take
+    if ult:
+        # (an ultimate's sheet is cut hard, with no dither, and given a dark edge, so it reads against the darkened field)
+        spec['edge'] = True
     EFFECTS[id] = spec
     return spec
 
@@ -149,10 +159,10 @@ fx('zone-fire', 'tile', 'fire', 1.3, 2.0, 0.8, frames=10, ms=800, loop=True, see
 
 # A scene at an ultimate's size: its options, how far it reaches on the ground and how tall it stands.
 BIG = dict(
-    arc=(dict(r=1.5, z=1.0, sparks=18), 2.5, 2.8), shockwave=(dict(r=1.9, forks=8), 2.1, 0.6), rain=(dict(r=1.6, h=3.4, n=22), 2.4, 4.0),
+    arc=(dict(r=1.5, z=1.0, sparks=18, wide=0.6), 2.5, 2.8), shockwave=(dict(r=1.9, forks=8), 2.1, 0.6), rain=(dict(r=1.6, h=3.4, n=22), 2.4, 4.0),
     burst=(dict(r=1.5, h=1.4, embers=26), 3.2, 3.4), halo=(dict(r=0.8, h=2.8, rays=9), 1.9, 3.3), dome=(dict(r=1.6), 1.8, 1.9),
     vines=(dict(r=1.5, h=1.7, n=8), 1.8, 2.3), sigil=(dict(r=1.7, points=7, skip=3, motes=14), 1.9, 1.5), spiral=(dict(r=0.9, h=2.4, bands=3), 1.6, 2.8),
-    cross=(dict(r=1.9, z=1.5), 2.6, 3.9), smoke=(dict(r=1.15, h=1.6, puffs=8), 2.2, 2.7), claws=(dict(r=1.9, z=1.5), 2.6, 4.0),
+    cross=(dict(r=1.9, z=1.5, wide=0.34), 2.6, 3.9), smoke=(dict(r=1.15, h=1.6, puffs=8), 2.2, 2.7), claws=(dict(r=1.9, z=1.5, wide=0.26), 2.6, 4.0),
     sparks=(dict(r=1.8, n=14, z=0.9), 2.8, 3.0), bolt=(dict(h=3.6, r=1.6, forks=3), 2.3, 4.1), trail=(dict(length=3.6, w=0.5), 3.4, 1.2),
     gust=(dict(r=1.7, n=5, turn=1.5708), 3.2, 3.0), crack=(dict(r=2.2, arms=7, rubble=18), 2.6, 1.4), chains=(dict(r=1.4, n=5, links=10, h=1.8), 1.7, 2.3),
     ring=(dict(r=1.8, n=4, thick=0.07), 2.0, 0.5), flare=(dict(r=0.9, h=2.2, tongues=8), 2.0, 3.6), nova=(dict(r=1.7, n=22, h=1.1), 2.2, 1.6),
@@ -167,7 +177,7 @@ BIG = dict(
 # Each ultimate: its palette, its strike's two scenes, and its showcase's style (which sets its weight, as `ultStageRules.ts` does).
 ULTS = dict(
     vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'burst', 'sky'), ilyra=('holy', 'halo', 'dome', 'bless'),
-    orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'smoke', 'blinks'),
+    orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'swarm', 'blinks'),
     wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'claws', 'smoke', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
     minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'burst', 'leap'), ninjaMonk=('wind', 'sparks', 'gust', 'blows'),
@@ -221,14 +231,33 @@ def ult_weight(kind):
 # longer: the ultimates are done about fifteen at a time. The rest keep a wind-up shared by weight and element and an
 # aftermath shared by element until their turn.
 ULT_OWN = 15
+# Frames a stage keeps of those rendered: the strike every one after its opening; the wind-up and the aftermath a few fewer, played
+# slower. (The director first set a limit of about 3 MB for the ultimates, then lifted it: bytes are spent where they buy force.)
+WIND_FRAMES, STRIKE_FRAMES, AFTER_FRAMES = 12, 13, 9
 # A stage's length by weight (ms: `WEIGHTS` in ultStageRules.ts), which sets how many frames it is given.
 STAGE_MS = dict(blow=(1600, 1500), flurry=(1700, 1600), wave=(1900, 1700), storm=(2000, 1800), summon=(2200, 2100))
 # What else may gather with a weight's own wind-up, and what an aftermath may be made of: a hero takes the first pair no
 # other hero of its element has, so no two wind-ups and no two aftermaths are alike.
-WIND_ADD = ('motes', 'sparks', 'swarm', 'flare', 'veil', 'smoke', 'souls', 'chains', 'shout', 'cloud', 'ring', 'spiral', 'sigil', 'eye')
-AFTER_LOW = ('cloud', 'smoke', 'sigil', 'ring', 'crack', 'spikes', 'vines')
-AFTER_HIGH = ('motes', 'swarm', 'souls', 'veil', 'smoke', 'spiral', 'pillar')
-SIZED = ('r', 'h', 'z', 'length', 'w')
+# Each hero's own: what joins its weight's gathering in its wind-up, and its aftermath's two parts (something low where it struck,
+# something lifting off it). Picked by hand to fit the ultimate; no two heroes of an element have the same.
+OWN = dict(
+    vael=('implode', 'sigil', 'souls'),        # the black sun draws the light in; a dark circle and what it took rise after
+    astrax=('motes', 'ring', 'motes'),         # starlight gathers; rings of it spread and stardust lifts
+    ilyra=('halo', 'sigil', 'veil'),           # her halo comes down; a circle of light and a curtain of it stay
+    orrun=('vines', 'vines', 'swarm'),         # roots climb; they stand a while and leaves wheel off them
+    nyxara=('spiral', 'ring', 'spiral'),       # the clock winds; its rings run out and unwind
+    kunoichi=('veil', 'cloud', 'swarm'),       # she fades behind a curtain; a low haze and petals after
+    wizard=('flare', 'crack', 'smoke'),        # fire climbs his staff; the ground is split and smoking
+    beastmaster=('swarm', 'ring', 'motes'),    # leaves wheel to the horn; the call's rings and motes
+    mercenary=('sparks', 'cloud', 'motes'),    # steel sparks; a red haze and drops lifting
+    arcBlade=('sparks', 'crack', 'motes'),     # he crackles; scorched lines on the ground, sparks rising
+    samurai=('sigil', 'ring', 'veil'),         # the still circle of the draw; a ring and a curtain of light after the cut
+    lancer=('swarm', 'cloud', 'swarm'),        # dust and wind whirl up; dust rolls and scatters
+    minotaur=('smoke', 'crack', 'smoke'),      # he paws up dust; cracked ground and dust
+    barbarian=('shout', 'crack', 'motes'),     # his roar; the cracked ground and blood-red motes
+    ninjaMonk=('veil', 'ring', 'swarm'),       # a blur round him; rings of wind and leaves
+)
+SIZED = ('r', 'h', 'z', 'length', 'w', 'wide')
 
 
 def grow(opt, k):
@@ -253,30 +282,30 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
     # rings and debris, its heaviest frames first. The first scene opens it, the second lands as the first is at its height.)
     k = STRIKE_SIZE[weight]
     reach = max(BIG[first][1], BIG[second][1]) * k
-    fx(f'ult-{kind}-strike', None, pal, **box(max(reach, 2.2 * k * 1.25), max(BIG[first][2], BIG[second][2], 2.4) * k, 0.6), frames=16, ms=1500, seed=40 + 2 * i + 59,
+    fx(f'ult-{kind}-strike', None, pal, **box(max(reach, 2.2 * k * 1.25), max(BIG[first][2], BIG[second][2], 2.4) * k, 0.6), frames=16, take=STRIKE_FRAMES, skip=3, ms=1300, seed=40 + 2 * i + 59, ult=True,
        stages=[stage('impact', 0.12, 1, r=2.2 * k), stage(first, 0, 0.7, **sized(first, k)), stage(second, 0.25, 1, **sized(second, k))])
     if own:
         wind_ms, after_ms = STAGE_MS[weight]
         base = [sc for sc, _, _ in WIND[weight]]
-        extra = next(sc for j in range(len(WIND_ADD)) for sc in [WIND_ADD[(i + j) % len(WIND_ADD)]] if sc not in base and (pal, weight, sc) not in _own_wind)
+        extra, low, high = OWN[kind]
+        assert (pal, weight, extra) not in _own_wind and (pal, low, high) not in _own_after, kind
         _own_wind.add((pal, weight, extra))
         # (the wind-up builds: the weight's own gathering, then the hero's own part joins it and swells to the blow)
-        fx(f'ult-{kind}-windup', None, pal, **box(max(BIG[sc][1] for sc in base + [extra]) * 0.72, 3.4, 0.5), frames=round(wind_ms / 105), ms=wind_ms, seed=7 + i,
+        fx(f'ult-{kind}-windup', None, pal, **box(max(BIG[sc][1] for sc in base + [extra]) * 0.72, 3.4, 0.5), frames=round(wind_ms / 105), take=WIND_FRAMES, ms=wind_ms, seed=7 + i, ult=True,
            stages=[stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]] + [stage(extra, 0.3, 1.3, **sized(extra, 0.72))])
-        low, high = next((lo, hi) for j in range(49) for lo, hi in [(AFTER_LOW[(i + j) % 7], AFTER_HIGH[(i + j // 7) % 7])] if lo != hi and (pal, lo, hi) not in _own_after)
         _own_after.add((pal, low, high))
         # (the aftermath lingers: something low where it struck, something lifting off it, both thinning to nothing)
-        fx(f'ult-{kind}-aftermath', None, pal, **canvas_of((low, high), 0.8), frames=round(after_ms / 120), ms=after_ms, seed=9 + i,
+        fx(f'ult-{kind}-aftermath', None, pal, **canvas_of((low, high), 0.8), frames=round(after_ms / 120), take=AFTER_FRAMES, ms=after_ms, seed=9 + i, ult=True,
            stages=[stage(low, 0, 0.85, **sized(low, 0.8)), stage(high, 0.1, 1, **sized(high, 0.8))])
         continue
     if (weight, pal) not in _wound:
         _wound.add((weight, pal))
-        fx(f'ultwind-{weight}-{pal}', None, pal, **box(1.9, 3.4, 0.5), frames=16, ms=1800, seed=7,
+        fx(f'ultwind-{weight}-{pal}', None, pal, **box(1.9, 3.4, 0.5), frames=16, take=WIND_FRAMES, ms=1800, seed=7, ult=True,
            stages=[stage(sc, a, b, **WIND_SIZE[sc]) for sc, a, b in WIND[weight]])
     if pal not in _after:
         _after.add(pal)
         # (the aftermath: the element's fumes rolling low where it struck and its motes lifting off, thinning to nothing)
-        fx(f'ultafter-{pal}', None, pal, **box(1.9, 2.4, 0.5), frames=12, ms=1700, seed=9,
+        fx(f'ultafter-{pal}', None, pal, **box(1.9, 2.4, 0.5), frames=12, take=AFTER_FRAMES, ms=1700, seed=9, ult=True,
            stages=[stage('cloud', 0, 1, r=0.95, h=0.36, puffs=5, bubbles=0), stage('motes', 0, 1, r=1.3, h=1.9, n=22, crosses=0)])
 
 # What the game ships: everything but the library's own previews.

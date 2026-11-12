@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.512.0',
+    date: '2026-11-12',
+    title: 'Ultimates lit above the dark',
+    notes: ['An ultimate\'s wind-up and strike now stay fully lit while the field darkens, and the strike opens on the blow itself.', 'Single-blow ultimates read as one wide cut. The Kunoichi\'s is a cross cut and a wheel of petals.'],
+  },
+  {
     version: '0.511.0',
     date: '2026-11-12',
     title: 'Aurelan\'s call, remade in light',
