@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.554.0',
+    date: '2026-11-12',
+    title: 'The party stays on the field between waves',
+    notes: ['After the march to the next section your heroes stay standing there until the next round begins; they used to vanish for a few seconds.', 'The next section is now built before the old one is taken down, so the battlefield is never left empty in between.', 'If the game has to rebuild the field between waves, it rebuilds the section on show, not the one just left.'],
+  },
+  {
     version: '0.553.0',
     date: '2026-11-12',
     title: 'Cuts and marks, a toll that shakes each foe',
