@@ -28,16 +28,18 @@ test('Spirit Guardians shows its guardians: spirits a fighter tall circling the 
   assert.match(fx, /this\.reduced \? 0 : \(performance\.now\(\) - born\) \/ \(own\?\.turn \?\? 1400\)/);
 });
 
-test('the great blow is only under abilities that are one great blow; a heal, a blessing, a ward, a mark, a summoning, a change and an aura have none', () => {
-  const great = Object.keys(SHOWCASES).filter((kind) => BFX_CLIPS[`ult-${kind}-strike`].sc?.[0] === 'impact');
-  // (a cut, a leap's landing, a crash from on high, shells, meteors, supernovas: eight of the seventy; the Dread Pirate's broadsides
-  // are shot falling among the foes, not one blow)
-  assert.deepEqual(great.sort(), ['astrologer', 'barbarian', 'bloodGargoyle', 'bombardier', 'samurai', 'seraph', 'siegeBot', 'wizard']);
-  for (const kind of Object.keys(SHOWCASES)) {
-    const style = SHOWCASES[kind].style;
-    // (no showcase that blesses, calls a pack or changes its hero is a great blow)
-    if (['bless', 'pack', 'change'].includes(style)) assert.ok(!great.includes(kind) || kind === 'seraph', `${kind} (${style}) has the great blow`);
-  }
+test('no strike has the great blow under it: each of the eight that had it has a strike of its own shape (the owner: "unique and extremely varied")', () => {
+  // (a white-hot core that tore open lay under eight strikes, and for half a second those eight were one picture, a great ball in a
+  // colour over the field; the director's order, 2026-11-12, is that none may be)
+  for (const kind of Object.keys(SHOWCASES)) assert.ok(!BFX_CLIPS[`ult-${kind}-strike`].sc?.includes('impact'), `${kind} has the great blow`);
+  // (what each of the eight is instead: a cut, a landing, a crash, a shell, meteors, a nova, a column, shells)
+  const own: Record<string, string> = { samurai: 'arc+sparks', barbarian: 'crack+shockwave+gust', bloodGargoyle: 'shockwave+slab+crack', siegeBot: 'shaft+crack+smoke', wizard: 'rain+crack+smoke', astrologer: 'implode+nova+sigil', seraph: 'pillar+wings+ring', bombardier: 'strike+flames' };
+  for (const [kind, look] of Object.entries(own)) assert.equal(BFX_CLIPS[`ult-${kind}-strike`].sc!.join('+'), look, kind);
+  // (and none of the eight is a ball of flame: `burst` is the fireball)
+  for (const kind of Object.keys(own)) assert.ok(!BFX_CLIPS[`ult-${kind}-strike`].sc!.includes('burst'), kind);
+  // (the Samurai's cut lies along his line, the Bombardier's shells fall on each foe)
+  assert.equal(ultPlace('samurai'), 'line');
+  assert.equal(ultPlace('bombardier'), 'each');
 });
 
 test('a strike plays where the ability lands: on each fighter it touches, round the caster, or once in the midst of what it struck', () => {
@@ -50,8 +52,11 @@ test('a strike plays where the ability lands: on each fighter it touches, round 
   assert.equal(ultPlace('geomancer'), 'tiles');
   // (an aura, a ward of his own, a change, a pull towards him: round the caster)
   for (const kind of ['cleric', 'knight', 'banneret', 'warlock', 'werewolf', 'demonSwordsman', 'kraken', 'plagueDoctor']) assert.equal(ultPlace(kind), 'self', kind);
-  // (a great blow, a storm on its tiles, a wall where it stands: once)
-  for (const kind of ['samurai', 'barbarian', 'wizard', 'archer', 'lightningMage', 'druid', 'lancer']) assert.equal(ultPlace(kind), 'one', kind);
+  // (a landing, a storm on its tiles, a wall where it stands: once)
+  for (const kind of ['barbarian', 'wizard', 'archer', 'lightningMage', 'druid', 'lancer']) assert.equal(ultPlace(kind), 'one', kind);
+  // (a cut or a breath along a line lies on the line: the Samurai's one cut was a great blow at one spot until the director's order
+  // that no strike be one)
+  for (const kind of ['samurai', 'dragoon']) assert.equal(ultPlace(kind), 'line', kind);
   assert.equal(ultPlace('skeleton'), 'one');
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /if \(place === 'self'\) \{/);
@@ -65,8 +70,7 @@ test('with the colour taken out no two heroes strike alike, wind up alike or lea
     const seen = new Map<string, string>();
     for (const kind of Object.keys(SHOWCASES)) {
       const c = BFX_CLIPS[`ult-${kind}-${stage}`];
-      // (the great blow under a strike is the same for all nine that have it: what is the hero's own is what lies over it)
-      const look = c.sc!.filter((sc) => sc !== 'impact').join('+');
+      const look = c.sc!.join('+');
       assert.ok(look.includes('+'), `${kind}'s ${stage} is one scene alone`);
       assert.ok(!seen.has(look), `${kind} and ${seen.get(look)} ${stage} alike: ${look}`);
       seen.set(look, kind);
