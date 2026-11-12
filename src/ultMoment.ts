@@ -398,7 +398,7 @@ export class UltMoments {
     const el = m.el ?? 'light';
     const t = m.landing ?? m.targets ?? NONE;
     const spots = burstSpots(t, m.unit, settings().saver);
-    this.opts.fx?.ultImpact(b, el, spots, 1, m.kind);
+    this.opts.fx?.ultImpact(b, el, spots, 1, m.kind, t);
     playAll(ultCues('impact', this.queue.calm));
     const at = spots.map((s) => ('unit' in s ? this.opts.anchor(s.unit) : this.opts.tile?.(s.u, s.v) ?? null)).filter((p): p is Pt => !!p);
     const c = at.length ? { x: at.reduce((n, p) => n + p.x, 0) / at.length, y: at.reduce((n, p) => n + p.y, 0) / at.length } : { x: innerWidth / 2, y: innerHeight * 0.45 };

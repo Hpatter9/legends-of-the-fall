@@ -91,6 +91,31 @@ their colours, and `test/ult-audit.test.ts` holds it. What the sheet still shows
 These are the next batch: new scenes where one scene is carrying too many heroes (a second kind of funnel, a second kind of barred
 ring), and the aftermaths.
 
+## Batch 3: guardians, beasts, the gaze, shields
+
+From the director's notes on the first sheets. `docs/samples/blender-fx/audit-batch3-1.jpg` and `-2.jpg`: 0.499 above, now below.
+
+| Ultimate | What it does | What 0.499 showed | What it shows now | Verdict |
+| --- | --- | --- | --- | --- |
+| Spirit Guardians (Cleric) | spirits circle her 10 s | a gold ball and ring; spirits too small to see | hooded guardians, a face in shadow under each hood, a spear at each side, a wake of wisps behind each, circling her for as long as the aura lasts | the ability itself |
+| Conjure Animals (Beastmaster) | four wolves answer | a green ball and ring | wind-up: pairs of eyes opening in dark brush round him; strike: a wolf's shape leaping out of a puff of smoke and landing in a ring, with claw marks | shows beasts arriving; it plays where the cast's events put it, which in the photographed fight is one spot, not one beast for each wolf |
+| Gaze of Medusa (Gorgon) | foes in sight turned to stone | green puffs on each foe | wind-up: snakes rising round her and the eye opening; a line runs from her to each foe (`ultLinked`), then grey stone grows up over it out of a fume | shows the gaze and the stone on each foe |
+| Panacea (Wanderer) | every ally healed, shielded, hastened | a gold ball and ring | the elixir fountains; a line of light runs to each friend; hearts, motes and a halo rise on her and on each of them, larger than before | lands on the friends, and reads |
+| Arcane Surge (Sage) | every ally's pool half filled, a shield on each | a gold ball and ring | a dome closes over him, then over each living friend, a sigil under each | reads as shields on each |
+| Mountain's Embrace (Geomancer) | a wall of stone 4 tiles across the foes' way, a shield on each friend | (in the sheet) | slabs rising in a ring of cracked ground | NOT RIGHT YET: it is still one cluster where the cast's events put it, not a wall along the tiles; in the photographed fight no wall of his was found on the board at the blow, which wants looking into |
+
+Two things under these that were wrong before and are now right:
+
+- **A heal or a blessing played on the caster alone.** The strike was given only the foes the cast struck (`burstSpots`), never the
+  friends it helped, so the Sage's "shield on each ally" was one dome on the Sage. A strike now has its own spots by where it plays
+  (`ultSpots`: the caster and each friend helped; the tiles taken; the foes struck), and where the cast's events do not name them (a
+  shield and a filled pool are not heals) the fight does: every living friend, the tiles the caster's wall stands on.
+- **Carried from the caster.** A healer's light and the Gorgon's gaze run out as a line of small clips from the caster to each one
+  touched, and the strike lands there as the line arrives (`ultLinked`, `ULT_LINK_MS`).
+
+Three new scenes in `tools/blender-fx/scenes.py`: `spirits` (redrawn as guardians), `beast` (a wolf: body, chest, head and snout, ears,
+legs, tail, an eye, leaping out of smoke) and `eyes` (pairs of eyes opening and blinking in dark brush).
+
 ## The audit of all 70
 
 To come, in batches: for each ultimate, what it does in the sim, what 0.499 showed, what main shows now, and the verdict; then the ten
