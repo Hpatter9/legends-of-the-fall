@@ -276,6 +276,8 @@ interface StageRun {
   blowAt: number | null;
   mid: { x: number; y: number } | null;
   embers: boolean;
+  /** The aftershock has gone off. */
+  shook: boolean;
 }
 
 export class EidolonCall {
@@ -1148,7 +1150,7 @@ export class EidolonCall {
     const a = this.opts.tile(0, 0);
     const c = this.opts.tile(1, 0);
     const k = a && c && a.x !== c.x ? Math.abs(c.x - a.x) / (TW / 2) : 1;
-    const run: StageRun = { look, m, t: 0, spot, k, sigil: null, glow: null, pillar: false, scorch: [], plan: [], cracks: [], blowAt: null, mid: null, embers: false };
+    const run: StageRun = { look, m, t: 0, spot, k, sigil: null, glow: null, pillar: false, scorch: [], plan: [], cracks: [], blowAt: null, mid: null, embers: false, shook: false };
     if (!spot) return run;
     const fx = this.opts.fx;
     const frames = groundFrames(look.sigil);
@@ -1228,6 +1230,18 @@ export class EidolonCall {
         const dx = n === 1 ? 0 : (i - 1) * 0.34;
         this.board.append(stageEl(look.embers, run.mid.x + dx * innerWidth, run.mid.y + 30, sc, { loop: true, delay: i * 130, ms: look.embers.ms + i * 170, mul: 1.15, flip: i === 1, cls: 'ecEmbers' }));
       }
+    }
+    // (an aftershock as the aftermath begins: the ground heaves once more under the foes, from the far tiles back to the near)
+    if (look.aftershock && !run.shook && run.blowAt !== null && p && p.stage === run && t >= m.AFTER && !this.reduced) {
+      run.shook = true;
+      const sc = stageScale(run.k);
+      const order = [...run.plan].sort((a, c) => c.delay - a.delay);
+      order.forEach((tl, i) => {
+        this.board.append(stageEl(look.fire, tl.x, tl.y + 5, sc, { delay: i * 55, mul: tl.foe ? 1.05 : 0.8, flip: (tl.u + tl.v) % 2 === 0, cls: 'ecTileFire' }));
+      });
+      const far = order[0];
+      if (far) this.layCracks(run, far.u, far.v);
+      if (settings().shake) this.opts.fx?.rumble(0.6);
     }
     for (const c of run.scorch) {
       if (c.sp.destroyed) continue;

@@ -85,8 +85,12 @@ def ice_mat():
     return m
 
 
-def mist_mat():
-    """Cold mist: pale, soft puffs. An object's red is how far it has thinned away."""
+MIST = [(0.25, (0.22, 0.4, 0.7, 1)), (0.45, (0.5, 0.72, 0.95, 1)), (0.7, (0.86, 0.95, 1.0, 1))]
+
+
+def mist_mat(stops=MIST):
+    """Cold mist: pale, soft puffs (`stops`: its colours from its thin edge in; another element's dust takes its own). An object's red
+    is how far it has thinned away."""
     m, nt = mat('mist')
     tc = nt.nodes.new('ShaderNodeTexCoord')
     info = nt.nodes.new('ShaderNodeObjectInfo')
@@ -105,7 +109,7 @@ def mist_mat():
     body = mth(nt, 'MULTIPLY', noise.outputs['Fac'], core)
     cut = mth(nt, 'ADD', 0.27, mth(nt, 'MULTIPLY', rgb.outputs['Red'], 0.55))
     alpha = mth(nt, 'MULTIPLY', mth(nt, 'SUBTRACT', body, cut), 6.0)
-    col = ramp(nt, body, [(0.25, (0.22, 0.4, 0.7, 1)), (0.45, (0.5, 0.72, 0.95, 1)), (0.7, (0.86, 0.95, 1.0, 1))])
+    col = ramp(nt, body, stops)
     glow(nt, col.outputs['Color'], alpha, 1.0)
     return m, clock
 

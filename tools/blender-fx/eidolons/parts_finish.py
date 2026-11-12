@@ -27,12 +27,14 @@ SHOWS = {
         # the smoke after it, where one frame is much like the next; it takes a fifth off the largest sheet)
         'keep': {'explosion': [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 13, 14, 16, 17, 19]},
     },
-    'nivra': {
-        'parts': {'sigil': (160, 96, 6), 'pillar': (144, 352, 16), 'explosion': (320, 300, 8), 'cracks': (256, 136, 6), 'fire': (64, 112, 14), 'scorch': (88, 48, 8), 'smoke': (128, 176, 16), 'embers': (160, 200, 12)},
-        'glow': ('pillar', 'explosion'),
-        'keep': {},
-    },
 }
+# (the others' pieces are the same sizes as Askel's, with the explosion rendered as the 16 frames it ships)
+for _id in ('nivra', 'gorm', 'voltara', 'aurelan', 'vaelkhar'):
+    SHOWS[_id] = {'parts': dict(SHOWS['askel']['parts']), 'glow': ('pillar', 'explosion'), 'keep': {}}
+# (Gorm's rock has a grain, which packs less well than fire or ice: his two big pieces ship without two of the frames in which the
+# slabs only stand, to keep his show the size of the others)
+SHOWS['gorm']['parts'].update({'pillar': (144, 352, 14), 'explosion': (320, 300, 7)})
+SHOWS['gorm']['keep'] = {'pillar': [0, 1, 2, 3, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15], 'explosion': [0, 1, 2, 3, 4, 5, 7, 9, 10, 11, 12, 13, 14, 15]}
 PARTS, GLOW, KEEP = SHOWS[ID]['parts'], SHOWS[ID]['glow'], SHOWS[ID]['keep']
 LUM = np.array([0.3, 0.59, 0.11], dtype=np.float32)
 
