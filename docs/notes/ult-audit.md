@@ -327,6 +327,20 @@ with reservations), two were changed and now read better (the Kunoichi's afterma
 confirmed (the Ninja Monk), two do not read and are not fixed (the Dread Pirate, the Dragoon), and several wind-ups are weak (the
 Kunoichi, the Mercenary, the Gunslinger). Thirty-three heroes remain to be looked at this way.
 
+### The two that did not read, and the Ninja Monk again
+
+`docs/samples/blender-fx/audit-fullsize-fixes2-393.jpg`.
+
+- **Ghost Fleet (the Dread Pirate)** is no longer a great blow (eight heroes have it now). Its strike is a rain of shot and a burst on
+  each foe it falls among (`each`, a fifth larger). In the photograph: purple shot raining over the crowd, then a burst on each of
+  three foes. Verdict: better, and the field is no longer hidden under one ball; but three purple balls among the foes still say
+  "explosions" more than "a fleet's guns". A broadside wants its own scene (shot arriving in a slanting volley from one side).
+- **Inferno Breath (the Dragoon)** has a new place, `line`: the strike on each tile of the line the ability takes, and nothing else
+  (`ultSpots`). In the photograph the flames lie over a short stretch of ground rather than standing in one cluster. Verdict: only a
+  little better; the line in the staged fight was short, and the clip on each tile is the same clump of tongues. It wants a strip of
+  fire that visibly runs out from her mouth.
+- **Hundred-Hand Strike (the Ninja Monk)**: photographed again, and again another fighter's fire lies over the frame. NOT CONFIRMED.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in

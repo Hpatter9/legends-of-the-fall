@@ -212,7 +212,7 @@ ULTS = dict(
 )
 # ULT-AUDIT (docs/notes/ult-audit.md): a strike must show what the ability does. Only an ability that IS one great blow has the blow
 # itself under it (a core, shock rings, rubble): a cut, a leap's landing, a shell, a meteor, a crash from on high.
-GREAT = {'samurai', 'barbarian', 'bloodGargoyle', 'siegeBot', 'wizard', 'astrologer', 'seraph', 'bombardier', 'dreadPirate'}
+GREAT = {'samurai', 'barbarian', 'bloodGargoyle', 'siegeBot', 'wizard', 'astrologer', 'seraph', 'bombardier'}
 # Where a strike plays. Most are one great thing at the middle of what was struck. `each`: a small one on every fighter the ability
 # touches (a mark sits on each foe marked, a flurry's cut on each foe cut, what is summoned arrives where each stands). `friends`: on
 # each friend the ability helps, and the caster (a heal, a blessing, a ward on them), with a line of light run out to each from the
@@ -222,6 +222,8 @@ PLACE = dict(
     peasant='friends', priestess='friends', geomancer='tiles', kunoichi='each', mercenary='each', arcBlade='each', ninjaMonk='each', buccaneer='each', harpooner='each', mirageDancer='each',
     gorgon='each', kitsune='each', timeWitch='each', ranger='each', astralSphinx='each', vampireLord='each', gunslinger='each', dhampir='each',
     inquisitor='each', beastmaster='each', illusionist='each',
+    # (a fleet's broadsides fall among the foes, one on each it strikes; breath down a line burns on each tile of the line)
+    dreadPirate='each', dragoon='line',
     cleric='self', knight='self', wolfBard='self', banneret='self', warlock='self', tyrant='self', bellWarden='self', plagueDoctor='self', kraken='self',
     reaper='self', mummy='self', werewolf='self', demonSwordsman='self', rifleBot='self', paladin='self', yamabushi='self',
 )
@@ -284,9 +286,9 @@ AFTER_OWN = dict(
     harpooner=['spikes', 'chains'], seaReaver=['trail', 'geyser'],
 )
 # How large a strike is drawn when it plays on each fighter, or round the caster.
-PLACE_SIZE = dict(each=0.8, friends=1.1, tiles=0.85, self=1.25)
+PLACE_SIZE = dict(each=0.8, friends=1.1, tiles=0.85, line=0.7, self=1.25)
 # (a few are drawn larger where they land: a beast is a beast's size, stone creeps over the whole of a foe)
-EACH_SIZE = dict(beastmaster=1.0, gorgon=1.0, geomancer=1.15)
+EACH_SIZE = dict(beastmaster=1.0, gorgon=1.0, geomancer=1.15, dreadPirate=1.2)
 # How much larger than a scene's own size a strike is drawn, by the show's weight.
 STRIKE_SIZE = dict(blow=1.6, flurry=1.6, wave=1.9, storm=2.3, summon=2.3)
 STYLE_WEIGHT = dict(line='blow', leap='blow', blinks='flurry', blows='flurry', hooks='flurry', burrow='flurry', burst='wave', bless='wave', change='wave',
