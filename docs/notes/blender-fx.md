@@ -160,6 +160,37 @@ the rendered loops instead: every element has one, a tile's worth, the lights wi
 loader are gone; the loop's strength on open ground and under a fighter. This is the owner's decision changing a requirement,
 not a test loosened. `tools/fx-alive/cut.py` (which cut the painted sheet) is kept for the record; its output is no longer used.
 
+## The ultimates, round 3: epic
+
+The director's review of the first release (0.500.0): Meteor Swarm's strike was about two tiles across, no bigger than a king's
+spell; the owner wants the ultimates to feel epic. So, for all 70:
+
+- **The strike is the biggest thing in the game.** Under each hero's own two scenes lies the blow itself (the `impact` scene, in
+  the hero's element): a white-hot core that swells in the first frames and tears open, two shock rings racing out along the
+  ground, a wide flash, and debris thrown high that tumbles back. The whole is scaled by the show's weight (`STRIKE_SIZE`: a blow
+  or a flurry 1.6, a wave 1.9, a storm or a summoning 2.3), which makes a blow four tiles and more across and a storm or a
+  summoning most of the foes' side. Its heaviest frames are its first.
+- **One great strike, not five.** `ultImpact` plays it once, at the middle of what the ultimate struck, where it used to play a
+  smaller one on each of up to five spots. A flurry's or a storm's further bursts play it small (0.4) on the next spots.
+- **Wind-ups swell to the blow.** Their stages now run past the end of the clip (to 1.2 to 1.9 of it), so each is still at its
+  height on the last frame, and a tall part joins from halfway (a rush of flame for a blow, a pillar for a wave, a storm or a
+  summoning): the wind-up stands about three tiles' height (twice a hero's) by the end.
+- The atlases may now be up to 2048 px a side (a strike's frames are too large a block for 1024).
+- **Atlases are held only when needed.** At this size the ultimates are 56 atlases; holding them all in the graphics memory at once
+  would be several hundred megabytes, too much for a phone. So the packer groups them (`group_order` in `pack.py`): a core group
+  every fight may need (the spells and the ground loops: two atlases, `BFX_CORE`), the shared wind-ups and aftermaths, and one group
+  for each pair of heroes' own sheets. `blenderFxArt.ts` loads the core up front and any other atlas only when one of its clips is
+  wanted: `Fx.show` warms a fight's heroes' ultimates as the fight begins (`warmBfx`), so a fight of five heroes holds the core, the
+  shared sheets it uses and at most five heroes' groups. All of them are still listed for the service worker, so they play offline.
+- **Bytes**: the atlases are 5,953,636 bytes in all now (they were 2,612,154 before this round): the strikes are four to eight
+  tiles across where they were two to four. This is the cost of "the biggest thing in the game" at the heroes' pixel size.
+- Every one of the 70 is photographed in a fight at 393x852 (`tools/blender-fx/ult-shots.mjs`, which is ULT-EPIC's `stages.mjs`
+  with a save that owns whichever heroes are picked): `docs/samples/blender-fx/ult-all-393-<n>.jpg`, with samples at the other two
+  sizes in `ult-all-360-1.jpg` and `ult-all-412-1.jpg`.
+
+**Not done in this round**: the showcase's own beats inside the strike (`Fx.showBeat`: the vanish, the cut, the dash, the marks and
+the rest, 24 kinds, still the painted toolkit and the pack). They are the next push.
+
 ## The ultimates, round 2: each hero's own three stages (fifteen at a time)
 
 The director's review of the first ultimates push: every hero's wind-up, strike and aftermath is to be its own recipe, sized to its
