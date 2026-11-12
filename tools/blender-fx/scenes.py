@@ -1291,8 +1291,9 @@ def shaft(c, r=0.42, h=3.4, slant=0.5):
 
 
 # 46. Slab: thick blocks of stone that slam up out of the ground in a ring and stand as a rampart, then drop.
-def slab(c, r=0.55, n=4, h=1.0):
-    m, av = c.solid('bright', 'mid', 0.15, 0.85, 0.0)
+def slab(c, r=0.55, n=4, h=1.0, dark=False):
+    # (`dark`: heavy stone, deep in colour and thick, for an ultimate's wall: it must stand out against pale ground)
+    m, av = c.solid('mid', 'deep', 0.04, 0.9, 0.0) if dark else c.solid('bright', 'mid', 0.15, 0.85, 0.0)
     blocks = []
     for i in range(n):
         ang = i * TAU / n + math.radians(45)
@@ -1306,7 +1307,7 @@ def slab(c, r=0.55, n=4, h=1.0):
         for o, ang, k, lag in blocks:
             g = (ease(win(t, lag, lag + 0.2)) + 0.12 * bell(win(t, lag, lag + 0.28))) * (1 - gone)
             hh = max(0.001, h * k * g)
-            put(o, (math.cos(ang) * r, math.sin(ang) * r, hh / 2), (0.42, 0.16, hh), (0, 0, ang + math.pi / 2))
+            put(o, (math.cos(ang) * r, math.sin(ang) * r, hh / 2), (0.56, 0.26, hh) if dark else (0.42, 0.16, hh), (0, 0, ang + math.pi / 2))
         av.outputs[0].default_value = 1 - 0.5 * gone
         put(ring, scale=(r * (0.6 + 1.6 * ease(t)),) * 2 + (1,))
         rv.outputs[0].default_value = 1 - win(t, 0.35, 0.8)
@@ -1614,7 +1615,7 @@ TOWARDS = (0.612, -0.612, 0.5)
 
 
 def spirits(c, r=1.2, n=4, tall=1.1, mode='circle', turns=0.5, hoop=True):
-    robe_m, robe_a = c.solid('bright', 'mid', 0.9, 0.5, 0.0)
+    robe_m, robe_a = c.solid('bright', 'mid', 1.2, 0.5, 0.0)
     hood_m, hood_a = c.solid('mid', 'deep', 0.5, 0.6, 0.0)
     face_m, face_a = c.flat('deep', 0.25)
     steel_m, steel_a = c.flat('hot', 1.6)
@@ -1646,13 +1647,13 @@ def spirits(c, r=1.2, n=4, tall=1.1, mode='circle', turns=0.5, hoop=True):
             base = 0.1 * tall + lift
             # (a guardian: a long robe drawn down to a wisp, a hood over a face in shadow on the side the camera sees, a pauldron on each
             # shoulder, a spear held upright at its side; behind it along the ring, a wake of fading wisps)
-            put(robe, (x, y, base + 0.4 * s), (0.2 * s, 0.2 * s, 0.4 * s), (math.pi, 0, 0))
-            put(hood, (x, y, base + 0.84 * s), (0.15 * s, 0.15 * s, 0.2 * s))
+            put(robe, (x, y, base + 0.4 * s), (0.25 * s, 0.25 * s, 0.4 * s), (math.pi, 0, 0))
+            put(hood, (x, y, base + 0.84 * s), (0.17 * s, 0.17 * s, 0.21 * s))
             put(face, (x + TOWARDS[0] * 0.075 * s, y + TOWARDS[1] * 0.075 * s, base + (0.8 + TOWARDS[2] * 0.075) * s), (0.085 * s, 0.085 * s, 0.1 * s))
             for side, o in zip((-1, 1), pads):
-                put(o, (x + RIGHT[0] * side * 0.19 * s, y + RIGHT[1] * side * 0.19 * s, base + 0.66 * s), (0.09 * s, 0.09 * s, 0.06 * s))
+                put(o, (x + RIGHT[0] * side * 0.22 * s, y + RIGHT[1] * side * 0.22 * s, base + 0.66 * s), (0.11 * s, 0.11 * s, 0.075 * s))
             sx, sy = x + RIGHT[0] * 0.31 * s, y + RIGHT[1] * 0.31 * s
-            put(spear, (sx, sy, base + 0.62 * s), (0.014 * s, 0.014 * s, 1.1 * s))
+            put(spear, (sx, sy, base + 0.62 * s), (0.02 * s, 0.02 * s, 1.1 * s))
             put(tip, (sx, sy, base + 1.24 * s), (0.04 * s, 0.04 * s, 0.16 * s))
             for i, o in enumerate(wake):
                 back = ang - 0.16 * (i + 1) * (1 if mode != 'rise' else 0.3)
@@ -1669,9 +1670,11 @@ def spirits(c, r=1.2, n=4, tall=1.1, mode='circle', turns=0.5, hoop=True):
 
 # 56. Beast: a wolf's shape (a long body, a head and snout, two ears, four legs, a tail) bursting out of a puff of smoke in a leap,
 # across the camera's view, and landing. What is summoned, arriving.
-def beast(c, size=1.0, puffs=5):
-    m, av = c.solid('bright', 'mid', 0.8, 0.6, 0.0)
-    eye_m, _ = c.flat('hot', 2.2)
+def beast(c, size=1.0, puffs=3):
+    # (a wolf's own colours, whatever the element: grey fur, an amber eye; the smoke it bursts from and the ring it lands in are the
+    # element's, the magic that called it)
+    m, av = c.solid((0.36, 0.37, 0.42), (0.1, 0.1, 0.12), 0.5, 0.75, 0.0)
+    eye_m, _ = c.flat((1.0, 0.72, 0.18), 2.6)
     body = c.sphere(1.0, m, 2)
     chest = c.sphere(1.0, m, 2)
     head = c.sphere(1.0, m, 2)
@@ -1715,10 +1718,11 @@ def beast(c, size=1.0, puffs=5):
         av.outputs[0].default_value = 1 - gone
         for o in (body, chest, head, snout, *ears, *legs, tail, eye):
             hide(o, t < 0.04 or gone >= 1)
-        cut.inputs[1].default_value = 0.15 + 0.7 * win(t, 0.1, 0.7)
+        # (a small puff, torn open at once: the beast is what is to be seen, not the smoke)
+        cut.inputs[1].default_value = 0.25 + 0.6 * win(t, 0.05, 0.45)
         for o, a, rad, sc in smoke_:
             q = win(t, 0, 0.7)
-            put(o, (-F[0] * 0.4 * s + math.cos(a) * rad * s * (0.4 + q), -F[1] * 0.4 * s + math.sin(a) * rad * s * (0.4 + q), 0.25 * s + 0.5 * s * q * sc), 0.42 * s * sc * (0.5 + 0.5 * ease(q)), (q, q * 0.5, a))
+            put(o, (-F[0] * 0.4 * s + math.cos(a) * rad * s * (0.4 + q), -F[1] * 0.4 * s + math.sin(a) * rad * s * (0.4 + q), 0.2 * s + 0.4 * s * q * sc), 0.24 * s * sc * (0.5 + 0.5 * ease(q)), (q, q * 0.5, a))
         put(ring, scale=(0.75 * s * (0.3 + 0.7 * ease(win(t, 0.5, 0.9))),) * 2 + (1,))
         rv.outputs[0].default_value = win(t, 0.5, 0.6) * (1 - win(t, 0.75, 1))
         hide(ring, t < 0.5)
@@ -1727,27 +1731,41 @@ def beast(c, size=1.0, puffs=5):
 
 # 57. Eyes: pairs of eyes opening one after another in dark brush round the middle, watching, blinking. What is about to be called.
 def eyes(c, r=1.3, n=5):
-    em, ev = c.flat('hot', 2.4)
-    bm, cut = c.flame(2.2, 0.6, 0.55)
-    pairs = []
+    # (wolves' heads lifting out of the dark one after another: a dark grey head with two pricked ears and a snout, and two amber eyes
+    # side by side that open, watch and blink. Animals, plainly, and plainly pairs of eyes)
+    em, ev = c.flat((1.0, 0.62, 0.12), 1.5)
+    fm, fa = c.solid((0.16, 0.17, 0.2), (0.05, 0.05, 0.06), 0.4, 0.85, 0.0)
+    shade, sa = c.disc('deep', 0.9, r * 1.2, noise=3)
+    heads = []
     for k in range(n):
         ang = k * TAU / n + c.rnd.uniform(-0.4, 0.4)
-        rad = c.rnd.uniform(0.6, 1.0) * r
-        z = c.rnd.uniform(0.3, 0.7)
-        bush = c.sphere(1.0, bm, 3)
-        pairs.append((ang, rad, z, bush, [c.sphere(1.0, em, 1), c.sphere(1.0, em, 1)], k / n * 0.6, c.rnd.uniform(0.5, 0.9)))
+        rad = c.rnd.uniform(0.55, 1.0) * r
+        head = c.sphere(1.0, fm, 2)
+        neck = c.teardrop(fm)
+        snout = c.cone(1.0, 1.0, fm, 6)
+        ears = [c.cone(1.0, 1.0, fm, 4), c.cone(1.0, 1.0, fm, 4)]
+        heads.append((ang, rad, head, neck, snout, ears, [c.sphere(1.0, em, 1), c.sphere(1.0, em, 1)], k / n * 0.6, c.rnd.uniform(0.5, 0.9)))
 
     def step(t):
         c.tick(t, 0.8)
-        cut.inputs[1].default_value = 0.12 + 0.5 * win(t, 0.8, 1)
-        for ang, rad, z, bush, pair, lag, blink in pairs:
+        gone = win(t, 0.88, 1)
+        fa.outputs[0].default_value = 1 - gone
+        sa.inputs[1].default_value = 1.6 * win(t, 0, 0.2) * (1 - gone)
+        for ang, rad, head, neck, snout, ears, pair, lag, blink in heads:
             x, y = math.cos(ang) * rad, math.sin(ang) * rad
-            g = ease(win(t, lag, lag + 0.25))
-            put(bush, (x, y, z * 0.8), (0.42 * g + 0.001, 0.42 * g + 0.001, 0.34 * g + 0.001), (t, 0, ang))
-            opened = win(t, lag + 0.12, lag + 0.2) * (0.15 if abs(t - blink) < 0.03 else 1.0) * (1 - win(t, 0.9, 1))
+            g = ease(win(t, lag, lag + 0.3))
+            z = 0.1 + 0.5 * g
+            put(neck, (x, y, z * 0.5), (0.2 * g + 0.001, 0.2 * g + 0.001, 0.34 * g + 0.001), (math.pi, 0, 0))
+            put(head, (x, y, z), 0.19 * g + 0.001)
+            put(snout, (x + TOWARDS[0] * 0.2 * g, y + TOWARDS[1] * 0.2 * g, z - 0.05 + TOWARDS[2] * 0.2 * g), (0.085 * g + 0.001, 0.085 * g + 0.001, 0.2 * g + 0.001), (math.radians(60), 0, math.radians(-45) + math.pi))
+            for side, e in zip((-1, 1), ears):
+                put(e, (x + RIGHT[0] * side * 0.11 * g, y + RIGHT[1] * side * 0.11 * g, z + 0.2 * g), (0.06 * g + 0.001, 0.06 * g + 0.001, 0.2 * g + 0.001), (0, side * 0.25, 0))
+            opened = win(t, lag + 0.2, lag + 0.28) * (0.12 if abs(t - blink) < 0.03 else 1.0)
             for side, e in zip((-1, 1), pair):
-                put(e, (x + TOWARDS[0] * 0.3 + RIGHT[0] * side * 0.09, y + TOWARDS[1] * 0.3 + RIGHT[1] * side * 0.09, z + TOWARDS[2] * 0.3), (0.05, 0.05, 0.05 * opened + 0.001))
-                hide(e, opened <= 0.01)
+                put(e, (x + TOWARDS[0] * 0.17 + RIGHT[0] * side * 0.085, y + TOWARDS[1] * 0.17 + RIGHT[1] * side * 0.085, z + 0.04 + TOWARDS[2] * 0.17), (0.045, 0.045, 0.04 * opened + 0.001))
+                hide(e, opened <= 0.01 or gone >= 1)
+            for o in (head, neck, snout, *ears):
+                hide(o, g <= 0.01 or gone >= 1)
     return step
 
 

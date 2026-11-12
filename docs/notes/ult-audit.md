@@ -135,6 +135,34 @@ Found on the way, and not yet dealt with: under every "burst" and "bless" showca
 before the blow, a ring going out along the ground and a ring of small tongues (`call` and `nova`). They are a second sameness, in the
 showcase rather than in the stages, and belong with the next batch.
 
+## Batch 5: guardians a hero tall, a grey wolf, the line seen
+
+`docs/samples/blender-fx/audit-batch5-393.jpg` (the Beastmaster and the Cleric at the usual moments; under them the Gorgon and the
+Wanderer 60 to 700 ms after the blow with the moment's flash turned off, `EARLY=1 NOFLASH=1`) and `audit-batch5-beasts-393.jpg`.
+
+- **The guardians** are a full hero tall and thicker (a wider robe and hood, larger pauldrons, a stouter spear, a stronger glow). In
+  the fight frames they stand over the fighters round the Cleric and read at a phone's size.
+- **The beast** is a wolf in a wolf's colours whatever the element: grey fur, an amber eye. Only the puff it bursts from and the ring
+  it lands in are the element's green. The puff is smaller and torn open at once, and the claw marks that lay over it are gone (the
+  second scene is a spray of sparks where it lands). In the sheet several grey wolves can be seen leaping, a ring under each as it
+  lands. Still not as clear as it should be: the aftermath's green fume lies over them a moment later and tints them.
+- **The line from the caster is confirmed** for the Wanderer: with the flash off, a row of small gold flares runs out from her to a
+  friend, and the hearts and the halo rise there as it arrives. For the Gorgon I cannot pick her line out against the foes' own
+  effects in these frames; hers is the same code in her own colour.
+
+## Batch 6: wolves' heads in the dark, a heavy wall
+
+`docs/samples/blender-fx/audit-batch6-393-1.jpg`. From the director's look at batch 4: the Beastmaster's wind-up and strike were round
+green blobs, the Geomancer's slabs small and pale.
+
+- **Conjure Animals, the wind-up**: the dark round brush read as green blobs with dots. It is now wolves' heads lifting out of a patch
+  of shadow one after another: a dark grey head, two pricked ears, a snout, and two amber eyes side by side that open and blink
+  (`eyes` in `scenes.py`), with leaves kicked up round them. On the frame sheet they are plainly animals. In the fight at a phone's
+  size they are small (a head is about a third of a fighter) and sit in a clump; they read as creatures with eyes, not yet at a glance
+  as wolves. They want to be larger and further apart.
+- **Mountain's Embrace**: an ultimate's slabs are heavy stone now (`dark` in `slab`: deep in colour, thicker, with the sheet's dark
+  edge) and a fifth larger. In the fight: dark standing stones in rings on five spots, strong against the pale ground.
+
 ## The audit of all 70
 
 To come, in batches: for each ultimate, what it does in the sim, what 0.499 showed, what main shows now, and the verdict; then the ten

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.528.0',
+    date: '2026-11-12',
+    title: 'Taller guardians, grey wolves',
+    notes: ['Spirit Guardians\' spirits now stand a full hero tall. The Beastmaster\'s wolves are grey with amber eyes, their heads lifting out of shadow before they leap.', 'The Geomancer\'s slabs are heavy dark stone, and a healer\'s light now runs out from her to each friend.'],
+  },
+  {
     version: '0.527.0',
     date: '2026-11-12',
     title: 'A beast for every wolf',

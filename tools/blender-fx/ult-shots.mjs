@@ -59,6 +59,8 @@ async function open(eidolons) {
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
   await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
+  // (NOFLASH=1: without the moment's flash of colour over the field as the blow lands, to see what plays under it)
+  if (process.env.NOFLASH) await page.addStyleTag({ content: '.umFlash { display: none !important; }' });
   await page.evaluate(() => {
     const g = window.__game;
     const seen = new Map();
