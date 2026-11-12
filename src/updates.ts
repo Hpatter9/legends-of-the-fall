@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.524.0',
+    date: '2026-11-12',
+    title: 'Seventy wind-ups, each its own',
+    notes: ['Every hero\'s ultimate now winds up in its own way: vines climbing, a shield wall closing, a whirlpool turning. No shared circle and pillar is left.', 'No two heroes\' wind-ups or strikes use the same shapes in the same order, whatever their colours.'],
+  },
+  {
     version: '0.523.0',
     date: '2026-11-12',
     title: 'Ultimates that show what they do',

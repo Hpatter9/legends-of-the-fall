@@ -54,3 +54,23 @@ test('a strike plays where the ability lands: on each fighter it touches, round 
   // (Spirit Guardians' strike is the spirits arriving, with the ring they circle in: no core, no rubble)
   assert.deepEqual(BFX_CLIPS['ult-cleric-strike'].sc, ['souls', 'motes', 'ring']);
 });
+
+test('with the colour taken out no two heroes strike alike or wind up alike: each has its own scenes, in its own order', () => {
+  for (const stage of ['strike', 'windup'] as const) {
+    const seen = new Map<string, string>();
+    for (const kind of Object.keys(SHOWCASES)) {
+      const c = BFX_CLIPS[`ult-${kind}-${stage}`];
+      // (the great blow under a strike is the same for all nine that have it: what is the hero's own is what lies over it)
+      const look = c.sc!.filter((sc) => sc !== 'impact').join('+');
+      assert.ok(look.includes('+'), `${kind}'s ${stage} is one scene alone`);
+      assert.ok(!seen.has(look), `${kind} and ${seen.get(look)} ${stage} alike: ${look}`);
+      seen.set(look, kind);
+    }
+  }
+  // (a wind-up is the ability beginning, not the circle and pillar every "wave" once shared)
+  const pillars = Object.keys(SHOWCASES).filter((kind) => BFX_CLIPS[`ult-${kind}-windup`].sc!.join('+').startsWith('sigil+motes+pillar'));
+  assert.deepEqual(pillars, []);
+  assert.deepEqual(BFX_CLIPS['ult-cleric-windup'].sc, ['ring', 'souls']);
+  assert.deepEqual(BFX_CLIPS['ult-lightningMage-windup'].sc, ['cloud', 'sparks']);
+  assert.deepEqual(BFX_CLIPS['ult-knight-windup'].sc, ['slab', 'dome']);
+});

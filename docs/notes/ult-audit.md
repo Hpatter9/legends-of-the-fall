@@ -65,9 +65,31 @@ now (below), eight moments each: two of the wind-up, two of the strike, two of t
 What the sheets make plain: at 0.499 the Cleric, the Wanderer and the Sage all had the same gold ball and ring. The sameness the owner
 saw is older than the rendered ultimates; the rendered great blow under every strike then kept it. Both are now gone for these.
 
-Not yet done, said plainly: the wind-ups. Every "wave" ultimate still winds up with a circle and a pillar in its colour (the Wanderer's,
-the Sage's, the Beastmaster's, the Gorgon's and the Werewolf's are the same shape in five colours). They are the next batch: a wind-up
-that is the ability beginning, as the Cleric's now is.
+## The wind-ups: the ability beginning
+
+Every "wave" ultimate wound up with the same circle and pillar in its colour (the Wanderer's, the Sage's, the Beastmaster's, the
+Gorgon's and the Werewolf's were one shape in five colours), every storm with the same funnel. Each of the 70 now has a wind-up of its
+own (`WIND_OWN` in `tools/blender-fx/effects.py`): the ability itself beginning. The Lightning Mage's cloud gathers and sparks, the
+Knight plants a slab and a dome closes over it, the Kraken's whirlpool turns and a spout rises, the Druid's vines climb, the Wanderer's
+elixir fountains up into hearts, the Gorgon's eye opens over a fume, the Buccaneer's hooks whirl, the Siege Bot's targeting ring locks
+and the shell's line comes down. `docs/samples/blender-fx/audit-windups-393.jpg` has five of them in a fight.
+
+## In grey
+
+`docs/samples/blender-fx/audit-grey.jpg` (`tools/blender-fx/grey_sheet.py`): all 70 wind-ups and strikes with the colour taken out, the
+frame reduced motion holds. The recipe now refuses two heroes with the same scenes in the same order in a strike or a wind-up, whatever
+their colours, and `test/ult-audit.test.ts` holds it. What the sheet still shows alike, said plainly:
+
+- the nine great blows share their core and ring by design (a cloudy ball in a ring); what differs is what lies over it, and in the held
+  frame that is little. They differ more in motion than in this one frame;
+- several strikes and wind-ups are "rings with upright bars" (Ilyra, the Priestess, the Paladin, the Peasant, the Gunslinger's wind-up,
+  Vael's wind-up): different scenes, similar silhouettes;
+- the coiled cones (the Kraken, the Mummy, Yamabushi, Karasu, the Wizard's wind-up) are one `vortex` scene at different sizes with a
+  different second scene.
+- the aftermaths have not been done: about forty of them share their two scenes with another hero's in another colour.
+
+These are the next batch: new scenes where one scene is carrying too many heroes (a second kind of funnel, a second kind of barred
+ring), and the aftermaths.
 
 ## The audit of all 70
 
