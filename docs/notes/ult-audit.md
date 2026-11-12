@@ -296,6 +296,37 @@ comes at 2 s. (The Samurai's line did not reach every foe in the staged fight, s
 Not done: an Eidolon's call. Its strike is the other builder's staged show (`eidolonCall.ts`, its own clock and its own cut,
 `CALL_OVER_MS`), not a small change of this kind; it is left as it is.
 
+## The full-size pass (begun): fifteen judged by the owner's two tests
+
+The director's order: go through the 48 not yet looked at closely, at full size, and judge each by the owner's two tests: does it
+show what the ability does, and could it be mistaken for another hero's. `tools/blender-fx/full_pass.py` cuts four moments of each
+(the wind-up at its height, the strike late, the aftermath early and in its middle) to the board, unscaled.
+`docs/samples/blender-fx/audit-fullsize-1-393.jpg`, `-2`, `-3` (as they were on 0.534.0) and `audit-fullsize-fixes-393.jpg` (the
+three changed here, after).
+
+| Hero | Shows the ability? | Mistaken for another? | Verdict |
+| --- | --- | --- | --- |
+| Vael, Kneel Before Night | a great sweeping cut across the field, then sigils on the ground; the shield on allies is not shown | no | reads as his sweep; it is purple where his words say a golden sweep, and his totality (eight seconds of it) has nothing lasting |
+| Ilyra, Death Denied | a line of light to each friend, then a golden dome with rays over each | close to Orrun's domes in shape, gold against green | reads as protection laid on each ally |
+| Orrun, The World Stands | vines rise round him; a dome wound with vines over each ally | see Ilyra | reads as a sanctuary on each ally |
+| Nyxara, Rewrite Fate | a sigil; a line to each ally; a spiral and a sigil on each | no | the spirals read as something wound back; acceptable |
+| Kunoichi, Assassinate | crossed blades on each foe cut | the Mercenary's is also crossed blades (red), with sparks | the strike reads. Her aftermath was a mass of purple smoke over the fallen: CHANGED to gusts and petals; in the new photograph it is a row of purple arcs, no longer a mass, still busy. Her wind-up is a few pale flecks: weak |
+| Mercenary, Killing Spree | red blades on each of the three | see Kunoichi | reads; the wind-up is a plain red ball, weak |
+| Minotaur, Stampede | cracks where he paws, then cracks and dust where he charges | no | reads as a charge's wake; the charge itself is the showcase's |
+| Ninja Monk, Hundred-Hand Strike | was a single small ball of sparks: NOT a flurry of blows. CHANGED to claw-like slash marks and gusts | no | NOT CONFIRMED: in the new photograph the strike's frame is covered by another fighter's fire and I cannot see the slash marks |
+| Buccaneer, Keelhaul | a cage of purple chain round him and on those hooked | no | reads as hooks and chain |
+| Archer, Hail of Arrows | a shaft loosed upward; rings on the ground with thin arrows falling; shafts standing in the rings | no | reads; the falling arrows are thin |
+| Dread Pirate, Ghost Fleet | one huge purple ball that tears open | the other great blows | DOES NOT READ as broadsides from a fleet, and hides the field for most of the strike. Not fixed yet: it wants shot falling across several spots, not one ball |
+| Siege Bot, Orbital Strike | a targeting ring and the shell's line coming down, then a fireball and its ring | the Wizard's fireball | reads well |
+| Gunslinger, High Noon | was a burst on each target with crossed sword cuts over it: bullets are not cuts. CHANGED to a burst and flaring tongues | no | the new photograph shows a burst on each target, then flames in a ring: better; the wind-up (a halo of bars) says nothing of high noon |
+| Rifle Bot, Overclock | a bolt down onto it, then sparks and rings round it | no | reads as charging itself |
+| Dragoon, Inferno Breath | flames rise round her; a cluster of flame with a wall in it at one spot; tall tongues after | the other fire strikes | DOES NOT READ as breath down a line: it stands in one place. Not fixed yet: it wants laying along the line the breath takes |
+
+So of these fifteen: nine read (Ilyra, Orrun, Nyxara, the Minotaur, the Buccaneer, the Archer, the Siege Bot, the Rifle Bot, Vael
+with reservations), two were changed and now read better (the Kunoichi's aftermath, the Gunslinger), one was changed and is not
+confirmed (the Ninja Monk), two do not read and are not fixed (the Dread Pirate, the Dragoon), and several wind-ups are weak (the
+Kunoichi, the Mercenary, the Gunslinger). Thirty-three heroes remain to be looked at this way.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
