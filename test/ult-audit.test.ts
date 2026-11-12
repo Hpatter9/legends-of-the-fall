@@ -85,8 +85,9 @@ test('a strike on each one the ability touched finds them: the friends helped (a
   assert.deepEqual(ultSpots('friends', t, 1, 5), [{ unit: 1 }, { unit: 2 }, { unit: 3 }]);
   assert.deepEqual(ultSpots('friends', { struck: [], helped: [], tiles: [] }, 1, 5), [{ unit: 1 }]);
   // (a wall's slabs stand on its tiles)
-  assert.deepEqual(ultSpots('tiles', t, 1, 5), [{ u: 4, v: 5 }, { u: 5, v: 5 }]);
-  assert.deepEqual(ultSpots('tiles', { struck: [7], helped: [], tiles: [] }, 1, 5), [{ unit: 7 }]);
+  assert.deepEqual(ultSpots('tiles', t, 1, 5), [{ u: 4, v: 5 }, { u: 5, v: 5 }, { unit: 1 }, { unit: 2 }, { unit: 3 }]);
+  // (a wall that found no line to stand on: what is left of the ability, its shields, is on the caster and each friend)
+  assert.deepEqual(ultSpots('tiles', { struck: [7], helped: [2], tiles: [] }, 1, 5), [{ unit: 1 }, { unit: 2 }]);
   // (a mark, a cut: the foes struck; with none, the tiles (the called arrive on them); with none, the friends; with none, the caster)
   assert.deepEqual(ultSpots('each', t, 1, 5), [{ unit: 7 }, { unit: 8 }]);
   assert.deepEqual(ultSpots('each', { struck: [], helped: [2], tiles: [{ u: 1, v: 1 }] }, 1, 5), [{ u: 1, v: 1 }]);

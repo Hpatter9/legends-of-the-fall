@@ -202,12 +202,14 @@ export const ultPlace = (kind: string): 'one' | 'each' | 'friends' | 'tiles' | '
 
 /** ULT-AUDIT: the spots a strike plays on, by where it plays, from what the cast touched: the foes it `struck`, the friends it
  *  `helped`, the `tiles` it took. `each`: the foes struck, else the tiles (what is summoned arrives on them), else the friends, else the
- *  caster. `friends`: the caster and each friend helped. `tiles`: its tiles, else as `each`. At most `cap`. */
+ *  caster. `friends`: the caster and each friend helped. `tiles`: its tiles first, then the caster and each friend (a wall's slabs along
+ *  the tiles it blocks, and its shield on each friend; a wall that found no line to stand on is its shields alone). At most `cap`. */
 export function ultSpots(place: 'each' | 'friends' | 'tiles', t: { struck: readonly number[]; helped: readonly number[]; tiles: readonly { u: number; v: number }[] }, caster: number, cap: number): ({ unit: number } | { u: number; v: number })[] {
   const units = (ids: readonly number[]) => ids.map((unit) => ({ unit }));
   const tiles = t.tiles.map(({ u, v }) => ({ u, v }));
   const each = t.struck.length ? units(t.struck) : tiles.length ? tiles : t.helped.length ? units(t.helped) : [{ unit: caster }];
-  const got = place === 'friends' ? units([caster, ...t.helped.filter((id) => id !== caster)]) : place === 'tiles' && tiles.length ? tiles : each;
+  const friends = units([caster, ...t.helped.filter((id) => id !== caster)]);
+  const got = place === 'friends' ? friends : place === 'tiles' ? [...tiles, ...friends] : each;
   return got.slice(0, cap);
 }
 

@@ -451,7 +451,7 @@ BEATS = dict(
     # (the dust a run kicks up, laid along it)
     dust=('gust', dict(r=0.6, n=3, h=0.6), box(1.0, 1.0), 8, 400, {}),
     # (one link of a line thrown out: a hook's reach, a blessing's ribbon)
-    link=('motes', dict(r=0.28, h=0.55, n=8, crosses=0), box(0.6, 0.9), 7, 400, {}),
+    link=('flare', dict(r=0.3, h=0.8, tongues=5), box(0.8, 1.2), 7, 400, {}),
     # (a landing that cracks the ground)
     crash=(None, [stage('impact', 0, 1, r=1.5, rubble=14, sparks=16), stage('crack', 0.1, 1, r=1.5, arms=6, rubble=8)], box(2.6, 2.4, 0.5), 12, 900, dict(colours=20)),
     # (a storm cloud gathering over the caster)

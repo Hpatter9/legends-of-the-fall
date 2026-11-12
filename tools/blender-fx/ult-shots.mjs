@@ -99,7 +99,8 @@ async function army(page, party, army = 'beasts', stage = 3) {
 
 const speedNow = (page) => page.evaluate(() => `${document.getElementById('speed').textContent}${document.getElementById('speed').dataset.show ? ' (held)' : ''} set x${window.__game.speed}`);
 /** Two frames in each stage: [stage, share of it]. */
-const FRAMES = [['windup', 0.55], ['windup', 0.95], ['strike', 0.5], ['strike', 0.9], ['aftermath', 0.12], ['aftermath', 0.5]];
+// (EARLY=1: the first moments after the blow lands instead of the strike's middle, for what is over quickly: a line run out from the caster)
+const FRAMES = process.env.EARLY ? [['windup', 0.55], ['windup', 0.95], ['blow', 60], ['blow', 200], ['blow', 400], ['blow', 700]] : [['windup', 0.55], ['windup', 0.95], ['strike', 0.5], ['strike', 0.9], ['aftermath', 0.12], ['aftermath', 0.5]];
 
 for (const pick of PICKS) {
   const { ctx, page } = await open();
@@ -122,7 +123,8 @@ for (const pick of PICKS) {
     let t = 0;
     const speeds = [];
     for (const [i, [name, k]] of FRAMES.entries()) {
-      const at = Math.round(st[name].at + st[name].ms * k);
+      // (`blow`: so many ms after the blow itself lands, which is the strike's start and the showcase's length on)
+      const at = name === 'blow' ? Math.round(st.strike.at + st.show + k) : Math.round(st[name].at + st[name].ms * k);
       await page.evaluate((d) => window.__step(d), at - t);
       t = at;
       speeds.push(await speedNow(page));
