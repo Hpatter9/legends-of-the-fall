@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.539.0',
+    date: '2026-11-12',
+    title: 'Auto fights run without pauses',
+    notes: ['Slow motion on a foe\'s fall is now for real bosses only; it was firing for most ordinary foes and dragging every wave.', 'An ultimate\'s short version on Auto no longer slows or stops the fight.', 'The big effect sheets are made ready before the fight starts, not in the middle of it.'],
+  },
+  {
     version: '0.538.0',
     date: '2026-11-12',
     title: 'Karasu\'s falling blades',

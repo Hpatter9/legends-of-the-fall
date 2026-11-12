@@ -10,6 +10,7 @@
 
 import { Rectangle, Texture } from 'pixi.js';
 import { loadImage } from './loadImage';
+import { keepReady } from './texReady';
 import { BFX_CLIPS, BFX_CORE, BFX_PX, BFX_SOFT } from './blenderFxData';
 import { bfxRect } from './blenderFxRules';
 import { BFX_MEM, BfxPages } from './blenderFxBudget';
@@ -36,6 +37,8 @@ async function glowPage(i: number): Promise<Texture | null> {
   try {
     const base = Texture.from(await loadImage(`fx/blender/soft-${i}.webp`));
     base.source.style.scaleMode = 'linear';
+    // (WAVE-DELAY: the glows are drawn in every fight: handed to the graphics card ahead of it, and held there through it)
+    keepReady(`bfx-soft-${i}`, base.source);
     return base;
   } catch (err) {
     console.warn(`blender effects soft-${i} did not load`, err);
@@ -71,6 +74,8 @@ function start(a: number): void {
       const base = Texture.from(pic);
       base.source.style.scaleMode = 'nearest';
       HELD.set(a, { base, bitmap: 'close' in pic ? pic : null });
+      // (WAVE-DELAY: the atlases every fight may need go to the graphics card ahead of the fight, not on a spell's first cast in it)
+      if (CORE.has(a)) keepReady(`bfx-px-${a}`, base.source);
       for (const key of IN.get(a) ?? []) {
         const c = BFX_CLIPS[key];
         FRAMES.set(key, Array.from({ length: c.n }, (_, i) => new Texture({ source: base.source, frame: new Rectangle(...bfxRect(c, i)) })));
