@@ -77,6 +77,24 @@ function skillIcon(s: Skill, px: number, heals = false): string {
   return paintedSkillIcon(s, px, heals);
 }
 
+/** WAVE-DELAY: play a class's animation from its start: the class comes off now and goes back on with the next frame. */
+function again(el: HTMLElement, cls: string): void {
+  el.classList.remove(cls);
+  requestAnimationFrame(() => el.classList.add(cls));
+}
+
+/** WAVE-DELAY: write a part of the page only when it would change (reading these back costs nothing; writing them, changed or
+ *  not, makes the browser lay the page out again). */
+function setText(el: globalThis.Element, v: string): void {
+  if (el.textContent !== v) el.textContent = v;
+}
+function setWidth(el: HTMLElement, v: string): void {
+  if (el.style.width !== v) el.style.width = v;
+}
+function setAttr(el: globalThis.Element, name: string, v: string): void {
+  if (el.getAttribute(name) !== v) el.setAttribute(name, v);
+}
+
 export class FightHud {
   private rows: Row[] = [];
   private key = '';
@@ -242,9 +260,7 @@ export class FightHud {
   lapse(id: number): void {
     const r = this.rows.find((x) => x.id === id);
     if (!r) return;
-    r.el.classList.remove('nudge');
-    void r.el.offsetWidth;
-    r.el.classList.add('nudge');
+    again(r.el, 'nudge');
   }
 
   /** Bring every row up to date (each frame: a row is only written when what it shows has changed). */
@@ -270,16 +286,18 @@ export class FightHud {
       el.classList.toggle('locked', ult.locked);
       el.classList.toggle('fallen', !u.alive);
       el.classList.toggle('rising', !!secs);
-      if (secs) el.dataset.revive = secs;
-      else delete el.dataset.revive;
+      if (secs) setAttr(el, 'data-revive', secs);
+      else if (el.dataset.revive !== undefined) delete el.dataset.revive;
+      // (WAVE-DELAY: each part is written only when its own words or width have changed. Writing the same words again still makes the
+      // browser lay the page out afresh, and a row changes most frames (its meters move): that was the fight's largest single cost)
       const plate = el.querySelector('.fhPlate') as HTMLElement;
-      plate.textContent = ult.queued ? '…' : 'TAP';
+      setText(plate, ult.queued ? '…' : 'TAP');
       plate.hidden = !(ult.ready || ult.queued);
       const [hp, pool] = el.querySelectorAll<HTMLElement>('.fhBar');
-      (hp.firstElementChild as HTMLElement).style.width = `${bars.hpShare * 100}%`;
-      hp.querySelector('b')!.textContent = bars.hp;
-      (pool.firstElementChild as HTMLElement).style.width = `${bars.poolShare * 100}%`;
-      pool.querySelector('b')!.textContent = bars.pool;
+      setWidth(hp.firstElementChild as HTMLElement, `${(bars.hpShare * 100).toFixed(1)}%`);
+      setText(hp.querySelector('b')!, bars.hp);
+      setWidth(pool.firstElementChild as HTMLElement, `${(bars.poolShare * 100).toFixed(1)}%`);
+      setText(pool.querySelector('b')!, bars.pool);
       el.querySelectorAll<HTMLElement>('.fhChip').forEach((ce, i) => {
         const c = chips[i];
         ce.style.setProperty('--cd', c.cd.toFixed(3));
@@ -288,12 +306,12 @@ export class FightHud {
         ce.classList.toggle('short', c.short);
         ce.classList.toggle('cool', c.open && c.cd > 0);
         ce.classList.toggle('revive', c.revive);
-        ce.querySelector('b')!.textContent = c.chip;
-        ce.querySelector('em')!.textContent = lines[i];
-        ce.title = `${c.name}: ${c.open ? `${c.cost} ${c.tag}` : lines[i]} (tap for more)`;
+        setText(ce.querySelector('b')!, c.chip);
+        setText(ce.querySelector('em')!, lines[i]);
+        setAttr(ce, 'title', `${c.name}: ${c.open ? `${c.cost} ${c.tag}` : lines[i]} (tap for more)`);
       });
-      el.title = ult.locked ? heroClassLabel(u.def) : `${heroClassLabel(u.def)}: tap the row when it says TAP to fire its ultimate (hold for its sheet)`;
-      el.setAttribute('aria-label', `${heroClassLabel(u.def)}${ult.locked ? '' : ult.ready ? ', ultimate ready: tap to fire' : `, ultimate ${Math.round(ult.meter * 100)}%`}`);
+      setAttr(el, 'title', ult.locked ? heroClassLabel(u.def) : `${heroClassLabel(u.def)}: tap the row when it says TAP to fire its ultimate (hold for its sheet)`);
+      setAttr(el, 'aria-label', `${heroClassLabel(u.def)}${ult.locked ? '' : ult.ready ? ', ultimate ready: tap to fire' : `, ultimate ${Math.round(ult.meter * 10) * 10}%`}`);
     }
     // (an open sheet follows the hero's numbers while the fight is held: a tab's change shows at once)
   }
@@ -410,16 +428,14 @@ export class FightHud {
     // (the row: lit in the element's colour with the skill's name over it, the chip that went off bright; all of it eases out, nothing blinks)
     const el = r.el;
     el.style.setProperty('--cast', colour);
-    el.classList.remove('casting');
-    void el.offsetWidth;
-    el.classList.add('casting');
+    // (WAVE-DELAY: the flash is begun again on the next frame, not by asking the row its width, which makes the browser lay the whole
+    // page out on the spot: a stop at every skill's cast on a phone)
+    again(el, 'casting');
     this.later(1100, () => el.classList.remove('casting'));
     (el.querySelector('.fhCast') as HTMLElement).textContent = s.name;
     const chip = which === 'ult' ? null : el.querySelector<HTMLElement>(`.fhChip[data-skill="${which}"]`);
     if (chip) {
-      chip.classList.remove('fired');
-      void chip.offsetWidth;
-      chip.classList.add('fired');
+      again(chip, 'fired');
       this.later(1100, () => chip.classList.remove('fired'));
     }
     if (which === 'ult' && this.opts.ultFull?.(u.id)) return;

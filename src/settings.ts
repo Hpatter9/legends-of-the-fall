@@ -3,6 +3,7 @@
 // and the gear in the top bar. The choices are kept in localStorage (legends.settings, the same keys as before the
 // submenus); `settings()` is what the rest of the page reads, and `onSettings` tells a module when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
+import { diagClear, diagShown } from './diag';
 import { glyphWord } from './paintedButton';
 import { tips } from './tips';
 import { DEFAULT_RULER, RULERS, rulerOf, type RulerId } from './rulerRules';
@@ -153,7 +154,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 let wired = false;
 
 /** The submenus of the page (the owner's ask: the options condensed into a short list of menus that open on a tap). */
-type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'updates' | 'about';
+type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'diag' | 'updates' | 'about';
 
 /** Each submenu's name and its one-line hint on the top list, in the order shown. */
 const PAGES: readonly { id: Page; title: string; hint: string }[] = [
@@ -163,6 +164,7 @@ const PAGES: readonly { id: Page; title: string; hint: string }[] = [
   { id: 'ruler', title: 'Ruler and Duchess', hint: 'Who rules your keep, and Duchess’s costume' },
   { id: 'data', title: 'Save and data', hint: 'Start over' },
   { id: 'dev', title: 'Developer', hint: 'Crowns, shards, stones and Build Town for testing' },
+  { id: 'diag', title: 'Diagnostics', hint: 'The stops of half a second or more the game has seen on this device' },
   { id: 'updates', title: 'Updates and notes', hint: 'What changed in each version' },
   { id: 'about', title: 'About', hint: 'Version and credits' },
 ];
@@ -245,6 +247,8 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
       return [startOverRow()];
     case 'dev':
       return [devRow()];
+    case 'diag':
+      return diagRows();
     case 'updates':
       return updatesRows();
     case 'about':
@@ -389,6 +393,33 @@ function aboutRows(): HTMLElement[] {
     rows.unshift(r);
   }
   return rows;
+}
+
+/** WAVE-DELAY (`diagRules.ts`): the stops the game has seen on this device, newest first, with a button to copy them (to send to
+ *  whoever is looking into a slow fight) and one to empty the list. */
+function diagRows(): HTMLElement[] {
+  const [head] = row('Stops seen', 'Each time the game stood still for half a second or more: when, for how long, where in a fight, and what it had just begun. The last thirty are kept on this device only.');
+  const copy = document.createElement('button');
+  copy.textContent = 'Copy';
+  copy.addEventListener('click', () => {
+    const done = (ok: boolean): void => void (copy.textContent = ok ? 'Copied' : 'Could not copy');
+    try {
+      void navigator.clipboard.writeText(diagShown()).then(() => done(true), () => done(false));
+    } catch {
+      done(false);
+    }
+  });
+  const clear = document.createElement('button');
+  clear.textContent = 'Clear';
+  clear.addEventListener('click', () => {
+    diagClear();
+    draw();
+  });
+  head.append(copy, clear);
+  const list = document.createElement('pre');
+  list.className = 'diagList';
+  list.textContent = diagShown();
+  return [head, list];
 }
 
 function row(title: string, hint: string): [HTMLElement, HTMLElement] {

@@ -39,6 +39,10 @@ export function loadSpellArt(): Promise<void> {
         IMAGES.set(session, img);
         const base = Texture.from(img);
         base.source.style.scaleMode = 'linear';
+        // (WAVE-DELAY: a painted sheet is up to 1536 x 3744 px, and the browser decodes all of it on the frame it is first drawn: a
+        // second's stop on a phone at a skill's first use. Each is handed to the graphics card ahead, in a deploy, one a frame, and
+        // held there while a fight is on: `texReady.ts`)
+        keepReady(`spell-sheet-${session}`, base.source);
         for (const [key, [col, row, n]] of Object.entries(m.parts)) {
           const frames: Texture[] = [];
           for (let i = 0; i < n; i++) frames.push(new Texture({ source: base.source, frame: new Rectangle((col + i) * m.cell, row * m.cell, m.cell, m.cell) }));

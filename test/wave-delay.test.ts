@@ -4,7 +4,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FALL_SLOW_MS, fallSlowMs, ultCastBeat } from '../src/render/fxRules';
-import { mayRelease, nextToWarm } from '../src/render/texReadyRules';
+import { mayRelease, mayWarm, nextToWarm } from '../src/render/texReadyRules';
+import { COLUMN_ROOM, WARM, warmMore } from '../src/render/boardWarmRules';
+import { ColumnTextures } from '../src/render/columnTextures';
+import { DIAG, diagText, doingIn, isStop, parseDiag, stopLine, withStop, type DiagStop } from '../src/diagRules';
 
 test('the slow moment for a fall is a boss\'s alone, and none with the screen kept still', () => {
   assert.equal(fallSlowMs(true, false), FALL_SLOW_MS);
@@ -29,10 +32,73 @@ test('the kept sheets go to the graphics card one a frame, in order, and are hel
   assert.equal(nextToWarm([], () => false), null);
   assert.equal(mayRelease(true), false);
   assert.equal(mayRelease(false), true);
+  // (handed over in a deploy, never in the middle of a fight)
+  assert.equal(mayWarm(true), false);
+  assert.equal(mayWarm(false), true);
 });
 
 test('an ultimate\'s short version (Auto\'s, or a second one\'s) never slows or stops the fight; the full moment keeps its beat', () => {
   assert.deepEqual(ultCastBeat(false), { slow: 0, stop: 0 });
   const full = ultCastBeat(true);
   assert.ok(full.slow > 0 && full.stop > 0);
+});
+
+test('the stops\' log: a gap of half a second is kept, the page left alone is not; the newest thirty; what the page was doing', () => {
+  assert.equal(isStop(DIAG.GAP_MS - 1), false);
+  assert.equal(isStop(DIAG.GAP_MS), true);
+  assert.equal(isStop(DIAG.AWAY_MS), false);
+  assert.equal(isStop(NaN), false);
+  const stop = (i: number): DiagStop => ({ at: 1_700_000_000_000 + i * 1000, ms: 600 + i, phase: 'fight', v: '0.1.0', doing: 'not known' });
+  let log: DiagStop[] = [];
+  for (let i = 0; i < 45; i++) log = withStop(log, stop(i));
+  assert.equal(log.length, DIAG.KEEP);
+  assert.equal(log[log.length - 1].ms, 644);
+  assert.equal(log[0].ms, 615);
+  // (what was said in the gap or just before it, in order, each once)
+  const marks = [{ t: 100, what: 'old' }, { t: 5000 - DIAG.NEAR_MS, what: 'the next board built' }, { t: 5400, what: 'a fight begun' }, { t: 5500, what: 'a fight begun' }, { t: 9000, what: 'later' }];
+  assert.equal(doingIn(marks, 5000, 6000), 'the next board built; a fight begun');
+  assert.equal(doingIn(marks, 20000, 21000), 'not known');
+  // (stored and read back; anything else stored reads as an empty log)
+  assert.deepEqual(parseDiag(JSON.stringify(log)), log);
+  for (const bad of [null, '', 'x', '{}', '[1, "a", null, {"at":"x"}]']) assert.deepEqual(parseDiag(bad), []);
+  assert.match(stopLine({ ...stop(0), ms: 2400, doing: 'the next board built' }), /^\d\d:\d\d:\d\d {2}2\.4 s {2}fight {2}the next board built \(0\.1\.0\)$/);
+  assert.match(diagText([]), /No stop/);
+  assert.equal(diagText(log).split('\n').length, DIAG.KEEP);
+  assert.ok(diagText(log).startsWith(stopLine(log[log.length - 1])));
+});
+
+test('painting ahead: a few tiles a frame at least, more only while the frame has time', () => {
+  assert.equal(warmMore(0, 0), true);
+  assert.equal(warmMore(WARM.LEAST - 1, 999), true);
+  assert.equal(warmMore(WARM.LEAST, WARM.FRAME_MS), false);
+  assert.equal(warmMore(WARM.LEAST, WARM.FRAME_MS - 1), true);
+  assert.ok(WARM.FRAME_MS <= 16);
+});
+
+test('the painted columns of three boards are kept: a board built again is not painted again', () => {
+  let painted = 0;
+  const cache = new ColumnTextures<number>(() => undefined, COLUMN_ROOM.entries, COLUMN_ROOM.bytes);
+  const board = (id: number) => Array.from({ length: 130 }, (_, i) => cache.acquire(`board${id}:${i}`, 64 * 110 * 4, () => ++painted));
+  // (the board fought on, the next painted for the march, then both let go and built again for the fight and the scenery's bake)
+  const a = board(1);
+  const b = board(2);
+  assert.equal(painted, 260);
+  for (const l of [...a, ...b]) l.release();
+  const again = [...board(2), ...board(1)];
+  assert.equal(painted, 260, 'nothing is painted a second time');
+  const c = board(3);
+  assert.equal(painted, 390);
+  for (const l of [...again, ...c]) l.release();
+  board(2);
+  board(3);
+  assert.equal(painted, 390, 'three boards\' worth is kept');
+  // (the old room did not hold two boards)
+  let old = 0;
+  const small = new ColumnTextures<number>(() => undefined, 256, 4 * 1024 * 1024);
+  const sb = (id: number) => Array.from({ length: 130 }, (_, i) => small.acquire(`board${id}:${i}`, 64 * 110 * 4, () => ++old));
+  const x = sb(1);
+  const y = sb(2);
+  for (const l of [...x, ...y]) l.release();
+  sb(2);
+  assert.ok(old > 260, 'the old room painted the second board again');
 });

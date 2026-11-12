@@ -122,7 +122,12 @@ export function installPopupGuard(): void {
   addEventListener('pointerdown', (e) => on('down', e), true);
   addEventListener('pointerup', (e) => on('up', e), true);
   addEventListener('click', (e) => on('click', e), true);
-  new MutationObserver(later).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'open'] });
+  // (WAVE-DELAY: the page is looked over again only when a change could have shown or hidden a guarded popup: the changed part is one,
+  // or holds one. A fight changes classes on its hero rows every frame, and looking the page over each time (it reads each popup's
+  // computed style, which makes the browser work the whole page's styles out) was a steady cost in every frame of every fight)
+  const holds = (n: Node): boolean => n instanceof Element && (n.matches(ALL) || n.querySelector(ALL) !== null);
+  const touches = (r: MutationRecord): boolean => (r.type === 'attributes' ? holds(r.target) : [...r.addedNodes, ...r.removedNodes].some(holds));
+  new MutationObserver((records) => records.some(touches) && later()).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'open'] });
   later();
   (window as unknown as { __popupGuard: unknown }).__popupGuard = { log, open: () => open.map((o) => ({ sel: o.l.sel, id: o.e.id, age: Math.round(performance.now() - o.at) })), ms: GUARD_MS };
 }
