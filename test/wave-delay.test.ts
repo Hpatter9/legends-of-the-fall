@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { FALL_SLOW_MS, fallSlowMs, ultCastBeat } from '../src/render/fxRules';
 import { mayRelease, mayWarm, nextToWarm } from '../src/render/texReadyRules';
-import { COLUMN_ROOM, WARM, warmMore } from '../src/render/boardWarmRules';
+import { COLUMN_ROOM, WARM, warmMore, warmNow } from '../src/render/boardWarmRules';
 import { ColumnTextures } from '../src/render/columnTextures';
 import { DIAG, diagHead, diagText, doingIn, isStop, parseDiag, stopLine, withStop, type DiagStop } from '../src/diagRules';
 
@@ -73,6 +73,20 @@ test('painting ahead: a few tiles a frame at least, more only while the frame ha
   assert.equal(warmMore(WARM.LEAST, WARM.FRAME_MS), false);
   assert.equal(warmMore(WARM.LEAST, WARM.FRAME_MS - 1), true);
   assert.ok(WARM.FRAME_MS <= 16);
+  // (through the fight: a tile a frame, and almost none of the frame's time)
+  assert.equal(warmMore(0, 999, true), true);
+  assert.equal(warmMore(WARM.FIGHT_LEAST, WARM.FIGHT_MS, true), false);
+  assert.ok(WARM.FIGHT_MS <= 3);
+  // (a device at five frames a second paints a twentieth of each long frame's time, no more)
+  assert.equal(warmMore(5, 9, true, 200), true);
+  assert.equal(warmMore(5, 10, true, 200), false);
+  assert.equal(warmMore(5, 13, true, 99999), false);
+  // (begun once the fight is under way, and at the latest as it is won; never in a deploy or a lost fight)
+  assert.equal(warmNow('fight', WARM.FIGHT_FROM - 100), false);
+  assert.equal(warmNow('fight', WARM.FIGHT_FROM), true);
+  assert.equal(warmNow('won', 0), true);
+  assert.equal(warmNow('deploy', 99999), false);
+  assert.equal(warmNow('lost', 99999), false);
 });
 
 test('the painted columns of three boards are kept: a board built again is not painted again', () => {
