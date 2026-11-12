@@ -72,7 +72,7 @@ import type { PackKey } from './fxRules';
 import { loadShowArt, showArt, type ShowArt } from './showArt';
 import { MOVE_LOOKS, PAINT, WALL_LOOKS, auraLook, type Look } from './toolkitLooks';
 import { KING_SHEET, KING_WALL } from './kingArt';
-import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
+import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTES, DIRGE_TINT, HANG_MULT, MOVE_PAINT, RIPOSTE, SONG_REACH, SONG_SHEET, SPIKES_SHEET, TRAVEL_MS, type StandState } from './movePaints';
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
@@ -2165,15 +2165,17 @@ export class Fx {
       });
     }
     if (!spellFrames(`${sheet}.motes`).length) return true;
-    const n = settings().saver ? 1 : 3;
-    const r = (reach + 0.5) * TW * 0.35;
+    // (what circles in it: three small motes close in, or the sheet's own (`AURA_MOTES`: Spirit Guardians' spirits, large and clear))
+    const own = AURA_MOTES[sheet];
+    const n = own ? (settings().saver ? own.saver : own.n) : settings().saver ? 1 : 3;
+    const r = own ? own.r * TW : (reach + 0.5) * TW * 0.35;
     const born = performance.now();
     for (let i = 0; i < n; i++)
       this.paintLoop(`${sheet}.motes`, () => {
         const [x, y] = centre();
-        const a = (this.reduced ? 0 : (performance.now() - born) / 1400) + (i * Math.PI * 2) / n;
-        return [x + Math.cos(a) * r, y - 14 + Math.sin(a) * r * 0.5];
-      }, live, { tint: o.tint });
+        const a = (this.reduced ? 0 : (performance.now() - born) / (own?.turn ?? 1400)) + (i * Math.PI * 2) / n;
+        return [x + Math.cos(a) * r, y - (own?.lift ?? 14) + Math.sin(a) * r * 0.5];
+      }, live, { tint: o.tint, ...(own ? { mult: own.mult, depthOf: () => 9999 } : {}) });
     return true;
   }
 
