@@ -61,20 +61,30 @@ Pure, no DOM: `swipeAxis` (a swipe or a scroll), `dragShift` (how far the card i
 on), `stepTo` (an arrow or a dot, kept on the list), `infoArmy` (the information's army: unchanged while the card moves), `arrowsAt` (which
 arrow is off).
 
-## For the owner to decide
+## The neighbours peek in (the owner's follow-up, after 0.504.0)
 
-1. **The neighbours' banners are gone.** The War Room showed three banners (the army and the one on each side). With the card alone
-   sliding, and an arrow on each side of it, there is one larger card and the dots. If the neighbours should peek in at the sides again,
-   say so.
-2. **A flick turns the card** though it is short of half-way. A slow drag short of half-way always springs back. If only half-way should
-   count, set `FLICK_SPEED` out of reach.
+The owner said yes to both questions this note first asked:
+
+1. **The neighbours' banners are back**, peeking in at each side of the centred card (`docs/samples/armies-peek/`, `before/` and
+   `after/`).
+   - The strip of cards is one slot wide (56% of the room, 232 px at most) and stands in the middle of the room's whole width, so the
+     army on each side shows at the edge, cut by the screen.
+   - A neighbour is smaller (80%) and dimmed, clearly behind the centred card. As the card settles, the army arriving grows and lights
+     and the one leaving shrinks and dims (at once with reduced motion).
+   - They are not buttons: a tap on one does nothing. The arrows, the dots and a swipe turn the card, so nothing fights the arrows.
+   - They slide with the card as one strip, and the information still changes only once the card has settled. Half-way is now half of
+     the slot's width.
+   - The arrows are where they were: centred on the card's height, clear of the centred card's art and words at every size, each over
+     its neighbour's dimmed edge.
+2. **A flick still turns the card** though it is short of half-way.
 
 ## Run
 
 - `npm run typecheck`: clean.
-- `npm test` (the full suite): 3,249 pass, none fail.
+- `npm test` (the full suite): passes (the hand-over has the count).
 - `npm run web`: builds.
-- `node tools/armies-swipe/shots.mjs`: 48 checks pass (16 at each size): the arrows' size, mirror, centring, clearance and pressed
+- `node tools/armies-swipe/shots.mjs`: 57 checks pass (19 at each size): the neighbours peek in on both sides, smaller and dimmed,
+  and a tap on one does nothing; the arrows' size, mirror, centring, clearance and pressed
   state; a short drag moves the card and not the information, and springs back; half-way held, the information is unchanged; past
   half-way, the card settles and the information changes, the host's place and height the same throughout; an arrow waits for the card;
   the first and last army; reduced motion; Back.

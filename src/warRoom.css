@@ -7,9 +7,15 @@
 /* ARMIES-SWIPE (docs/notes/armies-swipe.md): one army's card in the room, an arrow on each side of it, the dots under it. Only the card
    slides (`.asStrip`); the information under the room is one well in a host of a steady height, and fades across once the card rests. */
 .asStage { position: relative; flex: 1 1 0; min-height: 0; }
-/* (the card's window stops short of the arrows, so a card never slides under one; its two edges fade, so a card leaves softly) */
-.wrBody .asTrack { position: absolute; inset: 0 58px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent); mask-image: linear-gradient(90deg, transparent, #000 12px, #000 calc(100% - 12px), transparent); }
-.wrBody .asCard { padding: 0 12px 6px; }
+/* (the neighbours peek in: the strip is one card's slot wide and stands in the middle of the room's whole width, so the army on each side
+   shows at the edge, smaller and dimmed, behind the arrow. They are not buttons: the arrows, the dots and a swipe turn the card. The slot
+   leaves the arrows clear of the centre card at every phone width) */
+.wrBody .asTrack { position: absolute; inset: 0; }
+.wrBody .asStrip { width: 56%; max-width: 232px; margin: 0 auto; }
+.wrBody .asCard { padding: 0 7px 6px; }
+.wrBody .asCard .wrBanner { transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.26s; }
+.wrBody .asCard:not(.cur) .wrBanner { transform: scale(0.8); filter: brightness(0.45) saturate(0.6); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .wrBody .asCard .wrBanner { transition: none; } }
 .wrBody .wrBanner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; width: 100%; max-width: 210px; height: 100%; padding: 6px 8px 12px; border: 0; border-radius: 0; border-image: url(ui/combat-panel.png) 24 fill / 6px / 0 stretch; background: #442619e8; color: #e6cfa6; box-shadow: 0 6px 14px #0009; }
 .wrBanner img { flex: 1 1 0; min-height: 0; width: 100%; object-fit: contain; image-rendering: auto; pointer-events: none; }
 .wrBanner b { font: 700 15px/1.2 var(--display); color: #f2d59a; text-shadow: 0 2px 3px #000; }
