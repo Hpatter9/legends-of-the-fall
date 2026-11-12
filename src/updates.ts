@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.532.0',
+    date: '2026-11-12',
+    title: 'Whirlpools, sandstorms, wings and banners',
+    notes: ['New shapes for ultimates that looked alike: the Kraken\'s whirlpool turns flat on the ground, the Mummy raises a sandstorm, the Priestess unfolds wings of light.', 'The Beastmaster\'s wind-up is three clear wolves\' heads in profile, and the green rings under her wolves are gone.'],
+  },
+  {
     version: '0.531.0',
     date: '2026-11-12',
     title: 'Stone is stone, wolves are wolves',
