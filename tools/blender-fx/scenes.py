@@ -1577,7 +1577,7 @@ def tile(c, things='flames', n=4, fill=0.85, lift=1.0):
 def impact(c, r=3.0, rubble=26, sparks=30):
     fm, cut = c.flame(2.4, 0.5, 1.5)
     core = c.sphere(1, fm, 4)
-    flash, fa = c.disc('ramp', 1.6, r * 0.75)
+    flash, fa = c.disc('ramp', 1.6, r * 0.75, noise=3.0)
     rings = [c.ring('hot', 0.09, 1.3), c.ring('bright', 0.06, 1.2)]
     sm, sv = c.solid('mid', 'deep', 0.5, 0.8, 0.0)
     rocks = [(c.cone(c.rnd.uniform(0.09, 0.22), c.rnd.uniform(0.18, 0.42), sm, 4), c.rnd.uniform(0, TAU), c.rnd.uniform(0.35, 1.0) * r, c.rnd.uniform(3.0, 6.5), c.rnd.uniform(0, 0.12), c.rnd.uniform(3, 9))
@@ -1586,11 +1586,13 @@ def impact(c, r=3.0, rubble=26, sparks=30):
 
     def step(t):
         c.tick(t, 2.0)
-        # (the core: up fast in the first frames, the heaviest of the whole effect, then torn open)
-        s = r * (0.12 + 0.42 * ease(win(t, 0, 0.22))) * (1 + 0.25 * win(t, 0.22, 1))
+        # (the core: a fireball up in the first frame or two, the heaviest of the whole effect; then it tears open at once, so the
+        # fighters under it show through the holes, and burns on in rags, growing and thinning, for most of the blow)
+        s = r * (0.12 + 0.42 * ease(win(t, 0, 0.12))) * (1 + 0.35 * win(t, 0.12, 1))
         put(core, (0, 0, 0.5 + 0.5 * r * 0.2 * t), (s, s, s * 0.85), (t * 2, t, 0))
-        cut.inputs[1].default_value = 0.04 + 0.75 * win(t, 0.18, 0.8) ** 1.5
-        fa.inputs[1].default_value = 2.8 * (1 - win(t, 0.05, 0.6))
+        cut.inputs[1].default_value = 0.04 + 0.29 * win(t, 0.08, 0.2) + 0.1 * win(t, 0.2, 0.85) + 0.25 * win(t, 0.82, 1)
+        # (the flash on the ground is broken by noise and gone early: a flat disc of one colour reads as paint)
+        fa.inputs[1].default_value = 2.4 * (1 - win(t, 0.04, 0.4))
         for i, (o, v) in enumerate(rings):
             g = win(t, i * 0.1, 0.75 + i * 0.1)
             put(o, scale=(r * (0.08 + 1.0 * ease(g)),) * 2 + (1 + 3 * (1 - g),))

@@ -138,7 +138,7 @@ for (const pick of PICKS) {
       return n;
     });
     const after = await speedNow(page);
-    console.log('ok', pick, `${W}x${H}`, JSON.stringify({ weight: st.weight, shape: st.shape, show: st.show, windup: st.windup.ms, strike: st.strike.ms, aftermath: st.aftermath.ms, total: st.total, measured: t + rest, before, during: [...new Set(speeds)], after }));
+    console.log('ok', pick, `${W}x${H}`, JSON.stringify({ mem: await page.evaluate(() => window.__bfxMem?.()), weight: st.weight, shape: st.shape, show: st.show, windup: st.windup.ms, strike: st.strike.ms, aftermath: st.aftermath.ms, total: st.total, measured: t + rest, before, during: [...new Set(speeds)], after }));
   } catch (e) {
     console.log('FAILED', pick, String(e.message).split('\n')[0]);
   }
