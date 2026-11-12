@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.542.0',
+    date: '2026-11-12',
+    title: 'Diagnostics for the app; app settings',
+    notes: ['The Diagnostics log now begins with the version, whether it is the installed app or a browser, the web view, memory and screen: one copy tells it all.', 'The Android app keeps the game\'s page at full priority and asks the system for a large heap.'],
+  },
+  {
     version: '0.541.0',
     date: '2026-11-12',
     title: 'Smoother waves, and a Diagnostics page',
