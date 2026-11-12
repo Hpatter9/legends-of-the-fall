@@ -116,14 +116,18 @@ test('a strike on each one the ability touched finds them: the friends helped (a
   assert.ok(!BFX_CLIPS['ult-gunslinger-aftermath'].sc!.includes('flames'));
 });
 
-test('Vael\'s totality lasts: a black sun hangs over him for its eight seconds, his sweep is gold; Ilyra\'s is a figure of light and a halo, not a dome; the Kunoichi\'s one cut and a mark', () => {
+test('Vael\'s totality lasts: a black sun hangs over him for its eight seconds, his sweep is gold; Ilyra\'s is wings and a halo, not a dome; the Kunoichi\'s one cut and a mark', () => {
   assert.deepEqual(ULT_LASTS.vael, { clip: 'aura-eclipse', ms: 8000 });
   assert.ok(BFX_CLIPS['aura-eclipse'].loop);
   assert.equal(BFX_CLIPS['ult-vael-strike'].el, 'holy');
   assert.ok(BFX_CLIPS['ult-vael-windup'].sc!.includes('eclipse'));
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /this\.bfxStand\(lasts\.clip, this\.root, \.\.\.over\(\), \(\) => b\.t < until && me\.alive/);
-  // (a figure of light behind each ally, catching them: its own scene, in place of wings alone, which were not found among the rays)
-  assert.deepEqual(BFX_CLIPS['ult-ilyra-strike'].sc, ['angel', 'halo']);
+  // (wings of light and a halo on each ally; a modelled figure was tried and taken out: a thing wants painted art, the director's rule)
+  assert.deepEqual(BFX_CLIPS['ult-ilyra-strike'].sc, ['wings', 'halo']);
+  // (the same rule: the Bell Warden's toll is hoops of sound, cracks and dust, no bell; the Sea Reaver's is a tide along his line, no wave)
+  assert.deepEqual(BFX_CLIPS['ult-bellWarden-strike'].sc, ['toll', 'crack', 'gust']);
+  assert.equal(ultPlace('seaReaver'), 'line');
+  for (const c of Object.values(BFX_CLIPS)) for (const sc of c.sc ?? []) assert.ok(!['angel', 'wave'].includes(sc), sc);
   for (const kind of ['ilyra', 'seraph', 'samurai']) assert.ok(!BFX_CLIPS[`ult-${kind}-strike`].sc!.includes('dome'), kind);
   assert.deepEqual(BFX_CLIPS['ult-kunoichi-strike'].sc, ['arc', 'cross', 'ring']);
   assert.ok(ULT_LINK_MS >= 100 && ULT_LINK_MS <= 400);
