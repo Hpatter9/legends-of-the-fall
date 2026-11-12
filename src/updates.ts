@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.526.0',
+    date: '2026-11-12',
+    title: 'Guardians, beasts and stone',
+    notes: ['Spirit Guardians\' spirits are now hooded guardians with spears. The Beastmaster\'s eyes open in the brush before a beast leaps out. The Gorgon\'s snakes rise.', 'Heals and blessings now land on every ally they help, not only the caster: the Sage\'s domes close over each friend.'],
+  },
+  {
     version: '0.525.0',
     date: '2026-11-12',
     title: 'The wave ends when the last foe falls',

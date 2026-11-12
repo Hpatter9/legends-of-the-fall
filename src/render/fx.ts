@@ -76,7 +76,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, ultPlace, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, ultPlace, ultSpots, ultLinked, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
@@ -657,7 +657,7 @@ export class Fx {
   /** BLENDER-FX: a stage of a hero kind's ultimate as its rendered sheet on the moment's layer (which runs while the fight is held), the
    *  middle of its tile at (x, y), played once across `ms` (the stage's length; a strike plays at its own pace when none is given). A light's
    *  soft glow goes under it. Reduced motion holds its one readable frame. False when the kind has no sheet or it has not loaded. */
-  private bfxUlt(kind: string, stage: UltStageName, x: number, y: number, ms?: number, size = 1): boolean {
+  private bfxUlt(kind: string, stage: UltStageName, x: number, y: number, ms?: number, size = 1, delay = 0): boolean {
     const key = ultBfx(kind, stage, ultWeight(kind));
     const c = key ? bfxClip(key) : undefined;
     const frames = key ? bfxFrames(key) : [];
@@ -668,36 +668,50 @@ export class Fx {
     const glows = bfxBudget(settings().saver).glow ? bfxGlows(key) : [];
     if (c.g && glows.length) {
       const k = BFX_GLOW_SCALE * size;
-      this.moment.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: x + (c.g.w / 2 - c.g.ax) * k, y: y + (c.g.h / 2 - c.g.ay) * k, scale: k, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA, prio: true, half: 1 });
+      this.moment.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: x + (c.g.w / 2 - c.g.ax) * k, y: y + (c.g.h / 2 - c.g.ay) * k, scale: k, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA, prio: true, half: 1, ...(delay ? { delay } : {}) });
     }
     // (the aftermath lies over those it struck for a second or two, so it is drawn thinner: they show through it)
-    this.moment.spawn({ frames: held, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: life / held.length, life, prio: true, solid: stage !== 'aftermath', alpha: stage === 'aftermath' ? ULT_BFX.AFTER_ALPHA : 1, half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42 });
+    this.moment.spawn({ frames: held, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: life / held.length, life, prio: true, solid: stage !== 'aftermath', alpha: stage === 'aftermath' ? ULT_BFX.AFTER_ALPHA : 1, half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42, ...(delay ? { delay } : {}) });
     // (the moment's dim is lifted over a wind-up and a strike while they play, so they are seen at full strength and not through it: `momentLights`)
-    if (stage !== 'aftermath') this.bfxLit.push({ x: cx, y: cy, r: Math.max(c.w, c.h) * BFX_SCALE * size * ULT_BFX.LIGHT, left: life });
+    if (stage !== 'aftermath') this.bfxLit.push({ x: cx, y: cy, r: Math.max(c.w, c.h) * BFX_SCALE * size * ULT_BFX.LIGHT, left: life + delay });
     return true;
   }
 
   /** The blow lands (ULT-EPIC): a huge burst of the element on each spot (the kit's painted burst when there, else the strongest painted
    *  burst of the element the game has, or the pack's, drawn big), a shock ring along the ground, and a hard shake once the freeze lets go
    *  (none with the screen kept still). Spots are fighters (by id) or tiles. */
-  ultImpact(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[], size = 1, kind?: string): void {
+  ultImpact(b: Battle, el: Element, spots: readonly ({ unit: number } | { u: number; v: number })[], size = 1, kind?: string, touched?: { struck: readonly number[]; helped: readonly number[]; tiles: readonly { u: number; v: number }[] }): void {
     // (BLENDER-FX: the hero's own rendered strike on each spot, in place of the painted burst, the pack's nova and its ring)
     if (kind && ultBfx(kind, 'strike', ultWeight(kind)) && bfxFrames(ultBfx(kind, 'strike', ultWeight(kind))!).length) {
+      const place = ultPlace(kind);
+      const me = b.units.find((u) => u.side === 'hero' && u.def === kind && u.alive);
+      const caster = me ? this.sprites.get(me.id) : undefined;
+      // (ULT-AUDIT: a strike on each one the ability touched has its own spots: the friends it helped, the tiles it took, `ultSpots`)
+      // (what the cast's events do not say, the fight does: a blessing with no heal in it (a shield, a filled pool) is on every living
+      // friend; a wall's tiles are the ones the caster's wall stands on now)
+      const friends = () => b.units.filter((u) => u.side === 'hero' && u.alive && u.owner === undefined && u.id !== me?.id).map((u) => u.id);
+      const walled = () => (b.walls ?? []).filter((w) => w.by === me?.id && w.until > b.t).map((w) => ({ u: w.i % b.board.w, v: Math.floor(w.i / b.board.w) }));
+      const all = touched && { struck: touched.struck, helped: place === 'friends' && !touched.helped.length ? friends() : touched.helped, tiles: place === 'tiles' && !touched.tiles.length ? walled() : touched.tiles };
+      const own = place !== 'one' && place !== 'self' && all && me && size >= 1 ? ultSpots(place, all, me.id, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS) : spots;
       const at: [number, number][] = [];
-      for (const s of spots) {
+      for (const s of own) {
         const sp = 'unit' in s ? this.sprites.get(s.unit) : undefined;
         if ('unit' in s && !sp) continue;
         at.push(sp ? [sp.x, sp.y] : this.tilePos(b, (s as { u: number; v: number }).u, (s as { u: number; v: number }).v));
       }
-      const place = ultPlace(kind);
-      const caster = place === 'self' ? this.sprites.get(b.units.find((u) => u.side === 'hero' && u.def === kind && u.alive)?.id ?? -1) : undefined;
       if (place === 'self') {
         // (ULT-AUDIT: an aura, a ward, a transformation, a pull: it plays round the caster, once; its further bursts add nothing there)
         if (caster && size >= 1) this.bfxUlt(kind, 'strike', caster.x, caster.y);
-      } else if (place === 'each') {
-        // (ULT-AUDIT: a heal on each friend healed, a mark on each foe marked, a flurry's cut on each foe cut: a small strike on every one
-        // the ability touched, not one great one in their midst)
-        for (const [x, y] of at.slice(0, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS)) this.bfxUlt(kind, 'strike', x, y, undefined, size >= 1 ? 1 : 0.7);
+      } else if (place !== 'one') {
+        // (ULT-AUDIT: a heal on each friend healed, a mark on each foe marked, a flurry's cut on each foe cut, a wall's slab on each tile
+        // it blocks: a strike on every one the ability touched, not one great one in their midst. Where the ability is carried from the
+        // caster (a healer's light, the Gorgon's gaze), a line runs out to each first and the strike lands as it arrives)
+        const linked = ultLinked(kind) && caster && size >= 1;
+        for (const [x, y] of at.slice(0, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS)) {
+          const far = linked && Math.hypot(x - caster.x, y - caster.y) > 8;
+          if (far) beatLine(caster.x, caster.y, x, y).forEach(([px, py], i) => this.bfxBeat('link', el, px, py, { delay: i * BEAT_LINE.LAG }));
+          this.bfxUlt(kind, 'strike', x, y, undefined, size >= 1 ? 1 : 0.7, far ? ULT_LINK_MS : 0);
+        }
       } else if (at.length && size >= 1) {
         // (the blow itself is one great strike, four tiles and more across, at the middle of what it struck: it covers them all, where a
         // strike on each would be five of them piled on one another)
