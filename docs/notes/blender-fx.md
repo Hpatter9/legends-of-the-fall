@@ -485,3 +485,24 @@ in the game as the look that plays until the rendered sheets have loaded, so the
 - `docs/samples/blender-fx/reduced-motion-393x852.jpg`: seven spells with reduced motion asked for (each holds its one readable frame).
 
 `node tools/blender-fx/shots.mjs` takes them (after `npm run web`), and `tools/blender-fx/shots_sheet.py` joins them.
+
+## What the loader costs a slow phone (measured for the stalls, 2026-11-12)
+
+The owner reported stops of seconds at a wave's start and end and on a skill's first use. `COST=1` on
+`tools/blender-fx/ult-shots.mjs` throttles the CPU six times, times every hand-over of a picture to the graphics card (with the
+card made to finish) and every frame's own work. What it found, for this loader:
+
+- **Nothing walks the clips at a fight's start or end.** The clip list is walked once, as the module loads. A fight's start asks
+  for at most seventeen atlases by key (`warmBfx`); its end does nothing here.
+- **Cutting an atlas's frames** when it arrives: 1.7 ms for 400 textures. Not a stop.
+- **A fight-loaded atlas** (a bitmap, decoded off the page's thread): 5 to 29 ms to hand over on its first draw, at six times
+  throttle, for atlases up to 1137 x 1385. The core's largest (2041 x 2022) is 76 to 97 ms, and is handed over ahead of the fight
+  (`keepReady`).
+- **The glow atlas was the one stop that was this loader's**: it was loaded as a plain image, so its 2046 x 1331 pixels were decoded
+  on the frame it was handed over: 430 to 460 ms. It is a bitmap now, as the pixel atlases are: 63 ms.
+- A browser with no `createImageBitmap` falls back to a plain image and pays the decode at the hand-over (about 0.2 ms a thousand
+  pixels at this throttle: some 200 ms for a 1024 x 1024 atlas). Every phone browser the game supports has it.
+
+Not this loader's, but the largest stops the measure saw in a fight: the painted spell sheets (`fx/spells/*.webp`, plain images):
+`f-martial` 551 to 576 ms, `a-toolkit` 396 to 439 ms, `c-healers` 243 to 256 ms, `d-casters`/`e-moves`/`b-auras` 165 to 252 ms each,
+on the frame each is first drawn. The same cure would serve them.
