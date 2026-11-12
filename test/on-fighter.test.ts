@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BODY, ROUND, STATUS_ROUND, UNDER, frontCover, onFighterClip, overAlpha, wispAt, wispsOf } from '../src/render/onFighterRules';
+import { BODY, PAINT_OVER, ROUND, STATUS_ROUND, UNDER, frontCover, onFighterClip, overAlpha, wispAt, wispsOf } from '../src/render/onFighterRules';
 import { BODY_COVER } from '../src/render/bodyCover';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
 import { STATUS_LOOKS, maxStatuses } from '../src/render/fxRules';
@@ -95,4 +95,24 @@ test('every rendered clip that plays on a fighter is measured, and drawn over th
   assert.match(fx, /life: UNDER\.FLASH_MS, alpha: base, solid: true \}\);/);
   assert.match(readFileSync('src/render/unitView.ts', 'utf8'), /this\.root\.addChildAt\(this\.underFx, this\.root\.getChildIndex\(this\.body\)\);/);
   assert.match(fx, /this\.moment\.spawn\(\{ \.\.\.bit, alpha: base \* thin \}\);/);
+});
+
+test('a painted bit over a fighter is thinned to the ceiling and drawn again at full strength under that fighter\'s body', () => {
+  // (a painted bit's cover is not measured, so it is taken to cover the whole body: drawn over it at the ceiling itself)
+  assert.equal(PAINT_OVER, BODY.CEILING);
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.match(fx, /this\.particles\.cover = \(x, y, half\) => \(this\.overBody\(x, y, half\) \? PAINT_OVER : 1\);/);
+  assert.match(fx, /return s \? \{ to: this\.underAt\(s\.underLayer\(\), this\.lows\), ox: s\.root\.x, oy: s\.root\.y, k: s\.root\.scale\.x \|\| 1 \} : null;/);
+  // (a bit that lies over several fighters goes under the one farthest back, so it is behind them all)
+  assert.match(fx, /if \(!best \|\| s\.root\.zIndex < best\.root\.zIndex\) best = s;/);
+  // (a plain strip and a king's spell's clip over a fighter go under its body whole)
+  assert.match(fx, /const host = this\.bodyAt\(x, y, 16 \* scale\);/);
+  assert.match(fx, /const host = paint \? undefined : this\.bodyAt\(\(l \+ r\) \/ 2, Math\.min\(y, bot\) - half, half\);/);
+  assert.match(fx, /host\.underLayer\(\)\.addChild\(view\);/);
+  // (the under copies run on the fight's clock with the particles, and go when they go)
+  assert.match(fx, /this\.stepUnder\(this\.lows, dt\);/);
+  assert.match(fx, /if \(layer\.destroyed \|\| p\.root\.destroyed\) among\.delete\(layer\);/);
+  const parts = readFileSync('src/render/particles.ts', 'utf8');
+  assert.match(parts, /const low = this\.under\?\.\(b\.x, b\.y,/);
+  assert.match(parts, /low\.to\.spawn\(\{ \.\.\.b, x: \(b\.x - low\.ox\) \/ k, y: \(b\.y - low\.oy\) \/ k, scale: \(b\.scale \?\? 1\) \/ k,/);
 });

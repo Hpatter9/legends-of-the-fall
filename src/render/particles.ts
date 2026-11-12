@@ -77,6 +77,10 @@ export class Particles {
   /** FX-CLEAR: what a bit's alpha is multiplied by, from where it starts and its half-size (`Fx` thins those over a fighter,
    *  `overFighter.ts`); none: 1. */
   cover?: (x: number, y: number, half: number) => number;
+  /** ON-FIGHTER (`onFighterRules.ts`): where a bit that lies over a fighter's body is ALSO drawn, at its full strength, under that
+   *  body: another pool (in the fighter's own layer) and how to carry the bit into its space (its origin `ox, oy` and scale `k`);
+   *  null where it lies over no one. The copy here is then thinned by `cover`. */
+  under?: (x: number, y: number, half: number) => { to: Particles; ox: number; oy: number; k: number } | null;
   /** ULT-EPIC: what the bits made now are scaled by (an ultimate's moment draws its effects about twice the size: `Fx.setEpic`); their
    *  drift and growth with them, so a burst spreads as far as it is big; capped, `boostedScale`). 1 the rest of the time. */
   boost = 1;
@@ -95,6 +99,12 @@ export class Particles {
       b = { ...b, scale, ...(b.vx ? { vx: b.vx * k } : {}), ...(b.vy ? { vy: b.vy * k } : {}), ...(b.grow ? { grow: b.grow * k } : {}), ...(b.gravity ? { gravity: b.gravity * k } : {}), ...(b.half ? { half: b.half * k } : {}) };
     }
     if (this.live.length >= (b.prio ? this.cap * 1.3 : this.cap)) return;
+    const low = this.under?.(b.x, b.y, b.half ?? 16 * (b.scale ?? 1) * Math.max(b.stretchX ?? 1, b.stretchY ?? 1, 1));
+    if (low) {
+      const k = low.k;
+      low.to.calm = this.calm;
+      low.to.spawn({ ...b, x: (b.x - low.ox) / k, y: (b.y - low.oy) / k, scale: (b.scale ?? 1) / k, ...(b.vx ? { vx: b.vx / k } : {}), ...(b.vy ? { vy: b.vy / k } : {}), ...(b.grow ? { grow: b.grow / k } : {}), ...(b.gravity ? { gravity: b.gravity / k } : {}), ...(b.half ? { half: b.half / k } : {}) });
+    }
     const sp = this.pool.pop() ?? new Sprite();
     sp.anchor.set(0.5);
     sp.position.set(b.x, b.y);

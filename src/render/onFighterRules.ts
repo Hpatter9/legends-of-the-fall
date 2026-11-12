@@ -96,3 +96,9 @@ export const overAlpha = (cover: number): number => (cover <= BODY.CEILING ? 1 :
  *  - `RING`: a bright ring of the element on the ground at the fighter's feet, under it, as a strike lands on it (the showcase's
  *    `ring` clip), this much its own size. */
 export const UNDER = { SIZE: 1.15, FLASH_MS: BODY.FLASH_MS, RING: 1.5 } as const;
+
+/** How strongly a painted bit (a skill's cast or hit, a puff, a ring, a signature's step: the particles) is drawn OVER a fighter's
+ *  body. A painted bit's cover of a body is not measured, so it is taken to cover all of it: the ceiling itself. The bit is drawn
+ *  again at its full strength under that body (`Particles.under`), so it is seen round the fighter and behind it. (It was six
+ *  tenths with nothing behind, FX-CLEAR's `OVER_FIGHTER_ALPHA`: a heal's haze lay over the whole party.) */
+export const PAINT_OVER = BODY.CEILING;
