@@ -171,7 +171,7 @@ import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
 import { readyStep } from './render/texReady';
 import { warmNow } from './render/boardWarmRules';
-import { diagFrame, diagMark, diagRest } from './diag';
+import { diagFrame, diagMark, diagRest, diagStep, diagTimed } from './diag';
 import { WeatherView } from './render/weatherView';
 import { weatherOf, type Weather } from './sim/weather';
 import { BoardLife } from './render/boardLife';
@@ -713,6 +713,23 @@ class Game {
         console.error(err);
       }
     });
+    // (WAVE-DELAY: each picture handed to the graphics card is timed for the stops' log (`diag.ts`): a stop then says how many went
+    // up in it and how long that took. Two clock reads a picture; a fault here leaves the renderer as it was)
+    try {
+      const gl = (this.app.renderer as unknown as { gl?: WebGL2RenderingContext }).gl;
+      if (gl) {
+        for (const name of ['texImage2D', 'texSubImage2D'] as const) {
+          const real = (gl[name] as (...a: unknown[]) => void).bind(gl);
+          (gl as unknown as Record<string, unknown>)[name] = (...a: unknown[]): void => {
+            const t0 = performance.now();
+            real(...a);
+            diagStep('pictures to the graphics card', performance.now() - t0);
+          };
+        }
+      }
+    } catch {
+      /* (untimed) */
+    }
     // (FREEZE-FIX: a phone short of graphics memory takes the picture away; Pixi puts it back when the browser gives it back. Both are
     // logged, so a report of a frozen picture can be told from a fight that stopped. A context not given back within a few seconds
     // would leave the picture dead for good: the page is loaded again, into the same run and wave: `contextRules.ts`)
@@ -874,8 +891,8 @@ class Game {
     // (the speed picked stays on from wave to wave)
     this.setSpeed(this.speed);
     this.fx.clear();
-    this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
-    this.life.build(this.b.board, weatherOf(this.b.board));
+    diagTimed('the board laid', () => this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0));
+    diagTimed('the field\'s life', () => this.life.build(this.b.board, weatherOf(this.b.board)));
     this.syncChain();
     setBackdrop(this.b.board.area, this.b.board.riftWorld);
     this.weather.resize(this.app.screen.width, this.app.screen.height);
@@ -883,14 +900,14 @@ class Game {
     this.weather.set(weatherOf(this.b.board), this.b.board.area, this.boardView.litSpots(), true);
     showTwistBanner(this.run.tower?.cur?.fight?.twist ?? this.run.buff?.twist);
     this.showTheme();
-    this.syncSprites(true);
+    diagTimed('the fighters made', () => this.syncSprites(true));
     // (a new wave's deploy: the camera frames the board afresh, whatever the player did with it last wave; it starts at the usual view and
     // eases in on the placement rows, DEPLOY-ZOOM)
     this.manualCam = false;
     this.zoom = this.tzoom = 1;
-    this.layout();
+    diagTimed('the page laid out', () => this.layout());
     this.revealDestination();
-    this.refresh();
+    diagTimed('the page refreshed (bench, portraits)', () => this.refresh());
     // (a fight's cinematics come before the boss's own card: a Calamity's herald, a first elite, the tower's milestones ...)
     const due = this.setupMoments().filter((m) => this.scenesOn() && dueScene(this.meta, m));
     if (due.length) void Promise.all(due.map((m) => this.queueScene(m))).then(() => this.startIntro(true));
@@ -1303,6 +1320,7 @@ class Game {
     this.ty += dy;
     this.held = null;
     this.bbox = { x0: this.bbox.x0 + dx, x1: this.bbox.x1 + dx, y0: this.bbox.y0 + dy, y1: this.bbox.y1 + dy };
+    diagMark('the march begun');
     document.body.dataset.move = '1';
     this.chain.begin(c, wave - 1, walkers, () => {
       delete document.body.dataset.move;

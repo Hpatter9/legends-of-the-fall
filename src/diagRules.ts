@@ -33,10 +33,29 @@ export interface DiagMark {
 export const isStop = (gap: number): boolean => gap >= DIAG.GAP_MS && gap < DIAG.AWAY_MS;
 
 /** What the page was doing through a gap from `from` to `to` (its own clock): everything it said it had begun in the gap or just
- *  before it, in order, each once; "not known" with nothing said. */
+ *  before it, in order, each once. With nothing said then: "not known", and the last three things it did say, with how long before
+ *  the gap each was, so a stop with no name of its own still says what came before it. */
 export function doingIn(marks: readonly DiagMark[], from: number, to: number): string {
   const said = [...new Set(marks.filter((m) => m.t >= from - DIAG.NEAR_MS && m.t <= to).map((m) => m.what))];
-  return said.length ? said.join('; ') : 'not known';
+  if (said.length) return said.join('; ');
+  const before = marks.filter((m) => m.t < from).slice(-3).reverse();
+  return before.length ? `not known (before it: ${before.map((m) => `${m.what} ${((from - m.t) / 1000).toFixed(1)} s earlier`).join(', ')})` : 'not known';
+}
+
+/** One part of a frame's work: how long it took in all (ms) and how many times it ran. */
+export interface DiagStep {
+  ms: number;
+  n: number;
+}
+
+/** A stop's parts as words, the longest first: "columns painted 88 in 5200 ms; the old board baked 640x480 in 300 ms; columns from
+ *  the cache 12". A part that took no time to speak of says only how many. Empty with no parts. */
+export function stepsText(steps: ReadonlyMap<string, DiagStep>): string {
+  return [...steps]
+    .sort((a, b) => b[1].ms - a[1].ms)
+    .slice(0, 10)
+    .map(([name, s]) => `${name}${s.n > 1 ? ` ${s.n}` : ''}${s.ms >= 1 ? ` in ${Math.round(s.ms)} ms` : ''}`)
+    .join('; ');
 }
 
 /** The log with one more stop: the newest `KEEP`. */
