@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.522.0',
+    date: '2026-11-12',
+    title: 'Ten lives',
+    notes: ['A run now has ten lives in place of hearts. A fallen hero rises on the spot after 5 seconds at half health, spending one life.', 'If the whole party falls, everyone rises at once for a life each and the fight goes on. With no lives left, the fallen stay down.'],
+  },
+  {
     version: '0.521.0',
     date: '2026-11-12',
     title: 'No more waiting after a wave',
