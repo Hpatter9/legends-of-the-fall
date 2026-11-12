@@ -385,8 +385,8 @@ their shows were cut short (the killing blow's rule) and the later frames were a
 | Geomancer, Crags | a dust ball | a slab rising; stone pillars standing on tiles in rings; spikes | yes: crags raised | the Juggernaut's spires are in cracks, hers on tiles in rings |
 
 Eight read as they were; two did not and are changed and photographed (Astrax, the Falconer). Still wanting: the Bell Warden's bell
-and her aftermath's spikes, the Banneret's lumpy flames, the Corsair Surgeon's plain cones. Thirty-five of the 48 judged... and of all
-70, thirty-five are now judged at full size in this pass.
+and her aftermath's spikes, the Banneret's lumpy flames, the Corsair Surgeon's plain cones. Thirty-five heroes are
+now judged at full size in this pass.
 
 ## The audit of all 70
 
