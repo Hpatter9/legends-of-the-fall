@@ -591,8 +591,11 @@ def wall(c, length=1.0, h=1.25, tongues=5):
 
 
 # 22. Crystal: one great faceted block that closes round whoever stands there, glints, and breaks.
-def crystal(c, r=0.5, h=1.7, shards=6):
-    m, av = c.solid('bright', 'mid', 0.7, 0.08, 0.3)
+def crystal(c, r=0.5, h=1.7, shards=6, stone=False):
+    # (`stone`: grey rock lit plainly, whatever the element: what the Gorgon's gaze leaves is stone, not a crystal of her poison's green)
+    if stone:
+        _plain_lights(c)
+    m, av = c.solid((0.4, 0.4, 0.42), (0.09, 0.09, 0.1), 0.25, 0.85, 0.0) if stone else c.solid('bright', 'mid', 0.7, 0.08, 0.3)
     top = c.cone(r, h * 0.45, m, 6)
     body = c.tube(r, h * 0.55, m, 6, caps=True)
     side = []
@@ -1292,8 +1295,11 @@ def shaft(c, r=0.42, h=3.4, slant=0.5):
 
 # 46. Slab: thick blocks of stone that slam up out of the ground in a ring and stand as a rampart, then drop.
 def slab(c, r=0.55, n=4, h=1.0, dark=False):
-    # (`dark`: heavy stone, deep in colour and thick, for an ultimate's wall: it must stand out against pale ground)
-    m, av = c.solid('mid', 'deep', 0.04, 0.9, 0.0) if dark else c.solid('bright', 'mid', 0.15, 0.85, 0.0)
+    # (`dark`: heavy stone in stone's own grey-brown, lit plainly whatever the element, and thick, for an ultimate's wall or a planted
+    # slab: it must stand out against pale ground and not take the element's tint)
+    if dark:
+        _plain_lights(c)
+    m, av = c.solid((0.3, 0.27, 0.24), (0.06, 0.055, 0.05), 0.15, 0.9, 0.0) if dark else c.solid('bright', 'mid', 0.15, 0.85, 0.0)
     blocks = []
     for i in range(n):
         ang = i * TAU / n + math.radians(45)
@@ -1777,18 +1783,23 @@ def eyes(c, r=1.3, n=5, size=1.0):
         gone = win(t, 0.88, 1)
         fa.outputs[0].default_value = 1 - gone
         sa.inputs[1].default_value = 1.6 * win(t, 0, 0.2) * (1 - gone)
-        for ang, rad, head, neck, snout, ears, pair, lag, blink in heads:
+        for n_, (ang, rad, head, neck, snout, ears, pair, lag, blink) in enumerate(heads):
             x, y = math.cos(ang) * rad, math.sin(ang) * rad
             g = ease(win(t, lag, lag + 0.3))
             z = (0.1 + 0.5 * g) * k
-            put(neck, (x, y, z * 0.5), (0.2 * g * k + 0.001, 0.2 * g * k + 0.001, 0.34 * g * k + 0.001), (math.pi, 0, 0))
-            put(head, (x, y, z), 0.19 * g * k + 0.001)
-            put(snout, (x + TOWARDS[0] * 0.2 * g * k, y + TOWARDS[1] * 0.2 * g * k, z - 0.05 * k + TOWARDS[2] * 0.2 * g * k), (0.085 * g * k + 0.001, 0.085 * g * k + 0.001, 0.2 * g * k + 0.001), (math.radians(60), 0, math.radians(-45) + math.pi))
+            # (a wolf's head seen from the side, so its outline is a wolf's: a long snout out across the camera's view (to the left for
+            # one, to the right for the next), a brow, two tall ears pricked back, a thick ruff for the neck, and the eye on its near side)
+            f = 1 if n_ % 2 == 0 else -1
+            gk = g * k
+            put(neck, (x - RIGHT[0] * f * 0.06 * gk, y - RIGHT[1] * f * 0.06 * gk, z * 0.5), (0.24 * gk + 0.001, 0.24 * gk + 0.001, 0.36 * gk + 0.001), (math.pi, 0, 0))
+            put(head, (x, y, z), (0.2 * gk + 0.001, 0.2 * gk + 0.001, 0.17 * gk + 0.001))
+            put(snout, (x + RIGHT[0] * f * 0.27 * gk, y + RIGHT[1] * f * 0.27 * gk, z - 0.045 * gk), (0.085 * gk + 0.001, 0.085 * gk + 0.001, 0.36 * gk + 0.001), (0, f * math.radians(100), math.radians(45)))
             for side, e in zip((-1, 1), ears):
-                put(e, (x + RIGHT[0] * side * 0.11 * g * k, y + RIGHT[1] * side * 0.11 * g * k, z + 0.2 * g * k), (0.06 * g * k + 0.001, 0.06 * g * k + 0.001, 0.2 * g * k + 0.001), (0, side * 0.25, 0))
+                put(e, (x - RIGHT[0] * f * (0.07 + side * 0.05) * gk + TOWARDS[0] * side * 0.05 * gk, y - RIGHT[1] * f * (0.07 + side * 0.05) * gk + TOWARDS[1] * side * 0.05 * gk, z + 0.22 * gk), (0.055 * gk + 0.001, 0.055 * gk + 0.001, 0.26 * gk + 0.001), (0, -f * 0.3, math.radians(45)))
             opened = win(t, lag + 0.2, lag + 0.28) * (0.12 if abs(t - blink) < 0.03 else 1.0)
             for side, e in zip((-1, 1), pair):
-                put(e, (x + (TOWARDS[0] * 0.17 + RIGHT[0] * side * 0.085) * k, y + (TOWARDS[1] * 0.17 + RIGHT[1] * side * 0.085) * k, z + (0.04 + TOWARDS[2] * 0.17) * k), (0.06 * k, 0.06 * k, 0.05 * opened * k + 0.001))
+                # (the near eye, and the far one just seen past the brow)
+                put(e, (x + (TOWARDS[0] * (0.17 if side > 0 else 0.1) + RIGHT[0] * f * (0.09 + (0 if side > 0 else 0.07))) * k, y + (TOWARDS[1] * (0.17 if side > 0 else 0.1) + RIGHT[1] * f * (0.09 + (0 if side > 0 else 0.07))) * k, z + (0.05 + TOWARDS[2] * 0.14) * k), (0.055 * k, 0.055 * k, 0.045 * opened * k + 0.001))
                 hide(e, opened <= 0.01 or gone >= 1)
             for o in (head, neck, snout, *ears):
                 hide(o, g <= 0.01 or gone >= 1)

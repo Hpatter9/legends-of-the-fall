@@ -186,7 +186,7 @@ BIG = dict(
 ULTS = dict(
     vael=('shadow', 'arc', 'shockwave', 'burst'), astrax=('holy', 'rain', 'flames', 'sky'), ilyra=('holy', 'halo', 'dome', 'bless'),
     orrun=('forest', 'vines', 'dome', 'bless'), nyxara=('lightning', 'sigil', 'spiral', 'bless'), kunoichi=('shadow', 'cross', 'swarm', 'blinks'),
-    wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'beast', 'crack', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
+    wizard=('fire', 'burst', 'crack', 'sky'), beastmaster=('forest', 'beast', 'trail', 'pack'), mercenary=('blood', 'cross', 'sparks', 'blinks'),
     arcBlade=('lightning', 'bolt', 'cross', 'blinks'), samurai=('holy', 'arc', 'sparks', 'line'), lancer=('wind', 'trail', 'gust', 'line'),
     minotaur=('earth', 'crack', 'smoke', 'line'), barbarian=('blood', 'crack', 'burst', 'leap'), ninjaMonk=('wind', 'sparks', 'gust', 'blows'),
     buccaneer=('shadow', 'chains', 'cross', 'hooks'), archer=('wind', 'rain', 'ring', 'sky'), dreadPirate=('shadow', 'rain', 'burst', 'sky'),
@@ -409,8 +409,13 @@ def grow(opt, k):
     return {key: (v * k if key in SIZED else v) for key, v in opt.items()}
 
 
-def sized(scene, k):
-    return grow(BIG[scene][0], k)
+# A scene's own options for one hero's strike, where the ability wants what the scene's usual look is not (ULT-AUDIT): what the Gorgon's
+# gaze leaves on a foe is grey stone, lit plainly, not a crystal in her poison's green.
+OWN_OPT = dict(gorgon=dict(crystal=dict(stone=True)))
+
+
+def sized(scene, k, kind=None):
+    return {**grow(BIG[scene][0], k), **OWN_OPT.get(kind, {}).get(scene, {})}
 
 
 def canvas_of(scenes, k, pad=0.5):
@@ -427,7 +432,7 @@ for i, (kind, (pal, first, second, style)) in enumerate(ULTS.items()):
     place = PLACE.get(kind, 'one')
     k = STRIKE_SIZE[weight] if place == 'one' else EACH_SIZE.get(kind, PLACE_SIZE[place])
     scenes = [first, second] + ([THIRD[kind]] if kind in THIRD else [])
-    stages = [stage(first, 0, 0.7, **sized(first, k)), stage(second, 0.25, 1, **sized(second, k))] + ([stage(THIRD[kind], 0.1, 0.9, **sized(THIRD[kind], k))] if kind in THIRD else [])
+    stages = [stage(first, 0, 0.7, **sized(first, k, kind)), stage(second, 0.25, 1, **sized(second, k, kind))] + ([stage(THIRD[kind], 0.1, 0.9, **sized(THIRD[kind], k))] if kind in THIRD else [])
     reach, tall = max(BIG[sc][1] for sc in scenes) * k, max(BIG[sc][2] for sc in scenes) * k
     if kind in GREAT:
         # (a great blow: under the hero's own scenes lies the blow itself, in its element's colours: a white-hot core that tears open,

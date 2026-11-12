@@ -215,6 +215,29 @@ short, the least seen of the three stages; a second kind of barred ring is still
 The Beastmaster's aftermath is now a trail on the ground and motes, so no green ring lies across the wolves; the strike's green
 cracks under them remain.
 
+## Batch 10: wolves in profile, stone that is stone, a show cut short
+
+`docs/samples/blender-fx/audit-batch10-393-1.jpg` (the Beastmaster, the Geomancer, the Gorgon, the Knight) and
+`audit-batch10-beastmaster-393.jpg` (the Beastmaster at full size, as finally built).
+
+- **The wolves' heads** are seen from the side, so the outline is a wolf's: a long snout out across the view (one to the left, the next
+  to the right), a brow, two tall ears pricked back, a thick ruff, the near eye amber. The earlier ones faced the camera and read as
+  ghosts or cats.
+- **Nothing green across the wolves**: the strike's second scene is a short trail on the ground behind each wolf (it was cracks, then
+  for one build a ring, which was worse); the aftermath is a trail and motes. What is left under each wolf is the thin ring it lands
+  in.
+- **Plain light for what has its own colours** (the director's note after the wolves): an ultimate's slabs are stone's own grey-brown
+  lit plainly (`dark` in `slab`: the Geomancer's wall, the slab the Knight plants, the Peasant's, the Juggernaut's, the Blood
+  Gargoyle's); what the Gorgon's gaze leaves on a foe is grey rock, not a crystal in her poison's green (`stone` in `crystal`, asked
+  for by her strike alone: `OWN_OPT`). In the sheet: grey standing stones for the Geomancer, grey peaks over each petrified foe, a
+  grey slab under the Knight's gold dome. Left as they are, on purpose: ice, crystal, thorns and bone in a spell or a skill are the
+  element's own stuff and keep its light; the guardians are pale spirits and keep the wind's pale light. The spells that use `slab` and
+  `crystal` were rendered again by this change and came out the same (their options did not change).
+- **A show cut short at a fight's end** (the freeze fix, 0.525.0): read in the code, not photographed. The queue sends the moment
+  straight to its aftermath, a second of it at most (`fightOver`, `OVER_MS`), and the page plays the aftermath sheet over what is left
+  (`aftermath(b, m, Math.max(300, q.left))`), so all its frames play in that second: it reads, faster. A wind-up or strike sheet
+  already playing finishes its own run (1.3 s at most) on the board, under the result card; nothing waits on it.
+
 ## The audit of all 70
 
 To come, in batches: for each ultimate, what it does in the sim, what 0.499 showed, what main shows now, and the verdict; then the ten
