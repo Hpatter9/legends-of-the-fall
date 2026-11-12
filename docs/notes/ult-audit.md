@@ -198,6 +198,23 @@ First-use loading was checked as the director asked, since it would touch every 
 hero's wind-up, strike and aftermath as it begins (`warmBfx` in `Fx.show`), two at a time inside the budget, before any ultimate can
 be charged; in every photographed fight the wind-up was the hero's own on its first cast. No change was needed.
 
+## Batch 9: the aftermaths
+
+About forty aftermaths shared their two scenes with another hero's in another colour (seven were a cloud and motes, seven a ring and
+motes). Each of the 70 now has its own pair, what the ability leaves (`AFTER_OWN` in `tools/blender-fx/effects.py`): the Wizard's
+cracked ground burning, the Arc Blade's cracks with a last bolt, the Samurai's line and a veil, the Wanderer's ring and hearts, the
+Sage's sigil under a fading dome, the Blood Gargoyle's cracks and fallen slabs, the Kraken's ring and spout, the Werewolf's ring and
+claw marks. The recipe refuses two heroes with the same pair whatever their colours, and `test/ult-audit.test.ts` now holds that for
+all three stages. `docs/samples/blender-fx/audit-grey-aftermaths.jpg` is all 70 in grey; `audit-batch9-aftermaths-393-1.jpg` three
+of them in a fight.
+
+Still alike in grey, said plainly: several aftermaths are a ring with upright bars or tongues (Ilyra, the Priestess, the Inquisitor,
+the Seraph, the Illusionist), since `halo`, `pillar` and `veil` over a ring or sigil make much the same shape. They are thin and
+short, the least seen of the three stages; a second kind of barred ring is still owed.
+
+The Beastmaster's aftermath is now a trail on the ground and motes, so no green ring lies across the wolves; the strike's green
+cracks under them remain.
+
 ## The audit of all 70
 
 To come, in batches: for each ultimate, what it does in the sim, what 0.499 showed, what main shows now, and the verdict; then the ten

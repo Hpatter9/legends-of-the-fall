@@ -59,8 +59,8 @@ test('a strike plays where the ability lands: on each fighter it touches, round 
   assert.deepEqual(BFX_CLIPS['ult-cleric-strike'].sc, ['souls', 'motes', 'ring']);
 });
 
-test('with the colour taken out no two heroes strike alike or wind up alike: each has its own scenes, in its own order', () => {
-  for (const stage of ['strike', 'windup'] as const) {
+test('with the colour taken out no two heroes strike alike, wind up alike or leave the same aftermath: each has its own scenes, in its own order', () => {
+  for (const stage of ['strike', 'windup', 'aftermath'] as const) {
     const seen = new Map<string, string>();
     for (const kind of Object.keys(SHOWCASES)) {
       const c = BFX_CLIPS[`ult-${kind}-${stage}`];
