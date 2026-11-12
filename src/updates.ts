@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.541.0',
+    date: '2026-11-12',
+    title: 'Smoother waves, and a Diagnostics page',
+    notes: ['The next battlefield is painted ahead a little each frame as a wave is won, not all at once at the result and again at the next deploy.', 'A fight no longer makes the page measure itself every frame, and a spell\'s painted sheet is made ready before the fight, not on its first cast.', 'Settings has a Diagnostics page: it lists every stall of half a second or more with what the game was doing, and a Copy button to send it.'],
+  },
+  {
     version: '0.540.0',
     date: '2026-11-12',
     title: 'Fire that reads as fire; the Mummy\'s sand',

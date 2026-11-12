@@ -11,6 +11,7 @@ import { loadImage } from './loadImage';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, wayTo, type Battle, type BattleEvent, type Unit } from '../sim/battle';
 import { isBoss } from '../sim/foes';
+import { diagMark } from '../diag';
 import { RELICS } from '../sim/relics';
 import { isPainted, relicIcon } from './items';
 /** The relics' icons as textures, kept once loaded (the 16x16 tiles are scaled up crisp with nearest-neighbour, the paintings smooth). */
@@ -206,6 +207,7 @@ export class Fx {
   private skillStack: { txt: Text; cut: () => void }[] = [];
   /** The skill each caster last cast (its blows' hits read it: a skill or its ultimate). */
   private casting = new Map<number, string>();
+  private castOnce = new Set<string>();
   /** The small heals waiting to be shown (BATTLE-FEEL, `HealPool`). */
   private heals = new HealPool();
   /** The skills cast this tick, by caster (`show`). */
@@ -1523,6 +1525,11 @@ export class Fx {
       this.skillStack = this.skillStack.filter((l) => !l.txt.destroyed);
       while (this.skillStack.length >= 3) this.skillStack.shift()!.cut();
       this.skillStack.push(this.label(skillShown(by.unit, name), by.x, by.y - by.tall - 20, ultimate ? 0xfff2a0 : boss ? 0xff9a8a : 0xffe27a, ultimate || boss ? 15 : 13, 1200));
+    }
+    // (WAVE-DELAY: a skill's first use of the visit is said to the stops' log: its art may be handed to the graphics card on this frame)
+    if (!this.castOnce.has(name)) {
+      this.castOnce.add(name);
+      diagMark(`the first use of ${name}`);
     }
     this.casting.set(byId, name);
     const signature = kitSignature(name);
