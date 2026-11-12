@@ -79,6 +79,7 @@ import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
 import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, ultPlace, ultSpots, ultLinked, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
+import { SHOWCASES } from '../ultShowRules';
 import { spellAnchorY, spellPart, spellScale } from './spellLooks';
 import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinematicArt';
 import { flicker } from './cinematicRules';
@@ -383,6 +384,8 @@ export class Fx {
       this.bfxWarmed.add(b);
       const kinds = new Set(b.units.filter((x) => x.side === 'hero').map((x) => x.def));
       void warmBfx([...kinds].flatMap((kind) => (['windup', 'strike', 'aftermath'] as UltStageName[]).map((stage) => ultBfx(kind, stage, ultWeight(kind)))));
+      // (ULT-AUDIT: but the one small clip a healer's light or the Gorgon's gaze runs out in is: it must be there the first time)
+      warmBfx([...kinds].filter((kind) => ultLinked(kind) && SHOWCASES[kind]).map((kind) => beatBfx('link', SHOWCASES[kind].el)));
       // (the beats of their showcases are not asked for here: each loads the first time it is played, the older parts playing that once,
       // so a fight begins with as little held as it can)
     }
@@ -691,7 +694,13 @@ export class Fx {
       // friend; a wall's tiles are the ones the caster's wall stands on now)
       const friends = () => b.units.filter((u) => u.side === 'hero' && u.alive && u.owner === undefined && u.id !== me?.id).map((u) => u.id);
       const walled = () => (b.walls ?? []).filter((w) => w.by === me?.id && w.until > b.t).map((w) => ({ u: w.i % b.board.w, v: Math.floor(w.i / b.board.w) }));
-      const all = touched && { struck: touched.struck, helped: place === 'friends' && !touched.helped.length ? friends() : touched.helped, tiles: place === 'tiles' && !touched.tiles.length ? walled() : touched.tiles };
+      // (and what the caster called up arrives where each of them stands: a beast for each wolf)
+      const called = () => b.units.filter((u) => u.owner === me?.id && u.alive).map((u) => u.id);
+      const all = touched && {
+        struck: place === 'each' && !touched.struck.length ? called() : touched.struck,
+        helped: place !== 'each' && !touched.helped.length ? friends() : touched.helped,
+        tiles: place === 'tiles' && !touched.tiles.length ? walled() : touched.tiles,
+      };
       const own = place !== 'one' && place !== 'self' && all && me && size >= 1 ? ultSpots(place, all, me.id, settings().saver ? ULT_BFX.SPOTS_SAVER : ULT_BFX.SPOTS) : spots;
       const at: [number, number][] = [];
       for (const s of own) {

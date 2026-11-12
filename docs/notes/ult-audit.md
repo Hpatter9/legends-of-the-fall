@@ -116,6 +116,25 @@ Two things under these that were wrong before and are now right:
 Three new scenes in `tools/blender-fx/scenes.py`: `spirits` (redrawn as guardians), `beast` (a wolf: body, chest, head and snout, ears,
 legs, tail, an eye, leaping out of smoke) and `eyes` (pairs of eyes opening and blinking in dark brush).
 
+## Batch 4: one beast for each wolf, the wall's slabs, what the fight knows
+
+`docs/samples/blender-fx/audit-batch4-393.jpg` (the usual eight moments) and `audit-batch4-blow-393.jpg` (the Geomancer and the Gorgon
+60, 200, 400 and 700 ms after the blow lands: `EARLY=1` in `tools/blender-fx/ult-shots.mjs`).
+
+- **Conjure Animals**: a beast now leaps out where each wolf stands. What is called up is not in the cast's events, so the strike asks
+  the fight for the units the caster called (`Unit.owner`).
+- **Mountain's Embrace**: why it was one cluster: the wall is laid only where a line across the foes' way is free (`chokeLine`,
+  `raiseWall`), and in the photographed fight that was one tile or none. The strike now raises a slab on each tile the wall does stand
+  on, and then on the caster and each friend (the other half of the ability, a shield on each). In the photograph: slabs and rings on
+  five spots. It is still not a long wall when the sim lays a short one; that is the ability's own doing.
+- **The line from the caster** (a healer's light, the Gorgon's gaze): its one small clip is asked for as a fight with such a hero in it
+  begins, so it is there for the first cast, and the clip is larger (a small flare, not motes). NOT CONFIRMED BY EYE: in the photographs
+  taken just after the blow the moment's flash is over the field and I cannot pick the line out. It needs a look in motion.
+
+Found on the way, and not yet dealt with: under every "burst" and "bless" showcase the same two beats play in the showcase's colour
+before the blow, a ring going out along the ground and a ring of small tongues (`call` and `nova`). They are a second sameness, in the
+showcase rather than in the stages, and belong with the next batch.
+
 ## The audit of all 70
 
 To come, in batches: for each ultimate, what it does in the sim, what 0.499 showed, what main shows now, and the verdict; then the ten
