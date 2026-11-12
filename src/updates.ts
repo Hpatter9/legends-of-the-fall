@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.510.0',
+    date: '2026-11-12',
+    title: 'Voltara\'s call, remade in lightning',
+    notes: ['Voltara\'s call is rebuilt: her coil cut in light on the ground, the sky splitting in braided bolts as she arrives, then forks walking across the foes.', 'A thunderclap lands with each, and the ground is left crackling with falling sparks.'],
+  },
+  {
     version: '0.509.0',
     date: '2026-11-12',
     title: 'Gorm\'s call, remade in stone',
