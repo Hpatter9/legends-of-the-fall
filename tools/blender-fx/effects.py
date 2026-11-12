@@ -240,7 +240,7 @@ PLACE = dict(
 # constellation leaves, the halo a nova's healing lands as).
 THIRD = dict(bellWarden='gust', cleric='ring', timeWitch='ring', astrax='sigil', banneret='flames',              seaReaver='ring', minotaur='trail', shambler='geyser', rifleBot='spiral', demonSwordsman='spiral', werewolf='flare', corsairSurgeon='ring',
              wolfBard='ring', warDrummer='shockwave', lancer='sparks',
-             vael='eclipse', kunoichi='ring', barbarian='gust', bloodGargoyle='crack', siegeBot='smoke', wizard='smoke', astrologer='sigil', seraph='ring')
+             vael='eclipse', barbarian='gust', bloodGargoyle='crack', siegeBot='smoke', wizard='smoke', astrologer='sigil', seraph='ring')
 # ULT-AUDIT: every hero's wind-up is the ability itself beginning, in place of a circle and a pillar by its weight: the Cleric's wisps
 # rise inside the ring the spirits will keep, the Lightning Mage's cloud gathers, the Knight plants a slab and a dome closes, the Kraken's
 # whirlpool turns. No two heroes have the same scenes in the same order, whatever their colours.

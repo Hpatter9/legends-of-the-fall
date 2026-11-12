@@ -44,6 +44,7 @@ let errors = 0;
 async function open(eidolons) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, hasTouch: true, reducedMotion: REDUCED ? 'reduce' : 'no-preference' });
   const page = await ctx.newPage();
+  if (process.env.TRACE) page.on('console', (m) => { if (m.text().startsWith('TRACE')) console.log(m.text()); });
   page.on('pageerror', (e) => { errors++; console.log('PAGE ERROR', e.message); });
   await page.addInitScript(([owned, xp, eid, first]) => {
     let z = 0x2545f491;
@@ -60,6 +61,18 @@ async function open(eidolons) {
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
   await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
+  // (TRACE=1: each stage's rendered clip as it is asked for: where, how many spots, and whether its frames were held)
+  if (process.env.TRACE) await page.evaluate(() => {
+    const g = window.__game;
+    const fx = g.fx ?? g.view?.fx ?? g.board?.fx;
+    if (!fx) { console.log('TRACE no fx on the game'); return; }
+    for (const name of ['ultAfter', 'ultImpact']) {
+      const was = fx[name].bind(fx);
+      fx[name] = (...a) => { console.log('TRACE', name, JSON.stringify(a.slice(1, 6)).slice(0, 300)); return was(...a); };
+    }
+    const was = fx.bfxUlt.bind(fx);
+    fx.bfxUlt = (...a) => { const ok = was(...a); console.log('TRACE bfxUlt', a[0], a[1], Math.round(a[2]), Math.round(a[3]), a[4], a[5], 'drawn', ok); return ok; };
+  });
   // (COST=1: the loader's cost on a slow phone. The CPU is throttled six times; every hand-over of a picture to the graphics card is
   // timed (with the card made to finish), every frame's own work is timed, and cutting an atlas's frames is timed on its own)
   if (process.env.COST) {

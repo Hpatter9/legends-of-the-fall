@@ -677,11 +677,24 @@ director passed; they are small, and are not changed here.)
   so the wings are not lost among them. In the photograph: wide gold rings over the allies with a fan of feathers above them.
   A painted figure has its prompt in `docs/notes/ilyra-art-prompts.md`.
 
-`docs/samples/blender-fx/audit-later-4-393.jpg` (the Bell Warden above, the Kunoichi below; four moments early in the strike, taken
-after the push): the Bell Warden's strike does show at the right moment, purple hoops on the ground with the cracks standing up
-through them; my "one small hoop" was a frame too early. The Kunoichi's row shows her cut, the smoke where she stood, and three
-cuts over rings on the foes; those rings are her strike's own and are still large. Her smaller marks come after and are still
-not in a frame.
+### Three made to show: the toll's strike, the tide, the Kunoichi's marks
+
+`docs/samples/blender-fx/audit-later-4-393.jpg` (rows: the Bell Warden and the Sea Reaver from the blow on, the Kunoichi as her
+strike ends; four moments each, the screen's flash off). A strike can add small clips of its showcase's beyond its own
+(`ULT_EXTRA` in `blenderFxRules.ts`, a pure rule with a test): a `touch` on each foe struck as the strike's ring reaches it, a
+`wake` along the ground down a line, a `land` on the caster.
+
+- **The Bell Warden**: each foe his toll strikes is shaken by a small ring as the hoop of sound reaches it (sooner for a nearer
+  foe: `touchDelay`). In the photograph's first moment: wide purple hoops on the ground round him, the cracks standing up through
+  them, and small rings on the foes inside. (My earlier "one small hoop" was a frame too early.)
+- **The Sea Reaver**: foam runs along the ground from him down the whole line ahead of the strike on each spot, and a puff of
+  spray bursts where he lands. In the photograph's first moment: a pale cloud of spray where he lands and a streak of foam and
+  dust running from it to the foe he strikes. Honest: one moment only; it is quick, and the line in this fight was two tiles.
+- **The Kunoichi**: the large ring that lay under each of her cuts is gone (her strike is the crescent and the crossed cut
+  alone), so the small marks are seen. In the photograph's first moment: three purple cuts with a small sigil under each.
+
+The photographer has `TRACE=1` now (each stage's clip as it is asked for: where, and whether its frames were held); it showed
+the Kunoichi's marks were drawn all along and hidden under the rings.
 
 ## The audit of all 70
 
