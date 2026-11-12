@@ -100,7 +100,7 @@ test('a strike on each one the ability touched finds them: the friends helped (a
   for (const kind of ['kunoichi', 'samurai', 'cleric', 'beastmaster']) assert.ok(!ultLinked(kind), kind);
   assert.ok(ULT_LINK_MS >= 100 && ULT_LINK_MS <= 400);
   // (what the abilities are: beasts bursting out where each is called, stone creeping over each foe, slabs along the wall's tiles, shields)
-  assert.deepEqual(BFX_CLIPS['ult-beastmaster-strike'].sc, ['beast', 'crack']);
+  assert.deepEqual(BFX_CLIPS['ult-beastmaster-strike'].sc, ['beast', 'trail']);
   assert.deepEqual(BFX_CLIPS['ult-beastmaster-windup'].sc, ['eyes', 'swarm']);
   assert.deepEqual(BFX_CLIPS['ult-gorgon-strike'].sc, ['crystal', 'smoke']);
   assert.deepEqual(BFX_CLIPS['ult-gorgon-windup'].sc, ['vines', 'eye']);
