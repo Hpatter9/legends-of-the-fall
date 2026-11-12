@@ -341,6 +341,27 @@ Kunoichi, the Mercenary, the Gunslinger). Thirty-three heroes remain to be looke
   fire that visibly runs out from her mouth.
 - **Hundred-Hand Strike (the Ninja Monk)**: photographed again, and again another fighter's fire lies over the frame. NOT CONFIRMED.
 
+### The next ten, 0.499 above and now below
+
+`docs/samples/blender-fx/audit-fullsize-4-393.jpg` (the Ranger, the Paladin, Yamabushi, the Juggernaut, the Warlock) and `-5` (the
+Tyrant, the Shambler, the Reaper, the Illusionist, the Demon Swordsman); `tools/blender-fx/full_pass_two.py`.
+
+| Hero | 0.499 | Now | Shows the ability? | Mistaken for another? |
+| --- | --- | --- | --- | --- |
+| Ranger, Entangle | three green balls, then a green ring | vines whipping up round her; vines standing on each foe; a vine dome in a ring on each | yes: a net of vines on every foe | Orrun's vine domes are on allies, hers on foes: alike in shape, different in where |
+| Paladin, Holy Nova | a gold ball, then a gold ring | a pillar of light on him; a ring of gold tongues bursting out round him with a strike from above | yes: a nova from where he kneels | no |
+| Yamabushi, Tempest | two pale balls, then pale rings | a great funnel of wind round him, growing, then breaking into gusts | yes: a gale | the Wizard's wind-up was this funnel until batch 11; now only his |
+| Juggernaut, Fissure | a pale dust ball and ring | a slab under his foot; cracks running out across the ground; rock spires standing in them | yes: the ground splitting, spires rising; the cracks are thin and pale | no |
+| Warlock, Circle of Death | three purple balls, purple rings | an orb over a sigil; sigil circles spreading round him and under the foes | yes: a circle of death | Astral Sphinx and Vael also leave sigils; his are the only ones that are the whole effect |
+| Tyrant, Reign of Terror | two purple balls, purple rings | red spikes and climbing rings round him; rings and spikes bursting out | yes: terror going out from him | no |
+| Shambler, Plague Tide | a green ball, a green ring | a fume where he sinks; cracks; a spout of rot bursting up out of them | yes: bursting out of the grave-earth | no |
+| Reaper, Harvest of Souls | a purple ball, purple rings | wisps round him; a great crescent sweep; rings after | yes: a scythe's sweep | YES: Vael's strike is also a great purple crescent. One of the two wants changing (Vael's should be gold, by his own words) |
+| Illusionist, Hall of Mirrors | a purple ball, a purple ring | upright panes of light standing in a row, then a portal | yes: mirrors | no |
+| Demon Swordsman, Metamorphosis | a red ball, a red ring | a mass of flame on him; a ring of chain round him with a flare and a spiral | yes: chains, and a change on him | no |
+
+All ten read as their ability, and at 0.499 all ten were a ball and a ring in a colour. One pair is alike: the Reaper and Vael.
+Twenty-five of the 48 are judged; twenty-three remain.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
