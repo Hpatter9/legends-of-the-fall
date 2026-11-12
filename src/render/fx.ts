@@ -63,7 +63,7 @@ import { tierRing } from './signatures';
 import { kitSignature } from './kitLooks';
 import { isMythic } from '../sim/mythicRules';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
-import { arcStyle, bits, FLASH_MAX, FLASH_MS, GLOW, HealPool, SPELL_ELEMENT, numberShown, towards, WALL_DIM, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
+import { arcStyle, bits, fallSlowMs, ultCastBeat, FLASH_MAX, FLASH_MS, GLOW, HealPool, SPELL_ELEMENT, numberShown, towards, WALL_DIM, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
@@ -598,10 +598,11 @@ export class Fx {
         }
         if (e.killed && target.side === 'foe' && target.maxHp >= BIG_FOE_HP) {
           this.anim(magic.bloodExplosion, to.x, to.y - to.tall * 0.45, 2.2, 60);
-          // (the boss's own beat: a fire burst on it, smoke, and a slow moment for the fall)
+          // (a big foe's own beat: a fire burst on it, smoke; and for a boss a slow moment for the fall)
           this.anim(magic.fireExplosion, to.x, to.y - to.tall * 0.45, 3.2, 70);
           for (let i = 0; i < 3; i++) this.particles.spawn({ frames: VFX.smokeDark, x: to.x + jitter(18), y: to.y - to.tall * 0.4 + jitter(10), scale: 1.6, life: 900, vy: -0.03, grow: 0.0006, alpha: 0.8 });
-          this.slowLeft = 700;
+          // (WAVE-DELAY: the slow moment is a boss's alone; any other big foe keeps its burst, its flash and its shake)
+          this.slowLeft = Math.max(this.slowLeft, fallSlowMs(isBoss(target.def), this.calm()));
           this.flash(0.35, 120);
           this.trauma = Math.min(1, this.trauma + 0.4);
         }
@@ -1555,8 +1556,10 @@ export class Fx {
         this.flash(0.35, 110);
         this.trauma = Math.min(1, this.trauma + 0.45);
         if (!signature) play(this.particles, packKey(el, 'pillar'), x, y - by.tall * 0.6, { scale: 3.2, frameMs: 80, alpha: 0.7, tint });
-        this.slowMo(450);
-        if (!this.calm()) this.stopLeft = Math.max(this.stopLeft, 70);
+        // (WAVE-DELAY: the slow beat and the freeze are the full moment's; the short version never slows the fight)
+        const beat = ultCastBeat(epic);
+        if (beat.slow) this.slowMo(beat.slow);
+        if (beat.stop && !this.calm()) this.stopLeft = Math.max(this.stopLeft, beat.stop);
       });
     } else if (by.unit.side === 'hero' && !signature) {
       // (an ordinary hero skill ends in a ring of its element, a little bigger than the cast's circle)

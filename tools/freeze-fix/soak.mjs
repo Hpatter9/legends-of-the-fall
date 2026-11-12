@@ -70,7 +70,7 @@ let seed = 0x9e3779b9;
 const rnd = () => ((seed = (Math.imul(seed ^ (seed >>> 15), 0x2c1b3c6d) + 0x6d2b79f5) | 0) >>> 0) / 4294967296;
 const pick = (a) => a[Math.floor(rnd() * a.length)];
 
-const totals = { waves: 0, flags: [], slow: [], ends: [], faults: { failed: 0, late: 0 }, hides: 0, skips: 0, ults: 0, horns: 0, spells: 0 };
+const totals = { waves: 0, flags: [], slow: [], ends: [], endsDown: 0, endsLost: 0, faults: { failed: 0, late: 0 }, hides: 0, skips: 0, ults: 0, horns: 0, spells: 0 };
 
 /** The watchdog and the hidden-tab stand-in, put in the page before the game loads. */
 function inPage([STALL, LONG, HELD, SLOW]) {
@@ -256,7 +256,8 @@ async function begin(page, n, mode) {
     const k = pick(HEROES);
     if (!party.includes(k)) party.push(k);
   }
-  const o = { party, army: ARMIES[n % ARMIES.length], stage: RUNS ? 1 + ((n * 4) % 11) : 2 + ((n * 7) % 28), speed: 1 + (n % 3), seed: 1000 + Math.floor(rnd() * 1e6), eid: EIDOLONS[n % EIDOLONS.length] };
+  const o = { party, army: ARMIES[n % ARMIES.length], // (every third run is a hard one, deep in the army, so heroes fall, lives are spent and waves end with a fallen hero counting down)
+  stage: RUNS ? (n % 3 === 2 ? 24 + (n % 5) : 1 + ((n * 4) % 11)) : 2 + ((n * 7) % 28), speed: 1 + (n % 3), seed: 1000 + Math.floor(rnd() * 1e6), eid: EIDOLONS[n % EIDOLONS.length] };
   await page.evaluate((o) => {
     const g = window.__game;
     // (a card that is up is closed by its own button, as a player would)
@@ -330,7 +331,7 @@ async function waveEnd(page, mode, o, note) {
   const look = () => page.evaluate(() => {
     const g = window.__game;
     const vis = (el) => !!el && !el.hidden && el.offsetParent !== null;
-    return { phase: g.b.phase, result: vis(document.getElementById('result')), screens: window.__screens?.() ?? [], over: !!g.run.over, cleared: !!g.run.cleared, home: !!g.homeUp, queue: g.ultm.queue.waiting + (g.ultm.queue.current ? 1 : 0), call: !!g.eid.playing };
+    return { down: g.b.units.filter((u) => u.side === 'hero' && !u.alive && u.owner === undefined).length, lives: g.b.lives?.left ?? null, phase: g.b.phase, result: vis(document.getElementById('result')), screens: window.__screens?.() ?? [], over: !!g.run.over, cleared: !!g.run.cleared, home: !!g.homeUp, queue: g.ultm.queue.waiting + (g.ultm.queue.current ? 1 : 0), call: !!g.eid.playing };
   });
   await page.evaluate(() => { window.__endB = window.__game.b; });
   const first = await look();
@@ -344,6 +345,9 @@ async function waveEnd(page, mode, o, note) {
     ms += 250;
   }
   totals.ends.push(ms);
+  // (TEN-LIVES: a wave that ended with a hero down and a life to raise it, its countdown cut short by the end)
+  if (first.down > 0 && first.lives > 0) totals.endsDown++;
+  if (first.phase === 'lost') totals.endsLost++;
   if (ms > END_MS) await note({ kind: 'waveEnd', ms, message: `nothing shown for ${ms} ms after the fight ended${ms >= 60000 ? ' (never, in a minute)' : ''}; as it ended: ${first.queue} shows playing or waiting, a call ${first.call}`, state: await page.evaluate(() => window.__dump()) }, o);
   if (s.phase === 'fight') return true;
   // (the player's part)
@@ -482,7 +486,7 @@ const results = await Promise.all(MODES.map((m) => soak(m).catch((e) => ({ mode:
 const sum = { ...totals, results, cpu: CPU, faultsOn: FAULTS };
 writeFileSync(`${OUT}/soak.json`, JSON.stringify(sum, null, 2));
 console.log(`\nslow frames (over ${SLOW_MS} ms of work): ${totals.slow.length}, the worst ${Math.max(0, ...totals.slow.map((x) => x.ms))} ms`);
-if (totals.ends.length) console.log(`wave ends: ${totals.ends.length}; from the fight's end to something shown: ${[...totals.ends].sort((a, b) => a - b)[Math.floor(totals.ends.length / 2)]} ms at the middle, ${Math.max(...totals.ends)} ms at the worst, ${totals.ends.filter((x) => x > END_MS).length} over ${END_MS} ms`);
+if (totals.ends.length) console.log(`wave ends: ${totals.ends.length}; from the fight's end to something shown: ${[...totals.ends].sort((a, b) => a - b)[Math.floor(totals.ends.length / 2)]} ms at the middle, ${Math.max(...totals.ends)} ms at the worst, ${totals.ends.filter((x) => x > END_MS).length} over ${END_MS} ms; ${totals.endsDown} ended with a hero down and lives left, ${totals.endsLost} lost`);
 console.log(`fights ${totals.waves}; flags ${totals.flags.length} (${[...new Set(totals.flags.map((f) => f.kind))].join(', ') || 'none'}); ultimates by hand ${totals.ults}, horns ${totals.horns}, spells ${totals.spells}, skips ${totals.skips}, tab hidden ${totals.hides} times; sheets failed ${totals.faults.failed}, late ${totals.faults.late}`);
 // (the frame times are only real with `--real`: the stepped clock draws one picture a second)
 for (const r of results) console.log(`  ${r.mode}: ${r.waves} fights, most texture memory ${r.peak} MB, ${STEPPED ? '' : `longest frame ${r.longest} ms, longest task ${r.task} ms, ${r.fps} frames a second in fights, `}page errors ${r.errors.length}`);
