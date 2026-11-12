@@ -1603,7 +1603,7 @@ class Game {
   private waveEndBelt(dt: number, over: boolean): void {
     if (!over) return void (this.overFor = 0);
     this.overFor += Math.min(dt, 250);
-    const shown = !$('result').hidden || openScreens().length > 0 || this.sceneHold > 0 || !!this.revive || this.homeUp || !!this.resultDone;
+    const shown = !$('result').hidden || openScreens().length > 0 || this.sceneHold > 0 || this.homeUp || !!this.resultDone;
     if (!waveEndStuck(this.overFor, shown)) return;
     console.warn('a fight was over and its result never came: the flow is pushed on', JSON.stringify({ settled: this.settled, endWait: Math.round(this.endWait), moment: this.ultm.queue.current?.name ?? null, waiting: this.ultm.queue.waiting, call: this.eid.playing, duel: this.duelShow.ending, sceneHold: this.sceneHold }));
     this.overFor = 0;
