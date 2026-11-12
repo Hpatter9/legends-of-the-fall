@@ -59,6 +59,33 @@ async function open(eidolons) {
   await page.waitForTimeout(1500);
   await page.evaluate(() => document.getElementById('tipSkip')?.click());
   await page.addStyleTag({ content: '#tip, .tip, #tipBox, .duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
+  // (COST=1: the loader's cost on a slow phone. The CPU is throttled six times; every hand-over of a picture to the graphics card is
+  // timed (with the card made to finish), every frame's own work is timed, and cutting an atlas's frames is timed on its own)
+  if (process.env.COST) {
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 6 });
+    await page.evaluate(() => {
+      const g = window.__game;
+      const r = g.app.renderer;
+      const ts = r.texture;
+      window.__cost = { ups: [], frames: [], cut: null };
+      const up = ts.onSourceUpdate.bind(ts);
+      ts.onSourceUpdate = (src) => {
+        const t0 = performance.now();
+        up(src);
+        r.gl.finish();
+        const res = src.resource;
+        window.__cost.ups.push({ w: src.pixelWidth, h: src.pixelHeight, of: res?.constructor?.name ?? typeof res, ms: +(performance.now() - t0).toFixed(1), fight: !!g.b && g.b.phase === 'fight', label: String(src.label ?? '') });
+      };
+      const frame = g.frame.bind(g);
+      g.frame = (a, b) => {
+        const t0 = performance.now();
+        frame(a, b);
+        const ms = performance.now() - t0;
+        if (ms > 30) window.__cost.frames.push({ ms: +ms.toFixed(1), fight: !!g.b && g.b.phase === 'fight', show: !!g.ultm?.queue?.current });
+      };
+    });
+  }
   // (NOFLASH=1: without the moment's flash of colour over the field as the blow lands, to see what plays under it)
   if (process.env.NOFLASH) await page.addStyleTag({ content: '.umFlash { display: none !important; }' });
   await page.evaluate(() => {
@@ -205,6 +232,26 @@ for (const pick of PICKS) {
       await page.screenshot({ path: `${OUT}/${pick}-${W}-${7 + i}-after.png` });
     }
     const after = await speedNow(page);
+    if (process.env.COST) {
+    const cost = await page.evaluate(() => {
+      // (cutting a large atlas's frames: 400 textures over one source, as the loader makes when an atlas arrives)
+      const g = window.__game;
+      let any = null;
+      const walk = (n) => { if (!any && n.texture?.source && n.texture.frame) any = n.texture; for (const c of n.children ?? []) walk(c); };
+      walk(g.app.stage);
+      if (any) {
+        const T = any.constructor, R = any.frame.constructor;
+        const t0 = performance.now();
+        const made = [];
+        for (let i = 0; i < 400; i++) made.push(new T({ source: any.source, frame: new R(0, 0, 8, 8) }));
+        window.__cost.cut = +(performance.now() - t0).toFixed(1);
+        for (const t of made) t.destroy(false);
+      }
+      return window.__cost;
+    });
+    const big = cost.ups.filter((u) => u.w * u.h >= 200 * 200);
+    console.log('cost', pick, JSON.stringify({ uploads: big.length, inFight: big.filter((u) => u.fight), slowFrames: cost.frames.length, worst: cost.frames.sort((a, b) => b.ms - a.ms).slice(0, 6), cut400: cost.cut }));
+    }
     console.log('ok', pick, `${W}x${H}`, JSON.stringify({ mem: await page.evaluate(() => window.__bfxMem?.()), weight: st.weight, shape: st.shape, show: st.show, windup: st.windup.ms, strike: st.strike.ms, aftermath: st.aftermath.ms, total: st.total, measured: t + rest, before, during: [...new Set(speeds)], after }));
   } catch (e) {
     console.log('FAILED', pick, String(e.message).split('\n')[0]);
