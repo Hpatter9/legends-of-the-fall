@@ -3,6 +3,7 @@
 // Fields tileset's own. The column sprite is drawn as in Chronos's raid board (tacticsView.ts
 // `column`).
 
+import { COLUMN_ROOM, WARM, warmMore } from './boardWarmRules';
 import { Container, Graphics, Rectangle, Sprite, Texture, type Renderer } from 'pixi.js';
 import { LAVA_LANDS, tileAt, type Area, type Board, type HazardKind, type Tile } from '../sim/board';
 import { loadImage } from './loadImage';
@@ -263,7 +264,9 @@ const BAKED_MAX = 20;
 
 export class BoardView {
   readonly root = new Container();
-  private columns = new ColumnTextures<Texture>((texture) => texture.destroy(true));
+  // (WAVE-DELAY: room for the board fought on, the one before it and the next: a board built a second time (the march, then the
+  // fight) or baked into the scenery finds its columns still here, and is not painted again)
+  private columns = new ColumnTextures<Texture>((texture) => texture.destroy(true), COLUMN_ROOM.entries, COLUMN_ROOM.bytes);
   get columnStats() { return this.columns.stats; }
   private marks: Graphics[] = [];
   private rings: Graphics[] = [];
@@ -311,6 +314,8 @@ export class BoardView {
     const hold = FLOORS[b.area].hold;
     if (!floorArt(hold)) void loadFloorArt(hold).then((got) => got && this.board === b && this.repaint());
     this.built = this.section(b, look, { rot, ou: 0, ov: 0, w: b.w, d: b.d });
+    // (WAVE-DELAY: what was painted ahead for this build is the section's own now)
+    this.dropWarm();
     // (LAND-IDENTITY: what stands round the board and on it, once the land's pieces are here: `landRimRules.ts`)
     this.rim = [];
     this.rimTex?.destroy(true);
@@ -477,6 +482,7 @@ export class BoardView {
 
   /** Bake one waiting section (called each frame, so a long map comes up a section a frame). */
   pump(): void {
+    this.pumpWarm();
     const s = this.toBake[0];
     if (!s || !art) return;
     // (a section is baked once, so it waits a moment for its land's floor sheet: `floorArt.ts`)
@@ -566,7 +572,47 @@ export class BoardView {
   }
 
   /** The tiles of a board, laid as the frame says (turned, and its footprint's corner some tiles from the origin). */
-  private section(b: Board, look: Look, f: Frame): Built {
+  /** WAVE-DELAY (docs/notes/wave-delay.md): the next board's columns painted ahead, a few a frame, so that building it is not one
+   *  long stop at the wave's end: `prewarm` names the board, `pump` paints `warmSlice` of it each frame and holds what it painted, and
+   *  the build that follows finds every column already there. */
+  private warm: { b: Board; look: Look; rot: Rot; at: number; leases: ColumnLease<Texture>[] } | null = null;
+  private warmFloor: { b: Board; floor: FloorTile[] | null } | null = null;
+  prewarm(b: Board, look: Look = {}, rot: Rot = 0): void {
+    if (this.warm?.b === b) return;
+    this.dropWarm();
+    this.warm = { b, look, rot, at: 0, leases: [] };
+  }
+  private dropWarm(): void {
+    for (const l of this.warm?.leases ?? []) l.release();
+    this.warm = null;
+    this.warmFloor = null;
+  }
+  /** Paint the next few of the warmed board's columns: for `WARM.FRAME_MS` of work at most, `WARM.LEAST` tiles at least. */
+  private pumpWarm(): void {
+    const w = this.warm;
+    if (!w || !art) return;
+    const n = w.b.w * w.b.d;
+    if (w.at >= n) return;
+    // (its land's floor sheet first, as a section's bake waits for it: a column painted without it would be painted again)
+    const hold = FLOORS[w.b.area].hold;
+    if (!floorArt(hold) && !this.floorMissing.has(hold)) {
+      if (!this.floorAsked.has(hold)) {
+        this.floorAsked.add(hold);
+        void loadFloorArt(hold).then((got) => !got && this.floorMissing.add(hold));
+      }
+      return;
+    }
+    const t0 = performance.now();
+    let done = 0;
+    while (w.at < n && warmMore(done, performance.now() - t0)) {
+      const to = Math.min(n, w.at + WARM.LEAST);
+      this.section(w.b, w.look, { rot: w.rot, ou: 0, ov: 0, w: w.b.w, d: w.b.d }, { from: w.at, to, out: w.leases });
+      done += to - w.at;
+      w.at = to;
+    }
+  }
+
+  private section(b: Board, look: Look, f: Frame, only?: { from: number; to: number; out: ColumnLease<Texture>[] }): Built {
     const tiles: Container[] = [];
     const marks: Graphics[] = [];
     const rings: Graphics[] = [];
@@ -584,12 +630,23 @@ export class BoardView {
     const depth = b.tiles.some((t) => t.scene) ? sceneDepth(b) : null;
     const held = new Set((b.pieces ?? []).map((p) => p.v * b.w + p.u));
     // (LIVING-FIELDS: the land's painted floor, once its sheet is here; `repaint` lays it when it arrives later)
-    let floor = this.floorOf(b, f);
+    let floor = only && this.warmFloor?.b === b ? this.warmFloor.floor : this.floorOf(b, f);
+    if (only) this.warmFloor = { b, floor };
     redo.push(() => (floor = this.floorOf(b, f)));
     for (let v = 0; v < b.d; v++)
       for (let u = 0; u < b.w; u++) {
+        // (painting ahead: only the tiles asked for, and of those only the column)
+        if (only && (v * b.w + u < only.from || v * b.w + u >= only.to)) continue;
         const raw = tileAt(b, u, v)!;
         const far = depth ? depth[v * b.w + u] : 0;
+        if (only) {
+          const edge = Math.min(u, v, b.w - 1 - u, b.d - 1 - v);
+          const trimmed = !!depth && far >= 3 && !held.has(v * b.w + u) && raw.scene !== 'water' && raw.scene !== 'lava' && edge < 1 + ((mixSeed(b.seed, 0xed9e, u, v) >>> 0) % 3);
+          const sink = raw.scene ? Math.min(2, Math.max(0, far - 1)) : 0;
+          const now: Tile = raw.scene === 'water' || raw.scene === 'lava' ? { ...raw, h: raw.h - sink, ground: raw.scene === 'water' ? 'deep' : 'lava' } : sink ? { ...raw, h: raw.h - sink } : raw;
+          if (!trimmed && !now.chasm) only.out.push(this.column(now, u, v, b.area, depth ? !!now.paved : !!look.boss, !!depth, floor?.[v * b.w + u], strikes.get(v * b.w + u)));
+          continue;
+        }
         const tile = new Container();
         tile.zIndex = depthIn(f, u, v);
         const edge = Math.min(u, v, b.w - 1 - u, b.d - 1 - v);
@@ -743,6 +800,8 @@ export class BoardView {
         if (flair) addPic(tile, flair, x, y, live);
         tiles.push(tile);
       }
+    // (painting ahead: the columns are all that was wanted)
+    if (only) return { tiles, marks, rings, grounds, tex, redo, barrels, traps, landmark: null, live, zone };
     // an arena's set pieces, each on its tile of the land round it
     for (const p of b.pieces ?? []) {
       const tile = tiles[p.v * b.w + p.u];

@@ -71,10 +71,70 @@ among them; after, 14.5 M px, neither among them (they went up in the deploy). W
 use of the visit, and the heroes' own small sheets. Keeping all ten painted sheets on the card from the start would end those too,
 at 92 MB of graphics memory held whether a party uses them or not; not done.
 
+### The second report: stops of 2 to 6 s with Auto on
+
+The owner, with Auto ULT on: "The delay is 2-6 seconds", "usually the start of a wave, the end of a wave, and sometimes just on
+regular skill use". With Auto on nothing holds the fight (above), so these are the page's main thread stopped, which a clock stepped
+by hand cannot see. `tools/wave-delay/profile.mjs` plays waves on a real clock with the CPU throttled six times and takes a CPU
+profile across each moment (`node build.mjs --plain --out out/web-plain` keeps the functions' names). On main 0.537.0:
+
+| Moment | Longest single task at 6x | What ran |
+| --- | --- | --- |
+| A wave's end, before the result shows | 1.13 to 1.39 s, every wave | the march's next section built: about ninety columns, each painted on a canvas of its own (`refresh` > `startWalk` > `ChainView.begin` > `BoardView.build` > `paintColumn`) |
+| The result tapped, the next board built | 1.76 to 2.11 s, every wave | the same board painted again for the fight, and the old one again to bake it into the scenery (`newBattle` > `build`, `retire` > `bake`) |
+| In the fight | tasks of 0.2 to 0.6 s back to back | a quarter of all script time was one read of the window's width (`viewW`, each frame in the camera), which makes the browser lay the whole page out; the hero rows written every frame; the popup guard reading every popup's computed style every frame |
+| A skill's cast | a layout of the whole page, twice | the hero row's flash restarted by asking the row its width, and the banner measuring the panel |
+
+A phone slower than six times this machine turns the first two into the owner's 2 to 6 s. The JS heap sits at 450 to 510 MB from
+the start (game.js is 208 MB: the art is in it as data URLs, as it was at 0.492) and did not climb over three waves.
+
+What was changed:
+
+- **A board's columns are painted once.** The painted columns of three boards are kept (`COLUMN_ROOM` in
+  `src/render/boardWarmRules.ts`: 640 entries, 16 MB; it was 256 and 4 MB, not two boards' worth, so the second board was never
+  kept and every build painted it afresh). The board built for the march is found again by the fight's build and by the bake.
+- **The next board is painted ahead** (`BoardView.prewarm`, `pumpWarm`; `ChainView.prewarm`; asked by `main.ts` as a wave is won):
+  a few columns a frame (`warmMore`: four at least, more while the frame has 10 ms to give) through the two seconds the falls play
+  out, so the march's build finds them there.
+- **The window's size is kept** (`src/viewport.ts`), read again when the window changes, not every frame.
+- **The hero rows, the clock and the goat's place are written or measured only when they change** (`fightHud.ts` `setText`,
+  `setWidth`, `setAttr`; `main.ts`): writing the same words again still made the browser lay the page out.
+- **A cast no longer lays the page out**: the row's flash is begun again on the next frame (`again`), and the banner uses the
+  panel's place as last measured (twice a second at most).
+- **The popup guard looks the page over only when a change could have shown or hidden a popup** (`popupGuard.ts`), not on every
+  class changed by a fight.
+
+After, the same profile (three runs of three waves; the machine is noisy):
+
+| Moment | Longest single task at 6x, before | After |
+| --- | --- | --- |
+| A wave's end, before the result shows | 1.13 to 1.39 s | 0.48 to 1.03 s |
+| The result tapped, the next board built | 1.76 to 2.11 s | 0.39 to 0.92 s |
+| Script time in forced layout in a fight window of about 7 s | 1.8 to 1.9 s | 0.3 to 0.4 s |
+
+What this machine cannot show: the fight's own frames. Its software renderer keeps the script "busy" nine tenths of the time
+whatever the page does, so the tasks of 0.2 to 0.5 s in a fight read the same before and after, and one task of about a second in
+each fight is still there (a picture handed to the graphics card on its first use; with the painted spell sheets now kept ready it
+should be rarer, but that is not measured). The Diagnostics page is how the owner's phone will say.
+
+- **The painted spell sheets are kept ready** as well (all ten, up to 1536 x 3744 px: 92 MB on the graphics card while a fight is
+  on): each is handed over in a deploy, one a frame, never in a fight (`mayWarm`), where before it was decoded in full on the frame
+  a skill first drew from it.
+
+### The Diagnostics page
+
+Settings, Diagnostics (`src/diagRules.ts`, `src/diag.ts`, a page of `settings.ts`): every gap of half a second or more between two
+frames is kept (when, how long, the fight's phase, and what the page had just begun: "the next board built", "a fight begun",
+"the result worked out and shown", "the first use of <skill>"), the last thirty, in `localStorage` (`legends.diag`), newest first,
+with Copy and Clear. A gap of a minute or more is the phone left alone, not kept; the page hidden or at rest on the home screen
+starts the count afresh. It costs two comparisons a frame.
+
 ### The tests
 
 `test/wave-delay.test.ts`: the fall's slow moment (a boss's alone, none when calm); the short version's beat (none) and the full
-moment's; the kept sheets (one a frame, in order, held while a fight is on).
+moment's; the kept sheets (one a frame, in order, held while a fight is on); painting ahead (a few tiles a frame at least); the
+columns' room (three boards kept, and the old room shown to paint the second again); the stops' log (what is kept, the newest
+thirty, what the page was doing, stored and read back).
 
 ### Still the owner's to say
 

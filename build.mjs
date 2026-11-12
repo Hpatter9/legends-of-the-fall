@@ -36,7 +36,8 @@ const options = {
   format: 'iife',
   platform: 'browser',
   target: 'es2022',
-  minify: !serve,
+  // (`--plain`: names kept as written, for reading a CPU profile: `tools/wave-delay/profile.mjs`)
+  minify: !serve && !process.argv.includes('--plain'),
   sourcemap: true,
   logLevel: 'warning',
   // (the large paintings are WebP, data URLs as the PNGs are: bundled, so offline needs nothing in FILES)
