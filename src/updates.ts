@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.552.0',
+    date: '2026-11-12',
+    title: 'Meteors, a column of light, a tide',
+    notes: ['The Wizard\'s meteors are round burning rocks seen falling from the sky; the Seraph\'s is a solid golden column with feathers fanned to each side.', 'The Gorgon\'s gaze is a full row of large eyes running to each foe, the stone rising as it arrives.', 'The Sea Reaver\'s strike is a whirl of water and spray along his line; the Bell Warden\'s toll is heavy hoops of sound dropping in three strokes.', 'The Gunslinger\'s hits are sharp stars of sparks with a puff of smoke; Ilyra\'s wings are twice the size.'],
+  },
+  {
     version: '0.551.0',
     date: '2026-11-12',
     title: 'Quicker wave starts; ten look-alikes parted',
