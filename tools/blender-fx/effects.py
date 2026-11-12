@@ -181,7 +181,7 @@ BIG = dict(
     palisade=(dict(length=3.2, h=1.7, n=8), 2.4, 2.2), beast=(dict(size=2.3), 1.9, 2.2), whirlpool=(dict(r=1.7, arms=5), 2.0, 0.8), sandstorm=(dict(r=2.3, h=2.3, bands=11, grit=44, wide=0.36), 2.8, 3.2),
     wings=(dict(r=1.4, h=2.1), 1.7, 2.9), banner=(dict(h=2.4, w=1.3), 1.7, 2.9), eyes=(dict(r=2.5, n=3, size=3.0), 3.1, 2.7),
     flock=(dict(r=1.4, h=2.6, n=6, size=2.3), 4.0, 5.2),
-    notes=(dict(r=1.3, h=2.3, n=8, size=1.6), 2.8, 6.0), eclipse=(dict(r=0.9, z=2.4), 2.2, 4.6), broadside=(dict(r=1.4, n=7, size=1.0), 3.6, 4.6), implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
+    notes=(dict(r=1.3, h=2.3, n=8, size=1.6), 2.8, 6.0), eclipse=(dict(r=0.9, z=2.4), 2.2, 4.6), broadside=(dict(r=1.4, n=7, size=1.0), 3.6, 4.6), bite=(dict(r=1.0, n=6, z=1.0), 1.8, 2.9), implode=(dict(r=1.9, n=16, z=0.8), 2.5, 2.3), slab=(dict(r=0.9, n=6, h=1.3, dark=True), 1.7, 1.9), shaft=(dict(r=0.6, h=3.2, slant=0.4), 2.6, 3.8),
 )
 
 # Each ultimate: its palette, its strike's two scenes, and its showcase's style (which sets its weight, as `ultStageRules.ts` does).
@@ -201,14 +201,14 @@ ULTS = dict(
     illusionist=('arcane', 'veil', 'portal', 'pack'), priestess=('holy', 'wings', 'pillar', 'bless'), werewolf=('blood', 'claws', 'shout', 'change'),
     demonSwordsman=('fire', 'chains', 'flare', 'change'), kitsune=('fire', 'spiral', 'smoke', 'burst'), karasu=('wind', 'rain', 'swarm', 'sky'),
     timeWitch=('holy', 'sigil', 'crystal', 'burst'), wanderer=('holy', 'hearts', 'motes', 'bless'), satyr=('forest', 'notes', 'spiral', 'bless'),
-    samuraiCommander=('fire', 'banner', 'flare', 'bless'), sage=('lightning', 'dome', 'sigil', 'bless'), cleric=('holy', 'souls', 'motes', 'bless'),
-    peasant=('earth', 'banner', 'shout', 'bless'), wolfBard=('wind', 'notes', 'shout', 'bless'), vampireLord=('blood', 'implode', 'siphon', 'burst'),
+    samuraiCommander=('fire', 'flare', 'sparks', 'bless'), sage=('lightning', 'dome', 'sigil', 'bless'), cleric=('holy', 'souls', 'motes', 'bless'),
+    peasant=('earth', 'banner', 'shout', 'bless'), wolfBard=('wind', 'notes', 'shout', 'bless'), vampireLord=('blood', 'bite', 'siphon', 'burst'),
     hemomancer=('blood', 'siphon', 'rain', 'burst'), nightstalker=('shadow', 'swarm', 'claws', 'blinks'), bloodGargoyle=('earth', 'shockwave', 'slab', 'burst'),
     dhampir=('holy', 'rain', 'cross', 'shots'), warDrummer=('lightning', 'shout', 'bolt', 'burst'), geomancer=('earth', 'slab', 'crack', 'bless'),
     bellWarden=('shadow', 'shout', 'ring', 'burst'), falconer=('wind', 'flock', 'claws', 'sky'), banneret=('fire', 'banner', 'ring', 'bless'),
     astralSphinx=('arcane', 'eye', 'sigil', 'burst'), mirageDancer=('wind', 'veil', 'cross', 'blinks'), plagueDoctor=('poison', 'cloud', 'smoke', 'burst'),
     bombardier=('fire', 'strike', 'flames', 'sky'), astrologer=('holy', 'implode', 'nova', 'sky'), inquisitor=('holy', 'strike', 'ring', 'shots'),
-    seraph=('holy', 'pillar', 'wings', 'sky'), corsairSurgeon=('forest', 'geyser', 'motes', 'bless'), harpooner=('ice', 'chains', 'spikes', 'hooks'),
+    seraph=('holy', 'pillar', 'wings', 'sky'), corsairSurgeon=('forest', 'geyser', 'motes', 'bless'), harpooner=('ice', 'strike', 'spikes', 'hooks'),
     seaReaver=('water', 'geyser', 'gust', 'line'),
 )
 # ULT-AUDIT (docs/notes/ult-audit.md): a strike must show what the ability does. There is no great blow under any of them now (the
@@ -259,13 +259,13 @@ WIND_OWN = dict(
     demonSwordsman=[('chains', 0, 1.3), ('flames', 0.3, 1.6)], kitsune=[('spiral', 0, 1.4), ('flames', 0.3, 1.4)], karasu=[('swarm', 0, 1.5), ('gust', 0.3, 1.4)],
     timeWitch=[('sigil', 0, 1.5), ('ring', 0.2, 1.2), ('motes', 0.3, 1.4)], wanderer=[('geyser', 0, 1.3), ('hearts', 0.3, 1.5)], satyr=[('notes', 0, 1.5), ('hearts', 0.4, 1.5)],
     samuraiCommander=[('banner', 0, 1.5), ('flare', 0.4, 1.6)], sage=[('spiral', 0, 1.4), ('dome', 0.4, 1.6)], cleric=[('ring', 0, 1.4), ('souls', 0.1, 1.5)],
-    peasant=[('banner', 0, 1.5), ('shout', 0.3, 1.4)], wolfBard=[('notes', 0, 1.5), ('shout', 0.4, 1.5)], vampireLord=[('siphon', 0, 1.5), ('swarm', 0.2, 1.3)],
+    peasant=[('banner', 0, 1.5), ('shout', 0.3, 1.4)], wolfBard=[('notes', 0, 1.5), ('shout', 0.4, 1.5)], vampireLord=[('swarm', 0, 1.4), ('bite', 0.3, 1.5)],
     hemomancer=[('siphon', 0, 1.4), ('ring', 0, 1.2), ('rain', 0.4, 1.5)], nightstalker=[('swarm', 0, 1.4), ('smoke', 0.2, 1.3)], bloodGargoyle=[('gust', 0, 1.2), ('shaft', 0.4, 1.7)],
     dhampir=[('halo', 0, 1.2), ('cross', 0.5, 1.6)], warDrummer=[('shout', 0, 1.5), ('sparks', 0.3, 1.5)], geomancer=[('slab', 0, 1.5), ('motes', 0.2, 1.3)],
     bellWarden=[('shout', 0, 1.4), ('crystal', 0.4, 1.6)], falconer=[('flock', 0, 1.6), ('gust', 0.2, 1.3)], banneret=[('banner', 0, 1.5), ('ring', 0.1, 1.3)],
     astralSphinx=[('eye', 0, 1.5), ('sigil', 0, 1.3)], mirageDancer=[('veil', 0, 1.4), ('gust', 0.2, 1.4)], plagueDoctor=[('cloud', 0, 1.5), ('siphon', 0.3, 1.4)],
     bombardier=[('flames', 0, 1.2), ('geyser', 0.3, 1.6)], astrologer=[('implode', 0, 1.4), ('motes', 0.2, 1.4)], inquisitor=[('halo', 0, 1.3), ('strike', 0.4, 1.7)],
-    seraph=[('halo', 0, 1.4), ('shaft', 0.4, 1.7)], corsairSurgeon=[('geyser', 0, 1.4), ('ring', 0.1, 1.2)], harpooner=[('chains', 0, 1.4), ('geyser', 0.3, 1.5)],
+    seraph=[('halo', 0, 1.4), ('shaft', 0.4, 1.7)], corsairSurgeon=[('geyser', 0, 1.4), ('ring', 0.1, 1.2)], harpooner=[('spikes', 0, 1.4), ('geyser', 0.3, 1.5)],
     seaReaver=[('geyser', 0, 1.5), ('gust', 0.2, 1.4)],
 )
 # A wind-up that holds colours outside its element's (grey fur, amber eyes) has more of them, so the palette step keeps them.
@@ -295,7 +295,7 @@ AFTER_OWN = dict(
     geomancer=['spikes', 'motes'], bellWarden=['ring', 'veil'], falconer=['trail', 'swarm'], banneret=['flames', 'veil'],
     astralSphinx=['sigil', 'eye'], mirageDancer=['sigil', 'gust'], plagueDoctor=['cloud', 'motes'], bombardier=['flames', 'cloud'],
     astrologer=['sigil', 'motes'], inquisitor=['flames', 'halo'], seraph=['nova', 'wings'], corsairSurgeon=['cloud', 'hearts'],
-    harpooner=['spikes', 'chains'], seaReaver=['trail', 'geyser'],
+    harpooner=['spikes', 'geyser'], seaReaver=['trail', 'geyser'],
 )
 # How large a strike is drawn when it plays on each fighter, or round the caster.
 PLACE_SIZE = dict(each=0.8, friends=1.1, tiles=0.85, line=0.7, self=1.25)

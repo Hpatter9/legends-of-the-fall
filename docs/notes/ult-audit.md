@@ -575,6 +575,24 @@ the last two after the show is over), `TOUGH=1`.
   Cleric, no one whose fire lies over the picture). In it the strike is seen: pale slash marks, several together, on the foe he is
   striking, with a burst of sparks under them, and curved gusts after.
 
+### The look-alike pairs, 1: a harpoon, fangs, fire on each ally
+
+`docs/samples/blender-fx/audit-pairs-1-393.jpg` (0.499 above, now below), `TOUGH=1`.
+
+- **The Harpooner and the Buccaneer** were the same cage of chain on each foe hooked, pale blue against purple. The Harpooner's
+  Leviathan Line is harpoons now: a long barbed shaft comes down onto each foe he hauls in, a flare where it lands, ice standing
+  after; no chain anywhere in his three stages. The Buccaneer keeps his chains. In the photograph: tall pale harpoons standing
+  over the foes, then ice.
+- **The Samurai Commander and the Banneret** were both a banner in a ring of orange fire. The Commander raises his banner in the
+  wind-up only; his strike is the fire running to each ally, tongues of it leaping up on each with sparks. The Banneret's banner
+  stands in her strike, on herself. In the photograph: his banner and fire where he stands, then fire on each friend in a ring.
+- **The Vampire Lord and the Hemomancer** were both an orb of blood over red rings. The Vampire Lord's Banquet of Blood is fangs
+  now: two rows of teeth closing, in the wind-up over him and on the foe he drinks from, with the blood drawn up after. The
+  Hemomancer keeps her bowl of blood. In the photograph: pale fangs closing over him, then on the foe.
+- **The Sage's dome** I changed and then put back. A test from the third batch holds that his shield is a dome (the ability forms
+  a shield round each ally), and that was decided with the director; with Ilyra's dome gone there are two domes on allies left,
+  his (pale, banded, in lightning's colours) and Orrun's (wound with vines). I have left both and say so.
+
 ## The audit of all 70
 
 `docs/samples/blender-fx/audit-all-1.jpg` to `-7.jpg`: all 70 ultimates, ten heroes a sheet in the table's order, each fired by hand in
