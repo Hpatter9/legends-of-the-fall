@@ -23,8 +23,51 @@ What is restored (`AURA_MOTES` in `src/render/movePaints.ts`, `paintAura` in `fx
 about a fighter tall, circling her a tile and a quarter out at shoulder height, over the fighters, for as long as the aura lasts; still
 with reduced motion (they stand round her, not turning). `test/ult-audit.test.ts` holds it.
 
-Still to do for this ultimate, with the audit: its strike is the great blow in gold, which an aura is not. It is to be the spirits
-arriving (no core, no rubble).
+Then (0.520.0 on): the spirits are rendered in Blender to the heroes' pixel size (`spirits` in `tools/blender-fx/scenes.py`: a head,
+a robed body drawn down to a wisp, two wings, two dark eyes; the loop `aura-spirits` turns each exactly into the next one's place, so it
+runs round for ever). `paintAura` draws that loop on her, following her, rising out of the ground as it comes, for as long as the aura
+lives (the painted spirits circle in its place until it has loaded). Her wind-up is wisps rising inside the ring the spirits will keep
+(no circle of power, no pillar); her strike is the wisps and motes with that ring, round her, with no core and no rubble.
+
+## The rules the strikes now follow
+
+- **The great blow only under a great blow** (`GREAT` in `tools/blender-fx/effects.py`): nine of the seventy, each one blow by its own
+  words: the Samurai's cut, the Barbarian's leap, the Blood Gargoyle's crash, the Seraph's descent, the Siege Bot's shell, the Wizard's
+  meteors, the Astrologer's supernovas, the Bombardier's shells, the Dread Pirate's broadsides. Every other strike is its own two or
+  three scenes alone.
+- **A strike plays where the ability lands** (`PLACE`, the clip's `at`, `ultPlace`; `Fx.ultImpact`): `each`, a small one on every fighter
+  the ability touches (a heal on each friend healed, a ward on each warded, a mark on each foe marked, a flurry's cut on each foe cut,
+  the called where each arrives: 28 heroes); `self`, round the caster (an aura, a ward of his own, a change, a pull towards him: 16); else
+  once in the midst of what it struck (a great blow, a storm on its tiles, a wall where it stands).
+- **Pairs changed to say what the ability is**: Call Lightning is a cloud and its bolts, Inferno Breath a flare and a wall of fire, Wall
+  of Thorns a hedge and vines, Mass Polymorph a spiral and a puff of smoke, Panacea hearts and motes, Heavenfall rain and the flames its
+  constellations leave, Rallying Cry a pillar and a flare on each ally, Call to Arms a veil and a shout, Midnight Knell a shout and its
+  rings.
+
+## The first ten, at 0.499 beside now
+
+`docs/samples/blender-fx/audit-ten-1.jpg`, `-2.jpg`, `-3.jpg`: each hero's ultimate fired by hand in the same fight at 0.499 (above) and
+now (below), eight moments each: two of the wind-up, two of the strike, two of the aftermath, and 1.2 s and 3.8 s into the fight after.
+
+| Ultimate | Kind | What it does | What 0.499 showed | What it shows now | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| Spirit Guardians (Cleric) | aura | spirits circle her 10 s, hurting foes and healing friends near | a small gathering, then a gold ball and a gold ring burst; spirits too small to see after | wisps rising in a ring; four ghostly figures circling her through the aftermath and on into the fight | shows the ability; wind-up still plain |
+| Panacea (Wanderer) | heal | every ally healed, shielded, hastened | the same gold ball and ring burst as the Cleric's; then the heal's own green swirls on each ally | a circle and pillar on her, then hearts and motes on each ally, then the green swirls | better (the gold ball is gone, the heal lands on the allies) but the per-ally strike is small and faint; to be made stronger |
+| Arcane Surge (Sage) | blessing | every ally's pool half filled, an arcane shield on each | the same gold ball and ring burst again | blue pillars round him, then a sigil and a dome on each ally | better and its own colour; the domes on the allies need to read as shields at a glance |
+| Indomitable (Knight) | ward | foes must go for him; he is shielded | a pale dust burst and ring | rings of light climbing round him, then a dome over him | shows a ward on him |
+| Conjure Animals (Beastmaster) | summoning | four wolves answer | a green ball and a green ring burst, then the wolves | a green circle and pillar, then claw marks, smoke and a ring where each wolf arrives; the wolves themselves | shows arrivals; the wind-up is the shared circle and pillar |
+| Gaze of Medusa (Gorgon) | mark | foes in sight turned to stone 2.5 s | green puffs on each foe petrified (its own, on each) | an eye over her in the wind-up; an eye and grey crystal on each foe petrified | shows the mark on each foe |
+| Full Moon (Werewolf) | transformation | both forms at once, a howl | the painted moon, then a purple ball and ring | the painted moon (kept), then claws, a shout and a flare round him | keeps the moon; his own change reads |
+| Call Lightning (Lightning Mage) | storm | a cloud over her 6 s, a bolt a second | a pale ball and ring burst, then the painted storm cloud over the field | a funnel, then a cloud with a bolt out of it; the storm cloud stays over the field after | shows the storm lasting |
+| Cavalry Charge (Lancer) | dash | rides a line through every foe on it | sheet 3 | a streak along the ground, gusts and sparks where he passed | shows the line; the streak is short of his whole ride |
+| Berserker Leap (Barbarian) | single blow | leaps onto the thickest crowd | sheet 3 | the great blow in red: a core that tears open, rings, rubble | a great blow, as it should be; the core still hides the crowd for its first frames |
+
+What the sheets make plain: at 0.499 the Cleric, the Wanderer and the Sage all had the same gold ball and ring. The sameness the owner
+saw is older than the rendered ultimates; the rendered great blow under every strike then kept it. Both are now gone for these.
+
+Not yet done, said plainly: the wind-ups. Every "wave" ultimate still winds up with a circle and a pillar in its colour (the Wanderer's,
+the Sage's, the Beastmaster's, the Gorgon's and the Werewolf's are the same shape in five colours). They are the next batch: a wind-up
+that is the ability beginning, as the Cleric's now is.
 
 ## The audit of all 70
 
