@@ -633,8 +633,12 @@ first two; `AT=` on the photographer picks the strike's moments).
 - **The Seraph's column** was pale and see-through and her wings hard to find. The column is drawn solid (`dense`, hers only) and
   the wings are a third larger than the scene's usual (they were by mistake smaller). In the photograph: a solid golden column
   over the crowd with a fan of long feathers out to each side of it and rings under.
-- **The Bell Warden's bell** was small beside its hoops. It is twice the size, lower, and the largest thing in his wind-up and
-  strike. In the photograph: a great solid bell over him, its rim bright, wide hoops spreading under it.
+- **The Bell Warden's bell** was a small purple cone beside its hoops. It is twice the size, lower, and bronze whatever the
+  element (lit plainly, as the wolves and hawks are), with a bright rim and two dark cast bands round it; its hoops of sound stay
+  the element's purple. In the photograph: a great bronze bell over him, swinging, wide purple hoops spreading under it.
+- **The Wanderer's hearts** were tiny. Her strike on each friend is two thirds larger. In the photograph: wide pools of gold
+  light with rings on each friend and pale hearts over them. Honest: the pools and rings are what is seen; the hearts are still
+  the smaller part.
 - **The Sea Reaver's wave** was a striped wall. It is one sheet of water bent into a curl, seen from its side, with a bright lip,
   running to the screen's right. In the photograph: a curling wave beside him as he sets off, and a great curl breaking in
   rings where he lands.

@@ -2144,9 +2144,13 @@ def broadside(c, r=1.5, n=6, size=1.0):
 # dropping out of its mouth and spreading on the ground at each stroke.
 def toll(c, r=0.7, z=2.2, tolls=3):
     import bpy
-    m, av = c.solid('mid', 'deep', 0.9, 0.35, 0.6)
-    rim_m, _ = c.flat('bright', 1.5)
-    hot_m, _ = c.flat('hot', 2.0)
+    # (bronze, whatever the element, and lit plainly so it stays bronze: a bell is a made thing, not a shape of light. Its hoops of
+    # sound are the element's)
+    _plain_lights(c)
+    m, av = c.solid((0.36, 0.17, 0.04), (0.2, 0.08, 0.01), 0.18, 0.35, 0.9)
+    rim_m, _ = c.flat((0.95, 0.62, 0.2), 1.2)
+    hot_m, _ = c.flat((0.2, 0.1, 0.03), 1.0)
+    band_m, _ = c.flat((0.16, 0.07, 0.015), 1.0)
     root = bpy.data.objects.new('bell', None)
     c.sc.collection.objects.link(root)
     body = c.cone(1.0, 1.0, m, 20, r2=0.42)
@@ -2159,7 +2163,13 @@ def toll(c, r=0.7, z=2.2, tolls=3):
     put(lip, (0, 0, -1.0))
     clap = c.sphere(1.0, hot_m, 2)
     put(clap, (0, 0, -1.08), 0.16)
-    for o in (body, crown, loop, lip, clap):
+    # (two dark bands round its waist and shoulder, as a cast bell has)
+    bands = []
+    for zz, rr in ((-0.72, 0.85), (-0.3, 0.6)):
+        b = c.torus(rr, 0.035, band_m)
+        put(b, (0, 0, zz))
+        bands.append(b)
+    for o in (body, crown, loop, lip, clap, *bands):
         o.parent = root
     hoops = [c.ring('bright', 0.06, 1.4) for _ in range(tolls)]
 

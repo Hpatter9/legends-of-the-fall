@@ -269,7 +269,7 @@ WIND_OWN = dict(
     seaReaver=[('wave', 0, 1.5), ('gust', 0.2, 1.4)],
 )
 # A wind-up that holds colours outside its element's (grey fur, amber eyes) has more of them, so the palette step keeps them.
-WIND_COLOURS = dict(beastmaster=22, falconer=22)
+WIND_COLOURS = dict(beastmaster=22, falconer=22, bellWarden=22)
 # A wind-up scene's own options for one hero: the Falconer's hawks wheel overhead before they stoop.
 WIND_OPT = dict(falconer=dict(flock=dict(mode='circle', n=4, size=2.2, r=1.3)),
                 # (the Wolf Bard's notes are large, and rise well over the hoops of his chord)
@@ -300,7 +300,7 @@ AFTER_OWN = dict(
 # How large a strike is drawn when it plays on each fighter, or round the caster.
 PLACE_SIZE = dict(each=0.8, friends=1.1, tiles=0.85, line=0.7, self=1.25)
 # (a few are drawn larger where they land: a beast is a beast's size, stone creeps over the whole of a foe)
-EACH_SIZE = dict(kunoichi=0.75, gunslinger=0.6, samurai=1.3, bombardier=1.0, peasant=1.6, beastmaster=1.0, gorgon=1.0, geomancer=1.15)
+EACH_SIZE = dict(wanderer=1.7, kunoichi=0.75, gunslinger=0.6, samurai=1.3, bombardier=1.0, peasant=1.6, beastmaster=1.0, gorgon=1.0, geomancer=1.15)
 # How much larger than a scene's own size a strike is drawn, by the show's weight.
 STRIKE_SIZE = dict(blow=1.6, flurry=1.6, wave=1.9, storm=2.3, summon=2.3)
 STYLE_WEIGHT = dict(line='blow', leap='blow', blinks='flurry', blows='flurry', hooks='flurry', burrow='flurry', burst='wave', bless='wave', change='wave',
