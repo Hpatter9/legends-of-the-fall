@@ -209,3 +209,34 @@ Changed on the app's side (small, and not built or run here: the Android build i
 Not changed: storing `game.js` uncompressed in the APK (a larger download for a quicker start), until the owner's Diagnostics copy
 is in.
 
+
+### The lock (0.548.0): the fight's rows up, no battlefield, and it never moved on
+
+The owner, on the app at 0.548.0: the next board built in 0.5 to 1.9 s (the soft canvases worked), then the game locked: the
+fight's rows, the spell orbs and the clock at 0:00 up, the whole battlefield missing (only the painted backdrop behind the canvas),
+and nothing moved again. The last line of the stops' log was the board's build, from the cache.
+
+**Not reproduced** in a browser (eight waves on a real clock, with Pixi's own idle-texture sweep set to 1.5 s, played well). What
+is reasoned from the code: the page's canvas is see-through over a DOM backdrop, so a canvas that is cleared and never drawn again
+shows exactly that; the clock at 0:00 means the fight's step never ran either; and Pixi's ticker stops for good when a listener
+throws. The game's own frame was caught, but Pixi's drawing was its own listener on the same ticker and was not: one throw in a
+drawing (a texture that is no longer alive, or a context lost and given back inside the 4 s the reload waits) ends every frame
+after it. The reload's "never twice in a minute" would also have refused a second reload.
+
+What was done, as belts, since the cause is reasoned and not seen:
+
+- **The drawing is guarded** (`main.ts`): Pixi's own render listener is taken off the ticker and the game's, in a try, put in its
+  place at the same priority. A fault is counted and the loop goes on.
+- **The loop is watched from outside it** (`src/loopRules.ts`, `loopCure`; `Game.watchLoop` on a timer of its own, once a second):
+  a loop that has not turned for 2.5 s while the page is shown and the game is not at rest is started again (three times, then the
+  page is loaded again); sixty frames or drawings at fault in a row have the board built afresh with the column cache forgotten
+  (`BoardView.forget`), and if that does not cure it the page is loaded again into the same run and wave, by the context's rule
+  (only in a fight or a deploy: `reloadSafe`). A watch that comes late itself means the whole page was held, and is not counted.
+  Each cure is written to Settings, Diagnostics with the phase, the fight's time, the faults and whether the context was there.
+- **The column cache never hands out a dead texture** (`ColumnTextures.acquire`'s `alive`; `BoardView.column` checks the texture
+  and its source): one found dead is forgotten, counted (`stats.dead`) and painted afresh.
+- **The reload after a lost context** may come again after 15 s, not a minute (`CTX.AGAIN_MS`).
+
+Checked in a browser by force: the ticker stopped mid-fight was started again within 3 s and the fight went on; a drawing made to
+throw 75 frames running had the board built afresh after 60 (640 kept columns down to the 215 in use) and drew again, the fight
+never stopping; neither raised a page error. `test/wave-delay.test.ts` holds the rule and the cache's safety.
