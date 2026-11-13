@@ -1917,6 +1917,8 @@ export class Fx {
     this.root.addChild(view);
     const reach = reachOfWidth(c.w * Math.abs(sp.scale.x));
     let own = -1;
+    let ghost: Sprite | null = null;
+    let thin = 1;
     let t = -(o.delay ?? 0);
     this.items.push({
       view: {
@@ -1925,6 +1927,7 @@ export class Fx {
         },
         destroy: (opt) => {
           view.destroy(opt);
+          if (ghost && !ghost.destroyed) ghost.destroy();
           paint?.destroy();
           if (paint) sp.destroy();
         },
@@ -1941,10 +1944,21 @@ export class Fx {
           // its full strength; it was drawn over it at six tenths)
           const host = paint ? undefined : this.bodyAt((l + r) / 2, Math.min(y, bot) - half, half);
           if (host) {
+            // (the view, glow and all, goes under the body a little larger than itself, `UNDER.SIZE`; and a second copy of the clip
+            // stays over the fighter as thin as its measured cover of a body allows, so the spell is still seen to land on them:
+            // under the body alone a heal was all but hidden by whom it healed)
             const k = host.root.scale.x || 1;
-            view.scale.set(1 / k);
+            view.scale.set(UNDER.SIZE / k);
             view.position.set((x - host.root.x) / k, (y - host.root.y) / k);
             host.underLayer().addChild(view);
+            const top = this.bfxSprites(key, (o.mult ?? 1) * (this.boost !== 1 ? Math.min(this.boost, 1.5) : 1), o.flip);
+            if (top) {
+              ghost = top.sp;
+              top.glow?.destroy();
+              ghost.position.set(x + sp.x, y + sp.y);
+              thin = overAlpha(BODY_COVER[key] ?? 1);
+              this.root.addChild(ghost);
+            }
           }
           own = 1;
         }
@@ -1957,6 +1971,10 @@ export class Fx {
         } else {
           sp.texture = frames[f];
           sp.alpha = a * own;
+          if (ghost && !ghost.destroyed) {
+            ghost.texture = frames[f];
+            ghost.alpha = a * thin;
+          }
         }
         if (glow) {
           glow.texture = glows[f] ?? glows[0];

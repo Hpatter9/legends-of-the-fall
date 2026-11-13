@@ -109,6 +109,9 @@ test('a painted bit over a fighter is thinned to the ceiling and drawn again at 
   assert.match(fx, /const host = this\.bodyAt\(x, y, 16 \* scale\);/);
   assert.match(fx, /const host = paint \? undefined : this\.bodyAt\(\(l \+ r\) \/ 2, Math\.min\(y, bot\) - half, half\);/);
   assert.match(fx, /host\.underLayer\(\)\.addChild\(view\);/);
+  // (and a thin copy of a king's spell's clip stays over the fighter, by its measured cover, so the spell is seen to land)
+  assert.match(fx, /thin = overAlpha\(BODY_COVER\[key\] \?\? 1\);\n\s+this\.root\.addChild\(ghost\);/);
+  assert.match(fx, /view\.scale\.set\(UNDER\.SIZE \/ k\);/);
   // (a loop that stays round a fighter, the spirit guardians and Vael's black sun: whole under the body, thin over it)
   assert.match(fx, /const thin = overAlpha\(BODY_COVER\[key\] \?\? 1\);/);
   assert.match(fx, /if \(host && thin < 1\) this\.bfxStand\(key, this\.root, \.\.\.where\(\), live, \{ rise: true, follow: where, host \}\);/);
