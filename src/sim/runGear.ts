@@ -52,7 +52,7 @@ import type { Meta } from './meta';
 import { OLD_BASES } from './equipBases';
 import { claimLegends } from './legends';
 import { unpackSatchel } from './remedies';
-import { BREAK_GOLD, RUNE_SALT, WAVE_SOURCE, addRune, allRunes, autoRunes, rollRune, runeName, runeStats, takeOffRune, whereRune, type Rune } from './runes';
+import { BREAK_GOLD, RUNE_SALT, WAVE_SOURCE, addRune, openerKind, allRunes, autoRunes, rollRune, runeName, runeStats, takeOffRune, whereRune, type Rune } from './runes';
 import { mixSeed, Rng } from './rng';
 import { armyIndex } from './armies';
 import { AUTO_WEAR, wearState, type Fought, type WearNote } from './wear';
@@ -144,9 +144,12 @@ export function findSlotGear(run: Run, id: number, slot: Slot, tier: number, sta
   return isReal(run) ? fieldPiece(run, id, slot, tier, stage, source) : makeGear(id, slot, tier);
 }
 
-/** A rune run's won wave's rune (every fourth wave and the last: `waveGivesRune`): one of level I, from its own side stream (`WAVE_SOURCE`). */
+/** A rune run's won wave's rune (the first wave, every fourth and the last: `waveGivesRune`): one of level I, from its own side stream (`WAVE_SOURCE`). */
 export function waveRune(run: Run): Gear {
-  return runeGear(rollRune(run.runes!, run.seed, run.stage, WAVE_SOURCE, 0, 1), 'charm');
+  const r = rollRune(run.runes!, run.seed, run.stage, WAVE_SOURCE, 0, 1);
+  // (RUNE-WAVE-ONE: the first wave's rune is always one a hero can wear: a Keystone there is carved again, from its own side stream)
+  if (run.stage === 1 && r.kind === 'keystone') r.kind = openerKind(run.seed);
+  return runeGear(r, 'charm');
 }
 
 /** A rune's price in run gold: level I 50, II 120, and 120 more a level past it (FEWER-RUNES: twice the old, for runes four times as
