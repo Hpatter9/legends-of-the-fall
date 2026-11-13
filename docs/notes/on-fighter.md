@@ -140,3 +140,23 @@ The whole table is `tools/blender-fx/body-cover.json` (238 clips).
 ## Not yet under the rule
 
 See the end of the section on the painted effects, above.
+
+
+## Since: wisps that are wisps
+
+The wisps round a fighter were a bright head and a row of five shrinking puffs, and read as soft puffs. They are re-rendered as the
+owner's picture has them: a long thin thread of smoke that tapers to nothing behind its head, sways as it goes and curls over on
+itself at its tail, with a fainter second thread wound round it (the `wisp` scene; two ribbons, each widened across its own
+heading so it keeps its width through the curl). Nothing in the rules changed: the same five wisps, the same turn and climb, the
+same sizes and strengths in front of the body and behind it.
+
+- The clip: 22 x 11 px and 8 frames before, 31 x 16 px and 10 frames now (a longer, slower loop of 800 ms).
+- Memory (decoded): core atlas 0 unchanged at 16,695,380 bytes; core atlas 1 from 2042 x 963 (7,865,784 bytes) to 2042 x 984
+  (8,037,312 bytes), 171,528 bytes more. Nothing more is asked for at a fight's start.
+- Photographs: `docs/samples/blender-fx/wisps-before-after-393.png` (two moments before, the same two after; every hero carries a
+  haste, a rally or both) and `docs/samples/blender-fx/wisps-clips.png` (the clips, before above and after below).
+- Verdict: they now read as threads curling round the body and the body is clearer than under the puffs. They are fine things: in a
+  crowded melee they are easy to miss, and a first render at two thirds of this width was too faint to see at all.
+
+`STATUS=1` with `WATCH=1` in `tools/blender-fx/ult-shots.mjs` gives each hero a lasting status for the photographs; `ROOT=` in
+`tools/blender-fx/shots.mjs` photographs another build's page.

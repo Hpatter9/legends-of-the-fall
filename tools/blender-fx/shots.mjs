@@ -10,7 +10,8 @@ import { readFileSync, existsSync, mkdirSync } from 'node:fs';
 const { chromium } = createRequire('/opt/node-tools/node_modules/')('playwright');
 const PORT = Number(process.env.PORT ?? 8846);
 const OUT = process.argv[2] ?? 'out/blender-fx/shots';
-const root = 'out/web';
+// (ROOT=<folder>: another build's page, for a before and after)
+const root = process.env.ROOT ?? 'out/web';
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css' };
 createServer((q, r) => {
   const p = `${root}/` + (q.url.split('?')[0].slice(1) || 'index.html');
