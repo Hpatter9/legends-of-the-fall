@@ -14,6 +14,8 @@ let loading: Promise<boolean> | null = null;
 export const summonFxStats = { bytes: 0, loadMs: 0, ready: false };
 
 const TIMEOUT_MS = 15000;
+/** The screenshot tools pin every show to this moment (ms) to photograph it exactly; null in play. */
+let pinned: number | null = null;
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((done, fail) => {
@@ -166,7 +168,7 @@ export class HeroShow {
 
   tick(now: number): boolean {
     if (!this.on || !this.el.isConnected) return false;
-    this.pair.draw(heroShowAt(now - this.t0, SUMMON_FX) as ShowFrame[]);
+    this.pair.draw(heroShowAt(pinned ?? now - this.t0, SUMMON_FX) as ShowFrame[]);
     return true;
   }
 }
@@ -204,4 +206,4 @@ style.textContent = `
 document.head.append(style);
 
 // (the screenshot and timing tools read the costs here)
-(window as unknown as { __summonFx?: object }).__summonFx = { stats: summonFxStats, load: loadSummonFx };
+(window as unknown as { __summonFx?: object }).__summonFx = { stats: summonFxStats, load: loadSummonFx, pin: (t: number | null) => (pinned = t) };
