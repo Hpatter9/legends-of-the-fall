@@ -77,7 +77,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { hitSpark, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -557,7 +557,7 @@ export class Fx {
         // (a raised guard turns the blow aside: a bright block, and the word)
         if (e.src === 'blow' && target.guardUntil !== undefined && target.guardUntil > b.t) {
           this.label('Block', to.x, to.y - to.tall - 10, 0xbfe3ff, 12);
-          this.anim({ frames: VFX.hitLight }, to.x, to.y - to.tall * 0.5, 1.2, 50);
+          if (!this.bfxHit('block', 'ice', to.x, to.y - to.tall * 0.5, 0)) this.anim({ frames: VFX.hitLight }, to.x, to.y - to.tall * 0.5, 1.2, 50);
         }
         const hx = to.x;
         const hy = to.y - to.tall * 0.45;
@@ -572,9 +572,12 @@ export class Fx {
         } else if (defOf(by).shot) {
           // (a shot lands in its own element: fire bursts, frost shatters, lightning cracks, poison lingers, an arrow bites)
           const m = missileOf(defOf(by).shot!, defOf(by).name);
-          impactBurst(this.particles, impactElement(m), hx, hy, Math.min(1.8, 0.7 + spark * 0.5), e.splash);
-          if (m.look !== 'orb') this.anim(impact, hx, hy, 0.9 * spark, 45);
-        } else this.anim(impact, hx, hy, 0.9 * spark, 45);
+          // (HIT-SPARKS: the rendered burst of the shot's element; the painted one until its clip is held)
+          if (!this.bfxHit('burst', impactElement(m), hx, hy, e.dmg / target.maxHp)) {
+            impactBurst(this.particles, impactElement(m), hx, hy, Math.min(1.8, 0.7 + spark * 0.5), e.splash);
+            if (m.look !== 'orb') this.anim(impact, hx, hy, 0.9 * spark, 45);
+          }
+        } else if (!this.bfxHit('blow', 'light', hx, hy, e.dmg / target.maxHp)) this.anim(impact, hx, hy, 0.9 * spark, 45);
         if (this.particles.rate(0.7)) this.puffAt(to.x, to.y - to.tall * 0.3, target.side === 'hero' ? 'white' : 'blood', 0.8 + spark * 0.2);
         this.flesh(target, hx, hy, e.dmg / target.maxHp);
         // (a glancing blow, STATS batch 4: the word, and a smaller grey number)
@@ -606,15 +609,17 @@ export class Fx {
         this.stopLeft = Math.max(this.stopLeft, hitStopMs(e.heavy, share, e.killed, this.calm(), backstab, isCrit));
         if (lethalBackstab) {
           this.microThud(to.x, to.y, 1.25, Math.cos(wayAngle), Math.sin(wayAngle) * 0.6);
-          play(this.particles, 'dark-strike', to.x, to.y - to.tall * 0.45, { scale: 1.5, frameMs: 40 });
+          if (!this.bfxHit('backstab', 'dark', to.x, to.y - to.tall * 0.45, share)) play(this.particles, 'dark-strike', to.x, to.y - to.tall * 0.45, { scale: 1.5, frameMs: 40 });
         } else if (isCrit) {
           this.microThud(to.x, to.y, 1.0, Math.cos(wayAngle), Math.sin(wayAngle) * 0.6);
         }
         if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
         if (e.heavy && e.src === 'blow') {
           // (a crit, or a blow from height: a gold burst; a big one, a third of the target's health or more, also blinks the screen)
-          this.anim(magic.goldBurst, to.x, to.y - to.tall * 0.45, 1.3, 60);
-          play(this.particles, 'light-cross', to.x, to.y - to.tall * 0.45, { scale: 1.6, frameMs: 50 });
+          if (!this.bfxHit('crit', 'light', to.x, to.y - to.tall * 0.45, share)) {
+            this.anim(magic.goldBurst, to.x, to.y - to.tall * 0.45, 1.3, 60);
+            play(this.particles, 'light-cross', to.x, to.y - to.tall * 0.45, { scale: 1.6, frameMs: 50 });
+          }
           if (share >= 0.3) this.flash(0.3, 100);
           this.trauma = Math.min(1, this.trauma + 0.25);
         }
@@ -679,6 +684,26 @@ export class Fx {
     if (this.bfxUlt(by.unit.def, 'windup', by.x, by.y, ms, 1, 0, by.unit)) return;
     this.paintMoment(KIT.gather, by.x, by.y, 2.5, { frameMs: ms / 8, foot: true, alpha: 0.9 });
     windUp(this.moment, el, by.x, by.y, ms, by.tall, true);
+  }
+
+  /** HIT-SPARKS: the rendered spark of a landing at (x, y) on a fighter (`hitSpark`): for the rule's brief flash it is over the body
+   *  as it is, then it goes on under the ON-FIGHTER rule (thin over the body, whole behind it). False when its clip is not held:
+   *  the caller plays the painted spark. */
+  private bfxHit(kind: HitKind, el: Element, x: number, y: number, share: number): boolean {
+    const h = hitSpark(kind, el, share);
+    const c = h ? bfxClip(h.key) : undefined;
+    const frames = h ? bfxFrames(h.key) : [];
+    if (!h || !c || !frames.length) return false;
+    const scale = BFX_SCALE * h.size;
+    const per = h.ms / frames.length;
+    if (this.reduced) {
+      this.particles.spawn({ frames: [frames[c.hold]], x, y, scale, frameMs: h.ms, life: h.ms, prio: true, bare: true });
+      return true;
+    }
+    const first = Math.max(1, Math.min(frames.length - 1, Math.round(UNDER.FLASH_MS / per)));
+    this.particles.spawn({ frames: frames.slice(0, first), x, y, scale, frameMs: per, life: first * per, prio: true, solid: true, bare: true });
+    this.particles.spawn({ frames: frames.slice(first), x, y, scale, frameMs: per, life: (frames.length - first) * per, delay: first * per, prio: true });
+    return true;
   }
 
   /** ON-FIGHTER: move the layers under the fighters' bodies on; one whose fighter has gone (its view destroyed, and the layer with
@@ -1956,7 +1981,9 @@ export class Fx {
               ghost = top.sp;
               top.glow?.destroy();
               ghost.position.set(x + sp.x, y + sp.y);
-              thin = overAlpha(BODY_COVER[key] ?? 1);
+              // (a clip wider than a tile and a half lies over more fighters than the one it was measured on, a dome over a party: over
+              // them it is at the ceiling itself)
+              thin = c.w * BFX_SCALE > TW * 1.5 ? PAINT_OVER : overAlpha(BODY_COVER[key] ?? 1);
               this.root.addChild(ghost);
             }
           }
