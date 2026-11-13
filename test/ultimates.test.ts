@@ -235,8 +235,9 @@ test('a fight with ultimates is deterministic and its ultimates go off', () => {
 });
 
 test('every ultimate has a cast effect', async () => {
-  const { SKILL_FX } = await import('../src/render/skillFx');
-  for (const k of ALL_HEROES) assert.ok(SKILL_FX[keyOf(KITS[k].ultimate!)]?.cast, k);
+  // (its signature's cast: the `SKILL_FX` table this once read could not play, and is removed)
+  const { kitSignature } = await import('../src/render/kitLooks');
+  for (const k of ALL_HEROES) assert.ok(kitSignature(keyOf(KITS[k].ultimate!))?.cast.length, k);
 });
 
 test('a foe never takes a hero\'s ultimate: a boss whose second phase borrows a hero\'s skill has no ultimate to borrow', () => {

@@ -4,7 +4,9 @@
 import { writeFileSync } from 'node:fs';
 import { KITS } from '../../src/sim/abilities';
 import { UNITS } from '../../src/sim/units';
-import { SKILL_FX } from '../../src/render/skillFx';
+// (`SKILL_FX`, the table of what each skill showed before, is removed from the game: it could not play. This audit's "before"
+// columns are empty now; docs/notes/unique-spells-table.md keeps the table as it was written.)
+const SKILL_FX: Record<string, { cast?: { sheet: string; tint?: number }; hit?: { sheet: string; tint?: number } }> = {};
 import { SIGNATURES, type Step } from '../../src/render/signatures';
 
 const heroes = Object.entries(KITS).filter(([id]) => UNITS[id]?.side === 'hero' && !UNITS[id]?.summon);
