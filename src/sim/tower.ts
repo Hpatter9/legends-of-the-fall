@@ -937,7 +937,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
   let bossDrop = -1;
   const rng = new Rng(mixSeed(run.seed, 0xe11e, floor));
-  // (FEWER-RUNES: a fight's find, drawn as before, is kept as a rune one time in three; a boss's always)
+  // (FEWER-RUNES: a fight's find, drawn as before, is kept as a rune one time in three; a boss's and a mimic's always)
   const found = (g: Gear, source: number): void => {
     if (keepsFind(run, g, floor, source)) prizes.push(g);
   };
@@ -976,7 +976,8 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     if (recap) recap.gold += gold;
     run.found.push(`${gold} gold from the mimic's chest`);
     if (relics.length) relicOf(pickRelic(() => rng.next(), relics));
-    found(findGear(run, rng, gearId(run), floor, 1, SOURCE.chest), SOURCE.chest);
+    // (FEWER-RUNES: a mimic is a gamble the party chose, as a cursed path is: its great chest's rune is always kept)
+    prizes.push(findGear(run, rng, gearId(run), floor, 1, SOURCE.chest));
   }
   for (const g of prizes) {
     stow(run, g, g.id === bossDrop ? SOURCE.boss : undefined);

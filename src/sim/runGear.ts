@@ -153,8 +153,8 @@ export function waveRune(run: Run): Gear {
  *  strong). */
 export const RUNE_PRICE: readonly number[] = [0, 50, 120, 240, 360, 480];
 
-/** FEWER-RUNES: the share of a Calamity's fight finds (a plain fight's, an elite's, a mimic's chest) that are kept as runes; a boss's always
- *  is, and what is bought or chosen on the road is as it was. */
+/** FEWER-RUNES: the share of a Calamity's fight finds (a plain fight's, an elite's, a chest's on the map) that are kept as runes; a boss's and
+ *  a mimic's always are, and what is bought or chosen on the road is as it was. */
 export const FIND_KEEP = { share: 1 / 3 };
 /** The salt of that choice's side stream: `mixSeed(run.seed, RUNE_SALT, KEEP_SALT, stage, source, id)`. */
 export const KEEP_SALT = 0x6b33;

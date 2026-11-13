@@ -14,8 +14,8 @@ rune, not only on level V.
   fifteen waves now gives its wave runes on waves 4, 8, 12 and 15; the daily on 4, 8 and 10; a quest battle on its last wave (and on 4
   if it is that long). A boss still gives its own rune (level II) as before, so a boss wave is still the richest.
 - **The Calamity's fight finds are kept as runes one time in three** (`keepsFind`, `FIND_KEEP.share`): a plain fight's find, an elite's,
-  a detour's, a mimic's chest and a chest on the map (which then holds its gold alone). A boss's find is always kept. The Calamity has no
-  waves, so its runes all came from finds.
+  a detour's, and a chest on the map (which then holds its gold alone). A boss's find is always kept, and so is a mimic's
+  great chest, a gamble the party chose (as the cursed path is). The Calamity has no waves, so its runes all came from finds.
 - What is bought or chosen on the road (the merchant, the passing cart, the shop, the chest event, the cursed path, the mysteries) is as
   it was: the player sees the rune before taking it, and these are under one rune in ten of a run. The rune's price is doubled
   (`RUNE_PRICE`: level I 50 gold, II 120, then 120 more a level), as the rune is four times what it was.
@@ -85,12 +85,93 @@ five at a level that goes deep, the daily at a fresh save's power, the first six
 "Worn" is the strength the heroes wear at the start of a fight, in old level-I runes, averaged over the run's fights (the signatures and
 flourishes not counted).
 
-RESULTS_RUNES
+| Run (30 a row) | runes before | runes now | share | where now | level-I worth before / now | worn before / now |
+| --- | --- | --- | --- | --- | --- | --- |
+| Orc Warband, Lv 12 (15 waves won) | 17.2 | 6.2 | 36% | waves 4.0, bosses 2.0, chest event 0.2 | 19.2 / 8.2 | 7.8 / 10.0 |
+| Undead Legion, Lv 18 | 16.3 | 5.4 | 33% | waves 3.6, bosses 1.6, chest event 0.2 | 17.8 / 7.0 | 7.8 / 9.6 |
+| The Wildwood, Lv 28 (three bosses) | 14.6 | 6.2 | 42% | waves 3.5, bosses 2.5, chest event 0.2 | 16.7 / 8.6 | 8.0 / 13.4 |
+| The daily | 10.1 | 3.9 | 38% | waves 2.4, bosses 1.4 | 11.5 / 5.3 | 5.0 / 5.9 |
+| A quest battle (1.8 waves won) | 2.2 | 0.9 | 40% | waves 0.4, bosses 0.4 | 2.6 / 1.3 | 0.9 / 0.0 |
+| The Calamity (about 12 floors) | 5.6 | 3.1 | 55% | bosses 1.2, fights 1.0, shop 0.4, chests 0.4, mysteries 0.1 | 9.5 / 5.4 | (not tallied) |
+
+Before, a won wave's rune was nearly all of it (15 of an army's 17); the road's runes were about one in twenty, and the bot buys few of
+them (the cart offers about 0.7 a run). "Level-I worth" counts a level II find as two. A rune now being about four times as strong, the
+power handed out over a run is about 1.6 to 2 times what it was, but what the heroes actually wear in a fight is 20% to 30% more on the
+armies and the daily (two thirds more on the Wildwood, whose three bosses each give a rune), since the old runes were mostly merged
+together into a few, and the first rune now comes at wave 4. The Calamity keeps more of its share (55%) because its bosses' runes, about
+half of its runes, are all kept; its maps are as they were (below).
 
 **Clear rates** (main 0.562.0 against this branch, the same seeds):
 
-RESULTS_BALANCE
+- **The realistic climb** (`CLIMB_ARMIES=4 npm run balance -- --no-tables --climb --saves 120`, Batch 8's yardstick): mean tries.
+
+  | army | target | before | now |
+  | --- | --- | --- | --- |
+  | Orc Warband | 2.0 | 2.0 | 1.8 |
+  | Undead Legion | 2.9 | 3.4 | 3.6 |
+  | Beast Packs | 4.3 | 3.9 | 4.1 |
+  | The Wildwood | 2.0 | 2.3 | 2.1 |
+
+  Every save clears all four both ways (100%).
+
+- **The daily** (`npm run daily-rate -- --days 120`): with the run's ten lives, as the page plays it, 98% before and 99% now; with no
+  lives (the first lost wave ends it), 66% before and 72% now (Boar King 17% to 30%, Lich King 56% to 69%, Minotaur Champion 86% to 81%,
+  Orc Warlord 77% to 81%).
+
+- **The tiers** (`npm run balance -- --no-tables --deep --tiers-at 1 --levels 30,45 --attempts 6 --only orcs,undead,beasts,wildwood,labyrinth,ogres`,
+  and `--tiers-at 2,3 --levels 65,85`; a maxed castle, the recruits' five, no talents, 6 saves a cell, so a cell is noisy): mean tries
+  (clear %). The cells not shown are 1.0 (100%) both ways.
+
+  | tier, level | army | before | now |
+  | --- | --- | --- | --- |
+  | Hard, 30 | Labyrinth | 1.5 | 1.0 |
+  | Hard, 30 | Ogre Clans | 15.2 (67%) | 11.7 (83%) |
+  | Hard, 45 | Labyrinth | 1.3 | 1.2 |
+  | Hard, 45 | Ogre Clans | 7.5 | 9.8 |
+  | Elite, 65 | Labyrinth | 15.5 (67%) | 7.2 |
+  | Elite, 65 | Ogre Clans | 4.0 | 5.0 |
+  | Elite, 85 | Labyrinth | 6.2 | 2.8 |
+  | Elite, 85 | Ogre Clans | 1.5 | 2.0 |
+  | Legendary, 65 | Orc Warband | 1.7 | 2.8 |
+  | Legendary, 65 | Undead Legion | 3.7 | 3.2 |
+  | Legendary, 65 | Beast Packs | 8.8 | 7.7 |
+  | Legendary, 65 | The Wildwood | 14.3 (67%) | 7.7 |
+  | Legendary, 65 | Labyrinth, Ogre Clans | 25 (0%) | 25 (0%) |
+  | Legendary, 85 | Orc Warband | 1.0 | 1.2 |
+  | Legendary, 85 | Undead Legion | 2.5 | 2.0 |
+  | Legendary, 85 | Beast Packs | 3.8 | 3.2 |
+  | Legendary, 85 | The Wildwood | 4.0 | 3.0 |
+  | Legendary, 85 | Labyrinth | 22.7 (17%) | 18.3 (33%) |
+  | Legendary, 85 | Ogre Clans | 6.0 | 5.5 |
+
+  Summed over the cells that are not 1.0 both ways, about a fifth fewer tries now: a little easier at the top of a band, still several
+  tries at its entry, never trivial. The late armies (Infernal Host, Yokai, Golem Forge) are a wall at these levels without talents both
+  ways (25 tries). **A gap in the tool:** with `--talents` the deep table builds each hero's boost from the save alone (`heroStats`), so it
+  never sees the run's runes; its Hard 45 and Elite 65 tables on the late armies came out identical before and after for that reason, and
+  are not a measure of this change.
+
+- **The Calamity** (`npm run balance -- --no-tables --calamity --attempts 30`): maps cleared, mean 1.67 before and 1.67 now (map 1 100%
+  both; map 2 60% to 63%; map 3 7% to 3%; whole 7% to 3%, two runs to one).
+
+- **The Last Stand** has no runes: its identity hash (`stand`) did not move, so it plays exactly as before.
+
+**If the director would rather it a touch harder:** `RUNE_SCALE.k` is the one knob for every rune's numbers (1 now; 0.85 puts Ember I at
++12%); `RUNE_EVERY` (4) and `FIND_KEEP.share` (one in three) set how many.
 
 ## Checks
 
-RESULTS_CHECKS
+- `npm run typecheck`: clean.
+- `npm test -- runes rune-bench run-gear` and the tests the change touches (`events`, `tips`, `calamity`, `calMapRewards`, `tower`,
+  `mystery`, `recap-reveal`, `spells-identity`, `ailments-identical`): pass. The full suite (`npm test`): 3333 tests, all pass after the
+  mimic fix below.
+- Tests changed for the owner's new rule, and why: `runes.test.ts` (a Keystone one in ten; the wave rune every fourth wave and on the
+  last; any two of a level merge, a Keystone lifts any rune; Merge all feeds the Keystone to the highest rune; the new numbers, the
+  signatures and the stronger flourish; and new tests: the Calamity's keep, and an old run's runes loading at the new strengths);
+  `runes-page.test.ts` (the drag's wider merge and the tap's twins; the totals name the signatures); `events.test.ts` and
+  `recap-reveal.test.ts` (a won wave 1 or 5 no longer gives a rune of its own); `calMapRewards`, `calamity` and `tower` (what a detour,
+  a mini-boss and a chest pay is tested with every find kept, `FIND_KEEP.share = 1`; the one-in-three is tested in `runes.test.ts`); the
+  `daily` and `calamity` identity hashes, re-recorded in `spells-identity` and `ailment-logs` (the comment beside each says why).
+- The full suite first failed on `mystery.test.ts` (a mimic's great chest paid no rune one time in three): a mimic is a gamble the party
+  chose, so its rune is now always kept, as the cursed path's is.
+- `npm run web`; `node tools/fewer-runes/shots.mjs` at 393x852, 360x780 and 412x915: the merge of two kinds made, the card's words there,
+  the three sockets open, no sideways scroll, no page errors.
