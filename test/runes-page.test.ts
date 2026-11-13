@@ -3,7 +3,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { RUNE_SCALE, dropRune, mergesReady, newRunes, runeTargets, runeTotals, socketsOf, type Rune } from '../src/sim/runes';
+import { RUNE_SCALE, RUNE_STATS, dropRune, mergesReady, newRunes, runeTargets, runeTotals, socketsOf, type Rune } from '../src/sim/runes';
 
 const rune = (id: number, kind: Rune['kind'], lv: Rune['lv']): Rune => ({ id, kind, lv });
 const state = () => {
@@ -27,17 +27,20 @@ test('the total in words, by the runes\' levels and the knob', () => {
   const st = state();
   const k = RUNE_SCALE.k;
   const line = runeTotals(st.worn.knight);
-  assert.ok(line.includes(`+${Math.round(0.04 * k * 1000) / 10}% attack`), line);
+  assert.ok(line.includes(`+${Math.round(RUNE_STATS.ember.atk! * k * 1000) / 10}% attack`), line);
   assert.ok(line.includes('defence') && line.includes('hp'), line);
+  // (FEWER-RUNES: the signatures it carries, by their short names)
+  assert.ok(line.includes('kindling') && line.includes('brace'), line);
   assert.equal(runeTotals(undefined), '');
 });
 
 test('a tapped rune lights the heroes it can go on, the bag when worn, and its twins; a Keystone goes on no hero', () => {
   const st = state();
-  assert.deepEqual(runeTargets(st, 1, ['knight', 'archer']), { heroes: ['knight', 'archer'], bag: false, merge: [4] });
-  assert.deepEqual(runeTargets(st, 4, ['knight', 'archer']), { heroes: ['archer'], bag: true, merge: [1] });
+  // (FEWER-RUNES: a drag merges with any rune of its level or a Keystone, `merge`; a tap with its twins only)
+  assert.deepEqual(runeTargets(st, 1, ['knight', 'archer']), { heroes: ['knight', 'archer'], bag: false, merge: [2, 3, 4], twins: [2, 4] });
+  assert.deepEqual(runeTargets(st, 4, ['knight', 'archer']), { heroes: ['archer'], bag: true, merge: [1, 2, 3], twins: [1, 2] });
   assert.deepEqual(runeTargets(st, 2, ['knight']).heroes, [], 'a Keystone is never worn');
-  assert.deepEqual(runeTargets(st, 2, ['knight']).merge, [5], 'it merges with a rune of its level');
+  assert.deepEqual(runeTargets(st, 2, ['knight']).merge, [1, 3, 4, 5], 'it merges with a rune of any level');
 });
 
 test('a tap on a target: onto a twin merges, onto a hero sets, onto the bag takes off, onto a hero\'s rune that is no twin swaps', () => {
@@ -52,4 +55,10 @@ test('a tap on a target: onto a twin merges, onto a hero sets, onto the bag take
   assert.equal(dropRune(st, 3, { rune: 6 }), 'set', 'a swap onto a full hero');
   assert.ok(st.worn.knight.some((r) => r.id === 3) && st.bag.some((r) => r.id === 6));
   assert.equal(dropRune(st, 2, { kind: 'knight' }), null, 'a Keystone cannot be set');
+  // (FEWER-RUNES: two kinds of one level merge only by a drag, `anyKind`; a tap onto a hero's other rune swaps, as before)
+  const two = state();
+  assert.equal(dropRune(two, 3, { rune: 4 }), 'set', 'a tap: the Gale I swaps in for the Ember I');
+  const three = state();
+  assert.equal(dropRune(three, 3, { rune: 4, anyKind: true }), 'merged', 'a drag: they merge');
+  assert.deepEqual(three.worn.knight[0], rune(4, 'ember', 2), 'into the kind of the one it landed on');
 });

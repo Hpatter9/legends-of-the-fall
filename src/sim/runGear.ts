@@ -52,7 +52,7 @@ import type { Meta } from './meta';
 import { OLD_BASES } from './equipBases';
 import { claimLegends } from './legends';
 import { unpackSatchel } from './remedies';
-import { BREAK_GOLD, WAVE_SOURCE, addRune, allRunes, autoRunes, rollRune, runeName, runeStats, takeOffRune, whereRune, type Rune } from './runes';
+import { BREAK_GOLD, RUNE_SALT, WAVE_SOURCE, addRune, allRunes, autoRunes, rollRune, runeName, runeStats, takeOffRune, whereRune, type Rune } from './runes';
 import { mixSeed, Rng } from './rng';
 import { armyIndex } from './armies';
 import { AUTO_WEAR, wearState, type Fought, type WearNote } from './wear';
@@ -144,13 +144,26 @@ export function findSlotGear(run: Run, id: number, slot: Slot, tier: number, sta
   return isReal(run) ? fieldPiece(run, id, slot, tier, stage, source) : makeGear(id, slot, tier);
 }
 
-/** A rune run's won wave: one rune of level I, from its own side stream (`WAVE_SOURCE`). */
+/** A rune run's won wave's rune (every fourth wave and the last: `waveGivesRune`): one of level I, from its own side stream (`WAVE_SOURCE`). */
 export function waveRune(run: Run): Gear {
   return runeGear(rollRune(run.runes!, run.seed, run.stage, WAVE_SOURCE, 0, 1), 'charm');
 }
 
-/** A rune's price in run gold: level I 25, II 60, and 60 more a level past it. */
-export const RUNE_PRICE: readonly number[] = [0, 25, 60, 120, 180, 240];
+/** A rune's price in run gold: level I 50, II 120, and 120 more a level past it (FEWER-RUNES: twice the old, for runes four times as
+ *  strong). */
+export const RUNE_PRICE: readonly number[] = [0, 50, 120, 240, 360, 480];
+
+/** FEWER-RUNES: the share of a Calamity's fight finds (a plain fight's, an elite's, a mimic's chest) that are kept as runes; a boss's always
+ *  is, and what is bought or chosen on the road is as it was. */
+export const FIND_KEEP = { share: 1 / 3 };
+/** The salt of that choice's side stream: `mixSeed(run.seed, RUNE_SALT, KEEP_SALT, stage, source, id)`. */
+export const KEEP_SALT = 0x6b33;
+/** Whether a fight's find is kept (FEWER-RUNES): always in a run without runes and from a boss; else one time in three, from the rune side
+ *  stream, so nothing else the run draws moves. */
+export function keepsFind(run: Run, g: Gear, stage: number, source: number): boolean {
+  if (!g.rune || !run.runes || source === SOURCE.boss) return true;
+  return new Rng(mixSeed(run.seed, RUNE_SALT, KEEP_SALT, stage, source, g.id)).chance(FIND_KEEP.share);
+}
 /** What a piece sells for in run gold: a simple piece by its tier (the old merchant's 28 a tier), a real one by its grade, a rune by its
  *  level; plus 2 a stage. */
 export const findPrice = (g: Gear, stage: number, perTier = 28): number => (g.rune ? RUNE_PRICE[g.rune.lv] : g.piece ? FIELD_PRICE[g.piece.rarity] : perTier * g.tier) + 2 * stage;

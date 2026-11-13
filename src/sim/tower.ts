@@ -17,7 +17,7 @@ import { armyById, armyIndex, armyUnlocked, ARMIES } from './armies';
 import { BOSS_BANDS, FIELD_BANDS, FOE_BANDS } from './foes';
 import { grantEquipment, itemName, rollEquipment } from './equipment';
 import { gearText, type Gear } from './gear';
-import { findGear, findPrice, foundLine, SOURCE, stow } from './runGear';
+import { findGear, findPrice, foundLine, keepsFind, SOURCE, stow } from './runGear';
 import { FALLEN, healParty } from './health';
 import { drawEvent, TOWER_EVENT_KINDS } from './events';
 import type { Meta } from './meta';
@@ -677,7 +677,11 @@ function stockChest(run: Run, floor: number): Treasure {
   const relics = unownedRelics(run);
   const chest: Treasure = { gold: 30 + 6 * floor };
   if (relics.length && rng.chance(0.45)) chest.relic = pickRelic(() => rng.next(), relics);
-  else chest.gear = findGear(run, rng, gearId(run), floor, rng.chance(0.3) ? 1 : 0, SOURCE.floorChest);
+  else {
+    const g = findGear(run, rng, gearId(run), floor, rng.chance(0.3) ? 1 : 0, SOURCE.floorChest);
+    // (FEWER-RUNES: a rune run's chest holds its rune one time in three, else its gold alone)
+    if (keepsFind(run, g, floor, SOURCE.floorChest)) chest.gear = g;
+  }
   return chest;
 }
 
@@ -933,8 +937,12 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
   let bossDrop = -1;
   const rng = new Rng(mixSeed(run.seed, 0xe11e, floor));
+  // (FEWER-RUNES: a fight's find, drawn as before, is kept as a rune one time in three; a boss's always)
+  const found = (g: Gear, source: number): void => {
+    if (keepsFind(run, g, floor, source)) prizes.push(g);
+  };
   // (a run whose heroes start bare finds gear in its fights too: now and then in a plain one, always from an elite; from a side stream)
-  if (run.local && !t.cur?.side && (kind === 'elite' || (kind === 'fight' && new Rng(mixSeed(run.seed, 0x6ea5, floor)).chance(FIGHT_GEAR)))) prizes.push(findGear(run, new Rng(mixSeed(run.seed, 0x6ea6, floor)), gearId(run), floor, kind === 'elite' ? 1 : 0, SOURCE.floor));
+  if (run.local && !t.cur?.side && (kind === 'elite' || (kind === 'fight' && new Rng(mixSeed(run.seed, 0x6ea5, floor)).chance(FIGHT_GEAR)))) found(findGear(run, new Rng(mixSeed(run.seed, 0x6ea6, floor)), gearId(run), floor, kind === 'elite' ? 1 : 0, SOURCE.floor), SOURCE.floor);
   const relics = unownedRelics(run);
   const relicOf = (id: string) => {
     (run.relics ??= []).push(id);
@@ -943,7 +951,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
   };
   if (kind === 'elite' && t.cur?.side) {
     // (a detour's mini-boss: double gold and a good piece of gear, and no relic; no healing after, and a quarter of the XP)
-    prizes.push(findGear(run, rng, gearId(run), floor, 1, SOURCE.elite));
+    found(findGear(run, rng, gearId(run), floor, 1, SOURCE.elite), SOURCE.elite);
   } else if (kind === 'elite') {
     // (an elite always pays a relic, one of three: the page offers them on the map; none left, it pays gear)
     const offer = drawOffer(run, floor);
@@ -951,7 +959,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
       t.offer = offer;
       t.lastElite = t.cur?.fight?.elite;
       run.found.push(`a choice of ${offer.length >= OFFER_SIZE ? 'three' : offer.length} relics, on the map`);
-    } else prizes.push(findGear(run, rng, gearId(run), floor, 1, SOURCE.elite));
+    } else found(findGear(run, rng, gearId(run), floor, 1, SOURCE.elite), SOURCE.elite);
   } else if (kind === 'boss') {
     // (a boss drops gear, and a relic if one is left)
     const bossGear = findGear(run, rng, gearId(run), floor, 1, SOURCE.boss);
@@ -968,7 +976,7 @@ export function finishTower(run: Run, b: Battle, won: boolean, stars = 0): void 
     if (recap) recap.gold += gold;
     run.found.push(`${gold} gold from the mimic's chest`);
     if (relics.length) relicOf(pickRelic(() => rng.next(), relics));
-    prizes.push(findGear(run, rng, gearId(run), floor, 1, SOURCE.chest));
+    found(findGear(run, rng, gearId(run), floor, 1, SOURCE.chest), SOURCE.chest);
   }
   for (const g of prizes) {
     stow(run, g, g.id === bossDrop ? SOURCE.boss : undefined);
