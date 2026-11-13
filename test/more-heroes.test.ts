@@ -10,7 +10,7 @@ import { afterBlow, CHARGE_MAX, FORM_MULT, KITS, onStrike, ULT_LEVEL, keyOf } fr
 import { ALL_HEROES, formOf, UNITS } from '../src/sim/units';
 import { countTraits, HERO_TRAITS, membersOf, TRAITS, traitEffects } from '../src/sim/traits';
 import { TREES } from '../src/sim/talents';
-import { SKILL_FX } from '../src/render/skillFx';
+import { kitSignature } from '../src/render/kitLooks';
 import { SKILL_ELEMENT } from '../src/render/fxRules';
 import { SPOTS } from '../src/render/tavernSpots';
 import layout from '../src/art/units/sheets.json';
@@ -46,7 +46,7 @@ test('twenty heroes join, each with a kit, a tree, traits, a tavern spot and a s
     assert.equal(d.side, 'hero');
     assert.ok(KITS[id].ultimate, `${id} ultimate`);
     assert.ok(keyOf(KITS[id].skill) && KITS[id].passive.name, id);
-    for (const s of [KITS[id].skill, KITS[id].ultimate]) if (s) assert.ok(SKILL_FX[keyOf(s)] && SKILL_ELEMENT[keyOf(s)], s.name);
+    for (const s of [KITS[id].skill, KITS[id].ultimate]) if (s) assert.ok(kitSignature(keyOf(s)) && SKILL_ELEMENT[keyOf(s)], s.name);
     assert.equal(TREES[id]?.nodes.length, 16, `${id} tree`);
     const [o, c] = HERO_TRAITS[id];
     assert.equal(TRAITS[o].kind, 'origin');

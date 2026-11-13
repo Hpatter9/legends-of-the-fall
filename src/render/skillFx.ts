@@ -1,6 +1,9 @@
-// Which effect each hero or foe skill shows: the sheet it plays on the caster as it goes off (`cast`), and the one it
-// plays on each foe it strikes (`hit`). These names now select painted materials through `fx.ts`; the old names
-// retain the skill vocabulary. Pure data: no Pixi, no DOM, so the tests can check that every skill has an entry.
+// The king's spells' painted sheets (`SPELL_FX`), their words and glows, and the names of the painted skill cues (`MagicKey`).
+// Pure data: no Pixi, no DOM.
+//
+// (This file once held `SKILL_FX`, a sheet for each hero and foe skill's cast and hit. Every skill has had a signature of its
+// own since (`signatures.ts`, `kitLooks.ts`), and the renderer read `SKILL_FX` only for a skill with none, so none of its 158
+// entries could play. It was removed with the branches that read it: docs/notes/hit-sparks.md.)
 
 import type { SpellId } from '../sim/spells';
 
@@ -38,176 +41,6 @@ export interface Effect {
   /** Optional tint, for a sheet that wants another colour. */
   tint?: number;
 }
-
-export interface SkillFx {
-  cast?: Effect;
-  hit?: Effect;
-}
-
-/** Keyed by the skill's name (as in `KITS`, the `skill` event's `name`). */
-export const SKILL_FX: Record<string, SkillFx> = {
-  'Shield Wall': { cast: { sheet: 'earthShield', scale: 1.5 } },
-  Iaido: { cast: { sheet: 'moonSlash', scale: 1.6 }, hit: { sheet: 'moonSlash', scale: 1 } },
-  'Shadow Step': { cast: { sheet: 'darkCircle', scale: 1.2, tint: 0xb08af0 }, hit: { sheet: 'darkSlash', scale: 1.2 } },
-  Volley: { hit: { sheet: 'windBurst', scale: 0.9 } },
-  Meteor: { cast: { sheet: 'fireCircle', scale: 1.4 }, hit: { sheet: 'fireExplosion', scale: 1.3 } },
-  'Thousand Fists': { hit: { sheet: 'whiteBurst', scale: 0.9, frameMs: 50 } },
-  'Hold the Line': { cast: { sheet: 'iceShield', scale: 1.5 } },
-  'Chain Lightning': { cast: { sheet: 'lightningBurst', scale: 1.2 }, hit: { sheet: 'lightningStrike', scale: 1.2 } },
-  Sanctuary: { cast: { sheet: 'lightNova', scale: 1.8 } },
-  'Fox Charm': { cast: { sheet: 'pinkHeart', scale: 1.4 } },
-  Dive: { hit: { sheet: 'earthBurst', scale: 1 } },
-  'Wind Gust': { cast: { sheet: 'windWave', scale: 1.6 }, hit: { sheet: 'windBurst', scale: 0.9 } },
-  'Ground Slam': { cast: { sheet: 'earthWave', scale: 1.8 }, hit: { sheet: 'earthExplosion', scale: 1 } },
-  'Horned Shove': { cast: { sheet: 'earthWave', scale: 1.4, tint: 0xffb080 }, hit: { sheet: 'earthBurst', scale: 0.9 } },
-  'Summon Imps': { cast: { sheet: 'darkCircle', scale: 1.8, tint: 0xff7a4a } },
-  Hellfire: { cast: { sheet: 'fireCircle', scale: 1.6 }, hit: { sheet: 'fireExplosion', scale: 1.1 } },
-  'Spirit Ward': { cast: { sheet: 'lightCircle', scale: 1.6 } },
-  'Holy Challenge': { cast: { sheet: 'lightCircle', scale: 1.6, tint: 0xffe27a } },
-  Benediction: { cast: { sheet: 'lightGather', scale: 1.8 } },
-  'Call Treant': { cast: { sheet: 'earthBurst', scale: 1.6, tint: 0x8aff5a } },
-  Whirlwind: { cast: { sheet: 'windVortex', scale: 1.4, tint: 0xff9a6a }, hit: { sheet: 'bloodExplosion', scale: 0.6, frameMs: 50 } },
-  'Snare Trap': { hit: { sheet: 'earthBurst', scale: 1 } },
-  Hex: { cast: { sheet: 'darkCircle', scale: 1.4, tint: 0xb06aff }, hit: { sheet: 'darkSlash', scale: 1 } },
-  'Mirror Image': { cast: { sheet: 'whiteBurst', scale: 1.5, tint: 0xd8b0ff } },
-  'Dead Eye': { hit: { sheet: 'whiteBurst', scale: 1, frameMs: 50 } },
-  'Tusk Flurry': { hit: { sheet: 'bloodExplosion', scale: 0.6, frameMs: 50 } },
-  Ravage: { cast: { sheet: 'darkSlash', scale: 1.2 }, hit: { sheet: 'bloodExplosion', scale: 0.6 } },
-  'Gore Charge': { cast: { sheet: 'earthWave', scale: 1.4 }, hit: { sheet: 'earthBurst', scale: 0.9 } },
-  'Pipes of Pan': { cast: { sheet: 'lightGather', scale: 1.3, tint: 0xffd27a } },
-  'Petrifying Gaze': { cast: { sheet: 'darkCircle', scale: 1.3, tint: 0x9be07a } },
-  'War Banner': { cast: { sheet: 'goldBurst', scale: 1.4 } },
-  'Raise Dead': { cast: { sheet: 'darkCircle', scale: 1.8, tint: 0x6ab8ff } },
-  // the Yokai Night Parade and the Golem Forge
-  Possession: { cast: { sheet: 'pinkHeart', scale: 1.4, tint: 0xb06aff } },
-  Foxfire: { cast: { sheet: 'fireCircle', scale: 1.6, tint: 0x9ad0ff }, hit: { sheet: 'fireExplosion', scale: 1.2, tint: 0x9ad0ff } },
-  'Kanabo Smash': { cast: { sheet: 'earthWave', scale: 2, tint: 0xff8a6a }, hit: { sheet: 'earthExplosion', scale: 1.1 } },
-  'Thunder Drum': { cast: { sheet: 'lightningBurst', scale: 2.6 }, hit: { sheet: 'lightningStrike', scale: 1.1 } },
-  'Crushing Slam': { cast: { sheet: 'earthWave', scale: 1.8 }, hit: { sheet: 'earthExplosion', scale: 1 } },
-  'Shard Burst': { cast: { sheet: 'iceShield', scale: 1.6, tint: 0xd8a0ff }, hit: { sheet: 'whiteBurst', scale: 0.9, tint: 0xd8a0ff } },
-  'Shard Storm': { cast: { sheet: 'iceShield', scale: 2.2, tint: 0x80b0ff }, hit: { sheet: 'whiteBurst', scale: 1, tint: 0x80b0ff } },
-  'Magma Burst': { cast: { sheet: 'fireCircle', scale: 1.4 }, hit: { sheet: 'fireExplosion', scale: 1.2 } },
-  'Forge Hammer': { cast: { sheet: 'earthWave', scale: 2, tint: 0xffc070 }, hit: { sheet: 'earthExplosion', scale: 1.2 } },
-  'Furnace Blast': { cast: { sheet: 'fireCircle', scale: 2.2 }, hit: { sheet: 'fireExplosion', scale: 1.6 } },
-  // the ultimates
-  'Nine-Tailed Dream': { cast: { sheet: 'pinkHeart', scale: 2.6 }, hit: { sheet: 'pinkHeart', scale: 1 } },
-  'Feather Storm': { cast: { sheet: 'windVortex', scale: 2, tint: 0xff5a6a }, hit: { sheet: 'windBurst', scale: 1.3, tint: 0xff8a8a } },
-  Tempest: { cast: { sheet: 'windVortex', scale: 2.6 }, hit: { sheet: 'windBurst', scale: 1.1 } },
-  'Stone Curse': { cast: { sheet: 'darkCircle', scale: 2.2, tint: 0x9be07a }, hit: { sheet: 'whiteBurst', scale: 0.9, tint: 0xb0c0a0 } },
-  'Rally Cry': { cast: { sheet: 'goldBurst', scale: 2.6 } },
-  'Soul Nova': { cast: { sheet: 'lightNova', scale: 2.8, tint: 0x6ab8ff }, hit: { sheet: 'iceShield', scale: 1.3 } },
-  // the second wave of heroes
-  'Rotting Touch': { cast: { sheet: 'darkCircle', scale: 1.5, tint: 0x8aff5a }, hit: { sheet: 'darkSlash', scale: 0.9, tint: 0x8aff5a } },
-  'Burst Fire': { hit: { sheet: 'whiteBurst', scale: 0.7, frameMs: 50 } },
-  'Bounty Hunt': { cast: { sheet: 'darkCircle', scale: 1.2, tint: 0xffd24a }, hit: { sheet: 'goldBurst', scale: 1 } },
-  'Binding Wraps': { cast: { sheet: 'earthShield', scale: 1.6, tint: 0xe8d8a0 }, hit: { sheet: 'whiteBurst', scale: 0.8, tint: 0xe8d8a0 } },
-  'Grappling Hook': { hit: { sheet: 'darkSlash', scale: 1.1 } },
-  Dirge: { cast: { sheet: 'lightGather', scale: 1.8, tint: 0x9ad0ff }, hit: { sheet: 'iceShield', scale: 0.9 } },
-  'Call of the Wild': { cast: { sheet: 'earthBurst', scale: 1.6, tint: 0xffb07a } },
-  Undertow: { cast: { sheet: 'windVortex', scale: 1.8, tint: 0x5ab8d8 }, hit: { sheet: 'windBurst', scale: 0.9, tint: 0x5ab8d8 } },
-  'Lance Charge': { cast: { sheet: 'earthWave', scale: 1.4, tint: 0xffd0a0 }, hit: { sheet: 'earthBurst', scale: 0.9 } },
-  Reap: { cast: { sheet: 'darkCircle', scale: 1.8, tint: 0x6a70ff }, hit: { sheet: 'darkSlash', scale: 1.1 } },
-  'Temporal Surge': { cast: { sheet: 'lightCircle', scale: 2, tint: 0xff9ad8 }, hit: { sheet: 'iceShield', scale: 0.9, tint: 0xff9ad8 } },
-  'Voltage Blink': { cast: { sheet: 'lightningBurst', scale: 1.4 }, hit: { sheet: 'lightningStrike', scale: 1.1 } },
-  Broadside: { hit: { sheet: 'fireExplosion', scale: 1, tint: 0x9ad0b0 } },
-  'Shell Barrage': { cast: { sheet: 'earthWave', scale: 1.4, tint: 0xb0b8d0 }, hit: { sheet: 'fireExplosion', scale: 1.2 } },
-  'Holy Light': { cast: { sheet: 'lightGather', scale: 2 }, hit: { sheet: 'lightNova', scale: 1 } },
-  'Dragon Breath': { cast: { sheet: 'fireCircle', scale: 1.4, tint: 0xd890ff }, hit: { sheet: 'fireExplosion', scale: 0.9 } },
-  Earthquake: { cast: { sheet: 'earthWave', scale: 2.2 }, hit: { sheet: 'earthExplosion', scale: 1 } },
-  Starfall: { cast: { sheet: 'lightCircle', scale: 1.6, tint: 0xffe27a }, hit: { sheet: 'goldBurst', scale: 1.1 } },
-  'Hellblade Sweep': { cast: { sheet: 'darkSlash', scale: 1.6, tint: 0xff6a6a }, hit: { sheet: 'bloodExplosion', scale: 0.7 } },
-  Judgement: { cast: { sheet: 'darkCircle', scale: 1.8, tint: 0xff4a4a }, hit: { sheet: 'darkSlash', scale: 1.2, tint: 0xff6a6a } },
-  // ... and its ultimates
-  'Astral Convergence': { cast: { sheet: 'lightNova', scale: 2.8, tint: 0xffe27a }, hit: { sheet: 'goldBurst', scale: 1.1 } },
-  'Demon Form': { cast: { sheet: 'darkCircle', scale: 2.4, tint: 0xff4a4a } },
-  'Reign of Terror': { cast: { sheet: 'darkCircle', scale: 2.8, tint: 0xb06aff }, hit: { sheet: 'darkSlash', scale: 1.1, tint: 0xb06aff } },
-  // the other heroes' ultimates (unlock at level 30)
-  'Last Bastion': { cast: { sheet: 'earthShield', scale: 2.6 } },
-  'Mass Muster': { cast: { sheet: 'iceShield', scale: 2.4, tint: 0xe8d8a0 } },
-  'Divine Aegis': { cast: { sheet: 'lightCircle', scale: 2.6, tint: 0xffe27a }, hit: { sheet: 'lightNova', scale: 1 } },
-  Cataclysm: { cast: { sheet: 'earthWave', scale: 3 }, hit: { sheet: 'earthExplosion', scale: 1.2 } },
-  Stampede: { cast: { sheet: 'earthWave', scale: 2.4, tint: 0xffb080 }, hit: { sheet: 'earthBurst', scale: 1.1 } },
-  Maelstrom: { cast: { sheet: 'windVortex', scale: 2.6, tint: 0x5ab8d8 }, hit: { sheet: 'windBurst', scale: 1, tint: 0x5ab8d8 } },
-  'Curse of the Pharaoh': { cast: { sheet: 'darkCircle', scale: 2.4, tint: 0xe8d8a0 }, hit: { sheet: 'darkSlash', scale: 1, tint: 0xe8d8a0 } },
-  'Plague Tide': { cast: { sheet: 'darkCircle', scale: 2.4, tint: 0x8aff5a }, hit: { sheet: 'darkSlash', scale: 0.9, tint: 0x8aff5a } },
-  'Heaven-Splitting Cut': { cast: { sheet: 'moonSlash', scale: 3 }, hit: { sheet: 'moonSlash', scale: 1.3 } },
-  'Shadow Dance': { cast: { sheet: 'darkCircle', scale: 2.2, tint: 0xb08af0 }, hit: { sheet: 'darkSlash', scale: 1.3 } },
-  'Contract Killer': { cast: { sheet: 'darkCircle', scale: 2, tint: 0xffd24a }, hit: { sheet: 'goldBurst', scale: 1.1 } },
-  'Hundred Fists': { cast: { sheet: 'whiteBurst', scale: 2.4 }, hit: { sheet: 'whiteBurst', scale: 0.9, frameMs: 50 } },
-  Bloodlust: { cast: { sheet: 'windVortex', scale: 2.4, tint: 0xff9a6a }, hit: { sheet: 'bloodExplosion', scale: 0.8, frameMs: 50 } },
-  'Full Moon': { cast: { sheet: 'lightCircle', scale: 2.8, tint: 0xaab8ff }, hit: { sheet: 'bloodExplosion', scale: 0.7 } },
-  'Charge of the Knights': { cast: { sheet: 'earthWave', scale: 2.6, tint: 0xffd0a0 }, hit: { sheet: 'earthBurst', scale: 1.2 } },
-  'Harvest of Souls': { cast: { sheet: 'darkCircle', scale: 2.8, tint: 0x6a70ff }, hit: { sheet: 'darkSlash', scale: 1.3, tint: 0x6a70ff } },
-  'Inferno Breath': { cast: { sheet: 'fireCircle', scale: 2.4, tint: 0xd890ff }, hit: { sheet: 'fireExplosion', scale: 1.2 } },
-  'Thunder Cascade': { cast: { sheet: 'lightningBurst', scale: 2.4 }, hit: { sheet: 'lightningStrike', scale: 1.3 } },
-  Keelhaul: { cast: { sheet: 'windWave', scale: 2, tint: 0x5ab8d8 }, hit: { sheet: 'darkSlash', scale: 1.2 } },
-  'Hall of Mirrors': { cast: { sheet: 'whiteBurst', scale: 2.6, tint: 0xd8b0ff } },
-  'Soul Harvest': { cast: { sheet: 'darkCircle', scale: 2.6, tint: 0xb06aff }, hit: { sheet: 'darkSlash', scale: 1.2, tint: 0xb06aff } },
-  'Arrow Storm': { cast: { sheet: 'windVortex', scale: 2.2, tint: 0xffe27a }, hit: { sheet: 'windBurst', scale: 1.2 } },
-  Armageddon: { cast: { sheet: 'fireCircle', scale: 2.4 }, hit: { sheet: 'fireExplosion', scale: 1.6 } },
-  Thunderstorm: { cast: { sheet: 'lightningBurst', scale: 2.8 }, hit: { sheet: 'lightningStrike', scale: 1.4 } },
-  "Hunter's Net": { cast: { sheet: 'earthBurst', scale: 2.4, tint: 0xb0d890 }, hit: { sheet: 'earthBurst', scale: 1, tint: 0xb0d890 } },
-  'High Noon': { cast: { sheet: 'goldBurst', scale: 2.2 }, hit: { sheet: 'whiteBurst', scale: 1.2 } },
-  Overclock: { cast: { sheet: 'lightningBurst', scale: 2.2, tint: 0x9ad0ff }, hit: { sheet: 'whiteBurst', scale: 0.8, frameMs: 50 } },
-  'Orbital Strike': { cast: { sheet: 'earthWave', scale: 2.2, tint: 0xb0b8d0 }, hit: { sheet: 'fireExplosion', scale: 2 } },
-  'Ghost Fleet': { cast: { sheet: 'darkCircle', scale: 2.2, tint: 0x9ad0b0 }, hit: { sheet: 'fireExplosion', scale: 1.2, tint: 0x9ad0b0 } },
-  'Time Stop': { cast: { sheet: 'lightCircle', scale: 3, tint: 0xff9ad8 }, hit: { sheet: 'iceShield', scale: 1.1, tint: 0xff9ad8 } },
-  'Divine Intervention': { cast: { sheet: 'lightGather', scale: 2.8 }, hit: { sheet: 'lightNova', scale: 1 } },
-  'Dawn Light': { cast: { sheet: 'lightNova', scale: 2.6, tint: 0xfff2a0 } },
-  Resurrection: { cast: { sheet: 'lightGather', scale: 3, tint: 0xfff2a0 } },
-  'Battle Hymn': { cast: { sheet: 'lightGather', scale: 2.6, tint: 0x9ad0ff }, hit: { sheet: 'iceShield', scale: 1 } },
-  Bacchanal: { cast: { sheet: 'lightGather', scale: 2.4, tint: 0xffd27a } },
-  'Hunt of the Pack': { cast: { sheet: 'earthBurst', scale: 2.4, tint: 0xffb07a } },
-  'Heart of the Grove': { cast: { sheet: 'earthBurst', scale: 2.4, tint: 0x8aff5a } },
-  // ---- the nine heroes that joined from the twenty: skill 1 and ultimate (docs/notes/heroes-join.md)
-  'Crimson Lunge': { cast: { sheet: 'bloodExplosion', scale: 1.5 }, hit: { sheet: 'bloodExplosion', scale: 0.9 } },
-  'Banquet of Blood': { cast: { sheet: 'bloodExplosion', scale: 3 }, hit: { sheet: 'bloodExplosion', scale: 1.3 } },
-  'Sanguine Lash': { cast: { sheet: 'bloodExplosion', scale: 1.4 }, hit: { sheet: 'bloodExplosion', scale: 0.9 } },
-  'Blood Tithe': { cast: { sheet: 'bloodExplosion', scale: 2.8 }, hit: { sheet: 'bloodExplosion', scale: 1.1 } },
-  'Dusk Dive': { cast: { sheet: 'darkSlash', scale: 1.6 }, hit: { sheet: 'darkSlash', scale: 1.0 } },
-  'Belfry Swoop': { cast: { sheet: 'darkCircle', scale: 3 }, hit: { sheet: 'darkSlash', scale: 1.3 } },
-  'Gargoyle Crash': { cast: { sheet: 'earthExplosion', scale: 1.6 }, hit: { sheet: 'earthBurst', scale: 1.0 } },
-  'Cathedral Perch': { cast: { sheet: 'earthWave', scale: 3 }, hit: { sheet: 'earthExplosion', scale: 1.3 } },
-  'Silver Stake': { cast: { sheet: 'whiteBurst', scale: 1.4 }, hit: { sheet: 'whiteBurst', scale: 0.9 } },
-  'Silver Requiem': { cast: { sheet: 'lightNova', scale: 3 }, hit: { sheet: 'whiteBurst', scale: 1.3 } },
-  'Thunder Beat': { cast: { sheet: 'lightningBurst', scale: 1.6 }, hit: { sheet: 'lightningStrike', scale: 1.0 } },
-  'Ten Thousand Drums': { cast: { sheet: 'lightningBurst', scale: 3 }, hit: { sheet: 'lightningStrike', scale: 1.3 } },
-  'Tectonic Shove': { cast: { sheet: 'earthBurst', scale: 1.6 }, hit: { sheet: 'earthExplosion', scale: 1.0 } },
-  "Mountain's Embrace": { cast: { sheet: 'earthShield', scale: 2.6 }, hit: { sheet: 'earthExplosion', scale: 1.2 } },
-  'Bronze Peal': { cast: { sheet: 'lightNova', scale: 1.6 }, hit: { sheet: 'lightNova', scale: 0.9 } },
-  'Midnight Knell': { cast: { sheet: 'darkCircle', scale: 3 }, hit: { sheet: 'darkSlash', scale: 1.2 } },
-  'Falcon Stoop': { cast: { sheet: 'windBurst', scale: 1.6 }, hit: { sheet: 'windBurst', scale: 1.0 } },
-  'Sky Hunt': { cast: { sheet: 'windVortex', scale: 3 }, hit: { sheet: 'windBurst', scale: 1.3 } },
-  // ---- the five Mythics' skill 1 (docs/notes/mythic-heroes.md)
-  'Eclipse Cleave': { cast: { sheet: 'darkSlash', scale: 1.8, tint: 0xffdc87 }, hit: { sheet: 'darkCircle', scale: 0.8, tint: 0xffdc87 } },
-  Starbreath: { cast: { sheet: 'fireCircle', scale: 1.6, tint: 0x9bc9ff }, hit: { sheet: 'fireExplosion', scale: 1.0, tint: 0x9bc9ff } },
-  'Saint’s Spear': { cast: { sheet: 'lightGather', scale: 1.3, tint: 0xfff0d6 }, hit: { sheet: 'lightNova', scale: 0.8, tint: 0xfff0d6 } },
-  Rootquake: { cast: { sheet: 'earthWave', scale: 1.8, tint: 0x94d998 }, hit: { sheet: 'earthBurst', scale: 0.9, tint: 0x94d998 } },
-  'Fate Shard': { cast: { sheet: 'darkCircle', scale: 1.2, tint: 0xbda2ff }, hit: { sheet: 'whiteBurst', scale: 0.8, tint: 0xbda2ff } },
-  // ---- the other eleven of the twenty: skill 1 and ultimate (docs/notes/heroes-join-2.md)
-  'Standard Charge': { cast: { sheet: 'goldBurst', scale: 1.5 }, hit: { sheet: 'whiteBurst', scale: 0.9 } },
-  'Oriflamme of the Keep': { cast: { sheet: 'fireCircle', scale: 3 }, hit: { sheet: 'goldBurst', scale: 1.2 } },
-  'Rift Pounce': { cast: { sheet: 'darkSlash', scale: 1.6 }, hit: { sheet: 'darkSlash', scale: 1.0 } },
-  'The Last Riddle': { cast: { sheet: 'darkCircle', scale: 3 }, hit: { sheet: 'darkSlash', scale: 1.2 } },
-  'Whirling Veils': { cast: { sheet: 'windWave', scale: 1.6 }, hit: { sheet: 'windBurst', scale: 0.9 } },
-  'Dance of Seven Mirages': { cast: { sheet: 'windVortex', scale: 3 }, hit: { sheet: 'windBurst', scale: 1.3 } },
-  'Censer Swing': { cast: { sheet: 'earthWave', scale: 1.6 }, hit: { sheet: 'earthBurst', scale: 0.9 } },
-  'Black Miasma': { cast: { sheet: 'darkCircle', scale: 3 }, hit: { sheet: 'darkSlash', scale: 1.2 } },
-  'Concussion Mortar': { cast: { sheet: 'fireExplosion', scale: 1.6 }, hit: { sheet: 'fireExplosion', scale: 1.0 } },
-  'Shell Storm': { cast: { sheet: 'fireExplosion', scale: 3 }, hit: { sheet: 'fireExplosion', scale: 1.3 } },
-  'Gravity Well': { cast: { sheet: 'darkCircle', scale: 2.2 }, hit: { sheet: 'darkSlash', scale: 1.0 } },
-  'Supernova Alignment': { cast: { sheet: 'lightNova', scale: 3 }, hit: { sheet: 'whiteBurst', scale: 1.3 } },
-  'Chains of Judgement': { cast: { sheet: 'lightGather', scale: 1.4 }, hit: { sheet: 'lightNova', scale: 0.9 } },
-  'Solar Tribunal': { cast: { sheet: 'lightCircle', scale: 3 }, hit: { sheet: 'lightNova', scale: 1.3 } },
-  'Halo Dive': { cast: { sheet: 'lightNova', scale: 1.6 }, hit: { sheet: 'whiteBurst', scale: 1.0 } },
-  'Descent of the Host': { cast: { sheet: 'goldBurst', scale: 3 }, hit: { sheet: 'whiteBurst', scale: 1.3 } },
-  'Boarding Swing': { cast: { sheet: 'fireExplosion', scale: 1.3 }, hit: { sheet: 'fireExplosion', scale: 0.8 } },
-  'Rum Ration': { cast: { sheet: 'lightGather', scale: 2.6 }, hit: { sheet: 'pinkHeart', scale: 1.0 } },
-  'Barbed Harpoon': { cast: { sheet: 'iceShield', scale: 1.4 }, hit: { sheet: 'windBurst', scale: 0.9 } },
-  'Leviathan Line': { cast: { sheet: 'windWave', scale: 3 }, hit: { sheet: 'windBurst', scale: 1.3 } },
-  'Breaker Rush': { cast: { sheet: 'windWave', scale: 1.6 }, hit: { sheet: 'windBurst', scale: 0.9 } },
-  'Wrath of the Reef': { cast: { sheet: 'windWave', scale: 3 }, hit: { sheet: 'earthExplosion', scale: 1.2 } },
-};
 
 /** The king's spells: a sheet on each fighter the spell touches (the meteor's is its landing). */
 export const SPELL_FX: Record<Exclude<SpellId, 'meteor'>, Effect> = {
@@ -292,13 +125,3 @@ export const SPELL_GLOW: Record<Exclude<SpellId, 'meteor'>, { color: number; ms:
 
 /** A foe this big (its full health) that dies is a big kill: a burst, a white flash, a hard shake. */
 export const BIG_FOE_HP = 400;
-
-// The Mythics' ultimates: their own sheets in their own colours, larger than an ordinary skill's (docs/notes/mythics-finish.md; before, each
-// borrowed another hero's ultimate's entry).
-Object.assign(SKILL_FX, {
-  'Kneel Before Night': { cast: { sheet: 'darkCircle', scale: 2.6, tint: 0xf3c86a }, hit: { sheet: 'darkSlash', scale: 1.4, tint: 0xffd77a } },
-  Heavenfall: { cast: { sheet: 'lightCircle', scale: 2.6, tint: 0x9bc9ff }, hit: { sheet: 'lightningStrike', scale: 1.5, tint: 0xbfdcff } },
-  'Death Denied': { cast: { sheet: 'lightGather', scale: 2.4, tint: 0xfff0d6 }, hit: { sheet: 'goldBurst', scale: 1.2, tint: 0xffe2c8 } },
-  'The World Stands': { cast: { sheet: 'earthShield', scale: 2.6, tint: 0x94d998 }, hit: { sheet: 'earthExplosion', scale: 1.3, tint: 0xa8e08a } },
-  'Rewrite Fate': { cast: { sheet: 'windVortex', scale: 2.4, tint: 0xbda2ff }, hit: { sheet: 'lightningBurst', scale: 1.2, tint: 0xd2c0ff } },
-} satisfies Record<string, SkillFx>);

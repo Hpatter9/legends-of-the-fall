@@ -9,7 +9,7 @@ import { CHARGE_MAX, KITS, onStrike, tickStatus, keyOf } from '../src/sim/abilit
 import { ALL_HEROES, formOf, UNITS } from '../src/sim/units';
 import { HERO_TRAITS, TRAITS, membersOf } from '../src/sim/traits';
 import { ratingOf } from '../src/sim/stars';
-import { SKILL_FX } from '../src/render/skillFx';
+import { kitSignature } from '../src/render/kitLooks';
 import layout from '../src/art/units/sheets.json';
 import { dotOf } from '../src/sim/ailments';
 
@@ -40,7 +40,7 @@ test('the eight class heroes are registered, drawn at a sensible size, with a fo
     assert.equal(d.side, 'hero');
     assert.ok(d.forms?.length === 3, id);
     assert.ok(keyOf(KITS[id].skill) && KITS[id].passive.name, id);
-    assert.ok(SKILL_FX[keyOf(KITS[id].skill)], id);
+    assert.ok(kitSignature(keyOf(KITS[id].skill)), id);
     for (const f of d.forms!) assert.ok((layout as Record<string, unknown>)[f], f);
     const fig = (layout as Record<string, { figure: number }>)[d.sheet].figure * d.scale;
     // (heroes stand in one of three height bands: small 42, medium 50, large 60; see docs/notes/hero-art.md)

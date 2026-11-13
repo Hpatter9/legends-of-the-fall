@@ -56,3 +56,24 @@ point of the blow (the second, fourth and fifth moments below); the fighters are
 A king's spell's clip wider than a tile and a half lies over more fighters than the one it was measured on (a dome over a
 party); its copy over the fighters is at the 15% ceiling itself. The copy under the bodies, with the rim and the ground ring, is
 at full strength. `docs/samples/blender-fx/on-fighter-shield-393.png`: the dome is a faint wash over the party, who are plain inside it.
+
+## `SKILL_FX` removed (the director's order)
+
+`SKILL_FX` in `src/render/skillFx.ts` was a painted sheet for each of 158 skills' cast and hit. It could not play: every one of
+its entries also has a signature (`signatures.ts`, or a borrowed one through `kitLooks.ts`), and the renderer read the table
+only for a skill with none (counted with a throwaway test: 158 entries, none without a signature). Removed with it: the two
+branches of `fx.ts` that read it and the `effect` method only they used. A skill with no signature still has the plain fallback
+it had (the wind-up, the element's wave, the plain spark).
+
+Tests, said plainly:
+
+- `test/skill-fx.test.ts` checked the table itself ("every hero and foe skill has an effect of its own", "no effect names a skill
+  that is not in the kits", and the table's sizes). It now checks what plays: that every hero and foe skill has a signature
+  that shows something, that the table is gone and nothing reads it, and the king's Heal and Haste sheets' sizes as before. The
+  assertion that no entry names a skill outside the kits went with the table.
+- `test/class-heroes.test.ts`, `test/more-heroes.test.ts` and `test/ultimates.test.ts` each asserted a `SKILL_FX` entry for a
+  hero's skill or ultimate; each now asserts its signature (for an ultimate, a signature with a cast).
+
+Two tools read the table: `tools/fx-animate/lists.ts` (it only added the table's names to a list that has them from the
+signatures) and `tools/fxlab/audit.ts` (the "before" column of an old audit, now empty; the table it wrote is kept in
+`docs/notes/unique-spells-table.md`).
