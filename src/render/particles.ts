@@ -42,6 +42,9 @@ export interface Burst {
   /** Keep its full strength to the end instead of thinning over its last third (BLENDER-FX: a rendered sheet's own frames carry its
    *  going, and a wind-up must be at its height as the blow lands). */
   solid?: boolean;
+  /** ON-FIGHTER: drawn as it is, over whoever it lies on, with no copy under them: only for a flash of at most the rule's brief
+   *  moment (a hit spark's first frames). */
+  bare?: boolean;
   /** Its half-size on screen, for the FX-CLEAR cover (default: a 32px frame's at its scale; a painted 96px cell gives its own). */
   half?: number;
 }
@@ -99,7 +102,7 @@ export class Particles {
       b = { ...b, scale, ...(b.vx ? { vx: b.vx * k } : {}), ...(b.vy ? { vy: b.vy * k } : {}), ...(b.grow ? { grow: b.grow * k } : {}), ...(b.gravity ? { gravity: b.gravity * k } : {}), ...(b.half ? { half: b.half * k } : {}) };
     }
     if (this.live.length >= (b.prio ? this.cap * 1.3 : this.cap)) return;
-    const low = this.under?.(b.x, b.y, b.half ?? 16 * (b.scale ?? 1) * Math.max(b.stretchX ?? 1, b.stretchY ?? 1, 1));
+    const low = b.bare ? null : this.under?.(b.x, b.y, b.half ?? 16 * (b.scale ?? 1) * Math.max(b.stretchX ?? 1, b.stretchY ?? 1, 1));
     if (low) {
       const k = low.k;
       low.to.calm = this.calm;
@@ -112,7 +115,7 @@ export class Particles {
     sp.tint = b.tint ?? 0xffffff;
     sp.blendMode = b.add ? 'add' : 'normal';
     sp.visible = b.delay ? false : true;
-    const k = this.cover ? this.cover(b.x, b.y, b.half ?? 16 * (b.scale ?? 1) * Math.max(b.stretchX ?? 1, b.stretchY ?? 1, 1)) : 1;
+    const k = this.cover && !b.bare ? this.cover(b.x, b.y, b.half ?? 16 * (b.scale ?? 1) * Math.max(b.stretchX ?? 1, b.stretchY ?? 1, 1)) : 1;
     sp.alpha = (b.alpha ?? 1) * k;
     sp.texture = b.frames[0];
     sp.scale.set(b.scale ?? 1);

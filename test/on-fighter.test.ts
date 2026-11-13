@@ -110,7 +110,7 @@ test('a painted bit over a fighter is thinned to the ceiling and drawn again at 
   assert.match(fx, /const host = paint \? undefined : this\.bodyAt\(\(l \+ r\) \/ 2, Math\.min\(y, bot\) - half, half\);/);
   assert.match(fx, /host\.underLayer\(\)\.addChild\(view\);/);
   // (and a thin copy of a king's spell's clip stays over the fighter, by its measured cover, so the spell is seen to land)
-  assert.match(fx, /thin = overAlpha\(BODY_COVER\[key\] \?\? 1\);\n\s+this\.root\.addChild\(ghost\);/);
+  assert.match(fx, /thin = c\.w \* BFX_SCALE > TW \* 1\.5 \? PAINT_OVER : overAlpha\(BODY_COVER\[key\] \?\? 1\);\n\s+this\.root\.addChild\(ghost\);/);
   assert.match(fx, /view\.scale\.set\(UNDER\.SIZE \/ k\);/);
   // (a loop that stays round a fighter, the spirit guardians and Vael's black sun: whole under the body, thin over it)
   assert.match(fx, /const thin = overAlpha\(BODY_COVER\[key\] \?\? 1\);/);
@@ -121,6 +121,6 @@ test('a painted bit over a fighter is thinned to the ceiling and drawn again at 
   assert.match(fx, /this\.stepUnder\(this\.lows, dt\);/);
   assert.match(fx, /if \(layer\.destroyed \|\| p\.root\.destroyed\) among\.delete\(layer\);/);
   const parts = readFileSync('src/render/particles.ts', 'utf8');
-  assert.match(parts, /const low = this\.under\?\.\(b\.x, b\.y,/);
+  assert.match(parts, /const low = b\.bare \? null : this\.under\?\.\(b\.x, b\.y,/);
   assert.match(parts, /low\.to\.spawn\(\{ \.\.\.b, x: \(b\.x - low\.ox\) \/ k, y: \(b\.y - low\.oy\) \/ k, scale: \(b\.scale \?\? 1\) \/ k,/);
 });
