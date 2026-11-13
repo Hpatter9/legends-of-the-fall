@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.573.0',
+    date: '2026-11-13',
+    title: 'The app and web version build once a day',
+    notes: ['New versions now build once a day, early morning, and only when something has changed, which keeps the build allowance free.', 'Each app release now lists the changes it brings.'],
+  },
+  {
     version: '0.572.0',
     date: '2026-11-13',
     title: 'Each blow shows the weapon that struck',
