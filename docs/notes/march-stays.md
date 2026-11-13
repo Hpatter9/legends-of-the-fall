@@ -193,3 +193,46 @@ The camera at the deploy, the party's middle on the screen in the one picture th
 
 Not filmed: a hero whose tile is blocked on the next board (no seed found that blocks one; `squadTiles` and its test hold the
 rule), the Muster, reduced motion. The sheets kept are listed above.
+
+## Third pass (on 0.558.0): the lock of 0.548.0, and the deploy and the fight's start filmed
+
+The director asked whether the rim's fault, or one like it, could hit a deploy or a fight's first frame on an army road: the
+owner was once locked on 0.548.0 "at a fight's start with the board empty, clock 0:00" in an army run, wave 7.
+
+**What the film does now.** Beside the hand-over it watches every wave's deploy and the fight's first seconds (`--start`,
+5 s): the loop's turns with no picture drawn, a battle's clock that has not moved, a loop that did not turn. And every twelfth
+picture, the whole run long, it walks the stage for a sprite whose picture is dead (destroyed, or its source gone), shown or
+hidden. Each fails the run. The page's own picture is told from a bake by what the renderer is asked to draw, so it works on a
+build before the guarded drawing too.
+
+**Every place that destroys a picture, read:**
+
+| where | what | safe? |
+| --- | --- | --- |
+| `BoardView.dropRim` | the rim's one picture | yes now: its pieces first (it was the fault) |
+| `BoardView.bake` (the oldest baked section let go) | a baked section | yes: its sprite is destroyed just before |
+| `BoardView.columns` (the column cache's `destroy`) | a painted column | only when nothing holds it; every holder destroys its sprites before it lets go (`retire`, `dropOld`, the build, the bakes). `build(keepOld)` with a board still built would let go with the tiles up, but its one caller demotes first. A rim's near columns ride on the board's own leases; `demote` now takes the rim down first |
+| `BoardLife.light` | the dark layer | yes: the sprite and its picture go together |
+| `blenderFxArt.drop` | an effect's atlas | yes by its own rule: every frame is pointed at an empty picture first (read only; not my file) |
+| `standView`, `standHall`, `fieldView`, `sceneView`, `assaultScene` | their own stages | not on the fight's stage |
+
+No second fault of the kind was found.
+
+**Can it hit an army road?** No. A rim is laid only on a board with none of an army road's own tiles (`rimOf`: `t.scene`); of
+675 sections (nine armies, five seeds each) none carries one. Filmed on the build now: eight armies from wave 5 (waves 5 to 8;
+three were lost at the first wave by the film's party), every deploy and fight start drawn, every clock moving, no dead picture
+on the stage, no fault written. Filmed on 0.548.0 itself: five armies, waves 5 to 8, the same (its only failure the party
+vanishing after the march, as known).
+
+**But the rim's fault is very likely the lock.** On 0.548.0 the drawing was Pixi's own listener, not yet guarded. Filmed there
+in a daily run: at the first march the page throws `Cannot read properties of null (reading 'alphaMode')` uncaught, Pixi's
+ticker stops for good, and the next wave's fight "begins" with **no turn of the loop at all**: the page's own parts still answer
+taps (the card, the deploy, Fight), so the fight's rows and the clock at 0:00 come up over a canvas that was cleared and is
+never drawn again. That is the owner's picture exactly, and the stops' log would end on the board's build, as theirs did. The
+loop stays dead until the page is loaded again, whatever is played next, because the game only stops and starts its ticker from
+inside the loop that has died. So: a daily or a quest battle marched once in that sitting, on a land with a rim, and then any
+run, an army's among them, is locked at its next fight. I cannot show the owner's sitting was that; I can show the mechanism on
+their version and that an army road alone does not do it.
+
+Since 0.550.0 the guarded drawing and the loop watch turn that lock into a blank march (what the second pass found), and
+since 0.558.0 the cause is gone.

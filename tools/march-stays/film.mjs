@@ -14,6 +14,8 @@
 //   - the next section, once every tile of it has fallen into place, shows fewer tiles than it has, or one in the air again, or
 //   - the loop turned without a picture being drawn (a drawing that faulted leaves the canvas empty: only the backdrop shows), or
 //     the game wrote a fault to the console, or a fallen hero who returns was not on its feet with the party from the march on.
+// It watches each wave's deploy and the fight's first seconds the same way (turns of the loop with no picture, a battle's clock that
+// does not move), and every few pictures, the whole run long, looks over the stage for a sprite whose picture is dead: each fails it.
 // `--tap` taps the card on mid-march (the walk cut short); `--rebuild` has the loop watch's cure build the board afresh while the
 // party stands; `--shots` films it with the browser's screencast and keeps a contact sheet of each hand-over, for the eye (`--keep`: the frames too).
 import { createRequire } from 'node:module';
@@ -100,10 +102,29 @@ await page.evaluate(() => {
   };
   // (a drawing that throws never reaches `look`: the loop's turns are counted beside the drawings, and a turn with no drawing is a
   // picture the player did not get: the canvas keeps nothing, so the backdrop shows through)
-  g.app.ticker.add(() => { if (ms.on && !g.homeUp) ms.ticks++; });
+  g.app.ticker.add(() => { if (g.homeUp || g.standOn) return; ms.all.ticks++; if (ms.on) ms.ticks++; });
+  ms.all = { ticks: 0, draws: 0 };
+  ms.dead = [];
+  /** Every sprite on the stage whose picture is dead (destroyed, or its source gone): shown, it makes the drawing throw; hidden, it
+   *  will the moment it is shown. Looked for every few pictures, the whole run long. */
+  let scanned = 0;
+  const scan = () => {
+    if (scanned++ % 12 || ms.dead.length >= 8) return;
+    const walk = (n, path) => {
+      const t = n.texture;
+      const isSprite = t !== undefined && typeof n.anchor === 'object';
+      if (isSprite && (t === null || t.destroyed || !t.source || t.source.destroyed)) ms.dead.push(`${path} (${g.b.phase}, t ${g.b.t}, ${n.visible ? 'shown' : 'hidden'}, z ${n.zIndex}, at ${Math.round(n.x)},${Math.round(n.y)})`);
+      const kids = n.children;
+      if (kids) for (let i = 0; i < kids.length && ms.dead.length < 8; i++) walk(kids[i], `${path}/${kids[i].label || kids[i].constructor.name}`);
+    };
+    walk(g.app.stage, 'stage');
+  };
   const look = () => {
     // (only the page's own picture: a section or a rim baked into one picture is a drawing too, made in the middle of a build)
-    if (!ms.on || !ms.main) return;
+    if (!ms.main) return;
+    ms.all.draws++;
+    scan();
+    if (!ms.on) return;
     ms.draws++;
     const b = g.b;
     const chain = g.chain;
@@ -148,8 +169,13 @@ await page.evaluate(() => {
       fight: (() => { const f = document.getElementById('fight'); return !!f && !f.hidden && f.offsetParent !== null; })(),
     });
   };
-  const render = g.app.render.bind(g.app);
-  g.app.render = () => { ms.main = true; try { render(); } finally { ms.main = false; } };
+  // (the page's own picture is the stage drawn to the screen; a section or a rim baked into one picture is a drawing too, and is not it)
+  const render = g.app.renderer.render.bind(g.app.renderer);
+  g.app.renderer.render = (o, ...rest) => {
+    const main = o === g.app.stage || (!!o && o.container === g.app.stage && !o.target);
+    if (main) ms.main = true;
+    try { return render(o, ...rest); } finally { if (main) ms.main = false; }
+  };
   g.app.renderer.runners.postrender.add({ postrender: look });
 });
 await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU });
@@ -180,6 +206,8 @@ if (QUEST) {
 await page.waitForTimeout(3000);
 
 const rows = [];
+const starts = [];
+const START_MS = Number(opt('--start', '5000'));
 let shotN = 0;
 // (the film: the browser's own screencast, which costs the throttled page nothing; each frame is kept with the page's clock)
 let filmDir = '';
@@ -213,7 +241,17 @@ for (let wave = 1; wave <= WAVES; wave++) {
   } else
   await page.evaluate(() => window.__game.autoArrange(true));
   await page.waitForTimeout(1200);
+  /** The loop's turns with no picture drawn since this was last asked (a drawing that faulted), and the battle's clock. */
+  const windowOf = () => page.evaluate(() => { const a = window.__ms.all; const out = { undrawn: Math.max(0, a.ticks - a.draws - 1), turns: a.ticks, t: window.__game.b.t, phase: window.__game.b.phase }; a.ticks = a.draws = 0; return out; });
+  const atDeploy = await windowOf();
   await page.evaluate((speed) => { document.getElementById('bossCard')?.click(); if (window.__game.b.phase === 'deploy') document.getElementById('fight').click(); window.__game.setSpeed?.(speed); }, SPEED);
+  // (the fight's first seconds: the owner was once locked there with the board gone and the clock at 0:00)
+  await page.waitForTimeout(START_MS);
+  const atStart = await windowOf();
+  // (stuck: the fight is on and its clock has not moved, or the loop did not turn at all)
+  const stuck = (atStart.phase === 'fight' && !(atStart.t > 0)) || atStart.turns === 0;
+  starts.push({ wave, deployUndrawn: atDeploy.undrawn, deployTurns: atDeploy.turns, startUndrawn: atStart.undrawn, startTurns: atStart.turns, clock: atStart.t, stuck });
+  console.log(`wave ${wave}: the deploy ${atDeploy.turns} turns of the loop, ${atDeploy.undrawn} with no picture; the fight's first ${START_MS / 1000} s ${atStart.turns} turns, ${atStart.undrawn} with no picture, the battle's clock at ${atStart.t} ms${stuck ? ' (THE LOOP OR THE CLOCK IS NOT MOVING)' : ''}`);
   // (the fight: watched from its last moments, so the fall of the last foe is in the film)
   const began = Date.now();
   let phase = 'fight';
@@ -376,13 +414,17 @@ if (SHOTS) {
     if (!KEEP) rmSync(`${SHOTS}/${d}`, { recursive: true, force: true });
   }
 }
+const dead = await page.evaluate(() => window.__ms.dead);
+const badStarts = starts.filter((x) => x.deployUndrawn || x.startUndrawn || x.stuck);
 const bad = rows.filter((r) => r.heroGaps || r.tileGaps || r.refalls || r.risenGaps || r.undrawn || !r.marched);
 console.log(`\n${rows.length} hand-overs at ${W}x${H}, CPU x${CPU}, speed x${SPEED}: ${bad.length ? `${bad.length} FAILED` : 'all held'} ` +
   `(pictures short of a hero ${rows.reduce((s, r) => s + r.heroGaps, 0)}, short of the section ${rows.reduce((s, r) => s + r.tileGaps, 0)}, tiles in the air again ${rows.reduce((s, r) => s + r.refalls, 0)}, short of a returning hero ${rows.reduce((s, r) => s + r.risenGaps, 0)}, not drawn at all ${rows.reduce((s, r) => s + r.undrawn, 0)}); page errors: ${errs.length}`);
 for (const e of errs.slice(0, 5)) console.log(`  ${e}`);
+console.log(`${starts.length} deploys and fight starts: ${badStarts.length ? `${badStarts.length} FAILED` : 'all drawn, every clock moving'} (turns with no picture: the deploy ${starts.reduce((a, x) => a + x.deployUndrawn, 0)}, the fight's start ${starts.reduce((a, x) => a + x.startUndrawn, 0)}); sprites found on the stage with a dead picture: ${dead.length}`);
+for (const d of dead) console.log(`  ${d}`);
 if (faults.length) console.log(`faults written to the console: ${faults.length}`);
 for (const e of [...new Set(faults)].slice(0, 6)) console.log(`  ${e}`);
-if (SHOTS) writeFileSync(`${SHOTS}/film.json`, JSON.stringify({ size: `${W}x${H}`, cpu: CPU, speed: SPEED, rows }, null, 1));
+if (SHOTS && KEEP) writeFileSync(`${SHOTS}/film.json`, JSON.stringify({ size: `${W}x${H}`, cpu: CPU, speed: SPEED, rows, starts, dead }, null, 1));
 await browser.close();
 srv.close();
-process.exit(bad.length || errs.length || faults.length || !rows.length ? 1 : 0);
+process.exit(bad.length || badStarts.length || dead.length || errs.length || faults.length || !rows.length ? 1 : 0);
