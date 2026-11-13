@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.570.0',
+    date: '2026-11-13',
+    title: 'Wisps of smoke that curl round your heroes',
+    notes: ['The smoke round a healed or hastened hero is now long thin threads that sway and curl round the body, not a row of soft puffs.'],
+  },
+  {
     version: '0.569.0',
     date: '2026-11-13',
     title: 'A new summoning show',
