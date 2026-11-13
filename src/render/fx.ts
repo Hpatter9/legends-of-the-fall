@@ -38,7 +38,7 @@ import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { at, depth, facesRight, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
-import { BIG_FOE_HP, SKILL_FX, SPELL_GLOW, SPELL_WORD, type Effect, type MagicKey } from './skillFx';
+import { BIG_FOE_HP, SPELL_GLOW, SPELL_WORD, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
 import { Particles } from './particles';
 import { loadVfxArt, VFX } from './vfxArt';
@@ -551,7 +551,6 @@ export class Fx {
         // drawn as the skill it cast before)
         const castName = e.src === 'skill' ? this.tickCasts.get(e.by) ?? this.casting.get(e.by) ?? keyOfKit(by) : '';
         const signature = kitSignature(castName)?.hit;
-        const skillFx = e.src === 'skill' && !signature ? SKILL_FX[castName]?.hit : undefined;
         // (the spark grows with the blow: a scratch is small, a half-health blow fills the struck)
         const spark = Math.min(2, 0.6 + (e.dmg / target.maxHp) * 3);
         // (a raised guard turns the blow aside: a bright block, and the word)
@@ -565,10 +564,6 @@ export class Fx {
           // (a hero's skill has a look of its own: no shared burst on top)
           const spot = { x: hx, y: to.y, tall: to.tall };
           playSteps(signature, { p: this.particles, self: spot, foes: [spot], allies: [spot], dir: { x: 0, y: 1 }, ms: 0, size: ultKeyOf(by) === castName ? 1.25 : 1 });
-        } else if (skillFx) {
-          this.effect(skillFx, hx, hy);
-          // (and a burst of the skill's own element on top)
-          impactBurst(this.particles, skillElement(castName), hx, hy, 0.8, e.splash);
         } else if (defOf(by).shot) {
           // (a shot lands in its own element: fire bursts, frost shatters, lightning cracks, poison lingers, an arrow bites)
           const m = missileOf(defOf(by).shot!, defOf(by).name);
@@ -1616,13 +1611,6 @@ export class Fx {
     return sp;
   }
 
-  /** A painted skill cue, played on a point with its own size, timing and tint. */
-  private effect(e: Effect, x: number, y: number): Sprite {
-    const sp = this.anim(magic[e.sheet], x, y, e.scale, e.frameMs ?? 70);
-    if (e.tint !== undefined) sp.tint = e.tint;
-    return sp;
-  }
-
   /** A line of text that rises and fades. */
   private label(text: string, x: number, y: number, fill: number, size: number, life = 900, plain = false): { txt: Text; cut: () => void } {
     // (a `plain` label is the new banners': the exact size given, a multiple of 12, in the regular weight)
@@ -1688,7 +1676,6 @@ export class Fx {
     const size = (ultimate ? 1.45 : 1.15) * (by.unit.side === 'hero' && isMythic(by.unit.def) ? 1.2 : 1);
     if (signature) playSteps(signature.wind, this.sceneOf(by, ms, size));
     else windUp(this.particles, el, by.x, by.y, ms, by.tall, ultimate || boss);
-    const cast = signature ? undefined : SKILL_FX[name]?.cast;
     if (signature) this.later(ms, () => playSteps(signature.cast, this.sceneOf(this.sprites.get(byId) ?? by, ms, size)));
     if (ultimate) {
       this.trauma = Math.max(this.trauma, 0.5);
@@ -1726,14 +1713,7 @@ export class Fx {
       this.trauma = Math.max(this.trauma, 0.4);
       if (!signature) this.later(ms, () => play(this.particles, packKey(el, 'wave'), by.x, by.y, { scale: 3, frameMs: 90 }));
     }
-    if (cast) {
-      const sp = this.effect(cast, by.x, by.y - 4);
-      // (an ultimate's cast sheet is drawn big: kept in its element's colour and thinned)
-      if (ultimate) {
-        sp.alpha = 0.6;
-        if (ULT_TINT[el] !== undefined) sp.tint = ULT_TINT[el]!;
-      }
-    } else if (!signature) this.anim(impact, by.x, by.y - 4, 1.6, 40);
+    if (!signature) this.anim(impact, by.x, by.y - 4, 1.6, 40);
   }
 
   /** Where the caster, the foes nearest it and its friends are drawn, for a signature to be played against. */

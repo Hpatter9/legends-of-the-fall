@@ -1,25 +1,27 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { hasSkill, KITS, keyOf } from '../src/sim/abilities';
-import { SKILL_FX, SPELL_FX } from '../src/render/skillFx';
+import { kitSignature } from '../src/render/kitLooks';
+import { SPELL_FX } from '../src/render/skillFx';
 
-test('every hero and foe skill has an effect of its own', () => {
+// (This file checked `SKILL_FX`, a sheet for each skill's cast and hit. That table could not play: every skill has a signature,
+// and the renderer read the table only for a skill with none. It is removed (docs/notes/hit-sparks.md), and these check what
+// does play: the signature.)
+test('every hero and foe skill has an effect of its own: a signature that shows something', () => {
   // (FOE-STYLES: a common foe's kit has no skill)
   for (const kit of Object.values(KITS).filter(hasSkill)) {
-    const fx = SKILL_FX[keyOf(kit.skill)];
-    assert.ok(fx, `no effect for ${keyOf(kit.skill)}`);
-    assert.ok(fx.cast || fx.hit, `${keyOf(kit.skill)} shows nothing`);
+    const sig = kitSignature(keyOf(kit.skill));
+    assert.ok(sig, `no effect for ${keyOf(kit.skill)}`);
+    assert.ok(sig.cast.length || sig.hit?.length, `${keyOf(kit.skill)} shows nothing`);
   }
 });
 
-test('no effect names a skill that is not in the kits', () => {
-  const names = new Set(Object.values(KITS).flatMap((k) => [keyOf(k.skill), ...(k.ultimate ? [keyOf(k.ultimate)] : [])]));
-  for (const name of Object.keys(SKILL_FX)) assert.ok(names.has(name), `${name} is not a skill`);
+test('the old table is gone from the renderer, and nothing reads it', () => {
+  assert.ok(!readFileSync('src/render/fx.ts', 'utf8').includes('SKILL_FX'));
+  assert.ok(!/export const SKILL_FX/.test(readFileSync('src/render/skillFx.ts', 'utf8')));
 });
 
 test('the king\'s heal and haste have sheets, and the sizes are sane', () => {
-  for (const fx of [SPELL_FX.heal, SPELL_FX.haste, ...Object.values(SKILL_FX).flatMap((f) => [f.cast, f.hit])]) {
-    if (!fx) continue;
-    assert.ok(fx.scale > 0 && fx.scale <= 3, `scale ${fx.scale} for ${fx.sheet}`);
-  }
+  for (const fx of [SPELL_FX.heal, SPELL_FX.haste]) assert.ok(fx.scale > 0 && fx.scale <= 3, `scale ${fx.scale} for ${fx.sheet}`);
 });
