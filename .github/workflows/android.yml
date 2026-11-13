@@ -1,17 +1,61 @@
 # Builds the Android app (Capacitor wrapping out/web) and attaches the APK to a GitHub Release.
-# Runs when a tag like v0.320.0 is pushed, or by hand (Actions, Run workflow). See docs/notes/android-app.md.
+# Runs once a day, and only when main has moved since the newest release; or by hand (Actions, Build the Android app,
+# Run workflow), which always builds. Once a day keeps the account inside its free Actions minutes and storage.
+# See docs/notes/android-app.md.
 name: Build the Android app
 
 on:
-  push:
-    tags: ['v*']
+  schedule:
+    # 10:47 UTC every day (03:47 Pacific in summer, 02:47 in winter): outside 06:00 to 09:00 Pacific, off the hour.
+    - cron: '47 10 * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
+  # Is there anything new to build? A run by hand always builds. A scheduled run builds only when main's commit is not
+  # the newest release's, and package.json's version has not been released yet (a release is named after the version).
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.cmp.outputs.changed }}
+    steps:
+      - id: cmp
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "Started by hand: building."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          TAG=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1 --json tagName --jq '.[0].tagName // ""')
+          if [ -z "$TAG" ]; then
+            echo "No release yet: building."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          LAST=$(gh api "repos/$GITHUB_REPOSITORY/commits/$TAG" --jq .sha)
+          if [ "$LAST" = "$GITHUB_SHA" ]; then
+            echo "main ($GITHUB_SHA) is the newest release's commit ($TAG): nothing to build."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          VER=$(gh api "repos/$GITHUB_REPOSITORY/contents/package.json?ref=$GITHUB_SHA" --jq .content | base64 -d | jq -r .version)
+          if gh release view "v$VER" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Version $VER is already released (v$VER): nothing to build until the version moves."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "main moved since $TAG (to $VER): building."
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
   apk:
+    needs: check
+    if: needs.check.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,10 +110,32 @@ jobs:
       - name: Name the APK
         run: cp android/app/build/outputs/apk/release/app-release.apk "legends-of-the-last-keep-${{ steps.ver.outputs.version }}.apk"
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: apk
-          path: legends-of-the-last-keep-*.apk
+      # (no upload-artifact: the APK is on the release, and release files do not count against Actions storage)
+
+      # The notes list the pull requests merged since the previous release: a merge commit's second line, or a squash
+      # merge's title (its first line, ending "(#123)"); with none, the last commit's title.
+      - name: Write the release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PREV=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1 --json tagName --jq '.[0].tagName // ""')
+          TITLES=""
+          if [ -n "$PREV" ]; then
+            TITLES=$(gh api "repos/$GITHUB_REPOSITORY/compare/$PREV...$GITHUB_SHA" --jq '
+              .commits | reverse | .[] | .commit.message | split("\n") | map(select(length > 0)) as $l
+              | if ($l[0] | startswith("Merge pull request")) then ($l[1] // $l[0])
+                elif ($l[0] | test("\\(#[0-9]+\\)$")) then $l[0]
+                else empty end' || true)
+          fi
+          if [ -z "$TITLES" ]; then
+            TITLES=$(git log -1 --format=%s "$GITHUB_SHA")
+          fi
+          {
+            if [ -n "$PREV" ]; then echo "Merged since $PREV:"; else echo "In this build:"; fi
+            echo
+            printf '%s\n' "$TITLES" | sed 's/^/- /'
+          } > release-notes.md
+          cat release-notes.md
 
       - name: Publish the release
         uses: softprops/action-gh-release@v2
@@ -77,4 +143,4 @@ jobs:
           tag_name: v${{ steps.ver.outputs.version }}
           name: ${{ steps.ver.outputs.version }}
           files: legends-of-the-last-keep-*.apk
-          generate_release_notes: true
+          body_path: release-notes.md
