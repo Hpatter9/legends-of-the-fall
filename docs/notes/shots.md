@@ -21,6 +21,12 @@ its puffs and the lines drawn by hand.
   drawn by hand, as before.
 - Reduced motion: an orb and a strand hold their one still frame.
 
+## The block's own spark
+
+With the same push (the director's order): a block no longer borrows the blow's star in ice. `hit-block` is a scene of its own,
+`guard`: a short, bright, shallow arc in pale blue-steel (the edge a guard is held along; no shield is modelled), flaring where
+the blow met it and widening as it thins. `docs/samples/blender-fx/block-before-after-393.png`.
+
 ## Memory
 
 The new clips lie in the two atlases every fight already holds; nothing more is asked for at a fight's start.
@@ -28,10 +34,10 @@ The new clips lie in the two atlases every fight already holds; nothing more is 
 | | before | after |
 | --- | --- | --- |
 | core atlas 0 | 2041 x 2045, 16,695,380 bytes decoded | the same |
-| core atlas 1 | 2042 x 917, 7,490,056 bytes decoded | 2042 x 962, 7,857,616 bytes decoded |
+| core atlas 1 | 2042 x 917, 7,490,056 bytes decoded | 2042 x 963, 7,865,784 bytes decoded |
 
-That is 367,560 bytes more decoded (about 0.35 MB), and 15,488 bytes more on disc (`src/art/fx/blender`: 4,879,448 to
-4,894,936).
+That is 375,728 bytes more decoded (about 0.36 MB, the block's arc below included), and 15,320 bytes more on disc
+(`src/art/fx/blender`: 4,879,448 to 4,894,768).
 
 ## Verdict
 

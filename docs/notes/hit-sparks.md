@@ -99,3 +99,8 @@ Tests, said plainly:
 Two tools read the table: `tools/fx-animate/lists.ts` (it only added the table's names to a list that has them from the
 signatures) and `tools/fxlab/audit.ts` (the "before" column of an old audit, now empty; the table it wrote is kept in
 `docs/notes/unique-spells-table.md`).
+
+
+## Since: the block's own shape
+
+A block has a clip of its own, `hit-block` (a pale steel arc; `docs/notes/shots.md`), so it reads without its word.

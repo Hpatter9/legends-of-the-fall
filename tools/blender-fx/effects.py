@@ -560,6 +560,8 @@ HIT_SKIP = 3
 for j, (clip, (scene, opt, canvas, n, ms)) in enumerate(HITS.items()):
     for i, (el, (pal, _)) in enumerate(GROUND.items()):
         fx(f'hit-{clip}-{el}', scene, pal, **canvas, frames=n + HIT_SKIP, skip=HIT_SKIP, ms=ms, seed=700 + 11 * j + i, glow=False, **opt)
+# (a block has a shape of its own, so it reads without its word: a short bright arc in pale blue-steel, the edge a guard is held along)
+fx('hit-block', 'guard', 'ice', **box(1.05, 1.25), frames=6 + HIT_SKIP - 1, skip=HIT_SKIP - 1, ms=220, seed=740, glow=False)
 
 # ---- ULT-AUDIT: what an ability IS, as a loop that stays for as long as the ability lasts (docs/notes/ult-audit.md). Spirit Guardians:
 # four ghostly figures a fighter tall circling the Cleric, round and round (`paintAura` draws it on her while the aura lives). ----

@@ -2280,8 +2280,41 @@ def strand(c, length=2.0, kind='bolt', w=0.034, amp=0.14):
     return step
 
 
+# 71. Guard: a blow turned aside. A short, bright, shallow arc (the edge a guard is held along, not a shield), flaring where the
+# blow met it and widening as it thins, a few sparks thrown off it.
+def guard(c, r=0.6, z=0.5, wide=0.17, span=1.05):
+    m, a, _ = c.streak('mid', 'hot', 0.9, 1.5)
+    n = 14
+    angs = [math.pi / 2 - span + 2 * span * i / n for i in range(n + 1)]
+
+    def lay(k):
+        return [scr(math.cos(g) * r * k, math.sin(g) * r * k * 0.6 - r * 0.3, z) for g in angs]
+    sides = [scr(math.cos(g), math.sin(g) * 0.6) for g in angs]
+    arc = c.ribbon(list(zip(lay(0.8), sides)), wide, m)
+    fm, cut = c.flame(3.0, 0.5, 1.6)
+    core = c.sphere(1, fm, 3)
+    fly = _fly(c, 7, r * 0.7, r * 1.5, 2.5, 'hot', 0.03)
+
+    def step(t):
+        c.tick(t, 2.0)
+        g = ease(t)
+        thick = max(0.0, 1 - t) ** 0.4
+        # (each point of the arc is widened along its own spoke, so the ribbon is re-laid here point by point)
+        for i, (p, sd) in enumerate(zip(lay(0.8 + 0.3 * g), sides)):
+            w = wide * thick * (0.35 + 0.65 * math.sin(i / n * math.pi)) + 0.003
+            arc.data.vertices[i * 2].co = (p[0] - sd[0] * w, p[1] - sd[1] * w, p[2] - sd[2] * w)
+            arc.data.vertices[i * 2 + 1].co = (p[0] + sd[0] * w, p[1] + sd[1] * w, p[2] + sd[2] * w)
+        arc.data.update()
+        a.inputs[1].default_value = 2.6 * (1 - 0.5 * t)
+        hide(arc, t > 0.92)
+        put(core, (0, 0, z + r * 0.2), max(0.001, r * 0.22 * bell(win(t, 0, 0.5))))
+        cut.inputs[1].default_value = 0.05 + 0.4 * t
+        fly(t, z + r * 0.2)
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, toll, meteors, wisp, pool, strand,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, toll, meteors, wisp, pool, strand, guard,
 )}
