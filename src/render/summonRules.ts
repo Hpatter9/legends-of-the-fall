@@ -252,3 +252,44 @@ export function shardTotals(got: readonly Pull[]): ShardTotal[] {
   }
   return [...lines.values()];
 }
+
+// SUMMON-SHOW part 2: when each Blender piece of a new hero's show plays (pure). The pieces' own frames and times are in the generated
+// `summonFxData.ts`; this lays them on the reveal's clock, which `firstReveal`'s beats share: the charge from 0 to the flash (1.4 s),
+// the rift opening to the arrival (1.9 s), the burst over the arrival, then the aftermath, looping, under the hero until the scene closes.
+
+/** The reveal's beats (ms) the show is laid to: the charge, the rift, the arrival. */
+export const SHOW_AT = { charge: 0, rift: 1400, burst: 1900 } as const;
+/** The aftermath fades in over this as the burst ends. */
+export const AFTER_FADE_MS = 300;
+
+export interface ShowClip { n: number; ms: number; loop: boolean }
+export interface ShowFrame { piece: 'charge' | 'rift' | 'burst' | 'after'; frame: number; alpha: number }
+
+/** The frames of a hero's show at `t` ms (drawn in order: under first). A piece played once holds no frame past its end. */
+export function heroShowAt(t: number, clips: Readonly<Record<'charge' | 'rift' | 'burst' | 'after', ShowClip>>): ShowFrame[] {
+  const out: ShowFrame[] = [];
+  const once = (piece: 'charge' | 'rift' | 'burst', from: number, until: number): void => {
+    const c = clips[piece];
+    if (t < from || t >= until) return;
+    out.push({ piece, frame: Math.min(c.n - 1, Math.floor((t - from) / c.ms)), alpha: 1 });
+  };
+  once('charge', SHOW_AT.charge, SHOW_AT.rift);
+  once('rift', SHOW_AT.rift, SHOW_AT.burst);
+  const burstEnd = SHOW_AT.burst + clips.burst.n * clips.burst.ms;
+  const afterAt = burstEnd - AFTER_FADE_MS;
+  if (t >= afterAt) {
+    const a = clips.after;
+    out.push({ piece: 'after', frame: Math.floor((t - afterAt) / a.ms) % a.n, alpha: Math.min(1, (t - afterAt) / AFTER_FADE_MS) });
+  }
+  once('burst', SHOW_AT.burst, burstEnd);
+  return out;
+}
+
+/** Where a skipped show goes on from: the arrival's burst still plays (a skip never cuts the hero's entrance to nothing). */
+export const skipShowTo = (t: number): number => Math.max(t, SHOW_AT.burst);
+
+/** The frame of a shard card's flourish at `t` ms after its turn, or -1 once it is over. */
+export const flourishAt = (t: number, clip: ShowClip): number => (t < 0 || t >= clip.n * clip.ms ? -1 : Math.floor(t / clip.ms));
+
+/** How much a hero's show weighs once decoded (bytes: four to a pixel of every sheet), for the memory budget. */
+export const decodedBytes = (sheets: readonly { w: number; h: number }[]): number => sheets.reduce((n, s) => n + s.w * s.h * 4, 0);

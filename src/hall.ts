@@ -21,6 +21,7 @@ import { LifePainter } from './render/ambientPaint';
 import { SCENE_LIFE } from './render/ambientScenes';
 import sanctumUrl from './art/hall/sanctum.png';
 import { summoner } from './summoner';
+import { loadSummonFx } from './summonFx';
 import { chainsShown, hallPlaque } from './sim/eidolonChains';
 import lightPillarUrl from './art/hall/fx_light-pillar.png';
 
@@ -503,6 +504,8 @@ export class SummoningHall {
   /** Start drawing (the tab is showing); resolves once the room is drawn and moving. */
   start(): Promise<void> {
     this.running = true;
+    // (SUMMON-SHOW: the summoning show's sheets begin to load as the sanctum opens, off the page's own thread)
+    void loadSummonFx();
     if (this.raf || document.hidden) return Promise.resolve();
     return loadArt().then(() => {
       if (!this.running || this.raf) return;

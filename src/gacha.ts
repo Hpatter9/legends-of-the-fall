@@ -12,6 +12,7 @@ import { secretFigure } from './secretView';
 import { portrait } from './render/sheets';
 import { heroCard, pullInfo, queueReveal, revealUnseen, tarotBack, tarotFace } from './summonTarot';
 import { cardTimes, drawOrder, HERO_ONWARD_MS, shardTotals } from './render/summonRules';
+import { cardFlourish, loadSummonFx } from './summonFx';
 import { modesHidden } from './sim/hiddenModes';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -45,6 +46,8 @@ export class Gacha {
   }
 
   open(): void {
+    // (SUMMON-SHOW: the show's sheets begin to load as the sanctum opens, off the page's own thread)
+    void loadSummonFx();
     this.clearReveal();
     $('gacha').hidden = false;
     $('gacha').classList.remove('hasResults');
@@ -251,6 +254,8 @@ export class Gacha {
       const up = (): void => {
         if (res.classList.contains('up') || batch !== this.batch) return;
         res.classList.add('up');
+        // (SUMMON-SHOW: the card's own flourish as it turns; reduced motion has the fade alone)
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) cardFlourish(turn);
         const n = p.unlock ?? p.shards;
         turn.setAttribute('aria-label', `${heroTitle(p.kind)}: ${p.crowns ? `${p.crowns} crowns` : `${n} shard${n === 1 ? '' : 's'}`}${p.unlock && p.need ? `, ${p.have} of ${p.need} to join` : ''}`);
         turned++;
