@@ -105,8 +105,8 @@ another build (how the "before" numbers were taken).
 Not filmed: a duel wave, a quest battle, a wave after a revive, cinematics on (the destination's reveal). They go through the
 same `newBattle` > `syncSprites(true)`, so the rule covers them, but no film says so. Page errors in every film: none.
 
-The filmstrips are under `docs/samples/march-stays/` (`before-*`, `after-*`: one sheet a hand-over, and `film.json` with the
-sums; the `before-393` sheets are from a second, two-wave film of the same build).
+The filmstrips kept are under `docs/samples/march-stays/`: one contact sheet before and one after for each case
+(`heroes-*`, `daily-*`, `quest-*`, `fallen-*`, `duel-*`), and `rebuild-after`, `after-360x780`, `after-412x915`.
 
 ## What still looks abrupt, and what was not done
 
@@ -192,5 +192,4 @@ The camera at the deploy, the party's middle on the screen in the one picture th
 0.554.0 moved it 41 to 65 px (231 in the quest battle); now 6 to 30 px, the scale unchanged in both.
 
 Not filmed: a hero whose tile is blocked on the next board (no seed found that blocks one; `squadTiles` and its test hold the
-rule), the Muster, reduced motion. Sheets: `docs/samples/march-stays/` `ease-*`, `fell-393`, `duel-393`, `daily-393`,
-`quest-393`, `revive-393`, `scenes-393`, and `0554-*` for the build before.
+rule), the Muster, reduced motion. The sheets kept are listed above.
