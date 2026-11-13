@@ -57,7 +57,7 @@ moments each from the wind-up on).
 ## The painted effects and the king's spells (group 2)
 
 `docs/samples/blender-fx/on-fighter-painted-393.png` (the Druid's party under the Prayer of Healing, before above, now below) and
-`on-fighter-spells-393.jpg` (the king's Heal, Shield and Haste on a unit, four moments each).
+`on-fighter-spells-393.png` (the king's Heal above and Shield below on a unit, six moments each, cut close and doubled).
 
 - **Every painted bit** (a skill's cast and hit, a signature's steps, `MOVE_PAINT`, `HEALER_PAINT`, the spell sheets' parts, the
   pack's puffs and rings: all of them are the particles) that lies over a fighter's body is drawn over it at the ceiling itself
@@ -65,6 +65,10 @@ moments each from the wind-up on).
   fighters it goes under the one standing farthest BACK, so it is behind all of them and covers none.
 - **A plain strip** (`anim`) and **a king's spell's rendered clip on a unit** (`bfxOnce`) over a fighter go under that body whole.
 - A fighter's under layers are dropped when the fighter goes (`stepUnder`).
+- **A king's spell on a unit had gone too quiet** under the body alone (the Heal was all but hidden by whom it healed). Its
+  clip is now 15% larger under the body, glow and all, and a second copy stays over the fighter as thin as its measured cover
+  allows (as an ultimate's does). In the photograph the Heal is a green pool and glow round the healed, who stand in front of
+  it. The Shield's dome is still fairly strong over those inside it.
 
 ### The loops round a fighter, and a showcase's gathering
 

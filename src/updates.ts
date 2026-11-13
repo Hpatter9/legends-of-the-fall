@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.560.0',
+    date: '2026-11-13',
+    title: 'The king\'s spells seen round their target',
+    notes: ['The king\'s Heal, Shield and other spells on a hero now glow round them from behind, so they are plain to see without hiding the hero.'],
+  },
+  {
     version: '0.559.0',
     date: '2026-11-13',
     title: 'Ultimates keep their own look again',
