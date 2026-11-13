@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.567.0',
+    date: '2026-11-13',
+    title: 'Fewer runes, far more powerful',
+    notes: ['About a third as many runes now turn up in a run: a won wave gives one only on waves 4, 8, 12 and the last, and bosses still give theirs.', 'Each rune is about four times as strong, Ember I is +14% attack, and every rune has its own effect from level I, such as a kill bursting in flame.', 'Any two runes of the same level can be merged by dragging one onto the other; the result keeps the kind of the rune you drop onto.'],
+  },
+  {
     version: '0.566.0',
     date: '2026-11-13',
     title: 'Your lives as two rows of hearts',
