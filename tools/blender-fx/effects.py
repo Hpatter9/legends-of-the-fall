@@ -551,12 +551,15 @@ for j, (clip, (pal, scene, opt, canvas, n, ms)) in enumerate(BEAT_ONLY.items()):
 # sparks (a plain blow, a block, a shot's burst), and `hit-cut-<el>`, two crossed strokes (a crit, a backstab). Small and quick: a
 # blow is over in under 300 ms. They lie with the atlases every fight holds, so a fight loads nothing more for them.
 HITS = dict(
-    blow=('sparks', dict(r=0.5, n=10, z=0.5), box(0.95, 1.15), 6, 220),
-    cut=('cross', dict(r=0.95, z=0.65, wide=0.28), box(1.6, 1.8), 7, 280),
+    blow=('sparks', dict(r=0.55, n=12, z=0.5), box(1.05, 1.25), 6, 220),
+    cut=('cross', dict(r=1.0, z=0.65, wide=0.44), box(1.7, 1.9), 7, 280),
 )
+# (a spark is at its fullest as it lands: the scene's first frames, in which it gathers, are left out, so the clip opens on its peak.
+# What plays in a spark's first moment is all that is over the struck fighter at full strength)
+HIT_SKIP = 3
 for j, (clip, (scene, opt, canvas, n, ms)) in enumerate(HITS.items()):
     for i, (el, (pal, _)) in enumerate(GROUND.items()):
-        fx(f'hit-{clip}-{el}', scene, pal, **canvas, frames=n, ms=ms, seed=700 + 11 * j + i, glow=False, **opt)
+        fx(f'hit-{clip}-{el}', scene, pal, **canvas, frames=n + HIT_SKIP, skip=HIT_SKIP, ms=ms, seed=700 + 11 * j + i, glow=False, **opt)
 
 # ---- ULT-AUDIT: what an ability IS, as a loop that stays for as long as the ability lasts (docs/notes/ult-audit.md). Spirit Guardians:
 # four ghostly figures a fighter tall circling the Cleric, round and round (`paintAura` draws it on her while the aura lives). ----
