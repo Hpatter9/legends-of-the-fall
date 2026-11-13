@@ -244,6 +244,8 @@ export class Fx {
   /** SHOW-THROUGH: the fighters drawn again over a strike that stands over them (`showThrough`), on a layer over the moment's. */
   private throughLayer = new Container();
   private throughs: { id: number; sp: Sprite; t: number; life: number }[] = [];
+  /** (the same for a picture of the ordinary fight, a fall: these go on the fight's clock, the others on a show's) */
+  private fightThroughs: { id: number; sp: Sprite; t: number; life: number }[] = [];
   private rowBoxes = new Map<number, { box: Container; board: Board }>();
   /** Ms of a slow-motion beat left (a boss falls); `timeScale` slows the fight while it lasts. */
   private slowLeft = 0;
@@ -319,8 +321,9 @@ export class Fx {
     this.unders.clear();
     this.lows.clear();
     this.rowLows.clear();
-    for (const h of this.throughs) if (!h.sp.destroyed) h.sp.destroy();
+    for (const h of [...this.throughs, ...this.fightThroughs]) if (!h.sp.destroyed) h.sp.destroy();
     this.throughs = [];
+    this.fightThroughs = [];
     this.bossFx.clear();
     this.heals.clear();
     this.epic = new Set();
@@ -664,7 +667,7 @@ export class Fx {
     this.moment.step(dt);
     this.stepUnder(this.unders, dt);
     this.stepUnder(this.rowLows, dt, true);
-    this.stepThrough(dt);
+    this.throughs = this.stepThrough(this.throughs, dt);
     for (const l of this.bfxLit) l.left -= dt;
     this.bfxLit = this.bfxLit.filter((l) => l.left > 0);
   }
@@ -732,10 +735,11 @@ export class Fx {
   /** SHOW-THROUGH (`onFighterRules.ts`): a picture covering the world box `box` for `life` ms, after `delay`, stands over whoever is
    *  among it: each such living fighter is drawn again over it, so it is seen through the picture. One copy a fighter: a second
    *  picture over the same fighter only lengthens its copy's stay. */
-  private showThrough(box: readonly [number, number, number, number], life: number, delay = 0): void {
+  private showThrough(box: readonly [number, number, number, number], life: number, delay = 0, fight = false): void {
+    const list = fight ? this.fightThroughs : this.throughs;
     for (const s of this.sprites.values()) {
       if (!s.unit.alive || !amongPicture(s.x, s.y, s.tall, box)) continue;
-      const had = this.throughs.find((h) => h.id === s.unit.id);
+      const had = list.find((h) => h.id === s.unit.id);
       if (had) {
         // (it stays to the later end; if it has not begun, it begins with the earlier picture)
         const end = Math.max(had.life - had.t, delay + life);
@@ -746,12 +750,12 @@ export class Fx {
       const sp = new Sprite();
       sp.alpha = 0;
       this.throughLayer.addChild(sp);
-      this.throughs.push({ id: s.unit.id, sp, t: -delay, life });
+      list.push({ id: s.unit.id, sp, t: -delay, life });
     }
   }
 
-  private stepThrough(dt: number): void {
-    this.throughs = this.throughs.filter((h) => {
+  private stepThrough(list: { id: number; sp: Sprite; t: number; life: number }[], dt: number): typeof list {
+    return list.filter((h) => {
       h.t += dt;
       const s = this.sprites.get(h.id);
       if (h.t >= h.life || !s || !s.unit.alive || h.sp.destroyed) {
@@ -1487,7 +1491,10 @@ export class Fx {
     if (c && frames.length) {
       const size = Math.min(1.6, target.size ?? 1);
       const [cx, cy] = bfxCentre(c, x, feet, size);
-      this.particles.spawn({ frames: this.reduced ? [frames[c.hold]] : frames, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: this.reduced ? c.ms : c.ms / frames.length, life: c.ms, prio: true, solid: true });
+      // (SHOW-THROUGH: a fall is whole where the fighter fell, not thinned and tucked under a neighbour (in a melee it could not be
+      // seen at all); the living fighters it stands over are drawn again over it once the rule's brief flash is over)
+      this.particles.spawn({ frames: this.reduced ? [frames[c.hold]] : frames, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: this.reduced ? c.ms : c.ms / frames.length, life: c.ms, prio: true, solid: true, bare: true });
+      this.showThrough(bfxBox(c, x, feet, size), c.ms, 0, true);
       if (kind === 'bones') boneBits(this.particles, x, y);
     } else deathBurst(this.particles, kind, x, y, target.size ?? 1);
     if (kind === 'thud') this.trauma = Math.min(1, this.trauma + 0.2);
@@ -1698,6 +1705,7 @@ export class Fx {
     this.particles.calm = this.calm();
     this.particles.step(dt);
     this.stepUnder(this.lows, dt);
+    this.fightThroughs = this.stepThrough(this.fightThroughs, dt);
     this.slowLeft = Math.max(0, this.slowLeft - dt);
     this.stopLeft = Math.max(0, this.stopLeft - dt);
     this.dimLeft = Math.max(0, this.dimLeft - dt);

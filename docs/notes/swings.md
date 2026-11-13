@@ -72,3 +72,24 @@ cut play where the clips are not held.
 - Verdict: the cut on the foe is now plain to see where the painted one hardly showed at this size; it is the larger gain. The
   streak is a thin dark-violet line, right for a blade but easy to miss against dark foes. One blink on one land was
   photographed, not each hero that blinks.
+
+## Since: the falls and the charm caught in fights
+
+The director's order: catch the five falls not yet seen in a fight and the Kitsune's charm thread, and fix any that do not read.
+
+- **Found: the falls could not be seen in a melee.** A fall was spawned as an ordinary bit, so over a living neighbour it was
+  thinned to the ceiling and tucked under that neighbour's body; with the blow's blood chips over it, nothing of it showed. It
+  is now whole where the fighter fell (`bare`), and the living fighters it stands over are drawn again over it after the rule's
+  brief flash (SHOW-THROUGH, `docs/notes/on-fighter.md`), on the fight's own clock (`fightThroughs`).
+- Caught, each in a real fight (`docs/samples/blender-fx/falls-caught-3x.png`: the skeleton, the imp, the ogre, the Gorgon, the
+  Knight; two moments each, 150 and 300 ms after the fall, at three times the size; whole frames in
+  `falls-and-charm-caught-393.jpg`):
+  - **Ogre (dust):** reads: a ring of tan puffs, then grey smoke.
+  - **Gorgon (stone):** reads: white shards and a ring thrown out.
+  - **Knight (light):** reads, quietly: a gold ring on the ground and motes.
+  - **Imp (burning):** partly: grey smoke with flame at its heart, but it was caught behind a large slash and the blow's blood.
+  - **Skeleton (bones):** NOT judged. It fell inside a wall of fire, and neither its dust (a 24 px puff) nor its bones can be
+    told from the flames in the photograph.
+- **The Kitsune's charm** (`charm-caught-3x.png`): reads: a pink wavy thread from her to the charmed foe.
+- The photograph tool: `ARMY=`, `STAGE=`, `FRAIL=<heroes at one health>`, `TOUGH=<under 1 weakens the foes>`, and each `seen` line
+  gives where on the screen it happened, for a crop round it.

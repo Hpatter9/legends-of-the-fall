@@ -211,6 +211,9 @@ test('SHOW-THROUGH: a fighter among a strike\'s one large picture is drawn again
   assert.match(fx, /if \(stage === 'strike' && !host\) this\.showThrough\(bfxBox\(c, x, y, size\), life, delay\);/);
   assert.match(fx, /this\.showThrough\(bfxBox\(c, x, y, size\), life, o\.delay \?\? 0\);/);
   // (one copy a fighter, and it goes with the fighter or the fight)
-  assert.match(fx, /const had = this\.throughs\.find\(\(h\) => h\.id === s\.unit\.id\);/);
+  assert.match(fx, /const had = list\.find\(\(h\) => h\.id === s\.unit\.id\);/);
+  // (a fall is whole where the fighter fell, on the fight's own clock, with the living fighters it stands over shown through it)
+  assert.match(fx, /life: c\.ms, prio: true, solid: true, bare: true \}\);\n      this\.showThrough\(bfxBox\(c, x, feet, size\), c\.ms, 0, true\);/);
+  assert.match(fx, /this\.fightThroughs = this\.stepThrough\(this\.fightThroughs, dt\);/);
   assert.match(fx, /if \(h\.t >= h\.life \|\| !s \|\| !s\.unit\.alive \|\| h\.sp\.destroyed\) \{/);
 });
