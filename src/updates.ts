@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.569.0',
+    date: '2026-11-13',
+    title: 'A new summoning show',
+    notes: ['A new hero\'s summoning is a fresh show: a gold circle burns on, a rift of light tears open, and the hero steps out through rings of gold light.', 'Each shard card now turns with a small gold flourish.'],
+  },
+  {
     version: '0.568.0',
     date: '2026-11-13',
     title: 'Glowing orbs, lightning strands, a guarding arc',
