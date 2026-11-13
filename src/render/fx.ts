@@ -839,6 +839,7 @@ export class Fx {
       const own = this.underAt(host.underLayer());
       const lies = c.layer === 'ground' ? this.rowUnder(bfxBox(c, x, y, size * UNDER.SIZE)) : [];
       // (behind the body it is a little larger than itself and keeps its glow: strength there costs the body nothing, `UNDER`)
+      const grown = (UNDER.SIZE * BFX_SCALE * size) / k;
       const [ux, uy] = bfxCentre(c, x, y, size * UNDER.SIZE);
       for (const under of lies.length ? lies : [own]) {
         const [ok, ox, oy] = lies.length ? [1, 0, 0] : [k, host.root.x, host.root.y];
@@ -846,7 +847,7 @@ export class Fx {
           const gk = (BFX_GLOW_SCALE * size * UNDER.SIZE) / ok;
           under.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: (x - ox) / ok + (c.g.w / 2 - c.g.ax) * gk, y: (y - oy) / ok + (c.g.h / 2 - c.g.ay) * gk, scale: gk, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA, prio: true, half: 1, ...(delay ? { delay } : {}) });
         }
-        under.spawn({ ...bit, x: (ux - ox) / ok, y: (uy - oy) / ok, scale: (UNDER.SIZE * BFX_SCALE * size) / ok, half: bit.half / ok, alpha: base });
+        under.spawn({ ...bit, x: (ux - ox) / ok, y: (uy - oy) / ok, scale: lies.length ? grown * k : grown, half: bit.half / ok, alpha: base });
       }
       // (a strike lands with a bright ring of its element on the ground at the fighter's feet: flat, so on the ground's rows, under
       // every fighter and whole; in the fighter's own layer where the board gives no rows)
