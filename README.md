@@ -25,5 +25,8 @@ npm run web         # builds the phone version into out/web
 npm run dev         # serves out/web on http://localhost:8000 and rebuilds on changes
 ```
 
-Pushes to `main` publish `out/web` to GitHub Pages (`.github/workflows/pages.yml`; in the repo's Settings → Pages,
-set Source to "GitHub Actions").
+`out/web` is published to GitHub Pages once a day (10:17 UTC), when `main` has changed since the last publish
+(`.github/workflows/pages.yml`; in the repo's Settings → Pages, set Source to "GitHub Actions"). To publish at once, run
+**Publish the phone version** by hand from the Actions tab. The Android app is built the same way, once a day, and
+attached to a release (`.github/workflows/android.yml`; download it from the repo's Releases page; see
+`docs/notes/android-app.md`).

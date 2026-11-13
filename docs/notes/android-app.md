@@ -28,17 +28,19 @@ page skips the service worker when it runs in the app). The web build on GitHub 
 
 ## Publishing a new version
 
-After a merge (the director bumps `package.json` as usual), tag it and push the tag:
+Builds are made **once a day**, not on every push or tag, to stay inside the account's free GitHub Actions allowance
+(2,000 minutes a month and 500 MB of storage for a private repo; the spending limit is $0, so anything over is blocked).
+`.github/workflows/android.yml` runs at 10:47 UTC each day. Its first job (`check`) looks at the newest release: if
+`main` is still that release's commit, or `package.json`'s version has already been released, nothing is built. Otherwise
+it runs `npm ci`, `npm run web`, `cap sync`, `./gradlew assembleRelease`, and attaches
+`legends-of-the-last-keep-<version>.apk` to a Release named after the version (tag `v<version>`). The release notes list
+the titles of the pull requests merged since the previous release. The APK is not also kept as an Actions artifact
+(release files do not count against storage).
 
-```bash
-git tag v0.320.0   # the same number as package.json's version
-git push origin v0.320.0
-```
-
-The workflow runs `npm ci`, `npm run web`, `cap sync`, `./gradlew assembleRelease`, and attaches
-`legends-of-the-last-keep-<version>.apk` to a Release named after the version. It can also be started by hand
-(Actions, Build the Android app, Run workflow); it then uses package.json's version for the tag. The Android
-`versionCode` is `major*1000000 + minor*1000 + patch`, so each release is higher than the last.
+To build at once, start it by hand: on GitHub, Actions, **Build the Android app**, **Run workflow** (on `main`). A run
+started by hand always builds. Download builds from the Releases page (newest at
+github.com/hpatter9/legends-of-the-fall/releases/latest). The Android `versionCode` is
+`major*1000000 + minor*1000 + patch`, so each release is higher than the last.
 
 ## Signing
 
