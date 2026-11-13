@@ -35,7 +35,8 @@ Builds are made **once a day**, not on every push or tag, to stay inside the acc
 it runs `npm ci`, `npm run web`, `cap sync`, `./gradlew assembleRelease`, and attaches
 `legends-of-the-last-keep-<version>.apk` to a Release named after the version (tag `v<version>`). The release notes list
 the titles of the pull requests merged since the previous release. The APK is not also kept as an Actions artifact
-(release files do not count against storage).
+(release files do not count against storage). Older builds did keep it, about 318 MB each for 90 days; the
+workflow **Clear old artifacts** (run by hand) deletes every artifact older than a day.
 
 To build at once, start it by hand: on GitHub, Actions, **Build the Android app**, **Run workflow** (on `main`). A run
 started by hand always builds. Download builds from the Releases page (newest at
