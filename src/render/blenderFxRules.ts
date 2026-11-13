@@ -310,10 +310,10 @@ export const ARC_STRAND: Readonly<Record<'lightning' | 'charm' | 'hex', string>>
 /** How far a strand's clip may be stretched or squeezed along its length before it is laid as more (or fewer) lengths end to end. */
 export const STRAND_STRETCH = 1.35;
 /** A strand of clips of length `own` (world px) laid from (x0, y0) to (x1, y1): how it is turned, how many lengths lie end to
- *  end, how far each is stretched along the line (never beyond `STRAND_STRETCH`), and each length's middle. */
-export function strandLay(x0: number, y0: number, x1: number, y1: number, own: number): { turn: number; stretch: number; at: { x: number; y: number }[] } {
+ *  end, how far each is stretched along the line (never beyond `most`, `STRAND_STRETCH` when not given), and each length's middle. */
+export function strandLay(x0: number, y0: number, x1: number, y1: number, own: number, most: number = STRAND_STRETCH): { turn: number; stretch: number; at: { x: number; y: number }[] } {
   const len = Math.hypot(x1 - x0, y1 - y0);
-  const n = Math.max(1, Math.ceil(len / (own * STRAND_STRETCH)));
+  const n = Math.max(1, Math.ceil(len / (own * most)));
   const at = Array.from({ length: n }, (_, i) => ({ x: x0 + ((x1 - x0) * (i + 0.5)) / n, y: y0 + ((y1 - y0) * (i + 0.5)) / n }));
   return { turn: Math.atan2(y1 - y0, x1 - x0), stretch: len / n / own, at };
 }
@@ -335,3 +335,10 @@ export const deathClip = (kind: string): string | undefined => (BFX_CLIPS[`death
 export const GUN = { muzzle: 'shot-muzzle', tracer: 'shot-tracer', muzzleSize: 1.3, tracerSize: 1 } as const;
 /** The rendered clip a shot's missile flies as: an orb's in its element, a bullet's tracer; an arrow and a bone stay painted. */
 export const shotClip = (look: string, el: string): string | undefined => (look === 'orb' ? shotOrb(el) : look === 'tracer' && BFX_CLIPS[GUN.tracer] ? GUN.tracer : undefined);
+
+/** A blink that strikes (a teleport slash's hop): the rendered streak from where the fighter was to where it lands (`streak`, one
+ *  stroke `ms` long, fitted to the hop: stretched up to `STRETCH` of its length before a second is laid) and the crossed cut on the
+ *  foe (`cut`, `CUT_MS` long at `CUT_SIZE`, `CUT_LAG` ms after the streak sets off). */
+export const BLINK_CUT = { streak: 'swing-dash', ms: 220, STRETCH: 1.5, cut: 'hit-cut-dark', CUT_SIZE: 0.9, CUT_MS: 260, CUT_LAG: 80 } as const;
+/** The streak and the cut, or undefined where the pipeline has not made both (the painted ones play). */
+export const blinkCut = (): typeof BLINK_CUT | undefined => (BFX_CLIPS[BLINK_CUT.streak] && BFX_CLIPS[BLINK_CUT.cut] ? BLINK_CUT : undefined);

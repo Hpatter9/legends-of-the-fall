@@ -237,6 +237,9 @@ if (process.env.WATCH) {
       fx.slash = (b, by, to) => { window.__seen.push('swing:' + defOf(by)); window.__seenMs = 150; return slash(b, by, to); };
       const death = fx.death.bind(fx);
       fx.death = (target, ...a) => { window.__seen.push('fall:' + target.def); window.__seenMs = 300; return death(target, ...a); };
+      // (blink:<kind> a blink by that kind that strikes a foe: its streak and the cut on the foe)
+      const streak = fx.streak.bind(fx);
+      fx.streak = (b, e, slash) => { if (e.kind === 'blink' && slash) { window.__seen.push('blink:' + defOf(e.by)); window.__seenMs = 200; } return streak(b, e, slash); };
       const arc = fx.arc.bind(fx);
       fx.arc = (from, to, shock) => { window.__seen.push('arc:' + (shock ? 'shock' : defOf(from))); window.__seenMs = 300; return arc(from, to, shock); };
     });
