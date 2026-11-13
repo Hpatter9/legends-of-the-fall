@@ -124,3 +124,11 @@ export function rowCut(x: number, y: number, drop: number, tw: number, th: numbe
   const [w, h] = [tw / 2 + 1, th / 2 + 1];
   return [x, y - h, x + w, y, x + w, y + drop, x, y + h + drop, x - w, y + drop, x - w, y];
 }
+/** How strongly a painted bit's copy is drawn on the ground's rows. In a fighter's own layer the nearer tiles hid most of a large
+ *  painted ring; on the rows the whole of it shows, and at full strength a king's spell's ring was a bright disc three tiles
+ *  across. Seven tenths keeps it plain to see and leaves the ground readable under it. */
+export const ROW_PAINT = 0.7;
+/** How strongly a king's spell's clip is drawn on the ground's rows under those it lands on: a clip on one fighter nearly whole, a
+ *  clip wider than a tile and a half (a ring under a whole party) at a little over half, for the same reason as `ROW_PAINT`: all of
+ *  it shows now, where the nearer tiles used to hide most of it. */
+export const ROW_CLIP = { ONE: 0.85, WIDE: 0.55 } as const;

@@ -194,6 +194,35 @@ if (process.env.WATCH) {
     srv.close();
     process.exit(0);
   }
+  // (FRAMES=1 with WATCH: what a frame of an ordinary fight costs on a slow phone. The CPU is throttled four times and every frame
+  // of the fight's first WATCH_S seconds (20) is timed, the graphics card made to finish each; and how many of the ground's row
+  // layers were being drawn, on the average and at the most)
+  if (process.env.FRAMES) {
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+    const cost = await page.evaluate((secs) => {
+      const g = window.__game;
+      const gl = g.app.renderer.gl;
+      const all = [];
+      let rows = 0, most = 0;
+      for (let t = 0; t < secs * 1000 && g.b.phase === 'fight'; t += 16) {
+        const t0 = performance.now();
+        g.frame(16, 16);
+        gl?.finish();
+        all.push(performance.now() - t0);
+        const on = g.fx.rowLows ? [...g.fx.rowLows.keys()].filter((l) => !l.destroyed && l.visible).length : 0;
+        rows += on;
+        most = Math.max(most, on);
+      }
+      const s = [...all].sort((x, y) => x - y);
+      return { n: s.length, mean: +(s.reduce((x, y) => x + y, 0) / s.length).toFixed(2), p50: +s[Math.floor(s.length * 0.5)].toFixed(2), p95: +s[Math.floor(s.length * 0.95)].toFixed(2), worst: +s[s.length - 1].toFixed(2), rowsMean: +(rows / s.length).toFixed(1), rowsMost: most };
+    }, Number(process.env.WATCH_S ?? 20));
+    console.log('FRAMES fight', JSON.stringify(cost));
+    await ctx.close();
+    await browser.close();
+    srv.close();
+    process.exit(0);
+  }
   // (SEE=shot:wizard,arc:kitsune: the fight is stepped a frame at a time until that fighter looses a shot or an arc leaves it
   // (arc:shock for a shock's jump), and it is photographed in flight, at the fight's ordinary speed)
   if (process.env.SEE) {

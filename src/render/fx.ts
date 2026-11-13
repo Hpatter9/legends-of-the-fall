@@ -36,7 +36,7 @@ import { SPELL_SIGNATURES } from './spellSignatures';
 import { rankOf, SPELLS, type SpellId } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
-import { at, depth, facesRight, FOOT, HH, TH, TW } from './iso';
+import { at, depth, facesRight, getFrame, FOOT, HH, TH, TW, type Frame } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SPELL_GLOW, SPELL_WORD, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -86,7 +86,7 @@ import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinemati
 import { flicker } from './cinematicRules';
 import { coverAlpha, overFighter } from './overFighter';
 import { BODY_COVER } from './bodyCover';
-import { overAlpha, PAINT_OVER, UNDER, rowsUnder, behindRow, rowCut } from './onFighterRules';
+import { overAlpha, PAINT_OVER, UNDER, rowsUnder, behindRow, rowCut, ROW_PAINT, ROW_CLIP } from './onFighterRules';
 import { BossFx } from './bossFx';
 import type { Element, Family } from './fxRules';
 
@@ -284,7 +284,12 @@ export class Fx {
     this.particles.cover = (x, y, half) => (this.overBody(x, y, half) ? PAINT_OVER : 1);
     this.particles.under = (x, y, half) => {
       const s = this.bodyAt(x, y, half);
-      return s ? { to: this.underAt(s.underLayer(), this.lows), ox: s.root.x, oy: s.root.y, k: s.root.scale.x || 1 } : null;
+      if (!s) return null;
+      // (ROW-UNDER: on the ground of every row the bit covers, so it is under every fighter and not only the one farthest back;
+      // the fighter's own layer where the board gives no rows)
+      const rows = this.rowUnder([x - half, y - half, x + half, y + half]);
+      if (rows.length) return rows.map((to) => ({ to, ox: 0, oy: 0, k: 1, a: ROW_PAINT }));
+      return [{ to: this.underAt(s.underLayer(), this.lows), ox: s.root.x, oy: s.root.y, k: s.root.scale.x || 1 }];
     };
     if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
   }
@@ -722,8 +727,8 @@ export class Fx {
       if (layer.destroyed || p.root.destroyed) among.delete(layer);
       else {
         p.step(dt);
-        // (`rest`: a layer with nothing playing is not drawn, so its cut costs nothing between two ultimates)
-        if (rest) layer.visible = p.busy;
+        // (`rest`: a layer with nothing playing or lying on it is not drawn, so its cut costs nothing while it is empty)
+        if (rest) layer.visible = p.busy || layer.children.length > (layer.mask ? 2 : 1);
       }
     }
   }
@@ -733,40 +738,53 @@ export class Fx {
    *  every tile is under it), and one behind the whole board for what stands above its far edge. Empty where the board gives no
    *  rows: the caller keeps to the fighter's own layer. */
   private rowUnder(box: readonly [number, number, number, number]): Particles[] {
+    return this.rowLayers(box).map((layer) => this.underAt(layer, this.rowLows));
+  }
+
+  /** The board's tiles for the rows' cuts (each one's row, its top's middle and its height), kept for the board and the frame it
+   *  lies in: a bit is laid on the rows many times a frame. */
+  private rowTiles: { board: Board; frame: Frame; tiles: { depth: number; x: number; y: number; h: number }[]; low: number; far: number } | null = null;
+
+  /** ROW-UNDER: the layers themselves, for a picture covering the world box `box`: the one behind the whole board first, then one
+   *  over each row the box touches, each cut to its row's columns. Empty where the board gives no rows. */
+  private rowLayers(box: readonly [number, number, number, number]): Container[] {
     const board = this.lastBoard;
     if (!board) return [];
-    const tiles: { depth: number; x: number; y: number; h: number }[] = [];
-    for (let v = 0; v < board.d; v++)
-      for (let u = 0; u < board.w; u++) {
-        const t = tileAt(board, u, v);
-        if (!t || t.chasm) continue;
-        const [x, y] = at(u, v, t.h);
-        tiles.push({ depth: depth(u, v), x, y, h: t.h });
-      }
+    let had = this.rowTiles;
+    if (!had || had.board !== board || had.frame !== getFrame()) {
+      const tiles: { depth: number; x: number; y: number; h: number }[] = [];
+      for (let v = 0; v < board.d; v++)
+        for (let u = 0; u < board.w; u++) {
+          const t = tileAt(board, u, v);
+          if (!t || t.chasm) continue;
+          const [x, y] = at(u, v, t.h);
+          tiles.push({ depth: depth(u, v), x, y, h: t.h });
+        }
+      had = this.rowTiles = { board, frame: getFrame(), tiles, low: Math.min(...tiles.map((t) => t.h)), far: Math.min(...tiles.map((t) => t.depth)) };
+    }
+    const { tiles, low, far } = had;
     if (!tiles.length) return [];
-    const low = Math.min(...tiles.map((t) => t.h));
-    const out: Particles[] = [];
-    const back = this.groundRow(behindRow(Math.min(...tiles.map((t) => t.depth))));
+    const back = this.groundRow(behindRow(far));
     if (!back) return [];
-    out.push(this.underAt(back, this.rowLows));
+    const out: Container[] = [back];
     for (const d of rowsUnder(tiles, box, TW, TH)) {
       const layer = this.groundRow(d);
       if (!layer) continue;
-      let had = this.rowBoxes.get(d);
-      if (!had || had.box.destroyed || had.box.parent !== layer || had.board !== board) {
-        if (had && !had.box.destroyed) had.box.destroy({ children: true });
-        const cut = new Container();
+      let cut = this.rowBoxes.get(d);
+      if (!cut || cut.box.destroyed || cut.box.parent !== layer || cut.board !== board) {
+        if (cut && !cut.box.destroyed) cut.box.destroy({ children: true });
+        const box = new Container();
         const mask = new Graphics();
         // (each column's top and its near sides down to the lowest ground, `rowCut`)
         for (const t of tiles) if (t.depth === d) mask.poly(rowCut(t.x, t.y, (t.h - low) * HH + FOOT, TW, TH));
         mask.fill(0xffffff);
-        cut.addChild(mask);
-        cut.mask = mask;
-        layer.addChild(cut);
-        had = { box: cut, board };
-        this.rowBoxes.set(d, had);
+        box.addChild(mask);
+        box.mask = mask;
+        layer.addChild(box);
+        cut = { box, board };
+        this.rowBoxes.set(d, cut);
       }
-      out.push(this.underAt(had.box, this.rowLows));
+      out.push(cut.box);
     }
     return out;
   }
@@ -1665,7 +1683,21 @@ export class Fx {
     // (ON-FIGHTER: a strip laid over a fighter's body is drawn under that body, in the fighter's own layer, at its full strength: it
     // was drawn over it at six tenths)
     const host = this.bodyAt(x, y, 16 * scale);
-    if (host) {
+    // (ROW-UNDER: on the ground of every row it covers, a copy on each, so it is under every fighter; the fighter's own layer where
+    // the board gives no rows)
+    const half = (s.frames[0].frame.width * scale) / 2;
+    const rows = host ? this.rowLayers([x - half, y - half, x + half, y + half]) : [];
+    const copies: Sprite[] = [];
+    if (host && rows.length) {
+      rows[0].addChild(sp);
+      for (const layer of rows.slice(1)) {
+        const copy = new Sprite(s.frames[0]);
+        copy.anchor.set(0.5);
+        copy.position.set(x, y);
+        layer.addChild(copy);
+        copies.push(copy);
+      }
+    } else if (host) {
       const k = host.root.scale.x || 1;
       scale /= k;
       sp.scale.set(scale);
@@ -1675,8 +1707,27 @@ export class Fx {
     let t = 0;
     let peak: number | undefined;
     let own: number | undefined;
+    const show = (): void => {
+      for (const copy of copies) {
+        if (copy.destroyed) continue;
+        copy.texture = sp.texture;
+        copy.scale.copyFrom(sp.scale);
+        copy.rotation = sp.rotation;
+        copy.alpha = sp.alpha;
+        copy.tint = sp.tint;
+        copy.blendMode = sp.blendMode;
+      }
+    };
     this.items.push({
-      view: sp,
+      view: {
+        get destroyed() {
+          return sp.destroyed;
+        },
+        destroy: (opt) => {
+          if (!sp.destroyed) sp.destroy(opt);
+          for (const copy of copies) if (!copy.destroyed) copy.destroy();
+        },
+      },
       step: (dt) => {
         t += dt;
         // (it keeps the alpha it was given: over a fighter it is under the body, above)
@@ -1686,6 +1737,7 @@ export class Fx {
         if (f >= s.frames.length) return false;
         sp.texture = s.frames[f];
         if (!paintSprite(sp, t, s.frames.length * frameMs, scale, 0, peak, false, this.calm())) sp.alpha = own;
+        show();
         return true;
       },
     });
@@ -2005,6 +2057,9 @@ export class Fx {
     let own = -1;
     let ghost: Sprite | null = null;
     let thin = 1;
+    const under: { box: Container; sp: Sprite; glow: Sprite | null }[] = [];
+    // (how strongly the copy on the ground's rows is drawn, `ROW_CLIP`; 1 in a fighter's own layer and over no one)
+    let low = 1;
     let t = -(o.delay ?? 0);
     this.items.push({
       view: {
@@ -2012,7 +2067,8 @@ export class Fx {
           return view.destroyed;
         },
         destroy: (opt) => {
-          view.destroy(opt);
+          if (!view.destroyed) view.destroy(opt);
+          for (const u of under) if (!u.box.destroyed) u.box.destroy({ children: true });
           if (ghost && !ghost.destroyed) ghost.destroy();
           paint?.destroy();
           if (paint) sp.destroy();
@@ -2033,10 +2089,30 @@ export class Fx {
             // (the view, glow and all, goes under the body a little larger than itself, `UNDER.SIZE`; and a second copy of the clip
             // stays over the fighter as thin as its measured cover of a body allows, so the spell is still seen to land on them:
             // under the body alone a heal was all but hidden by whom it healed)
-            const k = host.root.scale.x || 1;
-            view.scale.set(UNDER.SIZE / k);
-            view.position.set((x - host.root.x) / k, (y - host.root.y) / k);
-            host.underLayer().addChild(view);
+            // (ROW-UNDER: on the ground of every row the clip covers, a copy on each, so it is under every fighter it lies over and
+            // not only the one farthest back; the fighter's own layer where the board gives no rows)
+            const rows = this.rowLayers(bfxBox(c, x, y, (Math.abs(sp.scale.y) / BFX_SCALE) * UNDER.SIZE));
+            if (rows.length) {
+              view.scale.set(UNDER.SIZE);
+              low = c.w * BFX_SCALE > TW * 1.5 ? ROW_CLIP.WIDE : ROW_CLIP.ONE;
+              rows[0].addChild(view);
+              for (const layer of rows.slice(1)) {
+                const copy = this.bfxSprites(key, (o.mult ?? 1) * (this.boost !== 1 ? Math.min(this.boost, 1.5) : 1), o.flip);
+                if (!copy) continue;
+                const box = new Container();
+                if (copy.glow) box.addChild(copy.glow);
+                box.addChild(copy.sp);
+                box.position.set(x, y);
+                box.scale.set(UNDER.SIZE);
+                layer.addChild(box);
+                under.push({ box, sp: copy.sp, glow: copy.glow });
+              }
+            } else {
+              const k = host.root.scale.x || 1;
+              view.scale.set(UNDER.SIZE / k);
+              view.position.set((x - host.root.x) / k, (y - host.root.y) / k);
+              host.underLayer().addChild(view);
+            }
             const top = this.bfxSprites(key, (o.mult ?? 1) * (this.boost !== 1 ? Math.min(this.boost, 1.5) : 1), o.flip);
             if (top) {
               ghost = top.sp;
@@ -2058,7 +2134,7 @@ export class Fx {
           paint.place(o.lie.u, o.lie.v, reach, x, y, frames[f]);
         } else {
           sp.texture = frames[f];
-          sp.alpha = a * own;
+          sp.alpha = a * own * low;
           if (ghost && !ghost.destroyed) {
             ghost.texture = frames[f];
             ghost.alpha = a * thin;
@@ -2066,7 +2142,16 @@ export class Fx {
         }
         if (glow) {
           glow.texture = glows[f] ?? glows[0];
-          glow.alpha = a * BFX_GLOW_ALPHA * (o.glow ?? 1) * (own < 1 ? own : 1);
+          glow.alpha = a * BFX_GLOW_ALPHA * (o.glow ?? 1) * (own < 1 ? own : 1) * low;
+        }
+        for (const u of under) {
+          if (u.box.destroyed) continue;
+          u.sp.texture = sp.texture;
+          u.sp.alpha = sp.alpha;
+          if (u.glow && glow) {
+            u.glow.texture = glow.texture;
+            u.glow.alpha = glow.alpha;
+          }
         }
         return true;
       },

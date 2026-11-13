@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BODY, PAINT_OVER, ROUND, STATUS_ROUND, UNDER, behindRow, frontCover, onFighterClip, overAlpha, rowCut, rowsUnder, wispAt, wispsOf } from '../src/render/onFighterRules';
+import { BODY, PAINT_OVER, ROUND, ROW_CLIP, ROW_PAINT, STATUS_ROUND, UNDER, behindRow, frontCover, onFighterClip, overAlpha, rowCut, rowsUnder, wispAt, wispsOf } from '../src/render/onFighterRules';
 import { BODY_COVER } from '../src/render/bodyCover';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
 import { STATUS_LOOKS, maxStatuses } from '../src/render/fxRules';
@@ -104,7 +104,10 @@ test('a painted bit over a fighter is thinned to the ceiling and drawn again at 
   assert.equal(PAINT_OVER, BODY.CEILING);
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /this\.particles\.cover = \(x, y, half\) => \(this\.overBody\(x, y, half\) \? PAINT_OVER : 1\);/);
-  assert.match(fx, /return s \? \{ to: this\.underAt\(s\.underLayer\(\), this\.lows\), ox: s\.root\.x, oy: s\.root\.y, k: s\.root\.scale\.x \|\| 1 \} : null;/);
+  // (ROW-UNDER 2, the director's order: the copy under the body is laid on the ground's rows, at `ROW_PAINT`, and in the fighter's
+  // own layer only where the board gives no rows; the assertion follows the new call)
+  assert.match(fx, /if \(rows\.length\) return rows\.map\(\(to\) => \(\{ to, ox: 0, oy: 0, k: 1, a: ROW_PAINT \}\)\);/);
+  assert.match(fx, /return \[\{ to: this\.underAt\(s\.underLayer\(\), this\.lows\), ox: s\.root\.x, oy: s\.root\.y, k: s\.root\.scale\.x \|\| 1 \}\];/);
   // (a bit that lies over several fighters goes under the one farthest back, so it is behind them all)
   assert.match(fx, /if \(!best \|\| s\.root\.zIndex < best\.root\.zIndex\) best = s;/);
   // (a plain strip and a king's spell's clip over a fighter go under its body whole)
@@ -124,7 +127,7 @@ test('a painted bit over a fighter is thinned to the ceiling and drawn again at 
   assert.match(fx, /if \(layer\.destroyed \|\| p\.root\.destroyed\) among\.delete\(layer\);/);
   const parts = readFileSync('src/render/particles.ts', 'utf8');
   assert.match(parts, /const low = b\.bare \? null : this\.under\?\.\(b\.x, b\.y,/);
-  assert.match(parts, /low\.to\.spawn\(\{ \.\.\.b, x: \(b\.x - low\.ox\) \/ k, y: \(b\.y - low\.oy\) \/ k, scale: \(b\.scale \?\? 1\) \/ k,/);
+  assert.match(parts, /one\.to\.spawn\(\{ \.\.\.b, x: \(b\.x - one\.ox\) \/ k, y: \(b\.y - one\.oy\) \/ k, scale: \(b\.scale \?\? 1\) \/ k,/);
 });
 
 test('a wisp is a long thin thread, not a puff: its clip is far wider than it is tall, in the atlases every fight holds', () => {
@@ -153,6 +156,22 @@ test("ROW-UNDER: an ultimate's copy under a fighter lies on every row its pictur
   assert.deepEqual(rowCut(0, 0, 12, 64, 32), [0, -17, 33, 0, 33, 12, 0, 29, -33, 12, -33, 0]);
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   // (a row's layer with nothing playing is not drawn, so its cut costs nothing between two ultimates)
-  assert.match(fx, /if \(rest\) layer\.visible = p\.busy;/);
+  assert.match(fx, /if \(rest\) layer\.visible = p\.busy \|\| layer\.children\.length > \(layer\.mask \? 2 : 1\);/);
   assert.match(fx, /this\.stepUnder\(this\.rowLows, dt, true\);/);
+});
+
+test('ROW-UNDER 2: painted bits, painted strips and the king\'s spells lie on the ground\'s rows, tempered, under every fighter', () => {
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  // (a strip and a king's spell's clip take a copy on each row they cover; the fighter's own layer where there are no rows)
+  assert.match(fx, /const rows = host \? this\.rowLayers\(\[x - half, y - half, x \+ half, y \+ half\]\) : \[\];/);
+  assert.match(fx, /const rows = this\.rowLayers\(bfxBox\(c, x, y, \(Math\.abs\(sp\.scale\.y\) \/ BFX_SCALE\) \* UNDER\.SIZE\)\);/);
+  assert.match(fx, /low = c\.w \* BFX_SCALE > TW \* 1\.5 \? ROW_CLIP\.WIDE : ROW_CLIP\.ONE;/);
+  // (on the rows the whole of a picture shows, where the nearer tiles used to hide most of it: it is drawn below full strength, a
+  // wide ring under a party the most tempered, and never so thin that it is lost)
+  assert.ok(ROW_PAINT < 1 && ROW_PAINT >= 0.5);
+  assert.ok(ROW_CLIP.WIDE < ROW_CLIP.ONE && ROW_CLIP.ONE < 1 && ROW_CLIP.WIDE >= 0.5);
+  // (a row's layer is drawn while anything plays or lies on it, and not otherwise)
+  assert.match(fx, /if \(rest\) layer\.visible = p\.busy \|\| layer\.children\.length > \(layer\.mask \? 2 : 1\);/);
+  // (the tiles of the rows' cuts are kept for the board and the frame, not gathered for every bit)
+  assert.match(fx, /if \(!had \|\| had\.board !== board \|\| had\.frame !== getFrame\(\)\) \{/);
 });
