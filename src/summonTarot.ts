@@ -183,8 +183,9 @@ const reducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion:
 
 /** The first-time reveal of a hero: a full-screen scene over everything but a cinematic. A tap (after the first moments, so a
  *  double tap cannot pass it) goes to the hero in full view with its name; a tap then closes it, and the hero is marked seen.
- *  `hold` (the screenshot tools) stops the scene at a beat. */
-export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; hold?: 1 | 2 | 3 | 4 } = {}): Promise<void> {
+ *  `hold` (the screenshot tools) stops the scene at a beat. `onward` (SUMMON-SHOW: a hero of a draw with another still to come) closes
+ *  the scene by itself that long after the hero is in full view; the last hero of a draw has none, and is held until a tap. */
+export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; hold?: 1 | 2 | 3 | 4; onward?: number } = {}): Promise<void> {
   const def = UNITS[kind];
   const a = arcanaOf(kind);
   const reduced = reducedMotion();
@@ -254,18 +255,10 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
     }, beats[n - 1]));
   }
   return new Promise((done) => {
-    root.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      // (the first moments of the scene, and of its last beat, let a tap go: a double tap cannot skip the hero)
-      if (performance.now() - at < SKIP_GUARD_MS) return;
-      if (root.dataset.stage !== '4') {
-        timers.forEach((t) => window.clearTimeout(t));
-        hushSummon();
-        if (root.dataset.stage === '1') playSfx('stingSummon');
-        root.classList.add('skipped');
-        set(4);
-        return;
-      }
+    let closed = false;
+    const close = (): void => {
+      if (closed) return;
+      closed = true;
       timers.forEach((t) => window.clearTimeout(t));
       hushSummon();
       markHeroSeen(meta, kind);
@@ -275,6 +268,27 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
       root.remove();
       leave();
       done();
+    };
+    // (SUMMON-SHOW: a hero with another still to come goes on by itself once it has been seen in full)
+    const onward = (): void => {
+      if (opts.onward !== undefined && !opts.hold) timers.push(window.setTimeout(close, opts.onward));
+    };
+    if (opts.onward !== undefined && !opts.hold) timers.push(window.setTimeout(onward, beats[3]));
+    root.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      // (the first moments of the scene, and of its last beat, let a tap go: a double tap cannot skip the hero)
+      if (performance.now() - at < SKIP_GUARD_MS) return;
+      if (root.dataset.stage !== '4') {
+        timers.forEach((t) => window.clearTimeout(t));
+        timers.length = 0;
+        hushSummon();
+        if (root.dataset.stage === '1') playSfx('stingSummon');
+        root.classList.add('skipped');
+        set(4);
+        onward();
+        return;
+      }
+      close();
     });
   });
 }
@@ -285,14 +299,14 @@ const waiting = new Set<string>();
 let playing = 0;
 
 /** Queue a hero's first reveal. `force`: a pull's join plays whatever the list says (it has just joined). Resolves when it has played. */
-export function queueReveal(meta: Meta, kind: string, opts: { lucky?: boolean; force?: boolean } = {}): Promise<void> {
+export function queueReveal(meta: Meta, kind: string, opts: { lucky?: boolean; force?: boolean; onward?: number } = {}): Promise<void> {
   if (waiting.has(kind) || (!opts.force && heroSeen(meta, kind)) || !UNITS[kind]) return line;
   waiting.add(kind);
   line = line.then(async () => {
     playing++;
     try {
       // (RECAP-REVEAL: a hero earned by a deed walks in to the keep instead; one out of a pull is the summoner's)
-      if (opts.force || !heroSeen(meta, kind)) await (arrivalOf(kind, opts.force) === 'earned' ? earnedArrival(meta, kind) : firstReveal(meta, kind, { lucky: opts.lucky }));
+      if (opts.force || !heroSeen(meta, kind)) await (arrivalOf(kind, opts.force) === 'earned' ? earnedArrival(meta, kind) : firstReveal(meta, kind, { lucky: opts.lucky, onward: opts.onward }));
     } finally {
       playing--;
       waiting.delete(kind);
@@ -360,10 +374,24 @@ const css = `
 .tarotFig { position: relative; width: 100%; height: 100%; display: grid; place-items: end center; overflow: hidden; background: radial-gradient(ellipse at 50% 70%, color-mix(in srgb, var(--cls) 45%, transparent), transparent 65%), linear-gradient(#15382a, #08170f); border: 2px solid #e8c56c; border-radius: 4px; box-shadow: 0 0 10px #e8c56c88; }
 .tarotFig canvas { width: 118%; image-rendering: pixelated; margin-bottom: 8%; }
 #gacha #reveal.tarotSpread { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)) !important; gap: 12px 6px; padding: 4px 0 8px; }
-/* UX-FIXES (#19): a new hero on a row of its own at 150 px; repeats turned to crowns are bare small cards, told as one line */
-#gacha #reveal.tarotSpread .tarotResult.joined { order: -1; grid-column: span 2; }
+/* UX-FIXES (#19): repeats turned to crowns are bare small cards, told in the totals. SUMMON-SHOW: the new heroes come after every shard, on a row of their own */
 #gacha #reveal.tarotSpread .tarotResult.dupe .tarotInfo { display: none; }
-#gacha #reveal .tarotDupes { order: 99; grid-column: 1 / -1; margin: 0; text-align: center; font: 400 14px var(--body); color: #ffd76a; }
+#gacha #reveal .tarotTotals { grid-column: 1 / -1; margin: 2px 0 0; padding: 8px 10px; border-top: 1px solid #d5b56c70; border-bottom: 1px solid #d5b56c40; background: linear-gradient(90deg, #05130fb0, #05130fe0 50%, #05130fb0); }
+#gacha #reveal .tarotTotals[hidden] { display: none; }
+#gacha #reveal .tarotTotals h3, #gacha #reveal .tarotHeroes h3 { margin: 0 0 6px; text-align: center; font: 700 11px var(--display); letter-spacing: 2px; text-transform: uppercase; color: #e6ca87; }
+#gacha #reveal .tarotTotals ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+#gacha #reveal .tarotTotals li { display: grid; grid-template-columns: 28px auto 1fr auto; align-items: center; gap: 0 8px; font: 13px/1.2 var(--body); color: #c9d8c5; }
+#gacha #reveal .tarotTotals li canvas { width: 28px; height: 28px; image-rendering: pixelated; }
+#gacha #reveal .tarotTotals li b { color: #ffe4a4; font: 900 13px var(--display); white-space: nowrap; }
+#gacha #reveal .tarotTotals li span { min-width: 0; overflow-wrap: anywhere; }
+#gacha #reveal .tarotTotals li em { font: italic 700 12px var(--display); color: #ffd76a; }
+#gacha #reveal .tarotTotals li.lucky b { color: #fff2c4; text-shadow: 0 0 6px #e9c46a; }
+#gacha #reveal .tarotHeroes { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 12px; padding-top: 4px; }
+#gacha #reveal .tarotHeroes h3 { flex: 0 0 100%; }
+#gacha #reveal.tarotSpread .tarotHeroes .tarotResult { width: 110px; animation: tarotJoin .5s cubic-bezier(.16,1,.3,1) both; }
+@keyframes tarotJoin { from { opacity: 0; transform: translateY(14px) scale(.9); } to { opacity: 1; transform: none; } }
+#gacha #reveal.tarotSingle .tarotHeroes { width: min(230px, 62vw); }
+#gacha #reveal.tarotSingle .tarotHeroes .tarotResult { width: 100%; }
 #gacha #reveal.tarotSingle { display: flex !important; justify-content: center; padding: 4px 0 8px; }
 #gacha #reveal.tarotSingle .tarotResult { width: min(230px, 62vw); }
 #gacha #reveal.tarotSingle .tarotName { font-size: 20px; min-height: 0; margin-top: 8px; }
@@ -371,6 +399,7 @@ const css = `
 #gacha #reveal.tarotSingle .tarotBar { height: 7px; }
 #gacha #reveal.tarotSingle .tarotBarLabel { font-size: 13px; }
 @media (prefers-reduced-motion: reduce) {
+  #gacha #reveal .tarotHeroes .tarotResult { animation: none !important; }
   .tarotTurn > .tarotSide { transition: opacity .3s; transform: none !important; }
   .tarotTurn > .tarotSide.front { opacity: 0; }
   .tarotResult.up .tarotTurn > .tarotSide.front { opacity: 1; }
