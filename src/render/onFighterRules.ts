@@ -102,3 +102,25 @@ export const UNDER = { SIZE: 1.15, FLASH_MS: BODY.FLASH_MS, RING: 1.5 } as const
  *  again at its full strength under that body (`Particles.under`), so it is seen round the fighter and behind it. (It was six
  *  tenths with nothing behind, FX-CLEAR's `OVER_FIGHTER_ALPHA`: a heal's haze lay over the whole party.) */
 export const PAINT_OVER = BODY.CEILING;
+
+/** ROW-UNDER: an ultimate's copy under a fighter is laid on the ground of every diagonal row its picture covers, each row's piece cut
+ *  to that row's tile tops and drawn just over them: so it is under the fighter it is on, under the fighters of the rows behind it
+ *  (in whose own layer it used to lie over them), and over every tile. What of it stands above the board's far edge goes on one
+ *  layer behind the whole board (`behindRow`). The rows whose tile tops (`TW` by `TH` diamonds, their middles at x, y) the box
+ *  `[left, top, right, bottom]` touches, nearest last. */
+export function rowsUnder(tiles: readonly { depth: number; x: number; y: number }[], box: readonly [number, number, number, number], tw: number, th: number): number[] {
+  const [l, t, r, b] = box;
+  const rows = new Set<number>();
+  for (const k of tiles) if (k.x + tw / 2 > l && k.x - tw / 2 < r && k.y + th / 2 > t && k.y - th / 2 < b) rows.add(k.depth);
+  return [...rows].sort((a, c) => a - c);
+}
+/** The draw depth of the layer behind every tile of a board whose farthest row is `far` (a row's layer is drawn at its depth + 1,
+ *  `BoardView.groundRow`, so this one is under the farthest row's tiles). */
+export const behindRow = (far: number): number => far - 2;
+/** A column's shape on the screen, for a row's cut: its top (a `tw` by `th` diamond, its middle at x, y), a pixel over all round so
+ *  no seam shows between two rows' pieces, and its two near sides down `drop` px (so a picture is not cut along a cliff's face; the
+ *  nearer rows' columns are drawn after it and cover what of it is theirs). Six corners, from the top round by the right. */
+export function rowCut(x: number, y: number, drop: number, tw: number, th: number): number[] {
+  const [w, h] = [tw / 2 + 1, th / 2 + 1];
+  return [x, y - h, x + w, y, x + w, y + drop, x, y + h + drop, x - w, y + drop, x - w, y];
+}

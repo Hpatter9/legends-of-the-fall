@@ -160,3 +160,36 @@ same sizes and strengths in front of the body and behind it.
 
 `STATUS=1` with `WATCH=1` in `tools/blender-fx/ult-shots.mjs` gives each hero a lasting status for the photographs; `ROOT=` in
 `tools/blender-fx/shots.mjs` photographs another build's page.
+
+## Since: ROW-UNDER, an ultimate's under copy on the ground's rows
+
+An ultimate's copy under a fighter lay in that fighter's own layer. The board is drawn a diagonal row at a time, so that layer was
+over everything farther back: the fighters of the rows behind were covered by it, and the nearer rows' tiles were drawn over its
+near edge (a ring at a fighter's feet was cut off by the tiles in front of it).
+
+It now lies on the ground. `Fx.rowUnder` gives a layer over each diagonal row of tiles the picture's box touches (`rowsUnder`), on
+the board's own row layers (`BoardView.groundRow`, as the ground paintings use; the board itself is not changed), each cut to its
+row's columns (`rowCut`: the top and the near sides, so the picture is not cut along a cliff's face), and one layer behind the
+whole board (`behindRow`) for what stands above the far edge. The same clip plays on each. So the copy is under the fighter it is
+on, under the fighters of every row behind, and over every tile. The ring at the feet and the glow go with it. A row's layer with
+nothing playing is not drawn. Where the board gives no rows the fighter's own layer is used, as before.
+
+- Photographs: `docs/samples/blender-fx/row-under-before-after-393.png` (the Cleric's and the Knight's strikes, before then after:
+  the ring whole on the ground, the ally beside the Cleric standing over it).
+- Memory: nothing new is loaded; no atlas changed.
+- Frame cost, the CPU throttled four times, every frame of the show timed with the graphics card made to finish
+  (`FRAMES=1 node tools/blender-fx/ult-shots.mjs --picks ...`). The strike's frames, mean ms (95th percentile), two runs before and
+  three after:
+
+  | | before | after |
+  | --- | --- | --- |
+  | Cleric | 3.9 (22), 4.8 (26) | 5.5 (32), 5.1 (28), 6.4 (27) |
+  | Knight | 4.9 (26), 4.5 (24) | 4.7 (26), 6.7 (34), 4.9 (26) |
+  | Paladin | 2.5 (6), 2.8 (9) | 4.2 (9), 2.0 (4), 2.3 (4) |
+  | Druid | 5.8 (31), 5.1 (29) | 7.0 (37), 4.9 (29), 7.1 (31) |
+
+  The runs vary by a millisecond or more among themselves. Read plainly: up to about a millisecond more on the mean and a few on
+  the 95th percentile for the strikes with a ring under several fighters, nothing measurable for the Paladin's. Eleven to
+  twenty-two row layers are made in a fight and each is drawn only while something plays on it.
+- Not covered: the painted hazes and the king's spells still go under the farthest-back fighter they overlap (`bodyAt`), not on
+  the rows; a picture's part over a chasm shows on the layer behind the board.

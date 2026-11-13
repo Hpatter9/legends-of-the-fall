@@ -36,7 +36,7 @@ import { SPELL_SIGNATURES } from './spellSignatures';
 import { rankOf, SPELLS, type SpellId } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
-import { at, depth, facesRight, TH, TW } from './iso';
+import { at, depth, facesRight, FOOT, HH, TH, TW } from './iso';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SPELL_GLOW, SPELL_WORD, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -86,7 +86,7 @@ import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinemati
 import { flicker } from './cinematicRules';
 import { coverAlpha, overFighter } from './overFighter';
 import { BODY_COVER } from './bodyCover';
-import { overAlpha, PAINT_OVER, UNDER } from './onFighterRules';
+import { overAlpha, PAINT_OVER, UNDER, rowsUnder, behindRow, rowCut } from './onFighterRules';
 import { BossFx } from './bossFx';
 import type { Element, Family } from './fxRules';
 
@@ -238,6 +238,10 @@ export class Fx {
   private unders = new Map<Container, Particles>();
   /** (the same for the fight's own effects, the painted bits: they run on the fight's clock, with `particles`) */
   private lows = new Map<Container, Particles>();
+  /** ROW-UNDER: an ultimate's copy under a fighter, a layer over each diagonal row of tiles (cut to that row's tile tops) and one
+   *  behind the whole board (`rowUnder`); `rowBoxes` are the cut layers by row, each made for the board it was cut to. */
+  private rowLows = new Map<Container, Particles>();
+  private rowBoxes = new Map<number, { box: Container; board: Board }>();
   /** Ms of a slow-motion beat left (a boss falls); `timeScale` slows the fight while it lasts. */
   private slowLeft = 0;
   /** Ms of hit-stop left (a crit or a killing blow freezes the fight for a moment). */
@@ -300,9 +304,10 @@ export class Fx {
     this.gusts.clear();
     this.particles.clear();
     this.moment.clear();
-    for (const p of [...this.unders.values(), ...this.lows.values()]) if (!p.root.destroyed) p.root.destroy({ children: true });
+    for (const p of [...this.unders.values(), ...this.lows.values(), ...this.rowLows.values()]) if (!p.root.destroyed) p.root.destroy({ children: true });
     this.unders.clear();
     this.lows.clear();
+    this.rowLows.clear();
     this.bossFx.clear();
     this.heals.clear();
     this.epic = new Set();
@@ -645,6 +650,7 @@ export class Fx {
     this.moment.calm = this.calm();
     this.moment.step(dt);
     this.stepUnder(this.unders, dt);
+    this.stepUnder(this.rowLows, dt, true);
     for (const l of this.bfxLit) l.left -= dt;
     this.bfxLit = this.bfxLit.filter((l) => l.left > 0);
   }
@@ -703,11 +709,58 @@ export class Fx {
 
   /** ON-FIGHTER: move the layers under the fighters' bodies on; one whose fighter has gone (its view destroyed, and the layer with
    *  it) is dropped. */
-  private stepUnder(among: Map<Container, Particles>, dt: number): void {
+  private stepUnder(among: Map<Container, Particles>, dt: number, rest = false): void {
     for (const [layer, p] of among) {
       if (layer.destroyed || p.root.destroyed) among.delete(layer);
-      else p.step(dt);
+      else {
+        p.step(dt);
+        // (`rest`: a layer with nothing playing is not drawn, so its cut costs nothing between two ultimates)
+        if (rest) layer.visible = p.busy;
+      }
     }
+  }
+
+  /** ROW-UNDER: the layers an ultimate's copy under a fighter is laid on, for a picture covering the world box `box`: one over each
+   *  diagonal row of tiles the box touches, cut to that row's tile tops (so the row's fighters and the rows' behind are over it and
+   *  every tile is under it), and one behind the whole board for what stands above its far edge. Empty where the board gives no
+   *  rows: the caller keeps to the fighter's own layer. */
+  private rowUnder(box: readonly [number, number, number, number]): Particles[] {
+    const board = this.lastBoard;
+    if (!board) return [];
+    const tiles: { depth: number; x: number; y: number; h: number }[] = [];
+    for (let v = 0; v < board.d; v++)
+      for (let u = 0; u < board.w; u++) {
+        const t = tileAt(board, u, v);
+        if (!t || t.chasm) continue;
+        const [x, y] = at(u, v, t.h);
+        tiles.push({ depth: depth(u, v), x, y, h: t.h });
+      }
+    if (!tiles.length) return [];
+    const low = Math.min(...tiles.map((t) => t.h));
+    const out: Particles[] = [];
+    const back = this.groundRow(behindRow(Math.min(...tiles.map((t) => t.depth))));
+    if (!back) return [];
+    out.push(this.underAt(back, this.rowLows));
+    for (const d of rowsUnder(tiles, box, TW, TH)) {
+      const layer = this.groundRow(d);
+      if (!layer) continue;
+      let had = this.rowBoxes.get(d);
+      if (!had || had.box.destroyed || had.box.parent !== layer || had.board !== board) {
+        if (had && !had.box.destroyed) had.box.destroy({ children: true });
+        const cut = new Container();
+        const mask = new Graphics();
+        // (each column's top and its near sides down to the lowest ground, `rowCut`)
+        for (const t of tiles) if (t.depth === d) mask.poly(rowCut(t.x, t.y, (t.h - low) * HH + FOOT, TW, TH));
+        mask.fill(0xffffff);
+        cut.addChild(mask);
+        cut.mask = mask;
+        layer.addChild(cut);
+        had = { box: cut, board };
+        this.rowBoxes.set(d, had);
+      }
+      out.push(this.underAt(had.box, this.rowLows));
+    }
+    return out;
   }
 
   /** ON-FIGHTER: the moment's layer in a fighter's own layer under its body (`UnitView.underLayer`). */
@@ -749,23 +802,29 @@ export class Fx {
     // (the fighter's own layer under its body, in the fighter's space: its feet the origin, its size the scale)
     const host = on && thin < 1 ? this.sprites.get(on.id) : undefined;
     if (host) {
-      const k = host.root.scale.x || 1;
-      const under = this.underAt(host.underLayer());
-      // (behind the body it is a little larger than itself and keeps its glow: strength there costs the body nothing, `UNDER`)
-      const grown = (UNDER.SIZE * BFX_SCALE * size) / k;
-      const [ux, uy] = bfxCentre(c, x, y, size * UNDER.SIZE);
-      if (c.g && glows.length) {
-        const gk = (BFX_GLOW_SCALE * size * UNDER.SIZE) / k;
-        under.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: (x - host.root.x) / k + (c.g.w / 2 - c.g.ax) * gk, y: (y - host.root.y) / k + (c.g.h / 2 - c.g.ay) * gk, scale: gk, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA, prio: true, half: 1, ...(delay ? { delay } : {}) });
-      }
-      under.spawn({ ...bit, x: (ux - host.root.x) / k, y: (uy - host.root.y) / k, scale: grown, half: bit.half / k, alpha: base });
-      // (a strike lands with a bright ring of its element on the ground at the fighter's feet, under the fighter)
       const ring = stage === 'strike' && SHOWCASES[kind] ? beatBfx('ring', SHOWCASES[kind].el) : undefined;
       const rc = ring ? bfxClip(ring) : undefined;
       const rf = ring ? bfxFrames(ring) : [];
-      if (rc && rf.length) {
-        const rs = (UNDER.RING * BFX_SCALE) / k;
-        under.spawn({ frames: this.reduced ? [rf[rc.hold]] : rf, x: (rc.w / 2 - rc.ax) * rs, y: (rc.h / 2 - rc.ay) * rs, scale: rs, frameMs: rc.ms / rf.length, life: rc.ms, prio: true, solid: true, half: 1, alpha: 1, ...(delay ? { delay } : {}) });
+      // (ROW-UNDER: on the ground of every row its picture covers, so it is under this fighter and under those of the rows behind,
+      // in whose bodies' way the fighter's own layer put it; where the board gives no rows, the fighter's own layer as before)
+      const rows = this.rowUnder(bfxBox(c, x, y, size * UNDER.SIZE));
+      const k = rows.length ? 1 : host.root.scale.x || 1;
+      const [ox, oy] = rows.length ? [0, 0] : [host.root.x, host.root.y];
+      const [fx, fy] = rows.length ? [host.root.x, host.root.y] : [0, 0];
+      // (behind the body it is a little larger than itself and keeps its glow: strength there costs the body nothing, `UNDER`)
+      const grown = (UNDER.SIZE * BFX_SCALE * size) / k;
+      const [ux, uy] = bfxCentre(c, x, y, size * UNDER.SIZE);
+      for (const under of rows.length ? rows : [this.underAt(host.underLayer())]) {
+        if (c.g && glows.length) {
+          const gk = (BFX_GLOW_SCALE * size * UNDER.SIZE) / k;
+          under.spawn({ frames: this.reduced ? [glows[c.hold]] : glows, x: (x - ox) / k + (c.g.w / 2 - c.g.ax) * gk, y: (y - oy) / k + (c.g.h / 2 - c.g.ay) * gk, scale: gk, frameMs: life / held.length, life, add: true, alpha: BFX_GLOW_ALPHA, prio: true, half: 1, ...(delay ? { delay } : {}) });
+        }
+        under.spawn({ ...bit, x: (ux - ox) / k, y: (uy - oy) / k, scale: grown, half: bit.half / k, alpha: base });
+        // (a strike lands with a bright ring of its element on the ground at the fighter's feet, under the fighter)
+        if (rc && rf.length) {
+          const rs = (UNDER.RING * BFX_SCALE) / k;
+          under.spawn({ frames: this.reduced ? [rf[rc.hold]] : rf, x: fx + (rc.w / 2 - rc.ax) * rs, y: fy + (rc.h / 2 - rc.ay) * rs, scale: rs, frameMs: rc.ms / rf.length, life: rc.ms, prio: true, solid: true, half: 1, alpha: 1, ...(delay ? { delay } : {}) });
+        }
       }
       // (and for its first moment the clip is over the body at full strength: the rule's brief flash, `UNDER.FLASH_MS`)
       if (!this.reduced) {

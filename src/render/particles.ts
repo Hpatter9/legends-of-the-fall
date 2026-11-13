@@ -128,6 +128,11 @@ export class Particles {
     this.live.push({ sp, b, scale: b.scale ?? 1, t: -(b.delay ?? 0), vy: b.vy ?? 0, frames: b.frames.length, span: b.life ?? b.frames.length * frameMs, k, bx: b.x, by: b.y });
   }
 
+  /** Whether anything is playing or waiting to play. */
+  get busy(): boolean {
+    return this.live.length > 0;
+  }
+
   /** Step every live one by `dt` ms; the ones that are done go back in the pool. */
   step(dt: number): void {
     const keep: Live[] = [];
