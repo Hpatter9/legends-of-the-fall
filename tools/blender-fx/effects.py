@@ -571,6 +571,9 @@ fx('swing-blade', 'swipe', 'wind', **box(1.3, 1.3), frames=7, skip=1, ms=240, se
 fx('swing-heavy', 'swipe', 'earth', **box(1.5, 1.5), frames=8, skip=1, ms=290, seed=761, glow=False, r=0.75, wide=0.24, bend=0.6)
 fx('swing-thrust', 'swipe', 'wind', **box(1.5, 1.0), frames=8, skip=2, ms=200, seed=762, glow=False, r=0.75, wide=0.1, bend=0.0)
 fx('swing-claw', 'claws', 'shadow', **box(1.3, 1.5), frames=7, skip=1, ms=260, seed=763, glow=False, r=0.55, z=0.55, wide=0.1)
+# A blink that strikes: the streak the blade leaves from where the fighter was to the foe (four tiles' sides long; the renderer turns
+# it and fits it to the hop), in the dark of the blink's own swirl. The crossed cut on the foe is the hit's (`hit-cut-dark`).
+fx('swing-dash', 'swipe', 'shadow', **box(2.5, 1.0), frames=8, skip=2, ms=220, seed=764, glow=False, r=2.0, wide=0.11, bend=0.03)
 # What a fighter leaves as it falls, by its kind (`deathKind`): a burning away, a heave of dust, stone breaking, a spray of blood, motes
 # of light, and the dust a skeleton's bones fall in (the bones themselves stay painted sprites).
 fx('death-burn', 'burst', 'fire', **box(1.3, 1.7), frames=10, ms=700, seed=770, glow=False, r=0.55, h=0.9, balls=4, embers=10)

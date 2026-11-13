@@ -77,7 +77,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { hitSpark, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { hitSpark, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -702,22 +702,22 @@ export class Fx {
   }
 
   /** A small quick clip on a fighter, its middle at (x, y) (a hit's spark, a swing's stroke): for the rule's brief flash it is over the
-   *  body as it is, then it goes on under the ON-FIGHTER rule. `turn` turns it and `mirror` flips it (a stroke to the left). False
-   *  when the clip is not held. */
-  private bfxFlash(key: string, x: number, y: number, size: number, ms: number, turn = 0, mirror = false): boolean {
+   *  body as it is, then it goes on under the ON-FIGHTER rule. `turn` turns it and `mirror` flips it (a stroke to the left); `stretch`
+   *  lengthens it along its own line, and it waits `delay` ms. False when the clip is not held. */
+  private bfxFlash(key: string, x: number, y: number, size: number, ms: number, turn = 0, mirror = false, stretch = 1, delay = 0): boolean {
     const c = bfxClip(key);
     const frames = bfxFrames(key);
     if (!c || !frames.length) return false;
     const scale = BFX_SCALE * size;
     const per = ms / frames.length;
-    const pose = { x, y, scale, ...(turn ? { rotation: turn } : {}), ...(mirror ? { stretchX: -1 } : {}) };
+    const pose = { x, y, scale, ...(turn ? { rotation: turn } : {}), ...(mirror || stretch !== 1 ? { stretchX: (mirror ? -1 : 1) * stretch } : {}), ...(delay ? { delay } : {}) };
     if (this.reduced) {
       this.particles.spawn({ ...pose, frames: [frames[c.hold]], frameMs: ms, life: ms, prio: true, bare: true });
       return true;
     }
     const first = Math.max(1, Math.min(frames.length - 1, Math.round(UNDER.FLASH_MS / per)));
     this.particles.spawn({ ...pose, frames: frames.slice(0, first), frameMs: per, life: first * per, prio: true, solid: true, bare: true });
-    this.particles.spawn({ ...pose, frames: frames.slice(first), frameMs: per, life: (frames.length - first) * per, delay: first * per, prio: true });
+    this.particles.spawn({ ...pose, frames: frames.slice(first), frameMs: per, life: (frames.length - first) * per, delay: delay + first * per, prio: true });
     return true;
   }
 
@@ -3106,6 +3106,20 @@ export class Fx {
     }, (d) => this.groundRow(d), look);
   }
 
+  /** A blink that strikes, rendered (`BLINK_CUT`): the blade's streak from (x0, y0) to (x1, y1), fitted to the hop, and the crossed
+   *  cut on the foe at (fx, fy) a moment after, both after `delay`. False when the clips are not held: the painted ones play. */
+  private bfxBlinkCut(x0: number, y0: number, x1: number, y1: number, fx: number, fy: number, delay: number): boolean {
+    const look = blinkCut();
+    const c = look ? bfxClip(look.streak) : undefined;
+    if (!look || !c || !bfxFrames(look.streak).length || !bfxFrames(look.cut).length) return false;
+    const lay = strandLay(x0, y0, x1, y1, c.w * BFX_SCALE, look.STRETCH);
+    // (a streak to the left is mirrored and turned the other way about, so its sparks still fall downwards)
+    const left = x1 < x0;
+    for (const p of lay.at) this.bfxFlash(look.streak, p.x, p.y, 1, look.ms, left ? lay.turn - Math.PI : lay.turn, left, lay.stretch, delay);
+    this.bfxFlash(look.cut, fx, fy, look.CUT_SIZE, look.CUT_MS, 0, false, 1, delay + look.CUT_LAG);
+    return true;
+  }
+
   /** A dash leaves a streak between the tiles; a blink a puff of smoke at each end. */
   private streak(b: Battle, e: Extract<BattleEvent, { kind: 'dash' | 'blink' }>, slash?: Slash): void {
     const by = this.sprites.get(e.by);
@@ -3119,7 +3133,7 @@ export class Fx {
       this.paintOnce(PAINT.blinkOut, x0, y0 - lift, { delay });
       this.paintOnce(PAINT.blinkIn, x1, y1 - lift, { delay: delay + 60 });
       const foe = slash && this.sprites.get(slash.struck);
-      if (foe) {
+      if (foe && !this.bfxBlinkCut(x0, y0 - lift, x1, y1 - lift, foe.x, foe.y - foe.tall * 0.5, delay)) {
         this.paintAlong(PAINT.slash, x0, y0 - lift, x1, y1 - lift, { delay });
         this.paintOnce(PAINT.slashHit, foe.x, foe.y - foe.tall * 0.5, { delay: delay + 80 });
       }

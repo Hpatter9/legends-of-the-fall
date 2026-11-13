@@ -55,3 +55,20 @@ Minotaur's, the Peasant's and the Kunoichi's blows, a fall) and `docs/samples/bl
   bones' dust are judged on the clip sheet, not in a fight.
 
 `SEE=swing:knight,fall:,shot:gunslinger WATCH=1 node tools/blender-fx/ult-shots.mjs --picks ...` catches each in a fight.
+
+## Since: a blink that strikes
+
+The painted streak and crossed cut of a blink that strikes (a teleport slash's hop) are rendered too (`BLINK_CUT`, `Fx.bfxBlinkCut`):
+`swing-dash`, a long thin stroke in the dark of the blink's swirl, turned to the hop and fitted to it (`strandLay`: stretched up to
+one and a half of its length, a second laid past that), and 80 ms later the crossed cut on the foe, which is the backstab's
+(`hit-cut-dark`), so no new picture is made for it. Both go on fighters as a hit's spark does (`bfxFlash`: whole for the rule's
+150 ms, then by the ON-FIGHTER rule). The painted swirls where the fighter vanishes and appears are kept; the painted streak and
+cut play where the clips are not held.
+
+- Memory (decoded): core atlas 0 unchanged (16,728,100 bytes); core atlas 1 from 2043 x 1041 (8,507,052) to 2047 x 1047
+  (8,572,836), 65,784 bytes more. Nothing more is asked for at a fight's start.
+- Photograph: `docs/samples/blender-fx/blink-cut-before-after-393.png` (two moments of the fight's first striking blink before,
+  the same two after).
+- Verdict: the cut on the foe is now plain to see where the painted one hardly showed at this size; it is the larger gain. The
+  streak is a thin dark-violet line, right for a blade but easy to miss against dark foes. One blink on one land was
+  photographed, not each hero that blinks.

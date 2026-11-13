@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { SWING, bfxClip, deathClip, swingClip } from '../src/render/blenderFxRules';
+import { BLINK_CUT, BFX_SCALE, SWING, bfxClip, blinkCut, deathClip, strandLay, swingClip } from '../src/render/blenderFxRules';
 import { deathKind } from '../src/render/fxRules';
 import { slashOf } from '../src/render/vfxRules';
 import { BODY } from '../src/render/onFighterRules';
@@ -44,4 +44,23 @@ test('every kind of fall has its rendered clip, and a skeleton keeps its painted
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /if \(kind === 'bones'\) boneBits\(this\.particles, x, y\);/);
   assert.match(fx, /\} else deathBurst\(this\.particles, kind, x, y, target\.size \?\? 1\);/);
+});
+
+test('a blink that strikes has its rendered streak, fitted to the hop, and the crossed cut on the foe; the painted ones are the fallback', () => {
+  const look = blinkCut();
+  assert.ok(look);
+  const [streak, cut] = [bfxClip(BLINK_CUT.streak)!, bfxClip(BLINK_CUT.cut)!];
+  // (both in the atlases every fight holds, and quick: the streak a long thin stroke)
+  assert.ok(streak.a <= 1 && cut.a <= 1 && BLINK_CUT.ms < 300 && BLINK_CUT.CUT_MS < 300);
+  assert.ok(streak.w > streak.h * 4);
+  // (the cut lands after the streak sets off)
+  assert.ok(BLINK_CUT.CUT_LAG > 0 && BLINK_CUT.CUT_LAG < BLINK_CUT.ms);
+  // (one stroke for a hop of up to one and a half of its length, never stretched beyond that; two for a longer one)
+  const own = streak.w * BFX_SCALE;
+  assert.equal(strandLay(0, 0, own * 1.4, 0, own, BLINK_CUT.STRETCH).at.length, 1);
+  assert.equal(strandLay(0, 0, own * 1.6, 0, own, BLINK_CUT.STRETCH).at.length, 2);
+  assert.ok(strandLay(0, 0, own * 2.9, 0, own, BLINK_CUT.STRETCH).stretch <= BLINK_CUT.STRETCH);
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.match(fx, /if \(foe && !this\.bfxBlinkCut\(x0, y0 - lift, x1, y1 - lift, foe\.x, foe\.y - foe\.tall \* 0\.5, delay\)\) \{/);
+  assert.match(fx, /this\.paintAlong\(PAINT\.slash, x0, y0 - lift, x1, y1 - lift, \{ delay \}\);/);
 });
