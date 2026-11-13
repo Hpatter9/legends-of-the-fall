@@ -563,6 +563,25 @@ for j, (clip, (scene, opt, canvas, n, ms)) in enumerate(HITS.items()):
 # (a block has a shape of its own, so it reads without its word: a short bright arc in pale blue-steel, the edge a guard is held along)
 fx('hit-block', 'guard', 'ice', **box(1.05, 1.25), frames=6 + HIT_SKIP - 1, skip=HIT_SKIP - 1, ms=220, seed=740, glow=False)
 
+# SWINGS (docs/notes/swings.md): the stroke of a melee blow by its weapon, travelling to the screen's right (the renderer turns it to
+# the blow): a sword's bright crescent, a club's heavy arc, a spear's straight thrust, three raking claws. Small and quick, as a hit's
+# spark is, and in the atlases every fight holds.
+fx('swing-blade', 'swipe', 'wind', **box(1.3, 1.3), frames=7, skip=1, ms=240, seed=760, glow=False, r=0.62, wide=0.2, bend=0.5)
+fx('swing-heavy', 'swipe', 'earth', **box(1.5, 1.5), frames=8, skip=1, ms=290, seed=761, glow=False, r=0.75, wide=0.24, bend=0.6)
+fx('swing-thrust', 'swipe', 'wind', **box(1.5, 1.0), frames=8, skip=2, ms=200, seed=762, glow=False, r=0.75, wide=0.1, bend=0.0)
+fx('swing-claw', 'claws', 'shadow', **box(1.3, 1.5), frames=7, skip=1, ms=260, seed=763, glow=False, r=0.55, z=0.55, wide=0.1)
+# What a fighter leaves as it falls, by its kind (`deathKind`): a burning away, a heave of dust, stone breaking, a spray of blood, motes
+# of light, and the dust a skeleton's bones fall in (the bones themselves stay painted sprites).
+fx('death-burn', 'burst', 'fire', **box(1.3, 1.7), frames=10, ms=700, seed=770, glow=False, r=0.55, h=0.9, balls=4, embers=10)
+fx('death-thud', 'dust', 'earth', **box(1.9, 1.0), frames=9, ms=620, seed=771, glow=False, r=1.0)
+fx('death-stone', 'shatter', 'bone', **box(1.6, 1.6), frames=9, ms=600, seed=772, glow=False, r=0.7, n=12, h=0.7)
+fx('death-blood', 'sparks', 'blood', **box(1.3, 1.4), frames=7, ms=420, seed=773, glow=False, r=0.6, n=10, z=0.45)
+fx('death-light', 'motes', 'holy', **box(1.2, 1.9), frames=10, ms=900, seed=774, glow=False, r=0.5, h=1.3, n=12, crosses=3)
+fx('death-bones', 'smoke', 'bone', **box(1.3, 1.2), frames=8, ms=560, seed=775, glow=False, r=0.55, h=0.7, puffs=5)
+# A gun's shot: its flash at the muzzle and the bullet with its streak (both to the screen's right, turned to the shot).
+fx('shot-muzzle', 'muzzle', 'fire', **box(1.0, 0.9), frames=6, ms=200, seed=780, glow=False)
+fx('shot-tracer', 'projectile', 'holy', **box(1.5, 0.6, 0.4), frames=6, ms=420, loop=True, seed=781, glow=False, r=0.07, tail=1.1)
+
 # ---- ULT-AUDIT: what an ability IS, as a loop that stays for as long as the ability lasts (docs/notes/ult-audit.md). Spirit Guardians:
 # four ghostly figures a fighter tall circling the Cleric, round and round (`paintAura` draws it on her while the aura lives). ----
 # SHOTS (docs/notes/shots.md): a shot's orb in each element, its tail behind it (a loop; it flies along the screen's right and the

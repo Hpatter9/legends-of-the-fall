@@ -2334,8 +2334,68 @@ def guard(c, r=0.6, z=0.5, wide=0.17, span=1.05):
     return step
 
 
+# 72. Swipe: one stroke of a weapon through the air, facing the screen and travelling to its right (the renderer turns it to the
+# blow): a crescent that runs along its curve and thins away behind its bright end, a few sparks off it. `bend` is how far the
+# crescent bows (0: a straight thrust).
+def swipe(c, r=0.7, z=0.5, wide=0.2, bend=0.45):
+    m, a, head = c.streak('mid', 'hot', 1.2, 1.3, tail=0.85)
+    us = [i / 14 * 2 - 1 for i in range(15)]
+    pts = [(scr(u * r, bend * r * (1 - u * u) - bend * r * 0.5, z), scr(0, 1)) for u in us]
+    c.ribbon(pts, lambda u: wide * math.sin(u * math.pi) ** 0.8 + 0.004, m)
+    fly = _fly(c, 5, r * 0.4, r * 1.0, 1.6, 'hot', 0.03)
+
+    def step(t):
+        head.outputs[0].default_value = 1.0 * win(t, 0.0, 0.4) + 0.9 * win(t, 0.55, 1)
+        a.inputs[1].default_value = 2.4
+        fly(max(0.0, (t - 0.35) / 0.65), z)
+    return step
+
+
+# 73. Muzzle: a gun's flash, thrown to the screen's right from the tile's middle (the renderer turns it to the shot): a short cone of
+# flare, a white heart, a few sparks ahead of it.
+def muzzle(c, r=0.5, z=0.3, n=5):
+    m, a, _ = c.streak('bright', 'hot', 1.2, 2.0)
+    rays = []
+    for i in range(n):
+        ang = (i - (n - 1) / 2) * 0.32
+        k = 1.0 - 0.45 * abs(i - (n - 1) / 2) / max(1, (n - 1) / 2)
+        pts = [(scr(math.cos(ang) * r * k * u, math.sin(ang) * r * k * u, z), scr(-math.sin(ang), math.cos(ang))) for u in (0, 0.25, 0.5, 0.75, 1)]
+        rays.append(c.ribbon(pts, lambda u, k=k: 0.07 * k * math.sin(u * math.pi) + 0.004, m))
+    fm, cut = c.flame(3.0, 0.5, 1.6)
+    core = c.sphere(1, fm, 3)
+    fly = _fly(c, 5, r * 0.5, r * 1.3, 0.6, 'hot', 0.028, gravity=1.0)
+
+    def step(t):
+        c.tick(t, 2.0)
+        a.inputs[1].default_value = 2.6 * (1 - 0.7 * t)
+        for o in rays:
+            put(o, scale=(0.5 + 0.6 * ease(t), 1, 1))
+            hide(o, t > 0.7)
+        put(core, scr(r * 0.12, 0, z), max(0.001, r * 0.36 * bell(win(t, 0, 0.55))))
+        cut.inputs[1].default_value = 0.05 + 0.4 * t
+        fly(t, z)
+    return step
+
+
+# 74. Dust: a heavy fall. A ring of small ragged puffs thrown out low along the ground from the middle, each rolling and thinning
+# as it goes, a few clods jumping. Many small puffs, never one mass.
+def dust(c, r=1.0, n=11, h=0.3):
+    m, cut = c.flame(2.2, 0.55, 0.9)
+    parts = [(c.sphere(1, m, 3), i * TAU / n + c.rnd.uniform(-0.2, 0.2), c.rnd.uniform(0.7, 1.0), c.rnd.uniform(0.6, 1.0), c.rnd.uniform(0, 0.15)) for i in range(n)]
+    fly = _fly(c, 6, r * 0.3, r * 0.8, 1.6, 'bright', 0.04)
+
+    def step(t):
+        c.tick(t, 1.2)
+        cut.inputs[1].default_value = 0.25 + 0.6 * t * t
+        for o, a, reach, s, lag in parts:
+            g = ease(win(t, lag, 1))
+            put(o, (math.cos(a) * r * reach * (0.2 + 0.8 * g), math.sin(a) * r * reach * (0.2 + 0.8 * g), 0.1 + h * g * s), r * 0.2 * s * (0.6 + 0.7 * g), (g, g * 0.5, a))
+        fly(t, 0.1)
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, toll, meteors, wisp, pool, strand, guard,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, toll, meteors, wisp, pool, strand, guard, swipe, muzzle, dust,
 )}

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.572.0',
+    date: '2026-11-13',
+    title: 'Each blow shows the weapon that struck',
+    notes: ['A sword leaves a pale crescent, a club a broad arc, a spear a straight line and claws three raking cuts, each rendered in Blender.', 'A fighter\'s fall now shows how they fell: a burst of fire, a ring of dust, shattered stone, a spray of blood or rising motes of light.', 'A gun\'s shot now has a bright tracer and a short muzzle flash.'],
+  },
+  {
     version: '0.571.0',
     date: '2026-11-13',
     title: 'An ultimate\'s glow stays on the ground',

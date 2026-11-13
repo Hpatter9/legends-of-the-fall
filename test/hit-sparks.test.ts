@@ -58,8 +58,9 @@ test('the renderer plays the spark, the painted one only when its clip is not he
   // (the first frames, no longer than the rule's flash, are drawn as they are; the rest goes under the ON-FIGHTER rule)
   assert.ok(BODY.FLASH_MS <= 150);
   assert.match(fx, /const first = Math\.max\(1, Math\.min\(frames\.length - 1, Math\.round\(UNDER\.FLASH_MS \/ per\)\)\);/);
-  assert.match(fx, /frames: frames\.slice\(0, first\), x, y, scale, frameMs: per, life: first \* per, prio: true, solid: true, bare: true \}\);/);
-  assert.match(fx, /frames: frames\.slice\(first\), x, y, scale, frameMs: per, life: \(frames\.length - first\) \* per, delay: first \* per, prio: true \}\);/);
+  // (the spark's two parts are now laid by `bfxFlash`, which a swing's stroke shares: the same two spawns, with a pose)
+  assert.match(fx, /\.\.\.pose, frames: frames\.slice\(0, first\), frameMs: per, life: first \* per, prio: true, solid: true, bare: true \}\);/);
+  assert.match(fx, /\.\.\.pose, frames: frames\.slice\(first\), frameMs: per, life: \(frames\.length - first\) \* per, delay: first \* per, prio: true \}\);/);
   const parts = readFileSync('src/render/particles.ts', 'utf8');
   assert.match(parts, /const low = b\.bare \? null : this\.under\?\.\(/);
 });
