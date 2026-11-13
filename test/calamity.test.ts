@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { FIND_KEEP } from '../src/sim/runGear';
 import { foundOf } from './helpers';
 import { autoMerge, canMerge, mergeReady } from '../src/sim/merge';
 import assert from 'node:assert/strict';
@@ -591,6 +592,8 @@ test('every calamity map has a mini-boss on a floor with other ways round it, a 
 });
 
 test('a mini-boss pays a relic to choose, gear, and double gold', () => {
+  // (FEWER-RUNES keeps a fight's find one time in three, tested in runes.test.ts; here every find is kept, to see what one pays)
+  FIND_KEEP.share = 1;
   const run = calamityRun(23, startedMeta(1), 'knight');
   reachNode(run, 'elite');
   const gold = run.gold;
@@ -599,6 +602,7 @@ test('a mini-boss pays a relic to choose, gear, and double gold', () => {
   assert.ok(run.tower!.offer && run.tower!.offer.length >= 1, 'a relic to choose');
   assert.ok(foundOf(run).length >= 1, 'gear');
   assert.ok(run.gold - gold >= 2 * (20 + 6 * floor) * 0.9, 'double gold');
+  FIND_KEEP.share = 1 / 3;
 });
 
 test('each calamity boss has its own name, title and kit, and the mechanics stack up through the maps', () => {

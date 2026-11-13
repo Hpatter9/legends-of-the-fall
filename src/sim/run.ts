@@ -35,7 +35,7 @@ import { drawEvent, eventAfter, type EventCard } from './events';
 import { gearBoost, type Gear, type Slot } from './gear';
 import type { EquipSlot, EquipStats, Equipment } from './equipment';
 import { migrateRunWorn } from './gearMigrate';
-import { newRunes, readRunes, type RuneState } from './runes';
+import { newRunes, readRunes, waveGivesRune, type RuneState } from './runes';
 import { settleWounds } from './wounds';
 import type { RemedyId } from './remedies';
 import { findGear, foundLine, SOURCE, stow, waveRune, type FoundHome } from './runGear';
@@ -645,8 +645,9 @@ export function finish(run: Run, won: boolean, stars = 0): void {
     // a prize for a cursed path, and a sure piece of gear from a boss (one tier up, from its own stream)
     const prizes: Gear[] = run.buff?.gear ? [run.buff.gear] : [];
     // (RUN-GEAR: in a real-gear run each is a real piece, drawn at the same moment from the same stream: `runGear.ts`)
-    // (SEVEN-SLOT GEAR batch 4: a rune run's won wave gives a rune of its own, from its side stream)
-    if (run.runes) prizes.push(waveRune(run));
+    // (SEVEN-SLOT GEAR batch 4: a rune run's won wave gives a rune of its own, from its side stream; FEWER-RUNES: every fourth wave and the
+    // last only, `waveGivesRune`)
+    if (run.runes && waveGivesRune(run.stage, army?.waves.length ?? 0)) prizes.push(waveRune(run));
     if (boss) prizes.push(findGear(run, new Rng(mixSeed(run.seed, 0x6ea2, run.stage)), (run.nextGear = (run.nextGear ?? 1) + 1) - 1, run.stage + (army ? GEAR_STAGES * Math.max(0, armyIndex(army.id)) : 0), 1, SOURCE.boss));
     // (FIRST-HOUR 3: the heroes risen at half are no longer listed among the finds; the wave card reads `run.risen` for a row of its own,
     // `risenLine` in `wounds.ts`)

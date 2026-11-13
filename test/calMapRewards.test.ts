@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { FIND_KEEP } from '../src/sim/runGear';
 import { foundOf } from './helpers';
 import assert from 'node:assert/strict';
 import { startedMeta } from '../src/sim/meta';
@@ -89,6 +90,8 @@ test('the recruit spot is one free choice out of three: the others close once on
 });
 
 test('a detour fight pays double gold and a good piece of gear, no relic and no healing; a detour hoard pays gold alone', () => {
+  // (FEWER-RUNES keeps a fight's find one time in three, tested in runes.test.ts; here every find is kept, to see what one pays)
+  FIND_KEEP.share = 1;
   let elite = 0;
   let hoard = 0;
   for (let seed = 1; seed <= 200 && (!elite || !hoard); seed++) {
@@ -127,6 +130,7 @@ test('a detour fight pays double gold and a good piece of gear, no relic and no 
   }
   assert.ok(elite && hoard, 'both kinds of detour were met');
   void SIDE_BASE;
+  FIND_KEEP.share = 1 / 3;
 });
 
 test('a map recap is kept when a map is cleared: spots, fights, gold, finds, events; and shown once', () => {

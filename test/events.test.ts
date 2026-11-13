@@ -94,8 +94,8 @@ test('a cursed path toughens the foes and pays a prize for a win', () => {
   const g = run.gold;
   finish(run, true);
   assert.ok(run.gold >= g + gold);
-  // (the prize, and the won wave's own rune: SEVEN-SLOT GEAR batch 4)
-  assert.equal(foundOf(run).length, 2);
+  // (the prize; the won wave gives no rune of its own on this wave: FEWER-RUNES, every fourth wave and the last)
+  assert.equal(foundOf(run).length, 1);
   assert.equal(run.buff, undefined);
 });
 
@@ -115,9 +115,9 @@ test('a boss stage drops a sure piece of gear, and leaving takes nothing', () =>
   const run = newRun(21);
   run.stage = 5;
   finish(run, true);
-  // (the boss's rune and the won wave's own: SEVEN-SLOT GEAR batch 4)
-  assert.equal(foundOf(run).length, 2);
-  assert.equal(run.found!.length, 2);
+  // (the boss's rune; the won wave's own comes every fourth wave and on the last only: FEWER-RUNES)
+  assert.equal(foundOf(run).length, 1);
+  assert.equal(run.found!.length, 1);
   assert.equal(run.event, undefined);
   run.event = drawEvent(run, 2);
   leaveEvent(run);
