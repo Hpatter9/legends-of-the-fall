@@ -77,7 +77,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { hitSpark, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { hitSpark, shotOrb, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -3748,11 +3748,8 @@ export class Fx {
     const len = Math.hypot(x1 - x0, y1 - y0) || 1;
     const nx = -(y1 - y0) / len;
     const ny = (x1 - x0) / len;
-    const g = new Graphics();
-    g.blendMode = 'add';
-    this.root.addChild(g);
-    const colour = style === 'lightning' ? [0x6aa8ff, 0xffffff] : style === 'charm' ? [0xff6aa8, 0xffd0e8] : [0x8a4aff, 0xe0c0ff];
     const life = style === 'lightning' ? 340 : 520;
+    const colour = style === 'lightning' ? [0x6aa8ff, 0xffffff] : style === 'charm' ? [0xff6aa8, 0xffd0e8] : [0x8a4aff, 0xe0c0ff];
     let t = 0;
     let drawn = -1;
     if (style === 'lightning') {
@@ -3760,6 +3757,11 @@ export class Fx {
       play(this.particles, 'lightning-hit', x1, y1, { scale: 1.3, frameMs: 45 });
     } else this.thread(x0, y0, x1, y1, style === 'charm' ? 'light-sparkle' : 'dark-puff');
     if (style === 'charm') for (let i = 0; i < 3; i++) this.particles.spawn({ frames: VFX.pinkHeart, x: x0, y: y0, scale: 0.6, life: 480, delay: i * 90, vx: (x1 - x0) / 480, vy: (y1 - y0) / 480 - 0.02, add: true });
+    if (this.bfxStrand(ARC_STRAND[style], x0, y0, x1, y1, life)) return;
+    // (the strand's clip is not held: the line drawn by hand)
+    const g = new Graphics();
+    g.blendMode = 'add';
+    this.root.addChild(g);
     this.items.push({
       view: g,
       step: (dt) => {
@@ -3794,6 +3796,40 @@ export class Fx {
     });
   }
 
+  /** SHOTS: a rendered strand laid from (x0, y0) to (x1, y1) for `life` ms (`strandLay`: turned to the line, stretched along it,
+   *  more than one length end to end where it is long), its frames running and the whole fading at the end. False when its clip
+   *  is not held. */
+  private bfxStrand(key: string, x0: number, y0: number, x1: number, y1: number, life: number): boolean {
+    const c = bfxClip(key);
+    const frames = bfxFrames(key);
+    if (!c || !frames.length) return false;
+    const lay = strandLay(x0, y0, x1, y1, c.w * BFX_SCALE);
+    const view = new Container();
+    const parts = lay.at.map((p, i) => {
+      const sp = new Sprite(frames[0]);
+      sp.anchor.set(c.ax / c.w, c.ay / c.h);
+      sp.position.set(p.x, p.y);
+      sp.rotation = lay.turn;
+      // (every other length is turned over, so two lengths side by side never show the same shape)
+      sp.scale.set(BFX_SCALE * lay.stretch, BFX_SCALE * (i % 2 ? -1 : 1));
+      view.addChild(sp);
+      return sp;
+    });
+    this.root.addChild(view);
+    let t = 0;
+    this.items.push({
+      view,
+      step: (dt) => {
+        t += dt;
+        const f = this.reduced ? c.hold : Math.floor(t / (c.ms / c.n));
+        parts.forEach((sp, i) => (sp.texture = frames[(f + i * 2) % frames.length]));
+        view.alpha = Math.min(1, (1 - t / life) * 1.6);
+        return t < life;
+      },
+    });
+    return true;
+  }
+
   /** A shot leaves its shooter and flies to the target along its arc, turned to its heading: an arrow or a bone, a glowing
    *  orb of the shooter's element (with a trail of its own), or a bullet's tracer. It leaves in a muzzle flash, and the
    *  shooter kicks back a little. Where it lands is the `hit` event's: the element's burst. */
@@ -3813,10 +3849,16 @@ export class Fx {
         for (let i = 0; i < bits(3, this.particles.density); i++) this.particles.spawn({ frames: VFX.puffWhite, x: x0 + Math.cos(aim) * 10, y: y0 + Math.sin(aim) * 5, scale: 0.4, life: 420, vx: Math.cos(aim) * 0.03 + jitter(0.01), vy: -0.02, grow: 0.0008, alpha: 0.8 });
     }
     by.nudge(-Math.cos(aim) * 2, -Math.sin(aim));
-    const orb = m.look === 'orb' ? PACK[packKey(m.el, 'orb')] : undefined;
-    const sp = new Sprite(m.look === 'arrow' ? arrow : m.look === 'bone' ? bone : orb?.[0]);
-    sp.anchor.set(0.5);
-    sp.scale.set(m.scale);
+    // (an orb is the rendered one of its element, its tail in the clip, where the clip is held; else the painted orb and its puffs)
+    const rkey = m.look === 'orb' ? shotOrb(m.el) : undefined;
+    const rc = rkey ? bfxClip(rkey) : undefined;
+    const rf = rkey ? bfxFrames(rkey) : [];
+    const made = rc && rf.length ? rc : undefined;
+    const orb = m.look === 'orb' && !made ? PACK[packKey(m.el, 'orb')] : undefined;
+    const sp = new Sprite(made ? rf[0] : m.look === 'arrow' ? arrow : m.look === 'bone' ? bone : orb?.[0]);
+    if (made) sp.anchor.set(made.ax / made.w, made.ay / made.h);
+    else sp.anchor.set(0.5);
+    sp.scale.set(made ? BFX_SCALE * SHOT_ORB_SIZE * m.scale : m.scale);
     if (orb) sp.blendMode = 'normal';
     const g = m.look === 'tracer' ? new Graphics() : undefined;
     if (g) g.blendMode = 'add';
@@ -3846,14 +3888,17 @@ export class Fx {
           g.circle(x, y, 1.6).fill(0xffffff);
         } else {
           sp.position.set(x, y);
-          if (orb) {
+          if (made) {
+            sp.texture = rf[this.reduced ? made.hold : Math.floor(t / (made.ms / made.n)) % rf.length];
+            sp.rotation = heading;
+          } else if (orb) {
             sp.texture = orb[Math.floor(t / 70) % orb.length];
             paintSprite(sp, ms * 0.4, ms, m.scale, heading, 1, true, this.calm());
             if (m.spin && !this.calm()) sp.rotation += t * 0.004;
           } else sp.rotation = m.spin ? t * 0.02 : heading;
         }
         // a trail behind it: puffs of its element, a faint glint behind an arrow
-        if (t - trailAt >= m.trailMs && trail?.length && this.particles.rate(1)) {
+        if (!made && t - trailAt >= m.trailMs && trail?.length && this.particles.rate(1)) {
           trailAt = t;
           this.particles.spawn({ frames: trail, x: x + jitter(3), y: y + jitter(3), scale: orb ? 0.5 : 0.3, life: orb ? 320 : 220, vy: -0.015, alpha: orb ? 0.85 : 0.6, add: true });
         }

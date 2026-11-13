@@ -560,9 +560,21 @@ HIT_SKIP = 3
 for j, (clip, (scene, opt, canvas, n, ms)) in enumerate(HITS.items()):
     for i, (el, (pal, _)) in enumerate(GROUND.items()):
         fx(f'hit-{clip}-{el}', scene, pal, **canvas, frames=n + HIT_SKIP, skip=HIT_SKIP, ms=ms, seed=700 + 11 * j + i, glow=False, **opt)
+# (a block has a shape of its own, so it reads without its word: a short bright arc in pale blue-steel, the edge a guard is held along)
+fx('hit-block', 'guard', 'ice', **box(1.05, 1.25), frames=6 + HIT_SKIP - 1, skip=HIT_SKIP - 1, ms=220, seed=740, glow=False)
 
 # ---- ULT-AUDIT: what an ability IS, as a loop that stays for as long as the ability lasts (docs/notes/ult-audit.md). Spirit Guardians:
 # four ghostly figures a fighter tall circling the Cleric, round and round (`paintAura` draws it on her while the aura lives). ----
+# SHOTS (docs/notes/shots.md): a shot's orb in each element, its tail behind it (a loop; it flies along the screen's right and the
+# renderer turns it to its heading), and the strands that run between two fighters: chain lightning's bolt, a charm's thread and
+# a hex's. They lie with the atlases every fight holds.
+STRAND_TILES = 2.0
+for i, (el, (pal, _)) in enumerate(GROUND.items()):
+    fx(f'shot-orb-{el}', 'projectile', pal, **box(1.5, 0.8, 0.5), frames=6, ms=420, loop=True, seed=800 + i, glow=False, r=0.2, tail=0.9)
+fx('arc-bolt', 'strand', 'lightning', **box(STRAND_TILES / 2 + 0.2, 0.9, 0.5), frames=6, ms=420, loop=True, seed=820, glow=False, length=STRAND_TILES, kind='bolt', amp=0.2)
+fx('arc-charm', 'strand', 'arcane', **box(STRAND_TILES / 2 + 0.2, 0.9, 0.5), frames=8, ms=640, loop=True, seed=821, glow=False, length=STRAND_TILES, kind='wave', amp=0.1, w=0.027)
+fx('arc-hex', 'strand', 'shadow', **box(STRAND_TILES / 2 + 0.2, 0.9, 0.5), frames=8, ms=640, loop=True, seed=822, glow=False, length=STRAND_TILES, kind='wave', amp=0.09, w=0.03)
+
 # ON-FIGHTER (docs/notes/on-fighter.md): what goes round a fighter while a status holds on it, in place of a loop drawn over its
 # body: a wisp of smoke (the renderer sends a few of them circling, behind the body for the back half of the turn) and a pool of
 # light at the feet. In the elements the statuses have.

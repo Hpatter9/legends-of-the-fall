@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.568.0',
+    date: '2026-11-13',
+    title: 'Glowing orbs, lightning strands, a guarding arc',
+    notes: ['Fire, ice and other magic orbs now fly as glowing comets in their element\'s colour, turned along their path.', 'Chain lightning, charms and hexes are rendered strands between the fighters, and a block shows as a pale steel arc of its own.'],
+  },
+  {
     version: '0.567.0',
     date: '2026-11-13',
     title: 'Fewer runes, far more powerful',

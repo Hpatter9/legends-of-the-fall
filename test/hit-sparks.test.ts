@@ -26,7 +26,9 @@ test('every kind of landing has its spark in every element, in the atlases every
   assert.equal(hitSpark('burst', 'fire', 0)!.key, 'hit-blow-fire');
   assert.equal(hitSpark('burst', 'poison', 0)!.key, 'hit-blow-poison');
   assert.equal(hitSpark('blow', 'fire', 0)!.key, 'hit-blow-light');
-  assert.equal(hitSpark('block', 'fire', 0)!.key, 'hit-blow-ice');
+  // (a block has its own shape, the director's order: an arc in pale steel, whatever struck it)
+  assert.equal(hitSpark('block', 'fire', 0)!.key, 'hit-block');
+  assert.ok(BFX_CORE.includes(BFX_CLIPS['hit-block'].a) && !BFX_CLIPS['hit-block'].loop);
   assert.equal(hitSpark('backstab', 'fire', 0)!.key, 'hit-cut-dark');
   assert.equal(hitSpark('crit', 'fire', 0)!.key, 'hit-cut-light');
 });
@@ -34,7 +36,7 @@ test('every kind of landing has its spark in every element, in the atlases every
 test('a spark is quick, grows with the blow, and a crit is plainly the largest', () => {
   for (const kind of KINDS) {
     assert.ok(HIT_SPARK[kind].ms < 300, `${kind}: ${HIT_SPARK[kind].ms} ms`);
-    assert.ok(BFX_CLIPS[`hit-${HIT_SPARK[kind].clip}-light`].ms < 300);
+    assert.ok(BFX_CLIPS[hitSpark(kind, 'light', 0)!.key].ms < 300);
   }
   // (a scratch is small, a third of the target's health is the spark at its largest)
   assert.ok(hitSpark('blow', 'light', 0)!.size < hitSpark('blow', 'light', 0.2)!.size);

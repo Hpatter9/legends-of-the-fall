@@ -191,6 +191,36 @@ if (process.env.WATCH) {
     srv.close();
     process.exit(0);
   }
+  // (SEE=shot:wizard,arc:kitsune: the fight is stepped a frame at a time until that fighter looses a shot or an arc leaves it
+  // (arc:shock for a shock's jump), and it is photographed in flight, at the fight's ordinary speed)
+  if (process.env.SEE) {
+    await page.evaluate(() => {
+      const fx = window.__game.fx;
+      window.__seen = [];
+      const defOf = (id) => fx.sprites.get(id)?.unit.def;
+      const shot = fx.shot.bind(fx);
+      fx.shot = (by, to, kind, ms) => { window.__seen.push('shot:' + defOf(by)); window.__seenMs = ms; return shot(by, to, kind, ms); };
+      const arc = fx.arc.bind(fx);
+      fx.arc = (from, to, shock) => { window.__seen.push('arc:' + (shock ? 'shock' : defOf(from))); window.__seenMs = 300; return arc(from, to, shock); };
+    });
+    for (const what of process.env.SEE.split(',')) {
+      const got = await page.evaluate((what) => { window.__seen = []; for (let i = 0; i < 6000 && !window.__seen.includes(what) && window.__game.b.phase === 'fight'; i++) window.__step(16); return window.__seen.includes(what) ? window.__seenMs : 0; }, what);
+      if (!got) console.log('NOT SEEN', what);
+      if (!got) continue;
+      await page.evaluate(() => window.__game.setSpeed(1));
+      for (const [i, k] of [0.3, 0.3].entries()) {
+        await page.evaluate((d) => window.__step(d), Math.round(got * k));
+        await page.screenshot({ path: `${OUT}/see-${what.replace(':', '-')}-${W}-${i}.png` });
+      }
+      console.log('seen', what);
+      await page.evaluate(() => window.__game.setSpeed(2));
+    }
+    await ctx.close();
+    console.log('page errors:', errors);
+    await browser.close();
+    srv.close();
+    process.exit(0);
+  }
   let ended = 0;
   for (let i = 0; i < Number(process.env.WATCH_N ?? 40) && ended < 3; i++) {
     await page.evaluate((d) => window.__step(d), every);
