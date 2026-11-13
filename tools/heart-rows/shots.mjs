@@ -82,13 +82,13 @@ try {
       const r = await page.evaluate(() => { const e = document.querySelector('#lives .hearts').getBoundingClientRect(); return { x: Math.max(0, e.left - 6), y: Math.max(0, e.top - 6), width: e.width + 12, height: e.height + 12 }; });
       // (the fades are paused as they start and stepped through by hand, 60 ms a frame: a screenshot is slower than the fade)
       await act();
-      const end = await page.evaluate(() => { const a = [...document.querySelectorAll('#lives .hearts img')].flatMap((i) => i.getAnimations()); a.forEach((x) => x.pause()); return Math.max(0, ...a.map((x) => x.effect.getComputedTiming().endTime)); });
+      const end = await page.evaluate(() => { const a = [...document.querySelectorAll('#lives .hearts img')].flatMap((i) => i.getAnimations()).filter((x) => !(x instanceof CSSAnimation)); a.forEach((x) => x.pause()); return Math.max(0, ...a.map((x) => x.effect.getComputedTiming().endTime)); });
       const frames = [];
       for (let t = 0; t <= end + 60; t += 60) {
-        await page.evaluate((t) => { for (const i of document.querySelectorAll('#lives .hearts img')) for (const a of i.getAnimations()) a.currentTime = t; }, t);
+        await page.evaluate((t) => { for (const i of document.querySelectorAll('#lives .hearts img')) for (const a of i.getAnimations()) if (!(a instanceof CSSAnimation)) a.currentTime = t; }, t);
         frames.push((await page.screenshot({ clip: r })).toString('base64'));
       }
-      await page.evaluate(() => { for (const i of document.querySelectorAll('#lives .hearts img')) for (const a of i.getAnimations()) a.finish(); });
+      await page.evaluate(() => { for (const i of document.querySelectorAll('#lives .hearts img')) for (const a of i.getAnimations()) if (!(a instanceof CSSAnimation)) a.finish(); });
       // (laid side by side on one picture)
       const strip = await ctx.newPage();
       await strip.setContent(`<body style="margin:0;background:#111;display:flex;flex-wrap:wrap;gap:4px;padding:4px">${frames.map((f) => `<img style="width:${r.width}px" src="data:image/png;base64,${f}">`).join('')}</body>`);
