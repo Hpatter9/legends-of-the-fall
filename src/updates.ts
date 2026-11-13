@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.565.0',
+    date: '2026-11-13',
+    title: 'Ten-draws: shards first, then your new heroes',
+    notes: ['A ten-draw now turns all the shard cards first and lists what each hero gained; only then does each new hero step out in its own reveal.', 'Hero reveals start at once; they used to take several seconds to begin.'],
+  },
+  {
     version: '0.564.0',
     date: '2026-11-13',
     title: 'Hit sparks that land at full strength',
