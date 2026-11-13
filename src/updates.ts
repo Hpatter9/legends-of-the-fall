@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.564.0',
+    date: '2026-11-13',
+    title: 'Hit sparks that land at full strength',
+    notes: ['Hit sparks now open at their brightest instead of fading in, and a crit is a bold gold cross about a fighter wide, clearly bigger than a plain hit.'],
+  },
+  {
     version: '0.563.0',
     date: '2026-11-13',
     title: 'Old unused skill effects cleared out',

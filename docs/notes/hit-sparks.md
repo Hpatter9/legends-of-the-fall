@@ -9,11 +9,11 @@ First, the hit sparks.
 
 | Landing | Clip | Element | Size | Lasts |
 | --- | --- | --- | --- | --- |
-| a plain blow | a small star of sparks (`hit-blow`) | light | 0.8 to 1.3 with the share of health taken | 200 ms |
+| a plain blow | a small star of sparks (`hit-blow`) | light | 1.0 to 1.5 with the share of health taken | 200 ms |
 | a shot's burst | the same star | the shot's own | 1.0 to 1.5 | 220 ms |
-| a block (a raised guard) | the same star | ice (pale blue) | 1.1 | 220 ms |
-| a killing backstab | two crossed strokes (`hit-cut`) | dark | 1.0 | 260 ms |
-| a crit | two crossed strokes | light (gold) | 1.3 to 1.6 | 280 ms |
+| a block (a raised guard) | the same star | ice (pale) | 1.1 | 220 ms |
+| a killing backstab | two crossed strokes (`hit-cut`) | dark | 0.7 | 260 ms |
+| a crit | two crossed strokes | light (gold) | 0.8 to 1.0 | 280 ms |
 
 A crit's picture is the larger clip at the larger size, so the least crit is plainly bigger than the greatest plain blow (a test).
 Every one is over in under 300 ms. `Fx.bfxHit` plays it; where its clip is not held the painted spark plays as before (the
@@ -24,6 +24,28 @@ Over a fighter it follows ON-FIGHTER: its first frames, no longer than the rule'
 
 Not changed: a skill's own hit (its signature's painted steps), the dust or blood puff, the debris, the ailments' ticks, a big
 foe's death burst, the swing's slash, the fan of sparkles that shows a blow's direction.
+
+## Caught in a frame, and what that showed
+
+`docs/samples/blender-fx/hit-sparks-caught-393.png`: a plain blow, a shot's burst, a block and a crit, each 16, 64 and 128 ms after
+it lands, cut on the struck fighter at four times size (the Knight and the Archer against a wave; `CATCH=blow,burst,block,crit`
+on the photographer steps the fight a frame at a time until each lands). The blow, the burst and the block are a small bright
+star on the body, gone by 64 ms; the crit is a gold cross about as large as the fighter, gone by 128 ms.
+
+Three things the first catches showed, each mended:
+
+- **The clips opened on their weakest frames** (a spark gathering), and those were what played at full strength in the first
+  moment; the strong frames came after, thinned. The clips now leave their first three frames out (`HIT_SKIP`), so each opens at
+  its peak.
+- **The crit was a thin pale cross, then, with thicker strokes, far too large** (it covered the whole fighter and its
+  neighbours). Its strokes are bold and it is drawn at 0.8 to 1.0 of the clip, about one fighter across: more than twice a plain
+  blow's star.
+- **The photographer was not holding the fight still.** The game starts its own loop again when it finds it stopped
+  (`watchLoop`), so real time passed between a step and its photograph and a 150 ms flash was over before the picture. The tool
+  puts that watch to sleep. (Earlier photographs in this work that "missed" a quick effect may have been this.)
+
+Honest: the block's star is pale yellow-white, not clearly blue; in a frame it is hard to tell from a plain blow, and it is the
+word "Block" over it that says what it is.
 
 ## The clips, and what they cost
 
@@ -36,7 +58,7 @@ Memory, the same staged fight (the Samurai's party, 393x852) on main 0.559.0 and
 | --- | --- | --- |
 | Fight-loaded atlases, decoded | 40.07 MB | 40.07 MB |
 | Fight-loaded atlases, on the graphics card | 10.17 MB | 10.17 MB |
-| Core atlas 1 (pinned) | 2030 x 750 px, 5.8 MB | 2048 x 908 px, 7.1 MB |
+| Core atlas 1 (pinned) | 2030 x 750 px, 5.8 MB | 2042 x 917 px, 7.1 MB |
 
 So 1.3 MB more, fixed, in the core; nothing more loaded in a fight.
 

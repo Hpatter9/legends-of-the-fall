@@ -109,6 +109,9 @@ async function open(eidolons) {
   if (process.env.NOFLASH) await page.addStyleTag({ content: '.umFlash { display: none !important; }' });
   await page.evaluate(() => {
     const g = window.__game;
+    // (the game starts its own loop again when it finds it stopped (WAVE-DELAY's `watchLoop`): this tool stops the loop to step the
+    // fight by hand, so the watch is put to sleep here, or real time passes between a step and its photograph)
+    g.watchLoop = () => {};
     const seen = new Map();
     window.__step = (ms) => {
       for (let t = 0; t < ms; t += 16) {
@@ -161,6 +164,33 @@ if (process.env.WATCH) {
   // (TOUGH=<n>: the foes are given n times their health, so the fight lasts and the heroes' heals and wards are seen)
   await page.evaluate((k) => { const g = window.__game; g.app.ticker.stop(); if (k > 1) for (const f of g.b.units) if (f.side === 'foe' && f.alive) { f.maxHp *= k; f.hp = f.maxHp; } }, Number(process.env.TOUGH ?? 1));
   const every = Number(process.env.WATCH_MS ?? 600);
+  // (CATCH=crit,block: the fight is stepped a frame at a time until a hit spark of each kind named lands, and each is photographed
+  // 50 ms and 110 ms after it lands: for what is over between two ordinary frames)
+  if (process.env.CATCH) {
+    const want = process.env.CATCH.split(',');
+    await page.evaluate(() => { const fx = window.__game.fx; const was = fx.bfxHit.bind(fx); window.__hits = []; fx.bfxHit = (kind, ...a) => { const ok = was(kind, ...a); if (ok) { window.__hits.push(kind); window.__hitAt = { ...(window.__hitAt ?? {}), [kind]: [a[1], a[2]] }; } return ok; }; });
+    for (const kind of want) {
+      const got = await page.evaluate((kind) => { window.__hits = []; for (let i = 0; i < 4000 && !window.__hits.includes(kind) && window.__game.b.phase === 'fight'; i++) window.__step(16); return window.__hits.includes(kind); }, kind);
+      if (!got) console.log('NOT CAUGHT', kind);
+      if (!got) continue;
+      // (the fight at its ordinary speed for the photographs, so a spark of 200 ms is on the screen for 200 ms; where it is on the
+      // screen is asked at each photograph, since the camera moves)
+      await page.evaluate(() => window.__game.setSpeed(1));
+      for (const [i, ms] of [16, 48, 64].entries()) {
+        await page.evaluate((d) => window.__step(d), ms);
+        const at = await page.evaluate((k) => { const [x, y] = window.__hitAt[k]; const g = window.__game.fx.root.toGlobal({ x, y }); return [Math.round(g.x), Math.round(g.y)]; }, kind);
+        await page.screenshot({ path: `${OUT}/catch-${kind}-${W}-${i}.png` });
+        console.log('caught', kind, i, JSON.stringify(at));
+        if (process.env.DUMP && i === 0) console.log('DUMP', kind, JSON.stringify(await page.evaluate((k) => { const fx = window.__game.fx; const [x, y] = window.__hitAt[k]; return { want: [Math.round(x), Math.round(y)], hush: fx.hushOn, rootVis: fx.particles.root.visible, n: fx.particles.live.length, near: fx.particles.live.filter((l) => Math.abs(l.b.x - x) < 30 && Math.abs(l.b.y - y) < 30).map((l) => ({ x: Math.round(l.sp.x), y: Math.round(l.sp.y), a: +l.sp.alpha.toFixed(2), v: l.sp.visible, t: Math.round(l.t), span: Math.round(l.span), w: l.sp.texture.frame.width, sc: +l.sp.scale.x.toFixed(2), bare: !!l.b.bare })) }; }, kind)));
+      }
+      await page.evaluate(() => window.__game.setSpeed(2));
+    }
+    await ctx.close();
+    console.log('page errors:', errors);
+    await browser.close();
+    srv.close();
+    process.exit(0);
+  }
   let ended = 0;
   for (let i = 0; i < Number(process.env.WATCH_N ?? 40) && ended < 3; i++) {
     await page.evaluate((d) => window.__step(d), every);

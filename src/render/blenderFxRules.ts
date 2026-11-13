@@ -284,11 +284,11 @@ export function bfxDrop(held: readonly number[], now: ReadonlySet<number>, befor
  *  Each is small and quick (`ms` under 300); `size` is a multiple of the clip's own. */
 export type HitKind = 'blow' | 'burst' | 'block' | 'backstab' | 'crit';
 export const HIT_SPARK: Readonly<Record<HitKind, { clip: 'blow' | 'cut'; el?: string; size: number; grow: number; ms: number }>> = {
-  blow: { clip: 'blow', el: 'light', size: 0.8, grow: 0.5, ms: 200 },
+  blow: { clip: 'blow', el: 'light', size: 1.0, grow: 0.5, ms: 200 },
   burst: { clip: 'blow', size: 1.0, grow: 0.5, ms: 220 },
   block: { clip: 'blow', el: 'ice', size: 1.1, grow: 0, ms: 220 },
-  backstab: { clip: 'cut', el: 'dark', size: 1.0, grow: 0, ms: 260 },
-  crit: { clip: 'cut', el: 'light', size: 1.3, grow: 0.3, ms: 280 },
+  backstab: { clip: 'cut', el: 'dark', size: 0.7, grow: 0, ms: 260 },
+  crit: { clip: 'cut', el: 'light', size: 0.8, grow: 0.2, ms: 280 },
 };
 /** The spark for a landing of `kind`: its clip (in `el` where the kind has no element of its own), how large it is drawn for a blow
  *  that took `share` of the target's health (0 to 1), and how long it plays. Undefined where the pipeline has not made the clip. */
