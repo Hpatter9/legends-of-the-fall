@@ -190,6 +190,7 @@ import { COMBO_NAME, comboById, comboOf, noteCombos } from './sim/combos';
 import { setAgeLooks, UnitSprite } from './render/unitView';
 import { flyUp, recyclePuff, summonBurst } from './render/uiFx';
 import { reducedMotion, reviveLine } from './reviveView';
+import { heartFades, heartFull, heartRows, heartsLabel, HEART_FADE_MS } from './heartRowsRules';
 import { reviveIn, REVIVE_MS } from './sim/lives';
 import { Fx, loadFx } from './render/fx';
 import { lookSheet } from './render/awakenLook';
@@ -3647,36 +3648,59 @@ class Game {
     }
   }
 
-  /** The lives at the top (TEN-LIVES: the party's ten, where the two hearts were): the heart and the number left, grey once none is.
-   *  The number jumps when a life is spent. Only runs with lives show them (not the tower or the calamity, which fail their own way). */
+  /** The lives at the top (TEN-LIVES: the party's ten, where the two hearts were; HEART-ROWS: a heart each, five to a row,
+   *  `heartRowsRules.ts`): a full heart is a life held, a spent one the same heart faded to black. A life spent fades its heart (several
+   *  at once, one after another), at once with reduced motion. Only runs with lives show them (not the tower or the calamity, which
+   *  fail their own way). */
   private drawLives(run: Run): void {
     const box = $('lives');
     box.hidden = !hasLives(run);
     if (box.hidden) return;
     // (in a fight the fight's own count is the freshest: a life spent this tick shows at once)
     const left = this.b?.lives && this.b.phase !== 'deploy' ? this.b.lives.left : livesLeft(run);
-    const key = `${left}:${run.orders?.mod ?? ''}`;
+    const max = livesMax(run);
+    const key = `${left}:${max}:${run.orders?.mod ?? ''}`;
     if (box.dataset.key === key) return;
     box.dataset.key = key;
-    box.replaceChildren();
-    box.title = `${left} of ${livesMax(run)} ${livesMax(run) === 1 ? 'life' : 'lives'} left. A fallen hero rises after ${REVIVE_MS / 1000} seconds for one life.`;
+    box.title = heartsLabel(left, max, REVIVE_MS / 1000);
     box.setAttribute('aria-label', box.title);
-    const img = document.createElement('img');
-    img.src = heartUrl;
-    img.alt = '';
-    img.className = left > 0 ? 'full' : 'spent';
-    const n = document.createElement('b');
-    n.className = 'livesLeft';
-    n.textContent = String(left);
-    box.append(img, n);
     box.classList.toggle('low', left > 0 && left <= 3);
     box.classList.toggle('none', left <= 0);
-    // (a life just spent: the count jumps once; not on the first draw, nor with reduced motion)
-    if (this.livesShown >= 0 && left < this.livesShown && !reducedMotion()) {
-      img.animate([{ transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 420, easing: 'ease-out' });
-      n.animate([{ transform: 'scale(1.6)', color: '#ff8a7a' }, { transform: 'scale(1)' }], { duration: 520, easing: 'ease-out' });
+    // (the hearts are kept from draw to draw, so a spent one can fade where it stands; made afresh only when the run's all changes)
+    let rows = box.querySelector<HTMLElement>('.hearts');
+    if (!rows || rows.childElementCount !== max) {
+      rows?.remove();
+      rows = document.createElement('span');
+      rows.className = 'hearts';
+      rows.dataset.rows = String(heartRows(max));
+      for (let i = 0; i < max; i++) {
+        const img = document.createElement('img');
+        img.src = heartUrl;
+        img.alt = '';
+        img.draggable = false;
+        rows.append(img);
+      }
+      box.prepend(rows);
+      this.livesShown = Math.min(this.livesShown, max);
+    }
+    const hearts = [...rows.children] as HTMLImageElement[];
+    hearts.forEach((img, i) => (img.className = heartFull(i, left) ? 'full' : 'spent'));
+    // (a life just spent: its heart flares, shrinks and settles dark; not on the first draw, nor with reduced motion)
+    if (!reducedMotion()) {
+      for (const { i, delay } of heartFades(this.livesShown, left, max)) {
+        hearts[i]?.animate(
+          [
+            { transform: 'scale(1)', filter: 'none', offset: 0 },
+            { transform: 'scale(1.3)', filter: 'brightness(1.9) drop-shadow(0 0 4px #ffd27a)', offset: 0.22 },
+            { transform: 'scale(0.82)', filter: 'grayscale(1) brightness(0.14)', offset: 0.7 },
+            { transform: 'scale(1)', filter: 'grayscale(1) brightness(0.14)', offset: 1 },
+          ],
+          { duration: HEART_FADE_MS, delay, easing: 'ease-out', fill: 'backwards' },
+        );
+      }
     }
     this.livesShown = left;
+    box.querySelector('.marchBadge')?.remove();
     const line = ordersLine(run.orders);
     if (line && run.orders?.mod) {
       const badge = document.createElement('button');

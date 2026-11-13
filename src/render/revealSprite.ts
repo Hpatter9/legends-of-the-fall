@@ -24,12 +24,18 @@ export function revealSprite(sheet: string, reduced: boolean, opts: { walk?: boo
   canvas.width = w;
   canvas.height = h;
   let x0 = w, y0 = h, x1 = 0, y1 = 0;
+  // (SUMMON-SHOW: the frames are read on a scratch canvas kept in memory, `willReadFrequently`: reading back the shown canvas, which
+  //  lives on the graphics card, took seconds a hero on a slow phone and held up a ten-draw's run of reveals)
+  const scan = document.createElement('canvas');
+  scan.width = w;
+  scan.height = h;
+  const sg = scan.getContext('2d', { willReadFrequently: true })!;
   for (const anim of [...(hasAttack ? ['idle', 'attack'] : ['idle']), ...(hasWalk ? ['walk'] : [])]) {
     for (let n = 0; n < counts[anim]; n++) {
       const s = source(anim, n);
-      g.clearRect(0, 0, w, h);
-      g.drawImage(img, s.x, s.y, w, h, 0, 0, w, h);
-      const data = g.getImageData(0, 0, w, h).data;
+      sg.clearRect(0, 0, w, h);
+      sg.drawImage(img, s.x, s.y, w, h, 0, 0, w, h);
+      const data = sg.getImageData(0, 0, w, h).data;
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
         if (data[(y * w + x) * 4 + 3] <= 8) continue;
         x0 = Math.min(x0, x); y0 = Math.min(y0, y);

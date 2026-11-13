@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.566.0',
+    date: '2026-11-13',
+    title: 'Your lives as two rows of hearts',
+    notes: ['The top bar shows your ten lives as two rows of five hearts. When a life is spent, its heart flares and fades to black.', 'With three or fewer lives left, the remaining hearts glow amber now and then as a warning.'],
+  },
+  {
+    version: '0.565.0',
+    date: '2026-11-13',
+    title: 'Ten-draws: shards first, then your new heroes',
+    notes: ['A ten-draw now turns all the shard cards first and lists what each hero gained; only then does each new hero step out in its own reveal.', 'Hero reveals start at once; they used to take several seconds to begin.'],
+  },
+  {
+    version: '0.564.0',
+    date: '2026-11-13',
+    title: 'Hit sparks that land at full strength',
+    notes: ['Hit sparks now open at their brightest instead of fading in, and a crit is a bold gold cross about a fighter wide, clearly bigger than a plain hit.'],
+  },
+  {
     version: '0.563.0',
     date: '2026-11-13',
     title: 'Old unused skill effects cleared out',

@@ -1,0 +1,562 @@
+[
+ {
+  "w": 393,
+  "h": 852,
+  "checks": [
+   {
+    "name": "deploy-10",
+    "at": {
+     "lives": {
+      "l": 8,
+      "r": 108,
+      "t": 8,
+      "b": 50
+     },
+     "gold": {
+      "l": 112,
+      "r": 237,
+      "t": 19,
+      "b": 39
+     },
+     "clock": {
+      "l": 241,
+      "r": 241,
+      "t": 29,
+      "b": 29
+     },
+     "mute": {
+      "l": 245,
+      "r": 289,
+      "t": 7,
+      "b": 51
+     },
+     "gear": {
+      "l": 293,
+      "r": 337,
+      "t": 7,
+      "b": 51
+     },
+     "speed": {
+      "l": 341,
+      "r": 385,
+      "t": 7,
+      "b": 51
+     },
+     "version": {
+      "l": 277,
+      "r": 387,
+      "t": 56,
+      "b": 69
+     },
+     "status": {
+      "l": 8,
+      "r": 385,
+      "t": 55,
+      "b": 78
+     },
+     "top": {
+      "l": 0,
+      "r": 393,
+      "t": 0,
+      "b": 87
+     },
+     "goldText": {
+      "l": 112,
+      "r": 184
+     }
+    },
+    "clash": [],
+    "off": false,
+    "hearts": [
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full"
+    ],
+    "label": "10 of 10 lives left. A fallen hero rises after 5 seconds for one life.",
+    "low": false
+   },
+   {
+    "name": "fight-10",
+    "at": {
+     "lives": {
+      "l": 10,
+      "r": 110,
+      "t": 8,
+      "b": 50
+     },
+     "gold": {
+      "l": 114,
+      "r": 205,
+      "t": 19,
+      "b": 39
+     },
+     "clock": {
+      "l": 209,
+      "r": 239,
+      "t": 19,
+      "b": 39
+     },
+     "mute": {
+      "l": 243,
+      "r": 287,
+      "t": 7,
+      "b": 51
+     },
+     "gear": {
+      "l": 291,
+      "r": 335,
+      "t": 7,
+      "b": 51
+     },
+     "speed": {
+      "l": 339,
+      "r": 383,
+      "t": 7,
+      "b": 51
+     },
+     "version": {
+      "l": 277,
+      "r": 387,
+      "t": 56,
+      "b": 69
+     },
+     "status": {
+      "l": 10,
+      "r": 383,
+      "t": 55,
+      "b": 78
+     },
+     "top": {
+      "l": 0,
+      "r": 393,
+      "t": 0,
+      "b": 87
+     },
+     "goldText": {
+      "l": 114,
+      "r": 186
+     }
+    },
+    "clash": [],
+    "off": false,
+    "hearts": [
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full"
+    ],
+    "label": "10 of 10 lives left. A fallen hero rises after 5 seconds for one life.",
+    "low": false
+   },
+   {
+    "name": "fight-7",
+    "at": {
+     "lives": {
+      "l": 10,
+      "r": 110,
+      "t": 8,
+      "b": 50
+     },
+     "gold": {
+      "l": 114,
+      "r": 207,
+      "t": 19,
+      "b": 39
+     },
+     "clock": {
+      "l": 211,
+      "r": 239,
+      "t": 19,
+      "b": 39
+     },
+     "mute": {
+      "l": 243,
+      "r": 287,
+      "t": 7,
+      "b": 51
+     },
+     "gear": {
+      "l": 291,
+      "r": 335,
+      "t": 7,
+      "b": 51
+     },
+     "speed": {
+      "l": 339,
+      "r": 383,
+      "t": 7,
+      "b": 51
+     },
+     "version": {
+      "l": 277,
+      "r": 387,
+      "t": 56,
+      "b": 69
+     },
+     "status": {
+      "l": 10,
+      "r": 383,
+      "t": 55,
+      "b": 78
+     },
+     "top": {
+      "l": 0,
+      "r": 393,
+      "t": 0,
+      "b": 87
+     },
+     "goldText": {
+      "l": 114,
+      "r": 186
+     }
+    },
+    "clash": [],
+    "off": false,
+    "hearts": [
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "spent",
+     "spent",
+     "spent"
+    ],
+    "label": "7 of 10 lives left. A fallen hero rises after 5 seconds for one life.",
+    "low": false
+   },
+   {
+    "name": "fight-3",
+    "at": {
+     "lives": {
+      "l": 10,
+      "r": 110,
+      "t": 8,
+      "b": 50
+     },
+     "gold": {
+      "l": 114,
+      "r": 209,
+      "t": 19,
+      "b": 39
+     },
+     "clock": {
+      "l": 213,
+      "r": 239,
+      "t": 19,
+      "b": 39
+     },
+     "mute": {
+      "l": 243,
+      "r": 287,
+      "t": 7,
+      "b": 51
+     },
+     "gear": {
+      "l": 291,
+      "r": 335,
+      "t": 7,
+      "b": 51
+     },
+     "speed": {
+      "l": 339,
+      "r": 383,
+      "t": 7,
+      "b": 51
+     },
+     "version": {
+      "l": 277,
+      "r": 387,
+      "t": 56,
+      "b": 69
+     },
+     "status": {
+      "l": 10,
+      "r": 383,
+      "t": 55,
+      "b": 78
+     },
+     "top": {
+      "l": 0,
+      "r": 393,
+      "t": 0,
+      "b": 87
+     },
+     "goldText": {
+      "l": 114,
+      "r": 186
+     }
+    },
+    "clash": [],
+    "off": false,
+    "hearts": [
+     "full",
+     "full",
+     "full",
+     "spent",
+     "spent",
+     "spent",
+     "spent",
+     "spent",
+     "spent",
+     "spent"
+    ],
+    "label": "3 of 10 lives left. A fallen hero rises after 5 seconds for one life.",
+    "low": true
+   },
+   {
+    "name": "fight-0",
+    "at": {
+     "lives": {
+      "l": 10,
+      "r": 110,
+      "t": 8,
+      "b": 50
+     },
+     "gold": {
+      "l": 114,
+      "r": 209,
+      "t": 19,
+      "b": 39
+     },
+     "clock": {
+      "l": 213,
+      "r": 239,
+      "t": 19,
+      "b": 39
+     },
+     "mute": {
+      "l": 243,
+      "r": 287,
+      "t": 7,
+      "b": 51
+     },
+     "gear": {
+      "l": 291,
+      "r": 335,
+      "t": 7,
+      "b": 51
+     },
+     "speed": {
+      "l": 339,
+      "r": 383,
+      "t": 7,
+      "b": 51
+     },
+     "version": {
+      "l": 277,
+      "r": 387,
+      "t": 56,
+      "b": 69
+     },
+     "status": {
+      "l": 10,
+      "r": 383,
+      "t": 55,
+      "b": 78
+     },
+     "top": {
+      "l": 0,
+      "r": 393,
+      "t": 0,
+      "b": 87
+     },
+     "goldText": {
+      "l": 114,
+      "r": 186
+     }
+    },
+    "clash": [],
+    "off": false,
+    "hearts": [
+     "spent",
+     "spent",
+     "spent",
+     "spent",
+     "spent",
+     "spent",
+     "spent",
+     "spent",
+     "spent",
+     "spent"
+    ],
+    "label": "0 of 10 lives left. A fallen hero rises after 5 seconds for one life.",
+    "low": false
+   },
+   {
+    "name": "card-6",
+    "at": {
+     "lives": {
+      "l": 8,
+      "r": 108,
+      "t": 8,
+      "b": 50
+     },
+     "gold": {
+      "l": 112,
+      "r": 210,
+      "t": 19,
+      "b": 39
+     },
+     "clock": {
+      "l": 214,
+      "r": 241,
+      "t": 19,
+      "b": 39
+     },
+     "mute": {
+      "l": 245,
+      "r": 289,
+      "t": 7,
+      "b": 51
+     },
+     "gear": {
+      "l": 293,
+      "r": 337,
+      "t": 7,
+      "b": 51
+     },
+     "speed": {
+      "l": 341,
+      "r": 385,
+      "t": 7,
+      "b": 51
+     },
+     "version": {
+      "l": 277,
+      "r": 387,
+      "t": 56,
+      "b": 69
+     },
+     "status": {
+      "l": 8,
+      "r": 385,
+      "t": 55,
+      "b": 78
+     },
+     "top": {
+      "l": 0,
+      "r": 393,
+      "t": 0,
+      "b": 90
+     },
+     "goldText": {
+      "l": 112,
+      "r": 182
+     }
+    },
+    "clash": [],
+    "off": false,
+    "hearts": [
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "spent",
+     "spent",
+     "spent",
+     "spent"
+    ],
+    "label": "6 of 10 lives left. A fallen hero rises after 5 seconds for one life.",
+    "low": false
+   },
+   {
+    "name": "march-6",
+    "at": {
+     "lives": {
+      "l": 8,
+      "r": 108,
+      "t": 8,
+      "b": 50
+     },
+     "gold": {
+      "l": 112,
+      "r": 237,
+      "t": 19,
+      "b": 39
+     },
+     "clock": {
+      "l": 241,
+      "r": 241,
+      "t": 29,
+      "b": 29
+     },
+     "mute": {
+      "l": 245,
+      "r": 289,
+      "t": 7,
+      "b": 51
+     },
+     "gear": {
+      "l": 293,
+      "r": 337,
+      "t": 7,
+      "b": 51
+     },
+     "speed": {
+      "l": 341,
+      "r": 385,
+      "t": 7,
+      "b": 51
+     },
+     "version": {
+      "l": 277,
+      "r": 387,
+      "t": 56,
+      "b": 69
+     },
+     "status": {
+      "l": 8,
+      "r": 385,
+      "t": 55,
+      "b": 78
+     },
+     "top": {
+      "l": 0,
+      "r": 393,
+      "t": 0,
+      "b": 87
+     },
+     "goldText": {
+      "l": 112,
+      "r": 182
+     }
+    },
+    "clash": [],
+    "off": false,
+    "hearts": [
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "full",
+     "spent",
+     "spent",
+     "spent",
+     "spent"
+    ],
+    "label": "6 of 10 lives left. A fallen hero rises after 5 seconds for one life.",
+    "low": false
+   }
+  ],
+  "errors": []
+ }
+]
