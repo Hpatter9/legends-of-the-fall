@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.561.0',
+    date: '2026-11-13',
+    title: 'A check against the empty-field lock',
+    notes: ['The test tools now watch every deploy and the first seconds of each fight for a picture that is not drawn, so the empty-field lock cannot slip back.'],
+  },
+  {
     version: '0.560.0',
     date: '2026-11-13',
     title: 'The king\'s spells seen round their target',
