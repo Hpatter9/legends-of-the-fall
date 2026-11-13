@@ -7,7 +7,7 @@
 // the run's end: they are the run's, not the save's.
 //
 // FEWER-RUNES (the owner: "There are too many runes. I want fewer to show up, but make them far more powerful"): about a third as many
-// reach the player (a won wave gives one only every fourth wave and on the last, `waveGivesRune`; the Calamity's fight finds are kept one
+// reach the player (a won wave gives one only on the first, every fourth wave and the last, `waveGivesRune`; the Calamity's fight finds are kept one
 // time in three, `runGear.ts` `keepsFind`), each about four times as strong as before, and every rune carries its kind's signature, a
 // small ability of its own that grows with its level (`RUNE_SIGNATURE`); level V adds the flourish (`docs/notes/fewer-runes.md`).
 //
@@ -138,8 +138,16 @@ export function rollRune(state: RuneState, seed: number, stage: number, source: 
  *  source. Off in the game; it changes nothing. */
 export const RUNE_TALLY = { on: false, made: new Map<number, number>(), got: [] as { source: number; lv: number }[] };
 
-/** Whether a won wave gives a rune (FEWER-RUNES): every `RUNE_EVERY`th wave, and the last (`waves`, the run's count; 0 when it has none). */
-export const waveGivesRune = (stage: number, waves: number): boolean => stage % RUNE_EVERY === 0 || (waves > 0 && stage >= waves);
+/** The salt of the side stream a first wave's Keystone is carved again from: `mixSeed(seed, RUNE_SALT, OPENER_SALT)`. */
+export const OPENER_SALT = 0x0be1;
+/** RUNE-WAVE-ONE: the kind a first wave's rune takes when its own roll was a Keystone (never worn, so no opener): one of the seven, from
+ *  its own side stream, so no other roll of the run moves. */
+export const openerKind = (seed: number): Exclude<RuneKind, 'keystone'> =>
+  RUNE_KINDS[new Rng(mixSeed(seed, RUNE_SALT, OPENER_SALT)).int(0, RUNE_KINDS.length - 1)] as Exclude<RuneKind, 'keystone'>;
+
+/** Whether a won wave gives a rune (FEWER-RUNES): the first (RUNE-WAVE-ONE, the owner's yes: a run's heroes have a rune from wave 2),
+ *  every `RUNE_EVERY`th wave, and the last (`waves`, the run's count; 0 when it has none). */
+export const waveGivesRune = (stage: number, waves: number): boolean => stage === 1 || stage % RUNE_EVERY === 0 || (waves > 0 && stage >= waves);
 
 /** Put a rune in the bag. A full bag merges it at once with a twin there if one is; else the lowest rune in the bag is broken for
  *  `BREAK_GOLD` (returned in `broke`, the gold for the caller to pay). */

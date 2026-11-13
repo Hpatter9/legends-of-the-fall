@@ -125,6 +125,8 @@ LAND_TERRAIN.on = false;
 // one scenario played with the hearts, which are the run's lives now, spent inside the fight; every other scenario keeps its hash)
 // (FEWER-RUNES, the owner's ask for fewer, far stronger runes, docs/notes/fewer-runes.md, re-recorded `daily` (fbabd44e) and `calamity` (e45bb273)
 // alone: they are the scenarios whose heroes wear runes, which now come less often and give more; every other scenario keeps its hash)
+// (RUNE-WAVE-ONE, the owner's yes to a rune for the first wave, docs/notes/rune-wave-one.md, re-recorded `daily` (43fa1cd4) alone: its heroes
+// wear a rune from wave 2; every other scenario keeps its hash)
 test('with the new ailments off, every mode plays as it did before the ailment model', () => {
   const was = AILMENT_SWITCH.on;
   const infernal = ARMIES.find((a) => a.id === 'infernal') as unknown as { start: number };

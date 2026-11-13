@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.574.0',
+    date: '2026-11-13',
+    title: 'The first wave gives a rune',
+    notes: ['Winning wave 1 now gives a rune, and it is always one a hero can wear, so a run starts with a rune on the bench.', 'Runes keep their strength; a run simply gives one more of them.'],
+  },
+  {
     version: '0.573.0',
     date: '2026-11-13',
     title: 'The app and web version build once a day',

@@ -170,7 +170,7 @@ export class RuneBench {
     }
     root.append(grid);
     this.fresh = new Set();
-    root.append(el('p', 'rbHint', !edit ? 'Runes change between waves.' : this.sel !== undefined ? `${chosenName(s, this.sel)}Now tap its twin to merge, or a lit hero to set it. Tap it again to put it down.` : s.bag.length ? 'Drag a rune onto another of its level to merge, or onto a hero to set it. Hold one to read it.' : 'The bag is empty: every fourth wave, the last wave and the bosses bring runes.'));
+    root.append(el('p', 'rbHint', !edit ? 'Runes change between waves.' : this.sel !== undefined ? `${chosenName(s, this.sel)}Now tap its twin to merge, or a lit hero to set it. Tap it again to put it down.` : s.bag.length ? 'Drag a rune onto another of its level to merge, or onto a hero to set it. Hold one to read it.' : 'The bag is empty: the first wave, every fourth, the last and the bosses bring runes.'));
   }
 
   private wornKey(s: RuneState): Record<string, string> {

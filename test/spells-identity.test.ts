@@ -162,6 +162,8 @@ function recordedStrengths<T>(fn: () => T): T {
 // one scenario played with the hearts, which are the run's lives now, spent inside the fight; every other scenario keeps its hash)
 // (FEWER-RUNES, the owner's ask for fewer, far stronger runes, docs/notes/fewer-runes.md, re-recorded `daily` (9d035692) and `calamity` (ff7af0a7)
 // alone: they are the scenarios whose heroes wear runes, which now come less often and give more; every other scenario keeps its hash)
+// (RUNE-WAVE-ONE, the owner's yes to a rune for the first wave, docs/notes/rune-wave-one.md, re-recorded `daily` (e42643a5) alone: its heroes
+// wear a rune from wave 2; every other scenario keeps its hash)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)

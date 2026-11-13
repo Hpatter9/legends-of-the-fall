@@ -94,8 +94,8 @@ test('a cursed path toughens the foes and pays a prize for a win', () => {
   const g = run.gold;
   finish(run, true);
   assert.ok(run.gold >= g + gold);
-  // (the prize; the won wave gives no rune of its own on this wave: FEWER-RUNES, every fourth wave and the last)
-  assert.equal(foundOf(run).length, 1);
+  // (the prize, and wave 1's own rune: RUNE-WAVE-ONE; FEWER-RUNES gives a wave's rune on the first, every fourth wave and the last)
+  assert.equal(foundOf(run).length, 2);
   assert.equal(run.buff, undefined);
 });
 
