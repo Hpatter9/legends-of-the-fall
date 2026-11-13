@@ -41,3 +41,47 @@ scratch canvas kept in memory (`willReadFrequently`): about 50 ms. A ten-draw's 
 
 Checked in the real page (`node tools/summon-show/film.mjs`, which films a ten-draw and a single new hero from the page's own
 screencast and checks that every shard card turned before the first reveal opened; `strip.py` makes a filmstrip of a take).
+
+## Part 2: the summoning's show, rendered in Blender
+
+The old show was the pack's sigil and burst strips (Pixel Effects) and code-drawn pieces: a CSS gathering glow, a blurred beam, a ring,
+18 spark dots and a canvas of drawn rays. It is now a show rendered in Blender, in the game's pixel finish, in the sanctum's emerald and
+gold, built only from what the pipeline does well (light, a sigil, rings, motes, shards and rays of light; nothing modelled as an
+object, so no ChatGPT prompt was needed).
+
+**The pieces** (`tools/blender-fx/summon/show.py`, seen front on and a little from above, as the reveal's stage is):
+
+| Piece | When (ms) | What |
+|---|---|---|
+| charge | 0 to 1400, 14 frames | a summoning circle (double ring, a band of runes, an eight-pointed star, rings at its points) burns onto the floor round from the top and inward, emerald heating to gold; a rune band turns against it; 64 motes of light spiral in off the dark to its heart; a thread of light starts up from it |
+| rift | 1400 to 1900, 6 frames | a seam of light tears up out of the circle and splits wide, its edges torn by a climbing noise, white at its heart and gold to emerald at its edges, a faint column round it; three rings race up it, streaks rush past |
+| burst | 1900 to 2710, 9 frames | the arrival: a ball of light seen as light (bright where it faces you, gone at its rim, its edge torn), two shock rings racing out over the floor, 40 shards of light and 14 rays thrown out, the rift collapsing into it; a softer white flash over the screen goes with it |
+| after | from 2410, a loop of 1.2 s | the circle glowing low, its rune band turning a twelfth of a turn a loop (so the loop meets itself), embers and motes rising off it; it fades in under the end of the burst and stays while the hero is held |
+| flourish | 600 ms, 8 frames | a shard card's turn, seen straight on: a gold ring breaking out round the card and a white one inside it, a four-pointed glint at its heart, slivers of light spun outward |
+
+A new hero's whole show is 2.7 s to its aftermath, inside the reveal's 3.1 s to its plate; with the plate a hero is about 3 to 4 s. The
+pieces' times are a pure rule (`heroShowAt`, `skipShowTo`, `flourishAt` in `src/render/summonRules.ts`, tested). A tap that skips the
+build-up still plays the arrival's burst.
+
+**The finish** (`tools/blender-fx/summon/finish.py`): each frame shrunk from twice its size by a box filter, its colours cut to one
+palette of 32 shared by every piece, its alpha hard (bright pixels there or not; dim ones one of three flat steps), each piece cut to
+the smallest box that holds all its frames and laid out as a sheet (lossless WebP), with a glow sheet a quarter the size under the four
+lit pieces. The manifest is `src/render/summonFxData.ts` (generated). `test/summon-show.test.ts` checks it against the files.
+
+**How the page plays it** (`src/summonFx.ts`):
+- The sheets load by URL (`fx/summon/*.webp`) when the sanctum opens (`SummoningHall.start`, `Gacha.open`), fetched and decoded off the
+  page's own thread (`createImageBitmap`), and the service worker keeps them (`SUMMON_FX_FILES` in `build.mjs`'s `FILES`).
+- A reveal whose sheets are in (`.tarotReveal.bfx`) lays a `HeroShow` between the painting and the battle sprite, sized so the circle's
+  heart is under the hero's feet and the frame as wide as the stage; the old strips, beam, sparks and rays are hidden (the rays' canvas
+  is not even made). Two small canvases: the hard pixels (176 x 240, scaled up pixelated) and the glow (44 x 60, smoothed, screen-blended).
+  Nothing is drawn again while the frame is the same (10 to 12 a second). One animation loop serves every show and stops when none plays.
+- Each shard card lays its flourish over itself as it turns (`cardFlourish`), and takes it away when it ends.
+- Until the sheets are in (a first visit offline, or a failed load), the reveal plays its older look.
+- **Reduced motion:** no show at all: the calm fade as before, and the cards fade with no flourish.
+
+**What it costs:** 9 files, about 107 KB to download; **about 4.9 MB decoded** (4,860,396 bytes); on a page with its CPU throttled four
+times, the sheets load in about 0.2 s, and a reveal's first frame of the show is on the screen about 0.4 s after it is called (most of
+that is the reveal's own scene: the painting, the sprite). `node tools/summon-show/measure.mjs` measures it.
+
+**Touched under `tools/blender-fx/`:** only the new folder `tools/blender-fx/summon/` (`show.py`, `finish.py`, `README.md`). It imports
+helpers from `eidolons/askel.py` and changes nothing there, nor `effects.py`, `scenes.py`, the shared atlases or `blenderFxData.ts`.

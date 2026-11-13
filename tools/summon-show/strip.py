@@ -1,4 +1,5 @@
-"""SUMMON-SHOW: a filmstrip of a filmed take (film.mjs): frames picked every `--every` ms (or at the times given), in rows, each with its
+"""SUMMON-SHOW: a filmstrip (each frame carries the page's own clock in its corner; the label over it is the screencast's time, which runs
+behind under load) of a filmed take (film.mjs): frames picked every `--every` ms (or at the times given), in rows, each with its
 time. python3 tools/summon-show/strip.py <take dir> <out.webp> [--every 500] [--at 0,400,...] [--cols 6] [--scale 0.5]"""
 import glob, os, sys
 from PIL import Image, ImageDraw

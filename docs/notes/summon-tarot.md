@@ -1,5 +1,8 @@
 # SUMMON-TAROT: shards as tarot cards, every hero's first-time reveal
 
+(Since SUMMON-SHOW, `summon-show.md`: a draw's shard cards all come first and the new heroes after, with no card of their own in the
+spread; the reveal's charge, beam, burst and rays are a show rendered in Blender.)
+
 The owner: "Shards gained with the summoning should show up as tarot cards instead of fully showing the unit. I want the actual
 unit to be a more exciting reveal when they get seen the first time." Then a bug report: "the summoning might not be working right.
 When I get heroes out, or enough shards for one to unlock, it should play the special unlock scene."
