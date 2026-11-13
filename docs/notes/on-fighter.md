@@ -66,8 +66,30 @@ moments each from the wind-up on).
 - **A plain strip** (`anim`) and **a king's spell's rendered clip on a unit** (`bfxOnce`) over a fighter go under that body whole.
 - A fighter's under layers are dropped when the fighter goes (`stepUnder`).
 
-Still over a fighter at the old strength, and next: a painted beam's segments (`paintBeam`, six tenths where a segment crosses
-a body), the `aura-spirits` and `aura-eclipse` loops, the ailments' front layers, a showcase's beats on the caster.
+### The loops round a fighter, and a showcase's gathering
+
+`docs/samples/blender-fx/on-fighter-loops-393.jpg` (the Cleric's Spirit Guardians and Vael's black sun, before above, now below).
+
+- **`aura-spirits` and `aura-eclipse`** (`bfxRound`): whole under the body of the fighter they are round, inside that fighter, and
+  over the fighters only as thinly as their measured cover allows (the spirits cover 85% of a body: 18% strength over it; the
+  black sun, which hangs above the head, 21%: 70%). In the photograph the guardians stand behind and beside the Cleric's party,
+  which is in front of them; the black sun hangs over Vael as before.
+- **A showcase's gathering on the caster** (the hero's own wind-up played again) goes through the two layers as the wind-up does.
+
+**A fault of mine, found here and mended:** the push before this asked, as a fight began, for the ring clip of every hero's
+element (for the ring at a struck fighter's feet). That is up to five more atlases, and it took the fight's atlases over their
+budget, so a strike's own atlas could be given up to make room and the strike fell back to its older look: Vael's golden sweep and
+his black sun went missing in a photograph. The rings are no longer asked for ahead; each lies with its element's showcase
+beats, which the caster's showcase has just played when the strike lands. Decoded memory in the staged fight is back to 40 MB
+(it had risen to 46 MB of the 48 MB budget).
+
+Still over a fighter at the old strength, by decision or not yet done:
+
+- **a painted beam's segments** (`paintBeam`, six tenths where a segment crosses a body): a beam ends ON its target, and is a thin
+  strand for under a second; thinning it to the ceiling would cut the beam off short of whom it strikes. Left as it is; say if
+  it should change.
+- **the ailments' front layers** (`ailmentLayer.ts`, half strength, held by a test at no less than 0.45): they are what tells the
+  player a fighter is poisoned, burning or frozen. Not changed without the director's word.
 
 ## The survey: rendered clips on a fighter, worst first
 

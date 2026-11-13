@@ -66,6 +66,8 @@ async function open(eidolons) {
     const g = window.__game;
     const fx = g.fx ?? g.view?.fx ?? g.board?.fx;
     if (!fx) { console.log('TRACE no fx on the game'); return; }
+    { const w = fx.bfxStand.bind(fx); fx.bfxStand = (key, layer, x, y, live, o) => { if (key !== 'aura-eclipse') return w(key, layer, x, y, live, o); let said = false; let n = 0; return w(key, layer, x, y, () => { const r = live(); n++; if (!r && !said) { said = true; console.log('TRACE eclipse live false at', window.__game.b.t, 'after calls', n, 'host', !!o?.host, 'phase', window.__game.b.phase); } return r; }, o); }; }
+    for (const name of ['bfxRound', 'bfxStand']) { const w = fx[name].bind(fx); fx[name] = (...a) => { let r; try { r = w(...a); } catch (e) { console.log('TRACE', name, 'THREW', String(e)); throw e; } console.log('TRACE', name, a[0], 'returned', r); return r; }; }
     for (const name of ['ultAfter', 'ultImpact']) {
       const was = fx[name].bind(fx);
       fx[name] = (...a) => { console.log('TRACE', name, JSON.stringify(a.slice(1, 6)).slice(0, 300)); return was(...a); };
@@ -274,6 +276,7 @@ for (const pick of PICKS) {
       await page.evaluate((d) => window.__step(d), ms);
       await page.screenshot({ path: `${OUT}/${pick}-${W}-${7 + i}-after.png` });
     }
+    if (process.env.ROUNDS) console.log('ROUNDS', await page.evaluate((pick) => { const g = window.__game; const u = g.b.units.find((x) => x.side === 'hero' && x.def === pick); const sp = g.sprites.get(u.id); const lay = sp.underFx; return JSON.stringify({ alive: u.alive, t: g.b.t, phase: g.b.phase, under: lay ? lay.children.map((c) => ({ a: +c.alpha.toFixed(2), v: c.visible, n: c.children.length })) : null }); }, pick));
     const after = await speedNow(page);
     if (process.env.COST) {
     const cost = await page.evaluate(() => {

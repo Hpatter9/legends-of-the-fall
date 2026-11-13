@@ -109,6 +109,11 @@ test('a painted bit over a fighter is thinned to the ceiling and drawn again at 
   assert.match(fx, /const host = this\.bodyAt\(x, y, 16 \* scale\);/);
   assert.match(fx, /const host = paint \? undefined : this\.bodyAt\(\(l \+ r\) \/ 2, Math\.min\(y, bot\) - half, half\);/);
   assert.match(fx, /host\.underLayer\(\)\.addChild\(view\);/);
+  // (a loop that stays round a fighter, the spirit guardians and Vael's black sun: whole under the body, thin over it)
+  assert.match(fx, /const thin = overAlpha\(BODY_COVER\[key\] \?\? 1\);/);
+  assert.match(fx, /if \(host && thin < 1\) this\.bfxStand\(key, this\.root, \.\.\.where\(\), live, \{ rise: true, follow: where, host \}\);/);
+  assert.match(fx, /this\.bfxRound\(lasts\.clip, this\.sprites\.get\(me\.id\), over,/);
+  assert.match(fx, /if \(this\.bfxRound\(own\.bfx, this\.bodyAt\(hx, hy - 10, 8\), centre, live\)\) return true;/);
   // (the under copies run on the fight's clock with the particles, and go when they go)
   assert.match(fx, /this\.stepUnder\(this\.lows, dt\);/);
   assert.match(fx, /if \(layer\.destroyed \|\| p\.root\.destroyed\) among\.delete\(layer\);/);
