@@ -85,3 +85,17 @@ that is the reveal's own scene: the painting, the sprite). `node tools/summon-sh
 
 **Touched under `tools/blender-fx/`:** only the new folder `tools/blender-fx/summon/` (`show.py`, `finish.py`, `README.md`). It imports
 helpers from `eidolons/askel.py` and changes nothing there, nor `effects.py`, `scenes.py`, the shared atlases or `blenderFxData.ts`.
+
+**Samples** (`docs/samples/summon-show/`):
+- `after-hero-stills-393x852.webp`: a new hero's show at exact moments (0.1 to 3.8 s), the scene held at its beat and the show pinned
+  (`tools/summon-show/stills.mjs`); `before-hero-steps-393x852.webp` is the old show the same way, a picture every 200 ms on the
+  page's own virtual clock (`steps.mjs`).
+- `after-ten-<size>.webp` (393x852, 360x780, 412x915) and `before-ten-393x852.webp`: a real ten-draw filmed from the page's screencast
+  (`film.mjs`, `strip.py --count`): the shard cards turning with their flourishes, the totals, then the first new hero's show. Frames
+  are in order but the screencast falls behind on a busy software-drawn page, so the later heroes are cut from these; each frame's corner
+  carries the page's own clock. `after-single-<size>.webp` and `before-single-393x852.webp` are a single lucky stone filmed the same way.
+- The page held 60 frames a second through a reveal with the show (58 with the old one) on the same software-drawn page.
+
+**What still looks weak, honestly:** the arrival's ball of light reads as a pale yellow egg round the hero for about two frames; the
+rift is close to a plain bright tube once it is wide (its torn edges show while it opens, less once it is open); the aftermath is faint
+next to the burst (a dim circle and a few motes); and the circle burns white more than gold.
