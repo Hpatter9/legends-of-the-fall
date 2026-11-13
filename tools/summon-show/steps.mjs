@@ -19,7 +19,7 @@ await page.waitForFunction(() => [...document.querySelectorAll('.hmTab')].some((
 await page.evaluate(() => document.getElementById('tipSkip')?.click());
 await page.evaluate(() => { for (const b of document.querySelectorAll('.hmTab')) if (b.textContent.includes('Recruit')) b.click(); });
 await page.waitForTimeout(4000);
-const dir = `out/summon-show/${W}x${H}/steps`;
+const dir = process.env.OUT ?? `out/summon-show/${W}x${H}/steps`;
 mkdirSync(dir, { recursive: true });
 const cdp = await ctx.newCDPSession(page);
 const advance = (ms) => new Promise((done) => {
