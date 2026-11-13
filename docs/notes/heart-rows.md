@@ -42,4 +42,4 @@ for a line, not the bar's count, so nothing clashes; they are left as they were.
 `docs/samples/heart-rows/`: the bar with 10, 7, 3 and 0 lives in a fight, the deploy, the result card and the march between waves
 (whole page), and filmstrips of one heart fading (`fade-one-*`) and five at once (`fade-five-*`), its animations paused and stepped
 60 ms a frame. It fails if the hearts, the gold's words, the clock and the three medallions overlap, if the Version line lies over
-the hearts, or if anything runs off the page; `checks.json` beside them has every box's place.
+the hearts, or if anything runs off the page; `checks-<width>.json` beside them has every box's place.

@@ -90,11 +90,13 @@ try {
       }
       await page.evaluate(() => { for (const i of document.querySelectorAll('#lives .hearts img')) for (const a of i.getAnimations()) if (!(a instanceof CSSAnimation)) a.finish(); });
       // (laid side by side on one picture)
-      const strip = await ctx.newPage();
+      const sctx = await browser.newContext({ deviceScaleFactor: 2 });
+      const strip = await sctx.newPage();
       await strip.setContent(`<body style="margin:0;background:#111;display:flex;flex-wrap:wrap;gap:4px;padding:4px">${frames.map((f) => `<img style="width:${r.width}px" src="data:image/png;base64,${f}">`).join('')}</body>`);
       await strip.setViewportSize({ width: Math.ceil(Math.min(frames.length, 10) * (r.width + 4) + 4), height: Math.ceil(Math.ceil(frames.length / 10) * (r.height + 4) + 4) });
-      await strip.screenshot({ path: `${OUT}/${name}-${w}x${h}.png` });
-      await strip.close();
+      await strip.waitForFunction(() => [...document.images].every((i) => i.complete));
+      await strip.screenshot({ path: `${OUT}/${name}-${w}x${h}.png` }).catch(() => strip.screenshot({ path: `${OUT}/${name}-${w}x${h}.png` }));
+      await sctx.close();
     };
     await film('fade-one', () => setLeft(9));
     await page.waitForTimeout(400);
@@ -122,6 +124,6 @@ try {
 } finally {
   await browser.close();
   server.close();
-  writeFileSync(`${OUT}/checks.json`, JSON.stringify(results, null, 1));
+  writeFileSync(`${OUT}/checks${only ? '-' + only : ''}.json`, JSON.stringify(results, null, 1));
   console.log(JSON.stringify(results.map((r) => ({ w: r.w, errors: r.errors, checks: r.checks.map((c) => ({ name: c.name, clash: c.clash, hearts: c.hearts?.filter((x) => x === 'full').length, lives: c.at?.lives, gold: c.at?.goldText, clock: c.at?.clock, version: c.at?.version })) })), null, 1));
 }
