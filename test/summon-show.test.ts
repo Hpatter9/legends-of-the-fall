@@ -61,3 +61,73 @@ test('the shard totals list each hero once, its whole share and its bar after th
   assert.equal(t[3].joins, true, 'a hero whose shards are in the draw and who joins in it is marked');
   assert.equal(a.joins, false);
 });
+
+// SUMMON-SHOW part 2: the Blender show's timing, and its manifest against the sheets on disk.
+import { readFileSync, existsSync, statSync } from 'node:fs';
+import { decodedBytes, flourishAt, heroShowAt, SHOW_AT, skipShowTo } from '../src/render/summonRules';
+import { SUMMON_FX } from '../src/render/summonFxData';
+
+test('a new hero\'s show: the charge, the rift, the burst, then the aftermath looping under it', () => {
+  const at = (t: number) => heroShowAt(t, SUMMON_FX).map((f) => f.piece);
+  assert.deepEqual(at(0), ['charge']);
+  assert.deepEqual(at(SHOW_AT.rift - 1), ['charge']);
+  assert.deepEqual(at(SHOW_AT.rift), ['rift']);
+  assert.deepEqual(at(SHOW_AT.burst), ['burst']);
+  const burstEnd = SHOW_AT.burst + SUMMON_FX.burst.n * SUMMON_FX.burst.ms;
+  assert.deepEqual(at(burstEnd - 100), ['after', 'burst'], 'the aftermath fades in under the end of the burst');
+  assert.deepEqual(at(burstEnd), ['after']);
+  assert.deepEqual(at(60000), ['after'], 'the aftermath stays while the hero is held');
+  // (each piece played once ends on its last frame, and the whole show is three to four seconds before it settles)
+  assert.equal(heroShowAt(SHOW_AT.rift - 1, SUMMON_FX)[0].frame, SUMMON_FX.charge.n - 1);
+  assert.ok(burstEnd >= 2600 && burstEnd <= 4000);
+  for (let t = 0; t < 8000; t += 37) for (const f of heroShowAt(t, SUMMON_FX)) assert.ok(f.frame >= 0 && f.frame < SUMMON_FX[f.piece].n && f.alpha > 0 && f.alpha <= 1);
+});
+
+test('a skipped show still plays the arrival\'s burst', () => {
+  assert.equal(skipShowTo(500), SHOW_AT.burst);
+  assert.equal(skipShowTo(3000), 3000);
+});
+
+test('a shard card\'s flourish is under a second and ends', () => {
+  const f = SUMMON_FX.flourish;
+  assert.ok(f.n * f.ms < 1000);
+  assert.equal(flourishAt(0, f), 0);
+  assert.equal(flourishAt(f.n * f.ms, f), -1);
+});
+
+/** A WebP's size, from its header (VP8L lossless or VP8X). */
+function webpSize(path: string): { w: number; h: number } {
+  const b = readFileSync(path);
+  const kind = b.toString('ascii', 12, 16);
+  if (kind === 'VP8L') {
+    const bits = b.readUInt32LE(21);
+    return { w: (bits & 0x3fff) + 1, h: ((bits >> 14) & 0x3fff) + 1 };
+  }
+  if (kind === 'VP8X') return { w: b.readUIntLE(24, 3) + 1, h: b.readUIntLE(27, 3) + 1 };
+  return { w: b.readUInt16LE(26) & 0x3fff, h: b.readUInt16LE(28) & 0x3fff };
+}
+
+test('the show\'s manifest matches its sheets, and they stay light', () => {
+  const sheets: { w: number; h: number }[] = [];
+  let bytes = 0;
+  for (const p of Object.values(SUMMON_FX)) {
+    const path = `src/art/fx/summon/${p.file}`;
+    assert.ok(existsSync(path), path);
+    const s = webpSize(path);
+    const rows = Math.ceil(p.n / p.cols);
+    assert.deepEqual(s, { w: p.w * p.cols, h: p.h * rows }, p.file);
+    assert.ok(p.x >= 0 && p.y >= 0 && p.x + p.w <= p.fw && p.y + p.h <= p.fh, `${p.file} lies in its frame`);
+    sheets.push(s);
+    bytes += statSync(path).size;
+    if (p.glow) {
+      const g = webpSize(`src/art/fx/summon/${p.glow}`);
+      assert.deepEqual(g, { w: Math.ceil(p.w / 4) * p.cols, h: Math.ceil(p.h / 4) * rows }, p.glow);
+      sheets.push(g);
+      bytes += statSync(`src/art/fx/summon/${p.glow}`).size;
+    }
+  }
+  assert.ok(bytes < 200_000, `the show is ${bytes} bytes`);
+  assert.ok(decodedBytes(sheets) < 8_000_000, `the show decodes to ${decodedBytes(sheets)} bytes`);
+  // (the page loads them by URL: the service worker must keep them)
+  assert.match(readFileSync('build.mjs', 'utf8'), /SUMMON_FX_FILES\.map/);
+});

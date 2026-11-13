@@ -39,6 +39,13 @@ await page.evaluate(() => {
       for (const n of m.removedNodes ?? []) if (n.classList?.contains('tarotReveal')) log.push({ t: performance.now() - t0, ev: 'closed' });
     }
   }).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+  // (the page's own clock in each filmed frame, from the draw's start: the screencast's times run behind the page under load)
+  const clock = document.createElement('div');
+  clock.style.cssText = 'position:fixed;left:2px;top:2px;z-index:99;font:700 11px monospace;color:#fff;background:#000a;padding:1px 3px;pointer-events:none';
+  document.body.append(clock);
+  window.__showT0 = performance.now();
+  const tick = () => { clock.textContent = `${((performance.now() - window.__showT0) / 1000).toFixed(2)} s`; requestAnimationFrame(tick); };
+  tick();
 });
 
 // (frames come from the page's own screencast, as they are painted, each with its time: a screenshot a frame was too slow to film by)
@@ -51,9 +58,10 @@ cdp.on('Page.screencastFrame', async (f) => {
 async function film(take, start, until, tapHeld = true) {
   const dir = `out/summon-show/${size}/${take}`;
   mkdirSync(dir, { recursive: true });
-  await page.evaluate(() => (window.__showLog.length = 0));
+  await page.evaluate(() => { window.__showLog.length = 0; window.__showT0 = performance.now(); });
   sink = [];
-  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 85, maxWidth: W, maxHeight: H });
+  // (half size, so the page's frames are sent as fast as they are made; a full-size take fell behind and lost its end)
+  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 70, maxWidth: Math.round(W / 2), maxHeight: Math.round(H / 2) });
   await start();
   const t0 = Date.now();
   let held = 0;
@@ -77,7 +85,8 @@ async function film(take, start, until, tapHeld = true) {
   return { take, frames: frames.length, log };
 }
 
-const settled = () => page.evaluate(() => !document.querySelector('.tarotReveal') && /drawn|ally|allies|step|grows|tribute|Lucky/.test(document.getElementById('resultSummary').textContent) && !/wait|answer|turn/.test(document.getElementById('resultSummary').textContent));
+// (settled: no reveal up, the screen free again (the line no longer ends on an ellipsis or counts cards turning))
+const settled = () => page.evaluate(() => { const t = document.getElementById('resultSummary').textContent; return !document.querySelector('.tarotReveal') && !!t && !/…$|turned|wait/.test(t); });
 const back = () => page.evaluate(() => document.getElementById('gachaClose').click());
 const ten = await film('ten', () => page.locator('.hlBar button').last().click(), settled);
 await page.waitForTimeout(800);

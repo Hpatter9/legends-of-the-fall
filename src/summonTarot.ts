@@ -28,6 +28,7 @@ import targetIcon from './art/talent/target.png';
 import haloIcon from './art/talent/halo.png';
 import { openScreen } from './screens';
 import { roman } from './sim/roman';
+import { HeroShow, summonFxReady } from './summonFx';
 
 /** The rows of the arcana atlas, by the Pixel Effects element. */
 const ELEMENTS = ['light', 'earth', 'blood', 'wind', 'lightning', 'crystal', 'star', 'fire', 'dark', 'moon', 'forest', 'sand'] as const;
@@ -198,7 +199,10 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   const charge = el('div', 'trCharge');
   const beam = el('div', 'trBeam');
   const impact = el('div', 'trImpact');
-  const rays = raysCanvas();
+  // (SUMMON-SHOW: the show rendered in Blender, once its sheets are in: the charge, the rift, the burst and the aftermath, laid between
+  //  the painting and the battle sprite; the older pieces stay for a page whose sheets have not loaded, and the drawn rays are not made)
+  const fx = !reduced && summonFxReady() ? new HeroShow() : null;
+  const rays = fx ? el('canvas', 'trRays') : raysCanvas();
   const stage = el('div', 'trStage');
   const actor = summoner();
   const flash = el('div', 'trFlash');
@@ -226,11 +230,16 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   );
   const lead = el('p', 'trLead', opts.lucky ? 'The stone burns gold…' : 'The summoner calls an ally…');
   const hint = el('small', 'trHint', 'Tap to skip');
-  stage.append(charge, beam, halo, artwork, ring, impact, showcase.canvas, burst, sparks);
+  if (fx) root.classList.add('bfx');
+  stage.append(charge, beam, halo, artwork, ...(fx ? [fx.el] : []), ring, impact, showcase.canvas, burst, sparks);
   root.append(rays, actor, heading, lead, stage, plate, flash, hint);
   // (CLOSE-SCREENS: a moment, laid over whatever is up; it is the player's to dismiss)
   const leave = openScreen('tarot', () => undefined, { kind: 'moment' });
   document.body.append(root);
+  if (fx) {
+    fx.fit(stage.clientWidth, stage.clientHeight);
+    fx.start();
+  }
   duck(true, 'reveal');
   let at = performance.now();
   const set = (n: number) => {
@@ -265,6 +274,7 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
       saveMeta(meta);
       duck(false, 'reveal');
       showcase.stop();
+      fx?.stop();
       root.remove();
       leave();
       done();
@@ -284,6 +294,7 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
         hushSummon();
         if (root.dataset.stage === '1') playSfx('stingSummon');
         root.classList.add('skipped');
+        fx?.skip();
         set(4);
         onward();
         return;
@@ -330,6 +341,13 @@ const css = `
 .tarotReveal[data-stage="2"] .trFlash { animation: summonFlash .7s ease-out both; }
 @keyframes summonFlash { 0% { opacity: 0; } 12% { opacity: .95; } 100% { opacity: 0; } }
 .tarotReveal.calm .trFlash, .tarotReveal.skipped .trFlash { display: none; }
+/* SUMMON-SHOW: with the Blender show, its pieces take the place of the pack's strips and the drawn charge, beam, sparks and rays,
+   and the flash comes with the arrival's burst rather than the rift */
+.tarotReveal.bfx :is(.trCharge, .trBeam, .trImpact, .trBurst, .trRing, .trHalo, .trSparks, .trRays) { display: none; }
+.tarotReveal.bfx[data-stage="2"] .trFlash { animation: none; }
+.tarotReveal.bfx[data-stage="3"] .trFlash { animation: summonFlashSoft .35s ease-out both; }
+@keyframes summonFlashSoft { 0% { opacity: 0; } 12% { opacity: .4; } 100% { opacity: 0; } }
+.tarotReveal.bfx .sfxHero { z-index: 1; }
 .tarotReveal .summonerActor { z-index: 1; }
 .tarotReveal .trStage, .tarotReveal .trPlate { z-index: 2; }
 
