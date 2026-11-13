@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.576.0',
+    date: '2026-11-13',
+    title: 'A blink that strikes leaves a cut',
+    notes: ['A hero who blinks to a foe now leaves a thin dark streak along the hop, then a crossed cut on the foe, rendered in Blender.'],
+  },
+  {
     version: '0.575.0',
     date: '2026-11-13',
     title: 'King\'s spells lie flat on the ground',
