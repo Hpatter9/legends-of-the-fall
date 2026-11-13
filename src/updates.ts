@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.578.0',
+    date: '2026-11-13',
+    title: 'Heroes show through an ultimate\'s strike',
+    notes: ['When a big ultimate strike (a pillar, a cloud, vines, a sigil) covers fighters, they now show through it after a brief flash.', 'This covers 21 ultimates, among them the Druid, Seraph, Lightning Mage, War Drummer and Eclipse Sovereign.'],
+  },
+  {
     version: '0.577.0',
     date: '2026-11-13',
     title: 'Ultimates keep their rising strike off the rows',
