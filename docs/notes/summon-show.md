@@ -99,3 +99,22 @@ helpers from `eidolons/askel.py` and changes nothing there, nor `effects.py`, `s
 **What still looks weak, honestly:** the arrival's ball of light reads as a pale yellow egg round the hero for about two frames; the
 rift is close to a plain bright tube once it is wide (its torn edges show while it opens, less once it is open); the aftermath is faint
 next to the burst (a dim circle and a few motes); and the circle burns white more than gold.
+
+## Second pass (the director's four points)
+
+1. **No egg round the hero.** The arrival's ball of light is gone. The rift snaps shut in two frames into a hot point on the floor
+   (one frame), and a fast gold ring races out over the floor from the circle with a white one behind it, a third ring **rises off
+   the floor as it widens** (a hoop the hero steps out of), 56 shards of light are flung outward and up off the circle's rim, and
+   streaks of light run out flat over the floor. The screen's flash with it is softer and shorter (0.4 for 0.35 s).
+2. **The rift stays alive once wide.** Its noise takes a big step every frame (its torn edges flicker and shift rather than drift),
+   its width jitters frame to frame, the soft column round it is dimmer, and 34 streaks run up inside the seam (14 more outside).
+3. **The aftermath is stronger.** The circle burns gold at a higher strength, its rune band glows gold and turns, and 96 motes rise
+   round the hero (from the inner rings to the rim, not over it) through the whole name card.
+4. **The circle is gold.** Its colour ramp tops out in rich gold (pale gold only at the very front of its drawing-on), and its
+   strength no longer clips it to white.
+
+The show is now 105,460 bytes; decoded memory about the same (the sheets' sizes barely moved). Stills, the same format as before:
+`docs/samples/summon-show/pass2-hero-stills-393x852.webp` beside `after-hero-stills-393x852.webp` (the first pass).
+
+Still weak: once fully open the rift is still close to a bright tube in a single still (it reads better moving, with the edges and
+streaks flickering); the motes of the aftermath sit partly behind the name plate.
