@@ -27,6 +27,18 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.563.0',
+    date: '2026-11-13',
+    title: 'Old unused skill effects cleared out',
+    notes: ['A table of old painted skill effects that could never play has been removed; nothing you see changes, and the game is a little smaller.'],
+  },
+  {
+    version: '0.562.0',
+    date: '2026-11-13',
+    title: 'New hit sparks; the Shield lets you see in',
+    notes: ['Hits land as small bright stars that grow with the damage; crits are crossed gold strokes, always bigger than a plain hit.', 'Blocks flash pale blue and a killing backstab leaves a dark cross.', 'The king\'s Shield over a party is a faint wash, so every hero inside it stays plain to see.'],
+  },
+  {
     version: '0.561.0',
     date: '2026-11-13',
     title: 'A check against the empty-field lock',
