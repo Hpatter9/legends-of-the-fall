@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.579.0',
+    date: '2026-11-13',
+    title: 'A fighter\'s fall shows in the thick of a melee',
+    notes: ['A fall\'s burst of dust, stone or light is now shown whole where the fighter dropped, with the fighters still standing beside it drawn over it.'],
+  },
+  {
     version: '0.578.0',
     date: '2026-11-13',
     title: 'Heroes show through an ultimate\'s strike',

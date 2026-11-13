@@ -160,9 +160,11 @@ const FRAMES = process.env.AT ? [['windup', 0.55], ['windup', 0.95], ...process.
 // on the fighters in an ordinary fight, a heal over time, a ward, an aura)
 if (process.env.WATCH) {
   const { ctx, page } = await open();
-  await army(page, PICKS.slice(0, 5));
+  await army(page, PICKS.slice(0, 5), process.env.ARMY ?? 'beasts', Number(process.env.STAGE ?? 3));
+  // (FRAIL=gorgon,knight: those heroes begin the fight at one health, so a hero's fall can be caught)
+  if (process.env.FRAIL) await page.evaluate((who) => { for (const u of window.__game.b.units) if (u.side === 'hero' && who.includes(u.def)) u.hp = 1; }, process.env.FRAIL.split(','));
   // (TOUGH=<n>: the foes are given n times their health, so the fight lasts and the heroes' heals and wards are seen)
-  await page.evaluate((k) => { const g = window.__game; g.app.ticker.stop(); if (k > 1) for (const f of g.b.units) if (f.side === 'foe' && f.alive) { f.maxHp *= k; f.hp = f.maxHp; } }, Number(process.env.TOUGH ?? 1));
+  await page.evaluate((k) => { const g = window.__game; g.app.ticker.stop(); if (k !== 1) for (const f of g.b.units) if (f.side === 'foe' && f.alive) { f.maxHp = Math.max(1, Math.round(f.maxHp * k)); f.hp = f.maxHp; } }, Number(process.env.TOUGH ?? 1));
   // (STATUS=1: each hero is given a status that lasts the fight, a different one each (haste, rally, both), so what goes round a
   // fighter is on the screen in every photograph)
   if (process.env.STATUS) await page.evaluate(() => { window.__game.b.units.filter((u) => u.side === 'hero').forEach((u, i) => { if (i % 3 !== 1) u.hasteUntil = 1e9; if (i % 3 !== 0) u.rallyUntil = 1e9; }); });
@@ -236,23 +238,24 @@ if (process.env.WATCH) {
       const slash = fx.slash.bind(fx);
       fx.slash = (b, by, to) => { window.__seen.push('swing:' + defOf(by)); window.__seenMs = 150; return slash(b, by, to); };
       const death = fx.death.bind(fx);
-      fx.death = (target, ...a) => { window.__seen.push('fall:' + target.def); window.__seenMs = 300; return death(target, ...a); };
+      fx.death = (target, ...a) => { window.__seen.push('fall:' + target.def); window.__seenMs = 500; window.__seenAt = { ...(window.__seenAt ?? {}), ['fall:' + target.def]: [a[0], a[2] ?? a[1]] }; return death(target, ...a); };
       // (blink:<kind> a blink by that kind that strikes a foe: its streak and the cut on the foe)
       const streak = fx.streak.bind(fx);
       fx.streak = (b, e, slash) => { if (e.kind === 'blink' && slash) { window.__seen.push('blink:' + defOf(e.by)); window.__seenMs = 200; } return streak(b, e, slash); };
       const arc = fx.arc.bind(fx);
-      fx.arc = (from, to, shock) => { window.__seen.push('arc:' + (shock ? 'shock' : defOf(from))); window.__seenMs = 300; return arc(from, to, shock); };
+      fx.arc = (from, to, shock) => { const k = 'arc:' + (shock ? 'shock' : defOf(from)); window.__seen.push(k); window.__seenMs = 300; const [p, q] = [fx.sprites.get(from), fx.sprites.get(to)]; if (p && q) window.__seenAt = { ...(window.__seenAt ?? {}), [k]: [(p.x + q.x) / 2, (p.y + q.y) / 2 - 20] }; return arc(from, to, shock); };
     });
     for (const what of process.env.SEE.split(',')) {
       const got = await page.evaluate((what) => { window.__seen = []; const has = () => window.__seen.some((s) => s.startsWith(what)); for (let i = 0; i < 6000 && !has() && window.__game.b.phase === 'fight'; i++) window.__step(16); return has() ? window.__seenMs : 0; }, what);
-      if (!got) console.log('NOT SEEN', what);
+      if (!got) console.log('NOT SEEN', what, 'saw', await page.evaluate(() => [...new Set(window.__seen)].join(' ') + ' | foes ' + [...new Set(window.__game.b.units.filter((u) => u.side === 'foe').map((u) => u.def))].join(' ') + ' | ' + window.__game.b.phase));
       if (!got) continue;
       await page.evaluate(() => window.__game.setSpeed(1));
       for (const [i, k] of [0.3, 0.3].entries()) {
         await page.evaluate((d) => window.__step(d), Math.round(got * k));
         await page.screenshot({ path: `${OUT}/see-${what.replace(':', '-')}-${W}-${i}.png` });
       }
-      console.log('seen', what);
+      // (where it was on the screen as the last photograph was taken, for a crop round it)
+      console.log('seen', what, JSON.stringify(await page.evaluate((w) => { const k = Object.keys(window.__seenAt ?? {}).find((x) => x.startsWith(w)); if (!k) return null; const [x, y] = window.__seenAt[k]; const g = window.__game.fx.root.toGlobal({ x, y }); return [Math.round(g.x), Math.round(g.y)]; }, what)));
       await page.evaluate(() => window.__game.setSpeed(2));
     }
     await ctx.close();
