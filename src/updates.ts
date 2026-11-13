@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.559.0',
+    date: '2026-11-13',
+    title: 'Ultimates keep their own look again',
+    notes: ['Fixed: since 0.556.0 an ultimate could fall back to its older look, because extra effects loaded at a fight\'s start were crowding out its own.', 'The Cleric\'s guardian spirits and Vael\'s black sun stand behind the heroes they circle, not over them.'],
+  },
+  {
     version: '0.558.0',
     date: '2026-11-13',
     title: 'No more empty field between waves',
