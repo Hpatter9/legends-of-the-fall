@@ -86,7 +86,11 @@ test('every rendered clip that plays on a fighter is measured, and drawn over th
   assert.match(fx, /const host = on && thin < 1 \? this\.sprites\.get\(on\.id\) : undefined;/);
   // (ROW-UNDER, the director's order: the copy is on the ground of every row it covers, and in the fighter's own layer only where
   // the board gives no rows; the assertion follows the new call)
-  assert.match(fx, /for \(const under of rows\.length \? rows : \[this\.underAt\(host\.underLayer\(\)\)\]\) \{/);
+  // (the flat-only rule, the director's order after Rally: the strike's own clip, which rises, is in the fighter's own layer; only
+  // the ring at the feet, and a clip made to lie on the ground, go on the ground's rows)
+  assert.match(fx, /const own = this\.underAt\(host\.underLayer\(\)\);/);
+  assert.match(fx, /const lies = c\.layer === 'ground' \? this\.rowUnder\(bfxBox\(c, x, y, size \* UNDER\.SIZE\)\) : \[\];/);
+  assert.match(fx, /const rows = this\.rowUnder\(\[host\.root\.x - reach, host\.root\.y - reach, host\.root\.x \+ reach, host\.root\.y \+ reach\]\);/);
   // (presence without cover: behind the body it is larger and keeps its glow; a ring lands at the feet under the fighter; and the
   // clip is over the body at full strength only for the rule's brief flash)
   assert.ok(UNDER.SIZE > 1 && UNDER.RING >= 1);

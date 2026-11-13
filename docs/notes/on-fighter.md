@@ -242,3 +242,21 @@ cut by the nearer tiles. Flames, pillars and hazes are exactly where they were.
 
 `ROOT=`, `EVAL=` and one fixed seed in `tools/blender-fx/shots.mjs` make two builds' spell photographs the same field and let
 one layer be taken away to see what another shows.
+
+
+## Since: the flat-only rule for ultimates too
+
+The director's order after Rally: an ultimate's copy under a fighter follows the same rule. The strike's own clip rises, so it and
+its glow are back in the fighter's own layer under its body (as before ROW-UNDER); only the flat ring at the feet goes on the
+ground's rows (whole, under every fighter), as would a clip made to lie on the ground. Where a board gives no rows the ring is in
+the fighter's own layer too.
+
+- Memory: nothing loaded, no atlas changed.
+- Photographs, on the Undead's stepped ground (`ARMY=undead`), before above and after below:
+  `docs/samples/blender-fx/row-under-ultimates-stepped-393.png` (the Cleric, the Knight, the Druid, the Great Sage) and
+  `docs/samples/blender-fx/row-under-ultimates-stepped-2x.png` (the same at twice the size, round the strike).
+- Verdict, plainly: before and after are all but the same picture in these four. The fault feared (a rising strike standing over
+  the fighters of the rows behind) did not show in the before pictures either, so this change is a safeguard and not a fix that
+  can be seen. Of the four, only the Cleric's and the Knight's strikes play on a fighter; the Druid's spikes and the Sage's dome
+  are one picture in the midst and were never on the rows. The Paladin, the High Priestess and the Wanderer were asked for and did
+  not fire in the tool on this land, so they are not shown.
