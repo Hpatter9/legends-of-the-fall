@@ -279,7 +279,8 @@ if (process.env.WATCH) {
 for (const pick of PICKS) {
   const { ctx, page } = await open();
   try {
-    await army(page, PARTY_OF(pick));
+    // (ARMY=<army>: whose land the fight is on; the Undead's is stepped ground)
+    await army(page, PARTY_OF(pick), process.env.ARMY ?? 'beasts');
     const before = await speedNow(page);
     if (process.env.KILL) await page.evaluate(() => { window.__killAll = true; });
     if (process.env.TOUGH) await page.evaluate(() => { window.__tough = true; });

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.577.0',
+    date: '2026-11-13',
+    title: 'Ultimates keep their rising strike off the rows',
+    notes: ['An ultimate\'s rising strike now stays with the hero who casts it, and only its flat ring lies on the ground, so it can never stand over heroes behind it.'],
+  },
+  {
     version: '0.576.0',
     date: '2026-11-13',
     title: 'A blink that strikes leaves a cut',
