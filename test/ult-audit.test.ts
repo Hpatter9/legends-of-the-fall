@@ -121,7 +121,8 @@ test('Vael\'s totality lasts: a black sun hangs over him for its eight seconds, 
   assert.ok(BFX_CLIPS['aura-eclipse'].loop);
   assert.equal(BFX_CLIPS['ult-vael-strike'].el, 'holy');
   assert.ok(BFX_CLIPS['ult-vael-windup'].sc!.includes('eclipse'));
-  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /this\.bfxStand\(lasts\.clip, this\.root, \.\.\.over\(\), \(\) => b\.t < until && me\.alive/);
+  // (ON-FIGHTER: it hangs round him by the rule: whole under his body, thin over it)
+  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /this\.bfxRound\(lasts\.clip, this\.sprites\.get\(me\.id\), over, \(\) => b\.t < until && me\.alive/);
   // (wings of light and a halo on each ally; a modelled figure was tried and taken out: a thing wants painted art, the director's rule)
   assert.deepEqual(BFX_CLIPS['ult-ilyra-strike'].sc, ['wings', 'halo']);
   // (the same rule: the Bell Warden's toll is hoops of sound, cracks and dust, no bell; the Sea Reaver's is a tide along his line, no wave)
@@ -145,7 +146,7 @@ test('on the caster a showcase gathers with the hero\'s own wind-up, not one cir
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   // (the hero's kind reaches the beat from the showcase)
   assert.match(readFileSync('src/ultShow.ts', 'utf8'), /fx\.showBeat\(b\.kind, p\[0\], p\[1\], \{ tall, el, hero: plan\.kind \}\);/);
-  assert.match(fx, /if \(own && this\.bfxUlt\(own, 'windup', x, y, BEAT_OWN\.GATHER_MS\)\) return true;/);
+  assert.match(fx, /if \(own && this\.bfxUlt\(own, 'windup', x, y, BEAT_OWN\.GATHER_MS, 1, 0, this\.bodyAt\(x, y - 10, 8\)\?\.unit\)\) return true;/);
   assert.match(fx, /if \(own\) return B\('dust', x, y\);/);
   assert.match(fx, /return own \? B\('appear', x, y, \{ mult: BEAT_OWN\.FINISH \}\) : B\('nova', x, y\);/);
   // (every hero has a wind-up of its own to gather with)
