@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.557.0',
+    date: '2026-11-12',
+    title: 'Skill effects go behind your heroes too',
+    notes: ['A skill\'s painted cast and hit, such as the green haze of Prayer of Healing, now lies behind and between the heroes instead of over them.', 'Where one effect spreads over several heroes it goes behind the one farthest back, so it covers none of them.', 'A king\'s spell on a unit is drawn under that fighter\'s body.'],
+  },
+  {
     version: '0.556.0',
     date: '2026-11-12',
     title: 'Smoke you can see; ultimates keep their force',
