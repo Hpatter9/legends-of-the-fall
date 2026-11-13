@@ -26,7 +26,9 @@ button:disabled, button.primary:disabled, .hmBig:disabled { color: var(--off-ink
    ones glow amber now and then (a gentle warning; steady with reduced motion). The words are on the box's title and label. */
 #lives { --heart: 20px; display: flex; gap: 4px; align-items: center; }
 #lives[hidden] { display: none; }
-#lives .hearts { display: grid; grid-template-columns: repeat(5, var(--heart)); grid-auto-rows: var(--heart); gap: 2px 1px; }
+/* (a narrow phone, 360 px: smaller hearts, so a five-figure purse and the clock still sit clear of each other) */
+@media (max-width: 379px) { #lives { --heart: 16px; } }
+#lives .hearts { display: grid; grid-template-columns: repeat(5, var(--heart)); grid-auto-rows: var(--heart); gap: 2px 0; }
 #lives .hearts img { width: var(--heart); height: var(--heart); image-rendering: auto; object-fit: contain; filter: drop-shadow(0 1px 1px #000c); }
 #lives .hearts img.spent { filter: grayscale(1) brightness(0.14) drop-shadow(0 0 1px #c9b48a66); }
 #lives.low .hearts img.full { animation: heartLow 2.4s ease-in-out infinite; }

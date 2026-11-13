@@ -7,7 +7,8 @@ The owner: "For the hearts, I want to see two rows of five up top. And when one 
 - The top bar's lives box (`#lives`, drawn by `Game.drawLives` in `src/main.ts`) holds a heart for each of the run's lives, five to a row:
   ten lives are two rows of five. The picture is the game's own heart (`src/art/ui/combat-heart.png`, the same `heartUrl`), drawn at
   20 px, so two rows with a 2 px gap fill the bar's 44 px row (the height of the sound, settings and speed medallions). The bar is no
-  taller than it was.
+  taller than it was. On a phone narrower than 380 px (360x780) they are 16 px: at 20 px the ten hearts (100 px, where the old heart
+  and number took about 54) pushed a five-figure purse ("12500 gold") 14 px into the clock.
 - A full heart is a life still held. A spent life is the same heart faded to black (`grayscale(1) brightness(0.14)` with a faint pale
   rim, so its shape still shows on the dark bar); it is never removed.
 - Lives are spent from the end: the last heart of the last row goes first, so the full hearts stay together from the first one.
