@@ -1,10 +1,13 @@
-# Builds the phone (web) version and publishes it to GitHub Pages on every push to main.
+# Builds the phone (web) version and publishes it to GitHub Pages once a day, only when main has moved since the last
+# successful publish; or by hand (Actions, Publish the phone version, Run workflow), which always publishes.
+# Once a day keeps the account inside its free Actions minutes and storage.
 # (In the repo's Settings → Pages, set Source to "GitHub Actions".)
 name: Publish the phone version
 
 on:
-  push:
-    branches: [main]
+  schedule:
+    # 10:17 UTC every day (03:17 Pacific in summer, 02:17 in winter): outside 06:00 to 09:00 Pacific, off the hour.
+    - cron: '17 10 * * *'
   workflow_dispatch:
 
 permissions:
@@ -17,7 +20,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Is there anything new to publish? A run by hand always publishes. A scheduled run publishes only when main's commit
+  # is not the one the last successful run of this workflow built.
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      changed: ${{ steps.cmp.outputs.changed }}
+    steps:
+      - id: cmp
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "Started by hand: publishing."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          LAST=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow pages.yml --status success --limit 1 --json headSha --jq '.[0].headSha // ""')
+          if [ -n "$LAST" ] && [ "$LAST" = "$GITHUB_SHA" ]; then
+            echo "main ($GITHUB_SHA) is what the last successful run published: nothing to do."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "main moved since ${LAST:-the start}: publishing."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: check
+    if: needs.check.outputs.changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,6 +65,8 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: out/web
+          # (the site is handed straight to the deploy job; keep it a day at most, as it counts against storage)
+          retention-days: 1
   deploy:
     needs: build
     runs-on: ubuntu-latest
