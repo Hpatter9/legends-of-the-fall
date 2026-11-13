@@ -29,7 +29,7 @@ const advance = (ms) => new Promise((done) => {
 await cdp.send('Emulation.setVirtualTimePolicy', { policy: 'pause' });
 await page.evaluate(() => { void window.__tarot.firstReveal(window.__game.meta, 'shambler', {}); });
 for (let t = 0; t <= UNTIL; t += STEP) {
-  await page.screenshot({ path: `${dir}/${String(t).padStart(5, '0')}.png` });
+  await page.screenshot({ path: `${dir}/${String(t).padStart(5, '0')}.png`, timeout: 180000 });
   await advance(STEP);
 }
 console.log('done', dir);
