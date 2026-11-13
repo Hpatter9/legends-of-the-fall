@@ -298,3 +298,21 @@ export function hitSpark(kind: HitKind, el: string, share: number): { key: strin
   if (!BFX_CLIPS[key]) return undefined;
   return { key, size: h.size + h.grow * Math.max(0, Math.min(1, share * 3)), ms: h.ms };
 }
+
+/** SHOTS (docs/notes/shots.md): the rendered orb of a shot in `el`, its tail behind it (the clip flies to the screen's right and the
+ *  renderer turns it to its heading). Undefined where the pipeline has not made it: the painted orb flies. */
+export const shotOrb = (el: string): string | undefined => (BFX_CLIPS[`shot-orb-${el}`] ? `shot-orb-${el}` : undefined);
+/** How large a shot's rendered orb is drawn, as a multiple of the clip's own size at the missile's scale of 1. */
+export const SHOT_ORB_SIZE = 1.25;
+/** The rendered strand between two fighters, by what runs along it: chain lightning's bolt, a charm's thread, a hex's. */
+export const ARC_STRAND: Readonly<Record<'lightning' | 'charm' | 'hex', string>> = { lightning: 'arc-bolt', charm: 'arc-charm', hex: 'arc-hex' };
+/** How far a strand's clip may be stretched or squeezed along its length before it is laid as more (or fewer) lengths end to end. */
+export const STRAND_STRETCH = 1.35;
+/** A strand of clips of length `own` (world px) laid from (x0, y0) to (x1, y1): how it is turned, how many lengths lie end to
+ *  end, how far each is stretched along the line (never beyond `STRAND_STRETCH`), and each length's middle. */
+export function strandLay(x0: number, y0: number, x1: number, y1: number, own: number): { turn: number; stretch: number; at: { x: number; y: number }[] } {
+  const len = Math.hypot(x1 - x0, y1 - y0);
+  const n = Math.max(1, Math.ceil(len / (own * STRAND_STRETCH)));
+  const at = Array.from({ length: n }, (_, i) => ({ x: x0 + ((x1 - x0) * (i + 0.5)) / n, y: y0 + ((y1 - y0) * (i + 0.5)) / n }));
+  return { turn: Math.atan2(y1 - y0, x1 - x0), stretch: len / n / own, at };
+}
