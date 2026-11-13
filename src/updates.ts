@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.575.0',
+    date: '2026-11-13',
+    title: 'King\'s spells lie flat on the ground',
+    notes: ['The rings of the king\'s spells and a skill\'s flat glow now lie whole on the ground under the heroes, never over them.', 'Rally\'s cast is now hoops of light instead of a solid disc.'],
+  },
+  {
     version: '0.574.0',
     date: '2026-11-13',
     title: 'The first wave gives a rune',
