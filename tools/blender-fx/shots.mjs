@@ -64,7 +64,8 @@ async function fight(page, stage) {
   await page.evaluate(([party, stage]) => {
     const g = window.__game;
     const r = JSON.parse(JSON.stringify(g.run));
-    Object.assign(r, { mode: { kind: 'army', army: 'undead' }, stage, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+    // (one seed for every run of the tool, so two builds' photographs are of the same field)
+    Object.assign(r, { seed: 7, mode: { kind: 'army', army: 'undead' }, stage, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
     document.getElementById('home').hidden = true;
     g.startRun(r);
     g.autoArrange(true);
@@ -206,6 +207,8 @@ for (const [w, h] of SIZES) {
       continue;
     }
     await runThenHold(page, ms);
+    // (EVAL=<script>: run in the page just before the photograph, for taking one layer away to see what another shows)
+    if (process.env.EVAL) console.log('EVAL', await page.evaluate(process.env.EVAL));
     await page.screenshot({ path: `${OUT}/${id}-${size}${REDUCED ? '-still' : ''}.png` });
     console.log(size, id, JSON.stringify(at));
   }

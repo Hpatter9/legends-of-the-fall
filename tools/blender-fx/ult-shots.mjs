@@ -194,6 +194,35 @@ if (process.env.WATCH) {
     srv.close();
     process.exit(0);
   }
+  // (FRAMES=1 with WATCH: what a frame of an ordinary fight costs on a slow phone. The CPU is throttled four times and every frame
+  // of the fight's first WATCH_S seconds (20) is timed, the graphics card made to finish each; and how many of the ground's row
+  // layers were being drawn, on the average and at the most)
+  if (process.env.FRAMES) {
+    const cdp = await ctx.newCDPSession(page);
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+    const cost = await page.evaluate((secs) => {
+      const g = window.__game;
+      const gl = g.app.renderer.gl;
+      const all = [];
+      let rows = 0, most = 0;
+      for (let t = 0; t < secs * 1000 && g.b.phase === 'fight'; t += 16) {
+        const t0 = performance.now();
+        g.frame(16, 16);
+        gl?.finish();
+        all.push(performance.now() - t0);
+        const on = g.fx.rowLows ? [...g.fx.rowLows.keys()].filter((l) => !l.destroyed && l.visible).length : 0;
+        rows += on;
+        most = Math.max(most, on);
+      }
+      const s = [...all].sort((x, y) => x - y);
+      return { n: s.length, mean: +(s.reduce((x, y) => x + y, 0) / s.length).toFixed(2), p50: +s[Math.floor(s.length * 0.5)].toFixed(2), p95: +s[Math.floor(s.length * 0.95)].toFixed(2), worst: +s[s.length - 1].toFixed(2), rowsMean: +(rows / s.length).toFixed(1), rowsMost: most };
+    }, Number(process.env.WATCH_S ?? 20));
+    console.log('FRAMES fight', JSON.stringify(cost));
+    await ctx.close();
+    await browser.close();
+    srv.close();
+    process.exit(0);
+  }
   // (SEE=shot:wizard,arc:kitsune: the fight is stepped a frame at a time until that fighter looses a shot or an arc leaves it
   // (arc:shock for a shock's jump), and it is photographed in flight, at the fight's ordinary speed)
   if (process.env.SEE) {
@@ -271,6 +300,12 @@ for (const pick of PICKS) {
       const m = g.ultm.queue.current;
       return m ? { ...m.stages, shape: m.shape, show: m.show ?? 0 } : null;
     }, pick);
+    // (ROWS=<ms>: what is playing on the ground's row layers that long after the strike begins, for finding a picture that does not show)
+    if (process.env.ROWS) {
+      console.log('ROWS', await page.evaluate(([st, ms]) => { const g = window.__game; window.__step(st.strike.at + Number(ms)); const out = []; for (const [layer, p] of g.fx.rowLows) for (const l of p.live) out.push({ z: layer.zIndex || layer.parent?.zIndex, vis: layer.visible, n: l.frames, t: Math.round(l.t), span: Math.round(l.span), x: Math.round(l.sp.x), y: Math.round(l.sp.y), a: +l.sp.alpha.toFixed(2), sv: l.sp.visible, w: l.sp.texture.width, sx: +l.sp.scale.x.toFixed(2), rot: +l.sp.rotation.toFixed(2) }); return JSON.stringify(out.map((o) => [o.n, o.w, o.t, o.span, o.a, o.x, o.y].join(':')).slice(0, 40)) + ' of ' + out.length + ' moment ' + JSON.stringify(g.fx.moment.live.map((l) => [l.frames, l.sp.texture.width, Math.round(l.t), Math.round(l.span), +l.sp.alpha.toFixed(2)].join(':'))); }, [st, process.env.ROWS]));
+    }
+    // (HOOK=<a method of the effects>: each call of it through the show is written out with what it was given and what it returned)
+    if (process.env.HOOK) await page.evaluate((name) => { const fx = window.__game.fx; const was = fx[name].bind(fx); fx[name] = (...a) => { const r = was(...a); console.log('TRACE', name, JSON.stringify(a.map((x) => (typeof x === 'number' ? Math.round(x) : x))), '->', JSON.stringify(r)); return r; }; }, process.env.HOOK);
     if (!st) throw new Error('the ultimate never fired');
     if (process.env.UNDERS) console.log('UNDERS', await page.evaluate(() => { const fx = window.__game.fx; window.__step(100); const p = [...fx.unders.values()][0]; const a = { t: p?.live[0]?.t, span: p?.live[0]?.span, frames: p?.live[0]?.frames }; window.__step(400); return JSON.stringify({ ...a, t2: p?.live[0]?.t, alpha: p?.live[0]?.sp.alpha, vis: p?.live[0]?.sp.visible, tex: p?.live[0]?.sp.texture.frame.x, sc: p?.live[0]?.sp.scale.x, msc: window.__game.fx.moment.live.map((l) => [l.sp.scale.x, l.sp.alpha, l.sp.texture.frame.x]) }); }));
     // (FRAMES=1: what a frame of the show costs on a slow phone. The CPU is throttled four times and every frame from the cast to the

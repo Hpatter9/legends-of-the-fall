@@ -81,9 +81,10 @@ export class Particles {
    *  `overFighter.ts`); none: 1. */
   cover?: (x: number, y: number, half: number) => number;
   /** ON-FIGHTER (`onFighterRules.ts`): where a bit that lies over a fighter's body is ALSO drawn, at its full strength, under that
-   *  body: another pool (in the fighter's own layer) and how to carry the bit into its space (its origin `ox, oy` and scale `k`);
-   *  null where it lies over no one. The copy here is then thinned by `cover`. */
-  under?: (x: number, y: number, half: number) => { to: Particles; ox: number; oy: number; k: number } | null;
+   *  body: the pools it is copied to (one over each row of the ground it covers, or the fighter's own layer) and how to carry the
+   *  bit into each one's space (its origin `ox, oy` and scale `k`; `a`, how strongly the copy is drawn there, 1 when not given);
+   *  null where it lies over no one. `flat`: the bit lies along the ground (a ring, a disc), as against one that rises. The copy here is then thinned by `cover`. */
+  under?: (x: number, y: number, half: number, flat: boolean) => { to: Particles; ox: number; oy: number; k: number; a?: number }[] | null;
   /** ULT-EPIC: what the bits made now are scaled by (an ultimate's moment draws its effects about twice the size: `Fx.setEpic`); their
    *  drift and growth with them, so a burst spreads as far as it is big; capped, `boostedScale`). 1 the rest of the time. */
   boost = 1;
@@ -102,11 +103,11 @@ export class Particles {
       b = { ...b, scale, ...(b.vx ? { vx: b.vx * k } : {}), ...(b.vy ? { vy: b.vy * k } : {}), ...(b.grow ? { grow: b.grow * k } : {}), ...(b.gravity ? { gravity: b.gravity * k } : {}), ...(b.half ? { half: b.half * k } : {}) };
     }
     if (this.live.length >= (b.prio ? this.cap * 1.3 : this.cap)) return;
-    const low = b.bare ? null : this.under?.(b.x, b.y, b.half ?? 16 * (b.scale ?? 1) * Math.max(b.stretchX ?? 1, b.stretchY ?? 1, 1));
-    if (low) {
-      const k = low.k;
-      low.to.calm = this.calm;
-      low.to.spawn({ ...b, x: (b.x - low.ox) / k, y: (b.y - low.oy) / k, scale: (b.scale ?? 1) / k, ...(b.vx ? { vx: b.vx / k } : {}), ...(b.vy ? { vy: b.vy / k } : {}), ...(b.grow ? { grow: b.grow / k } : {}), ...(b.gravity ? { gravity: b.gravity / k } : {}), ...(b.half ? { half: b.half / k } : {}) });
+    const low = b.bare ? null : this.under?.(b.x, b.y, b.half ?? 16 * (b.scale ?? 1) * Math.max(b.stretchX ?? 1, b.stretchY ?? 1, 1), flatOf(b));
+    for (const one of low ?? []) {
+      const k = one.k;
+      one.to.calm = this.calm;
+      one.to.spawn({ ...b, x: (b.x - one.ox) / k, y: (b.y - one.oy) / k, scale: (b.scale ?? 1) / k, ...(b.vx ? { vx: b.vx / k } : {}), ...(b.vy ? { vy: b.vy / k } : {}), ...(b.grow ? { grow: b.grow / k } : {}), ...(b.gravity ? { gravity: b.gravity / k } : {}), ...(b.half ? { half: b.half / k } : {}), ...(one.a !== undefined ? { alpha: (b.alpha ?? 1) * one.a } : {}) });
     }
     const sp = this.pool.pop() ?? new Sprite();
     sp.anchor.set(0.5);

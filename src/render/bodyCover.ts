@@ -33,7 +33,7 @@ export const BODY_COVER: Readonly<Record<string, number>> = {
   'spell-quake-hit': 0.158,
   'spell-raisedead-cast': 0.464,
   'spell-raisedead-hit': 0.62,
-  'spell-rally-cast': 0.676,
+  'spell-rally-cast': 0.598,
   'spell-rally-hit': 0.494,
   'spell-renewal-cast': 0.39,
   'spell-renewal-hit': 0.05,
