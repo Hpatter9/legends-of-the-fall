@@ -60,7 +60,8 @@ async function film(take, start, until, tapHeld = true) {
   mkdirSync(dir, { recursive: true });
   await page.evaluate(() => { window.__showLog.length = 0; window.__showT0 = performance.now(); });
   sink = [];
-  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 85, maxWidth: W, maxHeight: H });
+  // (half size, so the page's frames are sent as fast as they are made; a full-size take fell behind and lost its end)
+  await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 70, maxWidth: Math.round(W / 2), maxHeight: Math.round(H / 2) });
   await start();
   const t0 = Date.now();
   let held = 0;
