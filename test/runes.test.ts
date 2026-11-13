@@ -5,13 +5,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Rng } from '../src/sim/rng';
-import { newRun, finish, type Run } from '../src/sim/run';
+import { armyRun, catalogueRun, newRun, finish, type Run } from '../src/sim/run';
+import type { Gear } from '../src/sim/gear';
 import { startedMeta } from '../src/sim/meta';
-import { findGear, findsAsGear, runKitStats, bareKitStats, settleFinds, stow, SOURCE, upgradeFound } from '../src/sim/runGear';
+import { FIND_KEEP, findGear, findsAsGear, keepsFind, runKitStats, bareKitStats, settleFinds, stow, SOURCE, upgradeFound } from '../src/sim/runGear';
 import { equipStats } from '../src/sim/equipment';
 import {
-  BAG_MAX, RUNE_LEVEL, RUNE_SCALE, SOCKETS, addRune, autoRunes, canMerge, mergeAll, mergeRunes, mergesReady, newRunes, readRunes, rollRune, runeStats, setRune, takeOffRune, twinIds, type Rune,
+  BAG_MAX, FLOURISH_S, RUNE_KINDS, RUNE_LEVEL, RUNE_SCALE, RUNE_SIGNATURE, RUNE_STATS, SIGNATURE_S, SOCKETS, addRune, allRunes as allRunesOfState, areTwins, autoRunes, canMerge, mergeAll, mergeRunes, mergesReady, newRunes, readRunes, rollRune, runeStats, setRune, takeOffRune, twinIds, waveGivesRune, type Rune,
 } from '../src/sim/runes';
+import { ABILITIES } from '../src/sim/equipBases';
 
 const rune = (id: number, kind: Rune['kind'], lv: Rune['lv']): Rune => ({ id, kind, lv });
 
@@ -32,45 +34,66 @@ test('a new run finds runes; a find draws from its source\'s stream exactly what
   const s1 = newRunes();
   const s2 = newRunes();
   assert.deepEqual(rollRune(s1, 9, 3, 1, 4, 1), rollRune(s2, 9, 3, 1, 4, 1));
-  // (about one in fifteen is a Keystone)
+  // (about one in ten is a Keystone: FEWER-RUNES, it was one in fifteen)
   const st = newRunes();
   const keys = Array.from({ length: 1500 }, (_, i) => rollRune(st, 3, i, 1, i, 1)).filter((r) => r.kind === 'keystone').length;
-  assert.ok(keys > 60 && keys < 140, `${keys}`);
+  assert.ok(keys > 105 && keys < 200, `${keys}`);
 });
 
-test('a won wave adds a rune, a boss two (one of level II) and a trophy to wait on the run\'s end', () => {
+test('a won wave adds a rune every fourth wave and on the last (FEWER-RUNES); a boss its own of level II and a trophy for the run\'s end', () => {
   const run = newRun(6);
   finish(run, true);
-  assert.equal(run.runes!.bag.length, 1);
+  assert.equal(run.runes!.bag.length, 0, 'wave 1 gives none now');
+  run.stage = 4;
+  finish(run, true);
+  assert.equal(run.runes!.bag.length, 1, 'the fourth wave gives one');
   assert.equal(run.runes!.bag[0].lv, 1);
   run.stage = 10;
   finish(run, true);
-  assert.equal(run.runes!.bag.length, 3);
+  assert.equal(run.runes!.bag.length, 2, 'a boss wave: its own rune');
   assert.ok(run.runes!.bag.some((r) => r.lv === 2));
   assert.equal(run.trophies?.length, 1);
   assert.equal(run.pack, undefined, 'no pieces found');
+  // (an army's last wave gives one, besides its boss's)
+  assert.ok(waveGivesRune(15, 15) && waveGivesRune(10, 10) && !waveGivesRune(14, 15) && waveGivesRune(12, 15) && !waveGivesRune(5, 0));
+  const army = armyRun(8, 'orcs');
+  const shares = Array.from({ length: 15 }, (_, i) => waveGivesRune(i + 1, 15)).filter(Boolean).length;
+  assert.equal(shares, 4, 'an army of fifteen: waves 4, 8, 12 and 15');
+  army.stage = 15;
+  finish(army, true);
+  assert.equal(army.runes!.bag.length, 2, 'the last wave: its rune and the boss\'s');
 });
 
-test('merging: two of a kind and level make the next level where the one dropped onto was; a Keystone is a twin; V is the top', () => {
+test('merging: two of a level make the next level where the one dropped onto was, of its kind; a Keystone lifts any rune; V is the top', () => {
   const st = newRunes();
-  st.bag.push(rune(1, 'ember', 1), rune(2, 'ember', 1), rune(3, 'hawk', 1), rune(4, 'keystone', 2), rune(5, 'gale', 2), rune(6, 'ember', 5), rune(7, 'ember', 5));
+  st.bag.push(rune(1, 'ember', 1), rune(2, 'ember', 1), rune(3, 'hawk', 1), rune(4, 'keystone', 1), rune(5, 'gale', 2), rune(6, 'ember', 5), rune(7, 'ember', 5));
   setRune(st, 'knight', 1);
-  assert.deepEqual([...twinIds(st)].sort(), [1, 2, 4, 5], 'two level V runes are no twins');
-  assert.ok(!canMerge(rune(1, 'ember', 1), rune(2, 'hawk', 1)), 'different kinds');
+  assert.deepEqual([...twinIds(st)].sort(), [1, 2, 3, 4, 5], 'twins: the two Embers, and every rune below V with the Keystone');
+  // (FEWER-RUNES: two kinds of one level merge, by the player's own drag; they are not twins)
+  assert.ok(canMerge(rune(1, 'ember', 1), rune(2, 'hawk', 1)), 'different kinds of one level');
+  assert.ok(!areTwins(rune(1, 'ember', 1), rune(2, 'hawk', 1)), 'but no twins');
+  assert.ok(!canMerge(rune(1, 'ember', 1), rune(2, 'ember', 2)), 'not two levels');
   assert.ok(!canMerge(rune(6, 'ember', 5), rune(7, 'ember', 5)), 'V does not merge');
+  assert.ok(!canMerge(rune(4, 'keystone', 1), rune(6, 'ember', 5)), 'nor with a Keystone');
+  assert.ok(!canMerge(rune(4, 'keystone', 1), rune(8, 'keystone', 1)), 'two Keystones do not');
   const made = mergeRunes(st, 2, 1)!;
   assert.deepEqual(made, rune(1, 'ember', 2));
   assert.deepEqual(st.worn.knight, [made], 'on the knight, where the one dropped onto was');
   const wild = mergeRunes(st, 4, 5)!;
-  assert.deepEqual(wild, rune(5, 'gale', 3), 'a Keystone of the level merges as a twin');
-  assert.equal(mergeRunes(st, 3, 5), null);
+  assert.deepEqual(wild, rune(5, 'gale', 3), 'a Keystone of level I lifts a Gale II to III');
+  assert.equal(mergeRunes(st, 3, 5), null, 'a Hawk I and a Gale III do not');
+  const mixed = mergeRunes(st, 5, 6);
+  assert.equal(mixed, null, 'III onto V: no');
+  st.bag.push(rune(9, 'arcana', 1));
+  assert.deepEqual(mergeRunes(st, 9, 3), rune(3, 'hawk', 2), 'an Arcana I dragged onto a Hawk I makes a Hawk II');
   assert.equal(mergesReady(st), 0);
   // (Merge all: the highest first, Keystones last)
   const all = newRunes();
   all.bag.push(rune(1, 'arcana', 1), rune(2, 'arcana', 1), rune(3, 'arcana', 2), rune(4, 'keystone', 1), rune(5, 'bulwark', 1));
-  assert.equal(mergesReady(all), 3);
+  // (FEWER-RUNES: the Keystone lifts the highest rune, the Arcana II; the two Arcana I make a II; the Bulwark has no twin)
+  assert.equal(mergesReady(all), 2);
   mergeAll(all);
-  assert.deepEqual(all.bag.map((r) => `${r.kind}${r.lv}`).sort(), ['arcana3', 'bulwark2']);
+  assert.deepEqual(all.bag.map((r) => `${r.kind}${r.lv}`).sort(), ['arcana2', 'arcana3', 'bulwark1']);
 });
 
 test('three sockets a hero, any mix; a Keystone is never worn; taking one off is free', () => {
@@ -105,19 +128,28 @@ test('runes give their numbers in the fight, on top of the kit, by level', () =>
   assert.equal(runeStats(undefined), undefined);
   const s = runeStats([rune(1, 'ember', 3), rune(2, 'bulwark', 1), rune(3, 'arcana', 2)])!;
   const k = RUNE_SCALE.k;
-  assert.ok(Math.abs(s.atk - 0.04 * RUNE_LEVEL[3] * k) < 1e-9);
-  assert.ok(Math.abs(s.def - k) < 1e-9);
-  assert.ok(Math.abs(s.hp - 0.05 * k) < 1e-9);
-  assert.ok(Math.abs(s.tal!.pow - 0.1 * k) < 1e-9, 'Arcana is skill power');
-  assert.ok(runeStats([rune(1, 'ember', 5)])!.abilities.some((a) => a.id === 'dragonfire'), 'a level V flourish');
+  // (FEWER-RUNES: level I's numbers are about four times the old: Ember I +14% attack, Bulwark I +3 defence and +14% hp, Arcana I +15%)
+  assert.ok(Math.abs(s.atk - RUNE_STATS.ember.atk! * RUNE_LEVEL[3] * k) < 1e-9);
+  assert.ok(RUNE_STATS.ember.atk! * k >= 0.12 && RUNE_STATS.hawk.crit! * k >= 0.1, 'level I is felt at once');
+  assert.ok(Math.abs(s.def - RUNE_STATS.bulwark.def! * k) < 1e-9);
+  assert.ok(Math.abs(s.hp - RUNE_STATS.bulwark.hp! * k) < 1e-9);
+  assert.ok(Math.abs(s.tal!.pow - RUNE_STATS.arcana.pow! * 2 * k) < 1e-9, 'Arcana is skill power');
+  // (every rune carries its kind's signature, stronger by level; level V adds the flourish, stronger than before)
+  assert.deepEqual(s.abilities.map((a) => a.id).sort(), ['emberBurst', 'inkWell', 'parryBlow']);
+  assert.equal(s.abilities.find((a) => a.id === 'emberBurst')!.s, SIGNATURE_S[3]);
+  const two = runeStats([rune(1, 'hawk', 1), rune(2, 'hawk', 3)])!;
+  assert.deepEqual(two.abilities, [{ id: 'keenEye', name: RUNE_SIGNATURE.hawk!.name, s: SIGNATURE_S[3] }], 'two of a kind: the stronger signature, once');
+  const five = runeStats([rune(1, 'ember', 5)])!;
+  assert.ok(five.abilities.some((a) => a.id === 'dragonfire' && a.s === FLOURISH_S) && FLOURISH_S > 0.7, 'a level V flourish');
+  for (const kind of RUNE_KINDS) assert.ok(ABILITIES[RUNE_SIGNATURE[kind]!.id], `${kind}'s signature is an ability the gear knows`);
   const m = startedMeta(3);
   const run = newRun(3);
   run.runes!.worn.knight = [rune(1, 'ember', 2)];
   const kit = runKitStats(m, run, 'knight', equipStats)!;
-  assert.ok(Math.abs(kit.atk - 0.08 * k) < 1e-9);
+  assert.ok(Math.abs(kit.atk - RUNE_STATS.ember.atk! * 2 * k) < 1e-9);
   assert.equal(runKitStats(m, run, 'archer', equipStats), undefined, 'a hero with none is as it was');
   const bare: Run = { ...run, local: true };
-  assert.ok(Math.abs(bareKitStats(bare, 'knight')!.atk - 0.08 * k) < 1e-9);
+  assert.ok(Math.abs(bareKitStats(bare, 'knight')!.atk - RUNE_STATS.ember.atk! * 2 * k) < 1e-9);
 });
 
 test('Auto runes merges, then hands the best out by role, three a hero; a rune stays put unless a place is a tenth better', () => {
@@ -163,4 +195,29 @@ test('the run\'s end: runes are gone; a boss\'s trophy comes home a quarter of t
   run.cleared = run.over = true;
   n.armies.orcs = { best: 10, won: 10, clears: 1, stars: {} };
   assert.equal(settleFinds(n, run)!.pieces.length, 1);
+});
+
+test('FEWER-RUNES: a Calamity fight\'s find is kept one time in three, from the rune side stream; a boss\'s always; nothing else moves', () => {
+  const run = newRun(11);
+  const g = (id: number): Gear => ({ id, slot: 'charm', tier: 1, name: 'x', hp: 0, atk: 0, rune: rune(id, 'ember', 1) });
+  const kept = Array.from({ length: 900 }, (_, i) => keepsFind(run, g(i + 1), 3 + (i % 7), SOURCE.floor)).filter(Boolean).length;
+  assert.ok(Math.abs(kept / 900 - FIND_KEEP.share) < 0.06, `${kept}`);
+  assert.ok(Array.from({ length: 50 }, (_, i) => keepsFind(run, g(i + 1), 4, SOURCE.boss)).every(Boolean), 'a boss\'s find always');
+  const before = JSON.stringify(run);
+  keepsFind(run, g(5), 4, SOURCE.elite);
+  assert.equal(JSON.stringify(run), before, 'the choice draws from nothing of the run\'s');
+  assert.equal(keepsFind(run, g(5), 4, SOURCE.elite), keepsFind(run, g(5), 4, SOURCE.elite), 'the same find, the same answer');
+  const piece: Run = { ...newRun(11), runes: undefined };
+  assert.ok(keepsFind(piece, { id: 1, slot: 'charm', tier: 1, name: 'x', hp: 0, atk: 0 }, 4, SOURCE.floor), 'a run without runes keeps its finds');
+});
+
+test('FEWER-RUNES: a run saved with the old runes loads and carries on, its runes at the new strengths', () => {
+  const saved = JSON.parse(JSON.stringify({ ...newRun(12), runes: { bag: [rune(3, 'keystone', 2), rune(4, 'hawk', 1)], worn: { knight: [rune(1, 'ember', 2), rune(2, 'bulwark', 1)] }, next: 5 } }));
+  const r = catalogueRun(saved);
+  assert.equal(allRunesOfState(r.runes!).length, 4, 'every rune kept');
+  const s = runeStats(r.runes!.worn.knight)!;
+  assert.ok(Math.abs(s.atk - RUNE_STATS.ember.atk! * 2) < 1e-9 && s.abilities.some((a) => a.id === 'emberBurst'), 'the new numbers and signatures');
+  assert.ok(mergeRunes(r.runes!, 3, 4), 'the old Keystone II lifts the Hawk I under the new rule');
+  finish(r, true);
+  assert.ok(r.stage === 2 && !r.over, 'and the run carries on');
 });

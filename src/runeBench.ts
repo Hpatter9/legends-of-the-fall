@@ -1,12 +1,12 @@
 // RUNE-BENCH (docs/notes/rune-bench.md): the bench's rune side, pulled across by the bar on the bench's edge (`benchSlide.ts`). The bag's
-// runes sit as tiles, the way the heroes sit as cards, and are handled the same way: drag a rune onto its twin (or tap one, then the other)
-// to merge; drag it onto a hero on the field (or tap it, then the hero) to set it in a socket. While a rune is held, its twins on the bench
-// and the heroes that can take it light up; a drop that cannot be made springs back with a word saying why. A finger resting on a tile
-// opens the rune's card; a tap on a hero with no rune chosen opens its three sockets, to take one off. The bench's Auto sets the runes
-// for the player once earned (`featureUnlocks.ts`, `autoRunes`); Merge all is free, as it was in the old tray. The rules are all
-// `sim/runes.ts`; this only draws them and passes the moves on.
+// runes sit as tiles, the way the heroes sit as cards, and are handled the same way: drag a rune onto another of its level to merge
+// (FEWER-RUNES; a tap, one then the other, merges twins only); drag it onto a hero on the field (or tap it, then the hero) to set it in
+// a socket. While a rune is held, the runes it merges with on the bench and the heroes that can take it light up; a drop that cannot be
+// made springs back with a word saying why. A finger resting on a tile opens the rune's card; a tap on a hero with no rune chosen opens
+// its three sockets, to take one off. The bench's Auto sets the runes for the player once earned (`featureUnlocks.ts`, `autoRunes`);
+// Merge all is free, as it was in the old tray. The rules are all `sim/runes.ts`; this only draws them and passes the moves on.
 
-import { BAG_MAX, SOCKETS, autoRunes, canMerge, dropRune, mergeAll, mergesReady, runeName, runeTargets, runeText, RUNE_FLOURISH, RUNE_NAMES, twinIds, whereRune, type Rune, type RuneState } from './sim/runes';
+import { BAG_MAX, SOCKETS, areTwins, autoRunes, canMerge, dropRune, mergeAll, mergesReady, runeName, runeTargets, runeText, RUNE_FLOURISH, RUNE_NAMES, twinIds, whereRune, type Rune, type RuneState } from './sim/runes';
 import { heroName } from './sim/heroNames';
 import { autoRunesOpen, featureStarsToGo, AUTO_RUNES_STARS } from './sim/featureUnlocks';
 import { runeAutoLabel } from './benchSideRules';
@@ -59,7 +59,7 @@ const HOLD_MS = 450;
 export function socketBlock(state: RuneState, id: number, kind: string, kinds: readonly string[]): string | null {
   const at = whereRune(state, id);
   if (!at) return 'That rune is gone';
-  if (at.rune.kind === 'keystone') return 'A Keystone is never worn: drop it on a rune of its level to merge';
+  if (at.rune.kind === 'keystone') return 'A Keystone is never worn: drop it on a rune to lift it a level';
   if (!kinds.includes(kind)) return `${heroName(kind)} is not on the field`;
   if (at.kind === kind) return `${heroName(kind)} wears it already`;
   if ((state.worn[kind]?.length ?? 0) >= SOCKETS) return `${heroName(kind)}'s three sockets are full: tap ${heroName(kind)} to take one off`;
@@ -145,7 +145,7 @@ export class RuneBench {
     root.append(head);
     const grid = el('div', 'rbGrid');
     const twins = twinIds(s);
-    const lit = this.sel !== undefined ? runeTargets(s, this.sel, this.hooks.kinds()).merge : [];
+    const lit = this.sel !== undefined ? runeTargets(s, this.sel, this.hooks.kinds()).twins : [];
     for (let i = 0; i < Math.max(BAG_MAX, s.bag.length); i++) {
       const r = s.bag[i];
       const t = el('button', `rbTile${r ? '' : ' empty'}${r && r.id === this.sel ? ' sel' : ''}${r && lit.includes(r.id) ? ' mergeCan' : ''}${r && twins.has(r.id) ? ' ready' : ''}`);
@@ -170,7 +170,7 @@ export class RuneBench {
     }
     root.append(grid);
     this.fresh = new Set();
-    root.append(el('p', 'rbHint', !edit ? 'Runes change between waves.' : this.sel !== undefined ? `${chosenName(s, this.sel)}Now tap its twin to merge, or a lit hero to set it. Tap it again to put it down.` : s.bag.length ? 'Drag a rune onto its twin to merge, or onto a hero to set it. Hold one to read it.' : 'The bag is empty: won waves and finds bring runes.'));
+    root.append(el('p', 'rbHint', !edit ? 'Runes change between waves.' : this.sel !== undefined ? `${chosenName(s, this.sel)}Now tap its twin to merge, or a lit hero to set it. Tap it again to put it down.` : s.bag.length ? 'Drag a rune onto another of its level to merge, or onto a hero to set it. Hold one to read it.' : 'The bag is empty: every fourth wave, the last wave and the bosses bring runes.'));
   }
 
   private wornKey(s: RuneState): Record<string, string> {
@@ -239,8 +239,8 @@ export class RuneBench {
       const other = Number(onto.dataset.id);
       const a = whereRune(s, p.id)?.rune;
       const b = whereRune(s, other)?.rune;
-      if (a && b && canMerge(a, b)) return this.drop(s, p.id, { rune: other });
-      return this.reject(`${shortName(a!)} and ${shortName(b!)} do not merge: twins (or a Keystone of the level) do`, e);
+      if (a && b && canMerge(a, b)) return this.drop(s, p.id, { rune: other, anyKind: true });
+      return this.reject(`${shortName(a!)} and ${shortName(b!)} do not merge: two runes of one level do, or a Keystone and any rune`, e);
     }
     const kind = this.hooks.heroAt(e.clientX, e.clientY - 34);
     if (kind) {
@@ -268,7 +268,8 @@ export class RuneBench {
     }
     const a = whereRune(s, this.sel)?.rune;
     const b = whereRune(s, id)?.rune;
-    if (a && b && canMerge(a, b)) return this.drop(s, this.sel, { rune: id });
+    // (FEWER-RUNES: a tap merges twins only; two kinds are merged by a drag, a deliberate act, so a tap on another rune still chooses it)
+    if (a && b && areTwins(a, b)) return this.drop(s, this.sel, { rune: id });
     // (not its twin: the tapped one is chosen instead)
     this.sel = id;
     this.hooks.light(socketKinds(s, id, this.hooks.kinds()));
@@ -296,7 +297,7 @@ export class RuneBench {
     this.sync(true);
   }
 
-  private drop(s: RuneState, id: number, to: { rune?: number; kind?: string }): void {
+  private drop(s: RuneState, id: number, to: { rune?: number; kind?: string; anyKind?: boolean }): void {
     const before = this.wornKey(s);
     const done = dropRune(s, id, to);
     this.putDown(false);
@@ -378,8 +379,11 @@ export class RuneBench {
     const well = menuWell(menu.body);
     well.classList.add('rbInfo');
     well.append(runeStone(r), el('p', '', runeText(r)));
-    if (r.lv < 5) menuNote(menu.body, r.kind === 'keystone' ? `Merges with any rune of level ${ROMAN[r.lv]} to make it level ${ROMAN[r.lv + 1]}. Never worn.` : `Merge with another ${shortName(r)}, or a Keystone ${ROMAN[r.lv]}, to make ${RUNE_NAMES[r.kind]} ${ROMAN[r.lv + 1]}.`);
-    else if (RUNE_FLOURISH[r.kind]) menuNote(menu.body, `The top level: ${RUNE_FLOURISH[r.kind]!.name}.`);
+    if (r.kind === 'keystone') menuNote(menu.body, 'Drop it onto any rune below level V to lift that rune a level. Never worn.');
+    else if (r.lv < 5) {
+      menuNote(menu.body, `Drag any rune of level ${ROMAN[r.lv]} onto it, or a Keystone, to make ${RUNE_NAMES[r.kind]} ${ROMAN[r.lv + 1]}: the merged rune takes the kind of the one it lands on.`);
+      menuNote(menu.body, `Its signature grows with its level; at level V it adds ${RUNE_FLOURISH[r.kind]!.name.split(': ')[1]}.`);
+    } else if (RUNE_FLOURISH[r.kind]) menuNote(menu.body, `The top level: ${RUNE_FLOURISH[r.kind]!.name}.`);
     menuFoot(menu, { back: { word: 'close' } });
   }
 

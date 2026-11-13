@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { FIND_KEEP } from '../src/sim/runGear';
 import { foundOf } from './helpers';
 import assert from 'node:assert/strict';
 import { fight, place, playOut } from '../src/sim/battle';
@@ -206,6 +207,8 @@ test('a shop is the same each time it is entered, and its price for a hero follo
 });
 
 test('treasure: the chest gives its gold and a relic or gear, once', () => {
+  // (FEWER-RUNES keeps a chest's rune one time in three, tested in runes.test.ts; here every find is kept, to see what one pays)
+  FIND_KEEP.share = 1;
   const run = at('treasure', 6);
   const before = run.gold;
   const lines = openTreasure(run)!;
@@ -213,6 +216,7 @@ test('treasure: the chest gives its gold and a relic or gear, once', () => {
   assert.ok(lines.length >= 2);
   assert.ok((run.relics?.length ?? 0) + foundOf(run).length >= 1);
   assert.equal(openTreasure(run), null);
+  FIND_KEEP.share = 1 / 3;
 });
 
 test('a mystery floor draws a card from the tower kinds; a spring heals; closing the card clears the floor', () => {

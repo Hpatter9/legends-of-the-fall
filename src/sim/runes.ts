@@ -2,17 +2,21 @@
 // level up ... call them runes. Each hero can have only 3 runes active in a run; they can be removed to merge"). A rune is a carved stone
 // of a kind (Ember attack, Bulwark defence and hp, Arcana skill power, Gale speed, Hawk crits, Wellspring mending, Warding resist, and the
 // wild Keystone) and a level, I to V. A hero kind sets up to three in its sockets for the run (`RuneState.worn`, by kind, so a hero merged
-// or recycled keeps its runes); the rest wait in the bag (eight at most). Two of one kind and level, or one and a Keystone of that level,
-// merge into one of the next level, wherever they are. Runes are set, taken off and merged between waves only, and are gone at the run's
-// end: they are the run's, not the save's.
+// or recycled keeps its runes); the rest wait in the bag (eight at most). Two runes of one level merge into one of the next level, of the
+// kind of the rune dropped onto; a Keystone lifts any rune a level. Runes are set, taken off and merged between waves only, and are gone at
+// the run's end: they are the run's, not the save's.
+//
+// FEWER-RUNES (the owner: "There are too many runes. I want fewer to show up, but make them far more powerful"): about a third as many
+// reach the player (a won wave gives one only every fourth wave and on the last, `waveGivesRune`; the Calamity's fight finds are kept one
+// time in three, `runGear.ts` `keepsFind`), each about four times as strong as before, and every rune carries its kind's signature, a
+// small ability of its own that grows with its level (`RUNE_SIGNATURE`); level V adds the flourish (`docs/notes/fewer-runes.md`).
 //
 // Every source that handed out a run's gear hands out runes instead (`runGear.ts` `findGear`): it draws from its own stream exactly what
-// it drew before, and the rune's kind from a side stream (`RUNE_SALT`), so events, relics and foes play out the same. A won wave of an
-// army, the daily or a quest battle adds one rune of its own (`waveRune`).
+// it drew before, and the rune's kind from a side stream (`RUNE_SALT`), so events, relics and foes play out the same.
 //
 // Pure rules: no Pixi, no DOM; every roll comes from a stream of the run's seed.
 
-import { callingOf, emptyStats, type EquipStats } from './equipment';
+import { CAPS, callingOf, emptyStats, type EquipStats } from './equipment';
 import { mixSeed, Rng } from './rng';
 import { UNITS } from './units';
 
@@ -41,30 +45,48 @@ export const SOCKETS = 3;
 export const BAG_MAX = 8;
 /** A rune broken for room in a full bag pays this much gold. */
 export const BREAK_GOLD = 5;
-/** One rune in this many is a Keystone. */
-export const KEYSTONE_ONE_IN = 15;
+/** One rune in this many is a Keystone (FEWER-RUNES: it was one in fifteen, when runes were thrice as many). */
+export const KEYSTONE_ONE_IN = 10;
+/** A won wave gives a rune when its number is a multiple of this, and on the run's last wave (FEWER-RUNES: it was every wave). */
+export const RUNE_EVERY = 4;
 /** A rune's strength by level, as a multiple of level I (index 0 unused). */
 export const RUNE_LEVEL: readonly number[] = [0, 1, 2, 3.5, 5.5, 8];
-/** One knob for every rune's numbers. Batch 8's balance set it at 0.7 alongside the seven slots' SLOT_SCALE, the Beast Packs' start and the
- *  daily's start, measured against every mode (docs/notes/gear-build.md, "Batch 8"). */
-export const RUNE_SCALE = { k: 0.7 };
+/** One knob for every rune's numbers (`RUNE_STATS` are level I's at 1). Batch 8's balance set it at 0.7 on the old, small numbers;
+ *  FEWER-RUNES wrote the new numbers into `RUNE_STATS` and measured this against every mode (docs/notes/fewer-runes.md). */
+export const RUNE_SCALE = { k: 1 };
 /** The kinds a rune can be (the Keystone only from the side stream's 1 in 15). */
 export const RUNE_KINDS: readonly RuneKind[] = ['ember', 'bulwark', 'arcana', 'gale', 'hawk', 'wellspring', 'warding'];
 export const RUNE_NAMES: Readonly<Record<RuneKind, string>> = {
   ember: 'Ember', bulwark: 'Bulwark', arcana: 'Arcana', gale: 'Gale', hawk: 'Hawk', wellspring: 'Wellspring', warding: 'Warding', keystone: 'Keystone',
 };
-/** What each kind gives at level I (shares are 0.04 for +4%; `def` flat; `pow` lifts the skills, as a talent's does). */
+/** What each kind gives at level I (shares are 0.15 for +15%; `def` flat; `pow` lifts the skills, as a talent's does). FEWER-RUNES: about
+ *  four times the old numbers (Ember I was +2.8% attack, Bulwark I +0.7 defence and +3.5% hp, Hawk I +3.2% crit). */
 export const RUNE_STATS: Readonly<Record<RuneKind, Partial<Record<'atk' | 'hp' | 'def' | 'atkSpeed' | 'moveSpeed' | 'crit' | 'regen' | 'resist' | 'pow', number>>>> = {
-  ember: { atk: 0.04 },
-  bulwark: { def: 1, hp: 0.05 },
-  arcana: { pow: 0.05 },
-  gale: { atkSpeed: 0.04, moveSpeed: 0.04 },
-  hawk: { crit: 0.045 },
-  wellspring: { regen: 0.003 },
-  warding: { resist: 0.05 },
+  ember: { atk: 0.14 },
+  bulwark: { def: 3, hp: 0.14 },
+  arcana: { pow: 0.15 },
+  gale: { atkSpeed: 0.1, moveSpeed: 0.1 },
+  hawk: { crit: 0.12 },
+  wellspring: { regen: 0.008 },
+  warding: { resist: 0.15 },
   keystone: {},
 };
-/** The flourish a level V rune adds: a signature ability the gear already knows (`equipBases.ts`), at strength 0.7. */
+/** FEWER-RUNES: every rune's signature, a small ability the gear already knows (`equipBases.ts`), its strength by the rune's level
+ *  (`SIGNATURE_S`); a hero wearing two of a kind has the stronger one. `text` is what it does, in the page's words. */
+export const RUNE_SIGNATURE: Readonly<Partial<Record<RuneKind, { id: string; name: string; text: string }>>> = {
+  ember: { id: 'emberBurst', name: 'Ember: kindling', text: 'a kill bursts in flame on the foes beside it' },
+  bulwark: { id: 'parryBlow', name: 'Bulwark: brace', text: 'every fourth blow taken, it braces' },
+  arcana: { id: 'inkWell', name: 'Arcana: gather', text: 'every fifth blow gathers skill charge' },
+  gale: { id: 'quickWind', name: 'Gale: tailwind', text: 'a kill brings a burst of haste' },
+  hawk: { id: 'keenEye', name: 'Hawk: talon', text: 'a crit makes the foe bleed' },
+  wellspring: { id: 'mendingKnot', name: 'Wellspring: spring', text: 'mends once when badly hurt' },
+  warding: { id: 'mirrorFlash', name: 'Warding: mirror', text: 'may turn a blow back on its striker' },
+};
+/** A signature's strength by the rune's level (index 0 unused): small at I, as a found piece's at V. */
+export const SIGNATURE_S: readonly number[] = [0, 0.5, 0.65, 0.8, 0.9, 1];
+/** The strength of the level V flourish (FEWER-RUNES: it was 0.7). */
+export const FLOURISH_S = 1;
+/** The flourish a level V rune adds on top of its signature: a signature ability the gear already knows (`equipBases.ts`), at `FLOURISH_S`. */
 export const RUNE_FLOURISH: Readonly<Partial<Record<RuneKind, { id: string; name: string }>>> = {
   ember: { id: 'dragonfire', name: 'Ember V: blows burn' },
   bulwark: { id: 'scaledWard', name: 'Bulwark V: a ward at the start' },
@@ -81,10 +103,11 @@ const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V'];
 export const runeName = (r: Pick<Rune, 'kind' | 'lv'>): string => `${RUNE_NAMES[r.kind]} rune ${ROMAN[r.lv]}`;
 /** What a rune gives, in words ("+8% attack"). */
 export function runeText(r: Pick<Rune, 'kind' | 'lv'>): string {
-  if (r.kind === 'keystone') return 'merges as a twin of any rune of its level';
+  if (r.kind === 'keystone') return 'merged onto any rune, lifts it a level';
   const k = RUNE_LEVEL[r.lv] * RUNE_SCALE.k;
   const pct = (v: number) => `${Math.round(v * k * 1000) / 10}%`;
-  const s = RUNE_STATS[r.kind];
+  // (a stat past the gear's cap is told at the cap, as the fight has it: Wellspring V's mending, a high Hawk's crits)
+  const s = Object.fromEntries(Object.entries(RUNE_STATS[r.kind]).map(([key, v]) => [key, Math.min(v, (CAPS[key as keyof typeof CAPS] ?? Infinity) / k)])) as (typeof RUNE_STATS)[RuneKind];
   const words: string[] = [];
   if (s.atk) words.push(`+${pct(s.atk)} attack`);
   if (s.def) words.push(`+${Math.round(s.def * k * 10) / 10} defence`);
@@ -95,27 +118,38 @@ export function runeText(r: Pick<Rune, 'kind' | 'lv'>): string {
   if (s.crit) words.push(`+${pct(s.crit)} crit chance`);
   if (s.regen) words.push(`mends ${pct(s.regen)} hp a second`);
   if (s.resist) words.push(`+${pct(s.resist)} resist`);
+  if (RUNE_SIGNATURE[r.kind]) words.push(RUNE_SIGNATURE[r.kind]!.text);
   if (r.lv === 5 && RUNE_FLOURISH[r.kind]) words.push(RUNE_FLOURISH[r.kind]!.name.split(': ')[1]);
   return words.join(', ');
 }
 
 // ---- getting runes ----
 
-/** A rune from its side stream: one in fifteen a Keystone, else one of the seven kinds. Given the run's next id. */
+/** A rune from its side stream: one in ten a Keystone, else one of the seven kinds. Given the run's next id. */
 export function rollRune(state: RuneState, seed: number, stage: number, source: number, n: number, lv: number): Rune {
   const rng = new Rng(mixSeed(seed, RUNE_SALT, stage, source, n));
   const kind: RuneKind = rng.int(1, KEYSTONE_ONE_IN) === 1 ? 'keystone' : RUNE_KINDS[rng.int(0, RUNE_KINDS.length - 1)];
-  return { id: state.next++, kind, lv: Math.max(1, Math.min(5, Math.floor(lv))) as RuneLv };
+  const r: Rune = { id: state.next++, kind, lv: Math.max(1, Math.min(5, Math.floor(lv))) as RuneLv };
+  if (RUNE_TALLY.on) RUNE_TALLY.made.set(r.id, source);
+  return r;
 }
+
+/** For the measuring tools only (`tools/fewer-runes/count.ts`): with `on`, where each rune made came from and the runes the bag took, by
+ *  source. Off in the game; it changes nothing. */
+export const RUNE_TALLY = { on: false, made: new Map<number, number>(), got: [] as { source: number; lv: number }[] };
+
+/** Whether a won wave gives a rune (FEWER-RUNES): every `RUNE_EVERY`th wave, and the last (`waves`, the run's count; 0 when it has none). */
+export const waveGivesRune = (stage: number, waves: number): boolean => stage % RUNE_EVERY === 0 || (waves > 0 && stage >= waves);
 
 /** Put a rune in the bag. A full bag merges it at once with a twin there if one is; else the lowest rune in the bag is broken for
  *  `BREAK_GOLD` (returned in `broke`, the gold for the caller to pay). */
 export function addRune(state: RuneState, r: Rune): { merged?: Rune; broke?: Rune } {
+  if (RUNE_TALLY.on) RUNE_TALLY.got.push({ source: RUNE_TALLY.made.get(r.id) ?? 0, lv: r.lv });
   if (state.bag.length < BAG_MAX) {
     state.bag.push(r);
     return {};
   }
-  const twin = state.bag.find((x) => canMerge(r, x));
+  const twin = state.bag.find((x) => areTwins(r, x));
   if (twin) {
     const made = fuse(r, twin);
     state.bag[state.bag.indexOf(twin)] = made;
@@ -131,14 +165,25 @@ export function addRune(state: RuneState, r: Rune): { merged?: Rune; broke?: Run
 
 // ---- merging ----
 
-/** Whether two runes merge: of one level below V, and of one kind (not two Keystones' alone) or one of them a Keystone. */
+/** Whether two runes merge (FEWER-RUNES: runes are rarer, so any two of a level may): two runes of one level below V, of any kinds; or a
+ *  Keystone and a rune of any level below V (not two Keystones). */
 export function canMerge(a: Rune, b: Rune): boolean {
-  if (a.id === b.id || a.lv !== b.lv || a.lv >= 5) return false;
+  if (a.id === b.id) return false;
   if (a.kind === 'keystone' && b.kind === 'keystone') return false;
-  return a.kind === b.kind || a.kind === 'keystone' || b.kind === 'keystone';
+  if (a.kind === 'keystone' || b.kind === 'keystone') return (a.kind === 'keystone' ? b : a).lv < 5;
+  return a.lv === b.lv && a.lv < 5;
 }
-/** The rune two make: the next level, of the kind that is not the Keystone; it keeps the id of the one dropped onto. */
-const fuse = (dropped: Rune, onto: Rune): Rune => ({ id: onto.id, kind: onto.kind === 'keystone' ? dropped.kind : onto.kind, lv: (onto.lv + 1) as RuneLv });
+/** Whether two runes are twins, the merges Merge all, Auto and a full bag make, and the page rims: of one kind and level, or a Keystone and
+ *  a rune. A merge of two kinds is the player's own choice. */
+export function areTwins(a: Rune, b: Rune): boolean {
+  return canMerge(a, b) && (a.kind === b.kind || a.kind === 'keystone' || b.kind === 'keystone');
+}
+/** The rune two make: the next level of the rune that is not the Keystone, of the kind of the one dropped onto (or the other, when that
+ *  was the Keystone); it keeps the id of the one dropped onto. */
+const fuse = (dropped: Rune, onto: Rune): Rune => {
+  const rune = onto.kind === 'keystone' ? dropped : onto;
+  return { id: onto.id, kind: rune.kind, lv: (rune.lv + 1) as RuneLv };
+};
 
 /** Where a rune is: in the bag, or on a hero kind. */
 export function whereRune(state: RuneState, id: number): { kind?: string; rune: Rune } | undefined {
@@ -172,18 +217,18 @@ export function mergeRunes(state: RuneState, dropped: number, onto: number): Run
 
 /** Every rune of the run, worn or not. */
 export const allRunes = (state: RuneState): Rune[] => [...state.bag, ...Object.values(state.worn).flat()];
-/** The ids of the runes that have a twin somewhere (another of their kind and level, or a Keystone of their level): the page rims them. */
+/** The ids of the runes that have a twin somewhere (another of their kind and level, or a Keystone): the page rims them. */
 export function twinIds(state: RuneState): Set<number> {
   const all = allRunes(state);
-  return new Set(all.filter((r) => all.some((o) => canMerge(r, o))).map((r) => r.id));
+  return new Set(all.filter((r) => all.some((o) => areTwins(r, o))).map((r) => r.id));
 }
 /** How many merges are ready (pairs, the highest first, each rune in one pair). */
 export function mergesReady(state: RuneState): number {
   const copy: RuneState = JSON.parse(JSON.stringify(state));
   return mergeAll(copy).length;
 }
-/** Merge every pair that merges, highest level first, Keystones last, the result kept where the more used one was (on a hero over in the
- *  bag). Returns the runes made. */
+/** Merge every pair of twins, highest level first, Keystones last (each onto the highest rune), the result kept where the more used one was
+ *  (on a hero over in the bag). Two runes of different kinds are never merged here: that is the player's choice. Returns the runes made. */
 export function mergeAll(state: RuneState): Rune[] {
   const made: Rune[] = [];
   for (;;) {
@@ -191,7 +236,7 @@ export function mergeAll(state: RuneState): Rune[] {
     let pair: [Rune, Rune] | undefined;
     for (const a of all) {
       if (a.kind === 'keystone') continue;
-      const twin = all.find((b) => b.kind === a.kind && canMerge(a, b)) ?? all.find((b) => b.kind === 'keystone' && canMerge(a, b));
+      const twin = all.find((b) => b.kind === a.kind && areTwins(a, b)) ?? all.find((b) => b.kind === 'keystone' && areTwins(a, b));
       if (twin) {
         pair = [a, twin];
         break;
@@ -245,8 +290,13 @@ export function runeStats(worn: readonly Rune[] | undefined): EquipStats | undef
       if (stat === 'pow') pow += v * k;
       else (out as unknown as Record<string, number>)[stat] += v * k;
     }
+    // (the kind's signature, the strongest of a kind the hero wears; and level V's flourish)
+    const sig = RUNE_SIGNATURE[r.kind];
+    const had = sig && out.abilities.find((a) => a.id === sig.id);
+    if (sig && !had) out.abilities.push({ id: sig.id, name: sig.name, s: SIGNATURE_S[r.lv] });
+    else if (had) had.s = Math.max(had.s, SIGNATURE_S[r.lv]);
     const f = r.lv === 5 ? RUNE_FLOURISH[r.kind] : undefined;
-    if (f && !out.abilities.some((a) => a.id === f.id)) out.abilities.push({ id: f.id, name: f.name, s: 0.7 });
+    if (f && !out.abilities.some((a) => a.id === f.id)) out.abilities.push({ id: f.id, name: f.name, s: FLOURISH_S });
   }
   if (pow) out.tal = { pow };
   return out;
@@ -326,6 +376,8 @@ export function socketsOf(state: RuneState, kind: string): { rune?: Rune; twin: 
 export function runeTotals(worn: readonly Rune[] | undefined): string {
   const s = runeStats(worn);
   if (!s) return '';
+  // (at the gear's caps, as the fight has them)
+  for (const [key, cap] of Object.entries(CAPS)) (s as unknown as Record<string, number>)[key] = Math.min(cap!, (s as unknown as Record<string, number>)[key]);
   const pct = (v: number) => `${Math.round(v * 1000) / 10}%`;
   const out: string[] = [];
   if (s.atk) out.push(`+${pct(s.atk)} attack`);
@@ -337,24 +389,30 @@ export function runeTotals(worn: readonly Rune[] | undefined): string {
   if (s.crit) out.push(`+${pct(s.crit)} crit chance`);
   if (s.regen) out.push(`mends ${pct(s.regen)} hp/s`);
   if (s.resist) out.push(`+${pct(s.resist)} resist`);
+  // (FEWER-RUNES: the signatures and flourishes it carries, by their short names)
+  for (const a of s.abilities) out.push(a.name.split(': ')[1] ?? a.name);
   return out.join(', ');
 }
-/** Where a tapped rune can go, for the page to light up: the heroes it can be set on (a Keystone on none), the bag (when it is worn), and
- *  the runes it merges with. */
-export function runeTargets(state: RuneState, id: number, kinds: readonly string[]): { heroes: string[]; bag: boolean; merge: number[] } {
+/** Where a rune can go, for the page to light up: the heroes it can be set on (a Keystone on none), the bag (when it is worn), the runes
+ *  it merges with when dragged (any of its level, or any with a Keystone), and its twins (what a tap merges with). */
+export function runeTargets(state: RuneState, id: number, kinds: readonly string[]): { heroes: string[]; bag: boolean; merge: number[]; twins: number[] } {
   const at = whereRune(state, id);
-  if (!at) return { heroes: [], bag: false, merge: [] };
+  if (!at) return { heroes: [], bag: false, merge: [], twins: [] };
   return {
     heroes: at.rune.kind === 'keystone' ? [] : kinds.filter((k) => k !== at.kind),
     bag: !!at.kind,
     merge: allRunes(state).filter((o) => canMerge(at.rune, o)).map((o) => o.id),
+    twins: allRunes(state).filter((o) => areTwins(at.rune, o)).map((o) => o.id),
   };
 }
 /** Do what a tap on a target means: onto a rune, merge (or swap onto a hero's socket when they do not merge); onto a hero, set it (a full
- *  set gives up `swap`); onto the bag, take it off. Returns what happened, or null when nothing could. */
-export function dropRune(state: RuneState, id: number, to: { rune?: number; kind?: string; bag?: boolean }): 'merged' | 'set' | 'off' | null {
+ *  set gives up `swap`); onto the bag, take it off. Returns what happened, or null when nothing could. A tap merges twins only; `anyKind`
+ *  (the bench's drag) merges any two of a level too (FEWER-RUNES). */
+export function dropRune(state: RuneState, id: number, to: { rune?: number; kind?: string; bag?: boolean; anyKind?: boolean }): 'merged' | 'set' | 'off' | null {
   if (to.rune !== undefined) {
-    if (mergeRunes(state, id, to.rune)) return 'merged';
+    const a = whereRune(state, id)?.rune;
+    const b = whereRune(state, to.rune)?.rune;
+    if (a && b && (to.anyKind || areTwins(a, b)) && mergeRunes(state, id, to.rune)) return 'merged';
     const onto = whereRune(state, to.rune);
     if (onto?.kind && setRune(state, onto.kind, id, to.rune)) return 'set';
     return null;

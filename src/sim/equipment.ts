@@ -64,7 +64,7 @@ export const ABILITY_RARITY = 3;
 /** How strong the signature ability is at each rarity (index 0 is unused; Common and Rare have none). */
 export const ABILITY_SCALE: readonly number[] = [0, 0, 0, 0.45, 0.55, 0.7];
 /** The most a hero's worn pieces add to the shares that could otherwise stack without end. */
-const CAPS: Partial<Record<MainKey, number>> = { dodge: 0.35, crit: 0.6, resist: 0.6, atkSpeed: 0.8, moveSpeed: 0.8, charge: 1, regen: 0.03, jump: 1 };
+export const CAPS: Partial<Record<MainKey, number>> = { dodge: 0.35, crit: 0.6, resist: 0.6, atkSpeed: 0.8, moveSpeed: 0.8, charge: 1, regen: 0.03, jump: 1 };
 
 /** A signature ability a worn piece switches on: its id, the name to show, and its strength (`ABILITY_SCALE`, a little more per item level). */
 export interface ActiveAbility {
