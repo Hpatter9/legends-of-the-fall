@@ -86,7 +86,7 @@ import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinemati
 import { flicker } from './cinematicRules';
 import { coverAlpha, overFighter } from './overFighter';
 import { BODY_COVER } from './bodyCover';
-import { overAlpha, UNDER } from './onFighterRules';
+import { overAlpha, PAINT_OVER, UNDER } from './onFighterRules';
 import { BossFx } from './bossFx';
 import type { Element, Family } from './fxRules';
 
@@ -236,6 +236,8 @@ export class Fx {
   /** ON-FIGHTER: the moment's layers UNDER the fighters' bodies, one in each fighter that has needed one (`underAt`): where a clip
    *  played on a fighter is drawn at full strength, behind it. They run with the moment's layer and are thrown away with it. */
   private unders = new Map<Container, Particles>();
+  /** (the same for the fight's own effects, the painted bits: they run on the fight's clock, with `particles`) */
+  private lows = new Map<Container, Particles>();
   /** Ms of a slow-motion beat left (a boss falls); `timeScale` slows the fight while it lasts. */
   private slowLeft = 0;
   /** Ms of hit-stop left (a crit or a killing blow freezes the fight for a moment). */
@@ -274,7 +276,12 @@ export class Fx {
     this.dimLayer.visible = false;
     this.root.addChild(this.particles.root, this.moment.root);
     // (FX-CLEAR: the puffs, rings and signature steps laid over a fighter are thinned too)
-    this.particles.cover = (x, y, half) => coverAlpha(1, this.overBody(x, y, half));
+    // (ON-FIGHTER: thinned to the rule's ceiling, and drawn again at full strength under the body it lies over)
+    this.particles.cover = (x, y, half) => (this.overBody(x, y, half) ? PAINT_OVER : 1);
+    this.particles.under = (x, y, half) => {
+      const s = this.bodyAt(x, y, half);
+      return s ? { to: this.underAt(s.underLayer(), this.lows), ox: s.root.x, oy: s.root.y, k: s.root.scale.x || 1 } : null;
+    };
     if (typeof matchMedia === 'function') matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
   }
 
@@ -293,8 +300,9 @@ export class Fx {
     this.gusts.clear();
     this.particles.clear();
     this.moment.clear();
-    for (const p of this.unders.values()) p.root.destroy({ children: true });
+    for (const p of [...this.unders.values(), ...this.lows.values()]) if (!p.root.destroyed) p.root.destroy({ children: true });
     this.unders.clear();
+    this.lows.clear();
     this.bossFx.clear();
     this.heals.clear();
     this.epic = new Set();
@@ -635,7 +643,7 @@ export class Fx {
   stepMoment(dt: number): void {
     this.moment.calm = this.calm();
     this.moment.step(dt);
-    for (const p of this.unders.values()) p.step(dt);
+    this.stepUnder(this.unders, dt);
     for (const l of this.bfxLit) l.left -= dt;
     this.bfxLit = this.bfxLit.filter((l) => l.left > 0);
   }
@@ -672,14 +680,23 @@ export class Fx {
     windUp(this.moment, el, by.x, by.y, ms, by.tall, true);
   }
 
+  /** ON-FIGHTER: move the layers under the fighters' bodies on; one whose fighter has gone (its view destroyed, and the layer with
+   *  it) is dropped. */
+  private stepUnder(among: Map<Container, Particles>, dt: number): void {
+    for (const [layer, p] of among) {
+      if (layer.destroyed || p.root.destroyed) among.delete(layer);
+      else p.step(dt);
+    }
+  }
+
   /** ON-FIGHTER: the moment's layer in a fighter's own layer under its body (`UnitView.underLayer`). */
-  private underAt(layer: Container): Particles {
-    let p = this.unders.get(layer);
+  private underAt(layer: Container, among: Map<Container, Particles> = this.unders): Particles {
+    let p = among.get(layer);
     if (!p || p.root.destroyed) {
       p = new Particles();
       p.cap = 40;
       layer.addChild(p.root);
-      this.unders.set(layer, p);
+      among.set(layer, p);
     }
     return p;
   }
@@ -1503,6 +1520,7 @@ export class Fx {
     this.shakeY = (s ? (Math.random() * 2 - 1) * s : 0) + this.thudY;
     this.particles.calm = this.calm();
     this.particles.step(dt);
+    this.stepUnder(this.lows, dt);
     this.slowLeft = Math.max(0, this.slowLeft - dt);
     this.stopLeft = Math.max(0, this.stopLeft - dt);
     this.dimLeft = Math.max(0, this.dimLeft - dt);
@@ -1519,8 +1537,19 @@ export class Fx {
 
   /** FX-CLEAR: whether an effect centred on (x, y), `half` px across from its centre, lies over a living fighter's body. */
   private overBody(x: number, y: number, half: number): boolean {
-    for (const s of this.sprites.values()) if (s.unit.alive && overFighter(x, y, half, [s])) return true;
-    return false;
+    return !!this.bodyAt(x, y, half);
+  }
+
+  /** ON-FIGHTER: the living fighter whose body an effect centred on (x, y), `half` px across from its centre, lies over; when it lies
+   *  over several, the one standing farthest BACK (drawn first), so that what is put under its body is behind every one of them and
+   *  covers none; none: undefined. */
+  private bodyAt(x: number, y: number, half: number): UnitSprite | undefined {
+    let best: UnitSprite | undefined;
+    for (const s of this.sprites.values()) {
+      if (!s.unit.alive || !overFighter(x, y, half, [s])) continue;
+      if (!best || s.root.zIndex < best.root.zIndex) best = s;
+    }
+    return best;
   }
 
   private anim(s: Strip, x: number, y: number, scale: number, frameMs: number): Sprite {
@@ -1530,7 +1559,16 @@ export class Fx {
     sp.scale.set(scale);
     sp.position.set(x, y);
     sp.blendMode = 'add';
-    this.root.addChild(sp);
+    // (ON-FIGHTER: a strip laid over a fighter's body is drawn under that body, in the fighter's own layer, at its full strength: it
+    // was drawn over it at six tenths)
+    const host = this.bodyAt(x, y, 16 * scale);
+    if (host) {
+      const k = host.root.scale.x || 1;
+      scale /= k;
+      sp.scale.set(scale);
+      sp.position.set((x - host.root.x) / k, (y - host.root.y) / k);
+      host.underLayer().addChild(sp);
+    } else this.root.addChild(sp);
     let t = 0;
     let peak: number | undefined;
     let own: number | undefined;
@@ -1538,9 +1576,8 @@ export class Fx {
       view: sp,
       step: (dt) => {
         t += dt;
-        // (FX-CLEAR: an effect laid over a fighter's body is drawn see-through, `OVER_FIGHTER_ALPHA`; a strip that is not painted
-        // keeps the alpha it was given, thinned the same way)
-        own ??= coverAlpha(sp.alpha, this.overBody(x, y, 16 * scale));
+        // (it keeps the alpha it was given: over a fighter it is under the body, above)
+        own ??= sp.alpha;
         peak ??= own * 0.9;
         const f = Math.floor(t / frameMs);
         if (f >= s.frames.length) return false;
@@ -1898,7 +1935,16 @@ export class Fx {
         if (own < 0) {
           const [l, top, r, bot] = bfxBox(c, x, y, Math.abs(sp.scale.y) / BFX_SCALE);
           const half = Math.min(r - l, bot - top) * 0.42;
-          own = paint ? 1 : coverAlpha(1, this.overBody((l + r) / 2, Math.min(y, bot) - half, half));
+          // (ON-FIGHTER: a clip over a fighter's body (a king's spell on a unit) goes under that body, in the fighter's own layer, at
+          // its full strength; it was drawn over it at six tenths)
+          const host = paint ? undefined : this.bodyAt((l + r) / 2, Math.min(y, bot) - half, half);
+          if (host) {
+            const k = host.root.scale.x || 1;
+            view.scale.set(1 / k);
+            view.position.set((x - host.root.x) / k, (y - host.root.y) / k);
+            host.underLayer().addChild(view);
+          }
+          own = 1;
         }
         const f = bfxFrame(c, t, this.reduced, false, o.stretch);
         const a = bfxAlpha(t, life, this.reduced);

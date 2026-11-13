@@ -54,6 +54,21 @@ moments each from the wind-up on).
   row and of the rows behind it, which means moving the farther rows' fighters above the nearer rows' ground in `boardView.ts`
   (the march-stays builder's file now). Not done.
 
+## The painted effects and the king's spells (group 2)
+
+`docs/samples/blender-fx/on-fighter-painted-393.png` (the Druid's party under the Prayer of Healing, before above, now below) and
+`on-fighter-spells-393.jpg` (the king's Heal, Shield and Haste on a unit, four moments each).
+
+- **Every painted bit** (a skill's cast and hit, a signature's steps, `MOVE_PAINT`, `HEALER_PAINT`, the spell sheets' parts, the
+  pack's puffs and rings: all of them are the particles) that lies over a fighter's body is drawn over it at the ceiling itself
+  (`PAINT_OVER`, 15%; it was 60%) and again at its full strength under a body (`Particles.under`). Where it lies over several
+  fighters it goes under the one standing farthest BACK, so it is behind all of them and covers none.
+- **A plain strip** (`anim`) and **a king's spell's rendered clip on a unit** (`bfxOnce`) over a fighter go under that body whole.
+- A fighter's under layers are dropped when the fighter goes (`stepUnder`).
+
+Still over a fighter at the old strength, and next: a painted beam's segments (`paintBeam`, six tenths where a segment crosses
+a body), the `aura-spirits` and `aura-eclipse` loops, the ailments' front layers, a showcase's beats on the caster.
+
 ## The survey: rendered clips on a fighter, worst first
 
 238 clips on a fighter; over 0.15: 235; over 0.5: 193 (before this change every one of them was drawn over the fighter at full strength).
@@ -96,14 +111,6 @@ The whole table is `tools/blender-fx/body-cover.json` (238 clips).
 - `docs/samples/blender-fx/on-fighter-ultimates-393.jpg`: the Priestess, the Corsair Surgeon and the Knight, before above and
   after below. The Priestess's pillar, the Surgeon's spout and the Knight's dome stand behind the heroes, who are in front of them.
 
-## Not yet under the rule (the honest list)
+## Not yet under the rule
 
-These still lie over a fighter and are next, worst first by eye, since they are not rendered clips and are not measured yet:
-
-- the **painted skill effects** (`signatures.ts`, `MOVE_PAINT`, `HEALER_PAINT`, the spell sheets and the pack strips): they are
-  thinned to six tenths over a fighter (FX-CLEAR, `OVER_FIGHTER_ALPHA`), which is far above the ceiling;
-- the **king's spells' rendered clips on a unit** (`bfxOnce`: the same six tenths) and the standing loops `aura-spirits` and
-  `aura-eclipse` (drawn over the fighters; the spirits circle the body, the black sun hangs above it);
-- the **ailments' front layers** (`ailmentLayer.ts`, at half strength). (The guard's earth-shield ring is already under the body
-  in the fighter's drawing order; I listed it wrongly.)
-- a showcase's beats on the caster (`beat-*`).
+See the end of the section on the painted effects, above.

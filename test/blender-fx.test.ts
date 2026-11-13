@@ -204,8 +204,10 @@ test('the renderer plays the sheets through the effects\' own paths, and never t
   // (a spell's rendered sheets take the place of its older layers, the tiles' marks stay under it)
   assert.match(fx, /const rendered = this\.bfxSpell\(b, e, centre\);/);
   assert.match(fx, /this\.alivePatch\(b, spellTiles\(b\.board, e\.id, e\.u, e\.v, rankOf\(b, e\.id\)\)/);
-  // (FX-CLEAR: a clip over a fighter is thinned; one lying on the ground goes under the fighters)
-  assert.match(fx, /coverAlpha\(1, this\.overBody\(/);
+  // (ON-FIGHTER, the owner's order: a clip over a fighter goes under that fighter's body, whole (it was thinned to six tenths over
+  // it, FX-CLEAR); one lying on the ground goes under the fighters)
+  assert.match(fx, /const host = paint \? undefined : this\.bodyAt\(/);
+  assert.match(fx, /host\.underLayer\(\)\.addChild\(view\);/);
   assert.match(fx, /c\.layer === 'ground' && o\.lie \? this\.groundPaint\(/);
   // (reduced motion and the battery saver reach every helper)
   assert.ok((fx.match(/bfxFrame\(c, t.*this\.reduced/g) ?? []).length >= 3);
