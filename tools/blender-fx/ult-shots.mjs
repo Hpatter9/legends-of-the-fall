@@ -163,6 +163,9 @@ if (process.env.WATCH) {
   await army(page, PICKS.slice(0, 5));
   // (TOUGH=<n>: the foes are given n times their health, so the fight lasts and the heroes' heals and wards are seen)
   await page.evaluate((k) => { const g = window.__game; g.app.ticker.stop(); if (k > 1) for (const f of g.b.units) if (f.side === 'foe' && f.alive) { f.maxHp *= k; f.hp = f.maxHp; } }, Number(process.env.TOUGH ?? 1));
+  // (STATUS=1: each hero is given a status that lasts the fight, a different one each (haste, rally, both), so what goes round a
+  // fighter is on the screen in every photograph)
+  if (process.env.STATUS) await page.evaluate(() => { window.__game.b.units.filter((u) => u.side === 'hero').forEach((u, i) => { if (i % 3 !== 1) u.hasteUntil = 1e9; if (i % 3 !== 0) u.rallyUntil = 1e9; }); });
   const every = Number(process.env.WATCH_MS ?? 600);
   // (CATCH=crit,block: the fight is stepped a frame at a time until a hit spark of each kind named lands, and each is photographed
   // 50 ms and 110 ms after it lands: for what is over between two ordinary frames)

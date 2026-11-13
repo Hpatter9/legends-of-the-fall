@@ -124,3 +124,11 @@ test('a painted bit over a fighter is thinned to the ceiling and drawn again at 
   assert.match(parts, /const low = b\.bare \? null : this\.under\?\.\(b\.x, b\.y,/);
   assert.match(parts, /low\.to\.spawn\(\{ \.\.\.b, x: \(b\.x - low\.ox\) \/ k, y: \(b\.y - low\.oy\) \/ k, scale: \(b\.scale \?\? 1\) \/ k,/);
 });
+
+test('a wisp is a long thin thread, not a puff: its clip is far wider than it is tall, in the atlases every fight holds', () => {
+  for (const look of Object.values(STATUS_ROUND)) {
+    const c = BFX_CLIPS[`aura-wisp-${look.el}`];
+    assert.ok(c.w >= 28 && c.w >= c.h * 1.8, `${look.el}: ${c.w} x ${c.h}`);
+    assert.ok(c.a <= 1 && c.loop);
+  }
+});

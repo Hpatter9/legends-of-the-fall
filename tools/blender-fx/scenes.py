@@ -2209,21 +2209,42 @@ def meteors(c, r=1.6, n=3, size=1.0):
     return step
 
 
-# 68. Wisp: one wisp of smoke travelling to the screen's right (a loop): a small bright head and a tail of shrinking puffs that
-# trails behind it and curls up, flickering. What circles a fighter while a status holds (ON-FIGHTER): small, so the fighter is seen.
-def wisp(c, r=0.16, tail=0.55, puffs=5):
-    m, cut = c.flame(3.2, 0.5, 1.5)
-    hm, _ = c.flat('hot', 2.0)
-    head = c.sphere(1.0, hm, 2)
-    parts = [(c.sphere(1.0, m, 3), k / puffs, c.rnd.uniform(0, TAU)) for k in range(1, puffs + 1)]
+# 68. Wisp: one wisp of smoke travelling to the screen's right (a loop): a long thin thread that tapers to nothing behind its head,
+# swaying as it goes and curling over on itself at its tail, a fainter second thread wound round it. What circles a fighter
+# while a status holds (ON-FIGHTER): thin, so the fighter is seen through it. (It was a head and a row of puffs, and read as puffs.)
+def wisp(c, r=0.16, tail=1.25, n=22):
+    threads = []
+    for k, (lo, hi, strength, wide, lag) in enumerate((('mid', 'hot', 1.5, r * 0.5, 0.0), ('mid', 'bright', 1.15, r * 0.3, 0.37))):
+        m, a, _ = c.streak(lo, hi, 1.1, strength, noise=3.0)
+        flat = [(scr(tail * (0.5 - i / n), 0, 0.3), scr(0, 1)) for i in range(n + 1)]
+        threads.append((c.ribbon(flat, wide, m), a, wide, lag, strength))
+
+    def path(u, t, lag):
+        # (it sways more the farther behind the head, and its last third turns up and over in a curl)
+        sway = (0.03 + 0.1 * u) * math.sin(TAU * (1.6 * u - t - lag))
+        curl = max(0.0, u - 0.62) / 0.38
+        ang = curl * 3.6
+        x = tail * (0.5 - min(u, 0.62)) - 0.2 * math.sin(ang) * (1 - 0.3 * curl)
+        y = sway * (1 - curl) + 0.05 * u + 0.2 * (1 - math.cos(ang)) * (1 - 0.3 * curl)
+        return x, y + (0.035 * math.sin(TAU * (t + lag)) if lag else 0)
 
     def step(t):
         c.tick(t, 1.6)
-        cut.inputs[1].default_value = 0.22
-        put(head, scr(tail * 0.5, 0, 0.3), r * 0.55 * (1 + 0.12 * math.sin(TAU * t * 2)))
-        for o, u, ph in parts:
-            wob = 0.035 * math.sin(TAU * (t + u) + ph)
-            put(o, scr(tail * (0.5 - u), 0.12 * u * u + wob, 0.3), r * (1 - 0.62 * u), (t * TAU, ph, 0))
+        for ob, a, wide, lag, strength in threads:
+            pts = [path(i / n, t, lag) for i in range(n + 1)]
+            for i, (x, y) in enumerate(pts):
+                u = i / n
+                # (each point is widened across the thread's own heading, so it keeps its width through the curl)
+                x0, y0 = pts[max(0, i - 1)]
+                x1, y1 = pts[min(n, i + 1)]
+                d = math.hypot(x1 - x0, y1 - y0) or 1
+                nx, ny = -(y1 - y0) / d, (x1 - x0) / d
+                w = wide * (min(1, u / 0.08) ** 0.5) * (1 - u) ** 0.8 + 0.003
+                p, sd = scr(x, y, 0.3), scr(nx, ny)
+                ob.data.vertices[i * 2].co = (p[0] - sd[0] * w, p[1] - sd[1] * w, p[2] - sd[2] * w)
+                ob.data.vertices[i * 2 + 1].co = (p[0] + sd[0] * w, p[1] + sd[1] * w, p[2] + sd[2] * w)
+            ob.data.update()
+            a.inputs[1].default_value = strength * 1.6
     return step
 
 
