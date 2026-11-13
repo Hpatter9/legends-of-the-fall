@@ -404,8 +404,9 @@ export class Fx {
       // (ULT-AUDIT: but the one small clip a healer's light or the Gorgon's gaze runs out in is: it must be there the first time)
       warmBfx([...kinds].filter((kind) => ultLinked(kind) && SHOWCASES[kind]).map((kind) => beatBfx(ultLinkClip(kind), SHOWCASES[kind].el)));
       // (and the small clips a strike adds: a ring on each foe, foam down a line, spray where the caster lands)
-      // (ON-FIGHTER: and the ring that lands at a struck fighter's feet, in each hero's element)
-      warmBfx([...kinds].filter((kind) => SHOWCASES[kind]).map((kind) => beatBfx('ring', SHOWCASES[kind].el)));
+      // (ON-FIGHTER: the ring that lands at a struck fighter's feet is NOT asked for here: it lies with its element's showcase beats,
+      // which the caster's showcase has just played when the strike lands. Asking for every hero's at a fight's start took the
+      // atlases over their budget, and a strike's own atlas was given up to make room: Vael's sweep and his black sun went missing)
       warmBfx([...kinds].filter((kind) => ULT_EXTRA[kind] && SHOWCASES[kind]).flatMap((kind) => Object.values(ULT_EXTRA[kind]).map((clip) => beatBfx(clip, SHOWCASES[kind].el))));
       // (the beats of their showcases are not asked for here: each loads the first time it is played, the older parts playing that once,
       // so a fight begins with as little held as it can)
@@ -800,7 +801,7 @@ export class Fx {
           const sp = this.sprites.get(me.id);
           return sp ? [sp.x, sp.y] : [caster.x, caster.y];
         };
-        this.bfxStand(lasts.clip, this.root, ...over(), () => b.t < until && me.alive && b.phase === 'fight', { rise: true, follow: over, over: true });
+        this.bfxRound(lasts.clip, this.sprites.get(me.id), over, () => b.t < until && me.alive && b.phase === 'fight');
       }
       if (place === 'self') {
         // (ULT-AUDIT: an aura, a ward, a transformation, a pull: it plays round the caster, once; its further bursts add nothing there)
@@ -1205,7 +1206,8 @@ export class Fx {
         shake(0.04);
         return true;
       case 'gather':
-        if (own && this.bfxUlt(own, 'windup', x, y, BEAT_OWN.GATHER_MS)) return true;
+        // (ON-FIGHTER: on the caster, so under its body and thin over it, as the wind-up itself is)
+        if (own && this.bfxUlt(own, 'windup', x, y, BEAT_OWN.GATHER_MS, 1, 0, this.bodyAt(x, y - 10, 8)?.unit)) return true;
         return B('gather', x, y, { lit: true });
       case 'mark':
         if (!B('mark', x, y, { lit: true })) return false;
@@ -1966,10 +1968,19 @@ export class Fx {
     return true;
   }
 
+  /** ON-FIGHTER: a looping clip that stays ROUND a fighter (spirits circling it, a black sun over it): whole under the fighter's body,
+   *  inside the fighter, and over the fighter only as thinly as its measured cover of a body allows (`overAlpha`). Without the fighter's
+   *  view it is over the fighters, thinned. */
+  private bfxRound(key: string, host: UnitSprite | undefined, where: () => [number, number], live: () => boolean): boolean {
+    const thin = overAlpha(BODY_COVER[key] ?? 1);
+    if (host && thin < 1) this.bfxStand(key, this.root, ...where(), live, { rise: true, follow: where, host });
+    return this.bfxStand(key, this.root, ...where(), live, { rise: true, follow: where, over: true, alpha: thin });
+  }
+
   /** A looping clip that stays while `live` holds, then fades: on `layer` (a tile's own ground, so it sorts with the fighters by depth:
    *  whoever stands on the tile is drawn over it) with the middle of its tile at (x, y). `rise` grows it from the ground as it comes (a wall);
    *  `dim` thins it (a fighter standing in it). */
-  private bfxStand(key: string, layer: Container, x: number, y: number, live: () => boolean, o: { phase?: number; dim?: () => number; rise?: boolean; flip?: boolean; follow?: () => [number, number]; over?: boolean } = {}): boolean {
+  private bfxStand(key: string, layer: Container, x: number, y: number, live: () => boolean, o: { phase?: number; dim?: () => number; rise?: boolean; flip?: boolean; follow?: () => [number, number]; over?: boolean; host?: UnitSprite; alpha?: number } = {}): boolean {
     const c = bfxClip(key);
     const made = this.bfxSprites(key, 1, o.flip);
     if (!c || !made) return false;
@@ -1982,7 +1993,16 @@ export class Fx {
     view.position.set(x, y);
     view.alpha = 0;
     if (o.over) view.zIndex = 9999;
-    layer.addChild(view);
+    // (ON-FIGHTER, `host`: it is drawn inside that fighter, under its body, in the fighter's own space, and goes with the fighter)
+    const inside = (px: number, py: number): [number, number] => {
+      const k = o.host!.root.scale.x || 1;
+      view.scale.set(1 / k);
+      return [(px - o.host!.root.x) / k, (py - o.host!.root.y) / k];
+    };
+    if (o.host) {
+      view.position.set(...inside(x, y));
+      o.host.underLayer().addChild(view);
+    } else layer.addChild(view);
     const per = c.ms / c.n;
     const tall = sp.scale.y;
     let t = 0;
@@ -1992,13 +2012,13 @@ export class Fx {
       step: (dt) => {
         t += dt;
         const on = live() || t < BFX_FADE_MS;
-        if (o.follow) view.position.set(...o.follow());
+        if (o.follow) view.position.set(...(o.host ? inside(...o.follow()) : o.follow()));
         shown = Math.max(0, Math.min(1, shown + (on ? dt : -dt) / (on ? BFX_FADE_MS : 300)));
         if (!on && shown <= 0) return false;
         const f = bfxFrame(c, t + (o.phase ?? 0) * per, this.reduced, settings().saver);
         sp.texture = frames[f];
         if (o.rise && !this.reduced) sp.scale.y = tall * (0.35 + 0.65 * Math.min(1, t / 220));
-        view.alpha = shown * (o.dim?.() ?? 1);
+        view.alpha = shown * (o.dim?.() ?? 1) * (o.alpha ?? 1);
         if (glow) {
           glow.texture = glows[f] ?? glows[0];
           glow.alpha = BFX_GLOW_ALPHA;
@@ -2353,7 +2373,11 @@ export class Fx {
     // (what circles in it: three small motes close in, or the sheet's own (`AURA_MOTES`: Spirit Guardians' spirits, large and clear))
     const own = AURA_MOTES[sheet];
     // (BLENDER-FX: the rendered loop of what circles, following the caster, rising out of the ground as it comes, over the fighters)
-    if (own?.bfx && this.bfxStand(own.bfx, this.root, ...centre(), live, { rise: true, follow: centre, over: true })) return true;
+    // (ON-FIGHTER: whole under the body of the fighter it circles, and over the fighters only thinly)
+    if (own?.bfx) {
+      const [hx, hy] = centre();
+      if (this.bfxRound(own.bfx, this.bodyAt(hx, hy - 10, 8), centre, live)) return true;
+    }
     const n = own ? (settings().saver ? own.saver : own.n) : settings().saver ? 1 : 3;
     const r = own ? own.r * TW : (reach + 0.5) * TW * 0.35;
     const born = performance.now();
