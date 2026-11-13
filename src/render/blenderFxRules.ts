@@ -273,3 +273,28 @@ export const ULT_BFX = { ECHO: 0.4, SPOTS: 5, SPOTS_SAVER: 2, AFTER_ALPHA: 0.7, 
 export function bfxDrop(held: readonly number[], now: ReadonlySet<number>, before: ReadonlySet<number>, core: readonly number[]): number[] {
   return held.filter((a) => !core.includes(a) && !now.has(a) && !before.has(a));
 }
+
+/** HIT-SPARKS (docs/notes/hit-sparks.md): what plays where a blow lands, as rendered clips in the blow's element, in place of the
+ *  painted sparks (which stay as the fallback until a clip's atlas is held). The kinds of landing:
+ *  - `blow`: a plain blow: a small star of sparks, larger with the share of the target's health it took;
+ *  - `burst`: a shot landing, in the shot's own element: the same star, a little larger;
+ *  - `block`: a blow turned aside by a raised guard: a pale blue star;
+ *  - `backstab`: a killing blow from behind: two crossed strokes in the dark;
+ *  - `crit`: a heavy blow: crossed strokes in gold, plainly the largest.
+ *  Each is small and quick (`ms` under 300); `size` is a multiple of the clip's own. */
+export type HitKind = 'blow' | 'burst' | 'block' | 'backstab' | 'crit';
+export const HIT_SPARK: Readonly<Record<HitKind, { clip: 'blow' | 'cut'; el?: string; size: number; grow: number; ms: number }>> = {
+  blow: { clip: 'blow', el: 'light', size: 0.8, grow: 0.5, ms: 200 },
+  burst: { clip: 'blow', size: 1.0, grow: 0.5, ms: 220 },
+  block: { clip: 'blow', el: 'ice', size: 1.1, grow: 0, ms: 220 },
+  backstab: { clip: 'cut', el: 'dark', size: 1.0, grow: 0, ms: 260 },
+  crit: { clip: 'cut', el: 'light', size: 1.3, grow: 0.3, ms: 280 },
+};
+/** The spark for a landing of `kind`: its clip (in `el` where the kind has no element of its own), how large it is drawn for a blow
+ *  that took `share` of the target's health (0 to 1), and how long it plays. Undefined where the pipeline has not made the clip. */
+export function hitSpark(kind: HitKind, el: string, share: number): { key: string; size: number; ms: number } | undefined {
+  const h = HIT_SPARK[kind];
+  const key = `hit-${h.clip}-${h.el ?? el}`;
+  if (!BFX_CLIPS[key]) return undefined;
+  return { key, size: h.size + h.grow * Math.max(0, Math.min(1, share * 3)), ms: h.ms };
+}
