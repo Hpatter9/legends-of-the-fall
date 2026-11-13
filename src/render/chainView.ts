@@ -19,6 +19,8 @@ import { UnitSprite } from './unitView';
 export interface Walker {
   unit: Unit;
   goal: [number, number];
+  /** MARCH-STAYS: a fallen hero, back for the next wave: it rises where it fell and walks in with the party. */
+  risen?: boolean;
 }
 
 interface Moving {
@@ -175,7 +177,7 @@ export class ChainView {
       // (the path is over world tiles; the walkers are drawn on the joined board, whose tile (0, 0) is `min`. Between waves every hero walks
       // the fewest tiles at the same pace: no hero's own jump or slowness, and a climb costs no more than a level step)
       const path = walkAcross(old, next, w.unit, { u: w.goal[0], v: w.goal[1] }).map((p) => ({ u: p.u - minU, v: p.v - minV }));
-      const unit: Unit = { ...w.unit, u: path[0].u, v: path[0].v, step: undefined, swing: undefined, cast: undefined, hurtAt: undefined, guardUntil: undefined, slowUntil: undefined, hasteUntil: undefined, charmUntil: undefined, dot: undefined, ail: undefined };
+      const unit: Unit = { ...w.unit, ...(w.risen ? { alive: true, hp: w.unit.maxHp } : {}), u: path[0].u, v: path[0].v, step: undefined, swing: undefined, cast: undefined, hurtAt: undefined, guardUntil: undefined, slowUntil: undefined, hasteUntil: undefined, charmUntil: undefined, dot: undefined, ail: undefined };
       const sprite = new UnitSprite(unit);
       this.layer.addChild(sprite.root);
       inFrame(walkFrame, () => sprite.update(comp, 0, true));

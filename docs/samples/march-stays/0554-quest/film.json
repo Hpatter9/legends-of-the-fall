@@ -1,0 +1,36 @@
+{
+ "size": "393x852",
+ "cpu": 4,
+ "speed": 2,
+ "rows": [
+  {
+   "fallen": 0,
+   "risenGaps": 0,
+   "undrawn": 70,
+   "land": "shrine",
+   "rim": true,
+   "cut": {
+    "px": 231,
+    "scale": 1,
+    "ms": 188
+   },
+   "livesSpent": 3,
+   "wave": 1,
+   "frames": 89,
+   "heroes": 2,
+   "marched": false,
+   "marchMs": 0,
+   "standMs": 0,
+   "heroGaps": 0,
+   "heroGapMs": 0,
+   "fewestHeroes": 2,
+   "tileGaps": 0,
+   "tileGapMs": 0,
+   "fewestTiles": null,
+   "refalls": 0,
+   "longestFrameMs": 5120,
+   "tapped": false,
+   "rebuilt": false
+  }
+ ]
+}

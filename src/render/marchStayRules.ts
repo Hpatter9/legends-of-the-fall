@@ -84,3 +84,40 @@ export function filmFaults(frames: readonly FilmFrame[], marchers: number): { he
   }
   return { heroGaps, tileGaps, refalls };
 }
+
+/** A tile of a board. */
+export type Spot2 = [number, number];
+
+/** Where each of the squad is set down on a fight's deploy rows, in the squad's order: where it stood last (`wish`) when it still
+ *  `fits` there, else the first `free` tile; `take` sets it down (and may refuse). Null for a hero with nowhere to stand. The page
+ *  sets the squad down with this, and the march asks it first, of a rehearsal of the next fight, so each marcher walks to the very
+ *  tile its fighter will be set down on: a hero whose old tile is a boulder, a trap or a foe's on the new board no longer stands in
+ *  one place and jumps to another at the hand-over. */
+export function squadTiles(
+  ids: readonly number[],
+  wish: (id: number) => Spot2 | undefined,
+  fits: (id: number, at: Spot2) => boolean,
+  free: () => Spot2 | null,
+  take: (id: number, at: Spot2) => boolean,
+): Map<number, Spot2 | null> {
+  const out = new Map<number, Spot2 | null>();
+  for (const id of ids) {
+    const was = wish(id);
+    const at = was && fits(id, was) ? was : free();
+    out.set(id, at && take(id, at) ? at : null);
+  }
+  return out;
+}
+
+/** Who marches: every hero of the squad that fought and will be set down for the next wave, the fallen with the standing. A fallen
+ *  hero is back for the next wave; it rises where it fell as the march sets out and walks in with the party, where it used to lie
+ *  on the old section and then appear at the deploy. Summons and anyone not of the squad stay behind. */
+export const marches = (u: { side: string; summon: boolean; tag?: number }, squad: readonly number[]): boolean => u.side === 'hero' && !u.summon && u.tag !== undefined && squad.includes(u.tag);
+
+/** The camera at the hand-over: the deploy lays the page out afresh (the bench and the Fight button come up, the board is fitted to
+ *  the room left), which moved the picture in one cut. This is the camera that shows, in the new layout, exactly the picture that
+ *  was on the screen (`k` the world's scale on the screen, `baseX`/`baseY` where the world's origin was drawn), so the deploy's own
+ *  eases carry it from there to the deploy's framing with no jump. With reduced motion the cut is kept (the page does not ask). */
+export function sameView(was: { k: number; baseX: number; baseY: number }, scale: number, safe: { x: number; y: number; w: number; h: number }): { zoom: number; cx: number; cy: number } {
+  return { zoom: was.k / scale, cx: (safe.x + safe.w / 2 - was.baseX) / was.k, cy: (safe.y + safe.h / 2 - was.baseY) / was.k };
+}
