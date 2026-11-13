@@ -323,9 +323,11 @@ export class BoardView {
     // (WAVE-DELAY: what was painted ahead for this build is the section's own now)
     this.dropWarm();
     // (LAND-IDENTITY: what stands round the board and on it, once the land's pieces are here: `landRimRules.ts`)
-    this.rim = [];
-    this.rimTex?.destroy(true);
-    this.rimTex = null;
+    // (MARCH-STAYS: the rim's pieces go BEFORE its picture does. The march's build (`keepOld`) left the old board's rim on the stage
+    // and destroyed the one picture its still pieces are drawn from: a sprite with a dead picture makes every drawing throw, so for
+    // the whole march the canvas showed nothing but the backdrop, on every land that has a rim. The owner's "the battleground
+    // disappears")
+    this.dropRim();
     if (!look.boss && rot === 0) {
       if (holdSpritesReady(hold) && floorArt(hold)) this.layRim(b);
       else void Promise.all([loadHoldSprites(hold), loadFloorArt(hold)]).then(([got, floor]) => got && floor && this.board === b && this.built && this.layRim(b));
@@ -374,6 +376,9 @@ export class BoardView {
   demote(section: Board, ou: number, ov: number): void {
     if (!this.built || !this.board) return;
     this.dropOld();
+    // (MARCH-STAYS: the host's rim stood round it at the world's origin, where the next section is about to fall: it goes as the
+    // host is moved aside, and the section behind is baked without one, as every finished section is)
+    this.dropRim();
     // The destination is rendered once by the approaching/current host, never again in retired scenery.
     this.built.landmark?.destroy({ children: true });
     this.built.landmark = null;
@@ -909,6 +914,14 @@ export class BoardView {
   private rim: Container[] = [];
   /** The far rim's still part, drawn once (`layRim`). */
   private rimTex: Texture | null = null;
+  /** The rim is taken off the stage, its pieces first and only then the picture they are drawn from: never a sprite left with a dead
+   *  picture (MARCH-STAYS). */
+  private dropRim(): void {
+    for (const c of this.rim) if (!c.destroyed) c.destroy({ children: true });
+    this.rim = [];
+    this.rimTex?.destroy(true);
+    this.rimTex = null;
+  }
   /** Whether the board's rim is laid (the page's light and life wait for it). */
   get rimLaid(): boolean {
     return this.rim.length > 0;
@@ -920,10 +933,7 @@ export class BoardView {
   private layRim(b: Board): void {
     const built = this.built;
     if (!built) return;
-    for (const c of this.rim) if (!c.destroyed) c.destroy({ children: true });
-    this.rim = [];
-    this.rimTex?.destroy(true);
-    this.rimTex = null;
+    this.dropRim();
     const f: Frame = { rot: 0, ou: 0, ov: 0, w: b.w, d: b.d };
     const hold = FLOORS[b.area].hold;
     const live = built.live;

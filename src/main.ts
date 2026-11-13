@@ -179,7 +179,7 @@ import { BoardLife } from './render/boardLife';
 import { LAND_TERRAIN } from './sim/landTerrain';
 import { FIELD_HAZARDS } from './sim/fieldTraps';
 import { ChainView } from './render/chainView';
-import { fightersTakeOver, hostOnShow } from './render/marchStayRules';
+import { fightersTakeOver, hostOnShow, marches, sameView, squadTiles } from './render/marchStayRules';
 import { against, frameOf, transferFormation } from './sim/chain';
 import { isScenario } from './sim/scenario';
 import { battleTraitBadge } from './battleTraitArt';
@@ -886,9 +886,14 @@ class Game {
     // (a walk to the new section still going is over: the heroes are placed where it was taking them)
     this.chain.finish();
     this.walking.clear();
+    // (MARCH-STAYS: the party marched here: the picture on the screen now, for the camera to ease from, below)
+    const marchView = this.marchedFrom && this.marchedFrom === this.b && !reducedMotion() ? { k: this.scale * this.zoom, baseX: this.baseX, baseY: this.baseY } : null;
     // (Duchess the goat may join one fight in a thousand: the test page's `?duchess=1` always brings her, `duchessFight.ts`)
     diagMark('the next board built');
     this.b = startStage(this.run, this.duchessWish());
+    // (MARCH-STAYS: a duel's crowd stands in the board's own layer, which the build below empties: it is put away here, not on the
+    // next frame, or this frame's pose for it faulted on sprites already gone and the rest of the hand-over's frame was lost)
+    if (this.duelShow.on) this.duelShow.clear();
     hideDuchessCard();
     // (QUEST-POSSIBLE: a taken quest that bars spells or ultimates holds that Auto switch off for a fight it would count for, and says why)
     const run0 = this.run;
@@ -934,6 +939,16 @@ class Game {
     this.manualCam = false;
     this.zoom = this.tzoom = 1;
     diagTimed('the page laid out', () => this.layout());
+    // (MARCH-STAYS: the deploy's layout cut the camera to its own framing in one frame (the bench and the Fight button take the lower
+    // page, the board is fitted afresh): after a march the camera starts instead from the very picture that was on the screen, and
+    // the deploy's own eases carry it to the placement rows. No work is added: three numbers. Reduced motion keeps the cut)
+    if (marchView && this.b.phase === 'deploy') {
+      const v = sameView(marchView, this.scale, this.safe);
+      this.zoom = v.zoom;
+      this.cx = v.cx;
+      this.cy = v.cy;
+      this.place();
+    }
     this.revealDestination();
     diagTimed('the page refreshed (bench, portraits)', () => this.refresh());
     // (a fight's cinematics come before the boss's own card: a Calamity's herald, a first elite, the tower's milestones ...)
@@ -1047,16 +1062,27 @@ class Game {
 
   /** The squad onto the deploy rows, each where it stood last when it still can. */
   private placeSquad(): void {
-    for (const id of [...this.run.squad]) {
-      const h = heroOf(this.run, id);
-      if (!h) continue;
-      // (a spot from the last fight may be a boulder or a foe's now: a floor's twist can change the deploy rows)
-      // (a mirror's clone standing in for its original takes the original's spot: ONE-OF-EACH)
-      const was = this.placed.get(String(id)) ?? (h.standsFor !== undefined ? this.placed.get(String(h.standsFor)) : undefined);
-      const at = was && canPlace(this.b, h.kind, was[0], was[1], id) ? was : this.freeTile();
-      if (at && place(this.b, h.kind, at[0], at[1], id, this.boostFor(h))) this.placed.set(String(id), at);
+    for (const [id, at] of this.squadOnto(this.b))
+      if (at) this.placed.set(String(id), at);
       else setSquad(this.run, id, false);
-    }
+  }
+
+  /** Set the squad down on `b`'s deploy rows (`squadTiles`, `marchStayRules.ts`): the tile each took, null for one with nowhere. */
+  private squadOnto(b: Battle): Map<number, [number, number] | null> {
+    const ids = this.run.squad.filter((id) => heroOf(this.run, id));
+    // (a spot from the last fight may be a boulder or a foe's now: a floor's twist can change the deploy rows)
+    // (a mirror's clone standing in for its original takes the original's spot: ONE-OF-EACH)
+    const wish = (id: number) => {
+      const h = heroOf(this.run, id)!;
+      return this.placed.get(String(id)) ?? (h.standsFor !== undefined ? this.placed.get(String(h.standsFor)) : undefined);
+    };
+    return squadTiles(
+      ids,
+      wish,
+      (id, at) => canPlace(b, heroOf(this.run, id)!.kind, at[0], at[1], id),
+      () => this.freeTile(b),
+      (id, at) => !!place(b, heroOf(this.run, id)!.kind, at[0], at[1], id, this.boostFor(heroOf(this.run, id)!)),
+    );
   }
 
   /** An event's card has closed over a deploy (MID-EVENTS): when its choice changed the next fight (a boon, a curse on the foes, a twist), the fight
@@ -1324,7 +1350,12 @@ class Game {
     const c = chainOf(this.run);
     if (!c || wave >= c.length || this.run.stage !== wave + 1) return;
     const next = c[wave];
-    const heroes = this.b.units.filter((u) => u.side === 'hero' && u.alive && !UNITS[u.def].summon && u.tag !== undefined);
+    // (MARCH-STAYS: the fallen of the squad march too: they are back for the next wave, and rise where they fell to walk in with the
+    // party, where they used to lie on the old section and appear at the deploy: `marches`)
+    const heroes = this.b.units.filter((u) => marches({ side: u.side, summon: !!UNITS[u.def].summon, tag: u.tag }, this.run.squad));
+    // (and after a duel the rest of the party, who watched from beside the ring and are not in the duel's battle: they walk on with
+    // the champion from where they stood)
+    if (this.b.duel && this.duelShow.battle === this.b) heroes.push(...this.duelShow.marchOff().filter((w) => marches({ side: w.side, summon: false, tag: w.tag }, this.run.squad) && !heroes.some((h) => h.tag === w.tag)));
     // (the whole squad's formation moves over, so the fallen keep their places for the next fight)
     const spots = this.run.squad.flatMap((id) => {
       const at = this.placed.get(String(id));
@@ -1332,9 +1363,21 @@ class Game {
     });
     const goals = transferFormation(next.board, spots);
     for (const [id, at] of goals) this.placed.set(id, at);
+    // (MARCH-STAYS: the next fight rehearsed, with the squad set down on it as the deploy will set it: the fight's own board has
+    // traps, a flood and foes the section's plain board has not, and a hero whose tile one of them took stood there and then jumped
+    // to a free tile at the hand-over. Each walks to the tile it will really take. Nothing of the run is changed by the rehearsal)
+    try {
+      for (const [id, at] of this.squadOnto(startStage(this.run, 'never')))
+        if (at) {
+          this.placed.set(String(id), at);
+          goals.set(String(id), at);
+        }
+    } catch (err) {
+      console.error('a fault in the next fight\'s rehearsal; the march goes to the section\'s own tiles', err);
+    }
     const walkers = heroes.flatMap((unit) => {
       const goal = goals.get(String(unit.tag));
-      return goal ? [{ unit, goal }] : [];
+      return goal ? [{ unit, goal, risen: !unit.alive }] : [];
     });
     this.walking = new Set(walkers.map((w) => w.unit.id));
     this.marchedFrom = this.b;
@@ -1514,9 +1557,9 @@ class Game {
   }
 
   /** The first free standable tile on the heroes' rows, front row first. */
-  private freeTile(): [number, number] | null {
-    for (let v = 0; v < this.b.board.d; v++)
-      for (let u = 0; u < this.b.board.w; u++) if (isDeployTile(v, this.b.board.d) && standable(tileAt(this.b.board, u, v)) && !unitAt(this.b, u, v)) return [u, v];
+  private freeTile(b = this.b): [number, number] | null {
+    for (let v = 0; v < b.board.d; v++)
+      for (let u = 0; u < b.board.w; u++) if (isDeployTile(v, b.board.d) && standable(tileAt(b.board, u, v)) && !unitAt(b, u, v)) return [u, v];
     return null;
   }
 

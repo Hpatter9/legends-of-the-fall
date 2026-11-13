@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.558.0',
+    date: '2026-11-13',
+    title: 'No more empty field between waves',
+    notes: ['Fixed: on daily runs and quest battles the field and heroes could vanish from the march until the next deploy, leaving only the backdrop.', 'A hero who fell in the last wave rises and marches with the party; after a duel all five heroes march, not just the champion.', 'Heroes walk to the tile they will fight from, and the camera eases into the deploy instead of jumping.'],
+  },
+  {
     version: '0.557.0',
     date: '2026-11-12',
     title: 'Skill effects go behind your heroes too',
