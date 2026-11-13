@@ -84,7 +84,8 @@ async function film(take, start, until, tapHeld = true) {
   return { take, frames: frames.length, log };
 }
 
-const settled = () => page.evaluate(() => !document.querySelector('.tarotReveal') && /drawn|ally|allies|step|grows|tribute|Lucky/.test(document.getElementById('resultSummary').textContent) && !/wait|answer|turn/.test(document.getElementById('resultSummary').textContent));
+// (settled: no reveal up, the screen free again (the line no longer ends on an ellipsis or counts cards turning))
+const settled = () => page.evaluate(() => { const t = document.getElementById('resultSummary').textContent; return !document.querySelector('.tarotReveal') && !!t && !/…$|turned|wait/.test(t); });
 const back = () => page.evaluate(() => document.getElementById('gachaClose').click());
 const ten = await film('ten', () => page.locator('.hlBar button').last().click(), settled);
 await page.waitForTimeout(800);
