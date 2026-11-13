@@ -8,8 +8,8 @@ export type SummonPieceId = 'charge' | 'rift' | 'burst' | 'after' | 'flourish';
 
 export const SUMMON_FX: Readonly<Record<SummonPieceId, SummonPiece>> = {
   charge: {file: 'charge.webp', fw: 176, fh: 240, x: 7, y: 19, w: 151, h: 192, cols: 7, n: 14, ms: 100, loop: false, glow: 'charge-glow.webp'},
-  rift: {file: 'rift.webp', fw: 176, fh: 240, x: 38, y: 4, w: 100, h: 215, cols: 6, n: 6, ms: 84, loop: false, glow: 'rift-glow.webp'},
-  burst: {file: 'burst.webp', fw: 176, fh: 240, x: 4, y: 16, w: 172, h: 208, cols: 9, n: 9, ms: 90, loop: false, glow: 'burst-glow.webp'},
-  after: {file: 'after.webp', fw: 176, fh: 240, x: 38, y: 77, w: 100, h: 134, cols: 12, n: 12, ms: 100, loop: true},
+  rift: {file: 'rift.webp', fw: 176, fh: 240, x: 38, y: 0, w: 100, h: 220, cols: 6, n: 6, ms: 84, loop: false, glow: 'rift-glow.webp'},
+  burst: {file: 'burst.webp', fw: 176, fh: 240, x: 1, y: 17, w: 174, h: 208, cols: 9, n: 9, ms: 90, loop: false, glow: 'burst-glow.webp'},
+  after: {file: 'after.webp', fw: 176, fh: 240, x: 38, y: 73, w: 101, h: 138, cols: 12, n: 12, ms: 100, loop: true},
   flourish: {file: 'flourish.webp', fw: 112, fh: 144, x: 0, y: 0, w: 112, h: 144, cols: 8, n: 8, ms: 75, loop: false, glow: 'flourish-glow.webp'},
 };
