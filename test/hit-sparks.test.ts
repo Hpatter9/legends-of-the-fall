@@ -60,7 +60,7 @@ test('the renderer plays the spark, the painted one only when its clip is not he
   assert.match(fx, /const first = Math\.max\(1, Math\.min\(frames\.length - 1, Math\.round\(UNDER\.FLASH_MS \/ per\)\)\);/);
   // (the spark's two parts are now laid by `bfxFlash`, which a swing's stroke shares: the same two spawns, with a pose)
   assert.match(fx, /\.\.\.pose, frames: frames\.slice\(0, first\), frameMs: per, life: first \* per, prio: true, solid: true, bare: true \}\);/);
-  assert.match(fx, /\.\.\.pose, frames: frames\.slice\(first\), frameMs: per, life: \(frames\.length - first\) \* per, delay: first \* per, prio: true \}\);/);
+  assert.match(fx, /\.\.\.pose, frames: frames\.slice\(first\), frameMs: per, life: \(frames\.length - first\) \* per, delay: delay \+ first \* per, prio: true \}\);/);
   const parts = readFileSync('src/render/particles.ts', 'utf8');
   assert.match(parts, /const low = b\.bare \? null : this\.under\?\.\(/);
 });
