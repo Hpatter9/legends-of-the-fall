@@ -207,6 +207,8 @@ for (const [w, h] of SIZES) {
       continue;
     }
     await runThenHold(page, ms);
+    // (EVAL=<script>: run in the page just before the photograph, for taking one layer away to see what another shows)
+    if (process.env.EVAL) console.log('EVAL', await page.evaluate(process.env.EVAL));
     await page.screenshot({ path: `${OUT}/${id}-${size}${REDUCED ? '-still' : ''}.png` });
     console.log(size, id, JSON.stringify(at));
   }

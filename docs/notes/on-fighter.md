@@ -194,41 +194,51 @@ nothing playing is not drawn. Where the board gives no rows the fighter's own la
 - Not covered: the painted hazes and the king's spells still go under the farthest-back fighter they overlap (`bodyAt`), not on
   the rows; a picture's part over a chasm shows on the layer behind the board.
 
-## Since: ROW-UNDER 2, the painted bits and the king's spells on the ground's rows
+## Since: ROW-UNDER 2, what lies flat on the ground goes on the ground's rows
 
-The owner's standing rule is that no effect may hide a hero. After ROW-UNDER, three things still went under the farthest-back
-fighter they overlapped (`bodyAt`) and so could still lie over a fighter behind that one's row, and were cut by the nearer tiles:
-the painted bits (a skill's cast and hit, a healer's haze; `Particles.under`), a painted strip (`Fx.anim`), and a king's spell's
-rendered clip (`bfxOnce`). All three now lie on the ground's rows, as an ultimate's copy does: a copy on the layer over each row
-the picture covers, cut to that row's columns, and one behind the board (`rowLayers`). The fighter's own layer is used only where
-a board gives no rows.
+The owner's standing rule is that no effect may hide a hero. After ROW-UNDER, the painted bits, the painted strips and the
+king's spells' clips still went under the farthest-back fighter they overlapped (`bodyAt`), in that fighter's own layer, where
+the nearer tiles cut a ring at the feet.
 
-- **Tempered.** In a fighter's own layer the nearer tiles hid most of a large picture. On the rows all of it shows, and at full
-  strength the king's Rally was a bright disc three tiles across with a solid middle. So a painted bit's copy is drawn at
-  `ROW_PAINT` (0.7), a spell's clip at `ROW_CLIP.ONE` (0.85) and one wider than a tile and a half at `ROW_CLIP.WIDE` (0.55). The
-  thin copy over the fighters is as it was.
-- **Kept ready.** The rows' tiles are gathered once for a board and its frame (`rowTiles`), not for every bit; a row's layer is
-  drawn only while something plays or lies on it.
-- **Memory:** nothing new is loaded; no atlas changed.
+**The first try was wrong, and the director refused it.** It put all three on the rows whole (a copy on the layer over each row
+the picture covers, cut to that row's columns). The king's Rally then buried the two heroes in the middle of the party under
+large flame tongues: Rally's `hit` clip is tall flames, and a tall picture laid on the rows stood up the screen over the fighters
+of the rows behind. Taking the cut rows away in the page (`EVAL=` in `tools/blender-fx/shots.mjs`) brought the heroes back, so
+the rows were the cause; taking away only the layer behind the board did not.
+
+**The rule now** (the director's): on the rows, only what lies FLAT on the ground.
+
+- A painted bit that is flat (a ring, a disc: laid along the ground, `flatOf`) is copied to the rows at `ROW_PAINT` (0.7). A
+  painted bit that rises (a flame, a pillar, sparks, a healer's haze) stays in the one fighter's own layer, as before.
+- A king's spell's clip made to lie on the ground (`layer: 'ground'`: rings, a disc of light) is copied to the rows at
+  `ROW_CLIP.ONE` (0.85), or `ROW_CLIP.WIDE` (0.55) when it is wider than a tile and a half. A clip that rises stays in the
+  fighter's own layer, as before.
+- A painted strip cannot be told apart, so it always stays in the fighter's own layer, as before.
+- **Rally's ring** was the Ring scene's hoops round a solid orange middle, which read as a plate once all of it showed. It is
+  now `hoops` (the same hoops with a faint glow inside), so it reads as rings of light.
+
+So what changed in the end is small: flat rings under a party are whole on the ground and under every fighter, where they were
+cut by the nearer tiles. Flames, pillars and hazes are exactly where they were.
+
+- **Memory:** nothing new is loaded; the atlases are the same size (Rally's ring was rendered again in its own place).
 - **Frame cost**, a whole ordinary fight of 20 s (1250 frames), the CPU throttled four times, the graphics card made to finish
   each frame (`WATCH=1 FRAMES=1 node tools/blender-fx/ult-shots.mjs --picks ...`), three runs each:
 
   | | mean ms | median | 95th percentile |
   | --- | --- | --- | --- |
-  | before | 4.4, 3.2, 4.4 | 2.4, 1.8, 2.6 | 11.6, 8.2, 11.3 |
-  | after | 4.8, 4.2, 4.5 | 3.2, 2.6, 2.9 | 11.6, 10.1, 11.8 |
+  | before | 3.6, 3.8, 3.6 | 2.3, 2.3, 2.2 | 9.2, 9.5, 8.9 |
+  | after | 4.0, 3.7, 3.5 | 2.3, 2.4, 2.0 | 9.8, 9.7, 9.7 |
 
-  About half a millisecond more on the mean and the median, the 95th percentile within the runs' own spread. Sixteen row layers
-  are being drawn on the average through such a fight (24 at the most): a bit over a fighter is now several bits, one a row.
-- **Soak** (`tools/freeze-fix/soak.mjs`, seven minutes, ultimates and king's spells by hand): 25 fights, 136 spells, 141
-  ultimates, 145 horns; no stalled fight, no wave end over 8 s.
+  Within the runs' own spread. Two row layers are drawn on the average through such a fight (18 at the most).
 - **Photographs:** `docs/samples/blender-fx/row-under-spells-before-after-393.png` (before above, after below: the king's Heal,
-  Rally and Cleanse on the party, and the Cleric's Prayer of Healing in an ordinary fight).
-- **Verdict.** Every hero stands over the spell and the haze and is readable. Rally's and Cleanse's rings are now whole on the
-  ground where they were mostly hidden; even tempered they are more present than before, which is the largest change to the
-  eye. The healing haze is a pale wash across five or so tiles of ground where it was wisps beside the fighters: the ground under
-  it is a little milky while it lasts.
-- **Not covered:** a bit that drifts out of the rows it was laid on is cut at their edge; loops that stay round a fighter
-  (`bfxRound`, an ultimate's aura) are still in that fighter's own layer.
+  Rally and Cleanse on the party, and the Cleric's Prayer of Healing in an ordinary fight) and
+  `docs/samples/blender-fx/row-under-spells-rally-cleanse-2x.png` (Rally before and after, Cleanse before and after, at twice the
+  size).
+- **Not understood, and said plainly:** by the geometry a row's piece is cut to that row's own columns and should not stand over
+  the fighters of the rows behind, yet it did, on stepped ground. The cuts were in place (each row's layer had its mask). The
+  flat-only rule removes the fault whatever its cause, because a flat picture has nothing to stand up. **An ultimate's copy
+  (ROW-UNDER, above) uses the same rows and is the ultimate's whole strike clip, rising parts and all**, so the same fault may
+  be there on stepped ground. It was not seen in the four ultimates photographed, on gentler ground.
 
-`ROOT=` and one fixed seed in `tools/blender-fx/shots.mjs` make two builds' spell photographs the same field.
+`ROOT=`, `EVAL=` and one fixed seed in `tools/blender-fx/shots.mjs` make two builds' spell photographs the same field and let
+one layer be taken away to see what another shows.

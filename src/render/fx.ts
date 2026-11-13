@@ -282,12 +282,13 @@ export class Fx {
     // (FX-CLEAR: the puffs, rings and signature steps laid over a fighter are thinned too)
     // (ON-FIGHTER: thinned to the rule's ceiling, and drawn again at full strength under the body it lies over)
     this.particles.cover = (x, y, half) => (this.overBody(x, y, half) ? PAINT_OVER : 1);
-    this.particles.under = (x, y, half) => {
+    this.particles.under = (x, y, half, flat) => {
       const s = this.bodyAt(x, y, half);
       if (!s) return null;
-      // (ROW-UNDER: on the ground of every row the bit covers, so it is under every fighter and not only the one farthest back;
-      // the fighter's own layer where the board gives no rows)
-      const rows = this.rowUnder([x - half, y - half, x + half, y + half]);
+      // (ROW-UNDER: a bit that lies FLAT on the ground (a ring, a disc) goes on the ground of every row it covers, so it is under
+      // every fighter. A bit that rises (a flame, a pillar, sparks) does not: laid on a row it stands up the screen over the fighters
+      // of the rows behind and buries them. It stays in the one fighter's own layer, as does everything where a board gives no rows)
+      const rows = flat ? this.rowUnder([x - half, y - half, x + half, y + half]) : [];
       if (rows.length) return rows.map((to) => ({ to, ox: 0, oy: 0, k: 1, a: ROW_PAINT }));
       return [{ to: this.underAt(s.underLayer(), this.lows), ox: s.root.x, oy: s.root.y, k: s.root.scale.x || 1 }];
     };
@@ -1683,21 +1684,8 @@ export class Fx {
     // (ON-FIGHTER: a strip laid over a fighter's body is drawn under that body, in the fighter's own layer, at its full strength: it
     // was drawn over it at six tenths)
     const host = this.bodyAt(x, y, 16 * scale);
-    // (ROW-UNDER: on the ground of every row it covers, a copy on each, so it is under every fighter; the fighter's own layer where
-    // the board gives no rows)
-    const half = (s.frames[0].frame.width * scale) / 2;
-    const rows = host ? this.rowLayers([x - half, y - half, x + half, y + half]) : [];
-    const copies: Sprite[] = [];
-    if (host && rows.length) {
-      rows[0].addChild(sp);
-      for (const layer of rows.slice(1)) {
-        const copy = new Sprite(s.frames[0]);
-        copy.anchor.set(0.5);
-        copy.position.set(x, y);
-        layer.addChild(copy);
-        copies.push(copy);
-      }
-    } else if (host) {
+    // (a strip rises as often as it lies, and cannot be told apart: it stays in the fighter's own layer, never on the ground's rows)
+    if (host) {
       const k = host.root.scale.x || 1;
       scale /= k;
       sp.scale.set(scale);
@@ -1707,27 +1695,8 @@ export class Fx {
     let t = 0;
     let peak: number | undefined;
     let own: number | undefined;
-    const show = (): void => {
-      for (const copy of copies) {
-        if (copy.destroyed) continue;
-        copy.texture = sp.texture;
-        copy.scale.copyFrom(sp.scale);
-        copy.rotation = sp.rotation;
-        copy.alpha = sp.alpha;
-        copy.tint = sp.tint;
-        copy.blendMode = sp.blendMode;
-      }
-    };
     this.items.push({
-      view: {
-        get destroyed() {
-          return sp.destroyed;
-        },
-        destroy: (opt) => {
-          if (!sp.destroyed) sp.destroy(opt);
-          for (const copy of copies) if (!copy.destroyed) copy.destroy();
-        },
-      },
+      view: sp,
       step: (dt) => {
         t += dt;
         // (it keeps the alpha it was given: over a fighter it is under the body, above)
@@ -1737,7 +1706,6 @@ export class Fx {
         if (f >= s.frames.length) return false;
         sp.texture = s.frames[f];
         if (!paintSprite(sp, t, s.frames.length * frameMs, scale, 0, peak, false, this.calm())) sp.alpha = own;
-        show();
         return true;
       },
     });
@@ -2089,9 +2057,10 @@ export class Fx {
             // (the view, glow and all, goes under the body a little larger than itself, `UNDER.SIZE`; and a second copy of the clip
             // stays over the fighter as thin as its measured cover of a body allows, so the spell is still seen to land on them:
             // under the body alone a heal was all but hidden by whom it healed)
-            // (ROW-UNDER: on the ground of every row the clip covers, a copy on each, so it is under every fighter it lies over and
-            // not only the one farthest back; the fighter's own layer where the board gives no rows)
-            const rows = this.rowLayers(bfxBox(c, x, y, (Math.abs(sp.scale.y) / BFX_SCALE) * UNDER.SIZE));
+            // (ROW-UNDER: a clip that lies flat on the ground (`layer: 'ground'`: rings, a disc of light) goes on the ground of every
+            // row it covers, a copy on each, so it is under every fighter it lies over. A clip that rises (flames, a pillar) stays in
+            // the one fighter's own layer: on a row it would stand up the screen over the fighters of the rows behind)
+            const rows = c.layer === 'ground' ? this.rowLayers(bfxBox(c, x, y, (Math.abs(sp.scale.y) / BFX_SCALE) * UNDER.SIZE)) : [];
             if (rows.length) {
               view.scale.set(UNDER.SIZE);
               low = c.w * BFX_SCALE > TW * 1.5 ? ROW_CLIP.WIDE : ROW_CLIP.ONE;

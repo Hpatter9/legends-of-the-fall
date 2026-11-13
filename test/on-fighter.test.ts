@@ -160,11 +160,17 @@ test("ROW-UNDER: an ultimate's copy under a fighter lies on every row its pictur
   assert.match(fx, /this\.stepUnder\(this\.rowLows, dt, true\);/);
 });
 
-test('ROW-UNDER 2: painted bits, painted strips and the king\'s spells lie on the ground\'s rows, tempered, under every fighter', () => {
+test('ROW-UNDER 2: what lies flat on the ground (a painted ring, a king\'s spell\'s ring) goes on the ground\'s rows, tempered; what rises does not', () => {
   const fx = readFileSync('src/render/fx.ts', 'utf8');
-  // (a strip and a king's spell's clip take a copy on each row they cover; the fighter's own layer where there are no rows)
-  assert.match(fx, /const rows = host \? this\.rowLayers\(\[x - half, y - half, x \+ half, y \+ half\]\) : \[\];/);
-  assert.match(fx, /const rows = this\.rowLayers\(bfxBox\(c, x, y, \(Math\.abs\(sp\.scale\.y\) \/ BFX_SCALE\) \* UNDER\.SIZE\)\);/);
+  // (the director's ruling after Rally's flames buried two heroes: only what lies FLAT on the ground goes on the rows. A painted bit
+  // that is flat, and a clip made to lie on the ground; a bit or a clip that rises stays in the one fighter's own layer, and a
+  // painted strip, which cannot be told apart, always does)
+  assert.match(fx, /const rows = flat \? this\.rowUnder\(\[x - half, y - half, x \+ half, y \+ half\]\) : \[\];/);
+  assert.match(fx, /const rows = c\.layer === 'ground' \? this\.rowLayers\(bfxBox\(c, x, y, \(Math\.abs\(sp\.scale\.y\) \/ BFX_SCALE\) \* UNDER\.SIZE\)\) : \[\];/);
+  assert.doesNotMatch(fx, /const copies: Sprite\[\] = \[\];/);
+  assert.match(readFileSync('src/render/particles.ts', 'utf8'), /this\.under\?\.\(b\.x, b\.y, b\.half \?\? 16 \* \(b\.scale \?\? 1\) \* Math\.max\(b\.stretchX \?\? 1, b\.stretchY \?\? 1, 1\), flatOf\(b\)\);/);
+  // (Rally's rings under the party are hoops of light with a faint glow inside, not the Ring's solid middle)
+  assert.equal(BFX_CLIPS['spell-rally-cast'].layer, 'ground');
   assert.match(fx, /low = c\.w \* BFX_SCALE > TW \* 1\.5 \? ROW_CLIP\.WIDE : ROW_CLIP\.ONE;/);
   // (on the rows the whole of a picture shows, where the nearer tiles used to hide most of it: it is drawn below full strength, a
   // wide ring under a party the most tempered, and never so thin that it is lost)

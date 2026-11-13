@@ -2394,8 +2394,25 @@ def dust(c, r=1.0, n=11, h=0.3):
     return step
 
 
+# 75. Hoops: the Ring's hoops of light along the ground with only a faint glow inside them (`fill` of the Ring's), so what lies on
+# the ground under a party reads as rings of light and not a plate. (A scene of its own, so the Ring's many clips are not rendered
+# again for it.)
+def hoops(c, r=1.5, n=3, thick=0.05, fill=0.2):
+    rings = [c.ring('bright' if i % 2 else 'hot', thick * (1 - i * 0.2)) for i in range(n)]
+    glow, ga = c.disc('mid', 0.8, r * 0.8)
+
+    def step(t):
+        for i, (o, v) in enumerate(rings):
+            g = win(t, i * 0.14, 0.6 + i * 0.14)
+            put(o, (0, 0, 0.03), (r * (0.1 + 0.95 * ease(g)),) * 2 + (1 + 2 * (1 - g),))
+            v.outputs[0].default_value = 1 - win(g, 0.6, 1)
+            hide(o, g <= 0 or g >= 1)
+        ga.inputs[1].default_value = 1.4 * fill * bell(win(t, 0, 0.6))
+    return step
+
+
 SCENES = {f.__name__: f for f in (
     burst, pillar, spikes, arc, bolt, vortex, beam, nova, rain, crack, dome, projectile, trail, ring, swarm, chains, meteor, cloud, geyser, sigil,
     wall, crystal, shatter, gust, vines, motes, shout, spiral, implode, bite, eye, ribs, flames, ground, sparks, cross, smoke, portal, claws, veil,
-    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, toll, meteors, wisp, pool, strand, guard, swipe, muzzle, dust,
+    halo, shockwave, souls, hearts, shaft, slab, flare, strike, comet, palisade, siphon, tile, impact, spirits, beast, eyes, whirlpool, sandstorm, wings, banner, flock, notes, eclipse, broadside, toll, meteors, wisp, pool, strand, guard, swipe, muzzle, dust, hoops,
 )}
