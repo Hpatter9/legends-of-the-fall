@@ -1,6 +1,6 @@
 // The rune tray (SEVEN-SLOT GEAR batch 5, docs/notes/gear-runes-design.md section 7, "Showing who wears what"): in a rune run the pack
 // shows a row for each fielded hero (its portrait, name, three sockets and what its runes give), the bag's eight cells, Merge all and
-// Auto runes. Any rune with a twin (another of its kind and level, or a Keystone of its level) has a gold rim and a "2" badge. Tap a rune
+// Auto runes. Any rune with a twin (another of its kind and level, or a Keystone) has a gold rim and a "2" badge. Tap a rune
 // and the places it can go light up (a hero's sockets, the bag, its twins); tap one to set, swap, take off or merge. Runes change between
 // waves only. The rules are all `sim/runes.ts`; this only draws them. The stones are the owner's paintings (`gearUiArt.ts`): the stone in its
 // level's frame, with the level as pips too; an empty socket is a dark diamond, and a merge's new rune flashes the merge spark once.
@@ -118,7 +118,7 @@ export function drawRuneTray(card: HTMLElement, state: RuneState, heroes: readon
       words.append(el('b', '', heroName(h.kind)), el('small', '', runeTotals(state.worn[h.kind]) || 'No runes'));
       const sockets = el('div', 'rnSockets');
       for (const s of socketsOf(state, h.kind)) {
-        const b = el('button', `rnCell${s.rune && s.rune.id === sel ? ' sel' : ''}${s.rune && lit?.merge.includes(s.rune.id) ? ' can' : !s.rune && lit?.heroes.includes(h.kind) ? ' can' : ''}`);
+        const b = el('button', `rnCell${s.rune && s.rune.id === sel ? ' sel' : ''}${s.rune && lit?.twins.includes(s.rune.id) ? ' can' : !s.rune && lit?.heroes.includes(h.kind) ? ' can' : ''}`);
         b.type = 'button';
         b.append(stone(s.rune, s.twin));
         b.disabled = !canEdit;
@@ -137,7 +137,7 @@ export function drawRuneTray(card: HTMLElement, state: RuneState, heroes: readon
     const bag = el('div', `rnBag${lit?.bag ? ' can' : ''}`);
     for (let i = 0; i < BAG_MAX; i++) {
       const r = state.bag[i];
-      const b = el('button', `rnCell${r && r.id === sel ? ' sel' : ''}${r && lit?.merge.includes(r.id) ? ' can' : !r && lit?.bag ? ' can' : ''}`);
+      const b = el('button', `rnCell${r && r.id === sel ? ' sel' : ''}${r && lit?.twins.includes(r.id) ? ' can' : !r && lit?.bag ? ' can' : ''}`);
       b.type = 'button';
       b.append(stone(r, !!r && twins.has(r.id)));
       b.disabled = !canEdit;

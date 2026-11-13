@@ -42,7 +42,7 @@ export const TIPS: Readonly<Record<TipId, TipDef>> = {
   recycle: { text: 'Drag a spare hero off the bench and a Recycle spot appears: drop it there to turn it back into gold.', page: 'game', during: 'deploy' },
   retry: { text: 'Lives: the party shares ten, and a fallen hero rises after 5 seconds for one. With none left, the fallen stay down.', page: 'game' },
   // (FIRST-HOUR: the first rune came with no word; the bench that holds it is shut behind its pull bar)
-  runes: { text: 'You hold a rune. Tap Runes to open the rune bench: drag a rune onto a hero to set it, or onto its twin to merge.', page: 'game', during: 'deploy' },
+  runes: { text: 'You hold a rune. Tap Runes to open the rune bench: drag it onto a hero to set it, or onto a rune of its level to merge.', page: 'game', during: 'deploy' },
   autoReplay: { text: 'Switch Auto on to repeat a cleared army by itself, for as many runs as you set.', page: 'home' },
 };
 

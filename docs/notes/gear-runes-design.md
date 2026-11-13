@@ -251,6 +251,9 @@ chest crowns stay where the joint rebalance left them, so every crown buys less.
 
 ## 7. Runes (in place of the in-run equipment)
 
+> **FEWER-RUNES** changed this section's numbers and drops: about a third as many runes, each about four times as strong, a signature
+> ability on every rune, any two of a level merge, and the Keystone lifts any rune. See [fewer-runes.md](fewer-runes.md).
+
 Runes are carved stones that a hero sets in its three **sockets** for one run. They are the run's only gear. They merge two into one
 of the next level, as King God Castle's equipment does, but the kinds, numbers and look are our own.
 
