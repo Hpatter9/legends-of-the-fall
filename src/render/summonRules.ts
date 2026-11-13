@@ -166,3 +166,89 @@ export function skipAction(plan: ShowPlan, t: number): 'ignore' | 'reveal' | 'en
   if (plan.full && t < plan.revealAt) return 'reveal';
   return 'end';
 }
+
+// SUMMON-SHOW: the order of a draw's results (the owner: "Have the tarot cards, shards only show first. Then after that the
+// unlocked heroes can show"). Every shard card comes first, turned one after another (or all at once); only when every one is
+// turned do the new heroes come, each with its own full reveal, in the order they were drawn, the last one held until a tap.
+
+/** How long the spread waits, once every shard card is turned, before the first new hero's reveal (time to read the totals). */
+export const HEROES_AFTER_MS = 1100;
+/** With no shard card in the draw (every pull a new hero), the first reveal comes almost at once. */
+export const HEROES_AT_ONCE_MS = 350;
+/** How long a hero's reveal stays on its name before going on by itself to the next hero (all but the last; a tap goes sooner). */
+export const HERO_ONWARD_MS = 1800;
+/** The gap between one shard card turning by itself and the next. */
+export const CARD_GAP_MS = 140;
+/** When the first shard card turns by itself. */
+export const FIRST_CARD_MS = 260;
+
+export interface DrawOrder {
+  /** The shard cards (every pull that is not a new hero), in the order drawn: shown first. */
+  cards: number[];
+  /** The new heroes, in the order drawn: each a full reveal after every card is turned. */
+  heroes: number[];
+  /** The hero whose reveal is held until a tap (the last); -1 with no new hero. */
+  held: number;
+  /** How long after the last card turns the first reveal starts (0 with no new hero). */
+  heroesAfter: number;
+}
+
+/** The order a draw's results are shown in: shards first, then the new heroes. A draw of shards only has no heroes (it ends on the
+ *  spread and its totals); a draw of new heroes only has no cards (the reveals start almost at once). */
+export function drawOrder(got: readonly Pick<Pull, 'isNew'>[]): DrawOrder {
+  const cards: number[] = [];
+  const heroes: number[] = [];
+  got.forEach((p, i) => (p.isNew ? heroes : cards).push(i));
+  return {
+    cards,
+    heroes,
+    held: heroes.length ? heroes[heroes.length - 1] : -1,
+    heroesAfter: !heroes.length ? 0 : cards.length ? HEROES_AFTER_MS : HEROES_AT_ONCE_MS,
+  };
+}
+
+/** When each shard card turns by itself (ms from the spread opening), in the order of `drawOrder`'s cards. */
+export const cardTimes = (n: number): number[] => Array.from({ length: n }, (_, i) => FIRST_CARD_MS + i * CARD_GAP_MS);
+
+/** A line of the shard totals: one hero's whole share of the draw. */
+export interface ShardTotal {
+  kind: string;
+  /** How many cards of the draw were this hero's. */
+  cards: number;
+  /** Unlock shards gained (a hero not yet owned), and its bar after the last of them. */
+  unlock: number;
+  have?: number;
+  need?: number;
+  /** Rank shards gained (a hero owned). */
+  rank: number;
+  /** Crowns from cards of a hero with nothing left to buy. */
+  crowns: number;
+  /** The hero joins in this same draw (its reveal comes after the cards). */
+  joins: boolean;
+  lucky: boolean;
+}
+
+/** The shard totals of a draw, a line a hero, in the order each hero was first drawn. New-hero pulls add no line of their own (a
+ *  hero with shard cards too is marked `joins`). */
+export function shardTotals(got: readonly Pull[]): ShardTotal[] {
+  const lines = new Map<string, ShardTotal>();
+  for (const p of got) {
+    if (p.isNew) continue;
+    const t = lines.get(p.kind) ?? { kind: p.kind, cards: 0, unlock: 0, rank: 0, crowns: 0, joins: false, lucky: false };
+    t.cards++;
+    if (p.unlock) {
+      t.unlock += p.unlock;
+      t.have = p.have;
+      t.need = p.need;
+    }
+    t.rank += p.shards;
+    t.crowns += p.crowns ?? 0;
+    t.lucky ||= !!p.lucky;
+    lines.set(p.kind, t);
+  }
+  for (const p of got) {
+    const t = lines.get(p.kind);
+    if (p.isNew && t) t.joins = true;
+  }
+  return [...lines.values()];
+}
