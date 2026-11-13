@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BODY, PAINT_OVER, ROUND, ROW_CLIP, ROW_PAINT, STATUS_ROUND, UNDER, behindRow, frontCover, onFighterClip, overAlpha, rowCut, rowsUnder, wispAt, wispsOf } from '../src/render/onFighterRules';
+import { BODY, PAINT_OVER, ROUND, ROW_CLIP, ROW_PAINT, STATUS_ROUND, THROUGH, UNDER, amongPicture, behindRow, throughAlpha, frontCover, onFighterClip, overAlpha, rowCut, rowsUnder, wispAt, wispsOf } from '../src/render/onFighterRules';
 import { BODY_COVER } from '../src/render/bodyCover';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
 import { STATUS_LOOKS, maxStatuses } from '../src/render/fxRules';
@@ -184,4 +184,33 @@ test('ROW-UNDER 2: what lies flat on the ground (a painted ring, a king\'s spell
   assert.match(fx, /if \(rest\) layer\.visible = p\.busy \|\| layer\.children\.length > \(layer\.mask \? 2 : 1\);/);
   // (the tiles of the rows' cuts are kept for the board and the frame, not gathered for every bit)
   assert.match(fx, /if \(!had \|\| had\.board !== board \|\| had\.frame !== getFrame\(\)\) \{/);
+});
+
+test('SHOW-THROUGH: a fighter among a strike\'s one large picture is drawn again over it, after the brief flash, so the picture is over its body at the ceiling', () => {
+  // (the copy at 1 - ceiling over the picture leaves the picture at the ceiling over the body)
+  assert.ok(Math.abs(1 - THROUGH.ALPHA - BODY.CEILING) < 1e-9);
+  assert.equal(THROUGH.FLASH_MS, BODY.FLASH_MS);
+  // (nothing through the flash, then up, held, and out with the picture; never more than its strength)
+  assert.equal(throughAlpha(0, 1300), 0);
+  assert.equal(throughAlpha(THROUGH.FLASH_MS, 1300), 0);
+  assert.equal(throughAlpha(THROUGH.FLASH_MS + THROUGH.FADE_MS, 1300), THROUGH.ALPHA);
+  assert.equal(throughAlpha(700, 1300), THROUGH.ALPHA);
+  assert.ok(throughAlpha(1300 - THROUGH.FADE_MS / 2, 1300) < THROUGH.ALPHA);
+  assert.equal(throughAlpha(1300, 1300), 0);
+  assert.equal(throughAlpha(-10, 1300), 0);
+  // (reduced motion has no flash: the fighter is seen from the start)
+  assert.equal(throughAlpha(0, 1300, true), THROUGH.ALPHA);
+  // (a fighter 48 px tall with its feet at (0, 0): among a picture its body overlaps, not one beside, above or below it)
+  assert.ok(amongPicture(0, 0, 48, [-100, -200, 100, 50]));
+  assert.ok(amongPicture(0, 0, 48, [10, -30, 100, -20]));
+  assert.ok(!amongPicture(0, 0, 48, [20, -200, 100, 50]));
+  assert.ok(!amongPicture(0, 0, 48, [-100, -200, 100, -50]));
+  assert.ok(!amongPicture(0, 0, 48, [-100, 1, 100, 50]));
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  // (a strike not played on one fighter, and every clip of a showcase)
+  assert.match(fx, /if \(stage === 'strike' && !host\) this\.showThrough\(bfxBox\(c, x, y, size\), life, delay\);/);
+  assert.match(fx, /this\.showThrough\(bfxBox\(c, x, y, size\), life, o\.delay \?\? 0\);/);
+  // (one copy a fighter, and it goes with the fighter or the fight)
+  assert.match(fx, /const had = this\.throughs\.find\(\(h\) => h\.id === s\.unit\.id\);/);
+  assert.match(fx, /if \(h\.t >= h\.life \|\| !s \|\| !s\.unit\.alive \|\| h\.sp\.destroyed\) \{/);
 });

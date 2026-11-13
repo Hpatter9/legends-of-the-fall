@@ -86,7 +86,7 @@ import { loadPaintedArt, paintedStrip, paintSprite, paintHeld } from './cinemati
 import { flicker } from './cinematicRules';
 import { coverAlpha, overFighter } from './overFighter';
 import { BODY_COVER } from './bodyCover';
-import { overAlpha, PAINT_OVER, UNDER, rowsUnder, behindRow, rowCut, ROW_PAINT, ROW_CLIP } from './onFighterRules';
+import { overAlpha, PAINT_OVER, UNDER, rowsUnder, behindRow, rowCut, ROW_PAINT, ROW_CLIP, amongPicture, throughAlpha } from './onFighterRules';
 import { BossFx } from './bossFx';
 import type { Element, Family } from './fxRules';
 
@@ -241,6 +241,9 @@ export class Fx {
   /** ROW-UNDER: an ultimate's copy under a fighter, a layer over each diagonal row of tiles (cut to that row's tile tops) and one
    *  behind the whole board (`rowUnder`); `rowBoxes` are the cut layers by row, each made for the board it was cut to. */
   private rowLows = new Map<Container, Particles>();
+  /** SHOW-THROUGH: the fighters drawn again over a strike that stands over them (`showThrough`), on a layer over the moment's. */
+  private throughLayer = new Container();
+  private throughs: { id: number; sp: Sprite; t: number; life: number }[] = [];
   private rowBoxes = new Map<number, { box: Container; board: Board }>();
   /** Ms of a slow-motion beat left (a boss falls); `timeScale` slows the fight while it lasts. */
   private slowLeft = 0;
@@ -279,6 +282,8 @@ export class Fx {
     this.dimLayer.zIndex = 1e7 - 1;
     this.dimLayer.visible = false;
     this.root.addChild(this.particles.root, this.moment.root);
+    this.throughLayer.sortableChildren = true;
+    this.root.addChild(this.throughLayer);
     // (FX-CLEAR: the puffs, rings and signature steps laid over a fighter are thinned too)
     // (ON-FIGHTER: thinned to the rule's ceiling, and drawn again at full strength under the body it lies over)
     this.particles.cover = (x, y, half) => (this.overBody(x, y, half) ? PAINT_OVER : 1);
@@ -314,6 +319,8 @@ export class Fx {
     this.unders.clear();
     this.lows.clear();
     this.rowLows.clear();
+    for (const h of this.throughs) if (!h.sp.destroyed) h.sp.destroy();
+    this.throughs = [];
     this.bossFx.clear();
     this.heals.clear();
     this.epic = new Set();
@@ -657,6 +664,7 @@ export class Fx {
     this.moment.step(dt);
     this.stepUnder(this.unders, dt);
     this.stepUnder(this.rowLows, dt, true);
+    this.stepThrough(dt);
     for (const l of this.bfxLit) l.left -= dt;
     this.bfxLit = this.bfxLit.filter((l) => l.left > 0);
   }
@@ -719,6 +727,41 @@ export class Fx {
     this.particles.spawn({ ...pose, frames: frames.slice(0, first), frameMs: per, life: first * per, prio: true, solid: true, bare: true });
     this.particles.spawn({ ...pose, frames: frames.slice(first), frameMs: per, life: (frames.length - first) * per, delay: delay + first * per, prio: true });
     return true;
+  }
+
+  /** SHOW-THROUGH (`onFighterRules.ts`): a picture covering the world box `box` for `life` ms, after `delay`, stands over whoever is
+   *  among it: each such living fighter is drawn again over it, so it is seen through the picture. One copy a fighter: a second
+   *  picture over the same fighter only lengthens its copy's stay. */
+  private showThrough(box: readonly [number, number, number, number], life: number, delay = 0): void {
+    for (const s of this.sprites.values()) {
+      if (!s.unit.alive || !amongPicture(s.x, s.y, s.tall, box)) continue;
+      const had = this.throughs.find((h) => h.id === s.unit.id);
+      if (had) {
+        // (it stays to the later end; if it has not begun, it begins with the earlier picture)
+        const end = Math.max(had.life - had.t, delay + life);
+        if (had.t < 0) had.t = Math.max(had.t, -delay);
+        had.life = had.t + end;
+        continue;
+      }
+      const sp = new Sprite();
+      sp.alpha = 0;
+      this.throughLayer.addChild(sp);
+      this.throughs.push({ id: s.unit.id, sp, t: -delay, life });
+    }
+  }
+
+  private stepThrough(dt: number): void {
+    this.throughs = this.throughs.filter((h) => {
+      h.t += dt;
+      const s = this.sprites.get(h.id);
+      if (h.t >= h.life || !s || !s.unit.alive || h.sp.destroyed) {
+        if (!h.sp.destroyed) h.sp.destroy();
+        return false;
+      }
+      s.mirrorBody(h.sp);
+      h.sp.alpha = throughAlpha(h.t, h.life, this.reduced);
+      return true;
+    });
   }
 
   /** ON-FIGHTER: move the layers under the fighters' bodies on; one whose fighter has gone (its view destroyed, and the layer with
@@ -867,6 +910,9 @@ export class Fx {
       }
     }
     this.moment.spawn({ ...bit, alpha: base * thin });
+    // (SHOW-THROUGH: a strike not played on one fighter is a picture in the midst, standing over whoever is among it: they are drawn
+    // again over it, so none is hidden)
+    if (stage === 'strike' && !host) this.showThrough(bfxBox(c, x, y, size), life, delay);
     // (the moment's dim is lifted over a wind-up and a strike while they play, so they are seen at full strength and not through it: `momentLights`)
     if (stage !== 'aftermath') this.bfxLit.push({ x: cx, y: cy, r: Math.max(c.w, c.h) * BFX_SCALE * size * ULT_BFX.LIGHT, left: life + delay });
     return true;
@@ -1222,6 +1268,8 @@ export class Fx {
     const life = o.life ?? c.ms;
     const [cx, cy] = bfxCentre(c, x, y, size);
     this.moment.spawn({ frames: this.reduced ? [frames[c.hold]] : frames, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: this.reduced ? life : (loop ? c.ms : life) / c.n, life, loop, prio: true, solid: true, half: Math.min(c.w, c.h) * BFX_SCALE * size * 0.42, ...(o.delay ? { delay: o.delay } : {}), ...(o.vx ? { vx: o.vx } : {}), ...(o.vy ? { vy: o.vy } : {}) });
+    // (SHOW-THROUGH: a showcase's clip stands over whoever is among it, as a strike does: they are drawn again over it)
+    this.showThrough(bfxBox(c, x, y, size), life, o.delay ?? 0);
     if (o.lit) this.bfxLit.push({ x: cx, y: cy, r: Math.max(c.w, c.h) * BFX_SCALE * size * ULT_BFX.LIGHT, left: life + (o.delay ?? 0) });
     return true;
   }

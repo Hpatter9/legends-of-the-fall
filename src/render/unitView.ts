@@ -598,6 +598,20 @@ export class UnitSprite {
     return sp;
   }
 
+  /** SHOW-THROUGH: pose `sp` as this fighter's body is posed now, in the world's space (its picture, where it stands, its size, tint
+   *  and filters): a copy of the body to be drawn over an effect that stands over the fighter, so the fighter is seen through it. */
+  mirrorBody(sp: Sprite): void {
+    const k = this.root.scale;
+    sp.texture = this.body.texture;
+    sp.anchor.copyFrom(this.body.anchor);
+    sp.scale.set(this.body.scale.x * k.x, this.body.scale.y * k.y);
+    sp.position.set(this.root.x + this.body.x * k.x, this.root.y + this.body.y * k.y);
+    sp.tint = this.body.tint;
+    sp.filters = this.body.filters ? [...this.body.filters] : null;
+    sp.zIndex = this.root.zIndex;
+    sp.visible = this.root.visible && this.body.visible;
+  }
+
   /** ON-FIGHTER: a layer inside the fighter, just under its body (made when first asked for), in the fighter's own space: its feet at
    *  the origin, `root.scale` its size. An effect played on the fighter is drawn here at full strength, so the body stands in front of it. */
   private underFx: Container | null = null;

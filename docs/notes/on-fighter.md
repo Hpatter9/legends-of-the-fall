@@ -260,3 +260,50 @@ the fighter's own layer too.
   can be seen. Of the four, only the Cleric's and the Knight's strikes play on a fighter; the Druid's spikes and the Sage's dome
   are one picture in the midst and were never on the rows. The Paladin, the High Priestess and the Wanderer were asked for and did
   not fire in the tool on this land, so they are not shown.
+
+## Since: SHOW-THROUGH, a strike's one large picture never hides a fighter
+
+The director's order, from the Druid's spikes standing solid over the fighters among them: audit every ultimate whose strike is
+one large picture laid in the midst of what it struck, and make sure none hides a fighter while keeping the strike's moment.
+
+**The way chosen.** The picture is not thinned, moved or cut (its moment is the strike, and a rising picture cannot go on the
+ground's rows). Each living fighter whose body the picture's box overlaps (`amongPicture`) is drawn AGAIN over the picture, on a
+layer above the moment's (`Fx.showThrough`, `UnitView.mirrorBody`: the body's own picture, pose, tint and filters, followed every
+frame). The copy is absent for the rule's 150 ms flash, then comes up to `THROUGH.ALPHA` (0.85) and goes out with the picture
+(`throughAlpha`). A body at 0.85 over the picture leaves the picture over that body at the ceiling (0.15) exactly, and whole
+everywhere else. One copy a fighter; a second picture over the same fighter only lengthens its stay. Reduced motion has no
+flash: the fighter is seen from the start.
+
+**Where it applies.** Every strike not played on one fighter (the 21 below, and the strikes laid on tiles and down a line), and
+every clip of a showcase (the Druid's green spikes are her showcase's, before her strike of vines).
+
+**The 21 ultimates whose strike is one picture in the midst:** Druid, Archer, Last Star, Astrologer, Barbarian, Blood Gargoyle,
+Dread Pirate, Falconer, Hemomancer, Juggernaut, Karasu Tengu, Lancer, Lightning Mage, Minotaur, Strigoi, Seraph, Shambler, Siege
+Bot, Eclipse Sovereign, War Drummer, Fire Wizard. The Great Sage's dome is played on him and is left as glass.
+
+- Photographs, each on the Undead's stepped ground at the same moment of the strike, before above and after below, seven
+  ultimates a sheet in the order above: `docs/samples/blender-fx/show-through-{1,2,3}-393.jpg` (393x852) and
+  `show-through-{1,2,3}-2x.jpg` (round the strike at twice the size).
+- Memory: nothing loaded; no atlas changed.
+- Frame cost of the whole show, the CPU throttled four times, the strike's frames, mean ms (95th percentile), two runs each:
+
+  | | before | after |
+  | --- | --- | --- |
+  | Druid | 5.1 (30), 5.6 (32) | 7.6 (45), 4.2 (27) |
+  | Seraph | 4.7 (28), 5.0 (28) | 5.2 (32), 6.9 (36) |
+  | Lightning Mage | 6.3 (37), 4.9 (30) | 7.0 (38), 5.5 (35) |
+
+  The runs differ among themselves by more than the builds do: up to ten more sprites for a second is not measurable here.
+- Verdict. In all 21 the fighters among the picture can be read in the after row; the clearest are those that were worst (inside
+  the Lightning Mage's cloud, the Seraph's pillar, the Shambler's cloud, the War Drummer's rings, the Juggernaut's dust). The
+  strikes look a little less solid for it: a fighter seems to stand in front of a pillar it is inside.
+- Limits, plainly:
+  1. The show's clock is held on the blow, so the "150 ms" for which the picture is whole over the bodies lasts about 300 ms of
+     real time.
+  2. A fighter that only overlaps the picture's BOX is shown through too, even where the picture is empty there: harmless (its
+     copy is over nothing), but it means a fighter standing in front of a picture is drawn over it at 0.85 where it would have
+     been at full strength under it; no difference shows.
+  3. The copy is the body alone, not a status's wisps or an ailment's overlay; health bars are above the effects as before.
+  4. The copies are sorted among themselves by depth, but each is see-through, so where two overlap the farther shows faintly
+     through the nearer.
+  5. Each ultimate was photographed once, on one land, with the tool's own party.

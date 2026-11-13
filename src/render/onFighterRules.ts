@@ -132,3 +132,24 @@ export const ROW_PAINT = 0.7;
  *  clip wider than a tile and a half (a ring under a whole party) at a little over half, for the same reason as `ROW_PAINT`: all of
  *  it shows now, where the nearer tiles used to hide most of it. */
 export const ROW_CLIP = { ONE: 0.85, WIDE: 0.55 } as const;
+
+/** SHOW-THROUGH: an ultimate's strike that is one large picture in the midst of what it struck (spikes, a pillar, a wall, a burst
+ *  taller than a fighter) stands over whoever is among it. It is not thinned or moved (its moment is the strike): each fighter it
+ *  stands over is drawn again OVER it, at `1 - BODY.CEILING` of full strength, once the rule's brief flash is over. That leaves the
+ *  picture over a body at the ceiling exactly, and whole everywhere else. A fighter is among the picture when its body (`BODY.W` of
+ *  its height across, its height tall, from its feet at x, y) overlaps the picture's box `[left, top, right, bottom]`. */
+export const THROUGH = { ALPHA: 1 - BODY.CEILING, FLASH_MS: BODY.FLASH_MS, FADE_MS: 120 } as const;
+export function amongPicture(x: number, y: number, tall: number, box: readonly [number, number, number, number]): boolean {
+  const half = (tall * BODY.W) / 2;
+  return x + half > box[0] && x - half < box[2] && y > box[1] && y - tall < box[3];
+}
+/** How strongly a fighter's copy is drawn `t` ms after the picture began, for a picture `life` ms long: nothing through the
+ *  flash, then up to `THROUGH.ALPHA` over `FADE_MS`, and out again over the picture's last `FADE_MS`. With `still` (reduced motion)
+ *  there is no flash: the copy is there from the start. */
+export function throughAlpha(t: number, life: number, still = false): number {
+  if (t < 0 || t >= life) return 0;
+  const from = still ? 0 : THROUGH.FLASH_MS;
+  const up = still ? 1 : Math.max(0, Math.min(1, (t - from) / THROUGH.FADE_MS));
+  const down = Math.max(0, Math.min(1, (life - t) / THROUGH.FADE_MS));
+  return THROUGH.ALPHA * Math.min(up, down);
+}
