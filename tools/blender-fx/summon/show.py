@@ -42,7 +42,8 @@ PARTS = {
 }
 
 # The colours: the sanctum's emerald and its gold, burning up to white.
-GOLD_HEAT = [(0.0, (0.02, 0.12, 0.07, 1)), (0.25, (0.08, 0.55, 0.3, 1)), (0.5, (0.55, 0.9, 0.45, 1)), (0.7, (1.0, 0.82, 0.35, 1)), (0.86, (1.0, 0.95, 0.7, 1)), (1.0, (1, 1, 1, 1))]
+# (second pass: the circle burns gold, not white: its top is a rich gold, with pale gold only at the very front of the drawing-on)
+GOLD_HEAT = [(0.0, (0.02, 0.12, 0.07, 1)), (0.25, (0.06, 0.5, 0.26, 1)), (0.48, (0.7, 0.62, 0.14, 1)), (0.68, (0.95, 0.62, 0.1, 1)), (0.85, (1.0, 0.76, 0.24, 1)), (1.0, (1.0, 0.9, 0.55, 1))]
 WHITE = (1.0, 0.98, 0.9, 1)
 GOLD = (1.0, 0.8, 0.32, 1)
 PALE = (0.75, 1.0, 0.82, 1)
@@ -222,7 +223,7 @@ def circle(radius=1.4, z=0.01):
     hot = mth(nt, 'ADD', mth(nt, 'MULTIPLY', heat, 0.85), mth(nt, 'MULTIPLY', front, 0.5))
     col = ramp(nt, hot, GOLD_HEAT)
     a = mth(nt, 'MULTIPLY', mth(nt, 'MULTIPLY', mth(nt, 'MULTIPLY', img.outputs['Color'], 1.6), shown), strength)
-    glow(nt, col.outputs['Color'], a, 1.4)
+    glow(nt, col.outputs['Color'], a, 1.0)
     bpy.ops.mesh.primitive_plane_add(size=2 * radius, location=(0, 0, z))
     pl = bpy.context.object
     pl.data.materials.append(m)
@@ -239,7 +240,7 @@ def rune_band(radius=1.15, z=0.02):
     nt.links.new(tc.outputs['UV'], img.inputs[0])
     heat, strength = value(nt, 0.6), value(nt, 0.0)
     col = ramp(nt, heat, GOLD_HEAT)
-    glow(nt, col.outputs['Color'], mth(nt, 'MULTIPLY', mth(nt, 'MULTIPLY', img.outputs['Color'], 1.6), strength), 1.6)
+    glow(nt, col.outputs['Color'], mth(nt, 'MULTIPLY', mth(nt, 'MULTIPLY', img.outputs['Color'], 1.6), strength), 1.0)
     bpy.ops.mesh.primitive_plane_add(size=2 * radius, location=(0, 0, z))
     pl = bpy.context.object
     pl.data.materials.append(m)
@@ -343,10 +344,10 @@ def charge():
     def step(i):
         t = i / (n - 1)
         drawn.outputs[0].default_value = ease(clamp(t / 0.55))
-        heat.outputs[0].default_value = 0.35 + 0.5 * t + (0.04 if i % 2 else 0)
+        heat.outputs[0].default_value = 0.3 + 0.45 * t + (0.04 if i % 2 else 0)
         strength.outputs[0].default_value = 0.8 + 0.6 * t
         band.rotation_euler = (0, 0, -t * math.pi / 3)
-        bheat.outputs[0].default_value = 0.5 + 0.45 * t
+        bheat.outputs[0].default_value = 0.55 + 0.3 * t
         bstr.outputs[0].default_value = seg(t, 0.25, 0.6)
         pool.outputs[0].default_value = 0.25 + 0.5 * t
         cstr.outputs[0].default_value = 0.9 * seg(t, 0.55, 1.0)
@@ -377,26 +378,29 @@ def rift():
         rings.append((ring(m, 0.4, 0.03), v, k))
     rnd = random.Random(7)
     streaks = []
-    for k in range(26):
-        m, v, em = lit(rnd.choice([WHITE, GOLD, PALE]), 1.2)
+    # (streaks running up the seam itself, and a few outside it)
+    for k in range(48):
+        m, v, em = lit(rnd.choice([WHITE, GOLD, GOLD, PALE]), 1.2)
         o = ico(m, r=1.0, sub=1)
-        streaks.append((o, v, rnd.uniform(0, math.tau), rnd.uniform(0.25, 0.9), rnd.uniform(0, 1), rnd.uniform(1.2, 2.2)))
+        inside = k < 34
+        streaks.append((o, v, rnd.uniform(0, math.tau), rnd.uniform(0.02, 0.22) if inside else rnd.uniform(0.35, 0.9), rnd.uniform(0, 1), rnd.uniform(2.2, 3.6) if inside else rnd.uniform(1.2, 2.2)))
     drawn.outputs[0].default_value = 1.0
 
     def step(i):
         t = i / (n - 1)
-        clock.outputs[0].default_value = i * 0.35
-        heat.outputs[0].default_value = 0.9 + (0.05 if i % 2 else 0)
-        strength.outputs[0].default_value = 1.6
+        # (a big step of the noise a frame: the torn edges flicker and shift every frame, not drift)
+        clock.outputs[0].default_value = i * 1.7
+        heat.outputs[0].default_value = 0.8 + (0.06 if i % 2 else 0)
+        strength.outputs[0].default_value = 1.5
         band.rotation_euler = (0, 0, -math.pi / 3 - t * 0.6)
-        bheat.outputs[0].default_value = 1.0
+        bheat.outputs[0].default_value = 0.85
         bstr.outputs[0].default_value = 1.0
         pool.outputs[0].default_value = 0.8 + 0.3 * t
         # (the seam tears up: a hair first, then splits wide)
-        width.outputs[0].default_value = 0.02 + 0.26 * out3(seg(t, 0.15, 1.0))
+        width.outputs[0].default_value = (0.02 + 0.26 * out3(seg(t, 0.15, 1.0))) * (1.0 + (0.14 if i % 2 else -0.08))
         sstr.outputs[0].default_value = 0.7 + 0.3 * t
-        cstr.outputs[0].default_value = 0.35 + 0.35 * t
-        s = 0.1 + 0.32 * out3(t)
+        cstr.outputs[0].default_value = 0.25 + 0.25 * t
+        s = 0.1 + 0.28 * out3(t)
         col.scale = (s, s, 1.0)
         for o, v, k in rings:
             p = clamp(t * 1.3 - k * 0.22)
@@ -407,13 +411,18 @@ def rift():
         for o, v, a, r, ph, speed in streaks:
             z = ((ph + t * speed) % 1.0) * 6.0
             o.location = (math.cos(a) * r, math.sin(a) * r, z)
-            o.scale = (0.012, 0.012, 0.25 + 0.3 * speed)
-            v.outputs[0].default_value = seg(t, 0.1, 0.4) * (1 - seg(z, 3.6, 5.2))
+            o.location = (math.cos(a) * r, -0.05 if r < 0.3 else math.sin(a) * r, z)
+            o.scale = (0.012, 0.012, 0.2 + 0.25 * speed)
+            v.outputs[0].default_value = seg(t, 0.05, 0.3) * (1 - seg(z, 3.6, 5.2))
 
     render(sc, 'rift', n, step)
 
 
 def burst():
+    """The arrival (second pass): no ball of light round the hero. The rift snaps shut into a hot point on the floor (one frame), and a
+    fast ring of light races out from the circle across the floor with a second, higher ring of light behind it; shards of light are
+    flung outward and up off the circle's rim, and streaks of light run out flat across the floor. The hero, drawn over it, steps out of
+    the ring."""
     sc, n = reset('burst')
     pl, drawn, heat, strength = circle()
     band, bheat, bstr = rune_band(0.78)
@@ -421,73 +430,79 @@ def burst():
     width, sstr, clock = seam()
     col, cstr = pillar_glow()
     drawn.outputs[0].default_value = 1.0
-    fm, fv = soft_flash()
-    flash = ico(fm, (0, 0, 1.3), 1.0, sub=4)
-    for f in flash.data.polygons:
-        f.use_smooth = True
-    wm, wv, wem = lit(GOLD, 1.2)
-    wave = ring(wm, 1.0, 0.035)
-    wm2, wv2, wem2 = lit(PALE, 1.2)
-    wave2 = ring(wm2, 1.0, 0.025)
+    cm, cv, cem = lit(WHITE, 1.4)
+    core = ico(cm, (0, 0, 0.12), 1.0, sub=2)
+    wm, wv, wem = lit(GOLD, 1.3)
+    wave = ring(wm, 1.0, 0.05)
+    wm2, wv2, wem2 = lit(WHITE, 1.2)
+    wave2 = ring(wm2, 1.0, 0.03)
+    wm3, wv3, wem3 = lit(GOLD, 1.2)
+    wave3 = ring(wm3, 1.0, 0.03)
     rnd = random.Random(12)
     shards = []
-    for k in range(40):
-        m, v, em = lit(rnd.choice([WHITE, GOLD, GOLD, PALE, EMERALD]), rnd.uniform(1.0, 1.6))
+    for k in range(56):
+        m, v, em = lit(rnd.choice([WHITE, GOLD, GOLD, GOLD, PALE, EMERALD]), rnd.uniform(1.1, 1.5))
         o = ico(m, r=1.0, sub=0)
-        # (thrown out round the heart, mostly sideways and up, a few low across the floor)
-        a = rnd.uniform(0, math.tau)
-        up = rnd.uniform(-0.3, 1.0)
-        dirv = (math.cos(a) * (1 - abs(up) * 0.5), math.sin(a) * (1 - abs(up) * 0.5) * 0.6, up)
-        shards.append((o, v, dirv, rnd.uniform(1.4, 2.8), rnd.uniform(0.03, 0.06), (rnd.uniform(0, 6), rnd.uniform(0, 6), rnd.uniform(0, 6))))
+        # (off the circle's rim, flung outward and up)
+        a = (k + rnd.uniform(-0.4, 0.4)) / 56 * math.tau
+        r0 = rnd.uniform(0.9, 1.35)
+        out = rnd.uniform(0.5, 1.0)
+        up = rnd.uniform(0.6, 2.6)
+        shards.append((o, v, a, r0, out, up, rnd.uniform(0.028, 0.05), (rnd.uniform(0, 6), rnd.uniform(0, 6))))
     rays = []
-    for k in range(14):
-        m, v, em = lit(WHITE if k % 2 else GOLD, 1.2)
-        bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=1.0, radius2=0.0, depth=1.0, location=(0, 0, 1.3))
+    for k in range(16):
+        m, v, em = lit(GOLD if k % 2 else WHITE, 1.2)
+        bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=1.0, radius2=0.0, depth=1.0)
         o = bpy.context.object
         o.data.materials.append(m)
-        # (a ray in the camera's plane, from the heart outward)
-        a = (k + 0.5) / 14 * math.tau + rnd.uniform(-0.1, 0.1)
-        rays.append((o, v, a, rnd.uniform(1.3, 2.3)))
+        a = (k + 0.5) / 16 * math.tau + rnd.uniform(-0.12, 0.12)
+        rays.append((o, v, a, rnd.uniform(0.9, 1.4)))
 
     def step(i):
         t = i / (n - 1)
-        clock.outputs[0].default_value = 2.1 + i * 0.35
-        heat.outputs[0].default_value = 1.0 - 0.3 * seg(t, 0.4, 1.0)
-        strength.outputs[0].default_value = 1.6 - 0.5 * seg(t, 0.4, 1.0)
-        band.rotation_euler = (0, 0, -math.pi / 3 - 0.6 - t * 0.5)
-        bstr.outputs[0].default_value = 1.0 - 0.4 * t
-        pool.outputs[0].default_value = 1.1 - 0.6 * t
-        # (the rift collapses into the flash)
-        width.outputs[0].default_value = 0.28 * (1 - out3(seg(t, 0.0, 0.35)))
-        sstr.outputs[0].default_value = 1 - seg(t, 0.2, 0.4)
-        cstr.outputs[0].default_value = 0.7 * (1 - seg(t, 0.0, 0.45))
-        s = 0.42 * (1 - 0.7 * seg(t, 0.0, 0.4))
-        col.scale = (s, s, 1.0)
-        f = out3(seg(t, 0.0, 0.5))
-        flash.scale = (0.4 + 1.3 * f, 0.4 + 1.3 * f, 0.4 + 1.5 * f)
-        fv.outputs[0].default_value = (1 - seg(t, 0.15, 0.55)) * 0.95
-        w = out3(seg(t, 0.05, 1.0))
-        wave.scale = (0.4 + 1.85 * w, 0.4 + 1.85 * w, 1)
-        wv.outputs[0].default_value = 1 - seg(t, 0.5, 1.0)
-        w2 = out3(seg(t, 0.2, 1.0))
-        wave2.scale = (0.3 + 1.4 * w2, 0.3 + 1.4 * w2, 1)
-        wv2.outputs[0].default_value = seg(t, 0.2, 0.3) * (1 - seg(t, 0.6, 1.0))
-        for o, v, d, sp, r, rot in shards:
-            p = out3(seg(t, 0.05, 1.0))
-            dist = sp * p
-            o.location = (d[0] * dist, d[1] * dist, 1.3 + d[2] * dist - 0.8 * t * t)
-            o.scale = (r * 0.5, r * 0.5, r * (1.6 + 2.0 * (1 - p)))
-            o.rotation_euler = (rot[0] + t * 3, rot[1], rot[2] + t * 2)
-            v.outputs[0].default_value = (1 - seg(t, 0.55, 1.0))
+        clock.outputs[0].default_value = 12.0 + i * 1.7
+        heat.outputs[0].default_value = 0.88 - 0.15 * seg(t, 0.3, 1.0)
+        strength.outputs[0].default_value = 1.6 - 0.4 * seg(t, 0.4, 1.0)
+        band.rotation_euler = (0, 0, -math.pi / 3 - 0.6 - t * 0.9)
+        bheat.outputs[0].default_value = 0.85
+        bstr.outputs[0].default_value = 1.0 - 0.2 * t
+        pool.outputs[0].default_value = 1.2 - 0.5 * t
+        # (the rift snaps shut in the first two frames)
+        width.outputs[0].default_value = 0.28 * (1 - seg(t, 0.0, 0.2))
+        sstr.outputs[0].default_value = 1 - seg(t, 0.05, 0.2)
+        cstr.outputs[0].default_value = 0.5 * (1 - seg(t, 0.0, 0.2))
+        col.scale = (0.38, 0.38, 1.0)
+        # (the hot point on the floor: the first frame only, low and small)
+        core.scale = (0.32, 0.32, 0.14)
+        cv.outputs[0].default_value = 1.0 if i == 0 else 0.0
+        w = out3(seg(t, 0.0, 0.7))
+        wave.scale = (0.6 + 1.7 * w, 0.6 + 1.7 * w, 1)
+        wv.outputs[0].default_value = 1 - seg(t, 0.45, 0.9)
+        w2 = out3(seg(t, 0.08, 0.8))
+        wave2.scale = (0.5 + 1.3 * w2, 0.5 + 1.3 * w2, 1)
+        wv2.outputs[0].default_value = seg(t, 0.05, 0.12) * (1 - seg(t, 0.5, 0.95))
+        # (the higher ring rises off the floor as it widens: a hoop the hero steps out of)
+        w3 = out3(seg(t, 0.0, 0.6))
+        wave3.location = (0, 0, 0.1 + 1.0 * w3)
+        wave3.scale = (0.9 + 0.9 * w3, 0.9 + 0.9 * w3, 1)
+        wv3.outputs[0].default_value = 1 - seg(t, 0.35, 0.75)
+        for o, v, a, r0, out, up, r, rot in shards:
+            p = out3(seg(t, 0.0, 0.9))
+            rr = r0 + out * p
+            o.location = (math.cos(a) * rr, math.sin(a) * rr * 0.7, 0.1 + up * p - 1.2 * t * t)
+            o.scale = (r * 0.5, r * 0.5, r * (1.4 + 2.4 * (1 - p)))
+            # (each leans the way it flies)
+            o.rotation_euler = (rot[0] * 0.2 - 0.5 * math.sin(a), 0.6 * math.cos(a), rot[1])
+            v.outputs[0].default_value = 1 - seg(t, 0.6, 1.0)
         for o, v, a, ln in rays:
-            p = out3(seg(t, 0.0, 0.6))
+            p = out3(seg(t, 0.0, 0.45))
             L = ln * (0.3 + 0.7 * p)
-            wdt = 0.06 * (1 - 0.6 * p)
+            wdt = 0.045 * (1 - 0.5 * p)
+            # (laid flat on the floor, from the circle's rim outward)
             o.scale = (wdt, wdt, L)
-            # (the cone points along its local z; laid in the x-z plane at angle a, its base at the heart)
-            o.rotation_euler = (0, math.pi / 2 - a, 0)
-            o.location = (math.cos(a) * L / 2, -0.2, 1.3 + math.sin(a) * L / 2)
-            v.outputs[0].default_value = 0.9 * (1 - seg(t, 0.3, 0.75))
+            o.rotation_euler = (math.pi / 2, 0, a - math.pi / 2)
+            o.location = (math.cos(a) * (0.7 + L / 2), math.sin(a) * (0.7 + L / 2), 0.03)
+            v.outputs[0].default_value = 0.9 * (1 - seg(t, 0.25, 0.6))
 
     render(sc, 'burst', n, step)
 
@@ -500,25 +515,26 @@ def after():
     drawn.outputs[0].default_value = 1.0
     rnd = random.Random(21)
     embers = []
-    for k in range(56):
-        m, v, em = lit(rnd.choice([GOLD, PALE, WHITE, EMERALD]), rnd.uniform(1.0, 1.5))
-        o = ico(m, r=rnd.uniform(0.025, 0.045))
-        a, r = rnd.uniform(0, math.tau), math.sqrt(rnd.uniform(0, 1)) * 1.1
-        embers.append((o, v, a, r, rnd.uniform(0, 1), rnd.uniform(2.0, 3.6), rnd.uniform(0, math.tau)))
+    # (motes rising round the hero, not over it: a ring of them from the circle's inner rings to its rim)
+    for k in range(96):
+        m, v, em = lit(rnd.choice([GOLD, GOLD, PALE, WHITE, EMERALD]), rnd.uniform(1.2, 1.6))
+        o = ico(m, r=rnd.uniform(0.028, 0.05))
+        a, r = rnd.uniform(0, math.tau), rnd.uniform(0.45, 1.35)
+        embers.append((o, v, a, r, rnd.uniform(0, 1), rnd.uniform(2.0, 3.4), rnd.uniform(0, math.tau)))
 
     def step(i):
         t = i / n                                                            # (a loop: the last frame leads back into the first)
-        heat.outputs[0].default_value = 0.55 + 0.05 * math.sin(t * math.tau)
-        strength.outputs[0].default_value = 1.0 + 0.12 * math.sin(t * math.tau)
+        heat.outputs[0].default_value = 0.72 + 0.05 * math.sin(t * math.tau)
+        strength.outputs[0].default_value = 1.25 + 0.15 * math.sin(t * math.tau)
         # (the band has twelve runes: a twelfth of a turn a loop meets itself)
         band.rotation_euler = (0, 0, -t * math.tau / 12)
-        bheat.outputs[0].default_value = 0.6
-        bstr.outputs[0].default_value = 0.8
-        pool.outputs[0].default_value = 0.45 + 0.06 * math.sin(t * math.tau)
+        bheat.outputs[0].default_value = 0.82 + 0.04 * math.sin(t * math.tau * 2)
+        bstr.outputs[0].default_value = 1.15
+        pool.outputs[0].default_value = 0.6 + 0.08 * math.sin(t * math.tau)
         for o, v, a, r, ph, top, sw in embers:
             p = (ph + t) % 1.0
             o.location = (math.cos(a) * r + 0.08 * math.sin(sw + p * math.tau), math.sin(a) * r, p * top)
-            v.outputs[0].default_value = seg(p, 0.0, 0.12) * (1 - seg(p, 0.6, 1.0))
+            v.outputs[0].default_value = seg(p, 0.0, 0.1) * (1 - seg(p, 0.7, 1.0))
 
     render(sc, 'after', n, step)
 

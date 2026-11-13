@@ -345,8 +345,8 @@ const css = `
    and the flash comes with the arrival's burst rather than the rift */
 .tarotReveal.bfx :is(.trCharge, .trBeam, .trImpact, .trBurst, .trRing, .trHalo, .trSparks, .trRays) { display: none; }
 .tarotReveal.bfx[data-stage="2"] .trFlash { animation: none; }
-.tarotReveal.bfx[data-stage="3"] .trFlash { animation: summonFlashSoft .55s ease-out both; }
-@keyframes summonFlashSoft { 0% { opacity: 0; } 15% { opacity: .7; } 100% { opacity: 0; } }
+.tarotReveal.bfx[data-stage="3"] .trFlash { animation: summonFlashSoft .35s ease-out both; }
+@keyframes summonFlashSoft { 0% { opacity: 0; } 12% { opacity: .4; } 100% { opacity: 0; } }
 .tarotReveal.bfx .sfxHero { z-index: 1; }
 .tarotReveal .summonerActor { z-index: 1; }
 .tarotReveal .trStage, .tarotReveal .trPlate { z-index: 2; }
