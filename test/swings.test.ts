@@ -18,10 +18,10 @@ test('every weapon has its rendered stroke: small, quick, and in the atlases eve
   }
   // (four different strokes: a sword's crescent, a club's arc, a spear's thrust, claws)
   assert.equal(new Set(Object.values(SWING).map((s) => s.key)).size, 4);
-  // (a thrust is long and thin, a heavy arc the largest)
+  // (a thrust is long and thin, a heavy arc the longest stroke and drawn the largest)
   const [thrust, heavy, blade] = [bfxClip('swing-thrust')!, bfxClip('swing-heavy')!, bfxClip('swing-blade')!];
   assert.ok(thrust.w > thrust.h * 2);
-  assert.ok(heavy.w * heavy.h > blade.w * blade.h);
+  assert.ok(heavy.w * SWING.slashEarth.size > blade.w * SWING.slashLight.size);
 });
 
 test('the stroke goes on a fighter by the ON-FIGHTER rule, and the painted slash stays as the fallback', () => {
