@@ -144,7 +144,7 @@ export function findSlotGear(run: Run, id: number, slot: Slot, tier: number, sta
   return isReal(run) ? fieldPiece(run, id, slot, tier, stage, source) : makeGear(id, slot, tier);
 }
 
-/** A rune run's won wave's rune (every fourth wave and the last: `waveGivesRune`): one of level I, from its own side stream (`WAVE_SOURCE`). */
+/** A rune run's won wave's rune (the first wave, every fourth and the last: `waveGivesRune`): one of level I, from its own side stream (`WAVE_SOURCE`). */
 export function waveRune(run: Run): Gear {
   return runeGear(rollRune(run.runes!, run.seed, run.stage, WAVE_SOURCE, 0, 1), 'charm');
 }

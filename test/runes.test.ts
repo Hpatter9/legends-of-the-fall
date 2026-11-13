@@ -40,25 +40,29 @@ test('a new run finds runes; a find draws from its source\'s stream exactly what
   assert.ok(keys > 105 && keys < 200, `${keys}`);
 });
 
-test('a won wave adds a rune every fourth wave and on the last (FEWER-RUNES); a boss its own of level II and a trophy for the run\'s end', () => {
+test('a won wave adds a rune on the first, every fourth wave and the last (FEWER-RUNES, RUNE-WAVE-ONE); a boss its own of level II and a trophy for the run\'s end', () => {
   const run = newRun(6);
   finish(run, true);
-  assert.equal(run.runes!.bag.length, 0, 'wave 1 gives none now');
+  assert.equal(run.runes!.bag.length, 1, 'wave 1 gives one (RUNE-WAVE-ONE): the heroes have a rune from wave 2');
+  assert.equal(run.runes!.bag[0].lv, 1);
+  assert.ok(run.found!.some((l) => /rune I/.test(l)), 'and the wave card lists it');
+  finish(run, true);
+  assert.equal(run.runes!.bag.length, 1, 'wave 2 gives none');
   run.stage = 4;
   finish(run, true);
-  assert.equal(run.runes!.bag.length, 1, 'the fourth wave gives one');
-  assert.equal(run.runes!.bag[0].lv, 1);
+  assert.equal(run.runes!.bag.length, 2, 'the fourth wave gives one');
   run.stage = 10;
   finish(run, true);
-  assert.equal(run.runes!.bag.length, 2, 'a boss wave: its own rune');
+  assert.equal(run.runes!.bag.length, 3, 'a boss wave: its own rune');
   assert.ok(run.runes!.bag.some((r) => r.lv === 2));
   assert.equal(run.trophies?.length, 1);
   assert.equal(run.pack, undefined, 'no pieces found');
   // (an army's last wave gives one, besides its boss's)
   assert.ok(waveGivesRune(15, 15) && waveGivesRune(10, 10) && !waveGivesRune(14, 15) && waveGivesRune(12, 15) && !waveGivesRune(5, 0));
+  assert.ok(waveGivesRune(1, 15) && waveGivesRune(1, 0) && waveGivesRune(1, 1) && !waveGivesRune(2, 15) && !waveGivesRune(3, 15));
   const army = armyRun(8, 'orcs');
   const shares = Array.from({ length: 15 }, (_, i) => waveGivesRune(i + 1, 15)).filter(Boolean).length;
-  assert.equal(shares, 4, 'an army of fifteen: waves 4, 8, 12 and 15');
+  assert.equal(shares, 5, 'an army of fifteen: waves 1, 4, 8, 12 and 15');
   army.stage = 15;
   finish(army, true);
   assert.equal(army.runes!.bag.length, 2, 'the last wave: its rune and the boss\'s');

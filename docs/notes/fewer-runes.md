@@ -1,5 +1,7 @@
 # Fewer, far stronger runes (FEWER-RUNES)
 
+> **RUNE-WAVE-ONE** (the owner's yes): winning wave 1 now gives a rune too, one more a run. See [rune-wave-one.md](rune-wave-one.md).
+
 The owner's words: "There are too many runes. I want fewer to show up, but make them far more powerful."
 
 Runes are the run's only gear (`src/sim/runes.ts`, [gear-runes-design.md](gear-runes-design.md) section 7, [rune-bench.md](rune-bench.md)).
