@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { BODY, PAINT_OVER, ROUND, STATUS_ROUND, UNDER, frontCover, onFighterClip, overAlpha, wispAt, wispsOf } from '../src/render/onFighterRules';
+import { BODY, PAINT_OVER, ROUND, STATUS_ROUND, UNDER, behindRow, frontCover, onFighterClip, overAlpha, rowCut, rowsUnder, wispAt, wispsOf } from '../src/render/onFighterRules';
 import { BODY_COVER } from '../src/render/bodyCover';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
 import { STATUS_LOOKS, maxStatuses } from '../src/render/fxRules';
@@ -84,7 +84,9 @@ test('every rendered clip that plays on a fighter is measured, and drawn over th
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /const thin = cover === undefined \? 1 : overAlpha\(cover\);/);
   assert.match(fx, /const host = on && thin < 1 \? this\.sprites\.get\(on\.id\) : undefined;/);
-  assert.match(fx, /const under = this\.underAt\(host\.underLayer\(\)\);/);
+  // (ROW-UNDER, the director's order: the copy is on the ground of every row it covers, and in the fighter's own layer only where
+  // the board gives no rows; the assertion follows the new call)
+  assert.match(fx, /for \(const under of rows\.length \? rows : \[this\.underAt\(host\.underLayer\(\)\)\]\) \{/);
   // (presence without cover: behind the body it is larger and keeps its glow; a ring lands at the feet under the fighter; and the
   // clip is over the body at full strength only for the rule's brief flash)
   assert.ok(UNDER.SIZE > 1 && UNDER.RING >= 1);
@@ -131,4 +133,26 @@ test('a wisp is a long thin thread, not a puff: its clip is far wider than it is
     assert.ok(c.w >= 28 && c.w >= c.h * 1.8, `${look.el}: ${c.w} x ${c.h}`);
     assert.ok(c.a <= 1 && c.loop);
   }
+});
+
+test("ROW-UNDER: an ultimate's copy under a fighter lies on every row its picture covers, and behind the board above its far edge", () => {
+  // (a flat board of 4 x 4: tile (u, v) at ((u - v) * 32, (u + v) * 16), its row u + v, drawn at ten times that)
+  const tiles = [];
+  for (let u = 0; u < 4; u++) for (let v = 0; v < 4; v++) tiles.push({ depth: (u + v) * 10, x: (u - v) * 32, y: (u + v) * 16 });
+  // (a picture standing on tile (2, 2), a tile and a half wide and reaching three tiles' heights up the screen)
+  const rows = rowsUnder(tiles, [-48, 64 - 96, 48, 64 + 16], 64, 32);
+  // (its own row, the row before it at its near edge, and the rows behind it up the screen: all of them, nearest last)
+  assert.deepEqual(rows, [0, 10, 20, 30, 40, 50]);
+  // (a small picture at the feet touches only its own row and the two beside it, whose tiles' boxes it is within)
+  assert.deepEqual(rowsUnder(tiles, [-4, 60, 4, 68], 64, 32), [30, 40, 50]);
+  // (nothing off the board)
+  assert.deepEqual(rowsUnder(tiles, [500, 500, 600, 600], 64, 32), []);
+  // (the layer behind the board is drawn under the farthest row's tiles: a row's layer is drawn at its depth + 1)
+  assert.ok(behindRow(0) + 1 < 0);
+  // (a row's cut is a column's shape: its top a pixel over, its near sides down the drop)
+  assert.deepEqual(rowCut(0, 0, 12, 64, 32), [0, -17, 33, 0, 33, 12, 0, 29, -33, 12, -33, 0]);
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  // (a row's layer with nothing playing is not drawn, so its cut costs nothing between two ultimates)
+  assert.match(fx, /if \(rest\) layer\.visible = p\.busy;/);
+  assert.match(fx, /this\.stepUnder\(this\.rowLows, dt, true\);/);
 });

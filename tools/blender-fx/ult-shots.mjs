@@ -268,6 +268,33 @@ for (const pick of PICKS) {
     }, pick);
     if (!st) throw new Error('the ultimate never fired');
     if (process.env.UNDERS) console.log('UNDERS', await page.evaluate(() => { const fx = window.__game.fx; window.__step(100); const p = [...fx.unders.values()][0]; const a = { t: p?.live[0]?.t, span: p?.live[0]?.span, frames: p?.live[0]?.frames }; window.__step(400); return JSON.stringify({ ...a, t2: p?.live[0]?.t, alpha: p?.live[0]?.sp.alpha, vis: p?.live[0]?.sp.visible, tex: p?.live[0]?.sp.texture.frame.x, sc: p?.live[0]?.sp.scale.x, msc: window.__game.fx.moment.live.map((l) => [l.sp.scale.x, l.sp.alpha, l.sp.texture.frame.x]) }); }));
+    // (FRAMES=1: what a frame of the show costs on a slow phone. The CPU is throttled four times and every frame from the cast to the
+    // aftermath's end is timed, the graphics card made to finish each: the mean, the 95th percentile and the worst, for the whole
+    // show and for the strike alone)
+    if (process.env.FRAMES) {
+      const cdp = await ctx.newCDPSession(page);
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+      const cost = await page.evaluate((st) => {
+        const g = window.__game;
+        const gl = g.app.renderer.gl;
+        const end = st.aftermath.at + st.aftermath.ms;
+        const all = [], strike = [];
+        for (let t = 0; t < end; t += 16) {
+          const t0 = performance.now();
+          g.frame(16, 16);
+          gl?.finish();
+          const d = performance.now() - t0;
+          all.push(d);
+          if (t >= st.strike.at && t < st.strike.at + st.strike.ms) strike.push(d);
+        }
+        const sum = (a) => { const s = [...a].sort((x, y) => x - y); return { n: s.length, mean: +(s.reduce((x, y) => x + y, 0) / s.length).toFixed(2), p95: +s[Math.floor(s.length * 0.95)].toFixed(2), worst: +s[s.length - 1].toFixed(2) }; };
+        return { show: sum(all), strike: sum(strike), rows: g.fx.rowLows ? g.fx.rowLows.size : 0 };
+      }, st);
+      console.log('FRAMES', pick, JSON.stringify(cost));
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+      await ctx.close();
+      continue;
+    }
     // (KILL=1: the ultimate lands the last blow of a real fight. Every foe is put at one health as it is fired, so the cast itself ends
     // the fight in the sim and the run settles as it does in play; then it is watched frame by frame: when the fight ended, when the
     // blow was played, when the result card came up; and photographed on the way)

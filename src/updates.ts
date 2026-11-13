@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.571.0',
+    date: '2026-11-13',
+    title: 'An ultimate\'s glow stays on the ground',
+    notes: ['An ultimate\'s glow and ring under a hero now lie on the ground, under every hero standing behind, and the tiles in front no longer cut off the ring.'],
+  },
+  {
     version: '0.570.0',
     date: '2026-11-13',
     title: 'Wisps of smoke that curl round your heroes',
