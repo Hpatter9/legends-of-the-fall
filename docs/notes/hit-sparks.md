@@ -55,4 +55,4 @@ point of the blow (the second, fourth and fifth moments below); the fighters are
 
 A king's spell's clip wider than a tile and a half lies over more fighters than the one it was measured on (a dome over a
 party); its copy over the fighters is at the 15% ceiling itself. The copy under the bodies, with the rim and the ground ring, is
-at full strength.
+at full strength. `docs/samples/blender-fx/on-fighter-shield-393.png`: the dome is a faint wash over the party, who are plain inside it.
