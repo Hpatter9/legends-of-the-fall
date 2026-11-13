@@ -1,0 +1,31 @@
+# Clears out old Actions artifacts, which count against the account's 500 MB of Actions storage (the Android builds once
+# also kept every APK, about 318 MB each, as an artifact for 90 days). Run by hand: Actions, Clear old artifacts, Run
+# workflow. Artifacts made in the last day are kept, so a Pages deploy in progress is not disturbed. Release files are
+# not artifacts and are not touched.
+name: Clear old artifacts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  clear:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete artifacts older than a day
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CUTOFF=$(date -u -d '1 day ago' +%Y-%m-%dT%H:%M:%SZ)
+          gh api --paginate "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" \
+            --jq ".artifacts[] | select(.expired | not) | select(.created_at < \"$CUTOFF\") | [.id, .size_in_bytes, .name, .created_at] | @tsv" > old.tsv
+          COUNT=$(wc -l < old.tsv)
+          BYTES=$(awk -F'\t' '{s += $2} END {print s + 0}' old.tsv)
+          echo "Deleting $COUNT artifacts older than $CUTOFF, $((BYTES / 1048576)) MB in all."
+          while IFS=$'\t' read -r id size name created; do
+            gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id" && echo "deleted $name ($((size / 1048576)) MB, $created)"
+          done < old.tsv
+          LEFT=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=1" --jq .total_count)
+          echo "Artifacts left (including expired ones GitHub still lists): $LEFT"
