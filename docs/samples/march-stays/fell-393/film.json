@@ -1,0 +1,65 @@
+{
+ "size": "393x852",
+ "cpu": 4,
+ "speed": 2,
+ "rows": [
+  {
+   "fallen": 1,
+   "risenGaps": 0,
+   "undrawn": 0,
+   "land": "swamp",
+   "rim": false,
+   "cut": {
+    "px": 9,
+    "scale": 1,
+    "ms": 295
+   },
+   "livesSpent": 0,
+   "wave": 1,
+   "frames": 145,
+   "heroes": 4,
+   "marched": true,
+   "marchMs": 8311,
+   "standMs": 1692,
+   "heroGaps": 0,
+   "heroGapMs": 0,
+   "fewestHeroes": 4,
+   "tileGaps": 0,
+   "tileGapMs": 0,
+   "fewestTiles": null,
+   "refalls": 0,
+   "longestFrameMs": 385,
+   "tapped": false,
+   "rebuilt": false
+  },
+  {
+   "fallen": 0,
+   "risenGaps": 0,
+   "undrawn": 0,
+   "land": "swamp",
+   "rim": false,
+   "cut": {
+    "px": 20,
+    "scale": 1,
+    "ms": 253
+   },
+   "livesSpent": 0,
+   "wave": 2,
+   "frames": 132,
+   "heroes": 5,
+   "marched": true,
+   "marchMs": 8814,
+   "standMs": 1681,
+   "heroGaps": 0,
+   "heroGapMs": 0,
+   "fewestHeroes": 5,
+   "tileGaps": 0,
+   "tileGapMs": 0,
+   "fewestTiles": null,
+   "refalls": 0,
+   "longestFrameMs": 380,
+   "tapped": false,
+   "rebuilt": false
+  }
+ ]
+}
