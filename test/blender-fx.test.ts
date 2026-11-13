@@ -35,7 +35,9 @@ test('the manifest holds together: every clip lies inside its atlas, has its fra
       assert.ok(x >= 0 && y >= 0 && x + w <= aw && y + h <= ah, `${key}: frame ${i} outside its atlas`);
     }
     // (HIT-SPARKS: a blow's spark is over in under 300 ms, the director's order; everything else plays 400 ms and more)
-    assert.ok(key.startsWith('hit-') ? c.ms >= 150 && c.ms < 300 : c.ms >= 400 && c.ms <= 6000, `${key}: ${c.ms} ms`);
+    // (SWINGS: a weapon's stroke and a gun's flash are of the same quick kind as the spark they come with)
+    const quick = key.startsWith('hit-') || key.startsWith('swing-') || key === 'shot-muzzle';
+    assert.ok(quick ? c.ms >= 150 && c.ms < 300 : c.ms >= 400 && c.ms <= 6000, `${key}: ${c.ms} ms`);
     assert.ok(c.hold >= 0 && c.hold < c.n, `${key}: its held frame`);
     // (the tile's middle sits across the frame's width; a tall clip's may sit below its frames' lowest pixel, never far off)
     assert.ok(c.ax > -c.w && c.ax < 2 * c.w && c.ay > -c.h && c.ay < 2 * c.h, `${key}: anchor ${c.ax}, ${c.ay}`);

@@ -82,12 +82,17 @@ export function impactBurst(p: Particles, el: Element, x: number, y: number, siz
   }
 }
 
+/** The bones a skeleton falls into: painted chips thrown up, tumbling (they stay painted sprites when its dust is a rendered clip). */
+export function boneBits(p: Particles, x: number, y: number): void {
+  if (boneTex) for (let i = 0; i < bits(7, p.density); i++) p.spawn({ frames: [boneTex], x: x + jit(10), y: y + jit(4), scale: 0.5, life: 1000, vx: jit(0.06), vy: -0.14 - Math.random() * 0.05, gravity: 0.0005, spin: jit(0.014), tint: 0xf4ecd8 });
+}
+
 /** A fighter falls: skeletons come apart into bones, demons burn away, the big brutes thud in a ring of dust, a gorgon
  *  crumbles to stone, a hero rises in motes of light, the rest bleed. */
 export function deathBurst(p: Particles, kind: DeathKind, x: number, y: number, size = 1): void {
   switch (kind) {
     case 'bones':
-      if (boneTex) for (let i = 0; i < bits(7, p.density); i++) p.spawn({ frames: [boneTex], x: x + jit(10), y: y + jit(4), scale: 0.5, life: 1000, vx: jit(0.06), vy: -0.14 - Math.random() * 0.05, gravity: 0.0005, spin: jit(0.014), tint: 0xf4ecd8 });
+      boneBits(p, x, y);
       play(p, 'earth-puff', x, y, { scale: 1.1, add: false, alpha: 0.8 });
       play(p, 'dark-puff', x, y - 6, { scale: 0.9 });
       break;

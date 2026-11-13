@@ -56,7 +56,7 @@ interface AlivePatch {
   destroy(): void;
 }
 import { loadPackArt, PACK } from './fxSheets';
-import { bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
+import { boneBits, bossEntrance, deathBurst, impactBurst, play, setBoneArt, windUp } from './combatFx';
 import { showDuoToast } from '../duoToast';
 import { comboGather, comboStrike, promoteBurst, ringOut, toneColour, type Spot } from './spectacle';
 import { comboById, COMBO_NAME } from '../sim/combos';
@@ -77,7 +77,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { hitSpark, shotOrb, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { hitSpark, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -538,7 +538,7 @@ export class Fx {
             if (frames) this.particles.spawn({ frames, art: 'spell:poison', x: to.x, y: to.y - to.tall * 0.45, scale: 0.9, life: 300, alpha: 0.65 });
           }
           this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, false, false, e.ail);
-          if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
+          if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3, to.y);
           continue;
         }
         if (e.src === 'dot') {
@@ -548,7 +548,7 @@ export class Fx {
           else if (e.ail === 'poison') this.particles.spawn({ frames: PACK['poison-puff'], x: to.x, y: to.y - to.tall * 0.45, scale: 0.7, life: 300, alpha: 0.8 });
           else if (e.ail !== 'shock') this.anim(burn ? fire : impact, to.x, to.y - to.tall * 0.45, burn ? 0.7 : 0.6, 60);
           this.number(e.dmg, to.x, to.y - to.tall - 10, false, target.side === 'hero', false, e.ail);
-          if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
+          if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3, to.y);
           continue;
         }
         // (a skill's blow has its own sheet; a crit or a big kill adds a burst, a white flash and a harder shake)
@@ -613,7 +613,7 @@ export class Fx {
         } else if (isCrit) {
           this.microThud(to.x, to.y, 1.0, Math.cos(wayAngle), Math.sin(wayAngle) * 0.6);
         }
-        if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3);
+        if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3, to.y);
         if (e.heavy && e.src === 'blow') {
           // (a crit, or a blow from height: a gold burst; a big one, a third of the target's health or more, also blinks the screen)
           if (!this.bfxHit('crit', 'light', to.x, to.y - to.tall * 0.45, share)) {
@@ -692,18 +692,26 @@ export class Fx {
    *  the caller plays the painted spark. */
   private bfxHit(kind: HitKind, el: Element, x: number, y: number, share: number): boolean {
     const h = hitSpark(kind, el, share);
-    const c = h ? bfxClip(h.key) : undefined;
-    const frames = h ? bfxFrames(h.key) : [];
-    if (!h || !c || !frames.length) return false;
-    const scale = BFX_SCALE * h.size;
-    const per = h.ms / frames.length;
+    return !!h && this.bfxFlash(h.key, x, y, h.size, h.ms);
+  }
+
+  /** A small quick clip on a fighter, its middle at (x, y) (a hit's spark, a swing's stroke): for the rule's brief flash it is over the
+   *  body as it is, then it goes on under the ON-FIGHTER rule. `turn` turns it and `mirror` flips it (a stroke to the left). False
+   *  when the clip is not held. */
+  private bfxFlash(key: string, x: number, y: number, size: number, ms: number, turn = 0, mirror = false): boolean {
+    const c = bfxClip(key);
+    const frames = bfxFrames(key);
+    if (!c || !frames.length) return false;
+    const scale = BFX_SCALE * size;
+    const per = ms / frames.length;
+    const pose = { x, y, scale, ...(turn ? { rotation: turn } : {}), ...(mirror ? { stretchX: -1 } : {}) };
     if (this.reduced) {
-      this.particles.spawn({ frames: [frames[c.hold]], x, y, scale, frameMs: h.ms, life: h.ms, prio: true, bare: true });
+      this.particles.spawn({ ...pose, frames: [frames[c.hold]], frameMs: ms, life: ms, prio: true, bare: true });
       return true;
     }
     const first = Math.max(1, Math.min(frames.length - 1, Math.round(UNDER.FLASH_MS / per)));
-    this.particles.spawn({ frames: frames.slice(0, first), x, y, scale, frameMs: per, life: first * per, prio: true, solid: true, bare: true });
-    this.particles.spawn({ frames: frames.slice(first), x, y, scale, frameMs: per, life: (frames.length - first) * per, delay: first * per, prio: true });
+    this.particles.spawn({ ...pose, frames: frames.slice(0, first), frameMs: per, life: first * per, prio: true, solid: true, bare: true });
+    this.particles.spawn({ ...pose, frames: frames.slice(first), frameMs: per, life: (frames.length - first) * per, delay: first * per, prio: true });
     return true;
   }
 
@@ -1350,13 +1358,17 @@ export class Fx {
     const dx = to.x - by.x;
     const dy = (to.y - to.tall * 0.5) - (by.y - by.tall * 0.5);
     const left = dx < 0;
+    const turn = left ? Math.atan2(-dy, -dx) : Math.atan2(dy, dx);
+    // (SWINGS: the weapon's rendered stroke, turned to the blow; the painted slash where its clip is not held)
+    const swing = swingClip(slashOf(defOf(attacker).name));
+    if (swing && this.bfxFlash(swing.key, to.x, to.y - to.tall * 0.5, swing.size, swing.ms, turn, left)) return;
     this.particles.spawn({
       frames: VFX[slashOf(defOf(attacker).name)],
       x: to.x,
       y: to.y - to.tall * 0.5,
       scale: 2,
       frameMs: 45,
-      rotation: left ? Math.atan2(-dy, -dx) : Math.atan2(dy, dx),
+      rotation: turn,
       ...(left ? { stretchX: -1 } : {}),
       add: true,
     });
@@ -1391,9 +1403,19 @@ export class Fx {
   }
 
   /** A fighter falls, by its kind (`deathKind`): bones, a burning away, a thud of dust, stone chips, blood or motes of light. */
-  private death(target: Unit, x: number, y: number): void {
+  private death(target: Unit, x: number, y: number, feet: number): void {
     const kind = deathKind(defOf(target).name, target.side);
-    deathBurst(this.particles, kind, x, y, target.size ?? 1);
+    // (the rendered fall of its kind, standing on the ground at its feet; a skeleton's bones stay painted sprites over its dust. The
+    // painted burst where the clip is not held)
+    const key = deathClip(kind);
+    const c = key ? bfxClip(key) : undefined;
+    const frames = key ? bfxFrames(key) : [];
+    if (c && frames.length) {
+      const size = Math.min(1.6, target.size ?? 1);
+      const [cx, cy] = bfxCentre(c, x, feet, size);
+      this.particles.spawn({ frames: this.reduced ? [frames[c.hold]] : frames, x: cx, y: cy, scale: BFX_SCALE * size, frameMs: this.reduced ? c.ms : c.ms / frames.length, life: c.ms, prio: true, solid: true });
+      if (kind === 'bones') boneBits(this.particles, x, y);
+    } else deathBurst(this.particles, kind, x, y, target.size ?? 1);
     if (kind === 'thud') this.trauma = Math.min(1, this.trauma + 0.2);
   }
 
@@ -3902,14 +3924,22 @@ export class Fx {
     const x1 = to.x;
     const y1 = to.y - to.tall * 0.45;
     const aim = Math.atan2(y1 - y0, x1 - x0);
-    if (m.muzzle) {
+    // (a gun's flash is its rendered clip, thrown along the shot; the painted flash where it is not held, and for an orb's leaving)
+    const flash = m.look === 'tracer' ? bfxClip(GUN.muzzle) : undefined;
+    const flashes = flash ? bfxFrames(GUN.muzzle) : [];
+    if (m.muzzle && flash && flashes.length) {
+      const k = BFX_SCALE * GUN.muzzleSize;
+      const out = 8 + (flash.w / 2 - flash.ax) * k;
+      this.particles.spawn({ frames: this.reduced ? [flashes[flash.hold]] : flashes, x: x0 + Math.cos(aim) * out, y: y0 + Math.sin(aim) * out, scale: k, rotation: aim, frameMs: flash.ms / flashes.length, life: flash.ms, prio: true, solid: true, bare: true });
+    } else if (m.muzzle) {
       play(this.particles, packKey(m.el, 'hit'), x0 + Math.cos(aim) * 8, y0 + Math.sin(aim) * 4, { scale: m.look === 'tracer' ? 1.3 : 0.9, frameMs: 40 });
       if (m.look === 'tracer')
         for (let i = 0; i < bits(3, this.particles.density); i++) this.particles.spawn({ frames: VFX.puffWhite, x: x0 + Math.cos(aim) * 10, y: y0 + Math.sin(aim) * 5, scale: 0.4, life: 420, vx: Math.cos(aim) * 0.03 + jitter(0.01), vy: -0.02, grow: 0.0008, alpha: 0.8 });
     }
     by.nudge(-Math.cos(aim) * 2, -Math.sin(aim));
-    // (an orb is the rendered one of its element, its tail in the clip, where the clip is held; else the painted orb and its puffs)
-    const rkey = m.look === 'orb' ? shotOrb(m.el) : undefined;
+    // (an orb is the rendered one of its element and a bullet its rendered tracer, each with its tail in the clip, where the clip
+    // is held; else the painted orb and its puffs, and the bullet's streak drawn by hand)
+    const rkey = shotClip(m.look, m.el);
     const rc = rkey ? bfxClip(rkey) : undefined;
     const rf = rkey ? bfxFrames(rkey) : [];
     const made = rc && rf.length ? rc : undefined;
@@ -3917,9 +3947,9 @@ export class Fx {
     const sp = new Sprite(made ? rf[0] : m.look === 'arrow' ? arrow : m.look === 'bone' ? bone : orb?.[0]);
     if (made) sp.anchor.set(made.ax / made.w, made.ay / made.h);
     else sp.anchor.set(0.5);
-    sp.scale.set(made ? BFX_SCALE * SHOT_ORB_SIZE * m.scale : m.scale);
+    sp.scale.set(made ? BFX_SCALE * (m.look === 'tracer' ? GUN.tracerSize : SHOT_ORB_SIZE) * m.scale : m.scale);
     if (orb) sp.blendMode = 'normal';
-    const g = m.look === 'tracer' ? new Graphics() : undefined;
+    const g = m.look === 'tracer' && !made ? new Graphics() : undefined;
     if (g) g.blendMode = 'add';
     const view: Container = g ?? sp;
     this.root.addChild(view);

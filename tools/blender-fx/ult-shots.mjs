@@ -203,11 +203,16 @@ if (process.env.WATCH) {
       const defOf = (id) => fx.sprites.get(id)?.unit.def;
       const shot = fx.shot.bind(fx);
       fx.shot = (by, to, kind, ms) => { window.__seen.push('shot:' + defOf(by)); window.__seenMs = ms; return shot(by, to, kind, ms); };
+      // (swing:<kind> a melee blow's stroke by that kind, fall:<kind> that kind's fall; either side's fighters)
+      const slash = fx.slash.bind(fx);
+      fx.slash = (b, by, to) => { window.__seen.push('swing:' + defOf(by)); window.__seenMs = 150; return slash(b, by, to); };
+      const death = fx.death.bind(fx);
+      fx.death = (target, ...a) => { window.__seen.push('fall:' + target.def); window.__seenMs = 300; return death(target, ...a); };
       const arc = fx.arc.bind(fx);
       fx.arc = (from, to, shock) => { window.__seen.push('arc:' + (shock ? 'shock' : defOf(from))); window.__seenMs = 300; return arc(from, to, shock); };
     });
     for (const what of process.env.SEE.split(',')) {
-      const got = await page.evaluate((what) => { window.__seen = []; for (let i = 0; i < 6000 && !window.__seen.includes(what) && window.__game.b.phase === 'fight'; i++) window.__step(16); return window.__seen.includes(what) ? window.__seenMs : 0; }, what);
+      const got = await page.evaluate((what) => { window.__seen = []; const has = () => window.__seen.some((s) => s.startsWith(what)); for (let i = 0; i < 6000 && !has() && window.__game.b.phase === 'fight'; i++) window.__step(16); return has() ? window.__seenMs : 0; }, what);
       if (!got) console.log('NOT SEEN', what);
       if (!got) continue;
       await page.evaluate(() => window.__game.setSpeed(1));

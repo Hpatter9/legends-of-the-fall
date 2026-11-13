@@ -317,3 +317,21 @@ export function strandLay(x0: number, y0: number, x1: number, y1: number, own: n
   const at = Array.from({ length: n }, (_, i) => ({ x: x0 + ((x1 - x0) * (i + 0.5)) / n, y: y0 + ((y1 - y0) * (i + 0.5)) / n }));
   return { turn: Math.atan2(y1 - y0, x1 - x0), stretch: len / n / own, at };
 }
+
+/** SWINGS (docs/notes/swings.md): the rendered stroke of a melee blow, by the slash its weapon draws (`slashOf`): a sword's
+ *  crescent, a club's heavy arc, a spear's thrust, raking claws. Each travels to the screen's right; the renderer turns it to the
+ *  blow. `size` is a multiple of the clip's own, `ms` how long it plays (quick, as a hit's spark is). */
+export const SWING: Readonly<Record<'slashLight' | 'slashEarth' | 'slashWind' | 'darkSlash', { key: string; size: number; ms: number }>> = {
+  slashLight: { key: 'swing-blade', size: 1.15, ms: 240 },
+  slashEarth: { key: 'swing-heavy', size: 1.2, ms: 290 },
+  slashWind: { key: 'swing-thrust', size: 1.1, ms: 200 },
+  darkSlash: { key: 'swing-claw', size: 1.05, ms: 260 },
+};
+/** The swing for a slash sheet, or undefined where the pipeline has not made its clip (the painted slash plays). */
+export const swingClip = (sheet: keyof typeof SWING): { key: string; size: number; ms: number } | undefined => (BFX_CLIPS[SWING[sheet].key] ? SWING[sheet] : undefined);
+/** What a fighter leaves as it falls, by its kind (`deathKind`): the rendered clip, or undefined where it is not made. */
+export const deathClip = (kind: string): string | undefined => (BFX_CLIPS[`death-${kind}`] ? `death-${kind}` : undefined);
+/** A gun's shot: the flash at its muzzle and the bullet with its streak (both to the screen's right, turned to the shot). */
+export const GUN = { muzzle: 'shot-muzzle', tracer: 'shot-tracer', muzzleSize: 1.3, tracerSize: 1 } as const;
+/** The rendered clip a shot's missile flies as: an orb's in its element, a bullet's tracer; an arrow and a bone stay painted. */
+export const shotClip = (look: string, el: string): string | undefined => (look === 'orb' ? shotOrb(el) : look === 'tracer' && BFX_CLIPS[GUN.tracer] ? GUN.tracer : undefined);

@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { ARC_STRAND, BFX_SCALE, STRAND_STRETCH, bfxClip, shotOrb, strandLay } from '../src/render/blenderFxRules';
+import { ARC_STRAND, BFX_SCALE, GUN, STRAND_STRETCH, bfxClip, shotClip, shotOrb, strandLay } from '../src/render/blenderFxRules';
 import { ELEMENTS, arcStyle, missileOf } from '../src/render/fxRules';
 
 test('every element has a rendered orb, a short loop held with the atlases every fight has', () => {
@@ -17,10 +17,28 @@ test('every element has a rendered orb, a short loop held with the atlases every
   assert.equal(shotOrb('nothing'), undefined);
 });
 
-test('arrows and bones stay painted sprites: only an orb takes a rendered clip', () => {
+test('arrows and bones stay painted sprites: only an orb and a bullet take a rendered clip', () => {
+  // (the bullet's tracer was ordered after the orbs, so the rule that named the orb alone now names both; arrows and bones as before)
   const src = readFileSync('src/render/fx.ts', 'utf8');
-  assert.match(src, /const rkey = m\.look === 'orb' \? shotOrb\(m\.el\) : undefined/);
+  assert.match(src, /const rkey = shotClip\(m\.look, m\.el\);/);
+  assert.equal(shotClip('orb', 'fire'), 'shot-orb-fire');
+  assert.equal(shotClip('tracer', 'fire'), GUN.tracer);
+  assert.equal(shotClip('arrow', 'wind'), undefined);
+  assert.equal(shotClip('bone', 'dark'), undefined);
   assert.equal(missileOf('arrow', 'Archer').look, 'arrow');
+});
+
+test('a gun has its rendered flash and tracer, in the atlases every fight holds', () => {
+  for (const key of [GUN.muzzle, GUN.tracer]) {
+    const c = bfxClip(key);
+    assert.ok(c && c.a <= 1, key);
+  }
+  // (the tracer is a loop the renderer flies; the flash plays once and is over in under 300 ms)
+  assert.ok(bfxClip(GUN.tracer)!.loop && !bfxClip(GUN.muzzle)!.loop && bfxClip(GUN.muzzle)!.ms < 300);
+  // (the hand-drawn streak and the painted flash stay as the fallback)
+  const src = readFileSync('src/render/fx.ts', 'utf8');
+  assert.match(src, /const g = m\.look === 'tracer' && !made \? new Graphics\(\) : undefined;/);
+  assert.match(src, /\} else if \(m\.muzzle\) \{/);
 });
 
 test('each kind of arc has its strand, a loop in the atlases every fight has', () => {
