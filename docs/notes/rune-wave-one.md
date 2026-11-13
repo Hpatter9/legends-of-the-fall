@@ -33,15 +33,17 @@ runes' strengths (`RUNE_STATS`, `RUNE_SCALE.k` 1, untouched), the Calamity's one
     strength (the owner keeps it) but the count: e.g. dropping the fourth wave's rune (`RUNE_EVERY`) to keep the total as it was.
 - **The page.** The wave card lists wave 1's rune as it lists any find; the empty bag's line now says "the first wave, every fourth, the
   last and the bosses bring runes".
-- **A first rune can be a Keystone** (one in ten), which is never worn: a player's first rune is then something to merge later, not to set
-  on a hero. It is left as it is (changing it would mean a new rule of the side stream); flagged for the director.
+- **The first rune is always one a hero can wear** (the director's call: an unwearable opener defeats the point). One rune in ten is a
+  Keystone, never worn; a Keystone rolled for wave 1 is carved again as one of the seven kinds, from its own side stream
+  (`openerKind`: `mixSeed(seed, RUNE_SALT, OPENER_SALT)`), so no other roll moves. Later waves' runes may still be Keystones. No recorded
+  identity scenario opened on a Keystone, so no hash moved for this.
 
 ## Checks
 
 - `npm run typecheck`: clean.
 - `npm test -- runes rune-bench run-gear events recap-reveal tips spells-identity ailments-identical first-hour calamity tower mystery calMapRewards`:
   all pass. `test/runes.test.ts` checks the rule (wave 1 gives a rune and the wave card lists it, wave 2 does not, an army of fifteen gives
-  five: waves 1, 4, 8, 12 and 15). `test/events.test.ts`'s cursed path, won on wave 1, now finds its prize and the wave's rune.
+  five: waves 1, 4, 8, 12 and 15; over 600 runs wave 1's rune is never a Keystone, while the fourth wave's still can be). `test/events.test.ts`'s cursed path, won on wave 1, now finds its prize and the wave's rune.
 - `npm run web`; `node tools/rune-wave-one/shots.mjs` at 393x852, 360x780 and 412x915: an Orc Warband run's wave 1 won, its card listing
   the rune, and the rune bench before wave 2 holding it; no sideways scroll and no page errors. Pictures in
   [docs/samples/rune-wave-one/](../samples/rune-wave-one/).

@@ -138,6 +138,13 @@ export function rollRune(state: RuneState, seed: number, stage: number, source: 
  *  source. Off in the game; it changes nothing. */
 export const RUNE_TALLY = { on: false, made: new Map<number, number>(), got: [] as { source: number; lv: number }[] };
 
+/** The salt of the side stream a first wave's Keystone is carved again from: `mixSeed(seed, RUNE_SALT, OPENER_SALT)`. */
+export const OPENER_SALT = 0x0be1;
+/** RUNE-WAVE-ONE: the kind a first wave's rune takes when its own roll was a Keystone (never worn, so no opener): one of the seven, from
+ *  its own side stream, so no other roll of the run moves. */
+export const openerKind = (seed: number): Exclude<RuneKind, 'keystone'> =>
+  RUNE_KINDS[new Rng(mixSeed(seed, RUNE_SALT, OPENER_SALT)).int(0, RUNE_KINDS.length - 1)] as Exclude<RuneKind, 'keystone'>;
+
 /** Whether a won wave gives a rune (FEWER-RUNES): the first (RUNE-WAVE-ONE, the owner's yes: a run's heroes have a rune from wave 2),
  *  every `RUNE_EVERY`th wave, and the last (`waves`, the run's count; 0 when it has none). */
 export const waveGivesRune = (stage: number, waves: number): boolean => stage === 1 || stage % RUNE_EVERY === 0 || (waves > 0 && stage >= waves);

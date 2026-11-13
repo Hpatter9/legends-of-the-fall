@@ -8,7 +8,7 @@ import { Rng } from '../src/sim/rng';
 import { armyRun, catalogueRun, newRun, finish, type Run } from '../src/sim/run';
 import type { Gear } from '../src/sim/gear';
 import { startedMeta } from '../src/sim/meta';
-import { FIND_KEEP, findGear, findsAsGear, keepsFind, runKitStats, bareKitStats, settleFinds, stow, SOURCE, upgradeFound } from '../src/sim/runGear';
+import { FIND_KEEP, waveRune, findGear, findsAsGear, keepsFind, runKitStats, bareKitStats, settleFinds, stow, SOURCE, upgradeFound } from '../src/sim/runGear';
 import { equipStats } from '../src/sim/equipment';
 import {
   BAG_MAX, FLOURISH_S, RUNE_KINDS, RUNE_LEVEL, RUNE_SCALE, RUNE_SIGNATURE, RUNE_STATS, SIGNATURE_S, SOCKETS, addRune, allRunes as allRunesOfState, areTwins, autoRunes, canMerge, mergeAll, mergeRunes, mergesReady, newRunes, readRunes, rollRune, runeStats, setRune, takeOffRune, twinIds, waveGivesRune, type Rune,
@@ -63,6 +63,18 @@ test('a won wave adds a rune on the first, every fourth wave and the last (FEWER
   const army = armyRun(8, 'orcs');
   const shares = Array.from({ length: 15 }, (_, i) => waveGivesRune(i + 1, 15)).filter(Boolean).length;
   assert.equal(shares, 5, 'an army of fifteen: waves 1, 4, 8, 12 and 15');
+  // (RUNE-WAVE-ONE: the first wave's rune is never a Keystone, which no hero can wear; a later wave's still may be, one in ten)
+  let keys = 0;
+  let later = 0;
+  for (let seed = 1; seed <= 600; seed++) {
+    const one = newRun(seed);
+    one.stage = 1;
+    if (waveRune(one).rune!.kind === 'keystone') keys++;
+    one.stage = 4;
+    if (waveRune(one).rune!.kind === 'keystone') later++;
+  }
+  assert.equal(keys, 0, 'no Keystone on wave 1 in 600 runs');
+  assert.ok(later > 30, `the fourth wave's still can be (${later})`);
   army.stage = 15;
   finish(army, true);
   assert.equal(army.runes!.bag.length, 2, 'the last wave: its rune and the boss\'s');
