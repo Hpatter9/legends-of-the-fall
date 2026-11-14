@@ -94,6 +94,8 @@ capacitor-cordova-android-plugins
 
 # Copied web assets
 app/src/main/assets/public
+# (PLAY-SIZE: the same files, moved into the asset pack for a Play bundle by tools/play-size/pack.mjs)
+web/src/main/assets
 
 # Generated Config files
 app/src/main/assets/capacitor.config.json

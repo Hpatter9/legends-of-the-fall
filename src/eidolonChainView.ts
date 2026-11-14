@@ -6,6 +6,7 @@
 // `src/art/gear/`), set in a ring of its Eidolon's colour. Unbound Eidolons show as their card's silhouette with a "?".
 
 import { autoButton } from './autoAsk';
+import { glyphWord } from './paintedButton';
 import { canAutoQuest } from './sim/autoReplay';
 import { showWhenPainted } from './paintReady';
 import gearIndex from './art/gear/index.json';
@@ -302,6 +303,8 @@ export function openPactGallery(m: Meta, hooks: GalleryHooks): void {
   const shut = el('button', 'ecnShut', '‹ Back');
   shut.setAttribute('aria-label', 'Close the Pact Gallery');
   shut.addEventListener('click', closePactGallery);
+  // (RELEASE-AUDIT-ART: the painted plate and back chevron, as the quest log's Back beside it)
+  glyphWord(shut);
   head.append(el('h3', '', 'Pact Gallery'), shut);
   const listed = listedChains(m);
   const bound = listed.filter((c) => chainDone(m, c)).length;

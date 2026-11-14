@@ -1,4 +1,6 @@
 include ':app'
+// (PLAY-SIZE: the web files as an install-time asset pack for the Play bundle: web/build.gradle, docs/notes/play-size.md)
+include ':web'
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
