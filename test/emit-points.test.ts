@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { CAST, EMIT, FOE_EMIT, ULT_EMIT, ultEmitOffset, strokeLands, STROKE_AT, emitOffset, emitWorld, reachOffset, strokeLay } from '../src/render/emitRules';
 import { REACH } from '../src/render/reachData';
 import { FOES } from '../src/sim/foes';
-import { MOUTH_RUN, TAIL_MIN, lineLight, mouthRun, streamSpot, tailShare } from '../src/render/blenderFxRules';
+import { MOUTH_RUN, TAIL_MIN, lineLight, mouthRun, streamSpot, tailShare, ultLinked } from '../src/render/blenderFxRules';
 import { SHOW } from '../src/ultShowRules';
 import { UNITS } from '../src/sim/units';
 import layout from '../src/art/units/sheets.json';
@@ -219,4 +219,23 @@ test("the Dragoon's showcase is the same breath: its stream leaves her mouth, an
   // (the tiles light a step behind the breath and a step apart: none is alight as the stream sets off)
   assert.ok(SHOW.BURN > 0);
   assert.match(readFileSync('src/ultShowRules.ts', 'utf8'), /at: s \+ \(i \+ 1\) \* SHOW\.BURN, kind: 'burn'/);
+});
+
+/** The ultimates whose strike runs a line of small clips from the caster to each it touches (`ultLinked`), by whether the line now
+ *  leaves a measured point (the audit, docs/notes/emit-points.md): the rest still leave the caster's feet, each named on purpose. */
+const LINK_FROM_POINT = ['nyxara', 'wanderer', 'satyr', 'gorgon', 'gunslinger', 'priestess', 'sage', 'corsairSurgeon'];
+const LINK_FROM_FEET = ['ilyra', 'orrun', 'peasant', 'samuraiCommander'];
+
+test("ULTIMATES: a line run from the caster to those its ultimate touches leaves its hand, staff, muzzle or eyes, not its feet", () => {
+  const linked = Object.values(UNITS).filter((u) => u.side === 'hero' && ultLinked(u.id)).map((u) => u.id).sort();
+  assert.deepEqual(linked, [...LINK_FROM_POINT, ...LINK_FROM_FEET].sort());
+  for (const id of LINK_FROM_POINT) assert.ok(ULT_EMIT[UNITS[id].sheet] ?? EMIT[UNITS[id].sheet] ?? CAST[UNITS[id].sheet], id);
+  for (const id of LINK_FROM_FEET) assert.ok(!(ULT_EMIT[UNITS[id].sheet] ?? EMIT[UNITS[id].sheet] ?? CAST[UNITS[id].sheet]), id);
+  // (the Gorgon's gaze leaves her eyes, above the head of her staff's hand and near her middle line; her shot still leaves the staff)
+  const g = ULT_EMIT[UNITS.gorgon.sheet];
+  assert.equal(g.kind, 'eyes');
+  assert.ok(g.front[0] < EMIT[UNITS.gorgon.sheet].front[0] && g.front[1] > 75);
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.match(fx, /if \(far\) beatLine\(\.\.\.this\.ultFrom\(caster\), x, y\)/);
+  assert.match(fx, /return s\.ultPoint\(\) \?\? s\.emitPoint\(\) \?\? \[s\.x, s\.y\];/);
 });
