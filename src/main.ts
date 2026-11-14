@@ -481,6 +481,8 @@ class Game {
     let unreadable: string | null = null;
     this.meta = loadMeta((Date.now() % 100000) + 1, localStorage, (raw) => (unreadable = raw));
     if (unreadable !== null) await tellUnreadable(keepUnreadable(unreadable));
+    // (DUCHESS-TAPS: a tap on her by the panel counts on this meta)
+    this.goat.metaOf = () => this.meta;
     // (EIDOLONS: a hidden dev flag, `?eidolons=all`, binds all six Eidolons and fills the War Horn, to try the call before the quest chains
     // bind them; in normal play the horn fills but no Eidolon answers it yet)
     if (query.get('eidolons') === 'all') {

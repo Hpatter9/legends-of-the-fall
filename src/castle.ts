@@ -1,5 +1,7 @@
 // The Keep: an animated royal terrace and a separate building ledger. Presentation only; upgrades use the castle simulation.
 
+import { countDuchessTap, treatFoundToday } from './sim/duchessTaps';
+import { saveMeta } from './sim/meta';
 import {
   BUILDING_IDS,
   ROOM_BUILDING_IDS,
@@ -479,15 +481,11 @@ export class CastleScene {
         const nudge = tapNudgeGoat(this.goat, this.now);
         if (nudge.hopped) {
           play('sparkle');
-          try {
-            const raw = localStorage.getItem('legends.meta');
-            if (raw) {
-              const m = JSON.parse(raw);
-              m.duchessTaps = (m.duchessTaps ?? 0) + 1;
-              localStorage.setItem('legends.meta', JSON.stringify(m));
-            }
-          } catch {
-            /* ignore */
+          // (DUCHESS-TAPS: counted on the game's own meta and saved, not on a copy read from storage behind it: `sim/duchessTaps.ts`)
+          const tapped = this.meta;
+          if (tapped) {
+            countDuchessTap(tapped);
+            saveMeta(tapped);
           }
           const clientX = rect.left + (gx / this.canvas.width) * rect.width;
           const clientY = rect.top + ((gy - 38) / this.canvas.height) * rect.height;
@@ -986,18 +984,9 @@ export class CastleScene {
 
   private claimHaystackTreat(clientX: number, clientY: number, gx: number, gy: number): void {
     const today = new Date().getFullYear() * 10000 + (new Date().getMonth() + 1) * 100 + new Date().getDate();
-    let claimed = false;
-    let meta = this.meta;
-    try {
-      const raw = localStorage.getItem('legends.meta');
-      if (raw) {
-        const saved = JSON.parse(raw) as Meta;
-        if (saved.duchessTreat === today) claimed = true;
-        meta ??= saved;
-      }
-    } catch {
-      /* ignore */
-    }
+    // (DUCHESS-TAPS: today's treat by the game's own meta, the one it is paid into and saved)
+    const meta = this.meta;
+    const claimed = !!meta && treatFoundToday(meta, today);
 
     if (claimed) {
       showQuip({ x: clientX, y: clientY }, 'Duchess hops off her hay! (Already found today’s treat)', { who: 'Duchess', goat: true, hold: 2200 });
@@ -1014,11 +1003,7 @@ export class CastleScene {
       } else if (treat.kind === 'crowns') {
         meta.crowns = (meta.crowns ?? 0) + treat.amount;
       }
-      try {
-        localStorage.setItem('legends.meta', JSON.stringify(meta));
-      } catch {
-        /* ignore */
-      }
+      saveMeta(meta);
     }
     this.onReward?.();
     this.triggerHallBurst(gx, gy - 20, '#ffd13b', treat.kind === 'stones' ? '+Stones!' : treat.kind === 'crowns' ? '+Gold!' : 'Duchess Lore!');

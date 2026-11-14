@@ -3,6 +3,9 @@
 // tavern hall's corner. The camp draws her inside its own scene (camp.ts), with the same behaviour (`render/duchessRules.ts`).
 // She never takes a tap except on her own few pixels, and a tap makes her hop once with her "Mehh.". It only draws.
 
+import { countDuchessTap } from './sim/duchessTaps';
+import { saveMeta } from './sim/meta';
+import type { Meta } from './sim/meta';
 import { loadImage } from './render/loadImage';
 import {
   chewBob,
@@ -71,6 +74,8 @@ export class PageGoat {
   private battleState: DuchessBattleState = newDuchessBattleState();
   /** Told once a fight, as her visit begins and she starts to walk in (the cinematic of her first turning up). */
   onArrive?: () => void;
+  /** DUCHESS-TAPS: the game's meta, where her taps are counted (`main.ts` sets it). */
+  metaOf?: () => Meta | undefined;
   /** Tactical effect fired on tap once per battle (startle or cabbage). */
   onLuckyBleat?: (effect: LuckyBleatEffect) => void;
   private arrived = false;
@@ -139,15 +144,11 @@ export class PageGoat {
   /** A tap: she hops once, bleats, counts towards tap milestones, and applies her once-per-battle Lucky Bleat. */
   tap(): void {
     if (!tapGoat(this.g, performance.now() - this.t0)) return;
-    try {
-      const raw = localStorage.getItem('legends.meta');
-      if (raw) {
-        const m = JSON.parse(raw);
-        m.duchessTaps = (m.duchessTaps ?? 0) + 1;
-        localStorage.setItem('legends.meta', JSON.stringify(m));
-      }
-    } catch {
-      /* ignore */
+    // (DUCHESS-TAPS: counted on the game's own meta and saved, not on a copy read from storage behind it: `sim/duchessTaps.ts`)
+    const tapped = this.metaOf?.();
+    if (tapped) {
+      countDuchessTap(tapped);
+      saveMeta(tapped);
     }
     if (this.onLuckyBleat) {
       const effect = triggerLuckyBleat(this.battleState, this.rand);

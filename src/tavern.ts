@@ -6,6 +6,8 @@
 // `render/tavernLife.ts`, drawn by `tavernLifeDraw.ts`), the same every time. It only draws (Math.random, for Duchess, is fine here:
 // nothing that is played depends on it) and runs only while the tab is showing.
 
+import { countDuchessTap } from './sim/duchessTaps';
+import { saveMeta } from './sim/meta';
 import { tok } from './render/tok';
 import { ALL_HEROES, UNITS } from './sim/units';
 import type { Meta } from './sim/meta';
@@ -1035,15 +1037,11 @@ export class Tavern {
         return;
       }
       if (tapGoat(this.goat, this.now)) {
-        try {
-          const raw = localStorage.getItem('legends.meta');
-          if (raw) {
-            const m = JSON.parse(raw);
-            m.duchessTaps = (m.duchessTaps ?? 0) + 1;
-            localStorage.setItem('legends.meta', JSON.stringify(m));
-          }
-        } catch {
-          /* ignore */
+        // (DUCHESS-TAPS: counted on the game's own meta and saved, not on a copy read from storage behind it: `sim/duchessTaps.ts`)
+        const tapped = this.meta;
+        if (tapped) {
+          countDuchessTap(tapped);
+          saveMeta(tapped);
         }
         this.cycleDuchessHat(e.clientX, box.top + (Tavern.GOAT.y - 24 - this.camY) * this.scale);
       }
