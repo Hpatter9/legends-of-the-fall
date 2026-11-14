@@ -85,7 +85,7 @@ both are signed by the same key and carry the same files); (3) the data URLs to 
 | versionCode | **pass**: `major*1000000 + minor*1000 + patch` (0.590.0 → 590000), always rising, far below Play's 2,100,000,000 cap. Each upload needs a new one; a daily build fits. |
 | Release signing | **pass**: the workflow's latest build (run 232, 0.579.0) logged "Signing with the release key": the four secrets are set. It still falls back to the debug key silently when they are missing; a Play job should fail instead. |
 | Play App Signing | **owner action**: new apps must use it. When enrolling, **choose to upload the existing release key** (Play Console offers a tool for exporting it) rather than letting Google make a new one: then the Play build and the GitHub APK carry the same signature, and the owner's installed app can be updated from Play without uninstalling (which would lose the save). Keep the keystore backed up. |
-| Permissions | **pass**: `INTERNET` only (checked in the built APK's merged manifest), and the Play build makes no requests at all. |
+| Permissions | **pass**: `INTERNET`, and since IAP `com.android.vending.BILLING` (Play Billing, brought in by the RevenueCat plugin; `docs/notes/iap.md`). The Play build talks only to Google Play and RevenueCat, for the Shop. |
 | Cleartext traffic | **pass**: not allowed (the default at target 28+; `allowMixedContent: false`). |
 | Backups | **pass (fixed)**: `allowBackup` was false, so a new phone or a reinstall lost the save. Now on, limited to the page's own storage (`app_webview/.../Local Storage/` and `IndexedDB/`) by `res/xml/data_extraction_rules.xml` (Android 12+) and `backup_rules.xml` (older). **To check on the phone**: `adb shell bmgr backupnow com.hpatter9.lastkeep`, uninstall, reinstall, and see the save come back. |
 | Exported components | **pass**: the launcher activity (must be), the FileProvider (not exported), androidx's profile installer receiver (guarded by the DUMP permission). |
@@ -103,12 +103,12 @@ both are signed by the same key and carry the same files); (3) the data URLs to 
 | Free currency in the Developer page | **pass (fixed on `claude/store-dev-page`)**: a store's build has no Developer page (`docs/notes/store-dev-page.md`); the web and the GitHub app keep it for testing. |
 | Self-updating | **pass (fixed)**: `src/appUpdate.ts` fetched `api.github.com/.../releases/latest` once at start (app only) and, when a newer tag existed, Settings, About showed "Update available" with a link to the GitHub release page (it never downloaded or installed anything itself). Play's Device and Network Abuse policy forbids an app updating itself, or getting updates, outside Play, and a link to an APK page is close enough to be rejected. Now `node build.mjs --store play` (`npm run web:play`) defines `__STORE__ = 'play'` and `checkAppUpdate` asks only when `updateCheckOn(store, inApp())`: the GitHub release's app, as before. Tested in `test/app-update.test.ts`. |
 | Privacy policy | **owner action**: a URL is required for every app. Draft: `docs/store/privacy-policy.html` (fill in the date and a contact address, then host it on Pages: build.mjs would copy it to `out/web`). |
-| What the game collects | Nothing. Saves and the Diagnostics list stay on the device; no analytics, ads or accounts; the fonts are bundled. The only request was the GitHub update check, now not in the Play build. |
-| Data safety form | **owner action**. Answers for the Play build: "Does your app collect or share any of the required user data types?" **No**. (No data collected, none shared; so the encryption and deletion questions do not apply.) |
+| What the game collects | **Changed by IAP** (section 7): the Play build sends purchase data and a random app user ID to RevenueCat. Otherwise nothing: saves and the Diagnostics list stay on the device; no analytics, ads or accounts; the fonts are bundled. |
+| Data safety form | **owner action**: the answers changed with IAP; see section 7. |
 | Ads | **No ads.** Declare "No" under App content, Ads. |
-| In-app purchases | None. Crowns are earned only by playing. |
-| The summon (draws) | **pass**, with a note. A pull is a random shard of a random hero for 100 crowns (`docs/notes/hero-shards.md`), with pity rules, and chests roll random shards. That is a randomised reward, but Play's loot-box rule (publish the odds before purchase) covers random items bought with real money, directly or through a currency bought with real money. Crowns cannot be bought, so it is not a loot box under Play's rules and not gambling. If crowns or summon stones are ever sold, the odds must be shown first, and the rating changes. |
-| Content rating (IARC questionnaire) | **owner action**. Category: Game. Violence: yes, fantasy combat between pixel-art figures, not realistic, against humans and monsters; small stylised blood puffs in some hit effects. Fear: dark fantasy (undead, demons), no horror. Sexuality: no. Language: mild ("hell" twice in quest text). Controlled substances: references to alcohol (a tavern, ale, wine, a drunk), none used for gain. Gambling: no real-money gambling, no simulated casino games. Users interact: no. Shares location: no. Digital purchases: no. Expect about PEGI 7–12, ESRB Everyone 10+ to Teen. |
+| In-app purchases | **Yes, since IAP** (section 7): stones, crowns, a starter pack, bundles and cosmetics, through Google Play Billing (RevenueCat). Only the Play build sells; free earn rates are unchanged. |
+| The summon (draws) | **pass, with IAP**: stones and crowns can now be bought, so a stone's summon and the chest shop's chests are paid random items under Play's rule. The odds are published before purchase: the Odds button in the Summoning Sanctum lists every outcome's exact chance, worked out from the draw's own rules (`docs/notes/iap.md`). Everything sold for money directly has fixed contents. |
+| Content rating (IARC questionnaire) | **owner action**. Category: Game. Violence: yes, fantasy combat between pixel-art figures, not realistic, against humans and monsters; small stylised blood puffs in some hit effects. Fear: dark fantasy (undead, demons), no horror. Sexuality: no. Language: mild ("hell" twice in quest text). Controlled substances: references to alcohol (a tavern, ale, wine, a drunk), none used for gain. Gambling: no real-money gambling, no simulated casino games. Users interact: no. Shares location: no. Digital purchases: **yes** (in-app purchases); **random items purchasable: yes** (stones and crowns buy random summons and chests; odds shown). Expect about PEGI 7–12, ESRB Everyone 10+ to Teen. |
 | Target audience | **owner action**: choose **13 and over** (13–15, 16–17, 18+). Choosing under 13 brings the Families policy and its extra reviews; nothing in the game is made for children. |
 | Other names in the listing | Do not name other games ("King God Castle style", "FF Tactics") in the store text: Play's metadata policy treats it as impersonation or keyword spam. The drafts below do not. |
 
@@ -159,7 +159,9 @@ Proposed pictures, taken from the built game by `node tools/store-ready/shots.mj
 > - Call on six Eidolons, ancient spirits of fire, ice, stone, storm, light and shadow.
 > - Face foes who remember you: a nemesis who beat you once will return with a grudge and a new name.
 > - Hold the Last Stand against endless waves, take on the daily battle, and build up your keep.
-> - Plays fully offline. No ads. No purchases.
+> - Plays fully offline. No ads. Optional purchases; everything can be earned by playing.
+
+**Contains in-app purchases:** yes (Play adds the label once in-app products are set up; declare it in the listing).
 
 **Category:** Game, Strategy. **Tags:** Strategy, Auto battler, Tactics, Fantasy, Pixel art, Offline, Single player.
 Contact email and website: the owner's.
@@ -220,3 +222,76 @@ once the Play build is stable and option C has landed.
   (both build). Sizes from the AAB's own entries; the merged manifest read with `aapt2`.
 - `node tools/store-ready/shots.mjs` and the Chromium stand-in checks above.
 - Not run: anything on an Android device or emulator; `bundletool` (not run here).
+
+## 7. In-app purchases (IAP, `docs/notes/iap.md`)
+
+The Play build sells summoning stones, crowns, a one-time starter pack, bundles and (once their art lands) cosmetics, through Google Play
+Billing with RevenueCat. The web page and the GitHub release's app have no Shop.
+
+### Data safety (Play Console, App content, Data safety): the new answers
+
+| Question | Answer |
+| --- | --- |
+| Does your app collect or share any of the required user data types? | **Yes** |
+| Is all of the user data collected by your app encrypted in transit? | **Yes** (Google Play and RevenueCat use HTTPS) |
+| Do you provide a way for users to request that their data is deleted? | **Yes**: by email to the contact address (we ask RevenueCat to delete the app user ID's records) |
+| **Financial info: Purchase history** | **Collected**, not shared (RevenueCat is a service provider processing it for us, which Play does not count as sharing). Processed ephemerally: no. Required: yes, for purchases. Purpose: **App functionality** (delivering and restoring purchases) and **Analytics** (sales totals in RevenueCat's dashboard). |
+| **App info and performance / Device or other IDs** | **Device or other IDs: collected**: RevenueCat's random app user ID for the install. Not shared. Purpose: App functionality. |
+| Payment info (card numbers) | **Not collected by the app**: Google Play handles payment. |
+| Personal info (name, email), location, contacts, photos, messages, health, web history | Not collected. |
+| App activity, crash logs, diagnostics | Not collected (the Diagnostics list stays on the device). |
+
+Confirm against RevenueCat's own Data safety guidance for the SDK version shipped (`@revenuecat/purchases-capacitor` 11.3.3, purchases-hybrid-common 17.55),
+as it may list further device data its SDK sends.
+
+### Privacy policy
+
+`docs/store/privacy-policy.html` now says what RevenueCat and Google receive for a purchase, why, and how to ask for deletion; the
+network section says the Play build talks to Google Play and RevenueCat for the Shop. Fill in the date and contact, then host it.
+
+### Content rating (IARC)
+
+Answer **yes** to "Does the app allow users to purchase digital goods?" and **yes** to "random items purchasable" (loot-box style:
+stones and crowns, which can be bought, pay for random summons and the chest shop's random chests). Expect the rating's descriptors to add
+"In-Game Purchases (Includes Random Items)" (ESRB) / "In-game purchases (includes random items)" (PEGI).
+
+### The listing
+
+Declare "Contains in-app purchases" (Play shows the label on the listing). The full description's last line now reads "Optional purchases;
+everything can be earned by playing."
+
+### Countries that restrict paid random items
+
+Belgium's gaming authority treats paid loot boxes as gambling (2018), so paid random summons there risk enforcement: **the owner's call is
+to exclude Belgium** in Play Console's country targeting (Production, Countries / regions). **The Netherlands is worth checking**: its courts
+overturned the 2019 loot-box finding in 2022, but the government has said it wants a ban; review before launch. Others to watch (none bans
+them outright today): China and South Korea require published odds (the Odds sheet does), Japan forbids "complete gacha" (we have none),
+Australia now rates games with paid random items M or higher (from September 2024), and the UK and the EU have guidance but no ban.
+
+### The owner's action list (Play Console and RevenueCat)
+
+1. **Play Console, Monetise, Products, In-app products**: create each product with the exact ID, name, description and price in
+   `docs/notes/iap.md`: `stones_pouch`, `stones_satchel`, `stones_coffer`, `stones_hoard`, `crowns_purse`, `crowns_chest`, `crowns_vault`,
+   `starter_pack`, `bundle_recruit`, `bundle_warlord`, and the cosmetics (`look_duchess_regalia`, `look_duchess_knight`,
+   `look_duchess_lantern`, `bundle_wardrobe`, `ruler_ember`, `ruler_starlit`, `look_starfall`; these may be made later, when their art
+   lands). An app needs the BILLING permission in an uploaded build before products can be made: upload this branch's AAB to internal
+   testing first. Activate each product.
+2. **Play Console, Setup, API access**: link a Google Cloud project and make a **service account** with the Play Console permissions
+   RevenueCat lists (View app information, View financial data, Manage orders and subscriptions); download its JSON key.
+3. **RevenueCat**: make a project and an Android app with package `com.hpatter9.lastkeep`; upload the service account JSON; turn on
+   Google's Real-time developer notifications (RevenueCat gives the Pub/Sub topic). Import the products. Mark the stones, crowns and bundles
+   **consumable** and the starter pack and cosmetics **non-consumable**.
+4. **RevenueCat entitlements**: make `starter`, `duchess_regalia`, `duchess_knight`, `duchess_lantern`, `ruler_ember`, `ruler_starlit` and
+   `starfall_summons`; attach `starter_pack` to `starter`, each cosmetic product to its own, and `bundle_wardrobe` to all three Duchess
+   entitlements. (No offering is needed: the game asks for products by ID.)
+5. **The API key**: copy RevenueCat's **public Android SDK key** (it starts `goog_`) into a GitHub repository secret named
+   `REVENUECAT_ANDROID_KEY` (Settings, Secrets and variables, Actions). The workflow's Play bundle step passes it to the build. Never commit it.
+6. **Licence testers**: Play Console, Setup, License testing: add the testers' Google accounts (and the owner's), with "RESPOND_NORMALLY",
+   so their purchases are free test purchases. Testers install from the internal or closed testing track (not a sideloaded APK) for
+   Billing to work. In RevenueCat these show as sandbox purchases.
+7. **Country targeting**: exclude Belgium; review the Netherlands (above).
+8. **Forms**: Data safety, content rating and the listing's "Contains in-app purchases", as above; the privacy policy hosted with its new text.
+9. **Before release, on a phone from the test track**: buy one of each kind with a licence tester; force-close the app during a purchase
+   and reopen (it should arrive with "A purchase from before has arrived"); "Start over" and Restore (cosmetics back, consumables not); a
+   second phone on the same Google account and Restore; airplane mode (the Shop says it needs a connection, the game plays).
+
