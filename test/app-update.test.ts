@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { inApp, newerThan } from '../src/appUpdate';
+import { STORE, inApp, newerThan, updateCheckOn } from '../src/appUpdate';
 
 test('a newer release tag is told from an older or equal one', () => {
   assert.equal(newerThan('v0.320.0', '0.319.0'), true);
@@ -12,4 +12,12 @@ test('a newer release tag is told from an older or equal one', () => {
 
 test('a plain browser is not the app', () => {
   assert.equal(inApp(), false);
+});
+
+test('a store build never looks for updates outside the store; only the GitHub release app does', () => {
+  assert.equal(updateCheckOn('play', true), false);
+  assert.equal(updateCheckOn('play', false), false);
+  assert.equal(updateCheckOn('', true), true);
+  assert.equal(updateCheckOn('', false), false);
+  assert.equal(STORE, ''); // (the tests build with no store)
 });

@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node test.mjs",
     "web": "node build.mjs",
+    "web:play": "node build.mjs --store play",
     "dev": "node build.mjs --serve",
     "balance": "node tools/balance.mjs",
     "stand-balance": "node tools/stand-balance.mjs",

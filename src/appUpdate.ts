@@ -1,5 +1,7 @@
 // The Android app's "Update available" line. Only the installed app (Capacitor) asks; the web page never does.
 // One fetch to the public releases API on start; offline or any error is ignored quietly.
+// STORE-READY (docs/notes/store-readiness.md): a build for a store (`node build.mjs --store play`) never asks. Google Play's rules
+// forbid an app from updating itself, or sending its players elsewhere for updates, outside Play; Play updates it itself.
 
 const RELEASES_API = 'https://api.github.com/repos/hpatter9/legends-of-the-fall/releases/latest';
 
@@ -30,6 +32,14 @@ export function newerThan(a: string, b: string): boolean {
   return false;
 }
 
+/** The store this build is for ('play'), or '' for the web page and the GitHub release's app. */
+export const STORE: string = typeof __STORE__ === 'string' ? __STORE__ : '';
+
+/** Does this build look for a newer release? Only the GitHub release's app: not the web page, and never a store's build. */
+export function updateCheckOn(store: string, app: boolean): boolean {
+  return app && store === '';
+}
+
 let found: AppUpdate | null = null;
 
 /** The newer release found at start, if any. */
@@ -37,7 +47,7 @@ export const appUpdate = (): AppUpdate | null => found;
 
 /** Check once (app only). Calls `then` if a newer release exists. */
 export function checkAppUpdate(current: string, then?: (u: AppUpdate) => void): void {
-  if (!inApp()) return;
+  if (!updateCheckOn(STORE, inApp())) return;
   fetch(RELEASES_API, { headers: { Accept: 'application/vnd.github+json' } })
     .then((r) => (r.ok ? r.json() : null))
     .then((j: { tag_name?: string; html_url?: string } | null) => {
