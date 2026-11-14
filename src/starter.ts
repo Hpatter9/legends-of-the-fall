@@ -10,7 +10,6 @@ import { pickStarter, saveMeta, type Meta } from './sim/meta';
 import { CLASS_NAMES, CLASS_OF, packNamed } from './sim/starter';
 import { countTraits } from './sim/traits';
 import { portrait } from './render/sheets';
-import { heroSays } from './quips';
 import { hideQuip } from './quipView';
 import { menuChoice, menuFoot, menuNote, menuSection, ornateMenu } from './ornateMenu';
 import backdropUrl from './art/camp/overlook.png';
@@ -109,12 +108,7 @@ export function chooseStarter(meta: Meta): Promise<void> {
       });
       go!.disabled = false;
       go!.textContent = 'Start with this pack';
-      // (one of the pack says hello, by its own portrait, under the pack's name)
-      const who = Math.floor(Math.random() * pack.length);
-      heroSays(pack[who], 'hired', () => {
-        const r = card.querySelectorAll('.stHero')[who]?.getBoundingClientRect() ?? card.getBoundingClientRect();
-        return { x: r.left + 30, y: r.top + 4 };
-      });
+      // (no hello bubble here: the director's rule, a bubble never lies over a hero's row on a list, and a pack is all hero rows)
     });
     return card;
   });

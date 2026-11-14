@@ -55,10 +55,15 @@ const KEEP_CLEAR = [
   ...FIGHT_HUD,
   '.toast.lane',
   '#hmTop',
-  // (FIRST-FIVE: the starter's head and each pack's name and chips; the bench; the home screen's tabs, its battle button and plates)
+  // (FIRST-FIVE: the starter's head and packs; the bench; the home screen's tabs, its battle button and plates)
   '#starter .omHead',
-  '#starter .stPack > b',
-  '#starter .stChips',
+  '#starter .stPack',
+  // (and, the director's rule, a hero's row or card on any list: the War Council's company and pool, the hero list, the Houses, the codex)
+  '.ptSlot',
+  '.ptHeroPick',
+  '#ptGrid > *',
+  '.hsLine',
+  '.cxCard',
   '#benchWrap',
   '#hmTabs',
   '#home .hmBattle',
