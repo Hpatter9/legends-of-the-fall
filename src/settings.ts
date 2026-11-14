@@ -533,7 +533,8 @@ function speedRow(value: 1 | 2): HTMLElement {
 function cutRow(value: CutMode): HTMLElement {
   const [r] = row('Nemesis cut-ins', 'Full: a named foe taunts your heroes before its wave, and the hero it names answers. Short: its name plate only. A nemesis’s first meeting always plays in full unless they are off');
   const pair = document.createElement('div');
-  pair.className = 'pair';
+  // (RELEASE-AUDIT-ART: three choices beside the words squeezed them to a word a line at 393 wide; they sit under them instead)
+  pair.className = 'pair wide';
   for (const n of CUT_MODES) {
     const b = document.createElement('button');
     b.textContent = n === 'full' ? 'Full' : n === 'short' ? 'Short' : 'Off';
