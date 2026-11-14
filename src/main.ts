@@ -209,7 +209,7 @@ import { deployBox, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
-import { bindDuck, bindMute, endFight, endVictory, endWave, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
+import { bindDuck, bindMute, endFight, endVictory, endWave, play, playEvents, setAct, setHold, setScene, setup, startFight } from './render/sound';
 import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
@@ -218,7 +218,10 @@ import { installTapGuard } from './tapGuard';
 import { guardRuns, installPopupGuard } from './popupGuard';
 import { CHAINS } from './sim/eidolonChainData';
 import { readMs } from './popupGuardRules';
-import { onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
+import { closeSettings, onDevAssault, onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
+import { openTrialPicker } from './devAssaultView';
+import { trialMeta, type TrialPick } from './sim/assault/devTrial';
+import type { AssaultResult } from './sim/assault/assaultMode';
 import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
 import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
@@ -797,6 +800,12 @@ class Game {
       this.home.refresh();
       return said;
     });
+    // (ASSAULT-DEV: Try an Assault, the picker over Settings; the trial is fought on a throwaway copy of the save)
+    // (only from the home screen: a run under the page would be left running beneath it)
+    onDevAssault(() => {
+      if (!this.home.isOpen || document.getElementById('assaultScene')) return 'Open Settings from the home screen to try an Assault: a run is under way';
+      openTrialPicker(this.meta, (pick) => this.tryAssault(pick));
+    });
     window.addEventListener('resize', () => this.layout());
     this.watchTopHud();
     // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)
@@ -1256,6 +1265,25 @@ class Game {
     if (to.to === 'armies') return this.home.openArmies(to.army);
     if (to.to === 'heroes') return this.home.goTo({ to: 'heroes', hero: to.hero });
     this.home.show(to.to);
+  }
+
+  /** ASSAULT-DEV (`docs/notes/assault-dev.md`): a developer's trial of an assault (Settings, Developer, Try an Assault), on a throwaway
+   *  copy of the save made with the force `trialMeta` builds: its muster, battle and result as a real one's, nothing saved. Back from the
+   *  result (or the muster), Settings opens again on its Developer page; a Last Hold won plays the War's end from the copy's own ending
+   *  first, shown and not recorded. Public for the tools (`__game.tryAssault({ army: 'orcs', kind: 'last', ... })`). */
+  tryAssault(pick: TrialPick): void {
+    const m = trialMeta(this.meta, pick);
+    closeSettings();
+    const back = () => {
+      setHold(null);
+      openSettings('dev');
+    };
+    const done = (result?: AssaultResult) => {
+      const end = m.war?.end;
+      if (result?.warEnded && end) void this.scenes.play(warEndScene(end, armyById(end.army)?.area), { ...this.players(), party: [...m.party] }).then(back, back);
+      else back();
+    };
+    this.home.openTrial(m, pick.army, pick.kind === 'regroup', { done, again: () => this.tryAssault(pick) });
   }
 
   /** Every cinematic's id, and the frames of one worth a screenshot (previews: `tools/cinematics/shots.mjs`). */
