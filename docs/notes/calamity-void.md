@@ -3,11 +3,11 @@
 The owner: "We should make calamity map look more like an interdimensional space. I don't like the current look." The Calamity is reached through a portal; its six maps are now **realms of
 the void** instead of countryside. Everything else is as it was: the graph, the rules, the fog logic, the save and reopen, the walk and the balance (`calamity-map.md`).
 
-## The look (`src/calMap.ts`, `src/render/calRealm.ts`, `calmap.css`, `tools/calmap/prep.py`)
+## The look (`src/calMap.ts`, `calmap.css`, `tools/calmap/prep.py`; the old `src/render/calRealm.ts` went in the release audit, as nothing drew from it any more: `docs/notes/release-audit-code.md`)
 - **The void** (CSS layers behind the canvases, bundled): a sky gradient per realm with the packs' **stars** over it, a **moon** (the Moon pack's four: tan, white, red, pale blue) and a **nebula**
   (the Cloudscape pack's cloud layers, recoloured per realm). Each moves at its own pace as the map scrolls (the sky at half, the nebula at 0.6, the moon almost with the screen), so the party seems
   to travel through it; the nebula also drifts sideways, one slow turn in six minutes. Nothing flashes or pulses hard.
-- **Islands** (`CalMap.isleOf`, `render/calRealm.ts` `drawIsland`): each spot is a natural floating isle, not a cube. Its top is the realm's iso ground cut to an **irregular rounded outline** (an ellipse whose radius
+- **Islands** (`CalMap.isleOf`): each spot is a natural floating isle, not a cube. Its top is the realm's iso ground cut to an **irregular rounded outline** (an ellipse whose radius
   wobbles with four seeded waves, so every island has its own silhouette, deterministically) with a lit rim and a lip of earth; under it hangs a **tapering craggy root** of the Undead Tileset's rock face
   (narrowing to a point, with two seeded prongs, no straight sides) hung with what the realm grows: roots and leaves (meadow), crystals (crystal, rift), glowing cracks (infernal, rift), icicles (frozen),
   chains (clockwork). Size follows the landmark (tents, foe camps and the shop get more room than a chest or shrine); the portal's and the lair's islands are bigger; a radius is capped so neighbours never touch.
