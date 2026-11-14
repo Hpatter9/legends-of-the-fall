@@ -253,7 +253,7 @@ WIND_OWN = dict(
     minotaur=[('smoke', 0, 1.3), ('crack', 0.3, 1.4)], barbarian=[('flare', 0, 1.5), ('shout', 0.3, 1.4)], ninjaMonk=[('spiral', 0, 1.4), ('sparks', 0.4, 1.5)],
     buccaneer=[('chains', 0, 1.5), ('ring', 0, 1.0)], archer=[('shaft', 0, 1.4), ('gust', 0.2, 1.3)], dreadPirate=[('cloud', 0, 1.4), ('souls', 0.3, 1.5)],
     siegeBot=[('ring', 0, 1.4), ('strike', 0.5, 1.8)], lightningMage=[('cloud', 0, 1.5), ('sparks', 0.4, 1.5)], gunslinger=[('sparks', 0, 1.2), ('smoke', 0.3, 1.5)],
-    rifleBot=[('sparks', 0, 1.3), ('bolt', 0.5, 1.6)], dragoon=[('flames', 0, 1.4), ('flare', 0.4, 1.7)], ranger=[('vines', 0, 1.4), ('swarm', 0.3, 1.4)],
+    rifleBot=[('sparks', 0, 1.3), ('bolt', 0.5, 1.6)], dragoon=[('flames', 0, 1.4), ('ring', 0.3, 1.6)], ranger=[('vines', 0, 1.4), ('swarm', 0.3, 1.4)],
     knight=[('slab', 0, 1.3), ('dome', 0.4, 1.6)], paladin=[('nova', 0, 1.2), ('pillar', 0.3, 1.7)], yamabushi=[('vortex', 0, 1.5), ('gust', 0.3, 1.5)],
     gorgon=[('vines', 0, 1.4), ('eye', 0.2, 1.5)], juggernaut=[('crack', 0, 1.3), ('slab', 0.3, 1.5)], kraken=[('whirlpool', 0, 1.4), ('geyser', 0.4, 1.6)],
     mummy=[('sandstorm', 0, 1.4), ('chains', 0.3, 1.5)], warlock=[('sigil', 0, 1.4), ('siphon', 0.3, 1.5)], tyrant=[('shout', 0, 1.4), ('flare', 0.4, 1.6)],
@@ -275,6 +275,9 @@ WIND_OWN = dict(
 WIND_COLOURS = dict(beastmaster=22, falconer=22)
 # A wind-up scene's own options for one hero: the Falconer's hawks wheel overhead before they stoop.
 WIND_OPT = dict(falconer=dict(flock=dict(mode='circle', n=4, size=2.2, r=1.3)),
+                # (ON-FIGHTER: the Dragoon's fire is a pool at her feet, low tongues licking round her and a ring running out along
+                # the ground: a body-high wall of flame stood over her and behind her, and she was lost in it)
+                dragoon=dict(flames=dict(r=1.05, h=0.5, tongues=16, slim=0.3)),
                 # (the Wolf Bard's notes are large, and rise well over the hoops of his chord)
                 wolfBard=dict(notes=dict(size=2.8, n=6, h=2.6, r=1.1)))
 # ULT-AUDIT: every hero's aftermath is what its ability leaves, low where it struck and something lifting off it: no two heroes have

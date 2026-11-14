@@ -307,3 +307,25 @@ Bot, Eclipse Sovereign, War Drummer, Fire Wizard. The Great Sage's dome is playe
   4. The copies are sorted among themselves by depth, but each is see-through, so where two overlap the farther shows faintly
      through the nearer.
   5. Each ultimate was photographed once, on one land, with the tool's own party.
+
+## The Dragoon's wind-up (a wind-up that passed the rule and still lost its hero)
+
+The Dragoon's wind-up was a body-high wall of flame (`flames` at its full size, then `flare`). It went through the two layers as
+the rule asks: whole for 150 ms, then 18% over her (its measured cover of a body was 0.833) and whole behind her. She could be
+made out through it, but a wall of fire the height of her body right behind her and a wash of the same fire over her left her
+lost in it at every moment of the two seconds: the rule's numbers were kept and its purpose was not.
+
+So the clip itself was changed (`WIND_OPT.dragoon` and `WIND_OWN.dragoon` in `tools/blender-fx/effects.py`): a pool of fire at
+her feet, sixteen low tongues licking round her (half a unit high where they were two), and a ring running out along the ground
+in place of the tall flare. Its measured cover of a body is now 0.472, so it is drawn 32% over her; nothing of it stands higher
+than her knees. Only her own atlas changed, and it is smaller: 987 x 641 before, 906 x 605 after (2,530,668 bytes decoded to
+2,192,520).
+
+`WIND=<ms,ms,...>` on `tools/blender-fx/ult-shots.mjs` photographs a caster that many ms into its wind-up, 200 px round it, and
+writes what is drawn over it and under it with each one's strength (`DSF=3` for three times the size).
+
+Before and after, at 60, 300, 700, 1200 and 1700 ms: `docs/samples/blender-fx/windup-dragoon-before-3x.jpg`,
+`windup-dragoon-after-3x.jpg`. The first frame of each is inside the 150 ms flash.
+
+What the lesson is for the other wind-ups: a measured cover over the ceiling says the clip is drawn thin over the body, not that
+the body reads. A tall clip in the hero's own colours behind it can still lose it; those are to be looked at one by one.
