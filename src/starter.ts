@@ -1,7 +1,8 @@
 // The starter pick (#starter): a brand-new save, and one after Start over, offers two packs of three heroes on a
 // full-screen page; the player taps a pack, then confirms it, and its heroes become the unlocked heroes and the party.
 // The packs come from the save (`meta.starter`, the fixed packs of `sim/starter.ts`); this only shows them, with the
-// pack's name, line and chips, and the synergy it wakes, and calls the sim's `pickStarter`. Nothing on it moves or flashes.
+// pack's name, line and chips, and the synergy it wakes, and calls the sim's `pickStarter`. Nothing on it moves or flashes. It is the
+// standard ornate menu (FIRST-FIVE).
 
 import { UNITS } from './sim/units';
 import { heroClassLabel } from './sim/heroNames';
@@ -9,35 +10,29 @@ import { pickStarter, saveMeta, type Meta } from './sim/meta';
 import { CLASS_NAMES, CLASS_OF, packNamed } from './sim/starter';
 import { countTraits } from './sim/traits';
 import { portrait } from './render/sheets';
-import { heroSays } from './quips';
+import { hideQuip } from './quipView';
+import { menuChoice, menuFoot, menuNote, menuSection, ornateMenu } from './ornateMenu';
+import backdropUrl from './art/camp/overlook.png';
 
 const CSS = `
-#starter { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; gap: 10px; box-sizing: border-box; padding: 14px 14px 12px;
-  background: radial-gradient(ellipse at 50% 0%, var(--s6), var(--s2) 70%); color: var(--text); overflow-y: auto; image-rendering: pixelated; }
-#starter[hidden] { display: none; }
-#starter h1 { margin: 6px 0 0; font: 900 17px var(--display); letter-spacing: 1px; text-align: center; color: var(--gold-hi, var(--e8)); text-shadow: 0 2px 0 var(--black); }
-#starter .stSub { margin: 0; font: 400 11px/1.5 var(--body); text-align: center; color: var(--s13); max-width: 330px; }
-#starter .stPacks { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 380px; flex: 1 1 auto; }
-#starter .stPack { position: relative; display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; padding: 2px 4px 4px; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-  border-style: solid; border-width: 6px; border-radius: 0; background: none; border-image: url(ui/card.png) 3 fill / 6px stretch; }
-#starter .stPack:focus-visible { outline: 2px solid var(--white); outline-offset: 2px; }
-#starter .stPack.on { border-image-source: url(ui/card-r4.png); }
-#starter .stHead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 2px 2px 0; font: 700 12px var(--display); color: var(--gold-hi, var(--e8)); text-shadow: 0 2px 0 var(--black); }
-#starter .stHead i { font-style: normal; font-size: 10px; color: var(--s11); }
-#starter .stPack.on .stHead i { color: var(--g5); }
-#starter .stLine { margin: 0 2px; font: 400 10px/1.4 var(--body); color: var(--s13); }
-#starter .stChips { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 2px 2px; }
-#starter .stChips span { padding: 1px 6px; border: 1px solid var(--s8); border-radius: 8px; font: 700 9px var(--body); letter-spacing: 0.5px; text-transform: uppercase; color: var(--e6); background: var(--s3); }
-#starter .stChips span.syn { border-color: var(--g5); color: var(--g5); }
-#starter .stHero { display: flex; align-items: center; gap: 8px; min-width: 0; }
-#starter .stHero canvas { flex: none; width: 52px; height: 52px; background: radial-gradient(var(--s8), var(--s1)); border: 2px solid var(--s1); image-rendering: pixelated; }
-#starter .stHero div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-#starter .stHero b { font: 700 12px var(--display); color: var(--white); text-shadow: 0 2px 0 var(--black); overflow-wrap: anywhere; }
-#starter .stHero b em { margin-left: 6px; font: 400 9px var(--body); font-style: normal; letter-spacing: 0.5px; text-transform: uppercase; color: var(--e6); white-space: nowrap; }
-#starter .stHero span { font: 400 10px/1.35 var(--body); color: var(--s13); overflow-wrap: anywhere; }
-#starter .stGo { width: 100%; max-width: 380px; flex: none; }
-#starter .stNote { margin: 0; font: 400 9px/1.4 var(--body); text-align: center; color: var(--e5); }
-@media (max-height: 800px) { #starter { gap: 6px; padding-top: 10px; } #starter .stPacks { gap: 7px; } #starter .stHero canvas { width: 44px; height: 44px; } }
+#starter.omVeil { background-color: #0b1513; background-position: center top; background-size: cover; background-repeat: no-repeat; }
+#starter .om { max-height: 93%; }
+#starter .stPacks { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+#starter .stPack { align-items: stretch; gap: 5px; padding: 9px 10px 10px; cursor: pointer; }
+#starter .stPack > b { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 17px; }
+#starter .stPack > b i { font: 400 12px var(--body); font-style: normal; color: #b5ac97; }
+#starter .stPack.on > b i { color: #9fe39a; }
+#starter .stChips { display: flex; flex-wrap: wrap; gap: 4px; }
+#starter .stChips span { padding: 1px 7px; border: 1px solid #6b5c40; border-radius: 8px; font: 700 10px var(--body); letter-spacing: 0.5px; text-transform: uppercase; color: #d8c08a; background: #1a1d15; }
+#starter .stChips span.syn { border-color: #9fe39a99; color: #9fe39a; }
+#starter .stHero { display: flex; align-items: center; gap: 9px; min-width: 0; }
+#starter .stHero canvas { flex: none; width: 48px; height: 48px; border: 1px solid #6b5c40; border-radius: 3px; background: radial-gradient(#2b3024, #0d100b); image-rendering: pixelated; }
+#starter .stHero div { display: flex; flex-direction: column; gap: 1px; min-width: 0; text-align: left; }
+#starter .stHero b { font: 400 14px/1.2 var(--display); color: #f1ead9; overflow-wrap: anywhere; }
+#starter .stHero b em { margin-left: 6px; font: 700 10px var(--body); font-style: normal; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ornate-brass); white-space: nowrap; }
+#starter .stHero span { font: 400 12px/1.3 var(--body); color: #c4ba9f; overflow-wrap: anywhere; }
+#starter .omFoot .stGo { flex: 1; }
+@media (max-height: 800px) { #starter .stPack { padding: 7px 9px 8px; gap: 4px; } #starter .stHero canvas { width: 40px; height: 40px; } }
 `;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -47,7 +42,9 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-/** Show the pick and wait for it: resolves once a pack is taken (the meta is changed and saved by then). */
+/** Show the pick and wait for it: resolves once a pack is taken (the meta is changed and saved by then). FIRST-FIVE (the release audit's
+ *  finding 1): the first screen of the game is the standard ornate menu now, the sheet kind, over the Battle Overlook's painting (a stand-in
+ *  until the starter's own backdrop is painted, `docs/notes/release-audit-art-prompts.md` A1); each pack is one of its gilded choices. */
 export function chooseStarter(meta: Meta): Promise<void> {
   if (!document.getElementById('starterStyle')) {
     const st = el('style');
@@ -56,22 +53,33 @@ export function chooseStarter(meta: Meta): Promise<void> {
     document.head.append(st);
   }
   const packs = meta.starter?.packs ?? [];
-  const root = el('div');
-  root.id = 'starter';
-  const go = el('button', 'primary stGo', 'Choose a pack');
-  go.disabled = true;
+  const menu = ornateMenu({
+    id: 'starter',
+    kind: 'sheet',
+    eyebrow: 'The Last Keep',
+    title: 'Choose your first heroes',
+    sub: 'Three heroes join you now. Pick the band you like the look of: more heroes come from the summoning hall.',
+    label: 'Choose your first heroes',
+  });
+  menu.root.style.backgroundImage = `linear-gradient(#0b151333, #0b1513cc 55%, #0b1513), url(${backdropUrl})`;
+  // (the pick has no way out but a pack: Escape, which closes any other standard menu, is kept from this one)
+  const holdEscape = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') e.stopPropagation();
+  };
+  window.addEventListener('keydown', holdEscape, true);
   let chosen = -1;
-  const list = el('div', 'stPacks');
+  const list = menuSection(menu.body, 'Two bands', 'tap one to choose it', 2);
+  list.classList.add('stPacks');
+  const { primary: go } = menuFoot(menu, { primary: { label: 'Choose a pack', disabled: true, onClick: () => undefined } });
+  go!.classList.add('stGo');
   const cards = packs.map((pack, i) => {
-    const card = el('div', 'stPack');
-    card.tabIndex = 0;
-    card.setAttribute('role', 'button');
-    const state = el('i', '', 'tap to pick');
-    const head = el('div', 'stHead');
     // (a fixed pack is named, with its line and chips; an old save's seeded pack is just numbered)
     const named = packNamed(pack);
-    head.append(el('span', '', named?.name ?? `Pack ${i + 1}`), state);
-    card.append(head);
+    const card = menuChoice(list, { title: named?.name ?? `Pack ${i + 1}`, lines: named ? [named.line] : [] });
+    card.classList.add('stPack');
+    card.setAttribute('aria-pressed', 'false');
+    const state = el('i', '', 'tap to pick');
+    card.querySelector('b')!.append(state);
     const chips = el('div', 'stChips');
     for (const c of named?.chips ?? []) chips.append(el('span', '', c));
     // (the synergies the three wake together, as the party screen counts them)
@@ -80,7 +88,6 @@ export function chooseStarter(meta: Meta): Promise<void> {
       chip.title = `${t.trait.name}: ${t.trait.tiers[t.tier].text}`;
       chips.append(chip);
     }
-    if (named) card.append(el('p', 'stLine', named.line));
     if (chips.childElementCount) card.append(chips);
     for (const kind of pack) {
       const def = UNITS[kind];
@@ -92,44 +99,27 @@ export function chooseStarter(meta: Meta): Promise<void> {
       row.append(portrait(def.sheet, 52), text);
       card.append(row);
     }
-    const take = () => {
+    card.addEventListener('click', () => {
       chosen = i;
       cards.forEach((c, n) => {
         c.classList.toggle('on', n === i);
-        c.querySelector('.stHead i')!.textContent = n === i ? 'chosen' : 'tap to pick';
+        c.querySelector('b > i')!.textContent = n === i ? 'chosen' : 'tap to pick';
         c.setAttribute('aria-pressed', String(n === i));
       });
-      go.disabled = false;
-      go.textContent = 'Start with this pack';
-      // (one of the pack says hello)
-      heroSays(pack[Math.floor(Math.random() * pack.length)], 'hired', () => {
-        const r = card.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + 24 };
-      });
-    };
-    card.addEventListener('click', take);
-    card.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        take();
-      }
+      go!.disabled = false;
+      go!.textContent = 'Start with this pack';
+      // (no hello bubble here: the director's rule, a bubble never lies over a hero's row on a list, and a pack is all hero rows)
     });
-    list.append(card);
     return card;
   });
-  root.append(
-    el('h1', '', 'Choose your first heroes'),
-    el('p', 'stSub', 'Three heroes join you now. Pick the band you like the look of: more heroes come from the summoning hall.'),
-    list,
-    go,
-    el('p', 'stNote', 'Every hero is as strong as any other. They only fight differently.'),
-  );
-  document.body.append(root);
+  menuNote(menu.body, 'Every hero is as strong as any other. They only fight differently.');
   return new Promise((done) => {
-    go.addEventListener('click', () => {
+    go!.addEventListener('click', () => {
       if (chosen < 0 || !pickStarter(meta, chosen)) return;
       saveMeta(meta);
-      root.remove();
+      window.removeEventListener('keydown', holdEscape, true);
+      hideQuip();
+      menu.close();
       done();
     });
   });

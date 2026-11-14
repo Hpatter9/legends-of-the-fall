@@ -478,7 +478,7 @@ export class Home {
   }
 
   show(tab: Tab): void {
-    if (!$('hmSheet').hidden || this.castleMenu) this.closeSheet();
+    if (!$('hmSheet').hidden || this.castleMenu || this.logMenu) this.closeSheet();
     this.tab = tab;
     // (the tab bar stays under the armies: a tap on it leaves them)
     if ($('hmSub').classList.contains('armies')) this.closeSub();
@@ -513,34 +513,58 @@ export class Home {
     void revealUnseen(this.meta).then(() => this.refresh());
   }
 
-  /** The quest log, over the home screen (the hero sheet's place). */
+  /** The quest log up now, if any (FIRST-FIVE: a standard ornate menu, the sheet kind, over the home screen). */
+  private logMenu: OrnateMenu | null = null;
+
+  /** The quest log, over the home screen: the standard ornate sheet, "Quests" with its Back, the tabs as its gilded choices. */
   openQuests(tab: LogTab = 'active'): void {
     closeGiverCard();
     this.closeSheet();
-    this.sheetUp();
     this.tavern.stop();
     this.tavern.paintOnce();
     this.camp.stop();
+    const menu: OrnateMenu = ornateMenu({
+      id: 'questLog',
+      kind: 'sheet',
+      eyebrow: 'The tavern board',
+      title: 'Quests',
+      label: 'The quest log',
+      asked: true,
+      onClose: () => {
+        if (this.logMenu !== menu) return;
+        this.logMenu = null;
+        if (this.isOpen && this.tab === 'heroes') this.tavern.start();
+        if (this.isOpen && this.tab === 'battle') this.camp.start();
+      },
+    });
+    this.logMenu = menu;
+    menuFoot(menu, { back: { word: 'back' } });
     const draw = (t: LogTab) =>
-      drawQuestLog($('hmSheetBox'), this.meta, t, {
-        changed: (hold) => {
-          saveMeta(this.meta);
-          this.refresh();
-          // (SECRET-HEROES: a hero quest handed in from the log brings its hero in: its reveal plays over the log; QUEST-COMPLETE: once
-          // the Quest complete card has closed, not under it)
-          if (!hold) this.revealJoined();
+      drawQuestLog(
+        menu.body,
+        this.meta,
+        t,
+        {
+          changed: (hold) => {
+            saveMeta(this.meta);
+            this.refresh();
+            // (SECRET-HEROES: a hero quest handed in from the log brings its hero in: its reveal plays over the log; QUEST-COMPLETE: once
+            // the Quest complete card has closed, not under it)
+            if (!hold) this.revealJoined();
+          },
+          board: () => draw('board'),
+          close: () => menu.close(),
+          fight: (id, auto) => this.questBattle(id, auto),
+          saved: () => this.hooks.questSaved?.() ?? null,
+          summoner: () => this.show('recruit'),
+          goTo: (dest) => this.questGoto(dest),
+          story: (id) => {
+            const scene = chainById(id)?.prologue;
+            if (scene) void this.hooks.onStory?.(scene);
+          },
         },
-        board: () => draw('board'),
-        close: () => this.closeSheet(),
-        fight: (id, auto) => this.questBattle(id, auto),
-        saved: () => this.hooks.questSaved?.() ?? null,
-        summoner: () => this.show('recruit'),
-        goTo: (dest) => this.questGoto(dest),
-        story: (id) => {
-          const scene = chainById(id)?.prologue;
-          if (scene) void this.hooks.onStory?.(scene);
-        },
-      });
+        true,
+      );
     draw(tab);
   }
 
@@ -1291,6 +1315,10 @@ export class Home {
     const castleMenu = this.castleMenu;
     this.castleMenu = null;
     castleMenu?.close();
+    // (FIRST-FIVE: the quest log is a standard ornate sheet now: it goes too)
+    const logMenu = this.logMenu;
+    this.logMenu = null;
+    logMenu?.close();
     this.stopSheet?.();
     this.stopSheet = null;
     // (a redraw shuts the sheet and puts it straight back: remembered until the page next draws, so it is not taken for a fresh one)

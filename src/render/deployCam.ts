@@ -42,3 +42,31 @@ export function deployBox(tops: readonly Top[]): Box | null {
 export function deployView(box: Box, w: number, h: number, base: number, lo: number, hi: number): View {
   return viewFor(box, w, h, base, lo, Math.max(lo, 1, Math.min(hi, DEPLOY_MAX_K / base)));
 }
+
+/** FIRST-FIVE: how much room the placement rows keep inside the frame: the deploy view stands this much further back than an exact fit. */
+export const DEPLOY_COMFORT = 0.92;
+
+/**
+ * FIRST-FIVE (the release audit's first deploy): the deploy view set down on the board. The placement rows of an upright board run along
+ * its near edge, so a frame centred on them showed as much empty sky and water beyond that edge as board, and ran the board off the far
+ * side. The view stands back a little (`DEPLOY_COMFORT`, never past `lo`, nor out of the close view when it was close), then slides
+ * towards the middle of the `board` as far as it can with the placement `box` still wholly inside the `w` x `h` room: the rows stay big,
+ * comfortably inside, and the rest of the screen is the board.
+ */
+export function deployFit(view: View, box: Box, board: Box, w: number, h: number, base: number, lo: number): View {
+  const zoom = Math.max(lo, Math.min(view.zoom, Math.max(view.zoom * DEPLOY_COMFORT, Math.min(1, view.zoom))));
+  const k = base * zoom;
+  const hw = w / 2 / k;
+  const hh = h / 2 / k;
+  // (the centre may move anywhere that keeps the box inside; a box wider than the room stays centred on it)
+  const slide = (lo0: number, hi0: number, half: number, want: number, mid: number): number => {
+    const a = hi0 - half;
+    const b = lo0 + half;
+    return a > b ? mid : Math.min(b, Math.max(a, want));
+  };
+  return {
+    cx: slide(box.x0, box.x1, hw, (board.x0 + board.x1) / 2, view.cx),
+    cy: slide(box.y0, box.y1, hh, (board.y0 + board.y1) / 2, view.cy),
+    zoom,
+  };
+}

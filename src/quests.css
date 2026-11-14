@@ -135,3 +135,9 @@
 .qxReward .qxWords { min-width: 0; font: 400 var(--om-text)/1.3 var(--body); color: #e6dcc4; overflow-wrap: anywhere; }
 .qxReward .qxN { font: 700 17px/1 var(--display); color: #ffe7ae; font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .qxReward { opacity: 1; transform: none; transition: none; } }
+/* FIRST-FIVE: the log on the standard ornate sheet: its tabs are the sheet's gilded choices, one short row, each word on one line */
+#questLog .qlPick { gap: 4px; }
+#questLog .qlPick .omChoice { min-height: 44px; padding: 6px 2px; align-items: center; justify-content: center; text-align: center; flex-direction: row; gap: 4px; }
+#questLog .qlPick .omChoice b { font-size: 13px; white-space: nowrap; }
+#questLog .qlPick .qlDot { display: inline-block; min-width: 16px; font: 400 12px/16px var(--body); font-style: normal; color: #1b1408; background: var(--ornate-brass-hi, #f2dc9f); border-radius: 8px; }
+#questLog .om { height: 92%; }

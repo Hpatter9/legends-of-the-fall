@@ -205,7 +205,7 @@ import { coverElements, measureSafe, onCamCover, registerCamCover } from './camS
 import { easeRect, type Rect } from './render/safeRectRules';
 import { engagedAt, followView, heatOf, manualHeld, returnEase, tileKey, type HotSpot } from './render/followCamRules';
 import { whichCast } from './fightHudRules';
-import { deployBox, deployView, type Top } from './render/deployCam';
+import { deployBox, deployFit, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
@@ -2584,7 +2584,8 @@ class Game {
     const box = deployBox(tops);
     if (!box) return null;
     const { lo, hi } = this.camLimits();
-    return deployView(box, this.safe.w, this.safe.h, this.scale, lo, hi);
+    // (FIRST-FIVE: set down on the board, the rows comfortably inside, rather than centred on them with the void beyond the near edge)
+    return deployFit(deployView(box, this.safe.w, this.safe.h, this.scale, lo, hi), box, this.bbox, this.safe.w, this.safe.h, this.scale, lo);
   }
 
   /** Each frame of a deploy: the camera eases in on the placement rows (a cut with reduced motion), unless the player has taken it, or an

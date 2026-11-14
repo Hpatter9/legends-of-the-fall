@@ -544,3 +544,25 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.dim,
    size smaller and a touch tighter keeps each word between them) */
 .heroDetail .heroTabs button:not([class]):not(#mute):not(#gear):not(#speed) { font-size: 12px; letter-spacing: -0.01em; }
 @media (max-width: 375px) { .heroDetail .heroTabs button:not([class]):not(#mute):not(#gear):not(#speed) { font-size: 11px; } }
+
+/* FIRST-FIVE (the release audit's finding 5): one look for the main button. Four screens kept a look of their own over the gold plate:
+   the Sanctum's Continue and Use 10 stones (a flat green bar and an unframed brown one, `hall.ts`), the War Council's March to battle (green),
+   the wave card's Run recap and Next stage (green) and the run recap's Continue (the wooden skill plate). Each now wears the gold plate;
+   the selectors outweigh those rules (two ids and a class), which `hall.ts` lays at run time after this sheet. */
+#gacha #gachaClose.primary, #gacha .pulls #pull10.primary, #party #ptGo.primary, #result #next.primary, #recap .rcFoot > button.primary {
+  border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
+  border-image: url(ui/buttons/plate-primary.webp) var(--plate-primary-slice) / var(--plate-primary-width) / 0 stretch;
+  color: #fff7e2; text-shadow: 0 1px 2px #2a1600, 0 0 4px #2a1600cc, 0 0 1px #000;
+}
+:is(#gacha #gachaClose, #gacha .pulls #pull10, #party #ptGo, #result #next, #recap .rcFoot > button).primary:active:not(:disabled) {
+  border-image: url(ui/buttons/plate-primary-down.webp) var(--plate-primary-slice) / var(--plate-primary-width) / 0 stretch; background: none; transform: translateY(1px);
+}
+:is(#gacha #gachaClose, #gacha .pulls #pull10, #party #ptGo, #result #next, #recap .rcFoot > button).primary:disabled {
+  border-image: url(ui/buttons/plate-primary-off.webp) var(--plate-primary-slice) / var(--plate-primary-width) / 0 stretch; background: none; filter: none; opacity: 1;
+}
+
+/* FIRST-FIVE (the release audit's tap targets): the codex's Claim (32 px) and its tabs (30 px), and the rune bench's Merge all, Auto runes
+   and Satchel (30 px) stand 44 px tall, the tap floor every other control keeps. */
+.cxReward button, .cxTabs .cxTab { min-height: 44px; }
+#runeBench .rbHead .rbBtn { min-height: 44px; }
+#runeBench .rbHead .rbSatchel { min-width: 44px; }

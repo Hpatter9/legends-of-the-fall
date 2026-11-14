@@ -5,7 +5,7 @@ import { AWARD_JOKES } from './quipData';
 import { shownAchievements, claimable, stonesOfAchievement, unclaimed, type Achievement } from './sim/achievements';
 import type { Meta } from './sim/meta';
 import { SPELLS, type SpellId } from './sim/spells';
-import { fightToastTop } from './hudClear';
+import { fightToastTop, toastFloor } from './hudClear';
 import { reclearQuip } from './quipView';
 import { readMs } from './popupGuardRules';
 
@@ -144,6 +144,11 @@ function next(): void {
     el.style.top = `${Math.round(lane)}px`;
   }
   document.body.append(el);
+  // (FIRST-FIVE: never over a title or a Back button: the lane starts under the page's head when that is lower than its usual place)
+  if (lane === undefined) {
+    const floor = toastFloor();
+    if (floor > (parseFloat(getComputedStyle(el).top) || 0)) el.style.top = `${Math.round(floor)}px`;
+  }
   // (a quip's bubble already up steps out of the toast's lane)
   if (lane !== undefined) reclearQuip();
   requestAnimationFrame(() => el.classList.add('show'));

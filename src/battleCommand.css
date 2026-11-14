@@ -2,14 +2,16 @@
    Loaded after the shared theme so these rules remain local to the combat HUD. */
 #top {
   padding-top: calc(env(safe-area-inset-top) + 7px);
-  padding-bottom: 9px;
+  padding-bottom: 15px;
   background: linear-gradient(110deg, #111b18f5, #303029fa 50%, #111b18f5), url(ui/page.png);
   border-bottom: 3px double #b99b61;
   box-shadow: 0 4px 18px #0008, inset 0 -4px 8px #0006;
 }
+/* (FIRST-FIVE: the status line's words ran into the crest's sword tips at 393 and 360; the crest is a little smaller and the bar keeps a
+   band at its foot for the tips, under the words) */
 #top::after {
-  content: ''; position: absolute; left: calc(50% - 80px); bottom: -32px;
-  width: 160px; height: 54px; background: url(ui/battle-crest.png) center / contain no-repeat;
+  content: ''; position: absolute; left: calc(50% - 70px); bottom: -28px;
+  width: 140px; height: 47px; background: url(ui/battle-crest.png) center / contain no-repeat;
   filter: drop-shadow(0 2px 3px #000b); pointer-events: none;
 }
 #top #status {
