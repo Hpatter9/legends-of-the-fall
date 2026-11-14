@@ -8,6 +8,7 @@ import { startedMeta } from '../../src/sim/meta';
 import { mixSeed } from '../../src/sim/rng';
 import { assaultInput, assaultParty, defaultPlan, settleAssault } from '../../src/sim/assault/assaultMode';
 import { assaultScore, playAssault, startAssault } from '../../src/sim/assault/assault';
+import { shareOf } from '../../src/sim/assault/garrison';
 import { fullCastle, forceLine, trialArmies, trialMeta, type TrialHeroes, type TrialKind, type TrialStrength } from '../../src/sim/assault/devTrial';
 
 const flag = (name: string): string | undefined => (process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : undefined);
@@ -23,6 +24,10 @@ const noTalents = bare || process.argv.includes('--no-talents');
 const noSkills = bare || process.argv.includes('--no-skills');
 const rankFlag = bare ? 0 : flag('--rank') !== undefined ? Number(flag('--rank')) : undefined;
 const maxCastle = process.argv.includes('--max-castle');
+// (ASSAULT-RETUNE: `--scale 1,1.5,2` plays each storming with its garrison's share times each factor, for finding a hold's share; `--brief`
+//  prints each cell's mean length in place of every fight's)
+const scales = (flag('--scale') ?? '1').split(',').map(Number);
+const brief = process.argv.includes('--brief');
 
 const save = startedMeta(20261114);
 const before = JSON.stringify(save);
@@ -31,8 +36,10 @@ console.log(`\nTRY AN ASSAULT: every storming at "${strength}"${bare ? ' (BARE: 
 console.log('hold              kind      force                                              wins   host lost  length (each)          flag');
 const flags: string[] = [];
 for (const army of trialArmies().filter((a) => !only || only.includes(a)))
-  for (const kind of kinds) {
+  for (const kind of kinds)
+  for (const scale of scales) {
     let wins = 0;
+    let ms = 0;
     let lost = 0;
     const lens: string[] = [];
     let ended = 0;
@@ -54,6 +61,7 @@ for (const army of trialArmies().filter((a) => !only || only.includes(a)))
       const input = assaultInput(m, army, mixSeed(s, 0xa55a, army.length), { ...plan, ...(kind === 'regroup' ? { restorm: true } : {}) });
       input.auto = true;
       input.tactical = tactical;
+      if (scale !== 1) input.foeShare = shareOf(input) * scale;
       const b = startAssault(input);
       playAssault(b);
       const sc = assaultScore(b);
@@ -62,11 +70,17 @@ for (const army of trialArmies().filter((a) => !only || only.includes(a)))
       if (r.warEnded) ended++;
       lost += sc.platoons.reduce((n, p) => n + (10 - p.soldiers), 0);
       lens.push(`${r.won ? 'W' : 'L'} ${mmss(b.t)}`);
+      ms += b.t;
     }
     const lostPct = Math.round((100 * lost) / (50 * seeds));
     const winPct = Math.round((100 * wins) / seeds);
     const flag = wins === 0 ? 'unwinnable?' : winPct === 100 && lostPct < 20 ? 'trivial?' : '';
     if (flag) flags.push(`${army} ${kind}: ${flag}`);
+    if (brief) {
+      const aim = winPct >= 70 && winPct <= 80 && lostPct >= 40 && lostPct <= 70 ? 'on target' : '';
+      console.log(`${army.padEnd(11)}${kind.padEnd(9)}x${String(scale).padEnd(6)}${`${winPct}%`.padEnd(6)}${`${lostPct}%`.padEnd(6)}${mmss(ms / seeds).padEnd(7)}${aim || flag}`);
+      continue;
+    }
     console.log(`${army.padEnd(18)}${kind.padEnd(10)}${forceLine(army, kind, strength).padEnd(51)}${`${winPct}%`.padEnd(7)}${`${lostPct}%`.padEnd(11)}${lens.join(', ').padEnd(23)}${flag}${kind === 'last' && ended ? `  (the War ended ${ended}x)` : ''}`);
   }
 console.log(`\nthe save copied from: ${JSON.stringify(save) === before ? 'unchanged' : 'CHANGED'}`);
