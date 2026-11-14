@@ -294,7 +294,7 @@ test('a sheet on the moment\'s layer is put by its frame\'s middle so its tile\'
   assert.match(moment, /ultImpact\(b, m\.el \?\? 'light', spots, 0\.6, m\.kind\)/);
   assert.match(moment, /ultAfter\(b, el, spots, ms, m\.kind\)/);
   const fx = readFileSync('src/render/fx.ts', 'utf8');
-  assert.match(fx, /if \(this\.bfxUlt\(by\.unit\.def, 'windup', by\.x, by\.y, ms, 1, 0, by\.unit\)\) return;/);
+  assert.match(fx, /if \(this\.bfxUlt\(by\.unit\.def, 'windup', by\.x, by\.y, ms, 1, 0, by\.unit, !again\)\) return;/);
   assert.match(fx, /const held = this\.reduced \? \[frames\[c\.hold\]\] : frames;/, 'reduced motion holds the one frame');
 });
 
