@@ -21,6 +21,7 @@ import {
   stepGoat,
   tapGoat,
   triggerLuckyBleat,
+  untilVisit,
   visitAt,
   VISIT_WALK_MS,
   type DuchessBattleState,
@@ -113,6 +114,17 @@ export class PageGoat {
     this.t0 = performance.now();
     this.g = newGoat(FRAME / 2);
     this.g.face = 1;
+    // (a loop asleep through the last fight wakes for this one)
+    this.wake();
+  }
+
+  /** RELEASE-FIXES-2: the timer her loop sleeps on while she is away and coming later. */
+  private sleep = 0;
+  /** Her loop going again (shown, and not already going). */
+  private wake(): void {
+    clearTimeout(this.sleep);
+    this.sleep = 0;
+    if (!this.raf && !this.root.hidden) this.raf = requestAnimationFrame((t) => this.frame(t));
   }
 
   /** She is on the board in this fight (`sim/duchessFight.ts`), so she does not also watch it from the page's edge. */
@@ -134,6 +146,8 @@ export class PageGoat {
     if (!on) {
       cancelAnimationFrame(this.raf);
       this.raf = 0;
+      clearTimeout(this.sleep);
+      this.sleep = 0;
       return;
     }
     void goatSheet().then(() => {
@@ -175,6 +189,19 @@ export class PageGoat {
 
   private frame(t: number): void {
     this.raf = requestAnimationFrame((n) => this.frame(n));
+    // (RELEASE-FIXES-2: away, she draws nothing: her loop sleeps until she wanders in, or stops for the fight if she is not coming; it ran
+    // every frame of the three fights in four she does not visit)
+    if (this.planned) {
+      const wait = untilVisit(this.plan, performance.now() - this.planAt);
+      if (wait !== 0) {
+        this.root.style.visibility = 'hidden';
+        cancelAnimationFrame(this.raf);
+        this.raf = 0;
+        clearTimeout(this.sleep);
+        this.sleep = wait === null ? 0 : window.setTimeout(() => this.wake(), wait);
+        return;
+      }
+    }
     const spot = this.place();
     const visit = this.planned ? visitAt(this.plan, performance.now() - this.planAt) : { phase: 'here' as const, k: 1 };
     this.root.style.visibility = spot && visit.phase !== 'away' ? 'visible' : 'hidden';

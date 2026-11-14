@@ -502,6 +502,12 @@ export function warmPortraits(): void {
   const todo = [...images.keys()].filter((k) => LAYOUT[k] && !bounds.has(k));
   const later = (f: (d?: IdleDeadline) => void) => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 2000 }) : setTimeout(f, 50));
   const step = (d?: IdleDeadline): void => {
+    // (RELEASE-FIXES-2: a hidden page reads no pixels: the browser still runs idle work in a hidden tab, and these reads kept a phone in
+    // its pocket busy; it goes on once the page is seen again)
+    if (document.hidden) {
+      document.addEventListener('visibilitychange', () => later(step), { once: true });
+      return;
+    }
     let n = 0;
     while (todo.length && (d ? d.timeRemaining() > 4 : n++ < 3)) idleBounds(todo.pop()!);
     if (todo.length) later(step);
