@@ -77,7 +77,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { hitSpark, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { hitSpark, tailShare, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -4121,6 +4121,8 @@ export class Fx {
           if (made) {
             sp.texture = rf[this.reduced ? made.hold : Math.floor(t / (made.ms / made.n)) % rf.length];
             sp.rotation = heading;
+            // (EMIT-POINTS: its tail is no longer than the way it has come, so it does not trail back through the shooter as it leaves)
+            sp.scale.x = sp.scale.y * tailShare(Math.hypot(x - x0, y - y0), made.ax * sp.scale.y);
           } else if (orb) {
             sp.texture = orb[Math.floor(t / 70) % orb.length];
             paintSprite(sp, ms * 0.4, ms, m.scale, heading, 1, true, this.calm());

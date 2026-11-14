@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { EMIT, emitOffset, emitWorld } from '../src/render/emitRules';
+import { TAIL_MIN, tailShare } from '../src/render/blenderFxRules';
 import { UNITS } from '../src/sim/units';
 import layout from '../src/art/units/sheets.json';
 
@@ -63,4 +64,13 @@ test('the table the tool checks against the sheets is the table the game uses, a
   assert.match(fx, /return s\.emitPoint\(\) \?\? \[s\.x, s\.y - s\.tall \* lift\];/);
   // (looks only: the rules import nothing of the fight)
   assert.doesNotMatch(readFileSync('src/render/emitRules.ts', 'utf8'), /^import /m);
+});
+
+test("a shot's tail is no longer than the way it has come, so it never trails back through the shooter", () => {
+  assert.equal(tailShare(0, 40), TAIL_MIN);
+  assert.equal(tailShare(20, 40), 0.5);
+  assert.equal(tailShare(40, 40), 1);
+  assert.equal(tailShare(400, 40), 1);
+  assert.equal(tailShare(10, 0), 1);
+  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /sp\.scale\.x = sp\.scale\.y \* tailShare\(Math\.hypot\(x - x0, y - y0\), made\.ax \* sp\.scale\.y\);/);
 });

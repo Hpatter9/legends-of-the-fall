@@ -342,3 +342,9 @@ export const shotClip = (look: string, el: string): string | undefined => (look 
 export const BLINK_CUT = { streak: 'swing-dash', ms: 220, STRETCH: 1.5, cut: 'hit-cut-dark', CUT_SIZE: 0.9, CUT_MS: 260, CUT_LAG: 80 } as const;
 /** The streak and the cut, or undefined where the pipeline has not made both (the painted ones play). */
 export const blinkCut = (): typeof BLINK_CUT | undefined => (BFX_CLIPS[BLINK_CUT.streak] && BFX_CLIPS[BLINK_CUT.cut] ? BLINK_CUT : undefined);
+
+/** EMIT-POINTS: how much of its length a shot's clip is drawn at when it has come `gone` px from where it left and its tail is
+ *  `tail` px long: the tail never reaches back past the point it left from (it would lie across the shooter), and the clip is never
+ *  squeezed under `MIN` of itself, so its head is there from the first frame. */
+export const TAIL_MIN = 0.35;
+export const tailShare = (gone: number, tail: number): number => (tail <= 0 ? 1 : Math.max(TAIL_MIN, Math.min(1, gone / tail)));
