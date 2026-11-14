@@ -3981,25 +3981,29 @@ export class Fx {
       resolution: 3,
     });
     txt.anchor.set(0.5, 1);
+    // (RELEASE-AUDIT: the number and its arrow ride a container at the number's foot, as the arrow once rode the number itself: a Text
+    //  with a child is deprecated in Pixi 8 and warned of in the console. The same place, scale and fade)
+    const num = new Container();
+    num.addChild(txt);
     // (a blow from higher ground carries a small green arrow up beside its number)
     if (high) {
       const sz = heavy ? 5 : 4;
       const arrow = new Graphics();
       arrow.poly([0, -sz * 2, sz, 0, -sz, 0]).fill(0x9be37a).stroke({ color: 0x1a1008, width: 1 });
       arrow.position.set(txt.width / 2 + sz + 2, -txt.height / 2 + sz);
-      txt.addChild(arrow);
+      num.addChild(arrow);
     }
-    txt.position.set(Math.round(x + (k % 2 ? 9 : -9) * Math.sign(k)), Math.round(y - k * 13));
-    this.root.addChild(txt);
+    num.position.set(Math.round(x + (k % 2 ? 9 : -9) * Math.sign(k)), Math.round(y - k * 13));
+    this.root.addChild(num);
     let t = 0;
     const life = 800;
     this.items.push({
-      view: txt,
+      view: num,
       step: (dt) => {
         t += dt;
-        txt.y -= dt * 0.03;
-        txt.scale.set(popScale(t / 1000));
-        txt.alpha = t > life * 0.6 ? 1 - (t - life * 0.6) / (life * 0.4) : 1;
+        num.y -= dt * 0.03;
+        num.scale.set(popScale(t / 1000));
+        num.alpha = t > life * 0.6 ? 1 - (t - life * 0.6) / (life * 0.4) : 1;
         return t < life;
       },
     });
