@@ -78,7 +78,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { hitSpark, mouthRun, MOUTH_RUN, tailShare, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { hitSpark, mouthRun, MOUTH_RUN, streamSpot, lineLight, ULT_LINE, tailShare, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -997,20 +997,22 @@ export class Fx {
           // (EMIT-POINTS: a breath leaves the mouth. Small flames are blown outwards from the caster's mouth along the line, growing, each
           // turned the way the breath goes, and the line's own flames follow them; `mouthRun`)
           const mouth = caster.ultPoint();
-          let wait = 0;
-          if (mouth && run.length) {
-            const first = shown[run[0].i];
-            // (at the mouth's own height all the way: it comes down only where it reaches the line's first spot)
-            const breath = mouthRun(mouth[0], mouth[1], first[0], first[1] - (caster.y - mouth[1]));
-            const key = beatBfx(MOUTH_RUN.clip, el);
-            const frames = key ? bfxFrames(key) : [];
-            const fc = key ? bfxClip(key) : undefined;
-            if (fc && frames.length) {
-              for (const p of breath.at) this.moment.spawn({ frames: this.reduced ? [frames[fc.hold]] : frames, x: p.x, y: p.y, scale: BFX_SCALE * p.size, rotation: breath.turn, frameMs: this.reduced ? fc.ms : fc.ms / frames.length, life: fc.ms, delay: p.delay, prio: true, solid: true, half: 1 });
-              wait = breath.wait;
-            }
-          }
-          for (const r of run) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay + wait);
+          const fkey = mouth && run.length ? beatBfx(MOUTH_RUN.clip, el) : undefined;
+          const frames = fkey ? bfxFrames(fkey) : [];
+          const fc = fkey ? bfxClip(fkey) : undefined;
+          if (mouth && fc && frames.length) {
+            // (at the mouth's own height all the way, reaching over the line's third spot or its last: `streamSpot`)
+            const reach = streamSpot(run.length);
+            const far = shown[run[reach].i];
+            const breath = mouthRun(mouth[0], mouth[1], far[0], far[1] - (caster.y - mouth[1]));
+            for (const p of breath.at) this.moment.spawn({ frames: this.reduced ? [frames[fc.hold]] : frames, x: p.x, y: p.y, scale: BFX_SCALE * p.size, rotation: breath.turn, frameMs: this.reduced ? fc.ms : fc.ms / frames.length, life: fc.ms, delay: p.delay, prio: true, solid: true, half: 1 });
+            // (SHOW-THROUGH: whoever the stream crosses is drawn again over it, so none is hidden by it)
+            const half = (fc.h * BFX_SCALE * MOUTH_RUN.TO) / 2;
+            const end = breath.at[breath.at.length - 1];
+            this.showThrough([Math.min(mouth[0], end.x) - half, Math.min(mouth[1], end.y) - half, Math.max(mouth[0], end.x) + half, Math.max(mouth[1], end.y) + half], breath.wait + fc.ms);
+            // (each spot of the line lights as the stream passes over it, and those beyond it one after another: `lineLight`)
+            run.forEach((r, n) => this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, lineLight(n, reach, breath.wait, ULT_LINE.LAG)));
+          } else for (const r of run) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay);
         } else for (const [x, y] of shown) {
           const far = linked && Math.hypot(x - caster.x, y - caster.y) > 8;
           if (far) beatLine(caster.x, caster.y, x, y).forEach(([px, py], i) => this.bfxBeat(ultLinkClip(kind), el, px, py, { delay: i * BEAT_LINE.LAG }));

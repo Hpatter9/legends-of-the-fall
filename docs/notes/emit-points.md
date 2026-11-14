@@ -230,3 +230,19 @@ of fire falling from her face to her feet, over the knight beside her. The direc
 - Verdict: in the usual case a flame is at her mouth, pointing along the line, and the line lights from her outwards; it no
   longer falls to her feet. It is a small thing beside the wall of flames on the ground. The six-flame run is the one that looks
   like a breath, and play will rarely show it.
+
+### The breath as a stream over three tiles
+
+The director's next order, since the two-flame run was all an ordinary fight showed: at mouth height the stream reaches over the
+THIRD spot of her line, or the last of a shorter line (`streamSpot`, `MOUTH_RUN.TILES`), starting narrow and growing; each spot
+of the line lights as the stream passes over it, the spots beyond one after another (`lineLight`), so the fire spreads along
+the line beneath the breath; and whoever the stream crosses is drawn again over it (SHOW-THROUGH).
+
+- Proof: `docs/samples/blender-fx/emit-dragoon-mouth-3x.png`: two facings, each an ordinary strike on a line of four tiles and
+  more (the foes stood in a row by `LINE=`), at 0, 100 and 200 ms into the stream, three times the size. Four flames in one
+  facing, eight in the other.
+- Verdict, plainly: at 0 ms a flame is at her mouth pointing down the line, and by 100 ms fire runs out from her head along it.
+  But her SHOWCASE plays its own flames over the same line at the same moment (a stream with a ball of fire at its head, and
+  standing flames on the ground that are already lit at 0 ms), so I cannot cleanly tell my stream from the showcase's in the
+  photographs, nor see the ground flames light one by one beneath it. The rule that they do is tested; the picture does not
+  prove it.

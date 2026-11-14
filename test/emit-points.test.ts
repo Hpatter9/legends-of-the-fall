@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { CAST, EMIT, FOE_EMIT, ULT_EMIT, ultEmitOffset, strokeLands, STROKE_AT, emitOffset, emitWorld, reachOffset, strokeLay } from '../src/render/emitRules';
 import { REACH } from '../src/render/reachData';
 import { FOES } from '../src/sim/foes';
-import { MOUTH_RUN, TAIL_MIN, mouthRun, tailShare } from '../src/render/blenderFxRules';
+import { MOUTH_RUN, TAIL_MIN, lineLight, mouthRun, streamSpot, tailShare } from '../src/render/blenderFxRules';
 import { UNITS } from '../src/sim/units';
 import layout from '../src/art/units/sheets.json';
 
@@ -190,9 +190,17 @@ test("ULTIMATES: the Dragoon's breath leaves her mouth: small flames run from it
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /const mouth = caster\.ultPoint\(\);/);
   // (blown at the mouth's own height: the far point is that high over the line's first spot)
-  assert.match(fx, /mouthRun\(mouth\[0\], mouth\[1\], first\[0\], first\[1\] - \(caster\.y - mouth\[1\]\)\);/);
+  assert.match(fx, /mouthRun\(mouth\[0\], mouth\[1\], far\[0\], far\[1\] - \(caster\.y - mouth\[1\]\)\);/);
   assert.match(fx, /rotation: breath\.turn,/);
-  assert.match(fx, /r\.size, r\.delay \+ wait\);/);
+  // (the director's order for a real stream: it reaches over the line's third spot, or the last of a shorter line)
+  assert.deepEqual([1, 2, 3, 4, 8].map(streamSpot), [0, 1, 2, 2, 2]);
+  assert.match(fx, /const reach = streamSpot\(run\.length\);/);
+  // (each spot lights as the stream passes over it, the last of them as it arrives; those beyond one after another)
+  assert.deepEqual([0, 1, 2, 3, 4].map((i) => lineLight(i, 2, 300, 70)), [100, 200, 300, 370, 440]);
+  assert.equal(lineLight(0, 0, 80, 70), 80);
+  assert.match(fx, /r\.size, lineLight\(n, reach, breath\.wait, ULT_LINE\.LAG\)\)\);/);
+  // (whoever the stream crosses is shown through it)
+  assert.match(fx, /this\.showThrough\(\[Math\.min\(mouth\[0\], end\.x\) - half,/);
   // (its clip is asked for at a fight's start only when such a hero is in the fight)
   assert.match(fx, /warmBfx\(b\.units\.filter\(\(x\) => x\.side === 'hero' && ULT_EMIT\[defOf\(x\)\.sheet\]\)\.map\(\(\) => beatBfx\(MOUTH_RUN\.clip, 'fire'\)\)\);/);
 });
