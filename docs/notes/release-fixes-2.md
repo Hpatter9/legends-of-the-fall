@@ -59,8 +59,37 @@ chip was the word's own (45.17 x 16): a Text's width never counted its child, so
 
 ## Numbers
 
-NUMBERS
+`tools/release-audit/profile.mjs --sites --waves 10 --secs 8`, `main` at 0.597.0 (`out/plain-before`) against this branch (`out/plain`),
+a 393x852 page in headless Chromium with software rendering, the CPU throttled 4x (for comparing, not a phone's frame rate):
+
+| Screen | Before: main thread busy (style), frames asked a second | After |
+|---|---|---|
+| **Home, tab hidden** (the warm-up's first minute) | **16.8% (script 7.7%)** | **7.5% (script 0.1%)** |
+| **Deploy** | **54.8% (2.1%), 76.9; Duchess's loop 14 of them** | **44.0% (1.6%), 54.6; hers gone** |
+| A fight at x1 | 64.7% (29.5%), 24.6; Duchess's loop 4.5 of them | 71.9% (33.1%), 20.9; hers gone |
+| Home | 96.0% | 95.9% |
+| Recruit / Heroes / Castle / Spells tab | 26.2 / 40.4 / 56.0 / 29.2% | 26.2 / 40.8 / 47.8 / 24.9% |
+| Settings / Armies page over home | 12.2 / 13.7% | 12.8 / 13.9% |
+| A fight, tab hidden | 33.3% | 35.5% |
+| Home after the run / hidden | 51.4 / 33.8% | 44.8 / 46.9% |
+| Heap MB, waves 1 to 10 | 46, 48, 51, 52, 55, 56, 58, 59, 61, 58 | 49, 51, 53, 55, 58, 59, 61, 61, 63, 62 |
+| Pixi textures, waves 1 to 10 | 524, 737, 577, 646, 671, 686, 679, 602, 659, 602 | 524, 740, 574, 675, 675, 649, 688, 590, 615, 603 |
+| Twenty openings of the menus | no growth (heap 71 to 62 MB, DOM 1,891, 79 listeners, 26 observers, 5 intervals) | no growth (the same, 80 listeners: the cover watch's) |
+| Console warnings and errors (a menu sweep, ten waves) | 0 | 0 |
+
+Reading it: the two rows in bold are the fixes' own; the rest move by a few points either way between two runs of the same screen (the
+fight's frames are SwiftShader's, at 4 a second, and its row swings by ten points run to run; the hidden rows after the run are not
+script, 0.7 and 0.8% both). The heap and textures over ten waves are the same: no leak before, none after. (The heap is now ~50 MB,
+not ~450: the size job took the pictures out of `game.js` in 0.596.0 and 0.597.0.)
+
+The service worker's and the saves' numbers are in their sections above.
 
 ## Proof
 
-PROOF
+- `npm run typecheck`: clean.
+- `npm test`, the full suite, run alone on the branch's last code commit: 3,429 tests, 3,429 pass, 0 fail (new: `guarded-saves`,
+  `duchess-taps`, `background-rest`).
+- `npm run web`: builds.
+- In the built game: `tools/release-audit/robust.mjs --only full` and `--only corrupt` (above); `tools/release-audit/sw-update.mjs`, all
+  five steps pass on this branch (and two fail on `main`'s worker, as the table says); the profiles above.
+- Not run: a real phone; the soaks.
