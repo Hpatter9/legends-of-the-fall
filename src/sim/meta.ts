@@ -72,6 +72,9 @@ export interface Meta {
   shop?: { day: number; sold: Partial<Record<'bronze' | 'silver' | 'gold', number>> };
   /** The chests bought from the shop so far (each one's contents roll from a side stream of the seed and this count). */
   shopBuys?: number;
+  /** IAP (docs/notes/iap.md): the Shop's record of purchases granted to this save, each transaction once (`iapRules.ts`; the page alone writes it,
+   *  never a fight). Optional: a save that never met the store has none. */
+  purchases?: { granted: string[]; since: number; starterFrom?: number };
   /** Stones a save from before the stones was given on load, for the page to say so once (then it is deleted). */
   stoneGift?: number;
   /** Hero kinds unlocked for summoning. */
