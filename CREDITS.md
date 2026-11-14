@@ -72,7 +72,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   - Each track is resampled to 24 kHz, seamlessly crossfaded, and encoded to Opus with a 1.5 s wrap tail. The older synthesised loops (`src/render/musicScore.ts`, rendered in the page by `src/render/musicBake.ts`) remain as a fallback if a browser cannot decode the files.
 - **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API, except eight recorded combat sounds (sword and
   blunt hits, a shield block, a crit, a bowstring, an arrow hit, a death and an explosion) embedded in `src/render/combatAudioBank.ts`
-  (PR #150, given as CC0). Their original source and authors were not recorded with the PR and should be named here.
+  (PR #150, given as CC0). **Licence unconfirmed**: their original source and authors were not recorded with the PR and should be named here.
 - **The king's spells' sounds** (`src/sfx/*.opus`, 44 files): original, synthesised offline by `tools/spell-sfx/` for this game (using the
   filters, hall and instruments of `tools/epic-music/`). No samples or third-party audio went in.
 
@@ -109,9 +109,9 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
 - The Paladin, Cleric, Druid, Barbarian, Ranger, Warlock, Illusionist and Gunslinger (three looks each, one per grade) are
   **generated with PixelLab** (see below). The Himeko Sutori layered sheets they replace are gone, so
   `tools/compose-class-heroes.cjs` no longer makes the `cls_*` hero sheets (it now makes only the Last Stand's king).
-- The **Golem Forge** army's golems (`golem_stone/iron/crystal/magma/sapphire/forge.png`) are figures 6, 18, 20, 27, 32 and 15 of the same **Golems and elementals** pack by batareya (no licence file in the pack folder: check the author's terms before any public release). The pack has only still figures, so `tools/golems/cut.py` moves each by whole pixels for the walk, attack, idle, hurt and dead rows, with a last lying frame made by an exact 90-degree turn; nothing is resampled. The **Yokai Night Parade** troops and the Nine-Tailed Fox use the Kitsune, Karasu Tengu and Yamabushi Tengu sheets (Free Yokai Character Sprites, Craftpix) listed above.
+- The **Golem Forge** army's golems (`golem_stone/iron/crystal/magma/sapphire/forge.png`) are figures 6, 18, 20, 27, 32 and 15 of the same **Golems and elementals** pack by batareya (**licence unconfirmed**: no licence file in the pack folder; check the author's terms before any public release). The pack has only still figures, so `tools/golems/cut.py` moves each by whole pixels for the walk, attack, idle, hurt and dead rows, with a last lying frame made by an exact 90-degree turn; nothing is resampled. The **Yokai Night Parade** troops and the Nine-Tailed Fox use the Kitsune, Karasu Tengu and Yamabushi Tengu sheets (Free Yokai Character Sprites, Craftpix) listed above.
 - The **foes remade for the art cleanup** (`forest_boss_1-3`, `boar_king`, `devil_leader`, `shaman_king`, `golem_*`, `satyr_1-3`) and the new **walk and hurt rows of the 16 remade heroes** are generated the same way (PixelLab: bases from Craftpix style references, `/animate-with-text-v3` clips, native pixels, hard alpha, lying last death frame by `lie.py`). Tools: `tools/pixellab/foes/` and `tools/pixellab/heroes/polish.py`; see `docs/notes/art-cleanup.md`.
-- The Druid's treant (`cls_treant.png`) is one picture from the **Golems and elementals** pack by batareya (the pack folder has no licence file: check the author's terms before any public release).
+- The Druid's treant (`cls_treant.png`) is one picture from the **Golems and elementals** pack by batareya (**licence unconfirmed**: the pack folder has no licence file; check the author's terms before any public release).
 
 ## Magic effects (the spells, the skills and the crits)
 
@@ -230,7 +230,7 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
 
 ## Art generated with PixelLab
 
-- **Duchess's headbutt and fall** (the attack and dead rows of `duchess_goat.png`) are generated with **PixelLab**: her own standing frame from whtdragon's white goat (`src/art/duchess/goat.png`) on a 64-pixel canvas, animated with `/animate-with-text-v3` (`tools/duchess/gen.py`, the takes kept in `tools/duchess/generated/`), native pixels with hard alpha, then scaled 2x like the pack frames beside them. Four generations: two headbutt takes (the second used), a hurt take (not used: it drew a lightning flash) and the fall (its last three frames used). See `docs/notes/duchess-fights.md`.
+- **Duchess's headbutt and fall** (the attack and dead rows of `duchess_goat.png`) are generated with **PixelLab**: her own standing frame from whtdragon's white goat (`src/art/duchess/goat.png`; **licence unconfirmed**, as her sheet's) on a 64-pixel canvas, animated with `/animate-with-text-v3` (`tools/duchess/gen.py`, the takes kept in `tools/duchess/generated/`), native pixels with hard alpha, then scaled 2x like the pack frames beside them. Four generations: two headbutt takes (the second used), a hurt take (not used: it drew a lightning flash) and the fall (its last three frames used). See `docs/notes/duchess-fights.md`.
 - The **Lich King** (`lich_king.png`, the Undead Legion's boss) is generated the same way as the other bosses: a base figure (`/generate-with-style-v2`, 128 px, Craftpix Minotaur, Samurai Commander and Skeleton Warrior frames as style references), then idle, walk, attack, cast and death clips (`/animate-with-text-v3`), cropped and padded only (native pixels, hard alpha), with a last lying death frame made by an exact 90-degree turn (`tools/pixellab/lie.py`). The steps are in `tools/pixellab/lich.py`; see `docs/notes/armies.md`.
 - The **Oni King** (`oni_king.png`, the Yokai Night Parade's boss) is generated the same way as the Lich King: 4 base candidates at 128 px (Craftpix Minotaur, Samurai Commander and the generated Horned Ogre as style references; the armoured one picked), then idle, walk, attack, attack2 and death clips and the lying last frame. The steps are in `tools/pixellab/oni.py`; see `docs/notes/armies.md`.
 - The Druid's treant (`cls_treant.png`) is generated the same way (base figure from Craftpix Knight and Minotaur style references, then walk, attack and idle clips). Every generated sheet's last death frame is that sheet's idle figure turned exactly 90 degrees (`tools/pixellab/lie.py`), so no extra generation was involved.
@@ -349,7 +349,7 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
 
 Duchess is the town's goat from Chronos Settlement (`hpatter9/little-town`), and now of the camp, the tavern and the battlefield too. Her sheet
 is the one Chronos's cutscenes use (three steps walking left, three walking right), copied as it is. It is **whtdragon**'s RPG Maker MV white goat
-(`animals/goats.png`). The pack folder has no licence file: check whtdragon's posted terms of use before any public release (the same note as
+(`animals/goats.png`). **Licence unconfirmed**: the pack folder has no licence file; check whtdragon's posted terms of use before any public release (the same note as
 Chronos's CREDITS.md).
 
 Her fighting sheet (`src/art/units/duchess_goat.png`, for the rare fight she joins: `tools/duchess/compose-duchess.py`) keeps that goat's walk and idle
@@ -360,7 +360,7 @@ headbutt and her fall are **generated with PixelLab** from her own standing fram
 
 The wolf (and the black dire wolf) are the grey and black wolves of **whtdragon**'s RPG Maker MV animals pack (`animals/wolfdog.png`, from the private assets repository `hpatter9/chronos-assets`), the
 right-facing row of three walking frames, scaled up 2x with nearest-neighbour. The script builds the game's rows from them (a step cycle, a lunge made of the stride shifted forward, an idle, a hurt
-frame brightened, and a dead frame rolled onto its side). The pack folder has no licence file: the same note as Duchess the goat, which comes from the same pack: check whtdragon's posted terms of use before any public release.
+frame brightened, and a dead frame rolled onto its side). **Licence unconfirmed**: the pack folder has no licence file, the same note as Duchess the goat, which comes from the same pack: check whtdragon's posted terms of use before any public release.
 
 ## The sprite Eidolons on the board (`src/art/eidolons/sprites/`; `tools/eidolon-call-2/cut_sprites.py`, EIDOLON-CALL-2)
 
@@ -400,9 +400,9 @@ After an Eidolon's painting crosses the screen, its sprite comes onto the board 
 
 - The wolves and the dire wolf (`summon_wolf.png`, `summon_wolf_white.png`, `summon_direwolf.png`): the grey, white and black wild dogs of
   **whtdragon**'s RPG Maker MV animals pack (`animals/wilddogs.png`), the right-facing walking frames doubled by whole pixels, the bite,
-  idle, hurt and fall rows made by moving them by whole pixels. The same licence note as the wolves above.
+  idle, hurt and fall rows made by moving them by whole pixels. **Licence unconfirmed**: the same licence note as the wolves above.
 - The Reaper's wraith (`summon_wraith.png`) and the Illusionist's decoy (`summon_decoy.png`): figures 13 and 33 of the **Golems and
-  elementals** pack by batareya, moved by whole pixels as the Golem Forge's golems are, coming apart pixel by pixel as they fall (the same
+  elementals** pack by batareya, moved by whole pixels as the Golem Forge's golems are, coming apart pixel by pixel as they fall (**licence unconfirmed**: the same
   licence note as the golems).
 - The Samurai Commander's standard (`summon_standard.png`): the war camp's standard (`src/art/camp/standard.png`, Chronos Settlement's
   isometric kits, credited under the war camp) without its sand plot, its pennants stirring by whole pixels.
