@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.597.0',
+    date: '2026-11-14',
+    title: 'Faster start and far less memory',
+    notes: ['The game\'s pictures now load as separate files instead of one huge script, so it starts about a quarter faster and uses around 480 MB less memory.'],
+  },
+  {
     version: '0.596.0',
     date: '2026-11-14',
     title: 'Lighter on your phone',
