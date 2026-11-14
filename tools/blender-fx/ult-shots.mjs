@@ -196,6 +196,21 @@ if (process.env.WATCH) {
     srv.close();
     process.exit(0);
   }
+  // (WHO=1 with WATCH: which fighters something leaves from in WATCH_S seconds of the fight (20), and whether each has a measured
+  // point: the list of who still starts from the old place)
+  if (process.env.WHO) {
+    console.log('WHO', await page.evaluate((secs) => {
+      const g = window.__game, fx = g.fx, seen = {};
+      const was = fx.emitOf.bind(fx);
+      fx.emitOf = (s, lift) => { const k = s.unit.side + ':' + s.unit.def + ':' + (s.emitPoint() ? 'point' : 'old'); seen[k] = (seen[k] ?? 0) + 1; return was(s, lift); };
+      for (let t = 0; t < secs * 1000 && g.b.phase === 'fight'; t += 16) window.__step(16);
+      return JSON.stringify(seen);
+    }, Number(process.env.WATCH_S ?? 20)));
+    await ctx.close();
+    await browser.close();
+    srv.close();
+    process.exit(0);
+  }
   // (STAGED=1 with WATCH: EMIT-POINTS' proof. As the fight opens, before the lines meet, each hero of the party is put in the frame of
   // its attack that is on show as a shot leaves, facing each of the four ways in turn, and its own shot is loosed at the nearest
   // foe; one frame later (the shot just out) the hero is photographed, 130 px round it. Nothing of the fight is stepped: only the
