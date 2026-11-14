@@ -13,7 +13,7 @@ button:not([class]):not(#mute):not(#gear):not(#speed),
 button.small, button.pbPlate, button.pbSecondary,
 .omFoot button, button.omBack,
 #hmSubBack, #settingsClose, #ptBack, #ptSuggest, #askNo, #tipSkip, #revealAll, #pull1, #qbLeave, #autoStop, #gachaClose:not(.primary),
-:is(.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .twDetailClose, .tacClose, .qlDrop, .stLeave, .stPause, .asCont, .armyAgain, .ptOrders, .tvRoster, .tvQuests, .tvTrophies, .tvUpgrades, .ulGo, .tomeUse, .eqRepair):not(.primary) {
+:is(.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .ecnShut, .twDetailClose, .tacClose, .qlDrop, .stLeave, .stPause, .asCont, .armyAgain, .ptOrders, .tvRoster, .tvQuests, .tvTrophies, .tvUpgrades, .ulGo, .tomeUse, .eqRepair):not(.primary) {
   border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
   border-image: url(ui/buttons/plate-secondary.webp) var(--plate-secondary-slice) / var(--plate-secondary-width) / 0 stretch;
   padding: 6px 15px; color: #f4ead2; text-shadow: 0 1px 2px #000, 0 0 3px #000a;
@@ -22,12 +22,12 @@ button:not([class]):not(#mute):not(#gear):not(#speed):active:not(:disabled),
 button.small:active:not(:disabled), button.pbPlate:active:not(:disabled), button.pbSecondary:active:not(:disabled),
 .omFoot button:active:not(:disabled), button.omBack:active:not(:disabled),
 :is(#hmSubBack, #settingsClose, #ptBack, #ptSuggest, #askNo, #tipSkip, #revealAll, #pull1, #qbLeave, #autoStop):active:not(:disabled),
-:is(.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .twDetailClose, .tacClose, .qlDrop, .stLeave, .stPause, .asCont, .armyAgain, .ptOrders, .tvRoster, .tvQuests, .tvTrophies, .tvUpgrades, .ulGo, .tomeUse, .eqRepair):not(.primary):active:not(:disabled) {
+:is(.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .ecnShut, .twDetailClose, .tacClose, .qlDrop, .stLeave, .stPause, .asCont, .armyAgain, .ptOrders, .tvRoster, .tvQuests, .tvTrophies, .tvUpgrades, .ulGo, .tomeUse, .eqRepair):not(.primary):active:not(:disabled) {
   border-image: url(ui/buttons/plate-secondary-down.webp) var(--plate-secondary-slice) / var(--pbw, var(--plate-secondary-width)) / 0 stretch; background: none; box-shadow: none; transform: translateY(1px);
 }
 button:not([class]):not(#mute):not(#gear):not(#speed):disabled, button.small:disabled, button.pbPlate:disabled, .omFoot button:disabled,
 :is(#hmSubBack, #settingsClose, #ptBack, #ptSuggest, #askNo, #tipSkip, #revealAll, #pull1, #qbLeave, #autoStop):disabled,
-:is(.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .twDetailClose, .tacClose, .qlDrop, .stLeave, .stPause, .asCont, .armyAgain, .ptOrders, .tvRoster, .tvQuests, .tvTrophies, .tvUpgrades, .ulGo, .tomeUse, .eqRepair):not(.primary):disabled {
+:is(.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .ecnShut, .twDetailClose, .tacClose, .qlDrop, .stLeave, .stPause, .asCont, .armyAgain, .ptOrders, .tvRoster, .tvQuests, .tvTrophies, .tvUpgrades, .ulGo, .tomeUse, .eqRepair):not(.primary):disabled {
   border-image: url(ui/buttons/plate-secondary-off.webp) var(--plate-secondary-slice) / var(--pbw, var(--plate-secondary-width)) / 0 stretch; opacity: 1; color: #b9b3a4;
 }
 button.primary, button.pbPrimary, .omFoot button.omPrimary, .omFoot button.primary {
@@ -323,7 +323,7 @@ button.asFight.primary::before, button.asAssault::before {
 }
 button.asAssault::before { background-image: url(ui/buttons/assault.webp); }
 .asCont::before { content: ''; display: inline-block; width: 24px; height: 24px; margin-right: 4px; vertical-align: middle; background: url(ui/buttons/continue.webp) center / contain no-repeat; }
-.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut { white-space: nowrap; }
+.asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .ecnShut { white-space: nowrap; }
 
 /* --------------------------------------------------------------------------
    8. THE FIGHT HUD: the spell orbs in the painted rings (gold, lit while armed, bronze while it cannot be paid), the mana's drop, the
