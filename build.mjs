@@ -6,6 +6,8 @@
 import * as esbuild from 'esbuild';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { resolve } from 'node:path';
+import { losslessWebp } from './tools/play-size/webpLossless.mjs';
 
 const serve = process.argv.includes('--serve');
 // (`--board 7x9` builds with the old board size, to compare against the usual one)
@@ -59,10 +61,24 @@ const options = {
 //  (`ART_FILES`, from the build's metafile) for offline play)
 const SMALL_ART = 16 * 1024;
 let ART_FILES = [];
+// (PLAY-SIZE C, the owner's call: such a picture that is a PNG is written as lossless WebP, checked pixel for pixel, when that is
+//  smaller (`tools/play-size/webpLossless.mjs`); the import is resolved to a `.webp` path of the same name, so the file comes out
+//  as `art/<folder>/<name>-<hash>.webp`, and its code gets that URL. The PNG in src/art is untouched)
 const artFiles = {
   name: 'art-files',
   setup(build) {
+    build.onResolve({ filter: /\.png$/ }, async (args) => {
+      const png = resolve(args.resolveDir, args.path);
+      if (!existsSync(png)) return undefined;
+      const contents = readFileSync(png);
+      if (contents.length < SMALL_ART) return undefined;
+      const webp = await losslessWebp(contents);
+      const path = png.slice(0, -'.png'.length) + '.webp';
+      if (!webp || existsSync(path)) return undefined;
+      return { path, pluginData: { png, webp } };
+    });
     build.onLoad({ filter: /\.(png|webp)$/ }, (args) => {
+      if (args.pluginData?.webp) return { contents: args.pluginData.webp, loader: 'file', watchFiles: [args.pluginData.png] };
       const contents = readFileSync(args.path);
       return { contents, loader: contents.length < SMALL_ART ? 'dataurl' : 'file' };
     });
@@ -176,12 +192,19 @@ for (const f of readdirSync('src/sfx').filter((f) => f.endsWith('.opus'))) {
 const HERO_ART_FILES = [];
 // Awakened animation sheets stay outside the script: heroes and previews load
 // only the art they use, while the service worker keeps all forms for flights.
+// (PLAY-SIZE C: each sheet is written as lossless WebP, checked pixel for pixel; `src/render/awakenedArt.ts` names the .webp)
 const AWAKENED_ART_FILES = [];
 mkdirSync(`${out}/awakened`, { recursive: true });
-for (const f of readdirSync('src/art/awakened').filter(f => f.endsWith('.png'))) {
-  copyFileSync(`src/art/awakened/${f}`, `${out}/awakened/${f}`);
-  AWAKENED_ART_FILES.push(`awakened/${f}`);
-}
+await Promise.all(
+  readdirSync('src/art/awakened')
+    .filter((f) => f.endsWith('.png'))
+    .map(async (f) => {
+      const name = f.replace(/\.png$/, '.webp');
+      writeFileSync(`${out}/awakened/${name}`, await losslessWebp(readFileSync(`src/art/awakened/${f}`), { always: true }));
+      AWAKENED_ART_FILES.push(`awakened/${name}`);
+    }),
+);
+AWAKENED_ART_FILES.sort();
 mkdirSync(`${out}/heroes`, { recursive: true });
 for (const f of readdirSync('src/art/heroes').filter(f => f.endsWith('.webp'))) {
   copyFileSync(`src/art/heroes/${f}`, `${out}/heroes/${f}`);
