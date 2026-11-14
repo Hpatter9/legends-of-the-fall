@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.591.0',
+    date: '2026-11-14',
+    title: 'Ready for the store: a first set of fixes',
+    notes: ['Your save is now backed up with your phone, so it carries over to a new phone.', 'The app targets the newest Android version Google Play requires, and stays upright on tablets too.'],
+  },
+  {
     version: '0.590.0',
     date: '2026-11-14',
     title: 'The Lancer and the Lightning Mage stand out',
