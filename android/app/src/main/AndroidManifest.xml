@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- STORE-READY (docs/notes/store-readiness.md): the save (the page's own storage) is backed up and moves to a new phone
+         (res/xml/data_extraction_rules.xml, backup_rules.xml); the app is a game (android:appCategory), which keeps it upright on
+         tablets and foldables under Android 16, where other apps' orientation lock is ignored on large screens. -->
     <application
-        android:allowBackup="false"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:appCategory="game"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:icon="@mipmap/ic_launcher"
