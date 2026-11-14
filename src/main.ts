@@ -51,7 +51,8 @@ import { settleWear, wearWords } from './sim/wear';
 import { ELITE_BY_ID } from './sim/elites';
 import { isBoss } from './sim/foes';
 import { awakenedOf } from './sim/awaken';
-import { earn, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
+import { earn, keepUnreadable, loadMeta, needsStarter, pickStarter, heroRank, recordStars, saveMeta, type Meta } from './sim/meta';
+import { tellUnreadable, watchSaves } from './saveNotice';
 import { chooseStarter } from './starter';
 import { ScenePlayer } from './render/sceneView';
 import { WAR_END_SCENE, warEndScene } from './sim/warEndScene';
@@ -474,7 +475,12 @@ class Game {
     this.app.stage.addChild(this.world, this.weather.root, this.ghost, this.fx.flashLayer);
     const query = new URLSearchParams(location.search);
     const seed = Number(query.get('seed'));
-    this.meta = loadMeta((Date.now() % 100000) + 1);
+    // (GUARDED-SAVES: a save that fails from here on is caught and told once; a save that cannot be read is kept aside, and the player
+    // told, before the Keep begins afresh: `saveNotice.ts`)
+    watchSaves();
+    let unreadable: string | null = null;
+    this.meta = loadMeta((Date.now() % 100000) + 1, localStorage, (raw) => (unreadable = raw));
+    if (unreadable !== null) await tellUnreadable(keepUnreadable(unreadable));
     // (EIDOLONS: a hidden dev flag, `?eidolons=all`, binds all six Eidolons and fills the War Horn, to try the call before the quest chains
     // bind them; in normal play the horn fills but no Eidolon answers it yet)
     if (query.get('eidolons') === 'all') {

@@ -5,6 +5,7 @@ import { oneMythic, validMythicSquad } from './mythicRules';
 // raise the kind's rank, and each rank makes its heroes a little stronger in every fight. Pure rules: no Pixi, no DOM;
 // every pull draws from a side stream of the meta seed and the pull counter, so it replays exactly.
 
+import { guardedSave } from './saveGuard';
 import { readAssault } from './assault/economy';
 import { newCastle, readCastle, readChapel, readWorks, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
@@ -499,11 +500,17 @@ export function useStones(m: Meta, count: 1 | 10, opts: PullOpts = {}): Pull[] |
 }
 
 const KEY = 'legends.meta';
-export const saveMeta = (m: Meta, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(KEY, JSON.stringify(m));
-/** The saved meta, or a fresh one from `seed`. Kinds no longer in the game are dropped; a save from before the starter pick keeps the starting five. */
-export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localStorage): Meta {
+/** GUARDED-SAVES: where an unreadable save's text is kept before the game starts afresh (the first one kept, never written over). */
+export const UNREADABLE_KEY = 'legends.meta.unreadable';
+/** Save the meta. GUARDED-SAVES: false if the storage refused it (full, say); it never throws, and the game plays on from memory. */
+export const saveMeta = (m: Meta, store: Pick<Storage, 'setItem'> = localStorage): boolean => guardedSave(store, KEY, JSON.stringify(m));
+/** The saved meta, or a fresh one from `seed`. Kinds no longer in the game are dropped; a save from before the starter pick keeps the starting five.
+ *  GUARDED-SAVES: a save that is there but cannot be read is handed to `unreadable` (its text) before the fresh one is made. */
+export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localStorage, unreadable?: (raw: string) => void): Meta {
+  let raw: string | null = null;
   try {
-    const m = JSON.parse(store.getItem(KEY) ?? 'null') as Meta | null;
+    raw = store.getItem(KEY);
+    const m = JSON.parse(raw ?? 'null') as Meta | null;
     if (m && typeof m.crowns === 'number' && Array.isArray(m.unlocked) && typeof m.seed === 'number') {
       // (a save from before the starter pick always has the old five; one with a pick keeps just what it unlocked, and its pack)
       m.starter = readStarter(m.starter);
@@ -678,5 +685,17 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
   } catch {
     /* fall through to a fresh one */
   }
+  if (raw !== null && raw !== 'null' && raw.trim() !== '') unreadable?.(raw);
   return newMeta(seed);
+}
+
+/** GUARDED-SAVES: keep an unreadable save's text under `UNREADABLE_KEY`, unless one is kept already (the first is the one worth having:
+ *  after it the game has saved afresh). True if the text is kept there now. */
+export function keepUnreadable(raw: string, store: Pick<Storage, 'getItem' | 'setItem'> = localStorage): boolean {
+  try {
+    if (store.getItem(UNREADABLE_KEY) !== null) return true;
+  } catch {
+    return false;
+  }
+  return guardedSave(store, UNREADABLE_KEY, raw);
 }
