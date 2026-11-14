@@ -781,9 +781,19 @@ export const runFits = (r: Run): boolean => {
 };
 /** GUARDED-SAVES: false if the storage refused it; never a throw (`saveGuard.ts`). */
 export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage): boolean => guardedSave(store, KEY, JSON.stringify(((run.relicBook = RELIC_BOOK), run)));
-export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | null {
+/** GUARDED-SAVES: where a damaged run save's text is kept before the game goes on without it (the first only). */
+export const RUN_UNREADABLE_KEY = 'legends.run.unreadable';
+/** The run saved in the ordinary slot, if it can go on. GUARDED-SAVES: a run save that is there but cannot be read (not JSON, or not a run)
+ *  is handed to `unreadable` (its text); one that reads but cannot go on here (`runFits`: an old board, say) is no damage and is not. */
+export function loadRun(store: Pick<Storage, 'getItem'> = localStorage, unreadable?: (raw: string) => void): Run | null {
+  let raw: string | null = null;
   try {
-    const r = JSON.parse(store.getItem(KEY) ?? 'null') as Run | null;
+    raw = store.getItem(KEY);
+    const r = JSON.parse(raw ?? 'null') as Run | null;
+    if (r !== null && !(typeof r === 'object' && Array.isArray(r.roster) && typeof r.gold === 'number')) {
+      if (raw !== null && raw.trim() !== '') unreadable?.(raw);
+      return null;
+    }
     if (r && 'orders' in r) {
       // (DEPTH-BUILD: odd orders read as a plain march)
       const o = readOrders(r.orders);
@@ -804,6 +814,7 @@ export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | n
     }
     return r && Array.isArray(r.roster) && typeof r.gold === 'number' && runFits(r) ? catalogueRun(r) : null;
   } catch {
+    if (raw !== null && raw.trim() !== '' && raw !== 'null') unreadable?.(raw);
     return null;
   }
 }

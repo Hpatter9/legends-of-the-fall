@@ -689,13 +689,13 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
   return newMeta(seed);
 }
 
-/** GUARDED-SAVES: keep an unreadable save's text under `UNREADABLE_KEY`, unless one is kept already (the first is the one worth having:
- *  after it the game has saved afresh). True if the text is kept there now. */
-export function keepUnreadable(raw: string, store: Pick<Storage, 'getItem' | 'setItem'> = localStorage): boolean {
+/** GUARDED-SAVES: keep an unreadable save's text under `key` (the meta's `UNREADABLE_KEY`, or a run's `RUN_UNREADABLE_KEY`), unless one is
+ *  kept there already (the first is the one worth having: after it the game has saved afresh). True if the text is kept there now. */
+export function keepUnreadable(raw: string, store: Pick<Storage, 'getItem' | 'setItem'> = localStorage, key = UNREADABLE_KEY): boolean {
   try {
-    if (store.getItem(UNREADABLE_KEY) !== null) return true;
+    if (store.getItem(key) !== null) return true;
   } catch {
     return false;
   }
-  return guardedSave(store, UNREADABLE_KEY, raw);
+  return guardedSave(store, key, raw);
 }

@@ -43,13 +43,40 @@ const PLAIN = `http://localhost:${PORT}/`;
 const SEEDED = (meta) => `if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); localStorage.setItem('lotf-tips-off', '1'); ${meta === null ? '' : `localStorage.setItem('legends.meta', ${JSON.stringify(meta)});`} }`;
 
 // 1. a corrupt save: half a save, cut off as a phone killed mid-write might leave it (localStorage writes a key whole, but a save
-// copied in by hand or by an old build can be anything)
+// copied in by hand or by an old build can be anything). GUARDED-SAVES: the player is told, the text kept aside, a fresh save begun
 if (want('corrupt')) {
   const { ctx, page, log } = await open({ init: SEEDED('{"seed":7,"crowns":120,"unlocked":["knight"') });
   await page.goto(URL, { timeout: 300000 });
+  let told = false;
+  try {
+    await page.waitForSelector('#saveUnreadable .omPrimary', { timeout: 300000 });
+    told = true;
+    await page.click('#saveUnreadable .omPrimary');
+  } catch {
+    /* not told */
+  }
   await ready(page);
-  const s = await page.evaluate(() => ({ crowns: window.__game.meta.crowns, saved: localStorage.getItem('legends.meta')?.slice(0, 60), backup: Object.keys(localStorage).filter((k) => /bak|corrupt|old/i.test(k)) }));
-  report('corrupt save', true, `the game starts on a fresh save (crowns ${s.crowns}); the unreadable one is ${s.saved?.startsWith('{"seed":7,"crowns":120,"unlocked":["knight"') ? 'still there until the first save' : 'gone (replaced)'}; backups kept: ${JSON.stringify(s.backup)}`, log);
+  const s = await page.evaluate(() => ({ crowns: window.__game.meta.crowns, kept: localStorage.getItem('legends.meta.unreadable') }));
+  report('corrupt save', told && s.kept === '{"seed":7,"crowns":120,"unlocked":["knight"', `told ${told}; the game starts on a fresh save (crowns ${s.crowns}); the unreadable text kept aside: ${JSON.stringify(s.kept)}`, log);
+  await ctx.close();
+}
+
+// 1b. a damaged run save beside a good meta: the run kept aside, the player told, the meta untouched
+if (want('run')) {
+  const broken = '{"roster":[{"id":1,"kind":"knight"';
+  const { ctx, page, log } = await open({ init: SEEDED(FULL) + ` if (!sessionStorage.getItem('runSet')) { sessionStorage.setItem('runSet', '1'); localStorage.setItem('legends.run', ${JSON.stringify(broken)}); }` });
+  await page.goto(PLAIN, { timeout: 300000 });
+  let told = false;
+  try {
+    await page.waitForSelector('#runUnreadable .omPrimary', { timeout: 300000 });
+    told = true;
+    await page.click('#runUnreadable .omPrimary');
+  } catch {
+    /* not told */
+  }
+  await ready(page);
+  const s = await page.evaluate(() => ({ crowns: window.__game.meta.crowns, kept: localStorage.getItem('legends.run.unreadable') }));
+  report('damaged run save', told && s.kept === broken && s.crowns === 500, `told ${told}; the meta kept its 500 crowns (${s.crowns}); the run's text kept aside: ${JSON.stringify(s.kept)}`, log);
   await ctx.close();
 }
 
