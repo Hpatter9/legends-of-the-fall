@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEPLOY_MAX_K, DEPLOY_PAD, deployBox, deployView } from '../src/render/deployCam';
+import { DEPLOY_COMFORT, DEPLOY_MAX_K, DEPLOY_PAD, deployBox, deployFit, deployView } from '../src/render/deployCam';
 import { rawAt, TH, TW } from '../src/render/iso';
 import { DEPLOY_ROWS } from '../src/sim/board';
 
@@ -53,5 +53,31 @@ describe('the deploy camera', () => {
     assert.ok((cal.x1 - cal.x0) * 1.2 * v.zoom <= 360 + 1e-6);
     // (a board that does fit stays at least as close as the usual view)
     assert.ok(deployView(cal, 393, 520, 0.5, 0.4, 4).zoom >= 1);
+  });
+});
+
+describe('the deploy camera set down on the board (FIRST-FIVE)', () => {
+  const near = deployBox(rows(14, 18))!;
+  const board = deployBox(all(14, 18))!;
+  const v = deployView(near, 377, 442, 0.58, 0.47, 6.8);
+  const f = deployFit(v, near, board, 377, 442, 0.58, 0.47);
+  it('stands a little further back than an exact fit, never out of the close view', () => {
+    assert.ok(f.zoom <= v.zoom && f.zoom >= Math.min(1, v.zoom), `${f.zoom} from ${v.zoom}`);
+    assert.ok(f.zoom >= v.zoom * DEPLOY_COMFORT - 1e-9);
+  });
+  it('keeps every placement tile inside the room', () => {
+    const k = 0.58 * f.zoom;
+    assert.ok(near.x0 >= f.cx - 377 / 2 / k - 1e-6 && near.x1 <= f.cx + 377 / 2 / k + 1e-6);
+    assert.ok(near.y0 >= f.cy - 442 / 2 / k - 1e-6 && near.y1 <= f.cy + 442 / 2 / k + 1e-6);
+  });
+  it('moves towards the middle of the board, not away', () => {
+    const mx = (board.x0 + board.x1) / 2;
+    const my = (board.y0 + board.y1) / 2;
+    assert.ok(Math.hypot(f.cx - mx, f.cy - my) < Math.hypot(v.cx - mx, v.cy - my), 'closer to the board\'s middle');
+  });
+  it('leaves a box wider than the room centred on itself', () => {
+    const wide = { x0: -1000, x1: 1000, y0: 0, y1: 10 };
+    const g = deployFit({ cx: 0, cy: 5, zoom: 1 }, wide, { x0: -2000, x1: 2000, y0: -500, y1: 500 }, 300, 400, 0.5, 0.2);
+    assert.equal(g.cx, 0);
   });
 });
