@@ -120,6 +120,8 @@ export interface PlatoonState {
   ladder?: boolean;
   aim?: { foot: number; top: number } | null;
   raising?: number;
+  /** ASSAULT-AI: the tiles its leader last stood on (board indexes, the newest first): the file its soldiers walk in a narrow way. */
+  trail?: number[];
 }
 
 /** A siege ladder against the stone wall (phase 1b): the two tiles it joins, its hp (the defenders push it down), the platoon that raised

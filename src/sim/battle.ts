@@ -1059,6 +1059,9 @@ export interface FieldHooks {
   around?: (b: Battle, me: Unit, run: () => void) => void;
   /** The field's own end: the lord's fall, the host's, night. */
   end?: (b: Battle, out: BattleEvent[]) => void;
+  /** ASSAULT-AI: a hero that can get a blow at no foe closes in on `to` by the field's own walk (round its friends, through them where they
+   *  make way), not the board's; true when it stepped. */
+  closeIn?: (b: Battle, me: Unit, to: Unit, out: BattleEvent[]) => boolean;
 }
 export const fieldHooks: FieldHooks = {};
 
@@ -1763,8 +1766,10 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
     if (goal >= 0) return stepTo(b, me, firstStep(walk, goal)!, out);
   }
   // nobody can be got at from here: close in on the nearest anyway, round the others if the way is free
-  const open = walkFrom(b.board, me, def.jump, new Set(), me.side);
   const near = byDistance[0];
+  // (the Assault's field: by its own walk, round and through the friends in the way, ASSAULT-AI)
+  if (b.field && fieldHooks.closeIn?.(b, me, near, out)) return;
+  const open = walkFrom(b.board, me, def.jump, new Set(), me.side);
   const next = firstStep(open, near.v * b.board.w + near.u);
   if (next !== null && !blocked.has(next)) return stepTo(b, me, next, out);
   // (BATTLE-FEEL round 2: a melee hero with a still shooter or caster of its own in the way, in a gap in a wall say, changes places with it)

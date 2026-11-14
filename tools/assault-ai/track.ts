@@ -3,8 +3,8 @@
 // the developer's Try an Assault storms it ("As expected", the balance party, the muster's default plan, Auto), and each tick each hero is
 // looked at:
 //
-// - STILL: standing (not stepping, striking or casting) with a foe within six tiles;
-// - BLOCKED: standing with three or more of its own round it (of its eight neighbours);
+// - STILL: standing (not stepping, striking or casting) with a foe within six tiles but none within its reach (not fighting anyone);
+// - BLOCKED: standing with three or more of its own round it (of its eight neighbours), with no foe in its reach;
 // - LOOPING: in the last six seconds it stepped twelve tiles or more but is within two of where it was, with no foe in its reach;
 // - QUEUE: our fighters (heroes and soldiers) standing within four tiles of a gate's front or the middle of an approach's way, while no foe
 //   is within their reach: the mean of them over the battle;
@@ -79,7 +79,7 @@ for (const army of trialArmies().filter((a) => !only || only.includes(a))) {
           if (d <= def.range + 1 && canStrike(b.board, def, x, y)) inReach = true;
           if (foeNear && inReach) break;
         }
-        if (!busy && foeNear) t.still++;
+        if (!busy && foeNear && !inReach) { t.still++; }
         let friends = 0;
         for (let du = -1; du <= 1; du++)
           for (let dv = -1; dv <= 1; dv++) {
@@ -90,7 +90,7 @@ for (const army of trialArmies().filter((a) => !only || only.includes(a))) {
             const o = f.occ[v * f.w + u];
             if (o >= 0 && f.byId[o]?.side === x.side) friends++;
           }
-        if (!busy && friends >= 3) t.blocked++;
+        if (!busy && !inReach && friends >= 3) t.blocked++;
         const tr = trail.get(x.id) ?? [];
         tr.push({ u: x.u, v: x.v, moved: movedNow.has(x.id) });
         if (tr.length > WINDOW) tr.shift();
