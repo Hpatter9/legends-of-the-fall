@@ -397,6 +397,21 @@ for (const pick of PICKS) {
     if (process.env.ROWS) {
       console.log('ROWS', await page.evaluate(([st, ms]) => { const g = window.__game; window.__step(st.strike.at + Number(ms)); const out = []; for (const [layer, p] of g.fx.rowLows) for (const l of p.live) out.push({ z: layer.zIndex || layer.parent?.zIndex, vis: layer.visible, n: l.frames, t: Math.round(l.t), span: Math.round(l.span), x: Math.round(l.sp.x), y: Math.round(l.sp.y), a: +l.sp.alpha.toFixed(2), sv: l.sp.visible, w: l.sp.texture.width, sx: +l.sp.scale.x.toFixed(2), rot: +l.sp.rotation.toFixed(2) }); return JSON.stringify(out.map((o) => [o.n, o.w, o.t, o.span, o.a, o.x, o.y].join(':')).slice(0, 40)) + ' of ' + out.length + ' moment ' + JSON.stringify(g.fx.moment.live.map((l) => [l.frames, l.sp.texture.width, Math.round(l.t), Math.round(l.span), +l.sp.alpha.toFixed(2)].join(':'))); }, [st, process.env.ROWS]));
     }
+    // (MOUTH=<ms,ms,...>: the show is stepped until the caster's mouth run begins (the first small flame beat), then photographed
+    // that many ms after it, 200 px round the caster: for seeing a breath leave the mouth)
+    if (process.env.MOUTH) {
+      await page.evaluate(() => { const fx = window.__game.fx; const was = fx.bfxBeat.bind(fx); fx.bfxBeat = (clip, el, x, y, o) => { if (clip === 'flame' && o && o.mult && o.mult < 0.4) window.__mouth = true; return was(clip, el, x, y, o); }; });
+      const got = await page.evaluate(() => { for (let i = 0; i < 800 && !window.__mouth; i++) window.__step(16); return !!window.__mouth; });
+      console.log(got ? 'mouth run begun' : 'NO MOUTH RUN');
+      let was = 0;
+      for (const [i, ms] of process.env.MOUTH.split(',').map(Number).entries()) {
+        const at = await page.evaluate(([d, pick]) => { const g = window.__game; window.__step(d); const u = g.b.units.find((x) => x.side === 'hero' && x.def === pick); const sp = g.sprites.get(u.id); const p = g.fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 }); return [Math.round(p.x), Math.round(p.y)]; }, [ms - was, pick]);
+        was = ms;
+        await page.screenshot({ path: `${OUT}/mouth-${pick}-${i}.png`, clip: { x: Math.max(0, Math.min(W - 200, at[0] - 100)), y: Math.max(0, at[1] - 110), width: 200, height: 200 } });
+      }
+      await ctx.close();
+      continue;
+    }
     // (THRU=<ms>: the fighters drawn again over the strike that long after the strike's stage begins, and where each copy is)
     if (process.env.THRU) console.log('THRU', await page.evaluate(([st, ms]) => { const g = window.__game; window.__step(st.strike.at + Number(ms)); return JSON.stringify(g.fx.throughs.map((h) => ({ id: h.id, t: Math.round(h.t), life: h.life, a: +h.sp.alpha.toFixed(2), x: Math.round(h.sp.x), y: Math.round(h.sp.y), vis: h.sp.visible, w: h.sp.texture.width, sx: +h.sp.scale.x.toFixed(2), par: !!h.sp.parent, lz: g.fx.root.getChildIndex(g.fx.throughLayer), n: g.fx.root.children.length }))); }, [st, process.env.THRU]));
     // (HOOK=<a method of the effects>: each call of it through the show is written out with what it was given and what it returned)

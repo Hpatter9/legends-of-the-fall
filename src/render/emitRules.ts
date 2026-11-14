@@ -84,6 +84,19 @@ export const FOE_EMIT: Readonly<Record<string, { kind: EmitKind; at: readonly [n
   eidolon_vaelkhar: { kind: 'mouth', at: [52, 62], frame: 3 },
 };
 
+/** ULTIMATES: where an ultimate's own show leaves its caster, for the ultimates that are sent from a spot on the body: the Queen
+ *  Dragoon's Inferno Breath from her mouth. Read on the second frame of the ultimate's row (`attack2`), front and back (from
+ *  behind her mouth is hidden by her hair: the point is the front edge of her head at the mouth's height). */
+export const ULT_EMIT: Readonly<Record<string, Emit>> = {
+  hero_res_dragoon: { kind: 'mouth', front: [12, 77], back: [6, 78] },
+};
+/** That point for a fighter drawn now from `sheet`; undefined where it has none or wears another look. */
+export function ultEmitOffset(own: string, sheet: string, rear: string | undefined): readonly [number, number] | undefined {
+  const e = ULT_EMIT[own];
+  if (!e) return undefined;
+  return sheet === own ? e.front : rear !== undefined && sheet === rear ? e.back : undefined;
+}
+
 /** The point for a fighter whose own sheet is `own` and which is drawn now from `sheet` (its own, or `rear`, its look from behind):
  *  its shot's point, or its cast's where it has no shot's (a hero that shoots casts from its shot's point: its cast row was not
  *  measured), or a shooting foe's. Undefined where the sheet has none of these, or the fighter wears another look (a form, a guise, an awakened sheet), whose

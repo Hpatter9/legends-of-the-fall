@@ -348,3 +348,17 @@ export const blinkCut = (): typeof BLINK_CUT | undefined => (BFX_CLIPS[BLINK_CUT
  *  squeezed under `MIN` of itself, so its head is there from the first frame. */
 export const TAIL_MIN = 0.35;
 export const tailShare = (gone: number, tail: number): number => (tail <= 0 ? 1 : Math.max(TAIL_MIN, Math.min(1, gone / tail)));
+
+/** EMIT-POINTS: a breath leaves the mouth. For an ultimate laid down a line whose caster has a mouth point (`ULT_EMIT`), a run of
+ *  small flames from the mouth at (mx, my) to the line's first spot at (x1, y1), one every `STEP` px (`MIN` to `MAX` of them), each
+ *  `LAG` ms after the one before and larger than it (`FROM` of its size at the mouth, `TO` as it reaches the line); the line's own
+ *  flames then follow `wait` ms later, so the fire is seen to leave her and then run down the line. */
+export const MOUTH_RUN = { clip: 'flame', STEP: 14, MIN: 2, MAX: 6, LAG: 45, FROM: 0.3, TO: 0.75 } as const;
+export function mouthRun(mx: number, my: number, x1: number, y1: number): { at: { x: number; y: number; delay: number; size: number }[]; wait: number } {
+  const n = Math.max(MOUTH_RUN.MIN, Math.min(MOUTH_RUN.MAX, Math.round(Math.hypot(x1 - mx, y1 - my) / MOUTH_RUN.STEP)));
+  const at = Array.from({ length: n }, (_, i) => {
+    const f = i / n;
+    return { x: mx + (x1 - mx) * f, y: my + (y1 - my) * f, delay: i * MOUTH_RUN.LAG, size: MOUTH_RUN.FROM + (MOUTH_RUN.TO - MOUTH_RUN.FROM) * f };
+  });
+  return { at, wait: n * MOUTH_RUN.LAG };
+}

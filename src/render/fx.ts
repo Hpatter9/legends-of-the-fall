@@ -37,7 +37,7 @@ import { rankOf, SPELLS, type SpellId } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { at, depth, facesRight, getFrame, FOOT, HH, TH, TW, type Frame } from './iso';
-import { strokeLands, strokeLay } from './emitRules';
+import { strokeLands, strokeLay, ULT_EMIT } from './emitRules';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SPELL_GLOW, SPELL_WORD, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -78,7 +78,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { hitSpark, tailShare, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { hitSpark, mouthRun, MOUTH_RUN, tailShare, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -430,6 +430,9 @@ export class Fx {
       // which the caster's showcase has just played when the strike lands. Asking for every hero's at a fight's start took the
       // atlases over their budget, and a strike's own atlas was given up to make room: Vael's sweep and his black sun went missing)
       warmBfx([...kinds].filter((kind) => ULT_EXTRA[kind] && SHOWCASES[kind]).flatMap((kind) => Object.values(ULT_EXTRA[kind]).map((clip) => beatBfx(clip, SHOWCASES[kind].el))));
+      // (EMIT-POINTS: and the small flame a breath runs out of its caster's mouth in, for a hero whose ultimate has a mouth point. It
+      // lies with the fire showcase's beats, one atlas of about 4 MB decoded, asked for only when such a hero is in the fight)
+      warmBfx(b.units.filter((x) => x.side === 'hero' && ULT_EMIT[defOf(x).sheet]).map(() => beatBfx(MOUTH_RUN.clip, 'fire')));
       // (the beats of their showcases are not asked for here: each loads the first time it is played, the older parts playing that once,
       // so a fight begins with as little held as it can)
     }
@@ -991,7 +994,19 @@ export class Fx {
             beatLine(caster.x, caster.y, a1[0], a1[1]).forEach(([px, py], i) => this.bfxBeat(extra.wake!, el, px, py, { delay: i * BEAT_LINE.LAG, mult: ULT_EXTRA_AT.WAKE_SIZE }));
           }
           if (extra?.land) this.bfxBeat(extra.land, el, caster.x, caster.y, { mult: ULT_EXTRA_AT.LAND_SIZE });
-          for (const r of run) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay);
+          // (EMIT-POINTS: a breath leaves the mouth. Small flames run from the caster's mouth to the line's first spot, growing, and the
+          // line's own flames follow them; `mouthRun`. A flame stands on its foot, so each is put with its foot a little under the line)
+          const mouth = caster.ultPoint();
+          let wait = 0;
+          if (mouth && run.length) {
+            const first = shown[run[0].i];
+            const lift = caster.tall * 0.35;
+            const breath = mouthRun(mouth[0], mouth[1], first[0], first[1] - lift);
+            let drawn = false;
+            for (const p of breath.at) drawn = this.bfxBeat(MOUTH_RUN.clip, el, p.x, p.y + 12 * p.size, { delay: p.delay, mult: p.size }) || drawn;
+            if (drawn) wait = breath.wait;
+          }
+          for (const r of run) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay + wait);
         } else for (const [x, y] of shown) {
           const far = linked && Math.hypot(x - caster.x, y - caster.y) > 8;
           if (far) beatLine(caster.x, caster.y, x, y).forEach(([px, py], i) => this.bfxBeat(ultLinkClip(kind), el, px, py, { delay: i * BEAT_LINE.LAG }));

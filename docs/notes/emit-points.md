@@ -182,3 +182,29 @@ the stroke never met the weapon. The director's order: move it to the landing.
   the Samurai, the Kunoichi's claws, the Mercenary, the Reaper, the Dragoon, the Demon Swordsman. Where the blow was a crit, the
   crit's large gold cross is over both and the stroke adds little (the Barbarian, the Paladin, the Ninja Monk). It is one moment
   now, and a busier one.
+
+## Since: the ultimates' own shows, the Dragoon's flames first
+
+- **Her mouth** (`ULT_EMIT`, `ultEmitOffset`, `UnitView.ultPoint`): read on the second frame of her ultimate's row at four times its
+  size, front and back. From behind her mouth is hidden by her hair: the point is the front edge of her head at the mouth's
+  height.
+- **The breath** (`mouthRun`, `MOUTH_RUN`): two to six small flames run from her mouth to the first spot of her line, one every
+  14 px, each 45 ms after the one before and larger than it (0.3 of its size at the mouth, 0.75 as it reaches the line). The
+  line's own flames wait for the run, so the fire is seen to leave her and then go down the line. Any hero given a point in
+  `ULT_EMIT` whose strike is laid down a line gets the same; today that is the Dragoon alone.
+- **Found on the way:** the small flame clip (`beat-flame`) was never held in a fight. Every call for it returned false, on main
+  too, so her showcase's "stream of flame along the line" had always fallen back to the painted flames. The clip is now asked
+  for at a fight's start when a hero with a mouth point is in it, so her showcase's rendered flames play as well.
+- **Memory.** That clip lies in the fire showcase's atlas (1020 x 1011, 4,124,880 bytes decoded). The photograph tool's count of
+  what is held through her show is the same before and after (ten atlases, 36.0 MB decoded): the atlas was already loaded when
+  her showcase first played; it is now loaded at the fight's start instead, for fights with the Dragoon only. Handed to the
+  graphics card through the show: 2.4 MB before, 6.3 MB after, since its clips are now drawn.
+- Proof: `MOUTH=48,112,176,256` steps her show until the mouth run begins and photographs 200 px round her.
+  `docs/samples/blender-fx/emit-dragoon-mouth-3x.png`.
+- Verdict, plainly: a flame is at her face where there was none, and it is the right spot. But it does not read as a breath
+  blown outwards. Her line in the photographed fight began on the tile beside her, so the run was three flames going DOWN from
+  her face to the ground at her feet, and the show's clock is held on the blow just then, so the four photographs I took are the
+  same frozen moment: I have one picture, of one facing, not a sequence. I have no before picture of the same moment either (the
+  two builds' fights differ by then); "before" is that nothing was drawn at her mouth.
+- **Not done:** every other ultimate's show. The wind-ups gather on the caster's body and the strikes land where the ability
+  lands; which of them should leave a hand, a staff or a weapon has not been audited. The Dragoon was the one named.
