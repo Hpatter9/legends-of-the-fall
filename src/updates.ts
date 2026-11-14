@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.599.0',
+    date: '2026-11-14',
+    title: 'Safer saves and a quieter phone',
+    notes: ['If your phone\'s storage is full, the game keeps playing and tells you, instead of stopping; a save it cannot read is kept aside, not lost.', 'Duchess\'s taps and her haystack treats are no longer lost on the next save.', 'The game rests more in the background and no longer downloads itself again on every start.'],
+  },
+  {
     version: '0.598.0',
     date: '2026-11-14',
     title: 'New art across the first hour',
