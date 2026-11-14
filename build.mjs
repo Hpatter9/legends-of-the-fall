@@ -319,19 +319,33 @@ writeFileSync(
     2,
   ),
 );
-// (network first, so a new version shows as soon as it's online; the cache only when offline. Written once game.js is built, when
-//  the pictures it left as files are known: `artFiles` above)
+// (RELEASE-FIXES-2: the files a version is made of are served from that version's own cache first: they never change under their names
+// within a version, so an online start reads them from the phone (no 208 MB game.js fetched and written to the cache again every time).
+// A new version is found as before: the browser checks sw.js on every start, sees the new version's name in it, and the new worker
+// fetches the new files fresh (past the browser's own cache), takes over and clears the old version's cache; the start after that is the
+// new version, and plays offline. Anything not part of a version is network first, the cache when offline, as before. Written once
+// game.js is built, when the pictures it left as files are known: `artFiles` above)
 const writeServiceWorker = () => writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
 const FILES = ['.', 'index.html', 'game.js', 'assault-worker.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${BLENDER_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${SUMMON_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ASSAULT_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ART_FILES.map((f) => `'${f}'`).join(', ')}];
-self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
+const OWN = new Set(FILES.map((f) => new URL(f, self.registration.scope).href));
+self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: 'reload' }))))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
-// (network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used;
-// a page asked for with ?seed= or ?band= is the same page)
+// (a page asked for with ?seed= or ?band= is the same page)
 const fromCache = (req) => caches.match(req, { ignoreSearch: true });
+const bare = (url) => { const u = new URL(url); u.search = ''; return u.href; };
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET' || !e.request.url.startsWith(self.location.origin)) return;
+  if (e.request.mode === 'navigate' || OWN.has(bare(e.request.url))) {
+    // (this version's own file: its copy in this version's cache; a copy missing (the phone cleared it) is fetched and kept)
+    e.respondWith(caches.open(CACHE).then((c) => c.match(e.request, { ignoreSearch: true }).then((hit) => hit || fetch(e.request).then((r) => {
+      if (r.ok && r.type === 'basic' && !e.request.headers.has('range')) c.put(bare(e.request.url), r.clone());
+      return r;
+    }).catch(() => fromCache(e.request)))));
+    return;
+  }
+  // (anything else: network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used)
   const net = fetch(e.request).then((r) => {
     if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
     return r;
