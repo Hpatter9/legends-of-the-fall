@@ -43,15 +43,15 @@ export const HOLD_MARK: Readonly<Record<string, number>> = { orcs: 55, undead: 6
 
 /** Each hold's own share (`ASSAULT.foeShare`'s part, by army): set so the bot does about as well at each hold's mark (`HOLD_MARK`) as at the
  *  others, by the balance tool (docs/notes/assault-4.md). */
-export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: ASSAULT.foeShare, undead: 0.1175, beasts: 0.14, wildwood: 0.095, labyrinth: 0.125, ogres: 0.095, infernal: 0.075, yokai: 0.07, golems: 0.0775 };
+export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: 0.248, undead: 0.282, beasts: 0.322, wildwood: 0.1995, labyrinth: 0.2062, ogres: 0.285, infernal: 0.27, yokai: 0.168, golems: 0.31 };
 /** The share a hold's garrison stands at: a tool's own, else the hold's. */
 /** Phase 5: the Last Hold's garrison stands at this share of its hold's own, by army, against the whole Council's weight on its walls
  *  (`lastHold.ts`; tuned by `npm run balance -- --assault <army> --last`). The Council's members are elites and escorts with plainer kits
  *  than a hold's own nameless officers (an Ogre Shaman King, a Devil Leader), so at some holds they weaken it and at others strengthen it. */
-export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 0.95, undead: 1.12, beasts: 0.8, wildwood: 0.97, labyrinth: 0.88, ogres: 1.45, infernal: 1.25, yokai: 0.91, golems: 0.9 };
+export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 2.256, undead: 2.147, beasts: 1.948, wildwood: 1.848, labyrinth: 1.387, ogres: 1.933, infernal: 1.181, yokai: 1.289, golems: 0.81 };
 /** ASSAULT-RETUNE: the Warband regrouped (the weekly re-storm at Mythic, `RESTORM_TIER`) stands at this share of its hold's own, by army, on
  *  top of the Mythic tier's own multipliers (tuned by `node tools/assault-dev/run.mjs --kinds regroup`, `docs/notes/assault-retune.md`). */
-export const RESTORM_SHARE: Readonly<Record<string, number>> = { orcs: 1, undead: 1, beasts: 1, wildwood: 1, labyrinth: 1, ogres: 1, infernal: 1, yokai: 1, golems: 1 };
+export const RESTORM_SHARE: Readonly<Record<string, number>> = { orcs: 2.188, undead: 1.875, beasts: 1.522, wildwood: 1.905, labyrinth: 0.909, ogres: 1.2, infernal: 0.833, yokai: 0.958, golems: 1.1 };
 export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare' | 'last' | 'tier'>): number =>
   input.foeShare ?? (HOLD_SHARE[input.army] ?? ASSAULT.foeShare) * (input.last ? LAST_SHARE[input.army] ?? 1 : 1) * ((input.tier ?? 0) >= 4 ? RESTORM_SHARE[input.army] ?? 1 : 1);
 
