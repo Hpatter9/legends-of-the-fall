@@ -246,3 +246,23 @@ the line beneath the breath; and whoever the stream crosses is drawn again over 
   standing flames on the ground that are already lit at 0 ms), so I cannot cleanly tell my stream from the showcase's in the
   photographs, nor see the ground flames light one by one beneath it. The rule that they do is tested; the picture does not
   prove it.
+
+### One breath: her showcase too
+
+Her show is two parts: the showcase (a shot of flame at each foe of the line, and the ground catching alight) and then the strike
+(the stream above). The showcase's flames were a row of upright flames along the GROUND from her feet to each foe, and its
+burning tiles began to light at the same instant; so the strike's stream from her mouth was a second fire over a line already
+alight. The director's order: one breath, not two fires.
+
+- The showcase's shot of flame (`bfxShowBeat`, `shot` with `how: 'flame'`) is blown from the caster's mouth to the foe's middle
+  by the same `mouthRun`: growing, each flame turned the way it goes, with the show-through rule for whoever it crosses; its ball
+  (`nova`) bursts on the foe as the stream arrives, not at a fixed 220 ms. A caster with no mouth point keeps the row of flames
+  along the ground.
+- The showcase's burning tiles (`ultShowRules.ts`, the `burn` beats) light a step BEHIND the breath and a step apart
+  (`(i + 1) * SHOW.BURN`), nearest first: none is alight as the stream sets off.
+- Proof: `LINKS_ON=shot LINKS=0,100,200` photographs the caster from the showcase's first shot.
+  `docs/samples/blender-fx/emit-dragoon-showcase-3x.jpg`: two facings, before above after in each, at 0, 100 and 200 ms, three
+  times the size.
+- Verdict: plain. Before, flames stand in a row on the ground from her feet. After, a stream of small flames leaves her head and
+  runs outward, growing, and the ground flames come up behind it. The large flame round her own body in every frame is her
+  wind-up, which was left as it is.

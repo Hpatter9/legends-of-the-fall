@@ -393,4 +393,7 @@ test('a showcase\'s beats are rendered clips in its element: every clip in every
   const body = fx.slice(fx.indexOf('private bfxShowBeat('), fx.indexOf('/** ULT-SHOW: a painted prop'));
   for (const kind of beats) assert.ok(body.includes(`case '${kind}':`), `${kind} has a rendered beat`);
   assert.doesNotMatch(body, /rotation/, 'no clip is turned');
+  // (EMIT-POINTS, the director's order: one exception. A breath is blown from its caster's mouth, and its small flames are turned the
+  // way it goes; that is `breathRun`, a helper of its own which a showcase's shot of flame calls. Nothing else is turned.)
+  assert.match(body, /this\.breathRun\(mouth, to\.x, to\.y - to\.tall \* 0\.5, el\)/);
 });

@@ -997,21 +997,13 @@ export class Fx {
           // (EMIT-POINTS: a breath leaves the mouth. Small flames are blown outwards from the caster's mouth along the line, growing, each
           // turned the way the breath goes, and the line's own flames follow them; `mouthRun`)
           const mouth = caster.ultPoint();
-          const fkey = mouth && run.length ? beatBfx(MOUTH_RUN.clip, el) : undefined;
-          const frames = fkey ? bfxFrames(fkey) : [];
-          const fc = fkey ? bfxClip(fkey) : undefined;
-          if (mouth && fc && frames.length) {
-            // (at the mouth's own height all the way, reaching over the line's third spot or its last: `streamSpot`)
-            const reach = streamSpot(run.length);
-            const far = shown[run[reach].i];
-            const breath = mouthRun(mouth[0], mouth[1], far[0], far[1] - (caster.y - mouth[1]));
-            for (const p of breath.at) this.moment.spawn({ frames: this.reduced ? [frames[fc.hold]] : frames, x: p.x, y: p.y, scale: BFX_SCALE * p.size, rotation: breath.turn, frameMs: this.reduced ? fc.ms : fc.ms / frames.length, life: fc.ms, delay: p.delay, prio: true, solid: true, half: 1 });
-            // (SHOW-THROUGH: whoever the stream crosses is drawn again over it, so none is hidden by it)
-            const half = (fc.h * BFX_SCALE * MOUTH_RUN.TO) / 2;
-            const end = breath.at[breath.at.length - 1];
-            this.showThrough([Math.min(mouth[0], end.x) - half, Math.min(mouth[1], end.y) - half, Math.max(mouth[0], end.x) + half, Math.max(mouth[1], end.y) + half], breath.wait + fc.ms);
+          // (at the mouth's own height all the way, reaching over the line's third spot or its last: `streamSpot`)
+          const reach = streamSpot(run.length);
+          const far = run.length ? shown[run[reach].i] : undefined;
+          const wait = mouth && far ? this.breathRun(mouth, far[0], far[1] - (caster.y - mouth[1]), el) : null;
+          if (wait !== null) {
             // (each spot of the line lights as the stream passes over it, and those beyond it one after another: `lineLight`)
-            run.forEach((r, n) => this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, lineLight(n, reach, breath.wait, ULT_LINE.LAG)));
+            run.forEach((r, n) => this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, lineLight(n, reach, wait, ULT_LINE.LAG)));
           } else for (const r of run) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay);
         } else for (const [x, y] of shown) {
           const far = linked && Math.hypot(x - caster.x, y - caster.y) > 8;
@@ -1302,6 +1294,24 @@ export class Fx {
     return true;
   }
 
+  /** EMIT-POINTS: a breath blown from a mouth at `mouth` to (x1, y1) (`mouthRun`): small flames, growing, each TURNED the way the
+   *  breath goes, with whoever it crosses shown through it. This is the one rendered clip the game turns: a flame is the same from
+   *  every side, and a breath has to point where it is blown (the director's order). How long it takes to arrive, in ms; null when
+   *  its clip is not held, and the caller plays what it played before. */
+  private breathRun(mouth: readonly [number, number], x1: number, y1: number, el: Element): number | null {
+    const key = beatBfx(MOUTH_RUN.clip, el);
+    const frames = key ? bfxFrames(key) : [];
+    const fc = key ? bfxClip(key) : undefined;
+    if (!fc || !frames.length) return null;
+    const breath = mouthRun(mouth[0], mouth[1], x1, y1);
+    for (const p of breath.at) this.moment.spawn({ frames: this.reduced ? [frames[fc.hold]] : frames, x: p.x, y: p.y, scale: BFX_SCALE * p.size, rotation: breath.turn, frameMs: this.reduced ? fc.ms : fc.ms / frames.length, life: fc.ms, delay: p.delay, prio: true, solid: true, half: 1 });
+    // (SHOW-THROUGH: whoever the stream crosses is drawn again over it, so none is hidden by it)
+    const half = (fc.h * BFX_SCALE * MOUTH_RUN.TO) / 2;
+    const end = breath.at[breath.at.length - 1];
+    this.showThrough([Math.min(mouth[0], end.x) - half, Math.min(mouth[1], end.y) - half, Math.max(mouth[0], end.x) + half, Math.max(mouth[1], end.y) + half], breath.wait + fc.ms);
+    return breath.wait;
+  }
+
   /** BLENDER-FX: a beat of a showcase as rendered clips (`beat-*`, `tools/blender-fx/effects.py`), in the showcase's element. A clip
    *  stands on its tile's ground, so it is put at the feet. A line (a dash, a hook, a blessing) is a row of small clips. False when the
    *  beat's first clip is not loaded: the older parts play then. The shakes are the beats' own, as they were. */
@@ -1348,6 +1358,15 @@ export class Fx {
           B('blow', to.x, to.y, { delay: 60 }, 'lightning');
           shake(0.2);
         } else if (how === 'flame') {
+          // (EMIT-POINTS: a breath leaves the mouth here too. Where the caster has a mouth point the stream is blown from it to the
+          // foe's middle, growing, each flame turned the way it goes, and its ball bursts on the foe as it arrives: the same breath as
+          // the strike's, `mouthRun`. A caster without one keeps the row of flames along the ground from its feet)
+          const mouth = this.bodyAt(x, y - 10, 8)?.ultPoint();
+          const wait = mouth ? this.breathRun(mouth, to.x, to.y - to.tall * 0.5, el) : null;
+          if (wait !== null) {
+            B('nova', to.x, to.y, { delay: wait, mult: 0.7 }, 'fire');
+            return true;
+          }
           if (!line('flame', x, y, to.x, to.y, 35)) return false;
           B('nova', to.x, to.y, { delay: 220, mult: 0.7 }, 'fire');
         } else {

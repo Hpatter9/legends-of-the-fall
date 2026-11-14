@@ -413,6 +413,23 @@ for (const pick of PICKS) {
     }
     // (MOUTH=<ms,ms,...>: the show is stepped until the caster's mouth run begins (the first small flame beat), then photographed
     // that many ms after it, 200 px round the caster: for seeing a breath leave the mouth)
+    // (LINKS=<ms,ms>: the show is stepped until the strike begins (`ultImpact`; with LINKS_ON=shot, until the showcase's first shot
+    // beat), and the caster is photographed when the first of the bits made from then on is that old (the show's clock stands still
+    // on the blow): for seeing where what the ultimate sends leaves the caster. 240 by 200 px round the caster.)
+    if (process.env.LINKS) {
+      await page.evaluate((on) => { const fx = window.__game.fx; const mark = () => { if (!window.__old) window.__old = new Set(fx.moment.live); }; if (on === 'shot') { const was = fx.showBeat.bind(fx); fx.showBeat = (kind, ...a) => { if (kind === 'shot') mark(); return was(kind, ...a); }; } else { const was = fx.ultImpact.bind(fx); fx.ultImpact = (...a) => { mark(); return was(...a); }; } }, process.env.LINKS_ON ?? '');
+      const age = () => page.evaluate(() => { if (!window.__old) return null; const l = window.__game.fx.moment.live.filter((x) => !window.__old.has(x)).sort((p, q) => q.t - p.t)[0]; return l ? l.t : null; });
+      let seen = false;
+      for (let i = 0; i < 900 && !seen; i++) { await page.evaluate(() => window.__step(16)); seen = (await age()) !== null; }
+      console.log(seen ? 'begun' : 'NOT BEGUN', pick);
+      for (const [i, ms] of process.env.LINKS.split(',').map(Number).entries()) {
+        for (let n = 0; n < 200; n++) { const t = await age(); if (t === null || t >= ms) break; await page.evaluate(() => window.__step(16)); }
+        const at = await page.evaluate((pick) => { const g = window.__game; const u = g.b.units.find((x) => x.side === 'hero' && x.def === pick); const sp = g.sprites.get(u.id); const p = g.fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 }); return [Math.round(p.x), Math.round(p.y)]; }, pick);
+        await page.screenshot({ path: `${OUT}/links-${pick}-${i}.png`, clip: { x: Math.max(0, Math.min(W - 240, at[0] - 120)), y: Math.max(0, at[1] - 110), width: 240, height: 200 } });
+      }
+      await ctx.close();
+      continue;
+    }
     if (process.env.MOUTH) {
       // (the run's flames are the moment's bits that are turned; its clock is their own age, which stands still through the freeze on
       // the blow, so each photograph is taken when the first flame is that old, not that long after)
