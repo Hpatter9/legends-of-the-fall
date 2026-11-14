@@ -2,6 +2,7 @@
 // skills. Reads the meta only.
 
 import { glyphWord } from './paintedButton';
+import { releaseIcon, RELEASE_ICON } from './ornateMenu';
 import { filterCount, rosterRows, viewActive, viewRows, type RosterRow, type RosterView } from './heroFilterRules';
 import { rosterTools } from './heroFilterView';
 import { ALL_HEROES, UNITS } from './sim/units';
@@ -303,7 +304,10 @@ function paintSheet(box: HTMLElement, meta: Meta, kind: string, close: () => voi
   const view = el('button', 'heroArtOpen');
   view.type = 'button';
   view.setAttribute('aria-label', `View ${heroTitle(kind)} full artwork`);
-  view.append(artwork, el('span', 'heroArtHint', 'View full artwork ⤢'));
+  const hint = el('span', 'heroArtHint', 'View full artwork ');
+  // (RELEASE-ART: the painted frame-and-arrows icon in place of ⤢, which some phones' fonts lack)
+  hint.append(releaseIcon(RELEASE_ICON.artwork));
+  view.append(artwork, hint);
   view.disabled = !open;
   view.addEventListener('click', () => { closeArtwork = openHeroArtwork(kind, view, awakenedOf(meta, kind)); });
   const halo = el('span', 'heroCardHalo');

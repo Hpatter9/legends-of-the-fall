@@ -6,17 +6,18 @@
 import { FIGHT_HUD, hudBoxes } from './hudClear';
 
 const CSS = `
-#quip { position: fixed; z-index: 96; max-width: min(232px, calc(100vw - 24px)); box-sizing: border-box; padding: 6px 10px 7px; pointer-events: none; opacity: 0; transition: opacity 0.18s ease-out;
-  background: linear-gradient(180deg, #2c3125 0%, #181b13 100%); color: #f1ead9; border: 1px solid #c9a35c; border-radius: 5px;
-  box-shadow: inset 0 1px 0 rgba(255, 235, 185, 0.18), 0 0 0 1px #3a2e17, 0 3px 8px rgba(0, 0, 0, 0.6);
-  font: 400 13px/1.3 var(--body, sans-serif); text-align: center; text-shadow: 0 1px 1px #000; }
+/* (RELEASE-ART: the bubble is the parchment painted for it, art-source/release/quip-bubble.png, laid as a nine-slice: its 64 px corners
+   kept at 16 css px, the edges and the middle stretched; the tail is still the page's own, in the rim's brass) */
+#quip { position: fixed; z-index: 96; max-width: min(240px, calc(100vw - 24px)); box-sizing: border-box; padding: 3px 6px 4px; pointer-events: none; opacity: 0; transition: opacity 0.18s ease-out;
+  border: 12px solid transparent; border-image: url(ui/release/quip-bubble.webp) 64 fill / 16px / 0 stretch; background: none;
+  color: #2b1d0c; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+  font: 400 13px/1.3 var(--body, sans-serif); text-align: center; }
 #quip.on { opacity: 1; }
 #quip.off { transition-duration: 0.3s; }
-#quip::after { content: ''; position: absolute; left: var(--tail, 50%); top: 100%; width: 0; height: 0; margin-left: -6px; border: 6px solid transparent; border-top-color: #c9a35c; }
-#quip.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #c9a35c; }
-#quip.goat { background: linear-gradient(180deg, #f1e4c2 0%, #d8c599 100%); color: #2b1f0e; text-shadow: none; }
-#quip small { display: block; margin-bottom: 1px; font: 400 12px/1.2 var(--display, serif); letter-spacing: 0.04em; color: var(--ornate-brass, #d8b976); }
-#quip.goat small { color: #6d4f1f; }
+#quip::after { content: ''; position: absolute; left: var(--tail, 50%); top: calc(100% + 9px); width: 0; height: 0; margin-left: -18px; border: 6px solid transparent; border-top-color: #8a6530; }
+#quip.below::after { top: auto; bottom: calc(100% + 9px); border-top-color: transparent; border-bottom-color: #8a6530; }
+#quip.goat { color: #3a2408; }
+#quip small { display: block; margin-bottom: 1px; font: 700 12px/1.2 var(--display, serif); letter-spacing: 0.04em; color: #7a4f17; }
 @media (prefers-reduced-motion: reduce) { #quip { transition: none; } }
 `;
 
@@ -65,6 +66,8 @@ const KEEP_CLEAR = [
   '.hsLine',
   '.cxCard',
   '#benchWrap',
+  // (RELEASE-ART: and the deploy's buttons under it: a bubble pushed below a tall bench sat on Fight!)
+  '#buttons',
   '#hmTabs',
   '#home .hmBattle',
   '#home .cpPlate',

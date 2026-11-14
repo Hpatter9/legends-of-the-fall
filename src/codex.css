@@ -25,6 +25,7 @@
 .cxCard small { font-size: 10px; color: var(--dim); font-weight: 400; }
 .cxPort { width: 52px; height: 52px; image-rendering: pixelated; background: radial-gradient(var(--s8), var(--s1)); border-radius: 6px; border: 2px solid var(--s1); }
 .cxCard.dark .cxPort { filter: brightness(0); }
+.cxCard.dark .cxPort.cxUnknown { display: block; box-sizing: border-box; filter: none; border: 0; box-shadow: none; background: url(ui/release/codex-unknown.webp) center / 100% 100% no-repeat; }
 .cxCard.dark b { color: var(--dim); }
 .cxOverlay { position: absolute; inset: 0; z-index: 6; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgb(var(--s0-rgb) / 0.78); }
 .cxSheet { max-height: 100%; }

@@ -6543,5 +6543,90 @@
   "facesRight": true,
   "lies": true,
   "front": "hero_res_sea_reaver"
+ },
+ "orc_chieftain": {
+  "w": 98,
+  "h": 95,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "dead",
+   "hurt"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
+  },
+  "figure": 78,
+  "facesRight": true,
+  "lies": true
+ },
+ "bone_captain": {
+  "w": 108,
+  "h": 78,
+  "perRow": 7,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 7,
+   "attack": 5,
+   "idle": 7,
+   "hurt": 2,
+   "dead": 4
+  },
+  "figure": 61,
+  "facesRight": true
+ },
+ "minotaur_champion": {
+  "w": 144,
+  "h": 95,
+  "perRow": 12,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 12,
+   "attack": 5,
+   "idle": 10,
+   "hurt": 3,
+   "dead": 5
+  },
+  "figure": 77,
+  "facesRight": true
+ },
+ "gorgon_queen": {
+  "w": 142,
+  "h": 94,
+  "perRow": 16,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 13,
+   "attack": 16,
+   "idle": 7,
+   "hurt": 3,
+   "dead": 3
+  },
+  "figure": 79,
+  "facesRight": true
  }
 }

@@ -13,6 +13,7 @@
 .dayFacts li b { font-weight: 400; color: var(--text); text-align: right; }
 .dayPrize { display: flex; align-items: center; gap: 12px; width: min(320px, calc(86 * var(--vw))); box-sizing: border-box; padding: 8px 12px; text-align: left; font: 400 12px/1.4 var(--body); color: var(--text); background: rgb(var(--p0-rgb) / 0.7); border: 2px solid var(--p2); }
 .dayPrize .chestPic { flex: none; filter: drop-shadow(0 0 5px var(--p4)); }
+.dayPrize .dayChestArt { flex: none; width: 84px; height: 63px; object-fit: contain; filter: drop-shadow(0 0 6px var(--p4)); }
 .dayStatus { font: 400 12px/1.2 var(--body); color: var(--text-dim); }
 .dayBtns { display: flex; gap: 12px; }
 .dayBtns button { min-width: 120px; }

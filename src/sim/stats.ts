@@ -15,7 +15,7 @@
 // they never draw from the fight's streams. Pure rules: no Pixi, no DOM.
 
 import { mixSeed } from './rng';
-import { isBoss } from './foes';
+import { isBoss, kinSheet } from './foes';
 import type { UnitDef } from './units';
 
 export type Ability = 'str' | 'dex' | 'con' | 'int' | 'wis' | 'cha';
@@ -380,7 +380,7 @@ export const FOE_BLOCKS: Readonly<Record<FoeFamily, FoeBlock>> = {
 /** A foe's family, from how it fights and its look: spell-throwers are casters, other shooters shooters, the quick beasts skirmishers,
  *  the demons flyers, the bones and the golems armoured, and the rest brutes. */
 export function foeFamilyOf(def: Pick<UnitDef, 'sheet' | 'shot' | 'flies'>): FoeFamily {
-  const s = def.sheet;
+  const s = kinSheet(def.sheet);
   if (/shaman|lich|devil|witch|mage|sorcer|priest/.test(s) || def.shot === 'fire' || def.shot === 'curse' || def.shot === 'holy') return 'caster';
   if (def.shot) return 'shooter';
   if (/wolf|imp|kitsune|karasu|boar/.test(s)) return 'skirmisher';

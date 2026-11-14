@@ -46,7 +46,7 @@ import type { HoldEvent } from './sim/assault/holdTypes';
 import { FieldView, FIELD_FOG, fieldGrade, loadFieldArt } from './render/fieldView';
 import { loadSomeSheets, portrait } from './render/sheets';
 import { rawAt, TH, TW, HH } from './render/iso';
-import { menuFoot, menuNote, menuPick, menuSection, ornateMenu } from './ornateMenu';
+import { menuFoot, menuNote, menuPick, menuSection, ornateMenu, RELEASE_ICON } from './ornateMenu';
 import { drawHoldMap, mapAt, openPlatoonCard } from './assaultView';
 import { endAssault, play as playCue, playEvents, playHold, setHold, setHoldDrums, startFight } from './render/sound';
 import { HOLD_HEAR_TILES, holdPan, isNearOnly } from './render/holdSound';
@@ -709,7 +709,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     const menu = ornateMenu({ asked: true, id: 'assaultPause', eyebrow: 'The assault', title: 'Paused', sub: `${clockWords(b.t)} of battle`, onClose: () => (paused = false) });
     const grid = menuSection(menu.body, 'Battle detail', 'Lite caps the frames at 30 a second', 2);
     let now = lite;
-    menuPick(grid, [false, true], lite, (x) => ({ title: x ? 'Lite' : 'Full', icon: x ? '◔' : '●' }), (x) => {
+    menuPick(grid, [false, true], lite, (x) => ({ title: x ? 'Lite' : 'Full', art: x ? RELEASE_ICON.lite : RELEASE_ICON.full }), (x) => {
       now = x;
       try {
         localStorage.setItem(LITE_KEY, x ? '1' : '0');
@@ -722,7 +722,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     void now;
     const war = menuSection(menu.body, 'The retreat', 'the soldiers standing come home; the fallen are lost', 2);
     let asked = false;
-    const retreat = menuPick(war, ['retreat'], undefined, () => ({ title: 'Sound the retreat', icon: '⚑', lines: ['Tap twice: the assault ends'] }), () => {
+    const retreat = menuPick(war, ['retreat'], undefined, () => ({ title: 'Sound the retreat', art: RELEASE_ICON.retreat, lines: ['Tap twice: the assault ends'] }), () => {
       if (!asked) {
         asked = true;
         retreat[0].querySelector('b')!.textContent = 'Sound it? Tap again';

@@ -75,6 +75,8 @@ export const FOE_EMIT: Readonly<Record<string, { kind: EmitKind; at: readonly [n
   gorgon_1: { kind: 'mouth', at: [12, 48], frame: 10 },
   gorgon_2: { kind: 'mouth', at: [5, 45], frame: 10 },
   gorgon_3: { kind: 'mouth', at: [5, 52], frame: 10 },
+  // (RELEASE-ART: the Gorgon Queen's own sheet; her stone gaze leaves her eyes, the beam drawn on that frame)
+  gorgon_queen: { kind: 'mouth', at: [5, 65], frame: 10 },
   hk_orc_archer: { kind: 'bowHand', at: [20, 28], frame: 3 },
   skeleton_archer: { kind: 'bowHand', at: [25, 52], frame: 10 },
   lich_king: { kind: 'staffTip', at: [48, 40], frame: 3 },

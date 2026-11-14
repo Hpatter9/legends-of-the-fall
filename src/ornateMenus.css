@@ -1340,6 +1340,10 @@ body #spellbook h2 {
   color: #c4baa3;
 }
 
+.brow.ach .achMedal { flex: none; width: 36px; height: 36px; background: url(ui/release/achievement-medal.webp) center / contain no-repeat; filter: grayscale(1) brightness(0.55); opacity: 0.8; }
+.brow.ach .achMedal.lit { filter: drop-shadow(0 0 4px rgba(242, 220, 159, 0.5)); opacity: 1; }
+.brow.ach > div { flex: 1; min-width: 0; }
+
 .brow.ach .achJoke {
   font-style: italic;
   color: #9e9581;
@@ -2106,6 +2110,9 @@ body #spellbook h2 {
 }
 .omChoice b { font: 400 15px/1.2 var(--display); color: var(--ornate-brass); overflow-wrap: anywhere; }
 .omChoice .omIco { font-size: 20px; line-height: 1; margin-bottom: 2px; }
+/* RELEASE-ART: a painted icon from the release sheet (`releaseIcon`), 24 px in a choice row */
+.rlIco { display: inline-block; flex: none; width: 1em; height: 1em; vertical-align: -0.15em; background: url(ui/release/assault-icons.webp) 0 0 / 1200% 100% no-repeat; }
+.omChoice .omIco.rlIco { width: 28px; height: 28px; }
 .omLine { font: 400 var(--om-small)/1.3 var(--body); color: #c4ba9f; overflow-wrap: anywhere; }
 .omLine.omPay { color: #9fe39a; }
 .omLine.omLock { color: #9a9a8e; font-style: italic; }
