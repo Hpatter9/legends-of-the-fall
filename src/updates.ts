@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.583.0',
+    date: '2026-11-14',
+    title: 'Foes shoot from their weapons too',
+    notes: ['Fifteen foes that shoot now loose from the bow hand, staff head or hand, among them the Orc Archer, the Lich King and the Yokai Witch.', 'A Gorgon\'s shot leaves from her gaze, and Vaelkhar\'s from his mouth.'],
+  },
+  {
     version: '0.582.0',
     date: '2026-11-14',
     title: 'Spells leave from the caster\'s hand',
