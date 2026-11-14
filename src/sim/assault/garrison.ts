@@ -41,17 +41,21 @@ export const ASSAULT = {
  *  needs moves with that army's level: 55 + (`Army.level` - 1), capped at the level cap, 100. */
 export const HOLD_MARK: Readonly<Record<string, number>> = { orcs: 55, undead: 62, beasts: 69, wildwood: 76, labyrinth: 89, ogres: 99, infernal: 100, yokai: 100, golems: 100 };
 
-/** Each hold's own share (`ASSAULT.foeShare`'s part, by army): set so the bot does about as well at each hold's mark (`HOLD_MARK`) as at the
- *  others, by the balance tool (docs/notes/assault-4.md). */
+/** Each hold's own share (`ASSAULT.foeShare`'s part, by army). ASSAULT-RETUNE (the owner's yes, `docs/notes/assault-retune.md`): set
+ *  against the force a player really has at the hold's mark (`devTrial.ts`: the rank, talents, skills, castle and host of the game's paces,
+ *  not the level alone as before), so that Auto with the balance party wins about three in four at "As expected" (`node
+ *  tools/assault-dev/run.mjs`). The old shares, tuned for a bare party (rank 0, no talents) by `npm run balance -- --assault`
+ *  (docs/notes/assault-4.md), were 0.155, 0.1175, 0.14, 0.095, 0.125, 0.095, 0.075, 0.07 and 0.0775. */
 export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: 0.248, undead: 0.2735, beasts: 0.322, wildwood: 0.1995, labyrinth: 0.2062, ogres: 0.285, infernal: 0.27, yokai: 0.168, golems: 0.31 };
-/** The share a hold's garrison stands at: a tool's own, else the hold's. */
 /** Phase 5: the Last Hold's garrison stands at this share of its hold's own, by army, against the whole Council's weight on its walls
- *  (`lastHold.ts`; tuned by `npm run balance -- --assault <army> --last`). The Council's members are elites and escorts with plainer kits
- *  than a hold's own nameless officers (an Ogre Shaman King, a Devil Leader), so at some holds they weaken it and at others strengthen it. */
-export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 2.534, undead: 1.992, beasts: 2.045, wildwood: 1.922, labyrinth: 1.553, ogres: 1.836, infernal: 1.302, yokai: 1.16, golems: 0.919 };
+ *  (`lastHold.ts`). The Council's members are elites and escorts with plainer kits than a hold's own nameless officers (an Ogre Shaman King,
+ *  a Devil Leader), so at some holds they weaken it and at others strengthen it. ASSAULT-RETUNE: tuned with the trial's force, at level 100
+ *  (every other hold falls first), to be the hardest storming of its hold (`node tools/assault-dev/run.mjs --kinds last`). */
+export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 2.737, undead: 1.992, beasts: 1.984, wildwood: 1.922, labyrinth: 1.553, ogres: 1.836, infernal: 1.367, yokai: 1.16, golems: 0.919 };
 /** ASSAULT-RETUNE: the Warband regrouped (the weekly re-storm at Mythic, `RESTORM_TIER`) stands at this share of its hold's own, by army, on
  *  top of the Mythic tier's own multipliers (tuned by `node tools/assault-dev/run.mjs --kinds regroup`, `docs/notes/assault-retune.md`). */
 export const RESTORM_SHARE: Readonly<Record<string, number>> = { orcs: 2.188, undead: 1.778, beasts: 1.522, wildwood: 1.756, labyrinth: 0.909, ogres: 1.015, infernal: 0.873, yokai: 0.958, golems: 1.056 };
+/** The share a hold's garrison stands at: a tool's own, else the hold's, times the Last Hold's or the Warband regrouped's factor. */
 export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare' | 'last' | 'tier'>): number =>
   input.foeShare ?? (HOLD_SHARE[input.army] ?? ASSAULT.foeShare) * (input.last ? LAST_SHARE[input.army] ?? 1 : 1) * ((input.tier ?? 0) >= 4 ? RESTORM_SHARE[input.army] ?? 1 : 1);
 
