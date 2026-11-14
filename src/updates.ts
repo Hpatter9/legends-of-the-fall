@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.589.0',
+    date: '2026-11-14',
+    title: 'Casters stay in sight through their ultimates',
+    notes: ['A long wind-up no longer flashes over its caster again and again: the Priestess, Inquisitor and Lightning Mage stay visible in their pillars and clouds.', 'Four more ultimates reach out from staff, heart stone, spear point or banner, and a fight with a Gorgon loads less.'],
+  },
+  {
     version: '0.588.0',
     date: '2026-11-14',
     title: 'The Dragoon stays in sight as she winds up',

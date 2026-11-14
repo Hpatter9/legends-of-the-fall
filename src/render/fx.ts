@@ -37,7 +37,7 @@ import { rankOf, SPELLS, type SpellId } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { at, depth, facesRight, getFrame, FOOT, HH, TH, TW, type Frame } from './iso';
-import { strokeLands, strokeLay, ULT_EMIT } from './emitRules';
+import { breathes, strokeLands, strokeLay } from './emitRules';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SPELL_GLOW, SPELL_WORD, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -432,7 +432,7 @@ export class Fx {
       warmBfx([...kinds].filter((kind) => ULT_EXTRA[kind] && SHOWCASES[kind]).flatMap((kind) => Object.values(ULT_EXTRA[kind]).map((clip) => beatBfx(clip, SHOWCASES[kind].el))));
       // (EMIT-POINTS: and the small flame a breath runs out of its caster's mouth in, for a hero whose ultimate has a mouth point. It
       // lies with the fire showcase's beats, one atlas of about 4 MB decoded, asked for only when such a hero is in the fight)
-      warmBfx(b.units.filter((x) => x.side === 'hero' && ULT_EMIT[defOf(x).sheet]).map(() => beatBfx(MOUTH_RUN.clip, 'fire')));
+      warmBfx(b.units.filter((x) => x.side === 'hero' && breathes(defOf(x).sheet)).map(() => beatBfx(MOUTH_RUN.clip, 'fire')));
       // (the beats of their showcases are not asked for here: each loads the first time it is played, the older parts playing that once,
       // so a fight begins with as little held as it can)
     }
@@ -698,14 +698,15 @@ export class Fx {
 
   /** The opening of an ultimate's moment (ULT-EPIC): power gathers on the hero while the slash and the name are up (the painted kit's
    *  gathering when it is there, else the element's wind-up from the pack), so the board under the band is alive. */
-  ultGather(unit: number, el: Element, ms: number): void {
+  ultGather(unit: number, el: Element, ms: number, again = false): void {
     const by = this.sprites.get(unit);
     if (!by) return;
     const budget = particleBudget(settings().saver);
     this.moment.density = budget.density;
     this.moment.cap = budget.cap;
     // (BLENDER-FX: the hero's own rendered wind-up, played across the whole stage, in place of the painted gathering and the pack's)
-    if (this.bfxUlt(by.unit.def, 'windup', by.x, by.y, ms, 1, 0, by.unit)) return;
+    // (ON-FIGHTER: a long wind-up gathers twice, and the second gathering (`again`) does not flash whole over the hero a second time)
+    if (this.bfxUlt(by.unit.def, 'windup', by.x, by.y, ms, 1, 0, by.unit, !again)) return;
     this.paintMoment(KIT.gather, by.x, by.y, 2.5, { frameMs: ms / 8, foot: true, alpha: 0.9 });
     windUp(this.moment, el, by.x, by.y, ms, by.tall, true);
   }
@@ -858,7 +859,7 @@ export class Fx {
   /** BLENDER-FX: a stage of a hero kind's ultimate as its rendered sheet on the moment's layer (which runs while the fight is held), the
    *  middle of its tile at (x, y), played once across `ms` (the stage's length; a strike plays at its own pace when none is given). A light's
    *  soft glow goes under it. Reduced motion holds its one readable frame. False when the kind has no sheet or it has not loaded. */
-  private bfxUlt(kind: string, stage: UltStageName, x: number, y: number, ms?: number, size = 1, delay = 0, on?: { id: number }): boolean {
+  private bfxUlt(kind: string, stage: UltStageName, x: number, y: number, ms?: number, size = 1, delay = 0, on?: { id: number }, flash = true): boolean {
     const key = ultBfx(kind, stage, ultWeight(kind));
     const c = key ? bfxClip(key) : undefined;
     const frames = key ? bfxFrames(key) : [];
@@ -914,7 +915,9 @@ export class Fx {
         }
       }
       // (and for its first moment the clip is over the body at full strength: the rule's brief flash, `UNDER.FLASH_MS`)
-      if (!this.reduced) {
+      // (once: a long wind-up gathers twice and a showcase plays its hero's wind-up on the caster again, and each playing began
+      // with the flash, so a tall wind-up hid its caster whole two or three times in a show. Only the first beginning flashes: `flash`)
+      if (!this.reduced && flash) {
         const n = Math.max(1, Math.ceil(UNDER.FLASH_MS / (life / held.length)));
         this.moment.spawn({ ...bit, frames: held.slice(0, n), frameMs: UNDER.FLASH_MS / n, life: UNDER.FLASH_MS, alpha: base, solid: true });
       }
@@ -996,7 +999,7 @@ export class Fx {
           if (extra?.land) this.bfxBeat(extra.land, el, caster.x, caster.y, { mult: ULT_EXTRA_AT.LAND_SIZE });
           // (EMIT-POINTS: a breath leaves the mouth. Small flames are blown outwards from the caster's mouth along the line, growing, each
           // turned the way the breath goes, and the line's own flames follow them; `mouthRun`)
-          const mouth = caster.ultPoint();
+          const mouth = caster.mouthPoint();
           // (at the mouth's own height all the way, reaching over the line's third spot or its last: `streamSpot`)
           const reach = streamSpot(run.length);
           const far = run.length ? shown[run[reach].i] : undefined;
@@ -1363,7 +1366,7 @@ export class Fx {
           // (EMIT-POINTS: a breath leaves the mouth here too. Where the caster has a mouth point the stream is blown from it to the
           // foe's middle, growing, each flame turned the way it goes, and its ball bursts on the foe as it arrives: the same breath as
           // the strike's, `mouthRun`. A caster without one keeps the row of flames along the ground from its feet)
-          const mouth = this.bodyAt(x, y - 10, 8)?.ultPoint();
+          const mouth = this.bodyAt(x, y - 10, 8)?.mouthPoint();
           const wait = mouth ? this.breathRun(mouth, to.x, to.y - to.tall * 0.5, el) : null;
           if (wait !== null) {
             B('nova', to.x, to.y, { delay: wait, mult: 0.7 }, 'fire');
@@ -1417,7 +1420,7 @@ export class Fx {
         return true;
       case 'gather':
         // (ON-FIGHTER: on the caster, so under its body and thin over it, as the wind-up itself is)
-        if (own && this.bfxUlt(own, 'windup', x, y, BEAT_OWN.GATHER_MS, 1, 0, this.bodyAt(x, y - 10, 8)?.unit)) return true;
+        if (own && this.bfxUlt(own, 'windup', x, y, BEAT_OWN.GATHER_MS, 1, 0, this.bodyAt(x, y - 10, 8)?.unit, false)) return true;
         return B('gather', x, y, { lit: true });
       case 'mark':
         if (!B('mark', x, y, { lit: true })) return false;

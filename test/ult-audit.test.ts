@@ -146,7 +146,7 @@ test('on the caster a showcase gathers with the hero\'s own wind-up, not one cir
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   // (the hero's kind reaches the beat from the showcase)
   assert.match(readFileSync('src/ultShow.ts', 'utf8'), /fx\.showBeat\(b\.kind, p\[0\], p\[1\], \{ tall, el, hero: plan\.kind \}\);/);
-  assert.match(fx, /if \(own && this\.bfxUlt\(own, 'windup', x, y, BEAT_OWN\.GATHER_MS, 1, 0, this\.bodyAt\(x, y - 10, 8\)\?\.unit\)\) return true;/);
+  assert.match(fx, /if \(own && this\.bfxUlt\(own, 'windup', x, y, BEAT_OWN\.GATHER_MS, 1, 0, this\.bodyAt\(x, y - 10, 8\)\?\.unit, false\)\) return true;/);
   assert.match(fx, /if \(own\) return B\('dust', x, y\);/);
   assert.match(fx, /return own \? B\('appear', x, y, \{ mult: BEAT_OWN\.FINISH \}\) : B\('nova', x, y\);/);
   // (every hero has a wind-up of its own to gather with)

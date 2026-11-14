@@ -274,7 +274,7 @@ What each ultimate's show sends FROM its caster, read from the code (`Fx.ultImpa
 | Group | Ultimates | Where it left the caster | State |
 | --- | --- | --- | --- |
 | A line of small clips run from the caster to each one the strike touches (`ultLinked`) | Fateweaver, Wanderer, Satyr, Gorgon, Gunslinger, High Priestess, Great Sage, Corsair Surgeon | the caster's FEET | **fixed here**: its hand, staff, muzzle or eyes |
-| the same | Unburied Saint, Worldroot, Peasant, Samurai Commander | the caster's feet | not yet: their sheets have no measured point |
+| the same | Unburied Saint, Worldroot, Peasant, Samurai Commander | the caster's feet | yes (the last four): the head of her staff, the green stone in his chest, the point of his raised spear, the crest on his banner (`ULT_EMIT`) |
 | A strike laid down a line from the caster | Queen Dragoon | no breath at all | fixed (above) |
 | the same | Samurai (his cut along the line he dashes), Sea Reaver (a tide with foam from where he lands) | the caster's feet, on the ground | left: a dash and a tide belong on the ground |
 | A strike played round the caster (`self`: an aura, a ward, a pull) | Cleric, Knight, Wolf Bard, Banneret, Warlock, Tyrant, Bell Warden, Plague Doctor, Kraken Mate and the like | round the body | left: it is round the caster by design |
@@ -293,3 +293,26 @@ her muzzle; the healers' light leaves the staff or the hand.
   caster's feet. The strikes' own rings and bursts fill the same moment, and in several pairs (the Satyr, the Gorgon) I cannot
   pick the line's start out of the crowd. The Gorgon's gaze clips now begin at her head; in her photographs she had turned her
   foes to stone beside her, so the line was a clip or two long. I looked at one of the two sheets.
+
+## The last four link lines
+
+The four ultimates whose line of light to each friend still left the caster's feet now leave a measured point, each read on the
+second frame of its ultimate's row (`attack2`), front and back, and kept in `ULT_EMIT` (so only the ultimate's line moves: none
+of the four's ordinary blows or casts is touched):
+
+| Hero | Ultimate | Point | Front | Back |
+| --- | --- | --- | --- | --- |
+| Unburied Saint | The Unfinished Prayer | the head of her staff | 29, 92 | 28, 92 |
+| Worldroot | his pulse | the green stone in his chest (from behind, the front of his chest at its height) | 31, 58 | 14, 58 |
+| Peasant | Call to Arms | the point of his raised spear | 35, 96 | 35, 96 |
+| Samurai Commander | his banner's | the crest on his banner | 10, 81 | -3, 72 |
+
+All eight are on a drawn pixel of what they name (checked against the sheets). No ultimate's line leaves a caster's feet any
+more: the test's list of those that do is empty.
+
+**A fault of mine put right with it.** `ULT_EMIT` was read in three places as "this hero breathes": the breath's small flame
+asked for at a fight's start, the strike's breath down a line, and the showcase's breath. The Gorgon's eyes were already in
+the table, so a fight with a Gorgon in it asked for the breath's flame (the fire showcase's atlas, about 4 MB decoded) for
+nothing; with the four new points it would have been asked for by five heroes that never breathe. `breathes(sheet)` now says
+whether the point is a mouth, the fighter's `mouthPoint()` is what a breath asks, and `ultPoint()` is left to the lines. Only the
+Dragoon breathes.

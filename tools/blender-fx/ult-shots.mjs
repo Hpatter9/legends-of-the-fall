@@ -449,7 +449,27 @@ for (const pick of PICKS) {
           return { at: [Math.round(p.x), Math.round(p.y)], over, under, order: sp.root.children.map((c) => c.label || c.constructor.name) };
         }, pick);
         console.log('WIND', ms, JSON.stringify(seen));
-        await page.screenshot({ path: `${OUT}/wind-${pick}-${i}.png`, clip: { x: Math.max(0, Math.min(W - 200, seen.at[0] - 100)), y: Math.max(0, seen.at[1] - 120), width: 200, height: 200 } });
+        const clip = { x: Math.max(0, Math.min(W - 200, seen.at[0] - 100)), y: Math.max(0, seen.at[1] - 120), width: 200, height: 200 };
+        await page.screenshot({ path: `${OUT}/wind-${pick}-${i}.png`, clip });
+        // (the same moment twice more, nothing stepped: without the effects, and without the effects and the caster, so the caster's
+        // own pixels are known and how far the effects changed them can be measured: tools/blender-fx/wind_audit.py)
+        const hide = (body) => page.evaluate(([pick, body]) => {
+          const g = window.__game, fx = g.fx; const u = g.b.units.find((x) => x.side === 'hero' && x.def === pick); const sp = g.sprites.get(u.id);
+          fx.moment.root.visible = false;
+          for (const p of [...fx.unders.values(), ...fx.rowLows.values(), ...fx.lows.values()]) p.root.visible = false;
+          sp.root.visible = body;
+          g.app.render();
+        }, [pick, body]);
+        await hide(true);
+        await page.screenshot({ path: `${OUT}/wind-${pick}-${i}-bare.png`, clip });
+        await hide(false);
+        await page.screenshot({ path: `${OUT}/wind-${pick}-${i}-none.png`, clip });
+        await page.evaluate((pick) => {
+          const g = window.__game, fx = g.fx; const u = g.b.units.find((x) => x.side === 'hero' && x.def === pick);
+          fx.moment.root.visible = true;
+          for (const p of [...fx.unders.values(), ...fx.rowLows.values(), ...fx.lows.values()]) p.root.visible = true;
+          g.sprites.get(u.id).root.visible = true;
+        }, pick);
       }
       await ctx.close();
       continue;
