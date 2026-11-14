@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.600.0',
+    date: '2026-11-14',
+    title: 'A notice when a new version is ready',
+    notes: ['On the web, the home screen tells you when a new version is ready, with a Reload button; it never interrupts a fight.', 'A run save that cannot be read is now kept aside and you are told, instead of it vanishing; your heroes and crowns stay safe.'],
+  },
+  {
     version: '0.599.0',
     date: '2026-11-14',
     title: 'Safer saves and a quieter phone',
