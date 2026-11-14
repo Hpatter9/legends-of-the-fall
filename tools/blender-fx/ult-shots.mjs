@@ -233,7 +233,7 @@ if (process.env.WATCH) {
       window.__seen = [];
       const defOf = (id) => fx.sprites.get(id)?.unit.def;
       const shot = fx.shot.bind(fx);
-      fx.shot = (by, to, kind, ms) => { window.__seen.push('shot:' + defOf(by)); window.__seenMs = ms; return shot(by, to, kind, ms); };
+      fx.shot = (by, to, kind, ms) => { const k = 'shot:' + defOf(by); window.__seen.push(k); window.__seenMs = ms; const sp = fx.sprites.get(by); if (sp) window.__seenAt = { ...(window.__seenAt ?? {}), [k]: [sp.x, sp.y - sp.tall * 0.5] }; return shot(by, to, kind, ms); };
       // (swing:<kind> a melee blow's stroke by that kind, fall:<kind> that kind's fall; either side's fighters)
       const slash = fx.slash.bind(fx);
       fx.slash = (b, by, to) => { window.__seen.push('swing:' + defOf(by)); window.__seenMs = 150; return slash(b, by, to); };
@@ -250,7 +250,8 @@ if (process.env.WATCH) {
       if (!got) console.log('NOT SEEN', what, 'saw', await page.evaluate(() => [...new Set(window.__seen)].join(' ') + ' | foes ' + [...new Set(window.__game.b.units.filter((u) => u.side === 'foe').map((u) => u.def))].join(' ') + ' | ' + window.__game.b.phase));
       if (!got) continue;
       await page.evaluate(() => window.__game.setSpeed(1));
-      for (const [i, k] of [0.3, 0.3].entries()) {
+      // (SEE_AT=0.1,0.2: the shares of its flight at which it is photographed; 0.3 and 0.6 when not given)
+      for (const [i, k] of (process.env.SEE_AT ? process.env.SEE_AT.split(',').map(Number).map((v, j, a) => v - (a[j - 1] ?? 0)) : [0.3, 0.3]).entries()) {
         await page.evaluate((d) => window.__step(d), Math.round(got * k));
         await page.screenshot({ path: `${OUT}/see-${what.replace(':', '-')}-${W}-${i}.png` });
       }
