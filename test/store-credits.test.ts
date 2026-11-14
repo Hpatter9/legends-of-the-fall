@@ -57,7 +57,9 @@ test('a licence that asks for credit is tagged so, with a link to the source whe
 
 test('the assets whose licence is unconfirmed are tagged so on the page, as in CREDITS.md', () => {
   const marked = all.filter((c) => c.unconfirmed).map(creditText).join('\n');
-  for (const what of ['batareya', 'whtdragon', 'recorded combat sounds']) assert.ok(marked.includes(what), what);
+  for (const what of ['batareya', 'whtdragon']) assert.ok(marked.includes(what), what);
+  // (LICENCE-REPLACE, the owner's "Replace them": the eight recorded combat sounds are gone, synthesised in their place)
+  assert.ok(!all.some((c) => /recorded combat sounds/i.test(creditText(c))), 'no recorded combat sounds');
   // (and the record marks every use of those packs)
   const paras = md.split(/\n(?=- |\n|#)/);
   for (const p of paras.filter((x) => /batareya|whtdragon|combatAudioBank/.test(x) && !/Superseded|\breplace\b[^.]*\b(whtdragon|golem|batareya)/i.test(x))) {
