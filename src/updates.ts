@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.602.0',
+    date: '2026-11-14',
+    title: 'A shop, and the odds of every summon',
+    notes: ['The summoning sanctum shows the exact odds of every outcome, worked out for your own collection.', 'The Google Play version adds a shop for stones, crowns, bundles and new looks; everything you can earn stays free to earn.'],
+  },
+  {
     version: '0.601.0',
     date: '2026-11-14',
     title: 'Every combat sound is the game\'s own',
