@@ -8,6 +8,7 @@ import { heroesTabMark } from './heroesTabMark';
 import { glyphWord, medal, pbUrl } from './paintedButton';
 import { menuFoot, menuNote, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
 import { openMuster, openAssaultResult } from './assaultView';
+import type { AssaultResult } from './sim/assault/assaultMode';
 import { runAssault } from './assaultScene';
 import { claimTribute } from './sim/assault/economy';
 import { abandonLive } from './sim/assault/snapshot';
@@ -1367,6 +1368,25 @@ export class Home {
         void runAssault(this.meta, army, plan, {
           save,
           onEnd: (result) => openAssaultResult(this.meta, result, { onBack: () => this.openArmies(army), onFill: () => this.openAssault(army, restorm) }),
+        });
+      },
+    });
+  }
+
+  /** ASSAULT-DEV (`docs/notes/assault-dev.md`): a developer's trial of an assault on `m`, a throwaway copy of the save (`trialMeta`): the
+   *  same muster, battle and result as a real one, but nothing is saved (the save hook does nothing, and no snapshot is kept for a resume).
+   *  The result's way back is `done`; its "storm again" a fresh copy (`again`). */
+  openTrial(m: Meta, army: string, restorm: boolean, hooks: { done(result?: AssaultResult): void; again(): void }): void {
+    const save = () => undefined;
+    openMuster(m, army, {
+      save,
+      restorm,
+      onBack: () => hooks.done(),
+      onMarch: (plan) => {
+        void runAssault(m, army, plan, {
+          save,
+          trial: true,
+          onEnd: (result) => openAssaultResult(m, result, { onBack: () => hooks.done(result), onFill: () => hooks.again(), trial: true }),
         });
       },
     });

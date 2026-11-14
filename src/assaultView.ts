@@ -454,10 +454,15 @@ export function openPlatoonCard(m: Meta, hero: string, o: { save(): void; onChan
 }
 
 /** The result (8.3): a full page. */
-export function openAssaultResult(_m: Meta, r: AssaultResult, hooks: { onBack(): void; onFill?(): void }): void {
+export function openAssaultResult(_m: Meta, r: AssaultResult, hooks: { onBack(): void; onFill?(): void; trial?: boolean }): void {
   const bp = blueprintOf(r.army)!;
   const title = r.warEnded ? 'The War is won' : r.won ? `${bp.name} is conquered` : r.outcome === 'night' ? 'Night falls on the assault' : r.outcome === 'withdrawn' ? 'The retreat is sounded' : 'The host falls back';
   const menu = ornateMenu({ id: 'assaultResult', kind: 'sheet', eyebrow: `${r.last ? 'The Last Hold' : 'Conquest'} · Assault ${r.attempt}`, title, sub: r.warEnded ? `${bp.name} falls, and the Dark Council with it` : r.won ? `The ${armyById(r.army)!.name.replace(/^The /, '')} is broken` : 'The hold stands at full strength for the next attempt', label: title });
+  // (ASSAULT-DEV: a developer's trial says so: what follows is shown, and none of it reaches the save)
+  if (hooks.trial) {
+    const sec = menuSection(menu.body, 'A developer’s trial', undefined, 2);
+    menuWell(sec.parentElement!).append(el('p', '', 'All of this is shown, none of it recorded: your save is as it was.'));
+  }
   const host = menuSection(menu.body, 'The host', undefined, 2);
   const well = menuWell(host.parentElement!);
   for (const p of r.platoons) {
@@ -488,6 +493,6 @@ export function openAssaultResult(_m: Meta, r: AssaultResult, hooks: { onBack():
   }
   menuFoot(menu, {
     back: { word: 'back', onClick: () => { menu.close(); setHold(null); hooks.onBack(); } },
-    ...(!r.won && hooks.onFill ? { primary: { label: 'Fill the ranks', onClick: () => { menu.close(); setHold(null); hooks.onFill!(); } } } : {}),
+    ...(!r.won && hooks.onFill ? { primary: { label: hooks.trial ? 'Storm again' : 'Fill the ranks', onClick: () => { menu.close(); setHold(null); hooks.onFill!(); } } } : {}),
   });
 }

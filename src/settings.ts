@@ -163,7 +163,7 @@ const PAGES: readonly { id: Page; title: string; hint: string }[] = [
   { id: 'gameplay', title: 'Gameplay', hint: 'Fight speed, hero quips, cinematics, ultimate scenes, tips' },
   { id: 'ruler', title: 'Ruler and Duchess', hint: 'Who rules your keep, and Duchess’s costume' },
   { id: 'data', title: 'Save and data', hint: 'Start over' },
-  { id: 'dev', title: 'Developer', hint: 'Crowns, shards, stones and Build Town for testing' },
+  { id: 'dev', title: 'Developer', hint: 'Crowns, shards, stones, Build Town and Try an Assault for testing' },
   { id: 'diag', title: 'Diagnostics', hint: 'The stops of half a second or more the game has seen on this device' },
   { id: 'updates', title: 'Updates and notes', hint: 'What changed in each version' },
   { id: 'about', title: 'About', hint: 'Version and credits' },
@@ -172,14 +172,14 @@ const PAGES: readonly { id: Page; title: string; hint: string }[] = [
 /** The submenu showing, or null for the top list. */
 let page: Page | null = null;
 
-/** Opens the settings page over whatever is showing, at its top list. */
-export function openSettings(): void {
+/** Opens the settings page over whatever is showing, at its top list (or at one submenu: ASSAULT-DEV comes back to the Developer page). */
+export function openSettings(at: Page | null = null): void {
   if (!wired) {
     wired = true;
     $('settingsClose').addEventListener('click', closeSettings);
     glyphWord($('settingsClose'));
   }
-  page = null;
+  page = at;
   draw();
   $('settings').hidden = false;
 }
@@ -246,7 +246,7 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
     case 'data':
       return [startOverRow()];
     case 'dev':
-      return [devRow()];
+      return [devRow(), trialRow()];
     case 'diag':
       return diagRows();
     case 'updates':
@@ -651,6 +651,27 @@ function devRow(): HTMLElement {
   });
   group.append(town);
   r.append(group);
+  return r;
+}
+
+/** ASSAULT-DEV (`docs/notes/assault-dev.md`): the page's handler for Try an Assault (`main.ts` sets it: it holds the save, and opens the
+ *  picker, `devAssaultView.ts`). */
+let devAssaultFn: (() => string | void) | null = null;
+export function onDevAssault(fn: () => string | void): void {
+  devAssaultFn = fn;
+}
+
+/** Try an Assault: any hold, its Last Hold or its Warband regrouped, with the force a player has there, on a throwaway copy of the save. */
+function trialRow(): HTMLElement {
+  const [r, text] = row('Try an Assault', 'Storm any hold, its Last Hold or its Warband regrouped, with the levelled force a player has there; on a throwaway copy, so nothing carries over to your save');
+  const b = document.createElement('button');
+  b.textContent = 'Try an Assault';
+  b.className = 'devTrial';
+  b.addEventListener('click', () => {
+    const said = devAssaultFn?.();
+    if (said) text.querySelector('em')!.textContent = said;
+  });
+  r.append(b);
   return r;
 }
 

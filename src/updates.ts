@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.592.0',
+    date: '2026-11-14',
+    title: 'Try any assault in developer mode',
+    notes: ['Settings, Developer, Try an Assault: storm any army\'s hold, the Last Hold or a Mythic re-storm with a party levelled as a player would be by then.', 'It runs on a throwaway copy: nothing carries over to your save.'],
+  },
+  {
     version: '0.591.0',
     date: '2026-11-14',
     title: 'Ready for the store: a first set of fixes',
