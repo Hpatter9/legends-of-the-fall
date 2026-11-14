@@ -2,12 +2,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CAST, EMIT, emitOffset, emitWorld } from '../src/render/emitRules';
+import { CAST, EMIT, FOE_EMIT, emitOffset, emitWorld } from '../src/render/emitRules';
+import { FOES } from '../src/sim/foes';
 import { TAIL_MIN, tailShare } from '../src/render/blenderFxRules';
 import { UNITS } from '../src/sim/units';
 import layout from '../src/art/units/sheets.json';
 
-const SHEETS = layout as unknown as Record<string, { w: number; h: number; rear?: string; counts: Record<string, number> }>;
+const SHEETS = layout as unknown as Record<string, { w: number; h: number; rear?: string; facesRight?: boolean; counts: Record<string, number> }>;
 /** Heroes that shoot and keep the old place on purpose (none today): each with its reason. */
 const FALLBACK: Record<string, string> = {};
 
@@ -58,7 +59,7 @@ test('the point is the front view\'s or the rear view\'s, mirrored and scaled wi
 
 test('the table the tool checks against the sheets is the table the game uses, and the renderer starts from it', () => {
   const tool = JSON.parse(readFileSync('tools/emit-points/anchors.json', 'utf8'));
-  assert.deepEqual(tool, JSON.parse(JSON.stringify({ shot: EMIT, cast: CAST })));
+  assert.deepEqual(tool, JSON.parse(JSON.stringify({ shot: EMIT, cast: CAST, foe: FOE_EMIT })));
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /const \[x0, y0\] = this\.emitOf\(by, 0\.55\);/);
   assert.match(fx, /return s\.emitPoint\(\) \?\? \[s\.x, s\.y - s\.tall \* lift\];/);
@@ -97,4 +98,23 @@ test('every hero that casts without shooting has a measured point on its sheet, 
   assert.equal(Object.keys(CAST).length, CASTERS.length);
   // (a healer's thread leaves its point too)
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /if \(healer\) this\.thread\(\.\.\.this\.emitOf\(healer, 0\.5\), to\.x, to\.y - to\.tall \* 0\.5, 'light-sparkle'\);/);
+});
+
+test('every foe that shoots has a measured point on its sheet, read on the frame on show as its shot leaves', () => {
+  const shooters = Object.values(FOES).filter((f) => f.shot);
+  assert.ok(shooters.length >= 15);
+  for (const f of shooters) {
+    const e = FOE_EMIT[f.sheet];
+    assert.ok(e, `${f.id} (${f.sheet}) has no point`);
+    const L = SHEETS[f.sheet];
+    assert.ok(Math.abs(e.at[0]) <= L.w / 2 && e.at[1] >= 10 && e.at[1] < L.h, `${f.id}: ${e.at}`);
+    // (the release frame: the wind-up, 0.4 of the attack and 500 ms at most, over the swing, which is 250 ms longer)
+    const windup = Math.min(500, Math.round(f.atkMs * 0.4));
+    assert.equal(e.frame, Math.floor((windup / (windup + 250)) * L.counts.attack), f.id);
+    // (the sheet has no look from behind and faces right as drawn, so the one point serves)
+    assert.ok(!L.rear && L.facesRight !== false, f.id);
+    assert.deepEqual(emitOffset(f.sheet, f.sheet, f.sheet), e.at);
+  }
+  const used = new Set(shooters.map((f) => f.sheet));
+  for (const sheet of Object.keys(FOE_EMIT)) assert.ok(used.has(sheet) && !EMIT[sheet] && !CAST[sheet], sheet);
 });
