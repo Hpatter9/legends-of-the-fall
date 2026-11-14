@@ -46,15 +46,15 @@ export const HOLD_MARK: Readonly<Record<string, number>> = { orcs: 55, undead: 6
  *  not the level alone as before), so that Auto with the balance party wins about three in four at "As expected" (`node
  *  tools/assault-dev/run.mjs`). The old shares, tuned for a bare party (rank 0, no talents) by `npm run balance -- --assault`
  *  (docs/notes/assault-4.md), were 0.155, 0.1175, 0.14, 0.095, 0.125, 0.095, 0.075, 0.07 and 0.0775. */
-export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: 0.248, undead: 0.2598, beasts: 0.322, wildwood: 0.1995, labyrinth: 0.2062, ogres: 0.285, infernal: 0.27, yokai: 0.168, golems: 0.31 };
+export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: 0.496, undead: 0.4936, beasts: 0.4508, wildwood: 0.3392, labyrinth: 0.4124, ogres: 0.4845, infernal: 0.54, yokai: 0.2352, golems: 0.4185 };
 /** Phase 5: the Last Hold's garrison stands at this share of its hold's own, by army, against the whole Council's weight on its walls
  *  (`lastHold.ts`). The Council's members are elites and escorts with plainer kits than a hold's own nameless officers (an Ogre Shaman King,
  *  a Devil Leader), so at some holds they weaken it and at others strengthen it. ASSAULT-RETUNE: tuned with the trial's force, at level 100
  *  (every other hold falls first), to be the hardest storming of its hold (`node tools/assault-dev/run.mjs --kinds last`). */
-export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 2.63, undead: 2.097, beasts: 1.984, wildwood: 1.922, labyrinth: 1.553, ogres: 1.836, infernal: 1.33, yokai: 1.16, golems: 0.919 };
+export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 1.775, undead: 1.49, beasts: 2.055, wildwood: 2.035, labyrinth: 1.514, ogres: 1.404, infernal: 0.898, yokai: 1.119, golems: 0.953 };
 /** ASSAULT-RETUNE: the Warband regrouped (the weekly re-storm at Mythic, `RESTORM_TIER`) stands at this share of its hold's own, by army, on
  *  top of the Mythic tier's own multipliers (tuned by `node tools/assault-dev/run.mjs --kinds regroup`, `docs/notes/assault-retune.md`). */
-export const RESTORM_SHARE: Readonly<Record<string, number>> = { orcs: 2.188, undead: 1.872, beasts: 1.522, wildwood: 1.668, labyrinth: 0.909, ogres: 1.015, infernal: 0.873, yokai: 0.958, golems: 1.056 };
+export const RESTORM_SHARE: Readonly<Record<string, number>> = { orcs: 1.477, undead: 1.379, beasts: 1.522, wildwood: 1.766, labyrinth: 0.75, ogres: 0.896, infernal: 0.698, yokai: 1.129, golems: 0.939 };
 /** The share a hold's garrison stands at: a tool's own, else the hold's, times the Last Hold's or the Warband regrouped's factor. */
 export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare' | 'last' | 'tier'>): number =>
   input.foeShare ?? (HOLD_SHARE[input.army] ?? ASSAULT.foeShare) * (input.last ? LAST_SHARE[input.army] ?? 1 : 1) * ((input.tier ?? 0) >= 4 ? RESTORM_SHARE[input.army] ?? 1 : 1);
