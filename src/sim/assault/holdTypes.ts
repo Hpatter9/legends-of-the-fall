@@ -44,6 +44,9 @@ export interface AssaultInput {
   foeShare?: number;
   /** Auto from the first tick: the bot plays the platoons. */
   auto?: boolean;
+  /** ASSAULT-SKILLS: the king's spells Auto casts while the platoons are on Auto (AUTO-CAST, `autoCast.ts`), as an ordinary fight's Auto
+   *  does: the save's equipped spells, when it lets Auto cast them (`spellAutoSaved`). None: Auto casts no spell. */
+  spells?: string[];
   /** The bot's second style (the balance tool's Tactical): it silences the drums and flies to the wall-walk. */
   tactical?: boolean;
   /** The garrison's tier: Legendary (3, the default) or Mythic (4, the Warband regrouped, phase 2's weekly re-storm). */

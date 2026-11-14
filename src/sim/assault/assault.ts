@@ -30,10 +30,11 @@ import type { Blueprint } from './blueprint';
 import { addFieldUnit, archersOnly, bowless, buildGarrison, freeNear, shareOf } from './garrison';
 import { barrelOnForts, canStrikeFort, discoverWeaknesses, drumsBeating, landFortHits, makeForts, strikeFort } from './forts';
 import { anchorOf, DRUM_BLOW, holdTick, nearDrum } from './holdMind';
-import { applyQueued, CHARGE_MOVE, defaultFormation, ENGAGE, FORMATION_FX, givePlatoon, HERO_LEASH, LEADERLESS, LEASH, replayEntries, slotAt } from './platoons';
+import { applyQueued, autoSpellsOf, CHARGE_MOVE, defaultFormation, ENGAGE, FORMATION_FX, givePlatoon, HERO_LEASH, LEADERLESS, LEASH, replayEntries, slotAt } from './platoons';
 import type { AssaultInput, AssaultLogEntry, AssaultOutcome, HoldState, PlatoonRole, PlatoonState, PostState } from './holdTypes';
 import { ELITE_TRICK, kindOfUnit, rankOf, troopBoost, troopUnitOf, troopOf, TRICKS } from './troops';
 import { SPLASH_SHARE } from '../units';
+import { tryCast } from '../abilities';
 import { callVolley, carrying, KEG_SLOW, plantGoal, worksTick } from './works';
 import { duelBlow, duelSight, duelTick, inDuel } from './gateDuel';
 import { flightTick, tauntTick } from './warAnswer';
@@ -129,6 +130,8 @@ export function startAssault(input: AssaultInput): Battle {
     pl.order = { kind: 'move', at: { ...way.way[way.way.length - 1] } };
     h.platoons.push(pl);
   });
+  // (ASSAULT-SKILLS: the king's spells on Auto, as an ordinary fight's)
+  autoSpellsOf(b, h);
   buildGarrison(b, f, h, input);
   h.siege = startSiege(b, f, h);
   h.foesTotal = h.garrison.length + bp.reinforce.bands * bp.reinforce.roster.replace(/ /g, '').length;
@@ -389,6 +392,9 @@ function lead(b: Battle, me: Unit, _rng: Rng, out: BattleEvent[]): boolean {
   }
   const pl = h.platoons.find((p) => p.group === g.id);
   if (!pl) return false;
+  // (ASSAULT-SKILLS: its own kit before its orders walk it on: a skill, a heal, a guard or its ultimate, each only with something to do
+  //  within its sight, as in any fight; never on a fall back, a flank's run round or with a keg in its arms)
+  if (castsFirst(h, pl) && tryCast(b, me, out)) return true;
   const def = strikeDef(b, me);
   const inReach = nearestFoe(b, f, me, def.range + 3, true);
   const goal = orderGoal(b, f, h, pl, me);
@@ -422,6 +428,10 @@ function lead(b: Battle, me: Unit, _rng: Rng, out: BattleEvent[]): boolean {
   me.busyUntil = b.t + WAIT_MS;
   return true;
 }
+
+/** ASSAULT-SKILLS: whether a platoon's hero may cast from its own kit before its orders: not on a fall back or a flank (no stopping), nor
+ *  while its platoon carries a powder keg. */
+export const castsFirst = (h: HoldState, pl: PlatoonState): boolean => pl.order.kind !== 'fallback' && pl.order.kind !== 'flank' && !carrying(h, pl);
 
 /** The tile beside a structure nearest to `me` that a walker stands on (where to stand to strike it). */
 function nearFortTile(b: Battle, me: Unit, tiles: readonly number[]): At | null {
