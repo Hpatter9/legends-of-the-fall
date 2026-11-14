@@ -27,6 +27,24 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.594.0',
+    date: '2026-11-14',
+    title: 'Ready for the store: credits, size and polish',
+    notes: ['Five screens tidied: Houses filter words, the Pact Gallery\'s Back button, the hero page tabs, the Nemesis cut-in choices and the War Council\'s Auto-pick.', 'Each Settings page now has a single Back button.', 'The Google Play build leaves out the Developer page and fits Play\'s size limit.'],
+  },
+  {
+    version: '0.593.0',
+    date: '2026-11-14',
+    title: 'A credits page for every artist',
+    notes: ['Settings now has a Credits page naming the artists, composers and makers behind the game, with each licence and where to find their work.'],
+  },
+  {
+    version: '0.592.0',
+    date: '2026-11-14',
+    title: 'Try any assault in developer mode',
+    notes: ['Settings, Developer, Try an Assault: storm any army\'s hold, the Last Hold or a Mythic re-storm with a party levelled as a player would be by then.', 'It runs on a throwaway copy: nothing carries over to your save.'],
+  },
+  {
     version: '0.591.0',
     date: '2026-11-14',
     title: 'Ready for the store: a first set of fixes',

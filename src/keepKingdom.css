@@ -369,7 +369,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid #efd39a; outline-
 #party { gap: 0; padding: calc(env(safe-area-inset-top) + 7px) 10px calc(env(safe-area-inset-bottom) + 7px); background: radial-gradient(ellipse at 50% 10%, #354637, transparent 55%), #0d1512; color: #e5dfc9; }
 #party > header { flex: none; justify-content: space-between; gap: 6px; padding: 2px 0 9px; border-bottom: 1px solid #9b804b; }
 #party > header > div { flex: 1; text-align: center; }
-#party #ptSuggest { margin-left: 0; }
+#party #ptSuggest { margin-left: 0; white-space: nowrap; } /* (RELEASE-AUDIT-ART: at 360 wide "Auto-pick" broke over two lines) */
 #party > header small { display: block; font: 9px/1.6 var(--body); letter-spacing: .25em; color: #c7b67f; }
 #party h2 { display: block; height: auto; margin: 0; padding: 2px 0; text-align: center; font: 700 clamp(18px, 5.4vw, 25px)/1.25 var(--display); color: #ffe4a0; text-shadow: 0 2px 8px #000; }
 #party > header button { min-height: 40px; padding: 6px 8px; font: 12px var(--body); background: linear-gradient(#334334, #14241c); border: 1px solid #a18850; border-radius: 3px; }

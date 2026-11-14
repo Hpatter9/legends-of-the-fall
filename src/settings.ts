@@ -11,7 +11,8 @@ import { RULER_URLS } from './rulerUrls';
 import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
 import { closePicker, openPicker } from './settingsPicker';
 import type { DevGift } from './sim/devGrant';
-import { appUpdate } from './appUpdate';
+import { appUpdate, STORE } from './appUpdate';
+import { openCredits } from './credits';
 import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
 import { CUT_MODES, type CutMode } from './tauntCutRules';
 import { SLIDER_STEP, curvedVolume } from './render/audioRules';
@@ -154,7 +155,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 let wired = false;
 
 /** The submenus of the page (the owner's ask: the options condensed into a short list of menus that open on a tap). */
-type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'diag' | 'updates' | 'about';
+export type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'diag' | 'updates' | 'about' | 'credits';
 
 /** Each submenu's name and its one-line hint on the top list, in the order shown. */
 const PAGES: readonly { id: Page; title: string; hint: string }[] = [
@@ -163,23 +164,36 @@ const PAGES: readonly { id: Page; title: string; hint: string }[] = [
   { id: 'gameplay', title: 'Gameplay', hint: 'Fight speed, hero quips, cinematics, ultimate scenes, tips' },
   { id: 'ruler', title: 'Ruler and Duchess', hint: 'Who rules your keep, and Duchess’s costume' },
   { id: 'data', title: 'Save and data', hint: 'Start over' },
-  { id: 'dev', title: 'Developer', hint: 'Crowns, shards, stones and Build Town for testing' },
+  { id: 'dev', title: 'Developer', hint: 'Crowns, shards, stones, Build Town and Try an Assault for testing' },
   { id: 'diag', title: 'Diagnostics', hint: 'The stops of half a second or more the game has seen on this device' },
   { id: 'updates', title: 'Updates and notes', hint: 'What changed in each version' },
   { id: 'about', title: 'About', hint: 'Version and credits' },
+  // (STORE-CREDITS: its own page, the standard ornate menu, `credits.ts`; not a submenu of this list)
+  { id: 'credits', title: 'Credits', hint: 'The artists and composers, and the licences their work is under' },
 ];
+
+/** STORE-DEV (docs/notes/store-dev-page.md): the Developer page (free crowns, shards and stones, Build Town, Try an Assault) is a testing
+ *  tool for the owner, on the web and in the GitHub release's app. A store's build has none: a reviewer must not find free currency. */
+export function devToolsOn(store: string): boolean {
+  return store === '';
+}
+
+/** The submenus a build lists, in order: all of them, less the Developer page in a store's build. */
+export function settingsPages(store: string): readonly (typeof PAGES)[number][] {
+  return PAGES.filter((p) => p.id !== 'dev' || devToolsOn(store));
+}
 
 /** The submenu showing, or null for the top list. */
 let page: Page | null = null;
 
-/** Opens the settings page over whatever is showing, at its top list. */
-export function openSettings(): void {
+/** Opens the settings page over whatever is showing, at its top list (or at one submenu: ASSAULT-DEV comes back to the Developer page). */
+export function openSettings(at: Page | null = null): void {
   if (!wired) {
     wired = true;
     $('settingsClose').addEventListener('click', closeSettings);
     glyphWord($('settingsClose'));
   }
-  page = null;
+  page = at;
   draw();
   $('settings').hidden = false;
 }
@@ -210,10 +224,11 @@ function draw(): void {
   $('settingsClose').hidden = page !== null;
   const body = $('settingsBody');
   const title = document.querySelector<HTMLElement>('#settings h2');
-  const at = PAGES.find((p) => p.id === page);
+  const shown = settingsPages(STORE);
+  const at = shown.find((p) => p.id === page);
   if (title) title.textContent = at ? at.title : 'Settings';
   if (!at) {
-    body.replaceChildren(...PAGES.map(menuRow));
+    body.replaceChildren(...shown.map(menuRow));
     return;
   }
   body.replaceChildren(backRow(), ...pageRows(at.id, s));
@@ -246,13 +261,15 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
     case 'data':
       return [startOverRow()];
     case 'dev':
-      return [devRow()];
+      return devToolsOn(STORE) ? [devRow(), trialRow()] : [];
     case 'diag':
       return diagRows();
     case 'updates':
       return updatesRows();
     case 'about':
       return aboutRows();
+    case 'credits':
+      return [];
   }
 }
 
@@ -280,8 +297,21 @@ function menuRow(p: (typeof PAGES)[number]): HTMLElement {
   chevron.setAttribute('aria-hidden', 'true');
   chevron.textContent = '›';
   b.append(text, chevron);
-  b.addEventListener('click', () => go(p.id));
+  b.addEventListener('click', () => (p.id === 'credits' ? showCredits(b) : go(p.id)));
   return b;
+}
+
+/** STORE-CREDITS: the Credits page over Settings; on "‹ Back" the focus returns to what opened it. */
+function showCredits(from: HTMLElement): void {
+  closePicker();
+  // (STORE-DEV: one way back: the sheet's own "‹ Back"; the header's, which would leave Settings, is hidden under it until it closes)
+  const close = $('settingsClose');
+  const wasHidden = close.hidden;
+  close.hidden = true;
+  openCredits(() => {
+    close.hidden = wasHidden;
+    if (from.isConnected) from.focus();
+  });
 }
 
 /** The back button at the top of a submenu, back to the top list. */
@@ -378,8 +408,14 @@ function aboutRows(): HTMLElement[] {
   const [name] = row('Legends of the Last Keep', `Version ${__GAME_VERSION__}`);
   const [credits] = row(
     'Credits',
-    'Art from free pixel-art packs (most from Craftpix, some from DawnLike and others) and some made for the game. Music from OpenGameArt composers and others. Most sound effects are made in the game, with a few recorded hits. Every source is named in the game’s credits list.',
+    'Art from free pixel-art packs (most from Craftpix, some from DawnLike and others) and some made for the game. Music from OpenGameArt composers and others. Most sound effects are made in the game, with a few recorded hits. Every source, and the licence it is under, is named on the Credits page.',
   );
+  // (STORE-CREDITS: the line points to the page, and opens it)
+  const open = document.createElement('button');
+  open.type = 'button';
+  open.textContent = 'Credits';
+  open.addEventListener('click', () => showCredits(open));
+  credits.append(open);
   const rows = [name, credits];
   const up = appUpdate(); // (the app only: a newer release was found at start)
   if (up) {
@@ -533,7 +569,8 @@ function speedRow(value: 1 | 2): HTMLElement {
 function cutRow(value: CutMode): HTMLElement {
   const [r] = row('Nemesis cut-ins', 'Full: a named foe taunts your heroes before its wave, and the hero it names answers. Short: its name plate only. A nemesis’s first meeting always plays in full unless they are off');
   const pair = document.createElement('div');
-  pair.className = 'pair';
+  // (RELEASE-AUDIT-ART: three choices beside the words squeezed them to a word a line at 393 wide; they sit under them instead)
+  pair.className = 'pair wide';
   for (const n of CUT_MODES) {
     const b = document.createElement('button');
     b.textContent = n === 'full' ? 'Full' : n === 'short' ? 'Short' : 'Off';
@@ -651,6 +688,27 @@ function devRow(): HTMLElement {
   });
   group.append(town);
   r.append(group);
+  return r;
+}
+
+/** ASSAULT-DEV (`docs/notes/assault-dev.md`): the page's handler for Try an Assault (`main.ts` sets it: it holds the save, and opens the
+ *  picker, `devAssaultView.ts`). */
+let devAssaultFn: (() => string | void) | null = null;
+export function onDevAssault(fn: () => string | void): void {
+  devAssaultFn = fn;
+}
+
+/** Try an Assault: any hold, its Last Hold or its Warband regrouped, with the force a player has there, on a throwaway copy of the save. */
+function trialRow(): HTMLElement {
+  const [r, text] = row('Try an Assault', 'Storm any hold, its Last Hold or its Warband regrouped, with the levelled force a player has there; on a throwaway copy, so nothing carries over to your save');
+  const b = document.createElement('button');
+  b.textContent = 'Try an Assault';
+  b.className = 'devTrial';
+  b.addEventListener('click', () => {
+    const said = devAssaultFn?.();
+    if (said) text.querySelector('em')!.textContent = said;
+  });
+  r.append(b);
   return r;
 }
 
