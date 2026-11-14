@@ -99,7 +99,7 @@ export const BODY_COVER: Readonly<Record<string, number>> = {
   'ult-dhampir-strike': 0.753,
   'ult-dhampir-windup': 0.992,
   'ult-dragoon-aftermath': 0.907,
-  'ult-dragoon-windup': 0.833,
+  'ult-dragoon-windup': 0.472,
   'ult-dreadPirate-aftermath': 0.812,
   'ult-dreadPirate-windup': 0.921,
   'ult-druid-aftermath': 0.96,

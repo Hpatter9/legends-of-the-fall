@@ -42,7 +42,7 @@ const PARTY_OF = (pick) => [pick, ...(process.env.QUIET ? ['knight', 'cleric'] :
 let errors = 0;
 
 async function open(eidolons) {
-  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1, hasTouch: true, reducedMotion: REDUCED ? 'reduce' : 'no-preference' });
+  const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: Number(process.env.DSF ?? 1), hasTouch: true, reducedMotion: REDUCED ? 'reduce' : 'no-preference' });
   const page = await ctx.newPage();
   if (process.env.TRACE) page.on('console', (m) => { if (m.text().startsWith('TRACE')) console.log(m.text()); });
   page.on('pageerror', (e) => { errors++; console.log('PAGE ERROR', e.message); });
@@ -426,6 +426,30 @@ for (const pick of PICKS) {
         for (let n = 0; n < 200; n++) { const t = await age(); if (t === null || t >= ms) break; await page.evaluate(() => window.__step(16)); }
         const at = await page.evaluate((pick) => { const g = window.__game; const u = g.b.units.find((x) => x.side === 'hero' && x.def === pick); const sp = g.sprites.get(u.id); const p = g.fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 }); return [Math.round(p.x), Math.round(p.y)]; }, pick);
         await page.screenshot({ path: `${OUT}/links-${pick}-${i}.png`, clip: { x: Math.max(0, Math.min(W - 240, at[0] - 120)), y: Math.max(0, at[1] - 110), width: 240, height: 200 } });
+      }
+      await ctx.close();
+      continue;
+    }
+    // (WIND=<ms,ms,...>: the caster photographed that many ms into the show's wind-up, 200 px round it, and what is drawn on it then
+    // (the moment's bits near it and its own layer under its body, each with its strength): for seeing what a wind-up covers)
+    if (process.env.WIND) {
+      if (!st) throw new Error('the ultimate never fired');
+      let t = 0;
+      for (const [i, ms] of process.env.WIND.split(',').map(Number).entries()) {
+        const want = st.windup.at + ms;
+        await page.evaluate((d) => window.__step(d), want - t);
+        t = want;
+        const seen = await page.evaluate((pick) => {
+          const g = window.__game, fx = g.fx; const u = g.b.units.find((x) => x.side === 'hero' && x.def === pick); const sp = g.sprites.get(u.id);
+          const p = fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 });
+          const near = (l) => Math.abs(l.sp.x - sp.x) < 60 && Math.abs(l.sp.y - sp.y) < 90;
+          const over = fx.moment.live.filter(near).map((l) => ({ a: +l.sp.alpha.toFixed(2), w: Math.round(l.sp.width), h: Math.round(l.sp.height), add: l.sp.blendMode !== 'normal', t: Math.round(l.t) }));
+          const own = fx.unders.get(sp.underLayer());
+          const under = (own?.live ?? []).map((l) => ({ a: +l.sp.alpha.toFixed(2), w: Math.round(l.sp.width), h: Math.round(l.sp.height), t: Math.round(l.t) }));
+          return { at: [Math.round(p.x), Math.round(p.y)], over, under, order: sp.root.children.map((c) => c.label || c.constructor.name) };
+        }, pick);
+        console.log('WIND', ms, JSON.stringify(seen));
+        await page.screenshot({ path: `${OUT}/wind-${pick}-${i}.png`, clip: { x: Math.max(0, Math.min(W - 200, seen.at[0] - 100)), y: Math.max(0, seen.at[1] - 120), width: 200, height: 200 } });
       }
       await ctx.close();
       continue;
