@@ -14,7 +14,9 @@ page skips the service worker when it runs in the app). The web build on GitHub 
   `api.github.com/repos/hpatter9/legends-of-the-fall/releases/latest` at start, ignored quietly when offline or on any
   error. If the latest tag is newer than the running version, Settings, About shows an "Update available" row with a
   link to that release page.
-- `.github/workflows/android.yml`: builds the APK and publishes the release.
+- `.github/workflows/android.yml`: builds the APK and the Play bundle, and publishes the release.
+- `android/web/`: the Play bundle's install-time asset pack for the web files; `tools/play-size/` moves the files into it and
+  reads the bundle's sizes (`docs/notes/play-size.md`).
 
 ## Installing on the phone (once)
 
@@ -33,7 +35,10 @@ Builds are made **once a day**, not on every push or tag, to stay inside the acc
 `.github/workflows/android.yml` runs at 10:47 UTC each day. Its first job (`check`) looks at the newest release: if
 `main` is still that release's commit, or `package.json`'s version has already been released, nothing is built. Otherwise
 it runs `npm ci`, `npm run web`, `cap sync`, `./gradlew assembleRelease`, and attaches
-`legends-of-the-last-keep-<version>.apk` to a Release named after the version (tag `v<version>`). The release notes list
+`legends-of-the-last-keep-<version>.apk` to a Release named after the version (tag `v<version>`). The same job then builds the
+Google Play bundle, `legends-of-the-last-keep-<version>.aab`, from the Play web build with the web files in an install-time asset
+pack, checks its base module is under Play's 200 MB, and attaches it beside the APK (only when the release key is set;
+`docs/notes/play-size.md`). The release notes list
 the titles of the pull requests merged since the previous release. The APK is not also kept as an Actions artifact
 (release files do not count against storage). Older builds did keep it, about 318 MB each for 90 days; the
 workflow **Clear old artifacts** (run by hand) deletes every artifact older than a day.

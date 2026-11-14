@@ -1,0 +1,13 @@
+// PLAY-SIZE: the web files (the page, game.js and every picture, sound and font: `assets/public/...`) as one install-time asset pack,
+// so the Play bundle's base module stays small (Play's limit for it is 200 MB; the web files are over 300 MB). Install-time packs
+// arrive with the app and are read through the same AssetManager that Capacitor's local server opens its files with, so the page
+// sees the same `public/...` paths. Only `bundleRelease` uses it: `node tools/play-size/pack.mjs` moves the synced files here first.
+// A plain `assembleRelease` APK (the GitHub release's) keeps them in the app module, as before. See docs/notes/play-size.md.
+apply plugin: 'com.android.asset-pack'
+
+assetPack {
+    packName = "web"
+    dynamicDelivery {
+        deliveryType = "install-time"
+    }
+}
