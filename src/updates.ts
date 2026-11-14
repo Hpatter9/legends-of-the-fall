@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.601.0',
+    date: '2026-11-14',
+    title: 'Every combat sound is the game\'s own',
+    notes: ['The handful of recorded combat sounds are replaced by the game\'s own sound engine, matched in loudness, so every sound can ship to the store.'],
+  },
+  {
     version: '0.600.0',
     date: '2026-11-14',
     title: 'A notice when a new version is ready',
