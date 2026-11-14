@@ -11,7 +11,7 @@ import { RULER_URLS } from './rulerUrls';
 import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
 import { closePicker, openPicker } from './settingsPicker';
 import type { DevGift } from './sim/devGrant';
-import { appUpdate } from './appUpdate';
+import { appUpdate, STORE } from './appUpdate';
 import { openCredits } from './credits';
 import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
 import { CUT_MODES, type CutMode } from './tauntCutRules';
@@ -155,7 +155,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 let wired = false;
 
 /** The submenus of the page (the owner's ask: the options condensed into a short list of menus that open on a tap). */
-type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'diag' | 'updates' | 'about' | 'credits';
+export type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'diag' | 'updates' | 'about' | 'credits';
 
 /** Each submenu's name and its one-line hint on the top list, in the order shown. */
 const PAGES: readonly { id: Page; title: string; hint: string }[] = [
@@ -171,6 +171,17 @@ const PAGES: readonly { id: Page; title: string; hint: string }[] = [
   // (STORE-CREDITS: its own page, the standard ornate menu, `credits.ts`; not a submenu of this list)
   { id: 'credits', title: 'Credits', hint: 'The artists and composers, and the licences their work is under' },
 ];
+
+/** STORE-DEV (docs/notes/store-dev-page.md): the Developer page (free crowns, shards and stones, Build Town, Try an Assault) is a testing
+ *  tool for the owner, on the web and in the GitHub release's app. A store's build has none: a reviewer must not find free currency. */
+export function devToolsOn(store: string): boolean {
+  return store === '';
+}
+
+/** The submenus a build lists, in order: all of them, less the Developer page in a store's build. */
+export function settingsPages(store: string): readonly (typeof PAGES)[number][] {
+  return PAGES.filter((p) => p.id !== 'dev' || devToolsOn(store));
+}
 
 /** The submenu showing, or null for the top list. */
 let page: Page | null = null;
@@ -213,10 +224,11 @@ function draw(): void {
   $('settingsClose').hidden = page !== null;
   const body = $('settingsBody');
   const title = document.querySelector<HTMLElement>('#settings h2');
-  const at = PAGES.find((p) => p.id === page);
+  const shown = settingsPages(STORE);
+  const at = shown.find((p) => p.id === page);
   if (title) title.textContent = at ? at.title : 'Settings';
   if (!at) {
-    body.replaceChildren(...PAGES.map(menuRow));
+    body.replaceChildren(...shown.map(menuRow));
     return;
   }
   body.replaceChildren(backRow(), ...pageRows(at.id, s));
@@ -249,7 +261,7 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
     case 'data':
       return [startOverRow()];
     case 'dev':
-      return [devRow(), trialRow()];
+      return devToolsOn(STORE) ? [devRow(), trialRow()] : [];
     case 'diag':
       return diagRows();
     case 'updates':
@@ -292,7 +304,14 @@ function menuRow(p: (typeof PAGES)[number]): HTMLElement {
 /** STORE-CREDITS: the Credits page over Settings; on "‹ Back" the focus returns to what opened it. */
 function showCredits(from: HTMLElement): void {
   closePicker();
-  openCredits(() => from.isConnected && from.focus());
+  // (STORE-DEV: one way back: the sheet's own "‹ Back"; the header's, which would leave Settings, is hidden under it until it closes)
+  const close = $('settingsClose');
+  const wasHidden = close.hidden;
+  close.hidden = true;
+  openCredits(() => {
+    close.hidden = wasHidden;
+    if (from.isConnected) from.focus();
+  });
 }
 
 /** The back button at the top of a submenu, back to the top list. */
