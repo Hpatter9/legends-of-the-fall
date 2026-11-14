@@ -148,7 +148,6 @@ export const PLAYER_CREDITS: Readonly<Record<CreditGroup, readonly PlayerCredit[
   ],
   Sound: [
     { work: 'Original sound made for Legends of the Last Keep: the effects and the king’s spells.' },
-    { work: 'Eight recorded combat sounds: hits, a shield block, a crit, a bowstring, an arrow, a death and an explosion', author: 'Source not yet recorded', unconfirmed: true },
   ],
   Fonts: [
     { work: 'Cinzel Decorative', author: 'Natanael Gama', licence: OFL, credit: true, link: OFL_LINK },
