@@ -14,7 +14,7 @@ import type { Battle } from './sim/battle';
 import type { AssaultInput } from './sim/assault/holdTypes';
 
 export type ToWorker =
-  | { type: 'start'; input: AssaultInput; ranks?: Battle['spells']['ranks'] }
+  | { type: 'start'; input: AssaultInput; ranks?: Battle['spells']['ranks']; trial?: true }
   | { type: 'resume'; battle: Battle }
   | { type: 'step'; n: number }
   | { type: 'call'; name: CallName; args: unknown[] }
@@ -23,6 +23,8 @@ export type ToWorker =
 export type FromWorker = { type: 'init'; battle: Battle } | ({ type: 'batch'; snapshot: boolean } & ReturnType<typeof packMirror>) | { type: 'final'; battle: Battle };
 
 let b: Battle | null = null;
+// (ASSAULT-DEV: a developer's trial keeps no snapshot)
+let keep = true;
 const sent = new Set<number>();
 const post = (m: FromWorker) => (self as unknown as Worker).postMessage(m);
 
@@ -30,6 +32,7 @@ self.onmessage = (e: MessageEvent<ToWorker>) => {
   const m = e.data;
   if (m.type === 'start' || m.type === 'resume') {
     b = m.type === 'start' ? startAssault(m.input) : m.battle;
+    keep = !(m.type === 'start' && m.trial);
     if (m.type === 'start' && m.ranks) b.spells.ranks = m.ranks;
     sent.clear();
     for (const x of b.units) sent.add(x.id);
@@ -54,7 +57,7 @@ self.onmessage = (e: MessageEvent<ToWorker>) => {
     const ev = stepAssault(b);
     ms.push(performance.now() - t0);
     ticks.push({ ev, hold: b.field!.hold!.events.slice() });
-    if (snapshotDue(b)) {
+    if (keep && snapshotDue(b)) {
       snapshot = true;
       void saveBattle(b);
     }

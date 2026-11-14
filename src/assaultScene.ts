@@ -56,6 +56,8 @@ import { todayKey } from './modes';
 
 export interface SceneHooks {
   save(): void;
+  /** ASSAULT-DEV: a developer's trial on a throwaway copy of the save: no snapshot is kept for a resume, nor one cleared. */
+  trial?: boolean;
   onEnd(result: AssaultResult): void;
 }
 
@@ -142,11 +144,11 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   // (a battle resumed from its snapshot, phase 2, or a new one; either way the save notes it is under way)
   const input = resume?.field?.hold?.input ?? assaultInput(m, army, seed, plan, Object.fromEntries(m.party.filter((k) => UNITS[k]).map((k) => [k, formOf(UNITS[k], 3)])));
   // (the simulation in a Web Worker where it can be, so a slow tick never holds up a frame; `b` is the battle to draw)
-  const sim = await AssaultSim.start({ input, ranks: fightRanks(m.spellbook), resume });
+  const sim = await AssaultSim.start({ input, ranks: fightRanks(m.spellbook), resume, ...(hooks.trial ? { trial: true } : {}) });
   const b = sim.b;
   noteLive(m, b, todayKey());
   hooks.save();
-  if (!resume) void saveBattle(b);
+  if (!resume && !hooks.trial) void saveBattle(b);
   // (every twenty seconds of battle time the battle is kept for a resume; the save notes it)
   sim.onSnapshot = () => {
     noteLive(m, b, todayKey());
@@ -996,7 +998,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
       // (HOLD-SOUND: the victory fanfare for a hold conquered, the War's end over it, the defeat sting, or only the retreat's horn)
       endAssault(result);
       hooks.save();
-      void clearBattle();
+      if (!hooks.trial) void clearBattle();
       view.destroy();
       app.destroy(true);
       host.remove();
