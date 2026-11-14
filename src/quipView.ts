@@ -6,15 +6,17 @@
 import { FIGHT_HUD, hudBoxes } from './hudClear';
 
 const CSS = `
-#quip { position: fixed; z-index: 60; max-width: min(232px, calc(100vw - 24px)); box-sizing: border-box; padding: 6px 9px; pointer-events: none; opacity: 0; transition: opacity 0.18s ease-out;
-  background: var(--s14); color: var(--s1); border: 2px solid var(--s1); border-radius: 6px; box-shadow: 0 2px 0 rgb(var(--black-rgb) / 0.5);
-  font: 400 12px/1.3 var(--body, sans-serif); text-align: center; }
+#quip { position: fixed; z-index: 96; max-width: min(232px, calc(100vw - 24px)); box-sizing: border-box; padding: 6px 10px 7px; pointer-events: none; opacity: 0; transition: opacity 0.18s ease-out;
+  background: linear-gradient(180deg, #2c3125 0%, #181b13 100%); color: #f1ead9; border: 1px solid #c9a35c; border-radius: 5px;
+  box-shadow: inset 0 1px 0 rgba(255, 235, 185, 0.18), 0 0 0 1px #3a2e17, 0 3px 8px rgba(0, 0, 0, 0.6);
+  font: 400 13px/1.3 var(--body, sans-serif); text-align: center; text-shadow: 0 1px 1px #000; }
 #quip.on { opacity: 1; }
 #quip.off { transition-duration: 0.3s; }
-#quip::after { content: ''; position: absolute; left: var(--tail, 50%); top: 100%; width: 0; height: 0; margin-left: -5px; border: 5px solid transparent; border-top-color: var(--s1); }
-#quip.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: var(--s1); }
-#quip.goat { background: var(--e10); }
-#quip small { display: block; margin-bottom: 1px; font: 400 12px/1.2 var(--body, sans-serif); color: var(--s9); }
+#quip::after { content: ''; position: absolute; left: var(--tail, 50%); top: 100%; width: 0; height: 0; margin-left: -6px; border: 6px solid transparent; border-top-color: #c9a35c; }
+#quip.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #c9a35c; }
+#quip.goat { background: linear-gradient(180deg, #f1e4c2 0%, #d8c599 100%); color: #2b1f0e; text-shadow: none; }
+#quip small { display: block; margin-bottom: 1px; font: 400 12px/1.2 var(--display, serif); letter-spacing: 0.04em; color: var(--ornate-brass, #d8b976); }
+#quip.goat small { color: #6d4f1f; }
 @media (prefers-reduced-motion: reduce) { #quip { transition: none; } }
 `;
 
@@ -49,7 +51,33 @@ function ensure(): HTMLElement {
 /** UX-FIXES: pieces of the page a bubble must not sit on: the top bar, the fight's hero rows and a heading; and (COMBAT-HUD) the rest of the
  *  fight's HUD: the spell row, the boss's, twist's and combo bars, the tactic button and a toast in its lane. A bubble that would cover one is moved to the
  *  nearest clear spot (below it in the top half of the page, above it in the bottom half), again until it covers none. */
-const KEEP_CLEAR = [...FIGHT_HUD, '.toast.lane', '#hmTop', '#starter h1', '#starter .stSub'];
+const KEEP_CLEAR = [
+  ...FIGHT_HUD,
+  '.toast.lane',
+  '#hmTop',
+  // (FIRST-FIVE: the starter's head and each pack's name and chips; the bench; the home screen's tabs, its battle button and plates)
+  '#starter .omHead',
+  '#starter .stPack > b',
+  '#starter .stChips',
+  '#benchWrap',
+  '#hmTabs',
+  '#home .hmBattle',
+  '#home .cpPlate',
+  '#home .cpPlace',
+];
+
+/** FIRST-FIVE: the layers that open over a speaker (a card, a sheet, a sub-page such as the codex, Settings, the Sanctum, the War Council,
+ *  a wave's card): a speaker under one of them is out of sight, and its line is let go rather than laid over the layer. The starter pick is
+ *  where its own speakers stand, so it is not one. */
+// (the bubble stands over the standard menus' veil, z 95, so a speaker on the starter pick is heard; one under any other layer is not)
+const COVERS = '.omVeil:not(#starter), #hmSheet, #hmSub, #settings, #gacha, #party, #result, #recap';
+/** Whether the speaker at `at` is hidden under an open layer. */
+function covered(at: Anchor): boolean {
+  if (at.x < 0 || at.y < 0 || at.x > innerWidth || at.y > innerHeight) return false;
+  const top = document.elementFromPoint(at.x, at.y);
+  const layer = top?.closest<HTMLElement>(COVERS);
+  return !!layer && !layer.hidden;
+}
 /** Where a bubble `w` x `h` meant for (`left`, `top`) can sit covering none of them: where it is; else the nearest spot just above or
  *  below one of them; else (AUTO-RIGHT) the same moved sideways just clear of one of them (on a short phone with a toast in the lane there
  *  is no row between the lane and the tactic button tall enough, but there is room beside the button); else nowhere (`null`: the line is
@@ -79,6 +107,7 @@ function keepClear(left: number, top: number, w: number, h: number): { left: num
 /** Show `text` over `at` (replacing any bubble already up). `who` names the speaker in small type above it; `goat` is Duchess's cream bubble. */
 export function showQuip(at: Anchor, text: string, opts: { who?: string; goat?: boolean; hold?: number } = {}): void {
   const el = ensure();
+  if (covered(at)) return;
   window.clearTimeout(hideTimer);
   window.clearTimeout(offTimer);
   el.replaceChildren();
