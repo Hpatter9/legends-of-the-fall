@@ -67,6 +67,7 @@ const NOT_A_LAYER: Readonly<Record<string, string>> = {
   home: 'a place: its tabs are the rule’s own',
   loading: 'the loading screen',
   turnUp: 'the turn-upright notice',
+  mergeTag: 'the "Merge ⇧" label over a held hero (EASY-MERGE): no control, gone when the finger lifts',
   version: 'the version line',
 };
 

@@ -81,6 +81,7 @@ import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
 import { autoMergeOpen, autoPlaceOpen, FEATURES, featuresToTell, markTold } from './sim/featureUnlocks';
 import { spellSlots, tellSlots } from './sim/spellSlots';
 import { autoMerge, canMerge, merge, mergeMatches, mergeReady, type Merged } from './sim/merge';
+import { bodyBox, CARD_PAD, mergeDropTarget, type DropBody } from './mergeDropRules';
 import { flickToBench, inReturnZone, pushTrail, type DragPoint } from './benchDrop';
 import { canSwapTwin, fieldTwin, swapTwin } from './sim/oneEach';
 import { farewellOf, guestBoost, guestLevel, guestOf, guestOwned, guestsHere, splitGuestXp, takeGuest } from './sim/guest';
@@ -3873,7 +3874,10 @@ class Game {
     $('recycleZone').classList.toggle('hot', sell);
     pushTrail((d.trail ??= []), { x: e.clientX, y: e.clientY, t: e.timeStamp });
     this.markReturn(d.id, onto === null && !sell && overReturn(e.clientX, e.clientY));
-    this.hover = sell ? null : this.tileAtScreen(e.clientX, e.clientY - 24);
+    // (EASY-MERGE: over a match's body the lit tile is the match's own, not the one under the finger, so the board shows the drop merges)
+    const ontoUnit = onto !== null ? this.b.units.find((u) => u.side === 'hero' && u.tag === onto) : undefined;
+    this.hover = sell ? null : ontoUnit ? [ontoUnit.u, ontoUnit.v] : this.tileAtScreen(e.clientX, e.clientY - 24);
+    this.litMerges(d.id, onto, e.clientX, e.clientY);
     this.markTiles();
   }
 
@@ -3936,10 +3940,30 @@ class Game {
     $('recycleZone').classList.remove('hot');
     for (const c of $('bench').querySelectorAll('.dragging, .mergeCan, .mergeHot')) c.classList.remove('dragging', 'mergeCan', 'mergeHot');
     this.markReturn(null, false);
+    this.litMerges(null, null, 0, 0);
     this.hover = null;
     this.ghost.visible = false;
     this.refresh();
     this.markTiles();
+  }
+
+  /** EASY-MERGE: while hero `id` is held, every match on the board wears a gold outline, the one a drop would merge into (`onto`) the
+   *  brightest, and "Merge ⇧" shows over the held hero while letting go would merge. `id` null puts it all out. Looks only. */
+  private litMerges(id: string | null, onto: number | null, x: number, y: number): void {
+    for (const u of this.b.units) {
+      const s = this.sprites.get(u.id);
+      if (!s) continue;
+      const match = id !== null && u.side === 'hero' && u.tag !== undefined && String(u.tag) !== id && canMerge(this.run, Number(id), u.tag);
+      s.mergeLit = !match ? 0 : u.tag === onto ? 2 : 1;
+    }
+    const tag = document.getElementById('mergeTag');
+    if (!tag) return;
+    tag.hidden = onto === null;
+    if (onto === null) return;
+    // (over the held hero, which is drawn above the finger, so neither the finger nor the hero hides it; kept on the screen)
+    const top = y - 24 - Math.max(30, this.ghost.height) - 8;
+    tag.style.left = `${Math.max(48, Math.min(innerWidth - 48, x))}px`;
+    tag.style.top = `${Math.max(4, top)}px`;
   }
 
   /** Whether roster hero `id` stands on the board now. */
@@ -3959,14 +3983,32 @@ class Game {
     if (can) tag.textContent = hot ? '↓ Return to bench' : '↓ Drag here for the bench';
   }
 
-  /** The hero a dragged hero `id` would merge into if let go at (x, y): a matching card on the bench under the finger, or a matching hero on
-   *  the board tile the held hero is over (MERGE-TWO). Null when there is none. */
+  /** The hero a dragged hero `id` would merge into if let go at (x, y): a matching card on the bench under the finger or a few px from it,
+   *  or a matching hero on the board whose drawn body the finger (or the held hero's feet over it) is over, padded so a drop a little off
+   *  still merges (MERGE-TWO, EASY-MERGE: `mergeDropRules.ts`). The nearest match wins. Null when there is none. */
   private mergeTargetAt(id: string, x: number, y: number): number | null {
-    const card = document.elementsFromPoint(x, y).map((el) => el.closest<HTMLElement>('#bench .card')).find((c) => c && c.dataset.id !== id);
-    if (card && canMerge(this.run, Number(id), Number(card.dataset.id))) return Number(card.dataset.id);
-    const tile = this.tileAtScreen(x, y - 24);
-    const here = tile ? unitAt(this.b, tile[0], tile[1]) : undefined;
-    return here?.side === 'hero' && here.tag !== undefined && canMerge(this.run, Number(id), here.tag) ? here.tag : null;
+    const want = Number(id);
+    const cards: DropBody[] = [];
+    for (const c of $('bench').querySelectorAll<HTMLElement>('.card')) {
+      if (!c.dataset.id || c.dataset.id === id) continue;
+      const r = c.getBoundingClientRect();
+      if (!r.width) continue;
+      cards.push({ id: Number(c.dataset.id), box: { x: r.left, y: r.top, w: r.width, h: r.height }, match: canMerge(this.run, want, Number(c.dataset.id)) });
+    }
+    const card = mergeDropTarget(cards, [{ x, y }], CARD_PAD);
+    if (card !== null) return card;
+    // (over the bench's panel the board's heroes behind it are not aimed at)
+    if (overBench(x, y)) return null;
+    const k = this.world.scale.x;
+    const bodies: DropBody[] = [];
+    for (const u of this.b.units) {
+      if (u.side !== 'hero' || u.tag === undefined || !u.alive || String(u.tag) === id) continue;
+      const s = this.sprites.get(u.id);
+      if (!s) continue;
+      const box = bodyBox(colLeft() + this.world.x + s.x * k, this.world.y + s.y * k, s.tall, 32 * Math.max(1, u.size ?? 1), k);
+      bodies.push({ id: u.tag, box, match: canMerge(this.run, want, u.tag) });
+    }
+    return mergeDropTarget(bodies, [{ x, y }, { x, y: y - 24 }]);
   }
 
   /** Merge hero `aId` into hero `bId` by hand (dragged or tapped onto it, between waves only). */
@@ -4912,7 +4954,8 @@ class Game {
         const ok = who ? this.canPut(who, [u, v]) : !here;
         // (ONE-OF-EACH: the twin of the hero held stands on a lit tile (drop there to swap), as does one a refused copy just met)
         const twinHere = tag !== undefined && ((!!who && !mergeHere && fieldTwin(b, this.run, Number(who))?.tag === tag && !this.onBoard(who)) || this.twinLit?.tag === tag);
-        if (this.hover && this.hover[0] === u && this.hover[1] === v) this.boardView.mark(u, v, who && (ok || mergeHere || twinHere) ? 'hover' : 'bad');
+        // (EASY-MERGE: the match a drop would merge into burns brighter gold than the others)
+        if (this.hover && this.hover[0] === u && this.hover[1] === v) this.boardView.mark(u, v, who && mergeHere && this.drag ? 'mergeHot' : who && (ok || mergeHere || twinHere) ? 'hover' : 'bad');
         else if (twinHere) this.boardView.mark(u, v, 'twin');
         else if (here && who && String(here.tag) === who) this.boardView.mark(u, v, 'chosen');
         else if (mergeHere) this.boardView.mark(u, v, 'merge');
