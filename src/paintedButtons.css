@@ -561,3 +561,8 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.dim,
   border-image: url(ui/buttons/plate-primary-off.webp) var(--plate-primary-slice) / var(--plate-primary-width) / 0 stretch; background: none; filter: none; opacity: 1;
 }
 
+/* FIRST-FIVE (the release audit's tap targets): the codex's Claim (32 px) and its tabs (30 px), and the rune bench's Merge all, Auto runes
+   and Satchel (30 px) stand 44 px tall, the tap floor every other control keeps. */
+.cxReward button, .cxTabs .cxTab { min-height: 44px; }
+#runeBench .rbHead .rbBtn { min-height: 44px; }
+#runeBench .rbHead .rbSatchel { min-width: 44px; }
