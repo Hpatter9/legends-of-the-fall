@@ -65,8 +65,9 @@ function livePicture(sheet: string, dark: boolean): { pic: HTMLElement; stop: ()
 /** The card of a foe or hero in the grid: its portrait (a silhouette when unknown), name and a small line. */
 function card(sheet: string, grade: number, name: string, line: string, known: boolean): HTMLButtonElement {
   const b = el('button', `cxCard${known ? '' : ' dark'}`);
-  const pic = portrait(sheet, 52, grade);
-  pic.className = 'cxPort';
+  // (RELEASE-ART: one not yet known shows the painted fog-and-silhouette tile, `ui/release/codex-unknown.webp`, never a black square)
+  const pic: HTMLElement = known ? portrait(sheet, 52, grade) : el('i');
+  pic.className = known ? 'cxPort' : 'cxPort cxUnknown';
   b.append(pic, el('b', '', known ? name : '???'), el('small', '', line));
   return b;
 }

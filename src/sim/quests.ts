@@ -22,7 +22,7 @@ import { welcomeMythic } from './mythicProgression';
 
 import type { AchievementCtx } from './achievements';
 import { ARMIES, armyCleared, armyUnlocked, clearedCount, recordOf, waveFoes } from './armies';
-import { isBoss } from './foes';
+import { isBoss, kinSheet } from './foes';
 import type { Battle, BattleEvent, Unit } from './battle';
 import type { FightStats } from './fightStats';
 import { mvpOf } from './fightStats';
@@ -561,7 +561,7 @@ export interface QuestFight {
 }
 
 /** The foes of a family (by their look's sheet: every skeleton's sheet is a skeleton's). */
-const inFamily = (fam: FoeFamily, def: string): boolean => fam === 'skeletons' && (UNITS[def]?.sheet ?? '').startsWith('skeleton') && !isBoss(def);
+const inFamily = (fam: FoeFamily, def: string): boolean => fam === 'skeletons' && kinSheet(UNITS[def]?.sheet ?? '').startsWith('skeleton') && !isBoss(def);
 
 /** Every foe kind that marches in an army's waves (on Normal). */
 const armyFoes = new Map<string, Set<string>>();
