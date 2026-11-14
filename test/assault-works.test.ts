@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { jumpClass, reaches } from '../src/sim/assault/sectors';
 import { assaultChecksum } from '../src/sim/assault/assault';
-import { garrisonBoosts, ASSAULT } from '../src/sim/assault/garrison';
+import { garrisonBoosts, shareOf } from '../src/sim/assault/garrison';
 import { orderPlatoon } from '../src/sim/assault/platoons';
 import { BURN_MS, CHOKE, FIRE_NEED, LADDER_HP, LADDER_PUSH, RAM_BURNS, RAM_HIT, SCALE_MS, SIEGE_PRICES, SUPPRESSED, siegeBlow, siegeRefund } from '../src/sim/assault/siege';
 import type { Battle, Unit } from '../src/sim/battle';
@@ -77,7 +77,8 @@ test('the ram batters the gate its platoon assaults, every two seconds; shots se
   put(b, f.byId[h.platoons[0].heroId], 76, 59);
   orderPlatoon(b, 0, { kind: 'assault', fort: gate.spec.id });
   const ev = gather(b, 45);
-  const k = garrisonBoosts('orcs', ASSAULT.foeShare).foes.hp ?? 1;
+  // (the garrison's toughness at the hold's own share: Bloodtusk Hold's, since ASSAULT-RETUNE no longer the mode's default)
+  const k = garrisonBoosts('orcs', shareOf(h.input)).foes.hp ?? 1;
   const rams = ev.filter((e) => e.kind === 'ram').length;
   assert.ok(rams >= 2 && rams <= 3, `${rams} blows in four and a half seconds`);
   assert.ok(ev.some((e) => e.kind === 'fortHit' && e.by === ram.id && e.dmg === Math.round(RAM_HIT * k)), 'each for 600 at the garrison toughness');

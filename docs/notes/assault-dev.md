@@ -54,6 +54,9 @@ have. Try an Assault sits on it under the grants.
 
 ## The first balance read
 
+> **Retuned since** (ASSAULT-RETUNE, the owner's yes): the holds' shares were set against this force, and the table below is the old
+> one. See `docs/notes/assault-retune.md` for the before and after.
+
 `node tools/assault-dev/run.mjs --seeds 4` starts every storming as the dev entry does (`trialMeta`, the muster's default plan,
 `assaultInput`, `startAssault`), plays it out by Auto and settles it on the copy. "As expected", the balance party, 4 seeds each (2026-11-14):
 
