@@ -540,3 +540,7 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.dim,
    "Kwa…" and "Nat…" while the selected one fitted: the unselected plaques keep a narrower gutter, clear of the frame. */
 /* (the selector copies the plates' own, section 1, which counts three ids: a plainer one loses to it) */
 .heroDetail .heroStrip button:not([class]):not(#mute):not(#gear):not(#speed) { padding-left: 8px; padding-right: 8px; }
+/* (RELEASE-AUDIT-ART: the hero page's four tabs ran "Progression" and "Equipment" over the plate's side rails at 393 and 360 wide; a
+   size smaller and a touch tighter keeps each word between them) */
+.heroDetail .heroTabs button:not([class]):not(#mute):not(#gear):not(#speed) { font-size: 12px; letter-spacing: -0.01em; }
+@media (max-width: 375px) { .heroDetail .heroTabs button:not([class]):not(#mute):not(#gear):not(#speed) { font-size: 11px; } }
