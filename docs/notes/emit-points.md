@@ -208,3 +208,25 @@ the stroke never met the weapon. The director's order: move it to the landing.
   two builds' fights differ by then); "before" is that nothing was drawn at her mouth.
 - **Not done:** every other ultimate's show. The wind-ups gather on the caster's body and the strikes land where the ability
   lands; which of them should leave a hand, a staff or a weapon has not been audited. The Dragoon was the one named.
+
+
+### The breath corrected: outwards at mouth height
+
+The first version ran the flames from her mouth DOWN to the ground at the line's first spot, and in the photograph it was a pillar
+of fire falling from her face to her feet, over the knight beside her. The director held it and ordered the fix.
+
+- The run now goes outwards along the line at the mouth's own height, to the point that high over the line's first spot; it
+  comes down only there, where the line's flames take it on. Each flame is turned to point the way the breath goes (the clip is
+  an upright flame; `mouthRun` gives the `turn`). Two to nine flames, 16 px apart, 40 ms apart, from 0.3 to 0.8 of their size.
+- **What the proof found:** her line's tiles always begin on the tile beside her, so in an ordinary fight the run is the
+  shortest one, two flames, however long the line is: a flame at her mouth pointing down the line, and then the line alight. A
+  longer run (six flames) appeared only when the strike had no tiles to burn and was laid on the foes themselves, three tiles
+  off.
+- Proof: `LINE=<direction>,<from>` in the photograph tool stands the foes in a row from the hero for the photograph, and `MOUTH=`
+  now takes its photographs by the flames' own age (the show's clock stands still on the blow).
+  `docs/samples/blender-fx/emit-dragoon-mouth-3x.png`: above, the six-flame run; below, the usual two-flame case with a line of
+  four tiles; each at 0, 100 and 200 ms into the run, three times the size. Two facings, not chosen freely: they are the two the
+  staging gave.
+- Verdict: in the usual case a flame is at her mouth, pointing along the line, and the line lights from her outwards; it no
+  longer falls to her feet. It is a small thing beside the wall of flames on the ground. The six-flame run is the one that looks
+  like a breath, and play will rarely show it.

@@ -174,17 +174,24 @@ test("ULTIMATES: the Dragoon's breath leaves her mouth: small flames run from it
   const rear = SHEETS[UNITS.dragoon.sheet].rear!;
   assert.deepEqual(ultEmitOffset(UNITS.dragoon.sheet, rear, rear), e.back);
   assert.equal(ultEmitOffset(UNITS.knight.sheet, UNITS.knight.sheet, undefined), undefined);
-  // (the run: from the mouth, never reaching the line's spot itself, each later and larger than the last; the line waits for it)
-  const run = mouthRun(0, 0, 70, 0);
+  // (the run: from the mouth, never reaching the far point itself, each later and larger than the last; the line waits for it)
+  const run = mouthRun(0, 0, 80, 0);
   assert.equal(run.at.length, 5);
-  assert.deepEqual([run.at[0].x, run.at[0].delay, run.at[0].size], [0, 0, MOUTH_RUN.FROM]);
+  assert.deepEqual([run.at[0].x, run.at[0].y, run.at[0].delay, run.at[0].size], [0, 0, 0, MOUTH_RUN.FROM]);
   for (let i = 1; i < run.at.length; i++) assert.ok(run.at[i].x > run.at[i - 1].x && run.at[i].delay > run.at[i - 1].delay && run.at[i].size > run.at[i - 1].size);
-  assert.ok(run.at[4].x < 70 && run.at[4].size < MOUTH_RUN.TO);
+  assert.ok(run.at[4].x < 80 && run.at[4].size < MOUTH_RUN.TO);
   assert.equal(run.wait, 5 * MOUTH_RUN.LAG);
+  // (level all the way when the far point is at the mouth's height; an upright flame turned a quarter to point along it)
+  assert.ok(run.at.every((p) => p.y === 0));
+  assert.equal(run.turn, Math.PI / 2);
+  // (a line that begins beside her: two flames; a long one: nine at most)
   assert.equal(mouthRun(0, 0, 3, 0).at.length, MOUTH_RUN.MIN);
   assert.equal(mouthRun(0, 0, 900, 0).at.length, MOUTH_RUN.MAX);
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /const mouth = caster\.ultPoint\(\);/);
+  // (blown at the mouth's own height: the far point is that high over the line's first spot)
+  assert.match(fx, /mouthRun\(mouth\[0\], mouth\[1\], first\[0\], first\[1\] - \(caster\.y - mouth\[1\]\)\);/);
+  assert.match(fx, /rotation: breath\.turn,/);
   assert.match(fx, /r\.size, r\.delay \+ wait\);/);
   // (its clip is asked for at a fight's start only when such a hero is in the fight)
   assert.match(fx, /warmBfx\(b\.units\.filter\(\(x\) => x\.side === 'hero' && ULT_EMIT\[defOf\(x\)\.sheet\]\)\.map\(\(\) => beatBfx\(MOUTH_RUN\.clip, 'fire'\)\)\);/);

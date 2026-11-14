@@ -994,17 +994,21 @@ export class Fx {
             beatLine(caster.x, caster.y, a1[0], a1[1]).forEach(([px, py], i) => this.bfxBeat(extra.wake!, el, px, py, { delay: i * BEAT_LINE.LAG, mult: ULT_EXTRA_AT.WAKE_SIZE }));
           }
           if (extra?.land) this.bfxBeat(extra.land, el, caster.x, caster.y, { mult: ULT_EXTRA_AT.LAND_SIZE });
-          // (EMIT-POINTS: a breath leaves the mouth. Small flames run from the caster's mouth to the line's first spot, growing, and the
-          // line's own flames follow them; `mouthRun`. A flame stands on its foot, so each is put with its foot a little under the line)
+          // (EMIT-POINTS: a breath leaves the mouth. Small flames are blown outwards from the caster's mouth along the line, growing, each
+          // turned the way the breath goes, and the line's own flames follow them; `mouthRun`)
           const mouth = caster.ultPoint();
           let wait = 0;
           if (mouth && run.length) {
             const first = shown[run[0].i];
-            const lift = caster.tall * 0.35;
-            const breath = mouthRun(mouth[0], mouth[1], first[0], first[1] - lift);
-            let drawn = false;
-            for (const p of breath.at) drawn = this.bfxBeat(MOUTH_RUN.clip, el, p.x, p.y + 12 * p.size, { delay: p.delay, mult: p.size }) || drawn;
-            if (drawn) wait = breath.wait;
+            // (at the mouth's own height all the way: it comes down only where it reaches the line's first spot)
+            const breath = mouthRun(mouth[0], mouth[1], first[0], first[1] - (caster.y - mouth[1]));
+            const key = beatBfx(MOUTH_RUN.clip, el);
+            const frames = key ? bfxFrames(key) : [];
+            const fc = key ? bfxClip(key) : undefined;
+            if (fc && frames.length) {
+              for (const p of breath.at) this.moment.spawn({ frames: this.reduced ? [frames[fc.hold]] : frames, x: p.x, y: p.y, scale: BFX_SCALE * p.size, rotation: breath.turn, frameMs: this.reduced ? fc.ms : fc.ms / frames.length, life: fc.ms, delay: p.delay, prio: true, solid: true, half: 1 });
+              wait = breath.wait;
+            }
           }
           for (const r of run) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay + wait);
         } else for (const [x, y] of shown) {

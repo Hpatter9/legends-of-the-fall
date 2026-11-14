@@ -350,15 +350,17 @@ export const TAIL_MIN = 0.35;
 export const tailShare = (gone: number, tail: number): number => (tail <= 0 ? 1 : Math.max(TAIL_MIN, Math.min(1, gone / tail)));
 
 /** EMIT-POINTS: a breath leaves the mouth. For an ultimate laid down a line whose caster has a mouth point (`ULT_EMIT`), a run of
- *  small flames from the mouth at (mx, my) to the line's first spot at (x1, y1), one every `STEP` px (`MIN` to `MAX` of them), each
- *  `LAG` ms after the one before and larger than it (`FROM` of its size at the mouth, `TO` as it reaches the line); the line's own
- *  flames then follow `wait` ms later, so the fire is seen to leave her and then run down the line. */
-export const MOUTH_RUN = { clip: 'flame', STEP: 14, MIN: 2, MAX: 6, LAG: 45, FROM: 0.3, TO: 0.75 } as const;
-export function mouthRun(mx: number, my: number, x1: number, y1: number): { at: { x: number; y: number; delay: number; size: number }[]; wait: number } {
+ *  small flames blown OUTWARDS from the mouth at (mx, my), along the line and at the mouth's own height, to the point that high over
+ *  the line's first spot (x1, y1): one every `STEP` px (`MIN` to `MAX` of them), each `LAG` ms after the one before and larger than
+ *  it (`FROM` of its size at the mouth, `TO` at the far end), each turned to point the way the breath goes (`turn`; the clip is a
+ *  flame standing upright). It comes down to the ground only there, where the line's own flames take it on, `wait` ms after it set
+ *  off. A line that begins on the tile beside the caster has the shortest run, `MIN` flames, still at the mouth's height. */
+export const MOUTH_RUN = { clip: 'flame', STEP: 16, MIN: 2, MAX: 9, LAG: 40, FROM: 0.3, TO: 0.8 } as const;
+export function mouthRun(mx: number, my: number, x1: number, y1: number): { at: { x: number; y: number; delay: number; size: number }[]; wait: number; turn: number } {
   const n = Math.max(MOUTH_RUN.MIN, Math.min(MOUTH_RUN.MAX, Math.round(Math.hypot(x1 - mx, y1 - my) / MOUTH_RUN.STEP)));
   const at = Array.from({ length: n }, (_, i) => {
     const f = i / n;
     return { x: mx + (x1 - mx) * f, y: my + (y1 - my) * f, delay: i * MOUTH_RUN.LAG, size: MOUTH_RUN.FROM + (MOUTH_RUN.TO - MOUTH_RUN.FROM) * f };
   });
-  return { at, wait: n * MOUTH_RUN.LAG };
+  return { at, wait: n * MOUTH_RUN.LAG, turn: Math.atan2(y1 - my, x1 - mx) + Math.PI / 2 };
 }

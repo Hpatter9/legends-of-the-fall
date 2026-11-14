@@ -372,6 +372,7 @@ for (const pick of PICKS) {
     await army(page, PARTY_OF(pick), process.env.ARMY ?? 'beasts');
     const before = await speedNow(page);
     if (process.env.KILL) await page.evaluate(() => { window.__killAll = true; });
+    if (process.env.LINE) await page.evaluate((v) => { window.__line = v.split(',').map(Number).concat([3]).slice(0, 2); }, process.env.LINE);
     if (process.env.TOUGH) await page.evaluate(() => { window.__tough = true; });
     const st = await page.evaluate((pick) => {
       const g = window.__game;
@@ -387,6 +388,19 @@ for (const pick of PICKS) {
       if (window.__killAll) for (const f of g.b.units) if (f.side === 'foe' && f.alive) f.hp = 1;
       // (TOUGH=1: the foes are given health enough to live through the cast, so a strong hero's whole show is photographed, not its cut-short)
       if (window.__tough) for (const f of g.b.units) if (f.side === 'foe' && f.alive) { f.maxHp *= 60; f.hp = f.maxHp; }
+      // (LINE=<0..3>,<from>: for the photograph the foes are stood in a row running from the hero in that direction of the board,
+      // the nearest `from` tiles away (3 when not given), on tiles that are there and free: a long line for a breath)
+      if (window.__line) {
+        const [dir, from] = window.__line;
+        const [du, dv] = [[1, 0], [0, 1], [-1, 0], [0, -1]][dir];
+        const bd = g.b.board, taken = new Set(g.b.units.filter((x) => x.alive && x.side === 'hero').map((x) => x.u + ',' + x.v));
+        let k = from;
+        for (const f of g.b.units.filter((x) => x.side === 'foe' && x.alive)) {
+          for (; k < 9; k++) { const [tu, tv] = [u.u + du * k, u.v + dv * k]; if (tu >= 0 && tv >= 0 && tu < bd.w && tv < bd.d && !taken.has(tu + ',' + tv)) break; }
+          if (k >= 9) { f.u = (f.u + 3) % bd.w; continue; }
+          f.u = u.u + du * k; f.v = u.v + dv * k; f.step = undefined; k++;
+        }
+      }
       u.charge2 = 100;
       document.querySelector(`.fhRow[data-unit="${u.id}"]`).dispatchEvent(new MouseEvent('click', { bubbles: true }));
       for (let i = 0; i < 400 && !g.ultm.queue.current; i++) window.__step(16);
@@ -400,14 +414,16 @@ for (const pick of PICKS) {
     // (MOUTH=<ms,ms,...>: the show is stepped until the caster's mouth run begins (the first small flame beat), then photographed
     // that many ms after it, 200 px round the caster: for seeing a breath leave the mouth)
     if (process.env.MOUTH) {
-      await page.evaluate(() => { const fx = window.__game.fx; const was = fx.bfxBeat.bind(fx); fx.bfxBeat = (clip, el, x, y, o) => { if (clip === 'flame' && o && o.mult && o.mult < 0.4) window.__mouth = true; return was(clip, el, x, y, o); }; });
-      const got = await page.evaluate(() => { for (let i = 0; i < 800 && !window.__mouth; i++) window.__step(16); return !!window.__mouth; });
-      console.log(got ? 'mouth run begun' : 'NO MOUTH RUN');
-      let was = 0;
+      // (the run's flames are the moment's bits that are turned; its clock is their own age, which stands still through the freeze on
+      // the blow, so each photograph is taken when the first flame is that old, not that long after)
+      const age = () => page.evaluate(() => { const l = window.__game.fx.moment.live.filter((x) => x.sp.rotation !== 0 && x.frames === 8).sort((p, q) => q.t - p.t)[0]; return l ? l.t : null; });
+      let seen = false;
+      for (let i = 0; i < 900 && !seen; i++) { await page.evaluate(() => window.__step(16)); seen = (await age()) !== null; }
+      console.log(seen ? 'mouth run begun' : 'NO MOUTH RUN', JSON.stringify(await page.evaluate((pick) => { const g = window.__game; const u = g.b.units.find((x) => x.side === 'hero' && x.def === pick); return { facing: u.facing, flames: g.fx.moment.live.filter((x) => x.sp.rotation !== 0 && x.frames === 8).length }; }, pick)));
       for (const [i, ms] of process.env.MOUTH.split(',').map(Number).entries()) {
-        const at = await page.evaluate(([d, pick]) => { const g = window.__game; window.__step(d); const u = g.b.units.find((x) => x.side === 'hero' && x.def === pick); const sp = g.sprites.get(u.id); const p = g.fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 }); return [Math.round(p.x), Math.round(p.y)]; }, [ms - was, pick]);
-        was = ms;
-        await page.screenshot({ path: `${OUT}/mouth-${pick}-${i}.png`, clip: { x: Math.max(0, Math.min(W - 200, at[0] - 100)), y: Math.max(0, at[1] - 110), width: 200, height: 200 } });
+        for (let n = 0; n < 200; n++) { const t = await age(); if (t === null || t >= ms) break; await page.evaluate(() => window.__step(16)); }
+        const at = await page.evaluate((pick) => { const g = window.__game; const u = g.b.units.find((x) => x.side === 'hero' && x.def === pick); const sp = g.sprites.get(u.id); const p = g.fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 }); return [Math.round(p.x), Math.round(p.y)]; }, pick);
+        await page.screenshot({ path: `${OUT}/mouth-${pick}-${i}.png`, clip: { x: Math.max(0, Math.min(W - 240, at[0] - 120)), y: Math.max(0, at[1] - 120), width: 240, height: 200 } });
       }
       await ctx.close();
       continue;
