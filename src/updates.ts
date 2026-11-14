@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.581.0',
+    date: '2026-11-14',
+    title: 'Merging heroes by drag is easier',
+    notes: ['Dropping a hero near its match now merges it, even a little off the tile or onto a hero on high ground; matches glow while you drag.', 'A Merge label appears by your finger whenever letting go would merge.'],
+  },
+  {
     version: '0.580.0',
     date: '2026-11-14',
     title: 'Shots leave from the end of the gun',

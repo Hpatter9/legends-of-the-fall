@@ -1,0 +1,8 @@
+/* EASY-MERGE (docs/notes/easy-merge.md): "Merge ⇧" over the held hero while letting go would merge it into the match it is over (the
+   same gold pill as "Return to bench" and the Auto merge button). */
+#mergeTag { position: fixed; z-index: 61; transform: translate(-50%, -100%); padding: 5px 14px; border-radius: 999px; pointer-events: none; white-space: nowrap;
+  font: 700 14px var(--body, sans-serif); letter-spacing: 0.02em; color: #2a1a06; background: linear-gradient(#ffe9a8, #f2c25c); border: 2px solid #7a5420;
+  box-shadow: 0 0 14px rgb(255 214 110 / 0.8), 0 2px 8px rgb(0 0 0 / 0.5); animation: mergeTagIn 0.14s ease-out; }
+#mergeTag[hidden] { display: none; }
+@keyframes mergeTagIn { from { opacity: 0; transform: translate(-50%, -80%); } to { opacity: 1; transform: translate(-50%, -100%); } }
+@media (prefers-reduced-motion: reduce) { #mergeTag { animation: none; } }
