@@ -15,7 +15,8 @@ branch changed.
    is in a private repo.)
 3. **Unknown-licence assets ship.** The Golem Forge golems and the Druid's treant (batareya's pack), Duchess the goat and the
    Beastmaster's wolves (whtdragon's RPG Maker MV animals), and eight recorded combat sounds (PR #150, source not recorded). CREDITS.md
-   itself says "check the author's terms before any public release".
+   itself says "check the author's terms before any public release". (LICENCE-REPLACE: the owner's answer was "Replace them"; the
+   sounds are replaced by the game's own synth, and the art is being repainted: `docs/notes/licence-replace.md`.)
 
 **Fixed on this branch:** target API 36 (it was 35, and Play has refused 35 for new apps and updates since 31 August 2026; the
 extension window closed 1 November); the update check is off in a Play build (`--store play`); the save is now backed up and moves to a
@@ -125,7 +126,7 @@ both are signed by the same key and carry the same files); (3) the data URLs to 
 | Fonts (Pixelify Sans, Press Start 2P, Cinzel Decorative, Alegreya Sans) | SIL OFL 1.1 | bundling allowed | **pass** (the licence text should travel with them: one line and a link in the credits) |
 | Golems and elementals (batareya): golems and the treant | no licence file in the pack | unknown | **fail / owner action**: find the author's terms or replace |
 | whtdragon's RPG Maker MV animals: Duchess and the wolves | no licence file | unknown; RPG Maker resources are often limited to games made with RPG Maker | **fail / owner action**: check the terms or replace |
-| Eight recorded combat sounds (PR #150, "given as CC0") | source not recorded | unknown | **fail / owner action**: find the source or replace them with synthesised ones |
+| Eight recorded combat sounds (PR #150, "given as CC0") | source not recorded | unknown | **pass** (LICENCE-REPLACE): removed; the game's own synthesised cues play in their place, as loud |
 | Pixel Champions v3 (no licence file) | — | — | **pass**: no longer in the game (no `pc_*` sheet is in `src/art/units`) |
 | Art made with image models (OpenAI, Gemini, Dreamina, PixelLab) | the services' terms | generally allowed for the account holder; PixelLab and Dreamina tie commercial rights to the plan | **owner action**: confirm the plans used allow commercial use |
 
