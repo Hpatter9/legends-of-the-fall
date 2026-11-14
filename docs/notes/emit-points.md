@@ -131,3 +131,54 @@ Vaelkhar.
   Gorgon's is seen to move from her body to her head; the two archers' arrows are too small in the crops for me to say they sit
   on the bow hand. The Lich King, the Shaman King, Voltara, Vaelkhar, Nine Tails and the Gorgon Queen were not in the fights I
   staged (bosses and trials): their points are checked against their sheets only.
+
+## Since: melee strokes across the weapon's reach, and the thrust
+
+- **Every fighter's reach is read off its sheet by a tool**, not by eye: `tools/emit-points/reach.py` takes the frame on show as a
+  melee blow lands (six tenths through the attack row: the wind-up, 0.4 of the attack and 400 ms at most, of a swing 250 ms
+  longer) and finds the forward-most thing drawn on it, the weapon's end, a claw, a horn: the forward-most drawn column, at the
+  middle height of what is drawn in the last 4 px before it. It writes `src/render/reachData.ts` (generated): 190 sheets, heroes
+  and foes, 75 of them with a look from behind read too; a sheet drawn facing left is read mirrored. With an output path it
+  draws every frame with its point.
+- **The stroke** (`Fx.slash`, `strokeLay`, `STROKE_AT`): centred half way from the weapon's reach to the struck fighter's middle,
+  so it lies across the weapon's end and the near side of the one struck. It was on the struck fighter's middle. Its turn is
+  unchanged (the line from body to body): a first try turned it along the line from the weapon's end to the one struck, which is
+  a few pixels long, and strokes came out almost upright.
+- **The thrust** (`Fx.thrust`): the shaft runs out from the weapon's own height, not half the body's.
+- A fighter in another look, or on a sheet with no attack row, keeps the old place.
+- Proof: `STAGED=swing` puts a hero in its strike frame, turned to the fighter nearest it, and swings at that fighter.
+  `docs/samples/blender-fx/emit-strokes-3x.jpg` (fifteen melee heroes, before and after side by side).
+- Verdict, plainly: a small change. The stroke sits some pixels nearer the attacker's weapon and no longer on the far side of the
+  one struck; in several pairs I can hardly tell before from after. The reach is the forward-most thing DRAWN, which is the
+  weapon for most but can be a cape's edge, a wing or a shield on some sheets; I looked over the first fifty of the 265 frames
+  the tool drew, not all. The foes' strokes use the same table and were not photographed.
+- Found and left alone: the stroke plays as the swing BEGINS (the `swing` event), some 400 ms before the blow lands and its
+  spark plays. So the pose under it is the wind-up's first frame, not the strike frame its place was read from. Moving the
+  stroke to the landing would be a change of timing, not of place; it is the director's to order.
+
+## Since: the stroke plays as the blow lands
+
+The stroke was played on the `swing` event, as the swing BEGAN: over the wind-up's first frame, about 400 ms before the blow
+landed, and gone (240 to 300 ms long) before the blow's spark played. So the stroke and the spark were two separate moments and
+the stroke never met the weapon. The director's order: move it to the landing.
+
+- `strokeLands` (`emitRules.ts`): the stroke plays on a `hit` whose source is the blow itself, by a fighter that does not shoot,
+  on the one it was aimed at (not those a wide blow splashes). `Fx.show` calls `slash` there, just before the spark. The pose
+  under it is then the strike frame the reach was read from. The thrust moves with it.
+- **A blow that is dodged has no stroke now.** The `dodge` event does not say whose blow it was, and the one that dodged has
+  its own whoosh of wind. Before, the stroke had played 400 ms earlier whether or not the blow then landed.
+- **What else was keyed to the swing's start, checked:**
+  - the blink's dash and cut: keyed to the `blink` event and its skill blow (`slashesOf`), not to `swing`: untouched;
+  - sound: the heavy wind-up's swoosh is still on the `swing` event (it is the sound of the swing beginning), and the blow's
+    own sound was always on the hit: untouched;
+  - the ON-FIGHTER flash: the stroke and the spark now begin together, so for the rule's 150 ms both are whole over the struck
+    body where they were 400 ms apart. Both then go on by the rule as before. More is over the body in that first moment;
+  - reduced motion: the stroke holds its one still frame for its length, as before, now at the landing;
+  - the Assault's field and the Last Stand's hall read `swing` for their own things and are untouched.
+- Proof, real fights this time: `SEE=land:knight,...` steps a fight until a blow by that hero lands and photographs it 50 ms
+  later. Looks only, so the two builds' fights are the same to the frame. `docs/samples/blender-fx/emit-strokes-landing-3x.jpg`:
+  the same fifteen heroes, before (main) and after, at three times the size.
+- Verdict: in the after frames the stroke is there with the spark, at the weapon, where before the spark was alone: plain for
+  the Samurai, the Kunoichi's claws, the Mercenary, the Reaper, the Dragoon, the Demon Swordsman. Where the blow was a crit, the
+  crit's large gold cross is over both and the stroke adds little (the Barbarian, the Paladin, the Ninja Monk). It is one moment
+  now, and a busier one.

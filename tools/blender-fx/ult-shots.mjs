@@ -225,8 +225,8 @@ if (process.env.WATCH) {
     const who = foes ? await page.evaluate((ids) => [...new Set(window.__game.b.units.filter((u) => u.side === 'foe' && u.alive && ids.includes(u.def)).map((u) => u.def))], Object.keys(FOE_SHOTS)) : PICKS.slice(0, 5);
     if (foes) console.log('foes here:', await page.evaluate(() => [...new Set(window.__game.b.units.filter((u) => u.side === 'foe').map((u) => u.def))].join(' ')));
     for (const pick of who) {
-      for (const dir of [0, 1, 2, 3]) {
-        const at = await page.evaluate(([pick, dir, shot, cast, foes]) => {
+      for (const dir of process.env.STAGED === 'swing' ? [0] : [0, 1, 2, 3]) {
+        const at = await page.evaluate(([pick, dir, shot, cast, foes, swing]) => {
           const g = window.__game, b = g.b, fx = g.fx;
           const u = b.units.find((x) => x.side === (foes ? 'foe' : 'hero') && x.def === pick && x.alive);
           const foe = b.units.find((x) => x.side === (foes ? 'hero' : 'foe') && x.alive);
@@ -236,6 +236,22 @@ if (process.env.WATCH) {
           u.facing = dir;
           // (STAGED=cast: the hero in the middle of its skill's cast, and a strand run from it to the foe, for the heroes that cast
           // without shooting: where a skill's effect leaves them)
+          if (swing) {
+            // (STAGED=swing: the hero in the frame on show as its blow lands, turned to the fighter nearest it, and its stroke swung at
+            // that fighter: where a melee stroke lies. One photograph a hero, 200 px round the two of them.)
+            const near = b.units.filter((x) => x.alive && x.id !== u.id).sort((p, q) => Math.hypot(p.u - u.u, p.v - u.v) - Math.hypot(q.u - u.u, q.v - u.v))[0];
+            const D = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+            u.facing = D.map((d, i) => [d[0] * (near.u - u.u) + d[1] * (near.v - u.v), i]).sort((p, q) => q[0] - p[0])[0][1];
+            u.cast = undefined;
+            u.swing = { at: b.t - 600, ms: 1000, to: near.id };
+            sp.update(b.board, b.t, true);
+            fx.slash(b, u.id, near.id);
+            fx.step(60);
+            g.app.renderer.render(g.app.stage);
+            const t = g.sprites.get(near.id);
+            const p = fx.root.toGlobal({ x: (sp.x + t.x) / 2, y: (sp.y + t.y) / 2 - sp.tall * 0.5 });
+            return [Math.round(p.x), Math.round(p.y)];
+          }
           if (cast) {
             u.swing = undefined;
             u.cast = { at: b.t - 300, ms: 1000, anim: 'attack2' };
@@ -250,7 +266,7 @@ if (process.env.WATCH) {
           g.app.renderer.render(g.app.stage);
           const p = fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 });
           return [Math.round(p.x), Math.round(p.y)];
-        }, [pick, dir, shots[pick], process.env.STAGED === 'cast', foes]);
+        }, [pick, dir, shots[pick], process.env.STAGED === 'cast', foes, process.env.STAGED === 'swing']);
         if (!at) { console.log('NOT STAGED', pick); continue; }
         const x = Math.max(0, Math.min(W - 130, at[0] - 65));
         await page.screenshot({ path: `${OUT}/staged-${pick}-${dir}.png`, clip: { x, y: Math.max(0, at[1] - 75), width: 130, height: 130 } });
@@ -308,6 +324,9 @@ if (process.env.WATCH) {
       // (blink:<kind> a blink by that kind that strikes a foe: its streak and the cut on the foe)
       const streak = fx.streak.bind(fx);
       fx.streak = (b, e, slash) => { if (e.kind === 'blink' && slash) { window.__seen.push('blink:' + defOf(e.by)); window.__seenMs = 200; } return streak(b, e, slash); };
+      // (land:<kind> a melee blow by that kind landing on the one it was aimed at: the moment its spark, and its stroke, play)
+      const show = fx.show.bind(fx);
+      fx.show = (b, events) => { const r = show(b, events); for (const e of events) if (e.kind === 'hit' && e.src === 'blow' && !e.splash) { const k = 'land:' + defOf(e.by); const p = fx.sprites.get(e.by), q = fx.sprites.get(e.to); if (p && q && !window.__seen.includes(k)) { window.__seen.push(k); window.__seenMs = 150; window.__seenAt = { ...(window.__seenAt ?? {}), [k]: [(p.x + q.x) / 2, (p.y + q.y) / 2 - p.tall * 0.5] }; } } return r; };
       const arc = fx.arc.bind(fx);
       fx.arc = (from, to, shock) => { const k = 'arc:' + (shock ? 'shock' : defOf(from)); window.__seen.push(k); window.__seenMs = 300; const [p, q] = [fx.sprites.get(from), fx.sprites.get(to)]; if (p && q) window.__seenAt = { ...(window.__seenAt ?? {}), [k]: [(p.x + q.x) / 2, (p.y + q.y) / 2 - 20] }; return arc(from, to, shock); };
     });
