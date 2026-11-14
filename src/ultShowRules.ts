@@ -692,7 +692,9 @@ class Builder {
     const end = s + c.shots.length * SHOW.SHOT;
     // (the ground it set alight catches, tile by tile from the caster out)
     const far = (a: At) => Math.abs(a.u - from.u) + Math.abs(a.v - from.v);
-    [...c.ground].sort((a, b) => far(a) - far(b)).forEach((g, i) => this.beat({ at: s + i * SHOW.BURN, kind: 'burn', where: g }));
+    // (EMIT-POINTS: each tile lights BEHIND the breath, a step after the stream sets off and a step apart, not with it: the nearest
+    // tile is alight only once the fire has passed over it, so there is one breath and not a second fire lit at its start)
+    [...c.ground].sort((a, b) => far(a) - far(b)).forEach((g, i) => this.beat({ at: s + (i + 1) * SHOW.BURN, kind: 'burn', where: g }));
     this.key(c.caster, { at: end + 160, tile: from });
     this.plan.ms = end + SHOW.SHOTS_TAIL;
     this.plan.zoom = 1.35;

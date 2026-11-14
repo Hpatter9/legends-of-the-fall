@@ -1348,6 +1348,21 @@ export class Fx {
           B('blow', to.x, to.y, { delay: 60 }, 'lightning');
           shake(0.2);
         } else if (how === 'flame') {
+          // (EMIT-POINTS: a breath leaves the mouth here too. Where the caster has a mouth point the stream is blown from it to the
+          // foe's middle, growing, each flame turned the way it goes, and its ball bursts on the foe as it arrives: the same breath as
+          // the strike's, `mouthRun`. A caster without one keeps the row of flames along the ground from its feet)
+          const mouth = this.bodyAt(x, y - 10, 8)?.ultPoint();
+          const fkey = mouth ? beatBfx(MOUTH_RUN.clip, el) : undefined;
+          const frames = fkey ? bfxFrames(fkey) : [];
+          const fc = fkey ? bfxClip(fkey) : undefined;
+          if (mouth && fc && frames.length) {
+            const breath = mouthRun(mouth[0], mouth[1], to.x, to.y - to.tall * 0.5);
+            for (const p of breath.at) this.moment.spawn({ frames: this.reduced ? [frames[fc.hold]] : frames, x: p.x, y: p.y, scale: BFX_SCALE * p.size, rotation: breath.turn, frameMs: this.reduced ? fc.ms : fc.ms / frames.length, life: fc.ms, delay: p.delay, prio: true, solid: true, half: 1 });
+            const half = (fc.h * BFX_SCALE * MOUTH_RUN.TO) / 2;
+            this.showThrough([Math.min(mouth[0], to.x) - half, Math.min(mouth[1], to.y - to.tall * 0.5) - half, Math.max(mouth[0], to.x) + half, Math.max(mouth[1], to.y - to.tall * 0.5) + half], breath.wait + fc.ms);
+            B('nova', to.x, to.y, { delay: breath.wait, mult: 0.7 }, 'fire');
+            return true;
+          }
           if (!line('flame', x, y, to.x, to.y, 35)) return false;
           B('nova', to.x, to.y, { delay: 220, mult: 0.7 }, 'fire');
         } else {

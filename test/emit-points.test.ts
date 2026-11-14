@@ -6,6 +6,7 @@ import { CAST, EMIT, FOE_EMIT, ULT_EMIT, ultEmitOffset, strokeLands, STROKE_AT, 
 import { REACH } from '../src/render/reachData';
 import { FOES } from '../src/sim/foes';
 import { MOUTH_RUN, TAIL_MIN, lineLight, mouthRun, streamSpot, tailShare } from '../src/render/blenderFxRules';
+import { SHOW } from '../src/ultShowRules';
 import { UNITS } from '../src/sim/units';
 import layout from '../src/art/units/sheets.json';
 
@@ -203,4 +204,17 @@ test("ULTIMATES: the Dragoon's breath leaves her mouth: small flames run from it
   assert.match(fx, /this\.showThrough\(\[Math\.min\(mouth\[0\], end\.x\) - half,/);
   // (its clip is asked for at a fight's start only when such a hero is in the fight)
   assert.match(fx, /warmBfx\(b\.units\.filter\(\(x\) => x\.side === 'hero' && ULT_EMIT\[defOf\(x\)\.sheet\]\)\.map\(\(\) => beatBfx\(MOUTH_RUN\.clip, 'fire'\)\)\);/);
+});
+
+test("the Dragoon's showcase is the same breath: its stream leaves her mouth, and its tiles light behind it", () => {
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  // (the showcase's shot of flame is blown from the caster's mouth to the foe, and its ball bursts as the stream arrives)
+  assert.match(fx, /const mouth = this\.bodyAt\(x, y - 10, 8\)\?\.ultPoint\(\);/);
+  assert.match(fx, /const breath = mouthRun\(mouth\[0\], mouth\[1\], to\.x, to\.y - to\.tall \* 0\.5\);/);
+  assert.match(fx, /B\('nova', to\.x, to\.y, \{ delay: breath\.wait, mult: 0\.7 \}, 'fire'\);/);
+  // (a caster without a mouth point keeps the row of flames along the ground)
+  assert.match(fx, /if \(!line\('flame', x, y, to\.x, to\.y, 35\)\) return false;/);
+  // (the tiles light a step behind the breath and a step apart: none is alight as the stream sets off)
+  assert.ok(SHOW.BURN > 0);
+  assert.match(readFileSync('src/ultShowRules.ts', 'utf8'), /at: s \+ \(i \+ 1\) \* SHOW\.BURN, kind: 'burn'/);
 });
