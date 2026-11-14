@@ -858,7 +858,7 @@ export class Fx {
   /** BLENDER-FX: a stage of a hero kind's ultimate as its rendered sheet on the moment's layer (which runs while the fight is held), the
    *  middle of its tile at (x, y), played once across `ms` (the stage's length; a strike plays at its own pace when none is given). A light's
    *  soft glow goes under it. Reduced motion holds its one readable frame. False when the kind has no sheet or it has not loaded. */
-  private bfxUlt(kind: string, stage: UltStageName, x: number, y: number, ms?: number, size = 1, delay = 0, on?: { id: number }): boolean {
+  private bfxUlt(kind: string, stage: UltStageName, x: number, y: number, ms?: number, size = 1, delay = 0, on?: { id: number }, flash = true): boolean {
     const key = ultBfx(kind, stage, ultWeight(kind));
     const c = key ? bfxClip(key) : undefined;
     const frames = key ? bfxFrames(key) : [];
@@ -914,7 +914,9 @@ export class Fx {
         }
       }
       // (and for its first moment the clip is over the body at full strength: the rule's brief flash, `UNDER.FLASH_MS`)
-      if (!this.reduced) {
+      // (once: a showcase plays its hero's wind-up on the caster again, twice, and each playing began with the flash, so a tall
+      // wind-up hid its caster whole three times in a show. Only the clip's first beginning flashes: `flash`)
+      if (!this.reduced && flash) {
         const n = Math.max(1, Math.ceil(UNDER.FLASH_MS / (life / held.length)));
         this.moment.spawn({ ...bit, frames: held.slice(0, n), frameMs: UNDER.FLASH_MS / n, life: UNDER.FLASH_MS, alpha: base, solid: true });
       }
@@ -1417,7 +1419,7 @@ export class Fx {
         return true;
       case 'gather':
         // (ON-FIGHTER: on the caster, so under its body and thin over it, as the wind-up itself is)
-        if (own && this.bfxUlt(own, 'windup', x, y, BEAT_OWN.GATHER_MS, 1, 0, this.bodyAt(x, y - 10, 8)?.unit)) return true;
+        if (own && this.bfxUlt(own, 'windup', x, y, BEAT_OWN.GATHER_MS, 1, 0, this.bodyAt(x, y - 10, 8)?.unit, false)) return true;
         return B('gather', x, y, { lit: true });
       case 'mark':
         if (!B('mark', x, y, { lit: true })) return false;
