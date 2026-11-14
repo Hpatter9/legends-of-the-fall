@@ -28,6 +28,8 @@ export interface Product {
   usd: number;
   /** One line of what it is (a cosmetic's look). */
   blurb?: string;
+  /** Its picture's name in the art batch (`art-source/round2/<art>.png` on `art/round-2`); the Shop shows a stand-in until it is copied in. */
+  art: string;
   /** False while its art is not in the game: shown as "Coming soon", with no Buy. */
   ready: boolean;
 }
@@ -40,23 +42,23 @@ export const BASE_CROWNS = 6000;
 export const BASE_CROWNS_USD = 1.99;
 
 export const PRODUCTS: readonly Product[] = [
-  { id: 'stones_pouch', kind: 'stones', name: 'Pouch of stones', stones: 9, consumable: true, usd: 0.99, ready: true },
-  { id: 'stones_satchel', kind: 'stones', name: 'Satchel of stones', stones: 50, consumable: true, usd: 4.99, ready: true },
-  { id: 'stones_coffer', kind: 'stones', name: 'Coffer of stones', stones: 108, consumable: true, usd: 9.99, ready: true },
-  { id: 'stones_hoard', kind: 'stones', name: 'Hoard of stones', stones: 608, consumable: true, usd: 49.99, ready: true },
-  { id: 'crowns_purse', kind: 'crowns', name: 'Purse of crowns', crowns: 6000, consumable: true, usd: 1.99, ready: true },
-  { id: 'crowns_chest', kind: 'crowns', name: 'Chest of crowns', crowns: 19000, consumable: true, usd: 4.99, ready: true },
-  { id: 'crowns_vault', kind: 'crowns', name: 'Vault of crowns', crowns: 45000, consumable: true, usd: 9.99, ready: true },
-  { id: 'starter_pack', kind: 'starter', name: 'Starter pack', stones: 100, crowns: 20000, tomes: { large: 2 }, entitlements: ['starter'], consumable: false, usd: 2.99, blurb: 'Once only, for 72 hours', ready: true },
-  { id: 'bundle_recruit', kind: 'bundle', name: 'Recruit’s bundle', stones: 45, crowns: 7500, consumable: true, usd: 4.99, ready: true },
-  { id: 'bundle_warlord', kind: 'bundle', name: 'Warlord’s bundle', stones: 210, crowns: 37500, tomes: { large: 4 }, consumable: true, usd: 19.99, ready: true },
-  { id: 'look_duchess_regalia', kind: 'cosmetic', name: 'Duchess: Royal Regalia', entitlements: ['duchess_regalia'], consumable: false, usd: 1.99, blurb: 'An ermine cape and a jewelled crown', ready: false },
-  { id: 'look_duchess_knight', kind: 'cosmetic', name: 'Duchess: Little Knight', entitlements: ['duchess_knight'], consumable: false, usd: 1.99, blurb: 'A plumed steel helm and a tabard', ready: false },
-  { id: 'look_duchess_lantern', kind: 'cosmetic', name: 'Duchess: Lantern', entitlements: ['duchess_lantern'], consumable: false, usd: 1.99, blurb: 'A little lantern on her horns, with a ghost-light', ready: false },
-  { id: 'bundle_wardrobe', kind: 'cosmetic', name: 'Duchess’s wardrobe', entitlements: ['duchess_regalia', 'duchess_knight', 'duchess_lantern'], consumable: false, usd: 3.99, blurb: 'All three of her new costumes', ready: false },
-  { id: 'ruler_ember', kind: 'cosmetic', name: 'Ruler: the Ember Sovereign', entitlements: ['ruler_ember'], consumable: false, usd: 6.99, blurb: 'Blackened gold armour and a mantle of embers', ready: false },
-  { id: 'ruler_starlit', kind: 'cosmetic', name: 'Ruler: the Starlit Empress', entitlements: ['ruler_starlit'], consumable: false, usd: 6.99, blurb: 'Night-blue robes sewn with stars', ready: false },
-  { id: 'look_starfall', kind: 'cosmetic', name: 'Starfall summons', entitlements: ['starfall_summons'], consumable: false, usd: 3.99, blurb: 'The summoning’s cards and burst in violet and gold', ready: false },
+  { id: 'stones_pouch', kind: 'stones', name: 'Pouch of stones', stones: 9, consumable: true, usd: 0.99, art: 'shop_stones_1', ready: true },
+  { id: 'stones_satchel', kind: 'stones', name: 'Satchel of stones', stones: 50, consumable: true, usd: 4.99, art: 'shop_stones_2', ready: true },
+  { id: 'stones_coffer', kind: 'stones', name: 'Coffer of stones', stones: 108, consumable: true, usd: 9.99, art: 'shop_stones_3', ready: true },
+  { id: 'stones_hoard', kind: 'stones', name: 'Hoard of stones', stones: 608, consumable: true, usd: 49.99, art: 'shop_stones_4', ready: true },
+  { id: 'crowns_purse', kind: 'crowns', name: 'Purse of crowns', crowns: 6000, consumable: true, usd: 1.99, art: 'shop_crowns_1', ready: true },
+  { id: 'crowns_chest', kind: 'crowns', name: 'Chest of crowns', crowns: 19000, consumable: true, usd: 4.99, art: 'shop_crowns_2', ready: true },
+  { id: 'crowns_vault', kind: 'crowns', name: 'Vault of crowns', crowns: 45000, consumable: true, usd: 9.99, art: 'shop_crowns_3', ready: true },
+  { id: 'starter_pack', kind: 'starter', name: 'Starter pack', stones: 100, crowns: 20000, tomes: { large: 2 }, entitlements: ['starter'], consumable: false, usd: 2.99, blurb: 'Once only, for 72 hours', art: 'shop_starter', ready: true },
+  { id: 'bundle_recruit', kind: 'bundle', name: 'Recruit’s bundle', stones: 45, crowns: 7500, consumable: true, usd: 4.99, art: 'shop_bundle_recruit', ready: true },
+  { id: 'bundle_warlord', kind: 'bundle', name: 'Warlord’s bundle', stones: 210, crowns: 37500, tomes: { large: 4 }, consumable: true, usd: 19.99, art: 'shop_bundle_warlord', ready: true },
+  { id: 'look_duchess_regalia', kind: 'cosmetic', name: 'Duchess: Royal Regalia', entitlements: ['duchess_regalia'], consumable: false, usd: 1.99, blurb: 'An ermine cape and a jewelled crown', art: 'costume_regalia', ready: false },
+  { id: 'look_duchess_knight', kind: 'cosmetic', name: 'Duchess: Little Knight', entitlements: ['duchess_knight'], consumable: false, usd: 1.99, blurb: 'A plumed steel helm and a tabard', art: 'costume_knight', ready: false },
+  { id: 'look_duchess_lantern', kind: 'cosmetic', name: 'Duchess: Lantern', entitlements: ['duchess_lantern'], consumable: false, usd: 1.99, blurb: 'A little lantern on her horns, with a ghost-light', art: 'costume_lantern', ready: false },
+  { id: 'bundle_wardrobe', kind: 'cosmetic', name: 'Duchess’s wardrobe', entitlements: ['duchess_regalia', 'duchess_knight', 'duchess_lantern'], consumable: false, usd: 3.99, blurb: 'All three of her new costumes', art: 'costume_regalia', ready: false },
+  { id: 'ruler_ember', kind: 'cosmetic', name: 'Ruler: the Ember Sovereign', entitlements: ['ruler_ember'], consumable: false, usd: 6.99, blurb: 'Blackened gold armour and a mantle of embers', art: 'ruler_ember', ready: false },
+  { id: 'ruler_starlit', kind: 'cosmetic', name: 'Ruler: the Starlit Empress', entitlements: ['ruler_starlit'], consumable: false, usd: 6.99, blurb: 'Night-blue robes sewn with stars', art: 'ruler_starlit', ready: false },
+  { id: 'look_starfall', kind: 'cosmetic', name: 'Starfall summons', entitlements: ['starfall_summons'], consumable: false, usd: 3.99, blurb: 'The summoning’s cards and burst in violet and gold', art: 'starfall_cardback', ready: false },
 ];
 
 export const productById = (id: string): Product | undefined => PRODUCTS.find((p) => p.id === id);

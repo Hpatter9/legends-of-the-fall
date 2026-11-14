@@ -73,7 +73,7 @@ none, Tiny Tin Crown, Wizard Hat, Archery Quiver), each earned in play. **All of
 | `ruler_starlit` | `ruler_starlit` | A tenth ruler, the Starlit Empress (female): night-blue robes sewn with stars | 6.99 |
 | `look_starfall` | `starfall_summons` | Starfall summons: the summoning's card back and burst in violet and gold | 3.99 |
 
-Each needs art the packs do not have (prompts: `docs/notes/iap-art-prompts.md`; the owner chose to make both rulers). **A cosmetic is
+Each needs art the packs do not have. The director wrote the prompts into one ChatGPT batch on `art/round-2` (`art-source/round2/`): `shop_stones_1..4`, `shop_crowns_1..3`, `shop_starter`, `shop_bundle_recruit`, `shop_bundle_warlord`, `ruler_ember`, `ruler_starlit`, `costume_regalia`, `costume_knight`, `costume_lantern`, `starfall_cardback`, `starfall_burst`; each product names its picture (`art` in `PRODUCTS`). The owner chose to make both rulers. **A cosmetic is
 only on sale once its art is in the game**: until then the Shop shows it as "Coming soon" with no price and no Buy (`ready: false`). When
 one lands: set `ready: true`, let the picker that wears it (Settings, Ruler and Duchess; the summoning for Starfall) read the entitlement
 (`ownedNow()` in `iapView.ts`), and show it there as "In the Shop" while not owned.
@@ -146,7 +146,7 @@ no hero it does not list), the pity case, the every-hero-owned case, and the che
 
 - **Where**: a coin medallion beside the trophy on the home screen's top row (`#hmShop`), in a build with a provider only. It opens
   `openTreasury` (`iapView.ts`): a standard ornate sheet, "The Treasury" over "Shop", with four sections (Summoning stones, Crowns, Bundles
-  and starter, Cosmetics). Each item shows a picture (a plain stand-in from the menu icons until its art lands), its contents, its bonus,
+  and starter, Cosmetics). Each item shows a picture (a plain stand-in from the menu icons until its art (`art`, from `art/round-2`) is copied in), its contents, its bonus,
   and the local price from the store. The foot has "‹ Back" and **Restore purchases**. A line at the end says everything has fixed
   contents, where the odds are, and that the game is whole without buying.
 - **Providers** (`purchases.ts`): one interface (`start`, `products`, `buy`, `restore`, `customer`), two makers.

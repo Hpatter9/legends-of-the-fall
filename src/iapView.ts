@@ -99,7 +99,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-/** The item's picture: a plain stand-in from the menu icons until the Shop's own art lands (`docs/notes/iap-art-prompts.md`). */
+/** The item's picture: a plain stand-in from the menu icons until the Shop's own art lands (`art` in the catalogue: the director's batch on `art/round-2`). */
 function pictureOf(p: Product): HTMLElement {
   const box = el('span', `iapPic iap-${p.kind}`);
   if (p.kind === 'stones') box.append(icon(ICONS.stones, 'iapIco'));
