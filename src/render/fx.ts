@@ -37,7 +37,7 @@ import { rankOf, SPELLS, type SpellId } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { at, depth, facesRight, getFrame, FOOT, HH, TH, TW, type Frame } from './iso';
-import { strokeLands, strokeLay, ULT_EMIT } from './emitRules';
+import { breathes, strokeLands, strokeLay } from './emitRules';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SPELL_GLOW, SPELL_WORD, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -432,7 +432,7 @@ export class Fx {
       warmBfx([...kinds].filter((kind) => ULT_EXTRA[kind] && SHOWCASES[kind]).flatMap((kind) => Object.values(ULT_EXTRA[kind]).map((clip) => beatBfx(clip, SHOWCASES[kind].el))));
       // (EMIT-POINTS: and the small flame a breath runs out of its caster's mouth in, for a hero whose ultimate has a mouth point. It
       // lies with the fire showcase's beats, one atlas of about 4 MB decoded, asked for only when such a hero is in the fight)
-      warmBfx(b.units.filter((x) => x.side === 'hero' && ULT_EMIT[defOf(x).sheet]).map(() => beatBfx(MOUTH_RUN.clip, 'fire')));
+      warmBfx(b.units.filter((x) => x.side === 'hero' && breathes(defOf(x).sheet)).map(() => beatBfx(MOUTH_RUN.clip, 'fire')));
       // (the beats of their showcases are not asked for here: each loads the first time it is played, the older parts playing that once,
       // so a fight begins with as little held as it can)
     }
@@ -996,7 +996,7 @@ export class Fx {
           if (extra?.land) this.bfxBeat(extra.land, el, caster.x, caster.y, { mult: ULT_EXTRA_AT.LAND_SIZE });
           // (EMIT-POINTS: a breath leaves the mouth. Small flames are blown outwards from the caster's mouth along the line, growing, each
           // turned the way the breath goes, and the line's own flames follow them; `mouthRun`)
-          const mouth = caster.ultPoint();
+          const mouth = caster.mouthPoint();
           // (at the mouth's own height all the way, reaching over the line's third spot or its last: `streamSpot`)
           const reach = streamSpot(run.length);
           const far = run.length ? shown[run[reach].i] : undefined;
@@ -1363,7 +1363,7 @@ export class Fx {
           // (EMIT-POINTS: a breath leaves the mouth here too. Where the caster has a mouth point the stream is blown from it to the
           // foe's middle, growing, each flame turned the way it goes, and its ball bursts on the foe as it arrives: the same breath as
           // the strike's, `mouthRun`. A caster without one keeps the row of flames along the ground from its feet)
-          const mouth = this.bodyAt(x, y - 10, 8)?.ultPoint();
+          const mouth = this.bodyAt(x, y - 10, 8)?.mouthPoint();
           const wait = mouth ? this.breathRun(mouth, to.x, to.y - to.tall * 0.5, el) : null;
           if (wait !== null) {
             B('nova', to.x, to.y, { delay: wait, mult: 0.7 }, 'fire');

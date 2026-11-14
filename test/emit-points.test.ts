@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CAST, EMIT, FOE_EMIT, ULT_EMIT, ultEmitOffset, strokeLands, STROKE_AT, emitOffset, emitWorld, reachOffset, strokeLay } from '../src/render/emitRules';
+import { breathes, CAST, EMIT, FOE_EMIT, ULT_EMIT, ultEmitOffset, strokeLands, STROKE_AT, emitOffset, emitWorld, reachOffset, strokeLay } from '../src/render/emitRules';
 import { REACH } from '../src/render/reachData';
 import { FOES } from '../src/sim/foes';
 import { MOUTH_RUN, TAIL_MIN, lineLight, mouthRun, streamSpot, tailShare, ultLinked } from '../src/render/blenderFxRules';
@@ -189,7 +189,7 @@ test("ULTIMATES: the Dragoon's breath leaves her mouth: small flames run from it
   assert.equal(mouthRun(0, 0, 3, 0).at.length, MOUTH_RUN.MIN);
   assert.equal(mouthRun(0, 0, 900, 0).at.length, MOUTH_RUN.MAX);
   const fx = readFileSync('src/render/fx.ts', 'utf8');
-  assert.match(fx, /const mouth = caster\.ultPoint\(\);/);
+  assert.match(fx, /const mouth = caster\.mouthPoint\(\);/);
   // (blown at the mouth's own height: the far point is that high over the line's first spot)
   assert.match(fx, /this\.breathRun\(mouth, far\[0\], far\[1\] - \(caster\.y - mouth\[1\]\), el\)/);
   // (the director's order for a real stream: it reaches over the line's third spot, or the last of a shorter line)
@@ -202,13 +202,13 @@ test("ULTIMATES: the Dragoon's breath leaves her mouth: small flames run from it
   // (whoever the stream crosses is shown through it)
   assert.match(fx, /this\.showThrough\(\[Math\.min\(mouth\[0\], end\.x\) - half,/);
   // (its clip is asked for at a fight's start only when such a hero is in the fight)
-  assert.match(fx, /warmBfx\(b\.units\.filter\(\(x\) => x\.side === 'hero' && ULT_EMIT\[defOf\(x\)\.sheet\]\)\.map\(\(\) => beatBfx\(MOUTH_RUN\.clip, 'fire'\)\)\);/);
+  assert.match(fx, /warmBfx\(b\.units\.filter\(\(x\) => x\.side === 'hero' && breathes\(defOf\(x\)\.sheet\)\)\.map\(\(\) => beatBfx\(MOUTH_RUN\.clip, 'fire'\)\)\);/);
 });
 
 test("the Dragoon's showcase is the same breath: its stream leaves her mouth, and its tiles light behind it", () => {
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   // (the showcase's shot of flame is blown from the caster's mouth to the foe, and its ball bursts as the stream arrives)
-  assert.match(fx, /const mouth = this\.bodyAt\(x, y - 10, 8\)\?\.ultPoint\(\);/);
+  assert.match(fx, /const mouth = this\.bodyAt\(x, y - 10, 8\)\?\.mouthPoint\(\);/);
   assert.match(fx, /const wait = mouth \? this\.breathRun\(mouth, to\.x, to\.y - to\.tall \* 0\.5, el\) : null;/);
   assert.match(fx, /B\('nova', to\.x, to\.y, \{ delay: wait, mult: 0\.7 \}, 'fire'\);/);
   // (the strike and the showcase blow the one breath: one helper, the one rendered clip that is turned)
@@ -223,8 +223,9 @@ test("the Dragoon's showcase is the same breath: its stream leaves her mouth, an
 
 /** The ultimates whose strike runs a line of small clips from the caster to each it touches (`ultLinked`), by whether the line now
  *  leaves a measured point (the audit, docs/notes/emit-points.md): the rest still leave the caster's feet, each named on purpose. */
-const LINK_FROM_POINT = ['nyxara', 'wanderer', 'satyr', 'gorgon', 'gunslinger', 'priestess', 'sage', 'corsairSurgeon'];
-const LINK_FROM_FEET = ['ilyra', 'orrun', 'peasant', 'samuraiCommander'];
+const LINK_FROM_POINT = ['nyxara', 'wanderer', 'satyr', 'gorgon', 'gunslinger', 'priestess', 'sage', 'corsairSurgeon', 'ilyra', 'orrun', 'peasant', 'samuraiCommander'];
+// (none is left: the last four were measured)
+const LINK_FROM_FEET: string[] = [];
 
 test("ULTIMATES: a line run from the caster to those its ultimate touches leaves its hand, staff, muzzle or eyes, not its feet", () => {
   const linked = Object.values(UNITS).filter((u) => u.side === 'hero' && ultLinked(u.id)).map((u) => u.id).sort();
@@ -238,4 +239,12 @@ test("ULTIMATES: a line run from the caster to those its ultimate touches leaves
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /if \(far\) beatLine\(\.\.\.this\.ultFrom\(caster\), x, y\)/);
   assert.match(fx, /return s\.ultPoint\(\) \?\? s\.emitPoint\(\) \?\? \[s\.x, s\.y\];/);
+});
+
+test("ULTIMATES: only a hero whose ultimate's point is a mouth breathes it; the eyes, staff heads, the heart stone and the banner do not", () => {
+  assert.deepEqual(Object.keys(ULT_EMIT).filter(breathes), [UNITS.dragoon.sheet]);
+  // (so a Gorgon or a Saint in the fight does not ask for the breath's flame, an atlas of about 4 MB, and no breath is run from them)
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.equal((fx.match(/\.ultPoint\(\)/g) ?? []).length, 1);
+  assert.equal((fx.match(/\.mouthPoint\(\)/g) ?? []).length, 2);
 });

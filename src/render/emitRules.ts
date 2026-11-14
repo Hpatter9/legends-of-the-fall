@@ -7,7 +7,7 @@ import { REACH } from './reachData';
 
 /** What the point is: a gun's or a crossbow's muzzle, the hand on the bow, the head of a staff or wand (or a mace raised to cast), a
  *  casting or throwing hand, a mouth, a blade. */
-export type EmitKind = 'muzzle' | 'bowHand' | 'staffTip' | 'hand' | 'mouth' | 'blade' | 'eyes';
+export type EmitKind = 'muzzle' | 'bowHand' | 'staffTip' | 'hand' | 'mouth' | 'blade' | 'eyes' | 'heart' | 'banner';
 export interface Emit {
   kind: EmitKind;
   front: readonly [number, number];
@@ -92,7 +92,19 @@ export const ULT_EMIT: Readonly<Record<string, Emit>> = {
   // (the Gorgon's Stone Gaze leaves her eyes, not the head of her staff: read on the same frame of her ultimate's row; from behind
   // her eyes are hidden by her hair: the front edge of her head at their height)
   hero_res_gorgon: { kind: 'eyes', front: [6, 83], back: [8, 84] },
+  // (the last four whose ultimate carries a line of light to each friend it touches; each read on the same frame, the second of
+  // its ultimate's row. The Unburied Saint's Unfinished Prayer leaves the head of her staff)
+  mythic_ilyra: { kind: 'staffTip', front: [29, 92], back: [28, 92] },
+  // (the Worldroot's pulse leaves the green stone in his chest; from behind the stone is hidden: the front of his chest at its height)
+  mythic_orrun: { kind: 'heart', front: [31, 58], back: [14, 58] },
+  // (the Peasant's Call to Arms leaves the point of his raised spear)
+  hero_res_peasant: { kind: 'blade', front: [35, 96], back: [35, 96] },
+  // (the Samurai Commander's leaves the crest on his banner)
+  hero_res_samurai_commander: { kind: 'banner', front: [10, 81], back: [-3, 72] },
 };
+/** Whether a fighter of this sheet breathes its ultimate: its point is a mouth. Only such a hero has a breath run from it, and the
+ *  breath's small flame asked for at a fight's start. */
+export const breathes = (own: string): boolean => ULT_EMIT[own]?.kind === 'mouth';
 /** That point for a fighter drawn now from `sheet`; undefined where it has none or wears another look. */
 export function ultEmitOffset(own: string, sheet: string, rear: string | undefined): readonly [number, number] | undefined {
   const e = ULT_EMIT[own];

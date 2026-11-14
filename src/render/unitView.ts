@@ -27,7 +27,7 @@ import { poolOf } from '../sim/heroKits';
 import { RENEW_AT, timerOf } from '../sim/carry';
 import { at, depth, facesRight, facesAway, HH } from './iso';
 import { heroLook, rearView, formScale } from './heroFacing';
-import { emitOffset, emitWorld, reachOffset, ultEmitOffset } from './emitRules';
+import { breathes, emitOffset, emitWorld, reachOffset, ultEmitOffset } from './emitRules';
 import { VFX } from './vfxArt';
 import { paintSprite } from './cinematicArt';
 import { deathKind, maxStatuses, statusesOf } from './fxRules';
@@ -656,6 +656,11 @@ export class UnitSprite {
 
   /** EMIT-POINTS: where this fighter's ultimate leaves it, in the world (`ultEmitOffset`: the Dragoon's mouth); null where it has
    *  no such point or wears another look. */
+  /** EMIT-POINTS: that point where it is a mouth (`breathes`), for a breath; null for a hero whose ultimate leaves its eyes or its staff. */
+  mouthPoint(): [number, number] | null {
+    return breathes(this.ownSheet) ? this.ultPoint() : null;
+  }
+
   ultPoint(): [number, number] | null {
     const at = ultEmitOffset(this.ownSheet, this.sheet, rearView(this.ownSheet));
     if (!at) return null;
