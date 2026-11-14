@@ -4,8 +4,9 @@
 // bottom edge (the feet): x towards the way the figure faces, y upwards. `tools/emit-points/anchors.json` is the same table with
 // `tools/emit-points/check.py`, which checks each against the sheet's drawn pixels and draws them. Pure: the tests read it.
 
-/** What the point is: a gun's or a crossbow's muzzle, the hand on the bow, the head of a staff or wand, a casting or throwing hand, a mouth. */
-export type EmitKind = 'muzzle' | 'bowHand' | 'staffTip' | 'hand' | 'mouth';
+/** What the point is: a gun's or a crossbow's muzzle, the hand on the bow, the head of a staff or wand (or a mace raised to cast), a
+ *  casting or throwing hand, a mouth, a blade. */
+export type EmitKind = 'muzzle' | 'bowHand' | 'staffTip' | 'hand' | 'mouth' | 'blade';
 export interface Emit {
   kind: EmitKind;
   front: readonly [number, number];
@@ -43,11 +44,35 @@ export const EMIT: Readonly<Record<string, Emit>> = {
   hero_res_harpooner: { kind: 'hand', front: [40, 82], back: [37, 86] },
 };
 
+/** CASTERS: where a skill's effect leaves a hero that does not shoot (a healer's thread, a charm's arc, a painted streak): read off the
+ *  second frame of the skill's row (`attack2`, or the attack row where the sheet has none), the middle of the cast. x may be behind
+ *  the body's middle here: a mace or a fan raised overhead. */
+export const CAST: Readonly<Record<string, Emit>> = {
+  hero_res_cleric: { kind: 'hand', front: [25, 52], back: [35, 50] },
+  hero_res_paladin: { kind: 'staffTip', front: [-15, 105], back: [-27, 105] },
+  hero_res_satyr: { kind: 'hand', front: [15, 62], back: [28, 62] },
+  hero_res_kitsune: { kind: 'hand', front: [-12, 110], back: [-12, 112] },
+  hero_res_karasu: { kind: 'hand', front: [42, 45], back: [48, 72] },
+  hero_res_kunoichi: { kind: 'hand', front: [35, 45], back: [55, 62] },
+  hero_res_shambler: { kind: 'hand', front: [18, 14], back: [28, 14] },
+  hero_res_illusionist: { kind: 'staffTip', front: [25, 72], back: [30, 75] },
+  hero_res_buccaneer: { kind: 'hand', front: [10, 92], back: [22, 78] },
+  hero_res_mercenary: { kind: 'blade', front: [70, 56], back: [68, 80] },
+  hero_res_mummy: { kind: 'hand', front: [40, 72], back: [48, 72] },
+  hero_res_reaper: { kind: 'hand', front: [42, 50], back: [48, 52] },
+  hero_res_dread_pirate: { kind: 'hand', front: [38, 40], back: [40, 33] },
+  hero_res_arc_blade: { kind: 'blade', front: [0, 90], back: [0, 100] },
+  hero_res_dragoon: { kind: 'hand', front: [35, 50], back: [15, 88] },
+  hero_res_tyrant: { kind: 'staffTip', front: [22, 95], back: [25, 95] },
+  hero_res_nightstalker: { kind: 'hand', front: [40, 45], back: [42, 48] },
+};
+
 /** The point for a fighter whose own sheet is `own` and which is drawn now from `sheet` (its own, or `rear`, its look from behind):
- *  undefined where the sheet has no point, or the fighter wears another look (a form, a guise, an awakened sheet), whose pose was
- *  not measured: the caller keeps the old place, a share of the fighter's height above its feet. */
+ *  its shot's point, or its cast's where it has no shot's (a hero that shoots casts from its shot's point: its cast row was not
+ *  measured). Undefined where the sheet has neither, or the fighter wears another look (a form, a guise, an awakened sheet), whose
+ *  pose was not measured: the caller keeps the old place, a share of the fighter's height above its feet. */
 export function emitOffset(own: string, sheet: string, rear: string | undefined): readonly [number, number] | undefined {
-  const e = EMIT[own];
+  const e = EMIT[own] ?? CAST[own];
   if (!e) return undefined;
   return sheet === own ? e.front : rear !== undefined && sheet === rear ? e.back : undefined;
 }

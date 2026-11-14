@@ -1,7 +1,8 @@
 """EMIT-POINTS (docs/notes/emit-points.md): check each anchor in anchors.json against the sheet it was read from, and draw them.
 
-For each sheet's release frame (the third of its attack row, the one on show as the shot leaves), front and rear: the nearest
-drawn pixel to the anchor, and how far it is. An anchor more than FAR px from anything drawn was misread. With an output path, a
+For each sheet's frame, front and rear: the nearest drawn pixel to the anchor, and how far it is. A `shot` point is read on the
+release frame (the third of the attack row, the one on show as the shot leaves); a `cast` point on the second frame of the
+skill's row (`attack2`, or the attack row where the sheet has none), the middle of the cast. An anchor more than FAR px from anything drawn was misread. With an output path, a
 sheet of every frame at three times its size with the anchor marked is written there.
 
   python3 tools/emit-points/check.py [out.png]
@@ -14,19 +15,21 @@ d = json.load(open('src/art/units/sheets.json'))
 A = json.load(open('tools/emit-points/anchors.json'))
 
 
-def frame(k, i=2):
+def frame(k, i=2, row='attack'):
     L = d[k]
     im = Image.open(f'src/art/units/{k}.png').convert('RGBA')
-    r = L['rows'].index('attack')
+    if row not in L['rows'] or not L['counts'].get(row):
+        row = 'attack'
+    r = L['rows'].index(row)
     start = sum(-(-L['counts'][x] // L['perRow']) for x in L['rows'][:r])
-    i = min(i, L['counts']['attack'] - 1)
+    i = min(i, L['counts'][row] - 1)
     return im.crop(((i % L['perRow']) * L['w'], (start + i // L['perRow']) * L['h'], (i % L['perRow'] + 1) * L['w'], (start + i // L['perRow'] + 1) * L['h'])), L
 
 
 bad, cells = 0, []
-for sheet, a in A.items():
+for sec, sheet, a in [(sec, sheet, a) for sec in ('shot', 'cast') for sheet, a in A[sec].items()]:
     for view, k in (('front', sheet), ('back', d[sheet]['rear'])):
-        fr, L = frame(k)
+        fr, L = frame(k) if sec == 'shot' else frame(k, 1, 'attack2')
         px = fr.load()
         x, y = L['w'] // 2 + a[view][0], L['h'] - 1 - a[view][1]
         best = None
@@ -39,8 +42,8 @@ for sheet, a in A.items():
                         best = (q, dx, -dy)
         far = best is None or best[0] > FAR
         bad += far
-        print(f"{'FAR ' if far else 'ok  '}{sheet:28s} {view:5s} {a['kind']:9s} {a[view]}  nearest drawn {('%.1f px, by %+d, %+d' % best) if best else 'none within 12 px'}")
-        cells.append((fr, L, x, y, f'{sheet} {view}'))
+        print(f"{'FAR ' if far else 'ok  '}{sec} {sheet:28s} {view:5s} {a['kind']:9s} {a[view]}  nearest drawn {('%.1f px, by %+d, %+d' % best) if best else 'none within 12 px'}")
+        cells.append((fr, L, x, y, f'{sec} {sheet} {view}'))
 if len(sys.argv) > 1:
     Z, per = 3, 6
     W = max(c[1]['w'] for c in cells) * Z

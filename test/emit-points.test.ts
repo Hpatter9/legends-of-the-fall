@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { EMIT, emitOffset, emitWorld } from '../src/render/emitRules';
+import { CAST, EMIT, emitOffset, emitWorld } from '../src/render/emitRules';
 import { TAIL_MIN, tailShare } from '../src/render/blenderFxRules';
 import { UNITS } from '../src/sim/units';
 import layout from '../src/art/units/sheets.json';
@@ -58,7 +58,7 @@ test('the point is the front view\'s or the rear view\'s, mirrored and scaled wi
 
 test('the table the tool checks against the sheets is the table the game uses, and the renderer starts from it', () => {
   const tool = JSON.parse(readFileSync('tools/emit-points/anchors.json', 'utf8'));
-  assert.deepEqual(tool, JSON.parse(JSON.stringify(EMIT)));
+  assert.deepEqual(tool, JSON.parse(JSON.stringify({ shot: EMIT, cast: CAST })));
   const fx = readFileSync('src/render/fx.ts', 'utf8');
   assert.match(fx, /const \[x0, y0\] = this\.emitOf\(by, 0\.55\);/);
   assert.match(fx, /return s\.emitPoint\(\) \?\? \[s\.x, s\.y - s\.tall \* lift\];/);
@@ -73,4 +73,28 @@ test("a shot's tail is no longer than the way it has come, so it never trails ba
   assert.equal(tailShare(400, 40), 1);
   assert.equal(tailShare(10, 0), 1);
   assert.match(readFileSync('src/render/fx.ts', 'utf8'), /sp\.scale\.x = sp\.scale\.y \* tailShare\(Math\.hypot\(x - x0, y - y0\), made\.ax \* sp\.scale\.y\);/);
+});
+
+/** The heroes that do not shoot and from whom a skill's effect leaves (found by `WHO=1` over fights of every hero, and the healers). */
+const CASTERS = ['cleric', 'paladin', 'satyr', 'kitsune', 'karasu', 'kunoichi', 'shambler', 'illusionist', 'buccaneer', 'mercenary', 'mummy', 'reaper', 'dreadPirate', 'arcBlade', 'dragoon', 'tyrant', 'nightstalker'];
+
+test('every hero that casts without shooting has a measured point on its sheet, front and back', () => {
+  for (const id of CASTERS) {
+    const u = UNITS[id];
+    assert.ok(u && !u.shot, id);
+    const e = CAST[u.sheet];
+    assert.ok(e, `${id} (${u.sheet}) has no point`);
+    const L = SHEETS[u.sheet];
+    assert.ok(L.rear && SHEETS[L.rear], id);
+    // (inside the frame; a mace or a fan raised overhead may be behind the body's middle, so x may be negative)
+    for (const at of [e.front, e.back]) assert.ok(Math.abs(at[0]) <= L.w / 2 && at[1] >= 10 && at[1] < L.h, `${id}: ${at}`);
+    assert.deepEqual(emitOffset(u.sheet, u.sheet, L.rear), e.front);
+    assert.deepEqual(emitOffset(u.sheet, L.rear!, L.rear), e.back);
+  }
+  // (no sheet is in both tables, and none is kept for a sheet no hero uses)
+  const sheets = new Set(Object.values(UNITS).map((u) => u.sheet));
+  for (const sheet of Object.keys(CAST)) assert.ok(!EMIT[sheet] && sheets.has(sheet), sheet);
+  assert.equal(Object.keys(CAST).length, CASTERS.length);
+  // (a healer's thread leaves its point too)
+  assert.match(readFileSync('src/render/fx.ts', 'utf8'), /if \(healer\) this\.thread\(\.\.\.this\.emitOf\(healer, 0\.5\), to\.x, to\.y - to\.tall \* 0\.5, 'light-sparkle'\);/);
 });

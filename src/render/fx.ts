@@ -485,7 +485,7 @@ export class Fx {
           // (a green ring rises round the healed, and a thread of light runs to it from the healer)
           play(this.particles, 'forest-aura', to.x, to.y - 4, { scale: to.tall / 26, frameMs: 80 });
           const healer = e.by !== undefined && e.by !== e.to ? this.sprites.get(e.by) : undefined;
-          if (healer) this.thread(healer.x, healer.y - healer.tall * 0.5, to.x, to.y - to.tall * 0.5, 'light-sparkle');
+          if (healer) this.thread(...this.emitOf(healer, 0.5), to.x, to.y - to.tall * 0.5, 'light-sparkle');
         }
       } else if (e.kind === 'arc') this.arc(e.from, e.to, e.ail === 'shock');
       // (STATUS-FX: an ailment shrugged off, and a frozen fighter's ice shattering)
