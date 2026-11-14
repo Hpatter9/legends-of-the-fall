@@ -27,6 +27,7 @@ import { poolOf } from '../sim/heroKits';
 import { RENEW_AT, timerOf } from '../sim/carry';
 import { at, depth, facesRight, facesAway, HH } from './iso';
 import { heroLook, rearView, formScale } from './heroFacing';
+import { emitOffset, emitWorld } from './emitRules';
 import { VFX } from './vfxArt';
 import { paintSprite } from './cinematicArt';
 import { deathKind, maxStatuses, statusesOf } from './fxRules';
@@ -596,6 +597,15 @@ export class UnitSprite {
     sp.scale.set(this.body.scale.x * this.root.scale.x, this.body.scale.y * this.root.scale.y);
     sp.tint = 0x82d9ed;
     return sp;
+  }
+
+  /** EMIT-POINTS: where what this fighter looses leaves from, in the world (the muzzle, the bow hand, the staff's head: `emitRules.ts`),
+   *  mirrored with the body and at its size; null where its sheet has no point or it wears another look. */
+  emitPoint(): [number, number] | null {
+    const at = emitOffset(this.ownSheet, this.sheet, rearView(this.ownSheet));
+    if (!at) return null;
+    const k = this.root.scale;
+    return emitWorld(this.root.x + this.body.x * k.x, this.root.y + this.body.y * k.y, at, this.body.scale.x * k.x, this.body.scale.y * k.y);
   }
 
   /** SHOW-THROUGH: pose `sp` as this fighter's body is posed now, in the world's space (its picture, where it stands, its size, tint

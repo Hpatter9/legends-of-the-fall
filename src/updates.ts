@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.580.0',
+    date: '2026-11-14',
+    title: 'Shots leave from the end of the gun',
+    notes: ['Every hero who shoots now fires from the right spot: a gun\'s flash at the muzzle, an orb from the staff or hand, an arrow from the bow.', 'The point follows the hero\'s pose and facing, and a shot\'s tail no longer trails back across the shooter.'],
+  },
+  {
     version: '0.579.0',
     date: '2026-11-13',
     title: 'A fighter\'s fall shows in the thick of a melee',

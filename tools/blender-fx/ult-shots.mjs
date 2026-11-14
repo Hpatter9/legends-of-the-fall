@@ -196,6 +196,42 @@ if (process.env.WATCH) {
     srv.close();
     process.exit(0);
   }
+  // (STAGED=1 with WATCH: EMIT-POINTS' proof. As the fight opens, before the lines meet, each hero of the party is put in the frame of
+  // its attack that is on show as a shot leaves, facing each of the four ways in turn, and its own shot is loosed at the nearest
+  // foe; one frame later (the shot just out) the hero is photographed, 130 px round it. Nothing of the fight is stepped: only the
+  // hero's picture and the effects. The fight is not played on afterwards.)
+  if (process.env.STAGED) {
+    const { readFileSync } = await import('node:fs');
+    const shots = Object.fromEntries([...readFileSync('src/sim/units.ts', 'utf8').matchAll(/^\s+(\w+): \{ id: '\w+'[^\n]*?shot: '(\w+)'/gm)].map((m) => [m[1], m[2]]));
+    for (const pick of PICKS.slice(0, 5)) {
+      for (const dir of [0, 1, 2, 3]) {
+        const at = await page.evaluate(([pick, dir, shot]) => {
+          const g = window.__game, b = g.b, fx = g.fx;
+          const u = b.units.find((x) => x.side === 'hero' && x.def === pick);
+          const foe = b.units.find((x) => x.side === 'foe' && x.alive);
+          const sp = g.sprites.get(u.id);
+          if (!u || !foe || !sp) return null;
+          fx.step(3000);
+          u.facing = dir;
+          u.swing = { at: b.t - 600, ms: 1000, to: foe.id };
+          sp.update(b.board, b.t, true);
+          fx.shot(u.id, foe.id, shot, 400);
+          fx.step(16);
+          g.app.renderer.render(g.app.stage);
+          const p = fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 });
+          return [Math.round(p.x), Math.round(p.y)];
+        }, [pick, dir, shots[pick]]);
+        if (!at) { console.log('NOT STAGED', pick); continue; }
+        const x = Math.max(0, Math.min(W - 130, at[0] - 65));
+        await page.screenshot({ path: `${OUT}/staged-${pick}-${dir}.png`, clip: { x, y: Math.max(0, at[1] - 75), width: 130, height: 130 } });
+      }
+      console.log('staged', pick);
+    }
+    await ctx.close();
+    await browser.close();
+    srv.close();
+    process.exit(0);
+  }
   // (FRAMES=1 with WATCH: what a frame of an ordinary fight costs on a slow phone. The CPU is throttled four times and every frame
   // of the fight's first WATCH_S seconds (20) is timed, the graphics card made to finish each; and how many of the ground's row
   // layers were being drawn, on the average and at the most)
@@ -233,7 +269,7 @@ if (process.env.WATCH) {
       window.__seen = [];
       const defOf = (id) => fx.sprites.get(id)?.unit.def;
       const shot = fx.shot.bind(fx);
-      fx.shot = (by, to, kind, ms) => { window.__seen.push('shot:' + defOf(by)); window.__seenMs = ms; return shot(by, to, kind, ms); };
+      fx.shot = (by, to, kind, ms) => { const k = 'shot:' + defOf(by); window.__seen.push(k); window.__seenMs = ms; const sp = fx.sprites.get(by); if (sp) window.__seenAt = { ...(window.__seenAt ?? {}), [k]: [sp.x, sp.y - sp.tall * 0.5] }; return shot(by, to, kind, ms); };
       // (swing:<kind> a melee blow's stroke by that kind, fall:<kind> that kind's fall; either side's fighters)
       const slash = fx.slash.bind(fx);
       fx.slash = (b, by, to) => { window.__seen.push('swing:' + defOf(by)); window.__seenMs = 150; return slash(b, by, to); };
@@ -250,7 +286,8 @@ if (process.env.WATCH) {
       if (!got) console.log('NOT SEEN', what, 'saw', await page.evaluate(() => [...new Set(window.__seen)].join(' ') + ' | foes ' + [...new Set(window.__game.b.units.filter((u) => u.side === 'foe').map((u) => u.def))].join(' ') + ' | ' + window.__game.b.phase));
       if (!got) continue;
       await page.evaluate(() => window.__game.setSpeed(1));
-      for (const [i, k] of [0.3, 0.3].entries()) {
+      // (SEE_AT=0.1,0.2: the shares of its flight at which it is photographed; 0.3 and 0.6 when not given)
+      for (const [i, k] of (process.env.SEE_AT ? process.env.SEE_AT.split(',').map(Number).map((v, j, a) => v - (a[j - 1] ?? 0)) : [0.3, 0.3]).entries()) {
         await page.evaluate((d) => window.__step(d), Math.round(got * k));
         await page.screenshot({ path: `${OUT}/see-${what.replace(':', '-')}-${W}-${i}.png` });
       }

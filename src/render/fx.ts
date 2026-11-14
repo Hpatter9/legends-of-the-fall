@@ -77,7 +77,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { hitSpark, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { hitSpark, tailShare, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -2948,7 +2948,7 @@ export class Fx {
         const on = gr.at === 'self' ? [by] : gr.at === 'first' ? targets.slice(0, 1) : targets.slice(0, 4);
         for (const s of on) this.paintLoop(gr.part, () => [s.x, s.y], () => b.t < until, { depthOf: () => -1, alpha: AURA_ALPHA, ground: { b, tile: () => s.unit } });
       }
-      if (m.streak) for (const to of targets) this.paintAlong(m.streak, by.x, by.y - by.tall * 0.45, to.x, to.y - to.tall * 0.45, { delay: 40 });
+      if (m.streak) for (const to of targets) this.paintAlong(m.streak, ...this.emitOf(by, 0.45), to.x, to.y - to.tall * 0.45, { delay: 40 });
       if (m.chain && m.beam) {
         // (the bolt forks along each arc of the cast: from the caster, then from each it struck on to the next)
         const linked = new Set([e.by, ...struck]);
@@ -3061,7 +3061,7 @@ export class Fx {
     }
     // (the volley's arrows come down from the upper left, the way they are painted pointing; the rest slant in from the upper right)
     const sky: [number, number] = p.heading ? [cx - 150, cy - 360] : [cx + 150, cy - 360];
-    const [x0, y0] = p.from === 'caster' && by ? [by.x, by.y - by.tall * 0.45] : sky;
+    const [x0, y0] = p.from === 'caster' && by ? this.emitOf(by, 0.45) : sky;
     // (a thrown ball comes down on the foes' middles; a keg rolls along the ground)
     const ground = p.travel.startsWith('keg');
     const ty = ground ? cy - 6 : cy - 14;
@@ -3086,7 +3086,7 @@ export class Fx {
       this.lookOnce({ once: 'light-nova' }, x, y - 4, 1.8);
     }
     this.label('Revived!', x, y - to.tall - 14, 0xfff2a0, 14, 1400, true);
-    if (by && by !== to) this.thread(by.x, by.y - by.tall * 0.5, x, y - to.tall * 0.5, 'light-sparkle');
+    if (by && by !== to) this.thread(...this.emitOf(by, 0.5), x, y - to.tall * 0.5, 'light-sparkle');
     this.trauma = Math.min(1, this.trauma + 0.15);
   }
 
@@ -3956,7 +3956,9 @@ export class Fx {
     const c = this.sprites.get(toId);
     if (!a || !c) return;
     const style = shock ? 'lightning' : arcStyle(a.unit.def);
-    const [x0, y0, x1, y1] = [a.x, a.y - a.tall * 0.5, c.x, c.y - c.tall * 0.5];
+    // (EMIT-POINTS: a caster's own arc leaves its staff or hand; a shock's jump runs from body to body)
+    const [x0, y0] = shock ? [a.x, a.y - a.tall * 0.5] : this.emitOf(a, 0.5);
+    const [x1, y1] = [c.x, c.y - c.tall * 0.5];
     const len = Math.hypot(x1 - x0, y1 - y0) || 1;
     const nx = -(y1 - y0) / len;
     const ny = (x1 - x0) / len;
@@ -4008,6 +4010,12 @@ export class Fx {
     });
   }
 
+  /** EMIT-POINTS: where an effect that leaves `s` starts: its measured point (`UnitView.emitPoint`), else `lift` of its height above
+   *  its feet, as before. */
+  private emitOf(s: UnitSprite, lift: number): [number, number] {
+    return s.emitPoint() ?? [s.x, s.y - s.tall * lift];
+  }
+
   /** SHOTS: a rendered strand laid from (x0, y0) to (x1, y1) for `life` ms (`strandLay`: turned to the line, stretched along it,
    *  more than one length end to end where it is long), its frames running and the whole fading at the end. False when its clip
    *  is not held. */
@@ -4050,8 +4058,9 @@ export class Fx {
     const to = this.sprites.get(toId);
     if (!by || !to) return;
     const m: Missile = missileOf(kind, defOf(by.unit).name);
-    const x0 = by.x;
-    const y0 = by.y - by.tall * 0.55;
+    // (EMIT-POINTS: from the muzzle, the bow hand, the staff's head on the shooter's own picture; a share of its height where it has none)
+    const [x0, y0] = this.emitOf(by, 0.55);
+    const real = !!by.emitPoint();
     const x1 = to.x;
     const y1 = to.y - to.tall * 0.45;
     const aim = Math.atan2(y1 - y0, x1 - x0);
@@ -4060,7 +4069,8 @@ export class Fx {
     const flashes = flash ? bfxFrames(GUN.muzzle) : [];
     if (m.muzzle && flash && flashes.length) {
       const k = BFX_SCALE * GUN.muzzleSize;
-      const out = 8 + (flash.w / 2 - flash.ax) * k;
+      // (from a measured muzzle the flash begins at it; from the body's middle it was set a little ahead)
+      const out = (real ? 0 : 8) + (flash.w / 2 - flash.ax) * k;
       this.particles.spawn({ frames: this.reduced ? [flashes[flash.hold]] : flashes, x: x0 + Math.cos(aim) * out, y: y0 + Math.sin(aim) * out, scale: k, rotation: aim, frameMs: flash.ms / flashes.length, life: flash.ms, prio: true, solid: true, bare: true });
     } else if (m.muzzle) {
       play(this.particles, packKey(m.el, 'hit'), x0 + Math.cos(aim) * 8, y0 + Math.sin(aim) * 4, { scale: m.look === 'tracer' ? 1.3 : 0.9, frameMs: 40 });
@@ -4111,6 +4121,8 @@ export class Fx {
           if (made) {
             sp.texture = rf[this.reduced ? made.hold : Math.floor(t / (made.ms / made.n)) % rf.length];
             sp.rotation = heading;
+            // (EMIT-POINTS: its tail is no longer than the way it has come, so it does not trail back through the shooter as it leaves)
+            sp.scale.x = sp.scale.y * tailShare(Math.hypot(x - x0, y - y0), made.ax * sp.scale.y);
           } else if (orb) {
             sp.texture = orb[Math.floor(t / 70) % orb.length];
             paintSprite(sp, ms * 0.4, ms, m.scale, heading, 1, true, this.calm());
