@@ -148,7 +148,7 @@ files and the save, so it is left for its own change.
 | Home, later | ~55% | the camp (60/s) |
 | Recruit / Heroes / Castle / Spells tab | 26 / 38 to 46 / 47 to 62 / 25 to 39% | each its own scene at 60/s |
 | **Settings over the home screen** | **47.5 to 57.7% before, 13.7 to 14.8% after** | before: the camp under the 97% veil, unseen. Fixed |
-| **Armies (War Room) over the home screen** | see "Before and after" | the same: the camp under the page. Fixed |
+| **Armies (War Room) over the home screen** | **50.7% before, 14.3% after** | the same: the camp under the page. Fixed |
 | Home, tab hidden | 22 to 35% (the warm-up), no frames | `warmPortraits` goes on in idle time; the five intervals |
 
 Always running, on every screen: Pixi's own system ticker (an animation frame every frame, for its pointer events, while the game's
@@ -192,7 +192,7 @@ stay at 21 to 23.
 A full sweep (every home menu, every Settings page, the three phone sizes, ten waves): no errors, no unhandled rejections, no failed loads,
 no 404s. Warnings: 8 of "Oscillator.frequency.setValueAtTime value 22,xxx outside nominal range" (a bell's overtone past half the sample
 rate; fixed) and one Pixi deprecation, "addChild: Only Containers will be allowed to add children" (a damage number's high-ground arrow;
-fixed; the same pattern remains in `Fx.immune`, a crossed-out chip added to its "Immune" label, left because its label's width places
+fixed, as is the same on a boss's warning tile; the same pattern remains in `Fx.immune`, a crossed-out chip added to its "Immune" label, left because its label's width places
 the label: worth the same container). The ResizeObserver message ("loop completed with undelivered notifications") did not come in any
 run here. It comes when an observer's callback changes the size of something observed in the same frame; the likely one is
 `main.ts` `watchTopHud`, whose callback moves `#bossBar` and `#hudSpells`, both of which it observes. The browser reports it and then
@@ -247,13 +247,52 @@ version.
 3. **A damage number and its arrow ride a container** (`render/fx.ts`): the same place, scale and fade, no deprecation warning.
 4. **The fight's HUD writes the same words only once** (`main.ts`, `fightHud.ts`, `decreeHud.ts`, `test/decree-writes.test.ts`).
 5. **`render/calRealm.ts` removed** (nothing imported it).
+6. **A boss's warning tile and its fill ride a container** (`render/bossFx.ts`): a Graphics with a Graphics child, the second Pixi
+   deprecation (seen on wave 8's boss); the rim, the fill over it and the fade as before.
 
 ### Before and after
 
 The same tool, the same seeds, `origin/main` (`out/before`) against this branch (`out/web`), 4x throttle, 8 s a screen:
 
-BEFORE_AFTER_TABLE
+| Screen | Before: main thread busy (style), animation frames asked a second | After |
+|---|---|---|
+| Home | 96.3% (1.7%), 160 | 96.1% (1.4%), 164 |
+| Home, tab hidden | 27.5% (1.2%), 0 | 16.7% (1.2%), 0 |
+| Recruit tab | 34.9% (1.4%), 183 | 34.3% (1.6%), 183 |
+| Heroes tab | 45.0% (4.6%), 177 | 44.8% (5.2%), 177 |
+| Castle tab | 56.2% (1.8%), 183 | 58.3% (2.3%), 183 |
+| Spells tab | 25.8% (1.7%), 118 | 27.6% (2.0%), 120 |
+| **Settings over the home screen** | **44.3% (1.6%), 173** | **12.7% (1.3%), 120** |
+| **Armies page over the home screen** | **50.7% (1.5%), 183** | **14.3% (1.5%), 123** |
+| Deploy | 53.6% (2.1%), 66 | 43.3% (1.5%), 65 |
+| **A fight at x1** | **86.3% (45.4%), 21** | **68.9% (32.6%), 25** |
+| A fight, tab hidden | 40.7% (3.7%), 0 | 36.9% (4.6%), 0 |
+| Home after the run | 45.4% (1.7%), 85 | 43.9% (1.7%), 78 |
+| Home after the run, hidden | 45.6% (2.9%), 0 | 53.6% (3.7%), 0 |
+| **DOM writes in 5 s of a fight (of them the value already there)** | **337 (99)** | **348 (2)** |
+| Heap MB, waves 1 to 10 | 450, 452, 456, 457, 459, 460, 460, 463, 462, 465 | 450, 453, 455, 457, 460, 460, 462, 463, 464, 463 |
+| Pixi textures, waves 1 to 10 | 513, 731, 576, 602, 676, 633, 669, 590, 646, 607 | 529, 727, 576, 654, 667, 682, 676, 598, 600, 643 |
+| Twenty openings of the menus: heap / DOM / listeners / observers / intervals | 473 to 466 MB / 1,889 / 79 / 25 / 5, no growth | 473 to 461 MB / 1,889 / 79 / 26 / 5, no growth |
+| Console warnings (a menu sweep, ten waves; Playwright's own left out) | 8 (7 oscillator, 1 Pixi) | AFTER_WARN |
+| Address to home screen | 40.0 s | 38.5 s |
+
+Reading it: the two fixed pages over the home screen drop to a quarter (what is left is the always-on loops of point 5). The fight's
+style share falls from 45% to 33% and the no-op writes from 99 to 2; with SwiftShader drawing the board, its frames stay slow whatever
+the page does, so the fight's own line is noisy (its frame rate was 3.7 and 4.5). The other rows move by a few points either way, which
+is the noise between two runs of the same screen here (the home screen's hidden rows are the start-up warm-up's idle work, which runs
+whenever it runs). The memory and textures over ten waves are the same: no leak before, none after.
 
 ## The proof
 
-PROOF_LINES
+- `npm run typecheck`: clean.
+- `npm test` (the full suite, on the branch before the boss tile's commit): 3,389 tests, 3,389 pass, 0 fail. After the boss tile's
+  commit: `npm test -- boss-big ground-marks home-motion decree-writes hit-sparks battle-feel`, 35 pass. (A first full run showed 222
+  "failures": two single-file runs started beside it emptied `out/test` under it. Not the code; run again alone, all pass.)
+- `npm run web`: builds (`game.js` 208,045,632 bytes, 916 more than `main`'s: the comments).
+- The before/after profiles: `node tools/release-audit/profile.mjs --root out/before --waves 10 --secs 8 --mut --json before.json`, the
+  same for `out/web`, `node tools/release-audit/compare.mjs before.json after.json`.
+- `node tools/release-audit/robust.mjs`: corrupt save (fresh save, the old one lost), old save (read), storage full (the run cannot
+  start: `QuotaExceededError`), reload mid-fight (the run kept), offline start (works once the worker is installed; 40 s), a lost
+  graphics context mid-fight (given back, the fight goes on), five seconds hidden (the fight goes on, the sound suspended meanwhile).
+- Not run: a real phone, the soaks (`tools/freeze-fix/soak.mjs`, `tools/wave-delay/delays.mjs`), the balance tools (nothing under
+  `src/sim/` changed).
