@@ -43,13 +43,43 @@ const options = {
   minify: !serve && !process.argv.includes('--plain'),
   sourcemap: true,
   logLevel: 'warning',
-  // (the large paintings are WebP, data URLs as the PNGs are: bundled, so offline needs nothing in FILES)
+  // (PLAY-SIZE: a picture imported by the code is a file beside game.js (`art/<folder>/<name>-<hash>.<ext>`, listed in the service
+  //  worker's FILES from the build's own record) unless it is under SMALL_ART, which stays inside game.js as a data URL, as every
+  //  picture once did: `artFiles` below. The loader here is only the fallback for anything the plugin does not see)
   loader: { '.png': 'dataurl', '.webp': 'dataurl' },
+  assetNames: '[dir]/[name]-[hash]',
+  metafile: true,
   define: { __GAME_VERSION__: JSON.stringify(version), __TACTIC_ART__: JSON.stringify(TACTIC_ART), __STORE__: JSON.stringify(storeArg), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
 };
 
-// (the Assault's simulation in a Web Worker, phase 2: its own small bundle beside game.js, `src/assaultWorker.ts`)
-const workerOptions = { ...options, entryPoints: ['src/assaultWorker.ts'], outfile: `${out}/assault-worker.js` };
+// (PLAY-SIZE, docs/notes/play-size.md: game.js held every picture the code imports as base64, 208 MB of script that the page, and the
+//  app's WebView, parsed and kept in memory from the start. Each picture of SMALL_ART or more is now its own file, fetched when first
+//  drawn, as the paintings in the folders below always were; the small icons stay inline, so nothing small waits on a request. The
+//  files' names carry their content's hash, so a changed picture is a new file, and the service worker lists every one
+//  (`ART_FILES`, from the build's metafile) for offline play)
+const SMALL_ART = 16 * 1024;
+let ART_FILES = [];
+const artFiles = {
+  name: 'art-files',
+  setup(build) {
+    build.onLoad({ filter: /\.(png|webp)$/ }, (args) => {
+      const contents = readFileSync(args.path);
+      return { contents, loader: contents.length < SMALL_ART ? 'dataurl' : 'file' };
+    });
+    build.onEnd((result) => {
+      if (!result.metafile) return;
+      ART_FILES = Object.keys(result.metafile.outputs)
+        .filter((f) => /\.(png|webp)$/.test(f))
+        .map((f) => f.slice(out.length + 1))
+        .sort();
+      writeServiceWorker();
+    });
+  },
+};
+options.plugins = [artFiles];
+
+// (the Assault's simulation in a Web Worker, phase 2: its own small bundle beside game.js, `src/assaultWorker.ts`; it imports no pictures)
+const workerOptions = { ...options, plugins: [], metafile: false, entryPoints: ['src/assaultWorker.ts'], outfile: `${out}/assault-worker.js` };
 
 copyFileSync('src/art/icon-192.png', `${out}/icon-192.png`);
 copyFileSync('src/art/icon-512.png', `${out}/icon-512.png`);
@@ -289,11 +319,12 @@ writeFileSync(
     2,
   ),
 );
-// (network first, so a new version shows as soon as it's online; the cache only when offline)
-writeFileSync(
+// (network first, so a new version shows as soon as it's online; the cache only when offline. Written once game.js is built, when
+//  the pictures it left as files are known: `artFiles` above)
+const writeServiceWorker = () => writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'assault-worker.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${BLENDER_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${SUMMON_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ASSAULT_ART_FILES.map((f) => `'${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'assault-worker.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${BLENDER_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${SUMMON_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ASSAULT_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ART_FILES.map((f) => `'${f}'`).join(', ')}];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
 // (network first, but a connection that hangs, like a plane's, gives up after a few seconds and the saved copy is used;
