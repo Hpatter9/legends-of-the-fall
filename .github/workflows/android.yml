@@ -1,4 +1,5 @@
-# Builds the Android app (Capacitor wrapping out/web) and attaches the APK to a GitHub Release.
+# Builds the Android app (Capacitor wrapping out/web) and attaches the APK to a GitHub Release, with the Google Play bundle (AAB)
+# beside it (PLAY-SIZE: the web files in an install-time asset pack, so the base module fits Play's 200 MB; docs/notes/play-size.md).
 # Runs once a day, and only when main has moved since the newest release; or by hand (Actions, Build the Android app,
 # Run workflow), which always builds. Once a day keeps the account inside its free Actions minutes and storage.
 # See docs/notes/android-app.md.
@@ -110,6 +111,34 @@ jobs:
       - name: Name the APK
         run: cp android/app/build/outputs/apk/release/app-release.apk "legends-of-the-last-keep-${{ steps.ver.outputs.version }}.apk"
 
+      # PLAY-SIZE: the Google Play bundle, built after the APK from the Play web build (`--store play`: no update check outside
+      # Play), with the web files moved into the install-time asset pack `:web`. The APK above keeps its own web build and its files
+      # in the app module, as before. Only signed with the release key: a bundle signed with a CI machine's debug key could never be
+      # uploaded, so with no key it is skipped (with a warning) and the APK is released alone.
+      - name: Build the Play bundle
+        if: env.ANDROID_KEYSTORE_FILE != ''
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          npm run web:play
+          npx cap sync android
+          node tools/play-size/pack.mjs
+          (cd android && ./gradlew bundleRelease -PappVersionName=${{ steps.ver.outputs.version }} -PappVersionCode=${{ steps.ver.outputs.code }})
+          cp android/app/build/outputs/bundle/release/app-release.aab "legends-of-the-last-keep-${{ steps.ver.outputs.version }}.aab"
+      - name: No release key, so no Play bundle
+        if: env.ANDROID_KEYSTORE_FILE == ''
+        run: echo "::warning::No release key is set, so the Play bundle (AAB) was not built; the APK is released alone."
+
+      # (bundletool's own reading of what Play will download: the base module, the asset pack and the whole install. Fails the run
+      #  before anything is released if the base module is over Play's 200 MB)
+      - name: Check the Play bundle's sizes
+        if: env.ANDROID_KEYSTORE_FILE != ''
+        run: |
+          curl -sSLo "$RUNNER_TEMP/bundletool.jar" https://github.com/google/bundletool/releases/download/1.18.1/bundletool-all-1.18.1.jar
+          node tools/play-size/sizes.mjs "legends-of-the-last-keep-${{ steps.ver.outputs.version }}.aab" "$RUNNER_TEMP/bundletool.jar"
+
       # (no upload-artifact: the APK is on the release, and release files do not count against Actions storage)
 
       # The notes list the pull requests merged since the previous release: a merge commit's second line, or a squash
@@ -142,5 +171,7 @@ jobs:
         with:
           tag_name: v${{ steps.ver.outputs.version }}
           name: ${{ steps.ver.outputs.version }}
-          files: legends-of-the-last-keep-*.apk
+          files: |
+            legends-of-the-last-keep-*.apk
+            legends-of-the-last-keep-*.aab
           body_path: release-notes.md

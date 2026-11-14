@@ -18,6 +18,9 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!*.map'
         }
     }
+    // (PLAY-SIZE: the Play bundle carries the web files in the install-time asset pack `:web`, so its base module stays under Play's
+    //  200 MB; an APK build ignores asset packs. docs/notes/play-size.md)
+    assetPacks = [":web"]
     signingConfigs {
         // The release key comes from environment variables (the workflow sets them from repository secrets);
         // with none set, the release build is signed with the debug key so it still installs.
