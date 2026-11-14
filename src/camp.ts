@@ -1,6 +1,8 @@
 // The Battle tab: the company scouts its current enemy army from a cliffside command post.
 // All troop ranks, animation and atmosphere are decorative; they never step the battle.
 
+import { countDuchessTap, treatFoundToday } from './sim/duchessTaps';
+import { saveMeta } from './sim/meta';
 import { modeShown } from './sim/hiddenModes';
 import { tok } from './render/tok';
 import type { Meta } from './sim/meta';
@@ -885,15 +887,11 @@ export class CampScene {
       if (Math.abs(rx - this.goat.x) < 16 && ry > foot - 30 && ry < foot + 6) {
         const nudge = tapNudgeGoat(this.goat, this.now);
         if (nudge.hopped) {
-          try {
-            const raw = localStorage.getItem('legends.meta');
-            if (raw) {
-              const m = JSON.parse(raw);
-              m.duchessTaps = (m.duchessTaps ?? 0) + 1;
-              localStorage.setItem('legends.meta', JSON.stringify(m));
-            }
-          } catch {
-            /* ignore */
+          // (DUCHESS-TAPS: counted on the game's own meta and saved, not on a copy read from storage behind it: `sim/duchessTaps.ts`)
+          const tapped = this.meta;
+          if (tapped) {
+            countDuchessTap(tapped);
+            saveMeta(tapped);
           }
           if (nudge.nudgedFromNest) {
             this.claimHaystackTreat();
@@ -931,17 +929,10 @@ export class CampScene {
 
   private claimHaystackTreat(): void {
     const today = new Date().getFullYear() * 10000 + (new Date().getMonth() + 1) * 100 + new Date().getDate();
-    let claimed = false;
-    let meta: Meta | null = null;
-    try {
-      const raw = localStorage.getItem('legends.meta');
-      if (raw) {
-        meta = JSON.parse(raw);
-        if (meta && meta.duchessTreat === today) claimed = true;
-      }
-    } catch {
-      /* ignore */
-    }
+    // (DUCHESS-TAPS: today's treat is read from, and paid into, the game's own meta and saved. It was paid into a copy read from storage,
+    // and the game's next save took the stones or crowns back)
+    const meta = this.meta;
+    const claimed = !!meta && treatFoundToday(meta, today);
 
     const box = this.canvas.getBoundingClientRect();
     const g = this.goatGround(this.camp!);
@@ -962,11 +953,7 @@ export class CampScene {
       } else if (treat.kind === 'crowns') {
         meta.crowns = (meta.crowns ?? 0) + treat.amount;
       }
-      try {
-        localStorage.setItem('legends.meta', JSON.stringify(meta));
-      } catch {
-        /* ignore */
-      }
+      saveMeta(meta);
     }
     showQuip({ x, y }, treat.message, { who: 'Duchess', goat: true, hold: 3200 });
   }

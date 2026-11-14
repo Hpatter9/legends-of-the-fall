@@ -4,6 +4,7 @@ import { mythicFits } from './mythicRules';
 // merge button), never on their own; grade 4 is the top. At most five fight, the rest wait on the bench. Stage n meets a band of foes made tougher by n, and every fifth stage a boss (its own band, led by the boss). A win pays gold; a lost
 // fight ends the run. Pure rules: no Pixi, no DOM; the summon draws from a side stream of the run's seed.
 
+import { guardedSave } from './saveGuard';
 import { ritesSpent } from './chapelRooms';
 import { FALL_GOLD_FALLS, HEART_LIVES, LIVES } from './lives';
 import { roomOpen } from './rooms';
@@ -722,7 +723,7 @@ const KEY = 'legends.run';
 export const SLOT_KEYS = { tower: 'legends.tower', calamity: 'legends.calamity', quest: 'legends.questRun', muster: 'legends.muster' } as const;
 export type SlotKind = keyof typeof SLOT_KEYS;
 /** Save a run where it belongs: a tower or calamity run in its own slot, any other in the ordinary one. */
-export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => (run.relicBook = RELIC_BOOK) && store.setItem(run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' || run.mode?.kind === 'quest' || run.mode?.kind === 'muster' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run));
+export const saveSlot = (run: Run, store: Pick<Storage, 'setItem'> = localStorage): boolean => ((run.relicBook = RELIC_BOOK), guardedSave(store, run.mode?.kind === 'tower' || run.mode?.kind === 'calamity' || run.mode?.kind === 'quest' || run.mode?.kind === 'muster' ? SLOT_KEYS[run.mode.kind] : KEY, JSON.stringify(run)));
 /** The run saved in a mode's slot, if it is still going (a lost or cleared one is no run to carry on). */
 export function loadSlot(kind: SlotKind, store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
@@ -778,7 +779,8 @@ export const runFits = (r: Run): boolean => {
   const army = waveArmyOf(r);
   return !army || (r.stage >= 1 && r.stage <= army.waves.length);
 };
-export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(KEY, JSON.stringify(((run.relicBook = RELIC_BOOK), run)));
+/** GUARDED-SAVES: false if the storage refused it; never a throw (`saveGuard.ts`). */
+export const saveRun = (run: Run, store: Pick<Storage, 'setItem'> = localStorage): boolean => guardedSave(store, KEY, JSON.stringify(((run.relicBook = RELIC_BOOK), run)));
 export function loadRun(store: Pick<Storage, 'getItem'> = localStorage): Run | null {
   try {
     const r = JSON.parse(store.getItem(KEY) ?? 'null') as Run | null;
