@@ -36,7 +36,7 @@ export interface BossFxHost {
 
 interface Marks {
   view: GroundSet;
-  tiles: Graphics[];
+  tiles: Container[];
   t: number;
   ms: number;
 }
@@ -60,7 +60,7 @@ export class BossFx {
       const look = markLook(m.t, m.ms, calm);
       for (const g of m.tiles) {
         if (g.destroyed) continue;
-        const inner = g.children[0] as Graphics;
+        const inner = g.children[1] as Graphics;
         inner.scale.set(look.size);
         inner.alpha = look.fill / BOSS_BIG_LOOK.FILL_TO;
         g.alpha = look.edge;
@@ -82,7 +82,7 @@ export class BossFx {
   private warn(b: Battle, e: Sig): void {
     this.drop(e.n);
     const view = new GroundSet();
-    const tiles: Graphics[] = [];
+    const tiles: Container[] = [];
     const w = b.board.w;
     const spots: [number, number][] = [];
     const diamond = (g: Graphics, k: number) => g.poly([0, (-TH / 2 + 2) * k, (TW / 2 - 3) * k, 0, 0, (TH / 2 - 2) * k, (-TW / 2 + 3) * k, 0]);
@@ -93,10 +93,13 @@ export class BossFx {
       spots.push([x, y]);
       // (a dark red ground with a faint line round each tile and a bright rim round the patch; the fill grows from the middle as the blow
       // comes; on the tile's ground, under whoever stands there)
-      const g = patchTile(new Graphics(), 0, 0, rimOf(u, v), { colour: BOSS_BIG_LOOK.DARK, fill: 0.35, rimColour: BOSS_BIG_LOOK.RED, width: 3 });
+      // (RELEASE-AUDIT: the rim and its growing fill ride one container, the fill over the rim as before: a Graphics with a child is
+      //  deprecated in Pixi 8 and warned of in the console)
+      const g = new Container();
+      const rim = patchTile(new Graphics(), 0, 0, rimOf(u, v), { colour: BOSS_BIG_LOOK.DARK, fill: 0.35, rimColour: BOSS_BIG_LOOK.RED, width: 3 });
       const inner = new Graphics();
       diamond(inner, 1).fill({ color: BOSS_BIG_LOOK.RED, alpha: BOSS_BIG_LOOK.FILL_TO });
-      g.addChild(inner);
+      g.addChild(rim, inner);
       g.position.set(x, y);
       view.add(g, this.host.groundOf(u, v));
       tiles.push(g);
