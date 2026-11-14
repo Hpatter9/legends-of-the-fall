@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.603.0',
+    date: '2026-11-14',
+    title: 'A smaller download',
+    notes: ['The game\'s pictures are now stored in a lossless format, so the app and the web version download about 46 MB less, with every picture unchanged.'],
+  },
+  {
     version: '0.602.0',
     date: '2026-11-14',
     title: 'The war camps fight back',
