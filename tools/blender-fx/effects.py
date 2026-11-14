@@ -170,7 +170,7 @@ BIG = dict(
     burst=(dict(r=1.5, h=1.4, embers=26), 3.2, 3.4), halo=(dict(r=0.8, h=2.8, rays=9), 1.9, 3.3), dome=(dict(r=1.6), 1.8, 1.9),
     vines=(dict(r=1.5, h=1.7, n=8), 1.8, 2.3), sigil=(dict(r=1.7, points=7, skip=3, motes=14), 1.9, 1.5), spiral=(dict(r=0.9, h=2.4, bands=3), 1.6, 2.8),
     cross=(dict(r=1.9, z=1.5, wide=0.34), 2.6, 3.9), smoke=(dict(r=1.15, h=1.6, puffs=8), 2.2, 2.7), claws=(dict(r=1.9, z=1.5, wide=0.26), 2.6, 4.0),
-    sparks=(dict(r=1.8, n=14, z=0.9), 2.8, 3.0), bolt=(dict(h=3.6, r=1.6, forks=3), 2.3, 4.1), trail=(dict(length=3.6, w=0.5), 3.4, 1.2),
+    sparks=(dict(r=1.8, n=14, z=0.9), 2.8, 3.0), bolt=(dict(h=3.6, r=1.6, forks=3), 2.3, 4.1), dust=(dict(r=1.3, n=12, h=0.3), 1.8, 1.0), trail=(dict(length=3.6, w=0.5), 3.4, 1.2),
     gust=(dict(r=1.7, n=5, turn=1.5708), 3.2, 3.0), crack=(dict(r=2.2, arms=7, rubble=18), 2.6, 1.4), chains=(dict(r=1.4, n=5, links=10, h=1.8), 1.7, 2.3),
     ring=(dict(r=1.8, n=4, thick=0.07), 2.0, 0.5), flare=(dict(r=0.9, h=2.2, tongues=8), 2.0, 3.6), nova=(dict(r=1.7, n=22, h=1.1), 2.2, 1.6),
     strike=(dict(h=3.4, r=1.3, w=0.36), 2.2, 6.6), vortex=(dict(r=1.5, h=3.0, coils=5), 1.9, 3.4), eye=(dict(r=1.2, z=1.8), 2.0, 3.4),
@@ -249,7 +249,7 @@ WIND_OWN = dict(
     vael=[('eclipse', 0, 1.5), ('implode', 0.2, 1.3)], astrax=[('sigil', 0, 1.3), ('motes', 0.2, 1.4)], ilyra=[('halo', 0, 1.5), ('ring', 0, 1.2)],
     orrun=[('vines', 0, 1.5), ('ring', 0.1, 1.3)], nyxara=[('sigil', 0, 1.4), ('spiral', 0.3, 1.5)], kunoichi=[('smoke', 0, 1.3), ('veil', 0.2, 1.3)],
     wizard=[('cloud', 0, 1.3), ('flames', 0.3, 1.5)], beastmaster=[('eyes', 0, 1.4), ('swarm', 0.3, 1.4)], mercenary=[('implode', 0, 1.2), ('sparks', 0.5, 1.5)],
-    arcBlade=[('spiral', 0, 1.3), ('bolt', 0.2, 1.4)], samurai=[('ring', 0, 1.2), ('flare', 0.4, 1.8)], lancer=[('gust', 0, 1.4), ('trail', 0.3, 1.4)],
+    arcBlade=[('spiral', 0, 1.3), ('bolt', 0.2, 1.4)], samurai=[('ring', 0, 1.2), ('flare', 0.4, 1.8)], lancer=[('trail', 0, 1.4), ('dust', 0.2, 1.5)],
     minotaur=[('smoke', 0, 1.3), ('crack', 0.3, 1.4)], barbarian=[('flare', 0, 1.5), ('shout', 0.3, 1.4)], ninjaMonk=[('spiral', 0, 1.4), ('sparks', 0.4, 1.5)],
     buccaneer=[('chains', 0, 1.5), ('ring', 0, 1.0)], archer=[('shaft', 0, 1.4), ('gust', 0.2, 1.3)], dreadPirate=[('cloud', 0, 1.4), ('souls', 0.3, 1.5)],
     siegeBot=[('ring', 0, 1.4), ('strike', 0.5, 1.8)], lightningMage=[('cloud', 0, 1.5), ('sparks', 0.4, 1.5)], gunslinger=[('sparks', 0, 1.2), ('smoke', 0.3, 1.5)],
@@ -278,6 +278,11 @@ WIND_OPT = dict(falconer=dict(flock=dict(mode='circle', n=4, size=2.2, r=1.3)),
                 # (ON-FIGHTER: the Dragoon's fire is a pool at her feet, low tongues licking round her and a ring running out along
                 # the ground: a body-high wall of flame stood over her and behind her, and she was lost in it)
                 dragoon=dict(flames=dict(r=1.05, h=0.5, tongues=16, slim=0.3)),
+                # (the Lancer's wind is a streak along the ground and dust kicked up round his feet, none of it over his knees: a
+                # tall gust swept across his legs through the whole wind-up)
+                lancer=dict(dust=dict(r=1.2, n=12, h=0.3)),
+                # (the Lightning Mage's cloud is a dark storm cloud: she is pale, and the element's pale cloud lost her)
+                lightningMage=dict(cloud=dict(r=1.15, h=0.65, puffs=10, storm=True)),
                 # (the Wolf Bard's notes are large, and rise well over the hoops of his chord)
                 wolfBard=dict(notes=dict(size=2.8, n=6, h=2.6, r=1.1)))
 # ULT-AUDIT: every hero's aftermath is what its ability leaves, low where it struck and something lifting off it: no two heroes have

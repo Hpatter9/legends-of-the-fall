@@ -491,15 +491,23 @@ def meteor(c, r=0.42, tail=2.4):
 
 
 # 18. Cloud: a low bank of fumes that rolls and boils (a loop), bubbles popping in it.
-def cloud(c, r=1.5, h=0.7, puffs=9, bubbles=10):
-    m, cut = c.flame(1.8, 0.5, 1.0)
+def cloud(c, r=1.5, h=0.7, puffs=9, bubbles=10, storm=False):
+    # (`storm`: a storm cloud in storm's own dark grey, lit plainly whatever the element, so a pale caster standing in it stands
+    # out against it: the element's pale cloud round a pale mage lost her. It swells and thins by its own strength, as it has no
+    # flame's edge to burn away)
+    if storm:
+        _plain_lights(c)
+    m, cut = c.solid((0.13, 0.15, 0.21), (0.03, 0.04, 0.07), 0.1, 0.95, 0.0) if storm else c.flame(1.8, 0.5, 1.0)
     parts = [(c.sphere(1, m, 3), c.rnd.uniform(0, TAU), math.sqrt(c.rnd.uniform(0.05, 1)) * r * 0.75, c.rnd.uniform(0.45, 0.75), c.rnd.uniform(0, 1)) for _ in range(puffs)]
     rise = _rise(c, bubbles, r * 0.9, h * 2.2, 'hot', 0.05, 0.6)
 
     def step(t):
         c.tick(t, 1.2)
         k = 1 if c.loop else env(t, 0.2, 0.7)
-        cut.inputs[1].default_value = 0.1 + 0.5 * (1 - k)
+        if storm:
+            cut.outputs[0].default_value = k
+        else:
+            cut.inputs[1].default_value = 0.1 + 0.5 * (1 - k)
         for o, a, rad, s, ph in parts:
             w = math.sin((t + ph) * TAU)
             aa = a + 0.12 * w

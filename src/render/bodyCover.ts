@@ -145,7 +145,7 @@ export const BODY_COVER: Readonly<Record<string, number>> = {
   'ult-kunoichi-strike': 0.626,
   'ult-kunoichi-windup': 0.966,
   'ult-lancer-aftermath': 0.301,
-  'ult-lancer-windup': 0.289,
+  'ult-lancer-windup': 0.249,
   'ult-lightningMage-aftermath': 0.78,
   'ult-lightningMage-windup': 0.666,
   'ult-mercenary-aftermath': 0.782,

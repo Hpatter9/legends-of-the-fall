@@ -357,3 +357,16 @@ of the four moments.
 **What the audit does not cover:** one fight, one facing and one spot for each hero (a clip is not symmetric, so another facing
 can sit differently); 393 x 852 only; reduced motion not photographed; the first moment (200 ms) is just past the flash, so the
 flash itself was not judged.
+
+## The Lancer's gust and the Lightning Mage's cloud (the director's two from the audit)
+
+- **The Lancer.** His wind-up was a tall gust swept across the tile, through his legs, the whole wind-up (`lost` 0.23 to 0.26 at
+  every moment). It is now a streak of wind along the ground and dust kicked up round his feet (`trail`, then `dust` at
+  `h=0.3`): nothing of it over his knees. `lost` 0.01, 0.07, 0.01, 0.01 at the same four moments.
+- **The Lightning Mage.** Her cloud was the element's own pale blue-white round a pale mage. Thinning it was not the answer (the
+  director's word): the cloud is now a storm cloud in dark storm grey, lit plainly whatever the element (`storm` on the `cloud`
+  scene, used by her wind-up only), so she stands out against it; her sparks still play in it in the element's colours.
+
+Before over after, four moments each, at 2x: `docs/samples/blender-fx/windup-lancer-before-after-2x.jpg`,
+`windup-lightningMage-before-after-2x.jpg`. (The before and after fights are not the same fight: the party stood differently.)
+The storm cloud is plain: smooth grey lumps with little inside them. It does its work of contrast and no more.
