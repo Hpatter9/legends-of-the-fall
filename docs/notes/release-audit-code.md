@@ -273,7 +273,7 @@ The same tool, the same seeds, `origin/main` (`out/before`) against this branch 
 | Heap MB, waves 1 to 10 | 450, 452, 456, 457, 459, 460, 460, 463, 462, 465 | 450, 453, 455, 457, 460, 460, 462, 463, 464, 463 |
 | Pixi textures, waves 1 to 10 | 513, 731, 576, 602, 676, 633, 669, 590, 646, 607 | 529, 727, 576, 654, 667, 682, 676, 598, 600, 643 |
 | Twenty openings of the menus: heap / DOM / listeners / observers / intervals | 473 to 466 MB / 1,889 / 79 / 25 / 5, no growth | 473 to 461 MB / 1,889 / 79 / 26 / 5, no growth |
-| Console warnings (a menu sweep, ten waves; Playwright's own left out) | 8 (7 oscillator, 1 Pixi) | AFTER_WARN |
+| Console warnings (a menu sweep, ten waves; Playwright's own left out) | 8 (the oscillator warnings and a Pixi deprecation) | 2 after the first five fixes (the boss tile's deprecation); 0 after the sixth (a third run: Settings 12.3%, Armies 13.9%, a fight 63.4%, style 28.9%) |
 | Address to home screen | 40.0 s | 38.5 s |
 
 Reading it: the two fixed pages over the home screen drop to a quarter (what is left is the always-on loops of point 5). The fight's
