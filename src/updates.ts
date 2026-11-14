@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.598.0',
+    date: '2026-11-14',
+    title: 'New art across the first hour',
+    notes: ['New painted art: the starter\'s gatehouse, parchment speech bubbles, sigils on the summoning cards, the battle panel, the daily chest and the loading screen.', 'The Orc Chieftain, Bone Captain, Minotaur Champion and Gorgon Queen now have sprites of their own.'],
+  },
+  {
     version: '0.597.0',
     date: '2026-11-14',
     title: 'Faster start and far less memory',
