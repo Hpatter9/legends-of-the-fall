@@ -1,0 +1,33 @@
+# A one-off build check for the in-app purchase plugin: builds the APK and the AAB on a push to this branch only, and publishes
+# nothing (no release, no upload, no secrets). Deleted with the branch once it has passed.
+name: IAP Gradle check
+
+on:
+  push:
+    branches: [claude/iap-gradle-check]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - run: npm ci
+      - run: npm run web:play
+      - run: npx cap sync android
+      - name: Build the APK and the AAB (debug-signed)
+        working-directory: android
+        run: ./gradlew assembleRelease bundleRelease -PappVersionName=0.0.0 -PappVersionCode=1
