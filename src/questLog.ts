@@ -7,6 +7,7 @@
 // the first chain has been offered.
 
 import { glyphWord } from './paintedButton';
+import { menuPick, menuSection } from './ornateMenu';
 import { autoButton } from './autoAsk';
 import { canAutoQuest } from './sim/autoReplay';
 import { heroName } from './sim/heroNames';
@@ -63,45 +64,68 @@ export interface LogHooks {
   goTo?(dest: Destination): void;
 }
 
-/** Draw the log on a tab into the sheet's box. */
-export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogHooks): void {
-  box.className = 'hsheet qlog';
+/** Draw the log on a tab into `box`. FIRST-FIVE (the release audit's finding 11): the log is a standard ornate menu now (`home.ts`
+ *  `openQuests` opens the sheet, with its title and Back): `framed` draws only the body into the menu's body, the tabs as the menu's own
+ *  gilded choices. Left out, the log draws its own head and pills into a bare box (the art labs). */
+export function drawQuestLog(box: HTMLElement, m: Meta, tab: LogTab, hooks: LogHooks, framed = false): void {
+  if (framed) box.classList.add('qlog');
+  else box.className = 'hsheet qlog';
   box.replaceChildren();
-  const redraw = (t: LogTab = tab) => drawQuestLog(box, m, t, hooks);
-  const head = el('div', 'qlHead');
-  head.append(el('h3', '', 'Quests'));
-  const shut = el('button', 'qlShut', '‹ Back');
-  glyphWord(shut);
-  shut.setAttribute('aria-label', 'Close the quest log');
-  shut.addEventListener('click', hooks.close);
-  head.append(shut);
-  const tabs = el('div', 'qlTabs');
-  tabs.setAttribute('role', 'tablist');
+  const redraw = (t: LogTab = tab) => drawQuestLog(box, m, t, hooks, framed);
   const s = m.quests;
   const count: Partial<Record<LogTab, number>> = { active: s?.active.length ?? 0, board: s?.offers.length ?? 0 };
-  for (const t of LOG_TABS.filter((x) => x.shown || (x.id === 'eidolons' && chainsShown(m)))) {
-    const b = el('button', `qlTab${t.id === tab ? ' on' : ''}`, t.label);
-    b.setAttribute('role', 'tab');
-    b.setAttribute('aria-selected', String(t.id === tab));
-    if (t.id === 'active') {
-      // (QUESTS-3: three quests and one campaign: the campaign shows beside the count when one is taken)
-      const camps = (s?.active ?? []).filter((a) => isCampaign(questById(a.id)!)).length;
-      b.textContent = `Active ${(count.active ?? 0) - camps}/${ACTIVE_MAX}${camps ? ` + ${camps}/${CAMPAIGN_MAX}` : ''}`;
-    }
-    if (t.id === 'board' && count.board) b.append(el('i', 'qlDot', String(count.board)));
-    if (t.id === 'eidolons' && summonerWaiting(m)) b.append(el('i', 'qlDot', '!'));
-    b.addEventListener('click', () => {
-      dropping = null;
-      redraw(t.id);
-    });
-    tabs.append(b);
-  }
+  const shown = LOG_TABS.filter((x) => x.shown || (x.id === 'eidolons' && chainsShown(m)));
+  const label = (id: LogTab, word: string): string => {
+    if (id !== 'active') return word;
+    // (QUESTS-3: three quests and one campaign: the campaign shows beside the count when one is taken)
+    const camps = (s?.active ?? []).filter((a) => isCampaign(questById(a.id)!)).length;
+    return `Active ${(count.active ?? 0) - camps}/${ACTIVE_MAX}${camps ? ` + ${camps}/${CAMPAIGN_MAX}` : ''}`;
+  };
+  const badge = (b: HTMLElement, id: LogTab) => {
+    if (id === 'board' && count.board) b.append(el('i', 'qlDot', String(count.board)));
+    if (id === 'eidolons' && summonerWaiting(m)) b.append(el('i', 'qlDot', '!'));
+  };
+  const pick = (id: LogTab) => {
+    dropping = null;
+    redraw(id);
+  };
   const list = el('div', 'qlList');
+  if (framed) {
+    const grid = menuSection(box, undefined, undefined, 4);
+    grid.classList.add('qlPick');
+    grid.setAttribute('role', 'tablist');
+    grid.style.gridTemplateColumns = `repeat(${shown.length}, minmax(0, 1fr))`;
+    const rows = menuPick(grid, shown, shown.find((t) => t.id === tab), (t) => ({ title: label(t.id, t.label) }), (t) => pick(t.id));
+    rows.forEach((b, i) => {
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(shown[i].id === tab));
+      badge(b, shown[i].id);
+    });
+  } else {
+    const head = el('div', 'qlHead');
+    head.append(el('h3', '', 'Quests'));
+    const shut = el('button', 'qlShut', '‹ Back');
+    glyphWord(shut);
+    shut.setAttribute('aria-label', 'Close the quest log');
+    shut.addEventListener('click', hooks.close);
+    head.append(shut);
+    const tabs = el('div', 'qlTabs');
+    tabs.setAttribute('role', 'tablist');
+    for (const t of shown) {
+      const b = el('button', `qlTab${t.id === tab ? ' on' : ''}`, label(t.id, t.label));
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(t.id === tab));
+      badge(b, t.id);
+      b.addEventListener('click', () => pick(t.id));
+      tabs.append(b);
+    }
+    box.append(head, tabs);
+  }
   if (tab === 'active') drawActive(list, m, () => redraw(), hooks);
   else if (tab === 'board') drawBoard(list, m, () => redraw(), hooks);
   else if (tab === 'eidolons') drawEidolonsTab(list, m, hooks);
   else drawDone(list, m, hooks);
-  box.append(head, tabs, list);
+  box.append(list);
 }
 
 const empty = (list: HTMLElement, line: string) => list.append(el('p', 'qlEmpty', line));
