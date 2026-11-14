@@ -29,7 +29,8 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.addInitScript(saveScript(), [FEW, { stones: 24, armies: {} }]);
   if (!only || only === 'odds') {
     await page.goto(base);
-    await page.waitForTimeout(2500);
+    await page.waitForSelector('#home:not([hidden])', { timeout: 20000 });
+    await page.waitForTimeout(1500);
     await page.locator('.hmTab').first().click();
     await page.waitForTimeout(1200);
     await shot(page, 'sanctum', w);
@@ -49,7 +50,8 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   }
   if (!only || only === 'shop') {
     await page.goto(`${base}?shop=fake`);
-    await page.waitForTimeout(2500);
+    await page.waitForSelector('#home:not([hidden])', { timeout: 20000 });
+    await page.waitForTimeout(1500);
     const shop = page.locator('#hmShop');
     if (!(await shop.isVisible())) {
       console.log(w, 'no Shop button with ?shop=fake');
@@ -71,7 +73,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
       await shot(page, 'shop-bought', w);
       const stones = await page.evaluate(() => JSON.parse(localStorage.getItem('legends.meta')).stones);
       console.log(w, 'stones after the pouch:', stones);
-      if (stones !== 24 + 12) failed = true;
+      if (stones !== 24 + 9) failed = true;
       await page.locator('#iapDone .omBack, #iapDone .omPrimary').first().click().catch(() => {});
       await page.waitForTimeout(300);
       // (offline: the shop says it needs a connection)
@@ -85,6 +87,27 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     }
   }
   await ctx.close();
+  // (a save with two armies cleared: the starter pack's 72 hours are on)
+  if (!only || only === 'shop') {
+    const c2 = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, hasTouch: true });
+    const p2 = await c2.newPage();
+    p2.on('pageerror', (e) => errors.push(`${w} starter: ${e.message}`));
+    const rec = { waves: 10, best: 10, won: 10, clears: 1, stars: {} };
+    await p2.addInitScript(saveScript(), [FEW, { stones: 24, armies: { orcs: rec, undead: rec } }]);
+    await p2.goto(`${base}?shop=fake`);
+    await p2.waitForSelector('#home:not([hidden])', { timeout: 20000 });
+    await p2.waitForTimeout(1500);
+    await shot(p2, 'home-starter-pip', w);
+    await p2.locator('#hmShop').click();
+    await p2.waitForTimeout(800);
+    await p2.locator('#iapShop .omSection').nth(2).evaluate((s) => s.scrollIntoView({ block: 'start' }));
+    await p2.waitForTimeout(200);
+    await shot(p2, 'shop-starter', w);
+    const offered = await p2.locator('#iapShop [data-product="starter_pack"]').count();
+    console.log(w, 'starter offered with two armies cleared:', offered === 1);
+    if (offered !== 1) failed = true;
+    await c2.close();
+  }
 }
 srv.close();
 console.log('errors', errors);

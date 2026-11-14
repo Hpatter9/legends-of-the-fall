@@ -14,6 +14,8 @@ const out = process.argv.indexOf('--out') >= 0 ? process.argv[process.argv.index
 // (STORE-READY: `--store play` builds the Google Play version, which never looks for updates outside Play: `src/appUpdate.ts`,
 //  `docs/notes/store-readiness.md`. With no flag the build is the web page and the GitHub release's app, as before)
 const storeArg = process.argv.indexOf('--store') >= 0 ? process.argv[process.argv.indexOf('--store') + 1] : '';
+// (IAP, docs/notes/iap.md: the Play build reads RevenueCat's public Android key from REVENUECAT_ANDROID_KEY, which the workflow passes from a
+//  GitHub secret; no other build carries it, and none is committed. Without it the Play build's Shop says it is not set up)
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 let commit = 'dev';
 try {
@@ -49,7 +51,7 @@ const options = {
   loader: { '.png': 'dataurl', '.webp': 'dataurl' },
   assetNames: '[dir]/[name]-[hash]',
   metafile: true,
-  define: { __GAME_VERSION__: JSON.stringify(version), __TACTIC_ART__: JSON.stringify(TACTIC_ART), __STORE__: JSON.stringify(storeArg), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
+  define: { __GAME_VERSION__: JSON.stringify(version), __TACTIC_ART__: JSON.stringify(TACTIC_ART), __STORE__: JSON.stringify(storeArg), __RC_KEY__: JSON.stringify(storeArg === 'play' ? process.env.REVENUECAT_ANDROID_KEY ?? '' : ''), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
 };
 
 // (PLAY-SIZE, docs/notes/play-size.md: game.js held every picture the code imports as base64, 208 MB of script that the page, and the

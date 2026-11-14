@@ -25,6 +25,7 @@ import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
 import { openStall } from './stallView';
+import { lookStarter, openTreasury, shopOn, starterOnOffer, startPurchases } from './iapView';
 import { closeFinished } from './screens';
 import { dailyBossName } from './sim/daily';
 import { dailyTheme } from './sim/dailyThemes';
@@ -294,6 +295,15 @@ export class Home {
     this.pages.get('battle')!.append(this.camp.root);
     $('hmTrophy').addEventListener('click', () => this.openAchievements());
     $('hmGear').addEventListener('click', () => openSettings());
+    // (IAP: the Shop's coin medallion, only in a build that sells (the Play app, or the web build with ?shop=fake); the store's record is read
+    //  once at start, so a purchase the app closed before granting arrives)
+    if (shopOn()) {
+      const shop = $('hmShop');
+      shop.hidden = false;
+      shop.replaceChildren(icon(ICONS.gold, 'hmShopIco'));
+      shop.addEventListener('click', () => openTreasury(this.meta, () => this.refresh()));
+      void startPurchases(this.meta, () => this.refresh());
+    }
     $('hmSubBack').addEventListener('click', () => this.closeSub());
     glyphWord($('hmSubBack'));
     $('hmSheet').addEventListener('click', (e) => e.target === $('hmSheet') && this.closeSheet());
@@ -697,6 +707,11 @@ export class Home {
     // (PAINTED-BUTTONS: the painted crown and stone medallions on the chips)
     chipCount('hmCrowns', pbUrl('crowns'), m.crowns);
     chipCount('hmStones', pbUrl('stones'), stonesOf(m));
+    // (IAP: the starter pack's 72 hours begin with the second army cleared; the Shop's medallion wears the pip while it is on offer)
+    if (shopOn()) {
+      lookStarter(m);
+      $('hmShop').classList.toggle('new', starterOnOffer(m));
+    }
     this.hooks.onTopBar?.();
     // (Dynasties: the season's chip in the top bar's second row; redrawn only when the season changes, so its icon never blinks)
     if (m.dynasty) {
