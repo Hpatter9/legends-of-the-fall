@@ -26,8 +26,14 @@ jobs:
         with:
           packages: 'platform-tools'
       - run: npm ci
-      - run: npm run web:play
-      - run: npx cap sync android
-      - name: Build the APK and the AAB (debug-signed)
-        working-directory: android
-        run: ./gradlew assembleRelease bundleRelease -PappVersionName=0.0.0 -PappVersionCode=1
+      - name: The GitHub APK, as android.yml builds it
+        run: |
+          npm run web
+          npx cap sync android
+          (cd android && ./gradlew assembleRelease -PappVersionName=0.0.0 -PappVersionCode=1)
+      - name: The Play bundle, as android.yml builds it (debug-signed here)
+        run: |
+          npm run web:play
+          npx cap sync android
+          node tools/play-size/pack.mjs
+          (cd android && ./gradlew bundleRelease -PappVersionName=0.0.0 -PappVersionCode=1)
