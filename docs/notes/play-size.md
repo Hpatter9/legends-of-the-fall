@@ -143,7 +143,8 @@ saved is the 208 MB script held as source plus its strings: on a 3 to 4 GB phone
 **The same look.** Every home tab, the spellbook, the War Room, a deploy (the same run seed) and a fight a few seconds in, with
 reduced motion, photographed in both builds and compared pixel by pixel: 0.14% differs on each, which is the version line top right
 (it names the commit); a first run with the same commit on both showed 0.00% on every screen but the fight (0.18%, the fight's own
-timing). No page errors, no failed requests, no broken `<img>` in either.
+timing). No page errors, no failed requests, no broken `<img>` in either. Again at 0.595.0 (main's build against the same with B,
+after the release art landed): 0.13% on every screen, the version line; offline again 0 missing, 0 failed.
 
 **Offline.** One online visit: the service worker's cache held all 1,867 files in `FILES` (0 missing). Then the network cut and the
 page loaded again: the same tour, 0 page errors, 0 failed requests, 0 broken pictures. (The app does not use the service worker; it
@@ -198,7 +199,7 @@ already shipped were not measured.
 
 ### What ran (B and C)
 
-- `npm run typecheck`; the full `npm test` (3,404 pass, 0 fail) on 0.594.0 with B; `npm test -- play-size painted-buttons blender-fx
+- `npm run typecheck`; the full `npm test` on 0.594.0 with B (3,404 pass) and again on 0.595.0 (3,408 pass, 0 fail); `npm test -- play-size painted-buttons blender-fx
   epic-music`; `npm run web`, `npm run web:play`, and `npm run dev` (it serves the art files and lists all 416 in `sw.js`).
 - `tools/play-size/compare.mjs` (3 start runs each, the screens, offline), `tools/wave-delay/delays.mjs` (twice each way),
   `tools/freeze-fix/soak.mjs --minutes 20 --waves 40`, `tools/march-stays/film.mjs`.
