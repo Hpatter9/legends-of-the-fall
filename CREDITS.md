@@ -72,7 +72,7 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
   - Each track is resampled to 24 kHz, seamlessly crossfaded, and encoded to Opus with a 1.5 s wrap tail. The older synthesised loops (`src/render/musicScore.ts`, rendered in the page by `src/render/musicBake.ts`) remain as a fallback if a browser cannot decode the files.
 - **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API, except eight recorded combat sounds (sword and
   blunt hits, a shield block, a crit, a bowstring, an arrow hit, a death and an explosion) embedded in `src/render/combatAudioBank.ts`
-  (PR #150, given as CC0). Their original source and authors were not recorded with the PR and should be named here.
+  (PR #150, given as CC0). **Licence unconfirmed**: their original source and authors were not recorded with the PR and should be named here.
 - **The king's spells' sounds** (`src/sfx/*.opus`, 44 files): original, synthesised offline by `tools/spell-sfx/` for this game (using the
   filters, hall and instruments of `tools/epic-music/`). No samples or third-party audio went in.
 
@@ -109,9 +109,9 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
 - The Paladin, Cleric, Druid, Barbarian, Ranger, Warlock, Illusionist and Gunslinger (three looks each, one per grade) are
   **generated with PixelLab** (see below). The Himeko Sutori layered sheets they replace are gone, so
   `tools/compose-class-heroes.cjs` no longer makes the `cls_*` hero sheets (it now makes only the Last Stand's king).
-- The **Golem Forge** army's golems (`golem_stone/iron/crystal/magma/sapphire/forge.png`) are figures 6, 18, 20, 27, 32 and 15 of the same **Golems and elementals** pack by batareya (no licence file in the pack folder: check the author's terms before any public release). The pack has only still figures, so `tools/golems/cut.py` moves each by whole pixels for the walk, attack, idle, hurt and dead rows, with a last lying frame made by an exact 90-degree turn; nothing is resampled. The **Yokai Night Parade** troops and the Nine-Tailed Fox use the Kitsune, Karasu Tengu and Yamabushi Tengu sheets (Free Yokai Character Sprites, Craftpix) listed above.
+- The **Golem Forge** army's golems (`golem_stone/iron/crystal/magma/sapphire/forge.png`) are figures 6, 18, 20, 27, 32 and 15 of the same **Golems and elementals** pack by batareya (**licence unconfirmed**: no licence file in the pack folder; check the author's terms before any public release). The pack has only still figures, so `tools/golems/cut.py` moves each by whole pixels for the walk, attack, idle, hurt and dead rows, with a last lying frame made by an exact 90-degree turn; nothing is resampled. The **Yokai Night Parade** troops and the Nine-Tailed Fox use the Kitsune, Karasu Tengu and Yamabushi Tengu sheets (Free Yokai Character Sprites, Craftpix) listed above.
 - The **foes remade for the art cleanup** (`forest_boss_1-3`, `boar_king`, `devil_leader`, `shaman_king`, `golem_*`, `satyr_1-3`) and the new **walk and hurt rows of the 16 remade heroes** are generated the same way (PixelLab: bases from Craftpix style references, `/animate-with-text-v3` clips, native pixels, hard alpha, lying last death frame by `lie.py`). Tools: `tools/pixellab/foes/` and `tools/pixellab/heroes/polish.py`; see `docs/notes/art-cleanup.md`.
-- The Druid's treant (`cls_treant.png`) is one picture from the **Golems and elementals** pack by batareya (the pack folder has no licence file: check the author's terms before any public release).
+- The Druid's treant (`cls_treant.png`) is one picture from the **Golems and elementals** pack by batareya (**licence unconfirmed**: the pack folder has no licence file; check the author's terms before any public release).
 
 ## Magic effects (the spells, the skills and the crits)
 
@@ -349,7 +349,7 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
 
 Duchess is the town's goat from Chronos Settlement (`hpatter9/little-town`), and now of the camp, the tavern and the battlefield too. Her sheet
 is the one Chronos's cutscenes use (three steps walking left, three walking right), copied as it is. It is **whtdragon**'s RPG Maker MV white goat
-(`animals/goats.png`). The pack folder has no licence file: check whtdragon's posted terms of use before any public release (the same note as
+(`animals/goats.png`). **Licence unconfirmed**: the pack folder has no licence file; check whtdragon's posted terms of use before any public release (the same note as
 Chronos's CREDITS.md).
 
 Her fighting sheet (`src/art/units/duchess_goat.png`, for the rare fight she joins: `tools/duchess/compose-duchess.py`) keeps that goat's walk and idle
@@ -360,7 +360,7 @@ headbutt and her fall are **generated with PixelLab** from her own standing fram
 
 The wolf (and the black dire wolf) are the grey and black wolves of **whtdragon**'s RPG Maker MV animals pack (`animals/wolfdog.png`, from the private assets repository `hpatter9/chronos-assets`), the
 right-facing row of three walking frames, scaled up 2x with nearest-neighbour. The script builds the game's rows from them (a step cycle, a lunge made of the stride shifted forward, an idle, a hurt
-frame brightened, and a dead frame rolled onto its side). The pack folder has no licence file: the same note as Duchess the goat, which comes from the same pack: check whtdragon's posted terms of use before any public release.
+frame brightened, and a dead frame rolled onto its side). **Licence unconfirmed**: the pack folder has no licence file, the same note as Duchess the goat, which comes from the same pack: check whtdragon's posted terms of use before any public release.
 
 ## The sprite Eidolons on the board (`src/art/eidolons/sprites/`; `tools/eidolon-call-2/cut_sprites.py`, EIDOLON-CALL-2)
 
