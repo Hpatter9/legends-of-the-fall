@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.602.0',
+    date: '2026-11-14',
+    title: 'The war camps fight back',
+    notes: ['The army holds are retuned for a properly levelled party: a typical storming now wins about three times in four and costs much of your host.', 'The Last Hold and the Mythic re-storms are tuned to match.'],
+  },
+  {
     version: '0.601.0',
     date: '2026-11-14',
     title: 'Every combat sound is the game\'s own',
