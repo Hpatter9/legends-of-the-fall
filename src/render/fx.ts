@@ -37,6 +37,7 @@ import { rankOf, SPELLS, type SpellId } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { at, depth, facesRight, getFrame, FOOT, HH, TH, TW, type Frame } from './iso';
+import { strokeLay } from './emitRules';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SPELL_GLOW, SPELL_WORD, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -1433,17 +1434,25 @@ export class Fx {
     if (!by || !to || !attacker) return;
     // (a long weapon thrusts out at the foe)
     if (defOf(attacker).range === 2 && !defOf(attacker).shot) this.thrust(by, to);
+    // (EMIT-POINTS: the stroke lies across the weapon's reach, half way from the weapon's end to the struck fighter's middle; where
+    // the attacker's sheet has no reach it is on the struck fighter's middle, as before)
+    const reach = by.reachPoint();
+    const [ax, ay] = reach ?? [by.x, by.y - by.tall * 0.5];
+    const [sx, sy] = [to.x, to.y - to.tall * 0.5];
+    const lay = reach ? strokeLay(ax, ay, sx, sy) : { x: sx, y: sy };
+    // (it is turned along the line from body to body, as it was: from the weapon's end to the one struck is too short a line to
+    // take a direction from, and turned strokes almost upright)
     const dx = to.x - by.x;
-    const dy = (to.y - to.tall * 0.5) - (by.y - by.tall * 0.5);
+    const dy = sy - (by.y - by.tall * 0.5);
     const left = dx < 0;
     const turn = left ? Math.atan2(-dy, -dx) : Math.atan2(dy, dx);
     // (SWINGS: the weapon's rendered stroke, turned to the blow; the painted slash where its clip is not held)
     const swing = swingClip(slashOf(defOf(attacker).name));
-    if (swing && this.bfxFlash(swing.key, to.x, to.y - to.tall * 0.5, swing.size, swing.ms, turn, left)) return;
+    if (swing && this.bfxFlash(swing.key, lay.x, lay.y, swing.size, swing.ms, turn, left)) return;
     this.particles.spawn({
       frames: VFX[slashOf(defOf(attacker).name)],
-      x: to.x,
-      y: to.y - to.tall * 0.5,
+      x: lay.x,
+      y: lay.y,
       scale: 2,
       frameMs: 45,
       rotation: turn,
@@ -4141,7 +4150,9 @@ export class Fx {
 
   /** A spear's thrust: the shaft runs out two thirds of the way to the foe and snaps back. */
   private thrust(by: UnitSprite, to: UnitSprite): void {
-    const [x0, y0, x1, y1] = [by.x, by.y - by.tall * 0.5, to.x, to.y - to.tall * 0.5];
+    // (EMIT-POINTS: the shaft runs out from the weapon's own height, not the body's middle)
+    const reach = by.reachPoint();
+    const [x0, y0, x1, y1] = [by.x, reach ? reach[1] : by.y - by.tall * 0.5, to.x, to.y - to.tall * 0.5];
     const sp = new Sprite(arrow);
     sp.anchor.set(0.5);
     sp.scale.set(1.1);

@@ -3,6 +3,7 @@
 // as the shot leaves), for the view from the front and the view from behind, as pixels of the sheet from the middle of the frame's
 // bottom edge (the feet): x towards the way the figure faces, y upwards. `tools/emit-points/anchors.json` is the same table with
 // `tools/emit-points/check.py`, which checks each against the sheet's drawn pixels and draws them. Pure: the tests read it.
+import { REACH } from './reachData';
 
 /** What the point is: a gun's or a crossbow's muzzle, the hand on the bow, the head of a staff or wand (or a mace raised to cast), a
  *  casting or throwing hand, a mouth, a blade. */
@@ -98,4 +99,22 @@ export function emitOffset(own: string, sheet: string, rear: string | undefined)
  *  when it is mirrored to face the other way), so the point is mirrored with it and grows with it. */
 export function emitWorld(x: number, y: number, at: readonly [number, number], sx: number, sy: number): [number, number] {
   return [x + at[0] * sx, y - at[1] * Math.abs(sy)];
+}
+
+/** MELEE: where a fighter's weapon reaches on the frame on show as its blow lands (`reachData.ts`, read off every sheet by
+ *  `tools/emit-points/reach.py`: the forward-most thing drawn). For the fighter's own sheet or its look from behind; undefined for
+ *  another look or a sheet with no attack row: the caller keeps the old place. */
+export function reachOffset(own: string, sheet: string, rear: string | undefined): readonly [number, number] | undefined {
+  const e = REACH[own];
+  if (!e) return undefined;
+  return sheet === own ? e.front : rear !== undefined && sheet === rear ? e.back : undefined;
+}
+
+/** How far from the weapon's reach towards the struck fighter's middle a melee stroke is centred: half way, so it lies across the
+ *  weapon's end and the near side of the one struck, not on the struck fighter's middle. */
+export const STROKE_AT = 0.5;
+/** Where a stroke is centred, for a weapon reaching to (rx, ry) and a struck fighter's middle at (tx, ty). (Its turn stays the line
+ *  from body to body: from the weapon's end to the one struck is too short a line to take a direction from.) */
+export function strokeLay(rx: number, ry: number, tx: number, ty: number): { x: number; y: number } {
+  return { x: rx + (tx - rx) * STROKE_AT, y: ry + (ty - ry) * STROKE_AT };
 }

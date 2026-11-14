@@ -26,7 +26,8 @@ test('every weapon has its rendered stroke: small, quick, and in the atlases eve
 
 test('the stroke goes on a fighter by the ON-FIGHTER rule, and the painted slash stays as the fallback', () => {
   const fx = readFileSync('src/render/fx.ts', 'utf8');
-  assert.match(fx, /if \(swing && this\.bfxFlash\(swing\.key, to\.x, to\.y - to\.tall \* 0\.5, swing\.size, swing\.ms, turn, left\)\) return;/);
+  // (EMIT-POINTS, the owner's order: the stroke lies across the weapon's reach, not on the struck fighter's middle; the call follows)
+  assert.match(fx, /if \(swing && this\.bfxFlash\(swing\.key, lay\.x, lay\.y, swing\.size, swing\.ms, turn, left\)\) return;/);
   assert.match(fx, /frames: VFX\[slashOf\(defOf\(attacker\)\.name\)\],/);
   // (the flash: its first frames over the body as they are, the rest by the rule)
   assert.match(fx, /const first = Math\.max\(1, Math\.min\(frames\.length - 1, Math\.round\(UNDER\.FLASH_MS \/ per\)\)\);/);
