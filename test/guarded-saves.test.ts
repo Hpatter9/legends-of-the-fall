@@ -109,3 +109,37 @@ test('the page listens before its first save, and tells of an unreadable save be
   assert.ok(watch > 0 && watch < load && load < firstSave);
   assert.match(src, /if \(unreadable !== null\) await tellUnreadable\(keepUnreadable\(unreadable\)\)/);
 });
+
+test('a damaged run save is handed over and kept aside; a good one, none or an empty slot is not', async () => {
+  const { loadRun: load, RUN_UNREADABLE_KEY } = await import('../src/sim/run');
+  const { armyRun } = await import('../src/sim/run');
+  const seen: string[] = [];
+  const cut = store();
+  cut.data.set('legends.run', '{"roster":[{"id":1,"kind":"knight"');
+  assert.equal(load(cut, (raw) => seen.push(raw)), null);
+  assert.deepEqual(seen, ['{"roster":[{"id":1,"kind":"knight"']);
+  const notRun = store();
+  notRun.data.set('legends.run', '{"hello":1}');
+  load(notRun, (raw) => seen.push(raw));
+  assert.equal(seen.length, 2, 'readable text that is no run is damaged too');
+  const good = store();
+  saveRun(armyRun(11, 'orcs', ['knight', 'archer', 'mage', 'cleric', 'rogue']), good);
+  assert.ok(load(good, (raw) => seen.push(raw)), 'a good run loads');
+  load(store(), (raw) => seen.push(raw));
+  const empty = store();
+  empty.data.set('legends.run', 'null');
+  load(empty, (raw) => seen.push(raw));
+  assert.equal(seen.length, 2, 'neither a good run, no run nor an empty slot is damaged');
+  const s = store();
+  assert.equal(keepUnreadable('broken run', s, RUN_UNREADABLE_KEY), true);
+  assert.equal(s.data.get(RUN_UNREADABLE_KEY), 'broken run');
+  assert.equal(s.data.has(UNREADABLE_KEY), false, 'the run is kept apart from the meta');
+});
+
+test('the page keeps a damaged run aside and tells the player, with its own words', async () => {
+  const { RUN_UNREADABLE_WORDS } = await import('../src/saveNotice');
+  assert.match(RUN_UNREADABLE_WORDS.kept, /heroes, crowns and castle are safe/);
+  const src = readFileSync('src/main.ts', 'utf8');
+  assert.match(src, /loadRun\(localStorage, \(raw\) => \(runRaw = raw\)\)/);
+  assert.match(src, /if \(runRaw !== null\) await tellUnreadable\(keepUnreadable\(runRaw, localStorage, RUN_UNREADABLE_KEY\), 'run'\);/);
+});

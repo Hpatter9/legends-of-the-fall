@@ -27,4 +27,7 @@ save and readable text that is no save), the backup kept once, the words, and th
 card and the card is shown; a cut-off save shows the card, its text is kept under `legends.meta.unreadable`, and the game starts on a
 fresh save.
 
-Not done: a damaged run save (`legends.run`) is still read as no run, as before (the run is lost, the meta is not).
+A damaged run save (`legends.run`, RELEASE-FIXES-3) is kept the same way: `loadRun`'s second argument, kept under
+`legends.run.unreadable` (the first only), and a card ("Your run could not be read ... Your heroes, crowns and castle are safe", "Carry on")
+before the game goes on without it. A run that reads but cannot go on here (`runFits`: an old board, say) is dropped quietly as before:
+that is no damage. `tools/release-audit/robust.mjs --only run`.

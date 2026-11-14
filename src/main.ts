@@ -14,7 +14,7 @@ import * as toolkit from './sim/toolkit';
 import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
-import { hasLives, livesLeft, livesMax, settleLives, isCastHero, canJoin, sitsOut, armyOfRun, armyRun, benchFull, boostOf, chainOf, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, loadSlot, noteFight, paidOf, recycle, recycleValue, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
+import { hasLives, livesLeft, livesMax, settleLives, isCastHero, canJoin, sitsOut, armyOfRun, armyRun, benchFull, boostOf, chainOf, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, RUN_UNREADABLE_KEY, loadSlot, noteFight, paidOf, recycle, recycleValue, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
 import { climbXpView, heroLevel, localBoost } from './sim/climb';
 import { calamityRun } from './sim/modes';
 import { CAL_MAPS } from './sim/calamity';
@@ -251,6 +251,7 @@ import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHo
 import { hornEcho } from './sim/relicSets';
 import { EIDOLON_IDS } from './sim/eidolons';
 import { openScreen, openScreens } from './screens';
+import { offerUpdate, watchUpdate } from './updateReady';
 import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
 import { formationOf, formationSpots, setFormations, shapeFits, type Formation } from './sim/formations';
@@ -515,7 +516,10 @@ class Game {
     const closed = migrateOldClimb(this.meta, localStorage);
     if (closed) saveMeta(this.meta);
     // (a fresh page with no saved run shows the first army's board behind the home screen)
-    this.run = (!seed && loadRun()) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
+    // (GUARDED-SAVES: a damaged run save is kept aside and the player told, as the meta's is; the Keep goes on without that run)
+    let runRaw: string | null = null;
+    this.run = (!seed && loadRun(localStorage, (raw) => (runRaw = raw))) || armyRun(seed || (Date.now() % 100000) + 1, ARMIES[0].id, this.meta.party, this.meta.castle);
+    if (runRaw !== null) await tellUnreadable(keepUnreadable(runRaw, localStorage, RUN_UNREADABLE_KEY), 'run');
     // Explicit seeded previews leave ordinary and already-saved runs on their original maps.
     const scenario = query.get('scenario');
     if (seed && isScenario(scenario) && this.run.mode?.kind === 'army') this.run.mode.scenario = scenario;
@@ -834,8 +838,19 @@ class Game {
       //  here, the old fight's 'won' still on the board, and its fight never moved; EIDOLON-CHAINS)
       else if (this.homeUp && this.b.phase !== 'fight') this.app.ticker.stop();
     };
-    // (the tips on the home screen are still looked after, a few times a second)
-    setInterval(() => this.homeUp && tips.update(), 250);
+    // (UPDATE-READY: a new version's worker that has taken over is offered as a reload, on the home screen only: `updateReady.ts`)
+    watchUpdate(() => ({
+      home: this.homeUp,
+      assault: !!document.getElementById('assaultScene'),
+      fighting: this.b.phase === 'fight',
+      covered: openScreens().length > 0 || !!document.querySelector('.omVeil, #hmSheet:not([hidden]), #hmSub:not([hidden]), #settings:not([hidden]), #gacha:not([hidden]), #result:not([hidden])'),
+    }));
+    // (the tips on the home screen are still looked after, a few times a second; and the new version's card, when one is waiting)
+    setInterval(() => {
+      if (!this.homeUp) return;
+      tips.update();
+      offerUpdate();
+    }, 250);
     new MutationObserver(sync).observe(home, { attributes: true, attributeFilter: ['hidden'] });
     sync();
     // (the tower's map comes and goes without the home screen changing: the ambience follows it too)

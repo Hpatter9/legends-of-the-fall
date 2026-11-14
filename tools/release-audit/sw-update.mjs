@@ -78,7 +78,10 @@ const gameHits = () => hits.get('game.js') ?? 0;
 await page.goto(URL, { timeout: 300000 });
 await ready();
 await settled(name1);
-check('first visit', (await shown()).includes(name1.split(' ')[0]), `version shown "${await shown()}"; game.js fetched ${gameHits()} times (the page, then the worker's install)`);
+// (UPDATE-READY: the first visit's worker taking charge is no new version: no card)
+await page.waitForTimeout(1500);
+const cardFirst = await page.evaluate(() => !!document.getElementById('updateReady'));
+check('first visit', (await shown()).includes(name1.split(' ')[0]) && !cardFirst, `version shown "${await shown()}"; game.js fetched ${gameHits()} times (the page, then the worker's install)`);
 
 // 2. a start online again: nothing of the version fetched
 let before = gameHits();
@@ -95,6 +98,23 @@ await ready();
 const during = await shown();
 await settled(name2);
 check('next version found', during.includes(name1.split(' ')[0]) && gameHits() - before === 1, `this start shows "${during}" (the old, from the phone); the new worker fetched game.js ${gameHits() - before} time, fresh, and took over`);
+
+// 3b. UPDATE-READY: on the home screen the card says so; its Reload is the new version at once, from the phone
+let card = false;
+try {
+  await page.waitForSelector('#updateReady .omPrimary', { timeout: 15000 });
+  card = true;
+} catch {
+  /* no card */
+}
+const cardWords = card ? await page.evaluate(() => document.querySelector('#updateReady .omTitle')?.textContent) : '';
+before = gameHits();
+if (card) {
+  await Promise.all([page.waitForNavigation({ timeout: 300000 }), page.click('#updateReady .omPrimary')]);
+  await ready();
+}
+const afterReload = await shown();
+check('the home screen offers it', card && cardWords === 'A new version is ready' && afterReload.includes('update-test') && gameHits() === before, `card "${cardWords}"; after its Reload the version shown is "${afterReload}"; game.js fetched ${gameHits() - before} times`);
 
 // 4. the start after: the new version, from the phone
 before = gameHits();

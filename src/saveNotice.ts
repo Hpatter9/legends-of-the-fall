@@ -29,6 +29,12 @@ export const UNREADABLE_WORDS = {
   lost: 'The saved game on this phone is damaged, so the Keep begins afresh. The old save could not be kept aside (the phone’s storage is full).',
 };
 
+export const RUN_UNREADABLE_WORDS = {
+  title: 'Your run could not be read',
+  kept: 'The run in progress on this phone is damaged, so it cannot go on. Your heroes, crowns and castle are safe. The run has not been thrown away: it is kept on this phone, untouched, in case it can be mended.',
+  lost: 'The run in progress on this phone is damaged, so it cannot go on. Your heroes, crowns and castle are safe. The run could not be kept aside (the phone’s storage is full).',
+};
+
 let told = false;
 
 /** Listen for a failed save from now on: the first one puts up the card, the rest pass quietly. */
@@ -51,13 +57,15 @@ export function watchSaves(): void {
   });
 }
 
-/** Tell the player their save could not be read (`kept`: its text is kept aside). Resolves when the card is closed. */
-export function tellUnreadable(kept: boolean): Promise<void> {
+/** Tell the player their save (or, `what` 'run', their run in progress) could not be read (`kept`: its text is kept aside). Resolves when the
+ *  card is closed. */
+export function tellUnreadable(kept: boolean, what: 'save' | 'run' = 'save'): Promise<void> {
+  const words = what === 'run' ? RUN_UNREADABLE_WORDS : UNREADABLE_WORDS;
   return new Promise((done) => {
-    const menu = ornateMenu({ id: 'saveUnreadable', eyebrow: 'The Keep’s records', title: UNREADABLE_WORDS.title, onClose: done });
+    const menu = ornateMenu({ id: what === 'run' ? 'runUnreadable' : 'saveUnreadable', eyebrow: 'The Keep’s records', title: words.title, onClose: done });
     const p = document.createElement('p');
-    p.textContent = kept ? UNREADABLE_WORDS.kept : UNREADABLE_WORDS.lost;
+    p.textContent = kept ? words.kept : words.lost;
     menuWell(menu.body).append(p);
-    menuFoot(menu, { primary: { label: 'Begin afresh', onClick: () => menu.close() } }).primary?.focus();
+    menuFoot(menu, { primary: { label: what === 'run' ? 'Carry on' : 'Begin afresh', onClick: () => menu.close() } }).primary?.focus();
   });
 }
