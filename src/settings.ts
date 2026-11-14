@@ -12,6 +12,7 @@ import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules
 import { closePicker, openPicker } from './settingsPicker';
 import type { DevGift } from './sim/devGrant';
 import { appUpdate } from './appUpdate';
+import { openCredits } from './credits';
 import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
 import { CUT_MODES, type CutMode } from './tauntCutRules';
 import { SLIDER_STEP, curvedVolume } from './render/audioRules';
@@ -154,7 +155,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 let wired = false;
 
 /** The submenus of the page (the owner's ask: the options condensed into a short list of menus that open on a tap). */
-type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'diag' | 'updates' | 'about';
+type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'diag' | 'updates' | 'about' | 'credits';
 
 /** Each submenu's name and its one-line hint on the top list, in the order shown. */
 const PAGES: readonly { id: Page; title: string; hint: string }[] = [
@@ -167,6 +168,8 @@ const PAGES: readonly { id: Page; title: string; hint: string }[] = [
   { id: 'diag', title: 'Diagnostics', hint: 'The stops of half a second or more the game has seen on this device' },
   { id: 'updates', title: 'Updates and notes', hint: 'What changed in each version' },
   { id: 'about', title: 'About', hint: 'Version and credits' },
+  // (STORE-CREDITS: its own page, the standard ornate menu, `credits.ts`; not a submenu of this list)
+  { id: 'credits', title: 'Credits', hint: 'The artists and composers, and the licences their work is under' },
 ];
 
 /** The submenu showing, or null for the top list. */
@@ -253,6 +256,8 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
       return updatesRows();
     case 'about':
       return aboutRows();
+    case 'credits':
+      return [];
   }
 }
 
@@ -280,8 +285,14 @@ function menuRow(p: (typeof PAGES)[number]): HTMLElement {
   chevron.setAttribute('aria-hidden', 'true');
   chevron.textContent = '›';
   b.append(text, chevron);
-  b.addEventListener('click', () => go(p.id));
+  b.addEventListener('click', () => (p.id === 'credits' ? showCredits(b) : go(p.id)));
   return b;
+}
+
+/** STORE-CREDITS: the Credits page over Settings; on "‹ Back" the focus returns to what opened it. */
+function showCredits(from: HTMLElement): void {
+  closePicker();
+  openCredits(() => from.isConnected && from.focus());
 }
 
 /** The back button at the top of a submenu, back to the top list. */
@@ -378,8 +389,14 @@ function aboutRows(): HTMLElement[] {
   const [name] = row('Legends of the Last Keep', `Version ${__GAME_VERSION__}`);
   const [credits] = row(
     'Credits',
-    'Art from free pixel-art packs (most from Craftpix, some from DawnLike and others) and some made for the game. Music from OpenGameArt composers and others. Most sound effects are made in the game, with a few recorded hits. Every source is named in the game’s credits list.',
+    'Art from free pixel-art packs (most from Craftpix, some from DawnLike and others) and some made for the game. Music from OpenGameArt composers and others. Most sound effects are made in the game, with a few recorded hits. Every source, and the licence it is under, is named on the Credits page.',
   );
+  // (STORE-CREDITS: the line points to the page, and opens it)
+  const open = document.createElement('button');
+  open.type = 'button';
+  open.textContent = 'Credits';
+  open.addEventListener('click', () => showCredits(open));
+  credits.append(open);
   const rows = [name, credits];
   const up = appUpdate(); // (the app only: a newer release was found at start)
   if (up) {

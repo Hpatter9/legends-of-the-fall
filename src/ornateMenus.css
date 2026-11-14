@@ -2352,3 +2352,16 @@ dialog.heroArtViewer { border: var(--ornate-border-double); box-shadow: var(--or
 .ruStats.omWell { padding: 4px 12px; }
 .ruEarned.omNote { font-size: var(--om-small); color: #b8af9a; }
 
+
+/* STORE-CREDITS: the Credits page (`credits.ts`, a standard sheet over Settings): each section one well of entries, each entry its
+   lines and the licences it is under; one that asks for credit in brass, one not yet confirmed in grey italics. Nothing moves. */
+#credits .omGrid { display: block; }
+#credits .omWell p { margin: 0; overflow-wrap: anywhere; }
+.crEntry { padding: 7px 0; border-top: 1px solid #4a3e2966; }
+.crEntry:first-child { padding-top: 0; border-top: 0; }
+.crEntry:last-child { padding-bottom: 0; }
+.crEntry .crSub { margin-top: 3px; padding-left: 12px; font-size: var(--om-small); color: #c4ba9f; }
+.crLics { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px !important; }
+.crLic { padding: 1px 6px; border: 1px solid #6b5c40; border-radius: 3px; font: 400 12px/1.4 var(--body); color: #c4ba9f; background: #1a1d15; }
+.crLic.crCredit { border-color: var(--ornate-brass-mid, #9c8454); color: #f2dc9f; }
+.crLic.crUnconfirmed { border-style: dashed; color: #9a9a8e; font-style: italic; }
