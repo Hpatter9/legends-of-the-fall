@@ -93,7 +93,7 @@ try {
     check(`keyboard opens services tab ${width}`, await page.getByRole('tab', { name: 'Tavern services', exact: true }).getAttribute('aria-selected') === 'true');
     check(`services panel visible ${width}`, await page.locator('.ptActions').isVisible());
     await page.locator('.ptActions').getByRole('button', { name: 'Quests', exact: true }).click();
-    check(`quest log opens ${width}`, await page.locator('#hmSheetBox.qlog').isVisible());
+    check(`quest log opens ${width}`, await page.locator('#questLog .qlog').isVisible());
     await page.locator('.qlShut').click();
     await page.locator('.ptActions').getByRole('button', { name: /shop|Trader visiting/i }).click();
     check(`shop opens ${width}`, await page.locator('#stall').isVisible());

@@ -30,3 +30,16 @@ export function fightToastTop(): number | undefined {
   const tops = hudBoxes(['#top', '#hudSpells', '#bossBar', '#twistBanner', '#comboBar', '#tacticBtn']).filter((r) => r.top < half);
   return tops.length ? Math.max(...tops.map((r) => r.bottom)) + 6 : undefined;
 }
+
+/** FIRST-FIVE (the release audit's finding 6): the heads of the pages a toast may show over, and what is in them: a title and its Back
+ *  button. A toast's lane starts under the lowest of these showing in the top half of the screen (the War Council's title and Back, the
+ *  deploy's Formation plate, a sub-page's header), so a toast never covers a title or a way out. */
+export const PAGE_HEADS = ['#top', '#tacticBtn', '#twistBanner', '#hmTop', '#party > header', '#hmSub > header', '#gacha > header', '#settings > header', '.qlHead', '.ecnGHead'];
+
+/** Where a toast may start, in CSS px from the top: under every page head showing in the top half, and (in a fight) under the fight's own
+ *  top parts too. 0 when nothing is there. */
+export function toastFloor(): number {
+  const heads = hudBoxes(PAGE_HEADS).filter((r) => r.top < innerHeight / 2);
+  const under = heads.length ? Math.max(...heads.map((r) => r.bottom)) + 6 : 0;
+  return Math.max(under, fightToastTop() ?? 0);
+}

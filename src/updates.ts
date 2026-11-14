@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.595.0',
+    date: '2026-11-14',
+    title: 'A first five minutes worth remembering',
+    notes: ['The starter pick and the quest log are now ornate menus, and every main button wears the same gold plate.', 'Speech bubbles never cover a hero, a page title or a Back button, and a lost wave keeps the board in view.', 'The first deploy frames the board better, and small buttons are easier to tap.'],
+  },
+  {
     version: '0.594.0',
     date: '2026-11-14',
     title: 'Ready for the store: credits, size and polish',
