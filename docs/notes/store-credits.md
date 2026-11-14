@@ -48,3 +48,6 @@ spritesheet (GitHub), Alexandr Zhelanov's OpenGameArt page and the Open Font Lic
 - `node tools/store-ready/credits-shots.mjs` took the pictures in `docs/samples/store-credits/` at 393 x 852, 360 x 780 and 412 x 915:
   Settings, the page's top (Art), Characters and monsters, Music, Fonts, and About.
 - At each size the card fits with no sideways scroll (26 entries), "‹ Back" returns to Settings, and there were no page errors.
+- The body is a scrolling flex column, so its blocks are kept from shrinking (`#credits .omBody > * { flex: none }`). Without that, the
+  thank-you note was squeezed to one line and its second line ran under the Art heading. The shots script now counts blocks that
+  overlap or overflow: 1 at each size without the rule, 0 with it.

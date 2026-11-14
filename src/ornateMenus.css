@@ -2356,6 +2356,9 @@ dialog.heroArtViewer { border: var(--ornate-border-double); box-shadow: var(--or
 /* STORE-CREDITS: the Credits page (`credits.ts`, a standard sheet over Settings): each group one well of entries, each entry its work,
    its maker, what it includes, then its licence's tag (in brass where credit is required, dashed grey where unconfirmed) and the link. */
 #credits .omGrid { display: block; }
+/* (the body is a scrolling column: its blocks keep their height, so the thank-you note is never squeezed under the first heading) */
+#credits .omBody > * { flex: none; }
+#credits .omBody > .omNote { padding-bottom: 2px; }
 #credits .omWell p { margin: 0; overflow-wrap: anywhere; }
 .crEntry { padding: 8px 0; border-top: 1px solid #4a3e2966; }
 .crEntry:first-child { padding-top: 0; border-top: 0; }

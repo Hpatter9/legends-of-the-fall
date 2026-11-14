@@ -28,6 +28,13 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.locator('.setMenu[data-page="credits"]').click();
   await page.waitForTimeout(600);
   await shot('credits-top');
+  // (nothing in the body overlaps: each block's bottom is above the next one's top)
+  const overlaps = await page.evaluate(() => {
+    const kids = [...document.querySelectorAll('#credits .omBody > *')].map((e) => e.getBoundingClientRect());
+    const squeezed = [...document.querySelectorAll('#credits .omBody > *')].filter((e) => e.scrollHeight > e.clientHeight + 1).length;
+    return kids.slice(1).filter((r, i) => r.top < kids[i].bottom - 0.5).length + squeezed;
+  });
+  console.log(w, 'overlapping blocks:', overlaps);
   const scrollTo = async (text) => {
     await page.evaluate((t) => {
       const e = [...document.querySelectorAll('#credits .crEntry')].find((x) => x.textContent.includes(t));
