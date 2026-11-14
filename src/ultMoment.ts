@@ -330,7 +330,7 @@ export class UltMoments {
       this.ducked = true;
     }
     if (this.regather && q.phase === 'open' && windup - q.left >= this.regather.at) {
-      fx?.ultGather(this.regather.unit, m.el ?? 'light', this.regather.ms);
+      fx?.ultGather(this.regather.unit, m.el ?? 'light', this.regather.ms, true);
       this.regather = null;
     }
     if (q.strikes !== this.struckSeen) {

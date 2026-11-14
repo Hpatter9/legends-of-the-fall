@@ -329,3 +329,31 @@ Before and after, at 60, 300, 700, 1200 and 1700 ms: `docs/samples/blender-fx/wi
 
 What the lesson is for the other wind-ups: a measured cover over the ceiling says the clip is drawn thin over the body, not that
 the body reads. A tall clip in the hero's own colours behind it can still lose it; those are to be looked at one by one.
+
+## The wind-ups' audit (all seventy)
+
+Every hero's wind-up was photographed in a fight at 200, 600, 1000 and 1400 ms, each moment three times with nothing stepped
+between: as played, without the effects, and without the effects and the caster. The caster's own pixels are where the last two
+differ, so what the wind-up does to them is measured and not judged by eye (`tools/blender-fx/wind_audit.py`, from the
+photographs `WIND=` leaves): `took` is the mean change of the body's pixels, `lost` the share of them changed by more than a
+quarter, `edge` how well the body's outline still stands out from what is round it (1 as clear as the bare fight), `wall` the
+share of the outline with the effect behind it. The table, worst outline first: `docs/samples/blender-fx/windup-audit-table.txt`;
+the twelve worst, four moments each: `windup-audit-worst-2x.jpg`.
+
+**What it found.** One fault, in every tall wind-up: a long wind-up gathers twice (`ultGather` is called again as the band
+leaves) and a showcase plays the wind-up on its caster again, and each playing began with the rule's 150 ms flash at full
+strength. So a tall clip hid its caster whole two or three times in one show: the Priestess, the Inquisitor, the Lightning Mage
+and the Seraph were gone at 1000 ms (`lost` 0.31, 0.20, 0.36, 0.23), the Bombardier at 1400. Only the first beginning flashes
+now (`flash` on `bfxUlt`; `again` on `ultGather`; the showcase's playing passes false). After: the Priestess 0.00, the
+Inquisitor 0.00, the Lightning Mage 0.02 at the same moment (`windup-one-flash-2x.jpg`, before on the left).
+
+**What it did not find.** No other wind-up loses its caster as the Dragoon's did. Outside the flash, no hero's body is changed
+by more than 0.14 on average. The ones I looked at at full size and left: the Lancer (a white gust lies across his legs through
+the whole wind-up, `lost` 0.25; his cover is 0.289 so it is drawn 52% over him: head, plume and armour read, his legs do
+not well); the Lightning Mage (a pale mage in a pale cloud: she reads, weakly); the Time Witch and the Paladin (pale rings and
+glow behind them: they read). Astrax's `edge 0.00` is the measure failing, not the wind-up: he is under his cut-in's dim in two
+of the four moments.
+
+**What the audit does not cover:** one fight, one facing and one spot for each hero (a clip is not symmetric, so another facing
+can sit differently); 393 x 852 only; reduced motion not photographed; the first moment (200 ms) is just past the flash, so the
+flash itself was not judged.

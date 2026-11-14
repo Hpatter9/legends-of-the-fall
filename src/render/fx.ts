@@ -698,14 +698,15 @@ export class Fx {
 
   /** The opening of an ultimate's moment (ULT-EPIC): power gathers on the hero while the slash and the name are up (the painted kit's
    *  gathering when it is there, else the element's wind-up from the pack), so the board under the band is alive. */
-  ultGather(unit: number, el: Element, ms: number): void {
+  ultGather(unit: number, el: Element, ms: number, again = false): void {
     const by = this.sprites.get(unit);
     if (!by) return;
     const budget = particleBudget(settings().saver);
     this.moment.density = budget.density;
     this.moment.cap = budget.cap;
     // (BLENDER-FX: the hero's own rendered wind-up, played across the whole stage, in place of the painted gathering and the pack's)
-    if (this.bfxUlt(by.unit.def, 'windup', by.x, by.y, ms, 1, 0, by.unit)) return;
+    // (ON-FIGHTER: a long wind-up gathers twice, and the second gathering (`again`) does not flash whole over the hero a second time)
+    if (this.bfxUlt(by.unit.def, 'windup', by.x, by.y, ms, 1, 0, by.unit, !again)) return;
     this.paintMoment(KIT.gather, by.x, by.y, 2.5, { frameMs: ms / 8, foot: true, alpha: 0.9 });
     windUp(this.moment, el, by.x, by.y, ms, by.tall, true);
   }
@@ -914,8 +915,8 @@ export class Fx {
         }
       }
       // (and for its first moment the clip is over the body at full strength: the rule's brief flash, `UNDER.FLASH_MS`)
-      // (once: a showcase plays its hero's wind-up on the caster again, twice, and each playing began with the flash, so a tall
-      // wind-up hid its caster whole three times in a show. Only the clip's first beginning flashes: `flash`)
+      // (once: a long wind-up gathers twice and a showcase plays its hero's wind-up on the caster again, and each playing began
+      // with the flash, so a tall wind-up hid its caster whole two or three times in a show. Only the first beginning flashes: `flash`)
       if (!this.reduced && flash) {
         const n = Math.max(1, Math.ceil(UNDER.FLASH_MS / (life / held.length)));
         this.moment.spawn({ ...bit, frames: held.slice(0, n), frameMs: UNDER.FLASH_MS / n, life: UNDER.FLASH_MS, alpha: base, solid: true });

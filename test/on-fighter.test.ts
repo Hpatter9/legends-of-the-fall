@@ -220,8 +220,10 @@ test('SHOW-THROUGH: a fighter among a strike\'s one large picture is drawn again
 
 test("ON-FIGHTER: a wind-up played again on its caster by the showcase does not flash whole over the body again", () => {
   const fx = readFileSync('src/render/fx.ts', 'utf8');
-  // (the stage's own wind-up begins with the rule's one flash; the showcase's playings of it pass `flash` false)
-  assert.match(fx, /if \(this\.bfxUlt\(by\.unit\.def, 'windup', by\.x, by\.y, ms, 1, 0, by\.unit\)\) return;/);
+  // (the stage's own wind-up begins with the rule's one flash; its second gathering and the showcase's playings of it do not)
+  assert.match(fx, /if \(this\.bfxUlt\(by\.unit\.def, 'windup', by\.x, by\.y, ms, 1, 0, by\.unit, !again\)\) return;/);
+  // (and a long wind-up's second gathering says it is the second)
+  assert.match(readFileSync('src/ultMoment.ts', 'utf8'), /fx\?\.ultGather\(this\.regather\.unit, m\.el \?\? 'light', this\.regather\.ms, true\);/);
   assert.match(fx, /this\.bfxUlt\(own, 'windup', x, y, BEAT_OWN\.GATHER_MS, 1, 0, this\.bodyAt\(x, y - 10, 8\)\?\.unit, false\)/);
   assert.match(fx, /if \(!this\.reduced && flash\) \{/);
 });
