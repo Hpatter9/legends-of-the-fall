@@ -15,6 +15,7 @@
 //   &speed=2                    the battle at double speed (the sim runs twice a tick's work a frame-second)
 //   &siege=1 &skip=1500 &at=u,v &zoom=0.6   the siege works; the first ticks played at once; the camera held on a tile at a zoom
 //   &seed=7                     the first fight's seed
+//   &fx=0 | &fxstress=1         ASSAULT-SKILLS: no effects drawn, or the effects at their caps every frame (the worst they cost)
 
 import { Application } from 'pixi.js';
 import { startSpike, stepSpike, SPIKE_PLATOONS, SPIKE_TROOPS, type FieldEvent } from './sim/assault/spike';
@@ -32,6 +33,7 @@ import { BUCKET } from './sim/assault/field';
 import { FieldView, FIELD_FOG, fieldGrade, loadFieldArt, MID_AT, NEAR_AT, type Detail } from './render/fieldView';
 import { loadSomeSheets } from './render/sheets';
 import { rawAt } from './render/iso';
+import { ultKeyOf } from './sim/abilities';
 
 /** How many ticks and frames the readout's rolling figures cover. */
 const TICK_WINDOW = 600;
@@ -70,6 +72,8 @@ export interface BenchStats {
   chunks: number;
   /** The chunks in view, baked or not (all of them drawn once baking catches up). */
   wanted: number;
+  /** ASSAULT-SKILLS: the effects' bits alive. */
+  fx?: number;
   alive: number;
 }
 
@@ -93,6 +97,8 @@ function fieldEvents(b: Battle, ev: readonly BattleEvent[], hold: readonly HoldE
 
 export async function startAssaultBench(): Promise<void> {
   const query = new URLSearchParams(location.search);
+  const fxOff = query.get('fx') === '0';
+  const fxStress = query.get('fxstress') === '1';
   const speed = Math.max(1, Math.min(4, Number(query.get('speed')) || 1));
   let seed = Number(query.get('seed')) || 1;
   const spike = query.get('spike') === '1';
@@ -321,6 +327,7 @@ export async function startAssaultBench(): Promise<void> {
     const w0 = performance.now();
     // the battle, ten ticks a second (times the speed), each tick timed
     const events: FieldEvent[] = [];
+    const battle: BattleEvent[] = [];
     if (!ready) return;
     if (b.phase === 'fight') {
       acc += dt * speed;
@@ -340,6 +347,8 @@ export async function startAssaultBench(): Promise<void> {
       else if (sim) {
         for (const tk of sim.pump(Math.min(8, Math.floor(acc / TICK_MS)))) {
           batches.push(fieldEvents(b, tk.ev, tk.hold));
+          // (ASSAULT-SKILLS: the battle's own events, for the skills' and spells' effects)
+          battle.push(...tk.ev);
           heavy(tk.hold);
         }
         for (const ms of sim.copyMs.splice(0)) {
@@ -400,7 +409,15 @@ export async function startAssaultBench(): Promise<void> {
     // readout and the buttons)
     const hostTop = host.getBoundingClientRect().top;
     const play = { top: hud.getBoundingClientRect().bottom - hostTop, bottom: bar.getBoundingClientRect().top - hostTop };
-    view.update(cam, app.screen.width, app.screen.height, b.t + Math.min(acc, TICK_MS), events, play);
+    // (ASSAULT-SKILLS: `&fx=0` draws no effects; `&fxstress=1` fires the ultimate and a heal of every one of ours each frame, so the
+    // effects stand at their caps the whole time: the worst they can cost)
+    if (fxOff) battle.length = 0;
+    else if (fxStress)
+      for (const x of b.units)
+        if (x.alive && x.side === 'hero') {
+          battle.push({ kind: 'skill', by: x.id, name: ultKeyOf(x) ?? 'Fireball', ms: 500 }, { kind: 'heal', to: x.id, amount: 10 });
+        }
+    view.update(cam, app.screen.width, app.screen.height, b.t + Math.min(acc, TICK_MS), events, play, battle);
     bakeWorst = Math.max(bakeWorst, view.drawn.bakeMs);
     app.render();
     workMs.push(performance.now() - w0);
@@ -411,7 +428,7 @@ export async function startAssaultBench(): Promise<void> {
       const alive = b.units.filter((x) => x.alive);
       Object.assign(stats, {
         seed, run, ticks: b.field!.stats.ticks, simMean: mean(simMs), simP95: p95(simMs), simWorst, fps, frameMean: mean(frameMs), frameP95: p95(frameMs), workMean: mean(workMs), bakeWorst, copyMean: mean(copyMs), copyP95: p95(copyMs), worker: !!sim?.inWorker,
-        campWorkers: view.drawn.campWorkers, campSmoke: view.drawn.campSmoke, detail: view.detail, zoom: cam.zoom, fighters: view.drawn.fighters, chunks: view.drawn.chunks, wanted: view.wanted.length, alive: alive.length,
+        fx: view.fx.live(), campWorkers: view.drawn.campWorkers, campSmoke: view.drawn.campSmoke, detail: view.detail, zoom: cam.zoom, fighters: view.drawn.fighters, chunks: view.drawn.chunks, wanted: view.wanted.length, alive: alive.length,
       });
       const ours = alive.filter((x) => x.side === 'hero').length;
       const clock = `${Math.floor(b.t / 60000)}:${String(Math.floor((b.t % 60000) / 1000)).padStart(2, '0')}`;

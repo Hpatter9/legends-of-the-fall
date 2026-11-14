@@ -44,6 +44,7 @@ import { troopUnitOf } from './sim/assault/troops';
 import type { FieldEvent } from './sim/assault/spike';
 import type { HoldEvent } from './sim/assault/holdTypes';
 import { FieldView, FIELD_FOG, fieldGrade, loadFieldArt } from './render/fieldView';
+import { fxLevel, glanceAt } from './render/fieldFxRules';
 import { loadSomeSheets, portrait } from './render/sheets';
 import { rawAt, TH, TW, HH } from './render/iso';
 import { menuFoot, menuNote, menuPick, menuSection, ornateMenu, RELEASE_ICON } from './ornateMenu';
@@ -471,6 +472,8 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   let lastInput = performance.now();
   let heat: { t: number; k: number }[] = [];
   let aim: { x: number; y: number } | null = null;
+  // (ASSAULT-SKILLS: when the camera last glanced at an ultimate of ours)
+  let lastGlance = 0;
   const aimAt = (u: number, v: number, soft = false) => {
     const [x, y] = rawAt(u, v, b.board.tiles[v * b.board.w + u]?.h ?? 2);
     if (soft) aim = { x, y };
@@ -910,7 +913,13 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
       cam.y += (aim.y - cam.y) * k;
       if (d < 2 && !follow) aim = null;
     }
-    view.update(cam, app.screen.width, app.screen.height, b.t + Math.min(acc, TICK_MS), events, play());
+    view.update(cam, app.screen.width, app.screen.height, b.t + Math.min(acc, TICK_MS), events, play(), sound);
+    // (ASSAULT-SKILLS: an ultimate of ours as it goes off: the camera glances at it, when the player's hands have been still a while)
+    const u = view.fx.lastUlt;
+    if (u && u.at > lastGlance && glanceAt({ level: fxLevel(view.detail), following: follow, idleMs: now - lastInput, sinceGlance: now - lastGlance, calm: matchMedia('(prefers-reduced-motion: reduce)').matches }, IDLE_MS)) {
+      lastGlance = now;
+      aim = { x: u.x, y: u.y };
+    }
     app.render();
     // the bar, four times a second
     if (now - shown > 250) {

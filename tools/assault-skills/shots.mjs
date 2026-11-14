@@ -10,6 +10,9 @@ const ARMY = opt('--army', 'orcs');
 const K = Number(opt('--platoon', 3));
 const EVERY = Number(opt('--every', 2500));
 const N = Number(opt('--n', 6));
+const MARCH = Number(opt('--march', 100000));
+// (`--burst dir`: a quick run of photographs to a folder, every `--every` ms, to pick the moments from)
+const BURST = opt('--burst', '');
 const dir = out('docs/samples/assault-skills');
 const PORT = 8918;
 const server = serve(PORT);
@@ -29,9 +32,16 @@ for (const [w, h] of (process.env.SIZES ?? '393x852').split(',').map((s) => s.sp
   const box = await page.evaluate(() => { const r = document.querySelector('#assaultScene canvas').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
   await page.mouse.move(box[0], box[1]);
   for (let i = 0; i < 6; i++) { await page.mouse.wheel(0, -100); await wait(page, 60); }
-  // (the march to the fight: about forty seconds at x1)
-  await wait(page, 40000);
-  for (let n = 1; n <= N; n++) {
+  // (the march to the fight: about a minute and a half at x1, `--march` ms)
+  await wait(page, MARCH);
+  if (BURST)
+    for (let n = 1; n <= N; n++) {
+      await page.evaluate((k) => document.querySelectorAll('.asGem')[k]?.click(), K);
+      await page.screenshot({ path: `${BURST}/${tag}-${String(n).padStart(3, '0')}.png` });
+      await wait(page, EVERY);
+      if (!(await page.evaluate(() => !!document.querySelector('#assaultScene')))) break;
+    }
+  else for (let n = 1; n <= N; n++) {
     await page.evaluate((k) => document.querySelectorAll('.asGem')[k]?.click(), K);
     await wait(page, n === 1 ? 600 : EVERY);
     if (!(await page.evaluate(() => !!document.querySelector('#assaultScene')))) break;

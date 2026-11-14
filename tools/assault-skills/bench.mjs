@@ -10,6 +10,9 @@ const tag = args[0] || 'after';
 const opt = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
 const seed = opt('--seed', '1');
 const skip = opt('--skip', '1200');
+// (`--fx 0` no effects; `--fx stress` the effects at their caps every frame; default the effects as they come)
+const fxMode = opt('--fx', '');
+const fxQuery = fxMode === '0' ? '&fx=0' : fxMode === 'stress' ? '&fxstress=1' : '';
 const dir = 'docs/samples/assault-skills';
 mkdirSync(dir, { recursive: true });
 const types = { html: 'text/html', js: 'text/javascript', css: 'text/css', png: 'image/png', webp: 'image/webp', opus: 'audio/ogg', woff2: 'font/woff2', json: 'application/json' };
@@ -28,23 +31,29 @@ try {
     const page = await ctx.newPage();
     page.on('pageerror', (e) => errors.push(e.message));
     const cdp = await ctx.newCDPSession(page);
-    await page.goto(`http://127.0.0.1:8822/?bench=assault&seed=${seed}&skip=${skip}&lod=${lod}`, { waitUntil: 'load' });
+    await page.goto(`http://127.0.0.1:8822/?bench=assault&seed=${seed}&skip=${skip}&lod=${lod}${fxQuery}`, { waitUntil: 'load' });
     await page.waitForFunction(() => window.__bench?.ticks > 0, null, { timeout: 120000 });
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
     await page.waitForTimeout(8000);
-    if (lod === 'near') {
+    if (lod === 'near' && !fxMode) {
       for (const n of [1, 2, 3]) {
         await page.screenshot({ path: `${dir}/${tag}-near-${n}.png` });
         await page.screenshot({ path: `${dir}/${tag}-near-${n}-crop2x.png`, clip: { x: 98, y: 280, width: 196, height: 292 } });
         await page.waitForTimeout(2500);
       }
     }
-    await page.waitForTimeout(6000);
+    // (the effects alive, sampled four times a second through a twelve-second window)
+    const fxs = [];
+    for (let i = 0; i < 48; i++) {
+      fxs.push(await page.evaluate(() => window.__bench?.fx ?? 0));
+      await page.waitForTimeout(250);
+    }
     const s = await page.evaluate(() => ({ ...window.__bench }));
+    s.fx = `${Math.round(fxs.reduce((n, x) => n + x, 0) / fxs.length)} mean, ${Math.max(...fxs)} most`;
     rows.push({ lod, fps: s.fps, frameMean: +s.frameMean.toFixed(1), frameP95: +s.frameP95.toFixed(1), workMean: +s.workMean.toFixed(2), simMean: +s.simMean.toFixed(3), simP95: +s.simP95.toFixed(3), fighters: s.fighters, fx: s.fx });
     await ctx.close();
   }
 } finally { await browser.close(); server.close(); }
-console.log(`${tag} (393 x 852, CPU x4, seed ${seed}, ${skip} ticks in):`);
+console.log(`${tag} (393 x 852, CPU x4, seed ${seed}, ${skip} ticks in${fxMode ? `, fx ${fxMode}` : ''}):`);
 for (const r of rows) console.log(JSON.stringify(r));
 console.log(errors.length ? `page errors: ${errors.join(' | ')}` : '0 page errors');
