@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.588.0',
+    date: '2026-11-14',
+    title: 'The Dragoon stays in sight as she winds up',
+    notes: ['The Dragoon\'s wind-up is now a pool of fire at her feet with low tongues round her, so she is never hidden behind a wall of flame.'],
+  },
+  {
     version: '0.587.0',
     date: '2026-11-14',
     title: 'Ultimates reach out from hand and staff',
