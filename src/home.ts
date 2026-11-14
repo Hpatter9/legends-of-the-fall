@@ -48,6 +48,7 @@ import { todayKey } from './modes';
 import { openSettings, settings } from './settings';
 import { slotWaiting } from './sim/spellSlots';
 import { modeShown } from './sim/hiddenModes';
+import { homeMotion, type Motion } from './homeMotionRules';
 import { chapelOpen, chapelWaits, modeOpen, MODE_NEED, opensAt, progressLine } from './sim/modeUnlock';
 import { tips } from './tips';
 import { ICONS, icon } from './menuArt';
@@ -295,6 +296,9 @@ export class Home {
     $('hmSubBack').addEventListener('click', () => this.closeSub());
     glyphWord($('hmSubBack'));
     $('hmSheet').addEventListener('click', (e) => e.target === $('hmSheet') && this.closeSheet());
+    // (RELEASE-AUDIT: Settings, or the achievements, codex or armies page, put up or taken down: the scene under it stops or moves again)
+    const watchCover = new MutationObserver(() => this.isOpen && this.syncMotion());
+    for (const id of ['settings', 'hmSub']) watchCover.observe($(id), { attributes: true, attributeFilter: ['hidden'] });
     // (the builders' clock: once a second while something is going up, the countdowns tick and a finished build is raised)
     setInterval(() => this.tickWorks(), 1000);
   }
@@ -733,20 +737,24 @@ export class Home {
     this.hall.update(m);
     this.library.update(m);
     this.hooks.onScene?.();
-    // (the camp only moves while the Battle tab shows, and not under a hero sheet)
-    if (this.tab === 'battle' && $('hmSheet').hidden) this.camp.start();
-    else this.camp.stop();
-    // (the tavern only moves while it is showing, and not under a hero sheet)
-    if (this.tab === 'heroes' && $('hmSheet').hidden) this.tavern.start();
-    else this.tavern.stop();
-    // (the hall and the library move only while their tab shows; a pull in flight is not cut short by a redraw)
-    if (this.tab === 'recruit' && $('gacha').hidden) this.hall.start();
-    else if (this.tab !== 'recruit') this.hall.stop();
-    if (this.tab === 'spells') this.library.start();
-    else this.library.stop();
-    // (the courtyard moves only while it is showing, and not under a building card)
-    if (this.tab === 'castle' && !this.cardOpen && modeOpen(m, 'castle')) this.castle.start();
-    else this.castle.stop();
+    this.syncMotion();
+  }
+
+  /** RELEASE-AUDIT: a page over the whole home screen (Settings, or the achievements, codex or armies page) is all but opaque (97%),
+   *  so the scene under it holds still rather than draw sixty pictures a second that cannot be seen; it moves again as the page goes. */
+  private covered(): boolean {
+    return !$('hmSub').hidden || !$('settings').hidden;
+  }
+
+  /** Which of the home screen's scenes move: the one whose tab shows, and none under a sheet or a page over it (`homeMotionRules.ts`). */
+  private syncMotion(): void {
+    const go = homeMotion({ tab: this.tab, sheet: !$('hmSheet').hidden, covered: this.covered(), pulling: !$('gacha').hidden, card: this.cardOpen, castleOpen: modeOpen(this.meta, 'castle') });
+    const set = (m: Motion, scene: { start(): unknown; stop(): void }) => (m === 'move' ? void scene.start() : m === 'stop' ? scene.stop() : undefined);
+    set(go.camp, this.camp);
+    set(go.tavern, this.tavern);
+    set(go.hall, this.hall);
+    set(go.library, this.library);
+    set(go.castle, this.castle);
   }
 
   /** MENU-GLITCH: the pages are one strip. The page showing rests in place; on a tab change the page it goes to is laid beside it (on
