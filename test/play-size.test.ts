@@ -1,9 +1,10 @@
 // PLAY-SIZE (docs/notes/play-size.md): the Play bundle's web files go in an install-time asset pack, so its base module fits Play's
 // 200 MB; and the pictures the code imports are files beside game.js (the small ones inline), each listed for offline play.
-// The build itself is not run here (it takes a while); these hold its rules in place.
+// The build itself is not run here (it takes a while); these hold its rules in place, and C's check decodes every converted picture.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 
 const build = readFileSync('build.mjs', 'utf8');
 
@@ -44,4 +45,26 @@ test('the workflow builds the Play bundle from the Play web build, packed, and c
     at = next;
   }
   assert.ok(wf.indexOf('legends-of-the-last-keep-*.aab') > at, 'the bundle is attached to the release');
+});
+
+// PLAY-SIZE C (the owner's call, 2026-11-14): the shipped PNGs as lossless WebP, written by the build; src/art's PNGs untouched.
+test('the build writes imported PNGs and the awakened sheets as lossless WebP, and the code names the WebP', () => {
+  assert.match(build, /import \{ losslessWebp \} from '\.\/tools\/play-size\/webpLossless\.mjs';/);
+  assert.match(build, /build\.onResolve\(\{ filter: \/\\\.png\$\/ \}/);
+  assert.match(build, /losslessWebp\(readFileSync\(`src\/art\/awakened\/\$\{f\}`\), \{ always: true \}\)/);
+  const enc = readFileSync('tools/play-size/webpLossless.mjs', 'utf8');
+  assert.match(enc, /const OPTIONS = \{ lossless: true, exact: true, effort: 4 \};/);
+  assert.match(enc, /if \(!\(await samePixels\(png, webp\)\)\) throw/, 'each new encoding is decoded and compared before use');
+  const urls = readFileSync('src/render/awakenedArt.ts', 'utf8');
+  assert.doesNotMatch(urls, /\.png'/);
+  assert.match(urls, /'awakened\/awakened_knight\.webp'/);
+  assert.match(readFileSync('tools/ascended/pack.cjs', 'utf8'), /'awakened\/\$\{id\}\.webp'/);
+  // (the UI frames the CSS names by URL stay PNG: the owner's call)
+  assert.match(build, /UI_FILES\.push\(`ui\/\$\{f\}`\)/);
+});
+
+test('every PNG the build may write as WebP decodes to the very same pixels', () => {
+  const run = spawnSync(process.execPath, ['tools/play-size/webp-check.mjs'], { encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stdout + run.stderr);
+  assert.match(run.stdout, /every pixel the same/);
 });
