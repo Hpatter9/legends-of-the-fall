@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.582.0',
+    date: '2026-11-14',
+    title: 'Spells leave from the caster\'s hand',
+    notes: ['Seventeen heroes who cast without shooting now send their spells from the hand, staff, fan or blade, among them the Cleric, Paladin, Kitsune and Mercenary.', 'A healer\'s thread of light now leaves from the healer\'s hand, not the middle of the body.'],
+  },
+  {
     version: '0.581.0',
     date: '2026-11-14',
     title: 'Merging heroes by drag is easier',

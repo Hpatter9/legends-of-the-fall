@@ -84,3 +84,29 @@ times the size): `docs/samples/blender-fx/emit-points-{1..7}-3x.jpg`.
 - I looked closely at two of the seven sheets (the first and the sixth: eight heroes); the others I have not opened at full size.
 - The staged photographs loose the shot at the nearest foe whatever way the hero is turned, so in some the shot flies away from
   where the hero faces; they show where the shot starts, not a real aim.
+
+## Since: the heroes that cast without shooting
+
+The director's next step. `WHO=1 WATCH=1` in the photograph tool plays a fight and lists every fighter something leaves from and
+whether it has a point; run over fights of all 56 heroes that do not shoot, 40 s each, it named fourteen (the Kitsune, Karasu
+Tengu, Kunoichi, Shambler, Illusionist, Buccaneer, Mercenary, Mummy, Reaper, Dread Pirate, Arc Blade, Queen Dragoon, Tyrant,
+Strigoi). The three healers whose thread of light was still drawn from the body's middle (a call the first pass missed) make
+seventeen: the Cleric, the Paladin, the Satyr.
+
+- **A second table, `CAST`** (`emitRules.ts`), of the same shape. A skill's effect fires as its cast begins and plays through
+  it, so the point is read on the second frame of the skill's row (`attack2`, or the attack row where a sheet has none): the
+  middle of the cast. x may be negative here (the Paladin's mace and the Kitsune's fan are raised behind the head). A new kind,
+  `blade` (the Mercenary's sword point, the Arc Blade's crystal).
+- `emitOffset` gives a hero its shot's point, or its cast's where it has none. A hero that shoots still casts from its shot's
+  point: its cast row was not measured.
+- `tools/emit-points/anchors.json` now has the two tables (`shot`, `cast`) and `check.py` checks both: all 34 new points are on
+  or within 4 px of something drawn (one, the Mercenary's sword from behind, was 4.5 px off and was corrected).
+- The healers' thread now leaves the point too.
+- Proof: `STAGED=cast` puts each hero in that frame, facing each way, and runs a strand from it to the nearest foe.
+  `docs/samples/blender-fx/emit-casters-{1..5}-3x.jpg` (before in the left four columns, after in the right four).
+- Verdict: plain where the weapon is far from the body: the Paladin's strand leaves his raised mace, the Mercenary's his sword's
+  point, the Cleric's her hand, the Kitsune's her fan. For the Mummy, the Reaper and the Shambler the crops are crowded and I can
+  only say the strand starts near the hands. I looked closely at two of the five sheets.
+- Limits: the staged strand is lightning for every hero but the Kitsune (her own charm) since it is the tool's stand-in for
+  whatever the skill sends; one frame of the cast is measured, and the cast moves through four; a hero the 40 s fights did not
+  show casting is not in the table and keeps the old place.

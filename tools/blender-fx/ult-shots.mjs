@@ -196,6 +196,21 @@ if (process.env.WATCH) {
     srv.close();
     process.exit(0);
   }
+  // (WHO=1 with WATCH: which fighters something leaves from in WATCH_S seconds of the fight (20), and whether each has a measured
+  // point: the list of who still starts from the old place)
+  if (process.env.WHO) {
+    console.log('WHO', await page.evaluate((secs) => {
+      const g = window.__game, fx = g.fx, seen = {};
+      const was = fx.emitOf.bind(fx);
+      fx.emitOf = (s, lift) => { const k = s.unit.side + ':' + s.unit.def + ':' + (s.emitPoint() ? 'point' : 'old'); seen[k] = (seen[k] ?? 0) + 1; return was(s, lift); };
+      for (let t = 0; t < secs * 1000 && g.b.phase === 'fight'; t += 16) window.__step(16);
+      return JSON.stringify(seen);
+    }, Number(process.env.WATCH_S ?? 20)));
+    await ctx.close();
+    await browser.close();
+    srv.close();
+    process.exit(0);
+  }
   // (STAGED=1 with WATCH: EMIT-POINTS' proof. As the fight opens, before the lines meet, each hero of the party is put in the frame of
   // its attack that is on show as a shot leaves, facing each of the four ways in turn, and its own shot is loosed at the nearest
   // foe; one frame later (the shot just out) the hero is photographed, 130 px round it. Nothing of the fight is stepped: only the
@@ -205,7 +220,7 @@ if (process.env.WATCH) {
     const shots = Object.fromEntries([...readFileSync('src/sim/units.ts', 'utf8').matchAll(/^\s+(\w+): \{ id: '\w+'[^\n]*?shot: '(\w+)'/gm)].map((m) => [m[1], m[2]]));
     for (const pick of PICKS.slice(0, 5)) {
       for (const dir of [0, 1, 2, 3]) {
-        const at = await page.evaluate(([pick, dir, shot]) => {
+        const at = await page.evaluate(([pick, dir, shot, cast]) => {
           const g = window.__game, b = g.b, fx = g.fx;
           const u = b.units.find((x) => x.side === 'hero' && x.def === pick);
           const foe = b.units.find((x) => x.side === 'foe' && x.alive);
@@ -213,14 +228,23 @@ if (process.env.WATCH) {
           if (!u || !foe || !sp) return null;
           fx.step(3000);
           u.facing = dir;
-          u.swing = { at: b.t - 600, ms: 1000, to: foe.id };
-          sp.update(b.board, b.t, true);
-          fx.shot(u.id, foe.id, shot, 400);
+          // (STAGED=cast: the hero in the middle of its skill's cast, and a strand run from it to the foe, for the heroes that cast
+          // without shooting: where a skill's effect leaves them)
+          if (cast) {
+            u.swing = undefined;
+            u.cast = { at: b.t - 300, ms: 1000, anim: 'attack2' };
+            sp.update(b.board, b.t, true);
+            fx.arc(u.id, foe.id);
+          } else {
+            u.swing = { at: b.t - 600, ms: 1000, to: foe.id };
+            sp.update(b.board, b.t, true);
+            fx.shot(u.id, foe.id, shot, 400);
+          }
           fx.step(16);
           g.app.renderer.render(g.app.stage);
           const p = fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 });
           return [Math.round(p.x), Math.round(p.y)];
-        }, [pick, dir, shots[pick]]);
+        }, [pick, dir, shots[pick], process.env.STAGED === 'cast']);
         if (!at) { console.log('NOT STAGED', pick); continue; }
         const x = Math.max(0, Math.min(W - 130, at[0] - 65));
         await page.screenshot({ path: `${OUT}/staged-${pick}-${dir}.png`, clip: { x, y: Math.max(0, at[1] - 75), width: 130, height: 130 } });
