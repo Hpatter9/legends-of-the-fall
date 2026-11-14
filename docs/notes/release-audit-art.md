@@ -5,6 +5,9 @@ hour. Crops are in [docs/samples/release-audit-art/](../samples/release-audit-ar
 [release-audit-art-prompts.md](release-audit-art-prompts.md). Another auditor covers code and background work; a third covers store
 readiness.
 
+The walk was on 0.590.0. The branch was then rebased on 0.592.0, which changes none of the screens below, except that the Developer
+page (finding 15) now also offers "Try an Assault".
+
 ## How it was checked
 
 - `npm run web`, served over plain http on 127.0.0.1 (so the service worker stayed out of the walk), in the pre-installed Chromium with
