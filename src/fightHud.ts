@@ -292,7 +292,7 @@ export class FightHud {
       // browser lay the page out afresh, and a row changes most frames (its meters move): that was the fight's largest single cost)
       const plate = el.querySelector('.fhPlate') as HTMLElement;
       setText(plate, ult.queued ? '…' : 'TAP');
-      plate.hidden = !(ult.ready || ult.queued);
+      if (plate.hidden !== !(ult.ready || ult.queued)) plate.hidden = !(ult.ready || ult.queued);
       const [hp, pool] = el.querySelectorAll<HTMLElement>('.fhBar');
       setWidth(hp.firstElementChild as HTMLElement, `${(bars.hpShare * 100).toFixed(1)}%`);
       setText(hp.querySelector('b')!, bars.hp);

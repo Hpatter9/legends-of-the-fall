@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.596.0',
+    date: '2026-11-14',
+    title: 'Lighter on your phone',
+    notes: ['The home screen rests while a menu covers it, and the battle panel only redraws what changed, so the game does less work in the background.', 'A few hidden sound and drawing warnings are gone.'],
+  },
+  {
     version: '0.595.0',
     date: '2026-11-14',
     title: 'A first five minutes worth remembering',
