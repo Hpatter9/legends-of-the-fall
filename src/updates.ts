@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.587.0',
+    date: '2026-11-14',
+    title: 'Ultimates reach out from hand and staff',
+    notes: ['Eight ultimates that reach each foe they strike now send that reach from the hand, staff or muzzle instead of the caster\'s feet.', 'The Gorgon\'s Stone Gaze now leaves from her eyes.'],
+  },
+  {
     version: '0.586.0',
     date: '2026-11-14',
     title: 'The Dragoon\'s showcase breathes too',
