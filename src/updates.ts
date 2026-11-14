@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.590.0',
+    date: '2026-11-14',
+    title: 'The Lancer and the Lightning Mage stand out',
+    notes: ['The Lancer\'s wind-up is now a streak of wind and dust at his feet, so his legs are no longer lost in a gust.', 'The Lightning Mage now gathers a dark storm cloud, so she stands out against it instead of fading into a pale one.'],
+  },
+  {
     version: '0.589.0',
     date: '2026-11-14',
     title: 'Casters stay in sight through their ultimates',
