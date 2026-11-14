@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.585.0',
+    date: '2026-11-14',
+    title: 'The Dragoon breathes her fire',
+    notes: ['The Dragoon\'s ultimate now breathes a stream of fire from her mouth along her line, the ground lighting beneath it as it goes.', 'Her rendered flame clip, which never loaded before, now plays in her fights.'],
+  },
+  {
     version: '0.584.0',
     date: '2026-11-14',
     title: 'A blow\'s slash lands with the weapon',
