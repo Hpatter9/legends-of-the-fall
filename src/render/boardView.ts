@@ -41,14 +41,16 @@ const STONY = 3;
 /** How many steps of an army road's column are drawn below its top (they fade out past the first two). */
 const ROAD_SKIRT = 5;
 
-/** A tile's mark; `merge` is a hero on the field with a match ready to merge (MERGE-TWO). */
-type Mark = 'deploy' | 'hover' | 'bad' | 'chosen' | 'merge' | 'twin' | null;
+/** A tile's mark; `merge` is a hero on the field with a match ready to merge (MERGE-TWO), `mergeHot` the match a held hero would merge
+ *  into if let go now (EASY-MERGE). */
+type Mark = 'deploy' | 'hover' | 'bad' | 'chosen' | 'merge' | 'mergeHot' | 'twin' | null;
 const MARK_COLOUR: Record<Exclude<Mark, null>, [number, number]> = {
   deploy: [0x4a9cff, 0.28],
   hover: [0xffe066, 0.5],
   bad: [0xff4a4a, 0.4],
   chosen: [0x6dff8a, 0.45],
   merge: [0xffb43a, 0.6],
+  mergeHot: [0xffd75a, 0.88],
   // (ONE-OF-EACH: the hero of a kind already on the field, where a copy held may swap in)
   twin: [0xff8ad8, 0.55],
 };

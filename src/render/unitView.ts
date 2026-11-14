@@ -85,6 +85,9 @@ function gradeFilter(grade: number): ColorMatrixFilter {
   return f;
 }
 
+/** EASY-MERGE: the gold of the outline round a merge target (the bench's merge gold). */
+const MERGE_RIM = 0xffcf4a;
+
 /** A flat-colour filter for the rim copies of the sprite. */
 function flatFilter(color: number): ColorMatrixFilter {
   const f = new ColorMatrixFilter();
@@ -166,6 +169,11 @@ export class UnitSprite {
   /** Four flat-coloured copies of the body, a pixel out each way: a rim behind the sprite. */
   private rim = new Container();
   private sparks = new Graphics();
+  /** EASY-MERGE: eight gold copies of the body, a little further out than the rim: lit round a match while a hero is held over the board. */
+  private mergeRim = new Container();
+  /** EASY-MERGE: how this fighter is lit as a merge target while a hero is held (the page sets it): 0 not, 1 a match, 2 the one the held
+   *  hero would merge into if let go now. Looks only. */
+  mergeLit: 0 | 1 | 2 = 0;
   /** An awakened hero's class aura (null for the rest). */
   private awakenAura: AwakenAura | null;
   private burstAt = -1;
@@ -258,7 +266,14 @@ export class UnitSprite {
     const aged = unit.side === 'hero' && unit.owner === undefined && !summon ? ageFilter(unit.def, ageOf(unit.def), heirLookOf(unit.def)) : null;
     if (aged) this.body.filters = [...(this.body.filters ?? []), aged];
     if (unit.nem) this.dressNemesis(unit.nem.rank, unit.nem.name, unit.nem.scars ?? 0, unit.nem.trophies ?? []);
-    this.root.addChild(this.shadow, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []));
+    for (let i = 0; i < 8; i++) {
+      const r = new Sprite();
+      r.anchor.set(0.5, 1);
+      this.mergeRim.addChild(r);
+    }
+    this.mergeRim.filters = [flatFilter(MERGE_RIM)];
+    this.mergeRim.visible = false;
+    this.root.addChild(this.shadow, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.mergeRim, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []));
   }
 
   /** A nemesis's look (`sim/nemesis.ts`): its rank's rim round the body, a darker tone, and its name plate. Drawn once; nothing in it moves. */
@@ -495,6 +510,7 @@ export class UnitSprite {
       r.texture = this.body.texture;
       r.scale.copyFrom(this.body.scale);
     }
+    this.drawMergeRim(bob - lift, rot);
     // a blink of white when struck
     if (u.hurtAt !== undefined && t - u.hurtAt < 90 && u.alive) this.flash = 1;
     // (its ailments: their parts and chips, and the tint of the latest that has one (burning orange, frozen ice blue...); a flash wins over it)
@@ -534,6 +550,27 @@ export class UnitSprite {
     this.drawPillar(u.alive);
     if (this.popAt >= 0) this.root.scale.set(this.baseSize * this.popScale());
     else if (this.root.scale.x !== this.baseSize) this.root.scale.set(this.baseSize);
+  }
+
+  /** EASY-MERGE: the gold outline of the body while it is a merge target: a slow pulse round every match, steady and bright round the one
+   *  a drop would merge into (steady for reduced motion too). */
+  private drawMergeRim(y: number, rot: number): void {
+    const lit = this.mergeLit;
+    this.mergeRim.visible = lit > 0 && this.unit.alive;
+    if (!this.mergeRim.visible) return;
+    this.mergeRim.x = this.body.x;
+    this.mergeRim.y = y;
+    this.mergeRim.rotation = rot;
+    const still = !!this.reduced?.matches;
+    const pulse = still ? 0.5 : 0.5 + 0.5 * Math.sin(Date.now() / 260);
+    this.mergeRim.alpha = lit === 2 ? 1 : 0.45 + 0.4 * pulse;
+    // (the one a drop would merge into wears a thicker outline, its copies further out)
+    const out = (lit === 2 ? 3.8 : 2.4) / this.sizeNow;
+    (this.mergeRim.children as Sprite[]).forEach((r, i) => {
+      r.texture = this.body.texture;
+      r.scale.copyFrom(this.body.scale);
+      r.position.set(Math.cos((i * Math.PI) / 4) * out, Math.sin((i * Math.PI) / 4) * out);
+    });
   }
 
   /** ULT-SHOW: drawn in the pose the showcase stages (its place, its row's frame, its facing, how solid), over the sim's. */
