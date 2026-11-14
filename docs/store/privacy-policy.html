@@ -1,0 +1,52 @@
+<!doctype html>
+<!-- STORE-READY: a draft privacy policy for the store listings (docs/notes/store-readiness.md). Not built or published: to host it on
+     GitHub Pages, fill in the contact line, then have build.mjs copy it into out/web (it is not part of the game, so it needs no place
+     in the service worker's FILES). Its address then goes in Play Console, App content, Privacy policy. -->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy</title>
+<style>
+  :root { color-scheme: light dark; --bg: #f7f3ea; --fg: #1d1a15; --muted: #5b544a; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14110d; --fg: #eee6d6; --muted: #b3a892; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 Georgia, serif; }
+  main { max-width: 40rem; margin: 0 auto; padding: 2rem 16px 4rem; }
+  h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.1rem; margin: 1.6rem 0 .4rem; }
+  .muted { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Privacy Policy</h1>
+  <p class="muted">Legends of the Last Keep · last updated [DATE]</p>
+
+  <p>Legends of the Last Keep is a single-player game. It has no accounts, no advertising, no analytics and no in-app purchases,
+  and it does not collect, store on a server, sell or share any personal information.</p>
+
+  <h2>What stays on your device</h2>
+  <p>Your progress (heroes, armies, settings) is saved only on your device, in the game's own storage. Settings, Diagnostics keeps a
+  short list of slow moments the game noticed, also only on your device; it leaves the device only if you choose to copy it and send it
+  to someone yourself. Uninstalling the game deletes all of this.</p>
+
+  <h2>Backups</h2>
+  <p>On Android, if you have turned on backups for your Google account, Android may include the game's save in that backup so that it
+  can be restored on a new phone. That backup is handled by Google under your account's settings; we never receive it.</p>
+
+  <h2>Network use</h2>
+  <p>The game plays fully offline. The version from Google Play makes no network requests. (The version downloaded from the game's
+  GitHub releases page asks GitHub once at start whether a newer version exists; GitHub sees that request as it sees any web request,
+  including your IP address, under GitHub's own privacy statement. It sends nothing about you or your game.)</p>
+
+  <h2>Children</h2>
+  <p>The game is not directed at children under 13 and collects no information from anyone.</p>
+
+  <h2>Changes</h2>
+  <p>If this policy changes, the new version will be posted at this address with a new date.</p>
+
+  <h2>Contact</h2>
+  <p>[CONTACT EMAIL]</p>
+</main>
+</body>
+</html>

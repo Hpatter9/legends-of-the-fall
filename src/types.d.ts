@@ -13,3 +13,5 @@ declare const __GAME_VERSION__: string;
 declare const __TACTIC_ART__: string[];
 /** The usual board's size as "8x11", set by the build (`node build.mjs --board 7x9`); the sim reads it with `typeof` so tests, which do not define it, get the default. */
 declare const __BOARD__: string | undefined;
+/** The store this build is for (`node build.mjs --store play`), or '' for the web page and the GitHub release's app; read with `typeof`, as `__BOARD__` is. */
+declare const __STORE__: string | undefined;

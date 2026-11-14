@@ -11,6 +11,9 @@ const serve = process.argv.includes('--serve');
 // (`--board 7x9` builds with the old board size, to compare against the usual one)
 const boardArg = process.argv.indexOf('--board') >= 0 ? process.argv[process.argv.indexOf('--board') + 1] : null;
 const out = process.argv.indexOf('--out') >= 0 ? process.argv[process.argv.indexOf('--out') + 1] : 'out/web';
+// (STORE-READY: `--store play` builds the Google Play version, which never looks for updates outside Play: `src/appUpdate.ts`,
+//  `docs/notes/store-readiness.md`. With no flag the build is the web page and the GitHub release's app, as before)
+const storeArg = process.argv.indexOf('--store') >= 0 ? process.argv[process.argv.indexOf('--store') + 1] : '';
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 let commit = 'dev';
 try {
@@ -42,7 +45,7 @@ const options = {
   logLevel: 'warning',
   // (the large paintings are WebP, data URLs as the PNGs are: bundled, so offline needs nothing in FILES)
   loader: { '.png': 'dataurl', '.webp': 'dataurl' },
-  define: { __GAME_VERSION__: JSON.stringify(version), __TACTIC_ART__: JSON.stringify(TACTIC_ART), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
+  define: { __GAME_VERSION__: JSON.stringify(version), __TACTIC_ART__: JSON.stringify(TACTIC_ART), __STORE__: JSON.stringify(storeArg), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
 };
 
 // (the Assault's simulation in a Web Worker, phase 2: its own small bundle beside game.js, `src/assaultWorker.ts`)
@@ -317,5 +320,5 @@ if (serve) {
 } else {
   await esbuild.build(options);
   await esbuild.build(workerOptions);
-  console.log(`Built ${out} (version ${version})`);
+  console.log(`Built ${out} (version ${version}${storeArg ? `, for the ${storeArg} store` : ''})`);
 }

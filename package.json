@@ -1,13 +1,14 @@
 {
   "name": "legends-of-the-fall",
   "productName": "Legends of the Last Keep",
-  "version": "0.590.0",
+  "version": "0.591.0",
   "private": true,
   "description": "A King God Castle style auto-battler on an FF Tactics height grid.",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node test.mjs",
     "web": "node build.mjs",
+    "web:play": "node build.mjs --store play",
     "dev": "node build.mjs --serve",
     "balance": "node tools/balance.mjs",
     "stand-balance": "node tools/stand-balance.mjs",
