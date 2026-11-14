@@ -178,6 +178,14 @@ body #result.passing {
   box-shadow: 0 4px 16px #0006; transition: opacity .45s ease-out; cursor: pointer;
 }
 #result.passing.leaving { opacity: 0; pointer-events: none; }
+/* FIRST-FIVE (the release audit's finding 7): a lost wave's card kept nothing behind it but a near-black veil, blurred, and read as a crash.
+   It keeps the board and the top bar in sight now: a light veil, darker only round the card in the middle, no blur, and the top bar over it. */
+body[data-phase='lost'] #result:not(.jr) {
+  background: radial-gradient(ellipse 80% 45% at 50% 50%, #0b1513d9, #0b151366 70%, #0b151333);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+body[data-phase='lost'] #result:not(.jr) > .row { background: linear-gradient(#0b151300, #0b1513cc 45%); }
+body[data-phase='lost'] #top { z-index: 1; }
 #result.passing > .row { display: none; }
 body #result.passing #banner { padding: 8px 10px 7px; width: 100%; font-size: clamp(20px, 6vw, 24px); background: linear-gradient(90deg, transparent, #702b3080 30%, #702b3080 70%, transparent); }
 #result.passing #banner::before { display: none; }
