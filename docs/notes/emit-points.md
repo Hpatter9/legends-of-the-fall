@@ -182,3 +182,67 @@ the stroke never met the weapon. The director's order: move it to the landing.
   the Samurai, the Kunoichi's claws, the Mercenary, the Reaper, the Dragoon, the Demon Swordsman. Where the blow was a crit, the
   crit's large gold cross is over both and the stroke adds little (the Barbarian, the Paladin, the Ninja Monk). It is one moment
   now, and a busier one.
+
+## Since: the ultimates' own shows, the Dragoon's flames first
+
+- **Her mouth** (`ULT_EMIT`, `ultEmitOffset`, `UnitView.ultPoint`): read on the second frame of her ultimate's row at four times its
+  size, front and back. From behind her mouth is hidden by her hair: the point is the front edge of her head at the mouth's
+  height.
+- **The breath** (`mouthRun`, `MOUTH_RUN`): two to six small flames run from her mouth to the first spot of her line, one every
+  14 px, each 45 ms after the one before and larger than it (0.3 of its size at the mouth, 0.75 as it reaches the line). The
+  line's own flames wait for the run, so the fire is seen to leave her and then go down the line. Any hero given a point in
+  `ULT_EMIT` whose strike is laid down a line gets the same; today that is the Dragoon alone.
+- **Found on the way:** the small flame clip (`beat-flame`) was never held in a fight. Every call for it returned false, on main
+  too, so her showcase's "stream of flame along the line" had always fallen back to the painted flames. The clip is now asked
+  for at a fight's start when a hero with a mouth point is in it, so her showcase's rendered flames play as well.
+- **Memory.** That clip lies in the fire showcase's atlas (1020 x 1011, 4,124,880 bytes decoded). The photograph tool's count of
+  what is held through her show is the same before and after (ten atlases, 36.0 MB decoded): the atlas was already loaded when
+  her showcase first played; it is now loaded at the fight's start instead, for fights with the Dragoon only. Handed to the
+  graphics card through the show: 2.4 MB before, 6.3 MB after, since its clips are now drawn.
+- Proof: `MOUTH=48,112,176,256` steps her show until the mouth run begins and photographs 200 px round her.
+  `docs/samples/blender-fx/emit-dragoon-mouth-3x.png`.
+- Verdict, plainly: a flame is at her face where there was none, and it is the right spot. But it does not read as a breath
+  blown outwards. Her line in the photographed fight began on the tile beside her, so the run was three flames going DOWN from
+  her face to the ground at her feet, and the show's clock is held on the blow just then, so the four photographs I took are the
+  same frozen moment: I have one picture, of one facing, not a sequence. I have no before picture of the same moment either (the
+  two builds' fights differ by then); "before" is that nothing was drawn at her mouth.
+- **Not done:** every other ultimate's show. The wind-ups gather on the caster's body and the strikes land where the ability
+  lands; which of them should leave a hand, a staff or a weapon has not been audited. The Dragoon was the one named.
+
+
+### The breath corrected: outwards at mouth height
+
+The first version ran the flames from her mouth DOWN to the ground at the line's first spot, and in the photograph it was a pillar
+of fire falling from her face to her feet, over the knight beside her. The director held it and ordered the fix.
+
+- The run now goes outwards along the line at the mouth's own height, to the point that high over the line's first spot; it
+  comes down only there, where the line's flames take it on. Each flame is turned to point the way the breath goes (the clip is
+  an upright flame; `mouthRun` gives the `turn`). Two to nine flames, 16 px apart, 40 ms apart, from 0.3 to 0.8 of their size.
+- **What the proof found:** her line's tiles always begin on the tile beside her, so in an ordinary fight the run is the
+  shortest one, two flames, however long the line is: a flame at her mouth pointing down the line, and then the line alight. A
+  longer run (six flames) appeared only when the strike had no tiles to burn and was laid on the foes themselves, three tiles
+  off.
+- Proof: `LINE=<direction>,<from>` in the photograph tool stands the foes in a row from the hero for the photograph, and `MOUTH=`
+  now takes its photographs by the flames' own age (the show's clock stands still on the blow).
+  `docs/samples/blender-fx/emit-dragoon-mouth-3x.png`: above, the six-flame run; below, the usual two-flame case with a line of
+  four tiles; each at 0, 100 and 200 ms into the run, three times the size. Two facings, not chosen freely: they are the two the
+  staging gave.
+- Verdict: in the usual case a flame is at her mouth, pointing along the line, and the line lights from her outwards; it no
+  longer falls to her feet. It is a small thing beside the wall of flames on the ground. The six-flame run is the one that looks
+  like a breath, and play will rarely show it.
+
+### The breath as a stream over three tiles
+
+The director's next order, since the two-flame run was all an ordinary fight showed: at mouth height the stream reaches over the
+THIRD spot of her line, or the last of a shorter line (`streamSpot`, `MOUTH_RUN.TILES`), starting narrow and growing; each spot
+of the line lights as the stream passes over it, the spots beyond one after another (`lineLight`), so the fire spreads along
+the line beneath the breath; and whoever the stream crosses is drawn again over it (SHOW-THROUGH).
+
+- Proof: `docs/samples/blender-fx/emit-dragoon-mouth-3x.png`: two facings, each an ordinary strike on a line of four tiles and
+  more (the foes stood in a row by `LINE=`), at 0, 100 and 200 ms into the stream, three times the size. Four flames in one
+  facing, eight in the other.
+- Verdict, plainly: at 0 ms a flame is at her mouth pointing down the line, and by 100 ms fire runs out from her head along it.
+  But her SHOWCASE plays its own flames over the same line at the same moment (a stream with a ball of fire at its head, and
+  standing flames on the ground that are already lit at 0 ms), so I cannot cleanly tell my stream from the showcase's in the
+  photographs, nor see the ground flames light one by one beneath it. The rule that they do is tested; the picture does not
+  prove it.

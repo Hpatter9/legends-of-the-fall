@@ -37,7 +37,7 @@ import { rankOf, SPELLS, type SpellId } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { at, depth, facesRight, getFrame, FOOT, HH, TH, TW, type Frame } from './iso';
-import { strokeLands, strokeLay } from './emitRules';
+import { strokeLands, strokeLay, ULT_EMIT } from './emitRules';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SPELL_GLOW, SPELL_WORD, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -78,7 +78,7 @@ import { AREA_PAINT, SNARE, type AreaPaint, AURA_ALPHA, AURA_ALPHA_OF, AURA_MOTE
 import { SLASH_HOP_MS, type WallKind } from '../sim/toolkit';
 import { loadSpellArt, spellFrames } from './spellArt';
 import { bfxFrames, bfxGlows, loadBlenderFx, warmBfx } from './blenderFxArt';
-import { hitSpark, tailShare, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
+import { hitSpark, mouthRun, MOUTH_RUN, streamSpot, lineLight, ULT_LINE, tailShare, blinkCut, swingClip, deathClip, GUN, shotClip, SHOT_ORB_SIZE, ARC_STRAND, strandLay, type HitKind, BFX_FADE_MS, BFX_FLY_FROM, BFX_FLY_MS, BFX_GLOW_ALPHA, BFX_LINE_GLOW, BFX_GLOW_SCALE, BFX_SCALE, BFX_WALL_SPELL, SPELL_LAY, SPELL_STANDS, ULT_BFX, ZONE_BFX, bfxAlpha, bfxCentre, BEAT_OWN, ultPlace, ultSpots, ultLinked, ultLinkClip, ULT_LASTS, lineRun, ULT_EXTRA, ULT_EXTRA_AT, touchDelay, ULT_LINK_MS, beatBfx, beatLine, BEAT_LINE, type BeatClip, ultBfx, type UltStageName, bfxBox, bfxBudget, bfxClip, bfxFrame, bfxLife, groundBfx, spellBfx, standPhase, type SpellPartName } from './blenderFxRules';
 import { boostedScale, burstPart, epicEvent, KIT, ultScale, ULT_EPIC } from '../ultEpicRules';
 import { ultWeight } from '../ultStageRules';
 import { SHOWCASES } from '../ultShowRules';
@@ -430,6 +430,9 @@ export class Fx {
       // which the caster's showcase has just played when the strike lands. Asking for every hero's at a fight's start took the
       // atlases over their budget, and a strike's own atlas was given up to make room: Vael's sweep and his black sun went missing)
       warmBfx([...kinds].filter((kind) => ULT_EXTRA[kind] && SHOWCASES[kind]).flatMap((kind) => Object.values(ULT_EXTRA[kind]).map((clip) => beatBfx(clip, SHOWCASES[kind].el))));
+      // (EMIT-POINTS: and the small flame a breath runs out of its caster's mouth in, for a hero whose ultimate has a mouth point. It
+      // lies with the fire showcase's beats, one atlas of about 4 MB decoded, asked for only when such a hero is in the fight)
+      warmBfx(b.units.filter((x) => x.side === 'hero' && ULT_EMIT[defOf(x).sheet]).map(() => beatBfx(MOUTH_RUN.clip, 'fire')));
       // (the beats of their showcases are not asked for here: each loads the first time it is played, the older parts playing that once,
       // so a fight begins with as little held as it can)
     }
@@ -991,7 +994,25 @@ export class Fx {
             beatLine(caster.x, caster.y, a1[0], a1[1]).forEach(([px, py], i) => this.bfxBeat(extra.wake!, el, px, py, { delay: i * BEAT_LINE.LAG, mult: ULT_EXTRA_AT.WAKE_SIZE }));
           }
           if (extra?.land) this.bfxBeat(extra.land, el, caster.x, caster.y, { mult: ULT_EXTRA_AT.LAND_SIZE });
-          for (const r of run) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay);
+          // (EMIT-POINTS: a breath leaves the mouth. Small flames are blown outwards from the caster's mouth along the line, growing, each
+          // turned the way the breath goes, and the line's own flames follow them; `mouthRun`)
+          const mouth = caster.ultPoint();
+          const fkey = mouth && run.length ? beatBfx(MOUTH_RUN.clip, el) : undefined;
+          const frames = fkey ? bfxFrames(fkey) : [];
+          const fc = fkey ? bfxClip(fkey) : undefined;
+          if (mouth && fc && frames.length) {
+            // (at the mouth's own height all the way, reaching over the line's third spot or its last: `streamSpot`)
+            const reach = streamSpot(run.length);
+            const far = shown[run[reach].i];
+            const breath = mouthRun(mouth[0], mouth[1], far[0], far[1] - (caster.y - mouth[1]));
+            for (const p of breath.at) this.moment.spawn({ frames: this.reduced ? [frames[fc.hold]] : frames, x: p.x, y: p.y, scale: BFX_SCALE * p.size, rotation: breath.turn, frameMs: this.reduced ? fc.ms : fc.ms / frames.length, life: fc.ms, delay: p.delay, prio: true, solid: true, half: 1 });
+            // (SHOW-THROUGH: whoever the stream crosses is drawn again over it, so none is hidden by it)
+            const half = (fc.h * BFX_SCALE * MOUTH_RUN.TO) / 2;
+            const end = breath.at[breath.at.length - 1];
+            this.showThrough([Math.min(mouth[0], end.x) - half, Math.min(mouth[1], end.y) - half, Math.max(mouth[0], end.x) + half, Math.max(mouth[1], end.y) + half], breath.wait + fc.ms);
+            // (each spot of the line lights as the stream passes over it, and those beyond it one after another: `lineLight`)
+            run.forEach((r, n) => this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, lineLight(n, reach, breath.wait, ULT_LINE.LAG)));
+          } else for (const r of run) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay);
         } else for (const [x, y] of shown) {
           const far = linked && Math.hypot(x - caster.x, y - caster.y) > 8;
           if (far) beatLine(caster.x, caster.y, x, y).forEach(([px, py], i) => this.bfxBeat(ultLinkClip(kind), el, px, py, { delay: i * BEAT_LINE.LAG }));

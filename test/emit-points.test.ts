@@ -2,10 +2,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CAST, EMIT, FOE_EMIT, strokeLands, STROKE_AT, emitOffset, emitWorld, reachOffset, strokeLay } from '../src/render/emitRules';
+import { CAST, EMIT, FOE_EMIT, ULT_EMIT, ultEmitOffset, strokeLands, STROKE_AT, emitOffset, emitWorld, reachOffset, strokeLay } from '../src/render/emitRules';
 import { REACH } from '../src/render/reachData';
 import { FOES } from '../src/sim/foes';
-import { TAIL_MIN, tailShare } from '../src/render/blenderFxRules';
+import { MOUTH_RUN, TAIL_MIN, lineLight, mouthRun, streamSpot, tailShare } from '../src/render/blenderFxRules';
 import { UNITS } from '../src/sim/units';
 import layout from '../src/art/units/sheets.json';
 
@@ -164,4 +164,43 @@ test('a melee stroke plays as the blow lands, with its spark, and not as the swi
   assert.doesNotMatch(fx, /e\.kind === 'swing'\) this\.slash/);
   // (the swing's own sound is still the swing's: the heavy wind-up's swoosh as it begins)
   assert.match(readFileSync('src/render/soundRules.ts', 'utf8'), /case 'swing': \{/);
+});
+
+test("ULTIMATES: the Dragoon's breath leaves her mouth: small flames run from it to her line's first spot, growing, and the line follows", () => {
+  const e = ULT_EMIT[UNITS.dragoon.sheet];
+  assert.equal(e.kind, 'mouth');
+  // (her head, not her middle: above two thirds of her figure, front and back)
+  for (const at of [e.front, e.back]) assert.ok(at[1] > 70 && at[1] < 90 && at[0] >= 0 && at[0] < 20, String(at));
+  const rear = SHEETS[UNITS.dragoon.sheet].rear!;
+  assert.deepEqual(ultEmitOffset(UNITS.dragoon.sheet, rear, rear), e.back);
+  assert.equal(ultEmitOffset(UNITS.knight.sheet, UNITS.knight.sheet, undefined), undefined);
+  // (the run: from the mouth, never reaching the far point itself, each later and larger than the last; the line waits for it)
+  const run = mouthRun(0, 0, 80, 0);
+  assert.equal(run.at.length, 5);
+  assert.deepEqual([run.at[0].x, run.at[0].y, run.at[0].delay, run.at[0].size], [0, 0, 0, MOUTH_RUN.FROM]);
+  for (let i = 1; i < run.at.length; i++) assert.ok(run.at[i].x > run.at[i - 1].x && run.at[i].delay > run.at[i - 1].delay && run.at[i].size > run.at[i - 1].size);
+  assert.ok(run.at[4].x < 80 && run.at[4].size < MOUTH_RUN.TO);
+  assert.equal(run.wait, 5 * MOUTH_RUN.LAG);
+  // (level all the way when the far point is at the mouth's height; an upright flame turned a quarter to point along it)
+  assert.ok(run.at.every((p) => p.y === 0));
+  assert.equal(run.turn, Math.PI / 2);
+  // (a line that begins beside her: two flames; a long one: nine at most)
+  assert.equal(mouthRun(0, 0, 3, 0).at.length, MOUTH_RUN.MIN);
+  assert.equal(mouthRun(0, 0, 900, 0).at.length, MOUTH_RUN.MAX);
+  const fx = readFileSync('src/render/fx.ts', 'utf8');
+  assert.match(fx, /const mouth = caster\.ultPoint\(\);/);
+  // (blown at the mouth's own height: the far point is that high over the line's first spot)
+  assert.match(fx, /mouthRun\(mouth\[0\], mouth\[1\], far\[0\], far\[1\] - \(caster\.y - mouth\[1\]\)\);/);
+  assert.match(fx, /rotation: breath\.turn,/);
+  // (the director's order for a real stream: it reaches over the line's third spot, or the last of a shorter line)
+  assert.deepEqual([1, 2, 3, 4, 8].map(streamSpot), [0, 1, 2, 2, 2]);
+  assert.match(fx, /const reach = streamSpot\(run\.length\);/);
+  // (each spot lights as the stream passes over it, the last of them as it arrives; those beyond one after another)
+  assert.deepEqual([0, 1, 2, 3, 4].map((i) => lineLight(i, 2, 300, 70)), [100, 200, 300, 370, 440]);
+  assert.equal(lineLight(0, 0, 80, 70), 80);
+  assert.match(fx, /r\.size, lineLight\(n, reach, breath\.wait, ULT_LINE\.LAG\)\)\);/);
+  // (whoever the stream crosses is shown through it)
+  assert.match(fx, /this\.showThrough\(\[Math\.min\(mouth\[0\], end\.x\) - half,/);
+  // (its clip is asked for at a fight's start only when such a hero is in the fight)
+  assert.match(fx, /warmBfx\(b\.units\.filter\(\(x\) => x\.side === 'hero' && ULT_EMIT\[defOf\(x\)\.sheet\]\)\.map\(\(\) => beatBfx\(MOUTH_RUN\.clip, 'fire'\)\)\);/);
 });
