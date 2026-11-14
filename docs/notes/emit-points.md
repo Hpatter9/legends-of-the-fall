@@ -288,3 +288,8 @@ her muzzle; the healers' light leaves the staff or the hand.
 
 - Proof: `LINKS=60,160` steps a show until the strike begins and photographs the caster when the strike's first bit is that old.
   `docs/samples/blender-fx/emit-ult-links-{1,2}-3x.jpg` (before left, after right, at 60 ms and 160 ms; three times the size).
+- Verdict, plainly: a subtle change. In the after frames the row of small clips sets off from the staff's or hand's height (the
+  Fateweaver's and the Wanderer's pale discs sit higher, by her staff and his hand) where before they began on the ground at the
+  caster's feet. The strikes' own rings and bursts fill the same moment, and in several pairs (the Satyr, the Gorgon) I cannot
+  pick the line's start out of the crowd. The Gorgon's gaze clips now begin at her head; in her photographs she had turned her
+  foes to stone beside her, so the line was a clip or two long. I looked at one of the two sheets.
