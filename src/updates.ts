@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.594.0',
+    date: '2026-11-14',
+    title: 'Ready for the store: credits, size and polish',
+    notes: ['Five screens tidied: Houses filter words, the Pact Gallery\'s Back button, the hero page tabs, the Nemesis cut-in choices and the War Council\'s Auto-pick.', 'Each Settings page now has a single Back button.', 'The Google Play build leaves out the Developer page and fits Play\'s size limit.'],
+  },
+  {
     version: '0.593.0',
     date: '2026-11-14',
     title: 'A credits page for every artist',
