@@ -100,6 +100,7 @@ both are signed by the same key and carry the same files); (3) the data URLs to 
 
 | Item | Result |
 | --- | --- |
+| Free currency in the Developer page | **pass (fixed on `claude/store-dev-page`)**: a store's build has no Developer page (`docs/notes/store-dev-page.md`); the web and the GitHub app keep it for testing. |
 | Self-updating | **pass (fixed)**: `src/appUpdate.ts` fetched `api.github.com/.../releases/latest` once at start (app only) and, when a newer tag existed, Settings, About showed "Update available" with a link to the GitHub release page (it never downloaded or installed anything itself). Play's Device and Network Abuse policy forbids an app updating itself, or getting updates, outside Play, and a link to an APK page is close enough to be rejected. Now `node build.mjs --store play` (`npm run web:play`) defines `__STORE__ = 'play'` and `checkAppUpdate` asks only when `updateCheckOn(store, inApp())`: the GitHub release's app, as before. Tested in `test/app-update.test.ts`. |
 | Privacy policy | **owner action**: a URL is required for every app. Draft: `docs/store/privacy-policy.html` (fill in the date and a contact address, then host it on Pages: build.mjs would copy it to `out/web`). |
 | What the game collects | Nothing. Saves and the Diagnostics list stay on the device; no analytics, ads or accounts; the fonts are bundled. The only request was the GitHub update check, now not in the Play build. |

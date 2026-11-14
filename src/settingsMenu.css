@@ -19,3 +19,7 @@
 #settingsBody .earlier summary { min-height: 32px; display: flex; align-items: center; font-weight: 700; color: var(--kk-gold); cursor: pointer; }
 #settingsBody .earlier p { margin: 8px 0 0; font-size: 12px; line-height: 1.4; }
 #settingsBody .earlier p b { display: block; margin-bottom: 2px; font-size: 11px; color: var(--dim); }
+
+/* STORE-DEV: one way back on each screen. The header's "‹ Back" (out of Settings) is hidden on a sub-page, whose own "‹ Back" goes to
+   the list; the painted glyph's display:flex had kept it showing, so a sub-page had two "Back"s that did different things. */
+#settingsClose[hidden] { display: none !important; }
