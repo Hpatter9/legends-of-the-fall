@@ -230,7 +230,7 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
 
 ## Art generated with PixelLab
 
-- **Duchess's headbutt and fall** (the attack and dead rows of `duchess_goat.png`) are generated with **PixelLab**: her own standing frame from whtdragon's white goat (`src/art/duchess/goat.png`) on a 64-pixel canvas, animated with `/animate-with-text-v3` (`tools/duchess/gen.py`, the takes kept in `tools/duchess/generated/`), native pixels with hard alpha, then scaled 2x like the pack frames beside them. Four generations: two headbutt takes (the second used), a hurt take (not used: it drew a lightning flash) and the fall (its last three frames used). See `docs/notes/duchess-fights.md`.
+- **Duchess's headbutt and fall** (the attack and dead rows of `duchess_goat.png`) are generated with **PixelLab**: her own standing frame from whtdragon's white goat (`src/art/duchess/goat.png`; **licence unconfirmed**, as her sheet's) on a 64-pixel canvas, animated with `/animate-with-text-v3` (`tools/duchess/gen.py`, the takes kept in `tools/duchess/generated/`), native pixels with hard alpha, then scaled 2x like the pack frames beside them. Four generations: two headbutt takes (the second used), a hurt take (not used: it drew a lightning flash) and the fall (its last three frames used). See `docs/notes/duchess-fights.md`.
 - The **Lich King** (`lich_king.png`, the Undead Legion's boss) is generated the same way as the other bosses: a base figure (`/generate-with-style-v2`, 128 px, Craftpix Minotaur, Samurai Commander and Skeleton Warrior frames as style references), then idle, walk, attack, cast and death clips (`/animate-with-text-v3`), cropped and padded only (native pixels, hard alpha), with a last lying death frame made by an exact 90-degree turn (`tools/pixellab/lie.py`). The steps are in `tools/pixellab/lich.py`; see `docs/notes/armies.md`.
 - The **Oni King** (`oni_king.png`, the Yokai Night Parade's boss) is generated the same way as the Lich King: 4 base candidates at 128 px (Craftpix Minotaur, Samurai Commander and the generated Horned Ogre as style references; the armoured one picked), then idle, walk, attack, attack2 and death clips and the lying last frame. The steps are in `tools/pixellab/oni.py`; see `docs/notes/armies.md`.
 - The Druid's treant (`cls_treant.png`) is generated the same way (base figure from Craftpix Knight and Minotaur style references, then walk, attack and idle clips). Every generated sheet's last death frame is that sheet's idle figure turned exactly 90 degrees (`tools/pixellab/lie.py`), so no extra generation was involved.
@@ -400,9 +400,9 @@ After an Eidolon's painting crosses the screen, its sprite comes onto the board 
 
 - The wolves and the dire wolf (`summon_wolf.png`, `summon_wolf_white.png`, `summon_direwolf.png`): the grey, white and black wild dogs of
   **whtdragon**'s RPG Maker MV animals pack (`animals/wilddogs.png`), the right-facing walking frames doubled by whole pixels, the bite,
-  idle, hurt and fall rows made by moving them by whole pixels. The same licence note as the wolves above.
+  idle, hurt and fall rows made by moving them by whole pixels. **Licence unconfirmed**: the same licence note as the wolves above.
 - The Reaper's wraith (`summon_wraith.png`) and the Illusionist's decoy (`summon_decoy.png`): figures 13 and 33 of the **Golems and
-  elementals** pack by batareya, moved by whole pixels as the Golem Forge's golems are, coming apart pixel by pixel as they fall (the same
+  elementals** pack by batareya, moved by whole pixels as the Golem Forge's golems are, coming apart pixel by pixel as they fall (**licence unconfirmed**: the same
   licence note as the golems).
 - The Samurai Commander's standard (`summon_standard.png`): the war camp's standard (`src/art/camp/standard.png`, Chronos Settlement's
   isometric kits, credited under the war camp) without its sand plot, its pennants stirring by whole pixels.

@@ -1,5 +1,5 @@
 // STORE-CREDITS (docs/notes/store-credits.md): the Credits page at the three upright phone sizes, into docs/samples/store-credits/:
-// Settings' list with the Credits row, the page's top, a section with licence tags, the unconfirmed marks, and About's line.
+// Settings' list with the Credits row, the page's top (Art), Characters and monsters (the unconfirmed marks), Music, Fonts, and About's line.
 //
 //   npm run web && node tools/store-ready/credits-shots.mjs
 import { createRequire } from 'node:module';
@@ -35,10 +35,12 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     }, text);
     await page.waitForTimeout(300);
   };
+  await scrollTo('Free character and monster sprite packs');
+  await shot('credits-characters');
   await scrollTo('Blackmoor Colossus');
   await shot('credits-music');
-  await scrollTo('Golem Forge');
-  await shot('credits-unconfirmed');
+  await scrollTo('Cinzel Decorative');
+  await shot('credits-fonts');
   const sizes = await page.evaluate(() => {
     const c = document.querySelector('#credits .om').getBoundingClientRect();
     return { cardW: c.width, viewW: innerWidth, scrollW: document.documentElement.scrollWidth, entries: document.querySelectorAll('#credits .crEntry').length };

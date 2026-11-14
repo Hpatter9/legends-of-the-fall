@@ -1,8 +1,8 @@
-// STORE-CREDITS (docs/notes/store-credits.md): the in-app Credits page, opened from Settings. A standard ornate menu (UI-STANDARD) made
-// from CREDITS.md itself, taken into the bundle as text at build time, so the page shows exactly what the file says. Each entry names the
-// licences it is under; one that asks for its author's credit (CC-BY, CC-BY-SA, GPL, the font licence) is marked so.
-import creditsMd from '../CREDITS.md' with { type: 'text' };
-import { creditLicences, creditSections, type CreditEntry } from './creditsRules';
+// STORE-CREDITS (docs/notes/store-credits.md): the in-app Credits page, opened from Settings: a standard ornate menu (UI-STANDARD), a
+// sheet with "‹ Back". It lists `data/credits.ts`, written for players: one entry per creator or pack, grouped as Art, Characters and
+// monsters, Music, Sound and Fonts, each with its licence (tagged "credit required" where the licence asks for it) and, where the
+// licence asks, a link to the source. CREDITS.md stays the developers' record; the test keeps the two in step.
+import { CREDIT_GROUPS, PLAYER_CREDITS, type PlayerCredit } from './data/credits';
 import { menuFoot, menuNote, menuSection, menuWell, ornateMenu } from './ornateMenu';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -12,15 +12,23 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-/** One entry: its lines, then a tag for each licence it names. */
-function entryOf(e: CreditEntry): HTMLElement {
+/** One entry: the work, its author, what it includes, then its licence's tag and the link. */
+function entryOf(c: PlayerCredit): HTMLElement {
   const p = el('div', 'crEntry');
-  e.lines.forEach((line, i) => p.append(el('p', i ? 'crSub' : '', line)));
-  if (e.licences.length) {
+  p.append(el('p', 'crWork', c.work));
+  if (c.author) p.append(el('p', 'crBy', c.author));
+  if (c.includes?.length) p.append(el('p', 'crSub', c.includes.join(' · ')));
+  if (c.licence || c.unconfirmed || c.link) {
     const tags = el('p', 'crLics');
-    for (const l of e.licences) {
-      const t = el('span', `crLic${l.credit ? ' crCredit' : ''}${l.unconfirmed ? ' crUnconfirmed' : ''}`, l.credit ? `${l.name} · credit required` : l.name);
-      tags.append(t);
+    if (c.licence) tags.append(el('span', `crLic${c.credit ? ' crCredit' : ''}`, c.licence));
+    if (c.credit) tags.append(el('span', 'crLic crCredit', 'Credit required'));
+    if (c.unconfirmed) tags.append(el('span', 'crLic crUnconfirmed', 'Licence unconfirmed'));
+    if (c.link) {
+      const a = el('a', 'crLink', c.link.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''));
+      a.href = c.link;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      tags.append(a);
     }
     p.append(tags);
   }
@@ -29,18 +37,11 @@ function entryOf(e: CreditEntry): HTMLElement {
 
 /** Opens the Credits page over Settings; "‹ Back" (or Escape) returns to Settings. */
 export function openCredits(onClose?: () => void): void {
-  const sections = creditSections(creditsMd);
-  const menu = ornateMenu({ id: 'credits', eyebrow: 'Settings', title: 'Credits', sub: 'Where every picture, tune and sound comes from', kind: 'sheet', asked: true, onClose });
-  const intro = menuWell(menu.body);
-  intro.append(
-    el('p', '', 'Legends of the Last Keep is made with free art and music packs, with art made for the game, and with sound made in the game. Thank you to every artist and composer named here.'),
-    el('p', '', `Where a licence asks for its author to be credited (${creditLicences(sections).join(', ')}), it is named beside the work.`),
-  );
-  for (const s of sections) {
-    const grid = menuSection(menu.body, s.title);
-    const well = menuWell(grid);
-    for (const e of s.entries) well.append(entryOf(e));
+  const menu = ornateMenu({ id: 'credits', eyebrow: 'Settings', title: 'Credits', sub: 'The artists, composers and makers behind the game', kind: 'sheet', asked: true, onClose });
+  menuNote(menu.body, 'Thank you to every artist, composer and type designer named here, who share their work for games like this one.');
+  for (const group of CREDIT_GROUPS) {
+    const well = menuWell(menuSection(menu.body, group));
+    for (const c of PLAYER_CREDITS[group]) well.append(entryOf(c));
   }
-  menuNote(menu.body, 'The full list, with the files each covers, is CREDITS.md in the game’s source.');
   menuFoot(menu, { back: { word: 'back' } });
 }

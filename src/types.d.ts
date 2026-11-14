@@ -15,8 +15,3 @@ declare const __TACTIC_ART__: string[];
 declare const __BOARD__: string | undefined;
 /** The store this build is for (`node build.mjs --store play`), or '' for the web page and the GitHub release's app; read with `typeof`, as `__BOARD__` is. */
 declare const __STORE__: string | undefined;
-/** Text files taken into the bundle as a string (`import md from '../CREDITS.md' with { type: 'text' }`; esbuild reads it at build time). */
-declare module '*.md' {
-  const text: string;
-  export default text;
-}

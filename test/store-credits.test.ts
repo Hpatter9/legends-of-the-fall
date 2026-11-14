@@ -1,58 +1,76 @@
-// STORE-CREDITS (docs/notes/store-credits.md): the in-app Credits page is CREDITS.md, entry for entry, with each licence named.
+// STORE-CREDITS (docs/notes/store-credits.md): the in-app Credits page (`src/data/credits.ts`, written for players) covers every
+// third-party creator, pack and licence that CREDITS.md (the developers' record) names, so the two cannot drift apart.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import creditsMd from '../CREDITS.md' with { type: 'text' };
-import { creditLicences, creditSections, licencesOf, plainText } from '../src/creditsRules';
+import { CREDIT_GROUPS, PLAYER_CREDITS, creditText, type PlayerCredit } from '../src/data/credits';
+import { covers, creditNames, licencesOf, plainText } from '../src/creditsRules';
 
 const md = readFileSync('CREDITS.md', 'utf8');
-const sections = creditSections(creditsMd);
-const shown = sections.flatMap((s) => s.entries.flatMap((e) => e.lines)).join('\n');
+const all: PlayerCredit[] = CREDIT_GROUPS.flatMap((g) => PLAYER_CREDITS[g]);
 
-test('the page is made from the file as it is now (the bundle takes CREDITS.md at build time)', () => {
-  assert.equal(creditsMd, md);
+/** Names the record gives that are not third-party work in the game, each with why. A new name needs a place on the page or a line
+ *  here (with its reason); nothing else. */
+const NOT_ON_PAGE: Record<string, string> = {
+  'ART-ASCEND': 'a feature of the game, not a maker',
+  'Chronos Settlement': 'the owner’s other game, its art made for it (original art)',
+  URL: '"loaded by URL": not a name',
+  Craftpix: 'the maker of the Craftpix entries (on the page as Craftpix.net)',
+  'Pixel Champions v3': 'no longer in the game (CREDITS.md: superseded by the hero art remake; no pc_* sheet ships)',
+  Alex: 'Pixel Champions v3’s author: no longer in the game',
+  'Tiny RPG Town': 'its placeholder faces were replaced by the painted quest givers',
+};
+
+test('every third-party creator and pack CREDITS.md names is on the Credits page', () => {
+  const names = creditNames(md);
+  assert.ok(names.length > 60, `${names.length} names read`);
+  const missing = names.filter((n) => !(n in NOT_ON_PAGE) && !all.some((c) => covers(creditText(c), n)));
+  assert.deepEqual(missing, [], `not on the page: ${missing.join(' | ')}`);
 });
 
-test('every entry of CREDITS.md is on the page: each bullet, sub-bullet and paragraph, word for word', () => {
-  // (each top-level bullet or paragraph of the file, with its continuation lines, read independently of the page's parser)
-  const blocks: string[] = [];
-  let cur = '';
-  const flush = () => {
-    if (cur.trim()) blocks.push(cur);
-    cur = '';
-  };
-  for (const line of md.split('\n')) {
-    if (!line.trim() || /^#/.test(line)) flush();
-    else if (/^\s*- /.test(line)) {
-      flush();
-      cur = line.replace(/^\s*- /, '');
-    } else cur += ` ${line.trim()}`;
+test('the names read include the ones that matter (the reader is not reading nothing)', () => {
+  const names = creditNames(md);
+  for (const n of ['DragonDePlatino', 'Matthew Pablo', 'Alexandr Zhelanov', 'Universal LPC Spritesheet', 'Golems and elementals', 'Pixelify Sans', 'Stefie Justprince', 'Free Forest Bosses', 'Showkaizer']) {
+    assert.ok(names.includes(n), n);
   }
-  flush();
-  assert.ok(blocks.length > 200, `${blocks.length} entries read`);
-  for (const b of blocks) assert.ok(shown.includes(plainText(b)), `missing from the page: ${plainText(b).slice(0, 100)}`);
 });
 
-test('every heading of the file is a section of the page', () => {
-  const heads = [...md.matchAll(/^#{2,6}\s+(.*)$/gm)].map((m) => plainText(m[1]));
-  const titles = sections.map((s) => s.title);
-  for (const h of heads) assert.ok(titles.includes(h), h);
+test('every licence CREDITS.md names is on the page', () => {
+  const page = all.map((c) => `${c.licence ?? ''} ${c.unconfirmed ? 'licence unconfirmed' : ''}`).join(' ');
+  for (const l of licencesOf(plainText(md))) {
+    const words = l === 'licence unconfirmed' ? 'licence unconfirmed' : l;
+    assert.ok(page.toLowerCase().includes(words.toLowerCase().replace('cc0 1.0', 'cc0')), `licence missing from the page: ${l}`);
+  }
 });
 
-test('each licence asking for credit is named on its entry', () => {
-  assert.deepEqual(licencesOf('Matthew Pablo (CC-BY 3.0)'), [{ name: 'CC-BY 3.0', credit: true }]);
-  assert.deepEqual(licencesOf('LPC layers; CC-BY-SA 3.0 / GPL 3.0').map((l) => l.name), ['CC-BY-SA 3.0', 'GPL 3.0']);
-  assert.deepEqual(licencesOf('all under the SIL Open Font Licence 1.1').map((l) => l.name), ['SIL Open Font Licence 1.1']);
-  assert.deepEqual(licencesOf('by nene (OpenGameArt.org, CC0 Public Domain)'), [{ name: 'CC0', credit: false }]);
-  // (in the file: the music, DawnLike, the LPC sprite and the fonts)
-  const names = creditLicences(sections);
-  for (const n of ['CC-BY 3.0', 'CC-BY 4.0', 'CC-BY-SA 3.0', 'SIL Open Font Licence 1.1']) assert.ok(names.includes(n), n);
-  const pablo = sections.flatMap((s) => s.entries).filter((e) => e.lines.join(' ').includes('Blackmoor Colossus'));
-  assert.ok(pablo.length && pablo.every((e) => e.licences.some((l) => l.name === 'CC-BY 3.0' && l.credit)));
+test('a licence that asks for credit is tagged so, with a link to the source where the entry has one', () => {
+  for (const c of all) {
+    if (!c.licence) continue;
+    const asks = /^CC-BY|GPL|Open Font|attribution/i.test(c.licence);
+    assert.equal(!!c.credit, asks, `${c.work}: credit ${c.credit} for ${c.licence}`);
+  }
+  for (const who of ['Matthew Pablo', 'Alexandr Zhelanov', 'DragonDePlatino', 'The LPC artists']) {
+    const c = all.find((x) => x.author?.startsWith(who));
+    assert.ok(c?.credit && c.link?.startsWith('https://'), who);
+  }
 });
 
-test('the assets whose licence the owner has not confirmed are marked so, on the page too', () => {
-  const marked = sections.flatMap((s) => s.entries).filter((e) => e.licences.some((l) => l.unconfirmed));
-  const text = marked.map((e) => e.lines.join(' ')).join('\n');
-  for (const what of ['combatAudioBank', 'golem_stone', 'cls_treant', 'goats.png', 'wolfdog.png']) assert.ok(text.includes(what), what);
+test('the assets whose licence is unconfirmed are tagged so on the page, as in CREDITS.md', () => {
+  const marked = all.filter((c) => c.unconfirmed).map(creditText).join('\n');
+  for (const what of ['batareya', 'whtdragon', 'recorded combat sounds']) assert.ok(marked.includes(what), what);
+  // (and the record marks every use of those packs)
+  const paras = md.split(/\n(?=- |\n|#)/);
+  for (const p of paras.filter((x) => /batareya|whtdragon|combatAudioBank/.test(x) && !/Superseded|\breplace\b[^.]*\b(whtdragon|golem|batareya)/i.test(x))) {
+    assert.match(p, /licen[cs]e unconfirmed/i, p.slice(0, 120));
+  }
+});
+
+test('the page reads as a page for players: no file paths, branches, pull requests or build notes', () => {
+  for (const c of all) {
+    const t = creditText(c);
+    assert.doesNotMatch(t, /\b(src|tools|art-source|docs)\/|\.png\b|\.opus\b|\.ts\b|\bPR #|#\d{3}|\bart\/|game\.js|bundled|owner/i, t);
+  }
+  for (const g of CREDIT_GROUPS) assert.ok(PLAYER_CREDITS[g].length > 0, g);
+  const orig = all.filter((c) => /^Original (art|music|sound) made for Legends of the Last Keep/.test(c.work));
+  assert.ok(orig.some((c) => c.work === 'Original art made for Legends of the Last Keep.'));
 });
