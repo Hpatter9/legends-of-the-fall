@@ -10,7 +10,7 @@ branch changed.
 **Fails (each blocks a Play release):**
 
 1. **Size.** The release AAB is **318 MB compressed**; Play's limit for the base module is **200 MB**. Play rejects the upload. Plan below.
-2. **In-app credits.** Several licences (CC-BY 3.0/4.0 music and DawnLike tiles, the LPC sprite's CC-BY-SA) need attribution where players
+2. **In-app credits** (now done on `claude/store-credits`: Settings, Credits, `docs/notes/store-credits.md`). Several licences (CC-BY 3.0/4.0 music and DawnLike tiles, the LPC sprite's CC-BY-SA) need attribution where players
    can see it. The app's About row says "every source is named in the game's credits list", but no such list is in the app. (CREDITS.md
    is in a private repo.)
 3. **Unknown-licence assets ship.** The Golem Forge golems and the Druid's treant (batareya's pack), Duchess the goat and the
