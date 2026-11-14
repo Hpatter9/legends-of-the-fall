@@ -218,12 +218,18 @@ if (process.env.WATCH) {
   if (process.env.STAGED) {
     const { readFileSync } = await import('node:fs');
     const shots = Object.fromEntries([...readFileSync('src/sim/units.ts', 'utf8').matchAll(/^\s+(\w+): \{ id: '\w+'[^\n]*?shot: '(\w+)'/gm)].map((m) => [m[1], m[2]]));
-    for (const pick of PICKS.slice(0, 5)) {
+    // (STAGED=foe: the same for each kind of shooting foe in the fight, loosing at the nearest hero)
+    const FOE_SHOTS = { gorgon1: 'bone', gorgon2: 'bone', gorgon3: 'bone', orcArcher: 'arrow', boneVolley: 'bone', mazeGorgon1: 'bone', mazeGorgon2: 'bone', mazeGorgon3: 'bone', gorgonQueen: 'bone', lichKing: 'curse', yokaiWitch: 'curse', nineTails: 'fire', shamanKing: 'bolt', voltaraGoddess: 'bolt', vaelkharKing: 'curse' };
+    const foes = process.env.STAGED === 'foe';
+    if (foes) Object.assign(shots, FOE_SHOTS);
+    const who = foes ? await page.evaluate((ids) => [...new Set(window.__game.b.units.filter((u) => u.side === 'foe' && u.alive && ids.includes(u.def)).map((u) => u.def))], Object.keys(FOE_SHOTS)) : PICKS.slice(0, 5);
+    if (foes) console.log('foes here:', await page.evaluate(() => [...new Set(window.__game.b.units.filter((u) => u.side === 'foe').map((u) => u.def))].join(' ')));
+    for (const pick of who) {
       for (const dir of [0, 1, 2, 3]) {
-        const at = await page.evaluate(([pick, dir, shot, cast]) => {
+        const at = await page.evaluate(([pick, dir, shot, cast, foes]) => {
           const g = window.__game, b = g.b, fx = g.fx;
-          const u = b.units.find((x) => x.side === 'hero' && x.def === pick);
-          const foe = b.units.find((x) => x.side === 'foe' && x.alive);
+          const u = b.units.find((x) => x.side === (foes ? 'foe' : 'hero') && x.def === pick && x.alive);
+          const foe = b.units.find((x) => x.side === (foes ? 'hero' : 'foe') && x.alive);
           const sp = g.sprites.get(u.id);
           if (!u || !foe || !sp) return null;
           fx.step(3000);
@@ -244,7 +250,7 @@ if (process.env.WATCH) {
           g.app.renderer.render(g.app.stage);
           const p = fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 });
           return [Math.round(p.x), Math.round(p.y)];
-        }, [pick, dir, shots[pick], process.env.STAGED === 'cast']);
+        }, [pick, dir, shots[pick], process.env.STAGED === 'cast', foes]);
         if (!at) { console.log('NOT STAGED', pick); continue; }
         const x = Math.max(0, Math.min(W - 130, at[0] - 65));
         await page.screenshot({ path: `${OUT}/staged-${pick}-${dir}.png`, clip: { x, y: Math.max(0, at[1] - 75), width: 130, height: 130 } });

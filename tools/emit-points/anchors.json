@@ -46,5 +46,17 @@
     "hero_res_dragoon": { "kind": "hand", "front": [35, 50], "back": [15, 88] },
     "hero_res_tyrant": { "kind": "staffTip", "front": [22, 95], "back": [25, 95] },
     "hero_res_nightstalker": { "kind": "hand", "front": [40, 45], "back": [42, 48] }
+  },
+  "foe": {
+    "gorgon_1": { "kind": "mouth", "at": [12, 48], "frame": 10 },
+    "gorgon_2": { "kind": "mouth", "at": [5, 45], "frame": 10 },
+    "gorgon_3": { "kind": "mouth", "at": [5, 52], "frame": 10 },
+    "hk_orc_archer": { "kind": "bowHand", "at": [20, 28], "frame": 3 },
+    "skeleton_archer": { "kind": "bowHand", "at": [25, 52], "frame": 10 },
+    "lich_king": { "kind": "staffTip", "at": [48, 40], "frame": 3 },
+    "kitsune": { "kind": "hand", "at": [15, 42], "frame": 6 },
+    "shaman_king": { "kind": "staffTip", "at": [40, 42], "frame": 3 },
+    "eidolon_voltara": { "kind": "hand", "at": [55, 112], "frame": 3 },
+    "eidolon_vaelkhar": { "kind": "mouth", "at": [52, 62], "frame": 3 }
   }
 }

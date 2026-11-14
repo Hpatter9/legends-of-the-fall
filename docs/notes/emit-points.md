@@ -110,3 +110,24 @@ seventeen: the Cleric, the Paladin, the Satyr.
 - Limits: the staged strand is lightning for every hero but the Kitsune (her own charm) since it is the tool's stand-in for
   whatever the skill sends; one frame of the cast is measured, and the cast moves through four; a hero the 40 s fights did not
   show casting is not in the table and keeps the old place.
+
+## Since: the foes that shoot
+
+Fifteen foes shoot, on ten sheets: the three Gorgons, their three maze kin and the Gorgon Queen (`gorgon_1` to `_3`), the Orc
+Archer, the bone volley's archer, the Lich King, the Yokai Witch and Nine Tails (one sheet), the Shaman King, Voltara and
+Vaelkhar.
+
+- **A third table, `FOE_EMIT`** (`emitRules.ts`): one point a sheet, since a foe's sheet has no look from behind, and the
+  frame it was read on. That frame is worked out, not assumed: a shot leaves at the wind-up's end (0.4 of the attack, 500 ms at
+  most) of a swing 250 ms longer, so the frame on show is that share of the attack row: the eleventh of the Gorgons' sixteen and
+  of the bone archer's fifteen, the seventh of the Yokai's ten, the fourth of five for the rest. A test holds each frame to that
+  sum and each sheet to facing right as drawn with no rear view.
+- The points: the Gorgons' heads (their thrown arm reaches behind them in that frame, so the gaze is the honest place), the two
+  archers' bow hands, the Lich King's staff head, the Yokai's hand, the Shaman King's skull, Voltara's raised hand, Vaelkhar's
+  mouth. `check.py` checks them against the drawn pixels (all ten on or within 1 px, after two were pulled 3 px onto the figure).
+- Proof: `STAGED=foe` does for each kind of shooting foe in a fight what `STAGED=1` does for a hero.
+  `docs/samples/blender-fx/emit-foes-{1,2}-3x.jpg` (the Orc Archer, the bone archer, the three maze Gorgons, the Yokai Witch).
+- Verdict, plainly: this proof is weaker than the heroes'. A foe's shot is a small painted arrow or bone, not a bright orb. The
+  Gorgon's is seen to move from her body to her head; the two archers' arrows are too small in the crops for me to say they sit
+  on the bow hand. The Lich King, the Shaman King, Voltara, Vaelkhar, Nine Tails and the Gorgon Queen were not in the fights I
+  staged (bosses and trials): their points are checked against their sheets only.

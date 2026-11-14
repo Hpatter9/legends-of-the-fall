@@ -67,13 +67,30 @@ export const CAST: Readonly<Record<string, Emit>> = {
   hero_res_nightstalker: { kind: 'hand', front: [40, 45], back: [42, 48] },
 };
 
+/** FOES: where a shooting foe's shot leaves. A foe's sheet has one view (no look from behind) and its own number of attack frames, so
+ *  the point is read on `frame`: the frame of its attack row on show as the shot leaves (the share of the row gone by then, the
+ *  wind-up over the wind-up and 250 ms). Several foes share a sheet at their own sizes. */
+export const FOE_EMIT: Readonly<Record<string, { kind: EmitKind; at: readonly [number, number]; frame: number }>> = {
+  gorgon_1: { kind: 'mouth', at: [12, 48], frame: 10 },
+  gorgon_2: { kind: 'mouth', at: [5, 45], frame: 10 },
+  gorgon_3: { kind: 'mouth', at: [5, 52], frame: 10 },
+  hk_orc_archer: { kind: 'bowHand', at: [20, 28], frame: 3 },
+  skeleton_archer: { kind: 'bowHand', at: [25, 52], frame: 10 },
+  lich_king: { kind: 'staffTip', at: [48, 40], frame: 3 },
+  kitsune: { kind: 'hand', at: [15, 42], frame: 6 },
+  shaman_king: { kind: 'staffTip', at: [40, 42], frame: 3 },
+  eidolon_voltara: { kind: 'hand', at: [55, 112], frame: 3 },
+  eidolon_vaelkhar: { kind: 'mouth', at: [52, 62], frame: 3 },
+};
+
 /** The point for a fighter whose own sheet is `own` and which is drawn now from `sheet` (its own, or `rear`, its look from behind):
  *  its shot's point, or its cast's where it has no shot's (a hero that shoots casts from its shot's point: its cast row was not
- *  measured). Undefined where the sheet has neither, or the fighter wears another look (a form, a guise, an awakened sheet), whose
+ *  measured), or a shooting foe's. Undefined where the sheet has none of these, or the fighter wears another look (a form, a guise, an awakened sheet), whose
  *  pose was not measured: the caller keeps the old place, a share of the fighter's height above its feet. */
 export function emitOffset(own: string, sheet: string, rear: string | undefined): readonly [number, number] | undefined {
   const e = EMIT[own] ?? CAST[own];
-  if (!e) return undefined;
+  // (a foe's one view serves both ways it can face)
+  if (!e) return FOE_EMIT[own] && sheet === own ? FOE_EMIT[own].at : undefined;
   return sheet === own ? e.front : rear !== undefined && sheet === rear ? e.back : undefined;
 }
 
