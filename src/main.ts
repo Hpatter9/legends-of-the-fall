@@ -251,6 +251,7 @@ import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHo
 import { hornEcho } from './sim/relicSets';
 import { EIDOLON_IDS } from './sim/eidolons';
 import { openScreen, openScreens } from './screens';
+import { offerUpdate, watchUpdate } from './updateReady';
 import { TacticsView } from './tacticsView';
 import { setTactic } from './sim/tactics';
 import { formationOf, formationSpots, setFormations, shapeFits, type Formation } from './sim/formations';
@@ -834,8 +835,19 @@ class Game {
       //  here, the old fight's 'won' still on the board, and its fight never moved; EIDOLON-CHAINS)
       else if (this.homeUp && this.b.phase !== 'fight') this.app.ticker.stop();
     };
-    // (the tips on the home screen are still looked after, a few times a second)
-    setInterval(() => this.homeUp && tips.update(), 250);
+    // (UPDATE-READY: a new version's worker that has taken over is offered as a reload, on the home screen only: `updateReady.ts`)
+    watchUpdate(() => ({
+      home: this.homeUp,
+      assault: !!document.getElementById('assaultScene'),
+      fighting: this.b.phase === 'fight',
+      covered: openScreens().length > 0 || !!document.querySelector('.omVeil, #hmSheet:not([hidden]), #hmSub:not([hidden]), #settings:not([hidden]), #gacha:not([hidden]), #result:not([hidden])'),
+    }));
+    // (the tips on the home screen are still looked after, a few times a second; and the new version's card, when one is waiting)
+    setInterval(() => {
+      if (!this.homeUp) return;
+      tips.update();
+      offerUpdate();
+    }, 250);
     new MutationObserver(sync).observe(home, { attributes: true, attributeFilter: ['hidden'] });
     sync();
     // (the tower's map comes and goes without the home screen changing: the ambience follows it too)
