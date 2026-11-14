@@ -415,3 +415,11 @@ export function visitAt(v: Visit | null, t: number): { phase: 'away' | 'in' | 'h
   if (t < outAt + VISIT_WALK_MS) return { phase: 'out', k: 1 - (t - outAt) / VISIT_WALK_MS };
   return { phase: 'away', k: 0 };
 }
+
+/** RELEASE-FIXES-2: how long (ms) until she is next on the page at `t`: 0 while she is, the wait before she wanders in, or null if she is
+ *  not coming again this fight (no visit, or gone). Her loop sleeps that long rather than draw nothing every frame. */
+export function untilVisit(v: Visit | null, t: number): number | null {
+  if (!v) return null;
+  if (t < v.arrive) return v.arrive - t;
+  return visitAt(v, t).phase === 'away' ? null : 0;
+}

@@ -11,6 +11,7 @@ import { mythicFits, oneMythic } from './mythicRules';
 // a moment after they fall. The saved run (`StandRun`) is a small record kept at the start of each break; the battle is built
 // again from it. Pure rules: no Pixi, no DOM; every draw is a side stream of the run's seed.
 
+import { guardedSave } from './saveGuard';
 import { ULT_FILL } from './heroKits';
 import { addUse, unitUse, type UseGain } from './skillLevels';
 import { grantOres, standOres, type OreDrop } from './awakenMats';
@@ -1188,7 +1189,7 @@ export function settleStand(m: Meta, run: StandRun, armies: readonly string[] = 
 
 export const STAND_KEY = 'legends.stand';
 
-export const saveStand = (run: StandRun, store: Pick<Storage, 'setItem'> = localStorage) => store.setItem(STAND_KEY, JSON.stringify(((run.relicBook = RELIC_BOOK), run)));
+export const saveStand = (run: StandRun, store: Pick<Storage, 'setItem'> = localStorage): boolean => guardedSave(store, STAND_KEY, JSON.stringify(((run.relicBook = RELIC_BOOK), run)));
 export const dropStand = (store: Pick<Storage, 'removeItem'> = localStorage) => store.removeItem(STAND_KEY);
 /** The run saved in the Last Stand's slot, if it is a run still going. */
 export function loadStand(store: Pick<Storage, 'getItem'> = localStorage): StandRun | null {

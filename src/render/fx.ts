@@ -204,6 +204,8 @@ export class Fx {
   /** The fight's own clock in ms, and the text labels still on the screen (fading ones too), so a new one never lands on them. */
   private clock = 0;
   private shownLabels: Text[] = [];
+  /** RELEASE-FIXES-2: the labels that have their chip beside them (an "Immune"). */
+  private chipped = new WeakSet<Text>();
   /** The room (in world px) the labels may use: the board's area on the screen, set by the page each frame. */
   view = { x0: -1e6, x1: 1e6, y0: -1e6, y1: 1e6 };
   /** The skill names showing, oldest first, each with a way to fade it out early (at most three at a time). */
@@ -3906,10 +3908,29 @@ export class Fx {
     const s = this.sprites.get(id);
     if (!s || !settings().numbers) return;
     const { txt } = this.label('Immune', s.x + 6, s.y - s.tall - 12, IMMUNE_COLOUR, 9, 800);
-    if (txt.children.length) return;
+    if (this.chipped.has(txt)) return;
+    this.chipped.add(txt);
+    // (RELEASE-FIXES-2: the chip rides beside its word, just over it, rather than as the word's child: a Text with a child is deprecated in
+    // Pixi 8 and warned of in the console. Where it sits and its fade are as they were, and the next labels are placed by the word alone,
+    // as they were: a Text's width never counted its child)
     const chip = ailmentChip(what, undefined, true);
-    chip.position.set(-txt.width / 2 - 8, -txt.height / 2);
-    txt.addChild(chip);
+    const dx = -txt.width / 2 - 8;
+    const dy = -txt.height / 2;
+    const follow = () => {
+      chip.position.set(txt.x + dx * txt.scale.x, txt.y + dy * txt.scale.y);
+      chip.scale.copyFrom(txt.scale);
+      chip.alpha = txt.alpha;
+    };
+    follow();
+    this.root.addChildAt(chip, this.root.getChildIndex(txt) + 1);
+    this.items.push({
+      view: chip,
+      step: () => {
+        if (txt.destroyed) return false;
+        follow();
+        return true;
+      },
+    });
   }
 
   private weakAt = new Map<number, number>();
