@@ -1,0 +1,12 @@
+/* IAP (docs/notes/iap.md): the summoning's odds sheet (`oddsView.ts`) and the Shop (`iapView.ts`), both on the standard ornate menu. */
+.oddsTable { width: 100%; border-collapse: collapse; font: 400 var(--om-small)/1.3 var(--body); color: #dfd7c5; }
+.oddsTable th, .oddsTable td { padding: 3px 4px; text-align: left; vertical-align: top; }
+.oddsTable thead th { font: 400 var(--om-small) var(--display); color: var(--ornate-brass); border-bottom: 1px solid rgba(156, 132, 84, 0.4); }
+.oddsTable td { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.oddsTable thead th:not(:first-child) { text-align: right; }
+.oddsTable tbody th { font-weight: 400; overflow-wrap: anywhere; }
+.oddsTable tbody tr + tr { border-top: 1px solid rgba(156, 132, 84, 0.15); }
+.omWell:has(> .oddsTable) { padding: 6px 8px; }
+/* (a long body scrolls: its sections keep their height rather than being squeezed into each other) */
+.oddsSheet .omBody > *, .iapShop .omBody > * { flex: none; }
+.oddsHeroes td:nth-child(2) { width: 4.5em; }
