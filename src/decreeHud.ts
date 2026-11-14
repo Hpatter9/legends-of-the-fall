@@ -24,7 +24,14 @@ export function refreshDecree(box: HTMLElement, b: Battle): void {
   const bar = box.querySelector<HTMLElement>('.decreeBar span');
   if (bar) bar.style.width = `${d && !d.used ? (d.fill / DECREE_FULL) * 100 : 0}%`;
   const name = d ? DECREES[d.id as DecreeId].name : '';
-  box.title = !d ? '' : d.used ? `${name}: cast this fight` : ready ? `${name}: tap to cast your Decree` : `${name}: the Decree fills from spare mana and the spells you cast`;
-  box.setAttribute('role', ready ? 'button' : 'group');
-  box.setAttribute('aria-label', ready ? `Cast ${name}` : 'Mana');
+  // (RELEASE-AUDIT: each written only when it changes: this runs every frame of a fight, and a write of the same words still makes the
+  // browser look at the page's styles again)
+  const title = !d ? '' : d.used ? `${name}: cast this fight` : ready ? `${name}: tap to cast your Decree` : `${name}: the Decree fills from spare mana and the spells you cast`;
+  if (box.title !== title) box.title = title;
+  setAttr(box, 'role', ready ? 'button' : 'group');
+  setAttr(box, 'aria-label', ready ? `Cast ${name}` : 'Mana');
+}
+
+function setAttr(el: HTMLElement, name: string, v: string): void {
+  if (el.getAttribute(name) !== v) el.setAttribute(name, v);
 }

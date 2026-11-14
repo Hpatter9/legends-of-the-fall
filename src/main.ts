@@ -4475,7 +4475,10 @@ class Game {
     const dropped = this.spell && !canAfford(b, this.spell);
     if (dropped) this.spell = null;
     ($('mana').querySelector('i span') as HTMLElement).style.width = `${(b.spells.mana / MANA_MAX) * 100}%`;
-    $('mana').querySelector('b')!.textContent = manaText(b.spells);
+    // (RELEASE-AUDIT: the words and the hint written only when they change; written the same each frame, the browser lays the page out again)
+    const manaB = $('mana').querySelector('b')!;
+    const mana = manaText(b.spells);
+    if (manaB.textContent !== mana) manaB.textContent = mana;
     refreshDecree($('mana'), b);
     for (const card of $('spellCards').children as HTMLCollectionOf<HTMLElement>) {
       const id = card.dataset.id as SpellId;
@@ -4488,7 +4491,8 @@ class Game {
     if (caster) tips.offer('skill', () => this.spriteBox(caster.id));
     if (b.phase === 'fight' && !b.autoUlt && b.units.some((u) => u.alive && ultFull(u))) tips.offer('ult', $('fightHud'));
     // (one short line above the orbs, off the board; the spell's full words are on its orb's title and in the spellbook)
-    $('spellHint').textContent = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].name}: let go on the grid · back here to cancel` : `${SPELLS[this.spell].name}: tap a tile · tap the orb to cancel`) : '';
+    const hint = this.spell ? (this.spellDrag?.moved ? `${SPELLS[this.spell].name}: let go on the grid · back here to cancel` : `${SPELLS[this.spell].name}: tap a tile · tap the orb to cancel`) : '';
+    if ($('spellHint').textContent !== hint) $('spellHint').textContent = hint;
     if (dropped) this.markTiles();
   }
 
@@ -4942,7 +4946,8 @@ class Game {
       const twin = !u && this.b.phase === 'deploy' ? fieldTwin(this.b, this.run, Number(id)) : undefined;
       card.classList.toggle('twinOn', !!twin && !(twin.tag !== undefined && canMerge(this.run, Number(id), twin.tag)));
       const mark = card.querySelector<HTMLElement>('.twinMark');
-      if (mark) mark.textContent = sitsOut(this.run, Number(id)) ? 'Sits out' : 'On field';
+      const markText = sitsOut(this.run, Number(id)) ? 'Sits out' : 'On field';
+      if (mark && mark.textContent !== markText) mark.textContent = markText;
       // (SEVEN-SLOT GEAR batch 6: a hero risen at half shows its wound before the fight, with a bandage mark)
       const wound = !u && !this.run.tower ? hpShare(this.run, Number(id)) : 1;
       const share = u ? u.hp / u.maxHp : wound;

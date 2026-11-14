@@ -239,14 +239,20 @@ export class CueSynth extends AudioProcessor implements Voices {
     this.voiceGain = 1;
   }
 
+  /** RELEASE-AUDIT: a frequency held to the context's highest (half its sample rate). The browser holds it there anyway, with a console
+   *  warning for each (a bell's top overtone, pitched up, went past it); the sound is the same, without the warnings. */
+  private hz(f: number): number {
+    return Math.min(f, this.context.sampleRate / 2);
+  }
+
   /** A tone that swoops from `f` to `to` (if given) over `d` seconds, then dies away. */
   note(t: number, f: number, d: number, v: number, type: OscillatorType = 'triangle', to?: number): void {
     const c = this.context;
     const o = c.createOscillator();
     const g = c.createGain();
     o.type = type;
-    o.frequency.setValueAtTime(f * this.pitch, t);
-    if (to) o.frequency.exponentialRampToValueAtTime(to * this.pitch, t + d);
+    o.frequency.setValueAtTime(this.hz(f * this.pitch), t);
+    if (to) o.frequency.exponentialRampToValueAtTime(this.hz(to * this.pitch), t + d);
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(v * this.voiceGain, t + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, t + d);
@@ -258,8 +264,8 @@ export class CueSynth extends AudioProcessor implements Voices {
       const o2 = c.createOscillator();
       o2.type = type;
       o2.detune.value = 7;
-      o2.frequency.setValueAtTime(f * this.pitch, t);
-      if (to) o2.frequency.exponentialRampToValueAtTime(to * this.pitch, t + d);
+      o2.frequency.setValueAtTime(this.hz(f * this.pitch), t);
+      if (to) o2.frequency.exponentialRampToValueAtTime(this.hz(to * this.pitch), t + d);
       o2.connect(new GainNode(c, { gain: 0.5 })).connect(g);
       o2.start(t);
       o2.stop(t + d + 0.05);
@@ -279,7 +285,7 @@ export class CueSynth extends AudioProcessor implements Voices {
     const c = this.context;
     const filter = c.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(bright, t);
+    filter.frequency.setValueAtTime(this.hz(bright), t);
     const g = c.createGain();
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(v * this.voiceGain, t + d * 0.65);
@@ -289,8 +295,8 @@ export class CueSynth extends AudioProcessor implements Voices {
     for (const det of [0.996, 1.004]) {
       const o = c.createOscillator();
       o.type = type;
-      o.frequency.setValueAtTime(f * this.pitch * det, t);
-      if (to) o.frequency.exponentialRampToValueAtTime(to * this.pitch * det, t + d);
+      o.frequency.setValueAtTime(this.hz(f * this.pitch * det), t);
+      if (to) o.frequency.exponentialRampToValueAtTime(this.hz(to * this.pitch * det), t + d);
       o.connect(filter);
       o.start(t);
       o.stop(t + d + 0.05);
@@ -306,8 +312,8 @@ export class CueSynth extends AudioProcessor implements Voices {
     const filter = c.createBiquadFilter();
     filter.type = type;
     filter.Q.value = q;
-    filter.frequency.setValueAtTime(f * this.pitch, t);
-    if (to) filter.frequency.exponentialRampToValueAtTime(to * this.pitch, t + d);
+    filter.frequency.setValueAtTime(this.hz(f * this.pitch), t);
+    if (to) filter.frequency.exponentialRampToValueAtTime(this.hz(to * this.pitch), t + d);
     const g = c.createGain();
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(v * this.voiceGain, t + 0.008);
@@ -340,8 +346,8 @@ export class CueSynth extends AudioProcessor implements Voices {
     const o = c.createOscillator();
     const g = c.createGain();
     o.type = 'sine';
-    o.frequency.setValueAtTime(f * this.pitch, t);
-    o.frequency.exponentialRampToValueAtTime(Math.max(18, to * this.pitch), t + d);
+    o.frequency.setValueAtTime(this.hz(f * this.pitch), t);
+    o.frequency.exponentialRampToValueAtTime(this.hz(Math.max(18, to * this.pitch)), t + d);
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(v * this.voiceGain, t + 0.006);
     g.gain.exponentialRampToValueAtTime(0.0001, t + d);
