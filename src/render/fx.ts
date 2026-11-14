@@ -1007,7 +1007,9 @@ export class Fx {
           } else for (const r of run) this.bfxUlt(kind, 'strike', shown[r.i][0], shown[r.i][1], undefined, r.size, r.delay);
         } else for (const [x, y] of shown) {
           const far = linked && Math.hypot(x - caster.x, y - caster.y) > 8;
-          if (far) beatLine(caster.x, caster.y, x, y).forEach(([px, py], i) => this.bfxBeat(ultLinkClip(kind), el, px, py, { delay: i * BEAT_LINE.LAG }));
+          // (EMIT-POINTS: the line runs out from where the ability leaves the caster: its ultimate's own point (the Gorgon's eyes), else
+          // its shot's or cast's (a healer's hand or staff, the Gunslinger's muzzle); from its feet where it has neither, as before)
+          if (far) beatLine(...this.ultFrom(caster), x, y).forEach(([px, py], i) => this.bfxBeat(ultLinkClip(kind), el, px, py, { delay: i * BEAT_LINE.LAG }));
           this.bfxUlt(kind, 'strike', x, y, undefined, size >= 1 ? 1 : 0.7, far ? ULT_LINK_MS : 0, tileOf.get(`${x},${y}`));
         }
       } else if (at.length && size >= 1) {
@@ -4059,6 +4061,12 @@ export class Fx {
         return t < life;
       },
     });
+  }
+
+  /** EMIT-POINTS: where an ultimate's line to those it touches leaves its caster (`ULT_EMIT`, else its shot's or cast's point); its
+   *  feet where it has none, as before. */
+  private ultFrom(s: UnitSprite): [number, number] {
+    return s.ultPoint() ?? s.emitPoint() ?? [s.x, s.y];
   }
 
   /** EMIT-POINTS: where an effect that leaves `s` starts: its measured point (`UnitView.emitPoint`), else `lift` of its height above

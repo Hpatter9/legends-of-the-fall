@@ -266,3 +266,30 @@ alight. The director's order: one breath, not two fires.
 - Verdict: plain. Before, flames stand in a row on the ground from her feet. After, a stream of small flames leaves her head and
   runs outward, growing, and the ground flames come up behind it. The large flame round her own body in every frame is her
   wind-up, which was left as it is.
+
+## Since: the audit of the other ultimates' shows
+
+What each ultimate's show sends FROM its caster, read from the code (`Fx.ultImpact`, `ultPlace`, `ultLinked`, `ULT_EXTRA`):
+
+| Group | Ultimates | Where it left the caster | State |
+| --- | --- | --- | --- |
+| A line of small clips run from the caster to each one the strike touches (`ultLinked`) | Fateweaver, Wanderer, Satyr, Gorgon, Gunslinger, High Priestess, Great Sage, Corsair Surgeon | the caster's FEET | **fixed here**: its hand, staff, muzzle or eyes |
+| the same | Unburied Saint, Worldroot, Peasant, Samurai Commander | the caster's feet | not yet: their sheets have no measured point |
+| A strike laid down a line from the caster | Queen Dragoon | no breath at all | fixed (above) |
+| the same | Samurai (his cut along the line he dashes), Sea Reaver (a tide with foam from where he lands) | the caster's feet, on the ground | left: a dash and a tide belong on the ground |
+| A strike played round the caster (`self`: an aura, a ward, a pull) | Cleric, Knight, Wolf Bard, Banneret, Warlock, Tyrant, Bell Warden, Plague Doctor, Kraken Mate and the like | round the body | left: it is round the caster by design |
+| A strike on each foe, each tile, or one great picture in the midst, with nothing run from the caster | the rest | nothing leaves the caster | nothing to move |
+| Every wind-up | all | gathers on the caster's body, at its feet | not audited one by one: a gathering of power on the whole body reads right for most; which should gather on a staff or a blade is a matter of taste for the director |
+
+**Fixed in this step: the first eight.** `Fx.ultFrom` gives the line's start: the ultimate's own point (`ULT_EMIT`), else the hero's
+shot's or cast's point, else its feet as before. One new point: the Gorgon's Stone Gaze leaves her EYES (`ULT_EMIT`, kind `eyes`,
+read on her ultimate's frame), not the head of her staff, which her ordinary shot still leaves. The Gunslinger's High Noon leaves
+her muzzle; the healers' light leaves the staff or the hand.
+
+- Proof: `LINKS=60,160` steps a show until the strike begins and photographs the caster when the strike's first bit is that old.
+  `docs/samples/blender-fx/emit-ult-links-{1,2}-3x.jpg` (before left, after right, at 60 ms and 160 ms; three times the size).
+- Verdict, plainly: a subtle change. In the after frames the row of small clips sets off from the staff's or hand's height (the
+  Fateweaver's and the Wanderer's pale discs sit higher, by her staff and his hand) where before they began on the ground at the
+  caster's feet. The strikes' own rings and bursts fill the same moment, and in several pairs (the Satyr, the Gorgon) I cannot
+  pick the line's start out of the crowd. The Gorgon's gaze clips now begin at her head; in her photographs she had turned her
+  foes to stone beside her, so the line was a clip or two long. I looked at one of the two sheets.

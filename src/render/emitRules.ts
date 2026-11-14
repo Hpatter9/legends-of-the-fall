@@ -7,7 +7,7 @@ import { REACH } from './reachData';
 
 /** What the point is: a gun's or a crossbow's muzzle, the hand on the bow, the head of a staff or wand (or a mace raised to cast), a
  *  casting or throwing hand, a mouth, a blade. */
-export type EmitKind = 'muzzle' | 'bowHand' | 'staffTip' | 'hand' | 'mouth' | 'blade';
+export type EmitKind = 'muzzle' | 'bowHand' | 'staffTip' | 'hand' | 'mouth' | 'blade' | 'eyes';
 export interface Emit {
   kind: EmitKind;
   front: readonly [number, number];
@@ -84,11 +84,14 @@ export const FOE_EMIT: Readonly<Record<string, { kind: EmitKind; at: readonly [n
   eidolon_vaelkhar: { kind: 'mouth', at: [52, 62], frame: 3 },
 };
 
-/** ULTIMATES: where an ultimate's own show leaves its caster, for the ultimates that are sent from a spot on the body: the Queen
- *  Dragoon's Inferno Breath from her mouth. Read on the second frame of the ultimate's row (`attack2`), front and back (from
+/** ULTIMATES: where an ultimate's own show leaves its caster, where that is not where its shot or cast leaves: the Queen Dragoon's
+ *  Inferno Breath from her mouth, the Gorgon's Stone Gaze from her eyes. Read on the second frame of the ultimate's row (`attack2`), front and back (from
  *  behind her mouth is hidden by her hair: the point is the front edge of her head at the mouth's height). */
 export const ULT_EMIT: Readonly<Record<string, Emit>> = {
   hero_res_dragoon: { kind: 'mouth', front: [12, 77], back: [6, 78] },
+  // (the Gorgon's Stone Gaze leaves her eyes, not the head of her staff: read on the same frame of her ultimate's row; from behind
+  // her eyes are hidden by her hair: the front edge of her head at their height)
+  hero_res_gorgon: { kind: 'eyes', front: [6, 83], back: [8, 84] },
 };
 /** That point for a fighter drawn now from `sheet`; undefined where it has none or wears another look. */
 export function ultEmitOffset(own: string, sheet: string, rear: string | undefined): readonly [number, number] | undefined {
