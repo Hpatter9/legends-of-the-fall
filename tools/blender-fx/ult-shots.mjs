@@ -324,6 +324,9 @@ if (process.env.WATCH) {
       // (blink:<kind> a blink by that kind that strikes a foe: its streak and the cut on the foe)
       const streak = fx.streak.bind(fx);
       fx.streak = (b, e, slash) => { if (e.kind === 'blink' && slash) { window.__seen.push('blink:' + defOf(e.by)); window.__seenMs = 200; } return streak(b, e, slash); };
+      // (land:<kind> a melee blow by that kind landing on the one it was aimed at: the moment its spark, and its stroke, play)
+      const show = fx.show.bind(fx);
+      fx.show = (b, events) => { const r = show(b, events); for (const e of events) if (e.kind === 'hit' && e.src === 'blow' && !e.splash) { const k = 'land:' + defOf(e.by); const p = fx.sprites.get(e.by), q = fx.sprites.get(e.to); if (p && q && !window.__seen.includes(k)) { window.__seen.push(k); window.__seenMs = 150; window.__seenAt = { ...(window.__seenAt ?? {}), [k]: [(p.x + q.x) / 2, (p.y + q.y) / 2 - p.tall * 0.5] }; } } return r; };
       const arc = fx.arc.bind(fx);
       fx.arc = (from, to, shock) => { const k = 'arc:' + (shock ? 'shock' : defOf(from)); window.__seen.push(k); window.__seenMs = 300; const [p, q] = [fx.sprites.get(from), fx.sprites.get(to)]; if (p && q) window.__seenAt = { ...(window.__seenAt ?? {}), [k]: [(p.x + q.x) / 2, (p.y + q.y) / 2 - 20] }; return arc(from, to, shock); };
     });

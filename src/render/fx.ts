@@ -37,7 +37,7 @@ import { rankOf, SPELLS, type SpellId } from '../sim/spells';
 import type { Shot } from '../sim/units';
 import { settings } from '../settings';
 import { at, depth, facesRight, getFrame, FOOT, HH, TH, TW, type Frame } from './iso';
-import { strokeLay } from './emitRules';
+import { strokeLands, strokeLay } from './emitRules';
 import { fadeTrauma, popScale, shakeOf, traumaFor } from './juiceRules';
 import { BIG_FOE_HP, SPELL_GLOW, SPELL_WORD, type MagicKey } from './skillFx';
 import type { UnitSprite } from './unitView';
@@ -451,7 +451,7 @@ export class Fx {
       this.setEpic(epicEvent(e, this.epic));
       if (e.kind === 'shot') this.shot(e.by, e.to, e.shot, e.ms);
       else if (e.kind === 'skill') this.skillName(e.by, e.name, e.ms);
-      else if (e.kind === 'swing') this.slash(b, e.by, e.to);
+      // (EMIT-POINTS: a melee stroke is not played as the swing begins any more: it plays as the blow lands, below, `strokeLands`)
       else if (e.kind === 'dodge') {
         const to = this.sprites.get(e.to);
         if (to) {
@@ -568,6 +568,8 @@ export class Fx {
           if (e.killed) this.death(target, to.x, to.y - to.tall * 0.3, to.y);
           continue;
         }
+        // (EMIT-POINTS: the weapon's stroke, as the blow lands: with the spark, on the strike frame, where the weapon is)
+        if (strokeLands(e, !!defOf(by).shot)) this.slash(b, e.by, e.to);
         // (a skill's blow has its own sheet; a crit or a big kill adds a burst, a white flash and a harder shake)
         // (a cast's own hits come before its `skill` event in the tick: this tick's cast first, so a hero's second skill or ultimate is not
         // drawn as the skill it cast before)

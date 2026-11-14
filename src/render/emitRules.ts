@@ -118,3 +118,11 @@ export const STROKE_AT = 0.5;
 export function strokeLay(rx: number, ry: number, tx: number, ty: number): { x: number; y: number } {
   return { x: rx + (tx - rx) * STROKE_AT, y: ry + (ty - ry) * STROKE_AT };
 }
+
+/** WHEN a melee stroke plays: as the blow LANDS, with its spark, on the frame the weapon's reach was read from (it played as the swing
+ *  began, some 400 ms earlier, over the wind-up's first frame, and was gone before the spark). A blow lands as a `hit` whose source is
+ *  the blow itself, by a fighter that does not shoot, on the one it was aimed at (not the others a wide blow splashes). A blow that is
+ *  dodged has no stroke: the one that dodged has its own whoosh, and the event does not say whose blow it was. */
+export function strokeLands(e: { kind: string; src?: string; splash?: boolean }, shoots: boolean): boolean {
+  return !shoots && e.kind === 'hit' && e.src === 'blow' && !e.splash;
+}

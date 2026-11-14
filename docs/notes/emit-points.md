@@ -155,3 +155,30 @@ Vaelkhar.
 - Found and left alone: the stroke plays as the swing BEGINS (the `swing` event), some 400 ms before the blow lands and its
   spark plays. So the pose under it is the wind-up's first frame, not the strike frame its place was read from. Moving the
   stroke to the landing would be a change of timing, not of place; it is the director's to order.
+
+## Since: the stroke plays as the blow lands
+
+The stroke was played on the `swing` event, as the swing BEGAN: over the wind-up's first frame, about 400 ms before the blow
+landed, and gone (240 to 300 ms long) before the blow's spark played. So the stroke and the spark were two separate moments and
+the stroke never met the weapon. The director's order: move it to the landing.
+
+- `strokeLands` (`emitRules.ts`): the stroke plays on a `hit` whose source is the blow itself, by a fighter that does not shoot,
+  on the one it was aimed at (not those a wide blow splashes). `Fx.show` calls `slash` there, just before the spark. The pose
+  under it is then the strike frame the reach was read from. The thrust moves with it.
+- **A blow that is dodged has no stroke now.** The `dodge` event does not say whose blow it was, and the one that dodged has
+  its own whoosh of wind. Before, the stroke had played 400 ms earlier whether or not the blow then landed.
+- **What else was keyed to the swing's start, checked:**
+  - the blink's dash and cut: keyed to the `blink` event and its skill blow (`slashesOf`), not to `swing`: untouched;
+  - sound: the heavy wind-up's swoosh is still on the `swing` event (it is the sound of the swing beginning), and the blow's
+    own sound was always on the hit: untouched;
+  - the ON-FIGHTER flash: the stroke and the spark now begin together, so for the rule's 150 ms both are whole over the struck
+    body where they were 400 ms apart. Both then go on by the rule as before. More is over the body in that first moment;
+  - reduced motion: the stroke holds its one still frame for its length, as before, now at the landing;
+  - the Assault's field and the Last Stand's hall read `swing` for their own things and are untouched.
+- Proof, real fights this time: `SEE=land:knight,...` steps a fight until a blow by that hero lands and photographs it 50 ms
+  later. Looks only, so the two builds' fights are the same to the frame. `docs/samples/blender-fx/emit-strokes-landing-3x.jpg`:
+  the same fifteen heroes, before (main) and after, at three times the size.
+- Verdict: in the after frames the stroke is there with the spark, at the weapon, where before the spark was alone: plain for
+  the Samurai, the Kunoichi's claws, the Mercenary, the Reaper, the Dragoon, the Demon Swordsman. Where the blow was a crit, the
+  crit's large gold cross is over both and the stroke adds little (the Barbarian, the Paladin, the Ninja Monk). It is one moment
+  now, and a busier one.
