@@ -182,7 +182,7 @@ sprite, no page errors.
 As the audit said, B saves almost nothing in download (deflate already undid base64); what it saves is on the phone: the pack's files
 are stored uncompressed, so the installed app is about 50 MB smaller, and the WebView no longer parses and holds a 208 MB script.
 
-## C. Re-encoding the PNGs as WebP (measured, not done)
+## C. Re-encoding the PNGs as WebP: the estimate
 
 `python3 tools/play-size/webp-estimate.py out/web` encodes every shipped PNG in memory (no file changed). A PNG with more than 4,096
 colours in a sample is counted a "painting", the rest "pixel art"; the split is rough (a Blender effect sheet with soft edges counts
@@ -195,7 +195,7 @@ as a painting, and some sheets of many-coloured sprites may too), so the owner's
 
 Paintings lossy and pixel art lossless: 201.0 MB of PNG becomes 56.0 MB (−72%), about 145 MB off the 316 MB download. All lossless
 (safe for every picture): about 55 MB off. The audit's sample (−71% on the 40 largest) holds across the whole set. The WebP files
-already shipped were not measured.
+already shipped were not measured. The owner chose the lossless half (below); lossy paintings are left for the owner to judge.
 
 ### What ran (B and C)
 
@@ -208,3 +208,77 @@ already shipped were not measured.
 - Not run: anything on an Android device or emulator (no `/dev/kvm` here), so the memory and start-up gain in the app's WebView is
   inferred from Chromium, not measured. **On the phone**, after B: the internal-test checklist under A, plus Settings, Diagnostics
   after a few waves (the stops it lists), and the app's storage (about 325 MB, against about 375 MB with A alone).
+
+## C, done: the shipped PNGs as lossless WebP (0.600.0)
+
+The owner's call (14 November 2026): lossless WebP, written by the build, the PNGs in `src/art` untouched; the UI frames the CSS names
+by URL stay PNG; `sharp` (a build-only dependency, libwebp 1.6.0) added for it; soft edges may differ by up to 1/255 on screen in
+Chromium (below).
+
+### What changed
+
+- `tools/play-size/webpLossless.mjs`: `losslessWebp(png)` encodes with `{ lossless: true, exact: true, effort: 4 }` (`exact` keeps the
+  colour of fully see-through pixels too), decodes the result again and compares every RGBA byte with the PNG's, throwing if one
+  differs, so a picture that does not come back the same fails the build. Results are cached in `node_modules/.cache/lossless-webp`
+  by the PNG's content and the encoder's settings: a cold build takes about a minute longer (68 s here), a warm one is as before.
+  A WebP that is no smaller is not used (one picture keeps its PNG).
+- `build.mjs`: an imported PNG of 16 KB or more resolves to a `.webp` path of the same name, so it is written as
+  `art/<folder>/<name>-<hash>.webp` and the code gets that URL (359 pictures); the awakened sheets are written as
+  `awakened/<name>.webp` (98), and `src/render/awakenedArt.ts` (and its generator, `tools/ascended/pack.cjs`) name the `.webp`.
+  The service worker lists them as before. The icons inside `game.js`, the UI frames, the area backdrops and the WebP already in
+  `src/art` are untouched.
+- `tools/play-size/webp-check.mjs` (run by `test/play-size.test.ts`): every PNG the build may convert (545: each awakened sheet and
+  every PNG of 16 KB or more in `src/art`) encoded as the build does and decoded again: every pixel the same. With no cache it takes
+  about a minute; then a few seconds.
+- `tools/play-size/webp-browser.mjs`: Chromium's own decoding of each converted picture against its PNG (below).
+
+### Chromium: up to 1/255 on soft edges
+
+libvips decodes every pair to the same pixels. Chromium's PNG and WebP decoders round differently when they premultiply alpha, so on a
+picture's soft edge the colour read back can differ. Over the 457 converted pictures, drawn to a canvas from an `<img>` and through
+`fetch`, `createImageBitmap` and an `OffscreenCanvas` (the off-thread decode's path):
+
+- 408 read back identically; 49 differ, on semi-transparent pixels only;
+- size, alpha, and every opaque pixel: identical in all 457;
+- colour times alpha differs by at most 1/255; drawn over a dark and a light ground, the screen differs by at most 1/255;
+- the colour read back by `getImageData` at alpha 1 to 3 can differ by up to 255 (one step of premultiplied colour, unpremultiplied).
+
+What reads pixels back (`getImageData`), checked one by one: crop boxes, solid tests and cell checks read only alpha (`sheets.ts`,
+`revealSprite.ts`, `sceneView.ts`, `rulerArt.ts`, `tavernLifeDraw.ts`), so they see identical data; the recolourings (`abilityArt.ts`,
+`cinematicArt.ts`, `floorArt.ts`, `smallRig.ts`) put the pixels back, so the screen stays within 1/255; the fire finders
+(`ambientPaint.ts` at alpha over 128, `camp.ts`'s flame cut at any alpha) could put a pixel of alpha 1 to 3 in the other layer, which
+cannot be seen; `fieldView.ts` averages the opaque ground. Pixi's textures, CSS `url()`s, `Image.decode()` and the soft canvases all
+take WebP as they took PNG; no code looks at a `.png` in a URL.
+
+### Measured (main 0.600.0 against the same with C; Chromium at 393x852, CPU 4x, software rendering)
+
+| | Before | After C |
+| --- | --- | --- |
+| `out/web` without source maps | 310 MB | 265 MB |
+| `app-release.aab` | 316.6 MB | **270.6 MB** |
+| base module, download | 2.9 MB | 2.9 MB |
+| `web` asset pack, download | 313.1 MB | 267.1 MB |
+| whole install, download | 316.0 MB | **270.0 MB** |
+| universal APK (from the bundle) | 324.4 MB | 277.2 MB |
+| plain APK (the GitHub one) | 318.2 MB | **270.9 MB** |
+| to the camp, 3 runs | 42.3, 41.6, 44.7 s | 43.0, 47.0, 43.9 s |
+| renderer process memory, settled, 3 runs | 1,094, 1,085, 1,099 MB | 1,060, 1,052, 1,048 MB |
+
+- The start: the medians are 42.3 s and 43.9 s, inside each other's spread on this noisy machine; it may be a little slower (Chromium
+  decoding lossless WebP rather than PNG), not more than that.
+- The screens (every home tab, the spellbook, the War Room, a deploy with a fixed seed, a fight): 0.11% differs on each, the version
+  line; no page errors, failed requests or broken pictures. Offline: all 1,878 files cached on one visit; an offline reload, clean.
+- A fight's stalls (`delays.mjs --real --cpu 4 --waves 4 --configs auto1,hand1`, twice each way, before, after, after, before),
+  frames over 100 ms per second of fight: Auto before 4.31 and 4.71, after 4.60 and 4.90; by hand before 4.62 and 4.16, after 4.64 and
+  4.57. The ranges overlap; after is about 5% higher on average, which may be noise or a slightly dearer decode on a picture's first
+  use. The worst Auto frame was lower after (356 and 432 ms against 1,319 and 1,723 ms).
+- Freeze-fix soak (12 minutes, 21 fights, faults on): no wave's end stuck (2.0 s at the worst), one flag, the browser's ResizeObserver
+  notice seen in every build. March-stays film: 4 hand-overs held, 4 deploys and starts drawn, no dead sprite, no errors.
+
+### What ran (C, done)
+
+- `npm ci` (with sharp), `npm run typecheck`, the full `npm test` (3,439 pass, 0 fail), `npm run web` cold and warm, `npm run web:play`.
+- `webp-check.mjs` (545, all the same), `webp-browser.mjs` (457; within 1/255), `compare.mjs` (3 runs each, screens, offline),
+  `delays.mjs` four times, `soak.mjs --minutes 12`, `film.mjs`.
+- `cap sync`, `assembleRelease`, `pack.mjs`, `bundleRelease`, `sizes.mjs`, for main and for this branch.
+- Not run: anything on Android (no `/dev/kvm`). On the phone: the internal-test list under A; the app's storage (about 277 MB).
