@@ -40,7 +40,11 @@ function row(a: Achievement, m: Meta, claim: (ids: string[]) => void): HTMLEleme
   el.className = `brow ach${done ? ' done' : ''}${ready ? ' ready' : ''}`;
   const text = document.createElement('div');
   const name = document.createElement('b');
-  name.textContent = `${done ? '★ ' : '☆ '}${a.name}`;
+  name.textContent = a.name;
+  // (RELEASE-ART: the painted medal, art-source/release/achievement-medal.png: lit once claimed, greyed until then)
+  const medal = document.createElement('i');
+  medal.className = `achMedal${done && !ready ? ' lit' : ''}`;
+  medal.setAttribute('aria-hidden', 'true');
   const what = document.createElement('em');
   what.textContent = `${a.text} · ${a.crowns} crowns, ${stoneWord(stonesOfAchievement(a))}`;
   text.append(name, what);
@@ -57,7 +61,7 @@ function row(a: Achievement, m: Meta, claim: (ids: string[]) => void): HTMLEleme
     p.textContent = `${meter.now} of ${meter.need}`;
     text.append(bar, p);
   }
-  el.append(text);
+  el.append(medal, text);
   if (ready) {
     const take = document.createElement('button');
     take.className = 'primary';

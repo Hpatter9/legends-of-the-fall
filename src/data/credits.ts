@@ -31,7 +31,11 @@ const OFL_LINK = 'https://openfontlicense.org';
 
 export const PLAYER_CREDITS: Readonly<Record<CreditGroup, readonly PlayerCredit[]>> = {
   Art: [
-    { work: 'Original art made for Legends of the Last Keep.' },
+    {
+      work: 'Original art made for Legends of the Last Keep.',
+      // (RELEASE-ART: the release's pieces, named for players)
+      includes: ['The gatehouse and the loading poster', 'The speech bubble, the battle panel, the class sigils and the menu icons', 'The daily chest, the achievement medal and the codex', 'The Orc Chieftain, the Bone Captain, the Minotaur Champion and the Gorgon Queen'],
+    },
     {
       work: 'Free pixel-art packs: backgrounds, tilesets, props and icons',
       author: 'Craftpix.net',

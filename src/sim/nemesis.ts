@@ -14,7 +14,7 @@
 import type { Battle, Unit } from './battle';
 import { ARMIES, armyById, recordOf } from './armies';
 import { ELITE_FOES } from './eliteFoes';
-import { isBoss } from './foes';
+import { isBoss, kinSheet } from './foes';
 import { heroName } from './heroNames';
 import type { Meta } from './meta';
 import { NEMESIS_NAMES } from './nemesisNames';
@@ -244,8 +244,9 @@ export function foeClass(u: Pick<Unit, 'def' | 'side' | 'owner' | 'raised'>): 'b
 export function homeArmy(def: string): string | undefined {
   const own = ARMIES.find((a) => a.waves.some((w) => w.foes.includes(def)));
   if (own) return own.id;
-  const sheet = UNITS[def]?.sheet;
-  return sheet ? ARMIES.find((a) => a.waves.some((w) => w.foes.some((f) => UNITS[f]?.sheet === sheet)))?.id : undefined;
+  // (RELEASE-ART: a boss with its own sheet goes by its soldiers' look, `kinSheet`)
+  const sheet = UNITS[def]?.sheet && kinSheet(UNITS[def].sheet);
+  return sheet ? ARMIES.find((a) => a.waves.some((w) => w.foes.some((f) => UNITS[f]?.sheet && kinSheet(UNITS[f].sheet) === sheet)))?.id : undefined;
 }
 
 // ---- the snapshot a run takes ------------------------------------------------------------------------------------------------

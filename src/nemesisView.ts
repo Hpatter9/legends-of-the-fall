@@ -8,7 +8,7 @@
 //
 // Commissioned Council symbols and existing paintings are mapped by councilArt.ts.
 
-import { menuChoice, menuFoot, menuNote, menuPick, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
+import { menuChoice, menuFoot, menuNote, menuPick, menuSection, menuWell, ornateMenu, releaseIcon, RELEASE_ICON, type OrnateMenu } from './ornateMenu';
 import { portrait } from './render/sheets';
 import { armyById } from './sim/armies';
 import { buyScout, buyShard, musterCount, newsWord, SCOUT_PRICE, scoutable, SHARD_PRICE, SHARD_WEEK, shardHeroes, shardsLeft, superiorOf, swornTo, TROPHY_DAY } from './sim/council';
@@ -46,6 +46,13 @@ const icon = (src: string, cls = 'nmIcon'): HTMLImageElement => {
 };
 
 /** Might as pips ("●●●○○○○○○○"). */
+/** RELEASE-ART: a blood oath's line, the painted clasped hands before it (the ⚭ it had is missing from some phones' fonts). */
+const oathLine = (text: string): HTMLElement => {
+  const p = el('p', 'nmOathLine');
+  p.append(releaseIcon(RELEASE_ICON.sworn), ` ${text}`);
+  return p;
+};
+
 export const mightPips = (might: number): string => '●'.repeat(Math.max(0, Math.min(MIGHT_MAX, might))) + '○'.repeat(Math.max(0, MIGHT_MAX - might));
 
 /** A nemesis's face: its kind's portrait in its rank's frame (CSS); a scarred one wears the brass frame clawed once, twice or thrice. */
@@ -156,7 +163,7 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
   const b = menuChoice(grid, { title: n.name, lines: [`Might ${n.might}`], onPick: () => openNemesisCard(m, n, () => { menu.close(); hooks.hunt(n.army); }) });
   b.classList.add('nmSeat', cls, n.rank);
   b.prepend(face(n, size));
-  if (n.oath !== undefined) b.append(el('i', 'nmOath', '⚭'));
+  if (n.oath !== undefined) b.append(releaseIcon(RELEASE_ICON.sworn, 'nmOath'));
   if (RANK_BADGE[n.rank]) b.prepend(icon(RANK_BADGE[n.rank], 'nmRankBadge'));
   // (phase 3: an Avenger's or a Grudge holder's face on the card's corner; a member away licking its wounds is dimmed)
   const settler = Object.keys(avengersOf(m, n.id))[0] ?? Object.keys(grudgesOn(m, n.id))[0];
@@ -214,7 +221,7 @@ function drawCouncil(m: Meta, pane: HTMLElement, menu: OrnateMenu, hooks: BoardH
     const well = sectionWell(pane, 'Blood-oaths', 'when one falls, the other swears vengeance');
     for (const n of oaths) {
       const b = war.members.find((x) => x.id === n.oath);
-      if (b) well.append(el('p', 'nmOathLine', `⚭ ${fullName(n)} and ${fullName(b)}`));
+      if (b) well.append(oathLine(`${fullName(n)} and ${fullName(b)}`));
     }
   }
   const mw = sectionWell(pane, 'The Warchief’s Muster', musterCount(war));
@@ -355,7 +362,7 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
     }
     if (n.rank === 'warchief') well.append(el('p', 'nmMemory', 'Only the heroes can bring him down: the Council’s feuds never touch the warchief.'));
     const brother = n.oath !== undefined ? war.members.find((x) => x.id === n.oath) : undefined;
-    if (brother) well.append(el('p', 'nmOathLine', `⚭ Sworn in blood to ${fullName(brother)}`));
+    if (brother) well.append(oathLine(`Sworn in blood to ${fullName(brother)}`));
     if (n.vengeful) well.append(el('p', 'nmOathLine', `Vengeful against ${heroName(n.vengeful)}: +20% damage to ${heroName(n.vengeful)}, whom it goes for first`));
     // (phase 3: away licking its wounds, and Stitched)
     const away = awayRuns(war, n.id);

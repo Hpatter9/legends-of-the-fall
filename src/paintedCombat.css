@@ -24,7 +24,9 @@ body[data-phase='fight'] #lives img { image-rendering: auto; object-fit: contain
 .fightHud .fhRow {
   border-color: transparent;
   border-radius: 0;
-  border-image: url(ui/combat-panel.png) 24 fill / 4px / 0 stretch;
+  /* (RELEASE-ART: the hero row's own plate, art-source/release/hud-hero-row.png: dark stained wood in a brass rim, its brass-framed
+     portrait inset kept whole at the left, the rest stretched under the name, the bars and the skills) */
+  border-image: url(ui/release/hud-hero-row.webp) 12 12 12 112 fill / 4px 4px 4px 38px / 0 stretch;
   background: #0b1b12;
 }
 .fightHud .fhPic::after {

@@ -11,7 +11,7 @@ import type { Meta } from './sim/meta';
 import { UNITS } from './sim/units';
 import { portrait } from './render/sheets';
 import { AREA_NAMES } from './menuArt';
-import { chestPicture } from './chestStash';
+import dailyChestUrl from './art/release/daily-chest.webp';
 import { dailyTheme } from './sim/dailyThemes';
 import { themeBlock } from './themeView';
 
@@ -55,8 +55,10 @@ export function showDailyStart(m: Meta, date: number, go: (auto?: number) => voi
     facts.append(li);
   }
   const prize = el('div', 'dayPrize');
-  const chest = chestPicture('daily', 2).root;
-  chest.classList.add('dayChest');
+  // (RELEASE-ART: the daily chest painted for the card, art-source/release/daily-chest.png; the chest that opens is still the pack's)
+  const chest = el('img', 'dayChest dayChestArt');
+  chest.src = dailyChestUrl;
+  chest.alt = '';
   prize.append(chest, el('span', '', played ? 'Practice: no reward this time' : theme ? 'Clear it for a daily chest. The party never all down at once, a quick win, and the goal each add a bonus star.' : 'Clear it for a daily chest: crowns, summoning stones, maybe gear. A win with the party never all down at once, or a quick one, adds a bonus star to it.'));
   const status = el('div', 'dayStatus', `Today: ${dailyStatus(m, date)}`);
   const row = el('div', 'dayBtns');

@@ -12,11 +12,11 @@ import { countTraits } from './sim/traits';
 import { portrait } from './render/sheets';
 import { hideQuip } from './quipView';
 import { menuChoice, menuFoot, menuNote, menuSection, ornateMenu } from './ornateMenu';
-import backdropUrl from './art/camp/overlook.png';
+import backdropUrl from './art/release/starter-backdrop.webp';
 
 const CSS = `
 #starter.omVeil { background-color: #0b1513; background-position: center top; background-size: cover; background-repeat: no-repeat; }
-#starter .om { max-height: 93%; }
+#starter .om { max-height: 84%; }
 #starter .stPacks { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 #starter .stPack { align-items: stretch; gap: 5px; padding: 9px 10px 10px; cursor: pointer; }
 #starter .stPack > b { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 17px; }
@@ -43,8 +43,8 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 };
 
 /** Show the pick and wait for it: resolves once a pack is taken (the meta is changed and saved by then). FIRST-FIVE (the release audit's
- *  finding 1): the first screen of the game is the standard ornate menu now, the sheet kind, over the Battle Overlook's painting (a stand-in
- *  until the starter's own backdrop is painted, `docs/notes/release-audit-art-prompts.md` A1); each pack is one of its gilded choices. */
+ *  finding 1): the first screen of the game is the standard ornate menu now, the sheet kind, over the gatehouse painted for it
+ *  (RELEASE-ART, `docs/notes/release-audit-art-prompts.md` A1); each pack is one of its gilded choices. */
 export function chooseStarter(meta: Meta): Promise<void> {
   if (!document.getElementById('starterStyle')) {
     const st = el('style');
@@ -61,7 +61,8 @@ export function chooseStarter(meta: Meta): Promise<void> {
     sub: 'Three heroes join you now. Pick the band you like the look of: more heroes come from the summoning hall.',
     label: 'Choose your first heroes',
   });
-  menu.root.style.backgroundImage = `linear-gradient(#0b151333, #0b1513cc 55%, #0b1513), url(${backdropUrl})`;
+  // (the gatehouse looks out through its arch at the top; its quiet middle and floor lie under the sheet)
+  menu.root.style.backgroundImage = `linear-gradient(#0b151300, #0b151366 60%, #0b1513aa), url(${backdropUrl})`;
   // (the pick has no way out but a pack: Escape, which closes any other standard menu, is kept from this one)
   const holdEscape = (e: KeyboardEvent) => {
     if (e.key === 'Escape') e.stopPropagation();

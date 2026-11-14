@@ -124,6 +124,13 @@ for (const f of readdirSync('src/art/ui/buttons').filter((f) => f.endsWith('.web
   copyFileSync(`src/art/ui/buttons/${f}`, `${out}/ui/buttons/${f}`);
   UI_FILES.push(`ui/buttons/${f}`);
 }
+// (RELEASE-ART: the release audit's pieces the CSS lays by URL (the speech bubble, the fight HUD's hero row, the codex's unmet tile, the
+// achievement medal, the Assault's and the Nemesis board's icons): ui/release/<name>.webp, cached for offline)
+mkdirSync(`${out}/ui/release`, { recursive: true });
+for (const f of readdirSync('src/art/ui/release').filter((f) => f.endsWith('.webp'))) {
+  copyFileSync(`src/art/ui/release/${f}`, `${out}/ui/release/${f}`);
+  UI_FILES.push(`ui/release/${f}`);
+}
 // (RUNE-BENCH-LOOK: the owner's rune bench paintings once they land, imported by tools/rune-bench/import-art.py: ui/rune-bench/<name>.webp)
 if (existsSync('src/art/ui/rune-bench')) {
   mkdirSync(`${out}/ui/rune-bench`, { recursive: true });
@@ -251,9 +258,9 @@ for (const f of readdirSync('src/art/relics').filter((f) => f.endsWith('.webp'))
 // (the loading illustration is embedded in the cached page, so it appears before game.js and works offline)
 const dataUrl = (f) => `data:image/${f.endsWith('.webp') ? 'webp' : 'png'};base64,${readFileSync(f).toString('base64')}`;
 const LOADING_ART = {
-  __LD_KEEP__: 'src/art/loading/shattered-crown.webp',
-  __LD_CROWN_MASK__: 'src/art/loading/crown-mask.png',
-  __LD_CLOUDS__: 'src/art/loading/crown-clouds.webp',
+  // (RELEASE-ART: the keep under its two crowns, painted for the game in its own style, art-source/release/loading.png; the old
+  // poster's crown mask and cloud layer were cut to its picture and are retired with it)
+  __LD_KEEP__: 'src/art/loading/release-poster.webp',
 };
 const withLoadingArt = (html) => Object.entries(LOADING_ART).reduce((h, [k, f]) => h.replaceAll(k, () => dataUrl(f)), html);
 const writeIndexHtml = () => {

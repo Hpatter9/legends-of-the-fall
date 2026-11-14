@@ -116,6 +116,8 @@ export function menuSection(parent: HTMLElement, title?: string, line?: string, 
 export interface ChoiceOptions {
   title: string;
   icon?: string;
+  /** RELEASE-ART: a painted icon from the release icon sheet (`ui/release/assault-icons.webp`, `RELEASE_ICON`) in place of `icon`'s glyph. */
+  art?: number;
   /** Lines under the title: plain, or 'pay' (a reward, green) or 'lock' (what opens it). */
   lines?: (string | [string, 'pay' | 'lock'])[];
   on?: boolean;
@@ -123,12 +125,25 @@ export interface ChoiceOptions {
   onPick?: () => void;
 }
 
+/** RELEASE-ART: the painted icons' places in their sheet (art-source/release/assault-icons.png, 12 across), for text glyphs that were
+ *  icons: some showed as empty boxes on older phones. */
+export const RELEASE_ICON = { full: 0, lite: 1, retreat: 2, fillRanks: 3, bridge: 4, ford: 5, wall: 6, wedge: 7, loose: 8, ladders: 9, sworn: 10, artwork: 11 } as const;
+
+/** One painted icon of the sheet, sized by its class's CSS (`.rlIco`). */
+export function releaseIcon(i: number, cls = ''): HTMLElement {
+  const e = el('span', `rlIco${cls ? ` ${cls}` : ''}`);
+  e.style.backgroundPositionX = `${(i / 11) * 100}%`;
+  e.setAttribute('aria-hidden', 'true');
+  return e;
+}
+
 /** A gilded choice row (one of a section's options); `.on` is the chosen one. */
 export function menuChoice(parent: HTMLElement, c: ChoiceOptions): HTMLButtonElement {
   const b = el('button', `omChoice${c.on ? ' on' : ''}`);
   b.type = 'button';
   b.disabled = !!c.disabled;
-  if (c.icon) b.append(el('span', 'omIco', c.icon));
+  if (c.art !== undefined) b.append(releaseIcon(c.art, 'omIco'));
+  else if (c.icon) b.append(el('span', 'omIco', c.icon));
   b.append(el('b', '', c.title));
   for (const l of c.lines ?? []) {
     const [text, kind] = typeof l === 'string' ? [l, ''] : l;

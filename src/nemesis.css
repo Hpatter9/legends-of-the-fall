@@ -185,3 +185,4 @@ body.inDuel #hudSpells, body.inDuel .ehHorn, body.inDuel #mana { visibility: hid
 .nmBoard.nmEnded .omSectionHead { padding: 3px 8px; border-radius: 3px; background: linear-gradient(90deg, rgba(12, 9, 7, 0.86), rgba(12, 9, 7, 0.55) 70%, rgba(12, 9, 7, 0)); text-shadow: 0 1px 2px #000; }
 .nmBoard.nmEnded .omWell { background: rgba(12, 10, 8, 0.86); }
 .nmBoard.nmEnded .omNote { padding: 6px 8px; border-radius: 3px; background: rgba(12, 9, 7, 0.8); }
+.nmOath.rlIco { width: 14px; height: 14px; }

@@ -17,6 +17,7 @@ import { heroArtwork } from './heroArtwork';
 import { duck, hushSummon, play as playSfx } from './render/sound';
 import { SKIP_GUARD_MS } from './render/summonRules';
 import arcanaUrl from './art/tarot/arcana.png';
+import sigilsUrl from './art/release/class-sigils.webp';
 import sanctumUrl from './art/hall/sanctum.png';
 import { summoner } from './summoner';
 import { earnedArrival } from './earnedArrival';
@@ -111,6 +112,17 @@ function strip(row: number, part: keyof typeof PART, size: string, cls: string):
   return s;
 }
 
+/** RELEASE-ART: the class sigils' order in their sheet (art-source/release/class-sigils.png, 13 across): `TRAIT_ELEMENT`'s. */
+export const SIGIL_ORDER: readonly string[] = Object.keys(TRAIT_ELEMENT);
+
+/** A class trait's painted sigil, `size` square (a share of the card's width). */
+function sigil(trait: string, size = '74cqw'): HTMLElement {
+  const i = Math.max(0, SIGIL_ORDER.indexOf(trait));
+  const s = el('i', 'tarotSigil');
+  s.style.cssText = `width:${size};height:${size};background-image:url(${sigilsUrl});background-size:${SIGIL_ORDER.length * 100}% 100%;background-position-x:${(i / (SIGIL_ORDER.length - 1)) * 100}%`;
+  return s;
+}
+
 /** The face of a hero's tarot card: its silhouette behind its class sigil, never its figure. `px` is about the card's width. */
 export function tarotFace(kind: string, px: number): HTMLElement {
   const a = arcanaOf(kind);
@@ -120,11 +132,9 @@ export function tarotFace(kind: string, px: number): HTMLElement {
   const heart = el('div', 'tarotHeart');
   const sil = portrait(UNITS[kind].sheet, Math.max(48, Math.round(px * 0.9)));
   sil.className = 'tarotShadow';
-  heart.append(sil, strip(a.row, 'glyph', '72cqw', 'glyph'));
-  const icon = el('img', 'tarotIcon');
-  icon.src = a.icon;
-  icon.alt = '';
-  heart.append(icon);
+  // (RELEASE-ART: the class's painted sigil, burned in light over a faint silhouette, in place of the pack's glyph scaled up; the class's
+  // small icon is in the sigil now, so it goes)
+  heart.append(sil, sigil(a.trait));
   card.append(heart, el('span', 'tarotTrait', TRAITS[a.trait]?.name ?? ''));
   return card;
 }
@@ -363,7 +373,8 @@ const css = `
 .tarotCard .tarotHeart > * { grid-area: 1 / 1; }
 .tarotCard .glyph { filter: drop-shadow(0 0 4px var(--cls)); }
 .tarotCard .tarotIcon { image-rendering: pixelated; filter: drop-shadow(0 0 3px var(--cls)) drop-shadow(0 1px 0 #000); }
-.tarotCard .tarotShadow { width: 92cqw; height: auto; image-rendering: pixelated; filter: brightness(0) drop-shadow(0 0 3px var(--cls)); opacity: .75; }
+.tarotCard .tarotShadow { width: 92cqw; height: auto; image-rendering: pixelated; filter: brightness(0) drop-shadow(0 0 3px var(--cls)); opacity: .3; }
+.tarotCard .tarotSigil { display: block; background-repeat: no-repeat; filter: drop-shadow(0 0 5px var(--cls)); }
 .tarotCard .glyph { opacity: .55; }
 .tarotCard .tarotIcon { width: 20cqw; height: 20cqw; align-self: end; margin-bottom: 6%; }
 .tarotCard.back .glyph { opacity: 1; }

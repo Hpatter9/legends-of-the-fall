@@ -3,7 +3,7 @@
 // the formation), the war table's scene the first time the mode opens, and the result. Plain DOM over the sim's rules: buying, the plan and
 // the formations go through `sim/assault/economy.ts` and are saved by the caller's `save`.
 
-import { menuChoice, menuFoot, menuNote, menuPick, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
+import { menuChoice, menuFoot, menuNote, menuPick, menuSection, menuWell, ornateMenu, RELEASE_ICON, type OrnateMenu } from './ornateMenu';
 import type { Meta } from './sim/meta';
 import { armyById } from './sim/armies';
 import { heroName } from './sim/heroNames';
@@ -225,7 +225,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
       const fill = menuSection(menu.body, undefined, undefined, 2);
       menuChoice(fill, {
         title: `Fill all the ranks · ${all}`,
-        icon: '⚔',
+        art: RELEASE_ICON.fillRanks,
         lines: [m.crowns >= ASSAULT_PRICES.recruit ? 'Recruits, while the crowns last' : ['Not enough crowns', 'lock']],
         disabled: m.crowns < ASSAULT_PRICES.recruit,
         onPick: () => {
@@ -339,7 +339,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
   const openOrders = (k: string) => {
     const card = ornateMenu({ asked: true, id: 'assaultOrders', eyebrow: 'The War Plan', title: `${heroName(k)}'s orders`, sub: `${TROOPS[troopOf(k)].name} · ${troopsOf(m, k).length} soldiers`, onClose: redraw });
     const ways = menuSection(card.body, 'The way', 'over the Redwater', 2);
-    menuPick(ways, APPROACHES, plan.approaches[k], (w) => ({ title: APPROACH_NAME[w].replace(/^the /, 'The '), icon: w === 'bridge' ? '⌇' : '≈', lines: [APPROACH_COST[w]] }), (w) => {
+    menuPick(ways, APPROACHES, plan.approaches[k], (w) => ({ title: APPROACH_NAME[w].replace(/^the /, 'The '), art: w === 'bridge' ? RELEASE_ICON.bridge : RELEASE_ICON.ford, lines: [APPROACH_COST[w]] }), (w) => {
       plan.approaches[k] = w;
       st.plan = { ...plan.approaches };
       hooks.save();
@@ -358,7 +358,7 @@ export function openMuster(m: Meta, army: string, hooks: MusterHooks): void {
       const ram = st.siege?.ram === k;
       menuChoice(works, {
         title: `A ladder · ${SIEGE_PRICES.ladder}`,
-        icon: '🪜',
+        art: RELEASE_ICON.ladders,
         on: ladder,
         lines: [bp.wallStyle === 'ridge' ? 'Scale the crag: up in four seconds, pushed down by its defenders' : 'Scale the stone wall: up in four seconds, pushed down by its defenders', ladder ? '✓ Carried' : 'Tap to carry one'],
         onPick: () => {
@@ -443,7 +443,7 @@ export function openPlatoonCard(m: Meta, hero: string, o: { save(): void; onChan
     well.append(el('p', '', `Health ${s.hp} · attack ${s.atk} · reach ${s.reach} · ${s.speed} steps a second`), el('p', '', kind.text + (lookOf(hero) !== 'plain' ? ` (${lookOf(hero) === 'machine' ? 'Machine-built' : 'Risen dead'}, like their hero.)` : '')));
     battle.parentElement!.append(battle);
     const current: PlatoonFormation = st.formations?.[hero] ?? kind.formation;
-    menuPick(battle, FORMATIONS, current, (f) => ({ title: FORMATION_NAMES[f], icon: f === 'wall' ? '▬' : f === 'wedge' ? '▲' : f === 'line' ? '━' : '⁘', lines: f === kind.formation ? ['their own'] : [], disabled: o.readOnly }), (f) => {
+    menuPick(battle, FORMATIONS, current, (f) => ({ title: FORMATION_NAMES[f], ...(f === 'line' ? { icon: '━' } : { art: f === 'wall' ? RELEASE_ICON.wall : f === 'wedge' ? RELEASE_ICON.wedge : RELEASE_ICON.loose }), lines: f === kind.formation ? ['their own'] : [], disabled: o.readOnly }), (f) => {
       st.formations = { ...st.formations, [hero]: f };
       o.save();
     });

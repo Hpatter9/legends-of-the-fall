@@ -666,15 +666,16 @@
 
   /* The illustrated keep is embedded by the build: visible before the game bundle arrives.
      Only transforms and opacity animate; the title and tips stay still and readable. */
-  /* The Shattered Crown: live lettering over an offline-embedded poster. */
+  /* The Last Keep: live lettering over an offline-embedded poster. */
   #loading { position: fixed; inset: 0; z-index: 30; overflow: hidden; isolation: isolate; display: grid; place-items: center; color: #f3e5c5; background: #171614; font: 18px/1.4 Georgia, serif; text-align: center; }
   #loading > * { position: absolute; pointer-events: none; }
   .ldScene { inset: 0; overflow: hidden; }
   .ldArt { position: absolute; inset: -1%; background: #171614 url(__LD_KEEP__) center / cover no-repeat; animation: ldDepth 22s ease-in-out infinite alternate; }
-  .ldCrownMask { position: absolute; inset: 0; mask: url(__LD_CROWN_MASK__) center / cover no-repeat; -webkit-mask: url(__LD_CROWN_MASK__) center / cover no-repeat; }
-  .ldCrownLight { position: absolute; inset: 0; background: radial-gradient(ellipse at 53% 38%, #ffd47730, transparent 35%); mix-blend-mode: screen; animation: ldCrownBreathe 5s ease-in-out infinite alternate; }
+  /* (RELEASE-ART: the poster is the keep under its crowns now; the light breathes on the crowns, high in the sky, without the old mask) */
+  .ldCrownMask { position: absolute; inset: 0; }
+  .ldCrownLight { position: absolute; inset: 0; background: radial-gradient(ellipse 60% 18% at 52% 25%, #ffd47730, transparent 70%); mix-blend-mode: screen; animation: ldCrownBreathe 5s ease-in-out infinite alternate; }
   .ldGleam { position: absolute; inset: 0; background: linear-gradient(115deg, transparent 37%, #ffe4a022 47%, #fff0c65c 50%, #ffe4a022 53%, transparent 63%); background-size: 350% 100%; mix-blend-mode: screen; animation: ldGleam 9s ease-in-out infinite; }
-  .ldClouds { position: absolute; inset: 0; background: url(__LD_CLOUDS__) center / cover no-repeat; opacity: .42; animation: ldCloudDrift 20s ease-in-out infinite alternate; }
+  .ldClouds { display: none; }
   .ldClouds.far { opacity: .22; animation-duration: 31s; animation-direction: alternate-reverse; }
   .ldSnow { position: absolute; inset: 0; overflow: hidden; mask-image: linear-gradient(transparent 8%, #000 18% 84%, transparent 93%); }
   .ldSnow i { position: absolute; left: var(--x); top: -12px; width: var(--size); height: var(--size); border-radius: 50%; background: #fffaf0; box-shadow: 0 0 2px 0.5px #1716147a; opacity: 0; animation: ldSnowFall var(--t) linear var(--d) infinite; }

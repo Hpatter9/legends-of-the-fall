@@ -48,6 +48,11 @@ import yamabushiTengu from '../art/units/yamabushi_tengu.png';
 import orcGrunt from '../art/units/hk_orc_grunt.png';
 import orcArcher from '../art/units/hk_orc_archer.png';
 import orcBrute from '../art/units/hk_orc_brute.png';
+// (RELEASE-ART: the four bosses' own sheets, painted for the game on their soldiers' grids, art-source/release/bosses/)
+import orcChieftain from '../art/units/orc_chieftain.png';
+import boneCaptain from '../art/units/bone_captain.png';
+import minotaurChampion from '../art/units/minotaur_champion.png';
+import gorgonQueen from '../art/units/gorgon_queen.png';
 import orcWarlord from '../art/units/hk_orc_warlord.png';
 import demon from '../art/units/hk_demon.png';
 import demonLord from '../art/units/hk_demon_lord.png';
@@ -232,6 +237,10 @@ const URLS: Record<string, string> = {
   hk_orc_grunt: orcGrunt,
   hk_orc_archer: orcArcher,
   hk_orc_brute: orcBrute,
+  orc_chieftain: orcChieftain,
+  bone_captain: boneCaptain,
+  minotaur_champion: minotaurChampion,
+  gorgon_queen: gorgonQueen,
   hk_orc_warlord: orcWarlord,
   hk_demon: demon,
   hk_demon_lord: demonLord,

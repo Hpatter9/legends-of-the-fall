@@ -3,6 +3,7 @@
 // the frame's bottom edge (x towards the way the figure faces, y up), for the look from the front and, where a sheet has one, from behind.
 export const REACH: Readonly<Record<string, { front: readonly [number, number]; back?: readonly [number, number] }>> = {
   boar_king: { front: [45, 70] },
+  bone_captain: { front: [25, 18] },
   cls_barbarian_1: { front: [25, 23] },
   cls_barbarian_2: { front: [31, 25] },
   cls_barbarian_3: { front: [29, 26] },
@@ -50,6 +51,7 @@ export const REACH: Readonly<Record<string, { front: readonly [number, number]; 
   gorgon_1: { front: [39, 11] },
   gorgon_2: { front: [23, 11] },
   gorgon_3: { front: [28, 11] },
+  gorgon_queen: { front: [32, 61] },
   hero_beastmaster: { front: [28, 35] },
   hero_buccaneer: { front: [23, 36] },
   hero_demon_swordsman: { front: [23, 39] },
@@ -157,6 +159,7 @@ export const REACH: Readonly<Record<string, { front: readonly [number, number]; 
   minotaur_1: { front: [71, 36] },
   minotaur_2: { front: [68, 33] },
   minotaur_3: { front: [52, 31] },
+  minotaur_champion: { front: [45, 33] },
   mythic_astrax: { front: [74, 88], back: [71, 88] },
   mythic_ilyra: { front: [48, 79], back: [53, 77] },
   mythic_nyxara: { front: [48, 69], back: [49, 68] },
@@ -165,6 +168,7 @@ export const REACH: Readonly<Record<string, { front: readonly [number, number]; 
   ninja_monk: { front: [15, 57] },
   ninja_peasant: { front: [20, 10] },
   oni_king: { front: [43, 36] },
+  orc_chieftain: { front: [37, 67] },
   robot_destroyer: { front: [38, 62] },
   robot_infantry: { front: [35, 57] },
   robot_swordsman: { front: [45, 40] },

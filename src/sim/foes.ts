@@ -96,12 +96,13 @@ export const FOES: Record<string, UnitDef> = {
   hellImp: { ...HELL_IMP, id: 'hellImp', name: 'Imp', sheet: 'hk_imp', scale: 0.65, role: 'Pitchfork flurries, sets alight' },
   hellDemon: { ...DEMON, id: 'hellDemon', name: 'Demon', sheet: 'hk_demon', scale: 0.39, role: 'Hurls hellfire, hunts the shooters' },
   // the mid-bosses (a boss band's first foe, drawn bigger), the Lich King and the Labyrinth's champion
-  orcChieftain: { ...MID, id: 'orcChieftain', name: 'Orc Chieftain', sheet: 'hk_orc_brute', scale: 0.62, role: 'Rallies the warband with a banner' },
-  boneCaptain: { ...MID, id: 'boneCaptain', name: 'Bone Captain', sheet: 'skeleton_warrior', scale: 0.86, hp: 1400, atk: 44, role: 'Rallies the dead with a banner' },
+  // (RELEASE-ART: the four bosses below wear their own sheets now; each scale keeps the height on the board they had in their soldier's)
+  orcChieftain: { ...MID, id: 'orcChieftain', name: 'Orc Chieftain', sheet: 'orc_chieftain', scale: 0.73, role: 'Rallies the warband with a banner' },
+  boneCaptain: { ...MID, id: 'boneCaptain', name: 'Bone Captain', sheet: 'bone_captain', scale: 0.82, hp: 1400, atk: 44, role: 'Rallies the dead with a banner' },
   alphaWolf: { ...MID, id: 'alphaWolf', name: 'Alpha Werewolf', sheet: 'werewolf_black', scale: 1.05, hp: 1200, atk: 42, def: 6, moveMs: 420, atkMs: 800, jump: 3, role: 'Leader of the pack, rends the weak' },
-  gorgonQueen: { ...MID, id: 'gorgonQueen', name: 'Gorgon Queen', sheet: 'gorgon_1', scale: 0.95, hp: 1300, atk: 44, def: 7, range: 4, shot: 'bone', moveMs: 700, atkMs: 1500, role: 'Her gaze turns heroes to stone' },
+  gorgonQueen: { ...MID, id: 'gorgonQueen', name: 'Gorgon Queen', sheet: 'gorgon_queen', scale: 1.02, hp: 1300, atk: 44, def: 7, range: 4, shot: 'bone', moveMs: 700, atkMs: 1500, role: 'Her gaze turns heroes to stone' },
   lichKing: { ...LICH_KING, id: 'lichKing', name: 'Lich King', sheet: 'lich_king', scale: 0.45 },
-  minotaurChampion: { ...CHAMPION, id: 'minotaurChampion', name: 'Minotaur Champion', sheet: 'minotaur_1', scale: 0.78 },
+  minotaurChampion: { ...CHAMPION, id: 'minotaurChampion', name: 'Minotaur Champion', sheet: 'minotaur_champion', scale: 0.94 },
   // the Yokai Night Parade (kitsune and tengu sheets of the heroes; the Oni King is generated)
   yokaiFox: { ...YOKAI, id: 'yokaiFox', name: 'Fox Spirit', sheet: 'kitsune', scale: 0.59, role: 'Slips away, leaves decoys, flanks' },
   yokaiWitch: { ...YOKAI, id: 'yokaiWitch', name: 'Fox Witch', sheet: 'kitsune', scale: 0.59, hp: 190, atk: 26, def: 3, range: 3, shot: 'curse', moveMs: 650, atkMs: 1500, role: 'Curses the toughest heroes, backs off' },
@@ -131,6 +132,12 @@ for (const t of TRIALS) {
 const TRIAL_BOSSES: ReadonlySet<string> = new Set(TRIALS.map((t) => t.boss.id));
 
 /** The bosses' ids: the first foe of a boss band is one of these. */
+/** RELEASE-ART: the four bosses who wore a soldier's sheet now wear their own; the rules that read a look (a foe's family, its home army,
+ *  a quest's family of foes) read the soldier's, their kin, so every fight plays as it did. */
+export const KIN_SHEET: Readonly<Record<string, string>> = { orc_chieftain: 'hk_orc_brute', bone_captain: 'skeleton_warrior', minotaur_champion: 'minotaur_1', gorgon_queen: 'gorgon_1' };
+/** The look a rule reads for `sheet`: its kin's, for those four, else its own. */
+export const kinSheet = (sheet: string): string => KIN_SHEET[sheet] ?? sheet;
+
 export const BOSS_IDS: readonly string[] = ['orcWarlord', 'demonLord', 'hornedOgre', 'forestBoss1', 'forestBoss2', 'forestBoss3', 'boarKing', 'devilLeader', 'shamanKing', 'orcChieftain', 'boneCaptain', 'alphaWolf', 'gorgonQueen', 'lichKing', 'minotaurChampion', 'nineTails', 'oniKing', 'sapphireColossus', 'forgeTitan'];
 /** A boss: one of the list above, one of the calamity's own (`calamityBosses.ts`, kept out of the list: it is the meta's boss codex), or an
  *  Eidolon in its trial. */
