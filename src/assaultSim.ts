@@ -28,6 +28,9 @@ export class AssaultSim {
   private pending = 0;
   private finalWait: ((b: Battle) => void) | null = null;
 
+  /** ASSAULT-DEV: a developer's trial keeps no snapshot (nothing of it reaches the browser's store, so no resume either). */
+  private keep = true;
+
   private constructor(readonly b: Battle, private worker: Worker | null) {}
 
   /** Whether the simulation runs in a worker. */
@@ -36,7 +39,7 @@ export class AssaultSim {
   }
 
   /** Start an assault (or resume one): in a worker if it can be had and `worker` is not false. */
-  static async start(o: { input?: AssaultInput; ranks?: Battle['spells']['ranks']; resume?: Battle; worker?: boolean }): Promise<AssaultSim> {
+  static async start(o: { input?: AssaultInput; ranks?: Battle['spells']['ranks']; resume?: Battle; worker?: boolean; trial?: boolean }): Promise<AssaultSim> {
     if (o.worker !== false && typeof Worker !== 'undefined') {
       try {
         const w = new Worker(WORKER_URL);
@@ -51,11 +54,12 @@ export class AssaultSim {
             clearTimeout(timer);
             ok(null);
           };
-          const msg: ToWorker = o.resume ? { type: 'resume', battle: o.resume } : { type: 'start', input: o.input!, ...(o.ranks ? { ranks: o.ranks } : {}) };
+          const msg: ToWorker = o.resume ? { type: 'resume', battle: o.resume } : { type: 'start', input: o.input!, ...(o.ranks ? { ranks: o.ranks } : {}), ...(o.trial ? { trial: true } : {}) };
           w.postMessage(msg);
         });
         if (battle) {
           const sim = new AssaultSim(battle, w);
+          sim.keep = !o.trial;
           w.onmessage = (e: MessageEvent<FromWorker>) => sim.hear(e.data);
           return sim;
         }
@@ -66,7 +70,9 @@ export class AssaultSim {
     }
     const b = o.resume ?? startAssault(o.input!);
     if (!o.resume && o.ranks) b.spells.ranks = o.ranks;
-    return new AssaultSim(b, null);
+    const sim = new AssaultSim(b, null);
+    sim.keep = !o.trial;
+    return sim;
   }
 
   private hear(m: FromWorker): void {
@@ -96,7 +102,7 @@ export class AssaultSim {
       const ev = stepAssault(this.b);
       this.ms.push(performance.now() - t0);
       out.push({ ev, hold: this.b.field!.hold!.events.slice() });
-      if (snapshotDue(this.b)) {
+      if (this.keep && snapshotDue(this.b)) {
         void saveBattle(this.b);
         this.onSnapshot?.();
       }
