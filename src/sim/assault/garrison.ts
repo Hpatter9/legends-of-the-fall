@@ -48,10 +48,10 @@ export const HOLD_SHARE: Readonly<Record<string, number>> = { orcs: 0.248, undea
 /** Phase 5: the Last Hold's garrison stands at this share of its hold's own, by army, against the whole Council's weight on its walls
  *  (`lastHold.ts`; tuned by `npm run balance -- --assault <army> --last`). The Council's members are elites and escorts with plainer kits
  *  than a hold's own nameless officers (an Ogre Shaman King, a Devil Leader), so at some holds they weaken it and at others strengthen it. */
-export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 2.391, undead: 1.992, beasts: 2.045, wildwood: 1.922, labyrinth: 1.553, ogres: 1.836, infernal: 1.252, yokai: 1.16, golems: 0.875 };
+export const LAST_SHARE: Readonly<Record<string, number>> = { orcs: 2.534, undead: 1.992, beasts: 2.045, wildwood: 1.922, labyrinth: 1.553, ogres: 1.836, infernal: 1.302, yokai: 1.16, golems: 0.919 };
 /** ASSAULT-RETUNE: the Warband regrouped (the weekly re-storm at Mythic, `RESTORM_TIER`) stands at this share of its hold's own, by army, on
  *  top of the Mythic tier's own multipliers (tuned by `node tools/assault-dev/run.mjs --kinds regroup`, `docs/notes/assault-retune.md`). */
-export const RESTORM_SHARE: Readonly<Record<string, number>> = { orcs: 2.188, undead: 1.778, beasts: 1.522, wildwood: 1.848, labyrinth: 0.909, ogres: 1.08, infernal: 0.9, yokai: 0.958, golems: 1.056 };
+export const RESTORM_SHARE: Readonly<Record<string, number>> = { orcs: 2.188, undead: 1.778, beasts: 1.522, wildwood: 1.756, labyrinth: 0.909, ogres: 1.015, infernal: 0.873, yokai: 0.958, golems: 1.056 };
 export const shareOf = (input: Pick<AssaultInput, 'army' | 'foeShare' | 'last' | 'tier'>): number =>
   input.foeShare ?? (HOLD_SHARE[input.army] ?? ASSAULT.foeShare) * (input.last ? LAST_SHARE[input.army] ?? 1 : 1) * ((input.tier ?? 0) >= 4 ? RESTORM_SHARE[input.army] ?? 1 : 1);
 
