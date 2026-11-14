@@ -72,8 +72,8 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   });
   await wait(page, 900);
   const k = await spotOf(page, 1);
-  // (the drop point: past the right edge of the knight's drawn body, 10 px into the pad, and a little below its middle)
-  const tx = k.x + k.half + 10;
+  // (the drop point: past the right edge of the knight's drawn body, 22 px into the pad, and a little below its middle)
+  const tx = k.x + k.half + 22;
   const ty = k.y - k.tall * 0.35 + 24;
   const under = await page.evaluate(([x, y]) => window.__game.tileAtScreen(x, y - 24), [tx, ty]);
   const offTile = !under || under[0] !== k.tile[0] || under[1] !== k.tile[1];
@@ -123,7 +123,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   // (bench to bench: a wizard dropped 6 px past the other wizard card's edge merges)
   const c6 = await page.locator('#bench .card[data-id="6"]').boundingBox();
   const c7 = await page.locator('#bench .card[data-id="7"]').boundingBox();
-  await drag(page, c6.x + c6.width / 2, c6.y + c6.height / 2, c7.x + c7.width + 6, c7.y + c7.height / 2, 8);
+  await drag(page, c6.x + c6.width / 2, c6.y + c6.height / 2, c7.x + c7.width + 12, c7.y + c7.height / 2, 8);
   await wait(page, 150);
   const benchLabel = await page.evaluate(() => (document.getElementById('mergeTag').hidden ? 'hidden' : 'shown'));
   await page.mouse.up();
@@ -133,7 +133,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   const ok = offTile && mergedOff && label.startsWith('Merge') && labelFar === 'hidden' && placedFar && benchMerged && !overflow;
   if (!ok) fails++;
-  console.log(`${w}x${h}: knight on [${placed.knight}] (height ${k.h}, the near rows' lowest ${placed.low}) · drop over tile ${JSON.stringify(under)} (off its tile: ${offTile}) · label ${label} · lit ${lit} · merged ${mergedOff} · far drop placed ${placedFar}, label ${labelFar} · bench drop 6px off: label ${benchLabel}, merged ${benchMerged} · sideways scroll ${overflow} · errors ${errs.length} · ${ok ? 'OK' : 'FAIL'}`);
+  console.log(`${w}x${h}: knight on [${placed.knight}] (height ${k.h}, the near rows' lowest ${placed.low}) · drop over tile ${JSON.stringify(under)} (off its tile: ${offTile}) · label ${label} · lit ${lit} · merged ${mergedOff} · far drop placed ${placedFar}, label ${labelFar} · bench drop 12px off: label ${benchLabel}, merged ${benchMerged} · sideways scroll ${overflow} · errors ${errs.length} · ${ok ? 'OK' : 'FAIL'}`);
   console.log(`   rosters: ${afterOff} | ${afterFar} | ${afterBench}`);
   errors += errs.length;
   await ctx.close();

@@ -14,8 +14,8 @@ Looks and input only: the sim's merge rules (`src/sim/merge.ts`) are untouched.
 - The pad never takes a drop meant for another hero: a point squarely on a non-matching hero's own (unpadded) body does not count for a
   match's pad, so dropping onto a neighbour still swaps or places as before. On the match's own body it always counts.
 - On the board the box is the sprite's drawn body (`bodyBox`: 32 world px wide, its drawn height tall, standing on its feet) at the
-  world's scale, so it holds at every zoom and on every height. `BODY_PAD` is 18 px.
-- On the bench each other card's box, with `CARD_PAD` 10 px (the cards sit close). Over the bench's panel the board is not aimed at.
+  world's scale, so it holds at every zoom and on every height. `BODY_PAD` is 28 px (a finger, not a mouse: the director raised it from 18).
+- On the bench each other card's box, with `CARD_PAD` 16 px (raised from 10; the cards sit close, and a drop squarely on another card is never taken). Over the bench's panel the board is not aimed at.
 
 ## What shows (`src/main.ts` `litMerges`, `src/render/unitView.ts`, `src/render/boardView.ts`, `src/easyMerge.css`)
 
@@ -33,8 +33,8 @@ merge button.
 ## Checked
 
 `node tools/easy-merge/shots.mjs` (after `npm run web`), at 393x852, 360x780 and 412x915: a knight on the highest tile of the near rows
-(height 15 against the rows' lowest 9 or 10); the bench's knight is dragged to a point 10 px right of its drawn body, over the empty tile
+(height 15 against the rows' lowest 6 to 10, the ground varying a little run to run); the bench's knight is dragged to a point 22 px right of its drawn body, over the empty tile
 beside it, and merges (rank 2), with "Merge ⇧" shown and the knight lit brightest; a drop on an empty tile three tiles from the fielded
-archer does not merge and shows no label; a bench wizard dropped 6 px past the other wizard's card merges; no sideways scroll, no page
+archer does not merge and shows no label; a bench wizard dropped 12 px past the other wizard's card merges; no sideways scroll, no page
 errors. Photographs: `docs/samples/easy-merge-drag-*.png`, and the off-tile drop as a strip of frames,
 `docs/samples/easy-merge-strip-393x852.png` (the match lit while the hero is carried, lit brightest with the label, then merged).

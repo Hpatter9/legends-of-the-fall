@@ -21,9 +21,9 @@ export interface DropBody {
 }
 
 /** How far past a match's drawn body on the board a drop still merges into it (screen px). */
-export const BODY_PAD = 18;
+export const BODY_PAD = 28;
 /** The same for a card on the bench (the cards sit close together, so the pad is smaller). */
-export const CARD_PAD = 10;
+export const CARD_PAD = 16;
 
 /** Whether a point is inside a box grown by `pad` each way. */
 export function inBox(b: ScreenBox, px: number, py: number, pad = 0): boolean {
