@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.593.0',
+    date: '2026-11-14',
+    title: 'A credits page for every artist',
+    notes: ['Settings now has a Credits page naming the artists, composers and makers behind the game, with each licence and where to find their work.'],
+  },
+  {
     version: '0.592.0',
     date: '2026-11-14',
     title: 'Try any assault in developer mode',
