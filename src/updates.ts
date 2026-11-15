@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.609.0',
+    date: '2026-11-15',
+    title: 'Duels, plots and captains who kneel',
+    notes: ['A duel now has stakes, and a nemesis studies how you beat it and comes back with a counter.', 'The Council feuds in the open: rivals climb over each other, and plots can be warned of or backed.', 'A beaten old foe kneels: slay it for its bounty, or spare it to inform for five runs, at the risk it betrays you.'],
+  },
+  {
     version: '0.608.0',
     date: '2026-11-15',
     title: 'Nemeses who remember, and hunts',
