@@ -3855,6 +3855,7 @@ class Game {
   /** A run has ended: back to the main screen, showing what it earned. */
   private goHome(): void {
     clearRises();
+    this.riseToken++;
     const r = this.run;
     const army = armyOfRun(r);
     this.closeResult();
@@ -4130,28 +4131,69 @@ class Game {
     requestAnimationFrame(() => requestAnimationFrame(() => showRises(items)));
   }
 
+  /** HERO-RISE: wave-end plates waiting for the card to close are let go when this moves on (going home). */
+  private riseToken = 0;
+
   /** HERO-RISE: the plates over the save's heroes (by kind) that rose since `before`, over each where it stands on the board. */
   private showKindsRisen(before: Map<string, RiseShot>): void {
     const items = [...before].map(([kind, was]) => ({
       kind,
       lines: riseOf(was, shotOfHero(this.meta, kind, () => startBattle(1, []))),
+      // (over the hero on the board, else over its card on the bench)
       at: () => {
         const u = this.b.units.find((x) => x.side === 'hero' && x.def === kind && x.owner === undefined);
-        const s = u && this.sprites.get(u.id);
-        return s && s.root.visible ? this.toClient(s.x, s.y - s.tall - 6) : null;
+        const on = u && this.riseOnBoard(u);
+        if (on) return on;
+        const h = this.run.roster.find((x) => x.kind === kind);
+        return h ? this.riseAnchor(h.id) : null;
       },
     }));
-    showRises(items);
+    // (held until the wave's card has closed, so no plate sits over it: then over each hero where it stands, on the next deploy's board if
+    // the run goes on; going home clears them, and after a minute they are let go)
+    const until = performance.now() + 60000;
+    const token = ++this.riseToken;
+    const go = () => {
+      if (performance.now() > until || token !== this.riseToken) return;
+      if (!$('result').hidden || this.homeUp || this.chain.active) return void setTimeout(go, 300);
+      // (the march over: once every hero is on show (on the board or its bench card), or a few seconds on, whichever is first)
+      shownAt ??= performance.now();
+      if (items.some((i) => i.lines.length && !i.at()) && performance.now() - shownAt < 4000) return void setTimeout(go, 300);
+      requestAnimationFrame(() => requestAnimationFrame(() => showRises(items)));
+    };
+    let shownAt: number | undefined;
+    go();
   }
 
   /** Where a run's hero stands on the screen for its plate: over its head on the board, else over its bench card. */
-  private riseAnchor(id: number): { x: number; y: number } | null {
+  private riseAnchor(id: number): { x: number; y: number; under?: number; lo?: number; hi?: number } | null {
     const u = this.b.units.find((x) => x.side === 'hero' && x.tag === id);
-    const s = u && this.sprites.get(u.id);
-    if (s && s.root.visible) return this.toClient(s.x, s.y - s.tall - 6);
+    if (u) {
+      const on = this.riseOnBoard(u);
+      if (on) return on;
+    }
     const card = $('bench').querySelector<HTMLElement>(`[data-id="${id}"]`);
     const r = card?.getBoundingClientRect();
-    return r && r.width ? { x: r.left + r.width / 2, y: r.top + 4 } : null;
+    return r && r.width ? { x: r.left + r.width / 2, y: r.top + 4, lo: this.riseBand().lo } : null;
+  }
+
+  /** HERO-RISE: a hero on the board's place for its plate: over its head, or under its feet when there is no room above, kept to the board's
+   *  band of the screen (below the top bar and the spell row, above the bottom panel). */
+  private riseOnBoard(u: Unit): { x: number; y: number; under: number; lo: number; hi: number } | null {
+    const s = this.sprites.get(u.id);
+    if (!s || !s.root.visible) return null;
+    const head = this.toClient(s.x, s.y - s.tall - 6);
+    const feet = this.toClient(s.x, s.y + 4);
+    return { x: head.x, y: head.y, under: feet.y, ...this.riseBand() };
+  }
+
+  /** HERO-RISE: the band of the screen a plate over the board keeps to: below the top bar (and the fight's spell row, when it shows), above
+   *  the bottom panel. */
+  private riseBand(): { lo: number; hi: number } {
+    let lo = $('top').getBoundingClientRect().bottom;
+    const orbs = $('hudSpells');
+    if (getComputedStyle(orbs).display !== 'none') lo = Math.max(lo, orbs.getBoundingClientRect().bottom);
+    const panel = $('panel').getBoundingClientRect();
+    return { lo: Math.round(lo + 4), hi: Math.round((panel.height ? panel.top : innerHeight) - 4) };
   }
 
   /** Show merges the sim has made: each merged-away hero leaves the board, each target is set down again where it stood at its new grade

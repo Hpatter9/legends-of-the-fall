@@ -135,6 +135,11 @@ for (const [w, h] of SIZES) {
     await page.waitForTimeout(200);
     console.log(w, 'knight', JSON.stringify(await state(page)));
     await shot(page, 'knight', w);
+    // (the meaning closes on the next tap, anywhere: here on the panel's numbers)
+    const tipOpen = await page.evaluate(() => !document.querySelector('.fhlTip').hidden);
+    await page.evaluate(() => document.querySelector('.fhlStats').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+    await page.waitForTimeout(100);
+    console.log(w, 'meaning open', tipOpen, 'then closed by a tap', await page.evaluate(() => document.querySelector('.fhlTip').hidden));
     await tapHero(page, 'cleric');
     console.log(w, 'cleric', JSON.stringify(await state(page)));
     await shot(page, 'cleric', w);

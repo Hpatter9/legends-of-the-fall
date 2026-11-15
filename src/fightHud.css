@@ -471,6 +471,7 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
   opacity: 0; animation: rsRise 2.6s ease-out both; }
 .rsPlate::before { content: ''; position: absolute; left: 50%; bottom: -5px; width: 8px; height: 8px; transform: translateX(-50%) rotate(45deg);
   background: #17110a; border-right: 1px solid #c9a95c; border-bottom: 1px solid #c9a95c; }
+.rsPlate.under::before { bottom: auto; top: -5px; transform: translateX(-50%) rotate(225deg); }
 .rsName { font: 400 13px/15px var(--body); color: #ffe7b0; overflow: hidden; text-overflow: ellipsis; }
 .rsName em { font-style: normal; color: #ffd36a; }
 .rsStats { color: #9cf08a; font-family: 'Pixelify Sans', var(--body); overflow: hidden; text-overflow: ellipsis; }

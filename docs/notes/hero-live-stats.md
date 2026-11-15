@@ -33,7 +33,7 @@ In a fight (army waves, the daily, the Calamity's maps; the Last Stand by its ro
   guarding, mending, warded, hidden, just risen, frenzy, the kits' parry, vow, fury, treeform, guise, forms, charged, anchored, guardian
   angel, Scale Ward, Hymn of Dawn, lifesteal; brittle, charmed, snared, taunted, pinned, in smoke, polymorphed, bounty, condemned, turned to
   stone, suppressed, exposed, branded; "next blow crits" and "next blow misses"), each with a painted motif, its name and its seconds left.
-  A tap on one says what it does in a line over the panel's foot (it closes itself after four seconds, or on a second tap). Ailments come
+  A tap on one says what it does in a line over the panel's foot; the next tap anywhere closes it (a tap on another effect opens that one's). Ailments come
   first, the latest first, then what helps, then what harms.
 - **Fighting numbers:** Attack, Armour, AC and To hit, Blows (seconds between blows), Walk (seconds a tile), Range, Crit, Dodge and Guard (the
   share of a blow it is spared), each as the fight reads it now: haste and slow, frenzy, the kits, gear, the side's traits, the floor's twist.

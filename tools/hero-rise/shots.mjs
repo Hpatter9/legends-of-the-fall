@@ -75,7 +75,14 @@ const plates = (page) => page.evaluate(() => {
     const a = ps[i].r, b = ps[j].r;
     if (a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom) overlaps++;
   }
-  return { n: ps.length, queued, overlaps, offscreen: ps.filter((p) => p.r.left < 0 || p.r.right > innerWidth || p.r.top < 0).length, texts: ps.map((p) => p.text), pageW: document.documentElement.scrollWidth };
+  // (a plate over the board crossing the top bar, the spell row or, for one over a hero on the board, the bottom panel)
+  const box = (id) => { const e = document.getElementById(id); return e && getComputedStyle(e).display !== 'none' && !e.hidden ? e.getBoundingClientRect() : null; };
+  const cross = (r, b) => b && r.left < b.right && b.left < r.right && r.top < b.bottom && b.top < r.bottom;
+  const onBoard = !document.querySelector('.ulCard, .omVeil');
+  const overHud = onBoard ? ps.filter((p) => cross(p.r, box('top')) || cross(p.r, box('hudSpells'))).length : 0;
+  const card = document.getElementById('result');
+  const overCard = card && !card.hidden ? ps.length : 0;
+  return { n: ps.length, queued, overlaps, overHud, overCard, offscreen: ps.filter((p) => p.r.left < 0 || p.r.right > innerWidth || p.r.top < 0).length, texts: ps.map((p) => p.text), pageW: document.documentElement.scrollWidth };
 });
 const shot = async (page, name, w) => {
   const path = `docs/samples/hero-rise-${name}-${w}.png`;
@@ -107,7 +114,14 @@ for (const [w, h] of SIZES) {
       await page.waitForTimeout(2500);
       // (the foes struck down at once: the sim ends the wave on its next step, and the page settles it as any win)
       await page.evaluate(() => { for (const u of window.__game.b.units) if (u.side === 'foe') { u.hp = 0; u.alive = false; u.diedAt = window.__game.b.t; } });
-      await page.waitForSelector('.rsPlate', { timeout: 20000 });
+      // (the wave's card: no plate while it is up)
+      await page.waitForFunction(() => !document.getElementById('result').hidden, null, { timeout: 20000 });
+      await page.waitForTimeout(1500);
+      console.log(w, 'wave card up', JSON.stringify(await plates(page)));
+      await shot(page, 'wave-card', w);
+      // (the card closed: the next wave's deploy, and the plates over the heroes where they stand)
+      await page.evaluate(() => document.getElementById('next').click());
+      await page.waitForSelector('.rsPlate', { timeout: 30000 });
       await page.waitForTimeout(350);
       await freeze(page);
       console.log(w, 'wave', JSON.stringify(await plates(page)));

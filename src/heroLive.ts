@@ -19,8 +19,6 @@ import type { HeroStat } from './sim/fightStats';
 
 /** How often the panel is written (ms of the page's clock): five times a second reads as live, and costs next to nothing. */
 export const LIVE_EVERY_MS = 200;
-/** How long an effect's meaning stays open (ms). */
-const TIP_MS = 4000;
 
 const ATLAS = atlas as { cell: number; parts: Record<string, number[]> };
 /** The atlas's size in cells (1536 x 1152 at 96 px). */
@@ -62,8 +60,6 @@ export class HeroLivePanel {
   /** The effect whose meaning shows (by key), until another is tapped or it wears off. */
   private tip: string | null = null;
   private last: LiveView | null = null;
-  /** When the meaning was opened: it closes itself after `TIP_MS`, so it does not sit over the numbers. */
-  private tipAt = 0;
 
   constructor(private opts: LivePanelOpts) {
     this.el = document.createElement('div');
@@ -81,10 +77,21 @@ export class HeroLivePanel {
       const fx = t.closest<HTMLElement>('[data-fx]');
       if (fx) {
         this.tip = this.tip === fx.dataset.fx ? null : fx.dataset.fx!;
-        this.tipAt = performance.now();
         this.writeTip();
       }
     });
+    // (an effect's meaning closes on the next tap anywhere, the panel, the board or the rest of the page; a tap on another effect opens
+    // that one's instead)
+    document.addEventListener(
+      'pointerdown',
+      (e) => {
+        if (this.tip && !(e.target as HTMLElement | null)?.closest?.('.fhlEff')) {
+          this.tip = null;
+          this.writeTip();
+        }
+      },
+      true,
+    );
     this.el.addEventListener('pointerdown', (e) => e.stopPropagation());
     this.el.querySelector('.fhlBack')!.textContent = opts.back ?? '‹ Skills';
   }
@@ -123,7 +130,6 @@ export class HeroLivePanel {
     this.at = clock;
     const u = b.units.find((x) => x.id === this.id);
     if (!u) return;
-    if (this.tip && clock - this.tipAt > TIP_MS) this.tip = null;
     const v = liveOf(b, u, this.opts.statOf?.(u.id), base.get(u.id), this.opts);
     this.last = v;
     this.write(v);
@@ -191,6 +197,7 @@ export class HeroLivePanel {
       // (the effect has worn off: its chip's highlight goes with the next write)
       if (this.tip) delete this.parts['.fhlFx'];
       this.tip = null;
+      for (const b of this.el.querySelectorAll<HTMLElement>('.fhlEff.on')) b.classList.remove('on');
       return;
     }
     const text = `${e.name}: ${e.text}`;

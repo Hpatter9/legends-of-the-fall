@@ -126,3 +126,21 @@ test('a skill levelled by use shows as its name and new level', () => {
   assert.deepEqual(r.map((l) => l.text), [`${HERO_KITS().knight.s1.skill.name} Lv 3`]);
   assert.equal(r[0].kind, 'skill');
 });
+
+test('a plate keeps below the top bar and above the bottom panel, and hangs under its hero when there is no room above', () => {
+  // (a hero just under the top bar: its plate would cover the bar, so it hangs under the hero's feet, inside the board's band)
+  const [p] = layPlates([{ x: 200, y: 120, under: 170, w: 160, h: 40, lo: 110, hi: 600 }], 393);
+  assert.equal(p.under, true);
+  assert.ok(p.top >= 170 && p.top >= 110, 'under the feet, below the bar');
+  // (with room above, it sits above as before)
+  const [q] = layPlates([{ x: 200, y: 400, under: 450, w: 160, h: 40, lo: 110, hi: 600 }], 393);
+  assert.equal(q.under, false);
+  assert.equal(q.top, 400 - 40 - 4);
+  // (three heroes side by side near the top: none covers another, none leaves the band)
+  const crowd = [0, 1, 2].map((i) => ({ x: 180 + i * 30, y: 130, under: 180, w: 150, h: 40, lo: 110, hi: 600 }));
+  const laid = layPlates(crowd, 393);
+  for (const [i, a] of laid.entries()) {
+    assert.ok(a.top >= 110 && a.top + 40 <= 600, `plate ${i} in the band`);
+    for (const b of laid.slice(i + 1)) if (a.round === b.round) assert.ok(a.left >= b.left + 150 || b.left >= a.left + 150 || a.top >= b.top + 40 || b.top >= a.top + 40, 'no overlap');
+  }
+});

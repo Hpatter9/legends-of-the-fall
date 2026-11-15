@@ -136,31 +136,49 @@ export function plateLines(r: readonly RiseLine[]): { head: string[]; stats: str
   };
 }
 
-/** Where plates go when several heroes rise at once: each plate's box (its anchor's centre `x`, the top `y` it would sit above, and its size),
- *  laid so none covers another. A plate that would overlap one already laid in its round is lifted above it; when that would take it past
- *  the top of the screen (`topMin`), it is stacked downward under the plates it meets instead; it keeps inside the screen's sides, and above
- *  `bottomMax`. One with no room either way is queued for the next round (shown once the round before has gone). Returns each plate's
- *  left, top and round. */
-export function layPlates(boxes: readonly { x: number; y: number; w: number; h: number }[], screenW: number, gap = 4, topMin = 4, bottomMax = Infinity): { left: number; top: number; round: number }[] {
+/** A plate to lay: its anchor's centre `x`, the top `y` it would sit above, the bottom `under` it may hang below instead (a hero's feet;
+ *  none: only above), its size, and the band of the screen it must keep to (`lo`, `hi`: below the top bar, above the bottom panel). */
+export interface PlateBox {
+  x: number;
+  y: number;
+  under?: number;
+  w: number;
+  h: number;
+  lo?: number;
+  hi?: number;
+}
+
+/** Where plates go when several heroes rise at once, laid so none covers another and each keeps to its band (`lo` to `hi`, else `topMin`
+ *  to `bottomMax`). A plate sits just above its hero, lifted above any plate of its round it would cover; with no room for that, it hangs
+ *  under its hero instead (from `under`), pushed down past the plates it meets; with no room either way it is queued for the next round
+ *  (shown once the round before has gone). Returns each plate's left, top, round, and whether it hangs under. */
+export function layPlates(boxes: readonly PlateBox[], screenW: number, gap = 4, topMin = 4, bottomMax = Infinity): { left: number; top: number; round: number; under: boolean }[] {
   const rounds: { left: number; top: number; w: number; h: number }[][] = [];
-  const out: { left: number; top: number; round: number }[] = [];
+  const out: { left: number; top: number; round: number; under: boolean }[] = [];
   const hits = (laid: { left: number; top: number; w: number; h: number }[], left: number, top: number, b: { w: number; h: number }) =>
     laid.find((o) => left < o.left + o.w && left + b.w > o.left && top < o.top + o.h + gap && top + b.h + gap > o.top);
   for (const b of boxes) {
+    const lo = Math.max(topMin, b.lo ?? topMin);
+    const hi = Math.min(bottomMax, b.hi ?? bottomMax);
+    const fits = (top: number) => top >= lo && top + b.h <= hi;
     const left = Math.max(4, Math.min(screenW - b.w - 4, Math.round(b.x - b.w / 2)));
-    const start = Math.max(topMin, Math.round(b.y - b.h - gap));
     for (let round = 0; ; round++) {
       const laid = (rounds[round] ??= []);
-      // (lifted above every plate of the round it would cover, until it covers none; else pushed down under them)
-      let top = start;
+      // (above the hero, lifted over the plates it would cover)
+      let top = Math.round(b.y - b.h - gap);
       for (let o = hits(laid, left, top, b); o; o = hits(laid, left, top, b)) top = o.top - b.h - gap;
-      if (top < topMin) {
-        top = start;
+      let under = false;
+      if (!fits(top)) {
+        // (no room above: under the hero's feet, pushed down past the plates it meets)
+        top = Math.max(lo, Math.round((b.under ?? b.y) + gap + 4));
         for (let o = hits(laid, left, top, b); o; o = hits(laid, left, top, b)) top = o.top + o.h + gap;
+        under = true;
       }
-      if (round > 50 || (top >= topMin && top + b.h <= bottomMax)) {
+      if (fits(top) || round > 50) {
+        // (a plate taller than its whole band, or the fiftieth round: kept inside the band all the same)
+        top = Math.max(lo, Math.min(top, hi - b.h));
         laid.push({ left, top, w: b.w, h: b.h });
-        out.push({ left, top, round });
+        out.push({ left, top, round, under });
         break;
       }
     }

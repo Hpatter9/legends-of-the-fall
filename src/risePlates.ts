@@ -14,7 +14,9 @@ import { layPlates, plateLines, type RiseLine } from './riseRules';
 export interface RiseShow {
   kind: string;
   lines: RiseLine[];
-  at: () => { x: number; y: number } | null;
+  /** Its centre across and the top the plate sits above; where it may hang under instead (its feet); and the band of the screen the
+   *  plate keeps to (`lo`, `hi`: below the top bar and the spell row, above the bottom panel, for a hero on the board). */
+  at: () => { x: number; y: number; under?: number; lo?: number; hi?: number } | null;
 }
 
 /** How long a plate stays (ms), and how far apart a crowd's plates come in. */
@@ -61,13 +63,15 @@ export function showRises(items: readonly RiseShow[]): void {
   let rounds: number[] = [];
   const lay = (first: boolean) => {
     if (!plates.every((p) => p.el.isConnected)) return;
-    const boxes = plates.map((p) => ({ x: p.at.x, y: p.at.y, w: p.el.offsetWidth, h: p.el.offsetHeight }));
+    const boxes = plates.map((p) => ({ ...p.at, w: p.el.offsetWidth, h: p.el.offsetHeight }));
     const spots = layPlates(boxes, innerWidth, 4, 4, innerHeight - 4);
     if (!first && spots.some((s, i) => s.round !== rounds[i])) return;
     rounds = spots.map((s) => s.round);
     // (a plate with no room in the first round waits for the next: a round is shown, fades, and the next comes in where it was)
     const inRound = new Map<number, number>();
     plates.forEach((p, i) => {
+      // (a plate hung under its hero points up at it)
+      p.el.classList.toggle('under', spots[i].under);
       p.el.style.left = `${spots[i].left}px`;
       p.el.style.top = `${spots[i].top}px`;
       if (!first) return;
