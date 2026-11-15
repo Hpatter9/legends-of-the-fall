@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.604.0',
+    date: '2026-11-15',
+    title: 'Smarter, flashier assaults',
+    notes: ['In the assaults your heroes now cast their skills and ultimates as they advance, with effects you can see, and Auto casts your king\'s spells.', 'They flow round each other, file over bridges and through gates, and no longer bunch up and stand idle.'],
+  },
+  {
     version: '0.603.0',
     date: '2026-11-14',
     title: 'A smaller download',
