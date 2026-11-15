@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.607.0',
+    date: '2026-11-15',
+    title: 'New golems, wolves and a new Duchess',
+    notes: ['The golems, the treant, the wolves, the Reaper\'s wraith, the Illusionist\'s decoy and Duchess herself are redrawn as art made for this game.', 'Every picture in the game can now ship to the store, with nothing left whose licence is unconfirmed.'],
+  },
+  {
     version: '0.606.0',
     date: '2026-11-15',
     title: 'Trait perks that change the fight',
