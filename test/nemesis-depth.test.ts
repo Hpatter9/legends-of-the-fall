@@ -7,8 +7,8 @@ import assert from 'node:assert/strict';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { place, startBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { armyRun, recruit } from '../src/sim/run';
-import { decorate, planRun } from '../src/sim/revenge';
-import { duelOffer } from '../src/sim/duel';
+import { decorate, payTimes, planRun } from '../src/sim/revenge';
+import { duelOffer, DUELLIST_MARK, refuseDuel, settleDuelRun } from '../src/sim/duel';
 
 import { startedMeta, type Meta } from '../src/sim/meta';
 import { GUARD, LIEUTENANT, newWar, planNemeses, readWar, remembers, snapOf, STRANGER_CHANCE, type NemSnap, type Nemesis, type War } from '../src/sim/nemesis';
@@ -566,4 +566,49 @@ test('the wave card tells of the quarry in the next wave', () => {
   assert.match(huntAhead(run)!, /your quarry, Q/);
   run.stage = 5;
   assert.equal(huntAhead(run), undefined);
+});
+
+// ---- Idea 10: duels with stakes -------------------------------------------------------------------------------------------------
+
+test('a duel refused mocks the whole run: every nemesis in it is Mocking', () => {
+  const m = warMeta(4);
+  const a = member(m.war!, 'lieutenant', 3, { met: 3, weak: ['dread:knight'] });
+  const z = member(m.war!, 'captain', 3, { met: 3 });
+  const run = armyRun(11, 'undead', ['knight', 'wizard', 'cleric']);
+  run.roster = [];
+  run.squad = [];
+  for (const k of ['knight', 'wizard', 'cleric']) run.squad.push(recruit(run, k).id);
+  run.stage = 3;
+  run.nemesis = { members: [decorate(m, snapOf(a), a), decorate(m, snapOf(z), z)], waves: { '3': [a.id], '9': [z.id] } };
+  refuseDuel(run, duelOffer(run)!);
+  assert.ok(run.nemesis.members.every((s) => s.mocking));
+});
+
+test('a duel won leaves the champion a Duellist’s mark on the run’s other nemeses, and pays three times over', () => {
+  const run = armyRun(11, 'undead', ['knight']);
+  run.nemesis = { members: [{ id: 1, base: 'skeleton', name: 'A', epithet: '', rank: 'lieutenant', might: 1, scars: 0, traits: [], weak: [] }, { id: 2, base: 'skeleton', name: 'B', epithet: '', rank: 'captain', might: 1, scars: 0, traits: [], weak: [], grudge: { knight: 0.2 } }], waves: { '3': [1], '9': [2] } };
+  run.stage = 3;
+  const b = { duel: { id: 1, hero: 7, nem: 8, ended: 'won' }, units: [{ id: 7, def: 'knight' }, { id: 8, def: 'skeleton' }] } as unknown as Battle;
+  assert.equal(settleDuelRun(run, b), 'won');
+  assert.equal(run.nemesis.members[0].grudge, undefined, 'not on the one it beat');
+  assert.equal(run.nemesis.members[1].grudge?.knight, Math.round((0.2 + DUELLIST_MARK) * 100) / 100);
+  assert.equal(payTimes({ doubled: new Set([1]), tripled: new Set([1]) }, 1), 3);
+  assert.equal(payTimes({ doubled: new Set([1]), tripled: new Set() }, 1), 2);
+  assert.equal(payTimes({ doubled: new Set(), tripled: new Set() }, 1), 1);
+});
+
+test('a duel lost: the nemesis takes a trophy from the champion it bested', () => {
+  const m = warMeta(4);
+  m.equipment = [{ id: 501, base: 'kiteShield', rarity: 3, level: 12 }] as Meta['equipment'];
+  m.equipped = { knight: { off: 501 } } as Meta['equipped'];
+  const n = member(m.war!, 'lieutenant', 3, { met: 3 });
+  const b = fightOf([n.base], 3);
+  const u = b.units.find((x) => x.side === 'foe')!;
+  u.nem = nemOf(n);
+  const k = hero(b, 'knight');
+  b.duel = { id: n.id, hero: k.id, nem: u.id, ended: 'lost' } as Battle['duel'];
+  b.phase = 'lost';
+  const note = noteWar(m, armyRun(5, 'undead'), b, startNemesisTally(), false, 3);
+  assert.deepEqual(n.trophies?.map((t) => t.item), [501]);
+  assert.ok(note.council?.some((l) => /takes .*shield/.test(l)), JSON.stringify(note.council));
 });

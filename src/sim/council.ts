@@ -17,14 +17,14 @@ import { isBoss } from './foes';
 import { heroName } from './heroNames';
 import type { Meta } from './meta';
 import { MUSTER_NEED, musterOpen, warchiefOf } from './muster';
-import { FATE_MEETINGS, fullName, HEADS_MAX, remembers, homeArmy, MIGHT_MAX, nameFor, NEWS_MAX, noteNemesis, rankWord, remember, reveal, secretName, SEATS, type NemNote, type Nemesis, type NewsKind, type War, type WarNews } from './nemesis';
+import { FATE_MEETINGS, fullName, HEADS_MAX, remembers, TROPHIES_MAX, homeArmy, MIGHT_MAX, nameFor, NEWS_MAX, noteNemesis, rankWord, remember, reveal, secretName, SEATS, type NemNote, type Nemesis, type NewsKind, type War, type WarNews } from './nemesis';
 import type { NemesisTally } from './nemesisLog';
 import { TRAITS } from './nemesisTraits';
 import { mixSeed, Rng } from './rng';
 import type { Run } from './run';
 import { bountyOf, lapseHunt } from './hunt';
 import { drawTemper, TEMPER_COUNCIL, TEMPER_EVENTS, TEMPER_SALT } from './nemesisTemper';
-import { avengersNow, humiliate, settleRevenge } from './revenge';
+import { avengersNow, humiliate, payTimes, settleRevenge, trophyFrom, trophyWords } from './revenge';
 import { DUEL_SHAMED } from './duel';
 import { giveShards, owns, type Given } from './unlock';
 import { isContent, PULL_HEROES } from './unlockRules';
@@ -546,7 +546,7 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   let trophies = 0;
   let bounty = 0;
   for (const x of note.slain) {
-    trophies += TROPHIES[x.rank] * (rev.doubled.has(x.id) ? 2 : 1);
+    trophies += TROPHIES[x.rank] * payTimes(rev, x.id);
     // (NEMESIS-DEPTH, idea 4: the hunt's quarry slain pays its bounty, beyond the day's cap)
     if (war.hunt?.id === x.id) {
       bounty = bountyOf(x.might);
@@ -642,9 +642,15 @@ function duelSettle(war: War, m: Meta, note: NemNote, was: ReadonlyMap<number, N
   const n = war.members.find((x) => x.id === d.id);
   if (!n) return out;
   if (d.ended === 'lost') {
-    remember(n, `Bested ${champ} in single combat · ${armyById(n.army)?.name ?? n.army}`);
-    news(war, 'duel', `${fullName(n)} bests ${champ} in single combat`);
-    out.lines.push(`${fullName(n)} bests ${champ} in single combat, and fights on stronger`);
+    // (NEMESIS-DEPTH, idea 10: it takes a trophy from the champion it bested)
+    const t = hero ? trophyFrom(m, hero) : undefined;
+    const kept = n.trophies ?? [];
+    const took = t && kept.length < TROPHIES_MAX && !kept.some((x) => x.item === t.item) ? t : undefined;
+    if (took) n.trophies = [...kept, took];
+    const tw = took ? `, and takes ${trophyWords(took)}` : '';
+    remember(n, `Bested ${champ} in single combat${tw} · ${armyById(n.army)?.name ?? n.army}`);
+    news(war, 'duel', `${fullName(n)} bests ${champ} in single combat${tw}`);
+    out.lines.push(`${fullName(n)} bests ${champ} in single combat${tw}, and fights on stronger`);
   } else if (d.ended === 'timeout') {
     remember(n, `Outlasted ${champ} in single combat · ${armyById(n.army)?.name ?? n.army}`);
     news(war, 'duel', `${fullName(n)} outlasts ${champ} in single combat, and slips away`);

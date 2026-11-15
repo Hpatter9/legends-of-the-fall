@@ -6,11 +6,13 @@
 // it; the hero keeps its own skills, ultimate and gear.
 //
 // - **Won**: the nemesis is slain for good (it cannot cheat death; a warchief is humiliated instead and flees to his Muster), its wave breaks
-//   and runs and counts as won with its pay, every hero heals 20%, and the nemesis pays double (`council.ts`, `noteWar`).
+//   and runs and counts as won with its pay, every hero heals 20%, and the nemesis pays three times over (`council.ts`, `noteWar`;
+//   NEMESIS-DEPTH, idea 10), and the champion bears a Duellist's mark on the run's other nemeses (+10%).
 // - **Lost**: the champion falls and stands again at half for the wave; the nemesis gains a Might and fights the wave at full strength with
-//   its escorts.
+//   its escorts, and (idea 10) takes a trophy from the champion.
 // - **Time**: the nemesis escapes (a Might, and humiliated if it was under 25%); the wave is fought without it.
-// - **Refused**: the wave is fought as usual, and the nemesis is Mocking (+5% attack) for the rest of the run.
+// - **Refused**: the wave is fought as usual, and the nemesis is Mocking (+5% attack) for the rest of the run; since idea 10, every nemesis
+//   of the run is.
 //
 // The offer reads only the run (its frozen snapshot and its squad), so it is the same every time. The duel's fight is the wave's own board
 // and nemesis with the fight's streams moved onto the War's side stream (`DUEL_SALT`). Pure rules: no Pixi, no DOM.
@@ -245,12 +247,16 @@ export function acceptDuel(run: Run, o: DuelOffer, heroId: number): void {
   run.duel = { wave: o.wave, id: o.id, hero: run.roster.find((h) => h.id === heroId)?.kind, out: 'pending' };
 }
 
-/** A challenge refused: the wave is fought as usual, and the nemesis is Mocking (+5% attack) for the rest of the run. */
+/** A challenge refused: the wave is fought as usual, and the nemesis is Mocking (+5% attack) for the rest of the run. NEMESIS-DEPTH, idea
+ *  10: it tells its army, so every nemesis of the run is Mocking. */
 export function refuseDuel(run: Run, o: DuelOffer): void {
   run.duel = { wave: o.wave, id: o.id, out: 'refused' };
-  const s = offerSnap(run, o);
-  if (s) s.mocking = true;
+  for (const s of run.nemesis?.members ?? []) s.mocking = true;
 }
+
+/** NEMESIS-DEPTH, idea 10: a duel won leaves the champion a Duellist's mark: this much more against every other nemesis of the run (laid as
+ *  a Grudge's share on their snapshots, so the fight reads it where it reads a Grudge). */
+export const DUELLIST_MARK = 0.1;
 
 /** A nemesis's snapshot one Might stronger for the rest of the run (it won its duel, or escaped it). */
 function mightier(rn: RunNemesis | undefined, id: number): void {
@@ -267,7 +273,11 @@ export function settleDuelRun(run: Run, b: Battle): 'won' | 'lost' | 'timeout' |
   const d = b.duel;
   const out = d?.ended;
   if (!d || !out) return undefined;
-  run.duel = { wave: run.stage, id: d.id, hero: b.units.find((u) => u.id === d.hero)?.def, out };
+  const hero = b.units.find((u) => u.id === d.hero)?.def;
+  run.duel = { wave: run.stage, id: d.id, hero, out };
+  // (NEMESIS-DEPTH, idea 10: the champion's Duellist's mark on the run's other nemeses)
+  if (out === 'won' && hero)
+    for (const s of run.nemesis?.members ?? []) if (s.id !== d.id) s.grudge = { ...(s.grudge ?? {}), [hero]: Math.round(((s.grudge?.[hero] ?? 0) + DUELLIST_MARK) * 100) / 100 };
   if (out === 'lost') {
     if (d.tag !== undefined) (run.wounds ??= {})[String(d.tag)] = Math.min(run.wounds?.[String(d.tag)] ?? 1, REVIVE_SHARE);
     mightier(run.nemesis, d.id);
