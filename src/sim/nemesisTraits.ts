@@ -38,12 +38,8 @@ export interface UnitNem {
   grudge?: Readonly<Record<string, number>>;
   /** The Avengers: the Sworn partners of the heroes it slew, by kind (+15% attack on it, their skills 10% quicker while it stands). */
   avengers?: readonly string[];
-  /** Dynasties, phase 6: the kinds whose heir bears a Blood Grudge on it (it slew a parent): +15% damage to it. */
-  blood?: readonly string[];
   /** Stitched (it cheated death): once, at 0 hp it stands again at 20% (the old Survivor's effect), spent when it does. */
   stitched?: true;
-  /** Dynasties, phase 7: the Shade of a bearer it slew has struck it: it cannot cheat death this fight. */
-  doomed?: true;
   /** The trophies it carries, for the page's name plate only (their +5% attack is in its stats already). */
   trophies?: readonly { base: string; rarity: number }[];
   /** Fleeing: the hash has been asked (once a fight), and when it broke off and ran, if it did. */
@@ -86,7 +82,6 @@ export const TRAITS: Readonly<Record<string, TraitDef>> = {
   elusive: { name: 'Elusive', epithet: 'the Uncaught', text: '+20% move speed', from: 'did' },
   hillKing: { name: 'Hill-king', epithet: 'of the High Ground', text: '+1 jump; +10% from higher ground', from: 'did' },
   loneWolf: { name: 'Lone Wolf', epithet: 'the Lone', text: '+25% attack while no ally is within 3 tiles', from: 'did' },
-  legendSlayer: { name: 'Legend-slayer', epithet: 'Legend-slayer', text: 'Slew a hero sworn to the Legend Oath', from: 'did' },
 };
 
 /** At most this many traits, weaknesses and ailment immunities a nemesis holds. */
@@ -163,8 +158,6 @@ export const VENGEFUL = 0.2;
 export const VENGEFUL_REACH = 6;
 /** The Avenger's share of attack on its partner's slayer, and how much quicker its skills come round while the slayer stands. */
 export const AVENGER_ATK = 0.15;
-/** Dynasties, phase 6 (`heirs.ts`): an heir's Blood Grudge, its extra share of damage against the nemesis that slew a parent. */
-export const BLOOD_GRUDGE = 0.15;
 export const AVENGER_CHARGE = 0.1;
 
 // ---- the hooks the fight reads -----------------------------------------------------------------------------------------------
@@ -219,8 +212,6 @@ export function nemHurt(b: Battle, by: Unit, to: Unit, real: Unit, dmg: number, 
     const g = n.grudge?.[real.def];
     if (g) k *= 1 + g;
     if (n.avengers?.includes(real.def)) k *= 1 + AVENGER_ATK;
-    // (Dynasties, phase 6: an heir's Blood Grudge on the nemesis that slew a parent)
-    if (n.blood?.includes(real.def)) k *= 1 + BLOOD_GRUDGE;
   }
   if (by.nem && to.side === 'hero') {
     const c = callingOf(to.def);
@@ -237,7 +228,7 @@ export function nemHurt(b: Battle, by: Unit, to: Unit, real: Unit, dmg: number, 
 
 /** A fatal blow on a Survivor (or a Stitched nemesis, phase 3): once a fight it stands again at 20%. Returns whether it was spared. */
 export function nemSpare(to: Unit, out: BattleEvent[]): boolean {
-  if (!to.nem || to.nem.stood || to.nem.doomed || !(has(to, 'survivor') || to.nem.stitched)) return false;
+  if (!to.nem || to.nem.stood || !(has(to, 'survivor') || to.nem.stitched)) return false;
   to.nem.stood = true;
   to.hp = Math.max(1, Math.round(to.maxHp * 0.2));
   out.push({ kind: 'heal', to: to.id, amount: to.hp });

@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.605.0',
+    date: '2026-11-15',
+    title: 'Live hero stats, and no more heirs',
+    notes: ['Tap a hero mid-fight to see their live health, mana, damage dealt and taken, stats and every effect on them; tap off to get the skills back.', 'A small plate shows what went up whenever a hero levels, ranks up or learns a skill.', 'The heirs, the Houses and heroes dying for good are gone; every hero who fell under the Oath is back.'],
+  },
+  {
     version: '0.604.0',
     date: '2026-11-15',
     title: 'Smarter, flashier assaults',

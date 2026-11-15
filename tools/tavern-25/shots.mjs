@@ -1,6 +1,6 @@
-// Screenshots for TAVERN-25: node tools/tavern-25/shots.mjs [ring] [elders]  (build with `npm run web` first; SIZES=393,360,412 by default)
-// Writes docs/samples/tavern-25/: the duel's fight in its ring of standing stones (ring-<w>.png), and the Elders' table's card with the
-// table at its head (elders-<w>.png); and counts page errors.
+// Screenshots for TAVERN-25: node tools/tavern-25/shots.mjs [ring]  (build with `npm run web` first; SIZES=393,360,412 by default)
+// Writes docs/samples/tavern-25/: the duel's fight in its ring of standing stones (ring-<w>.png); and counts page errors. (REMOVE-DYNASTY:
+// the Elders' table's card went with the Dynasties.)
 import * as esbuild from 'esbuild';
 import { mkdirSync } from 'node:fs';
 import { serve, launch, SIZES } from '../calmap/lib.mjs';
@@ -9,8 +9,6 @@ mkdirSync(OUT, { recursive: true });
 mkdirSync('out/shots', { recursive: true });
 await esbuild.build({ entryPoints: ['tools/nemesis/saves4.ts'], bundle: true, platform: 'node', format: 'esm', outfile: 'out/shots/nemsaves4.mjs', logLevel: 'error', loader: { '.png': 'empty' } });
 const S = await import('../../out/shots/nemsaves4.mjs');
-await esbuild.build({ entryPoints: ['tools/dynasty/saves6.ts'], bundle: true, platform: 'node', format: 'esm', outfile: 'out/shots/dynsaves6.mjs', logLevel: 'error', loader: { '.png': 'empty' } });
-const D = await import('../../out/shots/dynsaves6.mjs');
 const TIPS = ['home', 'deploy', 'fight', 'mana', 'skill', 'ult', 'summon', 'crowns', 'calamity', 'tower', 'talents', 'castle', 'spellbook', 'stash', 'equipment', 'recycle', 'retry', 'autoReplay'];
 const srv = serve();
 const browser = await launch();
@@ -62,19 +60,6 @@ for (const [w, h] of sizes) {
     });
     await page.waitForTimeout(2200);
     await shoot(page, `${OUT}/ring-${w}.png`);
-    await ctx.close();
-  }
-  if (want('elders')) {
-    // (the Elders' table's card, opened from its button under Tavern services, with the table at its head)
-    const { ctx, page } = await open(w, h, D.meta());
-    await page.evaluate(() => window.__game.home.show('heroes'));
-    await page.waitForTimeout(1500);
-    await page.click('#ptTab1');
-    await page.waitForTimeout(300);
-    await page.click('.ptActions .ptButton:has-text("Elders")');
-    await page.waitForSelector('#eldersTable .hsEldersArt', { state: 'visible', timeout: 5000 });
-    await page.waitForFunction(() => document.querySelector('#eldersTable .hsEldersArt')?.complete);
-    await shoot(page, `${OUT}/elders-${w}.png`);
     await ctx.close();
   }
 }

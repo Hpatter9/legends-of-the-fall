@@ -23,9 +23,7 @@
 import type { Battle, BattleEvent } from './sim/battle';
 import type { Meta } from './sim/meta';
 import { drainBonus } from './sim/vaelkharHeart';
-import { armEidolon, armShade, canCallEidolon, eidolonById, eidolonFullName, EIDOLONS, SHADE_ID, type Eidolon } from './sim/eidolons';
-import { shadeChosen, shadeFight, shadesOf } from './sim/oath';
-import { openShades, playShadeCall, shadeGift, shadeName } from './shadeView';
+import { armEidolon, canCallEidolon, eidolonById, eidolonFullName, EIDOLONS, type Eidolon } from './sim/eidolons';
 import { orderEidolon } from './sim/orders';
 import { blowHorn, boundOf, chooseEidolon, chosenOf, HORN, hornHeld, hornOf, hornReady, noteSeen, seenCall } from './sim/warHorn';
 import { beatTimes, buildAt, CALL_OVER_MS, strikeOverdue, BOARD_ZOOM, canSkip, CHOREO, EYES, hornLook, hornWords, lineOf, LOOKS, momentOf, motesFor, NO_EIDOLON, reactionOf, shotAt, skipTarget, SNAP_MS, SNAP_ZOOM, SUMMONER_HINT, type MomentTimes, type Shot } from './eidolonRules';
@@ -323,10 +321,7 @@ export class EidolonCall {
     this.b = b;
     const m = this.opts.meta();
     const id = chosenOf(m);
-    // (Dynasties, phase 7: a Shade chosen answers in the Eidolon's place)
-    const shade = shadeChosen(m);
-    if (hornReady(m) && shade) armShade(b, shadeFight(m, shade), { mid, trial });
-    else if (hornReady(m) && id) armEidolon(b, id, { mid, trial, drainBonus: drainBonus(m) });
+    if (hornReady(m) && id) armEidolon(b, id, { mid, trial, drainBonus: drainBonus(m) });
     this.refresh(b);
     // (the figure loaded before it is needed, so the cinematic never waits on it)
     if (id && hornReady(m)) new Image().src = figureUrl(id);
@@ -359,9 +354,7 @@ export class EidolonCall {
     // (a fight already going, as a Last Stand carried on from its save: armed now)
     if (b.phase === 'fight' && !b.eidolon) {
       const id = chosenOf(this.opts.meta());
-      const shade = shadeChosen(this.opts.meta());
-      if (shade && hornReady(this.opts.meta())) armShade(b, shadeFight(this.opts.meta(), shade));
-      else if (id && hornReady(this.opts.meta())) armEidolon(b, id, { drainBonus: drainBonus(this.opts.meta()) });
+      if (id && hornReady(this.opts.meta())) armEidolon(b, id, { drainBonus: drainBonus(this.opts.meta()) });
     }
     this.refresh(b);
   }
@@ -386,24 +379,9 @@ export class EidolonCall {
       return;
     }
     if (!canCallEidolon(b)) return;
-    // (Dynasties, phase 7: a Shade's call is short, and holds nothing)
-    if (b.eidolon.id === SHADE_ID && b.eidolon.shade) return this.blowShade();
     const e = eidolonById(b.eidolon.id)!;
     if (!m.eidolons?.confirmed) return this.confirm(e);
     this.blow(e);
-  }
-
-  /** A Shade answers: the sim takes the order, the horn empties at once, and its short call plays over the fight running on. */
-  private blowShade(): void {
-    const b = this.b;
-    const m = this.opts.meta();
-    const s = b?.eidolon?.shade;
-    if (!b || !s || !orderEidolon(b, SHADE_ID)) return;
-    blowHorn(m);
-    this.opts.save();
-    this.refresh(b);
-    play('sparkle');
-    playShadeCall(s.kind, s.name, this.reduced);
   }
 
   /** A short note by the horn (it fades). */
@@ -1705,11 +1683,8 @@ export class EidolonCall {
     } else {
       box.append(el('p', 'ehAsk', 'The Eidolon that answers it (tap to choose; the horn keeps its fill):'));
       const list = el('div', 'ehList');
-      // (Dynasties, phase 7: a Shade chosen answers in the Eidolon's place)
-      const shade = shadeChosen(m);
-      if (shade) box.append(el('p', 'ehAsk', `Answering now: ${shadeName(shade)}, ${shadeGift(shade.kind).toLowerCase()}. Tap an Eidolon to answer again.`));
       for (const e of EIDOLONS.filter((x) => bound.includes(x.id))) {
-        const c = this.cardOf(e, chosenOf(m) === e.id && !shade);
+        const c = this.cardOf(e, chosenOf(m) === e.id);
         c.addEventListener('click', () => {
           if (chooseEidolon(m, e.id)) this.opts.save();
           this.openCamp();
@@ -1727,16 +1702,6 @@ export class EidolonCall {
         this.opts.gallery!();
       });
       row.append(gal);
-    }
-    // (Dynasties, phase 7: the Shades, on their own card; there once any is, greyed there until one can answer)
-    const shades = shadesOf(m);
-    if (shades.length) {
-      const sh = el('button', '', `The Shades (${shades.length})`);
-      sh.addEventListener('click', () => {
-        this.closeSheet();
-        openShades(m, this.opts.save, () => this.refreshCamp());
-      });
-      row.append(sh);
     }
     const close = el('button', 'primary', 'Close');
     close.addEventListener('click', () => this.closeSheet());

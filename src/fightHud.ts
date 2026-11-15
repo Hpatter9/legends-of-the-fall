@@ -21,6 +21,9 @@ import { paintedSkillIcon } from './combatSkillArt';
 import { battleSheet } from './render/awakenLook';
 import { GLOW, skillElement, type Element } from './render/fxRules';
 import { reviveIn } from './sim/lives';
+import { HeroLivePanel } from './heroLive';
+import { pickNow, pickable, statNumbers, type StatNumbers } from './heroLiveRules';
+import type { HeroStat } from './sim/fightStats';
 import { barNumbers, chipLine, chipOf, hudLayout, sheetOf, ultOf, whichCast, type ChipView, type Which } from './fightHudRules';
 
 export interface FightHudOpts {
@@ -45,6 +48,11 @@ export interface FightHudOpts {
   ultFull?: (unit: number) => boolean;
   /** The hero's painted art: the short version's banner for an ultimate shows its face. */
   ultArt?: (u: Unit) => string;
+  /** HERO-LIVE-STATS: the hero's row of the fight's tally, and its XP into its level, for the stats panel. */
+  statOf?: (id: number) => HeroStat | undefined;
+  xpOf?: (u: Unit) => { into: number; need: number } | undefined;
+  /** HERO-LIVE-STATS: the hero picked for the stats panel changed (the page rings it on the board). */
+  onPick?: (id: number | null) => void;
 }
 
 interface Row {
@@ -52,6 +60,9 @@ interface Row {
   el: HTMLElement;
   last: string;
 }
+
+/** HERO-LIVE-STATS: the stats panel is never shorter than this, even for a party of one or two (its head, bars, numbers and effects). */
+const LIVE_MIN_PX = 214;
 
 const hex = (n: number) => `#${n.toString(16).padStart(6, '0')}`;
 const elOf = (s: Skill): Element => skillElement(keyOf(s));
@@ -114,6 +125,11 @@ export class FightHud {
   private reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
   /** A long press on a row (it opens the ultimate's sheet, and the tap that ends it fires nothing). */
   private press: { timer: number; fired: boolean } | null = null;
+  /** HERO-LIVE-STATS: the stats panel, shown in the rows' place while a hero is picked, and each hero's numbers as the fight began. */
+  private live: HeroLivePanel;
+  private base = new Map<number, StatNumbers>();
+  /** The hero picked for the stats panel (null: the skills panel shows). */
+  picked: number | null = null;
 
   constructor(
     readonly root: HTMLElement,
@@ -148,7 +164,25 @@ export class FightHud {
     this.fxLayer = document.createElement('div');
     this.fxLayer.className = 'fhFx';
     document.body.append(this.sheet, this.fxLayer);
+    this.live = new HeroLivePanel({ statOf: opts.statOf, xp: opts.xpOf, equipmentStep: opts.equipmentStep, onClose: () => this.pick(null) });
   }
+
+  /* ---------------------------------------------------------- HERO-LIVE-STATS: the stats panel */
+
+  /** Pick a hero for the stats panel (its rows give way to it), or none to bring the skills back. */
+  pick(id: number | null): void {
+    const u = id === null ? undefined : this.b?.units.find((x) => x.id === id);
+    const next = pickable(u) && this.b?.phase === 'fight' ? u.id : null;
+    if (next === this.picked) return;
+    // (the panel takes the rows' own height, so the board above it neither moves nor loses more of itself; read once, on the tap)
+    if (next !== null && this.picked === null) this.live.el.style.height = `${Math.max(LIVE_MIN_PX, Math.round(this.root.getBoundingClientRect().height))}px`;
+    this.picked = next;
+    this.root.classList.toggle('picking', next !== null);
+    this.live.show(this.b, next === null ? undefined : u);
+    if (next !== null && this.b) this.live.refresh(this.b, this.base, true);
+    this.opts.onPick?.(next);
+  }
+
 
   /** Show the Auto ultimates button as on or off. */
   setAuto(on: boolean, shown = true): void {
@@ -176,16 +210,22 @@ export class FightHud {
     const units = this.heroes(b);
     const key = units.map((u) => `${u.id}:${u.def}:${u.grade ?? 1}:${u.level ?? 1}`).join() + `@${b.seed}`;
     if (key === this.key) return false;
+    const fresh = !this.key.endsWith(`@${b.seed}`);
     this.key = key;
     this.closeInfo();
     this.root.replaceChildren();
     this.rows = [];
+    // (HERO-LIVE-STATS: a new fight forgets the pick and the opening numbers; a hero gaining a level mid-fight keeps them)
+    if (fresh) this.base.clear();
+    if (fresh || !units.some((u) => u.id === this.picked)) this.pick(null);
+    this.live.el.style.height = '';
     const lay = hudLayout(units.length);
     this.compact = lay.pairs;
     this.root.classList.toggle('pairs', lay.pairs);
     this.root.style.setProperty('--fh-rows', String(lay.rows));
     // (two columns fill down, so the party's order reads down the first column and then the second)
     for (const u of units) this.root.append(this.row(u));
+    this.root.append(this.live.el);
     this.refresh(b);
     return true;
   }
@@ -249,6 +289,8 @@ export class FightHud {
     if (!b || !u) return;
     this.opts.onTap?.(u);
     if (orderUltimate(b, id)) this.refresh(b);
+    // (HERO-LIVE-STATS: a tap on a row whose ultimate cannot fire picks its hero for the stats panel; a full meter still fires on a tap)
+    else if (u.ultOrder === undefined && b.phase === 'fight') this.pick(id);
     else if (!ultOf(b, u).locked && !canOrderUltimate(b, id) && u.ultOrder === undefined) {
       // (a hero without its ultimate yet does nothing: it has no meter to point at)
       this.opts.onRefused?.(u);
@@ -266,7 +308,16 @@ export class FightHud {
   /** Bring every row up to date (each frame: a row is only written when what it shows has changed). */
   refresh(b: Battle): void {
     this.b = b;
-    for (const r of this.rows) {
+    // (HERO-LIVE-STATS: each hero's numbers as the fight began, read once; the panel follows the picked hero a few times a second)
+    if (b.phase === 'fight') for (const r of this.rows) if (!this.base.has(r.id)) {
+      const u = b.units.find((x) => x.id === r.id);
+      if (u) this.base.set(r.id, statNumbers(b, u));
+    }
+    const pk = pickNow(b, this.picked);
+    if (pk !== this.picked) this.pick(pk);
+    if (this.picked !== null) this.live.refresh(b, this.base);
+    // (the rows are hidden under the panel: nothing of theirs is written until they show again)
+    for (const r of this.picked === null ? this.rows : []) {
       const u = b.units.find((x) => x.id === r.id);
       if (!u) continue;
       const ult = ultOf(b, u);
@@ -381,6 +432,7 @@ export class FightHud {
   /** Take the HUD's floating parts off the page (the fight screen is left). */
   hideFloating(): void {
     this.closeInfo();
+    this.pick(null);
     this.fxLayer.replaceChildren();
   }
 

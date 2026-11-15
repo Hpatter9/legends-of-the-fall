@@ -19,13 +19,12 @@ import thick from './art/nemesis-traits/thick.png';
 import grounded from './art/nemesis-traits/grounded.png';
 import fearless from './art/nemesis-traits/fearless.png';
 import elusive from './art/nemesis-traits/elusive.png';
-import legendSlayer from './art/nemesis-traits/legendSlayer.png';
 import baneMartial from './art/nemesis-traits/bane-martial.png';
 import baneArcane from './art/nemesis-traits/bane-arcane.png';
 import baneDevout from './art/nemesis-traits/bane-devout.png';
 import baneWild from './art/nemesis-traits/bane-wild.png';
 
 export const NEMESIS_TRAIT_ICON: Readonly<Record<string, string>> = { ironSkull, arrowCatcher, scarred, sureFooted, spellScorned, hornDeaf, survivor, healerHunter, executioner, ambusher, hillKing, loneWolf,
-  fireproof, rime, venom, thick, grounded, fearless, elusive, legendSlayer,
+  fireproof, rime, venom, thick, grounded, fearless, elusive,
   'bane:martial': baneMartial, 'bane:arcane': baneArcane, 'bane:devout': baneDevout, 'bane:wild': baneWild,
 };

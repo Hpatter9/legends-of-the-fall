@@ -104,21 +104,17 @@ button.primary::after, button.pbPrimary::after { content: none; }
 .pbBadge[data-kind='shop'] { width: 20px; height: 20px; background-image: url(ui/buttons/badge-shop.webp); }
 
 /* --------------------------------------------------------------------------
-   3. CHIPS: the camp's counts (crowns, stones) and the season, on the brass well with the medallion at the left end.
+   3. CHIPS: the camp's counts (crowns, stones), on the brass well with the medallion at the left end.
    -------------------------------------------------------------------------- */
-#hmTop .chip, .pbChip, #hmSeason.chip, .hsSeasonChip {
+#hmTop .chip, .pbChip {
   display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 2px 12px 2px 4px;
   border: 1px solid transparent; border-radius: 0; background: none; box-shadow: none;
   border-image: url(ui/buttons/chip.webp) var(--chip-slice) / var(--chip-width) / 0 stretch;
   color: #f6e6bf; text-shadow: 0 1px 2px #000;
 }
-#hmTop .chip img, .pbChip .pbIco, .hsSeasonChip img { width: 32px; height: 32px; margin: -2px 0 -2px -4px; image-rendering: auto; filter: drop-shadow(0 1px 2px #000a); }
+#hmTop .chip img, .pbChip .pbIco { width: 32px; height: 32px; margin: -2px 0 -2px -4px; image-rendering: auto; filter: drop-shadow(0 1px 2px #000a); }
 .pbChip.lit { border-image: url(ui/buttons/chip-lit.webp) var(--chip-slice) / var(--pbw, var(--chip-width)) / 0 stretch; }
 .pbChip.warn { border-image: url(ui/buttons/chip-warn.webp) var(--chip-slice) / var(--pbw, var(--chip-width)) / 0 stretch; }
-/* (the season's chip is a button: a thumb's height, the lit chip while pressed) */
-#hmSeason.chip, .hsSeasonChip { min-height: 44px; padding-right: 12px; cursor: pointer; }
-#hmSeason.chip:active, .hsSeasonChip:active { border-image: url(ui/buttons/chip-lit.webp) var(--chip-slice) / var(--pbw, var(--chip-width)) / 0 stretch; background: none; transform: translateY(1px); }
-.hsSeasonChip img { width: 30px; height: 30px; }
 
 /* --------------------------------------------------------------------------
    4. THE BOTTOM TABS: the tab plates (lit when chosen), each tab's painted medallion (its lit picture when chosen) and the painted marks.

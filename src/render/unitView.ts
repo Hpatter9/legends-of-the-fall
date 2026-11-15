@@ -2,7 +2,7 @@
 // and a health bar over its head. A step is drawn as a glide between the two tiles with a hop (higher for a climb).
 
 import { perkTint } from './perkLookRules';
-import { type ColorMatrix, ColorMatrixFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
+import { ColorMatrixFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
 import { formOf, UNITS } from '../sim/units';
@@ -41,7 +41,6 @@ import { attackMotion } from './motionRules';
 import { idleFrame } from './enemyMotion';
 import { AilmentFx, ailmentTint } from './ailmentLayer';
 import { gearTexture } from './gearTex';
-import { lookMatrix } from '../sim/heroLooks';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -111,26 +110,6 @@ function nemFilter(): ColorMatrixFilter {
   return f;
 }
 
-/** Dynasties (`sim/dynasty.ts`): the page tells the sprites each hero kind's stage, so a Veteran or an Elder wears the touch of the years
- *  (`AGE_LOOKS` in `sim/heroLooks.ts`). Looks only: the battle never reads it. */
-let ageOf: (kind: string) => string | undefined = () => undefined;
-/** Phase 6 (`sim/heirs.ts`): each kind's fielded bearer's heir look, a steady tint of the sheet (`HEIR_LOOKS`). */
-let heirLookOf: (kind: string) => string | undefined = () => undefined;
-export function setAgeLooks(f: (kind: string) => string | undefined, look?: (kind: string) => string | undefined): void {
-  ageOf = f;
-  if (look) heirLookOf = look;
-}
-/** The age grade (some of the colour taken out towards silver, the darks lifted a little, a touch of cool) and an heir's tint, as one
- *  steady matrix (`lookMatrix`). Steady: it never moves. */
-export function ageFilter(kind: string, stage: string | undefined, look?: string): ColorMatrixFilter | null {
-  const m = lookMatrix(kind, stage, look);
-  if (!m) return null;
-  // (drawn at the screen's own resolution, so the pixel art stays as sharp as the sheets drawn plain)
-  const f = new ColorMatrixFilter({ resolution: 'inherit' });
-  f.matrix = m as ColorMatrix;
-  return f;
-}
-
 /** A colour between two (k from 0 to 1). */
 function mixTint(a: number, b: number, k: number): number {
   const ch = (shift: number) => Math.round(((a >> shift) & 255) * (1 - k) + ((b >> shift) & 255) * k);
@@ -176,6 +155,11 @@ export class UnitSprite {
   /** EASY-MERGE: how this fighter is lit as a merge target while a hero is held (the page sets it): 0 not, 1 a match, 2 the one the held
    *  hero would merge into if let go now. Looks only. */
   mergeLit: 0 | 1 | 2 = 0;
+  /** HERO-LIVE-STATS: this hero is the one the stats panel shows (the page sets it): a gold ring under its feet, turning slowly. Looks only. */
+  picked = false;
+  private pickRing = new Graphics();
+  /** HERO-LIVE-STATS: a gold chevron over the picked hero's bar: the ring under its feet is hidden when foes stand in front of it. */
+  private pickMark = new Graphics();
   /** An awakened hero's class aura (null for the rest). */
   private awakenAura: AwakenAura | null;
   private burstAt = -1;
@@ -264,9 +248,6 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    // (Dynasties: a Veteran's or an Elder's touch of the years, on the player's own heroes, never a summon)
-    const aged = unit.side === 'hero' && unit.owner === undefined && !summon ? ageFilter(unit.def, ageOf(unit.def), heirLookOf(unit.def)) : null;
-    if (aged) this.body.filters = [...(this.body.filters ?? []), aged];
     if (unit.nem) this.dressNemesis(unit.nem.rank, unit.nem.name, unit.nem.scars ?? 0, unit.nem.trophies ?? []);
     for (let i = 0; i < 8; i++) {
       const r = new Sprite();
@@ -275,7 +256,8 @@ export class UnitSprite {
     }
     this.mergeRim.filters = [flatFilter(MERGE_RIM)];
     this.mergeRim.visible = false;
-    this.root.addChild(this.shadow, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.mergeRim, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []));
+    this.drawPickRing();
+    this.root.addChild(this.shadow, this.pickRing, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.mergeRim, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []), this.pickMark);
   }
 
   /** A nemesis's look (`sim/nemesis.ts`): its rank's rim round the body, a darker tone, and its name plate. Drawn once; nothing in it moves. */
@@ -508,6 +490,17 @@ export class UnitSprite {
     // (in a launch's arc the shadow stays on the ground)
     this.shadow.y = arcLift;
     this.mark.visible = u.alive;
+    this.pickRing.visible = this.picked;
+    this.pickMark.visible = this.picked && u.alive;
+    if (this.picked) {
+      this.pickMark.alpha = 1;
+      this.pickMark.y = -this.tall - 16 + bob - lift + (this.reduced?.matches ? 0 : Math.sin(Date.now() / 260) * 1.5);
+      // (a slow breath of the ring's light, and a turn of its marks; still for reduced motion)
+      const still = !!this.reduced?.matches;
+      this.pickRing.alpha = still ? 1 : 0.75 + 0.25 * Math.sin(Date.now() / 300);
+      this.pickRing.y = arcLift;
+      this.pickRing.scale.set(Math.max(1, (u.size ?? 1) * 0.9) * (def.flies ? 0.8 : 1));
+    }
     for (const r of this.rim.children as Sprite[]) {
       r.texture = this.body.texture;
       r.scale.copyFrom(this.body.scale);
@@ -558,6 +551,22 @@ export class UnitSprite {
     this.drawPillar(u.alive);
     if (this.popAt >= 0) this.root.scale.set(this.baseSize * this.popScale());
     else if (this.root.scale.x !== this.baseSize) this.root.scale.set(this.baseSize);
+  }
+
+  /** HERO-LIVE-STATS: the picked hero's ring, drawn once: a gold ellipse in a darker rim with four brass marks at its points, flat on the
+   *  ground under the feet. */
+  private drawPickRing(): void {
+    const g = this.pickRing;
+    g.ellipse(0, 0, 17, 6.6).stroke({ color: 0x2a1a06, width: 3.6, alpha: 0.7 });
+    g.ellipse(0, 0, 17, 6.6).fill({ color: 0xffd36a, alpha: 0.14 }).stroke({ color: 0xffd36a, width: 1.8, alpha: 1 });
+    g.ellipse(0, 0, 12.5, 4.8).stroke({ color: 0xfff1c0, width: 0.8, alpha: 0.7 });
+    for (const [x, y] of [[0, -6.6], [17, 0], [0, 6.6], [-17, 0]] as const) g.circle(x, y, 1.8).fill({ color: 0xfff1c0 }).stroke({ color: 0x5a3a10, width: 0.8 });
+    g.visible = false;
+    // (the chevron: pointing down at the head, a dark edge so it reads on a pale sky)
+    const m = this.pickMark;
+    m.poly([-9, -8, 9, -8, 0, 4]).fill({ color: 0xffd36a }).stroke({ color: 0x2a1a06, width: 1.8, alpha: 0.95 });
+    m.poly([-4.5, -6.5, 4.5, -6.5, 0, -1]).fill({ color: 0xfff1c0, alpha: 0.85 });
+    m.visible = false;
   }
 
   /** EASY-MERGE: the gold outline of the body while it is a merge target: a slow pulse round every match, steady and bright round the one

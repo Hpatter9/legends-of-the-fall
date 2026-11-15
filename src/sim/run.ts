@@ -243,12 +243,6 @@ export interface Run {
   themeMet?: boolean;
   /** The road's memory for the events between waves (MID-EVENTS, `midEvents.ts`): the kinds seen this run, and debts and favours that come back later. Absent in an older save. */
   road?: RoadState;
-  /** Dynasties, phase 7 (`oath.ts`): the Legend Oath is sworn for this run; the roster ids slain under it (their kinds sit out the rest of
-   *  the run); each hero's falls this run; the heroes who fell in the wave being fought, before a heart burned. */
-  oath?: true;
-  slain?: number[];
-  oathFalls?: Record<string, number>;
-  oathWave?: number[];
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
@@ -455,29 +449,14 @@ export function spendLives(run: Run, n: number): void {
   const old = (run.retries ?? 0) * HEART_LIVES;
   run.lives = Math.max(-old, Math.min(livesMax(run) - old, (run.lives ?? 0) + n));
 }
-/** TEN-LIVES: lives raised these heroes (roster ids, one entry a rise) under the Legend Oath (`oath.ts`): each rise was a fall, as a
- *  burnt heart's was. Here, not in `oath.ts`, which this file must not import (it would load before the dynasties it reads). */
-export function noteOathRises(run: Run, ids: readonly number[]): void {
-  if (!run.oath) return;
-  for (const id of ids) {
-    const h = run.roster.find((x) => x.id === id);
-    if (!h || h.guest || h.cloneFloors !== undefined) continue;
-    const k = String(id);
-    (run.oathFalls ??= {})[k] = (run.oathFalls[k] ?? 0) + 1;
-    if (!(run.oathWave ??= []).includes(id)) run.oathWave.push(id);
-  }
-}
-
-/** Write a fight's lives back to the run: the lives it spent, its party falls (the run's first two each pay `retryGold`, for after the wave) and, under
- *  the Legend Oath, a fall for each hero a life raised. Safe to call as often as the page likes: only what is new since the last call
+/** Write a fight's lives back to the run: the lives it spent, its party falls (the run's first two each pay `retryGold`, for after the wave). Safe to call as often as the page likes: only what is new since the last call
  *  counts. Returns the gold paid. */
 export function settleLives(run: Run, b: Battle): number {
   const l = b.lives;
   if (!l) return 0;
-  const n = (l.noted ??= { spent: 0, falls: 0, rose: 0 });
+  const n = (l.noted ??= { spent: 0, falls: 0 });
   const falls = l.falls - n.falls;
   if (l.spent > n.spent) run.lives = (run.lives ?? 0) + l.spent - n.spent;
-  noteOathRises(run, l.rose.slice(n.rose));
   let gold = 0;
   // (only the run's first `FALL_GOLD_FALLS` falls pay, as its two hearts did)
   for (let i = 0; i < falls; i++) if (partyFalls(run) + i < FALL_GOLD_FALLS) gold += retryGold(run);
@@ -488,7 +467,6 @@ export function settleLives(run: Run, b: Battle): number {
   }
   n.spent = l.spent;
   n.falls = l.falls;
-  n.rose = l.rose.length;
   return gold;
 }
 
@@ -707,8 +685,6 @@ export const squadUsed = (run: Run): number => run.squad.filter((id) => !heroOf(
  *  (ONE-OF-EACH). A guest always has room: its place is an extra one beyond the five (GUEST-HERO). */
 export function canJoin(run: Run, id: number): boolean {
   const h = heroOf(run, id);
-  // (Dynasties, phase 7: a kind slain under the Oath sits out the rest of the run)
-  if (h && run.slain?.some((x) => heroOf(run, x)?.kind === h.kind)) return false;
   return !!h && mythicFits(run.squad.map(id => heroOf(run, id)?.kind ?? ''), h.kind) && !run.squad.includes(id) && (h.guest || squadUsed(run) < squadLimit(run)) && !squadTwin(run, h.kind, id) && !sitsOut(run, id);
 }
 
@@ -747,6 +723,8 @@ export function catalogueRun(r: Run): Run {
   // (SEVEN-SLOT GEAR: the finds a run from before wears move to the new slots, and a rune run's runes are read safely)
   migrateRunWorn(r);
   if (r.runes) r.runes = readRunes(r.runes) ?? newRunes();
+  // (REMOVE-DYNASTY: a run saved under the Legend Oath marches on free of it, its slain back in the squad's reach)
+  for (const k of ['oath', 'slain', 'oathFalls', 'oathWave']) delete (r as unknown as Record<string, unknown>)[k];
   // (QUEST-POSSIBLE: the outside help hired, a whole count or none)
   if (r.hired !== undefined && !(Number.isInteger(r.hired) && r.hired >= 0)) delete r.hired;
   if (r.relicBook === RELIC_BOOK) return r;

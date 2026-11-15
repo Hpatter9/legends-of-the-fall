@@ -53,13 +53,6 @@ try {
     await run('taunt', 3);
     assert.equal(await page.locator('.tcFoe .tcScars').count(), 1);
     await shot(`taunt-${width}`);
-    await run('houses');
-    await shot(`houses-${width}`);
-    await run('line');
-    assert.ok(await decoded('#houseLine .hsHeirloomChip img'));
-    await shot(`line-${width}`);
-    await run('season', 0);
-    await shot(`season-${width}`);
     await run('gear');
     await shot(`gear-${width}`);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);

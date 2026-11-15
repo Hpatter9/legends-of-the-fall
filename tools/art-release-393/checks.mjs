@@ -49,13 +49,6 @@ try {
     assert.ok(await decoded('.qcCard .qFace img.painted'));
     await page.evaluate(()=>window.__councilArt.board('spoils'));
     assert.ok(await decoded('#nemesisBoard .nmToken'));
-    await page.evaluate(()=>window.__dynastyArt.houses());
-    assert.ok(await decoded('#housesPage .hsFate, #housesPage .hsHouseCrest'));
-    await shot(`houses-${width}`);
-    await page.evaluate(()=>window.__dynastyArt.line());
-    assert.ok(await decoded('#houseLine .hsHeirloomChip img'));
-    await page.evaluate(()=>window.__dynastyArt.season(0));
-    assert.ok(await decoded('#seasonCard .hsSeasonBig'));
     await page.evaluate(()=>window.__dynastyArt.council());
     await shot(`council-${width}`);
     await page.evaluate(()=>window.__dynastyArt.traits(0));
