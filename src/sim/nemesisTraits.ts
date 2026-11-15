@@ -16,6 +16,11 @@ import { callingOf, type Calling } from './weakness';
 import { mixSeed } from './rng';
 import { UNITS } from './units';
 
+/** NEMESIS-DEPTH: a hunted quarry's guard, a shield of this share of its health (`hunt.ts`'s `HUNT.guard`). */
+export const HUNT_GUARD = 0.1;
+/** NEMESIS-DEPTH: a hunted quarry runs at this share of its health, this often (unless its temperament says otherwise). */
+export const HUNTED_FLEE = { at: 0.25, chance: 0.5 } as const;
+
 /** A nemesis's rank on the Council (phase 1 fills the captains and lieutenants; the warchief's seat comes with the Council's turns). */
 export type NemRank = 'warchief' | 'captain' | 'lieutenant';
 
@@ -49,6 +54,8 @@ export interface UnitNem {
   /** NEMESIS-DEPTH: its temperament (`nemesisTemper.ts`), and the heroes it remembers a fight with (an Old Hand takes less from them). */
   temper?: Temper;
   knows?: readonly string[];
+  /** NEMESIS-DEPTH, idea 4: the quarry of a hunt, on guard (a shield of a tenth of its health as the fight begins). */
+  hunted?: true;
 }
 
 /** A trait: its words, the epithet it gives a nemesis whose first trait it is, and what immunities it grants. */
@@ -280,6 +287,8 @@ export const nemStrike = (u: Unit, share: number): number => (has(u, 'hornDeaf')
 /** As the fight is made: an Ambusher starts hasted for 4 s; a Sure-footed nemesis's kit cannot be moved. */
 export function nemStart(u: Unit, kit: Kit | undefined): void {
   if (has(u, 'ambusher')) u.hasteUntil = 4000;
+  // (NEMESIS-DEPTH: a hunted quarry comes on guard)
+  if (u.nem?.hunted) u.shield = { hp: Math.round(u.maxHp * HUNT_GUARD), until: 1e9 };
   // (NEMESIS-DEPTH: a Trickster starts hasted too, for a shorter while)
   else if (u.nem?.temper === 'trickster') u.hasteUntil = TEMPER_FIGHT.tricksterHaste;
   // (as plain data, `KitRef`: a kit's skills are functions, and a battle holding one cannot be posted from the Assault's worker or saved)
@@ -295,11 +304,13 @@ export const FLEE_SALT = 0xf1ee;
 export const FLEE: Readonly<{ lieutenant: number; captain: number; warchief: number; at: number; ms: number }> = { lieutenant: 0.3, captain: 0.15, warchief: 0, at: 0.2, ms: 8000 };
 
 /** The share of its health under which a nemesis is asked whether it flees, and the chance it does (0: it never flees). */
-export function fleeOdds(n: Pick<UnitNem, 'rank' | 'traits' | 'weak' | 'temper'>): { at: number; chance: number } {
+export function fleeOdds(n: Pick<UnitNem, 'rank' | 'traits' | 'weak' | 'temper' | 'hunted'>): { at: number; chance: number } {
   if (n.rank === 'warchief') return { at: 0, chance: 0 };
   // (NEMESIS-DEPTH: its temperament first: a Brute and a Zealot never run, a Coward at 30%, a Schemer early and twice as often, a Trickster at 25%)
   const tf = n.temper && TEMPER_FLEE[n.temper];
   if (tf) return { at: tf.at, chance: tf.chance === 'double' ? Math.min(1, FLEE[n.rank] * 2) : tf.chance };
+  // (idea 4: a hunted quarry knows it is hunted, and runs at 25% health half the time, more often if its rank would)
+  if (n.hunted) return { at: HUNTED_FLEE.at, chance: Math.max(HUNTED_FLEE.chance, FLEE[n.rank]) };
   if (n.weak.includes('craven')) return { at: CRAVEN_AT, chance: 1 };
   if (n.traits.includes('elusive')) return { at: FLEE.at, chance: 1 };
   return { at: FLEE.at, chance: FLEE[n.rank] };

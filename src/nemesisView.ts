@@ -13,6 +13,7 @@ import { portrait } from './render/sheets';
 import { armyById } from './sim/armies';
 import { momentLine } from './sim/nemesisMoments';
 import { TEMPER } from './sim/nemesisTemper';
+import { bountyOf, cannotHunt, HUNT, quarryOf, quarryWaves, setHunt } from './sim/hunt';
 import { TEMPER_ICON } from './temperArt';
 import { buyScout, buyShard, musterCount, newsWord, SCOUT_PRICE, scoutable, SHARD_PRICE, SHARD_WEEK, shardHeroes, shardsLeft, superiorOf, swornTo, TROPHY_DAY, FATE_MEETINGS } from './sim/council';
 import { heroName } from './sim/heroNames';
@@ -166,7 +167,7 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
     return b;
   }
   const army = armyById(n.army)?.name ?? n.army;
-  const b = menuChoice(grid, { title: n.name, lines: [`Might ${n.might}`], onPick: () => openNemesisCard(m, n, () => { menu.close(); hooks.hunt(n.army); }) });
+  const b = menuChoice(grid, { title: n.name, lines: [`Might ${n.might}`], onPick: () => openNemesisCard(m, n, () => { menu.close(); hooks.hunt(n.army); }, () => hooks.save()) });
   b.classList.add('nmSeat', cls, n.rank);
   b.prepend(face(n, size));
   if (n.oath !== undefined) b.append(releaseIcon(RELEASE_ICON.sworn, 'nmOath'));
@@ -181,8 +182,15 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
     b.append(chip);
   }
   if (awayRuns(war, n.id)) b.classList.add('nmAway');
-  b.setAttribute('aria-label', `${rankWord(n.rank)} ${fullName(n)}, Might ${n.might}, of the ${army}${n.oath !== undefined ? ', sworn in blood' : ''}${awayRuns(war, n.id) ? ', licking its wounds' : ''}${n.temper ? `, a ${TEMPER[n.temper].name}` : ''}${settler ? `, ${heroName(settler)} has a score to settle` : ''}. Open its card`);
+  if (war.hunt?.id === n.id) b.classList.add('nmHunted');
+  b.setAttribute('aria-label', `${rankWord(n.rank)} ${fullName(n)}, Might ${n.might}, of the ${army}${n.oath !== undefined ? ', sworn in blood' : ''}${awayRuns(war, n.id) ? ', licking its wounds' : ''}${n.temper ? `, a ${TEMPER[n.temper].name}` : ''}${war.hunt?.id === n.id ? ', hunted' : ''}${settler ? `, ${heroName(settler)} has a score to settle` : ''}. Open its card`);
   return b;
+}
+
+/** NEMESIS-DEPTH, idea 4: a hunt in words ("Hunted: it stands in your next Undead Legion run, at wave 6, on guard"). */
+function huntWords(n: Nemesis): string {
+  const w = quarryWaves(n);
+  return `Hunted: it stands in your next ${armyById(n.army)?.name ?? n.army} run${w.length ? `, at wave ${w.join(' and ')}` : ''}, on guard. Run it down for the bounty; if it lives, the hunt fails.`;
 }
 
 /** The Council tab: the pyramid, then how the Muster stands. */
@@ -231,6 +239,12 @@ function drawCouncil(m: Meta, pane: HTMLElement, menu: OrnateMenu, hooks: BoardH
       const b = war.members.find((x) => x.id === n.oath);
       if (b) well.append(oathLine(`${fullName(n)} and ${fullName(b)}`));
     }
+  }
+  // (NEMESIS-DEPTH, idea 4: the hunt, if one is set)
+  const q = quarryOf(war);
+  if (q) {
+    const hw = sectionWell(pane, 'The Hunt', `bounty ${bountyOf(q.might)} War Trophies`);
+    hw.append(el('p', 'nmOathLine', huntWords(q)));
   }
   const mw = sectionWell(pane, 'The Warchief’s Muster', musterCount(war));
   mw.append(el('p', musterOpen(war) ? 'nmMusterOpen' : 'nmMemory', musterLine(war)));
@@ -348,7 +362,7 @@ function drawSpoils(m: Meta, pane: HTMLElement, hooks: BoardHooks, redraw: () =>
 }
 
 /** A nemesis's card: what is known of it, its place on the Council, what it remembers of you, and what slaying it pays. */
-export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
+export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void, save?: () => void): void {
   const army = armyById(n.army);
   const menu = ornateMenu({ id: 'nemesisCard', eyebrow: `${rankWord(n.rank)} · ${army?.name ?? n.army}`, title: fullName(n), sub: `${n.boss ? `${UNITS[n.base]?.name ?? ''} · ` : ''}Might ${n.might} of ${MIGHT_MAX}`, label: `${fullName(n)}, ${rankWord(n.rank)}` });
   menu.card.classList.add('nmCard');
@@ -424,6 +438,19 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
   };
   secrets('Traits', n.traits, (t) => ({ name: TRAITS[t]?.name ?? t, text: TRAITS[t]?.text ?? '' }), NEMESIS_TRAIT_ICON);
   secrets('Weaknesses', n.weak, (w) => weakWords(w, heroName));
+  // (NEMESIS-DEPTH, idea 4: the hunt: where it will stand, its bounty; or what a hunt would cost)
+  if (m.war && !m.war.end) {
+    const hunted = m.war.hunt?.id === n.id;
+    const well = sectionWell(menu.body, 'The Hunt', hunted ? `bounty ${bountyOf(n.might)} War Trophies` : `${HUNT.price} War Trophies · you hold ${m.war.trophies}`);
+    if (hunted) well.append(el('p', 'nmOathLine', huntWords(n)));
+    else {
+      well.append(el('p', 'nmMemory', `Hunt it: it will stand in your next ${armyById(n.army)?.name ?? n.army} run${quarryWaves(n).length ? `, at wave ${quarryWaves(n).join(' and ')}` : ''}, on guard, and one of its secrets is learned. Run it down for a bounty of ${bountyOf(n.might)} War Trophies: neither fate nor cheating death spares it. If it lives, the hunt fails.`));
+      const other = quarryOf(m.war);
+      const why = cannotHunt(m.war, n);
+      if (other) well.append(el('small', 'nmMemory', `Your hunt for ${fullName(other)} is called off if you hunt this one.`));
+      if (why) well.append(el('small', 'nmMemory', why));
+    }
+  }
   // (NEMESIS-DEPTH: the fights it remembers, and what it was once called)
   if (n.moments?.length || n.was?.length) {
     const well = sectionWell(menu.body, 'Remembered fights', 'its taunts come from these');
@@ -434,5 +461,24 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
     const well = sectionWell(menu.body, 'Memory', 'what it remembers');
     for (const line of n.memory) well.append(el('p', 'nmMemory', line));
   }
-  menuFoot(menu, { back: { word: 'close' }, ...(hunt ? { primary: { label: 'Hunt', onClick: () => { menu.close(); hunt(); } } } : {}) });
+  // (NEMESIS-DEPTH, idea 4: Hunt sets a hunt when it can, then goes to its army; a quarry's card goes straight there)
+  const canSet = !!m.war && !cannotHunt(m.war, n);
+  const hunted = m.war?.hunt?.id === n.id;
+  menuFoot(menu, {
+    back: { word: 'close' },
+    ...(hunt
+      ? {
+          primary: {
+            label: hunted ? 'Go to its army' : canSet ? `Hunt · ${HUNT.price} War Trophies` : 'Find its army',
+            onClick: () => {
+              if (canSet && !hunted) {
+                if (setHunt(m, n.id) !== null) save?.();
+              }
+              menu.close();
+              hunt();
+            },
+          },
+        }
+      : {}),
+  });
 }

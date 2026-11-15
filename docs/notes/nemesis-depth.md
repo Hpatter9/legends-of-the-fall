@@ -455,3 +455,75 @@ save's Council plays exactly as it did; the Council's newcomers bring temperamen
 | Duels | 55, 96% won | 52, 94% won |
 | Temperaments on the Council at the end | | Brute 3, Schemer 2, Trickster 2, Glory-hound 2, Coward 2, Oathbound 1, Zealot 1 |
 | Taunts by trigger | | thrown 86, slew 76, skill 59, humiliated 36, dread 21, brink 7; still 0 of 101 repeated |
+
+## Idea 4, built: hunts
+
+`src/sim/hunt.ts`. The player marks one member of the Council for **two War Trophies** (`HUNT.price`). One hunt at a time; setting
+another calls the first off, with no refund.
+
+- **Where it stands** (`planNemeses`, `huntWave`). In the next run of its army, wherever the draws fall:
+  - a boss quarry at its own boss's waves, and the warchief at his army's last, as ever;
+  - any other at the first ordinary wave a third of the way in (wave 5 of fifteen), and only there.
+
+  The run notes the hunt (`War.hunt.run`, with the quarry's meetings then), and the snapshot marks it `hunted`.
+- **On guard** (`nemStart`). A hunted quarry starts its fight with a shield of a tenth of its health (`HUNT_GUARD`). It knows it is
+  hunted, so it runs at 25% health half the time, or its rank's chance if higher (`HUNTED_FLEE`). A Brute or a Zealot still never runs, and
+  a Coward still runs at 30%.
+  - **Settled here:** the design's extra escort became this flight. One more foe would change the wave's length, and the first measure
+    showed hunts were a sure thing (17 of 18 run down) without a way for the quarry to get away.
+- **Setting it** reveals one of its secrets, and the News says "You set a hunt on Morrow the Unburnt".
+- **Not on** a member licking its wounds (it sits out its army's runs), nor once the War is over (`cannotHunt`).
+- **Run down** (`noteWar`):
+  - its pay, plus a **bounty** of `2 + Might / 2` War Trophies (`bountyOf`), paid beyond the day's cap of twelve;
+  - **neither fate nor cheating death spares it**: the player chose to finish it, as Vengeance does;
+  - the Fallen keeps it as hunted down (`FallenNemesis.hunted`);
+  - the wave card says "The hunt is over: Morrow the Unburnt is run down · bounty 4 War Trophies".
+- **Failed** (`endHunt`, from `settleRun` when the run is over): the quarry was met and lives (it fled, or the run was lost round it).
+  - The trophies are spent, and the memory says "Outlived a hunt".
+  - At the next meeting it taunts about it (`Nemesis.huntLived`). The wave card says "The hunt has failed: Morrow the Unburnt lives".
+  - A run that ended before the quarry's wave leaves the hunt on for the next run.
+- **Lapsed** (`lapseHunt`, each Council turn): a quarry the Council took (a feud, a betrayal, a desertion) ends the hunt, and its two
+  trophies come back.
+- **Taunts** (`HUNT_TAUNTS`, two a voice for each, 36 lines): the quarry, as its wave opens ("Heard you put a price on my head. Come and
+  collect."), and one that outlived a hunt, at the next meeting ("Wasted your trophies on me, eh?"). These come before anything else.
+- **On the page**:
+  - **the card**: a section, The Hunt, says where the quarry will stand, its bounty, and what a hunt costs against the trophies held. Its
+    button reads "Hunt · 2 War Trophies" (it sets the hunt, saves, and goes to the army), "Go to its army" for the quarry, or "Find its
+    army" when a hunt cannot be set (as the old Hunt did);
+  - **the Council**: the quarry's seat is ringed in blood red, and The Hunt's line sits above the Muster's;
+  - **the wave card**: "Ahead: your quarry, Morrow the Unburnt, stands in the next wave";
+  - **the News**: its own kind, `hunt`, shown with the duel's crossed blades until a symbol of its own is painted.
+- **Not done**: the run's map does not mark the quarry's wave (the card and the wave card say it).
+- Saved: `War.hunt` (kept only on a member who still sits), `Nemesis.huntLived`, `FallenNemesis.hunted`, `NemSnap.hunted` and
+  `huntLived`, `UnitNem.hunted`.
+
+### Measured (`npm run war-sim -- --hunts`: the bot sets a hunt on the mightiest member it can, whenever it has none and the trophies)
+
+| | No hunts | The bot hunting |
+|---|---|---|
+| Hunts | | 24 set: 15 run down, 7 failed, 2 lapsed or still on |
+| Slain by the heroes | 86, after 2.9 meetings | 95, after 3.2 |
+| Might mean, days 53 to 67 | 2.2 | 1.6 (the bot keeps hunting the mightiest) |
+| Duels | 52, 94% won | 47, 85% won |
+| Strangers' share of the seats | 9% | 7% |
+
+The default `npm run war-sim` sets no hunts, so its numbers stay comparable with the earlier tables.
+
+## Checks (the whole first batch)
+
+- `npm run typecheck` and `npm run web`.
+- `npm test -- nemesis council revenge duel callout assault-war assault-duel assault-last ui-standard regression ailments-identical modes`:
+  157 pass. Among them:
+  - `test/nemesis-depth.test.ts` (25 tests: each rule of the four ideas);
+  - the pinned fights: `nemesis-regression`, `stand-regression` and `ailments-identical` hold.
+- Tests changed because the owner's approved rules changed them:
+  - the Council's weights (a Recruit 1) and the Muster (three captains);
+  - cheating death's odds measured on members past fate's two meetings;
+  - the duel and callout tests' members met twice (only an old foe challenges);
+  - the taunt test's "every line comes up" now steps through meetings instead of seeds.
+- Screens at 393x852, 360x780 and 412x915 (`node tools/nemesis/shotsDepth.mjs`, saves in `tools/nemesis/savesDepth.ts`), in
+  `docs/samples/nemesis-depth/`:
+  - `council` and `council-foot`: every seat's temperament symbol, Morrow ringed as the quarry, The Hunt's line;
+  - `card` and `card-mid`: Morrow's temperament, the hunt, his remembered fights and what he was once called;
+  - `hunt`: Throg's card with the Hunt button and what it costs;
+  - `taunt`: Hask remembering Natsu's Volley in the graveyard, closing with a Schemer's tag.

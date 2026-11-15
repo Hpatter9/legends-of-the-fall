@@ -5,6 +5,7 @@
 // (`tower.ts`) that opens once a run has fought stage 10; its floors are the run's own stages. Pure rules: no Pixi, no DOM; the
 // date is passed in as yyyymmdd.
 
+import { endHunt } from './hunt';
 import { newRunes } from './runes';
 import { grantRemedy } from './remedies';
 import { checkAchievements, type Achievement } from './achievements';
@@ -247,6 +248,9 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   // (phase 2: and what it means for the Dark Council, `council.ts`; an army run that has ended gives the Council its turn)
   if (fight.battle && !quest) fight.war = noteWar(m, run, fight.battle, fight.nemesis, fight.won, fight.stage, fight.day);
   else openWar(m);
+  // (NEMESIS-DEPTH, idea 4: a hunt planned into the run whose quarry lives has failed)
+  const hunted = run.over ? endHunt(m, run) : undefined;
+  if (hunted && fight.war) fight.war.council = [...(fight.war.council ?? []), hunted];
   if (fight.day !== undefined && run.over) {
     const turn = endOfRun(m, run, fight.day);
     if (turn?.length && fight.war) fight.war.council = [...(fight.war.council ?? []), ...turnLines(turn)];

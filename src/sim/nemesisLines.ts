@@ -271,3 +271,33 @@ export const MOMENT_TAUNTS: Readonly<Record<MomentKind, Readonly<Record<Voice, r
     golems: ['Elemental damage: {what}, {land}. Insulation installed.', 'Your {what} corroded seven plates. Plates replaced, grudge retained.', 'Exposure to {what} recorded. Tolerance increased.', 'Analysis complete: {what}. Effectiveness against me: decreasing.'],
   },
 };
+
+/**
+ * NEMESIS-DEPTH, idea 4: the hunt's taunts (`hunt.ts`). `quarry`: it knows it is hunted, as the wave opens; `lived`: at the meeting after it
+ * outlived a hunt. They fill from `{name}` alone. Reached for before anything else.
+ */
+export type HuntTrigger = 'quarry' | 'lived';
+export const HUNT_TAUNTS: Readonly<Record<HuntTrigger, Readonly<Record<Voice, readonly string[]>>>> = {
+  quarry: {
+    orcs: ['Heard you put a price on my head. Come and collect.', 'You are hunting me? Good. Saves me looking for you.'],
+    undead: ['You hunt the dead? We are very good at waiting.', 'I heard the hunting horns. I have heard them for a hundred years.'],
+    beasts: ['You hunt me? I was born hunted. I grew teeth.', 'I smell the hunt on you. I smell fear under it.'],
+    wildwood: ['A hunt, in my wood? The wood hunts back.', 'Follow my trail, little hunters. It leads into the briars.'],
+    labyrinth: ['You hunt me in my own halls? Every corridor is mine.', 'Seek me, then. I have built a hundred ways to be lost.'],
+    ogres: ['You hunt me? Me hunt you! Me better at it!', 'Me hear you looking for me. Me right here. Hello.'],
+    infernal: ['You set a price on me? I have bought and sold kings.', 'Hunt me, then. The hunter becomes the kindling.'],
+    yokai: ['What is hunted and laughing? Guess before you find me.', 'You followed the lanterns. They were mine.'],
+    golems: ['Hunt directive detected. Counter-directive engaged.', 'You have designated me a target. Reciprocating.'],
+  },
+  lived: {
+    orcs: ['You hunted me, and here I am. Who is the prey now?', 'Wasted your trophies on me, eh? Ha!'],
+    undead: ['You hunted me and found only a grave. Not mine.', 'Your hunt failed. The dead are patient; the living are not.'],
+    beasts: ['You hunted me and lost the trail. I never lose yours.', 'The hunt is over, and I am still running. Now I run at you.'],
+    wildwood: ['Your hunt ended in the thorns, and I walked out of them laughing.', 'You hunted me through my own wood. How did that go?'],
+    labyrinth: ['You hunted me through my halls and found the way out instead. Shame.', 'A failed hunt is a lesson. Did you learn it?'],
+    ogres: ['You no catch me last time! Me hide behind tree! Big tree!', 'Hunt me again! Me like it! Me win!'],
+    infernal: ['You paid to hunt me, and I am still here. A poor bargain.', 'Your hunt failed. I let you live to remember it.'],
+    yokai: ['You hunted a fox and caught your own tail.', 'What did the hunt catch? Nothing at all. That was me.'],
+    golems: ['Previous hunt: failed. Probability of success: lower.', 'Hunt record retrieved: you lost. Repeating?'],
+  },
+};

@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { place, startBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { armyRun, recruit } from '../src/sim/run';
-import { decorate } from '../src/sim/revenge';
+import { decorate, planRun } from '../src/sim/revenge';
 import { duelOffer } from '../src/sim/duel';
 
 import { startedMeta, type Meta } from '../src/sim/meta';
@@ -20,6 +20,8 @@ import { drawTemper, TEMPER_SALT, TEMPER_TAGS, TEMPERS, type Temper } from '../s
 import { fleeOdds, nemHurt, nemPrey, nemStart, secondWeakPool } from '../src/sim/nemesisTraits';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { challengeOf } from '../src/sim/duel';
+import { bountyOf, cannotHunt, endHunt, HUNT, HUNT_GUARD, huntAhead, huntWave, lapseHunt, setHunt } from '../src/sim/hunt';
+import { armyById } from '../src/sim/armies';
 import { heroName } from '../src/sim/heroNames';
 import { CHEAT_DEATH, EVENT_WEIGHT, eventOpen, eventWeight, FATE_MEETINGS, happen, noteWar, swear, takeTurn } from '../src/sim/council';
 import { CHIEF_TENURE, MUSTER_NEED, musterLine, musterOpen, startMuster, tenureLeft, warchiefOf } from '../src/sim/muster';
@@ -445,4 +447,123 @@ test('its voice: a temperament’s tag closes the taunt every other meeting', ()
   assert.ok(!TEMPER_TAGS.schemer.some((t) => even.endsWith(t)));
   assert.ok(TEMPER_TAGS.schemer.some((t) => odd.endsWith(` ${t}`)), odd);
   assert.ok(!/[{}]/.test(odd));
+});
+
+// ---- Idea 4: hunts --------------------------------------------------------------------------------------------------------------
+
+test('setting a hunt costs two War Trophies, reveals a secret and replaces any other; not on one licking its wounds, nor without the trophies', () => {
+  const m = warMeta(3);
+  const war = m.war!;
+  const a = member(war, 'lieutenant', 2, { known: [] });
+  const z = member(war, 'lieutenant', 2);
+  assert.equal(setHunt(m, a.id), null, 'no trophies');
+  war.trophies = 5;
+  assert.notEqual(setHunt(m, a.id), null);
+  assert.equal(war.trophies, 3);
+  assert.deepEqual({ id: war.hunt!.id, army: war.hunt!.army }, { id: a.id, army: a.army });
+  assert.equal(a.known.length, 1, 'a secret learned');
+  assert.equal(war.news[0].kind, 'hunt');
+  assert.equal(setHunt(m, a.id), null, 'hunted already');
+  assert.notEqual(setHunt(m, z.id), null);
+  assert.equal(war.hunt!.id, z.id, 'one hunt at a time');
+  war.away = { [String(a.id)]: 2 };
+  assert.ok(cannotHunt(war, a));
+  // (the save keeps it, and forgets it when its quarry is gone)
+  assert.deepEqual(readWar(JSON.parse(JSON.stringify(war)))!.hunt, war.hunt);
+  assert.equal(readWar({ ...JSON.parse(JSON.stringify(war)), hunt: { id: 9999, army: 'undead', at: 0 } })!.hunt, undefined);
+});
+
+test('the quarry stands in its army’s next run at its hunt’s wave, whatever the draws, on guard; the run is noted', () => {
+  const army = armyById('undead')!;
+  const w = huntWave(army);
+  assert.ok(!army.waves[w - 1].boss && w >= army.waves.length / 3);
+  for (let s = 0; s < 40; s++) {
+    for (const rank of ['lieutenant', 'captain'] as const) {
+      const m = warMeta(s);
+      const war = m.war!;
+      war.trophies = 2;
+      const q = member(war, rank, 1, { met: 3 });
+      setHunt(m, q.id);
+      const run = armyRun(s + 7, 'undead');
+      const plan = planRun(m, run)!;
+      assert.deepEqual(Object.entries(plan.waves).filter(([, ids]) => ids.includes(q.id)).map(([k]) => Number(k)), [w], `${rank}, seed ${s}`);
+      assert.ok(plan.members.find((x) => x.id === q.id)!.hunted);
+      assert.equal(war.hunt!.run, run.seed);
+    }
+  }
+  // (on guard: a shield of a tenth of its health as the fight begins)
+  const b = fightOf(['skeleton']);
+  const u = b.units.find((x) => x.side === 'foe')!;
+  u.nem = { id: 1, name: 'Q', rank: 'lieutenant', traits: [], weak: [], hunted: true };
+  nemStart(u, undefined);
+  assert.equal(u.shield?.hp, Math.round(u.maxHp * HUNT_GUARD));
+});
+
+test('run down, the quarry pays its bounty beyond the day’s cap; neither fate nor cheating death spares it', () => {
+  const m = warMeta(5);
+  const war = m.war!;
+  war.trophies = 2;
+  const q = member(war, 'lieutenant', 4, { met: 0 });
+  setHunt(m, q.id);
+  war.trophyDay = { key: 0, got: 12 };
+  const run = armyRun(9, 'undead');
+  const b = fightOf([q.base, 'skeleton'], 9);
+  const u = b.units.find((x) => x.side === 'foe' && x.def === q.base)!;
+  u.nem = { ...nemOf(q), hunted: true };
+  const tally = told(b, [hit(hero(b, 'knight'), u, u.maxHp, true)]);
+  for (const x of b.units.filter((y) => y.side === 'foe')) {
+    x.alive = false;
+    x.hp = 0;
+  }
+  b.phase = 'won';
+  const note = noteWar(m, run, b, tally, true, 5, 0);
+  assert.ok(!war.members.includes(q), 'fate does not spare a hunted quarry');
+  assert.equal(war.trophies, bountyOf(4));
+  assert.equal(war.hunt, undefined);
+  assert.ok(war.fallen[0].hunted);
+  assert.ok(note.council?.some((l) => l.startsWith('The hunt is over')));
+});
+
+test('a hunt fails when its run ends with the quarry met and alive (one never reached carries on): it taunts about it at the next meeting; a quarry gone some other way gives the trophies back', () => {
+  const m = warMeta(6);
+  const war = m.war!;
+  war.trophies = 4;
+  const q = member(war, 'lieutenant', 2, { met: 3 });
+  setHunt(m, q.id);
+  const run = armyRun(12, 'undead');
+  run.nemesis = planRun(m, run);
+  assert.equal(endHunt(m, run), undefined, 'not before the run is over');
+  run.over = true;
+  // (a run that ended before the quarry's wave leaves the hunt on, for the next)
+  assert.equal(endHunt(m, run), undefined);
+  assert.equal(war.hunt?.id, q.id);
+  const again = armyRun(13, 'undead');
+  again.nemesis = planRun(m, again);
+  q.met++;
+  again.over = true;
+  assert.match(endHunt(m, again)!, /failed/);
+  assert.equal(war.hunt, undefined);
+  assert.equal(q.huntLived, q.met);
+  const s = decorate(m, snapOf(q), q);
+  assert.equal(triggerOf(s, ['knight']).trigger, 'lived');
+  assert.notEqual(triggerOf({ ...s, met: q.met + 1 }, ['knight']).trigger, 'lived', 'only at the next meeting');
+  assert.equal(triggerOf({ ...s, hunted: true }, ['knight']).trigger, 'quarry');
+  for (const v of VOICES) for (const k of ['quarry', 'lived'] as const) assert.ok(!/[{}]/.test(tauntFor({ ...s, army: v, ...(k === 'quarry' ? { hunted: true as const } : {}) }, [], 1).line));
+  // (a quarry the Council takes: the hunt lapses and its trophies come back)
+  const r = member(war, 'lieutenant', 1);
+  setHunt(m, r.id);
+  const held = war.trophies;
+  war.members = war.members.filter((x) => x !== r);
+  lapseHunt(war);
+  assert.equal(war.hunt, undefined);
+  assert.equal(war.trophies, held + HUNT.price);
+});
+
+test('the wave card tells of the quarry in the next wave', () => {
+  const run = armyRun(3, 'undead');
+  run.stage = 6;
+  run.nemesis = { members: [{ id: 2, base: 'skeleton', name: 'Q', epithet: '', rank: 'lieutenant', might: 1, scars: 0, traits: [], weak: [], hunted: true }], waves: { '6': [2] } };
+  assert.match(huntAhead(run)!, /your quarry, Q/);
+  run.stage = 5;
+  assert.equal(huntAhead(run), undefined);
 });
