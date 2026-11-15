@@ -33,6 +33,8 @@ import { endWar, isLastHold, lastCouncil } from './lastHold';
 import { MARKS_MAX, RESTORM_TIER } from './economy';
 import { rankOf, type PlatoonFormation } from './troops';
 import { siegeRefund } from './siege';
+import { spellAutoSaved } from '../autoCast';
+import { castList } from '../schools';
 
 /** The grade the heroes fight at in the Assault: the late waves' merged third grade of an army run. */
 export const ASSAULT_GRADE = 3;
@@ -88,6 +90,8 @@ export function assaultInput(m: Meta, army: string, seed: number, plan: AssaultP
     ...(plan.siege ? { siege: plan.siege } : {}),
     ...(plan.restorm ? { tier: RESTORM_TIER } : {}),
     castle: heroBoost(m.castle),
+    // (ASSAULT-SKILLS: the king's spells Auto casts, as in an ordinary fight)
+    ...(spellAutoSaved(m) && castList(m.spellbook).length ? { spells: [...castList(m.spellbook)] } : {}),
     council,
     ...(chief ? { warchief: decorate(m, snapOf(chief), chief) } : {}),
     // (phase 3: where the warchief rides if he flees this hold; none at the last hold standing)

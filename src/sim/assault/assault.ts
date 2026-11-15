@@ -30,10 +30,11 @@ import type { Blueprint } from './blueprint';
 import { addFieldUnit, archersOnly, bowless, buildGarrison, freeNear, shareOf } from './garrison';
 import { barrelOnForts, canStrikeFort, discoverWeaknesses, drumsBeating, landFortHits, makeForts, strikeFort } from './forts';
 import { anchorOf, DRUM_BLOW, holdTick, nearDrum } from './holdMind';
-import { applyQueued, CHARGE_MOVE, defaultFormation, ENGAGE, FORMATION_FX, givePlatoon, HERO_LEASH, LEADERLESS, LEASH, replayEntries, slotAt } from './platoons';
+import { applyQueued, autoSpellsOf, CHARGE_MOVE, defaultFormation, ENGAGE, FORMATION_FX, givePlatoon, HERO_LEASH, LEADERLESS, LEASH, replayEntries, slotAt } from './platoons';
 import type { AssaultInput, AssaultLogEntry, AssaultOutcome, HoldState, PlatoonRole, PlatoonState, PostState } from './holdTypes';
 import { ELITE_TRICK, kindOfUnit, rankOf, troopBoost, troopUnitOf, troopOf, TRICKS } from './troops';
 import { SPLASH_SHARE } from '../units';
+import { tryCast } from '../abilities';
 import { callVolley, carrying, KEG_SLOW, plantGoal, worksTick } from './works';
 import { duelBlow, duelSight, duelTick, inDuel } from './gateDuel';
 import { flightTick, tauntTick } from './warAnswer';
@@ -58,6 +59,18 @@ const IDLE_MS = 700;
 const PATH_STEPS = 4;
 /** A waypoint of a route counts as reached this near. */
 const WAYPOINT = 5;
+/** ASSAULT-AI (the movement rules, `docs/notes/assault-skills.md`): a friend's tile in a leader's walk costs this much more than a free one,
+ *  so it goes round a crowd where it can and through it, making way, where it cannot. */
+export const FRIEND_COST = 3;
+/** A leader whose walk has found no step this many times running side-steps to the free tile nearest its mark, to break a jam. */
+export const JAM_FAILS = 2;
+/** A melee hero at its order point takes on a foe this much further than its reach and leash (a shooter only what it can nearly shoot). */
+export const POINT_REACH = 2;
+/** A leader waits for its stragglers only with no foe this near, and not with this many of its own pressing round it. */
+export const STRAGGLE_FOE = 12;
+export const STRAGGLE_CROWD = 3;
+/** A leader whose way is shut hands the moment to its own mind with a foe this much further than its reach. */
+export const HAND_OVER = 2;
 
 /** The parts the platoons take when the plan names none: two on the main push, one in cover, one on the flank, one more on the push. */
 export const DEFAULT_ROLES: readonly PlatoonRole[] = ['main', 'main', 'cover', 'flank', 'main'];
@@ -129,6 +142,8 @@ export function startAssault(input: AssaultInput): Battle {
     pl.order = { kind: 'move', at: { ...way.way[way.way.length - 1] } };
     h.platoons.push(pl);
   });
+  // (ASSAULT-SKILLS: the king's spells on Auto, as an ordinary fight's)
+  autoSpellsOf(b, h);
   buildGarrison(b, f, h, input);
   h.siege = startSiege(b, f, h);
   h.foesTotal = h.garrison.length + bp.reinforce.bands * bp.reinforce.roster.replace(/ /g, '').length;
@@ -178,6 +193,8 @@ function tick(b: Battle, out: BattleEvent[]): void {
     }
     const hero = f.byId[pl.heroId];
     if (!hero.alive && !(pl.acting !== undefined && f.byId[pl.acting]?.alive)) pl.acting = pl.soldiers.find((s) => f.byId[s.id]?.alive)?.id;
+    // (ASSAULT-AI: the tiles its leader has stood on, for the file its soldiers walk in a narrow way)
+    noteTrail(b, f, pl);
     // (a platoon plays its part in the plan on its own until the player orders it; Auto hands them all back to it)
     if ((h.auto || !pl.manual) && f.stats.ticks % 10 === (k * 2) % 10) bot(b, f, h, k);
   });
@@ -389,6 +406,9 @@ function lead(b: Battle, me: Unit, _rng: Rng, out: BattleEvent[]): boolean {
   }
   const pl = h.platoons.find((p) => p.group === g.id);
   if (!pl) return false;
+  // (ASSAULT-SKILLS: its own kit before its orders walk it on: a skill, a heal, a guard or its ultimate, each only with something to do
+  //  within its sight, as in any fight; never on a fall back, a flank's run round or with a keg in its arms)
+  if (castsFirst(h, pl) && tryCast(b, me, out)) return true;
   const def = strikeDef(b, me);
   const inReach = nearestFoe(b, f, me, def.range + 3, true);
   const goal = orderGoal(b, f, h, pl, me);
@@ -417,11 +437,20 @@ function lead(b: Battle, me: Unit, _rng: Rng, out: BattleEvent[]): boolean {
   if (!goal.at) return false;
   const leash = pl.order.kind === 'charge' || pl.order.kind === 'focus' || pl.order.kind === 'flank' || pl.order.kind === 'scale' ? 0 : HERO_LEASH;
   if (dist(me, goal.at) > leash) return leaderWalk(b, f, h, pl, me, goal.at, out);
-  // (at its point: it fights what is near, within the leash, by its own mind; else it waits)
-  if (nearestFoe(b, f, me, def.range + HERO_LEASH + 1, false)) return false;
+  // (at its point: it fights what is near, within the leash, by its own mind; else it waits. ASSAULT-AI: a melee hero takes on a foe a
+  //  little further off rather than stand while it comes; a shooter only what it can nearly shoot, holding back from the crush)
+  if (nearestFoe(b, f, me, pointReach(def), false)) return false;
   me.busyUntil = b.t + WAIT_MS;
   return true;
 }
+
+/** ASSAULT-SKILLS: whether a platoon's hero may cast from its own kit before its orders: not on a fall back or a flank (no stopping), nor
+ *  while its platoon carries a powder keg. */
+export const castsFirst = (h: HoldState, pl: PlatoonState): boolean => pl.order.kind !== 'fallback' && pl.order.kind !== 'flank' && !carrying(h, pl);
+
+/** ASSAULT-AI: how far a hero at its order point looks for a foe to take on: a shooter, its shot and one; a melee hero, its reach, its
+ *  leash and `POINT_REACH`. */
+export const pointReach = (def: { range: number; shot?: unknown }): number => (def.shot ? def.range + 1 : def.range + HERO_LEASH + 1 + POINT_REACH);
 
 /** The tile beside a structure nearest to `me` that a walker stands on (where to stand to strike it). */
 function nearFortTile(b: Battle, me: Unit, tiles: readonly number[]): At | null {
@@ -446,21 +475,99 @@ function nearFortTile(b: Battle, me: Unit, tiles: readonly number[]): At | null 
 /** A leader's walk towards its point, waiting a little for its stragglers. */
 function leaderWalk(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, me: Unit, at: At, out: BattleEvent[]): boolean {
   const g = f.groups[pl.group];
-  if (straggling(b, f, pl, me) <= 4) g.waited = 0;
+  // (ASSAULT-AI: no waiting for stragglers with a foe near, or in a press of its own: it would only hold up the rest)
+  if (straggling(b, f, pl, me) <= 4 || !waitsForStragglers(b, f, me)) g.waited = 0;
   else if ((g.waited ?? 0) < WAIT_MAX) {
     g.waited = (g.waited ?? 0) + WAIT_MS;
     me.busyUntil = b.t + WAIT_MS;
     return true;
   }
   g.heading = wayTo(me, at);
+  const info = f.info[me.id];
   if (walkStep(b, f, me, at, out, true)) {
+    info.fails = 0;
     pace(b, h, pl, me);
+    return true;
+  }
+  // (ASSAULT-AI: a walk that has found no step twice running side-steps to break the jam, and searches afresh after)
+  info.fails = (info.fails ?? 0) + 1;
+  if (info.fails >= JAM_FAILS && sideStep(b, f, me, at, out)) {
+    info.fails = 0;
+    info.path = undefined;
     return true;
   }
   // (a crowd at a waypoint: one near enough counts as reached, and the platoon goes on to the next)
   if (pl.route.length > 1 && dist(me, pl.route[0]) <= WAYPOINT * 2) pl.route.shift();
+  // (and a hero with a foe close by lets its own mind take the moment: a blow, a skill, rather than wait on a way that is shut; not one
+  //  further off, which it would only walk to and back from)
+  if (pl.heroId === me.id && nearestFoe(b, f, me, strikeDef(b, me).range + HAND_OVER, false)) return false;
   me.busyUntil = b.t + WAIT_MS;
   return true;
+}
+
+/** ASSAULT-AI: how many tiles of its leader's trail a platoon keeps (its soldiers' file in a narrow way). */
+export const TRAIL_MAX = 12;
+/** A place is narrow (a bridge, a gap, a gate's mouth) when fewer than this many of the 24 tiles round it can be stood on. */
+export const NARROW_UNDER = 14;
+
+/** Keep a platoon's trail: its leader's tile, when it has moved on. */
+export function noteTrail(b: Battle, f: FieldState, pl: PlatoonState): void {
+  const a = anchorOf(f, pl);
+  if (!a) return;
+  const at = a.v * b.board.w + a.u;
+  const tr = (pl.trail ??= []);
+  if (tr[0] === at) return;
+  tr.unshift(at);
+  if (tr.length > TRAIL_MAX) tr.length = TRAIL_MAX;
+}
+
+/** Whether a tile is in a narrow way: fewer than `NARROW_UNDER` of the 24 tiles round it can be stood on. */
+export function narrowAt(b: Battle, at: At): boolean {
+  let n = 0;
+  for (let du = -2; du <= 2; du++)
+    for (let dv = -2; dv <= 2; dv++) {
+      if (!du && !dv) continue;
+      const u = at.u + du;
+      const v = at.v + dv;
+      if (u < 0 || v < 0 || u >= b.board.w || v >= b.board.d) continue;
+      const t = b.board.tiles[v * b.board.w + u];
+      if (t && !t.wall && !t.rock && t.ground !== 'deep') n++;
+    }
+  return n < NARROW_UNDER;
+}
+
+/** ASSAULT-AI: a soldier's place in a narrow way: in file behind its leader, on the tile of the leader's trail as far back as its slot (the
+ *  last kept for those further back). Null when the leader is not in a narrow way, or has no trail yet. */
+export function fileSlot(b: Battle, pl: PlatoonState, anchor: At, slot: number): At | null {
+  const tr = pl.trail;
+  if (!tr || tr.length < 2 || !narrowAt(b, anchor)) return null;
+  const i = tr[Math.min(slot, tr.length - 1)];
+  return { u: i % b.board.w, v: Math.floor(i / b.board.w) };
+}
+
+/** Whether a fighter leads its group on the field (a platoon's hero, a post's officer or lord). */
+const f_isLeader = (b: Battle, me: Unit): boolean => b.field?.info[me.id]?.slot === 0;
+
+/** ASSAULT-AI: whether a leader may stop for its stragglers: no foe within `STRAGGLE_FOE`, and fewer than `STRAGGLE_CROWD` of its own
+ *  pressing round it. */
+export function waitsForStragglers(b: Battle, f: FieldState, me: Unit): boolean {
+  if (nearestFoe(b, f, me, STRAGGLE_FOE, false)) return false;
+  return friendsRound(f, me) < STRAGGLE_CROWD;
+}
+
+/** How many of its own side stand on the eight tiles round a fighter. */
+export function friendsRound(f: FieldState, me: Unit): number {
+  let n = 0;
+  for (let du = -1; du <= 1; du++)
+    for (let dv = -1; dv <= 1; dv++) {
+      if (!du && !dv) continue;
+      const u = me.u + du;
+      const v = me.v + dv;
+      if (u < 0 || v < 0 || u >= f.w || v >= f.d) continue;
+      const o = f.occ[v * f.w + u];
+      if (o >= 0 && f.byId[o]?.side === me.side) n++;
+    }
+  return n;
 }
 
 /** How many of a platoon's soldiers are more than three tiles off their slots. */
@@ -512,7 +619,8 @@ function soldierMind(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, m
     return;
   }
   const g = f.groups[pl.group];
-  const slot = slotAt(anchor, g.heading, pl.formation, f.info[me.id].slot, !hero.alive);
+  // (ASSAULT-AI: in a narrow way, in file behind the leader; anywhere else, its place in the formation)
+  const slot = fileSlot(b, pl, anchor, f.info[me.id].slot) ?? slotAt(anchor, g.heading, pl.formation, f.info[me.id].slot, !hero.alive);
   if (goal.fights) {
     const leashed = dist(me, anchor) > LEASH;
     // (Assault: those who can reach the structure strike it; the shooters cover)
@@ -666,6 +774,53 @@ function steer(b: Battle, f: FieldState, me: Unit, mark: At, out: BattleEvent[])
   return walkStep(b, f, me, mark, out, false);
 }
 
+/** ASSAULT-AI: a jammed walker's side-step: onto the free tile round it that leaves it nearest its mark (ties by the lowest index), even if
+ *  that is no nearer than where it stands, so a crowd that holds everyone still shifts. False with no free tile round it. */
+export function sideStep(b: Battle, f: FieldState, me: Unit, mark: At, out: BattleEvent[]): boolean {
+  const w = b.board.w;
+  const here = b.board.tiles[me.v * w + me.u];
+  const jump = defOf(me).jump;
+  let best = -1;
+  let bd = Infinity;
+  for (const [du, dv] of DIRS) {
+    const u = me.u + du;
+    const v = me.v + dv;
+    if (u < 0 || v < 0 || u >= w || v >= b.board.d) continue;
+    const j = v * w + u;
+    if (f.occ[j] >= 0 || canStep(here, b.board.tiles[j], jump, me.side) === null) continue;
+    const d = Math.abs(u - mark.u) + Math.abs(v - mark.v);
+    if (d < bd) {
+      bd = d;
+      best = j;
+    }
+  }
+  if (best < 0) return false;
+  stepTo(b, me, best, out);
+  return true;
+}
+
+/** A friend standing on tile `j` that a leader may change places with (ASSAULT-AI): one of ours, not mid-step, not swinging or casting;
+ *  a soldier of any platoon, or a hero standing idle. A shooting hero does not push forward onto a tile beside a foe (it holds back). */
+export function makesWay(b: Battle, f: FieldState, me: Unit, j: number): boolean {
+  const o = f.byId[f.occ[j]];
+  if (!o || !o.alive || o.side !== me.side || o === me) return false;
+  if (o.step && b.t < o.step.at + o.step.ms) return false;
+  if ((o.swing && b.t < o.swing.at + o.swing.ms) || (o.cast && b.t < o.cast.at + o.cast.ms)) return false;
+  const role = f.info[o.id]?.role;
+  if (role !== 'soldier' && o.busyUntil > b.t + WAIT_MS) return false;
+  if (o.def === RAM.id) return false;
+  if (strikeDef(b, me).shot) {
+    const u = j % b.board.w;
+    const v = Math.floor(j / b.board.w);
+    let foe = false;
+    forNear(f, u, v, 1, (x) => {
+      if (x.alive && x.side !== me.side && Math.max(Math.abs(x.u - u), Math.abs(x.v - v)) <= 1) foe = true;
+    });
+    if (foe) return false;
+  }
+  return true;
+}
+
 /** A real walk towards a mark: a long walk over the sectors, then a bounded walk (`walkNear`) in the window round the walker to the tile that
  *  brings it nearest the next sectors on the way. One step of it is taken. A leader may change places with its own soldier in its way. */
 function walkStep(b: Battle, f: FieldState, me: Unit, mark: At, out: BattleEvent[], swapping: boolean): boolean {
@@ -687,11 +842,13 @@ function walkStep(b: Battle, f: FieldState, me: Unit, mark: At, out: BattleEvent
     }
     info.path = undefined;
   }
-  const mine = (j: number) => {
+  // (ASSAULT-AI: a leader walks through its own side at a price, `FRIEND_COST`, so it goes round a crowd where it can and through it, the
+  //  friends making way, where it cannot; a foe's tile is never walked through; anyone else keeps to the free tiles)
+  const friend = (j: number) => {
     const o = f.occ[j];
-    return o >= 0 && f.byId[o].side === me.side && f.info[o]?.role === 'soldier';
+    return o >= 0 && o !== me.id && f.byId[o]?.side === me.side;
   };
-  const walk = walkNear(b.board, me, jump, (j) => f.occ[j] >= 0 && f.occ[j] !== me.id && !(swapping && mine(j)), 8, me.side);
+  const walk = walkNear(b.board, me, jump, (j) => f.occ[j] >= 0 && f.occ[j] !== me.id && !(swapping && friend(j)), 8, me.side, swapping ? (j) => (friend(j) ? FRIEND_COST : 0) : undefined);
   const stakes = f.hold?.stakes;
   f.stats.walks++;
   f.stats.tickWalks++;
@@ -741,7 +898,12 @@ function walkStep(b: Battle, f: FieldState, me: Unit, mark: At, out: BattleEvent
   }
   const other = f.occ[first];
   if (other >= 0 && other !== me.id) {
-    // (its own soldier there: they change places, the soldier stepping back onto the leader's tile)
+    // (a friend there that can make way: they change places, the friend stepping back onto the leader's tile; one that cannot, the walk
+    //  waits a beat and searches afresh)
+    if (!makesWay(b, f, me, first)) {
+      if (info) info.path = undefined;
+      return false;
+    }
     const o = f.byId[other];
     if (canStep(b.board.tiles[first], b.board.tiles[here], defOf(o).jump, o.side) === null) return false;
     o.step = { u: o.u, v: o.v, h: b.board.tiles[first].h, at: b.t, ms: defOf(o).moveMs };
@@ -1131,3 +1293,4 @@ fieldHooks.unitAt = unitAtField;
 fieldHooks.moved = moved;
 fieldHooks.blast = blast;
 fieldHooks.end = end;
+fieldHooks.closeIn = (b, me, to, out) => me.side === 'hero' && f_isLeader(b, me) && walkStep(b, b.field!, me, { u: to.u, v: to.v }, out, true);

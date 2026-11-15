@@ -139,8 +139,9 @@ let nearDone = new Uint8Array(0);
  *  `jump`, never through a tile `blocked` says is taken. Inside its window it walks exactly as `walkFrom` would on a board cut to the
  *  window: a heap takes the cheapest open tile, ties by the lowest board index, as `walkFrom`'s plain look does. Used only on the
  *  Assault's field, where `walkFrom` (the whole board, a look through the list) would be far too slow. The walk's arrays are the
- *  near walks' scratch: they hold until the next `walkNear`, so a caller that keeps one copies it. */
-export function walkNear(b: Board, start: At, jump: number, blocked: (i: number) => boolean, half = 8, side?: 'hero' | 'foe'): NearWalk {
+ *  near walks' scratch: they hold until the next `walkNear`, so a caller that keeps one copies it. `extra` (ASSAULT-AI) adds to the cost of
+ *  stepping onto a tile, for a tile that may be walked through at a price (a friend's, who can make way) rather than not at all. */
+export function walkNear(b: Board, start: At, jump: number, blocked: (i: number) => boolean, half = 8, side?: 'hero' | 'foe', extra?: (i: number) => number): NearWalk {
   const u0 = Math.max(0, start.u - half);
   const v0 = Math.max(0, start.v - half);
   const u1 = Math.min(b.w - 1, start.u + half - 1);
@@ -177,7 +178,7 @@ export function walkNear(b: Board, start: At, jump: number, blocked: (i: number)
       const step = canStep(b.tiles[i], b.tiles[j], jump, side);
       if (step === null) continue;
       const kj = (nv - v0) * w + nu - u0;
-      const c = cost[k] + step;
+      const c = cost[k] + step + (extra ? extra(j) : 0);
       if (c >= cost[kj]) continue;
       cost[kj] = c;
       from[kj] = i;

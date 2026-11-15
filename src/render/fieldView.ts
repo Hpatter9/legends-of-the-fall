@@ -45,6 +45,11 @@ import * as INFERNAL_ATLAS from './assaultInfernalAtlas';
 import * as YOKAI_ATLAS from './assaultYokaiAtlas';
 import * as GOLEMS_ATLAS from './assaultGolemsAtlas';
 import { VFX, loadVfxArt } from './vfxArt';
+import { loadPackArt } from './fxSheets';
+import { loadAbilityArt } from './abilityArt';
+import { FieldFx, type FieldBody, type FieldLook } from './fieldFx';
+import { castPose, fxLevel } from './fieldFxRules';
+import type { BattleEvent } from '../sim/battle';
 import { holdMapOf, blueprintOf } from '../sim/assault/assault';
 import { FieldLife } from './fieldLife';
 import { WALL_TOP } from '../sim/assault/fieldMap';
@@ -216,6 +221,8 @@ export async function loadHoldArt(army = 'orcs'): Promise<void> {
     hold = null;
   }
   await loadVfxArt().catch(() => undefined);
+  // (ASSAULT-SKILLS: the ordinary fight's effects: the element packs and each skill's painting, `fieldFx.ts`)
+  await Promise.all([loadPackArt().catch(() => undefined), loadAbilityArt().catch(() => undefined)]);
 }
 
 /** The hue of a painted hold's tall grass: the colour of its own heath (the ground the tall grass grows on, `MAT.heath`), laid on the tufts
@@ -323,8 +330,12 @@ export class FieldView {
   private dots = new Graphics();
   private overview: Sprite | null = null;
   private chunks = new Map<number, Chunk>();
-  private sprites = new Map<number, { body: Sprite; ring: Sprite }>();
-  private pool: { body: Sprite; ring: Sprite }[] = [];
+  private sprites = new Map<number, { body: Sprite; ring: Sprite; tall?: number; sheet?: string }>();
+  private pool: { body: Sprite; ring: Sprite; tall?: number; sheet?: string }[] = [];
+  /** ASSAULT-SKILLS: the skills', ultimates', heals' and spells' effects (`fieldFx.ts`). */
+  readonly fx: FieldFx;
+  /** The last frame's world rectangle in view. */
+  private viewNow: WorldRect | null = null;
   private banners: Text[] = [];
   private fxLive: FxLive[] = [];
   private fxPool: Sprite[] = [];
@@ -368,6 +379,8 @@ export class FieldView {
   constructor(private b: Battle, private renderer: { generateTexture: (o: Container | { target: Container }) => Texture }) {
     this.unitLayer.sortableChildren = true;
     this.root.addChild(this.skirtLayer, this.chunkLayer, this.unitLayer, this.farLayer);
+    this.fx = new FieldFx(reducedMotion());
+    this.unitLayer.addChild(this.fx.root);
     this.farLayer.addChild(this.dots);
     // (the team rings under the fighters' feet: a ring, as the selection ring is drawn, blue for ours and red for theirs)
     const ring = (c: number) => {
@@ -962,7 +975,7 @@ export class FieldView {
   /** Draw the field for a camera looking at world (x, y) at `zoom`, on a screen `vw` x `vh` CSS pixels (Pixi's `app.screen`, not the
    *  canvas's device pixels). The camera's point is drawn halfway down `play`, the screen between the info panel and the buttons
    *  (`fieldCull.ts`). `simT` is the battle's time to draw (between ticks, for smooth steps). */
-  update(cam: { x: number; y: number; zoom: number }, vw: number, vh: number, simT: number, events: readonly FieldEvent[], play?: PlayArea): void {
+  update(cam: { x: number; y: number; zoom: number }, vw: number, vh: number, simT: number, events: readonly FieldEvent[], play?: PlayArea, battle: readonly BattleEvent[] = []): void {
     this.frame++;
     this.detail = detailFor(cam.zoom, this.detail);
     const focus = focusOnScreen(vw, vh, play);
@@ -976,6 +989,9 @@ export class FieldView {
     const view = viewRect(cam, vw, vh, focus);
     this.drawn = { chunks: 0, fighters: 0, props: 0, baked: 0, fx: 0, bakeMs: 0, campWorkers: 0, campSmoke: 0 };
     this.simT = simT;
+    // (ASSAULT-SKILLS: the frame's skills, ultimates, heals and spells, as the ordinary fight draws them; a simpler version at Mid, none at Far)
+    const mx = cam.x;
+    const my = cam.y;
     if (far) this.drawFar(simT, cam.zoom);
     else {
       this.drawSkirt(view);
@@ -987,10 +1003,33 @@ export class FieldView {
         this.life.update(simT, view, fires, this.detail === 'near');
       }
       this.drawFighters(view, simT, events);
+      this.viewNow = view;
       this.campLife?.update(simT, view, this.detail === 'near', reducedMotion());
       this.drawn.campWorkers = this.campLife?.drawn.workers ?? 0;
       this.drawn.campSmoke = this.campLife?.drawn.smoke ?? 0;
     }
+    this.fx.show(this.b, battle, fxLevel(this.detail), this.lookAt(mx, my), simT, performance.now());
+  }
+
+  /** What the effects ask of the field: a fighter's body as drawn this frame, a tile's spot, the middle of the view. */
+  private lookAt(mx: number, my: number): FieldLook {
+    return {
+      body: (id: number): FieldBody | null => {
+        const s = this.sprites.get(id);
+        const x = this.f.byId[id];
+        if (!s || !x || !s.body.visible || !s.tall || !s.sheet) return null;
+        return { x: s.body.x, y: s.body.y - 6, tall: s.tall, sx: s.body.scale.x, sy: s.body.scale.y, sheet: s.sheet, unit: x };
+      },
+      spot: (u: number, v: number) => {
+        const t = this.b.board.tiles[v * this.b.board.w + u];
+        return rawAt(u, v, t?.h ?? 0);
+      },
+      middle: () => [mx, my],
+      inView: (x: number, y: number) => {
+        const w = this.viewNow;
+        return !!w && x >= w.x0 && x <= w.x1 && y >= w.y0 && y <= w.y1;
+      },
+    };
   }
 
   /** The chunks the last frame wanted in view (keys cy * 100 + cx), for the bench and the screenshots' check. */
@@ -1471,7 +1510,10 @@ export class FieldView {
       }
       // (a fighter a skill called up has no place in the field's lists: its own kind's numbers and sheet)
       const info = f.info[x.id] ?? { def: UNITS[x.def], sheet: UNITS[x.def].sheet, role: 'leader' as const, group: -1, slot: 0 };
-      const [anim, ms] = this.animOf(x, simT);
+      const [anim0, ms] = this.animOf(x, simT);
+      // (ASSAULT-SKILLS: a fighter casting a skill gathers itself on its attack row's first frames, rising a little, and strikes as it goes off)
+      const casting = x.alive && !!x.cast && simT >= x.cast.at && simT < x.cast.at + x.cast.ms;
+      const anim: Anim = casting ? 'attack' : anim0;
       const frames = framesOf(info.sheet, anim);
       // (a sheet not loaded: nothing to draw for it)
       if (!frames?.length) {
@@ -1482,7 +1524,8 @@ export class FieldView {
       }
       s.body.visible = true;
       const per = anim === 'dead' ? 120 : anim === 'attack' ? Math.max(60, (x.swing?.ms ?? 500) / frames.length) : 110;
-      const k = anim === 'dead' ? Math.min(frames.length - 1, Math.floor(ms / per)) : Math.floor(ms / per) % frames.length;
+      const pose = casting ? castPose((simT - x.cast!.at) / x.cast!.ms, false) : null;
+      const k = pose ? Math.min(frames.length - 1, Math.floor(pose.share * frames.length)) : anim === 'dead' ? Math.min(frames.length - 1, Math.floor(ms / per)) : Math.floor(ms / per) % frames.length;
       s.body.texture = frames[k];
       // (heroes stand a head taller than their soldiers; the foes by their kind)
       // (a little larger at Mid, so the fighters still read when the camera is out)
@@ -1490,7 +1533,9 @@ export class FieldView {
       const scale = tall / figureOf(info.sheet);
       const flip = facesRight(x.facing) !== facesRightOf(info.sheet);
       s.body.scale.set(flip ? -scale : scale, scale);
-      s.body.position.set(px, py + 6);
+      s.body.position.set(px, py + 6 - (pose?.lift ?? 0));
+      s.tall = tall;
+      s.sheet = info.sheet;
       s.body.zIndex = depth + 5;
       s.body.tint = x.alive && x.hurtAt !== undefined && simT - x.hurtAt < 120 ? 0xff9a9a : 0xffffff;
       s.body.alpha = x.alive ? 1 : Math.max(0, 1 - (simT - (x.diedAt ?? 0)) / 1200);
@@ -1552,7 +1597,10 @@ export class FieldView {
           const a = this.placeOf(by, simT);
           const z = this.placeOf(to, simT);
           if (a[0] < view.x0 || a[0] > view.x1 || a[1] < view.y0 || a[1] > view.y1) continue;
-          this.addFx('arrow', simT, 300, [a[0], a[1] - 30], [z[0], z[1] - 26]);
+          // (ASSAULT-SKILLS: from the shooter's emit point, the bow hand or the staff's tip, as in the ordinary fight)
+          const sb = this.sprites.get(e.by);
+          const from: [number, number] = sb?.tall && sb.sheet ? FieldFx.shotFrom({ x: sb.body.x, y: sb.body.y - 6, tall: sb.tall, sx: sb.body.scale.x, sy: sb.body.scale.y, sheet: sb.sheet, unit: by }) : [a[0], a[1] - 30];
+          this.addFx('arrow', simT, 300, from, [z[0], z[1] - 26]);
         }
       }
     for (let i = this.fxLive.length - 1; i >= 0; i--) {
@@ -1664,6 +1712,7 @@ export class FieldView {
   }
 
   destroy(): void {
+    this.fx.destroy();
     for (const key of [...this.chunks.keys()]) this.dropChunk(key);
     this.root.destroy({ children: true });
   }

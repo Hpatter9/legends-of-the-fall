@@ -34,6 +34,8 @@ export interface FieldInfo {
   /** Its walk's next steps (board indexes) towards `pathTo`, kept from its last bounded walk so the next few steps need none. */
   path?: number[];
   pathTo?: number;
+  /** ASSAULT-AI: a leader's walks that found no step, running (a side-step breaks the jam at `JAM_FAILS`). */
+  fails?: number;
 }
 
 /** A group of fighters: one of our platoons (a hero and its soldiers) or one of the garrison's posts. */

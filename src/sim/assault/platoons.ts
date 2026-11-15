@@ -13,6 +13,7 @@
 
 import { DIRS, type At } from '../board';
 import type { Battle } from '../battle';
+import type { SpellId } from '../spells';
 import type { AssaultLogEntry, HoldState, PlatoonOrder, PlatoonState } from './holdTypes';
 import { TROOPS, type PlatoonFormation } from './troops';
 
@@ -98,6 +99,13 @@ export function standing(b: Battle, pl: PlatoonState): boolean {
   return pl.soldiers.some((s) => f.byId[s.id]?.alive);
 }
 
+/** ASSAULT-SKILLS: the king's spells cast on their own while the platoons are on Auto (`AssaultInput.spells`), none while the player plays. */
+export function autoSpellsOf(b: Battle, h: HoldState): void {
+  // (the save's own loadout, `assaultInput`: every name a spell's)
+  const spells = h.auto ? ((h.input.spells ?? []) as SpellId[]) : [];
+  b.autoSpells = spells.length ? [...spells] : undefined;
+}
+
 /** Apply the orders waiting (at the start of a tick), keeping each in the log. */
 export function applyQueued(b: Battle, h: HoldState): void {
   const due = h.queue.splice(0);
@@ -105,6 +113,7 @@ export function applyQueued(b: Battle, h: HoldState): void {
     h.log.push(e);
     if (e.kind === 'auto') {
       h.auto = e.on;
+      autoSpellsOf(b, h);
       // (Auto on hands every platoon back to its part in the plan)
       if (e.on) for (const pl of h.platoons) pl.manual = false;
     } else if (e.kind === 'retreat') h.outcome = 'withdrawn';
