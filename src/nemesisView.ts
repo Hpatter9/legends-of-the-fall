@@ -20,7 +20,7 @@ import { heroName } from './sim/heroNames';
 import type { Meta } from './sim/meta';
 import { musterLine, musterOpen, warchiefOf } from './sim/muster';
 import { fullName, MIGHT_MAX, payOf, rankWord, SEATS, type FallenNemesis, type Nemesis, type War, type WarEnd } from './sim/nemesis';
-import { TRAITS, weakWords } from './sim/nemesisTraits';
+import { STUDY, TRAITS, weakWords } from './sim/nemesisTraits';
 import { avengersOf, awayRuns, grudgesOn, trophyWords } from './sim/revenge';
 import { paintGearIcon } from './gearIcons';
 import { UNITS } from './sim/units';
@@ -438,6 +438,11 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void, save?: (
   };
   secrets('Traits', n.traits, (t) => ({ name: TRAITS[t]?.name ?? t, text: TRAITS[t]?.text ?? '' }), NEMESIS_TRAIT_ICON);
   secrets('Weaknesses', n.weak, (w) => weakWords(w, heroName));
+  // (NEMESIS-DEPTH, idea 5: the heroes it has studied, shown as soon as it learns them: the player saw it happen)
+  if (n.studied?.length) {
+    const well = sectionWell(menu.body, 'Studied', 'it knows these heroes’ tricks');
+    for (const k of n.studied) well.append(heroLine(k, `Takes ${STUDY.less * 100}% less from ${heroName(k)}, and shrugs off ${heroName(k)}’s first stun, freeze, fear or silence each fight. Send another hero, or its Dread, to beat it`));
+  }
   // (NEMESIS-DEPTH, idea 4: the hunt: where it will stand, its bounty; or what a hunt would cost)
   if (m.war && !m.war.end) {
     const hunted = m.war.hunt?.id === n.id;

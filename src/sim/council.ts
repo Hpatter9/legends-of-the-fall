@@ -17,7 +17,7 @@ import { isBoss } from './foes';
 import { heroName } from './heroNames';
 import type { Meta } from './meta';
 import { MUSTER_NEED, musterOpen, warchiefOf } from './muster';
-import { FATE_MEETINGS, fullName, HEADS_MAX, remembers, TROPHIES_MAX, homeArmy, MIGHT_MAX, nameFor, NEWS_MAX, noteNemesis, rankWord, remember, reveal, secretName, SEATS, type NemNote, type Nemesis, type NewsKind, type War, type WarNews } from './nemesis';
+import { FATE_MEETINGS, fullName, HEADS_MAX, remembers, study, TROPHIES_MAX, homeArmy, MIGHT_MAX, nameFor, NEWS_MAX, noteNemesis, rankWord, remember, reveal, secretName, SEATS, type NemNote, type Nemesis, type NewsKind, type War, type WarNews } from './nemesis';
 import type { NemesisTally } from './nemesisLog';
 import { TRAITS } from './nemesisTraits';
 import { mixSeed, Rng } from './rng';
@@ -536,6 +536,8 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
     if (!n || !u) continue;
     const old = fullName(n);
     if (remembers(n, tally?.foes[u.id], u, b, run.seed, wave)) lines.push(`${old} is now called ${fullName(n)}`);
+    const st = study(n, tally?.foes[u.id]);
+    if (st) lines.push(`${fullName(n)} has studied ${heroName(st)}: it takes less from ${heroName(st)}, and reads its first hold`);
   }
   // (phase 3: the Grudges, the humiliated, trophies brought home and Vengeance, `revenge.ts`; phase 4: a duel won pays double)
   const rev = settleRevenge(m, run, b, tally, note, was, cheated, avengers, wave, duel.won);

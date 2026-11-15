@@ -19,7 +19,7 @@ import { heroName } from './heroNames';
 import type { Meta } from './meta';
 import { NEMESIS_NAMES } from './nemesisNames';
 import { blankLog, type FoeLog, type NemesisTally } from './nemesisLog';
-import { addTrait, canAdd, CALLINGS, dreadOf, MAX_WEAK, secondWeakPool, TRAITS, type NemRank, type UnitNem } from './nemesisTraits';
+import { addTrait, canAdd, CALLINGS, dreadOf, MAX_WEAK, secondWeakPool, STUDY, TRAITS, type NemRank, type UnitNem } from './nemesisTraits';
 import { mixSeed, Rng } from './rng';
 import type { Run } from './run';
 import { TIERS } from './tiers';
@@ -128,6 +128,8 @@ export interface Nemesis {
   temper?: Temper;
   /** Idea 4 (`hunt.ts`): it outlived a hunt; its meetings then, so it taunts about it at the next. */
   huntLived?: number;
+  /** Idea 5: the heroes it has studied, newest first (`STUDY.max`): the hero that hurt it most in a meeting it lived through. */
+  studied?: string[];
   /** The epithets it was once called, newest first (`WAS_MAX`), and the rank at which its epithet last grew. */
   was?: string[];
   epiAt?: NemRank;
@@ -317,6 +319,8 @@ export interface NemSnap {
   /** Idea 4: it is the quarry of a hunt this run (on guard: a shield of a tenth of its health); it outlived the last hunt (its meetings then). */
   hunted?: true;
   huntLived?: number;
+  /** Idea 5: the heroes it has studied. */
+  studied?: string[];
   /** Phase 4 (`duel.ts`): its challenge was refused this run, so it is Mocking: +5% attack for the rest of the run. */
   mocking?: true;
 }
@@ -377,9 +381,9 @@ export function planNemeses(war: War | undefined, run: Run): RunNemesis | undefi
 }
 
 /** NEMESIS-DEPTH: what the fight knows of its temperament, and the heroes it remembers a fight with. */
-function nemDepth(s: NemSnap): Pick<UnitNem, 'temper' | 'knows' | 'hunted'> {
+function nemDepth(s: NemSnap): Pick<UnitNem, 'temper' | 'knows' | 'hunted' | 'studied'> {
   const knows = [...new Set((s.moments ?? []).map((x) => x.hero).filter((k): k is string => !!k))];
-  return { ...(s.temper ? { temper: s.temper } : {}), ...(s.temper === 'veteran' && knows.length ? { knows } : {}), ...(s.hunted ? { hunted: true as const } : {}) };
+  return { ...(s.temper ? { temper: s.temper } : {}), ...(s.temper === 'veteran' && knows.length ? { knows } : {}), ...(s.hunted ? { hunted: true as const } : {}), ...(s.studied?.length ? { studied: [...s.studied] } : {}) };
 }
 
 /** One nemesis put into a wave: the band's place it takes, what the fight knows of it, and its hp and attack on top of the wave's own. */
@@ -448,7 +452,7 @@ export interface NemNote {
   grew: { id: number; name: string; epithet: string; might: number }[];
   /** NEMESIS-DEPTH: the nemeses who feasted on their victories instead of growing (the death-spiral guard). */
   feasted?: { id: number; name: string; epithet: string }[];
-  /** NEMESIS-DEPTH: an old foe's epithet grown from the fight ("Gash, Pincushion is now called Gash, Who Would Not Die"). */
+  /** NEMESIS-DEPTH: an old foe's epithet grown from the fight ("Gash, Pincushion is now called Gash, Who Would Not Die"), and (idea 5) a hero it studied. */
   renamed?: string[];
   slain: { id: number; name: string; epithet: string; crowns: number; by: string; rank: NemRank; might: number; base: string; army: string }[];
   /** The nemeses who stood in the fight and lived while the heroes lost (their underlings' loyalty rises, `council.ts`). */
@@ -642,6 +646,9 @@ function settle(war: War, m: Meta, run: Run, b: Battle, tally: NemesisTally, won
     // (NEMESIS-DEPTH: the fight's striking moments, and an old foe's epithet grown from the newest)
     const was = fullName(n);
     if (remembers(n, f, u, b, run.seed, wave)) (note.renamed ??= []).push(`${was} is now called ${fullName(n)}`);
+    // (idea 5: it studies the hero that hurt it most)
+    const st = study(n, f);
+    if (st) (note.renamed ??= []).push(`${fullName(n)} has studied ${heroName(st)}: it takes less from ${heroName(st)}, and reads its first hold`);
     const deeds: Deed[] = u.fled ? ['escaped'] : f ? deedsOf(f, u, b, won) : !won ? ['escaped'] : [];
     if (!deeds.length) continue;
     for (const d of deeds) remember(n, memoryLine(d, f ?? blankLog(u.def), b, n.army, tier, wave));
@@ -745,6 +752,22 @@ export function remembers(n: Nemesis, f: FoeLog | undefined, u: Unit, b: Battle,
   return e;
 }
 
+/**
+ * NEMESIS-DEPTH, idea 5: a nemesis that lived through a meeting studies the hero that dealt it the most (never the hero it dreads: it fears
+ * that one too much to study it), `STUDY.max` at most, the oldest forgotten. Returns the hero newly studied, if one was.
+ */
+export function study(n: Nemesis, f: FoeLog | undefined): string | undefined {
+  const dread = dreadOf(n.weak);
+  const top = Object.entries(f?.by ?? {})
+    .filter(([k]) => k !== dread && !!UNITS[k])
+    .sort((a, c) => c[1] - a[1] || (a[0] < c[0] ? -1 : 1))[0]?.[0];
+  if (!top || n.studied?.[0] === top) return undefined;
+  const fresh = !n.studied?.includes(top);
+  n.studied = [top, ...(n.studied ?? []).filter((k) => k !== top)].slice(0, STUDY.max);
+  if (fresh) remember(n, `Studied ${heroName(top)}`);
+  return fresh ? top : undefined;
+}
+
 /** The hero kind a foe maimed: the one it dealt the most. */
 function maimedKind(f: FoeLog, b: Battle): string | undefined {
   const top = Object.entries(f.dealt).sort((a, c) => c[1] - a[1])[0]?.[0];
@@ -762,7 +785,7 @@ function readDepth(n: Partial<Nemesis>): Partial<Nemesis> {
   const moments = (Array.isArray(n.moments) ? n.moments : []).map(readMoment).filter((x): x is NemMoment => !!x).slice(0, MOMENTS_MAX);
   const was = (Array.isArray(n.was) ? n.was : []).filter((x): x is string => !!str(x)).slice(0, WAS_MAX);
   const temper = readTemper(n.temper);
-  return { ...(moments.length ? { moments } : {}), ...(was.length ? { was } : {}), ...(RANKS.includes(n.epiAt as NemRank) ? { epiAt: n.epiAt } : {}), ...(temper ? { temper } : {}), ...(typeof n.huntLived === 'number' && Number.isFinite(n.huntLived) ? { huntLived: int(n.huntLived, 0, 1e6, 0) } : {}) };
+  return { ...(moments.length ? { moments } : {}), ...(was.length ? { was } : {}), ...(RANKS.includes(n.epiAt as NemRank) ? { epiAt: n.epiAt } : {}), ...(temper ? { temper } : {}), ...(typeof n.huntLived === 'number' && Number.isFinite(n.huntLived) ? { huntLived: int(n.huntLived, 0, 1e6, 0) } : {}), ...(kinds(n.studied, STUDY.max).length ? { studied: kinds(n.studied, STUDY.max) } : {}) };
 }
 
 /** A saved trophy, if it is one (a known hero kind, a slot, a piece's id and its look). */

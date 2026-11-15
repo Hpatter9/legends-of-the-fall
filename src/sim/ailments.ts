@@ -10,7 +10,7 @@
 //
 // Pure rules: no Pixi, no DOM, no randomness of the fight's stream (a chance, such as a skeleton's poison, hashes the moment).
 
-import { nemHold, nemImmune } from './nemesisTraits';
+import { nemHold, nemImmune, nemReads } from './nemesisTraits';
 import { atkOf, hurt, defOf, tileOf, type Battle, type BattleEvent, type Unit } from './battle';
 import { isBoss } from './foes';
 import { mendUnit, type Dot } from './abilities';
@@ -197,6 +197,8 @@ export function gate(b: Battle, to: Unit, kind: AilmentKey, ms: number, by?: Uni
   // (the Nemesis War: a nemesis's earned immunities, and an Iron Skull's shorter stuns, `nemesisTraits.ts`)
   if (to.nem) {
     if (nemImmune(to, kind)) return immune();
+    // (NEMESIS-DEPTH, idea 5: it reads a studied hero's first hold of the fight)
+    if (nemReads(to, by ?? ailCtx.by, kind)) return immune();
     ms = nemHold(to, kind, ms);
   }
   if (r.half.has(kind)) ms *= 0.5;

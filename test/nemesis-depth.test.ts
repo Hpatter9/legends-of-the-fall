@@ -11,13 +11,14 @@ import { decorate, payTimes, planRun } from '../src/sim/revenge';
 import { duelOffer, DUELLIST_MARK, refuseDuel, settleDuelRun } from '../src/sim/duel';
 
 import { startedMeta, type Meta } from '../src/sim/meta';
-import { GUARD, LIEUTENANT, newWar, planNemeses, readWar, remembers, snapOf, STRANGER_CHANCE, type NemSnap, type Nemesis, type War } from '../src/sim/nemesis';
+import { GUARD, LIEUTENANT, newWar, planNemeses, readWar, remembers, snapOf, study, STRANGER_CHANCE, type NemSnap, type Nemesis, type War } from '../src/sim/nemesis';
 import { blankLog, startNemesisTally, tallyNemesis, type NemesisTally } from '../src/sim/nemesisLog';
 import { EPITHETS, keepMoment, MOMENT_KINDS, momentLine, momentsOf, MOMENTS_MAX, type NemMoment } from '../src/sim/nemesisMoments';
 import { MOMENT_TAUNTS, VOICES } from '../src/sim/nemesisLines';
 import { tauntFor, triggerOf } from '../src/tauntCutRules';
 import { drawTemper, TEMPER_SALT, TEMPER_TAGS, TEMPERS, type Temper } from '../src/sim/nemesisTemper';
-import { fleeOdds, nemHurt, nemPrey, nemStart, secondWeakPool } from '../src/sim/nemesisTraits';
+import { fleeOdds, nemHurt, nemPrey, nemReads, nemStart, secondWeakPool } from '../src/sim/nemesisTraits';
+import { gate } from '../src/sim/ailments';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { challengeOf } from '../src/sim/duel';
 import { bountyOf, cannotHunt, endHunt, HUNT, HUNT_GUARD, huntAhead, huntWave, lapseHunt, setHunt } from '../src/sim/hunt';
@@ -611,4 +612,46 @@ test('a duel lost: the nemesis takes a trophy from the champion it bested', () =
   const note = noteWar(m, armyRun(5, 'undead'), b, startNemesisTally(), false, 3);
   assert.deepEqual(n.trophies?.map((t) => t.item), [501]);
   assert.ok(note.council?.some((l) => /takes .*shield/.test(l)), JSON.stringify(note.council));
+});
+
+// ---- Idea 5: studied counters -----------------------------------------------------------------------------------------------------
+
+test('a nemesis that lives studies the hero that hurt it most, never its Dread, two at most; the save keeps them', () => {
+  const m = warMeta(2);
+  const n = member(m.war!, 'lieutenant', 2, { weak: ['dread:knight'] });
+  const f = blankLog('skeleton');
+  f.by = { knight: 900, wizard: 400, cleric: 100 };
+  assert.equal(study(n, f), 'wizard', 'not the Dread, though it hurt most');
+  assert.equal(study(n, f), undefined, 'already studied');
+  f.by = { cleric: 500 };
+  assert.equal(study(n, f), 'cleric');
+  f.by = { archer: 500 };
+  study(n, f);
+  assert.deepEqual(n.studied, ['archer', 'cleric']);
+  assert.deepEqual(readWar(JSON.parse(JSON.stringify(m.war)))!.members.find((x) => x.id === n.id)!.studied, ['archer', 'cleric']);
+});
+
+test('in the fight: 15% less from a studied hero, and its first hard hold of the fight is read and shrugged off', () => {
+  const b = fightOf(['skeleton']);
+  const k = hero(b, 'knight');
+  const w = hero(b, 'wizard');
+  const u = b.units.find((x) => x.side === 'foe')!;
+  u.nem = { id: 1, name: 'S', rank: 'lieutenant', traits: [], weak: [], studied: ['knight'] };
+  assert.equal(nemHurt(b, k, u, k, 100, 'blow', false, []), 85);
+  assert.equal(nemHurt(b, w, u, w, 100, 'blow', false, []), 100);
+  assert.equal(gate(b, u, 'stun', 1000, k), 0, 'the first stun from the knight is read');
+  assert.ok(gate(b, u, 'stun', 1000, k) > 0, 'the second lands');
+  assert.ok(gate(b, u, 'stun', 1000, w) > 0, 'another hero’s lands');
+  assert.ok(!nemReads(u, k, 'burn'), 'only hard holds');
+  u.nem = undefined;
+});
+
+test('a nemesis that has studied a hero on the board taunts about it, in every voice', () => {
+  const s: NemSnap = { id: 4, base: 'skeleton', name: 'S', epithet: '', rank: 'lieutenant', might: 2, scars: 0, traits: [], weak: [], studied: ['knight'], met: 3 };
+  for (const v of VOICES) {
+    const t = tauntFor({ ...s, army: v }, ['knight'], 1);
+    assert.equal(t.trigger, 'studied');
+    assert.ok(!/[{}]/.test(t.line), t.line);
+  }
+  assert.notEqual(triggerOf(s, ['wizard']).trigger, 'studied');
 });

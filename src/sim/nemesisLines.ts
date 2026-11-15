@@ -301,3 +301,17 @@ export const HUNT_TAUNTS: Readonly<Record<HuntTrigger, Readonly<Record<Voice, re
     golems: ['Previous hunt: failed. Probability of success: lower.', 'Hunt record retrieved: you lost. Repeating?'],
   },
 };
+
+/** NEMESIS-DEPTH, idea 5: a nemesis that has studied a hero on the board says so (`{hero}`, `{kind}`), two lines a voice. Reached for after a
+ *  remembered moment about a hero on the board, before a humiliation. */
+export const STUDY_TAUNTS: Readonly<Record<Voice, readonly string[]>> = {
+  orcs: ['I been watching you, {hero}. I know your tricks now.', 'Same moves as last time, {hero}? I am ready for them.'],
+  undead: ['I have studied you in the dark, {hero}. Every motion.', 'You repeat yourself, {hero}. The dead notice such things.'],
+  beasts: ['I know how you strike, {hero}. I know where to step.', 'Your scent, your swing, your tricks. I learned them all, {hero}.'],
+  wildwood: ['I watched you from the boughs, {hero}. I know your every step.', 'The wood has learned your rhythm, {hero}. Dance a new one.'],
+  labyrinth: ['I have mapped your every move, {hero}, as I map my halls.', 'A {kind} is a puzzle, {hero}, and I have solved you.'],
+  ogres: ['Me watch you lots, {hero}! Me know your hitty thing!', 'You do same thing every time, {hero}. Me remember. Me clever.'],
+  infernal: ['I have studied you, {hero}, as one studies a candle before snuffing it.', 'Your tricks are known to me, {hero}. Show me something new.'],
+  yokai: ['What knows your next move before you do, {hero}?', 'I have watched you in a hundred mirrors, {hero}.'],
+  golems: ['Combat pattern {hero}: recorded. Countermeasures: active.', 'Analysis of {hero}: complete. Predictability: high.'],
+};
