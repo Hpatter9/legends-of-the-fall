@@ -7,6 +7,7 @@
 
 import { fullName, rankWord, type NemSnap, type NemTrophy } from './sim/nemesis';
 import { MOMENT_TAUNTS, REPLIES, TAUNTS, TRIGGERS, VOICES, type TauntTrigger, type Voice } from './sim/nemesisLines';
+import { TEMPER_TAGS } from './sim/nemesisTemper';
 import { landWord, MOMENT_KINDS, type MomentKind, type NemMoment } from './sim/nemesisMoments';
 import { dreadOf, type NemRank } from './sim/nemesisTraits';
 import { heroName } from './sim/heroNames';
@@ -139,13 +140,21 @@ export function tauntFor(s: NemSnap, field: readonly string[], seed: number): Ta
     might: s.might,
     scars: s.scars,
     trigger: pick.trigger,
-    line: fill(tmpl, words),
+    line: withTag(fill(tmpl, words), s),
     ...(pick.hero ? { hero: pick.hero } : {}),
     ...(answer ? { reply: fill(answer[!pick.hero || PLAIN.includes(pick.trigger as TauntTrigger) ? 0 : 1], { name: s.name }) } : {}),
     ...(pick.trophy ? { trophy: pick.trophy } : {}),
     first: !s.seen && (s.met ?? 0) <= 1,
-    vain: s.weak.includes('vain'),
+    vain: s.weak.includes('vain') || s.temper === 'glory',
   };
+}
+
+/** NEMESIS-DEPTH: a temperament's tag closes the taunt every other meeting ("… But I am in no hurry."), turning with its meetings. */
+function withTag(line: string, s: Pick<NemSnap, 'temper' | 'met' | 'id'>): string {
+  const met = s.met ?? 0;
+  if (!s.temper || met % 2 === 0) return line;
+  const tags = TEMPER_TAGS[s.temper];
+  return `${line} ${tags[(Math.floor(met / 2) + hash(s.id)) % tags.length]}`;
 }
 
 /** How long a cut-in plays (0: not at all): off plays none; short the name plate only, unless it is a first meeting or the nemesis is Vain. */

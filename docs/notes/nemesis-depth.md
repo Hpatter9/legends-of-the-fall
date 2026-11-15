@@ -407,3 +407,51 @@ member's taunt as it would open its next meeting, compared with its taunt before
 
 The bot's saves never cast the king's spells or call an Eidolon, and seldom burn a foe for 15% of its health, so those three moments do not
 show in the simulator.
+
+## Idea 3, built: temperaments
+
+Every nemesis born from now on, named by a fight or recruited, has one of eight temperaments (`src/sim/nemesisTemper.ts`). It is drawn
+at its birth from its own stream (`TEMPER_SALT`), weighted by what it did and what it is:
+- a boss leans Glory-hound and is never a Coward;
+- a slayer leans Brute, a maimer Schemer, one that escaped Coward or Trickster;
+- a Recruit leans Schemer and is never an Old Hand.
+
+A member from before has none, and plays exactly as it did. **Settled here:** old members are not given a temperament on load, so an old
+save's Council plays exactly as it did; the Council's newcomers bring temperaments within a week or so of play.
+
+| Temperament | In the fight | On the Council | Duels, fleeing |
+|---|---|---|---|
+| Brute | +8% to its blows and to the blows it takes | feuds weigh x2 | never runs |
+| Schemer | goes for the weakest hero in reach | betrayals x3; its loyalty wears 2 a turn | never challenges; asked at 30% health, twice its rank's chance to run |
+| Glory-hound | goes for the strongest hero in reach | Trials x2 | always challenges, taunts in full, +10% taken in a duel (Vain's whole line); a Glory-hound at the Iron Gate calls a champion out as a Vain captain does |
+| Coward | | deserts after two losses in a row (from three) | never challenges; runs at 30% for certain (Craven's line) |
+| Zealot | +10% to its blows under half health | never betrays; its loyalty never falls below 50 | never runs |
+| Oathbound | +10% more to the hero it is Vengeful against | blood-oaths x3 | |
+| Trickster | starts hasted for 2 s | betrayals x2; its loyalty wears 1 a turn | asked at 25% health, runs half the time |
+| Old Hand | 10% less from every hero it remembers a fight with (its moments, Idea 2) | feasts x2 | |
+
+- **The Council** (`eventWeight`, `council.ts`): an event weighs its design's weight times the most that any temperament among those who
+  could act in it seeks it. A Council with no temperaments weighs exactly as it did, so its draws are unchanged.
+- **Vain and Craven** are no longer drawn as a second weakness for a nemesis with a temperament (`secondWeakPool`). The Glory-hound
+  and the Coward are those now. An old save's Vain and Craven keep theirs.
+- **Its voice** (`TEMPER_TAGS`): a short tag of its temperament closes its taunt every other meeting ("… But I am in no hurry.", "… Catch
+  me first."), four to each. **Settled here:** the design's 216 phrases by army and temperament became 32 tags written to fit any
+  army's voice. Each army's voice still carries the line, and the tag gives the character.
+- **On the board and the card**: a temperament's symbol on the seat's lower corner and in its name for a screen reader; a **Temperament**
+  section on the card with its symbol, its name and its words. The symbols are stand-ins (`src/temperArt.ts`) until the eight painted
+  ones land; their prompt is `docs/notes/nemesis-depth-art-prompts.md`.
+- **Not done:** the Assault's field movement does not read a temperament ("a Schemer's post holds back"). A temperament reaches the
+  Assault only through the fight's own hooks (its blows, whom it strikes, its flight) and the Iron Gate's duel.
+- Every fight hook is behind `Unit.nem` (`temper` and `knows` on it), so `nemesis-regression`, `stand-regression` and
+  `ailments-identical` hold.
+
+### Measured
+
+| | Idea 1 | Ideas 1 to 3 |
+|---|---|---|
+| Might mean, days 53 to 67 | 1.7 | **2.2** (3.0 by day 119) |
+| The Council's own seat changes a week | 5.5 | 5.7 |
+| Slain by the heroes, meetings | 85 after 3.0 | 86 after 2.9 |
+| Duels | 55, 96% won | 52, 94% won |
+| Temperaments on the Council at the end | | Brute 3, Schemer 2, Trickster 2, Glory-hound 2, Coward 2, Oathbound 1, Zealot 1 |
+| Taunts by trigger | | thrown 86, slew 76, skill 59, humiliated 36, dread 21, brink 7; still 0 of 101 repeated |

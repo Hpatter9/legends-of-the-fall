@@ -9,14 +9,19 @@ import { place, startBattle, type Battle, type BattleEvent, type Unit } from '..
 import { armyRun, recruit } from '../src/sim/run';
 import { decorate } from '../src/sim/revenge';
 import { duelOffer } from '../src/sim/duel';
+
 import { startedMeta, type Meta } from '../src/sim/meta';
 import { GUARD, LIEUTENANT, newWar, planNemeses, readWar, remembers, snapOf, STRANGER_CHANCE, type NemSnap, type Nemesis, type War } from '../src/sim/nemesis';
 import { blankLog, startNemesisTally, tallyNemesis, type NemesisTally } from '../src/sim/nemesisLog';
 import { EPITHETS, keepMoment, MOMENT_KINDS, momentLine, momentsOf, MOMENTS_MAX, type NemMoment } from '../src/sim/nemesisMoments';
 import { MOMENT_TAUNTS, VOICES } from '../src/sim/nemesisLines';
 import { tauntFor, triggerOf } from '../src/tauntCutRules';
+import { drawTemper, TEMPER_SALT, TEMPER_TAGS, TEMPERS, type Temper } from '../src/sim/nemesisTemper';
+import { fleeOdds, nemHurt, nemPrey, nemStart, secondWeakPool } from '../src/sim/nemesisTraits';
+import { mixSeed, Rng } from '../src/sim/rng';
+import { challengeOf } from '../src/sim/duel';
 import { heroName } from '../src/sim/heroNames';
-import { CHEAT_DEATH, EVENT_WEIGHT, FATE_MEETINGS, noteWar, swear, takeTurn } from '../src/sim/council';
+import { CHEAT_DEATH, EVENT_WEIGHT, eventOpen, eventWeight, FATE_MEETINGS, happen, noteWar, swear, takeTurn } from '../src/sim/council';
 import { CHIEF_TENURE, MUSTER_NEED, musterLine, musterOpen, startMuster, tenureLeft, warchiefOf } from '../src/sim/muster';
 
 CHEAT_DEATH.on = true;
@@ -308,4 +313,136 @@ test('every moment’s taunt fills in every voice, four lines each; one about a 
 test('a moment reads as a line of history on the card', () => {
   assert.equal(momentLine({ k: 'skill', hero: 'knight', what: 'Shield Bash', land: 'highlands', wave: 9 }), `Took ${heroName('knight')}’s Shield Bash in the highlands, wave 9, and lived`);
   assert.equal(momentLine({ k: 'element', what: 'fire', land: 'volcano', wave: 2 }), 'Scarred by fire in the ashlands, wave 2');
+});
+
+// ---- Idea 3: temperaments -----------------------------------------------------------------------------------------------------
+
+test('a temperament is drawn from its own stream: the same every time, all eight come up, a boss is never a Coward', () => {
+  const seen = new Set<Temper>();
+  for (let s = 0; s < 400; s++) {
+    const a = drawTemper(new Rng(mixSeed(s, TEMPER_SALT)), 'escort', 'slew');
+    assert.equal(a, drawTemper(new Rng(mixSeed(s, TEMPER_SALT)), 'escort', 'slew'));
+    seen.add(a);
+    assert.notEqual(drawTemper(new Rng(mixSeed(s, 9)), 'boss', 'escaped'), 'coward');
+    assert.notEqual(drawTemper(new Rng(mixSeed(s, 10)), 'recruit'), 'veteran');
+  }
+  assert.equal(seen.size, TEMPERS.length);
+});
+
+test('a Recruit comes with a temperament, the save keeps it, and a member from before has none', () => {
+  const m = warMeta(8);
+  const war = m.war!;
+  for (let i = 0; i < 4; i++) member(war, 'captain', 4);
+  takeTurn(war, m);
+  const recruits = war.members.filter((n) => n.memory.some((l) => l.startsWith('Recruited')));
+  assert.ok(recruits.length > 0);
+  for (const n of recruits) assert.ok(TEMPERS.includes(n.temper!), `${n.name}: ${n.temper}`);
+  const back = readWar(JSON.parse(JSON.stringify(war)))!;
+  assert.deepEqual(back.members.map((n) => n.temper), war.members.map((n) => n.temper));
+  const old = readWar({ ...JSON.parse(JSON.stringify(war)), members: [{ ...JSON.parse(JSON.stringify(recruits[0])), temper: 'nonsense' }] })!;
+  assert.equal(old.members[0].temper, undefined);
+});
+
+test('in the fight: a Brute hits and is hit harder, a Zealot harder under half, an Oathbound’s vengeance deeper, an Old Hand takes less from a hero it remembers', () => {
+  const b = fightOf(['skeleton']);
+  const k = hero(b, 'knight');
+  const u = b.units.find((x) => x.side === 'foe')!;
+  const base = { id: 1, name: 'T', rank: 'lieutenant' as const, traits: [], weak: [] };
+  const hurtBy = (n: Unit['nem'], dmg = 100) => {
+    u.nem = n;
+    return nemHurt(b, u, k, u, dmg, 'blow', false, []);
+  };
+  const hurtTo = (n: Unit['nem'], dmg = 100) => {
+    u.nem = n;
+    return nemHurt(b, k, u, k, dmg, 'blow', false, []);
+  };
+  assert.equal(hurtBy({ ...base }), 100);
+  assert.equal(hurtBy({ ...base, temper: 'brute' }), 108);
+  assert.equal(hurtTo({ ...base, temper: 'brute' }), 108);
+  u.hp = u.maxHp;
+  assert.equal(hurtBy({ ...base, temper: 'zealot' }), 100);
+  u.hp = u.maxHp * 0.4;
+  assert.equal(hurtBy({ ...base, temper: 'zealot' }), 110);
+  assert.equal(hurtBy({ ...base, veng: 'knight' }), 120);
+  assert.equal(hurtBy({ ...base, veng: 'knight', temper: 'oathbound' }), 130);
+  assert.equal(hurtTo({ ...base, temper: 'veteran', knows: ['knight'] }), 90);
+  assert.equal(hurtTo({ ...base, temper: 'veteran', knows: ['wizard'] }), 100);
+  u.nem = undefined;
+});
+
+test('whom it goes for and when it runs: a Schemer the weakest, a Glory-hound the strongest; Brutes and Zealots never run, a Coward at 30%', () => {
+  const b = fightOf(['skeleton']);
+  const u = b.units.find((x) => x.side === 'foe')!;
+  const heroes = b.units.filter((x) => x.side === 'hero');
+  heroes[0].hp = 5;
+  const base = { id: 1, name: 'T', rank: 'lieutenant' as const, traits: [], weak: [] };
+  u.nem = { ...base, temper: 'schemer' };
+  assert.equal(nemPrey(u, heroes)[0], heroes[0]);
+  u.nem = { ...base, temper: 'glory' };
+  assert.equal(nemPrey(u, heroes)[0].maxHp, Math.max(...heroes.map((h) => h.maxHp)));
+  assert.equal(fleeOdds({ ...base, temper: 'brute' }).chance, 0);
+  assert.equal(fleeOdds({ ...base, temper: 'zealot' }).chance, 0);
+  assert.deepEqual(fleeOdds({ ...base, temper: 'coward' }), { at: 0.3, chance: 1 });
+  assert.deepEqual(fleeOdds({ ...base, temper: 'schemer' }), { at: 0.3, chance: 0.6 });
+  assert.deepEqual(fleeOdds({ ...base, temper: 'trickster' }), { at: 0.25, chance: 0.5 });
+  assert.deepEqual(fleeOdds({ ...base }), fleeOdds({ ...base, temper: 'glory' }));
+  assert.equal(fleeOdds({ ...base, rank: 'warchief', temper: 'coward' }).chance, 0, 'a warchief never runs');
+  u.nem = { ...base, temper: 'trickster' };
+  u.hasteUntil = 0;
+  nemStart(u, undefined);
+  assert.equal(u.hasteUntil, 2000);
+  // (a nemesis with a temperament is never drawn Craven or Vain: those are the Coward and the Glory-hound)
+  assert.ok(secondWeakPool([]).includes('vain'));
+  assert.ok(!secondWeakPool([], 'brute').includes('vain') && !secondWeakPool([], 'brute').includes('craven'));
+  u.nem = undefined;
+});
+
+test('on the Council: an event weighs more with a temperament that seeks it; a Zealot never betrays and holds at 50; a Schemer’s loyalty wears; a Coward deserts sooner', () => {
+  const m = warMeta(2);
+  const war = m.war!;
+  const c1 = member(war, 'captain', 4);
+  member(war, 'captain', 4);
+  const lt = member(war, 'lieutenant', 4, { loyalty: 10 });
+  swear(war);
+  assert.equal(eventWeight(war, 'betrayal'), EVENT_WEIGHT.betrayal);
+  lt.temper = 'schemer';
+  assert.equal(eventWeight(war, 'betrayal'), EVENT_WEIGHT.betrayal * 3);
+  lt.temper = 'zealot';
+  assert.ok(!eventOpen(war, 'betrayal'), 'a Zealot never betrays');
+  c1.temper = 'brute';
+  assert.equal(eventWeight(war, 'feud'), EVENT_WEIGHT.feud * 2);
+  // (a Zealot's loyalty holds at 50; a Schemer's wears a turn)
+  const z = member(war, 'lieutenant', 1, { loyalty: 55, temper: 'zealot' });
+  const sc = member(war, 'lieutenant', 1, { loyalty: 60, temper: 'schemer' });
+  swear(war);
+  for (let i = 0; i < 3; i++) happen(war, m, new Rng(i), 'feast');
+  const before = sc.loyalty;
+  takeTurn(war, m);
+  if (war.members.includes(sc) && sc.sworn !== undefined) assert.ok(sc.loyalty <= before - 2 || sc.loyalty < 100);
+  assert.ok(z.loyalty >= 50);
+  // (a Coward deserts after two losses in a row)
+  const cw = member(war, 'lieutenant', 1, { streak: -2, temper: 'coward' });
+  assert.ok(eventOpen(war, 'desertion'));
+  cw.temper = 'brute';
+  assert.ok(!eventOpen(war, 'desertion'));
+});
+
+test('duels: a Glory-hound always calls a champion out and takes a tenth more in one; a Schemer or a Coward never calls one out', () => {
+  const squad = [{ id: 1, kind: 'knight' }];
+  const s: NemSnap = { id: 3, base: 'skeleton', name: 'G', epithet: '', rank: 'lieutenant', might: 3, scars: 0, traits: [], weak: [], met: 3 };
+  assert.equal(challengeOf(s, squad), undefined);
+  assert.equal(challengeOf({ ...s, temper: 'glory' }, squad)?.why, 'vain');
+  assert.equal(challengeOf({ ...s, weak: ['dread:knight'], temper: 'schemer' }, squad), undefined);
+  assert.equal(challengeOf({ ...s, weak: ['dread:knight'], temper: 'coward' }, squad), undefined);
+  assert.equal(challengeOf({ ...s, weak: ['dread:knight'], temper: 'zealot' }, squad)?.why, 'dread');
+  assert.ok(tauntFor({ ...s, temper: 'glory' }, [], 1).vain, 'its cut-in plays in full');
+});
+
+test('its voice: a temperament’s tag closes the taunt every other meeting', () => {
+  const s: NemSnap = { id: 3, base: 'skeleton', name: 'G', epithet: '', rank: 'lieutenant', might: 3, scars: 0, traits: [], weak: [], army: 'orcs', temper: 'schemer' };
+  const even = tauntFor({ ...s, met: 2 }, [], 1).line;
+  const odd = tauntFor({ ...s, met: 3 }, [], 1).line;
+  assert.ok(!TEMPER_TAGS.schemer.some((t) => even.endsWith(t)));
+  assert.ok(TEMPER_TAGS.schemer.some((t) => odd.endsWith(` ${t}`)), odd);
+  assert.ok(!/[{}]/.test(odd));
 });

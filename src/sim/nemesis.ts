@@ -26,6 +26,7 @@ import { TIERS } from './tiers';
 import { UNITS } from './units';
 import { callingOf } from './weakness';
 import { fieldedHero } from './fightStats';
+import { drawTemper, readTemper, TEMPER_SALT, type Temper } from './nemesisTemper';
 import { epithetFrom, keepMoment, mayGrowEpithet, momentsOf, MOMENTS_MAX, readMoment, WAS_MAX, type NemMoment } from './nemesisMoments';
 
 /** The side streams: births and fates at settle, and where the nemeses stand in a run. */
@@ -122,6 +123,8 @@ export interface Nemesis {
   // (NEMESIS-DEPTH, `nemesisMoments.ts`: remembered fights)
   /** The striking moments of the fights it lived through, newest first (`MOMENTS_MAX`). */
   moments?: NemMoment[];
+  /** Idea 3: its temperament (`nemesisTemper.ts`; none for a member from before). */
+  temper?: Temper;
   /** The epithets it was once called, newest first (`WAS_MAX`), and the rank at which its epithet last grew. */
   was?: string[];
   epiAt?: NemRank;
@@ -300,8 +303,9 @@ export interface NemSnap {
   fled?: number;
   met?: number;
   seen?: true;
-  /** NEMESIS-DEPTH: its remembered moments (its taunts read them first). */
+  /** NEMESIS-DEPTH: its remembered moments (its taunts read them first), and its temperament. */
   moments?: NemMoment[];
+  temper?: Temper;
   /** Phase 4 (`duel.ts`): its challenge was refused this run, so it is Mocking: +5% attack for the rest of the run. */
   mocking?: true;
 }
@@ -312,7 +316,7 @@ export interface RunNemesis {
   waves: Record<string, number[]>;
 }
 
-export const snapOf = (n: Nemesis): NemSnap => ({ id: n.id, base: n.base, name: n.name, epithet: n.epithet, rank: n.rank, ...(n.boss ? { boss: true as const } : {}), might: n.might, scars: n.scars, traits: [...n.traits], weak: [...n.weak], ...(n.vengeful ? { vengeful: n.vengeful } : {}) });
+export const snapOf = (n: Nemesis): NemSnap => ({ id: n.id, base: n.base, name: n.name, epithet: n.epithet, rank: n.rank, ...(n.boss ? { boss: true as const } : {}), might: n.might, scars: n.scars, traits: [...n.traits], weak: [...n.weak], ...(n.vengeful ? { vengeful: n.vengeful } : {}), ...(n.temper ? { temper: n.temper } : {}) });
 
 /**
  * Where the War's members of a run's army stand in it, fixed as the run begins: a boss nemesis at its own boss's wave; a captain born an
@@ -355,6 +359,12 @@ export function planNemeses(war: War | undefined, run: Run): RunNemesis | undefi
   const ids = new Set(Object.values(waves).flat());
   if (!ids.size) return undefined;
   return { members: mine.filter((n) => ids.has(n.id)).map(snapOf), waves };
+}
+
+/** NEMESIS-DEPTH: what the fight knows of its temperament, and the heroes it remembers a fight with. */
+function nemDepth(s: NemSnap): Pick<UnitNem, 'temper' | 'knows'> {
+  const knows = [...new Set((s.moments ?? []).map((x) => x.hero).filter((k): k is string => !!k))];
+  return { ...(s.temper ? { temper: s.temper } : {}), ...(s.temper === 'veteran' && knows.length ? { knows } : {}) };
 }
 
 /** One nemesis put into a wave: the band's place it takes, what the fight knows of it, and its hp and attack on top of the wave's own. */
@@ -407,7 +417,7 @@ export function nemesisBand(rn: RunNemesis | undefined, wave: number, band: read
       out[at] = s.base;
     }
     const avengers = s.avengers ? Object.keys(s.avengers) : [];
-    place.push({ at, nem: { id: s.id, name: fullName(s), rank: s.rank, ...(s.scars ? { scars: s.scars } : {}), traits: [...s.traits], weak: [...s.weak], ...(s.vengeful ? { veng: s.vengeful } : {}), ...(s.grudge && Object.keys(s.grudge).length ? { grudge: { ...s.grudge } } : {}), ...(avengers.length ? { avengers } : {}), ...(s.stitched ? { stitched: true as const } : {}), ...(s.trophies?.length ? { trophies: s.trophies.slice(0, TROPHIES_MAX).map((t) => ({ base: t.base, rarity: t.rarity })) } : {}) }, ...nemStats(lead ? { ...s, boss: true } : s, tier), ...(lead && s.rank === 'warchief' && !s.boss ? { chief: true as const } : {}) });
+    place.push({ at, nem: { id: s.id, name: fullName(s), rank: s.rank, ...(s.scars ? { scars: s.scars } : {}), traits: [...s.traits], weak: [...s.weak], ...(s.vengeful ? { veng: s.vengeful } : {}), ...(s.grudge && Object.keys(s.grudge).length ? { grudge: { ...s.grudge } } : {}), ...(avengers.length ? { avengers } : {}), ...(s.stitched ? { stitched: true as const } : {}), ...(s.trophies?.length ? { trophies: s.trophies.slice(0, TROPHIES_MAX).map((t) => ({ base: t.base, rarity: t.rarity })) } : {}), ...nemDepth(s) }, ...nemStats(lead ? { ...s, boss: true } : s, tier), ...(lead && s.rank === 'warchief' && !s.boss ? { chief: true as const } : {}) });
   }
   return { band: out, place };
 }
@@ -553,7 +563,7 @@ function grow(n: Nemesis, run: Run, rng: Rng, f: FoeLog | undefined): boolean {
   n.might++;
   n.grew = run.seed;
   if (n.might >= 5 && n.weak.length < MAX_WEAK) {
-    const pool = secondWeakPool(n.traits);
+    const pool = secondWeakPool(n.traits, n.temper);
     // (weighted by its history: the element that hurt it most this fight weighs more)
     const weight = (w: string) => 1 + (w.startsWith('fears:') ? (f?.ailDmg[{ fire: 'burn', frost: 'chill', storm: 'shock', venom: 'poison' }[w.slice(6)] as 'burn'] ?? 0) / 50 : 0);
     const total = pool.reduce((s, w) => s + weight(w), 0);
@@ -691,6 +701,8 @@ function birth(war: War, u: Unit, f: FoeLog, b: Battle, tally: NemesisTally, won
     born: war.turn,
     grew: run.seed,
   };
+  // (NEMESIS-DEPTH: its temperament, from its own stream)
+  n.temper = drawTemper(new Rng(mixSeed(run.seed, TEMPER_SALT, wave, n.id)), cls, deed);
   remember(n, memoryLine(deed, f, b, home, tier, wave));
   for (const mo of momentsOf(f, u, b, wave).reverse()) n.moments = keepMoment(n.moments, mo);
   if (deed === 'maimed') {
@@ -734,7 +746,8 @@ const secret = (s: unknown): s is string => typeof s === 'string' && (!!TRAITS[s
 function readDepth(n: Partial<Nemesis>): Partial<Nemesis> {
   const moments = (Array.isArray(n.moments) ? n.moments : []).map(readMoment).filter((x): x is NemMoment => !!x).slice(0, MOMENTS_MAX);
   const was = (Array.isArray(n.was) ? n.was : []).filter((x): x is string => !!str(x)).slice(0, WAS_MAX);
-  return { ...(moments.length ? { moments } : {}), ...(was.length ? { was } : {}), ...(RANKS.includes(n.epiAt as NemRank) ? { epiAt: n.epiAt } : {}) };
+  const temper = readTemper(n.temper);
+  return { ...(moments.length ? { moments } : {}), ...(was.length ? { was } : {}), ...(RANKS.includes(n.epiAt as NemRank) ? { epiAt: n.epiAt } : {}), ...(temper ? { temper } : {}) };
 }
 
 /** A saved trophy, if it is one (a known hero kind, a slot, a piece's id and its look). */

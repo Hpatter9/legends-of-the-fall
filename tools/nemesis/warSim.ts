@@ -185,6 +185,9 @@ function main(): void {
   console.log(`  warchiefs: ${chiefs.length ? chiefs.map((c) => `${c.name} days ${c.from}-${c.to ?? 'now'}${c.how ? ` (${c.how})` : ''}`).join('; ') : 'none'} (target: at least 2 weeks unless the player kills him)`);
   const meanOf = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
   console.log(`  NEMESIS-DEPTH: ${metAtFall.length} slain by the heroes after ${meanOf(metAtFall).toFixed(1)} meetings on average (${metAtFall.filter((x) => x >= 3).length} after three or more); strangers (never met) held ${(100 * meanOf(strangerShare)).toFixed(0)}% of the seats; ${bornNamed} named by the fights, ${bornRecruit} recruited (${bornNamed + bornRecruit ? ((100 * bornRecruit) / (bornNamed + bornRecruit)).toFixed(0) : 0}% recruits)`);
+  const tempers: Record<string, number> = {};
+  for (const n of war.members) tempers[n.temper ?? 'none'] = (tempers[n.temper ?? 'none'] ?? 0) + 1;
+  console.log(`  temperaments on the Council at the end: ${Object.entries(tempers).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', ')}; epithets grown: ${war.members.filter((n) => n.was?.length).length} of ${war.members.length} members`);
   console.log(`  taunts: ${repeats} of ${taunts} the same line as the member's taunt before (${taunts ? ((100 * repeats) / taunts).toFixed(0) : 0}%); by trigger: ${Object.entries(triggers).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', ')}`);
   console.log(`  the Muster opens at ${MUSTER_NEED} captains slain; final: ${war.members.length} members, ${war.fallen.length} fallen kept, ${war.heads?.length ?? 0} Warchief's Heads, ${war.trophies} War Trophies\n`);
 }

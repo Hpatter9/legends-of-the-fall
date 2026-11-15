@@ -1280,7 +1280,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     dmg = nemHurt(b, by, to, creditOf(b, by), dmg, src, splash, out);
     if (dmg <= 0) return false;
     // (phase 4: a Vain nemesis takes a tenth more in a duel)
-    if (b.duel && to.nem?.weak.includes('vain')) dmg = Math.max(1, Math.round(dmg * (1 + VAIN_DUEL)));
+    if (b.duel && (to.nem?.weak.includes('vain') || to.nem?.temper === 'glory')) dmg = Math.max(1, Math.round(dmg * (1 + VAIN_DUEL)));
   }
   // (DUEL-SHOW: a duel's blows land softer, so it lasts longer, `DUEL_LENGTH`)
   if (b.duel?.soften && by !== to) dmg = Math.max(1, Math.round(dmg / b.duel.soften));

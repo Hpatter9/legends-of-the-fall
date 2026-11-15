@@ -12,6 +12,8 @@ import { menuChoice, menuFoot, menuNote, menuPick, menuSection, menuWell, ornate
 import { portrait } from './render/sheets';
 import { armyById } from './sim/armies';
 import { momentLine } from './sim/nemesisMoments';
+import { TEMPER } from './sim/nemesisTemper';
+import { TEMPER_ICON } from './temperArt';
 import { buyScout, buyShard, musterCount, newsWord, SCOUT_PRICE, scoutable, SHARD_PRICE, SHARD_WEEK, shardHeroes, shardsLeft, superiorOf, swornTo, TROPHY_DAY, FATE_MEETINGS } from './sim/council';
 import { heroName } from './sim/heroNames';
 import type { Meta } from './sim/meta';
@@ -169,6 +171,8 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
   b.prepend(face(n, size));
   if (n.oath !== undefined) b.append(releaseIcon(RELEASE_ICON.sworn, 'nmOath'));
   if (RANK_BADGE[n.rank]) b.prepend(icon(RANK_BADGE[n.rank], 'nmRankBadge'));
+  // (NEMESIS-DEPTH: its temperament's symbol on the face's corner)
+  if (n.temper) b.append(icon(TEMPER_ICON[n.temper], 'nmTemper'));
   // (phase 3: an Avenger's or a Grudge holder's face on the card's corner; a member away licking its wounds is dimmed)
   const settler = Object.keys(avengersOf(m, n.id))[0] ?? Object.keys(grudgesOn(m, n.id))[0];
   if (settler && UNITS[settler]?.sheet) {
@@ -177,7 +181,7 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
     b.append(chip);
   }
   if (awayRuns(war, n.id)) b.classList.add('nmAway');
-  b.setAttribute('aria-label', `${rankWord(n.rank)} ${fullName(n)}, Might ${n.might}, of the ${army}${n.oath !== undefined ? ', sworn in blood' : ''}${awayRuns(war, n.id) ? ', licking its wounds' : ''}${settler ? `, ${heroName(settler)} has a score to settle` : ''}. Open its card`);
+  b.setAttribute('aria-label', `${rankWord(n.rank)} ${fullName(n)}, Might ${n.might}, of the ${army}${n.oath !== undefined ? ', sworn in blood' : ''}${awayRuns(war, n.id) ? ', licking its wounds' : ''}${n.temper ? `, a ${TEMPER[n.temper].name}` : ''}${settler ? `, ${heroName(settler)} has a score to settle` : ''}. Open its card`);
   return b;
 }
 
@@ -354,6 +358,13 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
   const facts = el('div', 'nmFacts');
   facts.append(el('b', 'nmPips', mightPips(n.might)), el('small', '', metLine(n.met)), el('small', 'omPay', `Slay: ${payOf(n) * (n.trophies?.length ? 2 : 1)} crowns${n.trophies?.length ? ', doubled for the trophy' : ''}`));
   top.append(facts);
+  // (NEMESIS-DEPTH: its temperament, felt in the fight, on the Council and in its voice)
+  if (n.temper) {
+    const well = sectionWell(menu.body, 'Temperament', TEMPER[n.temper].name);
+    const p = el('p', 'nmSecret nmWithTrait');
+    p.append(icon(TEMPER_ICON[n.temper], 'nmTraitIcon'), el('b', '', TEMPER[n.temper].name), el('small', '', TEMPER[n.temper].text));
+    well.append(p);
+  }
   // (its place on the Council: whom it serves, how loyal, its blood-oath, its vengeance)
   const war = m.war;
   if (war) {

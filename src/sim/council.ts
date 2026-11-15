@@ -22,6 +22,7 @@ import type { NemesisTally } from './nemesisLog';
 import { TRAITS } from './nemesisTraits';
 import { mixSeed, Rng } from './rng';
 import type { Run } from './run';
+import { drawTemper, TEMPER_COUNCIL, TEMPER_EVENTS, TEMPER_SALT } from './nemesisTemper';
 import { avengersNow, humiliate, settleRevenge } from './revenge';
 import { DUEL_SHAMED } from './duel';
 import { giveShards, owns, type Given } from './unlock';
@@ -114,7 +115,8 @@ function mightUp(n: Nemesis, grew: Set<number>): boolean {
   return true;
 }
 const mightDown = (n: Nemesis): void => void (n.might = Math.max(1, n.might - 1));
-const loyal = (n: Nemesis, d: number): void => void (n.loyalty = Math.max(0, Math.min(100, n.loyalty + d)));
+// (NEMESIS-DEPTH: a Zealot's loyalty never falls below 50)
+const loyal = (n: Nemesis, d: number): void => void (n.loyalty = Math.max(n.temper === 'zealot' ? Math.min(n.loyalty, TEMPER_COUNCIL.zealotFloor) : 0, Math.min(100, n.loyalty + d)));
 
 /** A member leaves the Council (slain or deserted): its seat empties, its oath brother and sworn lieutenants are freed, a claim lapses. */
 function drop(war: War, n: Nemesis): void {
@@ -215,6 +217,8 @@ export function recruit(war: War, m: Meta, rng: Rng): Nemesis | undefined {
     lost: 0,
     born: war.turn,
   };
+  // (NEMESIS-DEPTH: its temperament, from its own stream, so the turn's draws are as they were)
+  n.temper = drawTemper(new Rng(mixSeed(m.seed, TEMPER_SALT, war.turn, n.id)), 'recruit');
   remember(n, `Recruited to the Dark Council · ${armyById(army)?.name ?? army}`);
   war.members.push(n);
   return n;
@@ -284,16 +288,16 @@ export function eventOpen(war: War, e: CouncilEvent): boolean {
       return deserters(war).length > 0;
   }
 }
-/** The lieutenants who may betray their captain: loyalty under 30, within a Might of him. */
+/** The lieutenants who may betray their captain: loyalty under 30, within a Might of him (never a Zealot). */
 const traitors = (war: War): Nemesis[] =>
   ofRank(war, 'lieutenant').filter((n) => {
     const c = memberById(war, n.sworn);
-    return !!c && n.loyalty < BETRAY_BELOW && n.might >= c.might - 1;
+    return !!c && n.temper !== 'zealot' && n.loyalty < BETRAY_BELOW && n.might >= c.might - 1;
   });
 /** The lieutenants who may put their captain to a Trial of Strength: Might 4 or more, sworn to one. */
 const challengers = (war: War): Nemesis[] => ofRank(war, 'lieutenant').filter((n) => n.might >= TRIAL_MIGHT && !!memberById(war, n.sworn));
 /** The members who may desert: Might 1, the last three meetings lost (never the warchief). */
-const deserters = (war: War): Nemesis[] => war.members.filter((n) => n.rank !== 'warchief' && n.might <= 1 && (n.streak ?? 0) <= -DESERT_STREAK);
+const deserters = (war: War): Nemesis[] => war.members.filter((n) => n.rank !== 'warchief' && n.might <= 1 && (n.streak ?? 0) <= -(n.temper === 'coward' ? TEMPER_COUNCIL.cowardStreak : DESERT_STREAK));
 
 /** An event happens (its conditions must hold: `eventOpen`). `grew` holds who has gained Might this turn. */
 export function happen(war: War, m: Meta, rng: Rng, e: CouncilEvent, grew: Set<number> = new Set()): void {
@@ -388,13 +392,40 @@ export function happen(war: War, m: Meta, rng: Rng, e: CouncilEvent, grew: Set<n
   }
 }
 
+/** The members who could act in an event now (NEMESIS-DEPTH: an event weighs more while one of a temperament that seeks it could). */
+function actors(war: War, e: CouncilEvent): Nemesis[] {
+  switch (e) {
+    case 'feud':
+      return war.members.filter((n) => n.rank !== 'warchief');
+    case 'betrayal':
+      return traitors(war);
+    case 'trial':
+      return challengers(war);
+    case 'feast':
+      return ofRank(war, 'captain');
+    case 'oath':
+      return war.members.filter((n) => n.oath === undefined);
+    default:
+      return [];
+  }
+}
+/** An event's weight now: the design's, times the most any temperament among its actors seeks it (`TEMPER_EVENTS`). A Council of members
+ *  from before has no temperaments, and weighs as it did. */
+export function eventWeight(war: War, e: CouncilEvent): number {
+  const seek = TEMPER_EVENTS[e];
+  if (!seek) return EVENT_WEIGHT[e];
+  const most = actors(war, e).reduce((x, n) => Math.max(x, (n.temper && seek[n.temper]) || 1), 1);
+  return EVENT_WEIGHT[e] * most;
+}
+
 /** Draw one event by weight from those open now (none open: none). */
 export function drawEvent(war: War, rng: Rng): CouncilEvent | undefined {
   const open = (Object.keys(EVENT_WEIGHT) as CouncilEvent[]).filter((e) => eventOpen(war, e));
-  const total = open.reduce((s, e) => s + EVENT_WEIGHT[e], 0);
+  const w = open.map((e) => eventWeight(war, e));
+  const total = w.reduce((s, x) => s + x, 0);
   if (!total) return undefined;
   let r = rng.next() * total;
-  return open.find((e) => (r -= EVENT_WEIGHT[e]) < 0) ?? open[open.length - 1];
+  return open.find((_, i) => (r -= w[i]) < 0) ?? open[open.length - 1];
 }
 
 /**
@@ -411,6 +442,9 @@ export function takeTurn(war: War, m: Meta): WarNews[] {
   for (const n of ofRank(war, 'lieutenant')) {
     const c = memberById(war, n.sworn);
     if (c && n.might >= c.might) loyal(n, LOYALTY.ambition);
+    // (NEMESIS-DEPTH: a Schemer's loyalty wears whatever its Might; so does a Trickster's, by half)
+    if (c && n.temper === 'schemer') loyal(n, TEMPER_COUNCIL.schemerDrift);
+    if (c && n.temper === 'trickster') loyal(n, TEMPER_COUNCIL.schemerDrift / 2);
   }
   const r = rng.next();
   const count = r < TURN_SHAPE.none ? 0 : r < TURN_SHAPE.none + TURN_SHAPE.one ? 1 : 2;
