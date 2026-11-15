@@ -43,7 +43,7 @@ export interface Informant {
 
 /** The numbers: it kneels below this loyalty (or beaten in a duel); informs this many runs; leaves faithful this often, less for each brother
  *  slain; and its old captain's lieutenants lose this much loyalty. */
-export const SPARE = { loyalty: 40, runs: 5, faithful: 0.5, perBrother: 0.15, sworn: -20, thanks: 1 } as const;
+export const SPARE = { loyalty: 30, runs: 5, faithful: 0.5, perBrother: 0.15, sworn: -20, thanks: 1 } as const;
 export const SPARE_SALT = 0x4e3e5e;
 
 /** Whether a member brought down may kneel: an old foe (met past fate's meetings), never the warchief; beaten in single combat, or its

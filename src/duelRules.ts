@@ -68,7 +68,7 @@ export function duelWords(o: DuelOffer, s: NemSnap): { title: string; why: strin
   return {
     title: o.kind ? `${s.name} challenges ${hero}` : `${s.name} calls out your champion`,
     why: WHY[o.why](hero),
-    win: `It is slain for good${s.rank === 'warchief' ? ' (a warchief is humiliated, and flees to his Muster)' : ''}, its wave breaks and runs and the wave is won, every hero heals ${DUEL_HEAL * 100}%, it pays three times over, and ${o.kind ? hero : 'your champion'} takes +${DUELLIST_MARK * 100}% against the run’s other nemeses`,
+    win: `${s.rank === 'warchief' ? 'It is humiliated, and flees to his Muster' : 'It kneels: slay it, or spare it as your Informant'}, its wave breaks and runs and the wave is won, every hero heals ${DUEL_HEAL * 100}%, it pays three times over, and ${o.kind ? hero : 'your champion'} takes +${DUELLIST_MARK * 100}% against the run’s other nemeses`,
     lose: `${o.kind ? hero : 'Your champion'} falls and stands again at half; it takes a trophy from ${o.kind ? hero : 'your champion'}, gains a Might and fights the wave with its escorts`,
     time: `After ${clockWords(duelMs())} it slips away a Might stronger (humiliated if under ${DUEL_SHAMED * 100}% health); the wave fights on without it`,
     refuse: `The wave is fought as usual, and it tells its army: every nemesis of the run is Mocking, +${MOCKING_ATK * 100}% attack`,
