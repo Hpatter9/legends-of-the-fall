@@ -47,6 +47,7 @@ export const TEMPER_EVENTS: Readonly<Record<string, Partial<Record<Temper, numbe
   trial: { glory: 2 },
   feast: { veteran: 2 },
   oath: { oathbound: 3 },
+  plot: { schemer: 2, trickster: 2 },
 };
 /** A Schemer lieutenant's loyalty wears this much more a turn; a Zealot's never falls below this; a Coward deserts after this many losses. */
 export const TEMPER_COUNCIL = { schemerDrift: -2, zealotFloor: 50, cowardStreak: 2 } as const;

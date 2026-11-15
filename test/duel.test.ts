@@ -16,6 +16,7 @@ import { startNemesisTally, tallyNemesis, type NemesisTally } from '../src/sim/n
 import { VAIN_DUEL } from '../src/sim/nemesisTraits';
 import { CHEAT_DEATH, noteWar, TROPHIES } from '../src/sim/council';
 import { decorate } from '../src/sim/revenge';
+import { slayKneeler } from '../src/sim/spare';
 import { acceptDuel, challengeOf, championFor, contenders, DUEL_HEAL, DUEL_SHARE, duelHeal, duelMs, duelOffer, duelOutcome, duelShare, readRunDuel, refuseDuel, ringFor, settleDuelRun, startDuel, type DuelOffer } from '../src/sim/duel';
 import { DUEL_MS, inRing, RING_R } from '../src/sim/duelRing';
 import { REVIVE_SHARE } from '../src/sim/wounds';
@@ -219,7 +220,7 @@ test('a Vain nemesis takes a tenth more in a duel, and only in a duel', () => {
   assert.ok(Math.abs(inDuel - Math.round(Math.round(outside * (1 + VAIN_DUEL)) / (b.duel!.soften ?? 1))) <= 1, `${inDuel} against ${outside}`);
 });
 
-test('a win counts as the wave won, with its pay doubled; the nemesis cannot cheat death; every hero heals a fifth', () => {
+test('a win counts as the wave won, with its pay tripled (NEMESIS-DEPTH, idea 10); the nemesis cannot cheat death but kneels (idea 6); every hero heals a fifth', () => {
   for (let seed = 1; seed <= 12; seed++) {
     const m = warMeta(seed);
     const n = member(m.war!, { might: 4 });
@@ -231,10 +232,15 @@ test('a win counts as the wave won, with its pay doubled; the nemesis cannot che
     assert.equal(b.phase, 'won');
     const crowns = m.crowns;
     const note = noteWar(m, run, b, tally, true, run.stage);
-    assert.equal(note.slain.length, 1, 'slain for good: no cheating death');
-    assert.equal(note.slain[0].crowns, 2 * 40 * 4, 'double pay');
-    assert.equal(m.crowns - crowns, 2 * 40 * 4);
-    assert.equal(note.trophies, 2 * TROPHIES.lieutenant, 'double War Trophies');
+    // (NEMESIS-DEPTH, idea 6: an old foe beaten in single combat kneels, its pay held back; slain, it pays three times over, idea 10)
+    assert.equal(m.war!.kneel?.n.id, n.id, 'no cheating death: it kneels');
+    assert.equal(m.war!.kneel?.crowns, 3 * 40 * 4, 'pay three times over');
+    assert.equal(m.war!.kneel?.trophies, 3 * TROPHIES.lieutenant, 'War Trophies three times over');
+    assert.equal(note.slain.length, 0);
+    const trophies = m.war!.trophies;
+    slayKneeler(m);
+    assert.equal(m.crowns - crowns, 3 * 40 * 4);
+    assert.equal(m.war!.trophies - trophies, 3 * TROPHIES.lieutenant);
     assert.equal(m.war!.fallen[0].how, 'duel');
     assert.ok(!m.war!.members.some((x) => x.id === n.id));
     assert.ok(note.council?.some((l) => /single combat: the wave breaks and runs/.test(l)));
@@ -392,7 +398,7 @@ test('the challenge’s words: every line in every voice fills, the hero answers
   const w = duelWords({ id: n.id, wave: 3, why: 'grudge', hero: 1, kind: 'knight' }, snapOf(n));
   assert.match(w.title, /challenges Kwame/);
   assert.match(w.why, /Grudge/);
-  assert.match(w.win, /pays double/);
+  assert.match(w.win, /pays three times over/);
   assert.match(w.refuse, /Mocking/);
   assert.match(duelWords({ id: n.id, wave: 3, why: 'vain' }, snapOf(n)).title, /calls out your champion/);
   assert.match(duelWords({ id: n.id, wave: 3, why: 'vain' }, { ...snapOf(n), rank: 'warchief' }).win, /Muster/);

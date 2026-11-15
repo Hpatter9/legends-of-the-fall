@@ -122,6 +122,7 @@ import { acceptDuel, contenders, duelOffer, offerSnap, refuseDuel, settleDuelRun
 import { DUEL_MS } from './sim/duelRing';
 import { duelAhead, duelBar, duelTaunt } from './duelRules';
 import { huntAhead } from './sim/hunt';
+import { informantAhead, slayKneeler } from './sim/spare';
 import { openDuelCard } from './duelView';
 import { initPhoneBack } from './phoneBack';
 import { DuelShow } from './duelShow';
@@ -4733,6 +4734,8 @@ class Game {
       const offersBefore = (this.meta.quests?.offers ?? []).map((o) => o.id);
       const settled: Parameters<typeof settleRun>[2] = { won, stage, stars: rating.stars, battle: b, stats: this.stats, ults: this.ultsFired, nemesis: this.nemTally, day: todayKey() };
       const earned = settleRun(this.meta, run, settled);
+      // (NEMESIS-DEPTH, idea 6: an auto-replay never spares: one kneeling is slain at once)
+      if (this.auto && this.meta.war?.kneel) slayKneeler(this.meta);
       // (DEPTH-BUILD: a clue found or a Hunter's mark won, as toasts)
       toastLines([...weakLines(settled.weak), ...bondLines(settled.bonds, (k) => UNITS[k]?.name ?? k), ...(settled.trialShards ? [trialShardsLine(heroName(settled.trialShards.kind), settled.trialShards.n)] : [])]);
       // (the Nemesis War's lines go on the wave card below)
@@ -4815,7 +4818,7 @@ class Game {
       const next = won && !run.over && !this.auto ? duelOffer(run) : undefined;
       const nextSnap = next && offerSnap(run, next);
       // (NEMESIS-DEPTH, idea 4: and the hunt's quarry standing in the next wave)
-      const ahead = next && nextSnap ? duelAhead(next, nextSnap) : won && !run.over && !this.auto ? huntAhead(run) : undefined;
+      const ahead = next && nextSnap ? duelAhead(next, nextSnap) : won && !run.over && !this.auto ? huntAhead(run) ?? informantAhead(this.meta, run) : undefined;
       noteSpoils(recapOf(run), waveGains);
       this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: livesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], risen: won ? risenLine(run, heroName) : null, gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}), ...(nemesisLines(this.nemNote).length || ahead ? { nemesis: [...nemesisLines(this.nemNote), ...(ahead ? [ahead] : [])] } : {}) };
       if (!this.auto) {

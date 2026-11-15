@@ -56,6 +56,9 @@ export interface UnitNem {
   knows?: readonly string[];
   /** NEMESIS-DEPTH, idea 4: the quarry of a hunt, on guard (a shield of a tenth of its health as the fight begins). */
   hunted?: true;
+  /** Idea 5: the heroes it has studied (15% less from them, and their first hard hold of a fight fails), and those it has read this fight. */
+  studied?: readonly string[];
+  read?: string[];
 }
 
 /** A trait: its words, the epithet it gives a nemesis whose first trait it is, and what immunities it grants. */
@@ -182,6 +185,17 @@ export const NEM_CTX: { ult: number } = { ult: 0 };
 /** Whether a nemesis shrugs off this ailment (`ailments.ts`'s gate). */
 export const nemImmune = (u: Unit, kind: AilmentKey): boolean => !!u.nem?.traits.some((t) => TRAITS[t]?.immune?.includes(kind));
 
+/** NEMESIS-DEPTH, idea 5: what a study does: this much less from a studied hero, and the first of these holds from it in a fight fails. */
+export const STUDY = { less: 0.15, max: 2, holds: ['stun', 'freeze', 'fear', 'silence'] as readonly AilmentKey[] } as const;
+
+/** Whether a nemesis reads a studied hero's hold and shrugs it off (the first of a fight from that hero; `ailments.ts`'s gate). */
+export function nemReads(u: Unit, by: Unit | undefined, kind: AilmentKey): boolean {
+  const n = u.nem;
+  if (!n?.studied?.length || !by || !STUDY.holds.includes(kind) || !n.studied.includes(by.def) || n.read?.includes(by.def)) return false;
+  n.read = [...(n.read ?? []), by.def];
+  return true;
+}
+
 /** How long a hold lasts on it (Iron Skull halves a stun). */
 export const nemHold = (u: Unit, kind: AilmentKey, ms: number): number => (kind === 'stun' && has(u, 'ironSkull') ? ms * 0.5 : ms);
 
@@ -227,6 +241,8 @@ export function nemHurt(b: Battle, by: Unit, to: Unit, real: Unit, dmg: number, 
     // (NEMESIS-DEPTH: a Brute guards nothing; an Old Hand has seen the heroes it remembers a fight with)
     if (n.temper === 'brute') k *= 1 + TEMPER_FIGHT.brute;
     if (n.temper === 'veteran' && n.knows?.includes(real.def)) k *= 1 - TEMPER_FIGHT.veteran;
+    // (idea 5: a hero it has studied)
+    if (n.studied?.includes(real.def)) k *= 1 - STUDY.less;
   }
   if (by.nem && to.side === 'hero') {
     const c = callingOf(to.def);

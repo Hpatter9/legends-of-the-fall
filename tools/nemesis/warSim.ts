@@ -67,6 +67,8 @@ function main(): void {
   let repeats = 0;
   const triggers: Record<string, number> = {};
   let bornNamed = 0;
+  const spared = { knelt: 0, informed: 0, thanked: 0, betrayed: 0, other: 0 };
+  const plots = { hatched: 0, settled: 0 };
   let huntsSet = 0;
   let huntsWon = 0;
   let huntsLost = 0;
@@ -75,6 +77,8 @@ function main(): void {
   WAR_BOT.settle = true;
   // (phase 4: the bot takes every duel it is offered, its champion the hero named or else its strongest; `--no-duels` as phase 3)
   WAR_BOT.duels = !process.argv.includes('--no-duels');
+  // (NEMESIS-DEPTH, idea 6: `--spare` has the bot spare every nemesis that kneels; else it slays them)
+  WAR_BOT.spare = process.argv.includes('--spare');
   duelLog.length = 0;
   const t0 = Date.now();
   for (let day = 0; day < DAYS; day++) {
@@ -128,6 +132,8 @@ function main(): void {
       week.kinds[x.kind] = (week.kinds[x.kind] ?? 0) + 1;
       if (x.kind === 'hunt' && x.text.startsWith('The hunt is over')) huntsWon++;
       if (x.kind === 'hunt' && x.text.startsWith('The hunt has failed')) huntsLost++;
+      if (x.kind === 'spared') spared[/kneels/.test(x.text) ? 'knelt' : /turns Informant/.test(x.text) ? 'informed' : /with thanks/.test(x.text) ? 'thanked' : /betrays you/.test(x.text) ? 'betrayed' : 'other']++;
+      if (x.kind === 'plot') plots[/plots against/.test(x.text) && !/succeeds|found out|caught/.test(x.text) ? 'hatched' : 'settled']++;
       if (x.kind === 'named') bornNamed++;
       if (x.kind === 'recruit') bornRecruit++;
       // (phase 3: a humiliation is told on its own line, or on its cheat's)
@@ -205,6 +211,8 @@ function main(): void {
   for (const n of war.members) tempers[n.temper ?? 'none'] = (tempers[n.temper ?? 'none'] ?? 0) + 1;
   console.log(`  temperaments on the Council at the end: ${Object.entries(tempers).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', ')}; epithets grown: ${war.members.filter((n) => n.was?.length).length} of ${war.members.length} members`);
   console.log(`  taunts: ${repeats} of ${taunts} the same line as the member's taunt before (${taunts ? ((100 * repeats) / taunts).toFixed(0) : 0}%); by trigger: ${Object.entries(triggers).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', ')}`);
+  console.log(`  plots: ${plots.hatched} hatched, ${plots.settled} came to a head; rivalries on the Council at the end: ${war.members.filter((n) => n.rival !== undefined).length / 2}`);
+  console.log(`  spare or slay: ${spared.knelt} knelt, ${spared.informed} spared as Informants, ${spared.thanked} left with thanks, ${spared.betrayed} betrayed you (the bot ${WAR_BOT.spare ? 'spares' : 'slays'} them)`);
   if (HUNTS) console.log(`  hunts: ${huntsSet} set, ${huntsWon} run down, ${huntsLost} failed, ${huntsSet - huntsWon - huntsLost} lapsed or still on`);
   console.log(`  the Muster opens at ${MUSTER_NEED} captains slain; final: ${war.members.length} members, ${war.fallen.length} fallen kept, ${war.heads?.length ?? 0} Warchief's Heads, ${war.trophies} War Trophies\n`);
 }

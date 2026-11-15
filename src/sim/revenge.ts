@@ -105,6 +105,7 @@ export function decorate(m: Meta, s: NemSnap, n: Nemesis): NemSnap {
     ...(n.seen ? { seen: true as const } : {}),
     ...(n.moments?.length ? { moments: n.moments.map((x) => ({ ...x })) } : {}),
     ...(n.huntLived !== undefined ? { huntLived: n.huntLived } : {}),
+    ...(n.studied?.length ? { studied: [...n.studied] } : {}),
   };
 }
 
@@ -211,6 +212,8 @@ export function humiliate(m: Meta, war: War, n: Nemesis, hero: string | undefine
 export interface RevengeNote {
   lines: string[];
   doubled: Set<number>;
+  /** NEMESIS-DEPTH, idea 10: the slain whose pay is tripled (a duel won). */
+  tripled: Set<number>;
 }
 
 /**
@@ -220,9 +223,9 @@ export interface RevengeNote {
  * each member's Avengers as the fight began.
  */
 export function settleRevenge(m: Meta, run: Run, b: Battle, tally: NemesisTally | undefined, note: NemNote, was: ReadonlyMap<number, Nemesis>, cheated: ReadonlyMap<number, string>, avengers: ReadonlyMap<number, Record<string, string>>, wave: number, duelWon?: number): RevengeNote {
-  const out: RevengeNote = { lines: [], doubled: new Set() };
-  // (phase 4: a nemesis slain in a duel pays double, `duel.ts`)
-  if (duelWin(note, duelWon)) out.doubled.add(duelWon!);
+  const out: RevengeNote = { lines: [], doubled: new Set(), tripled: new Set() };
+  // (phase 4: a nemesis slain in a duel pays more, `duel.ts`; NEMESIS-DEPTH, idea 10: three times, not twice)
+  if (duelWin(note, duelWon)) out.tripled.add(duelWon!);
   const war = m.war;
   if (!war) return out;
   const member = (id: number | undefined) => (id === undefined ? undefined : war.members.find((n) => n.id === id));
@@ -284,16 +287,20 @@ export function settleRevenge(m: Meta, run: Run, b: Battle, tally: NemesisTally 
       out.lines.push(`Vengeance! ${heroName(x.by)} avenges ${heroName(avenged)}`);
       out.doubled.add(x.id);
     }
-    // (doubled once, however many reasons: the crowns now, the War Trophies in `noteWar`)
-    if (out.doubled.has(x.id)) {
-      m.crowns += x.crowns;
-      note.crowns += x.crowns;
-      x.crowns *= 2;
+    // (doubled once, however many reasons: the crowns now, the War Trophies in `noteWar`; a duel won triples it instead)
+    const k = payTimes(out, x.id);
+    if (k > 1) {
+      m.crowns += x.crowns * (k - 1);
+      note.crowns += x.crowns * (k - 1);
+      x.crowns *= k;
     }
   }
   tidyGrudges(m);
   return out;
 }
+
+/** How many times a slain nemesis's pay is multiplied: three for a duel won, else two for Vengeance or a trophy brought home, else one. */
+export const payTimes = (r: Pick<RevengeNote, 'doubled' | 'tripled'>, id: number): number => (r.tripled.has(id) ? 3 : r.doubled.has(id) ? 2 : 1);
 
 const duelWin = (note: NemNote, id: number | undefined): boolean => id !== undefined && note.slain.some((x) => x.id === id);
 

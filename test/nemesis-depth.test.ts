@@ -7,17 +7,20 @@ import assert from 'node:assert/strict';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { place, startBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { armyRun, recruit } from '../src/sim/run';
-import { decorate, planRun } from '../src/sim/revenge';
-import { duelOffer } from '../src/sim/duel';
+import { decorate, payTimes, planRun } from '../src/sim/revenge';
+import { duelOffer, DUELLIST_MARK, refuseDuel, settleDuelRun } from '../src/sim/duel';
 
 import { startedMeta, type Meta } from '../src/sim/meta';
-import { GUARD, LIEUTENANT, newWar, planNemeses, readWar, remembers, snapOf, STRANGER_CHANCE, type NemSnap, type Nemesis, type War } from '../src/sim/nemesis';
+import { GUARD, LIEUTENANT, newWar, planNemeses, readWar, remembers, snapOf, study, STRANGER_CHANCE, type NemSnap, type Nemesis, type War } from '../src/sim/nemesis';
 import { blankLog, startNemesisTally, tallyNemesis, type NemesisTally } from '../src/sim/nemesisLog';
 import { EPITHETS, keepMoment, MOMENT_KINDS, momentLine, momentsOf, MOMENTS_MAX, type NemMoment } from '../src/sim/nemesisMoments';
 import { MOMENT_TAUNTS, VOICES } from '../src/sim/nemesisLines';
 import { tauntFor, triggerOf } from '../src/tauntCutRules';
 import { drawTemper, TEMPER_SALT, TEMPER_TAGS, TEMPERS, type Temper } from '../src/sim/nemesisTemper';
-import { fleeOdds, nemHurt, nemPrey, nemStart, secondWeakPool } from '../src/sim/nemesisTraits';
+import { fleeOdds, nemHurt, nemPrey, nemReads, nemStart, secondWeakPool } from '../src/sim/nemesisTraits';
+import { gate } from '../src/sim/ailments';
+import { endInformant, informantAhead, mayKneel, slayKneeler, SPARE, spareKneeler } from '../src/sim/spare';
+import { freshPlot, handPlot, hatch, makeRivals, PLOT, plotOpen, plotters, resolvePlots, targetOf } from '../src/sim/politics';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { challengeOf } from '../src/sim/duel';
 import { bountyOf, cannotHunt, endHunt, HUNT, HUNT_GUARD, huntAhead, huntWave, lapseHunt, setHunt } from '../src/sim/hunt';
@@ -566,4 +569,279 @@ test('the wave card tells of the quarry in the next wave', () => {
   assert.match(huntAhead(run)!, /your quarry, Q/);
   run.stage = 5;
   assert.equal(huntAhead(run), undefined);
+});
+
+// ---- Idea 10: duels with stakes -------------------------------------------------------------------------------------------------
+
+test('a duel refused mocks the whole run: every nemesis in it is Mocking', () => {
+  const m = warMeta(4);
+  const a = member(m.war!, 'lieutenant', 3, { met: 3, weak: ['dread:knight'] });
+  const z = member(m.war!, 'captain', 3, { met: 3 });
+  const run = armyRun(11, 'undead', ['knight', 'wizard', 'cleric']);
+  run.roster = [];
+  run.squad = [];
+  for (const k of ['knight', 'wizard', 'cleric']) run.squad.push(recruit(run, k).id);
+  run.stage = 3;
+  run.nemesis = { members: [decorate(m, snapOf(a), a), decorate(m, snapOf(z), z)], waves: { '3': [a.id], '9': [z.id] } };
+  refuseDuel(run, duelOffer(run)!);
+  assert.ok(run.nemesis.members.every((s) => s.mocking));
+});
+
+test('a duel won leaves the champion a Duellist’s mark on the run’s other nemeses, and pays three times over', () => {
+  const run = armyRun(11, 'undead', ['knight']);
+  run.nemesis = { members: [{ id: 1, base: 'skeleton', name: 'A', epithet: '', rank: 'lieutenant', might: 1, scars: 0, traits: [], weak: [] }, { id: 2, base: 'skeleton', name: 'B', epithet: '', rank: 'captain', might: 1, scars: 0, traits: [], weak: [], grudge: { knight: 0.2 } }], waves: { '3': [1], '9': [2] } };
+  run.stage = 3;
+  const b = { duel: { id: 1, hero: 7, nem: 8, ended: 'won' }, units: [{ id: 7, def: 'knight' }, { id: 8, def: 'skeleton' }] } as unknown as Battle;
+  assert.equal(settleDuelRun(run, b), 'won');
+  assert.equal(run.nemesis.members[0].grudge, undefined, 'not on the one it beat');
+  assert.equal(run.nemesis.members[1].grudge?.knight, Math.round((0.2 + DUELLIST_MARK) * 100) / 100);
+  assert.equal(payTimes({ doubled: new Set([1]), tripled: new Set([1]) }, 1), 3);
+  assert.equal(payTimes({ doubled: new Set([1]), tripled: new Set() }, 1), 2);
+  assert.equal(payTimes({ doubled: new Set(), tripled: new Set() }, 1), 1);
+});
+
+test('a duel lost: the nemesis takes a trophy from the champion it bested', () => {
+  const m = warMeta(4);
+  m.equipment = [{ id: 501, base: 'kiteShield', rarity: 3, level: 12 }] as Meta['equipment'];
+  m.equipped = { knight: { off: 501 } } as Meta['equipped'];
+  const n = member(m.war!, 'lieutenant', 3, { met: 3 });
+  const b = fightOf([n.base], 3);
+  const u = b.units.find((x) => x.side === 'foe')!;
+  u.nem = nemOf(n);
+  const k = hero(b, 'knight');
+  b.duel = { id: n.id, hero: k.id, nem: u.id, ended: 'lost' } as Battle['duel'];
+  b.phase = 'lost';
+  const note = noteWar(m, armyRun(5, 'undead'), b, startNemesisTally(), false, 3);
+  assert.deepEqual(n.trophies?.map((t) => t.item), [501]);
+  assert.ok(note.council?.some((l) => /takes .*shield/.test(l)), JSON.stringify(note.council));
+});
+
+// ---- Idea 5: studied counters -----------------------------------------------------------------------------------------------------
+
+test('a nemesis that lives studies the hero that hurt it most, never its Dread, two at most; the save keeps them', () => {
+  const m = warMeta(2);
+  const n = member(m.war!, 'lieutenant', 2, { weak: ['dread:knight'] });
+  const f = blankLog('skeleton');
+  f.by = { knight: 900, wizard: 400, cleric: 100 };
+  assert.equal(study(n, f), 'wizard', 'not the Dread, though it hurt most');
+  assert.equal(study(n, f), undefined, 'already studied');
+  f.by = { cleric: 500 };
+  assert.equal(study(n, f), 'cleric');
+  f.by = { archer: 500 };
+  study(n, f);
+  assert.deepEqual(n.studied, ['archer', 'cleric']);
+  assert.deepEqual(readWar(JSON.parse(JSON.stringify(m.war)))!.members.find((x) => x.id === n.id)!.studied, ['archer', 'cleric']);
+});
+
+test('in the fight: 15% less from a studied hero, and its first hard hold of the fight is read and shrugged off', () => {
+  const b = fightOf(['skeleton']);
+  const k = hero(b, 'knight');
+  const w = hero(b, 'wizard');
+  const u = b.units.find((x) => x.side === 'foe')!;
+  u.nem = { id: 1, name: 'S', rank: 'lieutenant', traits: [], weak: [], studied: ['knight'] };
+  assert.equal(nemHurt(b, k, u, k, 100, 'blow', false, []), 85);
+  assert.equal(nemHurt(b, w, u, w, 100, 'blow', false, []), 100);
+  assert.equal(gate(b, u, 'stun', 1000, k), 0, 'the first stun from the knight is read');
+  assert.ok(gate(b, u, 'stun', 1000, k) > 0, 'the second lands');
+  assert.ok(gate(b, u, 'stun', 1000, w) > 0, 'another hero’s lands');
+  assert.ok(!nemReads(u, k, 'burn'), 'only hard holds');
+  u.nem = undefined;
+});
+
+test('a nemesis that has studied a hero on the board taunts about it, in every voice', () => {
+  const s: NemSnap = { id: 4, base: 'skeleton', name: 'S', epithet: '', rank: 'lieutenant', might: 2, scars: 0, traits: [], weak: [], studied: ['knight'], met: 3 };
+  for (const v of VOICES) {
+    const t = tauntFor({ ...s, army: v }, ['knight'], 1);
+    assert.equal(t.trigger, 'studied');
+    assert.ok(!/[{}]/.test(t.line), t.line);
+  }
+  assert.notEqual(triggerOf(s, ['wizard']).trigger, 'studied');
+});
+
+// ---- Idea 7: open politics --------------------------------------------------------------------------------------------------------
+
+test('a feud both live through makes rivals; a rival slain by the heroes lets the other climb over the body; rivals never share a wave', () => {
+  let made = 0;
+  for (let s = 0; s < 40 && !made; s++) {
+    const m = warMeta(s);
+    const war = m.war!;
+    const a = member(war, 'captain', 4);
+    const c = member(war, 'captain', 4);
+    happen(war, m, new Rng(s), 'feud');
+    if (war.members.includes(a) && war.members.includes(c) && a.rival === c.id && c.rival === a.id) made++;
+  }
+  assert.ok(made, 'a feud made rivals');
+  const m = warMeta(3);
+  const war = m.war!;
+  const a = member(war, 'lieutenant', 3, { met: 4 });
+  const c = member(war, 'lieutenant', 2, { met: 4 });
+  assert.ok(makeRivals(a, c));
+  assert.ok(!makeRivals(a, member(war, 'lieutenant', 1)), 'one rival each');
+  const note = slay(m, a, 9);
+  assert.ok(!war.members.includes(a));
+  assert.equal(c.might, 3);
+  assert.equal(c.rival, undefined);
+  assert.ok(note.council?.some((l) => l.includes('climbs over the body')));
+  // (rivals never stand in the same wave)
+  for (let s = 0; s < 60; s++) {
+    const mm = warMeta(s);
+    const x = member(mm.war!, 'lieutenant', 2, { met: 1 });
+    const y = member(mm.war!, 'lieutenant', 2, { met: 1 });
+    makeRivals(x, y);
+    const plan = planNemeses(mm.war, armyRun(s + 3, 'undead'));
+    for (const ids of Object.values(plan?.waves ?? {})) assert.ok(!(ids.includes(x.id) && ids.includes(y.id)), `seed ${s}`);
+  }
+});
+
+test('a plot is hatched against a captain or a rival (never the warchief), comes to a head in two turns, and the player may tip it off or back it', () => {
+  const setup = (seed: number) => {
+    const m = warMeta(seed);
+    const war = m.war!;
+    member(war, 'warchief', 6);
+    const cap = member(war, 'captain', 4);
+    const lt = member(war, 'lieutenant', 3);
+    swear(war);
+    war.trophies = 4;
+    return { m, war, cap, lt };
+  };
+  const { m, war, cap, lt } = setup(1);
+  assert.ok(plotOpen(war));
+  assert.match(hatch(war, new Rng(1))!, /plots against its captain/);
+  assert.deepEqual({ by: war.plots![0].by, on: war.plots![0].on, due: war.plots![0].due }, { by: lt.id, on: cap.id, due: war.turn + PLOT.turns });
+  assert.ok(!plotters(war).includes(lt), 'one plot each');
+  assert.ok(handPlot(m, 0, 'back'));
+  assert.equal(war.trophies, 4 - PLOT.price);
+  assert.ok(!handPlot(m, 0, 'tip'), 'one hand a plot');
+  // (the plot keeps through the save)
+  assert.deepEqual(readWar(JSON.parse(JSON.stringify(war)))!.plots, war.plots);
+  war.turn += PLOT.turns;
+  const swap = (low: Nemesis, high: Nemesis) => {
+    low.rank = high.rank;
+    high.rank = 'lieutenant';
+  };
+  const lines = resolvePlots(war, m, () => assert.fail('no slaying'), swap);
+  assert.match(lines[0], /takes .* seat/);
+  assert.equal(lt.rank, 'captain');
+  assert.equal(war.plots, undefined);
+  // (tipped off: the plotter is caught, slain or cast down)
+  for (let s = 0; s < 20; s++) {
+    const t = setup(s + 10);
+    hatch(t.war, new Rng(s));
+    handPlot(t.m, 0, 'tip');
+    t.war.turn += PLOT.turns;
+    let slain = false;
+    const out = resolvePlots(t.war, t.m, () => (slain = true), () => assert.fail('no swap'));
+    assert.match(out[0], /caught plotting/);
+    if (!slain) assert.equal(t.lt.loyalty, 0);
+  }
+  // (a warchief is never the mark)
+  const w = setup(30);
+  w.cap.rival = undefined;
+  w.war.members.filter((x) => x.rank === 'warchief').forEach((x) => assert.equal(targetOf(w.war, x), undefined));
+  assert.equal(targetOf(w.war, w.cap), undefined, 'a captain with no rival has no one to plot against');
+});
+
+test('a plot left alone succeeds about half the time, on its own stream; the camp shows a new plot once', () => {
+  let won = 0;
+  const N = 200;
+  for (let s = 0; s < N; s++) {
+    const m = warMeta(s);
+    const war = m.war!;
+    const cap = member(war, 'captain', 4);
+    const lt = member(war, 'lieutenant', 3);
+    swear(war);
+    hatch(war, new Rng(s));
+    war.turn += PLOT.turns;
+    resolvePlots(war, m, () => {}, (low) => (low.rank = 'captain'));
+    if (lt.rank === 'captain') won++;
+    else assert.equal(lt.loyalty, 10);
+    void cap;
+  }
+  assert.ok(Math.abs(won / N - PLOT.success) < 0.1, `${won} of ${N}`);
+  const m = warMeta(1);
+  const war = m.war!;
+  member(war, 'captain', 4);
+  member(war, 'lieutenant', 3);
+  swear(war);
+  hatch(war, new Rng(2));
+  assert.equal(freshPlot(war)?.i, 0);
+  assert.equal(freshPlot(war), undefined, 'once');
+});
+
+// ---- Idea 6: spare or slay --------------------------------------------------------------------------------------------------------
+
+test('an old foe brought down with low loyalty kneels: its pay is held back; slain, it pays; never a new foe, the warchief or a hunt’s quarry', () => {
+  const m = warMeta(7);
+  const war = m.war!;
+  const n = member(war, 'lieutenant', 3, { met: 3, loyalty: 20 });
+  const crowns = m.crowns;
+  CHEAT_DEATH.on = false;
+  const note = slay(m, n, 3);
+  CHEAT_DEATH.on = true;
+  assert.equal(war.kneel?.n.id, n.id);
+  assert.equal(note.slain.length, 0, 'not slain yet');
+  assert.equal(m.crowns, crowns, 'its pay held back');
+  assert.ok(!war.fallen.some((f) => f.id === n.id));
+  assert.ok(note.council?.some((l) => l.includes('kneels')));
+  const held = war.kneel!.crowns;
+  assert.match(slayKneeler(m)!, /gave none/);
+  assert.equal(m.crowns, crowns + held);
+  assert.equal(war.fallen[0].id, n.id);
+  assert.equal(war.kneel, undefined);
+  // (never: a foe met fewer than fate's meetings, the warchief, one loyal enough)
+  assert.ok(!mayKneel(war, { ...n, met: 1 }, false));
+  assert.ok(!mayKneel(war, { ...n, rank: 'warchief' }, true));
+  assert.ok(!mayKneel(war, { ...n, loyalty: 80 }, false));
+  assert.ok(mayKneel(war, { ...n, loyalty: 80 }, true), 'beaten in a duel, any loyalty');
+});
+
+test('spared, it turns Informant: its brothers’ secrets told, its captain’s lieutenants shaken, the hold scouted; then thanks or betrayal', () => {
+  let thanked = 0;
+  let betrayed = 0;
+  for (let s = 0; s < 60; s++) {
+    const m = warMeta(s);
+    const war = m.war!;
+    const cap = member(war, 'captain', 4, { known: [] });
+    const n = member(war, 'lieutenant', 3, { met: 3, loyalty: 20 });
+    const other = member(war, 'lieutenant', 2, { loyalty: 60 });
+    swear(war);
+    slay(m, n, s + 1);
+    // (it may cheat death instead, as any member past fate's meetings may)
+    if (!war.kneel) continue;
+    assert.match(spareKneeler(m)!, /Informant/);
+    assert.equal(war.informant?.n.id, n.id);
+    assert.deepEqual([...cap.known].sort(), [...new Set([...cap.traits, ...cap.weak])].sort(), 'its captain’s secrets told');
+    assert.equal(other.loyalty, 60 + SPARE.sworn);
+    assert.ok(m.assault?.scouted?.undead, 'the scouts’ report on its hold');
+    for (let r = 1; r < SPARE.runs; r++) assert.equal(endInformant(m, 'undead', s * 10 + r), undefined);
+    assert.equal(endInformant(m, 'orcs', 1), undefined, 'only its own army’s runs count');
+    const line = endInformant(m, 'undead', s * 10 + 9)!;
+    assert.equal(war.informant, undefined);
+    if (/thanks/.test(line)) thanked++;
+    else {
+      betrayed++;
+      const back = war.members.find((x) => x.id === n.id)!;
+      assert.ok(back.betrayer && back.vengeful === 'knight' && back.rank === 'lieutenant');
+    }
+  }
+  assert.ok(thanked > 10 && betrayed > 10, `${thanked} thanked, ${betrayed} betrayed`);
+});
+
+test('the Informant names the next wave’s nemeses in its army’s runs, and keeps through the save', () => {
+  const m = warMeta(2);
+  const war = m.war!;
+  const n = member(war, 'lieutenant', 3, { met: 3, loyalty: 10 });
+  for (let s = 4; !war.kneel; s++) {
+    if (!war.members.includes(n)) war.members.push(n);
+    slay(m, n, s);
+  }
+  spareKneeler(m);
+  const run = armyRun(3, 'undead');
+  run.stage = 4;
+  run.nemesis = { members: [{ id: 9, base: 'skeleton', name: 'Q', epithet: '', rank: 'lieutenant', might: 1, scars: 0, traits: [], weak: [] }], waves: { '4': [9] } };
+  assert.match(informantAhead(m, run)!, /Q stands in the next wave/);
+  assert.equal(informantAhead(m, armyRun(3, 'orcs')), undefined);
+  const back = readWar(JSON.parse(JSON.stringify(war)))!;
+  assert.equal(back.informant?.n.id, n.id);
+  assert.equal(back.informant?.runs, SPARE.runs);
 });

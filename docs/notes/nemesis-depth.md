@@ -527,3 +527,156 @@ The default `npm run war-sim` sets no hunts, so its numbers stay comparable with
   - `card` and `card-mid`: Morrow's temperament, the hunt, his remembered fights and what he was once called;
   - `hunt`: Throg's card with the Hunt button and what it costs;
   - `taunt`: Hask remembering Natsu's Volley in the graveyard, closing with a Schemer's tag.
+
+---
+
+# The second batch (the owner chose ideas 10, 5, 7 and 6, in that order)
+
+Built on 0.608.0 (the first batch released). The open questions take this note's defaults; each one settled is listed under its idea.
+
+## Idea 10, built: duels with stakes
+
+- **Won** (`settleRevenge`, `payTimes`):
+  - the nemesis pays **three times over**, crowns and War Trophies (from double; Vengeance and a trophy brought home still double);
+  - the champion bears a **Duellist's mark**: +10% against every other nemesis of the run (`DUELLIST_MARK`). It is laid as a Grudge's
+    share on their snapshots, so the fight reads it where it reads a Grudge, and no new fight hook is needed;
+  - since idea 6, an old foe beaten in a duel **kneels** for the player to slay or spare.
+- **Lost** (`duelSettle`): the nemesis takes a **trophy** from the champion (the piece in its first filled slot, as a humiliation's
+  trophy is; +5% attack while it carries it, two at most, brought home for double pay by slaying it).
+- **Refused** (`refuseDuel`): it tells its army, and **every nemesis of the run is Mocking** (+5% attack), not the challenger alone.
+- The challenge card says all of it.
+- **Settled here: the odds are left as they are.** The doc proposed tuning the share so the bot wins about 70% (from 97%). Measured at
+  each army's own level (`npm run balance -- --no-tables --duel --duel-kinds knight,archer,wizard,cleric,samurai,paladin --duel-seeds 4`,
+  2,592 duels), duels are already hard:
+  - 42.9% won over all nine armies;
+  - 60% over the six armies the bot can reach (Orcs 55%, Undead 59%, Beasts 45%, Wildwood 65%, Labyrinth 80%, Ogres 56%);
+  - 49% with the Dread.
+
+  The design's band is 55 to 65%. The war simulator's 94 to 97% is its bot fighting armies far below its level. Making duels harder would
+  punish the player at level, so the stakes come from what a duel pays and costs instead. Two levers are left for the owner: the share
+  (`DUEL_SHARE`), and the infernal, yokai and golem armies, still at the plain share (15%, 9%, 2% at their own level).
+
+## Idea 5, built: studied counters
+
+- **Studying** (`study`, `nemesis.ts`). After any meeting it lives through (or is dragged off), a nemesis studies **the hero that dealt
+  it the most**. Never its Dread: it fears that hero too much to study it. It knows two at most, and the oldest is forgotten. The wave card
+  says "Morrow has studied Kwame: it takes less from Kwame, and reads its first hold".
+- **In the fight**, behind `Unit.nem` (`UnitNem.studied`):
+  - **15% less** from a studied hero (`STUDY.less`, in `nemHurt`);
+  - that hero's **first stun, freeze, fear or silence** of the fight fails (`nemReads`, in the ailments' gate, shown as "Immune").
+- **The answer** is to bring another hero, or its Dread.
+- **On the page**: a **Studied** section on the card says so the moment it is learned (the player saw it happen).
+- **Taunts**: `STUDY_TAUNTS`, two a voice; it taunts about it ("I been watching you, Kwame. I know your tricks now.") after a remembered
+  moment, before a humiliation.
+- Saved: `Nemesis.studied`, `NemSnap.studied`.
+
+## Idea 7, built: open politics
+
+`src/sim/politics.ts`.
+
+- **Rivalries** (`makeRivals`, `Nemesis.rival`, both ways). Two members who fought it out between themselves and both lived become rivals
+  until one falls: a feud, a Trial of Strength, or a betrayal that casts the captain down. One rival each.
+  - A rival slain by the heroes lets the other **climb over the body** (+1 Might, never past 10; `climbOver`). The wave card and the News
+    say so.
+  - Rivals never stand in the same wave (`planNemeses`; the draw is made as ever, so the stream is unchanged).
+  - The Council board lists the **Rivalries** in violet beside the blood-oaths, and a member's card names its rival.
+- **Plots** (the Council's ninth event, `'plot'`, weight 0.5 (the owner's call, below); x2 while a Schemer or a Trickster could hatch one).
+  - **Who and whom:** a lieutenant plots against its sworn captain, or any member but the warchief against its rival. The warchief is never
+    a mark: only the heroes bring him down. Two plots at most.
+  - **When:** a plot comes to a head two Council turns later (`resolvePlots`, on its own stream, `PLOT_SALT`).
+  - **The player's hand, for 2 War Trophies:**
+    - **Warn** the mark: the plotter is caught, and is slain or cast down;
+    - **Back** the plotter: it takes its captain's seat (the captain cast down), or beats its rival (a Might less, slain half the time).
+  - **Left alone**, a plot succeeds half the time; else the plotter is found out (a Might less, its loyalty down to 10).
+  - A plot whose plotter or mark has gone, or whose seats no longer fit, fizzles.
+- **On the page:**
+  - the Council board has a section for each plot afoot, with its words ("Hask, Pincushion plots against its captain Morrow the Unburnt:
+    it comes to a head in 2 turns") and the two hands;
+  - a card names the plots it is in;
+  - **"The Dark Council stirs"**: the camp opens a standard card for a newly hatched plot once (`freshPlot`), after any hero reveal, with
+    the two faces, the plotter's temperament and the two hands.
+- **Settled here:**
+  - the web stays lists (rivalries and blood-oaths) and seat chips rather than lines drawn between the seats, which would cross the
+    pyramid's rows on a 360 px screen;
+  - the camp card shows plots only, not every betrayal or coronation, which already have the News;
+  - the plot event's weight: at 1 it moved the Council's own seat changes from 5.7 to 7.3 a week. **The owner set it to 0.5**, which
+    brings them to 5.4 (below).
+
+## Idea 6, built: spare or slay
+
+`src/sim/spare.ts`.
+
+- **Who kneels** (`mayKneel`, in `noteWar`): an old foe (met past fate's two meetings), never the warchief, brought down **in single
+  combat** or **with its loyalty under 30** (the betrayal line).
+  - Never the hunt's quarry, Vengeance's mark, at the Muster or at a hold's conquest.
+  - One at a time, and none while the player has an Informant.
+  - Its pay (crowns and War Trophies, after any tripling or doubling) is **held back** (`War.kneel`), and its fallen line waits.
+  - The wave card says "Greymaw kneels before Kwame and begs for its life: slay or spare it, on the Dark Council".
+- **Slay** (`slayKneeler`): it falls for good and pays what was held back ("Greymaw begged for mercy, and Kwame gave none").
+- **Spare** (`spareKneeler`): it leaves the Council and becomes the player's **Informant** for five of its army's runs (`War.informant`).
+  No pay. In return:
+  - every secret of its old captain and sworn brothers (and its blood-oath brother) is told at once;
+  - its old captain's lieutenants lose 20 loyalty;
+  - the scouts' report on its army's hold is given for nothing (`assault.scouted`);
+  - the wave card names the nemeses in the next wave of every run of its army (`informantAhead`; "Your Informant: Hask stands in the
+    next wave").
+- **When its runs are done** (`endInformant`, its own stream `SPARE_SALT`):
+  - half the time it leaves **with thanks** (a War Trophy);
+  - else it **betrays** you: back on the Council as a lieutenant, a **Betrayer**, Vengeful against the hero who spared it, a Might
+    stronger;
+  - each of its old brothers the heroes slay meanwhile makes the betrayal 15 points likelier;
+  - with no lieutenant's seat free, it slips away with thanks.
+- **On the page:**
+  - one kneeling is at the top of the Council tab (its face, its pay held back, Slay or Spare), and the camp opens the same as a card
+    (before a plot's);
+  - the Informant has its own section, with its runs left and how many of its brothers you have slain;
+  - a Betrayer's card says so;
+  - an **auto-replay never spares**: one kneeling is slain at once.
+- **Settled here:**
+  - **No guest fight and no open gate.** The doc's "once, it can be called as a guest" and "its old post's gate opens" are not built. A
+    guest is a hero of the roster (`guest.ts`), and a foe in that place needs a fighter path of its own, which is too large for this batch.
+    The free scouts' report is the Assault's tie instead.
+  - **When it kneels:** below 30 loyalty (the doc said 40), the same line a betrayal uses. In the measure, kneels came almost all from
+    duels anyway.
+- Saved: `War.kneel` and `War.informant`, each holding the nemesis as a member is read (`readKneel`, `readInformant`), and
+  `Nemesis.betrayer`.
+
+## Measured (`npm run war-sim`, 120 days, seed 1)
+
+The bot slays every nemesis that kneels by default; `--spare` has it spare them all.
+
+| | First batch (0.608.0) | Second batch, the bot slaying | Second batch, the bot sparing |
+|---|---|---|---|
+| The Council's own seat changes a week | 5.7 | 7.3 | 5.6 |
+| Slain by the heroes, meetings | 86, after 2.9 | 83, after 2.9 | 66, after 3.2 |
+| Might mean, days 53 to 67 | 2.2 | 2.2 | 2.8 |
+| Duels | 52, 94% won | 41, 95% won | 47, 83% won |
+| Plots | | 19 hatched, 21 came to a head; 3 or 4 rivalries standing | 20 hatched |
+| Spare or slay | | 43 knelt (39 of them from duels) | 6 knelt: 6 Informants, 2 left with thanks, 3 betrayed |
+| Taunts by trigger | thrown 86, slew 76, skill 59 | thrown 89, slew 66, skill 55, **studied 40**, dread 25 | |
+| The same taunt as last time | 0% | 0% | 1% |
+
+### With the plot at 0.5 (the owner's call)
+
+The same run, the bot slaying: the Council's own seat changes 5.4 a week (22.4 in all), the Might mean 2.1 for days 53 to 67, 72 slain by the
+heroes after 3.1 meetings, 46 duels 89% won, 12 plots hatched and 10 come to a head, 2 or 3 rivalries standing, and 38 knelt.
+
+## Checks (the second batch)
+
+- `npm run typecheck` and `npm run web`.
+- `npm test -- nemesis council revenge duel callout assault-war assault-duel assault-last ui-standard regression ailments modes`: all pass.
+  Among them:
+  - `test/nemesis-depth.test.ts` has 37 tests, 12 of them new for these four ideas;
+  - the pinned fights hold: `nemesis-regression`, `stand-regression` and `ailments-identical`.
+- Tests changed because the owner's approved rules changed them:
+  - the duel test's won duel now kneels before it pays, three times over;
+  - the duel card's words;
+  - the Council's weights (a Plot 0.5).
+- Screens at 393x852, 360x780 and 412x915 (`node tools/nemesis/shotsDepth2.mjs`, saves in `tools/nemesis/savesDepth2.ts`), in
+  `docs/samples/nemesis-depth-2/`:
+  - `kneel-card` and `council-kneel`: Greymaw kneeling, Slay or Spare;
+  - `council-politics`: the rivalries, the plot afoot with its two hands;
+  - `card-studied`: Morrow's studied heroes;
+  - `plot-card`: the camp's "The Dark Council stirs";
+  - `council-informant`: the Informant;
+  - `duel-card`: the challenge's new stakes.

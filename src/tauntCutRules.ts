@@ -6,7 +6,7 @@
 // portraits fade in held still. Pure: no Pixi, no DOM; the page is `tauntCut.ts`.
 
 import { fullName, rankWord, type NemSnap, type NemTrophy } from './sim/nemesis';
-import { HUNT_TAUNTS, MOMENT_TAUNTS, REPLIES, TAUNTS, TRIGGERS, VOICES, type HuntTrigger, type TauntTrigger, type Voice } from './sim/nemesisLines';
+import { HUNT_TAUNTS, MOMENT_TAUNTS, REPLIES, STUDY_TAUNTS, TAUNTS, TRIGGERS, VOICES, type HuntTrigger, type TauntTrigger, type Voice } from './sim/nemesisLines';
 import { TEMPER_TAGS } from './sim/nemesisTemper';
 import { landWord, MOMENT_KINDS, type MomentKind, type NemMoment } from './sim/nemesisMoments';
 import { dreadOf, type NemRank } from './sim/nemesisTraits';
@@ -28,7 +28,7 @@ export interface Taunt {
   rank: NemRank;
   might: number;
   scars: number;
-  trigger: TauntTrigger | MomentKind | HuntTrigger;
+  trigger: TauntTrigger | MomentKind | HuntTrigger | 'studied';
   line: string;
   /** The hero the taunt names (a kind on the board), and its answer. */
   hero?: string;
@@ -57,7 +57,7 @@ export function fill(t: string, w: { name: string; hero?: string; kind?: string;
 /** Which trigger a nemesis taunts with, and the hero it names: the most personal its memory holds for a hero on the board, else what it is.
  *  NEMESIS-DEPTH: a remembered moment about a hero on the board comes after a trophy, before the rest (a humiliation too); a moment about no
  *  hero (the king's spell, an Eidolon, an element) before an escape. The newest moment first. */
-export function triggerOf(s: NemSnap, field: readonly string[]): { trigger: TauntTrigger | MomentKind | HuntTrigger; hero?: string; trophy?: NemTrophy; fallen?: string; moment?: NemMoment } {
+export function triggerOf(s: NemSnap, field: readonly string[]): { trigger: AnyTrigger; hero?: string; trophy?: NemTrophy; fallen?: string; moment?: NemMoment } {
   const on = (k: string | undefined): k is string => !!k && field.includes(k);
   // (NEMESIS-DEPTH, idea 4: the hunt first: the quarry knows it is hunted; one that outlived a hunt says so at the next meeting)
   if (s.hunted) return { trigger: 'quarry' };
@@ -67,6 +67,9 @@ export function triggerOf(s: NemSnap, field: readonly string[]): { trigger: Taun
     if (t === 'humiliated') {
       const mo = s.moments?.find((x) => on(x.hero));
       if (mo) return { trigger: mo.k, hero: mo.hero, moment: mo };
+      // (idea 5: a hero it has studied)
+      const st = s.studied?.find(on);
+      if (st) return { trigger: 'studied', hero: st };
     } else if (t === 'escaped') {
       const mo = s.moments?.find((x) => !x.hero);
       if (mo) return { trigger: mo.k, moment: mo };
@@ -116,13 +119,13 @@ export function triggerOf(s: NemSnap, field: readonly string[]): { trigger: Taun
 /** The taunts that do not name a hero (its answer is then the plain one). */
 const PLAIN: readonly TauntTrigger[] = ['meet', 'escaped', 'warchief'];
 
-type AnyTrigger = TauntTrigger | MomentKind | HuntTrigger;
+type AnyTrigger = TauntTrigger | MomentKind | HuntTrigger | 'studied';
 const isMoment = (t: AnyTrigger): t is MomentKind => (MOMENT_KINDS as readonly string[]).includes(t);
 const isHunt = (t: AnyTrigger): t is HuntTrigger => t === 'quarry' || t === 'lived';
 /** A trigger's lines in a voice. */
-export const linesOf = (t: AnyTrigger, v: Voice): readonly string[] => (isMoment(t) ? MOMENT_TAUNTS[t][v] : isHunt(t) ? HUNT_TAUNTS[t][v] : TAUNTS[t][v]);
+export const linesOf = (t: AnyTrigger, v: Voice): readonly string[] => (t === 'studied' ? STUDY_TAUNTS[v] : isMoment(t) ? MOMENT_TAUNTS[t][v] : isHunt(t) ? HUNT_TAUNTS[t][v] : TAUNTS[t][v]);
 /** A trigger's place in the hash (the old triggers keep theirs). */
-const triggerKey = (t: AnyTrigger): number => (isMoment(t) ? 100 + MOMENT_KINDS.indexOf(t) : isHunt(t) ? (t === 'quarry' ? 200 : 201) : TRIGGERS.indexOf(t));
+const triggerKey = (t: AnyTrigger): number => (t === 'studied' ? 300 : isMoment(t) ? 100 + MOMENT_KINDS.indexOf(t) : isHunt(t) ? (t === 'quarry' ? 200 : 201) : TRIGGERS.indexOf(t));
 
 /**
  * A nemesis's cut-in for a run (`seed`) with these hero kinds on the board. NEMESIS-DEPTH: the line turns with its meetings (`met`, which

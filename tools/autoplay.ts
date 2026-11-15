@@ -9,6 +9,7 @@ import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battl
 import { planRun } from '../src/sim/revenge';
 import { noteWar } from '../src/sim/council';
 import { endHunt } from '../src/sim/hunt';
+import { endInformant, slayKneeler, spareKneeler } from '../src/sim/spare';
 import { acceptDuel, championFor, duelOffer, settleDuelRun, startDuel } from '../src/sim/duel';
 import { playOutTallied } from '../src/sim/nemesisLog';
 import { chooseOption, leaveEvent } from '../src/sim/events';
@@ -109,7 +110,7 @@ export function frontSpots(b: Battle): [number, number][] {
 
 /** The Nemesis War in the bot's runs: off, a save's War is met but never changed (the balance tool's frozen Council); on, each wave is
  *  settled for the War as the page settles it (`tools/nemesis/warBot.ts` grows a Council this way). */
-export const WAR_BOT = { settle: false, duels: false };
+export const WAR_BOT = { settle: false, duels: false, spare: false };
 
 /** Phase 4: the duels the bot fought (with `WAR_BOT.duels` on, it accepts every challenge, its champion the hero named or else its
  *  strongest), for the war simulator's report. */
@@ -127,6 +128,8 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
   const won = playWaves(meta, run, castle, gear, boostFor);
   // (NEMESIS-DEPTH, idea 4: the run is over: a hunt planned into it whose quarry lives has failed, as `settleRun` settles it on the page)
   if (WAR_BOT.settle && meta.war) endHunt(meta, { ...run, over: true });
+  // (NEMESIS-DEPTH, idea 6: and the Informant's runs count down)
+  if (WAR_BOT.settle && meta.war) endInformant(meta, armyId, run.seed);
   const cleared = !!run.cleared && won === army.waves.length;
   return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
 }
@@ -167,6 +170,7 @@ export function playWaves(meta: Meta, run: Run, castle: Castle = run.castle ?? n
       const out = settleDuelRun(run, d)!;
       duelLog.push({ army: army.id, kind: h.kind, why: offer.why, rank: run.nemesis?.members.find((x) => x.id === offer.id)?.rank ?? '', out });
       if (dt) noteWar(meta, run, d, dt, out === 'won', run.stage);
+      if (meta.war?.kneel) (WAR_BOT.spare ? spareKneeler : slayKneeler)(meta);
       if (out === 'won') {
         won = run.stage;
         noteFight(run, d);
@@ -184,6 +188,8 @@ export function playWaves(meta: Meta, run: Run, castle: Castle = run.castle ?? n
     const ok = b.phase === 'won';
     if (ok) won = run.stage;
     if (tally) noteWar(meta, run, b, tally, ok, run.stage);
+    // (idea 6: the bot slays one kneeling, or spares it with `WAR_BOT.spare`)
+    if (meta.war?.kneel) (WAR_BOT.spare ? spareKneeler : slayKneeler)(meta);
     noteFight(run, b);
     finish(run, ok, ratingOf(b, isBossRun(run)).stars);
     gainXp(meta, fightXp(b, xpRate(castle)));
