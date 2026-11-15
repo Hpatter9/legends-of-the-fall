@@ -103,6 +103,8 @@ export function decorate(m: Meta, s: NemSnap, n: Nemesis): NemSnap {
     ...(n.fled ? { fled: n.fled } : {}),
     met: n.met,
     ...(n.seen ? { seen: true as const } : {}),
+    ...(n.moments?.length ? { moments: n.moments.map((x) => ({ ...x })) } : {}),
+    ...(n.huntLived !== undefined ? { huntLived: n.huntLived } : {}),
   };
 }
 
@@ -127,6 +129,11 @@ export function planRun(m: Meta, run: Run): RunNemesis | undefined {
   if (war.away && !Object.keys(war.away).length) delete war.away;
   const plan = planNemeses(away.size ? { ...war, members: war.members.filter((n) => !away.has(n.id)) } : war, run);
   if (!plan) return undefined;
+  // (NEMESIS-DEPTH, idea 4: the hunt is planned into this run, so its end can tell whether the quarry was run down)
+  if (war.hunt && plan.members.some((x) => x.hunted)) {
+    war.hunt.run = run.seed;
+    war.hunt.met = war.members.find((n) => n.id === war.hunt!.id)?.met ?? 0;
+  }
   return { ...plan, members: plan.members.map((s) => decorate(m, s, war.members.find((n) => n.id === s.id)!)) };
 }
 

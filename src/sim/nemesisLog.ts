@@ -41,6 +41,12 @@ export interface FoeLog {
   by: Record<string, number>;
   /** The hero kind whose blow felled it, if a hero's did. */
   fell?: string;
+  // (NEMESIS-DEPTH, remembered fights: `nemesisMoments.ts`)
+  /** The damage each hero's skills dealt it, by "hero kind|skill key". */
+  skills?: Record<string, number>;
+  /** The hero who last struck it before it was shoved or launched, and the most levels it fell at once. */
+  thrownBy?: string;
+  drop?: number;
 }
 
 /** A fight's tally for the War. */
@@ -50,6 +56,9 @@ export interface NemesisTally {
   healed: Record<string, number>;
   /** The ailments each foe stood under after the last tick (to see one newly laid). */
   had: Record<number, string>;
+  /** NEMESIS-DEPTH: each hero's last skill cast (by unit id, its key), for the skill hits that follow; and who last struck each foe. */
+  cast?: Record<number, string>;
+  struck?: Record<number, string>;
 }
 
 export const blankLog = (def: string): FoeLog => ({ def, dealt: {}, slew: [], slewIds: [], low: [], high: 0, taken: 0, shots: 0, melee: 0, ailDmg: {}, ailHits: {}, laid: {}, arcs: 0, spells: 0, eidolon: 0, moved: 0, by: {} });
@@ -100,6 +109,12 @@ export function tallyNemesis(tally: NemesisTally, events: readonly BattleEvent[]
         const hero = by && by.side === 'hero' && fieldedHero(by) ? by.def : undefined;
         if (hero) f.by[hero] = (f.by[hero] ?? 0) + e.dmg;
         if (hero && e.killed) f.fell = hero;
+        // (NEMESIS-DEPTH: a hero's skill that struck it, by the skill it last cast; and who struck it last, for a shove)
+        if (hero && by) {
+          (tally.struck ??= {})[to.id] = hero;
+          const key = e.src === 'skill' ? tally.cast?.[by.id] : undefined;
+          if (key) (f.skills ??= {})[`${hero}|${key}`] = ((f.skills ??= {})[`${hero}|${key}`] ?? 0) + e.dmg;
+        }
       }
     } else if (e.kind === 'heal' && e.by !== undefined) {
       const by = credit(e.by);
@@ -112,7 +127,15 @@ export function tallyNemesis(tally: NemesisTally, events: readonly BattleEvent[]
       if (ownFoe(to)) log(to).spells++;
     } else if (e.kind === 'shove' || e.kind === 'launch' || e.kind === 'fall') {
       const to = byId.get(e.to);
-      if (ownFoe(to)) log(to).moved++;
+      if (ownFoe(to)) {
+        const f = log(to);
+        f.moved++;
+        if (e.kind === 'fall') f.drop = Math.max(f.drop ?? 0, e.levels);
+        else if (tally.struck?.[to.id]) f.thrownBy = tally.struck[to.id];
+      }
+    } else if (e.kind === 'skill') {
+      const by = byId.get(e.by);
+      if (by && by.side === 'hero' && fieldedHero(by)) (tally.cast ??= {})[by.id] = e.name;
     }
   }
   // (an ailment newly on a foe, read from what it shows after the tick: the laying itself has no event)

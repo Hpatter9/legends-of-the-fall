@@ -13,7 +13,10 @@
 import { ARMIES, armyUnlocked } from '../../src/sim/armies';
 import { councilTurn } from '../../src/sim/council';
 import { MUSTER_NEED, musterOpen, startMuster, warchiefOf } from '../../src/sim/muster';
-import { newWar, type Nemesis, type War } from '../../src/sim/nemesis';
+import { newWar, snapOf, type Nemesis, type War } from '../../src/sim/nemesis';
+import { decorate } from '../../src/sim/revenge';
+import { setHunt } from '../../src/sim/hunt';
+import { tauntFor } from '../../src/tauntCutRules';
 import { mixSeed } from '../../src/sim/rng';
 import { duelLog, playArmy, playWaves, savedAt, WAR_BOT } from '../autoplay';
 
@@ -36,6 +39,9 @@ const dayKey = (day: number): number => {
 
 const seatsOf = (war: War): Map<number, string> => new Map(war.members.map((n) => [n.id, n.rank]));
 
+/** NEMESIS-DEPTH: `--hunts` has the bot set a hunt whenever it can (`hunt.ts`). */
+const HUNTS = process.argv.includes('--hunts');
+
 function main(): void {
   const war: War = newWar();
   let opened = false;
@@ -52,6 +58,19 @@ function main(): void {
   let firstTen: number | undefined;
   let tenth: Nemesis | undefined;
   const around60: number[] = [];
+  // (NEMESIS-DEPTH: the meetings each member had when the heroes slew it, and the share of seats held by strangers the heroes never met)
+  const metAtFall: number[] = [];
+  const strangerShare: number[] = [];
+  // (NEMESIS-DEPTH: each member's taunt as it would open its next meeting, compared with the one before: the same line twice running)
+  const lastTaunt = new Map<number, { met: number; line: string }>();
+  let taunts = 0;
+  let repeats = 0;
+  const triggers: Record<string, number> = {};
+  let bornNamed = 0;
+  let huntsSet = 0;
+  let huntsWon = 0;
+  let huntsLost = 0;
+  let bornRecruit = 0;
   const at: Record<number, { mean: number; top: number; n: number }> = {};
   WAR_BOT.settle = true;
   // (phase 4: the bot takes every duel it is offered, its champion the hero named or else its strongest; `--no-duels` as phase 3)
@@ -73,9 +92,17 @@ function main(): void {
     const newsBefore = war.news[0];
     const before = seatsOf(war);
     const fallenIds = new Set(war.fallen.map((f) => f.id));
+    const objs = new Map(war.members.map((n) => [n.id, n]));
     const chiefBefore = warchiefOf(war);
     const key = dayKey(day);
     if (opened) turn(meta, 'visit', key, week);
+    // (NEMESIS-DEPTH, idea 4, with `--hunts`: the bot sets a hunt each day it has none and the trophies, on the mightiest member of the army
+    // it plays most, else of any army it plays)
+    if (HUNTS && opened && !war.hunt && war.trophies >= 2) {
+      const armies = (reach.length ? reach : [ARMIES[0]]).map((a) => a.id);
+      const pick = [...war.members].filter((n) => armies.includes(n.army) && !war.away?.[String(n.id)]).sort((a, b) => Number(b.army === armies[armies.length - 1]) - Number(a.army === armies[armies.length - 1]) || b.might - a.might || a.id - b.id)[0];
+      if (pick && setHunt(meta, pick.id) !== null) huntsSet++;
+    }
     for (let r = 0; r < RUNS; r++) {
       const pool = reach.length ? reach : [ARMIES[0]];
       // (mostly the newest army, now and then an older one)
@@ -99,6 +126,10 @@ function main(): void {
     for (const x of war.news) {
       if (x === newsBefore) break;
       week.kinds[x.kind] = (week.kinds[x.kind] ?? 0) + 1;
+      if (x.kind === 'hunt' && x.text.startsWith('The hunt is over')) huntsWon++;
+      if (x.kind === 'hunt' && x.text.startsWith('The hunt has failed')) huntsLost++;
+      if (x.kind === 'named') bornNamed++;
+      if (x.kind === 'recruit') bornRecruit++;
       // (phase 3: a humiliation is told on its own line, or on its cheat's)
       if (/humiliated/.test(x.text) && !/returns$/.test(x.text)) week.kinds.shamed = (week.kinds.shamed ?? 0) + 1;
       if (/humiliated.*, and took /.test(x.text)) week.kinds.took = (week.kinds.took ?? 0) + 1;
@@ -107,6 +138,19 @@ function main(): void {
     for (const [id, rank] of after) if (before.get(id) !== rank) week.changes++;
     for (const id of before.keys()) if (!after.has(id)) week.changes++;
     const fresh = war.fallen.filter((f) => !fallenIds.has(f.id));
+    for (const f of fresh) if (f.how !== 'council') metAtFall.push(objs.get(f.id)?.met ?? 1);
+    for (const n of war.members) {
+      const was = lastTaunt.get(n.id);
+      if (was && was.met === n.met) continue;
+      const t = tauntFor(decorate(meta, snapOf(n), n), PARTY, mixSeed(SEED, day, n.id));
+      if (was) {
+        taunts++;
+        if (t.line === was.line) repeats++;
+      }
+      triggers[t.trigger] = (triggers[t.trigger] ?? 0) + 1;
+      lastTaunt.set(n.id, { met: n.met, line: t.line });
+    }
+    if (war.members.length) strangerShare.push(war.members.filter((n) => n.met === 0).length / war.members.length);
     // (lost to infighting: slain by a rival of the Council, or deserted)
     week.infight += fresh.filter((f) => f.how === 'council').length + (week.kinds.desertion ?? 0) - (week.deserted ?? 0);
     week.deserted = week.kinds.desertion ?? 0;
@@ -155,6 +199,13 @@ function main(): void {
   const whys = [...new Set(duelLog.map((d) => d.why))].map((w) => `${w} ${dn((d) => d.why === w)}`).join(', ');
   console.log(`  phase 4: ${duelLog.length} duels (${whys || 'none'}): ${dn((d) => d.out === 'won')} won, ${dn((d) => d.out === 'lost')} lost, ${dn((d) => d.out === 'timeout')} out of time (${duelLog.length ? ((100 * dn((d) => d.out === 'won')) / duelLog.length).toFixed(0) : 0}% won; captains ${dn((d) => d.rank === 'captain' && d.out === 'won')} of ${dn((d) => d.rank === 'captain')}, lieutenants ${dn((d) => d.rank === 'lieutenant' && d.out === 'won')} of ${dn((d) => d.rank === 'lieutenant')}, warchiefs ${dn((d) => d.rank === 'warchief' && d.out === 'won')} of ${dn((d) => d.rank === 'warchief')})${WAR_BOT.duels ? '' : ''}`);
   console.log(`  warchiefs: ${chiefs.length ? chiefs.map((c) => `${c.name} days ${c.from}-${c.to ?? 'now'}${c.how ? ` (${c.how})` : ''}`).join('; ') : 'none'} (target: at least 2 weeks unless the player kills him)`);
+  const meanOf = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  console.log(`  NEMESIS-DEPTH: ${metAtFall.length} slain by the heroes after ${meanOf(metAtFall).toFixed(1)} meetings on average (${metAtFall.filter((x) => x >= 3).length} after three or more); strangers (never met) held ${(100 * meanOf(strangerShare)).toFixed(0)}% of the seats; ${bornNamed} named by the fights, ${bornRecruit} recruited (${bornNamed + bornRecruit ? ((100 * bornRecruit) / (bornNamed + bornRecruit)).toFixed(0) : 0}% recruits)`);
+  const tempers: Record<string, number> = {};
+  for (const n of war.members) tempers[n.temper ?? 'none'] = (tempers[n.temper ?? 'none'] ?? 0) + 1;
+  console.log(`  temperaments on the Council at the end: ${Object.entries(tempers).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', ')}; epithets grown: ${war.members.filter((n) => n.was?.length).length} of ${war.members.length} members`);
+  console.log(`  taunts: ${repeats} of ${taunts} the same line as the member's taunt before (${taunts ? ((100 * repeats) / taunts).toFixed(0) : 0}%); by trigger: ${Object.entries(triggers).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', ')}`);
+  if (HUNTS) console.log(`  hunts: ${huntsSet} set, ${huntsWon} run down, ${huntsLost} failed, ${huntsSet - huntsWon - huntsLost} lapsed or still on`);
   console.log(`  the Muster opens at ${MUSTER_NEED} captains slain; final: ${war.members.length} members, ${war.fallen.length} fallen kept, ${war.heads?.length ?? 0} Warchief's Heads, ${war.trophies} War Trophies\n`);
 }
 

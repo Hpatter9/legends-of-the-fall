@@ -30,8 +30,9 @@ function warMeta(seed = 3): Meta {
   m.war = newWar();
   return m;
 }
+/** A member of the Council, by hand: met twice, an old foe that may call a champion out (NEMESIS-DEPTH). */
 function member(war: War, extra: Partial<Nemesis> = {}): Nemesis {
-  const n: Nemesis = { id: war.nextId++, base: 'skeleton', army: 'undead', name: `Rattle${war.nextId}`, epithet: 'the Bony', rank: 'lieutenant', loyalty: 60, might: 3, scars: 0, traits: ['scarred'], weak: ['dread:knight'], known: [], memory: [], met: 1, lost: 0, born: 0, ...extra };
+  const n: Nemesis = { id: war.nextId++, base: 'skeleton', army: 'undead', name: `Rattle${war.nextId}`, epithet: 'the Bony', rank: 'lieutenant', loyalty: 60, might: 3, scars: 0, traits: ['scarred'], weak: ['dread:knight'], known: [], memory: [], met: 2, lost: 0, born: 0, ...extra };
   war.members.push(n);
   return n;
 }

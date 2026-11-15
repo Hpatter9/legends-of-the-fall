@@ -16,7 +16,9 @@ import { TIERS } from './tiers';
 import { decorate } from './revenge';
 
 /** Captains slain since the last Muster that open the next. */
-export const MUSTER_NEED = 2;
+export const MUSTER_NEED = 3;
+/** NEMESIS-DEPTH: a new warchief holds his seat this many war turns before his Muster can open (about three or four days' play). */
+export const CHIEF_TENURE = 10;
 /** Its waves, and how many lieutenants and captains stand in the first two. */
 export const MUSTER_WAVES = 3;
 export const MUSTER_LIEUTENANTS = 3;
@@ -25,13 +27,17 @@ export const MUSTER_CAPTAINS = 2;
 /** The warchief, if the seat is filled. */
 export const warchiefOf = (war: War | undefined): Nemesis | undefined => war?.members.find((n) => n.rank === 'warchief');
 /** Whether the Muster is open: a warchief sits, and two captains have fallen to the heroes since the last one. */
-export const musterOpen = (war: War | undefined): boolean => !!warchiefOf(war) && (war?.musterSince ?? 0) >= MUSTER_NEED;
+export const musterOpen = (war: War | undefined): boolean => !!warchiefOf(war) && (war?.musterSince ?? 0) >= MUSTER_NEED && tenureLeft(war) <= 0;
+/** The war turns before a new warchief's Muster can open (none for one crowned before NEMESIS-DEPTH kept the turn). */
+export const tenureLeft = (war: War | undefined): number => (war?.crowned === undefined ? 0 : Math.max(0, war.crowned + CHIEF_TENURE - war.turn));
 /** How far the Muster is from opening, in words, for the board ("Slay 1 more captain to call the Warchief out"). */
 export function musterLine(war: War | undefined): string {
   if (!war) return '';
   if (!warchiefOf(war)) return 'No warchief holds the Council yet: the strongest captain will claim the seat.';
   if (musterOpen(war)) return 'The Warchief’s Muster is open: his Council stands with him.';
   const left = MUSTER_NEED - war.musterSince;
+  const t = tenureLeft(war);
+  if (left <= 0) return `The Warchief is new to his seat: his Muster can be called in ${t} more war ${t === 1 ? 'turn' : 'turns'}.`;
   return `Slay ${left} more ${left === 1 ? 'captain' : 'captains'} to call the Warchief to his Muster.`;
 }
 

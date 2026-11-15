@@ -17,7 +17,8 @@
 
 import { addUnit, type Battle, type Boost } from './battle';
 import { canStep, standable, tileAt, type At, type Board } from './board';
-import { MIGHT_MAX, type NemSnap, type RunNemesis } from './nemesis';
+import { challenges } from './nemesisTemper';
+import { FATE_MEETINGS, MIGHT_MAX, type NemSnap, type RunNemesis } from './nemesis';
 import { walkFrom } from './path';
 import { mixSeed } from './rng';
 import type { Run } from './run';
@@ -103,7 +104,10 @@ export function challengeOf(s: NemSnap, squad: readonly { id: number; kind: stri
   const grudge = Object.entries(s.grudge ?? {})
     .filter(([k]) => find(k))
     .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0]?.[0];
-  return named('vengeful', find(s.vengeful)) ?? named('grudge', find(grudge)) ?? named('dread', find(dreadOf(s.weak))) ?? (s.weak.includes('vain') ? { id: s.id, why: 'vain' as const } : undefined);
+  // (NEMESIS-DEPTH: a Schemer or a Coward never calls a champion out; a Glory-hound always does, as a Vain one does)
+  const t = challenges(s.temper);
+  if (t === 'never') return undefined;
+  return named('vengeful', find(s.vengeful)) ?? named('grudge', find(grudge)) ?? named('dread', find(dreadOf(s.weak))) ?? (s.weak.includes('vain') || t === 'always' ? { id: s.id, why: 'vain' as const } : undefined);
 }
 
 /**
@@ -116,7 +120,9 @@ export function duelOffer(run: Run): DuelOffer | undefined {
   if (!squad.length) return undefined;
   for (const id of run.nemesis.waves[String(run.stage)] ?? []) {
     const s = run.nemesis.members.find((x) => x.id === id);
-    const c = s && challengeOf(s, squad);
+    // (NEMESIS-DEPTH: single combat is for old foes; one met fewer than `FATE_MEETINGS` times has no score to call out, and fate spares it)
+    if (!s || (s.met ?? 0) < FATE_MEETINGS) continue;
+    const c = challengeOf(s, squad);
     if (c) return { ...c, wave: run.stage };
   }
   return undefined;

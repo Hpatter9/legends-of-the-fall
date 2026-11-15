@@ -121,6 +121,7 @@ import { TauntCuts } from './tauntCut';
 import { acceptDuel, contenders, duelOffer, offerSnap, refuseDuel, settleDuelRun, startDuel, type DuelOffer } from './sim/duel';
 import { DUEL_MS } from './sim/duelRing';
 import { duelAhead, duelBar, duelTaunt } from './duelRules';
+import { huntAhead } from './sim/hunt';
 import { openDuelCard } from './duelView';
 import { initPhoneBack } from './phoneBack';
 import { DuelShow } from './duelShow';
@@ -4813,7 +4814,8 @@ class Game {
       // (phase 4: a challenge the next wave opens with is told on this wave's card)
       const next = won && !run.over && !this.auto ? duelOffer(run) : undefined;
       const nextSnap = next && offerSnap(run, next);
-      const ahead = next && nextSnap ? duelAhead(next, nextSnap) : undefined;
+      // (NEMESIS-DEPTH, idea 4: and the hunt's quarry standing in the next wave)
+      const ahead = next && nextSnap ? duelAhead(next, nextSnap) : won && !run.over && !this.auto ? huntAhead(run) : undefined;
       noteSpoils(recapOf(run), waveGains);
       this.waveCard = { quests: questLines(questMoved).map((l) => l.text), wave: stage, of: fixed ? fixed.waves.length : null, ...(title ? { title } : {}), ups, fell, hearts: this.heartsBurned, heartsLeft: livesLeft(run), found: [...(run.found ?? []), ...farSightLine(run, fixed, stage)], risen: won ? risenLine(run, heroName) : null, gains: waveGains.filter((g) => !this.dropGain || !(g.kind === 'shard' || g.kind === 'unlockShard' || g.kind === 'tome')), ...(this.dropGain ? { drops: this.dropGain.words } : {}), ...(hornSaid ? { horn: hornSaid } : {}), ...(studied.length ? { study: studied } : {}), ...(skillUps.length ? { skills: skillUps } : {}), ...(wore.length ? { wear: wore } : {}), ...(!this.auto && isReal(run) && spareFinds(run).length ? { waiting: spareFinds(run).length } : {}), ...(farewellOf(run) ? { farewell: farewellOf(run)! } : {}), ...(nemesisLines(this.nemNote).length || ahead ? { nemesis: [...nemesisLines(this.nemNote), ...(ahead ? [ahead] : [])] } : {}) };
       if (!this.auto) {
