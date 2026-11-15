@@ -391,3 +391,72 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
 /* (the crest under the top bar hangs to about 110px: the spell orbs start below it) */
 #hudSpells { top: 112px; }
 #hudSpells #spells button { min-width: 44px; min-height: 44px; }
+
+/* ---- HERO-LIVE-STATS (docs/notes/hero-live-stats.md, `heroLive.ts`): a hero picked mid-fight swaps the rows for its stats panel, in the
+   rows' own place and at least their height (so the board above does not move). A brass-rimmed plate as the rows are: the head (portrait,
+   name, level, rank, stars, the ultimate's charge, "‹ Skills"), the bars, this fight's numbers, the fighting numbers marked ▲ or ▼, the buffs
+   and ailments as chips (a tap says what each does), and the notes. Text 12px and up; it scrolls inside itself if a hero has a lot on it. ---- */
+.fightHud.picking .fhRow { display: none; }
+.fhLive { grid-column: 1 / -1; box-sizing: border-box; display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: 4px 6px 5px; color: #f0e6d2; font: 400 12px/14px var(--body); text-shadow: var(--outline); touch-action: pan-y; -webkit-touch-callout: none; user-select: none;
+  border: 1px solid #c9a95c; border-radius: 4px; background: radial-gradient(ellipse at top, #83945b40, transparent 70%), linear-gradient(#2b372a, #0e1914);
+  box-shadow: inset 0 0 0 1px #0c1712, inset 0 0 0 3px #a28a5833, 0 0 0 1px #0007; }
+.fhLive[hidden] { display: none; }
+.fhLive > * { flex: none; }
+.fhLive { position: relative; }
+.fhLive.fallen .fhlHead, .fhLive.fallen .fhlBars { filter: grayscale(0.8) brightness(0.8); }
+.fhlHead { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto auto; align-items: center; column-gap: 6px; }
+.fhlPic { position: relative; width: 36px; height: 36px; padding: 0; border: 0; background: rgb(0 0 0 / 0.35); cursor: pointer; }
+.fhlPic::after { content: ''; position: absolute; inset: 0; background: url(ui/combat-portrait.png) center / 100% 100% no-repeat; pointer-events: none; }
+.fhlFace { display: block; box-sizing: border-box; width: 100%; height: 100%; padding: 3px; object-fit: cover; image-rendering: auto; }
+.fhlWho { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.fhlWho b { font: 400 15px/16px var(--display, var(--body)); color: #ffe7b0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fhlWho small { font-size: 12px; color: #d8c8a0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fhlUlt { position: relative; display: block; width: 74px; height: 18px; box-sizing: border-box; border: 1px solid #a28a58; border-radius: 9px; background: #0a1710; overflow: hidden; }
+.fhlUlt i { position: absolute; inset: 0 auto 0 0; width: calc(var(--m, 0) * 100%);
+  background: linear-gradient(115deg, #ff9fe6, #8fe3ff, #c6a8ff, #ffe48f, #8fffd0); background-size: 300% 300%; animation: fhPearl 6s linear infinite; opacity: 0.85; }
+.fhlUlt span { position: relative; display: block; text-align: center; font: 400 12px/16px var(--body); color: #fff; }
+.fhlUlt.ready { border-color: #f6db91; box-shadow: 0 0 8px rgb(255 190 250 / 0.8); }
+.fhlUlt.locked { opacity: 0.6; }
+.fhlUlt.locked i { display: none; }
+.fhlBack { min-width: 64px; min-height: 34px; padding: 0 8px; border: 1px solid #c9a95c; border-radius: 4px; color: #ffe7b0; font: 400 13px/1 var(--body); cursor: pointer;
+  background: linear-gradient(#5a4a26, #2e2512); box-shadow: inset 0 1px 0 #fff3, 0 2px 4px #0008; }
+.fhlBack:active, .fhlPic:active { filter: brightness(1.2); }
+.fhlBars { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3px 6px; }
+.fhlBar { position: relative; height: 15px; box-sizing: border-box; border: 1px solid #9d8147; border-radius: 2px; background: #0a1710; box-shadow: inset 0 1px 2px #000c; overflow: hidden; }
+.fhlBar i { position: absolute; left: 0; top: 0; bottom: 0; transition: width 0.2s linear; }
+.fhlBar span { position: absolute; z-index: 1; left: 4px; top: 0; font: 400 12px/13px var(--body); color: #fff8; }
+.fhlBar b { position: relative; display: block; padding-left: 26px; font: 400 12px/13px 'Pixelify Sans', var(--body); text-align: center; white-space: nowrap; text-shadow: 0 1px 1px #000, 1px 0 1px #000, -1px 0 1px #000; }
+.fhlBar.hp i { background: linear-gradient(#8ef07a, #3fa836); }
+.fhlBar.mana i { background: linear-gradient(var(--b5, #9fd4ff), var(--b2, #2a6ad1)); }
+.fhlBar.stamina i { background: linear-gradient(#ffe27a, #d79a1e); }
+.fhlBar.sh b { padding-left: 42px; }
+.fhlBar.sh i { background: linear-gradient(#e6f4ff, #8fb6d8); }
+.fhlBar.xp i { background: linear-gradient(#e4c4ff, #8a5ad0); }
+.fhlFight { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+.fhlFight span { display: flex; flex-direction: column; align-items: center; padding: 1px 0; border-radius: 3px; background: rgb(0 0 0 / 0.35); box-shadow: inset 0 0 0 1px #a28a5844; }
+.fhlFight b { font: 400 13px/14px 'Pixelify Sans', var(--body); color: #fff3d0; }
+.fhlFight small { font-size: 12px; line-height: 12px; color: #c9b88e; }
+.fhlStats { display: grid; grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 1px 5px; margin: 0; padding: 3px 5px; border-radius: 3px; background: rgb(0 0 0 / 0.28); }
+.fhlStats dt { color: #c9b88e; white-space: nowrap; }
+.fhlStats dd { margin: 0; color: #f6ecd2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Pixelify Sans', var(--body); }
+.fhlStats dd em { font-style: normal; margin-left: 3px; font-size: 11px; }
+.fhlStats dd.up { color: #9cf08a; }
+.fhlStats dd.down { color: #ff9a8a; }
+.fhlFx { display: flex; flex-wrap: wrap; gap: 3px; }
+.fhlEff { display: inline-flex; align-items: center; gap: 3px; min-height: 22px; padding: 0 6px 0 2px; border-radius: 11px; cursor: pointer; color: #f6ecd2; font: 400 12px/14px var(--body);
+  background: rgb(8 14 11 / 0.8); border: 1px solid #8fd06a; }
+.fhlEff.bad { border-color: #e2765e; }
+.fhlEff em { font-style: normal; color: #d8c8a0; font-family: 'Pixelify Sans', var(--body); }
+.fhlEff.on { background: #3a3014; border-color: #ffe08a; }
+.fhlIco { display: block; flex: none; background-repeat: no-repeat; object-fit: contain; }
+.fhlIco.dot { border-radius: 50%; background: #c9a95c; }
+.fhlNone { color: #a89c80; }
+.fhlTip { position: absolute; z-index: 3; left: 6px; right: 6px; bottom: 5px; margin: 0; padding: 3px 6px; border-radius: 3px; color: #fff3d0; background: #3a3014f2; border: 1px solid #ffe08a; box-shadow: 0 -2px 8px #000a; pointer-events: none; }
+.fhlTip[hidden] { display: none; }
+.fhlNotes { display: flex; flex-direction: column; gap: 1px; color: #e0d2ad; }
+.fhlNotes:empty { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .fhlUlt i { animation: none; }
+  .fhlBar i { transition: none; }
+}

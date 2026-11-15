@@ -75,7 +75,7 @@ import { siteLevel, xpRate } from './sim/castle';
 import { heroStats } from './sim/talents';
 import { isReal, runKitStats, settleFinds, spareFinds, settleRunWear, slotTaken } from './sim/runGear';
 import { powerOf, powerText } from './sim/power';
-import { benchXp, fightXp, gainXp, levelOfKind, type LevelUp } from './sim/levels';
+import { benchXp, fightXp, gainXp, levelOfKind, progressOf, type LevelUp } from './sim/levels';
 import { levelBadge } from './levelBadge';
 import { ratingOf, STAR_CROWNS, STAR_GOLD, type Rating } from './sim/stars';
 import { autoDeploy, autoRound, gearCount, pickSquad } from './sim/autoplay';
@@ -152,6 +152,7 @@ import { FightHud } from './fightHud';
 import { HoldPress, UnitInfoCard } from './unitInfo';
 import { heroFace } from './heroFace';
 import { infoOf, previewUnit } from './unitInfoRules';
+import { nearestMark, pickOnTap, pickable } from './heroLiveRules';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
 import { fullScene, waveEndStuck } from './ultMomentRules';
@@ -2017,6 +2018,8 @@ class Game {
       else {
         // (TEN-LIVES: the countdown over a fallen hero a life will raise)
         s.reviveIn = b.lives && b.phase === 'fight' ? reviveIn(b, s.unit) : null;
+        // (HERO-LIVE-STATS: the hero the stats panel shows wears its ring)
+        s.picked = b.phase === 'fight' && this.hud.picked === id;
         s.update(b.board, t, b.phase !== 'deploy', isWon, this.endWait);
       }
     }
@@ -2719,6 +2722,19 @@ class Game {
     return undefined;
   }
 
+  /** HERO-LIVE-STATS: the fielded hero nearest a tap on the board, within a forgiving reach of its body (a small hero in a crowd can be
+   *  picked), or none. The fallen are pickable too: a fallen hero's panel says when a life raises it. */
+  private heroAtTap(sx: number, sy: number): Unit | undefined {
+    const wx = (sx - colLeft() - this.world.x) / this.world.scale.x;
+    const wy = (sy - this.world.y) / this.world.scale.y;
+    const marks = this.b.units.filter(pickable).flatMap((u) => {
+      const s = this.sprites.get(u.id);
+      return s && s.root.visible ? [{ id: u.id, x: s.x, y: s.y - s.tall * 0.45, r: Math.max(18, s.tall * 0.75) }] : [];
+    });
+    const id = nearestMark(marks, wx, wy);
+    return id === null ? undefined : this.b.units.find((u) => u.id === id);
+  }
+
   /** UNIT-INFO: the hold has fired on unit `u`: the drag it began is let go where it was, and its card opens (a pure read of the unit). */
   private openInfo(u: Unit): void {
     if (this.drag) {
@@ -2876,6 +2892,14 @@ class Game {
       },
       ultFull: (id) => fullScene(settings().ultFull, this.ultAutoOn()) && this.ultm.took(id),
       ultArt: (u) => heroArtUrl(u.def, awakenedOf(this.meta, u.def)),
+      // (HERO-LIVE-STATS: the picked hero's tally, and its XP into its lasting level, with what this fight has earned it so far)
+      statOf: (id) => this.stats?.find((s) => s.id === id),
+      xpOf: (u) => {
+        if (this.run.local) return undefined;
+        const p = progressOf(this.meta.xp[u.def] ?? 0);
+        if (p.level !== (u.level ?? 1)) return undefined;
+        return { into: p.into, need: p.need, fight: fightXp(this.b)[u.def] };
+      },
     });
     this.ultm = new UltMoments({
       // (ULT-EPIC: through the world's own scale, so the light stays on the fighters while the camera leans in)
@@ -3944,6 +3968,12 @@ class Game {
         this.glanceAt(this.spell, ...to);
         this.spell = null;
       }
+      return this.endDrag();
+    }
+    // (HERO-LIVE-STATS: a tap on the board mid-fight picks the hero under it for the stats panel; the same hero again, or anywhere else,
+    // brings the skills back)
+    if (this.b.phase === 'fight' && !this.spell && !d.moved && (e.target as HTMLElement) === this.app.canvas) {
+      this.hud.pick(pickOnTap(this.hud.picked, this.heroAtTap(e.clientX, e.clientY)));
       return this.endDrag();
     }
     if (this.b.phase !== 'deploy' || (d.pan && d.moved)) return this.endDrag();
