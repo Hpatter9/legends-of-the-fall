@@ -111,9 +111,9 @@ All Craftpix, copied one sprite or layer at a time; no PixelLab. Ground tops and
 - The Paladin, Cleric, Druid, Barbarian, Ranger, Warlock, Illusionist and Gunslinger (three looks each, one per grade) are
   **generated with PixelLab** (see below). The Himeko Sutori layered sheets they replace are gone, so
   `tools/compose-class-heroes.cjs` no longer makes the `cls_*` hero sheets (it now makes only the Last Stand's king).
-- The **Golem Forge** army's golems (`golem_stone/iron/crystal/magma/sapphire/forge.png`) are figures 6, 18, 20, 27, 32 and 15 of the same **Golems and elementals** pack by batareya (**licence unconfirmed**: no licence file in the pack folder; check the author's terms before any public release). The pack has only still figures, so `tools/golems/cut.py` moves each by whole pixels for the walk, attack, idle, hurt and dead rows, with a last lying frame made by an exact 90-degree turn; nothing is resampled. The **Yokai Night Parade** troops and the Nine-Tailed Fox use the Kitsune, Karasu Tengu and Yamabushi Tengu sheets (Free Yokai Character Sprites, Craftpix) listed above.
+- The **Golem Forge** army's golems (`golem_stone/iron/crystal/magma/sapphire/forge.png`): original art made for this game (ROUND2-WIRE, from `art-source/round2/`, the owner's PR #666), laid into the old sheets' grids by `tools/round2-wire/wire.py`. (They replace batareya's golem figures, which are gone.) The **Yokai Night Parade** troops and the Nine-Tailed Fox use the Kitsune, Karasu Tengu and Yamabushi Tengu sheets (Free Yokai Character Sprites, Craftpix) listed above.
 - The **foes remade for the art cleanup** (`forest_boss_1-3`, `boar_king`, `devil_leader`, `shaman_king`, `golem_*`, `satyr_1-3`) and the new **walk and hurt rows of the 16 remade heroes** are generated the same way (PixelLab: bases from Craftpix style references, `/animate-with-text-v3` clips, native pixels, hard alpha, lying last death frame by `lie.py`). Tools: `tools/pixellab/foes/` and `tools/pixellab/heroes/polish.py`; see `docs/notes/art-cleanup.md`.
-- The Druid's treant (`cls_treant.png`) is one picture from the **Golems and elementals** pack by batareya (**licence unconfirmed**: the pack folder has no licence file; check the author's terms before any public release).
+- The Druid's treant (`cls_treant.png`): original art made for this game (ROUND2-WIRE, from `art-source/round2/`, the owner's PR #666), laid into the old sheets' grids by `tools/round2-wire/wire.py`. (It replaces batareya's treant figure, which is gone.)
 
 ## Magic effects (the spells, the skills and the crits)
 
@@ -232,7 +232,7 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
 
 ## Art generated with PixelLab
 
-- **Duchess's headbutt and fall** (the attack and dead rows of `duchess_goat.png`) are generated with **PixelLab**: her own standing frame from whtdragon's white goat (`src/art/duchess/goat.png`; **licence unconfirmed**, as her sheet's) on a 64-pixel canvas, animated with `/animate-with-text-v3` (`tools/duchess/gen.py`, the takes kept in `tools/duchess/generated/`), native pixels with hard alpha, then scaled 2x like the pack frames beside them. Four generations: two headbutt takes (the second used), a hurt take (not used: it drew a lightning flash) and the fall (its last three frames used). See `docs/notes/duchess-fights.md`.
+- (Superseded by ROUND2-WIRE: Duchess's headbutt and fall were generated with PixelLab from her old pack goat; her whole fighting sheet is now original art made for this game (ROUND2-WIRE, from `art-source/round2/`, the owner's PR #666), laid into the old sheets' grids by `tools/round2-wire/wire.py`. The old takes in `tools/duchess/generated/` are kept as a record and are not in the game.)
 - The **Lich King** (`lich_king.png`, the Undead Legion's boss) is generated the same way as the other bosses: a base figure (`/generate-with-style-v2`, 128 px, Craftpix Minotaur, Samurai Commander and Skeleton Warrior frames as style references), then idle, walk, attack, cast and death clips (`/animate-with-text-v3`), cropped and padded only (native pixels, hard alpha), with a last lying death frame made by an exact 90-degree turn (`tools/pixellab/lie.py`). The steps are in `tools/pixellab/lich.py`; see `docs/notes/armies.md`.
 - The **Oni King** (`oni_king.png`, the Yokai Night Parade's boss) is generated the same way as the Lich King: 4 base candidates at 128 px (Craftpix Minotaur, Samurai Commander and the generated Horned Ogre as style references; the armoured one picked), then idle, walk, attack, attack2 and death clips and the lying last frame. The steps are in `tools/pixellab/oni.py`; see `docs/notes/armies.md`.
 - The Druid's treant (`cls_treant.png`) is generated the same way (base figure from Craftpix Knight and Minotaur style references, then walk, attack and idle clips). Every generated sheet's last death frame is that sheet's idle figure turned exactly 90 degrees (`tools/pixellab/lie.py`), so no extra generation was involved.
@@ -349,20 +349,17 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
 
 ## Duchess the goat (`src/art/duchess/goat.png`; `goat-half.png` is the same sheet cut to half size for the tavern)
 
-Duchess is the town's goat from Chronos Settlement (`hpatter9/little-town`), and now of the camp, the tavern and the battlefield too. Her sheet
-is the one Chronos's cutscenes use (three steps walking left, three walking right), copied as it is. It is **whtdragon**'s RPG Maker MV white goat
-(`animals/goats.png`). **Licence unconfirmed**: the pack folder has no licence file; check whtdragon's posted terms of use before any public release (the same note as
-Chronos's CREDITS.md).
+Duchess is the town's goat from Chronos Settlement (`hpatter9/little-town`), and now of the camp, the tavern and the battlefield too. Her walking
+sheet (`goat.png`: three steps walking left, three walking right; `goat-half.png` cut from it at half size) is original art made for this game (ROUND2-WIRE, from `art-source/round2/`, the owner's PR #666), laid into the old sheets' grids by `tools/round2-wire/wire.py`; her costumes' places
+were moved to the new goat (`render/duchessRules.ts`). (It replaces whtdragon's RPG Maker MV white goat, which is gone.)
 
-Her fighting sheet (`src/art/units/duchess_goat.png`, for the rare fight she joins: `tools/duchess/compose-duchess.py`) keeps that goat's walk and idle
-(the right-facing row, set on a 64-pixel canvas and scaled up 2x with nearest-neighbour) and her hurt (the standing frame brightened and knocked back). Her
-headbutt and her fall are **generated with PixelLab** from her own standing frame (see "Art generated with PixelLab").
+Her fighting sheet (`src/art/units/duchess_goat.png`: walk, headbutt, idle, hurt and fall) is original art made for this game (ROUND2-WIRE, from `art-source/round2/`, the owner's PR #666), laid into the old sheets' grids by `tools/round2-wire/wire.py` too. (The old one, built from the pack goat
+by `tools/duchess/compose-duchess.py` and `gen.py`, is gone; those tools are not run any more.)
 
 ## The Beastmaster's wolves (`src/art/units/wolf_grey.png`, `wolf_black.png`; `tools/wolf/compose-wolf.py`)
 
-The wolf (and the black dire wolf) are the grey and black wolves of **whtdragon**'s RPG Maker MV animals pack (`animals/wolfdog.png`, from the private assets repository `hpatter9/chronos-assets`), the
-right-facing row of three walking frames, scaled up 2x with nearest-neighbour. The script builds the game's rows from them (a step cycle, a lunge made of the stride shifted forward, an idle, a hurt
-frame brightened, and a dead frame rolled onto its side). **Licence unconfirmed**: the pack folder has no licence file, the same note as Duchess the goat, which comes from the same pack: check whtdragon's posted terms of use before any public release.
+The wolf and the black dire wolf (`wolf_grey.png`, `wolf_black.png`, also the Assault's beasts and war-wolves): original art made for this game (ROUND2-WIRE, from `art-source/round2/`, the owner's PR #666), laid into the old sheets' grids by `tools/round2-wire/wire.py`. (They replace whtdragon's
+RPG Maker MV wolves, which are gone; `tools/wolf/compose-wolf.py` made those and is not run any more.)
 
 ## The sprite Eidolons on the board (`src/art/eidolons/sprites/`; `tools/eidolon-call-2/cut_sprites.py`, EIDOLON-CALL-2)
 
@@ -400,12 +397,10 @@ After an Eidolon's painting crosses the screen, its sprite comes onto the board 
 
 ## The summons' own sheets (`src/art/units/summon_*.png`; `tools/summon-art/cut.py`, SUMMON-ART)
 
-- The wolves and the dire wolf (`summon_wolf.png`, `summon_wolf_white.png`, `summon_direwolf.png`): the grey, white and black wild dogs of
-  **whtdragon**'s RPG Maker MV animals pack (`animals/wilddogs.png`), the right-facing walking frames doubled by whole pixels, the bite,
-  idle, hurt and fall rows made by moving them by whole pixels. **Licence unconfirmed**: the same licence note as the wolves above.
-- The Reaper's wraith (`summon_wraith.png`) and the Illusionist's decoy (`summon_decoy.png`): figures 13 and 33 of the **Golems and
-  elementals** pack by batareya, moved by whole pixels as the Golem Forge's golems are, coming apart pixel by pixel as they fall (**licence unconfirmed**: the same
-  licence note as the golems).
+- The wolves and the dire wolf (`summon_wolf.png`, `summon_wolf_white.png`, `summon_direwolf.png`): original art made for this game (ROUND2-WIRE, from `art-source/round2/`, the owner's PR #666), laid into the old sheets' grids by `tools/round2-wire/wire.py`. (They replace whtdragon's wild
+  dogs.)
+- The Reaper's wraith (`summon_wraith.png`) and the Illusionist's decoy (`summon_decoy.png`): original art made for this game (ROUND2-WIRE, from `art-source/round2/`, the owner's PR #666), laid into the old sheets' grids by `tools/round2-wire/wire.py`. (They replace batareya's figures;
+  `tools/summon-art/cut.py` made the old ones and is not run any more for these.)
 - The Samurai Commander's standard (`summon_standard.png`): the war camp's standard (`src/art/camp/standard.png`, Chronos Settlement's
   isometric kits, credited under the war camp) without its sand plot, its pennants stirring by whole pixels.
 - The Druid's treant is drawn in the older treant sheets already in the game (`cls_treant.png`, `cls_treant_2.png`, `cls_treant_3.png`, credited above).

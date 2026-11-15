@@ -2,6 +2,8 @@
 # game's sheet layout. The pack has no animation, so each row is the still figure moved by whole pixels (a sway, a stomp, a lean
 # into the blow, a slump) and the last dead frame is the figure turned exactly 90 degrees: nothing is resampled, so it stays crisp.
 # Run from the repo root: python3 tools/golems/cut.py ../chronos-assets   (rewrites the golem_* sheets and their sheets.json entries)
+import sys as _sys
+_sys.exit("ROUND2-WIRE: retired. The sheets it made came from a pack whose licence could not be confirmed and are replaced by the game's own art (tools/round2-wire/wire.py, docs/notes/round2-wire.md); running it would bring the pack art back.")
 import json,sys
 from PIL import Image
 SRC=(sys.argv[1] if len(sys.argv)>1 else '../chronos-assets')+'/Golems and elementals (pack by batareya)/'

@@ -17,16 +17,16 @@ export interface SummonLook {
 
 /** Every summon kind a hero calls up, its sheet, size and caller. The Duchess and the Last Stand's king are not called up, so they keep their own art. */
 export const SUMMON_LOOKS: Readonly<Record<string, SummonLook>> = {
-  // (whtdragons' MV wild dogs, doubled: a grey wolf, silver at tier 3; the dire wolf a great black one)
+  // (the game's own wolves, ROUND2-WIRE: a grey wolf, silver at tier 3; the dire wolf a great black one)
   wolf: { sheets: ['summon_wolf', 'summon_wolf', 'summon_wolf_white'], scale: 0.45, caller: 'beastmaster' },
   direWolf: { sheets: ['summon_direwolf'], scale: 0.64, caller: 'beastmaster' },
   // (the Druid's old mossy treant and its two evolved forms, no longer her own shape: hers is the leafy Resonance treant)
   treant: { sheets: ['cls_treant', 'cls_treant_2', 'cls_treant_3'], scale: 0.5, caller: 'druid' },
-  // (batareya's blue spirit, not a tinted copy of the foe it was)
+  // (a hooded green reaper-spirit with a scythe, the game's own, ROUND2-WIRE)
   wraith: { sheets: ['summon_wraith'], scale: 0.55, caller: 'reaper', alpha: 0.88 },
   // (the war standard of the camp, its pennants stirring)
   standard: { sheets: ['summon_standard'], scale: 0.45, caller: 'samuraiCommander' },
-  // (batareya's violet crystal figure: a mirage of glass, not a second Illusionist)
+  // (a violet hooded mirage, the game's own, ROUND2-WIRE: not a second Illusionist)
   decoy: { sheets: ['summon_decoy'], scale: 0.52, caller: 'illusionist', alpha: 0.85 },
 };
 

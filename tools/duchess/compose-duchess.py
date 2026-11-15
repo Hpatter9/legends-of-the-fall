@@ -7,6 +7,8 @@
 # Every frame sits on a 64-pixel canvas the way gen.py placed her first frame, so the pack's and PixelLab's frames line up; the sheet
 # is then scaled up 2x (whole pixels).
 # Usage: python3 tools/duchess/compose-duchess.py ../chronos-assets/whtdragons_MVanimals_ALL_4-1-2025/animals/goats.png src/art/units
+import sys as _sys
+_sys.exit("ROUND2-WIRE: retired. The sheets it made came from a pack whose licence could not be confirmed and are replaced by the game's own art (tools/round2-wire/wire.py, docs/notes/round2-wire.md); running it would bring the pack art back.")
 import json, sys, glob
 from PIL import Image, ImageEnhance
 

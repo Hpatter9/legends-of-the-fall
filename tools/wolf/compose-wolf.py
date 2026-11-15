@@ -3,6 +3,8 @@
 # rows (walk, attack, idle, hurt, dead) with the frames the pack gives: a step cycle, a lunge made of the stride shifted forward, a breathing idle,
 # the hurt frame flashed and the dead one rolled onto its side.
 # Usage: python3 tools/wolf/compose-wolf.py ../chronos-assets/whtdragons_MVanimals_ALL_4-1-2025/animals/wolfdog.png src/art/units
+import sys as _sys
+_sys.exit("ROUND2-WIRE: retired. The sheets it made came from a pack whose licence could not be confirmed and are replaced by the game's own art (tools/round2-wire/wire.py, docs/notes/round2-wire.md); running it would bring the pack art back.")
 import json, sys
 from PIL import Image, ImageEnhance
 

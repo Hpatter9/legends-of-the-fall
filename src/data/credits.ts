@@ -34,7 +34,7 @@ export const PLAYER_CREDITS: Readonly<Record<CreditGroup, readonly PlayerCredit[
     {
       work: 'Original art made for Legends of the Last Keep.',
       // (RELEASE-ART: the release's pieces, named for players)
-      includes: ['The gatehouse and the loading poster', 'The speech bubble, the battle panel, the class sigils and the menu icons', 'The daily chest, the achievement medal and the codex', 'The Orc Chieftain, the Bone Captain, the Minotaur Champion and the Gorgon Queen'],
+      includes: ['The gatehouse and the loading poster', 'The speech bubble, the battle panel, the class sigils and the menu icons', 'The daily chest, the achievement medal and the codex', 'The Orc Chieftain, the Bone Captain, the Minotaur Champion and the Gorgon Queen', 'The Golem Forge, the treant, the wraith, the decoy, the wolves and Duchess the goat'],
     },
     {
       work: 'Free pixel-art packs: backgrounds, tilesets, props and icons',
@@ -120,8 +120,6 @@ export const PLAYER_CREDITS: Readonly<Record<CreditGroup, readonly PlayerCredit[
       credit: true,
       link: 'https://github.com/makrohn/Universal-LPC-spritesheet',
     },
-    { work: 'Golems and elementals: the Golem Forge, the treant, the wraith and the decoy', author: 'batareya', unconfirmed: true },
-    { work: 'RPG Maker MV animals: Duchess the goat, the wolves and the wild dogs', author: 'whtdragon', unconfirmed: true },
   ],
   Music: [
     {
