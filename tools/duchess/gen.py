@@ -3,6 +3,8 @@
 # resumes instead of paying again.
 #   python3 tools/duchess/gen.py submit <row> [seed]    then    python3 tools/duchess/gen.py collect <row> [seed]
 # Frames land in tools/duchess/generated/<row>_s<seed>_<n>.png; compose-duchess.py builds the sheet from them.
+import sys as _sys
+_sys.exit("ROUND2-WIRE: retired. The sheets it made came from a pack whose licence could not be confirmed and are replaced by the game's own art (tools/round2-wire/wire.py, docs/notes/round2-wire.md); running it would bring the pack art back.")
 import sys, os, json, io, base64
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), 'pixellab'))

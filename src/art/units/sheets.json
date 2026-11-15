@@ -1475,7 +1475,7 @@
   "lies": true
  },
  "cls_treant": {
-  "w": 100,
+  "w": 110,
   "h": 102,
   "perRow": 5,
   "rows": [
@@ -1582,7 +1582,7 @@
    "hurt": 3,
    "dead": 5
   },
-  "figure": 110,
+  "figure": 116,
   "facesRight": true,
   "lies": true
  },
@@ -1604,35 +1604,13 @@
    "hurt": 3,
    "dead": 5
   },
-  "figure": 112,
-  "facesRight": true,
-  "lies": true
- },
- "golem_iron": {
-  "w": 128,
-  "h": 121,
-  "perRow": 8,
-  "rows": [
-   "walk",
-   "attack",
-   "idle",
-   "hurt",
-   "dead"
-  ],
-  "counts": {
-   "walk": 8,
-   "attack": 5,
-   "idle": 4,
-   "hurt": 3,
-   "dead": 5
-  },
   "figure": 117,
   "facesRight": true,
   "lies": true
  },
- "golem_magma": {
-  "w": 134,
-  "h": 121,
+ "golem_iron": {
+  "w": 132,
+  "h": 129,
   "perRow": 8,
   "rows": [
    "walk",
@@ -1648,13 +1626,35 @@
    "hurt": 3,
    "dead": 5
   },
-  "figure": 118,
+  "figure": 119,
+  "facesRight": true,
+  "lies": true
+ },
+ "golem_magma": {
+  "w": 138,
+  "h": 129,
+  "perRow": 8,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5
+  },
+  "figure": 119,
   "facesRight": true,
   "lies": true
  },
  "golem_sapphire": {
-  "w": 128,
-  "h": 128,
+  "w": 134,
+  "h": 142,
   "perRow": 8,
   "rows": [
    "walk",
@@ -1675,8 +1675,8 @@
   "lies": true
  },
  "golem_forge": {
-  "w": 130,
-  "h": 128,
+  "w": 142,
+  "h": 133,
   "perRow": 8,
   "rows": [
    "walk",
@@ -2176,7 +2176,7 @@
   "lies": true
  },
  "wolf_grey": {
-  "w": 96,
+  "w": 106,
   "h": 96,
   "perRow": 4,
   "rows": [
@@ -2198,7 +2198,7 @@
   "lies": true
  },
  "wolf_black": {
-  "w": 96,
+  "w": 102,
   "h": 96,
   "perRow": 4,
   "rows": [
@@ -2215,7 +2215,7 @@
    "hurt": 1,
    "dead": 2
   },
-  "figure": 62,
+  "figure": 63,
   "facesRight": true,
   "lies": true
  },
@@ -4963,7 +4963,7 @@
   "lies": true
  },
  "summon_wolf": {
-  "w": 112,
+  "w": 126,
   "h": 96,
   "perRow": 5,
   "rows": [
@@ -4980,12 +4980,12 @@
    "hurt": 2,
    "dead": 4
   },
-  "figure": 78,
+  "figure": 65,
   "facesRight": true,
   "lies": true
  },
  "summon_wolf_white": {
-  "w": 112,
+  "w": 120,
   "h": 96,
   "perRow": 5,
   "rows": [
@@ -5002,12 +5002,12 @@
    "hurt": 2,
    "dead": 4
   },
-  "figure": 78,
+  "figure": 68,
   "facesRight": true,
   "lies": true
  },
  "summon_direwolf": {
-  "w": 112,
+  "w": 116,
   "h": 96,
   "perRow": 5,
   "rows": [
@@ -5024,7 +5024,7 @@
    "hurt": 2,
    "dead": 4
   },
-  "figure": 78,
+  "figure": 68,
   "facesRight": true,
   "lies": true
  },
@@ -5046,7 +5046,7 @@
    "hurt": 2,
    "dead": 5
   },
-  "figure": 91,
+  "figure": 81,
   "facesRight": true,
   "lies": true
  },
@@ -5068,7 +5068,7 @@
    "hurt": 2,
    "dead": 5
   },
-  "figure": 82,
+  "figure": 81,
   "facesRight": true,
   "lies": true
  },

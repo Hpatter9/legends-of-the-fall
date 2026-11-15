@@ -159,15 +159,8 @@ def standard_sheet():
 
 def main():
     d = json.load(open(D + 'sheets.json'))
-    # (wild dog blocks in wilddogs.png: top row black, brown, grey, white)
-    for name, (col, row) in {'summon_wolf': (2, 0), 'summon_wolf_white': (3, 0), 'summon_direwolf': (0, 0)}.items():
-        rows, fig = wolf_sheet(dog_frames(col, row))
-        d[name] = save(name, rows, 112, 96, fig)
-        print(name, fig)
-    for name, n, death in [('summon_wraith', 13, 'dissolve'), ('summon_decoy', 33, 'dissolve')]:
-        fig = trim(hard(Image.open(GOLEMS + '%d.png' % n)))
-        d[name] = save(name, still_sheet(fig, 96, 116, death), 96, 116, fig.height)
-        print(name, n, fig.height)
+    # (ROUND2-WIRE: the wolves, the wraith and the decoy are the game's own art now, laid in by tools/round2-wire/wire.py; they are no
+    # longer cut here from the wild dogs and the golem figures, whose licence could not be confirmed. Only the standard is.)
     rows, fig, W, H = standard_sheet()
     d['summon_standard'] = save('summon_standard', rows, W, H, fig)
     print('summon_standard', fig)

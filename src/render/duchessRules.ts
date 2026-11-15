@@ -1,7 +1,7 @@
 // Duchess the goat's behaviour: pure rules (no Pixi, no DOM, no clock of its own) so the camp, the tavern and the fight can
 // each give her a patch of ground and let her get on with it. She grazes (chewing), now and then ambles to a new spot, now and
-// then goes and nibbles at a hero, and when tapped she hops once with her "Mehh.". Her sheet (`art/duchess/goat.png`, the
-// same one Chronos uses) is 48-pixel frames: three steps walking left, then three walking right; frame 1 (or 4) is standing.
+// then goes and nibbles at a hero, and when tapped she hops once with her "Mehh.". Her sheet (`art/duchess/goat.png`, repainted
+// for the game in ROUND2-WIRE) is 48-pixel frames: three steps walking left, then three walking right; frame 1 (or 4) is standing.
 // Everything is a one-shot or a slow amble: nothing blinks or flashes.
 
 export type GoatMode = 'graze' | 'walk' | 'nibble' | 'hop' | 'nest';
@@ -268,8 +268,9 @@ export function drawDuchessCosmetic(
 
   if (cosmetic === 'crown') {
     // Tiny Tin Crown: perched right between the goat's horns!
-    const hx = face === 1 ? 30 : 11;
-    const hy = 8 + bob;
+    // (ROUND2-WIRE: on the repainted goat, her skull's top behind the horns: x 22 to 31 and y 18 facing right, mirrored facing left)
+    const hx = face === 1 ? 23 : 17;
+    const hy = 14 + bob;
     const x = fl + Math.round(hx * s);
     const y = ft + Math.round(hy * s);
 
@@ -290,8 +291,9 @@ export function drawDuchessCosmetic(
     ctx.fillRect(x + 3 * s, y + 2 * s, 1 * s, 1 * s);
   } else if (cosmetic === 'wizard') {
     // Wizard Hat: conical blue hat tilted back with a gold star
-    const hx = face === 1 ? 27 : 9;
-    const hy = 3 + bob;
+    // (ROUND2-WIRE: its brim on the repainted goat's skull, y 16 to 17)
+    const hx = face === 1 ? 22 : 15;
+    const hy = 9 + bob;
     const x = fl + Math.round(hx * s);
     const y = ft + Math.round(hy * s);
 
@@ -312,8 +314,9 @@ export function drawDuchessCosmetic(
     ctx.fillRect(x + (face === 1 ? 5 * s : 3 * s), y + 4 * s, 2 * s, 2 * s);
   } else if (cosmetic === 'quiver') {
     // Archery Quiver: slung across goat's back
-    const qx = face === 1 ? 16 : 25;
-    const qy = 20 + bob;
+    // (ROUND2-WIRE: on the rear of the repainted goat's back, which is level at y 32)
+    const qx = face === 1 ? 18 : 28;
+    const qy = 27 + bob;
     const x = fl + Math.round(qx * s);
     const y = ft + Math.round(qy * s);
 

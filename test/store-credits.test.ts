@@ -13,6 +13,7 @@ const all: PlayerCredit[] = CREDIT_GROUPS.flatMap((g) => PLAYER_CREDITS[g]);
  *  here (with its reason); nothing else. */
 const NOT_ON_PAGE: Record<string, string> = {
   'ART-ASCEND': 'a feature of the game, not a maker',
+  'ROUND2-WIRE': 'the wiring of the owner’s round-2 art, not a maker',
   'Chronos Settlement': 'the owner’s other game, its art made for it (original art)',
   URL: '"loaded by URL": not a name',
   Craftpix: 'the maker of the Craftpix entries (on the page as Craftpix.net)',
@@ -30,7 +31,7 @@ test('every third-party creator and pack CREDITS.md names is on the Credits page
 
 test('the names read include the ones that matter (the reader is not reading nothing)', () => {
   const names = creditNames(md);
-  for (const n of ['DragonDePlatino', 'Matthew Pablo', 'Alexandr Zhelanov', 'Universal LPC Spritesheet', 'Golems and elementals', 'Pixelify Sans', 'Stefie Justprince', 'Free Forest Bosses', 'Showkaizer']) {
+  for (const n of ['DragonDePlatino', 'Matthew Pablo', 'Alexandr Zhelanov', 'Universal LPC Spritesheet', 'Pixelify Sans', 'Stefie Justprince', 'Free Forest Bosses', 'Showkaizer']) {
     assert.ok(names.includes(n), n);
   }
 });
@@ -55,16 +56,11 @@ test('a licence that asks for credit is tagged so, with a link to the source whe
   }
 });
 
-test('the assets whose licence is unconfirmed are tagged so on the page, as in CREDITS.md', () => {
-  const marked = all.filter((c) => c.unconfirmed).map(creditText).join('\n');
-  for (const what of ['batareya', 'whtdragon']) assert.ok(marked.includes(what), what);
-  // (LICENCE-REPLACE, the owner's "Replace them": the eight recorded combat sounds are gone, synthesised in their place)
-  assert.ok(!all.some((c) => /recorded combat sounds/i.test(creditText(c))), 'no recorded combat sounds');
-  // (and the record marks every use of those packs)
-  const paras = md.split(/\n(?=- |\n|#)/);
-  for (const p of paras.filter((x) => /batareya|whtdragon|combatAudioBank/.test(x) && !/Superseded|\breplace\b[^.]*\b(whtdragon|golem|batareya)/i.test(x))) {
-    assert.match(p, /licen[cs]e unconfirmed/i, p.slice(0, 120));
-  }
+test('no asset of unconfirmed licence is left: batareya\'s and whtdragon\'s art and the recorded combat sounds are replaced', () => {
+  // (LICENCE-REPLACE and ROUND2-WIRE, the owner's "Replace them": nothing on the page is tagged unconfirmed, nor marked so in the record)
+  assert.ok(!all.some((c) => c.unconfirmed), all.filter((c) => c.unconfirmed).map(creditText).join('; '));
+  for (const who of ['batareya', 'whtdragon', 'recorded combat sounds']) assert.ok(!all.some((c) => creditText(c).toLowerCase().includes(who)), who);
+  assert.doesNotMatch(md, /licen[cs]e unconfirmed/i);
 });
 
 test('the page reads as a page for players: no file paths, branches, pull requests or build notes', () => {
