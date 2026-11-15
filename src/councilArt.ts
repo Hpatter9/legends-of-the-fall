@@ -30,6 +30,8 @@ export const NEWS_ICON: Readonly<Record<NewsKind, string>> = {
   hunt: duel,
   // (NEMESIS-DEPTH, idea 7: a plot wears the betrayal's dagger)
   plot: betrayal,
+  // (idea 6: one spared, kneeling or turned Informant, wears the blood-oath's clasped hands)
+  spared: oath,
 };
 export const TROPHY_ICON = token;
 export const SMOOTH_COUNCIL_ART = new Set([named, muster]);

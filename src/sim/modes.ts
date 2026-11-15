@@ -6,6 +6,7 @@
 // date is passed in as yyyymmdd.
 
 import { endHunt } from './hunt';
+import { endInformant } from './spare';
 import { newRunes } from './runes';
 import { grantRemedy } from './remedies';
 import { checkAchievements, type Achievement } from './achievements';
@@ -251,6 +252,9 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   // (NEMESIS-DEPTH, idea 4: a hunt planned into the run whose quarry lives has failed)
   const hunted = run.over ? endHunt(m, run) : undefined;
   if (hunted && fight.war) fight.war.council = [...(fight.war.council ?? []), hunted];
+  // (idea 6: a run of the Informant's army counts down its runs; at the last it leaves, or betrays you)
+  const informed = run.over && run.mode?.kind === 'army' ? endInformant(m, run.mode.army, run.seed) : undefined;
+  if (informed && fight.war) fight.war.council = [...(fight.war.council ?? []), informed];
   if (fight.day !== undefined && run.over) {
     const turn = endOfRun(m, run, fight.day);
     if (turn?.length && fight.war) fight.war.council = [...(fight.war.council ?? []), ...turnLines(turn)];

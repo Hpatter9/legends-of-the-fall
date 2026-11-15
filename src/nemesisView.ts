@@ -15,6 +15,7 @@ import { momentLine } from './sim/nemesisMoments';
 import { TEMPER } from './sim/nemesisTemper';
 import { bountyOf, cannotHunt, HUNT, quarryOf, quarryWaves, setHunt } from './sim/hunt';
 import { cannotHand, handPlot, PLOT, plotWords } from './sim/politics';
+import { informantArmy, slayKneeler, SPARE, spareKneeler } from './sim/spare';
 import { TEMPER_ICON } from './temperArt';
 import { buyScout, buyShard, musterCount, newsWord, SCOUT_PRICE, scoutable, SHARD_PRICE, SHARD_WEEK, shardHeroes, shardsLeft, superiorOf, swornTo, TROPHY_DAY, FATE_MEETINGS } from './sim/council';
 import { heroName } from './sim/heroNames';
@@ -188,6 +189,35 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
   return b;
 }
 
+/** NEMESIS-DEPTH, idea 6: the one kneeling, its face, what each choice means, and Slay or Spare. `done` saves and redraws. */
+function drawKneel(m: Meta, pane: HTMLElement, done: () => void): void {
+  const k = m.war?.kneel;
+  if (!k) return;
+  const top = menuWell(pane);
+  top.classList.add('nmTop');
+  top.append(face(k.n, 64));
+  const words = el('div', 'nmFacts');
+  words.append(el('b', '', `${fullName(k.n)} kneels`), el('small', '', `Beaten by ${heroName(k.by)}, it begs for its life.`));
+  top.append(words);
+  const grid = menuSection(pane, 'Slay or spare', `its pay held back: ${k.crowns} crowns, ${k.trophies} War ${k.trophies === 1 ? 'Trophy' : 'Trophies'}`, 2);
+  menuChoice(grid, { title: 'Slay it', lines: ['it falls for good, and pays'], onPick: () => { slayKneeler(m); done(); } });
+  menuChoice(grid, { title: 'Spare it', lines: [`it informs for ${SPARE.runs} runs, no pay`], onPick: () => { spareKneeler(m); done(); } });
+  menuNote(pane, `Spared, it tells every secret of its old brothers, names the nemeses in each next wave of its army's runs, and gives you the scouts' report on its hold. When its runs are done, it leaves with thanks half the time; else it betrays you and returns to the Council, Vengeful against ${heroName(k.by)}. Each brother of its you slay meanwhile makes that likelier.`);
+}
+
+/** NEMESIS-DEPTH, idea 6: the camp's card for one kneeling (a standard card: its face, Slay or Spare, Close to decide later). */
+export function openKneelCard(m: Meta, save: () => void): void {
+  const k = m.war?.kneel;
+  if (!k) return;
+  const menu = ornateMenu({ id: 'kneelCard', eyebrow: 'The Nemesis War', title: `${k.n.name} kneels`, sub: `${rankWord(k.n.rank)} · ${armyById(k.n.army)?.name ?? k.n.army}`, label: `${fullName(k.n)} kneels` });
+  menu.card.classList.add('nmCard');
+  drawKneel(m, menu.body, () => {
+    save();
+    menu.close();
+  });
+  menuFoot(menu, { back: { word: 'close' } });
+}
+
 /** NEMESIS-DEPTH, idea 7: "The Council stirs", the camp's card for a plot newly hatched: the plotter and its mark, face to face, what is
  *  afoot, and the player's hand in it (warn the mark, or back the plotter, for two War Trophies each), or Close to leave it be. */
 export function openPlotCard(m: Meta, i: number, save: () => void): void {
@@ -233,6 +263,17 @@ function drawCouncil(m: Meta, pane: HTMLElement, menu: OrnateMenu, hooks: BoardH
     well.append(el('p', 'nmEmpty', war ? 'No foe remembers you yet.' : 'The War has not begun.'));
     menuNote(pane, war ? 'A boss or a foe who slays, maims or escapes your heroes is named, and meets you again in its own army’s runs. The Council fills its seats between your runs.' : 'It opens when you first beat the Undead Legion on Normal.');
     return;
+  }
+  // (NEMESIS-DEPTH, idea 6: one kneeling first, its fate in the player's hand; then the Informant)
+  if (war.kneel) drawKneel(m, pane, () => {
+    hooks.save();
+    pane.replaceChildren();
+    drawCouncil(m, pane, menu, hooks);
+  });
+  if (war.informant) {
+    const inf = war.informant;
+    const well = sectionWell(pane, 'Your Informant', `${inf.runs} more ${inf.runs === 1 ? 'run' : 'runs'} of the ${informantArmy(inf)}`);
+    well.append(el('p', 'nmOathLine', `${fullName(inf.n)}, spared by ${heroName(inf.by)}, names the nemeses in the next wave of every ${informantArmy(inf)} run. When its runs are done it leaves with thanks, or betrays you and returns${inf.betrayed ? `: you have slain ${inf.betrayed} of the brothers it sold, and it has noticed` : ''}.`));
   }
   const chief = warchiefOf(war);
   const claim = war.claim !== undefined ? war.members.find((n) => n.id === war.claim) : undefined;
@@ -450,6 +491,7 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void, save?: (
     if (brother) well.append(oathLine(`Sworn in blood to ${fullName(brother)}`));
     // (NEMESIS-DEPTH, idea 7: its rival, and a plot it hatched or is the mark of)
     const rival = n.rival !== undefined ? war.members.find((x) => x.id === n.rival) : undefined;
+    if (n.betrayer) well.append(el('p', 'nmPlotLine', 'A Betrayer: your heroes spared it once, and it turned on them'));
     if (rival) well.append(el('p', 'nmRivalLine', `Rival of ${fullName(rival)}: if you slay one, the other climbs over the body`));
     for (const p of war.plots ?? []) if (p.by === n.id || p.on === n.id) well.append(el('p', 'nmPlotLine', plotWords(war, p)));
     if (n.vengeful) well.append(el('p', 'nmOathLine', `Vengeful against ${heroName(n.vengeful)}: +20% damage to ${heroName(n.vengeful)}, whom it goes for first`));

@@ -19,6 +19,7 @@ import { tauntFor, triggerOf } from '../src/tauntCutRules';
 import { drawTemper, TEMPER_SALT, TEMPER_TAGS, TEMPERS, type Temper } from '../src/sim/nemesisTemper';
 import { fleeOdds, nemHurt, nemPrey, nemReads, nemStart, secondWeakPool } from '../src/sim/nemesisTraits';
 import { gate } from '../src/sim/ailments';
+import { endInformant, informantAhead, mayKneel, slayKneeler, SPARE, spareKneeler } from '../src/sim/spare';
 import { freshPlot, handPlot, hatch, makeRivals, PLOT, plotOpen, plotters, resolvePlots, targetOf } from '../src/sim/politics';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { challengeOf } from '../src/sim/duel';
@@ -765,4 +766,82 @@ test('a plot left alone succeeds about half the time, on its own stream; the cam
   hatch(war, new Rng(2));
   assert.equal(freshPlot(war)?.i, 0);
   assert.equal(freshPlot(war), undefined, 'once');
+});
+
+// ---- Idea 6: spare or slay --------------------------------------------------------------------------------------------------------
+
+test('an old foe brought down with low loyalty kneels: its pay is held back; slain, it pays; never a new foe, the warchief or a hunt’s quarry', () => {
+  const m = warMeta(7);
+  const war = m.war!;
+  const n = member(war, 'lieutenant', 3, { met: 3, loyalty: 20 });
+  const crowns = m.crowns;
+  CHEAT_DEATH.on = false;
+  const note = slay(m, n, 3);
+  CHEAT_DEATH.on = true;
+  assert.equal(war.kneel?.n.id, n.id);
+  assert.equal(note.slain.length, 0, 'not slain yet');
+  assert.equal(m.crowns, crowns, 'its pay held back');
+  assert.ok(!war.fallen.some((f) => f.id === n.id));
+  assert.ok(note.council?.some((l) => l.includes('kneels')));
+  const held = war.kneel!.crowns;
+  assert.match(slayKneeler(m)!, /gave none/);
+  assert.equal(m.crowns, crowns + held);
+  assert.equal(war.fallen[0].id, n.id);
+  assert.equal(war.kneel, undefined);
+  // (never: a foe met fewer than fate's meetings, the warchief, one loyal enough)
+  assert.ok(!mayKneel(war, { ...n, met: 1 }, false));
+  assert.ok(!mayKneel(war, { ...n, rank: 'warchief' }, true));
+  assert.ok(!mayKneel(war, { ...n, loyalty: 80 }, false));
+  assert.ok(mayKneel(war, { ...n, loyalty: 80 }, true), 'beaten in a duel, any loyalty');
+});
+
+test('spared, it turns Informant: its brothers’ secrets told, its captain’s lieutenants shaken, the hold scouted; then thanks or betrayal', () => {
+  let thanked = 0;
+  let betrayed = 0;
+  for (let s = 0; s < 60; s++) {
+    const m = warMeta(s);
+    const war = m.war!;
+    const cap = member(war, 'captain', 4, { known: [] });
+    const n = member(war, 'lieutenant', 3, { met: 3, loyalty: 20 });
+    const other = member(war, 'lieutenant', 2, { loyalty: 60 });
+    swear(war);
+    slay(m, n, s + 1);
+    // (it may cheat death instead, as any member past fate's meetings may)
+    if (!war.kneel) continue;
+    assert.match(spareKneeler(m)!, /Informant/);
+    assert.equal(war.informant?.n.id, n.id);
+    assert.deepEqual([...cap.known].sort(), [...new Set([...cap.traits, ...cap.weak])].sort(), 'its captain’s secrets told');
+    assert.equal(other.loyalty, 60 + SPARE.sworn);
+    assert.ok(m.assault?.scouted?.undead, 'the scouts’ report on its hold');
+    for (let r = 1; r < SPARE.runs; r++) assert.equal(endInformant(m, 'undead', s * 10 + r), undefined);
+    assert.equal(endInformant(m, 'orcs', 1), undefined, 'only its own army’s runs count');
+    const line = endInformant(m, 'undead', s * 10 + 9)!;
+    assert.equal(war.informant, undefined);
+    if (/thanks/.test(line)) thanked++;
+    else {
+      betrayed++;
+      const back = war.members.find((x) => x.id === n.id)!;
+      assert.ok(back.betrayer && back.vengeful === 'knight' && back.rank === 'lieutenant');
+    }
+  }
+  assert.ok(thanked > 10 && betrayed > 10, `${thanked} thanked, ${betrayed} betrayed`);
+});
+
+test('the Informant names the next wave’s nemeses in its army’s runs, and keeps through the save', () => {
+  const m = warMeta(2);
+  const war = m.war!;
+  const n = member(war, 'lieutenant', 3, { met: 3, loyalty: 10 });
+  for (let s = 4; !war.kneel; s++) {
+    if (!war.members.includes(n)) war.members.push(n);
+    slay(m, n, s);
+  }
+  spareKneeler(m);
+  const run = armyRun(3, 'undead');
+  run.stage = 4;
+  run.nemesis = { members: [{ id: 9, base: 'skeleton', name: 'Q', epithet: '', rank: 'lieutenant', might: 1, scars: 0, traits: [], weak: [] }], waves: { '4': [9] } };
+  assert.match(informantAhead(m, run)!, /Q stands in the next wave/);
+  assert.equal(informantAhead(m, armyRun(3, 'orcs')), undefined);
+  const back = readWar(JSON.parse(JSON.stringify(war)))!;
+  assert.equal(back.informant?.n.id, n.id);
+  assert.equal(back.informant?.runs, SPARE.runs);
 });

@@ -82,7 +82,7 @@ import type { Scene } from './sim/sceneKit';
 import { closeGiverCard, openGiverCard } from './questCard';
 import { showWhenPainted } from './paintReady';
 import { warmPortraits } from './render/sheets';
-import { councilLine, councilPlate, openNemesisBoard, openPlotCard } from './nemesisView';
+import { councilLine, councilPlate, openKneelCard, openNemesisBoard, openPlotCard } from './nemesisView';
 import { freshPlot } from './sim/politics';
 import { councilTurn } from './sim/council';
 import { musterOpen, warchiefOf } from './sim/muster';
@@ -350,10 +350,13 @@ export class Home {
     this.hooks.onOpened?.();
   }
 
-  /** NEMESIS-DEPTH, idea 7: "The Council stirs": a plot the camp has not shown yet, with the player's hand in it. */
+  /** NEMESIS-DEPTH, idea 7: "The Council stirs": a plot the camp has not shown yet, with the player's hand in it; idea 6: before it, one
+   *  kneeling, whose fate waits on the player. */
   private offerPlot(): void {
     const m = this.meta;
     if (!$('home') || $('home').hidden || document.querySelector('.omCard:not([hidden]), #nemesisBoard')) return;
+    // (idea 6: one kneeling comes first)
+    if (m.war?.kneel) return openKneelCard(m, () => saveMeta(m));
     const fresh = freshPlot(m.war);
     if (!fresh) return;
     saveMeta(m);

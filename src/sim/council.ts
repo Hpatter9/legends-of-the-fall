@@ -23,6 +23,7 @@ import { TRAITS } from './nemesisTraits';
 import { mixSeed, Rng } from './rng';
 import type { Run } from './run';
 import { bountyOf, lapseHunt } from './hunt';
+import { brotherSlain, mayKneel } from './spare';
 import { climbOver, hatch, makeRivals, plotOpen, plotters, resolvePlots } from './politics';
 import { drawTemper, TEMPER_COUNCIL, TEMPER_EVENTS, TEMPER_SALT } from './nemesisTemper';
 import { avengersNow, humiliate, payTimes, settleRevenge, trophyFrom, trophyWords } from './revenge';
@@ -76,7 +77,7 @@ export const SCOUT_PRICE = 2;
 /** The traits a recruit may come with (what a fighter brings to the Council, not what it learned from the heroes: no immunity). */
 export const RECRUIT_TRAITS: readonly string[] = ['bane:martial', 'bane:arcane', 'bane:devout', 'bane:wild', 'ambusher', 'loneWolf', 'hillKing', 'scarred', 'arrowCatcher', 'executioner', 'healerHunter', 'elusive'];
 
-const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster', fled: 'Fled', humiliated: 'Humiliated', vengeance: 'Vengeance', reclaimed: 'Reclaimed', duel: 'Single combat', conquest: 'Conquest', hunt: 'Hunt', plot: 'Plot' };
+const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster', fled: 'Fled', humiliated: 'Humiliated', vengeance: 'Vengeance', reclaimed: 'Reclaimed', duel: 'Single combat', conquest: 'Conquest', hunt: 'Hunt', plot: 'Plot', spared: 'Spared' };
 /** A News kind's word ("Feud"). */
 export const newsWord = (k: NewsKind): string => EVENT_WORD[k];
 
@@ -565,8 +566,21 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   for (const x of note.born) news(war, 'named', `${fullName(x)} is named a ${rankWord(x.rank).toLowerCase()}: ${x.deed === 'slew' ? 'it slew a hero' : x.deed === 'maimed' ? 'it maimed a hero' : 'it escaped you'}`);
   let trophies = 0;
   let bounty = 0;
+  const knelt = new Set<number>();
   for (const x of note.slain) {
-    trophies += TROPHIES[x.rank] * payTimes(rev, x.id);
+    // (NEMESIS-DEPTH, idea 6: an old foe beaten in single combat, or brought down with its loyalty low, may kneel: its pay is held back while
+    // the player chooses to slay or spare it; never the hunt's quarry or Vengeance's mark, at the Muster or at a conquest)
+    const wasN = was.get(x.id);
+    if (wasN && !muster && !conquest && war.hunt?.id !== x.id && (x.id === duel.won || !avenged.has(x.id)) && mayKneel(war, wasN, x.id === duel.won)) {
+      knelt.add(x.id);
+      m.crowns -= x.crowns;
+      note.crowns -= x.crowns;
+      war.fallen = war.fallen.filter((f) => !(f.id === x.id && f.how !== 'council'));
+      war.kneel = { n: wasN, by: x.by, crowns: x.crowns, trophies: TROPHIES[x.rank] * payTimes(rev, x.id), tier: run.mode?.kind === 'army' ? run.mode.tier ?? 0 : 0, how: x.id === duel.won ? 'duel' : 'slain' };
+      news(war, 'spared', `${fullName(x)} kneels before ${x.by ? heroName(x.by) : 'your heroes'}`);
+      lines.push(`${fullName(x)} kneels before ${x.by ? heroName(x.by) : 'your heroes'} and begs for its life: slay or spare it, on the Dark Council`);
+    } else trophies += TROPHIES[x.rank] * payTimes(rev, x.id);
+    brotherSlain(war, x.id);
     // (NEMESIS-DEPTH, idea 4: the hunt's quarry slain pays its bounty, beyond the day's cap)
     if (war.hunt?.id === x.id) {
       bounty = bountyOf(x.might);
@@ -577,7 +591,7 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
       lines.push(`The hunt is over: ${fullName(x)} is run down · bounty ${bounty} War ${bounty === 1 ? 'Trophy' : 'Trophies'}`);
     }
     const by = x.by ? ` by ${heroName(x.by)}` : '';
-    news(war, 'slain', `${fullName(x)}, ${rankWord(x.rank).toLowerCase()}, is slain${by}${muster ? ' at the Muster' : ''}`);
+    if (!knelt.has(x.id)) news(war, 'slain', `${fullName(x)}, ${rankWord(x.rank).toLowerCase()}, is slain${by}${muster ? ' at the Muster' : ''}`);
     // (its blood-oath brother swears vengeance on the hero who struck the blow)
     const brother = war.members.find((n) => n.oath === x.id);
     if (brother) {
@@ -603,6 +617,7 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
       lines.push(...reshuffle(war));
     }
   }
+  if (knelt.size) note.slain = note.slain.filter((x) => !knelt.has(x.id));
   // (the underlings of a member who won its meeting grow more loyal)
   for (const id of note.held) {
     const n = war.members.find((x) => x.id === id);
