@@ -65,8 +65,9 @@ the same size on the board as the old ones (`board-summonsA.png`, `board-summons
   - `tools/wolf/compose-wolf.py`;
   - `tools/duchess/compose-duchess.py` and `gen.py`;
   - `tools/summon-art/cut.py`, for the five summons it made (it still makes the standard).
-- `tools/duchess/generated/` (the old PixelLab takes made from the pack goat) and the treant originals in
-  `art-source/finishing-pass/` are kept as a record. They are not shipped.
+- `tools/duchess/generated/` (the old PixelLab takes made from the pack goat) and the treant pieces in `art-source/finishing-pass/`
+  (`treant-originals/` and the `cls_treant*` sheets and references) were deleted in a follow-up (ROUND2-CLEANUP), and the treant step of
+  `tools/art-finish/pack.py` retired.
 - `cls_treant_2.png` and `cls_treant_3.png` (the treant's evolved forms) were generated with PixelLab using the old treant as a style
   reference. They contain no pack pixels, so they are unchanged.
 

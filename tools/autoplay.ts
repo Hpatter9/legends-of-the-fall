@@ -8,6 +8,7 @@ import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
 import { planRun } from '../src/sim/revenge';
 import { noteWar } from '../src/sim/council';
+import { endHunt } from '../src/sim/hunt';
 import { acceptDuel, championFor, duelOffer, settleDuelRun, startDuel } from '../src/sim/duel';
 import { playOutTallied } from '../src/sim/nemesisLog';
 import { chooseOption, leaveEvent } from '../src/sim/events';
@@ -124,6 +125,8 @@ export function playArmy(meta: Meta, armyId: string, seed: number, party: readon
   // (the Nemesis War: a save with a War meets its army's nemeses, frozen as the run starts; `WAR_BOT.settle` also names and promotes them)
   if (meta.war) run.nemesis = planRun(meta, run);
   const won = playWaves(meta, run, castle, gear, boostFor);
+  // (NEMESIS-DEPTH, idea 4: the run is over: a hunt planned into it whose quarry lives has failed, as `settleRun` settles it on the page)
+  if (WAR_BOT.settle && meta.war) endHunt(meta, { ...run, over: true });
   const cleared = !!run.cleared && won === army.waves.length;
   return { won, cleared, stars: cleared ? armyRules(army, tierOfRun(run), run).filter((r) => r.earned).length : 0 };
 }

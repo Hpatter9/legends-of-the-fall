@@ -65,7 +65,8 @@ export function vainCaptain(f: FieldState, h: HoldState): { post: number; captai
   const p = h.posts[post];
   if (!p || p.council === undefined || p.mood === 'routed') return null;
   const captain = f.byId[f.groups[p.group].leader];
-  if (!captain?.alive || !captain.nem?.weak?.includes('vain')) return null;
+  // (NEMESIS-DEPTH: a Glory-hound is as Vain as a Vain one)
+  if (!captain?.alive || !(captain.nem?.weak?.includes('vain') || captain.nem?.temper === 'glory')) return null;
   return { post, captain };
 }
 

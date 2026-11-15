@@ -26,6 +26,8 @@ export const NEWS_ICON: Readonly<Record<NewsKind, string>> = {
   cheated, recruit, promotion, feud, betrayal, feast, trial, oath, desertion,
   claim: RANK_BADGE.warchief, crowned: RANK_BADGE.warchief, named, slain, muster,
   fled, humiliated, vengeance, reclaimed, duel, conquest: RANK_BADGE.warchief,
+  // (NEMESIS-DEPTH: a hunt wears the duel's crossed blades until a symbol of its own is painted)
+  hunt: duel,
 };
 export const TROPHY_ICON = token;
 export const SMOOTH_COUNCIL_ART = new Set([named, muster]);

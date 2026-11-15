@@ -63,7 +63,7 @@ played by hand. The scene's lines are unchanged; `docs/lines/new-lines.json` has
 **fall** are PixelLab clips (`gen.py`, `/animate-with-text-v3` from her own standing frame, so size, palette and angle match), native
 pixels with hard alpha. PixelLab's hurt take drew a lightning flash over her head, so her hurt stays the pack's standing frame
 brightened and knocked back. Four generations spent (20.75 before, 16.75 after): two headbutt takes (the second, seed 11, used),
-the hurt take (unused) and the fall (its last three frames). The takes are kept in `tools/duchess/generated/`. Sheet:
+the hurt take (unused) and the fall (its last three frames). The takes were kept in `tools/duchess/generated/` until ROUND2-CLEANUP deleted them with the pack goat they came from (`docs/notes/round2-wire.md`). Sheet:
 `docs/samples/duchess-fights-sheet.png`.
 
 ## Her Grace's Favour (`achievements.ts`)

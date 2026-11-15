@@ -186,3 +186,8 @@ body.inDuel #hudSpells, body.inDuel .ehHorn, body.inDuel #mana { visibility: hid
 .nmBoard.nmEnded .omWell { background: rgba(12, 10, 8, 0.86); }
 .nmBoard.nmEnded .omNote { padding: 6px 8px; border-radius: 3px; background: rgba(12, 9, 7, 0.8); }
 .nmOath.rlIco { width: 14px; height: 14px; }
+/* NEMESIS-DEPTH: a temperament's symbol on a seat's left side, over the lower corner of the face's frame (clear of the name) */
+.nmTemper { position: absolute; left: 3px; top: 22px; z-index: 2; width: 18px; height: 18px; image-rendering: pixelated; pointer-events: none; filter: drop-shadow(0 1px 1px #000); }
+.omChoice.nmSeat.nmBig .nmTemper { left: 62px; top: auto; bottom: 6px; width: 22px; height: 22px; }
+/* NEMESIS-DEPTH, idea 4: the hunt's quarry, ringed in blood red on its seat */
+.omChoice.nmSeat.nmHunted { box-shadow: 0 0 0 2px #b8322a, 0 0 10px 2px rgba(184, 50, 42, 0.55); }

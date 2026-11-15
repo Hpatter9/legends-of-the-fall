@@ -36,7 +36,7 @@ export function duelTaunt(o: DuelOffer, s: NemSnap, seed: number): Taunt {
     ...(o.kind ? { hero: o.kind } : {}),
     ...(reply ? { reply: fill(reply, { name: s.name }) } : {}),
     first: true,
-    vain: s.weak.includes('vain'),
+    vain: s.weak.includes('vain') || s.temper === 'glory',
   };
 }
 

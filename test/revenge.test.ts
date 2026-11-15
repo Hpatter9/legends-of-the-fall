@@ -346,10 +346,13 @@ test('every taunt template fills from a real memory, in every voice; the hero it
         const done = fill(line, { name: s.name, ...(pick.hero ? { hero: 'Kwame', kind: 'Knight' } : {}), ...(pick.trophy ? { trophy: 'shield' } : {}), ...(pick.fallen ? { fallen: 'Kwame' } : {}) });
         assert.ok(!/[{}]/.test(done), `${t}/${v}: "${line}" left a place unfilled`);
       }
-      // (and through the whole making: over many runs every line comes up)
+      // (and through the whole making: over its meetings every line comes up, NEMESIS-DEPTH, and never the same twice running)
       const seen = new Set<string>();
-      for (let seed = 0; seed < 60; seed++) {
-        const taunt = tauntFor(s, field, seed);
+      let last = '';
+      for (let met = 0; met < 60; met++) {
+        const taunt = tauntFor({ ...s, met }, field, 7);
+        assert.notEqual(taunt.line, last, `${t}/${v}: the same line twice running`);
+        last = taunt.line;
         assert.ok(!/[{}]/.test(taunt.line) && !/[{}]/.test(taunt.reply ?? ''));
         if (pick.hero) assert.equal(taunt.hero, pick.hero === 'knight' || pick.hero === 'peasant' ? pick.hero : taunt.hero);
         seen.add(taunt.line);
@@ -486,7 +489,7 @@ test('cheating death gives no Might of its own, and a warchief cheats at a flat 
     const N = 600;
     for (let s = 0; s < N; s++) {
       const m = warMeta(s);
-      const chief = member(m.war!, 'warchief', 5, { scars: 3, traits: ['survivor'] });
+      const chief = member(m.war!, 'warchief', 5, { scars: 3, traits: ['survivor'], met: 4 });
       slay(m, chief, s + 1);
       if (!m.war!.members.includes(chief)) continue;
       cheats++;

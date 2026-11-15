@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.608.0',
+    date: '2026-11-15',
+    title: 'Nemeses who remember, and hunts',
+    notes: ['Nemeses live long enough to matter, each with a temperament that shapes how it fights, flees, duels and plots on the Council.', 'They remember your fights and taunt you with them, and you can spend War Trophies to hunt one down for a bounty.'],
+  },
+  {
     version: '0.607.0',
     date: '2026-11-15',
     title: 'New golems, wolves and a new Duchess',

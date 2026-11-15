@@ -17,11 +17,13 @@ import { isBoss } from './foes';
 import { heroName } from './heroNames';
 import type { Meta } from './meta';
 import { MUSTER_NEED, musterOpen, warchiefOf } from './muster';
-import { fullName, HEADS_MAX, homeArmy, MIGHT_MAX, nameFor, NEWS_MAX, noteNemesis, rankWord, remember, reveal, secretName, SEATS, type NemNote, type Nemesis, type NewsKind, type War, type WarNews } from './nemesis';
+import { FATE_MEETINGS, fullName, HEADS_MAX, remembers, homeArmy, MIGHT_MAX, nameFor, NEWS_MAX, noteNemesis, rankWord, remember, reveal, secretName, SEATS, type NemNote, type Nemesis, type NewsKind, type War, type WarNews } from './nemesis';
 import type { NemesisTally } from './nemesisLog';
 import { TRAITS } from './nemesisTraits';
 import { mixSeed, Rng } from './rng';
 import type { Run } from './run';
+import { bountyOf, lapseHunt } from './hunt';
+import { drawTemper, TEMPER_COUNCIL, TEMPER_EVENTS, TEMPER_SALT } from './nemesisTemper';
 import { avengersNow, humiliate, settleRevenge } from './revenge';
 import { DUEL_SHAMED } from './duel';
 import { giveShards, owns, type Given } from './unlock';
@@ -33,9 +35,10 @@ export const COUNCIL_SALT = 0x4e3e53;
 /** A turn has no event, one or two this often. The design's start was 10%, 60% and 30%; tuned with the war simulator to its churn targets
  *  (`docs/notes/nemesis-2.md`): at four turns a day, that many events turned the Council over far faster than a player could follow. */
 export const TURN_SHAPE = { none: 0.65, one: 0.3, two: 0.05 } as const;
-/** The events and their weights (the design's table). */
+/** The events and their weights (the design's table; NEMESIS-DEPTH brought a Recruit down from 3 to 1, so the seats fill with foes the heroes
+ *  have fought rather than strangers: `docs/notes/nemesis-depth.md`). */
 export type CouncilEvent = 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion';
-export const EVENT_WEIGHT: Readonly<Record<CouncilEvent, number>> = { recruit: 3, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5 };
+export const EVENT_WEIGHT: Readonly<Record<CouncilEvent, number>> = { recruit: 1, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5 };
 /** Turns counted a real day after army runs, besides the day's first visit. */
 export const RUN_TURNS = 4;
 /** The Council never falls below this many lieutenants once the War is open: a Recruit is forced when it would. */
@@ -72,7 +75,7 @@ export const SCOUT_PRICE = 2;
 /** The traits a recruit may come with (what a fighter brings to the Council, not what it learned from the heroes: no immunity). */
 export const RECRUIT_TRAITS: readonly string[] = ['bane:martial', 'bane:arcane', 'bane:devout', 'bane:wild', 'ambusher', 'loneWolf', 'hillKing', 'scarred', 'arrowCatcher', 'executioner', 'healerHunter', 'elusive'];
 
-const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster', fled: 'Fled', humiliated: 'Humiliated', vengeance: 'Vengeance', reclaimed: 'Reclaimed', duel: 'Single combat', conquest: 'Conquest' };
+const EVENT_WORD: Readonly<Record<NewsKind, string>> = { cheated: 'Cheated death', recruit: 'Recruit', promotion: 'Promotion', feud: 'Feud', betrayal: 'Betrayal', feast: 'Feast', trial: 'Trial', oath: 'Blood-oath', desertion: 'Desertion', claim: 'Claim', crowned: 'Warchief', named: 'Named', slain: 'Slain', muster: 'Muster', fled: 'Fled', humiliated: 'Humiliated', vengeance: 'Vengeance', reclaimed: 'Reclaimed', duel: 'Single combat', conquest: 'Conquest', hunt: 'Hunt' };
 /** A News kind's word ("Feud"). */
 export const newsWord = (k: NewsKind): string => EVENT_WORD[k];
 
@@ -113,7 +116,8 @@ function mightUp(n: Nemesis, grew: Set<number>): boolean {
   return true;
 }
 const mightDown = (n: Nemesis): void => void (n.might = Math.max(1, n.might - 1));
-const loyal = (n: Nemesis, d: number): void => void (n.loyalty = Math.max(0, Math.min(100, n.loyalty + d)));
+// (NEMESIS-DEPTH: a Zealot's loyalty never falls below 50)
+const loyal = (n: Nemesis, d: number): void => void (n.loyalty = Math.max(n.temper === 'zealot' ? Math.min(n.loyalty, TEMPER_COUNCIL.zealotFloor) : 0, Math.min(100, n.loyalty + d)));
 
 /** A member leaves the Council (slain or deserted): its seat empties, its oath brother and sworn lieutenants are freed, a claim lapses. */
 function drop(war: War, n: Nemesis): void {
@@ -214,6 +218,8 @@ export function recruit(war: War, m: Meta, rng: Rng): Nemesis | undefined {
     lost: 0,
     born: war.turn,
   };
+  // (NEMESIS-DEPTH: its temperament, from its own stream, so the turn's draws are as they were)
+  n.temper = drawTemper(new Rng(mixSeed(m.seed, TEMPER_SALT, war.turn, n.id)), 'recruit');
   remember(n, `Recruited to the Dark Council · ${armyById(army)?.name ?? army}`);
   war.members.push(n);
   return n;
@@ -255,6 +261,7 @@ function crown(war: War, n: Nemesis): void {
   delete n.sworn;
   delete n.chiefStitch;
   delete war.claim;
+  war.crowned = war.turn;
   remember(n, `Took the Warchief’s seat of the Dark Council`);
   news(war, 'crowned', `${fullName(n)} takes the Warchief’s seat`);
 }
@@ -282,16 +289,16 @@ export function eventOpen(war: War, e: CouncilEvent): boolean {
       return deserters(war).length > 0;
   }
 }
-/** The lieutenants who may betray their captain: loyalty under 30, within a Might of him. */
+/** The lieutenants who may betray their captain: loyalty under 30, within a Might of him (never a Zealot). */
 const traitors = (war: War): Nemesis[] =>
   ofRank(war, 'lieutenant').filter((n) => {
     const c = memberById(war, n.sworn);
-    return !!c && n.loyalty < BETRAY_BELOW && n.might >= c.might - 1;
+    return !!c && n.temper !== 'zealot' && n.loyalty < BETRAY_BELOW && n.might >= c.might - 1;
   });
 /** The lieutenants who may put their captain to a Trial of Strength: Might 4 or more, sworn to one. */
 const challengers = (war: War): Nemesis[] => ofRank(war, 'lieutenant').filter((n) => n.might >= TRIAL_MIGHT && !!memberById(war, n.sworn));
 /** The members who may desert: Might 1, the last three meetings lost (never the warchief). */
-const deserters = (war: War): Nemesis[] => war.members.filter((n) => n.rank !== 'warchief' && n.might <= 1 && (n.streak ?? 0) <= -DESERT_STREAK);
+const deserters = (war: War): Nemesis[] => war.members.filter((n) => n.rank !== 'warchief' && n.might <= 1 && (n.streak ?? 0) <= -(n.temper === 'coward' ? TEMPER_COUNCIL.cowardStreak : DESERT_STREAK));
 
 /** An event happens (its conditions must hold: `eventOpen`). `grew` holds who has gained Might this turn. */
 export function happen(war: War, m: Meta, rng: Rng, e: CouncilEvent, grew: Set<number> = new Set()): void {
@@ -386,13 +393,40 @@ export function happen(war: War, m: Meta, rng: Rng, e: CouncilEvent, grew: Set<n
   }
 }
 
+/** The members who could act in an event now (NEMESIS-DEPTH: an event weighs more while one of a temperament that seeks it could). */
+function actors(war: War, e: CouncilEvent): Nemesis[] {
+  switch (e) {
+    case 'feud':
+      return war.members.filter((n) => n.rank !== 'warchief');
+    case 'betrayal':
+      return traitors(war);
+    case 'trial':
+      return challengers(war);
+    case 'feast':
+      return ofRank(war, 'captain');
+    case 'oath':
+      return war.members.filter((n) => n.oath === undefined);
+    default:
+      return [];
+  }
+}
+/** An event's weight now: the design's, times the most any temperament among its actors seeks it (`TEMPER_EVENTS`). A Council of members
+ *  from before has no temperaments, and weighs as it did. */
+export function eventWeight(war: War, e: CouncilEvent): number {
+  const seek = TEMPER_EVENTS[e];
+  if (!seek) return EVENT_WEIGHT[e];
+  const most = actors(war, e).reduce((x, n) => Math.max(x, (n.temper && seek[n.temper]) || 1), 1);
+  return EVENT_WEIGHT[e] * most;
+}
+
 /** Draw one event by weight from those open now (none open: none). */
 export function drawEvent(war: War, rng: Rng): CouncilEvent | undefined {
   const open = (Object.keys(EVENT_WEIGHT) as CouncilEvent[]).filter((e) => eventOpen(war, e));
-  const total = open.reduce((s, e) => s + EVENT_WEIGHT[e], 0);
+  const w = open.map((e) => eventWeight(war, e));
+  const total = w.reduce((s, x) => s + x, 0);
   if (!total) return undefined;
   let r = rng.next() * total;
-  return open.find((e) => (r -= EVENT_WEIGHT[e]) < 0) ?? open[open.length - 1];
+  return open.find((_, i) => (r -= w[i]) < 0) ?? open[open.length - 1];
 }
 
 /**
@@ -401,6 +435,7 @@ export function drawEvent(war: War, rng: Rng): CouncilEvent | undefined {
  */
 export function takeTurn(war: War, m: Meta): WarNews[] {
   const rng = new Rng(mixSeed(m.seed, COUNCIL_SALT, war.turn));
+  const openBefore = musterOpen(war);
   war.turn++;
   const grew = new Set<number>();
   swear(war);
@@ -408,6 +443,9 @@ export function takeTurn(war: War, m: Meta): WarNews[] {
   for (const n of ofRank(war, 'lieutenant')) {
     const c = memberById(war, n.sworn);
     if (c && n.might >= c.might) loyal(n, LOYALTY.ambition);
+    // (NEMESIS-DEPTH: a Schemer's loyalty wears whatever its Might; so does a Trickster's, by half)
+    if (c && n.temper === 'schemer') loyal(n, TEMPER_COUNCIL.schemerDrift);
+    if (c && n.temper === 'trickster') loyal(n, TEMPER_COUNCIL.schemerDrift / 2);
   }
   const r = rng.next();
   const count = r < TURN_SHAPE.none ? 0 : r < TURN_SHAPE.none + TURN_SHAPE.one ? 1 : 2;
@@ -424,6 +462,10 @@ export function takeTurn(war: War, m: Meta): WarNews[] {
     news(war, 'recruit', `${fullName(n)} joins the Council as a lieutenant (${armyById(n.army)?.name ?? n.army})`);
   }
   swear(war);
+  // (NEMESIS-DEPTH, idea 4: a hunt whose quarry the turn took away lapses, and its trophies come back)
+  lapseHunt(war);
+  // (NEMESIS-DEPTH: a new warchief's Muster may open with a turn, once his tenure is served)
+  if (!openBefore && musterOpen(war)) news(war, 'muster', `${fullName(warchiefOf(war)!)} has held his seat long enough: the Warchief’s Muster is open`);
   return war.news.filter((x) => x.turn === war.turn);
 }
 
@@ -480,10 +522,21 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   // (phase 4: a nemesis slain in a duel cannot cheat death either, and a warchief beaten in one is humiliated instead and flees to his Muster)
   const duel = duelSettle(war, m, note, was, b);
   if (duel.won !== undefined) avenged.add(duel.won);
+  // (NEMESIS-DEPTH, idea 4: a hunted quarry run down is not spared, by fate or by cheating death)
+  const quarry = war.hunt?.id;
+  if (quarry !== undefined && b.units.some((u) => u.nem?.id === quarry && u.nem.hunted)) avenged.add(quarry);
   const cheated = new Map<number, string>();
   // (the Assault: a member slain on the attempt that conquers its hold dies for good)
   const conquest = won && run.mode?.kind === 'army' && !!run.mode.assault;
   if (CHEAT_DEATH.on && !muster && !conquest) lines.push(...cheatDeath(war, m, run, wave, note, was, avenged, cheated));
+  // (NEMESIS-DEPTH: one dragged off the field remembers the fight that brought it down, as one that lived does)
+  for (const id of cheated.keys()) {
+    const n = war.members.find((x) => x.id === id);
+    const u = b.units.find((x) => x.nem?.id === id);
+    if (!n || !u) continue;
+    const old = fullName(n);
+    if (remembers(n, tally?.foes[u.id], u, b, run.seed, wave)) lines.push(`${old} is now called ${fullName(n)}`);
+  }
   // (phase 3: the Grudges, the humiliated, trophies brought home and Vengeance, `revenge.ts`; phase 4: a duel won pays double)
   const rev = settleRevenge(m, run, b, tally, note, was, cheated, avengers, wave, duel.won);
   lines.push(...rev.lines);
@@ -491,8 +544,18 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   lines.push(...duel.lines);
   for (const x of note.born) news(war, 'named', `${fullName(x)} is named a ${rankWord(x.rank).toLowerCase()}: ${x.deed === 'slew' ? 'it slew a hero' : x.deed === 'maimed' ? 'it maimed a hero' : 'it escaped you'}`);
   let trophies = 0;
+  let bounty = 0;
   for (const x of note.slain) {
     trophies += TROPHIES[x.rank] * (rev.doubled.has(x.id) ? 2 : 1);
+    // (NEMESIS-DEPTH, idea 4: the hunt's quarry slain pays its bounty, beyond the day's cap)
+    if (war.hunt?.id === x.id) {
+      bounty = bountyOf(x.might);
+      delete war.hunt;
+      const f = war.fallen.find((y) => y.id === x.id);
+      if (f) f.hunted = true;
+      news(war, 'hunt', `The hunt is over: ${fullName(x)} is run down${x.by ? ` by ${heroName(x.by)}` : ''}`);
+      lines.push(`The hunt is over: ${fullName(x)} is run down · bounty ${bounty} War ${bounty === 1 ? 'Trophy' : 'Trophies'}`);
+    }
     const by = x.by ? ` by ${heroName(x.by)}` : '';
     news(war, 'slain', `${fullName(x)}, ${rankWord(x.rank).toLowerCase()}, is slain${by}${muster ? ' at the Muster' : ''}`);
     // (its blood-oath brother swears vengeance on the hero who struck the blow)
@@ -531,6 +594,10 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
     war.trophyDay.got += got;
     war.trophies += got;
     if (got) note.trophies = got;
+  }
+  if (bounty) {
+    war.trophies += bounty;
+    note.trophies = (note.trophies ?? 0) + bounty;
   }
   swear(war);
   if (!openBefore && musterOpen(war)) lines.push('The Warchief’s Muster is open: see the Dark Council');
@@ -593,6 +660,7 @@ export const CHEAT_DEATH = { on: true };
 /** The chance by rank, and the extra with Survivor or a scar. Never at the Muster: it is the warchief's last stand. */
 export const CHEAT: Readonly<Record<Nemesis['rank'], number>> = { lieutenant: 0.15, captain: 0.25, warchief: 0.35 };
 export const CHEAT_EXTRA = 0.2;
+export { FATE_MEETINGS } from './nemesis';
 const CHEAT_SALT = 0xc4ea7;
 
 /**
@@ -607,7 +675,9 @@ function cheatDeath(war: War, m: Meta, run: Run, wave: number, note: NemNote, wa
     if (!n || avenged.has(x.id)) return true;
     // (phase 3: a warchief's chance is a flat 35%, his scars and Survivor adding nothing, so his cheats do not feed each other)
     const chance = CHEAT[x.rank] + (x.rank !== 'warchief' && (n.traits.includes('survivor') || n.scars > 0) ? CHEAT_EXTRA : 0);
-    if (new Rng(mixSeed(run.seed, CHEAT_SALT, wave, x.id)).next() >= chance) return true;
+    // (NEMESIS-DEPTH: fate spares it in its first meetings; the draw is still made, so the stream is as it was)
+    const roll = new Rng(mixSeed(run.seed, CHEAT_SALT, wave, x.id)).next();
+    if (n.met > FATE_MEETINGS && roll >= chance) return true;
     m.crowns -= x.crowns;
     note.crowns -= x.crowns;
     war.fallen = war.fallen.filter((f) => !(f.id === x.id && f.how !== 'council'));
