@@ -486,7 +486,7 @@ test('cheating death gives no Might of its own, and a warchief cheats at a flat 
     const N = 600;
     for (let s = 0; s < N; s++) {
       const m = warMeta(s);
-      const chief = member(m.war!, 'warchief', 5, { scars: 3, traits: ['survivor'] });
+      const chief = member(m.war!, 'warchief', 5, { scars: 3, traits: ['survivor'], met: 4 });
       slay(m, chief, s + 1);
       if (!m.war!.members.includes(chief)) continue;
       cheats++;

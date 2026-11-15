@@ -319,3 +319,48 @@ the game's dark pixel-art style:
    player may feel cheated. The alternative is only the Recruit and Muster changes, which roughly halve the churn.
 3. Idea 3: may Vain and Craven move from weaknesses to temperaments for newborns (old saves keep theirs)?
 4. Idea 6 (when it comes): may a spared nemesis come back as a traitor, or should sparing always be safe?
+
+---
+
+# Stage 2: the build (the owner chose ideas 1 to 4)
+
+The owner's answers, through the director: build the first batch (1, 2, 3 and 4), and yes, a nemesis cannot die in its first two meetings.
+The other open questions take this note's defaults; each one settled is listed under its idea.
+
+## Idea 1, built: staying power
+
+- **Fate spares it** (`FATE_MEETINGS = 2`, `nemesis.ts`; `cheatDeath` in `council.ts`). A member brought down in its first or second
+  meeting is always dragged off the field. It cheats death as before: a scar, humiliation, a trophy taken, and it sits out one to three runs.
+  The cheat's draw is still made, so the stream is as it was. Vengeance, the Muster and a hold's conquest still slay it outright.
+- **Only an old foe calls a champion out** (`duelOffer`, `duel.ts`). Settled here: one met fewer than two times makes no challenge. In the
+  first measure, duels were how the heroes slew most nemeses at their first meeting (104 duels, 96 won), straight past fate. A challenge
+  is now between old foes, which is what a duel should be.
+- **A Recruit weighs 1** (from 3) on the Council's turns (`EVENT_WEIGHT`). It is still forced while fewer than three lieutenants sit.
+- **Strangers come looking** (`planNemeses`). A lieutenant never met is placed before the others, at twice the chance (`STRANGER_CHANCE`).
+  Its card says "Unblooded: you have never met". One met once says "fate spares it at your next meeting".
+- **The death-spiral guard** (`GUARD`): a member that has won three meetings in a row feasts instead of growing, half the time, on its
+  own stream (`GUARD_SALT`). The wave card says "Gash feasts on its victories, and grows no stronger".
+- **A warchief's tenure** (`CHIEF_TENURE = 10` war turns, `War.crowned`, `tenureLeft`): his Muster cannot open sooner, and it now needs
+  **three** captains slain (`MUSTER_NEED`, from two). The board says "The Warchief is new to his seat: his Muster can be called in 4 more
+  war turns". The turn that opens it says so in the News. A warchief crowned before this keeps no turn, so he has no tenure to serve.
+
+### Measured (`npm run war-sim`, 120 days, seed 1)
+
+Main (0.606.0) first, then with Idea 1. The war simulator now also reports the meetings a member had when the heroes slew it, the share of
+seats held by strangers, and the share of newcomers who were recruited rather than named by a fight.
+
+| | Main | Idea 1 | Target |
+|---|---|---|---|
+| Seat changes a week, from week 3 | 26 (the Council's own turns ~10 to 15) | 22.8 (the Council's own **5.5**) | the Council's own 3 to 5 |
+| Slain by the heroes | 207, after **1.7** meetings on average (30 after three or more) | 85, after **3.0** (69 after three or more) | three or more |
+| Strangers' share of the seats | 28% | **10%** | low |
+| Newcomers recruited (not named by a fight) | 49% | **21%** | low |
+| Warchiefs in 120 days | 20, most 1 to 4 days | 10, most 4 to 11 days (one 20) | a week or more |
+| Duels | 106, 93% won | 55, 96% won (now only between old foes) | (Idea 10) |
+| Might mean, days 53 to 67 | 1.7 | 1.7 | 3 to 5 |
+
+What it has not done: the **Might** has not risen. Every member is spared by fate in its first meetings, so it is humiliated each time,
+and it then sits out one to three runs (110 humiliations, up from 42). That keeps it alive, but it is met less often, so it grows less. The
+total of seat changes is still high (22.8 a week) because new members are named by the fights at about ten a week, and a newborn
+replaces a weak lieutenant. If the owner wants the Might up, the next lever is to have fate's sparing not humiliate (no runs sat out).
+Duels are still won 96% of the time; that is Idea 10's job.

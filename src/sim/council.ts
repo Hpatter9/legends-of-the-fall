@@ -17,7 +17,7 @@ import { isBoss } from './foes';
 import { heroName } from './heroNames';
 import type { Meta } from './meta';
 import { MUSTER_NEED, musterOpen, warchiefOf } from './muster';
-import { fullName, HEADS_MAX, homeArmy, MIGHT_MAX, nameFor, NEWS_MAX, noteNemesis, rankWord, remember, reveal, secretName, SEATS, type NemNote, type Nemesis, type NewsKind, type War, type WarNews } from './nemesis';
+import { FATE_MEETINGS, fullName, HEADS_MAX, homeArmy, MIGHT_MAX, nameFor, NEWS_MAX, noteNemesis, rankWord, remember, reveal, secretName, SEATS, type NemNote, type Nemesis, type NewsKind, type War, type WarNews } from './nemesis';
 import type { NemesisTally } from './nemesisLog';
 import { TRAITS } from './nemesisTraits';
 import { mixSeed, Rng } from './rng';
@@ -33,9 +33,10 @@ export const COUNCIL_SALT = 0x4e3e53;
 /** A turn has no event, one or two this often. The design's start was 10%, 60% and 30%; tuned with the war simulator to its churn targets
  *  (`docs/notes/nemesis-2.md`): at four turns a day, that many events turned the Council over far faster than a player could follow. */
 export const TURN_SHAPE = { none: 0.65, one: 0.3, two: 0.05 } as const;
-/** The events and their weights (the design's table). */
+/** The events and their weights (the design's table; NEMESIS-DEPTH brought a Recruit down from 3 to 1, so the seats fill with foes the heroes
+ *  have fought rather than strangers: `docs/notes/nemesis-depth.md`). */
 export type CouncilEvent = 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion';
-export const EVENT_WEIGHT: Readonly<Record<CouncilEvent, number>> = { recruit: 3, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5 };
+export const EVENT_WEIGHT: Readonly<Record<CouncilEvent, number>> = { recruit: 1, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5 };
 /** Turns counted a real day after army runs, besides the day's first visit. */
 export const RUN_TURNS = 4;
 /** The Council never falls below this many lieutenants once the War is open: a Recruit is forced when it would. */
@@ -255,6 +256,7 @@ function crown(war: War, n: Nemesis): void {
   delete n.sworn;
   delete n.chiefStitch;
   delete war.claim;
+  war.crowned = war.turn;
   remember(n, `Took the Warchief’s seat of the Dark Council`);
   news(war, 'crowned', `${fullName(n)} takes the Warchief’s seat`);
 }
@@ -401,6 +403,7 @@ export function drawEvent(war: War, rng: Rng): CouncilEvent | undefined {
  */
 export function takeTurn(war: War, m: Meta): WarNews[] {
   const rng = new Rng(mixSeed(m.seed, COUNCIL_SALT, war.turn));
+  const openBefore = musterOpen(war);
   war.turn++;
   const grew = new Set<number>();
   swear(war);
@@ -424,6 +427,8 @@ export function takeTurn(war: War, m: Meta): WarNews[] {
     news(war, 'recruit', `${fullName(n)} joins the Council as a lieutenant (${armyById(n.army)?.name ?? n.army})`);
   }
   swear(war);
+  // (NEMESIS-DEPTH: a new warchief's Muster may open with a turn, once his tenure is served)
+  if (!openBefore && musterOpen(war)) news(war, 'muster', `${fullName(warchiefOf(war)!)} has held his seat long enough: the Warchief’s Muster is open`);
   return war.news.filter((x) => x.turn === war.turn);
 }
 
@@ -593,6 +598,7 @@ export const CHEAT_DEATH = { on: true };
 /** The chance by rank, and the extra with Survivor or a scar. Never at the Muster: it is the warchief's last stand. */
 export const CHEAT: Readonly<Record<Nemesis['rank'], number>> = { lieutenant: 0.15, captain: 0.25, warchief: 0.35 };
 export const CHEAT_EXTRA = 0.2;
+export { FATE_MEETINGS } from './nemesis';
 const CHEAT_SALT = 0xc4ea7;
 
 /**
@@ -607,7 +613,9 @@ function cheatDeath(war: War, m: Meta, run: Run, wave: number, note: NemNote, wa
     if (!n || avenged.has(x.id)) return true;
     // (phase 3: a warchief's chance is a flat 35%, his scars and Survivor adding nothing, so his cheats do not feed each other)
     const chance = CHEAT[x.rank] + (x.rank !== 'warchief' && (n.traits.includes('survivor') || n.scars > 0) ? CHEAT_EXTRA : 0);
-    if (new Rng(mixSeed(run.seed, CHEAT_SALT, wave, x.id)).next() >= chance) return true;
+    // (NEMESIS-DEPTH: fate spares it in its first meetings; the draw is still made, so the stream is as it was)
+    const roll = new Rng(mixSeed(run.seed, CHEAT_SALT, wave, x.id)).next();
+    if (n.met > FATE_MEETINGS && roll >= chance) return true;
     m.crowns -= x.crowns;
     note.crowns -= x.crowns;
     war.fallen = war.fallen.filter((f) => !(f.id === x.id && f.how !== 'council'));

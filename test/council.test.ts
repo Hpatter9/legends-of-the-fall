@@ -13,7 +13,7 @@ import { mixSeed, Rng } from '../src/sim/rng';
 import { newWar, readWar, SEATS, type Nemesis, type War } from '../src/sim/nemesis';
 import { startNemesisTally, tallyNemesis, type NemesisTally } from '../src/sim/nemesisLog';
 import { nemHurt, nemMove } from '../src/sim/nemesisTraits';
-import { buyScout, buyShard, CHEAT, CHEAT_DEATH, COUNCIL_SALT, FEUD_SLAYS, councilTurn, drawEvent, endOfRun, EVENT_WEIGHT, eventOpen, happen, LOYALTY, MIN_LIEUTENANTS, noteWar, RUN_TURNS, SHARD_PRICE, SHARD_WEEK, shardHeroes, swear, swornTo, takeTurn, TROPHY_DAY, type CouncilEvent } from '../src/sim/council';
+import { buyScout, buyShard, CHEAT, CHEAT_DEATH, COUNCIL_SALT, FATE_MEETINGS, FEUD_SLAYS, councilTurn, drawEvent, endOfRun, EVENT_WEIGHT, eventOpen, happen, LOYALTY, MIN_LIEUTENANTS, noteWar, RUN_TURNS, SHARD_PRICE, SHARD_WEEK, shardHeroes, swear, swornTo, takeTurn, TROPHY_DAY, type CouncilEvent } from '../src/sim/council';
 import { MUSTER_NEED, musterArmy, musterOpen, musterPlan, startMuster, warchiefOf } from '../src/sim/muster';
 import { CHIEF_PHASE, phaseKitOf } from '../src/sim/bossPhases';
 import { ARMIES } from '../src/sim/armies';
@@ -135,8 +135,8 @@ test('a turn replays exactly from the turn counter and the save’s seed, and dr
   assert.equal(new Rng(mixSeed(m.seed, COUNCIL_SALT, 0)).next(), new Rng(mixSeed(m.seed, COUNCIL_SALT, 0)).next());
 });
 
-test('the events’ weights are the design’s table, and each is drawn about as often as its weight says when all are open', () => {
-  assert.deepEqual({ ...EVENT_WEIGHT }, { recruit: 3, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5 });
+test('the events’ weights are the design’s table (a Recruit 1, NEMESIS-DEPTH), and each is drawn about as often as its weight says when all are open', () => {
+  assert.deepEqual({ ...EVENT_WEIGHT }, { recruit: 1, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5 });
   const m = warMeta();
   const war = council(m, 1, 3, 6);
   const lts = war.members.filter((n) => n.rank === 'lieutenant');
@@ -151,7 +151,7 @@ test('the events’ weights are the design’s table, and each is drawn about as
     const e = drawEvent(war, new Rng(mixSeed(5, i)))!;
     counts[e] = (counts[e] ?? 0) + 1;
   }
-  for (const [e, w] of Object.entries(EVENT_WEIGHT)) assert.ok(Math.abs((counts[e as CouncilEvent] ?? 0) / N - w / 13) < 0.02, `${e}: ${counts[e as CouncilEvent]}`);
+  for (const [e, w] of Object.entries(EVENT_WEIGHT)) assert.ok(Math.abs((counts[e as CouncilEvent] ?? 0) / N - w / 11) < 0.02, `${e}: ${counts[e as CouncilEvent]}`);
 });
 
 test('each event waits for its conditions', () => {
@@ -430,7 +430,7 @@ test('slaying pays War Trophies (twelve a day at most); the Spoils sell unlock s
   assert.deepEqual(n.known, ['scarred']);
 });
 
-test('the Muster opens with a warchief once two captains have fallen since the last; it is three waves with the warchief last, who changes form', () => {
+test('the Muster opens with a warchief once three captains (NEMESIS-DEPTH) have fallen since the last; it is three waves with the warchief last, who changes form', () => {
   const m = warMeta();
   const war = council(m, 1, 4, 4);
   const chief = warchiefOf(war)!;
@@ -438,8 +438,9 @@ test('the Muster opens with a warchief once two captains have fallen since the l
   assert.equal(startMuster(m, m.party, 9), null, 'not open: no Muster');
   const caps = war.members.filter((n) => n.rank === 'captain');
   slay(m, caps[0], 1);
+  slay(m, caps[1], 2);
   assert.ok(!musterOpen(war));
-  const note = slay(m, caps[1], 2);
+  const note = slay(m, caps[2], 4);
   assert.equal(war.musterSince, MUSTER_NEED);
   assert.ok(musterOpen(war));
   assert.ok(note.council?.some((l) => l.includes('Muster is open')));
@@ -472,7 +473,7 @@ test('the Muster opens with a warchief once two captains have fallen since the l
 test('the warchief’s fall leaves his Head, resets the Muster, and reshuffles the Council: a captain to the seat, a lieutenant to captain', () => {
   const m = warMeta();
   const war = council(m, 1, 3, 4);
-  war.musterSince = 2;
+  war.musterSince = MUSTER_NEED;
   const chief = warchiefOf(war)!;
   const top = war.members.filter((n) => n.rank === 'captain')[0];
   top.might = 8;
@@ -523,6 +524,8 @@ test('cheating death (phase 3’s, brought forward): a member slain in an ordina
       const m = warMeta(s);
       const war = council(m, 0, 0, 1);
       const n = war.members[0];
+      // (met before: past fate's spared meetings, NEMESIS-DEPTH)
+      n.met = FATE_MEETINGS + 1;
       const crowns = m.crowns;
       const note = slay(m, n, s + 1);
       if (war.members.includes(n)) {
@@ -541,7 +544,7 @@ test('cheating death (phase 3’s, brought forward): a member slain in an ordina
     for (let s = 0; s < 40; s++) {
       const m = warMeta(s);
       const war = council(m, 1, 0, 3);
-      war.musterSince = 2;
+      war.musterSince = MUSTER_NEED;
       const chief = warchiefOf(war)!;
       slay(m, chief, s + 1, undefined, startMuster(m, m.party, s + 3)!);
       assert.ok(!war.members.includes(chief));

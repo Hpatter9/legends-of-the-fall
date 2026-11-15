@@ -42,6 +42,16 @@ export const FALLEN_MAX = 30;
 export const BIRTH = { slew: { boss: 1, elite: 1, escort: 0.35 }, maimed: { boss: 0.6, elite: 0.6, escort: 0 }, escaped: { boss: 1, elite: 1, escort: 0 } } as const;
 /** A lieutenant stands in an ordinary wave from this wave on, this often, at most this many waves a run. */
 export const LIEUTENANT = { from: 3, chance: 0.25, most: 2 };
+/** NEMESIS-DEPTH, staying power: a member brought down in its first `FATE_MEETINGS` meetings is always dragged off the field (fate spares it,
+ *  `council.ts`), so a nemesis is met three times or more before it can fall; and only one met that often calls a champion out (`duel.ts`).
+ *  Vengeance, the Muster and a hold's conquest still slay it outright, so the player can always finish one on purpose. */
+export const FATE_MEETINGS = 2;
+/** NEMESIS-DEPTH: a lieutenant the heroes have never met (a Recruit) is placed at this many times the chance, and before the others. */
+export const STRANGER_CHANCE = 2;
+/** NEMESIS-DEPTH, the death-spiral guard (the design's section 8): a member that has won this many meetings in a row feasts instead of
+ *  growing, half the time (its own stream, `GUARD_SALT`). */
+export const GUARD = { streak: 3, feasts: 0.5 } as const;
+const GUARD_SALT = 0x4e3e5a;
 /** Pay for slaying one, crowns per Might (a duel, a trophy brought home and Vengeance, the later phases, double it). */
 export const PAY: Readonly<Record<NemRank, number>> = { warchief: 200, captain: 80, lieutenant: 40 };
 
@@ -181,6 +191,8 @@ export interface War {
   day?: { key: number; turns: number; visit?: true };
   /** The captain who has claimed the empty warchief's seat (he takes it on the next turn unless challenged). */
   claim?: number;
+  /** NEMESIS-DEPTH: the war turn the sitting warchief was crowned on (his Muster waits `CHIEF_TENURE` turns from it). */
+  crowned?: number;
   /** The Warchief's Heads taken. */
   heads?: WarHead[];
   /** Phase 3: humiliated members licking their wounds, by id: their army's runs still to sit out (1 to 3). */
@@ -323,11 +335,13 @@ export function planNemeses(war: War | undefined, run: Run): RunNemesis | undefi
   const captains = mine.filter((x) => !x.boss && x.rank === 'captain').sort(byMight);
   captains.slice(0, mids.length).forEach((n, i) => put(mids[i], n.id));
   // (the lieutenants: an ordinary wave from wave 3 now and then)
-  const lieutenants = mine.filter((x) => !x.boss && x.rank === 'lieutenant').sort(byMight);
+  // (NEMESIS-DEPTH: a recruit the heroes have never met comes looking for them: the strangers first, at `STRANGER_CHANCE` times the chance)
+  const stranger = (n: Nemesis) => (n.met === 0 ? 0 : 1);
+  const lieutenants = mine.filter((x) => !x.boss && x.rank === 'lieutenant').sort((a, b) => stranger(a) - stranger(b) || byMight(a, b));
   let used = 0;
   for (let w = LIEUTENANT.from; w <= army.waves.length && used < Math.min(LIEUTENANT.most, lieutenants.length); w++) {
     if (army.waves[w - 1].boss) continue;
-    if (rng.next() < LIEUTENANT.chance) put(w, lieutenants[used++].id);
+    if (rng.next() < LIEUTENANT.chance * (lieutenants[used].met === 0 ? STRANGER_CHANCE : 1)) put(w, lieutenants[used++].id);
   }
   const ids = new Set(Object.values(waves).flat());
   if (!ids.size) return undefined;
@@ -398,6 +412,8 @@ export interface NemNote {
   /** Phase 3: the nemeses who fled the board (escaped, not slain). */
   fled?: number[];
   grew: { id: number; name: string; epithet: string; might: number }[];
+  /** NEMESIS-DEPTH: the nemeses who feasted on their victories instead of growing (the death-spiral guard). */
+  feasted?: { id: number; name: string; epithet: string }[];
   slain: { id: number; name: string; epithet: string; crowns: number; by: string; rank: NemRank; might: number; base: string; army: string }[];
   /** The nemeses who stood in the fight and lived while the heroes lost (their underlings' loyalty rises, `council.ts`). */
   held: number[];
@@ -593,7 +609,12 @@ function settle(war: War, m: Meta, run: Run, b: Battle, tally: NemesisTally, won
     if (deeds.includes('escaped')) n.fled = Math.min(999, (n.fled ?? 0) + 1);
     const hurt = deeds.includes('maimed') && f ? maimedKind(f, b) : undefined;
     if (hurt) n.maimed = [hurt, ...(n.maimed ?? []).filter((k) => k !== hurt)].slice(0, 4);
-    if (grow(n, run, rng, f)) note.grew.push({ id: n.id, name: n.name, epithet: n.epithet, might: n.might });
+    // (NEMESIS-DEPTH: the death-spiral guard; one fat on its wins feasts instead of growing, half the time)
+    if ((n.streak ?? 0) >= GUARD.streak && n.grew !== run.seed && new Rng(mixSeed(run.seed, GUARD_SALT, wave, n.id)).next() < GUARD.feasts) {
+      n.grew = run.seed;
+      remember(n, `Feasted on its victories instead of growing stronger · ${armyById(n.army)?.name ?? n.army}`);
+      (note.feasted ??= []).push({ id: n.id, name: n.name, epithet: n.epithet });
+    } else if (grow(n, run, rng, f)) note.grew.push({ id: n.id, name: n.name, epithet: n.epithet, might: n.might });
     const open = f ? traitsEarned(f, u, b, tally, won).filter((t) => canAdd(n.traits, t)) : [];
     // (one that fled the board learns Elusive from it, phase 3: the design's "escaped by timeout or by fleeing")
     const fresh = u.fled && canAdd(n.traits, 'elusive') ? 'elusive' : open.length ? rng.pick(open) : undefined;
@@ -790,6 +811,7 @@ export function readWar(raw: unknown): War | undefined {
   const dy = dayRec(r.day, (d) => ({ turns: int(d.turns, 0, 99, 0), ...(d.visit === true ? { visit: true as const } : {}) }));
   if (dy) war.day = dy;
   if (typeof r.claim === 'number' && war.members.some((n) => n.id === r.claim && n.rank === 'captain')) war.claim = r.claim;
+  if (typeof r.crowned === 'number' && Number.isFinite(r.crowned)) war.crowned = int(r.crowned, 0, 1e9, 0);
   // (phase 3: the members away licking their wounds, the pieces brought home, the Vengeance scenes waiting)
   if (r.away && typeof r.away === 'object')
     for (const [k, v] of Object.entries(r.away)) if (war.members.some((n) => String(n.id) === k)) (war.away ??= {})[k] = int(v, 1, 3, 1);
@@ -863,6 +885,7 @@ export function nemesisLines(n: NemNote | undefined): string[] {
   for (const x of n.slain) out.push(`Slain: ${fullName(x)}${x.by ? ` by ${heroName(x.by)}` : ''} · ${x.crowns} crowns`);
   for (const x of n.born) out.push(`Remembered: ${fullName(x)}, ${rankWord(x.rank).toLowerCase()}, ${DEED_WORD[x.deed]}`);
   for (const x of n.grew) out.push(`${fullName(x)} grows stronger · Might ${x.might}`);
+  for (const x of n.feasted ?? []) out.push(`${fullName(x)} feasts on its victories, and grows no stronger`);
   for (const l of n.learned) out.push(`Learned of ${l}`);
   if (n.trophies) out.push(`War Trophies +${n.trophies}`);
   for (const l of n.council ?? []) out.push(l);

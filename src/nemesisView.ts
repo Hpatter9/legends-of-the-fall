@@ -11,7 +11,7 @@
 import { menuChoice, menuFoot, menuNote, menuPick, menuSection, menuWell, ornateMenu, releaseIcon, RELEASE_ICON, type OrnateMenu } from './ornateMenu';
 import { portrait } from './render/sheets';
 import { armyById } from './sim/armies';
-import { buyScout, buyShard, musterCount, newsWord, SCOUT_PRICE, scoutable, SHARD_PRICE, SHARD_WEEK, shardHeroes, shardsLeft, superiorOf, swornTo, TROPHY_DAY } from './sim/council';
+import { buyScout, buyShard, musterCount, newsWord, SCOUT_PRICE, scoutable, SHARD_PRICE, SHARD_WEEK, shardHeroes, shardsLeft, superiorOf, swornTo, TROPHY_DAY, FATE_MEETINGS } from './sim/council';
 import { heroName } from './sim/heroNames';
 import type { Meta } from './sim/meta';
 import { musterLine, musterOpen, warchiefOf } from './sim/muster';
@@ -46,6 +46,9 @@ const icon = (src: string, cls = 'nmIcon'): HTMLImageElement => {
 };
 
 /** Might as pips ("●●●○○○○○○○"). */
+/** NEMESIS-DEPTH: how often it has been met, and whether fate spares it at the next meeting (it cannot fall before the third). */
+const metLine = (met: number): string => (met === 0 ? 'Unblooded: you have never met' : met < FATE_MEETINGS ? `Met once · fate spares it at your next meeting` : `Met ${met} times`);
+
 /** RELEASE-ART: a blood oath's line, the painted clasped hands before it (the ⚭ it had is missing from some phones' fonts). */
 const oathLine = (text: string): HTMLElement => {
   const p = el('p', 'nmOathLine');
@@ -348,7 +351,7 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
   top.classList.add('nmTop');
   top.append(face(n, 72));
   const facts = el('div', 'nmFacts');
-  facts.append(el('b', 'nmPips', mightPips(n.might)), el('small', '', `Met ${n.met} ${n.met === 1 ? 'time' : 'times'}`), el('small', 'omPay', `Slay: ${payOf(n) * (n.trophies?.length ? 2 : 1)} crowns${n.trophies?.length ? ', doubled for the trophy' : ''}`));
+  facts.append(el('b', 'nmPips', mightPips(n.might)), el('small', '', metLine(n.met)), el('small', 'omPay', `Slay: ${payOf(n) * (n.trophies?.length ? 2 : 1)} crowns${n.trophies?.length ? ', doubled for the trophy' : ''}`));
   top.append(facts);
   // (its place on the Council: whom it serves, how loyal, its blood-oath, its vengeance)
   const war = m.war;
