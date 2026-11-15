@@ -580,7 +580,7 @@ Built on 0.608.0 (the first batch released). The open questions take this note's
     say so.
   - Rivals never stand in the same wave (`planNemeses`; the draw is made as ever, so the stream is unchanged).
   - The Council board lists the **Rivalries** in violet beside the blood-oaths, and a member's card names its rival.
-- **Plots** (the Council's ninth event, `'plot'`, weight 1; x2 while a Schemer or a Trickster could hatch one).
+- **Plots** (the Council's ninth event, `'plot'`, weight 0.5 (the owner's call, below); x2 while a Schemer or a Trickster could hatch one).
   - **Who and whom:** a lieutenant plots against its sworn captain, or any member but the warchief against its rival. The warchief is never
     a mark: only the heroes bring him down. Two plots at most.
   - **When:** a plot comes to a head two Council turns later (`resolvePlots`, on its own stream, `PLOT_SALT`).
@@ -599,8 +599,8 @@ Built on 0.608.0 (the first batch released). The open questions take this note's
   - the web stays lists (rivalries and blood-oaths) and seat chips rather than lines drawn between the seats, which would cross the
     pyramid's rows on a 360 px screen;
   - the camp card shows plots only, not every betrayal or coronation, which already have the News;
-  - the plot event's weight stays 1 (it moves the Council's own seat changes from 5.7 to 7.3 a week, below). At 0.5 it would hatch about
-    half as often, if the owner wants a calmer Council.
+  - the plot event's weight: at 1 it moved the Council's own seat changes from 5.7 to 7.3 a week. **The owner set it to 0.5**, which
+    brings them to 5.4 (below).
 
 ## Idea 6, built: spare or slay
 
@@ -656,6 +656,11 @@ The bot slays every nemesis that kneels by default; `--spare` has it spare them 
 | Taunts by trigger | thrown 86, slew 76, skill 59 | thrown 89, slew 66, skill 55, **studied 40**, dread 25 | |
 | The same taunt as last time | 0% | 0% | 1% |
 
+### With the plot at 0.5 (the owner's call)
+
+The same run, the bot slaying: the Council's own seat changes 5.4 a week (22.4 in all), the Might mean 2.1 for days 53 to 67, 72 slain by the
+heroes after 3.1 meetings, 46 duels 89% won, 12 plots hatched and 10 come to a head, 2 or 3 rivalries standing, and 38 knelt.
+
 ## Checks (the second batch)
 
 - `npm run typecheck` and `npm run web`.
@@ -666,7 +671,7 @@ The bot slays every nemesis that kneels by default; `--spare` has it spare them 
 - Tests changed because the owner's approved rules changed them:
   - the duel test's won duel now kneels before it pays, three times over;
   - the duel card's words;
-  - the Council's weights (a Plot 1).
+  - the Council's weights (a Plot 0.5).
 - Screens at 393x852, 360x780 and 412x915 (`node tools/nemesis/shotsDepth2.mjs`, saves in `tools/nemesis/savesDepth2.ts`), in
   `docs/samples/nemesis-depth-2/`:
   - `kneel-card` and `council-kneel`: Greymaw kneeling, Slay or Spare;

@@ -40,7 +40,7 @@ export const TURN_SHAPE = { none: 0.65, one: 0.3, two: 0.05 } as const;
 /** The events and their weights (the design's table; NEMESIS-DEPTH brought a Recruit down from 3 to 1, so the seats fill with foes the heroes
  *  have fought rather than strangers: `docs/notes/nemesis-depth.md`). */
 export type CouncilEvent = 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion' | 'plot';
-export const EVENT_WEIGHT: Readonly<Record<CouncilEvent, number>> = { recruit: 1, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5, plot: 1 };
+export const EVENT_WEIGHT: Readonly<Record<CouncilEvent, number>> = { recruit: 1, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5, plot: 0.5 };
 /** Turns counted a real day after army runs, besides the day's first visit. */
 export const RUN_TURNS = 4;
 /** The Council never falls below this many lieutenants once the War is open: a Recruit is forced when it would. */
