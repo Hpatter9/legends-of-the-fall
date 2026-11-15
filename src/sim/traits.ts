@@ -102,7 +102,7 @@ export const TRAITS: Record<string, Trait> = {
     tier(4, 'Resurrection', 'Once a wave, the first to fall rises at once, free', 'Once a wave, the first hero to fall is raised by light at once, at a fifth of its health, and no life is spent.'),
   ]),
   wild: trait('wild', 'Wild', 'origin', 'Wi', [
-    tier(2, 'Bloodscent', '+8% damage to wounded foes', 'Every hero deals 8% more to a foe below half its health.'),
+    tier(2, 'Bloodscent', '+5% damage to wounded foes', 'Every hero deals 5% more to a foe below half its health.'),
     tier(3, 'Frenzy', 'Every Wild kill quickens the party, to +40%', 'Each kill by a Wild hero makes the whole party act 4% faster for the rest of the wave, up to 40%.'),
     tier(4, 'Stampede', "A stampede tramples the foes' thickest file", "3 seconds into each wave, and every 20 seconds after, a stampede thunders down the file with the most foes: each foe in it is trampled for more than the party's might and knocked back a tile."),
   ]),

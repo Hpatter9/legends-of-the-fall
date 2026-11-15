@@ -136,7 +136,7 @@ Heroes: Werewolf, Druid, Barbarian, Wolf Bard, Falconer.
 
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Bloodscent | Every hero deals 8% more to a foe below half its health. | "+8% damage to wounded foes" |
+| I (2) | Bloodscent | Every hero deals 5% more to a foe below half its health. | "+5% damage to wounded foes" |
 | II (3) | Frenzy | Each kill by a Wild hero makes the whole party act 4% faster for the rest of the wave, up to 40%. | "Every Wild kill quickens the party, to +40%" |
 | III (4) | Stampede | 3 seconds into each wave, and every 20 seconds after, a stampede thunders down the file with the most foes: each foe in it is trampled for more than the party's might and knocked back a tile. | "A stampede tramples the foes' thickest file" |
 
@@ -428,14 +428,15 @@ perks wins nearest half (a binary search). Fights at level 1 have no ultimates, 
   the Pirates' tide is water the whole party walks (it slowed the party's own heroes as they closed).
 - Up: Beast's Apex 40% faster and 5% healing a blow, Pack Instinct 6% a friend; the stampede more than the party's might; Frenzy 4% a
   kill; the broadside rakes three files for twice the party's might, from 5 s in and every 12 s; Trailblazers also 4% quicker.
-- Down for the hero table's spread: Bloodscent 8% (it reaches the whole party), High Ground 6% a step.
+- Down for the hero table's spread: Bloodscent 5% (it reaches the whole party), High Ground 6% a step.
 - Smaller cuts to Mystic (Echo 30%, Conflux every fourth spell; Ley Lines a quarter off, up from 15%), Holy (Blessing 15%, hallowed ground), Caster (Surge
   8%, Overcast every fifth), Support (hymns every 12 s, the Rallying Cry 6%), Assassin (Execute at 10%), Vanguard (Spearhead 15%, the
   Onslaught most of a hero's attack) and Arcanist (Spell Sling a tenth of a pool).
 
 **The table** (`GAMES=200 node tools/trait-perks/run.mjs`, two shards, heroes at level 1). "Old %" is the party with the traits as they
 were, "None %" with no perk, "On %" with only this trait's perks; "Lift" is on against none, "Vs old" on against old. Each cell is 200
-fights, so a lift is good to about 4 points either way.
+fights, so a lift is good to about 4 points either way. It was measured just before the Mummy's retune and Bloodscent's cut from 8% to 5% (Wild's rows
+read a point or two high for that).
 
 | Trait | Tier | Stage | Old % | None % | On % | Lift | Vs old |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -555,10 +556,13 @@ rows were measured a pass before the last small cuts.)
   `emit-points` (the risen archer and the sentry shoot from their stand-in sheets' points). The recorded fights (`ailments-identical`,
   `nemesis-regression`, `spells-identity`, `stand-regression`) play with the switch off, as recorded. Seed-staged tests re-staged, as their
   own notes do when the party's play moves: `stand-retreat` (two tests) and `set-powers` (three powers to seed 7).
-- **Still failing:** `hero-balance` at level 1. The Mummy is 6.8 points under the roster average (the bar is 6; before the perks it was
-  4.2 under). The Mummy and the Shambler share Undead and Warden, and those traits' perks help a front-line tank more than the Mummy:
-  every version of the two traits that lifted the Mummy past the bar at level 1 pushed the Shambler past it at level 30. The test's own
-  note says to retune the hero rather than loosen the bar, and retuning the Mummy's kit would re-record the level-1 fights of the
-  recorded tests, so it is left for the director to decide.
+- **The Mummy, retuned** (the director's call): once the traits' old flat bonuses were gone, the Mummy fell 6.8 points under the hero
+  table's average at level 1 (the bar is 6; it was 4.2 under before). The Mummy and the Shambler share Undead and Warden, and those
+  traits' perks help a front-line tank more, so no change to the two traits could lift the one without pushing the other past the bar at
+  level 30. As the test's own note asks, the hero was retuned instead: its base health is 315 (it was 299). After it, every hero is within
+  6 at both levels (the nearest: the Falconer +5.84 and the Mummy -5.42 at level 1; the Shambler +5.93 and the Wizard -5.93 at level 30),
+  with Bloodscent cut to 5% for the Falconer. That health moves every recorded scenario with the Mummy in it, so `ailments-identical`
+  (field1, field30, bosses, armyFoes, spells) and `spells-identity` (those and heroes1, heroes10, heroes30 and their "Others") are
+  re-recorded, each with its note; every other scenario keeps its hash.
 - The photographs: `node tools/trait-perks/shots.mjs` at 393x852, 360x780 and 412x915 (`docs/samples/trait-perks-*`): the deploy row, the
   Undead card, the fight with the skeletons risen and a close look at them. No page error, no sideways scroll, the card inside the screen.

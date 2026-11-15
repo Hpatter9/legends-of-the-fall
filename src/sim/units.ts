@@ -92,7 +92,7 @@ export const UNITS: Record<string, UnitDef> = {
   shambler: { id: 'shambler', name: 'Shambler', side: 'hero', sheet: 'hero_res_shambler', scale: 0.520833, hp: 310, atk: 16, def: 4, range: 1, moveMs: 900, atkMs: 1100, jump: 2, role: 'A corpse-eater: rots his foes and eats the fallen' },
   rifleBot: { id: 'rifleBot', name: 'Rifle Bot', side: 'hero', sheet: 'hero_res_rifle_bot', scale: 0.520833, hp: 154, atk: 27, def: 3, range: 4, moveMs: 700, atkMs: 1300, jump: 2, shot: 'bullet', role: 'A suppressor: bursts, and a lane of fire' },
   mercenary: { id: 'mercenary', name: 'Mercenary', side: 'hero', sheet: 'hero_res_mercenary', scale: 0.520833, hp: 206, atk: 23, def: 5, range: 1, moveMs: 520, atkMs: 800, jump: 3, role: 'A bounty hunter: marks the strongest and is paid for it' },
-  mummy: { id: 'mummy', name: 'Mummy', side: 'hero', sheet: 'hero_res_mummy', scale: 0.520833, hp: 299, atk: 19, def: 7, range: 1, moveMs: 800, atkMs: 1200, jump: 2, role: 'A puppeteer: binds a foe and walks it into its friends', },
+  mummy: { id: 'mummy', name: 'Mummy', side: 'hero', sheet: 'hero_res_mummy', scale: 0.520833, hp: 315, atk: 19, def: 7, range: 1, moveMs: 800, atkMs: 1200, jump: 2, role: 'A puppeteer: binds a foe and walks it into its friends', },
   buccaneer: { id: 'buccaneer', name: 'Buccaneer', side: 'hero', sheet: 'hero_res_buccaneer', scale: 0.520833, hp: 207, atk: 24, def: 5, range: 1, moveMs: 560, atkMs: 850, jump: 3, role: 'A gambler: hooks, and the dice' },
 
   wolfBard: { id: 'wolfBard', name: 'Wolf Bard', side: 'hero', sheet: 'hero_res_wolf_bard', scale: 0.520833, hp: 247, atk: 22, def: 3, range: 3, moveMs: 700, atkMs: 1500, jump: 2, shot: 'holy', role: 'A songweaver: a standing song he switches' },

@@ -26,6 +26,9 @@
 // tests' own output: the roster's pool means move every hero's pools, and the new heroes join the pool the fights draw on.)
 // (HEROES-JOIN 2, docs/notes/heroes-join-2.md, re-recorded every scenario again from the tests' own output: eleven more heroes in the roster move the
 // pool means, and the new heroes join the pool the fights draw on; the Knight's, Wanderer's, Priestess's and Tyrant's ultimates and the Mummy's skill 1 were retuned.)
+// (TRAIT-PERKS, docs/notes/trait-perks.md, re-recorded field1, field30, bosses, armyFoes and spells: the Mummy's base health went from 299 to
+// 315, the director's retune to keep it within the hero table's band once the traits' old flat bonuses were gone. These are the scenarios
+// with the Mummy in them; the traits themselves play here with their switch off, as before, and every other scenario keeps its hash.)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { scenarioHashes } from '../tools/status-fx/logs';

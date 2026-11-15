@@ -168,6 +168,9 @@ function recordedStrengths<T>(fn: () => T): T {
 // alone: they are the scenarios whose heroes wear runes, which now come less often and give more; every other scenario keeps its hash)
 // (RUNE-WAVE-ONE, the owner's yes to a rune for the first wave, docs/notes/rune-wave-one.md, re-recorded `daily` (e42643a5) alone: its heroes
 // wear a rune from wave 2; every other scenario keeps its hash)
+// (TRAIT-PERKS, docs/notes/trait-perks.md, re-recorded field1, field30, bosses, armyFoes, spells, heroes1, heroes10, heroes30 and their
+// "Others": the Mummy's base health went from 299 to 315, the director's retune to keep it within the hero table's band once the traits'
+// old flat bonuses were gone. These are the scenarios with the Mummy in them; the traits play here with their switch off, as before.)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)

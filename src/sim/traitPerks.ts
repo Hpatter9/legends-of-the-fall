@@ -73,7 +73,7 @@ export const PERK = {
   HALLOW_BURN: 0.02,
   RISE_HP: 0.2,
   // Wild
-  SCENT: 1.08,
+  SCENT: 1.05,
   FRENZY_PER: 0.04,
   FRENZY_MAX: 10,
   STAMPEDE_FIRST: 3000,
