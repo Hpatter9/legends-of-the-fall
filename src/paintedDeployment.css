@@ -89,3 +89,6 @@ body[data-phase='deploy'] #traits .trait {
 }
 body[data-phase='deploy'] #traits .trait.on { box-shadow: inset 0 0 0 1px #c3a25b; }
 body[data-phase='deploy'] #traits .trait.picked { outline: 2px solid #ffe4a5; outline-offset: -1px; }
+/* TRAIT-PERKS: a chip's three pips, one a tier, lit as each is reached */
+#traits .trait .tpips { margin-left: 5px; font-style: normal; font-size: 10px; letter-spacing: 1px; color: #8a7a58; }
+#traits .trait.on .tpips { color: #f2dc9f; }

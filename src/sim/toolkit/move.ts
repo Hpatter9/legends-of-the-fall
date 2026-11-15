@@ -46,7 +46,8 @@ export const MOVE = {
 export function movable(f: Unit): 'no' | 'boss' | 'yes' {
   if (!f.alive || f.under) return 'no';
   const def = defOf(f);
-  if (def.still || f.def === 'decoy' || f.def === 'standKing' || kitOf(f)?.passive.steady) return 'no';
+  // (TRAIT-PERKS, Bulwark I: a Bulwark cannot be moved)
+  if (def.still || f.def === 'decoy' || f.def === 'standKing' || kitOf(f)?.passive.steady || f.pk?.steady) return 'no';
   if (ailBoss(f) || (f.size ?? 1) > 1) return 'boss';
   return 'yes';
 }

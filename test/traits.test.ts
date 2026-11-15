@@ -3,10 +3,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { D, DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, hurt, place, startBattle, stepBattle, type Battle, type BattleEvent } from '../src/sim/battle';
-import { CHARGE_MAX, rollCrit, spawnSpiritWisp, tryCast, ULT_LEVEL } from '../src/sim/abilities';
+import { CHARGE_MAX, spawnSpiritWisp, tryCast, ULT_LEVEL } from '../src/sim/abilities';
 import { DUO_WINDOW_MS, HARMONIC_MS } from '../src/sim/duoCombos';
-import { speedOf } from '../src/sim/spells';
-import { ALL_HEROES, UNITS } from '../src/sim/units';
+import { ALL_HEROES } from '../src/sim/units';
 import { countTraits, HERO_TRAITS, membersOf, TRAITS, traitEffects } from '../src/sim/traits';
 
 const spots = (b: Battle) => {
@@ -36,51 +35,30 @@ test('every hero has an origin and a class, and every trait has two to five ordi
   }
 });
 
-test('only distinct kinds count, and a trait unlocks at its thresholds', () => {
+test('only distinct kinds count, and a trait wakes its three tiers at 2, 3 and 4 (TRAIT-PERKS)', () => {
   const find = (kinds: string[], id: string) => countTraits(kinds).find((c) => c.trait.id === id);
   assert.equal(find(['knight', 'knight', 'knight'], 'guardian')!.count, 1);
   assert.ok(!find(['knight', 'knight'], 'guardian')!.active);
   assert.ok(find(['knight', 'peasant'], 'guardian')!.active);
   assert.equal(find(['samurai', 'kunoichi'], 'samurai')!.tier, 0);
-  assert.equal(find(['samurai', 'kunoichi', 'archer'], 'samurai')!.tier, 0);
-  assert.equal(find(['samurai', 'kunoichi', 'archer', 'ninjaMonk'], 'samurai')!.tier, 1);
+  assert.equal(find(['samurai', 'kunoichi', 'archer'], 'samurai')!.tier, 1);
+  assert.equal(find(['samurai', 'kunoichi', 'archer', 'ninjaMonk'], 'samurai')!.tier, 2);
   assert.equal(find(['samurai'], 'samurai')!.goal, 2);
   assert.deepEqual(traitEffects(['knight']), {});
+  for (const t of Object.values(TRAITS)) assert.deepEqual(t.tiers.map((x) => x.need), [2, 3, 4], t.id);
 });
 
-test('each trait bonus applies to the heroes in the fight', () => {
-  // Samurai: attack
-  assert.equal(hero(started(['samurai', 'kunoichi']), 'samurai').power, TRAITS.samurai.tiers[0].effects.atk);
-  assert.equal(hero(started(['samurai', 'kunoichi', 'archer', 'ninjaMonk']), 'samurai').power, TRAITS.samurai.tiers[1].effects.atk);
-  // Knightly: health
-  const k = hero(started(['knight', 'peasant']), 'knight');
-  assert.ok(k.maxHp > UNITS.knight.hp && k.hp === k.maxHp);
-  // Mystic: the king's mana
-  assert.equal(started(['wizard', 'wanderer']).spells.rate, TRAITS.mystic.tiers[0].effects.mana);
-  assert.equal(started(['wizard']).spells.rate, 1);
-  // Trickster: speed, for heroes only
-  const t = started(['kunoichi', 'kitsune']);
-  assert.equal(speedOf(t, hero(t, 'kunoichi')), TRAITS.trickster.tiers[0].effects.speed);
-  assert.equal(speedOf(t, t.units.find((x) => x.side === 'foe')!), 1);
-  // Blade: crit, for a hero with no crit of its own
-  const bl = started(['samurai', 'ninjaMonk']);
-  const monk = hero(bl, 'ninjaMonk');
-  let crits = 0;
-  for (let i = 0; i < 400; i++) if (rollCrit(bl, monk) > 1) crits++;
-  assert.ok(crits > 10 && crits < 90, `${crits} crits`);
-  const none = started(['ninjaMonk']);
-  for (let i = 0; i < 100; i++) assert.equal(rollCrit(none, hero(none, 'ninjaMonk')), 1);
-  // Caster: skill charge over time
-  const c = started(['wizard', 'wanderer']);
-  const plain = started(['wizard']);
-  stepBattle(c);
-  stepBattle(plain);
-  assert.ok(hero(c, 'wizard').charge > hero(plain, 'wizard').charge);
+test('the daily\'s featured trait counts one hero more', () => {
+  assert.equal(countTraits(['samurai', 'kunoichi'], 'samurai').find((c) => c.trait.id === 'samurai')!.tier, 1);
+  assert.equal(countTraits(['samurai'], 'samurai').find((c) => c.trait.id === 'samurai')!.tier, 0);
+  assert.equal(countTraits(['samurai'], 'mystic').find((c) => c.trait.id === 'samurai')!.tier, -1);
 });
 
-test('Guardian cuts damage taken and Yokai slips blows', () => {
-  assert.equal(started(['knight', 'peasant']).traits!.guard, TRAITS.guardian.tiers[0].effects.guard);
+test('the old team bonuses kept on the ladder: the Yokai slip from two', () => {
   assert.equal(started(['kitsune', 'karasu']).traits!.dodge, TRAITS.yokai.tiers[0].effects.dodge);
+  assert.equal(started(['knight', 'peasant']).traits!.guard, undefined);
+  // (no flat attack or health any more)
+  assert.equal(hero(started(['samurai', 'kunoichi']), 'samurai').power ?? 1, hero(started(['samurai']), 'samurai').power ?? 1);
 });
 
 test('Marksman lengthens a shooter\'s reach from height, and the traits are fixed at the start of the fight', async () => {
@@ -185,7 +163,7 @@ test('Archer + Lightning Mage Duo: electrified arrows chain lightning to nearby 
   assert.ok(archer.electrifiedUntil && archer.electrifiedUntil > b.t);
 });
 
-test('Trait Milestones come at three of a trait: Tricksters slip a low blow with a decoy log, Yokai leave spirit wisps, Guardians shield', () => {
+test('Trait Milestones on the new ladder: three Tricksters slip a low blow with a decoy log, two Yokai leave spirit wisps, three Guardians shield', () => {
   // 1. Trickster milestone: not with two Tricksters, but with three
   assert.ok(!started(['kunoichi', 'kitsune']).traits?.tricksterLog);
   const bTr = started(['kunoichi', 'kitsune', 'karasu']);
@@ -206,9 +184,9 @@ test('Trait Milestones come at three of a trait: Tricksters slip a low blow with
   hurt(bTr, foe, kitsune, kitsune.hp + 500, true, false, [], 'skill');
   assert.ok(!kitsune.alive && !kitsune.tricksterLogUsed);
 
-  // 2. Yokai milestone: three Yokai; one wisp a Yokai at a time
-  assert.ok(!started(['kitsune', 'karasu']).traits?.yokaiWisp);
-  const bYo = started(['kitsune', 'karasu', 'gorgon']);
+  // 2. Yokai: two Yokai (Yokai I); one wisp a Yokai at a time
+  assert.ok(!started(['kitsune']).traits?.yokaiWisp);
+  const bYo = started(['kitsune', 'karasu']);
   assert.ok(bYo.traits?.yokaiWisp);
   const karasu = hero(bYo, 'karasu');
   const wispOut: BattleEvent[] = [];
@@ -223,10 +201,10 @@ test('Trait Milestones come at three of a trait: Tricksters slip a low blow with
   assert.ok(!started(['knight', 'peasant']).traits?.guardianShield);
   const bGu = started(['knight', 'peasant', 'paladin']);
   assert.ok(bGu.traits?.guardianShield);
-  assert.equal(bGu.traits!.guard, TRAITS.guardian.tiers[1].effects.guard);
   const knight = hero(bGu, 'knight');
   const gFoe = bGu.units.find((u) => u.side === 'foe')!;
-  hurt(bGu, gFoe, knight, knight.hp - Math.round(knight.maxHp * 0.2), true, false, [], 'skill');
+  // (a blow that leaves it well under 30% even after Challenge's guard)
+  hurt(bGu, gFoe, knight, knight.hp - Math.round(knight.maxHp * 0.05), true, false, [], 'skill');
   assert.ok(knight.alive && knight.shield && knight.shield.hp === Math.round(knight.maxHp * 0.15));
 });
 

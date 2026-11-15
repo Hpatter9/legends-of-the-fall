@@ -64,7 +64,7 @@ export const fallenHeroes = (b: Battle): Unit[] => b.units.filter((u) => ofParty
  *  the fight has no lives. What the countdown over its spot and on its bench card shows. */
 export function reviveIn(b: Battle, u: Unit): number | null {
   if (!b.lives || b.lives.left <= 0 || u.alive || !ofParty(u) || u.diedAt === undefined) return null;
-  return Math.max(0, u.diedAt + REVIVE_MS - b.t);
+  return Math.max(0, u.diedAt + (b.reviveMs ?? REVIVE_MS) - b.t);
 }
 
 /** The tile a risen hero stands on: its own, or the nearest free standable one (rings outward, each ring in reading order). */
@@ -119,7 +119,7 @@ export function tickLives(b: Battle, out: BattleEvent[]): void {
   // (a hero down with no time of death on it is counted from now)
   for (const u of fallenHeroes(b)) u.diedAt ??= b.t;
   const due = fallenHeroes(b)
-    .filter((u) => u.diedAt !== undefined && b.t - u.diedAt >= REVIVE_MS)
+    .filter((u) => u.diedAt !== undefined && b.t - u.diedAt >= (b.reviveMs ?? REVIVE_MS))
     .sort((x, y) => x.diedAt! - y.diedAt! || x.id - y.id);
   const rose: number[] = [];
   for (const u of due) if (raise(b, u, out)) rose.push(u.id);

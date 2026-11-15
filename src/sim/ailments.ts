@@ -317,8 +317,10 @@ export function stunFor(b: Battle, to: Unit, ms: number, set = false, kind: 'stu
     to.stunUntil = set ? b.t + ms : Math.max(to.stunUntil ?? 0, b.t + ms);
     return true;
   }
-  const t = gate(b, to, kind, ms, by);
-  if (!t) return false;
+  const t0 = gate(b, to, kind, ms, by);
+  if (!t0) return false;
+  // (TRAIT-PERKS, Bulwark I: no stun holds a Bulwark long)
+  const t = to.pk?.steady && b.perk ? Math.min(t0, 1000) : t0;
   to.busyUntil = Math.max(to.busyUntil, b.t + t);
   to.stunUntil = Math.max(to.stunUntil ?? 0, b.t + t);
   upsert(to, kind, b.t + t, by?.id ?? to.id);

@@ -6,6 +6,7 @@
 //   npm run daily-rate -- --days 200   more dates
 
 import './joint/off';
+import './trait-perks/env';
 import './living-fields/switch';
 import { dailyArmy, dailyBossName, DAILY_WAVES } from '../src/sim/daily';
 import { dateKey } from '../src/sim/dailySeed';

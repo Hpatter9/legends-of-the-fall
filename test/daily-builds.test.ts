@@ -1,7 +1,8 @@
 import { test } from 'node:test';
+import { countTraits } from '../src/sim/traits';
 import assert from 'node:assert/strict';
 import { dailyArmy, dailyHost, DAILY_ARMIES, DAILY_WAVES } from '../src/sim/daily';
-import { dailyTheme, dailyStarsMax, dayNumber, themeBlock, THEME_GAP, DAILY_THEMES, DAILY_THEMES_FROM, featuredExtra, SWARM_HP, SWARM_MAX, themeFx, themeGoalMet, themePool } from '../src/sim/dailyThemes';
+import { dailyTheme, dailyStarsMax, dayNumber, themeBlock, THEME_GAP, DAILY_THEMES, DAILY_THEMES_FROM, SWARM_HP, SWARM_MAX, themeFx, themeGoalMet, themePool } from '../src/sim/dailyThemes';
 import { dailyBonus, dailyRun } from '../src/sim/modes';
 import { dailyArea } from '../src/sim/dailySeed';
 import { finish, noteFight, runTheme, startStage, waveArmyOf } from '../src/sim/run';
@@ -102,11 +103,12 @@ test('a themed day brings its five, its pool, its host, its land and its twist',
   });
 });
 
-test("the featured trait's woken bonus counts twice; asleep, it adds nothing", () => {
-  assert.deepEqual(featuredExtra('beast', ['werewolf']), {});
-  assert.deepEqual(featuredExtra('beast', ['werewolf', 'minotaur']), { atk: 1.03 });
-  assert.deepEqual(featuredExtra('beast', ['werewolf', 'minotaur', 'satyr', 'gorgon']), { atk: 1.08 });
-  assert.deepEqual(featuredExtra('guardian', ['knight', 'paladin']), { guard: 0.05 });
+test("the featured trait counts one hero more (TRAIT-PERKS): one of it wakes its first tier, three its signature", () => {
+  const tier = (kinds: string[], featured?: string) => countTraits(kinds, featured).find((c) => c.trait.id === 'beast')?.tier;
+  assert.equal(tier(['werewolf']), -1);
+  assert.equal(tier(['werewolf'], 'beast'), 0);
+  assert.equal(tier(['werewolf', 'minotaur', 'satyr'], 'beast'), 2);
+  assert.equal(tier(['werewolf', 'minotaur', 'satyr'], 'guardian'), 1);
 });
 
 const placeAll = (b: Battle, kinds: readonly string[]): void => {

@@ -208,7 +208,9 @@ test('a king who falls holding the line ends the run: the end says the room, and
 });
 
 test('an act\'s last foes break off and run for the breaches: gone, unpaid, and the wave is over', () => {
-  const s = startStand(runAt(6, 4), setupAt(100));
+  // (TRAIT-PERKS, docs/notes/trait-perks.md: re-staged from seed 6 to seed 7: with the Samurai's Way of the Duel the Kunoichi's skill now fells
+  // seed 6's last four foes at a stroke, before they can break off; seeds 7 to 11 all break off as before)
+  const s = startStand(runAt(7, 4), setupAt(100));
   startFirstWave(s);
   // (wave 4: no breaking off; it ends as ever, by the hunt)
   const four = stepUntil(s, (x) => x.phase === 'break');

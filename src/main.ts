@@ -185,6 +185,8 @@ import { fightersTakeOver, hostOnShow, marches, sameView, squadTiles } from './r
 import { against, frameOf, transferFormation } from './sim/chain';
 import { isScenario } from './sim/scenario';
 import { battleTraitBadge } from './battleTraitArt';
+import { openTraitCard } from './traitCard';
+import { ROMAN, tierPips } from './traitCardRules';
 import { closestTrait, countTraits, kindsOf, nextTierLine, traitsOf, TRAITS } from './sim/traits';
 import { placeSynergies, startSynergies, updateCombo } from './synergyView';
 import { duoCombosOf } from './sim/duoCombos';
@@ -4889,7 +4891,8 @@ class Game {
     const hint = $('traitHint');
     // (a themed daily's featured trait leads the strip)
     const lead = this.theme()?.trait;
-    const counts = countTraits(kindsOf(this.b.units)).sort((a, b) => Number(b.trait.id === lead) - Number(a.trait.id === lead));
+    // (TRAIT-PERKS: the featured trait counts one hero more today)
+    const counts = countTraits(kindsOf(this.b.units), lead).sort((a, b) => Number(b.trait.id === lead) - Number(a.trait.id === lead));
     // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot, as a Bonds chip at the end)
     const pairs = placedPairs(this.run.bonds, kindsOf(this.b.units));
     const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick + pairs.map((p) => p.key).join();
@@ -4902,7 +4905,7 @@ class Game {
     for (const c of counts) {
       const was = this.traitTiers.get(c.trait.id) ?? -1;
       const lit = c.tier > was && strip.dataset.drawn === '1';
-      if (lit) woke.push(`${c.trait.name}: ${c.trait.tiers[c.tier].text}${featured === c.trait.id ? ', twice over today' : ''}`);
+      if (lit) woke.push(`${c.trait.name} ${ROMAN[c.tier]}, ${c.trait.tiers[c.tier].name}: ${c.trait.tiers[c.tier].text}`);
       const pill = document.createElement('button');
       pill.className = `trait ${c.trait.kind}${c.active ? ' on' : ''}${lit ? ' wake' : ''}${this.traitPick === c.trait.id ? ' picked' : ''}${featured === c.trait.id ? ' featured' : ''}`;
       // (the chip says the count and what the next tier gives; a trait at its top tier shows just the count)
@@ -4910,15 +4913,22 @@ class Game {
       const head = document.createElement('span');
       head.className = 'thead';
       head.append(battleTraitBadge(c.trait.id), document.createTextNode(`${c.trait.name} ${c.count}/${c.goal}`));
+      // (TRAIT-PERKS: a pip for each of the three tiers, lit when reached)
+      const pips = document.createElement('i');
+      pips.className = 'tpips';
+      pips.textContent = tierPips(c.trait.id, kindsOf(this.b.units), lead);
+      head.append(pips);
       pill.append(head);
-      if (next) {
-        const fx = document.createElement('small');
-        fx.textContent = next.text;
-        pill.append(fx);
-      }
-      pill.addEventListener('click', () => {
-        this.traitPick = this.traitPick === c.trait.id ? undefined : c.trait.id;
-        this.refreshTraits();
+      // (the perk awake, by name, and what the next tier gives)
+      const fx = document.createElement('small');
+      fx.textContent = c.active ? `${c.trait.tiers[c.tier].name}${next ? ` · next: ${next.text}` : ''}` : next ? next.text : '';
+      if (fx.textContent) pill.append(fx);
+      // (a tap, or a long press, opens the trait's whole ladder in its card)
+      const open = () => openTraitCard(c.trait.id, kindsOf(this.b.units), lead);
+      pill.addEventListener('click', open);
+      pill.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        open();
       });
       strip.append(pill);
     }
@@ -4950,11 +4960,11 @@ class Game {
     hint.textContent = woke.length
       ? `Synergy active! ${woke.join('; ')}`
       : picked
-        ? `${picked.trait.name}: ${picked.trait.tiers.map((t) => `${t.need} heroes, ${t.text}`).join('; ')}`
+        ? `${picked.trait.name}: ${picked.trait.tiers.map((t) => `${t.need} heroes, ${t.name}: ${t.text}`).join('; ')}`
         : near
           ? `${near.trait.name}: ${nextTierLine(near)}`
           : counts.length
-            ? 'Different heroes of a trait give a team bonus'
+            ? 'Different heroes of a trait wake its perks: tap a trait for its three'
             : '';
   }
 

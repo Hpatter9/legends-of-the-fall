@@ -2378,3 +2378,16 @@ dialog.heroArtViewer { border: var(--ornate-border-double); box-shadow: var(--or
 .crLic.crCredit { border-color: var(--ornate-brass-mid, #9c8454); color: #f2dc9f; }
 .crLic.crUnconfirmed { border-style: dashed; color: #9a9a8e; font-style: italic; }
 .crLink { font: 400 12px/1.4 var(--body); color: #9fc7e3; text-decoration: underline; overflow-wrap: anywhere; }
+
+/* TRAIT-PERKS: a trait's card (`traitCard.ts`): one slate well a tier, the tiers reached with the gilded rim of a chosen row, the next one
+   with a dashed brass rim, the ones beyond it dim. */
+#traitCard .omSection { display: flex; flex-direction: column; gap: 8px; }
+#traitCard .omBody > * { flex: none; }
+.tpTier { opacity: 0.72; }
+.tpTier.tpOn { opacity: 1; border-color: #f2dc9f; background: linear-gradient(180deg, #444c38 0%, #293021 100%); box-shadow: inset 0 0 0 1px #d8b97660, 0 0 12px rgba(219, 193, 139, 0.3); }
+.tpTier.tpNext { opacity: 1; border-style: dashed; border-color: var(--ornate-brass-mid, #9c8454); }
+.tpHead { display: flex; align-items: baseline; gap: 8px; }
+.tpHead b { color: var(--ornate-brass-hi, #f2dc9f); font-weight: 400; }
+.tpHead small { margin-left: auto; font-size: var(--om-small); color: #b8af9a; white-space: nowrap; }
+.tpRoman { display: inline-block; min-width: 26px; padding: 0 4px; border: 1px solid #6b5c40; border-radius: 3px; text-align: center; font: 400 var(--om-small)/1.4 var(--body); color: #f2dc9f; background: #1a1d15; }
+.tpRule { margin: 6px 0 0 !important; }

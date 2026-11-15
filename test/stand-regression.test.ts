@@ -10,6 +10,10 @@ import { FIELD_BANDS } from '../src/sim/foes';
 import { HEROES } from '../src/sim/units';
 import { stageBoost } from '../src/sim/run';
 import { AILMENT_SWITCH } from '../src/sim/ailments';
+import { TRAIT_PERKS } from '../src/sim/traits';
+
+// (TRAIT-PERKS: these fights were pinned before the traits had their perks; with the switch off the traits are as they were)
+TRAIT_PERKS.on = false;
 
 /** One fight in a line: who won, how long it took, who is left standing, and the fight's random stream. */
 function signature(seed: number, band: string, stage: number): string {

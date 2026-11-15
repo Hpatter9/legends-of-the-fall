@@ -6,6 +6,7 @@ import { mythicKits } from './mythicCombat';
 //
 // Randomness comes from the battle's own side stream (`b.skillRng`), so the fight's main stream is left alone.
 
+import { perkCast, perkUlt } from './traitPerks';
 import { FEEL } from './feel';
 import { sightClear, standable, tileAt, type At } from './board';
 import { addUnit, atkOf, blowMult, canStrike, defenceOf, defOf, hurt, strikeDef, tileOf, unitAt, wayTo, type Battle, type BattleEvent, type Unit } from './battle';
@@ -1794,6 +1795,13 @@ export function powered(b: Battle, me: Unit, s: Skill, more: number, out: Battle
   // (RELICS-3: the Wyrm's Breath Vial freezes what the fight's first skill struck)
   if (ok && me.side === 'hero' && b.relics?.hooks?.firstFreeze && !b.relicFroze) relicSkill(b, me, out, from);
   if (ok && powersOn(b)) powerCast(b, me, s, out, from);
+  // (TRAIT-PERKS: the pools topped up, the bursts and refunds, the marks on the ground, a Caster's second cast)
+  if (ok && b.perk) perkCast(b, me, from, out, () => {
+    const was = ailCtx.by;
+    ailCtx.by = me;
+    s.cast(b, me, out);
+    ailCtx.by = was;
+  });
   return ok;
 }
 /** How strong the skill being cast is, as a multiple (1 unless a talent or an ultimate's `power` lifts it): an ultimate's engines scale what is not an attack (how long a stun or guard lasts, how much is shielded) by it. */
@@ -1819,6 +1827,7 @@ export function began(b: Battle, me: Unit, s: Skill, out: BattleEvent[], slot: '
   me.busyUntil = b.t + s.castMs;
   out.push({ kind: 'skill', by: me.id, name: keyOf(s), ms: s.castMs });
   if (slot === 'ult') triggerDuoComboOnUlt(b, me, out);
+  if (slot === 'ult' && b.perk) perkUlt(b, me, out);
   return true;
 }
 
