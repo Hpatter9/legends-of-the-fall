@@ -35,7 +35,7 @@ export const PERK = {
   // Undead
   DOOR_SAFE_MS: 1000,
   ROT_REACH: 2,
-  ROT_SHARE: 0.1,
+  ROT_SHARE: 0.05,
   ROT_MS: 3000,
   SKELETON_HP: 0.25,
   SKELETON_ATK: 0.25,
@@ -46,7 +46,7 @@ export const PERK = {
   POEM_DEALT: 1.15,
   POEM_LIVES: 0.25,
   // Mystic
-  LEY_COST: 0.8,
+  LEY_COST: 0.75,
   ECHO_MS: 1500,
   ECHO_SHARE: 0.3,
   CONFLUX_EVERY: 4,
@@ -69,11 +69,11 @@ export const PERK = {
   ORDER_HP: 0.3,
   // Holy
   BLESS: 1.15,
-  HALLOW_HEAL: 0.003,
-  HALLOW_BURN: 0.03,
+  HALLOW_HEAL: 0.002,
+  HALLOW_BURN: 0.02,
   RISE_HP: 0.2,
   // Wild
-  SCENT: 1.15,
+  SCENT: 1.08,
   FRENZY_PER: 0.04,
   FRENZY_MAX: 10,
   STAMPEDE_FIRST: 3000,
@@ -86,6 +86,7 @@ export const PERK = {
   OVERLOAD_START: 30,
   OVERLOAD_BACK: 0.25,
   // Frontier
+  TRAIL_SPEED: 1.04,
   SNARES: 3,
   SNARE_MS: 14000,
   WANTED: 1.4,
@@ -93,10 +94,10 @@ export const PERK = {
   WANTED_HEAL: 0.1,
   // Machine
   PLATING: 0.1,
-  BOOM: 2,
+  BOOM: 1.5,
   SENTRIES: 2,
-  SENTRY_HP: 0.18,
-  SENTRY_ATK: 0.22,
+  SENTRY_HP: 0.15,
+  SENTRY_ATK: 0.2,
   // Royal
   CROWN: 1.1,
   TRIBUTE: 0.04,
@@ -118,28 +119,29 @@ export const PERK = {
   THRALL_ATK: 0.4,
   // Guardian
   CHALLENGE_MS: 600,
-  CHALLENGE_TAKEN: 0.9,
+  CHALLENGE_TAKEN: 0.93,
   BASTION_TAKEN: 1,
-  BASTION_BACK: 0.15,
+  BASTION_BACK: 0.08,
   // Blade
   BLEED: 1 / 3,
   RIPOSTE: 0.4,
   RIPOSTE_EVERY: 1000,
   CUTS_EVERY: 5,
   // Marksman
-  HIGH_PER: 0.08,
+  HIGH_PER: 0.06,
   PIN_EVERY: 4,
   PIN_MS: 1000,
   VOLLEY_EVERY: 12000,
   VOLLEY_CRIT: 1.5,
   // Caster
-  SURGE: 6,
+  SURGE: 8,
   LINGER_MS: 4000,
   LINGER_TILES: 2,
   OVERCAST_EVERY: 5,
   // Warden
-  THORNWARD: 0.1,
-  SANCTUARY: 0.9,
+  /** Warden I: what a hero beside a Warden takes (the Warden's watch over its neighbours). */
+  WATCH_TAKEN: 0.95,
+  SANCTUARY: 0.95,
   SANCTUARY_REACH: 3,
   CIRCLE_AT: 0.5,
   CIRCLE_MS: 6000,
@@ -174,7 +176,7 @@ export const PERK = {
   STEP_REACH: 3,
   // Support
   MEDIC_EVERY: 2000,
-  MEDIC: 0.02,
+  MEDIC: 0.025,
   HYMN_EVERY: 12000,
   HYMN_MS: 4000,
   HYMN_GUARD: 0.85,
@@ -185,16 +187,16 @@ export const PERK = {
   // Vanguard
   SPEARHEAD_MS: 8000,
   SPEARHEAD: 1.15,
-  STAGGER_MS: 500,
+  STAGGER_MS: 800,
   ONSLAUGHT_AT: 2000,
   ONSLAUGHT: 0.8,
   ONSLAUGHT_STUN_MS: 600,
   // Arcanist
   RUNIC: 1.15,
   SLING: 5,
-  ANCHOR_AT: 0.25,
+  ANCHOR_AT: 0.2,
   /** The most of its health the anchor gives a hero back (time turns back, but not all the way for the badly hurt). */
-  ANCHOR_CAP: 0.15,
+  ANCHOR_CAP: 0.1,
   ANCHOR_MS: 4000,
   // Bulwark
   STEADY_STUN_MS: 1000,
@@ -538,8 +540,8 @@ export function perkWave(b: Battle, out: BattleEvent[]): void {
   if (perkAt(b, 'pirate', 1)) tide(b, out);
   // Gunner II: the kegs
   if (perkAt(b, 'gunner', 1)) rollKegs(b, out);
-  // Bulwark II: the earthworks
-  if (perkAt(b, 'bulwark', 1))
+  // Bulwark II: the earthworks (not on the Assault's field, whose narrow ways a wall raised every minute would jam for the heroes too)
+  if (perkAt(b, 'bulwark', 1) && !b.field)
     for (const w of membersUp(b, 'bulwark')) {
       const laid = raiseWall(b, w, [{ u: w.u, v: w.v - 2 }], 'stone', PERK.EARTH_MS, out);
       if (laid.length) perkEv(out, { trait: 'bulwark', what: 'earthworks', to: w.id, tiles: laid });
@@ -959,6 +961,7 @@ export function perkDamage(b: Battle, by: Unit, to: Unit, dmg: number, src: 'blo
     if (perkAt(b, 'knightly', 2) && nearStandard(b, to)) m *= PERK.ORDER_TAKEN;
     if (perkAt(b, 'guardian', 0) && isOf(to, 'guardian')) m *= PERK.CHALLENGE_TAKEN;
     if (perkAt(b, 'guardian', 2) && isOf(to, 'guardian') && membersUp(b, 'guardian').some((g) => g !== to && apart(g, to) === 1)) m *= PERK.BASTION_TAKEN;
+    if (perkAt(b, 'warden', 0) && membersUp(b, 'warden').some((w) => w !== to && apart(w, to) === 1)) m *= PERK.WATCH_TAKEN;
     if (perkAt(b, 'warden', 1) && membersUp(b, 'warden').some((w) => w !== to && w.u === to.u && w.v < to.v && to.v - w.v <= PERK.SANCTUARY_REACH)) m *= PERK.SANCTUARY;
     if (perkAt(b, 'pirate', 1) && isOf(to, 'pirate') && onWater(b, to)) m *= PERK.SEA_TAKEN;
     if (perkAt(b, 'bulwark', 2)) {
@@ -984,8 +987,6 @@ export function perkStruck(b: Battle, by: Unit, to: Unit, landed: number, src: '
   if (src !== 'dot' && perkAt(b, 'vampire', 0) && isOf(by, 'vampire') && by.alive) mendUnit(by, landed * PERK.THIRST, out, by);
   if (to.side !== 'hero' || !by.alive || src === 'dot') return;
   const melee = src === 'blow' && !splash && apart(by, to) === 1 && !defOf(by).shot;
-  // Warden I
-  if (melee && perkAt(b, 'warden', 0) && isOf(to, 'warden')) hurt(b, to, by, Math.max(1, Math.round(landed * PERK.THORNWARD)), false, true, out, 'skill');
   // Guardian III
   if (by.alive && perkAt(b, 'guardian', 2) && isOf(to, 'guardian') && membersUp(b, 'guardian').some((g) => g !== to && apart(g, to) === 1)) {
     hurt(b, to, by, Math.max(1, Math.round(landed * PERK.BASTION_BACK)), false, true, out, 'skill');
@@ -1155,8 +1156,7 @@ export function perkBlow(b: Battle, by: Unit, to: Unit, crit: boolean, dmg: numb
   }
   if (perkAt(b, 'vanguard', 1) && isOf(by, 'vanguard') && to.alive && !(p.met ??= []).includes(to.id)) {
     p.met.push(to.id);
-    shove(b, by, to, 1, out);
-    if (to.alive) stunFor(b, to, PERK.STAGGER_MS, false, 'stun', by);
+    stunFor(b, to, PERK.STAGGER_MS, false, 'stun', by);
   }
   if (perkAt(b, 'beast', 2) && p.apex !== undefined && p.apex > b.t) mendUnit(by, by.maxHp * PERK.APEX_HEAL, out, by);
   if (shot && perkAt(b, 'gunner', 0) && isOf(by, 'gunner'))
@@ -1178,6 +1178,7 @@ export function perkSpeed(b: Battle, x: Unit): number {
   if (!real(x)) return 1;
   let m = 1;
   if (s.frenzy) m *= 1 + PERK.FRENZY_PER * s.frenzy;
+  if (perkAt(b, 'frontier', 0)) m *= PERK.TRAIL_SPEED;
   if (perkAt(b, 'vanguard', 0) && isOf(x, 'vanguard') && b.t - s.waveAt < PERK.SPEARHEAD_MS) m *= PERK.SPEARHEAD;
   if (x.pk?.apex !== undefined && x.pk.apex > b.t) m *= PERK.APEX_SPEED;
   return m;
@@ -1187,7 +1188,8 @@ export function perkSpeed(b: Battle, x: Unit): number {
 export function perkFoot(b: Battle, me: Unit, ground: string): boolean {
   if (me.side !== 'hero' || !b.perk) return false;
   if (perkAt(b, 'frontier', 0)) return true;
-  return perkAt(b, 'pirate', 1) && isOf(me, 'pirate') && (ground === 'water' || ground === 'deep');
+  // (Pirate II: the whole party walks the water the tide brings)
+  return perkAt(b, 'pirate', 1) && (ground === 'water' || ground === 'deep');
 }
 
 /** A stun's length on a fighter after Bulwark I. */

@@ -396,15 +396,19 @@ test('Caster: the surge, lingering magic, the overcast', () => {
   assert.equal(again, 1, 'the fourth casts twice');
 });
 
-test('Warden: thorns, the sanctuary behind, the circles at half health', () => {
-  const b = started(['cleric', 'druid', 'shambler', 'mummy']);
+test('Warden: a watch over its neighbours, the sanctuary behind, the circles when the party is low', () => {
+  const b = started(['cleric', 'druid', 'shambler', 'mummy'], { tight: true });
   const cl = hero(b, 'cleric');
   const f = foe(b);
-  put(f, free(b, cl));
-  const was = f.hp;
-  hurt(b, f, cl, 40, false, false, [], 'blow');
-  assert.ok(f.hp < was);
-  for (const h of b.units.filter((x) => x.side === 'hero' && x.alive && !x.pk?.raised)) h.hp = Math.round(h.maxHp * 0.3);
+  // (a hero beside a Warden takes less than a plain one)
+  const plain = started(['cleric']);
+  const c2 = hero(plain, 'cleric');
+  const a = cl.hp;
+  hurt(b, f, cl, 100, false, false, [], 'skill');
+  const was2 = c2.hp;
+  hurt(plain, foe(plain), c2, 100, false, false, [], 'skill');
+  assert.ok(a - cl.hp < was2 - c2.hp, `${a - cl.hp} vs ${was2 - c2.hp}`);
+  for (const h of b.units.filter((x) => x.side === 'hero' && x.alive && !x.pk?.raised)) h.hp = Math.round(h.maxHp * 0.2);
   const out: BattleEvent[] = [];
   tickPerks(b, out);
   assert.ok(perks(out, 'circle').length >= 1);

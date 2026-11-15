@@ -82,7 +82,7 @@ export const TRAITS: Record<string, Trait> = {
     tier(4, 'Death Poem', 'The first Samurai to fall fights on, unkillable', 'The first Samurai to fall each wave fights on at 1 health for two and a half seconds: nothing can hurt it and it deals 15% more. Then it falls, unless a heal has lifted it above a quarter of its health.'),
   ]),
   mystic: trait('mystic', 'Mystic', 'origin', 'My', [
-    tier(2, 'Ley Lines', "King's spells cost a fifth less", "The king's spells cost a fifth less mana."),
+    tier(2, 'Ley Lines', "King's spells cost a quarter less", "The king's spells cost a quarter less mana."),
     tier(3, 'Echo', "Each king's spell echoes at 30%", "Every king's spell (but those that call or raise) echoes 1.5 seconds later on the same spot at 30% of its strength."),
     tier(4, 'Conflux', 'Every fourth spell is free, and cast twice', "Every fourth king's spell of a fight is free, and lands a second time at full strength."),
   ]),
@@ -102,7 +102,7 @@ export const TRAITS: Record<string, Trait> = {
     tier(4, 'Resurrection', 'Once a wave, the first to fall rises at once, free', 'Once a wave, the first hero to fall is raised by light at once, at a fifth of its health, and no life is spent.'),
   ]),
   wild: trait('wild', 'Wild', 'origin', 'Wi', [
-    tier(2, 'Bloodscent', '+15% damage to wounded foes', 'Every hero deals 15% more to a foe below half its health.'),
+    tier(2, 'Bloodscent', '+8% damage to wounded foes', 'Every hero deals 8% more to a foe below half its health.'),
     tier(3, 'Frenzy', 'Every Wild kill quickens the party, to +40%', 'Each kill by a Wild hero makes the whole party act 4% faster for the rest of the wave, up to 40%.'),
     tier(4, 'Stampede', "A stampede tramples the foes' thickest file", "3 seconds into each wave, and every 20 seconds after, a stampede thunders down the file with the most foes: each foe in it is trampled for more than the party's might and knocked back a tile."),
   ]),
@@ -112,14 +112,14 @@ export const TRAITS: Record<string, Trait> = {
     tier(4, 'Overload', 'Ultimates start 30% fuller, refund a quarter', 'Every ultimate meter starts each wave 30% fuller, and casting an ultimate gives a quarter of the meter back.'),
   ]),
   frontier: trait('frontier', 'Frontier', 'origin', 'Fr', [
-    tier(2, 'Trailblazers', 'The party crosses rough ground unslowed', 'Heroes are not slowed by mud, tall grass, water or snow, nor held by the field\'s snares.'),
+    tier(2, 'Trailblazers', 'The party moves quicker, over rough ground unslowed', 'Heroes act and walk 4% faster, are not slowed by mud, tall grass, water or snow, and are not held by the field\'s snares.'),
     tier(3, 'Ambush', "Three snares laid in the foes' path each wave", "At each wave's start three snares are laid on the tiles the foes nearest the party will step on."),
     tier(4, 'Wanted', 'The toughest foe is Wanted: +40% against it', "The wave's toughest foe is marked Wanted: heroes deal 40% more to it, and when it falls every hero gains 4 seconds of haste and mends 10%."),
   ]),
   machine: trait('machine', 'Machine', 'origin', 'Ma', [
     tier(2, 'Plating', 'Machines start each wave shielded', 'Each Machine starts each wave behind a shield of a tenth of its health.'),
-    tier(3, 'Self-Destruct', 'A fallen Machine explodes', 'A Machine that falls explodes: every foe within a tile takes twice its attack.'),
-    tier(4, 'Sentry Network', 'Two sentry turrets deploy each wave', "At each wave's start two sentry turrets unfold beside the party: they stand, and shoot with a quarter of the party's might. Rebuilt each wave; they never cost a life."),
+    tier(3, 'Self-Destruct', 'A fallen Machine explodes', 'A Machine that falls explodes: every foe within a tile takes half as much again as its attack.'),
+    tier(4, 'Sentry Network', 'Two sentry turrets deploy each wave', "At each wave's start two sentry turrets unfold beside the party: they stand, and shoot with a fifth of the party's might. Rebuilt each wave; they never cost a life."),
   ]),
   royal: trait('royal', 'Royal', 'origin', 'Ro', [
     tier(2, 'The Crown', 'The strongest is crowned: +10%', 'The hero with the most attack wears the crown: 10% more attack and health. When it falls, the crown passes to the strongest standing.'),
@@ -128,7 +128,7 @@ export const TRAITS: Record<string, Trait> = {
   ]),
   pirate: trait('pirate', 'Pirate', 'origin', 'Pi', [
     tier(2, 'Plunder', 'Pirate kills drop extra gold', "Each foe a Pirate slays drops a gold piece for the run."),
-    tier(3, 'Sea Legs', 'Pirates walk water; the tide slows the foes', "Pirates walk water as dry ground and take 20% less on it. At each wave's start the tide floods three tiles under the foes' front."),
+    tier(3, 'Sea Legs', 'The party walks water; the tide slows the foes', "The party walks water as dry ground, and Pirates take 20% less on it. At each wave's start the tide floods three tiles under the foes' front."),
     tier(4, 'Broadside', 'Every 12 s a broadside rakes the foes', "5 seconds into each wave, and every 12 seconds after, a ghost ship's broadside rakes the three files with the most foes in their middle: each foe in them takes twice the party's might and burns."),
   ]),
   vampire: trait('vampire', 'Vampire', 'origin', 'Vm', [
@@ -137,9 +137,9 @@ export const TRAITS: Record<string, Trait> = {
     tier(4, 'Blood Thralls', 'The first two foes slain rise as your thralls', 'The first two foes slain each wave rise as blood thralls with a third of their health and half their bite, and fight for the party until the wave ends. Bosses and nemeses do not rise.', { vampireSwarm: true }),
   ]),
   guardian: trait('guardian', 'Guardian', 'class', 'Gu', [
-    tier(2, 'Challenge', 'Foes beside a Guardian must strike it', 'A foe beside a Guardian must strike a Guardian, and the Guardians take 15% less damage.'),
+    tier(2, 'Challenge', 'Foes beside a Guardian must strike it', 'A foe beside a Guardian must strike a Guardian, and the Guardians take 7% less damage.'),
     tier(3, 'Aegis', 'An Aegis covers each hero once a wave', 'The first time each hero drops below 30% health in a wave, an Aegis shield of 15% of its health covers it for 5 seconds.', { guardianShield: true }),
-    tier(4, 'Bastion', 'Guardians side by side turn back blows', 'A Guardian with another Guardian beside it turns 15% of each blow back on whoever struck it.', { guardianShield: true }),
+    tier(4, 'Bastion', 'Guardians side by side turn back blows', 'A Guardian with another Guardian beside it turns 8% of each blow back on whoever struck it.', { guardianShield: true }),
   ]),
   blade: trait('blade', 'Blade', 'class', 'Bl', [
     tier(2, 'Bleeding Edge', 'Blade crits make foes bleed', "A Blade's crit makes its target bleed for a third of the blow again over 3 seconds."),
@@ -147,18 +147,18 @@ export const TRAITS: Record<string, Trait> = {
     tier(4, 'Thousand Cuts', 'Every fifth blow cuts all around', 'Every fifth blow of a Blade is a whirling cut that strikes every foe round it at full damage.'),
   ]),
   marksman: trait('marksman', 'Marksman', 'class', 'Mk', [
-    tier(2, 'High Ground', 'Shots from the heights reach further and hit harder', 'Shooters reach half a tile further for each step of height above their target, and their shots deal 8% more for each step.', { reach: 0.5 }),
+    tier(2, 'High Ground', 'Shots from the heights reach further and hit harder', 'Shooters reach half a tile further for each step of height above their target, and their shots deal 6% more for each step.', { reach: 0.5 }),
     tier(3, 'Pinning Shot', 'Every fourth shot pins', "Every fourth shot of a Marksman pins its target where it stands for a second.", { reach: 0.5 }),
     tier(4, 'Volley', 'Every 12 s the Marksmen loose as one', 'Every 12 seconds every Marksman looses at once at the foe nearest the party, each shot a crit.', { reach: 0.5 }),
   ]),
   caster: trait('caster', 'Caster', 'class', 'Ca', [
-    tier(2, 'Surge', 'Caster skills refund part of their pool', "Each skill a Caster casts gives back 6% of its pool."),
+    tier(2, 'Surge', 'Caster skills refund part of their pool', "Each skill a Caster casts gives back 8% of its pool."),
     tier(3, 'Lingering Magic', 'Caster skills leave their mark on the ground', "A Caster's skill leaves its magic on the ground under two of the foes it struck (or those nearest it) for 4 seconds: a burn, a shock, a curse or a bleed, by the Caster."),
     tier(4, 'Overcast', 'Every fifth Caster skill casts twice', 'Every fifth skill the Casters cast (counted together) goes off twice.'),
   ]),
   warden: trait('warden', 'Warden', 'class', 'Wa', [
-    tier(2, 'Thornward', 'Melee blows on Wardens hurt the striker', 'A foe that strikes a Warden in melee takes a tenth of the blow back.'),
-    tier(3, 'Sanctuary', 'Heroes behind a Warden take 10% less', 'A hero with a Warden standing in front of it in the same file takes 10% less damage.'),
+    tier(2, 'Watchful', 'Heroes beside a Warden take 5% less', 'A hero on a tile beside a Warden takes 5% less damage.'),
+    tier(3, 'Sanctuary', 'Heroes behind a Warden take 5% less', 'A hero with a Warden standing in front of it in the same file takes 5% less damage.'),
     tier(4, 'Warding Circle', 'At half health, the Wardens raise circles', "Once a wave, when the party's health falls below half, every Warden raises a warding circle round it for 6 seconds: heroes in it take a quarter less damage."),
   ]),
   trickster: trait('trickster', 'Trickster', 'class', 'Tr', [
@@ -182,19 +182,19 @@ export const TRAITS: Record<string, Trait> = {
     tier(4, 'Shadow Step', 'Kills step Assassins through the shadows', "At each wave's start and after each kill, an Assassin steps through the shadows to the tile behind the weakest foe within 3 tiles (any on the field at a wave's start), and its next blow is a crit."),
   ]),
   support: trait('support', 'Support', 'class', 'Su', [
-    tier(2, 'Field Medic', 'The most hurt hero is always mending', 'Every 2 seconds the hero lowest in health mends 2% of its health.'),
+    tier(2, 'Field Medic', 'The most hurt hero is always mending', 'Every 2 seconds the hero lowest in health mends 2.5% of its health.'),
     tier(3, 'Battle Hymn', 'Every 12 s a hymn: haste, guard, then might', 'Every 12 seconds the Supports sing to the whole party for 4 seconds, in turn a hymn of haste, of guard (15% less damage) and of might (a tenth more).'),
     tier(4, 'Rallying Cry', "A friend's fall rallies the rest; lives raise in 3 s", 'When a hero falls, every other hero mends 6% and gains 5 seconds of haste, and a life raises the fallen hero after 3 seconds instead of 5.'),
   ]),
   vanguard: trait('vanguard', 'Vanguard', 'class', 'Va', [
     tier(2, 'Spearhead', "Vanguards surge at each wave's start", 'Vanguards act and walk 15% faster for the first 8 seconds of each wave.'),
-    tier(3, 'Breakthrough', "Each foe's first Vanguard blow knocks it back", "A Vanguard's first blow on each foe knocks it back a tile and staggers it for half a second."),
+    tier(3, 'Breakthrough', "Each foe's first Vanguard blow staggers it", "A Vanguard's first blow on each foe staggers it for most of a second."),
     tier(4, 'Onslaught', 'Each wave the Vanguards leap into the foes', '2 seconds into each wave the Vanguards leap into the foes\' line together, each landing for most of its attack on the tiles round it and stunning those foes for a moment.'),
   ]),
   arcanist: trait('arcanist', 'Arcanist', 'class', 'Ac', [
     tier(2, 'Runic Study', "King's spells 15% stronger", "The king's spells hit and heal 15% harder."),
     tier(3, 'Spell Sling', "King's spells make Arcanists cast", "When the king casts a spell, each Arcanist's pool gains a tenth and it is ready to cast at once."),
-    tier(4, 'Chronal Anchor', 'Once a wave, time turns back 4 s for the party', "Once a wave, when the party's health first falls below a quarter, time turns back 4 seconds for every hero: its place returns to where it was and its health toward what it was (15% of its health at most), and a hero fallen in those 4 seconds stands again without spending a life."),
+    tier(4, 'Chronal Anchor', 'Once a wave, time turns back 4 s for the party', "Once a wave, when the party's health first falls below a fifth, time turns back 4 seconds for every hero: its place returns to where it was and its health toward what it was (a tenth of its health at most), and a hero fallen in those 4 seconds stands again without spending a life."),
   ]),
   bulwark: trait('bulwark', 'Bulwark', 'class', 'Bw', [
     tier(2, 'Steadfast', 'Bulwarks cannot be moved or held long', 'Bulwarks cannot be knocked back, and no stun holds them longer than a second.'),

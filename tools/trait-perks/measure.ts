@@ -56,17 +56,21 @@ function rate(team: string[], stage: number, way: Way, trait: string, games: num
   return (100 * won) / games;
 }
 
-/** The stage where the party without perks wins nearest half (a short scan, then the nearest). */
+/** The stage where the party without perks wins nearest half: a binary search over the stages (their foes only grow stronger). */
 function evenStage(team: string[], trait: string): number {
+  let lo = 1;
+  let hi = 60;
   let best = 1;
   let gap = Infinity;
-  for (const s of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16, 19, 22, 26, 30, 36, 44, 52, 60]) {
+  while (lo <= hi) {
+    const s = Math.floor((lo + hi) / 2);
     const w = rate(team, s, 'none', trait, 40, 900000);
     if (Math.abs(w - 50) < gap) {
       gap = Math.abs(w - 50);
       best = s;
     }
-    if (w < 30) break;
+    if (w > 50) lo = s + 1;
+    else hi = s - 1;
   }
   return best;
 }

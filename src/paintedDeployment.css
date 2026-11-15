@@ -92,3 +92,6 @@ body[data-phase='deploy'] #traits .trait.picked { outline: 2px solid #ffe4a5; ou
 /* TRAIT-PERKS: a chip's three pips, one a tier, lit as each is reached */
 #traits .trait .tpips { margin-left: 5px; font-style: normal; font-size: 10px; letter-spacing: 1px; color: #8a7a58; }
 #traits .trait.on .tpips { color: #f2dc9f; }
+/* (each chip keeps its own width and the row scrolls, so a long "next" line never squeezes the chip beside it) */
+#traits .trait { flex: none; }
+#traits .trait small { max-width: 230px; overflow: hidden; text-overflow: ellipsis; }

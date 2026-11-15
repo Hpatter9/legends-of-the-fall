@@ -220,6 +220,8 @@ export class Fx {
   private tickCasts = new Map<number, string>();
   /** BLENDER-FX: the battles whose heroes' ultimates have been asked for (`warmBfx`). */
   private bfxWarmed = new WeakSet<Battle>();
+  /** TRAIT-PERKS: the battles whose perks' beat clips have been asked for. */
+  private perkWarmed = new WeakSet<Battle>();
   /** BLENDER-FX: how many of a spell's touches have been drawn this tick (the battery saver draws fewer: `bfxBudget`). */
   private bfxTouches = 0;
   /** The painted loops held over fighters (`movePaint`'s stands), so a state shown once is not shown twice. */
@@ -421,6 +423,11 @@ export class Fx {
     this.particles.calm = this.calm();
     this.enter(b);
     this.bfxTouches = 0;
+    // (TRAIT-PERKS: the small beat clips of the perks the party woke, once the fight has begun and woken them, so the first skeleton's rising shows)
+    if (b.perk && !this.perkWarmed.has(b)) {
+      this.perkWarmed.add(b);
+      warmBfx(perkClips(Object.keys(b.perk.tier).flatMap((t) => TRAIT_BEATS[t] ?? [])).map(([clip, el]) => beatBfx(clip, el)));
+    }
     // (BLENDER-FX: a fight's heroes' ultimates are large sheets, loaded as the fight begins rather than all held at once)
     if (!this.bfxWarmed.has(b)) {
       this.bfxWarmed.add(b);
@@ -436,8 +443,6 @@ export class Fx {
       // (EMIT-POINTS: and the small flame a breath runs out of its caster's mouth in, for a hero whose ultimate has a mouth point. It
       // lies with the fire showcase's beats, one atlas of about 4 MB decoded, asked for only when such a hero is in the fight)
       warmBfx(b.units.filter((x) => x.side === 'hero' && breathes(defOf(x).sheet)).map(() => beatBfx(MOUTH_RUN.clip, 'fire')));
-      // (TRAIT-PERKS: the small beat clips of the perks the party woke, so the first skeleton's rising shows)
-      warmBfx(perkClips(Object.keys(b.perk?.tier ?? {}).flatMap((t) => TRAIT_BEATS[t] ?? [])).map(([clip, el]) => beatBfx(clip, el)));
       // (the beats of their showcases are not asked for here: each loads the first time it is played, the older parts playing that once,
       // so a fight begins with as little held as it can)
     }

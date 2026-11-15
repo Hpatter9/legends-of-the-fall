@@ -70,6 +70,21 @@ try {
     await page.waitForTimeout(2600);
     const bones = await page.evaluate(() => window.__game.b.units.filter((u) => u.alive && u.pk?.raised === 'grave').map((u) => u.def));
     await shot('skeletons');
+    // (and a close look: the party and the three risen, cut from the picture round them)
+    const box = await page.evaluate(() => {
+      const g = window.__game;
+      const c = document.querySelector('canvas').getBoundingClientRect();
+      const pts = g.b.units.filter((u) => u.alive && u.side === 'hero').map((u) => g.sprites.get(u.id)?.root?.getGlobalPosition()).filter(Boolean);
+      const xs = pts.map((p) => p.x + c.left);
+      const ys = pts.map((p) => p.y + c.top);
+      return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+    });
+    const pad = 46;
+    const x = Math.max(0, Math.floor(box.x0 - pad));
+    const y = Math.max(0, Math.floor(box.y0 - pad * 1.6));
+    const cw = Math.min(w - x, Math.ceil(box.x1 - box.x0 + pad * 2));
+    const ch = Math.min(h - y, Math.ceil(box.y1 - box.y0 + pad * 2.2));
+    if (cw > 40 && ch > 40) await page.screenshot({ path: `docs/samples/trait-perks-close-${w}x${h}.png`, clip: { x, y, width: cw, height: ch } });
     report.push({ w, h, chips, card, bones, errors });
     assert.equal(bones.length, 3, `three skeletons at ${w}`);
     assert.ok(card.fits, `the card fits at ${w}`);

@@ -1,10 +1,18 @@
-# Trait perks (TRAIT-PERKS): the design, for the owner's approval
+# Trait perks (TRAIT-PERKS)
 
 The owner's ask: "lets change the perks for having multiple people of a type on the field. I want them to really matter. be unique and give
 amazing and varied buffs. like have 4 of an undead type means 3 skeletons rise from the grave and join you. they revive at the end of the
 wave only and dont cost hearts"
 
-This is stage 1: the design only. Nothing in the sim has changed yet.
+Stage 1 (the design) was approved with the owner's answers:
+
+1. Keep the 2/3/4 ladder; no fifth tier.
+2. Three fresh skeletons each wave; the dead stay down until the wave ends, and none ever costs a life.
+3. In assaults, the wave-start perks refresh every 60 s.
+4. Pirate I's extra gold is fine.
+
+Stage 2 built it: every trait's three tiers in the sim, the deploy screen's trait row and a card for each trait's whole ladder, the
+effects and sounds, a balance pass measured by a new tool, and tests for every rule.
 
 ## What there is today
 
@@ -49,341 +57,374 @@ A party is five heroes; the Calamity's is ten. Between them, five heroes carry t
 Most of these are a few per cent of one stat, and nine traits have only one tier. Nothing changes how a fight plays except the four
 milestones.
 
-## The new ladder
+## The ladder as built
 
-**Every trait gets three tiers, at 2, 3 and 4 heroes.** Every trait has five to seven heroes and a party is five, so 4 is the most a party
-can reach while still mixing in another trait. It is also where the owner's example sits. In the Calamity's ten, two or three traits can
-reach their top tier at once (see Interactions).
+Every trait has three tiers, at 2, 3 and 4 different heroes of it, and each tier keeps the ones below it. The flat stat bonuses are gone;
+each tier is a rule of its own. The four old milestones are on the new ladder (the wisps at Yokai I, the Aegis at Guardian II, the decoy
+log at Trickster II, the bats at Vampire II) and now come round once a wave. The words below are the game's own (`TRAITS` in
+`src/sim/traits.ts`: each tier's name, its badge line and its whole rule); the numbers are `PERK` in `src/sim/traitPerks.ts`.
 
-- **I (2 heroes): a taste.** A small rule of the trait's own, worth roughly a few per cent of a party's power. Every party has two or three
-  of these on, so they must stay small.
-- **II (3 heroes): a turn of the fight.** A rule you see work in every wave. Each tier keeps the ones below it.
-- **III (4 heroes): the trait's signature.** A big, visible thing: an army rising, a broadside, time turning back. It is worth building a
-  party around, roughly one extra hero's worth (see Balance).
-
-The flat stat bonuses (+1% attack and the rest) all go. Each tier is a rule instead, and none of them repeats another trait's rule. The four
-existing milestones stay, moved onto the new ladder (the Aegis to Guardian II, the decoy log to Trickster II, the wisps to Yokai I, the bats
-to Vampire II).
-
-"A wave" below means one fight of a run (a wave of an army, a stage of the Calamity's map), and each wave of the Last Stand's one long
-fight. "The party's might" is the average attack of the party's heroes placed at the fight's start (after gear, grade and talents), and
-"the party's health" the same for health, so a perk grows with the heroes as summons do now (`callSummon` scales by the caster).
-
-Numbers are first guesses, to be tuned in stage 2 by the measurements below.
+"Each wave" means each fight of a run, each wave of the Last Stand's one long fight, and each minute of an Assault. "The party's might" is
+the average attack of the placed heroes as the fight begins, and "the party's health" their average health: the strikes and the
+summons are sized from them, so they grow with the heroes.
 
 ### Origins
 
-#### Undead (the owner's example)
+#### Undead
+
+Heroes: Shambler, Mummy, Reaper, Dread Pirate, Plague Doctor.
 
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Death's Door | The first blow each wave that would fell an Undead hero leaves it on 1 health instead, and it cannot be hurt for 1 s. | "Each Undead cheats death once a wave" |
-| II (3) | Grave Rot | A foe slain within 2 tiles of an Undead hero bursts: every foe within 1 tile of it is poisoned for 3 s (each half second, 8% of the party's might). | "Foes slain near the Undead burst in rot" |
-| III (4) | Rise from the Grave | At each wave's start, three skeletons claw up from the ground beside the Undead: a Skeleton Warrior, a Skeleton Spearman and a Skeleton Archer, each with 45% of the party's health and attack. A skeleton that falls stays down until the wave ends; then all three rise again for the next wave. They never cost a life. | "Three skeletons rise to fight each wave" |
-
-The skeletons are summon kinds (`summon: true`), so `lives.ts` already leaves them out of the party (`ofParty`): they never spend a life and
-never count as a party fall. They are not kept between waves (`KEPT_KINDS`). Each wave they are made fresh, at full health.
+| I (2) | Death's Door | The first blow each wave that would fell an Undead hero leaves it on 1 health instead, and nothing can hurt it for a second. | "Each Undead cheats death once a wave" |
+| II (3) | Grave Rot | A foe slain within 2 tiles of an Undead hero bursts: every foe within a tile of it is poisoned. | "Foes slain near the Undead burst in rot" |
+| III (4) | Rise from the Grave | At each wave's start three skeletons claw up beside the Undead: a warrior, a spearman and an archer. One that falls stays down until the wave ends; then all three rise again. They never cost a life. | "Three skeletons rise to fight each wave" |
 
 #### Samurai
 
+Heroes: Samurai, Kunoichi, Archer, Ninja Monk, War Drummer.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Iaijutsu | Each Samurai's first blow of a wave is a sure crit at double damage. | "First cut of each wave: a double crit" |
-| II (3) | Way of the Duel | A Samurai striking a foe that no other hero is attacking deals 20% more. A Samurai's kill gives it 2 s of haste. | "Lone duels cut 20% deeper; kills quicken" |
-| III (4) | Death Poem | The first Samurai to fall each wave does not fall. It fights on at 1 health for 5 s, cannot be hurt and deals 60% more, then falls (a life raises it as usual). If a heal lifts it above a quarter of its health in those 5 s, it lives. | "The first Samurai to fall fights 5 s more, unkillable" |
+| I (2) | Iaijutsu | Each Samurai's first blow of a wave that lands is a crit (15% more). | "First cut of each wave: a keen crit" |
+| II (3) | Way of the Duel | A Samurai that fells a foe it fought alone (no other hero beside the foe) gains a second of haste. | "A lone duel won quickens the Samurai" |
+| III (4) | Death Poem | The first Samurai to fall each wave fights on at 1 health for two and a half seconds: nothing can hurt it and it deals 15% more. Then it falls, unless a heal has lifted it above a quarter of its health. | "The first Samurai to fall fights on, unkillable" |
 
 #### Mystic
 
+Heroes: Fire Wizard, Lightning Mage, Wanderer, Great Sage, Geomancer.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Ley Lines | The king's spells cost 15% less mana. | "King's spells cost 15% less" |
-| II (3) | Echo | Every king's spell echoes 1.5 s later on the same spot at 40% of its strength. | "Each king's spell echoes at 40%" |
-| III (4) | Conflux | Every third king's spell of a fight is free and lands twice at full strength (the echo follows both). | "Every third spell is free, and cast twice" |
+| I (2) | Ley Lines | The king's spells cost a fifth less mana. | "King's spells cost a fifth less" |
+| II (3) | Echo | Every king's spell (but those that call or raise) echoes 1.5 seconds later on the same spot at 30% of its strength. | "Each king's spell echoes at 30%" |
+| III (4) | Conflux | Every fourth king's spell of a fight is free, and lands a second time at full strength. | "Every fourth spell is free, and cast twice" |
 
 #### Yokai
 
+Heroes: Kitsune, Karasu Tengu, Yamabushi Tengu, Gorgon, Bell Warden.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Will-o'-Wisps | Yokai slip 8% of blows. A Yokai that slips a blow leaves a spirit wisp on its tile (the existing `yokaiWisp`). | "Yokai slip 8% of blows and leave wisps" |
-| II (3) | Foxfire Twin | Once a wave, a Yokai brought below 40% health splits: a foxfire twin of it stands beside it for 10 s, with 30% of its health and half its attack, and draws blows. | "A Yokai brought low splits in two" |
-| III (4) | Night Parade | Each wave opens in spirit dusk for 10 s: every foe walks and acts 25% slower, and every foe slain in the dusk leaves a wisp where it fell. | "Each wave opens in spirit dusk" |
+| I (2) | Will-o'-Wisps | Yokai slip 8% of blows, and a Yokai that slips one leaves a spirit wisp on its tile that hurts the foe who steps on it. | "Yokai slip 8% of blows and leave wisps" |
+| II (3) | Foxfire Twin | Once a wave, a Yokai brought below 40% health splits: a foxfire twin with a quarter of its health and half its attack stands beside it for 10 seconds and draws blows. | "A Yokai brought low splits in two" |
+| III (4) | Night Parade | Each wave opens in spirit dusk for 5 seconds: the foes walk and act 15% slower, and every foe slain in the dusk leaves a wisp where it fell. | "Each wave opens in spirit dusk" |
 
 #### Knightly
+
+Heroes: Peasant, Knight, Minotaur, Samurai Commander, Banneret.
 
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
 | I (2) | Shield Wall | A Knightly hero with a friend on a tile beside it takes 10% less damage. | "10% less damage shoulder to shoulder" |
-| II (3) | Oath of Protection | When a blow would land on a hero below 30% health, the nearest Knightly hero within 2 tiles steps in and takes it instead (each knight once every 6 s). | "Knights take blows for the badly hurt" |
-| III (4) | The Order's Standard | At each wave's start the Order plants its standard (the Samurai Commander's standard, in the Order's colours) in the middle of the party. Friends within 2 tiles deal 15% more and take 10% less. If it still stands when the wave is won, every hero mends 20% of its health. | "A standard is planted each wave: +15%, -10%" |
+| II (3) | Oath of Protection | A blow on a hero below 30% health is taken instead by the nearest Knightly hero within 2 tiles (each knight once every 6 seconds). | "Knights take blows for the badly hurt" |
+| III (4) | The Order's Standard | At each wave's start the Order plants its standard among the party. Friends within 2 tiles of it deal 15% more, take 10% less and mend 1% of their health a second while it stands. | "A standard is planted each wave: +15%, -10%" |
 
 #### Holy
 
+Heroes: Paladin, Cleric, High Priestess, Inquisitor, Seraph.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Blessing | Every heal on a hero is 20% stronger. | "Healing is 20% stronger" |
-| II (3) | Consecrated Ground | At each wave's start the 3x3 of tiles under each Holy hero is hallowed for the wave. A hero on hallowed ground mends 1% of its health a second; a foe on it takes 6% of the party's might a second. | "Holy ground mends friends and burns foes" |
-| III (4) | Resurrection | Once a wave, the first party hero to fall is raised by light at once (no 5 s wait), at 60% health, and no life is spent. | "Once a wave, the first to fall rises at once, free" |
+| I (2) | Blessing | Every heal on a hero is 15% stronger. | "Healing is 15% stronger" |
+| II (3) | Consecrated Ground | At each wave's start the ground round each Holy hero is hallowed: a hero on it mends 1% of its health a second, and a foe on it is burnt by the light. | "Holy ground mends friends and burns foes" |
+| III (4) | Resurrection | Once a wave, the first hero to fall is raised by light at once, at a fifth of its health, and no life is spent. | "Once a wave, the first to fall rises at once, free" |
 
 #### Wild
 
+Heroes: Werewolf, Druid, Barbarian, Wolf Bard, Falconer.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Bloodscent | Every hero deals 12% more to a foe below half its health. | "+12% damage to wounded foes" |
-| II (3) | Frenzy | Each kill by a Wild hero makes the whole party act 3% faster for the rest of the wave, up to 30%. | "Every Wild kill quickens the party, to +30%" |
-| III (4) | Stampede | 3 s into each wave, and every 20 s after, a stampede of wild beasts thunders down the board's file with the most foes. Every foe in it takes the party's might once and is knocked back a tile. | "A stampede tramples the foes' thickest file" |
+| I (2) | Bloodscent | Every hero deals 15% more to a foe below half its health. | "+15% damage to wounded foes" |
+| II (3) | Frenzy | Each kill by a Wild hero makes the whole party act 4% faster for the rest of the wave, up to 40%. | "Every Wild kill quickens the party, to +40%" |
+| III (4) | Stampede | 3 seconds into each wave, and every 20 seconds after, a stampede thunders down the file with the most foes: each foe in it is trampled for more than the party's might and knocked back a tile. | "A stampede tramples the foes' thickest file" |
 
 #### Arcane
 
+Heroes: Satyr, Warlock, Illusionist, Time Witch, Astral Sphinx.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Flux | When a hero casts its skill, the friend with the emptiest pool gains 10% of a pool. | "Each skill tops up a friend's pool 10%" |
-| II (3) | Spell Weave | When three skills are cast within 3 s (by any heroes), an arcane burst hits the third one's target: 1.5 times the party's might on the 3x3 round it. | "Three skills in 3 s: an arcane burst" |
-| III (4) | Overload | Every ultimate meter starts each wave 30% fuller (on top of ULT-CHARGE), and casting an ultimate gives a quarter of the meter back. | "Ultimates start 30% fuller, refund a quarter" |
+| I (2) | Flux | When a hero casts a skill, the friend with the emptiest pool gains a tenth of a pool. | "Each skill tops up a friend's pool 10%" |
+| II (3) | Spell Weave | When three skills are cast within 3 seconds, an arcane burst strikes round the third one's nearest foe for one and a half times the party's might. | "Three skills in 3 s: an arcane burst" |
+| III (4) | Overload | Every ultimate meter starts each wave 30% fuller, and casting an ultimate gives a quarter of the meter back. | "Ultimates start 30% fuller, refund a quarter" |
 
 #### Frontier
 
+Heroes: Ranger, Gunslinger, Mercenary, Beastmaster, Mirage Dancer.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Trailblazers | Heroes ignore the slowing of deep mud, tall grass, shallow water and snow, and step over the field's snares unharmed. | "The party crosses rough ground unslowed" |
-| II (3) | Ambush | At each wave's start, three snares (the Ranger's) are laid on the tiles in the foes' path toward the party. | "Three snares laid in the foes' path each wave" |
-| III (4) | Wanted | The wave's toughest foe (its boss, or else the foe with the most health) is marked: heroes deal 40% more to it, and when it falls every hero gains 4 s of haste and mends 10%. | "The toughest foe is Wanted: +40% against it" |
+| I (2) | Trailblazers | Heroes are not slowed by mud, tall grass, water or snow, nor held by the field's snares. | "The party crosses rough ground unslowed" |
+| II (3) | Ambush | At each wave's start three snares are laid on the tiles the foes nearest the party will step on. | "Three snares laid in the foes' path each wave" |
+| III (4) | Wanted | The wave's toughest foe is marked Wanted: heroes deal 40% more to it, and when it falls every hero gains 4 seconds of haste and mends 10%. | "The toughest foe is Wanted: +40% against it" |
 
 #### Machine
 
+Heroes: Rifle Bot, Arc Blade, Siege Bot, Juggernaut, Bombardier.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Plating | Each Machine starts each wave behind a shield of 15% of its health. | "Machines start each wave shielded" |
-| II (3) | Self-Destruct | A Machine that falls explodes: every foe within 1 tile takes twice its attack. A life raises it as usual. | "A fallen Machine explodes" |
-| III (4) | Sentry Network | At each wave's start two sentry turrets unfold on the high tiles nearest the party: still, reach 4, each shooting with 50% of the party's might and 40% of its health. Rebuilt each wave; never cost a life. | "Two sentry turrets deploy each wave" |
+| I (2) | Plating | Each Machine starts each wave behind a shield of a tenth of its health. | "Machines start each wave shielded" |
+| II (3) | Self-Destruct | A Machine that falls explodes: every foe within a tile takes twice its attack. | "A fallen Machine explodes" |
+| III (4) | Sentry Network | At each wave's start two sentry turrets unfold beside the party: they stand, and shoot with a quarter of the party's might. Rebuilt each wave; they never cost a life. | "Two sentry turrets deploy each wave" |
 
 #### Royal
 
+Heroes: Lancer, Queen Dragoon, Demon Swordsman, Tyrant, Astrologer.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | The Crown | The hero with the highest attack wears the crown: 15% more attack and health while it stands. When it falls the crown passes to the next strongest standing. | "The strongest is crowned: +15%" |
+| I (2) | The Crown | The hero with the most attack wears the crown: 10% more attack and health. When it falls, the crown passes to the strongest standing. | "The strongest is crowned: +10%" |
 | II (3) | Tribute | Each kill by the crowned hero mends every hero 4% of its health. | "The crown's kills mend the party" |
-| III (4) | Regicide's Price | When a crowned hero falls, every foe is stunned for 2 s and the heir who takes the crown has its ultimate filled at once. | "The crown's fall stuns all; the heir's ult fills" |
+| III (4) | Regicide's Price | When a crowned hero falls, every foe is stunned for a second and a half and the heir who takes the crown has its ultimate filled. | "The crown's fall stuns all; the heir's ult fills" |
 
 #### Pirate
 
-| Tier | Name | The rule | Badge line |
-| --- | --- | --- | --- |
-| I (2) | Plunder | Each foe a Pirate slays drops 1 extra gold for the run (a run's waves only). | "Pirate kills drop extra gold" |
-| II (3) | Sea Legs | Pirates walk water as dry ground and take 20% less on water. At each wave's start the tide floods three shallow-water tiles under the foes' front. | "Pirates walk water; the tide slows the foes" |
-| III (4) | Broadside | Every 15 s a ghost ship's broadside rakes the board's file with the most foes: each foe in it takes 1.5 times the party's might and burns for 3 s. | "Every 15 s a broadside rakes the foes" |
-
-#### Vampire (now 2, 3, 4 like the others; it was 2, 4, 5)
+Heroes: Buccaneer, Kraken Mate, Corsair Surgeon, Harpooner, Sea Reaver.
 
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Thirst | Vampires leech 10% of the damage they deal. | "Vampires drink 10% of what they deal" |
-| II (3) | Swarm | Once a wave, a Vampire brought below 30% bursts into bats, mends 15% and slips away (the existing `vampireSwarm`, now once a wave). | "A Vampire brought low bursts into bats" |
-| III (4) | Blood Thralls | The first two foes slain each wave rise as blood thralls and fight for the party until the wave ends, with half their health. Bosses and nemeses do not rise. | "The first two foes slain rise as your thralls" |
+| I (2) | Plunder | Each foe a Pirate slays drops a gold piece for the run. | "Pirate kills drop extra gold" |
+| II (3) | Sea Legs | Pirates walk water as dry ground and take 20% less on it. At each wave's start the tide floods three tiles under the foes' front. | "Pirates walk water; the tide slows the foes" |
+| III (4) | Broadside | 5 seconds into each wave, and every 12 seconds after, a ghost ship's broadside rakes the three files with the most foes in their middle: each foe in them takes twice the party's might and burns. | "Every 12 s a broadside rakes the foes" |
+
+#### Vampire
+
+Heroes: Vampire Lord, Hemomancer, Strigoi, Blood Gargoyle, Dhampir.
+
+| Tier | Name | The rule | Badge line |
+| --- | --- | --- | --- |
+| I (2) | Thirst | A Vampire drinks back 8% of the damage it deals. | "Vampires drink 8% of what they deal" |
+| II (3) | Swarm | Once a wave, a Vampire brought below 30% health bursts into bats, mends 15% and comes together away from the foes. | "A Vampire brought low bursts into bats" |
+| III (4) | Blood Thralls | The first two foes slain each wave rise as blood thralls with a third of their health and half their bite, and fight for the party until the wave ends. Bosses and nemeses do not rise. | "The first two foes slain rise as your thralls" |
 
 ### Classes
 
 #### Guardian
 
+Heroes: Peasant, Knight, Yamabushi Tengu, Paladin, Seraph.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Challenge | A foe within 1 tile of a Guardian must strike a Guardian if it can. | "Foes beside a Guardian must strike it" |
-| II (3) | Aegis | The first time each hero drops below 30% in a wave, an Aegis shield of 15% of its health covers it for 5 s (the existing `guardianShield`, now once a wave). | "An Aegis covers each hero once a wave" |
-| III (4) | Bastion | Two Guardians on tiles side by side both turn back 30% of each blow onto whoever struck them, and take 15% less. | "Guardians side by side turn back 30% of blows" |
+| I (2) | Challenge | A foe beside a Guardian must strike a Guardian, and the Guardians take 15% less damage. | "Foes beside a Guardian must strike it" |
+| II (3) | Aegis | The first time each hero drops below 30% health in a wave, an Aegis shield of 15% of its health covers it for 5 seconds. | "An Aegis covers each hero once a wave" |
+| III (4) | Bastion | A Guardian with another Guardian beside it turns 15% of each blow back on whoever struck it. | "Guardians side by side turn back blows" |
 
 #### Blade
 
+Heroes: Samurai, Ninja Monk, Samurai Commander, Barbarian, Vampire Lord.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Bleeding Edge | A Blade's crit makes its target bleed: 30% of the blow again over 3 s. | "Blade crits make foes bleed" |
+| I (2) | Bleeding Edge | A Blade's crit makes its target bleed for a third of the blow again over 3 seconds. | "Blade crits make foes bleed" |
 | II (3) | Riposte | A Blade struck in melee strikes straight back for 40% of its attack (once a second). | "Blades riposte when struck" |
 | III (4) | Thousand Cuts | Every fifth blow of a Blade is a whirling cut that strikes every foe round it at full damage. | "Every fifth blow cuts all around" |
 
 #### Marksman
 
+Heroes: Archer, Lightning Mage, Ranger, Gunslinger, Falconer.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | High Ground | Shooters reach half a tile further per step of height above their target (as today), and deal 8% more per step. | "Shots from the heights reach further and hit harder" |
-| II (3) | Pinning Shot | Every fourth shot of a Marksman pins its target where it stands for 1 s. | "Every fourth shot pins" |
-| III (4) | Volley | Every 12 s every Marksman looses at once at the same foe (the one nearest the party), each shot a sure crit. | "Every 12 s the Marksmen loose as one" |
+| I (2) | High Ground | Shooters reach half a tile further for each step of height above their target, and their shots deal 8% more for each step. | "Shots from the heights reach further and hit harder" |
+| II (3) | Pinning Shot | Every fourth shot of a Marksman pins its target where it stands for a second. | "Every fourth shot pins" |
+| III (4) | Volley | Every 12 seconds every Marksman looses at once at the foe nearest the party, each shot a crit. | "Every 12 s the Marksmen loose as one" |
 
 #### Caster
 
+Heroes: Fire Wizard, Wanderer, Warlock, Tyrant, Hemomancer.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Surge | A Caster's skill that hits three or more foes gives back 30% of its pool. | "Skills that hit three refund 30%" |
-| II (3) | Lingering Magic | A Caster's skill leaves its element on the tiles it hit for 4 s: fire burns, ice chills, lightning leaps, shadow curses, light mends friends. | "Caster skills leave their element on the ground" |
-| III (4) | Overcast | Every third skill a Caster casts goes off twice. | "Every third skill casts twice" |
+| I (2) | Surge | Each skill a Caster casts gives back 6% of its pool. | "Caster skills refund part of their pool" |
+| II (3) | Lingering Magic | A Caster's skill leaves its magic on the ground under two of the foes it struck (or those nearest it) for 4 seconds: a burn, a shock, a curse or a bleed, by the Caster. | "Caster skills leave their mark on the ground" |
+| III (4) | Overcast | Every fifth skill the Casters cast (counted together) goes off twice. | "Every fifth Caster skill casts twice" |
 
 #### Warden
 
+Heroes: Cleric, Druid, Shambler, Mummy, Banneret.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Thornward | A foe that strikes a Warden in melee takes 15% of the blow back. | "Melee blows on Wardens hurt the striker" |
-| II (3) | Sanctuary | A hero with a Warden standing between it and the foes (in front of it, in the same file) takes 15% less damage. | "Heroes behind a Warden take 15% less" |
-| III (4) | Warding Circle | Once a wave, when the party's health falls below half, every Warden plants a warding circle (the 3x3 round it) for 6 s: heroes in it take half damage. | "At half health, the Wardens raise circles" |
+| I (2) | Thornward | A foe that strikes a Warden in melee takes a tenth of the blow back. | "Melee blows on Wardens hurt the striker" |
+| II (3) | Sanctuary | A hero with a Warden standing in front of it in the same file takes 10% less damage. | "Heroes behind a Warden take 10% less" |
+| III (4) | Warding Circle | Once a wave, when the party's health falls below half, every Warden raises a warding circle round it for 6 seconds: heroes in it take a quarter less damage. | "At half health, the Wardens raise circles" |
 
 #### Trickster
+
+Heroes: Kunoichi, Kitsune, Karasu Tengu, Illusionist, Mirage Dancer.
 
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
 | I (2) | Sleight | The first blow each wave aimed at each Trickster misses. | "The first blow on each Trickster misses" |
-| II (3) | Decoy Log | A Trickster brought below 25% leaves a decoy log and slips aside, once a wave (the existing `tricksterLog`). | "A Trickster brought low leaves a decoy" |
-| III (4) | Hall of Mirrors | At each wave's start, each Trickster casts two mirror images beside it for 8 s: 25% of its health, half its attack. A foe that kills an image is dazed for 1 s. | "Each Trickster casts two mirror images each wave" |
+| II (3) | Decoy Log | Once a wave, a Trickster brought below 25% health leaves a decoy log where it stood and slips aside. | "A Trickster brought low leaves a decoy" |
+| III (4) | Hall of Mirrors | At each wave's start each Trickster casts a mirror image beside it for 8 seconds, with a fifth of its health and half its attack. A foe that breaks an image is dazed for a second. | "Each Trickster casts a mirror image each wave" |
 
 #### Beast
 
+Heroes: Werewolf, Minotaur, Satyr, Gorgon, Astral Sphinx.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Pack Instinct | A Beast deals 5% more for each friend within 2 tiles, up to 20%. | "Beasts hit harder with friends near" |
-| II (3) | Primal Roar | At each wave's start every Beast roars: foes within 2 tiles of it flee for 1.5 s. | "Each wave the Beasts roar foes away" |
-| III (4) | Apex | A Beast that kills goes into a frenzy for 5 s: 40% faster, and each blow mends it 3% of its health. Another kill starts the 5 s again. | "Kills send the Beasts into a frenzy" |
+| I (2) | Pack Instinct | A Beast deals 6% more for each friend within 2 tiles, up to 24%. | "Beasts hit harder with friends near" |
+| II (3) | Primal Roar | Each wave, the first time the foes close on a Beast, it roars: the foes within 2 tiles flee for 2 seconds. | "Each wave the Beasts roar foes away" |
+| III (4) | Apex | A Beast that kills goes into a frenzy for 5 seconds: 40% faster, and each of its blows mends it 5% of its health. Another kill starts the 5 seconds again. | "Kills send the Beasts into a frenzy" |
 
 #### Gunner
 
+Heroes: Rifle Bot, Siege Bot, Dhampir, Bombardier, Harpooner.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Powder | A Gunner's shot splashes 25% of its damage onto foes beside its target. | "Gunner shots splash" |
-| II (3) | Powder Kegs | At each wave's start three powder barrels (the board's own terrain) are set among the foes' front. A Gunner's shot sets them off. | "Powder kegs planted among the foes each wave" |
-| III (4) | Bombardment | Every 10 s the Gunners call down four shells on the four foes farthest back: 1.2 times the party's might on the 3x3 round each. | "Every 10 s, shells fall on the foes' back rows" |
+| I (2) | Powder | A Gunner's shot splashes a quarter of its damage onto the foes beside its target. | "Gunner shots splash" |
+| II (3) | Powder Kegs | At each wave's start three powder kegs are rolled among the foes' front. A Gunner's shot beside one sets it off; otherwise they go off by themselves after 8 seconds. | "Powder kegs among the foes each wave" |
+| III (4) | Bombardment | Every 12 seconds the Gunners call down four shells on the four foes farthest back: each bursts on the tiles round it for most of the party's might. | "Every 12 s, shells fall on the foes' back rows" |
 
 #### Assassin
 
+Heroes: Mercenary, Buccaneer, Reaper, Arc Blade, Strigoi.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Backstab | A blow from behind (against the way the foe faces) deals 30% more. | "Blows from behind deal 30% more" |
-| II (3) | Execute | An Assassin's blow on a foe below 15% of its health kills it outright (a boss below 6%). | "Assassins finish foes below 15%" |
-| III (4) | Shadow Step | At each wave's start and after each kill, an Assassin vanishes for half a second and comes out behind the weakest foe within 4 tiles; its next blow is a sure crit. | "Kills step Assassins through the shadows" |
+| I (2) | Backstab | A blow from behind a foe deals 30% more. | "Blows from behind deal 30% more" |
+| II (3) | Execute | An Assassin's blow on a foe below 10% of its health (a boss below 6%) kills it outright. | "Assassins finish foes below 10%" |
+| III (4) | Shadow Step | At each wave's start and after each kill, an Assassin steps through the shadows to the tile behind the weakest foe within 3 tiles (any on the field at a wave's start), and its next blow is a crit. | "Kills step Assassins through the shadows" |
 
 #### Support
 
+Heroes: Wolf Bard, Beastmaster, High Priestess, War Drummer, Corsair Surgeon.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Field Medic | Every 2 s the hero lowest in health mends 3% of its health. | "The most hurt hero is always mending" |
-| II (3) | Battle Hymn | Every 10 s the Supports sing to the whole party for 4 s: first a hymn of haste, then of guard (25% less damage), then of might (20% more), in turn. | "Every 10 s a hymn: haste, guard, then might" |
-| III (4) | Rallying Cry | When a hero falls, every other hero mends 15% and gains 5 s of haste, and a life raises the fallen hero after 3 s instead of 5. | "A friend's fall rallies the rest; lives raise in 3 s" |
+| I (2) | Field Medic | Every 2 seconds the hero lowest in health mends 2% of its health. | "The most hurt hero is always mending" |
+| II (3) | Battle Hymn | Every 12 seconds the Supports sing to the whole party for 4 seconds, in turn a hymn of haste, of guard (15% less damage) and of might (a tenth more). | "Every 12 s a hymn: haste, guard, then might" |
+| III (4) | Rallying Cry | When a hero falls, every other hero mends 6% and gains 5 seconds of haste, and a life raises the fallen hero after 3 seconds instead of 5. | "A friend's fall rallies the rest; lives raise in 3 s" |
 
 #### Vanguard
 
+Heroes: Lancer, Dread Pirate, Queen Dragoon, Demon Swordsman, Sea Reaver.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Spearhead | Vanguards act and walk 25% faster for the first 8 s of each wave. | "Vanguards surge at each wave's start" |
+| I (2) | Spearhead | Vanguards act and walk 15% faster for the first 8 seconds of each wave. | "Vanguards surge at each wave's start" |
 | II (3) | Breakthrough | A Vanguard's first blow on each foe knocks it back a tile and staggers it for half a second. | "Each foe's first Vanguard blow knocks it back" |
-| III (4) | Onslaught | 2 s into each wave the Vanguards leap into the foes' line together, each landing for 1.5 times its attack on the 3x3 round it and stunning those foes for 1 s. | "Each wave the Vanguards leap into the foes" |
+| III (4) | Onslaught | 2 seconds into each wave the Vanguards leap into the foes' line together, each landing for most of its attack on the tiles round it and stunning those foes for a moment. | "Each wave the Vanguards leap into the foes" |
 
 #### Arcanist
 
+Heroes: Time Witch, Great Sage, Plague Doctor, Astrologer, Inquisitor.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Runic Study | The king's spells hit (and heal) 15% harder. | "King's spells 15% stronger" |
-| II (3) | Spell Sling | When the king casts a spell, each Arcanist whose pool is at least half full casts its skill at once. | "King's spells make Arcanists cast" |
-| III (4) | Chronal Anchor | Once a wave, when the party's health first falls below 40%, time turns back 4 s for every hero: its health, place and pools return to where they were (the Time Witch's rewind, for the whole party). The fallen in those 4 s stand again without spending a life. | "Once a wave, time turns back 4 s for the party" |
+| I (2) | Runic Study | The king's spells hit and heal 15% harder. | "King's spells 15% stronger" |
+| II (3) | Spell Sling | When the king casts a spell, each Arcanist's pool gains a tenth and it is ready to cast at once. | "King's spells make Arcanists cast" |
+| III (4) | Chronal Anchor | Once a wave, when the party's health first falls below a quarter, time turns back 4 seconds for every hero: its place returns to where it was and its health toward what it was (15% of its health at most), and a hero fallen in those 4 seconds stands again without spending a life. | "Once a wave, time turns back 4 s for the party" |
 
 #### Bulwark
 
+Heroes: Kraken Mate, Juggernaut, Blood Gargoyle, Geomancer, Bell Warden.
+
 | Tier | Name | The rule | Badge line |
 | --- | --- | --- | --- |
-| I (2) | Steadfast | Bulwarks cannot be knocked back, and no stun holds them longer than 1 s. | "Bulwarks cannot be moved or held long" |
-| II (3) | Earthworks | At each wave's start each Bulwark raises a ruined wall (the board's own terrain) on the tile two in front of it, blocking the foes' walk and shots. It crumbles when the wave ends. | "Bulwarks raise walls before them each wave" |
-| III (4) | Immovable | A Bulwark that has not moved for 2 s takes 40% less damage, and every hero beside it takes 20% less. | "Bulwarks standing firm shelter their neighbours" |
+| I (2) | Steadfast | Bulwarks cannot be knocked back, and no stun holds them longer than a second. | "Bulwarks cannot be moved or held long" |
+| II (3) | Earthworks | At each wave's start each Bulwark raises a stone wall two tiles in front of it, which blocks the foes' walk and shots for 12 seconds. | "Bulwarks raise walls before them each wave" |
+| III (4) | Immovable | A Bulwark that has not moved for 2 seconds takes 15% less damage, and every hero beside it takes 5% less. | "Bulwarks standing firm shelter their neighbours" |
 
-### The kinds, at a glance
 
-So that the ladder is varied, here are the kinds of the top tiers: summons (Undead, Machine, Vampire, Trickster), battlefield strikes
-(Wild, Pirate, Gunner, Vanguard), revives and death (Holy, Samurai, Arcanist), auras and formation (Knightly, Guardian, Bulwark, Warden),
-on-kill chains (Beast, Assassin, Frontier, Royal), resources (Arcane, Mystic), conditions (Support, Blade, Marksman, Caster, Yokai). Terrain
-appears in the middle tiers (Pirate tide, Gunner kegs, Bulwark walls, Holy ground, Caster ground, Frontier trail).
+## How it is built
 
-## How it is built (stage 2)
+- **The rules** are `src/sim/traitPerks.ts`. `fight()` calls `startPerks` (after the kept summons stand): it fixes each trait's tier from
+  the placed heroes (`perkTiers`; the daily's featured trait counts one hero more) into `Battle.perk`, and runs the first wave's start
+  (`perkWave`). The fight's hooks call into it: `tickPerks` each tick; `perkGuard`, `perkDamage`, `perkStruck`, `perkSpare` and `perkDeath`
+  in `hurt`; `perkBlow` after a blow lands (`settle`); `perkCrit` in `swing`; `perkCast` and `perkUlt` in `powered` and `began`;
+  `perkSpell`, `spellCost` and `spellPower` in `castSpell`; `perkSpeed` in `speedOf`; `perkFoot` in a step's cost and the field's snares.
+  A fight with no perk awake has no `Battle.perk`, and each hook is one check.
+- **The fighters' marks** are `Unit.pk` (`PerkUnit`): a spent Death's Door, a death poem's end, blows counted, a crown, a Wanted foe, and
+  what a perk raised (`raised`).
+- **What the perks raise** are new summon kinds in `units.ts`: `graveWarrior`, `graveSpear`, `graveArcher` (the foes' skeleton sheets),
+  `sentry` (a stand-in sheet, `robot_infantry`, until its art lands), `thrall` (drawn in the slain foe's own sheet), `mirror` (drawn in its
+  hero's sheet), and the Samurai Commander's `standard` for the Order. Each is `summon: true` and owned by no hero, so `lives.ts` never
+  counts one as the party: none ever spends a life, and a party all down with only these standing is still a party fall. None is in
+  `KEPT_KINDS`: the skeletons and turrets that stand at a wave's end are made whole, the fallen rise again, and the thralls go.
+- **No randomness.** Every rule is a count, a timer or a nearest-first pick (ties by tile, then id). Nothing draws from the fight's stream
+  or a side stream.
+- **The switch** is `TRAIT_PERKS` in `traits.ts`. Off, the traits are exactly what they were before (`LEGACY_TIERS`: the old small bonuses,
+  the old milestones at their old counts, the daily's featured bonus counted twice) and no perk wakes, so the recorded fights of the
+  regression tests (`ailments-identical`, `nemesis-regression`, `spells-identity`, `stand-regression`) still play as recorded with it off,
+  as they do with `FIELD_HAZARDS` and `LAND_TERRAIN` off. `only` keeps one trait's perks, for the measure.
+- **The run** pays Pirate I's gold in `noteFight` (`run.ts`). **Lives** read `Battle.reviveMs` (Support III's 3 s). A Bulwark's `steady`
+  is read by `stunFor` (`ailments.ts`) and `movable` (`toolkit/move.ts`).
 
-- **The data:** `TRAITS` keeps its shape. Each tier's `effects` names one perk (`perk: 'skeletons'` and so on) with its numbers, and its `text`
-  is the badge line. A new `src/sim/traitPerks.ts` holds the rules: one function per perk for each of a few hooks (the wave's start, a
-  tick, a blow dealt, a blow taken, a kill, a fall, a skill cast, a king's spell, the wave's end). `battle.ts` calls the hooks; a fight with
-  no perks pays one check per hook. One switch, `TRAIT_PERKS = { on: true }`, so a tool can measure with them off.
-- **Randomness:** almost none. Every rule above is a count, a timer or a nearest-first choice (ties by tile, then id). If anything needs a
-  draw (the stampede's file when two are level, say), it takes its own side stream, `new Rng(mixSeed(seed, TRAIT_SALT))`, so existing fights
-  draw the same.
-- **The wave's start and end:** the run already knows both (`fight()` is a wave's start; `keepCharges` runs as a wave is won). The Last
-  Stand has its own wave turns in `stand.ts`, which will call the same two hooks.
-- **The summons:** new summon kinds (`skeletonRaised`, `spearRaised`, `archerRaised`, `sentry`, `thrall`, `mirror`), each `summon: true`
-  with an `owner` of the trait (not a hero), sized from the party's might and health. They are not in `KEPT_KINDS`; the perk makes them
-  again at each wave's start.
-- **The page:** the deploy screen's trait row and the bench badges keep their places. Each counter reads "Undead 3/4 · Grave Rot" (the
-  reached tier's name) and lights a pip per tier. A tap (and a long-press) opens the trait's full ladder in a standard ornate card
-  (`ornateMenu`, `menuSection` per tier, "Close"): the three tiers, reached ones lit, each with its rule and the heroes of the trait you own.
-  The daily's theme text and the codex read the same lines.
-- **Old code:** the stat hooks for `atk`, `hp`, `guard`, `dodge`, `crit`, `speed`, `charge`, `mana`, `reach`, `leech` stay, because relics
-  (`b.relics.team`) use the same `TraitEffects`. The traits simply stop filling them.
+## In each mode
 
-## Art and effects
+- **A run's waves and the Calamity:** each fight is a wave. In the Calamity's ten, two or three top tiers can stand at once; the measure
+  has not shown that to be a problem yet, so there is no cap.
+- **Ten lives:** as above, nothing a perk raises costs a life. Holy III and Arcanist III stand a hero up without spending one; Support III
+  makes a life raise a hero in 3 s instead of 5; Undead I and Samurai III put a fall off.
+- **The Last Stand:** one long fight. Each of its waves is a perk wave: `beginWave` asks for the wave's start once its foes have come on
+  (`perkWaveSoon`), and its party's changes are read again (`syncPerks`, from `syncTraits`).
+- **The Assault:** its field has no waves, so its wave-start perks come round every 60 s (the owner's answer, `ASSAULT_WAVE_MS`). On the big
+  field a perk reaches only the foes within 16 tiles of the party's middle (`FIELD_REACH`), so the strikes stay near the fighting and cheap.
+- **The daily:** the featured trait counts one hero more than it has, in place of its old bonus counted twice. Its theme lines name the
+  perks now ("The Undead count one more: three of them and the skeletons rise"); the start card says "Undead counts one more".
+- **Duels:** the ring holds only the champion and the nemesis. Nothing is raised or laid there and no strike falls on the field; the
+  champion's own perks (Iaijutsu, Bleeding Edge, Backstab, Thirst, Steadfast, the Death Poem and the like) still work.
+- **Foes:** the perks are the heroes' only.
 
-Almost all of it reuses what the game has:
+## On the page
 
-| Perk | Looks |
-| --- | --- |
-| Skeletons | the foes' sheets `skeleton_warrior`, `skeleton_spearman`, `skeleton_archer`, tinted to the party's side ring; rising: `beat-rise` with `death-bones` played backwards, `ground-dark` |
-| Sentry turrets | **new art** (a small turret sheet, idle and fire); a stand-in until it lands: `robot_infantry`, still |
-| Blood thralls | the slain foe's own sheet with a red tint and the side ring; `beat-appear-blood` |
-| Mirror images, foxfire twin | the hero's own sheet, faded and tinted (as the decoy is); `beat-appear-light`, `beat-appear-fire` |
-| Order's standard | the existing `summon_standard` |
-| Stampede | the wolf sheets (`summon_wolf`, `summon_direwolf`) running a file, with `beat-dust-earth` |
-| Broadside | `beat-sky-fire` shells down a file, `beat-crash-fire`; a ship's silhouette at the board's edge is **new art** (stand-in: none) |
-| Bombardment | `beat-sky-fire` and `beat-crash-fire` |
-| Onslaught | the Dragoon's jump arc and `beat-crash-earth` |
-| Night Parade | a violet board tint (the weather layer) and `aura-spirits` |
-| Hallowed ground, warding circle, Lingering Magic | `aura-pool-light`, `ground-*`, `beat-ring-light`, the element's `aura-pool-*` |
-| Chronal Anchor | the Time Witch's rewind effect for each hero |
-| The crown | **new art**: a small crown mark over the crowned hero (stand-in: the gold rank pip) |
-| Powder kegs, ruined walls, shallow water, snares | the board's own terrain and trap looks |
-| The rest | numbers, `beat-*` beats and status marks the fight already draws |
+- **The deploy screen's trait row:** each chip has the trait's count against its next need ("Undead 3/4"), three pips (one a tier, lit as
+  each is reached), and under it the perk awake by name and what the next tier gives. A tap or a long press opens the trait's card.
+  When a tier wakes, the line under the row says so ("Synergy active! Undead III, Rise from the Grave: ...").
+- **The trait's card** (`src/traitCard.ts`, words from `traitCardRules.ts`) is the standard ornate card: "Origin" or "Class", the trait's
+  name, how many are on the field, the three tiers as slate wells (those reached gilded, the next one rimmed with a dashed brass line,
+  each with its numeral, name, count and whole rule), the trait's heroes with those on the field marked, and "Close".
+- **In the fight**, each perk's beat (`PerkEvent`) is drawn by `Fx.perk` from `src/render/perkFxRules.ts`: its word over the fighter or
+  the spot, and a Blender beat clip from the showcases' own sheets (a rising for the skeletons, a crash for a broadside, dust down a file for
+  the stampede, a ring for a hymn...), on a fighter, a tile, some tiles, a file or the whole party. Only the clips of the traits awake are
+  asked for as a fight begins. A file's strikes run down it from the far end; the big ones shake the camera a little. A keg waits on its
+  tile until it goes off. What a perk raised is tinted for what it is (`perkLookRules.ts`: a thrall blood red, an image pale and faded, a
+  skeleton grave green), and the crowned hero and the Wanted foe are touched with gold and amber. Each beat has its sound
+  (`soundRules.ts`, `PERK_CUES`). Reduced motion keeps its rules: the clips show their held frame.
 
-The three new pieces of art get ChatGPT prompts in `docs/notes/trait-perks-art-prompts.md` (pushed with this note).
+## Art
+
+Everything is drawn from what the game has, with three stand-ins until their art lands; their ChatGPT prompts are in
+`docs/notes/trait-perks-art-prompts.md` (branch `art/trait-perks`, files under `art-source/trait-perks/`):
+
+- the sentry turret (stand-in: the `robot_infantry` sheet, standing still);
+- the ghost ship of the broadside (stand-in: the fire beats down the files, no ship);
+- the crown mark (stand-in: the crowned hero's gold tint and the "Crowned" word).
 
 ## Balance
 
-**The target:** each trait's top tier is worth about one extra hero (+8 to +15 win-rate points at a stage where the same five without
-perks win half their fights), and no top tier above +20. Each tier I is worth +1 to +4. Today's tiers are worth +1 to +5, so parties get
-stronger overall. The foes' tables will need a small lift afterwards (stage 2 measures by how much).
+**The target** (the design's): a trait's top tier worth about one extra hero, +8 to +20 points of win rate over the same party with no perk
+awake, at a stage where that party wins about half its fights; a first tier a few points.
 
-First estimates of the top tiers, as a share of a five-hero party's power (to be measured):
+**The tool:** `node tools/trait-perks/run.mjs [traits]` (`GAMES`, default 300; `TIERS=3` for the top tiers only; `LEVEL` for the heroes'
+level). For each trait and tier, a party of that many of the trait's heroes, filled to five with plain heroes of other traits, plays the hero
+table's fights (`tools/heroSweep.ts`: every band in turn, the land's traps laid, the king's starting spells cast by Auto) three ways: with
+only that trait's perks, with no perk at all, and with the traits as they were ("vs old"). The stage is the one where the party with no
+perks wins nearest half (a binary search). Fights at level 1 have no ultimates, and the hero table's fights have no lives, so the revives
+(Holy III, Arcanist III) read higher here than they are worth in a run, where a life would have raised the hero anyway.
 
-| About +20% (watch closely) | About +12 to 15% | About +8 to 10% |
-| --- | --- | --- |
-| Undead (three bodies), Holy (a free revive), Arcanist (the rewind), Vampire (two thralls) | Machine, Pirate, Gunner, Wild, Support, Trickster, Knightly, Mystic, Arcane, Vanguard | Samurai, Royal, Guardian, Bulwark, Blade, Marksman, Caster, Warden, Beast, Assassin, Frontier, Yokai |
+**What moved in the tuning** (four passes; the design's first numbers were far too strong, and a few rules worked against their own side):
 
-The first column's numbers will likely come down (45% skeletons may become 35%) and the last column's go up.
-
-**How it is measured:**
-
-1. A new `tools/trait-perks/measure.mjs`, on the hero table's method (`tools/balance.ts`): for each trait and each tier, a party built to
-   reach it (the trait's heroes plus fill-ins that wake nothing else) plays the same seeded fights with `TRAIT_PERKS.on` true and false, at
-   a stage where the off party wins about half. It prints each tier's lift, and flags any top tier above +20 or below +6.
-2. `npm run balance -- --runs-only` and `--no-tables --tiers` before and after, for the whole run's win rate and the tiers' clear rates.
-3. `npm run balance -- --no-tables --stand` for the Last Stand, where the summons are rebuilt every wave of a long fight.
-4. `node tools/assault-dev/run.mjs` for the Assault, and `npm run daily-rate` for the daily with its featured trait.
-5. `npm run balance -- --duel` for the duel waves.
-
-## How each perk plays in each mode
-
-- **Ordinary waves and the Calamity:** as written. In the Calamity's ten heroes, two or three top tiers can stand at once. If the measure
-  shows that too strong, the Calamity can cap it at two top tiers (the two with the most heroes).
-- **Ten lives:** summons, turrets, thralls, images and the standard are never the party, so they never cost a life, and a party all down
-  with only summons standing still counts as a party fall (as today). Holy III and Arcanist III raise heroes without spending a life;
-  Support III shortens the wait from 5 s to 3 s; Undead I and Samurai III delay a fall rather than prevent it.
-- **The Last Stand:** one long fight. "A wave" is each of its waves: summons rise and once-a-wave rules reset at each wave's start there.
-- **The Assault:** one long fight on its big field with no waves, so the wave-start rules run once, at the start, and the once-a-wave rules
-  happen once. The field strikes (stampede, broadside, bombardment) pick their file within the 16 tiles round the party's middle, so they stay
-  cheap on the big field. A question for the owner below.
-- **The daily:** the featured trait counts one hero more than it has (so three of the Undead on Grave Pact day raise the skeletons), in
-  place of today's doubled bonus. The theme lines ("Four Beasts wake the pack: +16% attack") are rewritten to name the perks.
-- **Duels:** the ring holds only the champion and the nemesis, so the perks that make summons, strike the field or change the terrain do not
-  happen in the ring. The champion's own perks (Iaijutsu, Bleeding Edge, Backstab, Thirst, Steadfast, Death Poem and the like) do apply.
-- **Foes:** the perks are the heroes' only. Nothing changes for the foes.
-
-## Open questions for the owner
-
-1. Is a ladder of 2, 3 and 4 right? A fourth tier at 5 (a whole party of one origin) could crown the five-hero traits, but it would mean
-   a party with only one origin.
-2. The skeletons rise at each wave's start and are not kept between waves (always three, always fresh). Is that the owner's "revive at the
-   end of the wave"?
-3. The Assault has no waves. Should the skeletons and the other wave-start perks rise once, or again every so often (say every 60 s)?
-4. Pirate I pays a little gold. Is a perk that touches the run's economy all right, or should every perk stay within the fight?
+- The summons: the skeletons from 45% of the party's health and attack to a quarter; the sentries from half the party's might to a fifth
+  (their health 15%); the thralls from half the foe's health and its full bite to a quarter and 40%; the mirror images one a Trickster, not
+  two, at a fifth of its health; the foxfire twin a fifth.
+- The revives: the Resurrection from 60% health to a fifth; the Chronal Anchor now waits for a fifth of the party's health and gives back at
+  most a tenth of each hero's; the Death Poem two and a half seconds at 15% more.
+- The guards: Guardian I is the taunt with 7% less damage for the Guardians (a taunt alone lost to the old 5% guard for everyone); the
+  Bastion turns back 8%, with no guard of its own; Immovable 15% and 5%; the Warding Circle a quarter; Sanctuary 10%; Thornward 8%.
+- Samurai: Way of the Duel is a second of haste for a lone duel won (its +20% damage made the starting five, three Samurai among them, win
+  six more of every forty fights against every band), and Iaijutsu's crit 15% more.
+- Rules that hurt their own side: Breakthrough no longer knocks foes back (it pushed them out of the Vanguards' reach), only staggers;
+  the Pirates' tide is water the whole party walks (it slowed the party's own heroes as they closed).
+- Up: Beast's Apex 40% faster and 5% healing a blow, Pack Instinct 6% a friend; the stampede more than the party's might; Bloodscent 15%;
+  Frenzy 4% a kill; the broadside rakes three files for twice the party's might, from 5 s in and every 12 s.
+- Smaller cuts to Mystic (Echo 30%, Conflux every fourth spell, Ley Lines a fifth off), Holy (Blessing 15%, hallowed ground), Caster (Surge
+  6%, Overcast every fifth), Support (hymns every 12 s, the Rallying Cry 6%), Assassin (Execute at 10%), Vanguard (Spearhead 15%, the
+  Onslaught most of a hero's attack) and Arcanist (Spell Sling a tenth of a pool).
