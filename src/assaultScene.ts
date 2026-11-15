@@ -38,6 +38,9 @@ import { TauntCuts } from './tauntCut';
 import { tauntFor } from './tauntCutRules';
 import { settings } from './settings';
 import { FORMATIONS, FORMATION_NAMES } from './sim/assault/platoons';
+import { HeroLivePanel } from './heroLive';
+import { statNumbers, type StatNumbers } from './heroLiveRules';
+import { tally, type FightStats } from './sim/fightStats';
 import { anchorOf } from './sim/assault/holdMind';
 import { BUCKET } from './sim/assault/field';
 import { troopUnitOf } from './sim/assault/troops';
@@ -93,6 +96,7 @@ const CSS = `
 .asBottom{position:absolute;left:0;right:0;bottom:0;z-index:3;display:flex;flex-direction:column;gap:4px;padding:4px 6px calc(6px + env(safe-area-inset-bottom));background:linear-gradient(#1b161000,#1b1610f0 18%)}
 .asOrders{display:flex;gap:4px;height:40px}.asOrders button{flex:1;padding:0 2px;font-size:12px;min-width:0}
 .asOrders[hidden]{display:none}
+.asBottom.asLiveOn .asOrders,.asBottom.asLiveOn .asSpells{display:none}.asBottom .fhLive{height:212px}
 .asPlatoons{display:flex;gap:5px;justify-content:center;height:76px;align-items:flex-end}
 .asPort{position:relative;width:60px;height:72px;border-radius:8px;border:1px solid #c9a24a99;background:#211a12e6;padding:0;color:#f3e7c7}
 .asPort.on{border-color:#ffd76a;box-shadow:0 0 0 2px #ffd76a66;transform:translateY(-4px)}
@@ -213,7 +217,10 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   const flankBtn = el('button', '', 'Flank');
   const formBtn = el('button', '', 'Wall');
   const followBtn = el('button', '', 'Follow');
-  orders.append(holdBtn, chargeBtn, flankBtn, backBtn, formBtn, followBtn);
+  // (HERO-LIVE-STATS: the chosen platoon's hero's live stats, in place of the orders and spells until "‹ Orders")
+  const statsBtn = el('button', '', 'Stats');
+  statsBtn.setAttribute('aria-label', 'The hero\'s live stats');
+  orders.append(holdBtn, chargeBtn, flankBtn, backBtn, formBtn, followBtn, statsBtn);
   // (the siege orders, phase 1b, for a chosen platoon that can give them: Ladder with a kit, Fire and Suppress with shooters)
   const works = el('div', 'asOrders asWorks');
   works.hidden = true;
@@ -234,7 +241,17 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
   const volleyBtn = el('button', 'volley', 'Volley');
   volleyBtn.setAttribute('aria-label', 'Call the trebuchet\'s volley');
   spells.append(mana, volleyBtn);
-  bottom.append(works, orders, bar, spells);
+  // (HERO-LIVE-STATS: the panel, over the platoon bar; each platoon hero's tally and its numbers as the assault began, read on the page's copy)
+  const liveStats: FightStats = h.platoons.map((pl) => ({ id: pl.heroId, kind: pl.hero, dealt: 0, taken: 0, healed: 0, kills: 0, casts: 0 }));
+  const liveBase = new Map<number, StatNumbers>();
+  const live = new HeroLivePanel({ statOf: (id) => liveStats.find((x) => x.id === id), onClose: () => showLive(null), back: '‹ Orders' });
+  const showLive = (k: number | null) => {
+    const u = k === null ? undefined : b.field!.byId[h.platoons[k].heroId];
+    live.show(b, u);
+    bottom.classList.toggle('asLiveOn', !!u);
+    statsBtn.classList.toggle('on', !!u);
+  };
+  bottom.append(works, orders, live.el, bar, spells);
   host.append(top, mini, bottom);
   // (the duel at the Iron Gate: its clock while it is fought)
   const duelTag = el('div', 'asDuel');
@@ -329,6 +346,8 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     ports.forEach((x, i) => x.p.classList.toggle('on', i === k));
     allBtn.classList.toggle('on', k === 5);
     orders.hidden = k < 0;
+    // (the stats panel follows the chosen platoon; All or none puts the orders back)
+    if (live.shown !== null) showLive(k >= 0 && k < 5 ? k : null);
     if (k >= 0 && k < 5) {
       const a = anchorOf(b.field!, h.platoons[k]);
       if (a) aimAt(a.u, a.v, true);
@@ -424,6 +443,7 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     volleyBtn.classList.toggle('armed', volleyArmed);
     if (volleyArmed) say('Volley: tap where the stone falls');
   });
+  statsBtn.addEventListener('click', () => showLive(live.shown === null && chosen >= 0 && chosen < 5 ? chosen : null));
   followBtn.addEventListener('click', () => {
     follow = !follow;
     syncOrders();
@@ -768,6 +788,12 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     const events: FieldEvent[] = [];
     const sound: BattleEvent[] = [];
     cuts.frame(dt, false);
+    // (HERO-LIVE-STATS: the heroes' numbers as the assault began, read once; the open panel a few times a second, reading the page's copy)
+    if (!liveBase.size && b.phase === 'fight') for (const pl of h.platoons) liveBase.set(pl.heroId, statNumbers(b, b.field!.byId[pl.heroId]));
+    if (live.shown !== null) {
+      if (b.phase !== 'fight') showLive(null);
+      else live.refresh(b, liveBase);
+    }
     if (b.phase === 'fight' && !paused && !duelCard && !cuts.busy) {
       acc += dt * (slow ? SLOW : speed);
       let n = 0;
@@ -775,6 +801,8 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
       const got = sim.pump(Math.min(8, Math.floor(acc / TICK_MS)));
       for (const tk of got) {
         const ev = tk.ev;
+        // (HERO-LIVE-STATS: the platoon heroes' own tally; their soldiers' blows are the platoon's, not the hero's)
+        tally(liveStats, ev);
         for (const e of ev) {
           if (e.kind === 'swing' && e.to >= 0) {
             const by = b.field!.byId[e.by];

@@ -201,7 +201,7 @@ export const sellAsks = (m: Meta, it: Equipment): boolean => it.rarity >= 3 || l
  *  changes, when it is worn by a hero or not owned). */
 export function sellPiece(m: Meta, id: number, day: number): number {
   const it = spareEquipment(m).find((x) => x.id === id);
-  // (SEVEN-SLOT GEAR: a named legend is never sold; Dynasties, phase 6: nor is an heirloom)
+  // (SEVEN-SLOT GEAR: a named legend is never sold)
   if (!it || keptForGood(it)) return 0;
   const price = sellPrice(it);
   m.equipment = m.equipment!.filter((x) => x.id !== id);
@@ -220,7 +220,7 @@ export function bulkCommons(m: Meta): Equipment[] {
   for (const x of m.equipment ?? []) left.set(x.base, (left.get(x.base) ?? 0) + 1);
   const out: Equipment[] = [];
   for (const it of spareEquipment(m).sort((a, b) => a.level - b.level || a.id - b.id)) {
-    if (it.rarity !== 1 || it.heirloom || worn.has(SET_OF_BASE[it.base]?.id ?? '')) continue;
+    if (it.rarity !== 1 || worn.has(SET_OF_BASE[it.base]?.id ?? '')) continue;
     const n = left.get(it.base) ?? 0;
     if (n <= 1) continue;
     left.set(it.base, n - 1);

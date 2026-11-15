@@ -21,7 +21,7 @@ import { EMPTY_SLOT_ART, DOLL_BACKING } from './finishingArt';
 import { shopArt } from './bookArt';
 import { durabilityOf, maxDurability, repairCost, wearState } from './sim/wear';
 import { sellPiece, stallRepair } from './sim/stall';
-import { heirloomLine, keptForGood, sellPrice, stashCount, stashFull } from './sim/equipment';
+import { keptForGood, sellPrice, stashCount, stashFull } from './sim/equipment';
 import { todayKey } from './modes';
 import { icon } from './menuArt';
 import { play } from './render/sound';
@@ -30,7 +30,6 @@ import { takeGearNote } from './sim/gearMigrate';
 import { GLYPHS, patchBlock, patchCost, patchItem } from './sim/enchant';
 import { SEASON_CAP, seasonNeed } from './sim/wear';
 import { claimLegends, nextVerseAt, takeLegendNews, versesOpen } from './sim/legends';
-import { HEIRLOOM_FRAME } from './expansionArt';
 import { reclaimed } from './sim/revenge';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -131,20 +130,6 @@ function compareRows(next: EquipStats, cur: EquipStats | undefined): HTMLElement
   return rows;
 }
 
-/** An heirloom's icon in the House's gold filigree frame (docs/notes/art-wire-5.md), a gold mark in a notch for each generation it has
- *  passed through (three at most). */
-function heirloomFramed(icon: HTMLElement, marks: number): HTMLElement {
-  const box = el('span', 'eqHeirloomFrame');
-  const art = el('img', 'eqHeirloomArt');
-  art.src = HEIRLOOM_FRAME;
-  art.alt = '';
-  art.draggable = false;
-  box.append(icon, art);
-  for (let i = 0; i < 3; i++) box.append(el('i', `eqMark n${i}${i < marks ? ' on' : ''}`));
-  box.title = `${marks} ${marks === 1 ? 'generation' : 'generations'}`;
-  return box;
-}
-
 /** What the picker shows for one item: its icon and name, the stat rows (against `against` when given), the affixes. */
 function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt, home = false): HTMLElement {
   const base = EQUIP_BASES[it.base];
@@ -154,7 +139,7 @@ function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt,
   // (the Nemesis War, phase 3: a piece a slain nemesis carried as a trophy, brought home)
   title.append(el('b', '', itemName(it)), el('small', '', `${RARITY_NAMES[it.rarity]} · Lv ${it.level}${home ? ' · Reclaimed' : ''}`));
   const ico = itemIcon(it, base.slot, 'small');
-  head.append(it.heirloom ? heirloomFramed(ico, it.heirloom.marks) : ico, title);
+  head.append(ico, title);
   card.append(head);
   const stats = itemStats(it, kind);
   card.append(...compareRows(stats, against ? itemStats(against, kind) : undefined));
@@ -181,8 +166,6 @@ function itemCard(it: Equipment, kind: string, against?: Equipment, at?: HeroAt,
     }
     card.append(line);
   }
-  // (Dynasties, phase 6: an heirloom's House and its generation marks)
-  if (it.heirloom) card.append(el('p', 'eqAffix eqHeirloom', heirloomLine(it)));
   if (it.scars) card.append(el('small', 'eqDim', `Patched: ${it.scars} durability lost for good (a reforge at Hester's clears it)`));
   (it.glyphs ?? []).forEach((g, i) => {
     const line = el('small', 'eqGlyph');
@@ -475,7 +458,7 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
         commit();
         picker(slot);
       });
-      // (a named legend is never sold: the save keeps its one copy; nor is an heirloom, Dynasties phase 6)
+      // (a named legend is never sold: the save keeps its one copy)
       btns.append(...(keptForGood(it) ? [on] : [on, sell]));
       if (it.wear) btns.append(repairButton(it, () => picker(slot)));
       row.append(btns);

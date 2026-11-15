@@ -21,6 +21,8 @@ export interface HeroStat {
   taken: number;
   healed: number;
   kills: number;
+  /** HERO-LIVE-STATS: skills and ultimates cast this fight (a summon's count for its caller); absent in a recap's rows. */
+  casts?: number;
 }
 
 /** The heroes' rows for a fight, in the order they stood. */
@@ -30,7 +32,7 @@ export type FightStats = HeroStat[];
 export const STAT_KEYS = ['dealt', 'taken', 'healed', 'kills'] as const;
 
 export function startStats(units: Unit[]): FightStats {
-  return units.filter(fieldedHero).map((u) => ({ id: u.id, kind: u.def, dealt: 0, taken: 0, healed: 0, kills: 0 }));
+  return units.filter(fieldedHero).map((u) => ({ id: u.id, kind: u.def, dealt: 0, taken: 0, healed: 0, kills: 0, casts: 0 }));
 }
 
 /** Add one tick's events to the tally (`units` are the fight's, to find who called up a decoy or treant). Foes and the king's own spells have no row, so they count for no one. */
@@ -50,6 +52,9 @@ export function tally(stats: FightStats, events: BattleEvent[], units: readonly 
         if (e.killed) by.kills++;
       }
       if (to) to.taken += e.dmg;
+    } else if (e.kind === 'skill') {
+      const by = row(e.by);
+      if (by) by.casts = (by.casts ?? 0) + 1;
     } else if (e.kind === 'heal' && e.by !== undefined) {
       const by = row(e.by);
       if (by) by.healed += e.amount;

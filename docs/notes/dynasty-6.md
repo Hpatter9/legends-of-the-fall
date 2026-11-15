@@ -1,5 +1,7 @@
 # Dynasties, phase 6: Heirs and the Mantle
 
+> **Removed (REMOVE-DYNASTY, after 0.604.0):** the owner took the Dynasties out of the game; see `docs/notes/remove-dynasty.md`. This note is the record of what was built.
+
 Phase 6 of the expansion in `docs/design/legends-expansion.md` (section 9, "Phase 6: Heirs and the Mantle"), built to sections 3.0, 3.3 to
 3.5, 3.7, 5.2 and 7 of the design, on top of phase 5's seasons and Houses (`docs/notes/dynasty-5.md`) and the Nemesis War's phases 1 to 4.
 The owner's answers hold throughout: **retirement is never forced** outside the Oath, **the game always says "heir"**, and the Oath (phase

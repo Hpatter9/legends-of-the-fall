@@ -1314,7 +1314,9 @@ export class StandView {
     const tu = performance.now();
     // (ULT-SHOW: a showcase's stages, for the fighters made this frame too)
     if (s.phase !== 'deploy') this.ultm.stage();
-    for (const [, sp] of this.sprites) {
+    for (const [id, sp] of this.sprites) {
+      // (HERO-LIVE-STATS: the hero a row's tap picked for the stats panel wears its ring)
+      sp.picked = this.hud.picked === id;
       // (a fighter far off the screen is not drawn, and is looked at only now and then)
       const off = sp.x < view.x0 - 80 || sp.x > view.x1 + 80 || sp.y < view.y0 - 120 || sp.y > view.y1 + 80;
       if (off && this.frameN % 8 !== 0) {

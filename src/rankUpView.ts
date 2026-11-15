@@ -22,6 +22,9 @@ import { statRows, type StatRow } from './statRows';
 import { signed } from './sim/statLines';
 import { MAX_AWAKEN } from './sim/awakenRules';
 import heartUrl from './art/ui/combat-heart.png';
+import { startBattle } from './sim/battle';
+import { riseOf, shotOfHero } from './riseRules';
+import { showRises } from './risePlates';
 import swordsUrl from './art/ui/combat-icon-swords.png';
 
 export interface Taken {
@@ -139,12 +142,16 @@ function openReadyRankUp(meta: Meta, kind: string, done: (t: Taken) => void): vo
     primary: {
       label: rp ? 'Rank up' : 'Awaken',
       onClick: () => {
+        // (HERO-RISE: the hero before the step, for the plate that says what rose)
+        const was = shotOfHero(meta, kind, () => startBattle(1, []));
         const got = rp ? rankUp(meta, kind) : awaken(meta, kind);
         if (!got) return close();
         saveMeta(meta);
         close();
         play('levelUp');
         done({ what: rp ? 'rank' : 'awaken', n: got });
+        // (over the middle of the page the card stood on)
+        showRises([{ kind, lines: riseOf(was, shotOfHero(meta, kind, () => startBattle(1, []))), at: () => ({ x: innerWidth / 2, y: innerHeight * 0.42 }) }]);
       },
     },
   });

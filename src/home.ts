@@ -13,7 +13,6 @@ import { runAssault } from './assaultScene';
 import { claimTribute } from './sim/assault/economy';
 import { abandonLive } from './sim/assault/snapshot';
 import { clearBattle, loadBattle } from './assaultSave';
-import { settleMourning } from './sim/oath';
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
 import { roomOpen, roomsOf } from './sim/rooms';
@@ -39,10 +38,7 @@ import { ALL_HEROES, UNITS } from './sim/units';
 import { levelOfKind } from './sim/levels';
 import { drawArmies } from './armiesView';
 import { drawChestStash } from './chestStash';
-import { drawAchievements, toastLines } from './achievementsView';
-import { openDynasty, takeSeasonNews, SEASON_WORDS, seasonOf } from './sim/dynasty';
-import { agedLines, openEldersTable, openHouses, openSeasonCard, seasonChip } from './housesView';
-import { cadetsOf, HEIR_NOTE, regularsOf, takeHeirNote } from './sim/heirs';
+import { drawAchievements } from './achievementsView';
 import { drawCodex, stopCodex } from './codexView';
 import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
@@ -224,10 +220,6 @@ export class Home {
     }, {
       // (CLIFF-ROAM: Hester's corner in the hearth hall opens her stall, as the stall on the cliff did, SHOP-BOOKS-GEAR)
       onStall: () => openStall(this.meta, () => this.refresh()),
-    }, {
-      // (Dynasties, phase 6: the Elders' table, its regulars, the day's story and ride, and a cadet visiting)
-      onElders: () => void openEldersTable(this.meta, todayKey(), () => this.refresh()),
-      shown: (m) => regularsOf(m).length > 0 || cadetsOf(m).length > 0,
     });
     // (the tavern leads to the Heroes tab, the chapel to the Spells tab and the signpost to the battle screen; the six upgrades open their cards)
     this.hall = new SummoningHall({
@@ -334,9 +326,6 @@ export class Home {
     this.note = note;
     // (CLOSE-SCREENS: back to a place: any flow screen still open (a result card, a recap, a summary) is closed, not left under it)
     closeFinished();
-    // (Dynasties, phase 5: the seasons open with the save's heroes, every owned kind has its line, and a season ended since is settled;
-    // a new season, and a stage reached at its turn, are told once)
-    this.openSeasons();
     // (coming back to the home screen it is simply there, on the Battle page: nothing slides)
     if ($('home').hidden) this.snapNext = true;
     $('home').hidden = false;
@@ -354,26 +343,6 @@ export class Home {
     // (a hero who joined and has not had its first-time reveal, one earned in play or one whose reveal was missed, has it now)
     void revealUnseen(this.meta).then(() => this.refresh());
     this.hooks.onOpened?.();
-  }
-
-  /** Dynasties: open the seasons (and the lines of heroes joined since), settle a season that has turned, and tell it. */
-  private openSeasons(): void {
-    const m = this.meta;
-    const before = JSON.stringify(m.dynasty ?? null);
-    const aged = openDynasty(m, todayKey());
-    // (phase 7: a mourning that has ended: the trained heir, or a foundling, takes up the mantle)
-    const mourned = settleMourning(m, Date.now(), todayKey());
-    const news = takeSeasonNews(m, todayKey());
-    if (JSON.stringify(m.dynasty ?? null) !== before) saveMeta(m);
-    // (phase 6: a save whose Hall had mentors before the heirs is told once that they may name one)
-    const note = takeHeirNote(m);
-    if (note) saveMeta(m);
-    toastLines([...(news ? [`${SEASON_WORDS[news.name]} has come: Year ${news.year} of the War`] : []), ...agedLines(aged), ...(note ? [HEIR_NOTE] : []), ...mourned]);
-  }
-
-  /** The Houses (Dynasties): the family tree, on a line when one is given. */
-  openHouses(kind?: string): void {
-    openHouses(this.meta, todayKey(), kind);
   }
 
   /** The Dark Council's board (the Nemesis War): its Hunt opens an army, its Muster calls the page's. */
@@ -698,20 +667,6 @@ export class Home {
     chipCount('hmCrowns', pbUrl('crowns'), m.crowns);
     chipCount('hmStones', pbUrl('stones'), stonesOf(m));
     this.hooks.onTopBar?.();
-    // (Dynasties: the season's chip in the top bar's second row; redrawn only when the season changes, so its icon never blinks)
-    if (m.dynasty) {
-      const key = String(seasonOf(m.dynasty, todayKey()).index);
-      const had = document.getElementById('hmSeason');
-      if (had?.dataset.key !== key) {
-        const chip = seasonChip(m, todayKey(), () => openSeasonCard(m, todayKey(), () => this.openHouses()));
-        if (chip) {
-          chip.dataset.key = key;
-          // (TOPBAR-FIT: in the second row, before the armies line, so the top row keeps the gear beside the trophy)
-          if (had) had.replaceWith(chip);
-          else $('hmBest').prepend(chip);
-        }
-      }
-    }
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
     const best = $('hmBest');
     const bestText = best.querySelector('.hbText') ?? best.appendChild(el('span', 'hbText'));

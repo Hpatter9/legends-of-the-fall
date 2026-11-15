@@ -1,5 +1,7 @@
 # Dynasties, phase 7: the Legend Oath and the Shades
 
+> **Removed (REMOVE-DYNASTY, after 0.604.0):** the owner took the Dynasties out of the game; see `docs/notes/remove-dynasty.md`. This note is the record of what was built.
+
 Phase 7 of the expansion in `docs/design/legends-expansion.md` (section 9, "Phase 7: The Legend Oath and the Shades"), built to sections
 3.4, 3.6, 3.7, 5.2, 7 and 8 of the design, on phase 6's heirs and the Mantle (`docs/notes/dynasty-6.md`). The owner's answers hold: **the
 Oath is sworn per run, on Hard or harder**; **the bearer can die, but the progress never does**; **the fallen become Shades on the War

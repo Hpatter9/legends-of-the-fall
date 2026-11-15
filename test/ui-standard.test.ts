@@ -102,35 +102,3 @@ test('March orders: a plain march with nothing open gives no orders; the picks b
   // (a marked hero taken out of the party since falls to the party's first)
   assert.equal(ordersOf({ chosen: 'plain', marked: 'wizard' }, 5, party)?.marked, 'knight');
 });
-
-test('the Houses, a line, a bearer and the Seasons are standard menus (Dynasties, phase 5)', () => {
-  const src = readFileSync('src/housesView.ts', 'utf8');
-  assert.match(src, /from '\.\/ornateMenu'/);
-  for (const [fn, way] of [['openHouses', 'back'], ['openLine', 'back'], ['openBearer', 'close'], ['openSeasonCard', 'close']] as const) {
-    const body = src.slice(src.indexOf(`export function ${fn}`));
-    const own = body.slice(0, body.indexOf('\n}\n'));
-    assert.match(own, /ornateMenu\(/, `${fn} builds its page with ornateMenu`);
-    assert.match(own, new RegExp(`back: \\{ word: '${way}' \\}`), `${fn} says ${way === 'back' ? '‹ Back' : 'Close'}`);
-  }
-});
-
-test('the heirs\' cards are standard menus that say Close (Dynasties, phase 6)', () => {
-  const src = readFileSync('src/housesView.ts', 'utf8');
-  for (const fn of ['openNameHeir', 'openMantle', 'openFarewell', 'openHonour', 'openBanner', 'openEldersTable']) {
-    const body = src.slice(src.indexOf(`export function ${fn}`));
-    const own = body.slice(0, body.indexOf('\n}\n'));
-    assert.match(own, /ornateMenu\(/, `${fn} builds its card with ornateMenu`);
-    assert.match(own, /back: \{ word: 'close'/, `${fn} says Close`);
-  }
-});
-
-test('the Shades\' card is a standard menu that says Close, and the Houses filter has "The fallen" (Dynasties, phase 7)', () => {
-  const src = readFileSync('src/shadeView.ts', 'utf8');
-  const body = src.slice(src.indexOf('export function openShades'));
-  const own = body.slice(0, body.indexOf('\n}\n'));
-  assert.match(own, /ornateMenu\(/, 'openShades builds its card with ornateMenu');
-  assert.match(own, /back: \{ word: 'close' \}/, 'openShades says Close');
-  assert.match(readFileSync('src/housesView.ts', 'utf8'), /fallen: 'The fallen'/);
-  // (the March orders carry the Legend Oath in their own standard section)
-  assert.match(readFileSync('src/marchCard.ts', 'utf8'), /menuSection\(body, 'The Legend Oath'/);
-});

@@ -6,14 +6,12 @@ import assert from 'node:assert/strict';
 import { fight, hurt, playOut, stepBattle, TIME_LIMIT_MS, unitAt, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { HEART_LIVES, LIVES, REVIVE_HP, REVIVE_MS, REVIVE_SAFE_MS, TIMEOUT_LIVES, reviveIn } from '../src/sim/lives';
 import { raiseFallen } from '../src/sim/kits/revive';
-import { armyRun, finish, hasLives, livesLeft, livesMax, livesSpent, loadRun, newRun, noteFight, partyFalls, recruit, retryGold, saveRun, settleLives, spendLives, startStage, type Run } from '../src/sim/run';
+import { armyRun, finish, hasLives, livesLeft, livesMax, livesSpent, loadRun, newRun, noteFight, partyFalls, retryGold, saveRun, settleLives, spendLives, startStage, type Run } from '../src/sim/run';
 import { startDaily } from '../src/sim/modes';
 import { startedMeta } from '../src/sim/meta';
 import { startQuestBattle } from '../src/sim/questRun';
 import { questBattleById } from '../src/sim/questBattles';
 import { ordersFor } from '../src/sim/march';
-import { swearOath } from '../src/sim/oath';
-import { openDynasty } from '../src/sim/dynasty';
 import { autoDeploy, autoRound } from '../src/sim/autoplay';
 import { readyBattle } from './helpers';
 
@@ -306,24 +304,4 @@ test('a road event takes or gives a heart\'s worth of lives, within what the run
   old.retries = 1;
   spendLives(old, -HEART_LIVES);
   assert.equal(livesLeft(old), 10);
-});
-
-test('under the Legend Oath a hero a life raises has fallen once', () => {
-  const m = startedMeta(9);
-  openDynasty(m, 1);
-  const r = armyRun(5, 'orcs', m.party, m.castle, 1);
-  for (const k of m.party) r.squad.push(recruit(r, k).id);
-  r.oath = true;
-  void swearOath;
-  const b = startStage(r);
-  autoDeploy(b, r, m);
-  fight(b);
-  for (const f of b.units.filter((u) => u.side === 'foe')) f.busyUntil = 1e12;
-  const [a] = heroesOf(b);
-  fell(b, a);
-  run(b, REVIVE_MS);
-  settleLives(r, b);
-  assert.equal(r.oathFalls?.[String(a.tag)], 1);
-  settleLives(r, b);
-  assert.equal(r.oathFalls?.[String(a.tag)], 1, 'counted once');
 });
