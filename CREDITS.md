@@ -601,10 +601,9 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 - The Lost Techniques manuscript (`src/art/quests/lost-face.png`) is original artwork generated with OpenAI image generation, retained in `art-source/council-manuscript/manuscript.png` and approved by the owner.
 - Council news symbols and War Trophy token (`src/art/council/`) are unchanged crops from the previously credited `art-source/expansion/nemesis-icons.png`. Existing commissioned rank insignia and painted Book of Names / war drum are reused with their original credits. `tools/council-art/import.py` reproduces the imports. New imports are bundled for offline play.
 
-## Dynasty symbols, menu backdrops and Nemesis traits
+## Council backdrops and Nemesis traits
 
-- House shield and heirloom keepsake (`src/art/dynasty/{house,heirloom}.webp`) are original OpenAI-generated paintings in the owner-approved style, retained in `art-source/dynasty-finish/house-heirloom.png`.
-- Season/fate symbols, twelve Nemesis trait symbols, and Houses/Council backdrops reuse the already credited source artwork in `art-source/expansion/`. `tools/dynasty-art/import.py` crops symbols and downsamples the backdrops; original source art remains unchanged. All new imports are bundled for offline play.
+- Twelve Nemesis trait symbols (`src/art/dynasty/trait-*.png`) and the Council backdrops (`src/art/dynasty/council-*.webp`) reuse the already credited source artwork in `art-source/expansion/`. `tools/dynasty-art/import.py` downsamples the backdrops; original source art remains unchanged. All are bundled for offline play. (REMOVE-DYNASTY: the House, heirloom, season and fate symbols and the Houses' backdrop left the game with the Dynasties; their sources stay in `art-source/`.)
 
 ## Quest complete (UI-ART-WIRE)
 
@@ -624,20 +623,18 @@ Original generated illustrations for the approved Calamity portal-expedition dir
 ## Expansion art 2 (PR #464: `src/art/council/`, `src/art/dynasty/`, `src/art/expansion/`)
 
 - The owner's repaints of `art-source/expansion/nemesis-icons.png` (twelve traits, ten Council events, the News icons and the War Trophy),
-  `seasons-fates.png` (four seasons, five fates), `frames.png` (three scarred portrait frames, the heirloom frame and its signet ring chip) and the
-  Houses and Council backdrops: original art generated with OpenAI image generation from the prompts in `docs/notes/expansion-2-art-prompts.md`.
+  `frames.png` (three scarred portrait frames) and the Council backdrop: original art generated with OpenAI image generation from the prompts in `docs/notes/expansion-2-art-prompts.md`.
   `tools/art-wire-5/import-expansion.py` trims each symbol and brings it down to the size the game draws (`src/art/council/`, `src/art/dynasty/`,
-  `src/art/expansion/scar-*.png`, `heirloom-frame.png`, `heirloom-chip.png`); `tools/dynasty-art/import.py` downsamples the backdrops. All are bundled
+  `src/art/expansion/scar-*.png`); `tools/dynasty-art/import.py` downsamples the backdrops. All are bundled
   into game.js for offline play (docs/notes/art-wire-5.md).
 - The Council's hall after the War's end (`art-source/expansion/council-fallen-backdrop.png`, from `art/assault-war-end`): the owner's painting of
   the same chamber with its seats burning, original art generated with OpenAI image generation from the prompt in
   `docs/notes/assault-5-art-prompts.md`. `tools/dynasty-art/import.py` downsamples it beside the Council backdrop
   (`src/art/dynasty/council-fallen-backdrop.webp`), bundled into game.js (docs/notes/art-wire-9.md).
-- The Elders' table (`art-source/expansion/elders-table.png`) and the duel's ring of standing stones (`duel-ring.png`): original art generated
-  with OpenAI image generation from the prompts in `docs/notes/expansion-2-art-prompts.md`. `tools/expansion/tavern-tables.py` trims the
-  table for the head of the Elders' table's card (`src/art/tavern/elders-table.png`); `tools/expansion/duel-ring.py` cuts the ring into its
-  twenty stones and shrinks them to the board (`src/art/duel/ring-stones.png` and `.json`). Both are bundled into game.js for offline play
-  (docs/notes/tavern-25.md).
+- The duel's ring of standing stones (`duel-ring.png`): original art generated with OpenAI image generation from the prompts in
+  `docs/notes/expansion-2-art-prompts.md`. `tools/expansion/duel-ring.py` cuts the ring into its twenty stones and shrinks them to the board
+  (`src/art/duel/ring-stones.png` and `.json`), bundled into game.js for offline play (docs/notes/tavern-25.md). (REMOVE-DYNASTY: the
+  Elders' table, `src/art/tavern/elders-table.png`, left the game with the Dynasties.)
 
 ### Painted tavern hearth
 
@@ -657,7 +654,7 @@ OpenAI image generation: natural tavern room, Gwen Tallow, rustic games/supper t
 
 ## Remaining Nemesis trait symbols
 
-- Twelve original OpenAI-generated gothic game symbols (`src/art/nemesis-traits/`) complete the modelled trait set: Fireproof, Rime-hardened, Venom-blooded, Thick-hided, Grounded, Fearless, four Banes, Elusive and Legend-slayer. The owner approved the three-symbol style proposal against the existing commissioned icons. Sources and the unused hazy take are retained in `art-source/nemesis-traits/`. `tools/nemesis-trait-art/import.py` normalises footprints, hard alpha and palette, with nearest-neighbour packing. Original trait artwork retains its existing credits.
+- Eleven original OpenAI-generated gothic game symbols (`src/art/nemesis-traits/`) complete the modelled trait set: Fireproof, Rime-hardened, Venom-blooded, Thick-hided, Grounded, Fearless, four Banes and Elusive (a twelfth, the Legend-slayer's, left the game with the Dynasties). The owner approved the three-symbol style proposal against the existing commissioned icons. Sources and the unused hazy take are retained in `art-source/nemesis-traits/`. `tools/nemesis-trait-art/import.py` normalises footprints, hard alpha and palette, with nearest-neighbour packing. Original trait artwork retains its existing credits.
 
 ## Painted road encounter vignettes
 

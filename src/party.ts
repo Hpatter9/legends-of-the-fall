@@ -11,10 +11,6 @@ import { PartyPack } from './partyPack';
 import { rosterRows, viewRows, type RosterView } from './heroFilterRules';
 import { rosterTools, type RosterTools } from './heroFilterView';
 import { retired } from './sim/legacy';
-import { fieldedOf, fieldsElder } from './sim/dynasty';
-import { mourning, mourningLeft } from './sim/oath';
-import { bannerChoices, fieldName } from './sim/heirs';
-import { openBanner } from './housesView';
 import { heroRank, partySlots, saveMeta, setParty, type Meta } from './sim/meta';
 import { heroClassLabel, heroName } from './sim/heroNames';
 import { progressOf, xpOf } from './sim/levels';
@@ -149,10 +145,9 @@ export class Party {
     this.pack.setPlan(o && !this.quest ? { line: o.line, open: (redraw) => o.open([...this.picked], redraw) } : null);
   }
 
-  /** HEROES-FILTER: every hero as the Reinforcements list sees it: the roster's rows, but "in the party" is the draft being picked, and a
-   *  search also finds the bearer who takes the field. */
+  /** HEROES-FILTER: every hero as the Reinforcements list sees it: the roster's rows, but "in the party" is the draft being picked. */
   private rows() {
-    return rosterRows(this.meta, (k) => fieldName(this.meta, k)).map((r) => ({ ...r, inParty: this.picked.includes(r.kind) }));
+    return rosterRows(this.meta).map((r) => ({ ...r, inParty: this.picked.includes(r.kind) }));
   }
 
   /** The heroes a choice leaves in the grid: filtered and sorted by the roster's rules, the unlocked ones first and the locked shaded
@@ -328,12 +323,8 @@ export class Party {
       if (locked) remove.innerHTML = PADLOCK;
       const number = el('span', 'ptSlotNumber', String(i + 1));
       number.dataset.number = String(i + 1);
-      // (Dynasties, phase 6: the bearer who takes the field, the heir or an elder the banner chose)
-      // (phase 7: a House in mourning does not march with the armies: its slot is greyed and says so)
-      const mourns = mourning(this.meta, kind, todayKey());
-      if (mourns) b.classList.add('ptMourns');
       // (HEROES-FILTER: with the Satchel and the Plan off the page, the company's five are proper cards: the portrait, the name and the level)
-      b.append(number, portrait(lookSheet(kind, heroRank(this.meta, kind), 1), 48), el('small', '', mourns ? `${fieldName(this.meta, kind)} · mourning` : fieldName(this.meta, kind)), levelBadge(progressOf(xpOf(this.meta, kind)).level), remove);
+      b.append(number, portrait(lookSheet(kind, heroRank(this.meta, kind), 1), 48), el('small', '', heroName(kind)), levelBadge(progressOf(xpOf(this.meta, kind)).level), remove);
       if (locked) b.append(el('span', 'ptQuestRibbon', 'Quest'));
       b.addEventListener('click', () => (this.held ? (this.held = false) : this.toggle(kind)));
       this.holdTo(b, kind);
@@ -342,8 +333,7 @@ export class Party {
 
     // the hint, and the traits the party would wake (the same rule as a fight's team)
     const hint = $('ptHint');
-    const mourn = this.picked.filter((k) => mourning(m, k, todayKey()));
-    hint.textContent = this.note || (mourn.length && !this.quest ? `${mourn.map((k) => fieldName(m, k)).join(' and ')}: the House mourns, and does not march with the armies for ${Math.max(...mourn.map((k) => mourningLeft(m, k, todayKey())))} more days` : '') || (this.quest ? `${this.quest.title} · ${this.quest.rule}` : full ? 'Tap a chosen hero to remove · hold for details' : 'Choose a reinforcement to fill your company');
+    hint.textContent = this.note || (this.quest ? `${this.quest.title} · ${this.quest.rule}` : full ? 'Tap a chosen hero to remove · hold for details' : 'Choose a reinforcement to fill your company');
     hint.classList.toggle('full', !!this.note);
     const counts = countTraits(this.picked);
     const active = counts.filter((c) => c.active);
@@ -402,27 +392,11 @@ export class Party {
       const card = el('button', `hcard ptCard${open ? '' : ' locked'}${on ? ' picked' : ''}${hit ? ' hit' : ''}${this.focus && !hit ? ' faded' : ''}`);
       card.setAttribute('aria-pressed', String(on));
       card.append(secret ? secretFigure(56) : portrait(lookSheet(kind, heroRank(this.meta, kind), 1), 56));
-      // (Dynasties, phase 6: a line with an honoured elder has a banner, the bearer who takes the field; a tap chooses, the heir by default)
-      let bannerChip: HTMLElement | null = null;
-      if (open && bannerChoices(m, kind).length > 1) {
-        const f = fieldedOf(m, kind);
-        const banner = el('span', `ptBanner${fieldsElder(m, kind) ? ' elder' : ''}`, `⚑ ${f?.name ?? heroName(kind)}`);
-        banner.setAttribute('role', 'button');
-        banner.setAttribute('aria-label', `${f?.name ?? heroName(kind)} takes the field. Choose who bears the banner`);
-        banner.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openBanner(m, kind, () => this.draw());
-        });
-        bannerChip = banner;
-      }
-      // (Dynasties, phase 7: a House in mourning after a bearer slain under the Oath cannot march with the armies for three days)
-      if (open && mourning(m, kind, todayKey())) card.append(el('span', 'ptPickedFlag ptMourning', `In mourning · ${mourningLeft(m, kind, todayKey())}d`));
-      else if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
+      if (on) card.append(el('span', 'ptPickedFlag', '◆ Chosen'));
       else if (open && retired(m, kind)) card.append(el('span', 'ptPickedFlag', 'In the Hall'));
       if (open) card.append(el('span', 'ptCardRole', ROLE_NAMES[roleOf(kind)]));
       const lock = lockInfo(m, kind);
-      card.append(el('b', '', open ? fieldName(m, kind) : lock?.named ? heroName(kind) : '???'));
-      if (bannerChip) card.append(bannerChip);
+      card.append(el('b', '', open ? heroName(kind) : lock?.named ? heroName(kind) : '???'));
       if (open) {
         const p = progressOf(xpOf(m, kind));
         const tags = el('span', 'ptTags');

@@ -59,7 +59,7 @@ const KEEP_CLEAR = [
   // (FIRST-FIVE: the starter's head and packs; the bench; the home screen's tabs, its battle button and plates)
   '#starter .omHead',
   '#starter .stPack',
-  // (and, the director's rule, a hero's row or card on any list: the War Council's company and pool, the hero list, the Houses, the codex)
+  // (and, the director's rule, a hero's row or card on any list: the War Council's company and pool, the hero list, the codex)
   '.ptSlot',
   '.ptHeroPick',
   '#ptGrid > *',

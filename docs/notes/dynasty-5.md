@@ -1,5 +1,7 @@
 # Dynasties, phase 5: Seasons and the Houses
 
+> **Removed (REMOVE-DYNASTY, after 0.604.0):** the owner took the Dynasties out of the game; see `docs/notes/remove-dynasty.md`. This note is the record of what was built.
+
 Phase 5 of the expansion in `docs/design/legends-expansion.md` (section 9, "Phase 5: Seasons and the Houses"), built to sections 3.0 to
 3.2, 3.7, 5.2 and 7 of the design, on top of the Nemesis War's phases 1 to 4 (`docs/notes/nemesis-1.md` to `nemesis-4.md`). It is the start
 of Dynasties. Phase 5's list is the season clock and its icon, bearers and their ages, the life stages, Elder's Counsel, the family tree
