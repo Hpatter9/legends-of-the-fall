@@ -72,7 +72,30 @@ The rules, each with a staged test in `test/assault-ai.test.ts`:
 - **Melee heroes take on a foe a little further off; shooters hold back** (`pointReach`): at its point a melee hero engages a foe two tiles
   beyond its reach and leash; a shooter only what it can nearly shoot, and a shooter never pushes in onto a tile beside a foe.
 
-COUNTERS_TABLE
+**The counters** (`node tools/assault-ai/run.mjs --seeds 8`, every hold's conquest, "As expected", Auto; main 0.603.0 against this branch with
+its casting and movement, both at the 0.602.0 shares; STILL, BLOCKED and LOOPING are shares of the heroes' time alive, QUEUE the mean
+standing near a chokepoint, NEVER of 40 heroes a hold):
+
+| Hold | Still: main → now | Blocked | Looping | Queue | Never |
+| --- | --- | --- | --- | --- | --- |
+| Bloodtusk Hold | 10.4% → 6.1% | 5.0% → 1.1% | 0.6% → 0.9% | 2.2 → 3.8 | 0 → 0 |
+| Barrow Necropolis | 7.5% → 5.5% | 5.9% → 2.3% | 0.2% → 0.3% | 2.9 → 2.9 | 0 → 0 |
+| Howling Den | 12.0% → 6.5% | 11.3% → 5.1% | 0.2% → 0.3% | 5.3 → 7.6 | 0 → 0 |
+| Elder Root | 9.7% → 8.2% | 6.4% → 5.7% | 0.4% → 0.2% | 4.3 → 8.3 | 0 → 1 |
+| Heart of the Maze | 6.9% → 4.5% | 6.3% → 1.9% | 0.1% → 0.4% | 1.3 → 1.9 | 0 → 0 |
+| Bonefire Crag | 9.4% → 7.2% | 7.6% → 9.4% | 0.3% → 0.5% | 4.3 → 8.0 | 0 → 0 |
+| Brimstone Gate | 5.1% → 7.4% | 9.0% → 4.0% | 0.2% → 0.2% | 3.6 → 6.4 | 0 → 0 |
+| Moonlit Shrine | 10.1% → 4.5% | 4.5% → 1.6% | 0.2% → 0.6% | 0.8 → 2.2 | 0 → 0 |
+| Iron Foundry | 11.0% → 8.2% | 9.6% → 7.1% | 0.1% → 0.1% | 3.8 → 6.6 | 0 → 0 |
+| All | 9.6% → 6.6% | 7.6% → 4.5% | 0.3% → 0.4% | 3.2 → 5.4 | 0 → 1 of 360 |
+
+Standing still with foes near falls by about a third, and standing boxed in by our own by about two fifths, though not at every hold:
+Brimstone Gate's STILL rose (5.1% → 7.4%) as its BLOCKED fell. Looping was rare and stays
+so. The QUEUE goes up: part of it is the file now waiting its turn at a bridge or a gap (switching the file off makes BLOCKED nearly double,
+9.3%, the Den 19%, with 5 heroes never fighting), and part is that more of the host reaches the chokepoints sooner and together; the
+battles are quicker for it (Bloodtusk 6:29 → 4:29, the Den 5:18 → 2:53). Bonefire Crag's BLOCKED did not come down, and one Elder Root hero
+in 40 never fought. One hold's chokepoint, the Den's rope bridge, in one fight: the mean of ours standing there 36 → 9, and the fight 5:57 →
+2:16.
 
 ### The renderer
 
@@ -118,13 +141,49 @@ shares, every conquest measured was won every time. The shares (`HOLD_SHARE`, `L
 with the dev trial's force (`node tools/assault-dev/run.mjs`, "As expected", the balance party, Auto), back to the 0.602.0 band of about
 72 to 84% wins, the Last Hold at the low end of it.
 
-BALANCE_TABLE
+**After** (32 seeds a cell, the final shares; the 0.602.0 table, for the force before these changes, is in `assault-retune.md`):
+
+| Hold | Conquest | The Last Hold | Regrouped |
+| --- | --- | --- | --- |
+| Bloodtusk Hold | 78%, 78% host lost | 66%, 78% | 84%, 74% |
+| Barrow Necropolis | 88%, 80% | 66%, 86% | 88%, 77% |
+| Howling Den | 84%, 81% | 66%, 78% | 81%, 75% |
+| Elder Root | 91%, 70% | 66%, 68% | 75%, 75% |
+| Heart of the Maze | 88%, 89% | 72%, 83% | 81%, 83% |
+| Bonefire Crag | 81%, 68% | 69%, 63% | 84%, 65% |
+| Brimstone Gate | 72%, 81% | 66%, 81% | 84%, 82% |
+| Moonlit Shrine | 88%, 84% | 69%, 85% | 81%, 88% |
+| Iron Foundry | 84%, 65% | 72%, 77% | 84%, 70% |
+
+The Last Hold is now the hardest at every hold (66 to 72%). The conquests run 72 to 91% and the Warband regrouped 75 to 88%. Over the
+band: the Elder Root's conquest (91%) and five cells at 88% (the Necropolis and Maze conquests, the Necropolis regrouped, the Shrine's
+conquest, and the Shrine regrouped at 88% host lost). The table moved 10 to 20 points between runs of the same values at these seeds, and
+the Elder Root's conquest stayed at 91% through a nudge, so I stopped there. The battles are longer than at 0.602.0 (5 to 9 minutes of
+battle time, from 3 to 9): the shares rose 1.4 to 2 times, so there is more garrison to cut through.
+
+| Hold | `HOLD_SHARE` 0.602.0 → now | `LAST_SHARE` | `RESTORM_SHARE` |
+| --- | --- | --- | --- |
+| Bloodtusk Hold | 0.248 → 0.4811 | 2.63 → 1.976 | 2.188 → 1.675 |
+| Barrow Necropolis | 0.2598 → 0.4442 | 2.097 → 1.705 | 1.872 → 1.578 |
+| Howling Den | 0.322 → 0.4969 | 1.984 → 1.864 | 1.522 → 1.463 |
+| Elder Root | 0.1995 → 0.3883 | 1.922 → 1.777 | 1.668 → 1.465 |
+| Heart of the Maze | 0.2062 → 0.4289 | 1.553 → 1.237 | 0.909 → 0.743 |
+| Bonefire Crag | 0.285 → 0.5039 | 1.836 → 1.35 | 1.015 → 0.896 |
+| Brimstone Gate | 0.27 → 0.4771 | 1.33 → 1.057 | 0.873 → 0.675 |
+| Moonlit Shrine | 0.168 → 0.2667 | 1.16 → 1.027 | 0.958 → 0.995 |
+| Iron Foundry | 0.31 → 0.4352 | 0.919 → 0.852 | 1.056 → 0.93 |
 
 ## Photographs
 
 `docs/samples/assault-skills/` at 393 x 852, each with a 2x crop of its middle:
 
-PHOTOS
+- `skills-before`: main, the Wizard's platoon marching into the fight: no effect of any kind;
+- `skills-after-ultimate`: the Wizard's Meteor Swarm winding up (the fire ring and glow round it, the caster rising), its name over it;
+- `skills-after-strike`: the moment after, the meteors' impacts landing up the field;
+- `skills-after-gem`: an ultimate fired by hand from the portrait's gem;
+- `choke-before-1`, `-2` and `choke-after-1`, `-2`: the Howling Den's rope bridge at the same moments of the march (about 0:15 and 0:21
+  of the battle's clock). On main the host bunches on the near bank at the bridge's foot and is still bunched six seconds on; now the
+  platoons file over it, the Wizard's ultimate going off as it crosses, and are up on the far bank by the second photograph.
 
 ## Files
 
