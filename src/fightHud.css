@@ -460,3 +460,30 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
   .fhlUlt i { animation: none; }
   .fhlBar i { transition: none; }
 }
+
+/* ---- HERO-RISE (docs/notes/hero-rise.md, `risePlates.ts`): the small plate over a hero who rose: its name and new level or stars, the
+   numbers that went up in green, each skill or talent earned in gold with its icon. Rises in, stays about two seconds, fades; with reduced
+   motion it only fades. Never takes a tap. ---- */
+.rsLayer { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+.rsPlate { position: absolute; display: flex; flex-direction: column; gap: 1px; max-width: min(270px, calc(100vw - 16px)); box-sizing: border-box; padding: 3px 8px 4px;
+  color: #f6ecd2; font: 400 12px/14px var(--body); text-shadow: var(--outline); white-space: nowrap;
+  border: 1px solid #c9a95c; border-radius: 4px; background: linear-gradient(#2e2414f2, #17110af2); box-shadow: inset 0 0 0 1px #0c0904, inset 0 1px 0 #ffffff22, 0 3px 10px #000b;
+  opacity: 0; animation: rsRise 2.6s ease-out both; }
+.rsPlate::before { content: ''; position: absolute; left: 50%; bottom: -5px; width: 8px; height: 8px; transform: translateX(-50%) rotate(45deg);
+  background: #17110a; border-right: 1px solid #c9a95c; border-bottom: 1px solid #c9a95c; }
+.rsName { font: 400 13px/15px var(--body); color: #ffe7b0; overflow: hidden; text-overflow: ellipsis; }
+.rsName em { font-style: normal; color: #ffd36a; }
+.rsStats { color: #9cf08a; font-family: 'Pixelify Sans', var(--body); overflow: hidden; text-overflow: ellipsis; }
+.rsEarned { display: flex; align-items: center; gap: 4px; color: #ffe08a; white-space: normal; }
+.rsEarned img { flex: none; object-fit: contain; }
+.rsEarned.skill { color: #bfe6ff; }
+@keyframes rsRise {
+  0% { opacity: 0; transform: translateY(8px) scale(0.92); }
+  10% { opacity: 1; transform: translateY(0) scale(1); }
+  80% { opacity: 1; transform: translateY(-2px); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rsPlate { animation-name: rsFade; }
+}
+@keyframes rsFade { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }

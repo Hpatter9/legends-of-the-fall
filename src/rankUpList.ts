@@ -17,6 +17,9 @@ import { gems, playAwakenShow, tellAwakened } from './awakenView';
 import { oreIcon } from './oreView';
 import { autoPlanAll, autoSpendAll, planCost } from './sim/talentAuto';
 import { nodeOf } from './sim/talents';
+import { startBattle } from './sim/battle';
+import { riseOf, shotOfHero, type RiseShot } from './riseRules';
+import { showRises } from './risePlates';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -148,12 +151,14 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
     const row: Row = { kind, box, pic, step: awakenedOf(meta, kind), ranks, what, cost, go };
     made.push(row);
     go.addEventListener('click', () => {
+      const before = shotsOf([kind]);
       const t = takeUpgrade(meta, kind);
       if (!t) return paint();
       saveMeta(meta);
       took = true;
       shown([t]);
       paint();
+      risen(before);
     });
     if (onHero)
       pic.addEventListener('click', () => {
@@ -190,6 +195,22 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
     go.addEventListener('click', open);
     pic.addEventListener('click', open);
   }
+
+  /** HERO-RISE: the heroes of `kinds` as they stand now, and after a step the plates over each row that rose (its numbers, its new talents
+   *  and abilities), laid so none covers another. */
+  const shotsOf = (kinds: readonly string[]): Map<string, RiseShot> => new Map(kinds.map((k) => [k, shotOfHero(meta, k, () => startBattle(1, []))]));
+  const risen = (before: Map<string, RiseShot>, sel = '.ulRow'): void => {
+    showRises([...before].map(([kind, was]) => ({
+      kind,
+      lines: riseOf(was, shotOfHero(meta, kind, () => startBattle(1, []))),
+      at: () => {
+        const row = rows.querySelector<HTMLElement>(`${sel}[data-kind="${kind}"]`);
+        const r = row?.getBoundingClientRect();
+        // (over the row's own words, the picture left clear for its flourish)
+        return r && r.height ? { x: r.left + r.width * 0.55, y: r.bottom - 2 } : null;
+      },
+    })));
+  };
 
   /** The short flourish over each hero that rose (once a hero, its last step), a little apart so they do not all land at once. */
   const shown = (steps: Took[]): void => {
@@ -296,19 +317,23 @@ export function openUpgrades(meta: Meta, kinds: readonly string[], changed: () =
   yes.addEventListener('click', () => {
     unask();
     if (asking === 'auto') {
+      const before = shotsOf(talents.map((t) => t.kind));
       const learnt = autoSpendAll(meta, talents.map((t) => t.kind));
       if (learnt.length) {
         saveMeta(meta);
         took = true;
       }
-      return paint();
+      paint();
+      return risen(before, '.ulTalent');
     }
+    const before = shotsOf(order);
     const done = upgradeAll(meta, order);
     if (!done.steps.length) return paint();
     saveMeta(meta);
     took = true;
     shown(done.steps);
     paint();
+    risen(new Map([...before].filter(([k]) => done.steps.some((s) => s.kind === k))));
   });
 
   const key = (e: KeyboardEvent): void => {

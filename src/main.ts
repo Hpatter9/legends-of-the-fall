@@ -11,7 +11,7 @@ import { Application, Container, Sprite, TextureSource, UPDATE_PRIORITY } from '
 import { standable, tileAt, type Area } from './sim/board';
 import { PHASE2 } from './sim/bossPhases';
 import * as toolkit from './sim/toolkit';
-import { canPlace, fight, heroesPlaced, isDeployTile, place, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
+import { canPlace, fight, heroesPlaced, isDeployTile, place, startBattle, stepBattle, TICK_MS, unitAt, unplace, type Battle, type BattleEvent, type Boost, type Unit } from './sim/battle';
 import { mvpOf, startStats, tally, type FightStats } from './sim/fightStats';
 // (`saveSlot` as `saveRun`: a tower or calamity run is saved in its own slot, any other in the ordinary one)
 import { hasLives, livesLeft, livesMax, settleLives, isCastHero, canJoin, sitsOut, armyOfRun, armyRun, benchFull, boostOf, chainOf, dropSlot, finish, heroOf, hireBlock, isBossRun, keepCharges, loadRun, RUN_UNREADABLE_KEY, loadSlot, noteFight, paidOf, recycle, recycleValue, saveSlot as saveRun, setSquad, squadLimit, startStage, summon, summonCost, tierOfRun, runTheme, waveArmyOf, type Owned, type Run } from './sim/run';
@@ -153,6 +153,8 @@ import { HoldPress, UnitInfoCard } from './unitInfo';
 import { heroFace } from './heroFace';
 import { infoOf, previewUnit } from './unitInfoRules';
 import { nearestMark, pickOnTap, pickable } from './heroLiveRules';
+import { riseOf, shotOfHero, shotOfUnit, type RiseShot } from './riseRules';
+import { clearRises, showRises } from './risePlates';
 import { heroArtUrl, UltMoments } from './ultMoment';
 import { BossMoments } from './bossMoment';
 import { fullScene, waveEndStuck } from './ultMomentRules';
@@ -3045,8 +3047,13 @@ class Game {
     // (MERGE-TWO: one tap merges every pair ready, then the pairs those make, up to rank 4, and stops)
     $('mergeAll').addEventListener('click', () => {
       if (this.b.phase !== 'deploy' || !autoMergeOpen(this.meta)) return;
+      const before = this.rosterShots();
       const done = autoMerge(this.run);
-      if (done.length) this.showMerges(done);
+      if (done.length) {
+        this.showMerges(done);
+        // (HERO-RISE: a plate over each hero Auto merge raised, once a hero, its last grade)
+        this.showRisen(done.map((m) => m.id).filter((id) => heroOf(this.run, id)), before);
+      }
     });
     $('summon').addEventListener('click', () => {
       const got = summon(this.run);
@@ -3847,6 +3854,7 @@ class Game {
 
   /** A run has ended: back to the main screen, showing what it earned. */
   private goHome(): void {
+    clearRises();
     const r = this.run;
     const army = armyOfRun(r);
     this.closeResult();
@@ -4096,8 +4104,54 @@ class Game {
   /** Merge hero `aId` into hero `bId` by hand (dragged or tapped onto it, between waves only). */
   private mergeHeroes(aId: number, bId: number): void {
     if (this.b.phase !== 'deploy') return;
+    const before = this.rosterShots();
     const m = merge(this.run, aId, bId);
-    if (m) this.showMerges([m]);
+    if (m) {
+      this.showMerges([m]);
+      this.showRisen([m.id], before);
+    }
+  }
+
+  /** HERO-RISE: every hero of the run's roster as the fight would make it now (each read on a scratch copy of the battle: nothing is placed). */
+  private rosterShots(): Map<number, RiseShot> {
+    return new Map(this.run.roster.map((h) => [h.id, shotOfUnit(previewUnit(this.b, h.kind, this.boostFor(h), h.id))]));
+  }
+
+  /** HERO-RISE: the plates over the run's heroes `ids` that rose since `before`: over the hero on the board, or its card on the bench. */
+  private showRisen(ids: readonly number[], before: Map<number, RiseShot>): void {
+    const items = [...new Set(ids)].flatMap((id) => {
+      const h = heroOf(this.run, id);
+      const was = before.get(id);
+      if (!h || !was) return [];
+      const lines = riseOf(was, shotOfUnit(previewUnit(this.b, h.kind, this.boostFor(h), h.id)));
+      return [{ kind: h.kind, lines, at: () => this.riseAnchor(id) }];
+    });
+    // (two frames on, so a hero set down afresh has been drawn where it stands)
+    requestAnimationFrame(() => requestAnimationFrame(() => showRises(items)));
+  }
+
+  /** HERO-RISE: the plates over the save's heroes (by kind) that rose since `before`, over each where it stands on the board. */
+  private showKindsRisen(before: Map<string, RiseShot>): void {
+    const items = [...before].map(([kind, was]) => ({
+      kind,
+      lines: riseOf(was, shotOfHero(this.meta, kind, () => startBattle(1, []))),
+      at: () => {
+        const u = this.b.units.find((x) => x.side === 'hero' && x.def === kind && x.owner === undefined);
+        const s = u && this.sprites.get(u.id);
+        return s && s.root.visible ? this.toClient(s.x, s.y - s.tall - 6) : null;
+      },
+    }));
+    showRises(items);
+  }
+
+  /** Where a run's hero stands on the screen for its plate: over its head on the board, else over its bench card. */
+  private riseAnchor(id: number): { x: number; y: number } | null {
+    const u = this.b.units.find((x) => x.side === 'hero' && x.tag === id);
+    const s = u && this.sprites.get(u.id);
+    if (s && s.root.visible) return this.toClient(s.x, s.y - s.tall - 6);
+    const card = $('bench').querySelector<HTMLElement>(`[data-id="${id}"]`);
+    const r = card?.getBoundingClientRect();
+    return r && r.width ? { x: r.left + r.width / 2, y: r.top + 4 } : null;
   }
 
   /** Show merges the sim has made: each merged-away hero leaves the board, each target is set down again where it stood at its new grade
@@ -4702,6 +4756,8 @@ class Game {
       // (Dynasties, phase 5: an Elder on the field gives the rest of the party Elder's Counsel, +5% XP)
       const fielded = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def)).map((u) => u.def);
       // (Dynasties, phase 6: an heir in its first season has the Heir's Promise, +25% XP)
+      // (HERO-RISE: the fielded heroes of the save as they stood before this wave's XP and skill use, for the plates over them after)
+      const riseBefore = new Map(run.local ? [] : [...new Set(fielded)].map((k) => [k, shotOfHero(this.meta, k, () => startBattle(1, []))] as const));
       const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, promiseXp(this.meta, counselXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }, fielded), todayKey())));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (QUEST-COMPLETE 2: a quest battle's record, once its last fight is in the run's books)
@@ -4716,6 +4772,8 @@ class Game {
       const skillUps = useCut > 0 ? levelUpWords(settleSkillUse(this.meta, fightUse(b, this.meta.unlocked), useCut)) : [];
       // (POPUP-GUARD: a skill's new level is on the wave's card; the run's recap lists it too, for a card tapped past)
       for (const w of skillUps) noteNotice(w);
+      // (HERO-RISE: a plate over each hero who gained a level or a skill's level, where it stands on the board at the wave's end)
+      if (riseBefore.size) this.showKindsRisen(riseBefore);
       // (RUN-GEAR: the found pieces wear as the lasting kit does, and a lasting piece a find sits in for does not)
       const fought = placed.map((u) => ({ kind: u.def, fell: !u.alive }));
       const wore = [...(run.local ? [] : wearWords(settleWear(this.meta, fought, !!this.auto, (kind, slot) => slotTaken(run, kind, slot) || markedHero(run, kind)), heroName)), ...wearWords(settleRunWear(run, fought, !!this.auto), heroName)];
