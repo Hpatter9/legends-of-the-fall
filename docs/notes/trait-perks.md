@@ -525,10 +525,10 @@ Read with the rest:
   anyway, so they are worth less there) and Trickster's Hall of Mirrors (+20.5, within the noise). Arcane's Overload reads low here
   (+9) because level 1 has no ultimates to fill.
 - **Against the old bonuses:** the old four-of tiers were strong flat stats (Undead's +14% health for every hero, Machine's +10% attack),
-  and at the measure's even stages a few points of health or attack swing a fight hard, so some top tiers read below old (Undead -14,
-  Machine -10.5) while those that change how a fight plays read well above it (Vampire, Trickster, Arcanist, Support). The first tiers
+  and at the measure's even stages a few points of health or attack swing a fight hard, so some top tiers read below old (Undead -9,
+  Machine -10.5, Warden -14) while those that change how a fight plays read well above it (Vampire, Trickster, Arcanist, Support). The first tiers
   are mostly a little under the old flat bonuses (-1 to -9), as the target asked: small.
-- **The director's watch list:** Undead's skeletons +12 (the owner's own example, in the band, not dominant); Holy and Arcanist +21.5
+- **The director's watch list:** Undead's skeletons +17 (the owner's own example, in the band, not dominant); Holy and Arcanist +21.5
   each (the revives, above); Vampire's thralls +17.5.
 
 **Every mode** (the same commands with `TRAIT_PERKS=0` for the old traits, `tools/trait-perks/env.ts`):
