@@ -1,7 +1,7 @@
 // A painted room with five interchangeable guests. Character illustrations stay
 // separate from the background so every save shows its own strongest company.
 import type { Meta } from './sim/meta';
-import type { TavernElders, TavernQuests, TavernShop, TavernUpgrades } from './tavern';
+import type { TavernQuests, TavernShop, TavernUpgrades } from './tavern';
 import { tavernCompany, tavernGuestArt, TAVERN_SEATS, TAVERN_ACTIVITIES, tavernPlaces } from './render/tavernCompany';
 import { heroArtwork } from './heroArtwork';
 import { heroClassLabel, heroName } from './sim/heroNames';
@@ -17,13 +17,6 @@ import { medal, type PbIcon } from './paintedButton';
 import { onSettings } from './settings';
 import { AmbientLayer } from './render/ambientLayer';
 import { SCENE_LIFE } from './render/ambientScenes';
-// (Dynasties, phase 7: the ghosts of bearers slain under the Oath: pale at their own seat with a candle while the House mourns, then by
-//  the hearth once the line has a bearer again)
-import { cornerGhosts, ghostOf, mourners } from './sim/oath';
-import { FATE_ICON } from './dynastyArt';
-
-/** How many ghosts stand by the hearth at most. */
-const HEARTH_GHOSTS = 3;
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const node = document.createElement(tag);
@@ -36,14 +29,11 @@ export class PaintedTavern {
   readonly root = el('div', 'ptTavern');
   private scene = el('div', 'ptScene');
   private guests = el('div', 'ptGuests');
-  /** (Dynasties, phase 7) the ghosts by the hearth: not guests, so they cannot be tapped. */
-  private ghosts = el('div', 'ptGhosts');
   private list = el('div', 'ptCompany');
   private count = el('small', 'ptCount');
   private upgradeBtn: HTMLButtonElement;
   private questBtn: HTMLButtonElement;
   private stallBtn: HTMLButtonElement;
-  private eldersBtn: HTMLButtonElement;
   private trophy = new TrophyWallModal();
   private meta?: Meta;
   private active = false;
@@ -54,7 +44,6 @@ export class PaintedTavern {
     private quests?: TavernQuests,
     private upgrades?: TavernUpgrades,
     private shop?: TavernShop,
-    private elders?: TavernElders,
   ) {
     const head = el('header', 'ptHead');
     const title = el('div');
@@ -98,11 +87,10 @@ export class PaintedTavern {
     barFront.src = backdrop.src;
     barFront.alt = '';
     barFront.draggable = false;
-    this.ghosts.setAttribute('aria-hidden', 'true');
     // (ALIVE: the room's own life over its painting: the hearth licks and breathes, the candles and lanterns gutter, the herbs, ivy
     //  and banner stir, embers and dust drift; `render/ambientLayer.ts`)
     const life = new AmbientLayer(SCENE_LIFE.tavern, backdrop.src, { fit: 'fill' }, 'ptLife');
-    this.scene.append(backdrop, life.root, warmth, gwenArt, barFront, this.ghosts, this.guests, rearTable, frontTable, dice, steam, caption);
+    this.scene.append(backdrop, life.root, warmth, gwenArt, barFront, this.guests, rearTable, frontTable, dice, steam, caption);
     document.addEventListener('visibilitychange', () => this.syncMotion());
     onSettings(({ saver }) => this.root.classList.toggle('ptSaver', saver));
     this.syncMotion();
@@ -116,13 +104,12 @@ export class PaintedTavern {
     this.upgradeBtn = this.button('Upgrades', 'upgrades', () => this.upgrades?.onUpgrades());
     this.questBtn = this.button('Quests', 'quests', () => this.quests?.onQuests());
     this.stallBtn = this.button('Hester’s shop', 'hester', () => this.shop?.onStall());
-    this.eldersBtn = this.button('Elders’ table', 'elders', () => this.elders?.onElders());
     const board = this.button('Quest board', 'quest-board', () => this.quests?.onBoard());
     const gwen = this.button('Talk to Gwen', 'gwen', () => this.quests?.onGwen());
     const trophies = this.button('Trophies', 'tav-trophies', () => { if (this.meta) this.trophy.open(this.meta); });
     this.questBtn.hidden = board.hidden = gwen.hidden = !this.quests;
     this.stallBtn.hidden = !this.shop;
-    actions.append(this.upgradeBtn, this.questBtn, this.stallBtn, board, gwen, trophies, this.eldersBtn);
+    actions.append(this.upgradeBtn, this.questBtn, this.stallBtn, board, gwen, trophies);
     const sections = el('div', 'ptSections');
     sections.setAttribute('role', 'tablist');
     sections.setAttribute('aria-label', 'Tavern management');
@@ -184,7 +171,6 @@ export class PaintedTavern {
     const news = hesterNews(meta, todayKey());
     this.stallBtn.classList.toggle('ptReady', news.fresh || !!news.visitor);
     this.stallBtn.querySelector('span')!.textContent = news.visitor ? 'Trader visiting' : news.fresh ? 'Shop · new stock' : 'Hester’s shop';
-    this.eldersBtn.hidden = !this.elders?.shown(meta);
     // Reuse each guest's image node while strength changes. No loading flash on refresh.
     const existing = new Map([...this.guests.querySelectorAll<HTMLButtonElement>('.ptGuest')].map((node) => [node.dataset.kind!, node]));
     const keep = new Set(company.map(({ kind }) => kind));
@@ -214,17 +200,6 @@ export class PaintedTavern {
       guest.dataset.seat = TAVERN_SEATS[place].id;
       guest.dataset.flip = String((place === 0 ? 'left' : place === 1 ? 'right' : 'left') !== activity.facing);
       guest.style.setProperty('--life-delay', `${-rank * 1.73}s`);
-      // (Dynasties, phase 7: a guest whose bearer was slain under the Oath sits pale, a candle by it, until the next bearer comes)
-      const ghost = !!ghostOf(meta, kind);
-      guest.classList.toggle('ptGhost', ghost);
-      guest.querySelector('.ptCandle')?.remove();
-      if (ghost) {
-        const candle = el('img', 'ptCandle');
-        candle.src = FATE_ICON.fallen;
-        candle.alt = '';
-        candle.draggable = false;
-        guest.append(candle);
-      }
       const painting = guest.querySelector<HTMLImageElement>('.ptGuestArt')!;
       const nextArt = tavernGuestArt(kind);
       if (painting.getAttribute('src') !== nextArt) painting.src = nextArt;
@@ -250,20 +225,6 @@ export class PaintedTavern {
       this.list.append(row);
     });
     if (!company.length) this.list.append(el('p', 'ptHint', 'Recruit a hero to join you by the hearth.'));
-    // (Dynasties, phase 7: the ghosts by the hearth: Houses in mourning whose hero is not among the guests, and the fallen elders whose
-    //  Houses have a bearer again; three at most, still and pale)
-    const seated = new Set(company.map((x) => x.kind));
-    const by = [...mourners(meta, todayKey()).filter((k) => !seated.has(k)), ...cornerGhosts(meta).map((g) => g.kind)].filter((k, i, a) => a.indexOf(k) === i).slice(0, HEARTH_GHOSTS);
-    this.ghosts.replaceChildren(
-      ...by.map((kind, i) => {
-        const g = el('img', 'ptHearthGhost');
-        g.src = tavernGuestArt(kind);
-        g.alt = '';
-        g.draggable = false;
-        g.dataset.at = String(i);
-        return g;
-      }),
-    );
     this.scene.classList.toggle('ptHasPlayers', company.some(hero => hero.kind === 'knight' || hero.kind === 'barbarian'));
     this.scene.classList.toggle('ptHasSupper', company.length >= 5);
   }

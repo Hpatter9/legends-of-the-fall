@@ -480,9 +480,6 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   // (phase 4: a nemesis slain in a duel cannot cheat death either, and a warchief beaten in one is humiliated instead and flees to his Muster)
   const duel = duelSettle(war, m, note, was, b);
   if (duel.won !== undefined) avenged.add(duel.won);
-  // (Dynasties, phase 7: the Shade of a bearer it slew struck it this fight: it cannot cheat death either)
-  const doomed = b.eidolon?.called !== undefined ? b.eidolon.shade?.slayer : undefined;
-  if (doomed !== undefined) avenged.add(doomed);
   const cheated = new Map<number, string>();
   // (the Assault: a member slain on the attempt that conquers its hold dies for good)
   const conquest = won && run.mode?.kind === 'army' && !!run.mode.assault;

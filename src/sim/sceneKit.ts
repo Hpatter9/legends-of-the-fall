@@ -182,8 +182,6 @@ export type Moment =
   | { kind: 'calAct'; map: number }
   /** The Nemesis War, phase 3: an Avenger's Vengeance (`vengeanceScenes.ts`), "avenger>avenged", played at the camp. */
   | { kind: 'vengeance'; pair: string }
-  /** Dynasties, phase 6: a kindred pair names an heir (`heirScenes.ts`), played at the camp. */
-  | { kind: 'heir'; pair: string }
   /** The Assault, phase 5: the Last Hold has fallen and the War is over (`warEndScene.ts`), played at the camp. */
   | { kind: 'warEnd' };
 

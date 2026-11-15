@@ -3,7 +3,7 @@
 // Avengers and the hero it dreads on the board, its seat), from templates by trigger, in its army's voice. The orcs are gruff, the dead cold,
 // the beasts snarl, the wildwood is fey, the labyrinth proud, the ogres dim, the infernal grand, the yokai speak in riddles and the golems
 // formally. A hero the taunt names answers from the right, in a line of its own. This is the first batch: two lines for each trigger in each
-// voice, and two replies for each hero; more follow for the owner to read. The heir's Blood Grudge trigger comes with the Dynasties (phase 6).
+// voice, and two replies for each hero; more follow for the owner to read.
 //
 // The templates fill from `{name}` (its own name), `{hero}` (the hero it names), `{kind}` (that hero's calling, "Knight"), `{trophy}` (the
 // piece it took: weapon, shield, helm, charm) and `{fallen}` (the hero it slew, whom the Avenger avenges). Pure data: no Pixi, no DOM.

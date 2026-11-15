@@ -1,5 +1,7 @@
 # Dynasty and Council art finishing pass
 
+> **Removed (REMOVE-DYNASTY, after 0.604.0):** the owner took the Dynasties out of the game; see `docs/notes/remove-dynasty.md`. This note is the record of what was built.
+
 Branch `art/dynasty-backdrops`, worktree `/workspace/legends-of-the-fall`. Prior completed portrait, trophy and Council/manuscript batches remain intact. Owner approved the existing source artwork and two new House/heirloom symbol concepts.
 
 Four season icons and four modelled fate icons replace borrowed item tiles, with smooth painted sampling. The unused Legend source is retained/imported, but no Legend fate or gameplay has been invented. New House paintings replace the generic ledger mapping and are visible as the Houses/lineage crest. Heirloom rows use the dedicated keepsake painting. Twelve commissioned trait symbols supplement learned trait names/descriptions only; unknown traits reveal no artwork. Traits without commissioned icons and all weaknesses retain their existing text.

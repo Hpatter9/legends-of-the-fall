@@ -336,6 +336,8 @@ Slaying a recruit at Might 1 pays little, so the War cannot be farmed.
 
 ## 3. Dynasties: heroes who age, love and pass on
 
+> **Removed (REMOVE-DYNASTY, after 0.604.0):** the owner took the Dynasties out of the game ("take out the plan of the characters having heirs and heroes dying off permanently. no houses or anything like that"); see `docs/notes/remove-dynasty.md`. This section is kept as the record of the design.
+
 ### 3.0 The promise to the player who loves their hero
 
 These four rules are the design. Everything else bends to them:

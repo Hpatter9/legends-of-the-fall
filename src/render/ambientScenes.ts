@@ -317,20 +317,6 @@ export const SCENE_LIFE = {
     drifts: [{ kind: 'motes', box: [0.05, 0.05, 0.95, 0.7], count: 12, colour: 0xffd8a0 }],
   },
 
-  /** The Houses' menus (`art/dynasty/houses-backdrop.webp`, under the card's dark veil, so light only): the candelabras either side
-   *  of the great tapestry gutter, dust drifts before it. */
-  houses: {
-    size: [768, 1152],
-    lights: [
-      ...candles([[0.02, 0.33], [0.035, 0.35], [0.965, 0.33], [0.98, 0.35]], 0.06, 0.5),
-      { at: [0.03, 0.36], r: 0.16, kind: 'candle', colour: 0xffa850, power: 0.3 },
-      { at: [0.97, 0.36], r: 0.16, kind: 'candle', colour: 0xffa850, power: 0.3 },
-    ],
-    regions: [],
-    spouts: [],
-    drifts: [{ kind: 'motes', box: [0.08, 0.1, 0.92, 0.9], count: 14, colour: 0xffd8a0 }],
-  },
-
   /** The Dark Council's chamber (`art/dynasty/council-backdrop.webp`, under the card's dark veil, so light only): its sconces and
    *  torches burn, the high ones send up embers, violet light breathes over the warchief's seat. */
   council: {
@@ -398,7 +384,6 @@ export const SCENE_ART: Record<SceneName, string> = {
   throneHall: 'src/art/castle-remake/throne-hall.webp',
   altar: 'src/art/altar/sanctuary.webp',
   stall: 'src/art/shop/shelf.webp',
-  houses: 'src/art/dynasty/houses-backdrop.webp',
   council: 'src/art/dynasty/council-backdrop.webp',
   councilFallen: 'src/art/dynasty/council-fallen-backdrop.webp',
 };

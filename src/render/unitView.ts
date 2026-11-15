@@ -1,7 +1,7 @@
 // The fighters drawn: an animated sprite from the unit's sheet, mirrored to face the way it's going, a shadow under it
 // and a health bar over its head. A step is drawn as a glide between the two tiles with a hop (higher for a climb).
 
-import { type ColorMatrix, ColorMatrixFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
+import { ColorMatrixFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
 import { formOf, UNITS } from '../sim/units';
@@ -40,7 +40,6 @@ import { attackMotion } from './motionRules';
 import { idleFrame } from './enemyMotion';
 import { AilmentFx, ailmentTint } from './ailmentLayer';
 import { gearTexture } from './gearTex';
-import { lookMatrix } from '../sim/heroLooks';
 
 /** The sheet rows beyond `Anim`: the skills' casts (a sheet without one plays its plain attack). */
 type Row = Anim | 'attack2' | 'defend';
@@ -107,26 +106,6 @@ function nemFilter(): ColorMatrixFilter {
   m[0] *= 1.08;
   m[6] *= 0.9;
   m[12] *= 0.92;
-  return f;
-}
-
-/** Dynasties (`sim/dynasty.ts`): the page tells the sprites each hero kind's stage, so a Veteran or an Elder wears the touch of the years
- *  (`AGE_LOOKS` in `sim/heroLooks.ts`). Looks only: the battle never reads it. */
-let ageOf: (kind: string) => string | undefined = () => undefined;
-/** Phase 6 (`sim/heirs.ts`): each kind's fielded bearer's heir look, a steady tint of the sheet (`HEIR_LOOKS`). */
-let heirLookOf: (kind: string) => string | undefined = () => undefined;
-export function setAgeLooks(f: (kind: string) => string | undefined, look?: (kind: string) => string | undefined): void {
-  ageOf = f;
-  if (look) heirLookOf = look;
-}
-/** The age grade (some of the colour taken out towards silver, the darks lifted a little, a touch of cool) and an heir's tint, as one
- *  steady matrix (`lookMatrix`). Steady: it never moves. */
-export function ageFilter(kind: string, stage: string | undefined, look?: string): ColorMatrixFilter | null {
-  const m = lookMatrix(kind, stage, look);
-  if (!m) return null;
-  // (drawn at the screen's own resolution, so the pixel art stays as sharp as the sheets drawn plain)
-  const f = new ColorMatrixFilter({ resolution: 'inherit' });
-  f.matrix = m as ColorMatrix;
   return f;
 }
 
@@ -263,9 +242,6 @@ export class UnitSprite {
     this.pillar.anchor.set(0.5, 1);
     this.pillar.visible = false;
     this.pillar.blendMode = 'add';
-    // (Dynasties: a Veteran's or an Elder's touch of the years, on the player's own heroes, never a summon)
-    const aged = unit.side === 'hero' && unit.owner === undefined && !summon ? ageFilter(unit.def, ageOf(unit.def), heirLookOf(unit.def)) : null;
-    if (aged) this.body.filters = [...(this.body.filters ?? []), aged];
     if (unit.nem) this.dressNemesis(unit.nem.rank, unit.nem.name, unit.nem.scars ?? 0, unit.nem.trophies ?? []);
     for (let i = 0; i < 8; i++) {
       const r = new Sprite();

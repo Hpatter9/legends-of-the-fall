@@ -43,16 +43,14 @@ export interface FightLives {
   /** How many times the whole party was down at once, or the clock ran out (what a burnt heart was: the stars and quests that asked
    *  for "no heart" ask for none of these). */
   falls: number;
-  /** The heroes a life raised in this fight, by their roster tag, one entry a rise (the Legend Oath counts each a fall). */
-  rose: number[];
   /** The Chapel's Vigil, if the run's orders chose one: its gift to each hero a life raises. */
   vigil?: VigilId;
-  /** How much of `spent`, `falls` and `rose` the run has been told of already (`settleLives`). */
-  noted?: { spent: number; falls: number; rose: number };
+  /** How much of `spent` and `falls` the run has been told of already (`settleLives`). */
+  noted?: { spent: number; falls: number };
 }
 
 /** A fresh fight's lives. */
-export const fightLives = (left: number, vigil?: VigilId): FightLives => ({ left: Math.max(0, left), spent: 0, falls: 0, rose: [], ...(vigil ? { vigil } : {}) });
+export const fightLives = (left: number, vigil?: VigilId): FightLives => ({ left: Math.max(0, left), spent: 0, falls: 0, ...(vigil ? { vigil } : {}) });
 
 /** The heroes lives are for: the party's own placed heroes (not a summoned helper, nor a hero's pet). */
 const ofParty = (u: Unit): boolean => u.side === 'hero' && u.owner === undefined && !UNITS[u.def]?.summon;
@@ -93,7 +91,6 @@ function raise(b: Battle, u: Unit, out: BattleEvent[]): boolean {
   if (!at) return false;
   l.left--;
   l.spent++;
-  if (u.tag !== undefined) l.rose.push(u.tag);
   u.u = at.u;
   u.v = at.v;
   u.alive = true;

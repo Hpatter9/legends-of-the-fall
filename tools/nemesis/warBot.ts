@@ -46,7 +46,7 @@ export function growWar(runs: number, seed = 1, party: readonly string[] = PARTY
 
 /** The worst case: every member five Might up (to 10 at most) with three traits. */
 export function harshen(war: War): War {
-  const order = Object.keys(TRAITS).filter((t) => t !== 'legendSlayer');
+  const order = Object.keys(TRAITS);
   for (const n of war.members) {
     n.might = Math.min(10, n.might + 5);
     for (const t of order) {
