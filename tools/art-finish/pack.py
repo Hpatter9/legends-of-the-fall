@@ -139,6 +139,7 @@ if __name__ == '__main__':
     OUT.mkdir(parents=True, exist_ok=True)
     PREVIEW.mkdir(parents=True, exist_ok=True)
     menu_art()
-    treants()
+    # (ROUND2-CLEANUP: the treant step is retired: its originals came from batareya's pack and are deleted, and cls_treant.png is the
+    # round-2 art now; cls_treant_2/_3 keep the hurt rows it baked into them)
     effects()
     print('Packed 3 travellers, 5 expedition icons, 7 empty slots, doll backing, 3 treant clips and 18 spell frames')
