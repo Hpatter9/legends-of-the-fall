@@ -11,12 +11,12 @@ import { duelOffer, offerSnap } from '../src/sim/duel';
 import { onceEach, tauntFor, wavesTaunts, type Taunt } from '../src/tauntCutRules';
 import { duelTaunt } from '../src/duelRules';
 
-/** An Undead Legion run at wave 3 with two nemeses standing in it: one dreads the knight (it challenges him), the other only taunts. */
+/** An Undead Legion run at wave 3 with two nemeses (old foes, met twice: NEMESIS-DEPTH) standing in it: one dreads the knight (it challenges him), the other only taunts. */
 function wave(): { run: Run; dreads: Nemesis; other: Nemesis } {
   const m = startedMeta(3);
   m.war = newWar();
   const mk = (extra: Partial<Nemesis>): Nemesis => {
-    const n: Nemesis = { id: m.war!.nextId++, base: 'skeleton', army: 'undead', name: `Rattle${m.war!.nextId}`, epithet: 'the Bony', rank: 'lieutenant', loyalty: 60, might: 3, scars: 0, traits: ['scarred'], weak: [], known: [], memory: [], met: 1, lost: 0, born: 0, ...extra };
+    const n: Nemesis = { id: m.war!.nextId++, base: 'skeleton', army: 'undead', name: `Rattle${m.war!.nextId}`, epithet: 'the Bony', rank: 'lieutenant', loyalty: 60, might: 3, scars: 0, traits: ['scarred'], weak: [], known: [], memory: [], met: 2, lost: 0, born: 0, ...extra };
     m.war!.members.push(n);
     return n;
   };

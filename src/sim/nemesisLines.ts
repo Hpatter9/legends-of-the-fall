@@ -8,6 +8,8 @@
 // The templates fill from `{name}` (its own name), `{hero}` (the hero it names), `{kind}` (that hero's calling, "Knight"), `{trophy}` (the
 // piece it took: weapon, shield, helm, charm) and `{fallen}` (the hero it slew, whom the Avenger avenges). Pure data: no Pixi, no DOM.
 
+import type { MomentKind } from './nemesisMoments';
+
 /** What a taunt is about, in the order a nemesis reaches for them (the most personal first). */
 export type TauntTrigger = 'trophy' | 'humiliated' | 'avenger' | 'slew' | 'dread' | 'maimed' | 'escaped' | 'warchief' | 'meet';
 export const TRIGGERS: readonly TauntTrigger[] = ['trophy', 'humiliated', 'avenger', 'slew', 'dread', 'maimed', 'escaped', 'warchief', 'meet'];
@@ -193,4 +195,79 @@ export const REPLIES: Readonly<Record<string, readonly [string, string]>> = {
   ilyra: ['Not one of mine falls to you, {name}.', 'I came back from the grave for this, {name}. You will not send me back.'],
   orrun: ['Strike the roots, {name}. They have weathered worse.', 'I stood before the first forest, {name}. I will stand after you.'],
   nyxara: ['I have read your ending, {name}. It is short.', 'Every future I keep has you losing, {name}.'],
+};
+
+/**
+ * NEMESIS-DEPTH, idea 2: the taunts of remembered fights (`nemesisMoments.ts`), four to each moment in each voice. They fill from `{name}`,
+ * `{hero}` and `{kind}` (the hero the moment is about), `{what}` (the skill's name, or the element: fire, frost, storm, venom) and `{land}`
+ * (where it happened: "the highlands"). A moment about a hero on the board is reached for before an Avenger, a slaying, the Dread or a maiming;
+ * one about no hero (the king's spell, an Eidolon, an element) before an escape. Pure data.
+ */
+export const MOMENT_TAUNTS: Readonly<Record<MomentKind, Readonly<Record<Voice, readonly string[]>>>> = {
+  skill: {
+    orcs: ['Your {what} hurt, {hero}. Then I got up.', 'I took your {what} in {land}, {hero}. Do it again. Harder.', 'Still got the mark of your {what}, {hero}. I show it off.', 'Is that {what} all you got, {hero}? I been waiting.'],
+    undead: ['Your {what} broke three of my ribs, {hero}. I had spares.', 'I remember your {what}, {hero}. The dead remember everything.', 'In {land} you gave me your {what}, {hero}. I give you nothing back but the grave.', 'Your {what} could not finish me, {hero}. Nothing can.'],
+    beasts: ['Your {what} bit deep, {hero}. I bite deeper.', 'I smell your {what} coming, {hero}. I learned the smell in {land}.', 'You hurt me with your {what}, {hero}. Prey does not do that twice.', 'I licked the wound your {what} left, {hero}. It healed hungry.'],
+    wildwood: ['Your {what} cut me to the heartwood, {hero}. Heartwood grows back.', 'In {land} your {what} found me, {hero}. Today the brambles find you.', 'I pressed your {what} between my leaves, {hero}, to remember it by.', 'Such a pretty {what}, {hero}. It will look lovely on your grave.'],
+    labyrinth: ['I have studied your {what}, {hero}, as one studies a door. I know its hinges.', 'Your {what} shook my halls in {land}, {hero}. My halls still stand.', 'A {kind}’s {what}. I have had it carved over my gate, so I never forget.', 'You struck me with your {what}, {hero}. I mapped every inch of it.'],
+    ogres: ['Your {what} make me go ow, {hero}! Me no forget ow!', 'That {what} thing! Do not do the {what} thing, {hero}!', 'Me still got lump from your {what}, {hero}. Lump angry.', 'You do {what} in {land}. Me do smash here. Fair.'],
+    infernal: ['Your {what} singed my soul, {hero}. I have been savouring it.', 'I bore your {what} in {land}, {hero}, and I grew stronger in the fire of it.', 'Show me your {what} again, {hero}. I want to watch it fail.', 'A {kind}’s {what}: a spark against the abyss.'],
+    yokai: ['What hurts once and tickles twice? Your {what}, {hero}.', 'I keep your {what} in a paper lantern, {hero}. It flickers when you are near.', 'In {land} your {what} split me in two, {hero}. Which of me are you talking to?', 'A riddle, {hero}: what does a {what} do to mist?'],
+    golems: ['Damage log: {what}, source {hero}. Countermeasure: installed.', 'Your {what} in {land} has been analysed, {hero}. Do not expect it to work.', 'Recorded: {hero}’s {what}. Plating reinforced.', 'Impact signature {what} recognised. Proceeding with confidence.'],
+  },
+  brink: {
+    orcs: ['You had me on my knees, {hero}. You should have finished it.', 'One more swing and I was dead, {hero}. You missed it.', 'In {land} you left me breathing, {hero}. Worst mistake you ever made.', 'I was nearly dead. Now I am nearly angry.'],
+    undead: ['You brought me to the edge of the grave, {hero}. I know it well. I came back.', 'A breath from oblivion, {hero}. I did not take it.', 'In {land} I lay a thread from the end, {hero}. The thread held.', 'You almost unmade me, {hero}. Almost is a long word.'],
+    beasts: ['I was bleeding out in {land}, {hero}. I crawled away. I crawled back.', 'You left me on the edge, {hero}. The edge is where I hunt.', 'Nearly dead, {hero}. Never so hungry.', 'A wounded beast is the worst kind, {hero}. You made me this.'],
+    wildwood: ['You cut me down to a stump, {hero}. Stumps sprout.', 'One leaf left on me in {land}, {hero}. It was enough.', 'You nearly felled me, {hero}. The forest held its breath. Then it breathed again.', 'So close, {hero}. I felt your axe on my last ring.'],
+    labyrinth: ['You stood at the very heart of me, {hero}, and turned back. Pity.', 'One step from victory in {land}, {hero}. My maze has many last steps.', 'You almost had me, {hero}. Almost is where my halls keep their dead.', 'I was a single breath from ruin. I have rebuilt from less.'],
+    ogres: ['Me almost dead! Me very cross about that!', 'You nearly squash me, {hero}! Me no like nearly!', 'In {land} me lie down a long time. Me get up now.', 'Me only had one bit of health left. Me use it to come back.'],
+    infernal: ['You left me an ember, {hero}. Embers start fires.', 'I clung to existence by a thread in {land}, {hero}. I am woven of such threads.', 'So close to my end, {hero}. You will not come so close again.', 'You had me broken, {hero}. Broken things have sharp edges.'],
+    yokai: ['What is almost nothing but still laughs? Me, in {land}.', 'You blew out all my lanterns but one, {hero}.', 'A whisper from death, {hero}, and the whisper was mine.', 'Nearly gone, {hero}. Nearly is my favourite place.'],
+    golems: ['Integrity at four per cent in {land}. Integrity restored. Grudge retained.', 'Near-total failure logged, {hero}. Cause: you. Remedy: you.', 'Survival probability was low, {hero}. I exceeded it.', 'Critical damage, {hero}, but not critical enough.'],
+  },
+  thrown: {
+    orcs: ['You threw me off a cliff, {hero}. I climbed back up just to hit you.', 'I fell a long way in {land}. Long way to think about you.', 'Throw me again, {hero}. I land on my head. It is the hard bit.', 'Last time I went flying. This time you do.'],
+    undead: ['You cast me down in {land}, {hero}. The dead are used to falling.', 'I fell, {hero}. I lay at the bottom with the bones. They told me to come back.', 'Throw me where you like, {hero}. I always walk back.', 'You hurled me from the heights. Now I bring the depths to you.'],
+    beasts: ['You knocked me off my feet, {hero}. I have four. I got up faster.', 'I tumbled down the rocks in {land}, {hero}. I came up with your scent.', 'Push me again, {hero}. See what I take with me.', 'You threw me, {hero}. I landed hunting.'],
+    wildwood: ['You flung me from the bough, {hero}. Leaves always find the ground again.', 'I fell like autumn in {land}, {hero}. Spring is here now.', 'You tossed me down the bank, {hero}, into the brambles. They are my friends.', 'Down I went, {hero}, and the roots caught me.'],
+    labyrinth: ['You hurled me into my own pit, {hero}. I know the way out of every pit I dug.', 'A fall in {land}, {hero}. I have redesigned the stairs since.', 'You threw me down, {hero}. The lower halls are where I keep my best ideas.', 'I have counted the steps you knocked me down. All of them. Twice.'],
+    ogres: ['You push me off big hill, {hero}! Me roll and roll!', 'Me fall down in {land}! Everybody laugh! Me no laugh.', 'You throw me, {hero}? Me throw you! Further!', 'Me land on rock. Rock broke. Me fine. You next.'],
+    infernal: ['You cast me down in {land}, {hero}. I have fallen from far greater heights than yours.', 'You threw me into the dark, {hero}. I was born there.', 'Hurl me again, {hero}. Every fall brings me closer to the pit, and the pit is mine.', 'I fell, {hero}. Thrones are built on such falls.'],
+    yokai: ['What falls without breaking? A fox in {land}. Ask {hero}.', 'You tossed me like a paper lantern, {hero}. Lanterns float.', 'Down and down I went, {hero}, and then I was behind you.', 'Push a ghost off a cliff, {hero}, and see where it lands.'],
+    golems: ['Unscheduled descent in {land}, cause {hero}. Gyroscopes upgraded.', 'Fall recorded: several levels. Repaired. Retaliation pending.', 'Ballistic event, {hero}. My turn to calculate yours.', 'Displacement by {hero} logged. Anchor bolts installed.'],
+  },
+  kingSpell: {
+    orcs: ['Your king threw magic at me in {land}. Tell him to come down and fight.', 'The little king’s spell stung. Tell him I said thanks.', 'Your king hides behind his spells. I will drag him out.', 'Magic from the sky, eh? I punched the sky. It stopped.'],
+    undead: ['Your king’s spell found me in {land}. I have been dead too long for it to matter.', 'Tell your king his magic is fading, like everything.', 'The king cast at me from afar. Afraid to look on what he fights?', 'Your king’s fire was brief. I am not.'],
+    beasts: ['The sky bit me in {land}. Your king’s doing. I will bite him back.', 'Your king throws lightning like a coward throws stones.', 'I smelled the king’s magic on the wind. I will follow it home.', 'Your king hurt me from far away. I am coming close.'],
+    wildwood: ['Your king rained his spells on my glade in {land}. The glade remembers.', 'A crown that throws spells is still only a crown, little ones.', 'Your king’s magic scorched my bark. I will grow a ring around it.', 'Tell your king the wood heard him. The wood is listening still.'],
+    labyrinth: ['Your king’s spell struck my halls in {land}. I have since put a roof over them.', 'A king who fights from the walls has never walked a maze.', 'I have catalogued your king’s spells. Every one of them has a counter in my halls.', 'Your king cast blind into my corridors. He will not find me so easily again.'],
+    ogres: ['Your king make sky hurt me! Me no like sky now!', 'Who throw magic in {land}? Your king? Me eat him.', 'Magic go boom on me. Me go boom on you.', 'Tell king me coming. Me hungry for king.'],
+    infernal: ['Your king’s spell in {land}, a candle held to a furnace.', 'I tasted your king’s magic. Thin. Mortal. Delicious.', 'Tell your king I bear his spell like a brand. I will return it with interest.', 'A king who casts from safety knows nothing of fire.'],
+    yokai: ['What falls from the sky but cannot see? Your king’s spell in {land}.', 'Your king cast a spell at a shadow. The shadow cast one back.', 'The king’s magic burned my tails. I have more tails.', 'Tell your king the fox remembers who threw the stars.'],
+    golems: ['Arcane impact in {land}, source: the king. Shielding updated.', 'Royal magic recorded. Resistance compiled.', 'Your king’s spell was inefficient. I have corrected for it.', 'External arcane interference logged. Origin: crown. Response: queued.'],
+  },
+  eidolon: {
+    orcs: ['You called a god on me in {land}. I was still standing after. Think on that.', 'Your big glowing friend hit hard. I hit harder.', 'Call your god again. I want another go.', 'I got hit by a god and lived. What have you done today?'],
+    undead: ['You summoned a god against me in {land}. Gods die too. I have met them.', 'Your Eidolon burned like a sun. Suns go out.', 'I have outlived gods, little heroes. I will outlive yours.', 'The sky opened and I did not fall. You should have stopped then.'],
+    beasts: ['The sky-beast struck me in {land}. I am the bigger beast.', 'You called something huge. I did not run. Remember that.', 'Your god-thing hurt me. I hunt gods now.', 'I stood under the Eidolon’s strike and howled back.'],
+    wildwood: ['You tore the sky open over my wood in {land}. The wood has not forgiven the sky.', 'A god came down to fell me. I bent like a willow, and stood.', 'Your Eidolon scorched every leaf on me. The leaves came back thorns.', 'Call down your god again, little ones. The roots are deeper now.'],
+    labyrinth: ['A god walked my halls in {land} and found no centre. Neither will you.', 'Your Eidolon shook my foundations. I have dug them deeper.', 'I survived a god in my own corridors. You are merely mortals.', 'You needed a god against me. What will you need today?'],
+    ogres: ['Big shiny thing hit me in {land}! Me hit it back! Me think!', 'You bring big god friend? Me bring big club. Same.', 'Me got squashed by god. Me still here. God gone.', 'Do sky thing again! Me ready this time!'],
+    infernal: ['You called a god against me in {land}. I have served worse masters.', 'Your Eidolon’s light, how quaint. I was burning before it was born.', 'Summon your little god. {name} awaits it.', 'I have looked into an Eidolon’s eye and smiled. Look into mine.'],
+    yokai: ['What came from the sky and left without me? Your god, in {land}.', 'You tore the heavens for one fox. Flattering.', 'The Eidolon struck, and I was already elsewhere. Mostly.', 'Call your god, heroes. I have a riddle for it.'],
+    golems: ['Eidolon-class strike survived in {land}. Armour rated accordingly.', 'Divine impact logged. Divinity: overrated.', 'Your summoned entity caused damage. Damage repaired. Entity noted.', 'Eidolon strike recorded. Repeat strikes will be less effective.'],
+  },
+  element: {
+    orcs: ['Your {what} got me in {land}. Look, I kept the scars.', 'I been through your {what}. Bring more.', 'A bit of {what}? I bathe in worse.', 'Last time you got me with {what}. This time I got thicker skin.'],
+    undead: ['Your {what} ate at me in {land}. There is little left to eat.', 'I remember your {what}, how it crept into my bones.', 'Your {what} cannot kill what is already dead. You tried.', 'The {what} you laid on me lingers still. So do I.'],
+    beasts: ['Your {what} burned my hide in {land}. My hide grew back tougher.', 'I smell {what} on you. I remember that smell.', 'You poured {what} on me. I shook it off. I shake you off next.', 'The {what} hurt. Pain makes me fast.'],
+    wildwood: ['Your {what} withered half my leaves in {land}. The other half is sharp.', 'I wear the scars of your {what}, little ones, like autumn wears red.', 'The {what} you brought into my wood still lingers. The wood is angry.', 'Bring your {what} again. I have grown a bark for it.'],
+    labyrinth: ['Your {what} filled my halls in {land}. I have since built drains.', 'I know the taste of your {what} now. I have designed around it.', 'The {what} you set loose in my maze got lost. As will you.', 'Every wall of mine still bears the mark of your {what}. A lesson, carved.'],
+    ogres: ['Your {what} make me all funny in {land}! Me no like funny!', 'Ow, {what}! Me remember ow!', 'You do {what} again, me do angry again.', 'The {what} hurt my belly. Now me hungry AND hurt.'],
+    infernal: ['Your {what} in {land}, a mortal trick. I have learned it.', 'You scarred me with {what}. I wear it like a crown.', 'I drank your {what} and found it wanting.', 'More {what}, heroes. I am curious how much you have.'],
+    yokai: ['What wears your {what} like a coat and smiles? I do, since {land}.', 'Your {what} left a mark on my mask. I painted over it.', 'A riddle: what is {what} to a ghost?', 'You poured {what} on mist in {land}. How did that go?'],
+    golems: ['Elemental damage: {what}, {land}. Insulation installed.', 'Your {what} corroded seven plates. Plates replaced, grudge retained.', 'Exposure to {what} recorded. Tolerance increased.', 'Analysis complete: {what}. Effectiveness against me: decreasing.'],
+  },
 };

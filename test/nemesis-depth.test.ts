@@ -10,8 +10,12 @@ import { armyRun, recruit } from '../src/sim/run';
 import { decorate } from '../src/sim/revenge';
 import { duelOffer } from '../src/sim/duel';
 import { startedMeta, type Meta } from '../src/sim/meta';
-import { GUARD, LIEUTENANT, newWar, planNemeses, readWar, snapOf, STRANGER_CHANCE, type Nemesis, type War } from '../src/sim/nemesis';
-import { startNemesisTally, tallyNemesis, type NemesisTally } from '../src/sim/nemesisLog';
+import { GUARD, LIEUTENANT, newWar, planNemeses, readWar, remembers, snapOf, STRANGER_CHANCE, type NemSnap, type Nemesis, type War } from '../src/sim/nemesis';
+import { blankLog, startNemesisTally, tallyNemesis, type NemesisTally } from '../src/sim/nemesisLog';
+import { EPITHETS, keepMoment, MOMENT_KINDS, momentLine, momentsOf, MOMENTS_MAX, type NemMoment } from '../src/sim/nemesisMoments';
+import { MOMENT_TAUNTS, VOICES } from '../src/sim/nemesisLines';
+import { tauntFor, triggerOf } from '../src/tauntCutRules';
+import { heroName } from '../src/sim/heroNames';
 import { CHEAT_DEATH, EVENT_WEIGHT, FATE_MEETINGS, noteWar, swear, takeTurn } from '../src/sim/council';
 import { CHIEF_TENURE, MUSTER_NEED, musterLine, musterOpen, startMuster, tenureLeft, warchiefOf } from '../src/sim/muster';
 
@@ -194,4 +198,114 @@ test('only an old foe calls a champion out: one met fewer than two times makes n
     run.nemesis = { members: [decorate(m, snapOf(n), n)], waves: { '3': [n.id] } };
     assert.equal(!!duelOffer(run), met >= FATE_MEETINGS, `met ${met}`);
   }
+});
+
+// ---- Idea 2: remembered fights ------------------------------------------------------------------------------------------------
+
+test('the tally keeps each hero’s skill damage by the skill it cast, who threw a foe, and how far it fell', () => {
+  const b = fightOf(['skeleton']);
+  const k = hero(b, 'knight');
+  const u = b.units.find((x) => x.side === 'foe')!;
+  const t = startNemesisTally();
+  tallyNemesis(t, [{ kind: 'skill', by: k.id, name: 'shieldBash', ms: 500 }], b.units, 100);
+  tallyNemesis(t, [{ kind: 'hit', by: k.id, to: u.id, dmg: 40, heavy: false, splash: false, killed: false, src: 'skill' }, { kind: 'shove', to: u.id, path: [], ms: 200, how: 'shove' }, { kind: 'fall', to: u.id, levels: 2 }], b.units, 200);
+  const f = t.foes[u.id];
+  assert.equal(f.skills?.['knight|shieldBash'], 40);
+  assert.equal(f.thrownBy, 'knight');
+  assert.equal(f.drop, 2);
+});
+
+test('a fight’s moments: a skill that took a quarter of its health, the brink, a throw, an Eidolon, the king’s spell, an element; two at most', () => {
+  const b = fightOf(['skeleton']);
+  const u = b.units.find((x) => x.side === 'foe')!;
+  const f = blankLog(u.def);
+  assert.deepEqual(momentsOf(f, u, b, 4), []);
+  f.skills = { 'knight|shieldBash': u.maxHp * 0.3 };
+  f.by = { knight: u.maxHp * 0.9 };
+  u.hp = u.maxHp * 0.05;
+  const two = momentsOf(f, u, b, 4);
+  assert.deepEqual(two.map((x) => x.k), ['skill', 'brink']);
+  assert.equal(two[0].hero, 'knight');
+  assert.equal(two[0].land, b.board.area);
+  assert.equal(two[0].wave, 4);
+  // (below the bars, nothing)
+  f.skills = { 'knight|shieldBash': u.maxHp * 0.1 };
+  u.hp = u.maxHp * 0.5;
+  assert.deepEqual(momentsOf(f, u, b, 4), []);
+  f.eidolon = 1;
+  f.spells = 2;
+  f.ailDmg = { burn: u.maxHp * 0.2 };
+  assert.deepEqual(momentsOf(f, u, b, 4).map((x) => x.k), ['eidolon', 'kingSpell']);
+  f.eidolon = 0;
+  f.spells = 0;
+  const el = momentsOf(f, u, b, 4);
+  assert.equal(el[0].k, 'element');
+  assert.equal(el[0].what, 'fire');
+});
+
+test('moments are kept newest first, one of a kind about a hero, six at most; the save keeps them and drops nonsense', () => {
+  let list: NemMoment[] | undefined;
+  for (let w = 1; w <= 9; w++) list = keepMoment(list, { k: w % 2 ? 'skill' : 'brink', hero: w < 5 ? 'knight' : `wizard`, wave: w });
+  assert.ok(list!.length <= MOMENTS_MAX);
+  assert.equal(list![0].wave, 9);
+  assert.equal(new Set(list!.map((x) => `${x.k}/${x.hero}`)).size, list!.length);
+  const m = warMeta();
+  const n = member(m.war!, 'captain', 4, { moments: [...list!, { k: 'nonsense' as never, wave: 1 }, { k: 'skill', hero: 'notAHero', wave: 2 }] as NemMoment[], was: ['Pincushion'], epiAt: 'captain' });
+  const back = readWar(JSON.parse(JSON.stringify(m.war)))!.members.find((x) => x.id === n.id)!;
+  assert.deepEqual(back.moments, list);
+  assert.deepEqual(back.was, ['Pincushion']);
+  assert.equal(back.epiAt, 'captain');
+});
+
+test('an old foe’s epithet grows from a moment, once a rank, from its third meeting; the old one is kept', () => {
+  const b = fightOf(['skeleton']);
+  const u = b.units.find((x) => x.side === 'foe')!;
+  const f = blankLog(u.def);
+  f.by = { knight: u.maxHp };
+  u.hp = u.maxHp * 0.05;
+  const m = warMeta();
+  const young = member(m.war!, 'lieutenant', 2, { met: 2, epithet: 'Pincushion' });
+  assert.equal(remembers(young, f, u, b, 7, 3), undefined, 'not before the third meeting');
+  assert.equal(young.moments?.[0].k, 'brink');
+  const old = member(m.war!, 'lieutenant', 2, { met: 3, epithet: 'Pincushion' });
+  const e = remembers(old, f, u, b, 7, 3)!;
+  assert.ok(EPITHETS.brink.includes(e), e);
+  assert.equal(old.epithet, e);
+  assert.deepEqual(old.was, ['Pincushion']);
+  assert.equal(old.epiAt, 'lieutenant');
+  assert.equal(remembers(old, f, u, b, 8, 4), undefined, 'once a rank');
+  old.rank = 'captain';
+  assert.ok(remembers(old, f, u, b, 9, 5), 'again at a new rank');
+  // (the same every time)
+  const twin = member(m.war!, 'lieutenant', 2, { met: 3, epithet: 'Pincushion' });
+  twin.id = old.id;
+  assert.equal(remembers(twin, f, u, b, 7, 3), e);
+});
+
+test('every moment’s taunt fills in every voice, four lines each; one about a hero on the board is reached for after a trophy, one about no hero before an escape', () => {
+  const field = ['knight', 'cleric'];
+  for (const k of MOMENT_KINDS)
+    for (const v of VOICES) {
+      assert.equal(MOMENT_TAUNTS[k][v].length, 4, `${k}/${v}`);
+      const hero = k === 'skill' || k === 'brink' || k === 'thrown' ? 'knight' : undefined;
+      const s: NemSnap = { id: 5, base: 'skeleton', name: 'Morrow', epithet: 'the Unburnt', rank: 'captain', might: 3, scars: 0, traits: [], weak: [], army: v, ...(hero ? { slew: ['knight'] } : {}), fled: 2, moments: [{ k, ...(hero ? { hero } : {}), what: k === 'element' ? 'frost' : 'Shield Bash', land: 'snow', wave: 7 }] };
+      const seen = new Set<string>();
+      for (let met = 0; met < 8; met++) {
+        const t = tauntFor({ ...s, met }, field, 3);
+        assert.equal(t.trigger, k, `${k}/${v}`);
+        assert.ok(!/[{}]/.test(t.line), `${k}/${v}: "${t.line}"`);
+        seen.add(t.line);
+      }
+      assert.equal(seen.size, 4, `${k}/${v}: every line comes up`);
+    }
+  // (a trophy still comes first; a moment about a hero not on the board is passed over)
+  const base: NemSnap = { id: 6, base: 'skeleton', name: 'Hask', epithet: '', rank: 'lieutenant', might: 2, scars: 0, traits: [], weak: [], army: 'orcs', moments: [{ k: 'skill', hero: 'knight', what: 'Shield Bash', wave: 3 }] };
+  assert.equal(triggerOf({ ...base, trophies: [{ kind: 'knight', slot: 'off', item: 1, base: 'woodenShield', rarity: 2 }] }, field).trigger, 'trophy');
+  assert.equal(triggerOf({ ...base, shamed: 'knight' }, field).trigger, 'skill');
+  assert.equal(triggerOf({ ...base, slew: ['cleric'] }, ['cleric']).trigger, 'slew');
+});
+
+test('a moment reads as a line of history on the card', () => {
+  assert.equal(momentLine({ k: 'skill', hero: 'knight', what: 'Shield Bash', land: 'highlands', wave: 9 }), `Took ${heroName('knight')}’s Shield Bash in the highlands, wave 9, and lived`);
+  assert.equal(momentLine({ k: 'element', what: 'fire', land: 'volcano', wave: 2 }), 'Scarred by fire in the ashlands, wave 2');
 });

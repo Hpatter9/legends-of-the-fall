@@ -364,3 +364,46 @@ and it then sits out one to three runs (110 humiliations, up from 42). That keep
 total of seat changes is still high (22.8 a week) because new members are named by the fights at about ten a week, and a newborn
 replaces a weak lieutenant. If the owner wants the Might up, the next lever is to have fate's sparing not humiliate (no runs sat out).
 Duels are still won 96% of the time; that is Idea 10's job.
+
+## Idea 2, built: remembered fights
+
+- **Moments** (`src/sim/nemesisMoments.ts`). A nemesis that lives through a fight, or is dragged off it, keeps up to two of the fight's
+  striking moments. It holds six at most, newest first, and one of a kind about the same hero replaces the older (`keepMoment`). The kinds:
+  - **skill**: a hero's skill dealt it a quarter of its health ("Took Kwame’s Shield Bash in the highlands, wave 9, and lived");
+  - **brink**: it lived on under 12% of its health;
+  - **thrown**: it fell from a height, or a hero shoved or launched it;
+  - **Eidolon**: an Eidolon's strike hit it;
+  - **king's spell**: the king's spell hit it;
+  - **element**: fire, frost, storm or venom ticks took 15% of its health.
+
+  Each moment names the hero, the land and the wave.
+- **The tally learns three things** (`nemesisLog.ts`, still no hook inside the fight): each hero's skill damage, credited to the skill it
+  last cast (`FoeLog.skills`); who struck a foe last before it was shoved (`thrownBy`); and the most levels it fell at once (`drop`).
+- **Taunts read moments** (`MOMENT_TAUNTS` in `nemesisLines.ts`: six moments, nine voices, four lines each, 216 new lines). They fill
+  from `{hero}`, `{kind}`, `{what}` (the skill's name or the element) and `{land}` ("the highlands"). In `triggerOf`:
+  - a moment about a hero on the board comes after a trophy and **before a humiliation**. I settled this here: every nemesis fate spares is
+    humiliated, so with the humiliation first it would crowd the moments out;
+  - a moment about no hero comes before an escape.
+- **No repeats.** The line now turns with the nemesis's meetings (`met`), not the run's seed, so a nemesis never says the same line twice
+  running while its cell has more than one. The old triggers keep their two lines a cell. **Settled here:** the heroes' replies stay as they
+  are (each hero's personal reply answers a moment); the design's 135 new replies are left for a later batch.
+- **Epithets grow** (`remembers`, `epithetFrom`, `EPITHET_SALT`). From its third meeting, once at each rank, an old foe's epithet changes
+  to one from its newest moment's bank ("Who Would Not Die", "the Twice-Burnt", "Kwame’s Survivor", "of the Long Drop"). The old
+  epithet is kept (`Nemesis.was`, three at most), the memory says "Now called …", and the wave card says "Hask, Pincushion is now called
+  Hask, Who Would Not Die".
+- **The card** has a **Remembered fights** section: each moment as a line of history, and "Once called Pincushion".
+- Saved: `Nemesis.moments`, `was` and `epiAt` (read and capped by `readWar`; a bad moment is dropped), and `NemSnap.moments` (`decorate`).
+  An old save reads as it was.
+
+### Measured
+
+The fights are unchanged (Idea 2 only reads them), so the war simulator's other numbers are Idea 1's. Its new taunt measure: each
+member's taunt as it would open its next meeting, compared with its taunt before.
+
+| | Main | Ideas 1 and 2 |
+|---|---|---|
+| The same taunt as last time | 8 of 43 (19%) | **0 of 103 (0%)** |
+| Taunts by trigger | slew 152, dread 85, humiliated 42 | humiliated 108, slew 76, **thrown 36, skill 32**, dread 21, **brink 5** (before the moments were moved ahead of a humiliation) |
+
+The bot's saves never cast the king's spells or call an Eidolon, and seldom burn a foe for 15% of its health, so those three moments do not
+show in the simulator.

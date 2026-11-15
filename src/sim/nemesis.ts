@@ -26,6 +26,7 @@ import { TIERS } from './tiers';
 import { UNITS } from './units';
 import { callingOf } from './weakness';
 import { fieldedHero } from './fightStats';
+import { epithetFrom, keepMoment, mayGrowEpithet, momentsOf, MOMENTS_MAX, readMoment, WAS_MAX, type NemMoment } from './nemesisMoments';
 
 /** The side streams: births and fates at settle, and where the nemeses stand in a run. */
 export const NEMESIS_SALT = 0x4e3e51;
@@ -118,6 +119,12 @@ export interface Nemesis {
   seen?: true;
   /** A warchief made Stitched while he holds the seat: once a seat holding (it is cleared when he is crowned). */
   chiefStitch?: true;
+  // (NEMESIS-DEPTH, `nemesisMoments.ts`: remembered fights)
+  /** The striking moments of the fights it lived through, newest first (`MOMENTS_MAX`). */
+  moments?: NemMoment[];
+  /** The epithets it was once called, newest first (`WAS_MAX`), and the rank at which its epithet last grew. */
+  was?: string[];
+  epiAt?: NemRank;
 }
 
 /** A trophy a humiliated nemesis took: the hero's piece in the first filled slot of weapon, shield, helm or charm, drawn with that piece's own
@@ -293,6 +300,8 @@ export interface NemSnap {
   fled?: number;
   met?: number;
   seen?: true;
+  /** NEMESIS-DEPTH: its remembered moments (its taunts read them first). */
+  moments?: NemMoment[];
   /** Phase 4 (`duel.ts`): its challenge was refused this run, so it is Mocking: +5% attack for the rest of the run. */
   mocking?: true;
 }
@@ -414,6 +423,8 @@ export interface NemNote {
   grew: { id: number; name: string; epithet: string; might: number }[];
   /** NEMESIS-DEPTH: the nemeses who feasted on their victories instead of growing (the death-spiral guard). */
   feasted?: { id: number; name: string; epithet: string }[];
+  /** NEMESIS-DEPTH: an old foe's epithet grown from the fight ("Gash, Pincushion is now called Gash, Who Would Not Die"). */
+  renamed?: string[];
   slain: { id: number; name: string; epithet: string; crowns: number; by: string; rank: NemRank; might: number; base: string; army: string }[];
   /** The nemeses who stood in the fight and lived while the heroes lost (their underlings' loyalty rises, `council.ts`). */
   held: number[];
@@ -603,6 +614,9 @@ function settle(war: War, m: Meta, run: Run, b: Battle, tally: NemesisTally, won
     // (it lived: each deed promotes it, +1 Might a run at most, a new trait from this fight, a memory line; one that fled the board escaped,
     // and is named from that alone, phase 3)
     if (u.fled) (note.fled ??= []).push(n.id);
+    // (NEMESIS-DEPTH: the fight's striking moments, and an old foe's epithet grown from the newest)
+    const was = fullName(n);
+    if (remembers(n, f, u, b, run.seed, wave)) (note.renamed ??= []).push(`${was} is now called ${fullName(n)}`);
     const deeds: Deed[] = u.fled ? ['escaped'] : f ? deedsOf(f, u, b, won) : !won ? ['escaped'] : [];
     if (!deeds.length) continue;
     for (const d of deeds) remember(n, memoryLine(d, f ?? blankLog(u.def), b, n.army, tier, wave));
@@ -678,12 +692,30 @@ function birth(war: War, u: Unit, f: FoeLog, b: Battle, tally: NemesisTally, won
     grew: run.seed,
   };
   remember(n, memoryLine(deed, f, b, home, tier, wave));
+  for (const mo of momentsOf(f, u, b, wave).reverse()) n.moments = keepMoment(n.moments, mo);
   if (deed === 'maimed') {
     const k = maimedKind(f, b);
     if (k) n.maimed = [k];
   }
   if (deed === 'escaped') n.fled = 1;
   return n;
+}
+
+/**
+ * NEMESIS-DEPTH: keep a fight's striking moments for a nemesis that lived through it (or was dragged off: `council.ts`), and grow an old foe's
+ * epithet from the newest, once a rank (the old one kept as "once called"). Returns the new epithet, if it grew one.
+ */
+export function remembers(n: Nemesis, f: FoeLog | undefined, u: Unit, b: Battle, seed: number, wave: number): string | undefined {
+  const got = momentsOf(f, u, b, wave);
+  for (const mo of [...got].reverse()) n.moments = keepMoment(n.moments, mo);
+  if (!got.length || !mayGrowEpithet(n)) return undefined;
+  const e = epithetFrom(got[0], n.epithet, seed, wave, n.id);
+  if (!e) return undefined;
+  if (n.epithet) n.was = [n.epithet, ...(n.was ?? []).filter((x) => x !== n.epithet)].slice(0, WAS_MAX);
+  n.epithet = e;
+  n.epiAt = n.rank;
+  remember(n, `Now called ${e}`);
+  return e;
 }
 
 /** The hero kind a foe maimed: the one it dealt the most. */
@@ -698,6 +730,13 @@ const str = (x: unknown, max = 80): string | undefined => (typeof x === 'string'
 const int = (x: unknown, lo: number, hi: number, d: number): number => (typeof x === 'number' && Number.isFinite(x) ? Math.max(lo, Math.min(hi, Math.round(x))) : d);
 const RANKS: readonly NemRank[] = ['warchief', 'captain', 'lieutenant'];
 const secret = (s: unknown): s is string => typeof s === 'string' && (!!TRAITS[s] || s.startsWith('dread:') || s.startsWith('fears:') || s === 'hatesHeights' || s === 'glutton' || s === 'craven' || s === 'vain');
+/** NEMESIS-DEPTH's fields of a saved member, read and capped: its moments, its old epithets, the rank its epithet last grew at. */
+function readDepth(n: Partial<Nemesis>): Partial<Nemesis> {
+  const moments = (Array.isArray(n.moments) ? n.moments : []).map(readMoment).filter((x): x is NemMoment => !!x).slice(0, MOMENTS_MAX);
+  const was = (Array.isArray(n.was) ? n.was : []).filter((x): x is string => !!str(x)).slice(0, WAS_MAX);
+  return { ...(moments.length ? { moments } : {}), ...(was.length ? { was } : {}), ...(RANKS.includes(n.epiAt as NemRank) ? { epiAt: n.epiAt } : {}) };
+}
+
 /** A saved trophy, if it is one (a known hero kind, a slot, a piece's id and its look). */
 export function readTrophy(x: unknown): NemTrophy | undefined {
   if (!x || typeof x !== 'object') return undefined;
@@ -773,6 +812,7 @@ export function readWar(raw: unknown): War | undefined {
       ...(n.stitched === true ? { stitched: true as const } : {}),
       ...(n.seen === true ? { seen: true as const } : {}),
       ...(n.chiefStitch === true ? { chiefStitch: true as const } : {}),
+      ...readDepth(n),
     });
   }
   // (a sworn captain or an oath brother who is no longer a member is forgotten; an oath is kept only both ways)
@@ -885,6 +925,7 @@ export function nemesisLines(n: NemNote | undefined): string[] {
   for (const x of n.slain) out.push(`Slain: ${fullName(x)}${x.by ? ` by ${heroName(x.by)}` : ''} · ${x.crowns} crowns`);
   for (const x of n.born) out.push(`Remembered: ${fullName(x)}, ${rankWord(x.rank).toLowerCase()}, ${DEED_WORD[x.deed]}`);
   for (const x of n.grew) out.push(`${fullName(x)} grows stronger · Might ${x.might}`);
+  for (const l of n.renamed ?? []) out.push(l);
   for (const x of n.feasted ?? []) out.push(`${fullName(x)} feasts on its victories, and grows no stronger`);
   for (const l of n.learned) out.push(`Learned of ${l}`);
   if (n.trophies) out.push(`War Trophies +${n.trophies}`);

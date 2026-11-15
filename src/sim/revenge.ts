@@ -103,6 +103,7 @@ export function decorate(m: Meta, s: NemSnap, n: Nemesis): NemSnap {
     ...(n.fled ? { fled: n.fled } : {}),
     met: n.met,
     ...(n.seen ? { seen: true as const } : {}),
+    ...(n.moments?.length ? { moments: n.moments.map((x) => ({ ...x })) } : {}),
   };
 }
 

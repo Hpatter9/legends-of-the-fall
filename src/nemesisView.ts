@@ -11,6 +11,7 @@
 import { menuChoice, menuFoot, menuNote, menuPick, menuSection, menuWell, ornateMenu, releaseIcon, RELEASE_ICON, type OrnateMenu } from './ornateMenu';
 import { portrait } from './render/sheets';
 import { armyById } from './sim/armies';
+import { momentLine } from './sim/nemesisMoments';
 import { buyScout, buyShard, musterCount, newsWord, SCOUT_PRICE, scoutable, SHARD_PRICE, SHARD_WEEK, shardHeroes, shardsLeft, superiorOf, swornTo, TROPHY_DAY, FATE_MEETINGS } from './sim/council';
 import { heroName } from './sim/heroNames';
 import type { Meta } from './sim/meta';
@@ -412,6 +413,12 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void): void {
   };
   secrets('Traits', n.traits, (t) => ({ name: TRAITS[t]?.name ?? t, text: TRAITS[t]?.text ?? '' }), NEMESIS_TRAIT_ICON);
   secrets('Weaknesses', n.weak, (w) => weakWords(w, heroName));
+  // (NEMESIS-DEPTH: the fights it remembers, and what it was once called)
+  if (n.moments?.length || n.was?.length) {
+    const well = sectionWell(menu.body, 'Remembered fights', 'its taunts come from these');
+    for (const mo of n.moments ?? []) well.append(el('p', 'nmMemory', momentLine(mo)));
+    if (n.was?.length) well.append(el('p', 'nmMemory', `Once called ${[...n.was].reverse().join(', then ')}`));
+  }
   if (n.memory.length) {
     const well = sectionWell(menu.body, 'Memory', 'what it remembers');
     for (const line of n.memory) well.append(el('p', 'nmMemory', line));
