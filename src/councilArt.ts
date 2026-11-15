@@ -28,6 +28,8 @@ export const NEWS_ICON: Readonly<Record<NewsKind, string>> = {
   fled, humiliated, vengeance, reclaimed, duel, conquest: RANK_BADGE.warchief,
   // (NEMESIS-DEPTH: a hunt wears the duel's crossed blades until a symbol of its own is painted)
   hunt: duel,
+  // (NEMESIS-DEPTH, idea 7: a plot wears the betrayal's dagger)
+  plot: betrayal,
 };
 export const TROPHY_ICON = token;
 export const SMOOTH_COUNCIL_ART = new Set([named, muster]);

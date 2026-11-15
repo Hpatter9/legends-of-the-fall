@@ -27,6 +27,7 @@ import { UNITS } from './units';
 import { callingOf } from './weakness';
 import { fieldedHero } from './fightStats';
 import { huntWave } from './hunt';
+import { PLOT, readPlot, type Plot } from './politics';
 import { drawTemper, readTemper, TEMPER_SALT, type Temper } from './nemesisTemper';
 import { epithetFrom, keepMoment, mayGrowEpithet, momentsOf, MOMENTS_MAX, readMoment, WAS_MAX, type NemMoment } from './nemesisMoments';
 
@@ -130,6 +131,8 @@ export interface Nemesis {
   huntLived?: number;
   /** Idea 5: the heroes it has studied, newest first (`STUDY.max`): the hero that hurt it most in a meeting it lived through. */
   studied?: string[];
+  /** Idea 7 (`politics.ts`): its rival on the Council (both ways), from a feud, a trial or a betrayal they both lived through. */
+  rival?: number;
   /** The epithets it was once called, newest first (`WAS_MAX`), and the rank at which its epithet last grew. */
   was?: string[];
   epiAt?: NemRank;
@@ -171,7 +174,7 @@ export interface FallenNemesis {
 }
 
 /** A line of the War News (`council.ts`): the turn, what happened and its words. */
-export type NewsKind = 'cheated' | 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion' | 'claim' | 'crowned' | 'named' | 'slain' | 'muster' | 'fled' | 'humiliated' | 'vengeance' | 'reclaimed' | 'duel' | 'conquest' | 'hunt';
+export type NewsKind = 'cheated' | 'recruit' | 'promotion' | 'feud' | 'betrayal' | 'feast' | 'trial' | 'oath' | 'desertion' | 'claim' | 'crowned' | 'named' | 'slain' | 'muster' | 'fled' | 'humiliated' | 'vengeance' | 'reclaimed' | 'duel' | 'conquest' | 'hunt' | 'plot';
 export interface WarNews {
   turn: number;
   kind: NewsKind;
@@ -211,6 +214,8 @@ export interface War {
   /** NEMESIS-DEPTH, idea 4 (`hunt.ts`): the member hunted, its army, the war turn the hunt was set, and the seed of the run it was planned
    *  into, with the quarry's meetings then (a run that ended before its wave leaves the hunt on). */
   hunt?: { id: number; army: string; at: number; run?: number; met?: number };
+  /** NEMESIS-DEPTH, idea 7 (`politics.ts`): the plots afoot on the Council (two at most). */
+  plots?: Plot[];
   /** NEMESIS-DEPTH: the war turn the sitting warchief was crowned on (his Muster waits `CHIEF_TENURE` turns from it). */
   crowned?: number;
   /** The Warchief's Heads taken. */
@@ -372,7 +377,10 @@ export function planNemeses(war: War | undefined, run: Run): RunNemesis | undefi
   let used = 0;
   for (let w = LIEUTENANT.from; w <= army.waves.length && used < Math.min(LIEUTENANT.most, lieutenants.length); w++) {
     if (army.waves[w - 1].boss) continue;
-    if (rng.next() < LIEUTENANT.chance * (lieutenants[used].met === 0 ? STRANGER_CHANCE : 1)) put(w, lieutenants[used++].id);
+    // (NEMESIS-DEPTH, idea 7: rivals never stand in the same wave; the draw is made as ever, so the stream is as it was)
+    const hit = rng.next() < LIEUTENANT.chance * (lieutenants[used].met === 0 ? STRANGER_CHANCE : 1);
+    const rival = lieutenants[used].rival;
+    if (hit && !(rival !== undefined && waves[String(w)]?.includes(rival))) put(w, lieutenants[used++].id);
   }
   const ids = new Set(Object.values(waves).flat());
   if (!ids.size) return undefined;
@@ -785,7 +793,7 @@ function readDepth(n: Partial<Nemesis>): Partial<Nemesis> {
   const moments = (Array.isArray(n.moments) ? n.moments : []).map(readMoment).filter((x): x is NemMoment => !!x).slice(0, MOMENTS_MAX);
   const was = (Array.isArray(n.was) ? n.was : []).filter((x): x is string => !!str(x)).slice(0, WAS_MAX);
   const temper = readTemper(n.temper);
-  return { ...(moments.length ? { moments } : {}), ...(was.length ? { was } : {}), ...(RANKS.includes(n.epiAt as NemRank) ? { epiAt: n.epiAt } : {}), ...(temper ? { temper } : {}), ...(typeof n.huntLived === 'number' && Number.isFinite(n.huntLived) ? { huntLived: int(n.huntLived, 0, 1e6, 0) } : {}), ...(kinds(n.studied, STUDY.max).length ? { studied: kinds(n.studied, STUDY.max) } : {}) };
+  return { ...(moments.length ? { moments } : {}), ...(was.length ? { was } : {}), ...(RANKS.includes(n.epiAt as NemRank) ? { epiAt: n.epiAt } : {}), ...(temper ? { temper } : {}), ...(typeof n.huntLived === 'number' && Number.isFinite(n.huntLived) ? { huntLived: int(n.huntLived, 0, 1e6, 0) } : {}), ...(kinds(n.studied, STUDY.max).length ? { studied: kinds(n.studied, STUDY.max) } : {}), ...(typeof n.rival === 'number' && Number.isFinite(n.rival) ? { rival: n.rival } : {}) };
 }
 
 /** A saved trophy, if it is one (a known hero kind, a slot, a piece's id and its look). */
@@ -799,7 +807,7 @@ export function readTrophy(x: unknown): NemTrophy | undefined {
   return { kind, slot, item: Math.round(t.item), base, rarity: int(t.rarity, 1, 5, 1) };
 }
 const kinds = (x: unknown, max: number): string[] => (Array.isArray(x) ? [...new Set(x.filter((k): k is string => typeof k === 'string' && !!UNITS[k]))].slice(0, max) : []);
-const NEWS_KINDS: readonly NewsKind[] = ['cheated', 'recruit', 'promotion', 'feud', 'betrayal', 'feast', 'trial', 'oath', 'desertion', 'claim', 'crowned', 'named', 'slain', 'muster', 'fled', 'humiliated', 'vengeance', 'reclaimed', 'duel', 'conquest', 'hunt'];
+const NEWS_KINDS: readonly NewsKind[] = ['cheated', 'recruit', 'promotion', 'feud', 'betrayal', 'feast', 'trial', 'oath', 'desertion', 'claim', 'crowned', 'named', 'slain', 'muster', 'fled', 'humiliated', 'vengeance', 'reclaimed', 'duel', 'conquest', 'hunt', 'plot'];
 const dayRec = <T extends object>(x: unknown, extra: (r: Record<string, unknown>) => T): ({ key: number } & T) | undefined => {
   if (!x || typeof x !== 'object') return undefined;
   const r = x as Record<string, unknown>;
@@ -866,9 +874,10 @@ export function readWar(raw: unknown): War | undefined {
       ...readDepth(n),
     });
   }
-  // (a sworn captain or an oath brother who is no longer a member is forgotten; an oath is kept only both ways)
+  // (a sworn captain or an oath brother who is no longer a member is forgotten; an oath is kept only both ways; a rivalry too, NEMESIS-DEPTH)
   const ids = new Set(war.members.map((n) => n.id));
   for (const n of war.members) {
+    if (n.rival !== undefined && (!ids.has(n.rival) || n.rival === n.id || war.members.find((x) => x.id === n.rival)?.rival !== n.id)) delete n.rival;
     if (n.sworn !== undefined && (n.rank !== 'lieutenant' || war.members.find((x) => x.id === n.sworn)?.rank !== 'captain')) delete n.sworn;
     if (n.oath !== undefined && (!ids.has(n.oath) || n.oath === n.id || war.members.find((x) => x.id === n.oath)?.oath !== n.id)) delete n.oath;
   }
@@ -903,6 +912,9 @@ export function readWar(raw: unknown): War | undefined {
   if (dy) war.day = dy;
   if (typeof r.claim === 'number' && war.members.some((n) => n.id === r.claim && n.rank === 'captain')) war.claim = r.claim;
   if (typeof r.crowned === 'number' && Number.isFinite(r.crowned)) war.crowned = int(r.crowned, 0, 1e9, 0);
+  // (NEMESIS-DEPTH, idea 7: the plots afoot, between members who still sit)
+  const plots = (Array.isArray(r.plots) ? r.plots : []).map((x) => readPlot(x, war)).filter((x): x is Plot => !!x).slice(0, PLOT.most);
+  if (plots.length) war.plots = plots;
   // (NEMESIS-DEPTH: a hunt is kept only on a member who still sits)
   const h = r.hunt;
   if (h && typeof h === 'object' && typeof h.id === 'number') {

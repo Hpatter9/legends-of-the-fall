@@ -82,7 +82,8 @@ import type { Scene } from './sim/sceneKit';
 import { closeGiverCard, openGiverCard } from './questCard';
 import { showWhenPainted } from './paintReady';
 import { warmPortraits } from './render/sheets';
-import { councilLine, councilPlate, openNemesisBoard } from './nemesisView';
+import { councilLine, councilPlate, openNemesisBoard, openPlotCard } from './nemesisView';
+import { freshPlot } from './sim/politics';
 import { councilTurn } from './sim/council';
 import { musterOpen, warchiefOf } from './sim/muster';
 
@@ -341,8 +342,22 @@ export class Home {
     // (the Nemesis War: the Dark Council takes its turn on the day's first visit, phase 2)
     if (this.meta.war && councilTurn(this.meta, 'visit', todayKey())) saveMeta(this.meta);
     // (a hero who joined and has not had its first-time reveal, one earned in play or one whose reveal was missed, has it now)
-    void revealUnseen(this.meta).then(() => this.refresh());
+    // (NEMESIS-DEPTH, idea 7: then a plot hatched on the Council since, once, on the camp's own card)
+    void revealUnseen(this.meta).then(() => {
+      this.refresh();
+      this.offerPlot();
+    });
     this.hooks.onOpened?.();
+  }
+
+  /** NEMESIS-DEPTH, idea 7: "The Council stirs": a plot the camp has not shown yet, with the player's hand in it. */
+  private offerPlot(): void {
+    const m = this.meta;
+    if (!$('home') || $('home').hidden || document.querySelector('.omCard:not([hidden]), #nemesisBoard')) return;
+    const fresh = freshPlot(m.war);
+    if (!fresh) return;
+    saveMeta(m);
+    openPlotCard(m, fresh.i, () => saveMeta(m));
   }
 
   /** The Dark Council's board (the Nemesis War): its Hunt opens an army, its Muster calls the page's. */

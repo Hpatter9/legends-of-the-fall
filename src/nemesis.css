@@ -191,3 +191,8 @@ body.inDuel #hudSpells, body.inDuel .ehHorn, body.inDuel #mana { visibility: hid
 .omChoice.nmSeat.nmBig .nmTemper { left: 62px; top: auto; bottom: 6px; width: 22px; height: 22px; }
 /* NEMESIS-DEPTH, idea 4: the hunt's quarry, ringed in blood red on its seat */
 .omChoice.nmSeat.nmHunted { box-shadow: 0 0 0 2px #b8322a, 0 0 10px 2px rgba(184, 50, 42, 0.55); }
+/* NEMESIS-DEPTH, idea 7: a rivalry's line (violet, beside the blood-oath's red) and a plot's words */
+.nmRivalLine { margin: 0; padding: 6px 0 6px 10px; border-left: 3px solid #8a5ad0; color: #e3d6f5; font-size: 14px; line-height: 1.35; }
+.nmPlotLine { margin: 0 0 6px; padding: 6px 0 6px 10px; border-left: 3px solid #b8322a; color: #f0dcc8; font-size: 14px; line-height: 1.35; }
+.nmFaceOff { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.nmFaceOff .nmVs { font-size: 13px; letter-spacing: 1px; color: #c9a45a; text-transform: uppercase; }

@@ -19,6 +19,7 @@ import { tauntFor, triggerOf } from '../src/tauntCutRules';
 import { drawTemper, TEMPER_SALT, TEMPER_TAGS, TEMPERS, type Temper } from '../src/sim/nemesisTemper';
 import { fleeOdds, nemHurt, nemPrey, nemReads, nemStart, secondWeakPool } from '../src/sim/nemesisTraits';
 import { gate } from '../src/sim/ailments';
+import { freshPlot, handPlot, hatch, makeRivals, PLOT, plotOpen, plotters, resolvePlots, targetOf } from '../src/sim/politics';
 import { mixSeed, Rng } from '../src/sim/rng';
 import { challengeOf } from '../src/sim/duel';
 import { bountyOf, cannotHunt, endHunt, HUNT, HUNT_GUARD, huntAhead, huntWave, lapseHunt, setHunt } from '../src/sim/hunt';
@@ -654,4 +655,114 @@ test('a nemesis that has studied a hero on the board taunts about it, in every v
     assert.ok(!/[{}]/.test(t.line), t.line);
   }
   assert.notEqual(triggerOf(s, ['wizard']).trigger, 'studied');
+});
+
+// ---- Idea 7: open politics --------------------------------------------------------------------------------------------------------
+
+test('a feud both live through makes rivals; a rival slain by the heroes lets the other climb over the body; rivals never share a wave', () => {
+  let made = 0;
+  for (let s = 0; s < 40 && !made; s++) {
+    const m = warMeta(s);
+    const war = m.war!;
+    const a = member(war, 'captain', 4);
+    const c = member(war, 'captain', 4);
+    happen(war, m, new Rng(s), 'feud');
+    if (war.members.includes(a) && war.members.includes(c) && a.rival === c.id && c.rival === a.id) made++;
+  }
+  assert.ok(made, 'a feud made rivals');
+  const m = warMeta(3);
+  const war = m.war!;
+  const a = member(war, 'lieutenant', 3, { met: 4 });
+  const c = member(war, 'lieutenant', 2, { met: 4 });
+  assert.ok(makeRivals(a, c));
+  assert.ok(!makeRivals(a, member(war, 'lieutenant', 1)), 'one rival each');
+  const note = slay(m, a, 9);
+  assert.ok(!war.members.includes(a));
+  assert.equal(c.might, 3);
+  assert.equal(c.rival, undefined);
+  assert.ok(note.council?.some((l) => l.includes('climbs over the body')));
+  // (rivals never stand in the same wave)
+  for (let s = 0; s < 60; s++) {
+    const mm = warMeta(s);
+    const x = member(mm.war!, 'lieutenant', 2, { met: 1 });
+    const y = member(mm.war!, 'lieutenant', 2, { met: 1 });
+    makeRivals(x, y);
+    const plan = planNemeses(mm.war, armyRun(s + 3, 'undead'));
+    for (const ids of Object.values(plan?.waves ?? {})) assert.ok(!(ids.includes(x.id) && ids.includes(y.id)), `seed ${s}`);
+  }
+});
+
+test('a plot is hatched against a captain or a rival (never the warchief), comes to a head in two turns, and the player may tip it off or back it', () => {
+  const setup = (seed: number) => {
+    const m = warMeta(seed);
+    const war = m.war!;
+    member(war, 'warchief', 6);
+    const cap = member(war, 'captain', 4);
+    const lt = member(war, 'lieutenant', 3);
+    swear(war);
+    war.trophies = 4;
+    return { m, war, cap, lt };
+  };
+  const { m, war, cap, lt } = setup(1);
+  assert.ok(plotOpen(war));
+  assert.match(hatch(war, new Rng(1))!, /plots against its captain/);
+  assert.deepEqual({ by: war.plots![0].by, on: war.plots![0].on, due: war.plots![0].due }, { by: lt.id, on: cap.id, due: war.turn + PLOT.turns });
+  assert.ok(!plotters(war).includes(lt), 'one plot each');
+  assert.ok(handPlot(m, 0, 'back'));
+  assert.equal(war.trophies, 4 - PLOT.price);
+  assert.ok(!handPlot(m, 0, 'tip'), 'one hand a plot');
+  // (the plot keeps through the save)
+  assert.deepEqual(readWar(JSON.parse(JSON.stringify(war)))!.plots, war.plots);
+  war.turn += PLOT.turns;
+  const swap = (low: Nemesis, high: Nemesis) => {
+    low.rank = high.rank;
+    high.rank = 'lieutenant';
+  };
+  const lines = resolvePlots(war, m, () => assert.fail('no slaying'), swap);
+  assert.match(lines[0], /takes .* seat/);
+  assert.equal(lt.rank, 'captain');
+  assert.equal(war.plots, undefined);
+  // (tipped off: the plotter is caught, slain or cast down)
+  for (let s = 0; s < 20; s++) {
+    const t = setup(s + 10);
+    hatch(t.war, new Rng(s));
+    handPlot(t.m, 0, 'tip');
+    t.war.turn += PLOT.turns;
+    let slain = false;
+    const out = resolvePlots(t.war, t.m, () => (slain = true), () => assert.fail('no swap'));
+    assert.match(out[0], /caught plotting/);
+    if (!slain) assert.equal(t.lt.loyalty, 0);
+  }
+  // (a warchief is never the mark)
+  const w = setup(30);
+  w.cap.rival = undefined;
+  w.war.members.filter((x) => x.rank === 'warchief').forEach((x) => assert.equal(targetOf(w.war, x), undefined));
+  assert.equal(targetOf(w.war, w.cap), undefined, 'a captain with no rival has no one to plot against');
+});
+
+test('a plot left alone succeeds about half the time, on its own stream; the camp shows a new plot once', () => {
+  let won = 0;
+  const N = 200;
+  for (let s = 0; s < N; s++) {
+    const m = warMeta(s);
+    const war = m.war!;
+    const cap = member(war, 'captain', 4);
+    const lt = member(war, 'lieutenant', 3);
+    swear(war);
+    hatch(war, new Rng(s));
+    war.turn += PLOT.turns;
+    resolvePlots(war, m, () => {}, (low) => (low.rank = 'captain'));
+    if (lt.rank === 'captain') won++;
+    else assert.equal(lt.loyalty, 10);
+    void cap;
+  }
+  assert.ok(Math.abs(won / N - PLOT.success) < 0.1, `${won} of ${N}`);
+  const m = warMeta(1);
+  const war = m.war!;
+  member(war, 'captain', 4);
+  member(war, 'lieutenant', 3);
+  swear(war);
+  hatch(war, new Rng(2));
+  assert.equal(freshPlot(war)?.i, 0);
+  assert.equal(freshPlot(war), undefined, 'once');
 });

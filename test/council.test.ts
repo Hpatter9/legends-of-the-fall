@@ -135,8 +135,8 @@ test('a turn replays exactly from the turn counter and the save’s seed, and dr
   assert.equal(new Rng(mixSeed(m.seed, COUNCIL_SALT, 0)).next(), new Rng(mixSeed(m.seed, COUNCIL_SALT, 0)).next());
 });
 
-test('the events’ weights are the design’s table (a Recruit 1, NEMESIS-DEPTH), and each is drawn about as often as its weight says when all are open', () => {
-  assert.deepEqual({ ...EVENT_WEIGHT }, { recruit: 1, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5 });
+test('the events’ weights are the design’s table (a Recruit 1 and a Plot 1, NEMESIS-DEPTH), and each is drawn about as often as its weight says when all are open', () => {
+  assert.deepEqual({ ...EVENT_WEIGHT }, { recruit: 1, promotion: 4, feud: 2, betrayal: 1, feast: 1, trial: 1, oath: 0.5, desertion: 0.5, plot: 1 });
   const m = warMeta();
   const war = council(m, 1, 3, 6);
   const lts = war.members.filter((n) => n.rank === 'lieutenant');
@@ -151,7 +151,7 @@ test('the events’ weights are the design’s table (a Recruit 1, NEMESIS-DEPTH
     const e = drawEvent(war, new Rng(mixSeed(5, i)))!;
     counts[e] = (counts[e] ?? 0) + 1;
   }
-  for (const [e, w] of Object.entries(EVENT_WEIGHT)) assert.ok(Math.abs((counts[e as CouncilEvent] ?? 0) / N - w / 11) < 0.02, `${e}: ${counts[e as CouncilEvent]}`);
+  for (const [e, w] of Object.entries(EVENT_WEIGHT)) assert.ok(Math.abs((counts[e as CouncilEvent] ?? 0) / N - w / 12) < 0.02, `${e}: ${counts[e as CouncilEvent]}`);
 });
 
 test('each event waits for its conditions', () => {
