@@ -4,6 +4,7 @@
 // balance read: a storming Auto never wins is flagged "unwinnable?", one it wins with little lost "trivial?".
 //
 //   node tools/assault-dev/run.mjs [--strength expected|strong|weak] [--heroes design|recruits] [--seeds 1] [--only orcs,undead] [--kinds hold,last,regroup] [--tactical]
+import '../trait-perks/env';
 import { startedMeta } from '../../src/sim/meta';
 import { mixSeed } from '../../src/sim/rng';
 import { assaultInput, assaultParty, defaultPlan, settleAssault } from '../../src/sim/assault/assaultMode';

@@ -445,6 +445,9 @@ export function cuesFor(b: Battle, e: BattleEvent, casts?: ReadonlyMap<number, s
       return [{ cue: 'shadowHum', gain: 0.7 }, { cue: 'fireWhoosh', delay: 60, gain: 0.5 }];
     case 'wisp':
       return [{ cue: 'sparkle', gain: 0.6 }];
+    // (TRAIT-PERKS: a perk's beat, in the voice of what it is; the small marks are quiet)
+    case 'perk':
+      return PERK_CUES[e.what] ?? [];
     case 'burst':
       return e.tone === 'tier' ? [{ cue: 'shieldHum', gain: 0.5 }] : [];
     case 'promote':
@@ -590,3 +593,38 @@ export function intensityOf(b: Battle): number {
   const low = Math.min(heroAll ? hero / heroAll : 1, foeAll ? foe / foeAll : 1);
   return Math.max(0, Math.min(1, (0.75 - low) / 0.6));
 }
+
+/** TRAIT-PERKS: the cues of the perks' beats (`traitPerks.ts`): the big ones heard, the small marks (a plating, a pin, a sling) quiet. */
+const PERK_CUES: Partial<Record<string, { cue: Cue; delay?: number; gain?: number }[]>> = {
+  rise: [{ cue: 'earthRumble', gain: 0.8 }, { cue: 'shadowHum', delay: 120, gain: 0.7 }],
+  poem: [{ cue: 'holyChime', gain: 0.8 }],
+  conflux: [{ cue: 'thunder', gain: 0.8 }],
+  twin: [{ cue: 'fireWhoosh', gain: 0.6 }],
+  dusk: [{ cue: 'shadowHum' }],
+  oath: [{ cue: 'block', gain: 0.8 }],
+  standard: [{ cue: 'horn' }],
+  risen: [{ cue: 'heal' }, { cue: 'holyChime', delay: 120 }],
+  stampede: [{ cue: 'earthRumble', gain: 1.2 }, { cue: 'hitHeavy', delay: 200, gain: 0.8 }],
+  weave: [{ cue: 'crackle' }],
+  boom: [{ cue: 'fireBoom' }],
+  sentry: [{ cue: 'shieldHum', gain: 0.6 }],
+  regicide: [{ cue: 'horn' }, { cue: 'thunder', delay: 100, gain: 0.8 }],
+  tide: [{ cue: 'windGust', gain: 0.6 }],
+  broadside: [{ cue: 'fireBoom', gain: 1.2 }, { cue: 'fireBoom', delay: 160, gain: 0.9 }, { cue: 'fireBoom', delay: 320, gain: 0.7 }],
+  thrall: [{ cue: 'shadowHum', gain: 0.8 }],
+  cuts: [{ cue: 'hitHeavy', gain: 0.8 }],
+  volley: [{ cue: 'arrowRain' }],
+  overcast: [{ cue: 'crackle', gain: 0.8 }],
+  circle: [{ cue: 'shieldHum' }],
+  mirrors: [{ cue: 'blink' }, { cue: 'blink', delay: 90, gain: 0.8 }],
+  roar: [{ cue: 'horn', gain: 0.7 }],
+  kegBoom: [{ cue: 'fireBoom' }],
+  shells: [{ cue: 'meteorFall', gain: 0.6 }, { cue: 'fireBoom', delay: 400 }],
+  execute: [{ cue: 'hitHeavy' }],
+  shadow: [{ cue: 'blink' }],
+  hymn: [{ cue: 'pipes', gain: 0.8 }],
+  rally: [{ cue: 'horn', gain: 0.8 }],
+  onslaught: [{ cue: 'earthRumble' }, { cue: 'hitHeavy', delay: 80 }],
+  anchor: [{ cue: 'holyChime' }, { cue: 'windGust', delay: 80, gain: 0.7 }],
+  earthworks: [{ cue: 'earthRumble', gain: 0.8 }],
+};

@@ -2,7 +2,7 @@
 // the goal and the day's heroes) and its banner over the deploy board, with the goal counted as heroes are placed. The trait chips
 // and the bench marks of the featured trait are lit by `main.ts` (the class `featured`). This only draws; the rules are the sim's.
 
-import { FEATURED_MULT, featuredCount, themeGoalText, traitPlural, type DailyTheme } from './sim/dailyThemes';
+import { FEATURED_PLUS, featuredCount, themeGoalText, traitPlural, type DailyTheme } from './sim/dailyThemes';
 import { TRAITS, traitsOf } from './sim/traits';
 import { UNITS } from './sim/units';
 import { portrait } from './render/sheets';
@@ -15,8 +15,8 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-/** "Beast bonus x2". */
-const boostText = (t: DailyTheme): string => `${TRAITS[t.trait].name} bonus x${FEATURED_MULT}`;
+/** "Beast counts one more" (TRAIT-PERKS: the featured trait wakes its perks a hero sooner). */
+const boostText = (t: DailyTheme): string => `${TRAITS[t.trait].name} counts ${FEATURED_PLUS === 1 ? 'one' : FEATURED_PLUS} more`;
 
 /** The start card's theme block: the theme's name and idea, the featured trait, the goal, and the day's heroes (the featured ones lit). */
 export function themeBlock(t: DailyTheme): HTMLElement {

@@ -18,7 +18,6 @@ import { cloneBoard } from './chain';
 import { weatherOf } from './weather';
 import type { LayoutId } from './layouts';
 import { twistBoard, type TwistFx } from './twists';
-import { featuredExtra } from './dailyThemes';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { standDecide } from './standAi';
@@ -44,7 +43,8 @@ import { afterBlow, gangOf, kitOf, CHARGE_MAX, echoSkill, mendUnit, undying, far
 import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellState } from './spells';
 import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
-import { kindsOf, traitsOf, traitEffects, type TraitEffects } from './traits';
+import { kindsOf, legacyFeatured, traitsOf, traitEffects, TRAIT_PERKS, type TraitEffects } from './traits';
+import { perkBlow, perkCrit, perkDamage, perkDeath, perkFoot, perkGuard, perkSpare, perkStruck, startPerks, tickPerks, type PerkEvent, type PerkState, type PerkUnit } from './traitPerks';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
 import { powerFell, powerSpare, powersOn } from './setPowers';
 import { mergeEffects, type RelicHooks } from './relics';
@@ -275,6 +275,8 @@ export interface Unit {
   electrifiedUntil?: number;
   /** Trickster substitution log spent once per fight. */
   tricksterLogUsed?: boolean;
+  /** TRAIT-PERKS (`traitPerks.ts`): what the trait perks keep on this fighter. */
+  pk?: PerkUnit;
   /** Guardian emergency aegis shield spent once per fight. */
   guardianShieldUsed?: boolean;
   /** The Vampires' bat swarm spent, once a fight. */
@@ -398,6 +400,8 @@ export type BattleEvent =
   /** A fighter is drawn with another sheet (a form, a guise), or its own again (null). */
   | { kind: 'look'; by: number; sheet: string | null }
   /** Timed terrain from a kit is laid on a tile for `ms` (0: it is gone again). */
+  /** TRAIT-PERKS: a trait perk's beat for the page to draw (`traitPerks.ts`). */
+  | PerkEvent
   | { kind: 'terrain'; u: number; v: number; what: TerrainFx['kind'] | WallKind; ms: number; side?: Side }
   /** The movement toolkit (RPG-SPELLS): a fighter shoved or dragged along `path` (its landing last); thrown in an arc from `from` to
    *  `land` (`peak` in levels); slammed into something; fallen `levels`; an ice wall shattered; a burrower going down (with its tunnel's
@@ -494,6 +498,10 @@ export interface Battle {
   twist?: TwistFx;
   /** A themed daily's featured trait (`Stage.featured`). */
   featured?: string;
+  /** TRAIT-PERKS (`traitPerks.ts`): the perks the placed heroes woke, and what their rules count; absent with none awake. */
+  perk?: PerkState;
+  /** How long a fallen hero lies before a life raises it, when not `REVIVE_MS` (Support III's Rallying Cry). */
+  reviveMs?: number;
   /** Time still to hold the fight for a boss changing form (ms); nothing moves while it runs down. */
   pause?: number;
   /** Every hero's healing is multiplied by this (a calamity ascension). */
@@ -662,7 +670,7 @@ export interface Stage {
   /** LIVING-FIELDS: how thickly the land's traps and hazards are laid (`fieldTraps.ts`: 0 none, to 3); none when unset, so a fight made
    *  outside a run has none. `startStage` sets it by the wave and the tier. */
   hazards?: number;
-  /** A themed daily's featured trait: its woken bonus counts double (`dailyThemes.ts`). */
+  /** A themed daily's featured trait: it counts one hero more than it has (`dailyThemes.ts`, TRAIT-PERKS). */
   featured?: string;
   /** QUESTS-3 (Q5): a quest battle's own rules (`questRules.ts`). */
   rules?: QuestRules;
@@ -944,6 +952,8 @@ export function fight(b: Battle): boolean {
   startRift(b);
   // (a hero's summons and shapes kept from the last wave stand up again: SUMMON-TIMERS, `carry.ts`)
   startKept(b);
+  // (TRAIT-PERKS: the perks the placed heroes wake, and the first wave's start: skeletons, turrets, the standard...)
+  startPerks(b);
   // (the party's tactic: who is held until the line meets the foe, `tactics.ts`)
   startTactic(b);
   // (the shape the heroes stand in, if the fight has the formations on)
@@ -990,8 +1000,9 @@ function startKits(b: Battle): void {
 
 /** Fix the placed heroes' trait bonuses: attack and health now, the rest read by the hooks as the fight goes. */
 function applyTraits(b: Battle): void {
-  let fx = mergeEffects(traitEffects(kindsOf(b.units)), b.relics?.team ?? {});
-  if (b.featured) fx = mergeEffects(fx, featuredExtra(b.featured, kindsOf(b.units)));
+  // (TRAIT-PERKS: the daily's featured trait counts one hero more, in place of its old doubled bonus; with the perks off, as it was)
+  let fx = mergeEffects(traitEffects(kindsOf(b.units), b.featured), b.relics?.team ?? {});
+  if (b.featured && !TRAIT_PERKS.on) for (const e of legacyFeatured(b.featured, kindsOf(b.units))) fx = mergeEffects(fx, e);
   b.traits = fx;
   // (a war drum: the foes stand a while before they act)
   if (b.relics?.first) for (const x of b.units) if (x.side === 'foe') x.busyUntil = b.relics.first;
@@ -1095,6 +1106,7 @@ function stepOnce(b: Battle): BattleEvent[] {
   b.pending.sort((x, y) => x.at - y.at);
   while (b.pending.length && b.pending[0].at <= b.t) settle(b, b.pending.shift()!, out);
   tickStatus(b, out);
+  if (b.perk) tickPerks(b, out);
   tickMythics(b, out);
   if (b.rites?.id !== undefined) tickRites(b, out);
   // (TEN-LIVES: a fallen hero whose five seconds are up rises, a life spent)
@@ -1228,6 +1240,7 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   }
   if (reached) {
     afterBlow(b, by, target, !!p.crit, p.dmg, out);
+    if (b.perk) perkBlow(b, by, target, !!p.crit, p.dmg, out);
     kitBlow(b, by, target, !!p.crit, p.dmg, out);
     if (isMythic(by.def)) mythicBlow(b, by, out);
     if (by.electrifiedUntil && by.electrifiedUntil > b.t) {
@@ -1253,6 +1266,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (to.safeUntil !== undefined && to.safeUntil > b.t) return false;
   // (a burrower underground is struck by nothing but its own ailments, RPG-SPELLS)
   if (to.under && src !== 'dot') return false;
+  // (TRAIT-PERKS: a death poem or Death's Door holds every blow off; Sleight turns the first; a knight steps in front)
+  if (b.perk && perkGuard(b, by, to, dmg, src, splash, out)) return false;
   const left = onStrike(b, by, to, dmg, src, splash, out);
   if (left === null) return false;
   dmg = left;
@@ -1269,6 +1284,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   }
   // (DUEL-SHOW: a duel's blows land softer, so it lasts longer, `DUEL_LENGTH`)
   if (b.duel?.soften && by !== to) dmg = Math.max(1, Math.round(dmg / b.duel.soften));
+  // (TRAIT-PERKS: what the perks of the striker's side and the struck's side make of it)
+  if (b.perk) dmg = perkDamage(b, by, to, dmg, src, splash);
   // (an aura's guard takes its share off, RPG-SPELLS)
   if (to.auraGuard && to.auraGuard.until > b.t) dmg = Math.max(1, Math.round(dmg * (1 - to.auraGuard.share)));
   // (a formation takes splash differently, a skirmisher less, a square packed together more, and a skirmisher the foes' skills less, `formations.ts`)
@@ -1402,6 +1419,8 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (killed && undying(to, out)) killed = false;
   // (a nemesis that is a Survivor stands again once a fight)
   if (killed && to.nem && nemSpare(to, out)) killed = false;
+  // (TRAIT-PERKS: Death's Door, the Death Poem, the Resurrection)
+  if (killed && b.perk && perkSpare(b, to, out)) killed = false;
   if (!killed && to.eq) fxHurt(b, to, out);
   if (killed) {
     // (DEPTH-BUILD: the Chapel's Last Rites marks the first hero to fall in the wave to rise)
@@ -1434,6 +1453,9 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
     fxKill(b, by, to, out);
     kitDeath(b, to, by, out);
   }
+  // (TRAIT-PERKS: what a blow that reached health wakes, and what a fall does)
+  if (b.perk && landed > 0) perkStruck(b, by, to, landed, src, splash, out);
+  if (killed && b.perk) perkDeath(b, by, to, credit, out);
   // (a blow beside a powder barrel sets it off)
   // (LIVING-FIELDS: and tips a brazier over)
   if (b.braziers && src !== 'dot') for (const i of b.braziers.filter((i) => Math.max(Math.abs((i % b.board.w) - to.u), Math.abs(Math.floor(i / b.board.w) - to.v)) <= 1)) tipBrazier(b, i, out);
@@ -1813,7 +1835,8 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
   // kit, a glance lands for half, and `BLOW_SCALE` puts the average blow back where it was)
   const c = critOf(b, me);
   const r = rollBlow(b, me, to, hMe, hTo, tileOf(b, to).ground === 'tall', c.chance, c.mult);
-  const crit = r.crit;
+  // (TRAIT-PERKS: Iaijutsu's first cut, a Shadow Step's sure crit)
+  const crit = b.perk && r.res !== 'miss' ? perkCrit(b, me, r.crit, c.mult) : r.crit;
   // (FOE-STYLES: a charger's blow at the end of its run, a pack's bite with friends round the prey)
   const rush = chargeOf(me);
   if (rush > 1) out.push({ kind: 'style', by: me.id, what: 'Charge!' });
@@ -1843,7 +1866,7 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
   const from = tileOf(b, me);
   let to = tileOf(b, next);
   // (a sure-footed fighter climbs at no extra cost)
-  let cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h) * CLIMB_COST) + (to.ground ? GROUND_COST[to.ground] : 0) + (to.trap ? TRAP_SLOW[to.trap] ?? 0 : 0);
+  let cost = def.flies ? 1 : 1 + (sureFooted(me) ? 0 : Math.max(0, to.h - from.h) * CLIMB_COST) + (to.ground && !(b.perk && perkFoot(b, me, to.ground)) ? GROUND_COST[to.ground] : 0) + (to.trap && !(b.perk && perkFoot(b, me, 'snare')) ? TRAP_SLOW[to.trap] ?? 0 : 0);
   // (ice: a walker who steps onto it may slide one tile on, if that tile is free and no higher, and not lava; a hash of the moment says, so no stream moves)
   if (to.ground === 'ice' && !def.flies && !(b.stand && me.post) && !b.duel && (mixSeed(b.seed, 0x1ce, b.t, me.id) >>> 0) / 4294967296 < ICE_SLIDE) {
     const on = { u: next.u + next.u - me.u, v: next.v + next.v - me.v };
@@ -1876,7 +1899,7 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
   else if (to.ground === 'coals' && !def.flies) hurt(b, me, me, Math.max(1, Math.round(me.maxHp * COALS_BURN)), false, false, out, 'dot');
   if (me.alive) groundStep(b, me);
   // (LIVING-FIELDS: a trap under the step springs; a totem's strength is held only while standing on it)
-  if (me.alive && to.trap) trapStep(b, me, out);
+  if (me.alive && to.trap && !(b.perk && to.trap === 'snare' && perkFoot(b, me, 'snare'))) trapStep(b, me, out);
   if (me.totem || to.trap === 'totem') totemStep(b, me);
 }
 

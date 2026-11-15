@@ -302,6 +302,11 @@ export function noteFight(run: Run, b: Battle): void {
   addRelicMarks(run, b);
   // (TEN-LIVES: the lives the fight spent are the run's)
   settleLives(run, b);
+  // (TRAIT-PERKS, Pirate I: what the Pirates' kills dropped)
+  if (b.perk?.plunder) {
+    run.gold += b.perk.plunder;
+    noteGold(run, 'earned', b.perk.plunder);
+  }
   // (SEVEN-SLOT GEAR batch 6: a won wave's fallen stand again at half, `wounds.ts`)
   settleWounds(run, b);
   // (DEPTH-BUILD: the Chapel's Last Rites comes once a run)

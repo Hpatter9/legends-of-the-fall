@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.606.0',
+    date: '2026-11-15',
+    title: 'Trait perks that change the fight',
+    notes: ['Two, three or four heroes of a type now wake real perks: Undead raise three skeletons each wave, Holy heroes rise again, Pirates fire a broadside, and more.', 'Tap a trait on the deploy screen to see its three tiers and its heroes.'],
+  },
+  {
     version: '0.605.0',
     date: '2026-11-15',
     title: 'Live hero stats, and no more heirs',

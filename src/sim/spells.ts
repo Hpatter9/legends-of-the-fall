@@ -12,6 +12,7 @@ import { AILMENT_SWITCH, burnFor, charmFor, chillFor, cleanse, curseFor, freezeF
 import { raiseWall, wallAt } from './toolkit/walls';
 import { moveMany } from './toolkit/move';
 import { relicFoeSlow, relicMana, relicSpeed } from './relicFight';
+import { perkSpeed, perkSpell, spellCost, spellHook, spellPower } from './traitPerks';
 
 export type SpellId =
   | 'heal' | 'meteor' | 'haste' | 'shield' | 'chain' | 'frost' | 'rally' | 'quake' | 'smite' | 'resurrect' | 'poison'
@@ -205,7 +206,7 @@ export const isHasted = (b: Battle, x: Unit) => x.hasteUntil !== undefined && x.
 /** Whether a fighter is slowed (Frost Nova) now. */
 export const isSlowed = (b: Battle, x: Unit) => x.slowUntil !== undefined && x.slowUntil > b.t;
 /** How much faster a fighter acts now (1 when neither hasted nor slowed): it moves and swings at this speed. */
-export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (isSlowed(b, x) ? SLOW_MULT : 1) * (x.side === 'hero' ? (b.traits?.speed ?? 1) * relicSpeed(b, x) : (b.foeSpeed ?? 1) * relicFoeSlow(b, x)) * (b.twist?.pace ?? 1);
+export const speedOf = (b: Battle, x: Unit) => (isHasted(b, x) ? HASTE_MULT : 1) * (isSlowed(b, x) ? SLOW_MULT : 1) * (x.side === 'hero' ? (b.traits?.speed ?? 1) * relicSpeed(b, x) : (b.foeSpeed ?? 1) * relicFoeSlow(b, x)) * (b.twist?.pace ?? 1) * (b.perk ? perkSpeed(b, x) : 1);
 
 /** Mana that comes in over the top of the bar is kept, up to this much more (KING-SPELLS batch 1): it waits behind the bar and pours back in as
  *  soon as a cast makes room, so a king who waits for the right moment loses nothing. */
@@ -309,7 +310,9 @@ export const RIDER_SPOTS: readonly (readonly [number, number])[] = [[-2, -2], [2
 export const cooldownLeft = (b: Battle, id: SpellId) => Math.max(0, b.spells.ready[id] - b.t);
 
 /** Whether a spell could be cast now (mana and cooldown; the tile is checked by `castSpell`). */
-export const canAfford = (b: Battle, id: SpellId) => b.phase === 'fight' && b.spells.mana >= SPELLS[id].cost && cooldownLeft(b, id) === 0;
+export const canAfford = (b: Battle, id: SpellId) => b.phase === 'fight' && b.spells.mana >= costOf(b, id) && cooldownLeft(b, id) === 0;
+/** What a spell costs in this fight (TRAIT-PERKS: Mystic I's Ley Lines take a share off). */
+export const costOf = (b: Battle, id: SpellId): number => spellCost(b, SPELLS[id].cost);
 
 /** KING-SPELLS batch 4: the schools' new spells' numbers. */
 export const SHATTER_POWER = 90;
@@ -358,11 +361,12 @@ const mostWounded = (b: Battle) => b.units.filter((x) => x.alive && x.side === '
 export const kingStrike = (b: Battle, x: Unit, power: number, heavy: boolean, out: BattleEvent[], might = kingMight(b)) => hurt(b, KING, x, Math.max(1, Math.round(power * might) - defOf(x).def), heavy, false, out, 'skill');
 
 /** Cast a spell on the 3x3 around tile (u, v) (the tile is ignored by spells that go everywhere). False (and nothing changed) if the fight isn't on, the tile isn't on the board, the mana or cooldown isn't there, or Resurrect has nobody to lift. */
-export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean {
+export function castSpell(b: Battle, id: SpellId, u: number, v: number, echo?: number): boolean {
   const spell = SPELLS[id];
   // (the Nemesis War, phase 4: the king's spells stay out of a duel)
   if (b.duel) return false;
-  if (!spell || (spell.target === 'tile' && !tileAt(b.board, u, v)) || !canAfford(b, id)) return false;
+  // (TRAIT-PERKS: an echo or Conflux's second cast is free, has no cooldown and is not logged: the cast it follows brings it back on a replay)
+  if (!spell || (spell.target === 'tile' && !tileAt(b.board, u, v)) || (echo === undefined ? !canAfford(b, id) : b.phase !== 'fight')) return false;
   const fallen = id === 'resurrect' ? fallenIn(b, u, v) : undefined;
   if (id === 'resurrect' && !fallen) return false;
   // (Blink needs a free tile to land on and a hero to move; the wolves need room to come up)
@@ -378,16 +382,19 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
   const corpses = id === 'raisedead' ? fallenFoesIn(b, u, v) : [];
   if (id === 'raisedead' && !corpses.length) return false;
   const s = b.spells;
-  s.mana -= spell.cost;
-  feedDecree(b, spell.cost * DECREE_PER_SPENT);
-  // (the rank: its strength, its cooldown, and at the top its rider)
+  const cost = costOf(b, id);
+  if (echo === undefined) {
+    s.mana -= cost;
+    feedDecree(b, cost * DECREE_PER_SPENT);
+  }
+  // (the rank: its strength, its cooldown, and at the top its rider; TRAIT-PERKS: Arcanist I's Runic Study, an echo's share)
   const rk = rankOf(b, id);
-  const pot = RANK_POWER[rk];
+  const pot = RANK_POWER[rk] * spellPower(b) * (echo ?? 1);
   const top = rk >= RANK_MAX;
-  s.ready[id] = b.t + Math.round(spell.cooldownMs * RANK_COOL[rk]);
+  if (echo === undefined) s.ready[id] = b.t + Math.round(spell.cooldownMs * RANK_COOL[rk]);
   s.events.push({ kind: 'spell', id, u, v });
   // (kept in the fight's log with the heroes' ultimates, so a recorded fight replays whole: `orders.ts`)
-  (b.log ??= []).push({ t: b.t, kind: 'spell', id, u, v });
+  if (echo === undefined) (b.log ??= []).push({ t: b.t, kind: 'spell', id, u, v });
   const ev = s.events;
   const fx = (to: Unit) => ev.push({ kind: 'spellfx', id, to: to.id });
   switch (id) {
@@ -664,8 +671,13 @@ export function castSpell(b: Battle, id: SpellId, u: number, v: number): boolean
       break;
     }
   }
+  // (TRAIT-PERKS: the Mystics' echo and Conflux, the Arcanists' answer; an echo has none of its own)
+  if (echo === undefined && b.perk) s.mana += perkSpell(b, id, u, v, cost, ev);
   return true;
 }
+
+// (TRAIT-PERKS: a perk's free cast of a king's spell: an echo, Conflux's second)
+spellHook.cast = (b, id, u, v, share) => void castSpell(b, id as SpellId, u, v, share);
 
 /** Every tick: meteors that have fallen strike the foes in their 3x3, poison clouds bite, and rallies wear off. */
 export function settleFalls(b: Battle, out: BattleEvent[]): void {

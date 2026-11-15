@@ -66,6 +66,7 @@ import { kitSignature } from './kitLooks';
 import { isMythic } from '../sim/mythicRules';
 import { loadProps, playSteps, setSignatureSprite, type Pt, type Scene } from './signatureFx';
 import { arcStyle, bits, fallSlowMs, ultCastBeat, FLASH_MAX, FLASH_MS, GLOW, HealPool, SPELL_ELEMENT, numberShown, towards, WALL_DIM, ULT_TINT, deathKind, hitStopMs, impactElement, isBackstab, missileOf, nudgeOf, packKey, skillElement, SPELL_CAST, type Missile } from './fxRules';
+import { HYMN_WORDS, PERK_LOOKS, perkClips, TRAIT_BEATS } from './perkFxRules';
 import { particleBudget, slashOf } from './vfxRules';
 import { placeLabel } from './labelRules';
 import { HAZARD_LOOKS } from './hazardLooks';
@@ -219,6 +220,8 @@ export class Fx {
   private tickCasts = new Map<number, string>();
   /** BLENDER-FX: the battles whose heroes' ultimates have been asked for (`warmBfx`). */
   private bfxWarmed = new WeakSet<Battle>();
+  /** TRAIT-PERKS: the battles whose perks' beat clips have been asked for. */
+  private perkWarmed = new WeakSet<Battle>();
   /** BLENDER-FX: how many of a spell's touches have been drawn this tick (the battery saver draws fewer: `bfxBudget`). */
   private bfxTouches = 0;
   /** The painted loops held over fighters (`movePaint`'s stands), so a state shown once is not shown twice. */
@@ -420,6 +423,11 @@ export class Fx {
     this.particles.calm = this.calm();
     this.enter(b);
     this.bfxTouches = 0;
+    // (TRAIT-PERKS: the small beat clips of the perks the party woke, once the fight has begun and woken them, so the first skeleton's rising shows)
+    if (b.perk && !this.perkWarmed.has(b)) {
+      this.perkWarmed.add(b);
+      warmBfx(perkClips(Object.keys(b.perk.tier).flatMap((t) => TRAIT_BEATS[t] ?? [])).map(([clip, el]) => beatBfx(clip, el)));
+    }
     // (BLENDER-FX: a fight's heroes' ultimates are large sheets, loaded as the fight begins rather than all held at once)
     if (!this.bfxWarmed.has(b)) {
       this.bfxWarmed.add(b);
@@ -532,6 +540,8 @@ export class Fx {
         else this.zone(b, e.u, e.v, e.ms);
       }
       else if (e.kind === 'trap') this.trap(b, e.u, e.v, e.ms);
+      // (TRAIT-PERKS: a trait perk's beat)
+      else if (e.kind === 'perk') this.perk(b, e);
       else if (e.kind === 'duoCombo') this.duoCombo(e);
       else if (e.kind === 'decoyLog') {
         const by = this.sprites.get(e.by);
@@ -3839,6 +3849,41 @@ export class Fx {
   }
 
   /** A snare on a tile: a dark ring that waits there (and goes out when it is sprung or runs down). */
+  /** TRAIT-PERKS: a perk's beat (`perkFxRules.ts`): its word, and its beat clip on the fighter, the tile, each tile, a file or the party. */
+  private perk(b: Battle, e: Extract<BattleEvent, { kind: 'perk' }>): void {
+    const look = PERK_LOOKS[e.what];
+    if (!look) return;
+    const word = e.what === 'hymn' ? HYMN_WORDS[e.note ?? ''] : look.word;
+    const beat = (x: number, y: number, delay = 0) => {
+      const key = beatBfx(look.clip, look.el);
+      if (!key || !this.bfxFlash(key, x, y, look.size, bfxClip(key)?.ms ?? 600, 0, false, 1, delay)) this.sparkles(x, y, look.tint);
+    };
+    const spots: [number, number][] = [];
+    if (look.on === 'to' && e.to !== undefined) {
+      const s = this.sprites.get(e.to);
+      if (s) spots.push([s.x, s.y - s.tall * 0.4]);
+    } else if (look.on === 'at' && e.at) spots.push(this.tilePos(b, e.at.u, e.at.v));
+    else if (look.on === 'tiles') for (const t of e.tiles ?? []) spots.push(this.tilePos(b, t.u, t.v));
+    else if (look.on === 'file') {
+      for (const t of e.tiles ?? []) if (tileAt(b.board, t.u, t.v)) spots.push(this.tilePos(b, t.u, t.v));
+    } else if (look.on === 'party') for (const s of this.sprites.values()) if (s.unit.alive && s.unit.side === 'hero' && !s.unit.pk?.raised) spots.push([s.x, s.y - s.tall * 0.4]);
+    if (e.at && look.on === 'to' && !spots.length) spots.push(this.tilePos(b, e.at.u, e.at.v));
+    // (a file's beats run down it from the far end, a party's together; a few tiles at most, so a stampede is not a wall of clips)
+    const shown = look.on === 'file' ? spots.filter((_, i) => i % 2 === 0) : spots.slice(0, 8);
+    shown.forEach(([x, y], i) => beat(x, y, look.on === 'file' ? i * 60 : 0));
+    if (word && shown.length) {
+      const [x, y] = look.on === 'party' || look.on === 'file' ? shown[Math.floor(shown.length / 2)] : shown[0];
+      this.label(word, x, y - 26, look.tint, 13, 1200, true);
+    }
+    if (e.what === 'stampede' || e.what === 'broadside' || e.what === 'onslaught' || e.what === 'kegBoom' || e.what === 'boom' || e.what === 'regicide') this.trauma = Math.min(1, this.trauma + 0.25);
+    // (a keg stands where it was rolled until it goes off)
+    if (e.what === 'keg' && e.at && spellFrames(SNARE.ground).length) {
+      const { u, v } = e.at;
+      const [x, y] = this.tilePos(b, u, v);
+      this.paintLoop(SNARE.ground, () => [x, y], () => !!b.perk?.kegs.some((k) => k.u === u && k.v === v), { depthOf: () => -1, alpha: 0.95, tint: 0xffa040 });
+    }
+  }
+
   private trap(b: Battle, u: number, v: number, ms: number): void {
     // (painted, session F: the hidden ring of teeth and rope while it waits, and the snap when it is sprung)
     if (spellFrames(SNARE.ground).length) {

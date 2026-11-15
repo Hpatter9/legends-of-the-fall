@@ -54,8 +54,9 @@ const contrast = (a: string, b: string) => {
   });
   test('a trait at its top tier is not raised again', () => {
     const wild = Object.keys(HERO_TRAITS).filter((k) => HERO_TRAITS[k].includes('knightly'));
-    assert.ok(wild.length > 2);
-    assert.ok(!raisedBy(wild.slice(0, 2), wild[2]).includes('knightly'));
+    assert.ok(wild.length > 4);
+    assert.ok(raisedBy(wild.slice(0, 2), wild[2]).includes('knightly'));
+    assert.ok(!raisedBy(wild.slice(0, 4), wild[4]).includes('knightly'));
   });
 }
 

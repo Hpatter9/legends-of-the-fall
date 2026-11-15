@@ -103,6 +103,7 @@ import { armyById } from '../src/sim/armies';
 import { CAL_SCALE } from '../src/sim/calamity';
 import { FIELD_HAZARDS } from '../src/sim/fieldTraps';
 import { LAND_TERRAIN } from '../src/sim/landTerrain';
+import { TRAIT_PERKS } from '../src/sim/traits';
 
 // (LIVING-FIELDS: these fights were recorded before the land's traps and hazards, `fieldTraps.ts`; the set's one switch is off here, so every
 // fight is laid as it was and plays as recorded)
@@ -110,6 +111,9 @@ FIELD_HAZARDS.on = false;
 // (LAND-IDENTITY: nor had the lands' own terrain been laid thicker, `landTerrain.ts`: the mire's pools are off here for the same reason.
 //  What the two switches do to a fight is held by their own tests, `living-fields-traps` and `land-terrain`.)
 LAND_TERRAIN.on = false;
+// (TRAIT-PERKS: nor had the traits their perks, `traitPerks.ts`: with the switch off they are the old small bonuses, so every fight plays as
+//  recorded. What the perks do is held by their own tests, `trait-perks` and `traits`.)
+TRAIT_PERKS.on = false;
 
 // (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
 // fields one of each kind, where it fielded two of a kind before; `daily` again for its foes' new start, `DAILY_START` 0.565; every other
@@ -164,6 +168,9 @@ function recordedStrengths<T>(fn: () => T): T {
 // alone: they are the scenarios whose heroes wear runes, which now come less often and give more; every other scenario keeps its hash)
 // (RUNE-WAVE-ONE, the owner's yes to a rune for the first wave, docs/notes/rune-wave-one.md, re-recorded `daily` (e42643a5) alone: its heroes
 // wear a rune from wave 2; every other scenario keeps its hash)
+// (TRAIT-PERKS, docs/notes/trait-perks.md, re-recorded field1, field30, bosses, armyFoes, spells, heroes1, heroes10, heroes30 and their
+// "Others": the Mummy's base health went from 299 to 315, the director's retune to keep it within the hero table's band once the traits'
+// old flat bonuses were gone. These are the scenarios with the Mummy in them; the traits play here with their switch off, as before.)
 test('every mode, and every hero at level 1, 10 and 30, plays as recorded; and with the healers left out, exactly as on main', () => {
   BOSS_BIG.on = false;
   // (DEPTH-BUILD: and the bosses' weaknesses, which came after these were recorded, `weakness.ts`)

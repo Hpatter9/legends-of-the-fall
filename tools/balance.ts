@@ -30,6 +30,7 @@
 import { sweepLevel } from './living-fields/switch';
 import { PROVISIONS } from '../src/sim/calJourney';
 import './joint/off';
+import './trait-perks/env';
 import './tactics/off';
 import { fight, place, playOut } from '../src/sim/battle';
 import { FIELD_BANDS } from '../src/sim/foes';

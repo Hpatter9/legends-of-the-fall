@@ -64,7 +64,8 @@ test('a strong party falls back room by room, in order, and each new room is lai
   // (HEROES-JOIN, docs/notes/heroes-join.md: nine more heroes move the roster means every hero's numbers are sized against, so the party
   // falls a little sooner: 7 of seeds 1 to 14 now reach the fourth room, seed 1 among them)
   // (HEROES-JOIN 2, docs/notes/heroes-join-2.md: eleven more move them again, and seed 1 now falls before the fourth room: re-staged from seed 1 to seed 3, which does reach it)
-  const s = startStand(newStandRun(3, EIGHT, armies), setupAt(100));
+  // (TRAIT-PERKS, docs/notes/trait-perks.md: re-staged from seed 3 to seed 2: with the perks 9 of seeds 1 to 14 reach the fourth room, seed 3 not among them)
+  const s = startStand(newStandRun(2, EIGHT, armies), setupAt(100));
   startFirstWave(s);
   const rooms: { hall: HallKind; wave: number }[] = [];
   const notes: StandNote[] = [];
@@ -208,7 +209,9 @@ test('a king who falls holding the line ends the run: the end says the room, and
 });
 
 test('an act\'s last foes break off and run for the breaches: gone, unpaid, and the wave is over', () => {
-  const s = startStand(runAt(6, 4), setupAt(100));
+  // (TRAIT-PERKS, docs/notes/trait-perks.md: re-staged from seed 6 to seed 7: with the Samurai's Way of the Duel the Kunoichi's skill now fells
+  // seed 6's last four foes at a stroke, before they can break off; seeds 7 to 11 all break off as before)
+  const s = startStand(runAt(7, 4), setupAt(100));
   startFirstWave(s);
   // (wave 4: no breaking off; it ends as ever, by the hunt)
   const four = stepUntil(s, (x) => x.phase === 'break');

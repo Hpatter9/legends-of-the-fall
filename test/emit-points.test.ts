@@ -11,8 +11,11 @@ import { UNITS } from '../src/sim/units';
 import layout from '../src/art/units/sheets.json';
 
 const SHEETS = layout as unknown as Record<string, { w: number; h: number; rear?: string; facesRight?: boolean; counts: Record<string, number> }>;
-/** Heroes that shoot and keep the old place on purpose (none today): each with its reason. */
-const FALLBACK: Record<string, string> = {};
+/** Heroes that shoot and keep the old place on purpose: each with its reason. */
+const FALLBACK: Record<string, string> = {
+  graveArcher: "TRAIT-PERKS: a risen skeleton in the foes' own sheet, shooting from the foe's point",
+  sentry: 'TRAIT-PERKS: a stand-in sheet for the sentry turret until its art lands (docs/notes/trait-perks-art-prompts.md)',
+};
 
 test('every hero that shoots has a measured point on its sheet, front and back, or names its fallback on purpose', () => {
   const shooters = Object.values(UNITS).filter((u) => u.side === 'hero' && u.shot);

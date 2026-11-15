@@ -1,6 +1,7 @@
 // The fighters drawn: an animated sprite from the unit's sheet, mirrored to face the way it's going, a shadow under it
 // and a health bar over its head. A step is drawn as a glide between the two tiles with a hop (higher for a climb).
 
+import { perkTint } from './perkLookRules';
 import { ColorMatrixFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
@@ -512,6 +513,12 @@ export class UnitSprite {
     this.body.tint = this.flash > 0 ? 0xffb0b0 : ailmentTint(this.ail.shown) ?? 0xffffff;
     // (a foe turned to stone is grey)
     if (u.alive && u.kx?.stone !== undefined && t < u.kx.stone) this.body.tint = 0x9a9a92;
+    // (TRAIT-PERKS: what a perk raised shows what it is: a thrall's blood red, an image's or a twin's spirit light, a risen skeleton's
+    // grave green; a crowned hero is a touch gold; a Wanted foe a touch amber)
+    if (u.alive && this.flash <= 0 && u.pk) {
+      const tint = perkTint(u.pk);
+      if (tint !== undefined) this.body.tint = tint;
+    }
     // (the fallen go dark as they burn away, or grey as they turn to stone)
     if (!u.alive || rising < 1) {
       const kind = deathKind(def.name, u.side);
@@ -531,7 +538,7 @@ export class UnitSprite {
     this.y = y;
     // Fallen heroes stay where they fell so a life can raise them; foes fade away.
     const dead = u.alive || (u.side === 'hero' && !def.summon) ? 0 : t - (u.diedAt ?? 0);
-    this.root.alpha = dead > FADE_FROM ? Math.max(0, 1 - (dead - FADE_FROM) / FADE_MS) : this.solid;
+    this.root.alpha = (dead > FADE_FROM ? Math.max(0, 1 - (dead - FADE_FROM) / FADE_MS) : this.solid) * (u.pk?.raised === 'image' || u.pk?.raised === 'twin' ? 0.7 : 1);
     // (a burrower underground is not seen: the page draws its mound instead, RPG-SPELLS)
     if (u.under) this.root.alpha = 0;
     this.root.visible = this.root.alpha > 0;

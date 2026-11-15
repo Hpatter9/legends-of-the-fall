@@ -8,7 +8,7 @@ import { existsSync } from 'node:fs';
 import { addUnit, apart, atkOf, hurt, startBattle, stepBattle, type Battle, type BattleEvent, type Unit } from '../src/sim/battle';
 import { afterBlow, CHARGE_MAX, FORM_MULT, KITS, onStrike, ULT_LEVEL, keyOf } from '../src/sim/abilities';
 import { ALL_HEROES, formOf, UNITS } from '../src/sim/units';
-import { countTraits, HERO_TRAITS, membersOf, TRAITS, traitEffects } from '../src/sim/traits';
+import { countTraits, HERO_TRAITS, membersOf, TRAITS, TRAIT_PERKS, traitEffects } from '../src/sim/traits';
 import { TREES } from '../src/sim/talents';
 import { kitSignature } from '../src/render/kitLooks';
 import { SKILL_ELEMENT } from '../src/render/fxRules';
@@ -86,14 +86,20 @@ test('the traits: every one has two to five heroes (owner call for the twenty), 
     assert.ok(n >= 2 && n <= 5, `${id} ${n}`);
     for (const tier of t.tiers) assert.ok(tier.need <= n, `${id} tier ${tier.need} with ${n} members`);
   }
-  // (the new four-piece bonuses)
-  for (const id of ['undead', 'machine', 'royal', 'assassin', 'vanguard', 'frontier', 'warden', 'caster', 'wild', 'arcane', 'mystic']) {
-    assert.equal(TRAITS[id].tiers.length, 2, id);
+  // (TRAIT-PERKS: every trait's three tiers, the top one reached by its heroes)
+  for (const id of Object.keys(TRAITS)) {
+    assert.equal(TRAITS[id].tiers.length, 3, id);
     const c = countTraits(membersOf(id)).find((x) => x.trait.id === id)!;
-    assert.equal(c.tier, 1, id);
+    assert.equal(c.tier, 2, id);
   }
-  assert.ok(Math.abs(traitEffects(['shambler', 'mummy', 'reaper', 'dreadPirate']).hp! - 1.14) < 1e-9);
-  assert.ok(Math.abs(traitEffects(['rifleBot', 'arcBlade', 'siegeBot', 'juggernaut']).atk! - 1.1 * 1.04) < 1e-9);
+  // (the old four-piece bonuses, with the perks switched off)
+  TRAIT_PERKS.on = false;
+  try {
+    assert.ok(Math.abs(traitEffects(['shambler', 'mummy', 'reaper', 'dreadPirate']).hp! - 1.14) < 1e-9);
+    assert.ok(Math.abs(traitEffects(['rifleBot', 'arcBlade', 'siegeBot', 'juggernaut']).atk! - 1.1 * 1.04) < 1e-9);
+  } finally {
+    TRAIT_PERKS.on = true;
+  }
 });
 
 test('every new hero\'s skill fires in a fight when its charge is full', () => {

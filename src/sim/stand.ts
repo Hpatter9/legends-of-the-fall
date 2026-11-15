@@ -32,6 +32,7 @@ import { relicFoe, relicStart } from './relicFight';
 import { addRelicMarks, relicCtx } from './run';
 import { fxStart } from './equipFx';
 import { kindsOf, traitEffects } from './traits';
+import { perkWaveSoon, syncPerks } from './traitPerks';
 import { killXp, levelOfKind } from './levels';
 import { boostOf, FOE_START } from './run';
 import { heroBoost, manaRate, moveRate, type Castle } from './castle';
@@ -467,6 +468,8 @@ function syncTraits(s: Stand): void {
   const b = s.b;
   const fx = mergeEffects(traitEffects(kindsOf(b.units)), b.relics?.team ?? {});
   b.traits = fx;
+  // (TRAIT-PERKS: the perks of the heroes on the field)
+  syncPerks(b);
   const hp = fx.hp ?? 1;
   const atk = fx.atk ?? 1;
   if (hp !== s.traitHp || atk !== s.traitAtk) {
@@ -598,6 +601,8 @@ function beginWave(s: Stand, hold?: WaveSpec): void {
   s.help = newHelpBook();
   s.waveAt = b.t;
   s.rageAt = b.t + ENRAGE_AFTER;
+  // (TRAIT-PERKS: the wave's start for the perks, once its foes have come on)
+  perkWaveSoon(b, Math.min(3000, SPAWN_SPAN + 500));
   b.revived = false;
   // (RELICS-2: a wave is the Last Stand's fight for the relics' start-of-fight rules: the king's first mana, the Ember's and the Ring's prices)
   relicStart(b, true);
