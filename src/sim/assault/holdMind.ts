@@ -31,6 +31,17 @@ import { ELITE_TRICK, rankOf, TRICKS } from './troops';
 
 export const WAKE = 8;
 export const CALL = 12;
+/** ASSAULT-SQUADS (the owner: "the enemies in the area should be coming to the heroes if they're within distance"): a post out in the
+ *  fields (a camp, a guard, a band by the road) wakes to ours this near its home and comes for them, calling the posts within `CALL` as
+ *  it goes; the posts on the palisade, the wall, the baileys and the keep keep to `WAKE` and their places. */
+export const AGGRO = 14;
+/** A post out in the fields hunts ours this far from its home, and goes home past it (the squad well away). */
+export const FIELD_HUNT = 22;
+/** Whether a post stands out in the fields (it comes to ours) or on the hold's works (it keeps its place). */
+export const inTheField = (p: Pick<PostState, 'def'>): boolean => p.def.zone === 'fields';
+/** How near a post wakes to ours, and how far it hunts them. */
+export const aggroOf = (p: Pick<PostState, 'def'>): number => (p.def.horn ? 4 : inTheField(p) ? AGGRO : WAKE);
+export const huntOf = (p: Pick<PostState, 'def'>): number => (p.def.id === 'throne' ? THRONE_HUNT : inTheField(p) ? FIELD_HUNT : HUNT);
 /** An awake post hunts ours this far from its home (the throne's guard keeps closer), and goes home past it. */
 export const HUNT = 14;
 export const THRONE_HUNT = 8;
@@ -83,7 +94,7 @@ function postSecond(b: Battle, f: FieldState, h: HoldState, p: PostState): void 
   if (p.mood === 'posted') {
     const hurt = living.some((id) => f.byId[id].hp < f.byId[id].maxHp);
     let near = false;
-    forNear(f, g.home.u, g.home.v, p.def.horn ? 4 : WAKE, (x) => (near = x.side === 'hero'));
+    forNear(f, g.home.u, g.home.v, aggroOf(p), (x) => (near = x.side === 'hero'));
     if (hurt || near) wake(f, h, p, true);
     // (a patrol walks its round while it is posted)
     if (p.def.loop && p.loopAt !== undefined) {
@@ -120,7 +131,7 @@ function postSecond(b: Battle, f: FieldState, h: HoldState, p: PostState): void 
     p.mark = { ...g.home };
     return;
   }
-  const reach = p.def.id === 'throne' ? THRONE_HUNT : HUNT;
+  const reach = huntOf(p);
   // (the Howling Den's pack goes for our shooters first, round the line: a shooter within reach is nearer by `reach` than any other)
   const shooters = h.bp.huntShooters;
   let best: Unit | null = null;

@@ -50,7 +50,7 @@ export const FALLBACK_MS = 800;
 /** How far a fighter's own mind looks for foes on the field. */
 export const SIGHT = 10;
 /** A leader waits this long at a time for its stragglers. */
-const WAIT_MAX = 3000;
+const WAIT_MAX = 5000;
 /** A soldier that finds no step for this long asks for a bounded walk. */
 const STUCK_MS = 2000;
 /** A cheap mind in its place with nothing near looks again after this long (not every `WAIT_MS`). */
@@ -69,6 +69,14 @@ export const POINT_REACH = 2;
 /** A leader waits for its stragglers only with no foe this near, and not with this many of its own pressing round it. */
 export const STRAGGLE_FOE = 12;
 export const STRAGGLE_CROWD = 3;
+/** ASSAULT-SQUADS (the owner: "the hero and its troops form a group so they need to travel closely together"): a soldier further than
+ *  this from its hero is a straggler, its hero waits for it (up to `WAIT_MAX` at a time), and it walks the hero's trail to catch up rather
+ *  than make for its place in the formation (which may lie across a river from it). */
+export const SQUAD_STRAGGLE = 5;
+/** A leader marching with its squad (no foe within its reach and this) waits for its stragglers even with foes in sight, and keeps their pace. */
+export const SQUAD_FIGHT = 2;
+/** On the march (no foe near), the formation's places are drawn in to this share of their spread. */
+export const MARCH_CLOSE = 0.7;
 /** A leader whose way is shut hands the moment to its own mind with a foe this much further than its reach. */
 export const HAND_OVER = 2;
 
@@ -476,12 +484,20 @@ function nearFortTile(b: Battle, me: Unit, tiles: readonly number[]): At | null 
 function leaderWalk(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, me: Unit, at: At, out: BattleEvent[]): boolean {
   const g = f.groups[pl.group];
   // (ASSAULT-AI: no waiting for stragglers with a foe near, or in a press of its own: it would only hold up the rest)
-  if (straggling(b, f, pl, me) <= 4 || !waitsForStragglers(b, f, me)) g.waited = 0;
+  if (!straggling(b, f, pl, me) || !waitsForStragglers(b, f, me)) g.waited = 0;
   else if ((g.waited ?? 0) < WAIT_MAX) {
     g.waited = (g.waited ?? 0) + WAIT_MS;
     me.busyUntil = b.t + WAIT_MS;
     return true;
   }
+  // (ASSAULT-SQUADS: at the mouth of a narrow way another squad is still in, it waits its turn, its squad gathered, `TURN_MAX` at most)
+  if (waitsTurn(b, f, pl, me)) {
+    if ((g.turned ?? 0) < TURN_MAX) {
+      g.turned = (g.turned ?? 0) + WAIT_MS;
+      me.busyUntil = b.t + WAIT_MS;
+      return true;
+    }
+  } else if (narrowAt(b, me)) g.turned = 0;
   g.heading = wayTo(me, at);
   const info = f.info[me.id];
   if (walkStep(b, f, me, at, out, true)) {
@@ -506,7 +522,7 @@ function leaderWalk(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, me
 }
 
 /** ASSAULT-AI: how many tiles of its leader's trail a platoon keeps (its soldiers' file in a narrow way). */
-export const TRAIL_MAX = 12;
+export const TRAIL_MAX = 40;
 /** A place is narrow (a bridge, a gap, a gate's mouth) when fewer than this many of the 24 tiles round it can be stood on. */
 export const NARROW_UNDER = 14;
 
@@ -551,7 +567,8 @@ const f_isLeader = (b: Battle, me: Unit): boolean => b.field?.info[me.id]?.slot 
 /** ASSAULT-AI: whether a leader may stop for its stragglers: no foe within `STRAGGLE_FOE`, and fewer than `STRAGGLE_CROWD` of its own
  *  pressing round it. */
 export function waitsForStragglers(b: Battle, f: FieldState, me: Unit): boolean {
-  if (nearestFoe(b, f, me, STRAGGLE_FOE, false)) return false;
+  // (ASSAULT-SQUADS: in sight of foes too, since the squad must arrive together; only not in the fight itself)
+  if (nearestFoe(b, f, me, strikeDef(b, me).range + SQUAD_FIGHT, false)) return false;
   return friendsRound(f, me) < STRAGGLE_CROWD;
 }
 
@@ -570,22 +587,109 @@ export function friendsRound(f: FieldState, me: Unit): number {
   return n;
 }
 
-/** How many of a platoon's soldiers are more than three tiles off their slots. */
-function straggling(_b: Battle, f: FieldState, pl: PlatoonState, anchor: Unit): number {
-  let n = 0;
-  const g = f.groups[pl.group];
+/** ASSAULT-SQUADS: whether a platoon has a straggler: a living soldier further than `SQUAD_STRAGGLE` from its leader (not one in a fight
+ *  of its own, a foe within its reach). */
+export function straggling(b: Battle, f: FieldState, pl: PlatoonState, anchor: Unit): boolean {
   for (const s of pl.soldiers) {
     const x = f.byId[s.id];
     if (!x?.alive || x.id === anchor.id) continue;
-    if (dist(x, slotAt(anchor, g.heading, pl.formation, s.slot)) > 3) n++;
+    if (Math.max(Math.abs(x.u - anchor.u), Math.abs(x.v - anchor.v)) <= SQUAD_STRAGGLE) continue;
+    if (nearestFoe(b, f, x, strikeDef(b, x).range, true)) continue;
+    return true;
   }
-  return n;
+  return false;
 }
 
-/** A step's pace for the platoon's order: a charge quickens it; a fall back keeps to the Shieldguard's walk. */
+/** ASSAULT-SQUADS: a squad waits this long at most for its turn at a narrow way, then goes in. */
+export const TURN_MAX = 8000;
+/** The mouth of a narrow way: a narrow tile this near the leader. Another squad in it: one of its living fighters on a narrow tile this near. */
+export const TURN_MOUTH = 2;
+export const TURN_NEAR = 6;
+
+/** ASSAULT-SQUADS: whether a leader waits its turn: it stands outside a narrow way with one at its feet (`TURN_MOUTH`), another squad's
+ *  fighters are in it near by (`TURN_NEAR`), and no foe is in its reach (a fight does not queue). The squad already crossing goes first, so
+ *  the squads file over one at a time, not woven through each other. */
+export function waitsTurn(b: Battle, f: FieldState, pl: PlatoonState, me: Unit): boolean {
+  if (narrowAt(b, me)) return false;
+  if (nearestFoe(b, f, me, strikeDef(b, me).range + SQUAD_FIGHT, false)) return false;
+  let mouth = false;
+  for (let du = -TURN_MOUTH; du <= TURN_MOUTH && !mouth; du++)
+    for (let dv = -TURN_MOUTH; dv <= TURN_MOUTH && !mouth; dv++) {
+      const u = me.u + du;
+      const v = me.v + dv;
+      const t = b.board.tiles[v * b.board.w + u];
+      if (u >= 0 && v >= 0 && u < b.board.w && v < b.board.d && t && !t.wall && !t.rock && t.ground !== 'deep' && narrowAt(b, { u, v })) mouth = true;
+    }
+  if (!mouth) return false;
+  let other = false;
+  forNear(f, me.u, me.v, TURN_NEAR, (x) => {
+    if (x.side !== me.side || !x.alive) return;
+    const g = f.info[x.id]?.group;
+    if (g === undefined || g < 0 || g === pl.group) return;
+    if (narrowAt(b, x)) other = true;
+    return other;
+  });
+  return other;
+}
+
+/** ASSAULT-SQUADS: the jump a leader walks with: its own, or its living soldiers' lowest, whichever is less. */
+export function squadJump(f: FieldState, me: Unit, own: number): number {
+  const pl = f.hold?.platoons.find((p) => p.heroId === me.id);
+  if (!pl) return own;
+  let j = own;
+  for (const s of pl.soldiers) {
+    const x = f.byId[s.id];
+    if (x?.alive) j = Math.min(j, defOf(x).jump);
+  }
+  return j;
+}
+
+/** ASSAULT-SQUADS: a straggler catches up along its leader's own trail (the way the leader found, over the bridge or the ford), aiming a few
+ *  tiles on from the trail's tile nearest it, never at a place across water. True when it stepped. */
+export function followTrail(b: Battle, f: FieldState, pl: PlatoonState, me: Unit, out: BattleEvent[]): boolean {
+  const tr = pl.trail;
+  if (!tr?.length) return false;
+  const w = b.board.w;
+  let best = 0;
+  let bd = Infinity;
+  tr.forEach((i, k) => {
+    const d = Math.max(Math.abs((i % w) - me.u), Math.abs(Math.floor(i / w) - me.v));
+    // (the nearest; of equal ones, the newest)
+    if (d < bd) {
+      bd = d;
+      best = k;
+    }
+  });
+  const aim = tr[bd <= 2 ? Math.max(0, best - TRAIL_AHEAD) : best];
+  return walkStep(b, f, me, { u: aim % w, v: Math.floor(aim / w) }, out, false);
+}
+
+/** A straggler on its leader's trail aims this many of the trail's tiles on from where it is. */
+export const TRAIL_AHEAD = 3;
+
+/** ASSAULT-SQUADS: a leader's step on the march takes as long as its slowest living soldier's (the squad keeps together). */
+export function squadPace(b: Battle, f: FieldState, pl: PlatoonState, me: Unit): number {
+  let ms = me.step?.ms ?? defOf(me).moveMs;
+  if (nearestFoe(b, f, me, strikeDef(b, me).range + SQUAD_FIGHT, false)) return ms;
+  for (const s of pl.soldiers) {
+    const x = f.byId[s.id];
+    if (x?.alive) ms = Math.max(ms, defOf(x).moveMs);
+  }
+  return ms;
+}
+
+/** A step's pace for the platoon's order: a charge quickens it; a fall back keeps to the Shieldguard's walk; on the march, the squad's. */
 function pace(b: Battle, h: HoldState, pl: PlatoonState, me: Unit): void {
   if (!me.step || me.step.at !== b.t) return;
   let ms = me.step.ms;
+  if (pl.heroId === me.id && pl.order.kind !== 'charge' && pl.order.kind !== 'fallback') {
+    const slow = squadPace(b, b.field!, pl, me);
+    if (slow > ms) {
+      me.step.ms = slow;
+      me.busyUntil = b.t + slow;
+      ms = slow;
+    }
+  }
   if (pl.order.kind === 'charge' && b.t < (pl.chargeUntil ?? 0)) ms = Math.round(ms / CHARGE_MOVE);
   else if (pl.order.kind === 'fallback') ms = Math.max(ms, FALLBACK_MS);
   else if (carrying(h, pl)) ms = Math.round(ms * KEG_SLOW);
@@ -620,7 +724,8 @@ function soldierMind(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, m
   }
   const g = f.groups[pl.group];
   // (ASSAULT-AI: in a narrow way, in file behind the leader; anywhere else, its place in the formation)
-  const slot = fileSlot(b, pl, anchor, f.info[me.id].slot) ?? slotAt(anchor, g.heading, pl.formation, f.info[me.id].slot, !hero.alive);
+  const march = nearestFoe(b, f, anchor, strikeDef(b, anchor).range + ENGAGE + 2, false) ? 1 : MARCH_CLOSE;
+  const slot = fileSlot(b, pl, anchor, f.info[me.id].slot) ?? slotAt(anchor, g.heading, pl.formation, f.info[me.id].slot, !hero.alive, march);
   if (goal.fights) {
     const leashed = dist(me, anchor) > LEASH;
     // (Assault: those who can reach the structure strike it; the shooters cover)
@@ -659,6 +764,8 @@ function soldierMind(b: Battle, f: FieldState, h: HoldState, pl: PlatoonState, m
     if (target && canStrike(b.board, def, me, target)) return strike(b, me, target, rng, out);
     if (target && !leashed && !(pl.order.kind === 'hold' && def.shot) && steer(b, f, me, target, out)) return;
   }
+  // (ASSAULT-SQUADS: a straggler catches up on the leader's own trail, not straight for its place)
+  if (Math.max(Math.abs(me.u - anchor.u), Math.abs(me.v - anchor.v)) > SQUAD_STRAGGLE && followTrail(b, f, pl, me, out)) return;
   if (dist(me, slot) === 0) me.busyUntil = b.t + (goal.fights && nearestFoe(b, f, me, def.range + ENGAGE + 2, false) ? WAIT_MS : IDLE_MS);
   else if (!steer(b, f, me, slot, out)) me.busyUntil = b.t + WAIT_MS;
   else if (pl.order.kind === 'fallback' || (pl.order.kind === 'charge' && b.t < (pl.chargeUntil ?? 0))) pace(b, h, pl, me);
@@ -826,7 +933,8 @@ export function makesWay(b: Battle, f: FieldState, me: Unit, j: number): boolean
 function walkStep(b: Battle, f: FieldState, me: Unit, mark: At, out: BattleEvent[], swapping: boolean): boolean {
   const w = b.board.w;
   const def = defOf(me);
-  const jump = def.flies ? 9 : def.jump;
+  // (ASSAULT-SQUADS: a leader walks only where its squad can follow: its soldiers' jump, not its own leap or wings)
+  const jump = swapping ? squadJump(b.field!, me, def.flies ? 9 : def.jump) : def.flies ? 9 : def.jump;
   const c = jumpClass(jump);
   // (the walk's next steps kept from the last search, while it walks for the same mark and the next tile is free and steppable)
   const info = f.info[me.id];
