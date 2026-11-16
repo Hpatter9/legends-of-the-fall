@@ -71,10 +71,30 @@ isometric column drawing (`src/render/boardView.ts`), `loadImage` and the battle
     - Opening (`opening.opus`): **Spooky Waltz (Music Box)** by **Aureolus_Omicron** (OpenGameArt.org, CC0 Public Domain).
     - Story scenes: **Medieval Victory Theme** (`triumph.opus`, CC0); **Emotional Piano Loop** by **Extenz** (`solemn.opus`, CC0); **Soliloquy** by **Matthew Pablo** (`spire.opus`, CC-BY 3.0); **Enchanted Festival** by **Matthew Pablo** (`comic.opus`, CC-BY 3.0).
   - Each track is resampled to 24 kHz, seamlessly crossfaded, and encoded to Opus with a 1.5 s wrap tail. The older synthesised loops (`src/render/musicScore.ts`, rendered in the page by `src/render/musicBake.ts`) remain as a fallback if a browser cannot decode the files.
-- **The sound effects** are synthesised in `src/render/audioProcessors.ts` with the Web Audio API: original to this game, no samples. The
-  eight recorded combat sounds that PR #150 had added (their source was never recorded) were removed in LICENCE-REPLACE; the synthesised
-  hits, shots, deaths and explosions under them play instead, each set as loud as the recording it replaces (`SYNTH_LEVEL`,
-  `docs/notes/licence-replace.md`).
+- **The sound effects** (CC0-SOUNDS, `docs/notes/cc0-sounds.md`): 73 cues play recordings (`src/sfx/cues/*.opus`, 154 files, about 340
+  KB), cut, levelled and encoded by `tools/cc0-sounds/` (whose `sources.mjs` names the file and options of every take). Every source is
+  **CC0 1.0** (public domain dedication; no credit is required, it is given anyway), each licence read on the item's own OpenGameArt page
+  (an item offered under several licences was left out). Downloaded from OpenGameArt.org:
+  - Kenney's **RPG Audio** (50 RPG sound effects) by Kenney: footsteps, coins, book pages, a knife's slice, a latch, creaks.
+  - **150 Combat Sound Effects** gathered by untamedpixels, from CC0 packs by Kenney (Impact Sounds, RPG Audio, Sci-fi Sounds),
+    Kronbits (200 Free SFX) and lentikula (Basic, Druid and Healing Spell Impacts): punches, slices, explosions, the spell impacts.
+  - **80 CC0 RPG SFX**, **100 CC0 SFX 2**, **100 CC0 metal and wood SFX**, **75 CC0 breaking, falling and hit SFX**,
+    **25 CC0 bang and firework SFX** and **80 CC0 creature SFX**, all by rubberduck.
+  - **20 sword sound effects** (attacks and clashes), **10 impact and shield blocks**, **12 coin sound effects**, **4 metal dings**,
+    **Cave-in** and **Crowd shouting** by StarNinjas.
+  - **Swishes sound pack** by artisticdude; **Punch**, **Impact**, **20 rustles**, **3 dark magic spells** and
+    **Energy drain** by qubodup; **35 wooden cracks, hits and destructions** and **8 wet squish impacts** from the Independent.nu
+    Ljudbank (uploaded by qubodup).
+  - **Tinysized SFX library** and **Fantasy weapons and apparel SFX library** by Vehicle (Jan Schupke).
+  - **Bones rattle** by congusbongus; **Skeleton SFX short pack** by colodical; **Ice breaking and shattering** and **Wind** by IgnasD;
+    **Bell dings and chimes** by pwl; **Bubble sound effects** by bmaczero; **They're coming** (a horn) by stumpystrust; **Wolf
+    monster sound** by caveboytup; **Deep monster roar** by trazzz123; **Earthquake and open sesame** by mieki256; **Chunky
+    explosion** by Joth; **Gunshots** (Black Powder) by Kurt; **Catching fire** and **Breaking rock** by TheMightyGlider;
+    **Teleport spell** by ogrebane; **Air whoosh** by pyranostudios; **Dynamite sound effect** by listener.
+  The other 50 cues (the tuned chimes, stingers and blips, and a few with no CC0 recording to match) are still synthesised in
+  `src/render/audioProcessors.ts` with the Web Audio API, original to this game, and every recorded cue keeps its synth as the fallback.
+  (The eight recorded combat sounds that PR #150 had added, of no recorded source, were removed in LICENCE-REPLACE,
+  `docs/notes/licence-replace.md`.)
 - **The king's spells' sounds** (`src/sfx/*.opus`, 44 files): original, synthesised offline by `tools/spell-sfx/` for this game (using the
   filters, hall and instruments of `tools/epic-music/`). No samples or third-party audio went in.
 

@@ -145,7 +145,32 @@ export const PLAYER_CREDITS: Readonly<Record<CreditGroup, readonly PlayerCredit[
     { work: 'Original music made for Legends of the Last Keep.' },
   ],
   Sound: [
-    { work: 'Original sound made for Legends of the Last Keep: the effects and the king’s spells.' },
+    { work: 'Original sound made for Legends of the Last Keep: the king’s spells, and the tuned chimes, stingers and blips.' },
+    // (CC0-SOUNDS: the recorded sound effects, all from OpenGameArt.org; CC0 asks no credit, it is given anyway)
+    { work: 'RPG Audio, and the Impact Sounds, RPG Audio and Sci-fi Sounds in 150 Combat Sound Effects', author: 'Kenney', licence: 'CC0' },
+    { work: '150 Combat Sound Effects (with sounds by Kronbits and lentikula)', author: 'untamedpixels', licence: 'CC0', includes: ['Kronbits: 200 Free SFX', 'lentikula: Basic, Druid and Healing Spell Impacts'] },
+    {
+      work: 'CC0 sound packs',
+      author: 'rubberduck',
+      licence: 'CC0',
+      includes: ['80 CC0 RPG SFX', '100 CC0 SFX 2', '100 CC0 metal and wood SFX', '75 CC0 breaking, falling and hit SFX', '25 CC0 bang and firework SFX', '80 CC0 creature SFX'],
+    },
+    { work: 'Sword attacks and clashes, impact and shield blocks, coins, metal dings, a cave-in and a shouting crowd', author: 'StarNinjas', licence: 'CC0',
+      includes: ['20 sword sound effects', '10 impact and shield blocks', '12 coin sound effects', '4 metal dings', 'Cave-in', 'Crowd shouting'] },
+    { work: 'Punch, Impact, 20 rustles, 3 dark magic spells and Energy drain; the Independent.nu Ljudbank’s 35 wooden cracks, hits and destructions and 8 wet squish impacts', author: 'qubodup', licence: 'CC0' },
+    { work: 'Tinysized SFX library and Fantasy weapons and apparel SFX library', author: 'Vehicle (Jan Schupke)', licence: 'CC0' },
+    { work: 'Swishes sound pack', author: 'artisticdude', licence: 'CC0' },
+    {
+      work: 'Single sounds',
+      author: 'Various OpenGameArt.org artists',
+      licence: 'CC0',
+      includes: [
+        'Bones rattle by congusbongus', 'Skeleton SFX short pack by colodical', 'Ice breaking and shattering, and Wind, by IgnasD', 'Bell dings and chimes by pwl',
+        'Bubble sound effects by bmaczero', 'They’re coming (a horn) by stumpystrust', 'Wolf monster sound by caveboytup', 'Deep monster roar by trazzz123',
+        'Earthquake and open sesame by mieki256', 'Chunky explosion by Joth', 'Gunshots by Kurt', 'Catching fire and Breaking rock by TheMightyGlider',
+        'Teleport spell by ogrebane', 'Air whoosh by pyranostudios', 'Dynamite sound effect by listener',
+      ],
+    },
   ],
   Fonts: [
     { work: 'Cinzel Decorative', author: 'Natanael Gama', licence: OFL, credit: true, link: OFL_LINK },

@@ -23,6 +23,7 @@ import { BOSS_TRACK, atPlace, crossfadeOf, endAt, musicOf, type BattleEnd, type 
 import { bakeTrack } from './musicBake';
 import { Mixer, castsOf, cuesFor, type Cue } from './soundRules';
 import { SpellBank } from './spellBank';
+import { CueBank } from './cueBank';
 import { coveredBySpells, spellParts } from './spellSfx';
 import { AMBIENCE_LEVEL, MOMENT_CUES, MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, busOf } from './audioMix';
 import { assaultEnd, drumGap, holdCues, holdScene, holdVoice, type AssaultEnd, type HoldAt, type HoldLike } from './holdSound';
@@ -94,6 +95,7 @@ function unlock(): void {
   // (a phone can hold the clock after the game was away, until a tap: the tap starts it again, and the sound fades back in)
   if (engine.core.context.state !== 'running') void engine.core.start().then(() => fadeIn());
   warmSpells();
+  warmCues();
   if (!engine.music.current) {
     syncMusic();
     // (the fight's track is decoded while the camp's plays, so a fight's music starts at once)
@@ -322,9 +324,24 @@ function cue(name: Cue, speed: number, gain: number, delay: number, pan: number)
   if (!v) return;
   // (a moment's cue asked for after a skip hushed the last one's: the bus is opened for it)
   if (MOMENT_CUES.includes(name)) openMoment(delay);
-  // (a test page can set `window.__sfxLog = []` to see which sounds played)
-  (window as unknown as { __sfxLog?: string[] }).__sfxLog?.push(name);
-  engine.synth.play(name, engine.core.context.currentTime + 0.01 + delay / 1000, { gain: v.gain, pitch: v.pitch, bus: busOf(name), pan });
+  const t = engine.core.context.currentTime + 0.01 + delay / 1000;
+  const o = { gain: v.gain, pitch: v.pitch, bus: busOf(name), pan };
+  // (CC0-SOUNDS: a recorded take if the cue has one decoded, else its synthesised voice: `cueSamples.ts`)
+  const file = cueBank?.play(name, t, o) ?? null;
+  if (!file) engine.synth.play(name, t, o);
+  // (a test page can set `window.__sfxLog = []` to see which sounds played, and `window.__cueLog = []` which played a recording)
+  const w = window as unknown as { __sfxLog?: string[]; __cueLog?: string[] };
+  w.__sfxLog?.push(name);
+  if (file) w.__cueLog?.push(file);
+}
+
+/** The recorded cues (CC0-SOUNDS): loaded on the first tap with the spells' files (about 340 KB, decoded once). */
+let cueBank: CueBank | null = null;
+function warmCues(): void {
+  if (cueBank || !engine) return;
+  const mixer = engine.mixer;
+  cueBank = new CueBank(engine.core.context, (n) => mixer.bus(n));
+  void cueBank.load();
 }
 
 /** The king's spells' rendered sounds: loaded on the first tap (a few hundred KB, decoded once). */
@@ -526,6 +543,8 @@ function debugState(): unknown {
     beds: engine.beds.live,
     ducked: ducks.reasons,
     limiter: m.limited,
+    // (CC0-SOUNDS: how many recorded takes are decoded)
+    cueFiles: cueBank?.decoded ?? 0,
     master: m.params.master.read(),
     buses: { music: m.params.music.read(), sfx: m.params.sfx.read(), ui: m.params.ui.read(), ambience: m.params.ambience.read() },
     duckGain: m.params.duck.read(),
