@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.612.0',
+    date: '2026-11-16',
+    title: 'The Shattered Crown returns',
+    notes: ['The loading screen is the black and red Shattered Crown poster again.'],
+  },
+  {
     version: '0.611.0',
     date: '2026-11-16',
     title: 'Squads march as one',
