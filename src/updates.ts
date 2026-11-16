@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.610.0',
+    date: '2026-11-16',
+    title: 'Recorded sound effects',
+    notes: ['73 battle and page sounds now play real recordings (all public-domain CC0), with two or three takes for the frequent ones so repeats don\'t grate.', 'The tuned chimes and stingers keep their synth, so they stay in key with the music.'],
+  },
+  {
     version: '0.609.0',
     date: '2026-11-15',
     title: 'Duels, plots and captains who kneel',

@@ -188,6 +188,13 @@ for (const f of readdirSync('src/sfx').filter((f) => f.endsWith('.opus'))) {
   copyFileSync(`src/sfx/${f}`, `${out}/sfx/${f}`);
   AUDIO_FILES.push(`sfx/${f}`);
 }
+// (CC0-SOUNDS: the recorded cues, cut by tools/cc0-sounds/ into src/sfx/cues/*.opus, served as sfx/cues/<name>.opus and cached with the
+// rest; `cueBank.ts` loads them, and each cue's synthesised voice stands in for any file that cannot load or decode)
+mkdirSync(`${out}/sfx/cues`, { recursive: true });
+for (const f of readdirSync('src/sfx/cues').filter((f) => f.endsWith('.opus'))) {
+  copyFileSync(`src/sfx/cues/${f}`, `${out}/sfx/cues/${f}`);
+  AUDIO_FILES.push(`sfx/cues/${f}`);
+}
 // Full art and smaller menu cutouts are separate files, all retained for offline play.
 const HERO_ART_FILES = [];
 // Awakened animation sheets stay outside the script: heroes and previews load

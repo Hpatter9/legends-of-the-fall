@@ -1,5 +1,7 @@
 # Audio engine (phase 1)
 
+**Changed by [cc0-sounds.md](cc0-sounds.md):** 73 cues play CC0 recordings (`cueBank.ts`) on the same buses, falling back to `CueSynth`.
+
 **Changed by [sound-pass.md](sound-pass.md):** the ducking is by reason (a sheet -4 dB, the shows -9 dB and muffled; the settings and the Armies screen not at all), the native stand-in limiter has its makeup gain taken off, and the bed has a high-pass and a limiter of its own.
 
 The page's sound now runs on audiorective (`@audiorective/core` and `@audiorective/effects`, both 2.3.2, bundled into
