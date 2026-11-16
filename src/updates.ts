@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.611.0',
+    date: '2026-11-16',
+    title: 'Squads march as one',
+    notes: ['In an Assault each hero and their troops travel together, cross the river by the same bridge or ford, and re-form on the far bank.', 'Enemy camps and guards now charge your squads when they come near, and call their neighbours to join them.', 'The holds are retuned for the new fighting.'],
+  },
+  {
     version: '0.610.0',
     date: '2026-11-16',
     title: 'Recorded sound effects',
