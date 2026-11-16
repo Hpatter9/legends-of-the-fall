@@ -288,9 +288,11 @@ for (const f of readdirSync('src/art/relics').filter((f) => f.endsWith('.webp'))
 // (the loading illustration is embedded in the cached page, so it appears before game.js and works offline)
 const dataUrl = (f) => `data:image/${f.endsWith('.webp') ? 'webp' : 'png'};base64,${readFileSync(f).toString('base64')}`;
 const LOADING_ART = {
-  // (RELEASE-ART: the keep under its two crowns, painted for the game in its own style, art-source/release/loading.png; the old
-  // poster's crown mask and cloud layer were cut to its picture and are retired with it)
-  __LD_KEEP__: 'src/art/loading/release-poster.webp',
+  // (LOADING-BACK: the black and red Shattered Crown poster again, the owner's ask; its crown mask and cloud layer are cut from it by
+  // tools/shattered-crown-layers.py. The snowy keep of the release art, 0.598 to 0.611, is retired)
+  __LD_KEEP__: 'src/art/loading/shattered-crown.webp',
+  __LD_CROWN_MASK__: 'src/art/loading/crown-mask.png',
+  __LD_CLOUDS__: 'src/art/loading/crown-clouds.webp',
 };
 const withLoadingArt = (html) => Object.entries(LOADING_ART).reduce((h, [k, f]) => h.replaceAll(k, () => dataUrl(f)), html);
 const writeIndexHtml = () => {
