@@ -90,7 +90,30 @@ waiting their turn.
 
 ## Balance
 
-BALANCE-PLACEHOLDER
+With the camps charging, Auto's wins on Try an Assault ("As expected", the balance party) moved a long way from the 72 to 91% they
+stood at: the ogres' hold fell to 38%, the orcs' to 50%; the yokai's rose. The holds' shares (`HOLD_SHARE`, `LAST_SHARE`, `RESTORM_SHARE`
+in `garrison.ts`) were retuned in three passes: a sweep at 0.7, 0.85 and 1 of the old shares (8 seeds), a logistic fit per storming, then
+two passes of smaller steps at 24 and 32 seeds, the last only on the stormings still outside the mark.
+
+The result (32 seeds each; the aim is about 72 to 84%, the Last Hold at the low end):
+
+| hold | hold | Last Hold | Warband regrouped |
+|---|---|---|---|
+| orcs | 84% | 81% | 81% |
+| undead | 69% | 81% | 84% |
+| beasts | 94% | 81% | 69% |
+| wildwood | 81% | 75% | 72% |
+| labyrinth | 72% | 72% | 75% |
+| ogres | 50% | 75% | 75% |
+| infernal | 78% | 69% | 81% |
+| yokai | 84% | 75% | 53% |
+| golems | 78% | 81% | 78% |
+
+24 of the 27 within 69 to 84%. At 32 seeds a storming's win rate still swings by about eight points, and near the mark it moved more
+with the seeds than with a 5% change of share (the beasts' hold went from 66 to 94% with its share cut 5%; the yokai's Warband from 94
+to 53% with its share raised 6%), so the three outside are left where they are rather than chased. **Bonefire Crag's hold (the ogres)**
+stays at 50 to 67% whatever its share (from 0.50 down to 0.29 of the old one) with only about a third of the host lost: it is lost to the
+map's one-tile gap and the time, not to the garrison's strength; a wider gap there is a map change for the owner to decide.
 
 ## Pictures (393 x 852)
 
