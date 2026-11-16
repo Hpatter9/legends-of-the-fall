@@ -42,9 +42,10 @@ export const FORMATION_FX: Readonly<Record<PlatoonFormation, { guard: number; pu
 
 /** A soldier's slot (1 to 10) round its anchor, turned to the heading (an index into `DIRS`). Leaderless, the slots close up on the
  *  platoon's middle: they are drawn in by half. */
-export function slotAt(anchor: At, heading: number, form: PlatoonFormation, slot: number, close = false): At {
+export function slotAt(anchor: At, heading: number, form: PlatoonFormation, slot: number, close = false, march = 1): At {
   const [fwd, across] = SLOTS[form][Math.max(0, Math.min(9, slot - 1))];
-  const k = close ? 0.5 : 1;
+  // (ASSAULT-SQUADS: on the march the places are drawn in, `march`, so the squad walks close round its hero)
+  const k = (close ? 0.5 : 1) * march;
   const [fu, fv] = DIRS[heading];
   return { u: Math.round(anchor.u + (fu * fwd - fv * across) * k), v: Math.round(anchor.v + (fv * fwd + fu * across) * k) };
 }
