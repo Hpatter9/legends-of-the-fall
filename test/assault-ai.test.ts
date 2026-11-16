@@ -108,7 +108,9 @@ test('a platoon keeps its leader\'s trail: the newest tile first, once a tile, a
   assert.equal(pl.trail[0], hero.v * b.board.w + hero.u);
 });
 
-test('a leader stops for its stragglers only with no foe near and no press of its own round it', () => {
+// (ASSAULT-SQUADS, the owner's "the hero and its troops ... need to travel closely together": a leader now gathers its squad in sight of
+//  foes too, only not in the fight itself, a foe within its reach and SQUAD_FIGHT)
+test('a leader stops for its stragglers only out of the fight and with no press of its own round it', () => {
   const b = quiet();
   const f = b.field!;
   const h = f.hold!;
@@ -128,7 +130,12 @@ test('a leader stops for its stragglers only with no foe near and no press of it
   put(b, s1, at.u - 3, at.v - 3);
   assert.equal(waitsForStragglers(b, f, hero), true);
   const foe = b.units.find((x) => x.side === 'foe' && x.alive)!;
+  // (a foe in sight but out of the fight: it still gathers)
   put(b, foe, at.u + 3, at.v - 2);
+  rebuildBuckets(f, b.units);
+  assert.equal(waitsForStragglers(b, f, hero), true);
+  // (a foe at its blade: no waiting)
+  put(b, foe, at.u + 1, at.v - 1);
   rebuildBuckets(f, b.units);
   assert.equal(waitsForStragglers(b, f, hero), false);
 });

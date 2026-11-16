@@ -56,6 +56,8 @@ export interface FieldGroup {
   heading: number;
   /** How long its leader has waited for stragglers (a leader waits a little, then goes on). */
   waited?: number;
+  /** ASSAULT-SQUADS: how long its leader has waited its turn at the mouth of a narrow way (`TURN_MAX` at most). */
+  turned?: number;
 }
 
 export interface FieldStats {
