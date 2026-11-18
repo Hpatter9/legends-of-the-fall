@@ -32,8 +32,9 @@ export type UnlockKind =
  *  - `heroReveal`: the hero's first-time reveal ("Joins your company": `earnedArrival.ts`, `summonTarot.ts`);
  *  - `burst`: the burst on the hero's picture ("Fully awakened", `awakenView.ts`);
  *  - `toast`: a toast line (`achievementsView.ts`);
- *  - `recap`: a line on the fight's results ("New skill", "Ultimate unlocked", `jrpgRecap.ts`). */
-export type Announcer = 'card' | 'binding' | 'heroReveal' | 'burst' | 'toast' | 'recap';
+ *  - `recap`: a line on the fight's results ("New skill", "Ultimate unlocked", `jrpgRecap.ts`);
+ *  - `tutorial`: the unlock tutorial's card as the next wave's fight begins ("Auto merge unlocked", PAUSE-TIPS, `tutorialRules.ts`). */
+export type Announcer = 'card' | 'binding' | 'heroReveal' | 'burst' | 'toast' | 'recap' | 'tutorial';
 
 export const UNLOCK_TELLS: Readonly<Record<UnlockKind, Announcer>> = {
   army: 'card',
@@ -47,7 +48,7 @@ export const UNLOCK_TELLS: Readonly<Record<UnlockKind, Announcer>> = {
   eidolon: 'binding',
   hero: 'heroReveal',
   spell: 'toast',
-  helper: 'toast',
+  helper: 'tutorial',
   skill: 'recap',
   ultimate: 'recap',
 };

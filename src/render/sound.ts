@@ -59,6 +59,8 @@ let holdDrums: { standing: number; total: number } | null = null;
 let duckLift: ReturnType<typeof setTimeout> | null = null;
 /** The page is out of sight (the sound is faded and the clock suspended). */
 let hidden = false;
+/** PAUSE-TIPS: the fight is paused (`holdSound`): the clock is suspended as for a hidden page, and nothing but Resume starts it again. */
+let held = false;
 /** Where the player is, as the music hears it (`placeOf`), the battle on (its one track), whether a fight is being fought and
  *  whether a won battle's victory music is up (`battleMusic.ts`); and whether a cinematic's own score is playing. */
 let music: MusicState = { place: 'camp', battle: null, fighting: false, victory: false };
@@ -93,7 +95,7 @@ function unlock(): void {
     syncHold();
   }
   // (a phone can hold the clock after the game was away, until a tap: the tap starts it again, and the sound fades back in)
-  if (engine.core.context.state !== 'running') void engine.core.start().then(() => fadeIn());
+  if (engine.core.context.state !== 'running' && !held) void engine.core.start().then(() => fadeIn());
   warmSpells();
   warmCues();
   if (!engine.music.current) {
@@ -147,11 +149,27 @@ function hush(): void {
   void ctx.suspend();
 }
 
+/** PAUSE-TIPS: the fight paused, or resumed. Paused, every sound fades and the clock is suspended, so the music, the beds and every cue
+ *  hold where they are; resumed (and the page in sight), they carry on from there. A tap on the paused card does not start the clock. */
+export function holdSound(on: boolean): void {
+  if (held === on) return;
+  held = on;
+  if (!engine) return;
+  if (on) {
+    const ctx = engine.core.context;
+    const master = engine.mixer.params.master;
+    master.cancelScheduledValues(ctx.currentTime);
+    master.setTargetAtTime(0, ctx.currentTime, 0.015);
+    // (the fade's moment, then the clock stops)
+    setTimeout(() => held && engine && void engine.core.context.suspend(), 80);
+  } else if (!hidden) void engine.core.context.resume().then(fadeIn, fadeIn);
+}
+
 /** The game is back in sight: the clock runs again, the track that was playing carries on, and the master comes back up from
  *  silence over `WAKE_FADE_S` to exactly where it was (the mute's 0 or 1, never louder or quieter than before the game was left). */
 function wake(): void {
-  if (!engine) return;
   hidden = false;
+  if (!engine || held) return;
   const ctx = engine.core.context;
   void ctx.resume().then(fadeIn, fadeIn);
   engine.music.wake();
@@ -159,7 +177,7 @@ function wake(): void {
 
 /** Brings the master up from silence to the mute's level (on wake, and on a tap that resumed a clock a phone had held). */
 function fadeIn(): void {
-  if (!engine || hidden) return;
+  if (!engine || hidden || held) return;
   const ctx = engine.core.context;
   const master = engine.mixer.params.master;
   master.cancelScheduledValues(ctx.currentTime);

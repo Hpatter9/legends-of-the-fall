@@ -127,7 +127,9 @@ import { openDuelCard } from './duelView';
 import { initPhoneBack } from './phoneBack';
 import { DuelShow } from './duelShow';
 import { noteWar } from './sim/council';
-import type { OrnateMenu } from './ornateMenu';
+import { menuChoice, menuFoot, menuNote, menuSection, ornateMenu, type OrnateMenu } from './ornateMenu';
+import { dueAtWave, markTutorialSeen, settleTutorials, tutorialSeen, WAVE_CAP, type TutorialId } from './tutorialRules';
+import { bindTutorials, showTutorial } from './tutorialView';
 import { warmGearTextures } from './render/gearTex';
 import { tauntFor, wavesTaunts } from './tauntCutRules';
 import { dreadOf } from './sim/nemesisTraits';
@@ -212,7 +214,7 @@ import { deployBox, deployFit, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
-import { bindDuck, bindMute, endFight, endVictory, endWave, play, playEvents, setAct, setHold, setScene, setup, startFight } from './render/sound';
+import { bindDuck, bindMute, endFight, endVictory, endWave, holdSound, play, playEvents, setAct, setHold, setScene, setup, startFight } from './render/sound';
 import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
@@ -289,6 +291,8 @@ const FOLLOW_IN = 1.7;
 const INTRO_ZOOM = 0.25;
 /** How long the board stays on show after the last kill before the wave recap comes up (ms). */
 const END_WAIT_MS = 2000;
+/** PAUSE-TIPS: the picture's frames a second while the fight is paused: it stands still, so a few are plenty. */
+const PAUSED_FPS = 12;
 /** FREEZE-FIX: what a page loaded again after a lost graphics context finds in the session: where the player was, and when it was. */
 const CTX_RESUME = 'legends.ctxResume';
 const CTX_RELOADED = 'legends.ctxReloaded';
@@ -491,6 +495,9 @@ class Game {
       addHorn(this.meta, HORN_FULL);
     }
     await loadAwakenedSheets(Object.keys(this.meta.awakened ?? {}));
+    // (PAUSE-TIPS: a save's first load with the tutorials marks what it already has open as seen, so a veteran is not flooded)
+    settleTutorials(this.meta);
+    bindTutorials(() => this.meta, () => saveMeta(this.meta));
     saveMeta(this.meta);
     initQuips(this.meta.seed);
     // (a new save, or one after Start over, picks its first three heroes before anything else; an address with a seed is a test page and takes the first pack)
@@ -747,6 +754,11 @@ class Game {
     setInterval(() => this.watchLoop(), 1000);
     // (a page shown again has had no frames while it was hidden: that is not a stopped loop)
     document.addEventListener('visibilitychange', () => (this.loop.frameAt = performance.now()));
+    // (PAUSE-TIPS: a fight whose page is hidden (the phone locked, another app) is paused, and stays paused on return until Resume is
+    // tapped. Not an auto-replay's: it carries on by itself when the page is back, as it always has)
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && !this.auto) this.pauseFight('player', false);
+    });
     // (WAVE-DELAY: each picture handed to the graphics card is timed for the stops' log (`diag.ts`): a stop then says how many went
     // up in it and how long that took. Two clock reads a picture; a fault here leaves the renderer as it was)
     try {
@@ -1662,6 +1674,8 @@ class Game {
     }
     this.refresh();
     reclearQuip();
+    // (PAUSE-TIPS: what has opened since the last wave is explained before this one's first tick; an auto-replay explains nothing)
+    this.waveTips = this.auto ? [] : dueAtWave(this.meta).slice(0, WAVE_CAP);
   }
 
   /** Where to point a speech bubble at a hero of this kind on the board: above the head of one of their sprites (page pixels), or null. */
@@ -1750,7 +1764,7 @@ class Game {
     if (late) l.frameAt = now;
     // (the game stops its own loop under the home screen outside a fight: that one is at rest, not stopped)
     const running = !(this.homeUp && this.b.phase !== 'fight');
-    const cure = loopCure({ running, hidden: document.hidden, sinceFrame: now - l.frameAt, faults: l.faults, restarts: l.restarts, rebuilt: l.rebuilt });
+    const cure = loopCure({ running, hidden: document.hidden, sinceFrame: now - l.frameAt, faults: l.faults, restarts: l.restarts, rebuilt: l.rebuilt, paused: !!this.paused });
     if (cure === 'none') return;
     const b = this.b;
     const found = `phase ${b.phase}, t ${b.t}, ${l.faults} faults in a row, started again ${l.restarts} times, context ${(this.app.renderer as unknown as { gl?: WebGL2RenderingContext }).gl?.isContextLost() ? 'lost' : 'there'}`;
@@ -1851,6 +1865,12 @@ class Game {
     }
     // (WAVE-DELAY: a gap of half a second or more since the last frame is kept for the Diagnostics page: `diag.ts`)
     diagFrame(b.phase);
+    // (PAUSE-TIPS: paused, nothing of the fight moves: no tick, no effect, no show, no camera; the picture is only drawn again. A fight
+    // that is somehow over under the card lets the pause go)
+    if (this.paused) {
+      if (b.phase === 'fight') return;
+      this.resumeFight();
+    }
     // (WAVE-DELAY: the large sheets a fight draws from go to the graphics card ahead of it, one a frame: `texReady.ts`)
     readyStep(this.app.renderer, b.phase === 'fight');
     if (this.auto) this.autoTick(dt);
@@ -1858,6 +1878,12 @@ class Game {
     // (DUEL-SHOW: a duel's show is dropped once the board is another fight's; through its walk-in the fight is held)
     if (this.duelShow.on && this.duelShow.battle !== b) this.duelShow.clear();
     const held = this.sceneHold > 0 || this.hud.holding || this.eid.sheetOpen || this.duelShow.holding;
+    // (PAUSE-TIPS: the wave's unlock tutorials, before its first tick, once nothing else has the screen: never over an ultimate, a call,
+    // a cut-in, the boss's card or a duel's walk-in)
+    if (this.waveTips.length && b.phase === 'fight') {
+      if (b.t > 0) this.waveTips = [];
+      else if (!held && !this.intro && !this.ultm.queue.current && !this.eid.long && !this.taunts.busy && $('bossCard').hidden) return this.showWaveTips();
+    }
     // (EIDOLONS: the call's cinematic moves on in real time; it may outlast the fight its strike ended)
     // (FREEZE-FIX: no show outlives the fight. The owner's freeze was a wave's end waiting, 10 to 20 s or for good, on shows with
     // nothing left to strike: once the fight is over the call and the moment playing are cut to a second of aftermath at most, and
@@ -3082,6 +3108,11 @@ class Game {
       // (the last choice is remembered; ×3 is only for tiers already cleared, so the setting keeps ×2 at most)
       setSetting('speed', Math.min(this.speed, 2) as 1 | 2);
     });
+    $('pause').addEventListener('click', () => this.pauseFight('player', true));
+    // (PAUSE-TIPS: Settings opened from the paused card puts the card back as it closes, the fight still paused)
+    new MutationObserver(() => {
+      if ($('settings').hidden && this.paused === 'player' && !this.pauseCard) this.showPauseCard(true);
+    }).observe($('settings'), { attributes: true, attributeFilter: ['hidden'] });
     $('auto').addEventListener('click', () => autoPlaceOpen(this.meta) && this.autoArrange(true));
     $('autoStop').addEventListener('click', () => this.endAuto('stopped'));
     $('asumOk').addEventListener('click', () => this.closeAutoSummary());
@@ -3103,6 +3134,90 @@ class Game {
     // (PAINTED-BUTTONS: the painted chevrons, one, two or three, by the CSS from this; the words for a reader)
     $('speed').dataset.speed = String(this.speed);
     $('speed').setAttribute('aria-label', `Fight speed ×${this.speed}`);
+  }
+
+  /* -------------------------------------------------------------- PAUSE-TIPS: the pause, and the wave's unlock tutorials */
+
+  /** Why the fight is held, or null while it runs: the player's pause (the medallion, or the page hidden), or a wave's tutorials. */
+  private paused: 'player' | 'tips' | null = null;
+  private pauseCard: OrnateMenu | null = null;
+  /** The tutorials due as this wave's fight begins (`dueAtWave`: at most `WAVE_CAP`), shown before its first tick. */
+  private waveTips: TutorialId[] = [];
+
+  /** Hold the fight where it is: the renderer stops stepping the battle (the sim is never touched), the shows and effects stand still,
+   *  the sound's clock stops, and the picture is drawn at a few frames a second. `asked`: the player's own tap (else the page hid). */
+  private pauseFight(why: 'player' | 'tips', asked: boolean): void {
+    if (this.b.phase !== 'fight' || this.standOn || this.homeUp) return;
+    if (this.paused) return;
+    this.paused = why;
+    holdSound(true);
+    document.body.classList.add('gamePaused');
+    $('pause').dataset.on = '';
+    this.app.ticker.maxFPS = PAUSED_FPS;
+    diagMark(why === 'tips' ? 'the fight held for its tutorials' : 'the fight paused');
+    if (why === 'player') this.showPauseCard(asked);
+  }
+
+  /** Let the fight run on from exactly where it stood. */
+  private resumeFight(): void {
+    if (!this.paused) return;
+    this.paused = null;
+    holdSound(false);
+    document.body.classList.remove('gamePaused');
+    delete $('pause').dataset.on;
+    this.app.ticker.maxFPS = settings().saver ? 30 : 0;
+    // (the watch counts from here: a pause is not a stopped loop)
+    this.loop.frameAt = performance.now();
+    const card = this.pauseCard;
+    this.pauseCard = null;
+    card?.close();
+  }
+
+  /** The paused card: Resume, and Settings (which brings the card back as it closes). No tap outside it resumes; Escape and the phone's
+   *  Back are Resume. */
+  private showPauseCard(asked: boolean): void {
+    let toSettings = false;
+    const menu = ornateMenu({
+      id: 'fightPause',
+      eyebrow: 'The battle',
+      title: 'Paused',
+      sub: `${clock(this.b.t)} of battle`,
+      asked,
+      onClose: () => {
+        if (this.pauseCard !== menu) return;
+        this.pauseCard = null;
+        if (!toSettings) this.resumeFight();
+      },
+    });
+    this.pauseCard = menu;
+    menuNote(menu.body, 'The fight is held where it stands: nothing moves until you resume.');
+    const grid = menuSection(menu.body, undefined, undefined, 2);
+    menuChoice(grid, {
+      title: 'Settings',
+      icon: '⚙',
+      lines: ['Sound, display and gameplay'],
+      onPick: () => {
+        toSettings = true;
+        menu.close();
+        openSettings();
+      },
+    });
+    menuFoot(menu, { primary: { label: 'Resume', onClick: () => menu.close() } });
+  }
+
+  /** The wave's tutorials, one after another (at most `WAVE_CAP`), the fight held until the last is closed. Each is seen once a save. */
+  private showWaveTips(): void {
+    const ids = this.waveTips.splice(0);
+    this.pauseFight('tips', false);
+    const next = (i: number): void => {
+      if (i >= ids.length) return this.resumeFight();
+      showTutorial(ids[i], { index: i, count: ids.length }, () => {
+        markTutorialSeen(this.meta, ids[i]);
+        saveMeta(this.meta);
+        next(i + 1);
+      });
+    };
+    next(0);
   }
 
   /* -------------------------------------------------------------- auto-deploy and auto-replay */
@@ -3163,7 +3278,10 @@ class Game {
     if (!due.length) return;
     markTold(this.meta, due);
     saveMeta(this.meta);
-    toastLines(due.map((f) => FEATURES[f].line));
+    // (PAUSE-TIPS, UNLOCK-ONCE: a helper is told by its tutorial's card as the next fight begins; the toast is left only for one whose
+    // tutorial was already seen, so nothing is told twice and nothing goes untold)
+    const lines = due.filter((f) => tutorialSeen(this.meta, f)).map((f) => FEATURES[f].line);
+    if (lines.length) toastLines(lines);
   }
 
   /** SPELL-SLOTS: a spell slot the stars have just opened is told once, by the standard notice (a toast, which the run's recap lists in

@@ -6,6 +6,7 @@
 import { diagClear, diagCopy, diagShown } from './diag';
 import { glyphWord } from './paintedButton';
 import { tips } from './tips';
+import { onShowTipsAgain, openTutorialsPage } from './tutorialView';
 import { DEFAULT_RULER, RULERS, rulerOf, type RulerId } from './rulerRules';
 import { RULER_URLS } from './rulerUrls';
 import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
@@ -155,13 +156,15 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 let wired = false;
 
 /** The submenus of the page (the owner's ask: the options condensed into a short list of menus that open on a tap). */
-export type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'diag' | 'updates' | 'about' | 'credits';
+export type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'diag' | 'updates' | 'about' | 'credits' | 'tutorials';
 
 /** Each submenu's name and its one-line hint on the top list, in the order shown. */
 const PAGES: readonly { id: Page; title: string; hint: string }[] = [
   { id: 'sound', title: 'Sound', hint: 'Music and effects volumes' },
   { id: 'display', title: 'Display and motion', hint: 'Screen shake, damage numbers, battery saver, keep awake' },
   { id: 'gameplay', title: 'Gameplay', hint: 'Fight speed, hero quips, cinematics, ultimate scenes, tips' },
+  // (PAUSE-TIPS: its own page, the standard ornate menu, `tutorialView.ts`: every explanation to read again, and Show tips again)
+  { id: 'tutorials', title: 'Tutorials', hint: 'Every explanation the game gives, to read again; show tips again' },
   { id: 'ruler', title: 'Ruler and Duchess', hint: 'Who rules your keep, and Duchess’s costume' },
   { id: 'data', title: 'Save and data', hint: 'Start over' },
   { id: 'dev', title: 'Developer', hint: 'Crowns, shards, stones, Build Town and Try an Assault for testing' },
@@ -269,6 +272,7 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
     case 'about':
       return aboutRows();
     case 'credits':
+    case 'tutorials':
       return [];
   }
 }
@@ -297,7 +301,7 @@ function menuRow(p: (typeof PAGES)[number]): HTMLElement {
   chevron.setAttribute('aria-hidden', 'true');
   chevron.textContent = '›';
   b.append(text, chevron);
-  b.addEventListener('click', () => (p.id === 'credits' ? showCredits(b) : go(p.id)));
+  b.addEventListener('click', () => (p.id === 'credits' ? showCredits(b) : p.id === 'tutorials' ? showTutorials(b) : go(p.id)));
   return b;
 }
 
@@ -309,6 +313,20 @@ function showCredits(from: HTMLElement): void {
   const wasHidden = close.hidden;
   close.hidden = true;
   openCredits(() => {
+    close.hidden = wasHidden;
+    if (from.isConnected) from.focus();
+  });
+}
+
+/** PAUSE-TIPS: the Tutorials page over Settings, as the Credits page is; on "‹ Back" the focus returns to what opened it. Its Show tips
+ *  again starts the first-run tips over too. */
+function showTutorials(from: HTMLElement): void {
+  closePicker();
+  onShowTipsAgain(() => tips.reset());
+  const close = $('settingsClose');
+  const wasHidden = close.hidden;
+  close.hidden = true;
+  openTutorialsPage(() => {
     close.hidden = wasHidden;
     if (from.isConnected) from.focus();
   });

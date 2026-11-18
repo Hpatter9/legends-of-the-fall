@@ -52,7 +52,7 @@ import { loadSomeSheets, portrait } from './render/sheets';
 import { rawAt, TH, TW, HH } from './render/iso';
 import { menuFoot, menuNote, menuPick, menuSection, ornateMenu, RELEASE_ICON } from './ornateMenu';
 import { drawHoldMap, mapAt, openPlatoonCard } from './assaultView';
-import { endAssault, play as playCue, playEvents, playHold, setHold, setHoldDrums, startFight } from './render/sound';
+import { endAssault, holdSound, play as playCue, playEvents, playHold, setHold, setHoldDrums, startFight } from './render/sound';
 import { HOLD_HEAR_TILES, holdPan, isNearOnly } from './render/holdSound';
 import { standTrack } from './render/battleMusic';
 import { spellIconHtml } from './spellIcons';
@@ -726,10 +726,16 @@ export async function runAssault(m: Meta, army: string, plan: AssaultPlan, hooks
     autoBtn.classList.toggle('on', !h.auto);
     say(h.auto ? 'You take the platoons' : 'Auto: the platoons follow the plan');
   });
-  pauseBtn.addEventListener('click', () => openPause());
-  const openPause = () => {
+  pauseBtn.addEventListener('click', () => openPause(true));
+  // (PAUSE-TIPS: the page hidden mid-battle pauses the assault, and it stays paused on return until Resume is tapped)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && !gone && !paused && b.phase === 'fight') openPause(false);
+  });
+  const openPause = (byTap = true) => {
     paused = true;
-    const menu = ornateMenu({ asked: true, id: 'assaultPause', eyebrow: 'The assault', title: 'Paused', sub: `${clockWords(b.t)} of battle`, onClose: () => (paused = false) });
+    // (PAUSE-TIPS: the sound's clock stops with the battle, and carries on from there)
+    holdSound(true);
+    const menu = ornateMenu({ asked: byTap, id: 'assaultPause', eyebrow: 'The assault', title: 'Paused', sub: `${clockWords(b.t)} of battle`, onClose: () => ((paused = false), holdSound(false)) });
     const grid = menuSection(menu.body, 'Battle detail', 'Lite caps the frames at 30 a second', 2);
     let now = lite;
     menuPick(grid, [false, true], lite, (x) => ({ title: x ? 'Lite' : 'Full', art: x ? RELEASE_ICON.lite : RELEASE_ICON.full }), (x) => {
