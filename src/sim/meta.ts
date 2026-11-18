@@ -223,6 +223,9 @@ export interface Meta {
   bossCards?: string[];
   /** The deploy bar's earned helpers whose unlocking has been told (`featureUnlocks.ts`): once a save. Saves from before have none. */
   featuresTold?: string[];
+  /** PAUSE-TIPS: the unlock tutorials already seen (`tutorialRules.ts`), once a save. A save from before has none: its first load marks
+   *  what it already has open as seen (`settleTutorials`), but for the few newer than their unlock. */
+  tutorials?: string[];
   /** SPELL-SLOTS: how many spell slots' opening has been told (`spellSlots.ts`): one on a new save (the slot it starts with). A save
    *  from before the slots has no such key, and is told none of the slots it already holds. */
   slotsTold?: number;
@@ -657,6 +660,9 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       // (saves from before the earned deploy helpers have told none: `featureUnlocks.ts`)
       if (Array.isArray(m.featuresTold)) m.featuresTold = m.featuresTold.filter((x) => typeof x === 'string');
       else delete m.featuresTold;
+      // (PAUSE-TIPS: saves from before the tutorials have seen none, and are settled on their first load: `settleTutorials`)
+      if (Array.isArray(m.tutorials)) m.tutorials = m.tutorials.filter((x) => typeof x === 'string');
+      else delete m.tutorials;
       // (SPELL-SLOTS: a save from before the slots is not told of the slots it already holds; a new save's first is never told)
       m.slotsTold = Math.max(1, Math.min(4, typeof m.slotsTold === 'number' ? Math.floor(m.slotsTold) : spellSlots(m)));
       // (saves from before the quests have none: nothing begun, and the day's offers are drawn when the page next looks)

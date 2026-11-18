@@ -1,0 +1,38 @@
+/* PAUSE-TIPS (docs/notes/pause-tips.md): the fight's pause medallion, beside the speed control, and the fight held under the paused card
+   and the unlock tutorials' cards. */
+
+/* (the medallion is a fight's alone: the deploy, the march and the results have no clock to stop) */
+#top #pause { display: none; }
+body[data-phase='fight'] #top { grid-template-columns: auto minmax(0, 1fr) auto repeat(4, 44px); grid-template-areas: 'lives gold clock mute gear pause speed' 'status status status status status status status'; }
+body[data-phase='fight'] #top #pause { display: grid; grid-area: pause; }
+/* (a class of its own, the medallion's, so the plain buttons' painted plate never lands on it) */
+#top #pause {
+  position: relative; place-items: center; width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0;
+  border: 0; border-image: none; border-radius: 50%; box-shadow: none; font-size: 0; color: transparent; text-shadow: none;
+  background: url(ui/buttons/pause.webp) center / contain no-repeat; filter: drop-shadow(0 2px 3px #000b);
+}
+#top #pause:active { background-color: transparent; border-image: none; transform: scale(0.93); filter: drop-shadow(0 1px 1px #000b) brightness(0.9); }
+#top #pause[data-on] { filter: drop-shadow(0 0 6px #f2dc9f) brightness(1.15); }
+
+/* (paused: every page animation under the card stands still too, the fight's rows, glows and cut-ins; the cards themselves move) */
+body.gamePaused *:not(.omVeil):not(.omVeil *) { animation-play-state: paused !important; }
+
+/* the unlock tutorials' card: the picture, then the lines */
+.tuArt { display: block; width: 72px; height: 72px; margin: 2px auto 8px; object-fit: contain; filter: drop-shadow(0 3px 6px #000c); }
+.tuLines { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.tuLines li { font-size: var(--om-text, 14.5px); line-height: 1.4; }
+.tuCount { text-align: center; opacity: 0.8; }
+/* (the Tutorials page: a row a tutorial, the picture small at its left) */
+.tuRow .omIco img { width: 28px; height: 28px; object-fit: contain; }
+.tuRow.unseen b::after { content: ' · not yet met'; font-weight: 400; opacity: 0.7; }
+/* (a narrow phone: four medallions and the clock leave the gold little room, so the medallions are a touch smaller and the gold is cut
+   short rather than run under the clock) */
+body[data-phase='fight'] #top #gold { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 430px) {
+  body[data-phase='fight'] #top { grid-template-columns: auto minmax(0, 1fr) auto repeat(4, 40px); column-gap: 3px; }
+  body[data-phase='fight'] #top #mute, body[data-phase='fight'] #top #gear, body[data-phase='fight'] #top #speed, body[data-phase='fight'] #top #pause { width: 40px; height: 40px; min-width: 40px; min-height: 40px; }
+  body[data-phase='fight'] #top #gold, body[data-phase='fight'] #top #clock { font-size: 14px; }
+}
+/* (a deploy tutorial's lit button kept in sight: the card set above it when it is low on the screen, `spotlight` in tutorialView.ts) */
+.omVeil.tuAbove { align-items: flex-start; }
+.omVeil.tuAbove .om { max-height: calc(var(--tu-room, 100vh) - env(safe-area-inset-top) - 14px); }

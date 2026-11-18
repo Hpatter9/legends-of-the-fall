@@ -19,10 +19,13 @@ export type LoopCure = 'none' | 'restart' | 'rebuild' | 'reload';
 /** What to do now. `running`: the loop is meant to be turning (not at rest on the home screen); `hidden`: the page is not shown;
  *  `sinceFrame`: ms since a frame last began; `faults`: frames or drawings at fault in a row; `restarts`: how many times the loop was
  *  started again since it last ran well; `rebuilt`: the board has been built afresh for this trouble already. */
-export function loopCure(o: { running: boolean; hidden: boolean; sinceFrame: number; faults: number; restarts: number; rebuilt: boolean }): LoopCure {
+// PAUSE-TIPS (docs/notes/pause-tips.md): a paused fight (the player's pause, or a wave's tutorials) is never loaded again: the reload would
+// bring the wave back from its start and lose the pause. Its picture still turns, slowly, so it is not seen as stopped; if its loop does
+// stop, it is only started again, however often, and a drawing that keeps faulting is built afresh once, then left for the Resume.
+export function loopCure(o: { running: boolean; hidden: boolean; sinceFrame: number; faults: number; restarts: number; rebuilt: boolean; paused?: boolean }): LoopCure {
   if (!o.running || o.hidden) return 'none';
-  if (o.faults >= LOOP.FAULTS) return o.rebuilt ? 'reload' : 'rebuild';
-  if (!(o.sinceFrame < LOOP.STALL_MS)) return o.restarts >= LOOP.RESTARTS ? 'reload' : 'restart';
+  if (o.faults >= LOOP.FAULTS) return o.rebuilt ? (o.paused ? 'none' : 'reload') : 'rebuild';
+  if (!(o.sinceFrame < LOOP.STALL_MS)) return o.restarts >= LOOP.RESTARTS && !o.paused ? 'reload' : 'restart';
   return 'none';
 }
 

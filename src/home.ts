@@ -4,6 +4,7 @@
 // older screens (gacha, modes, achievements, settings, castle upgrades); it only reads and changes the Meta through the
 // sim's own functions.
 
+import { offerPageTutorials } from './tutorialView';
 import { heroesTabMark } from './heroesTabMark';
 import { glyphWord, medal, pbUrl } from './paintedButton';
 import { menuFoot, menuNote, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
@@ -367,6 +368,8 @@ export class Home {
   openCouncil(tab?: 'council' | 'news' | 'fallen' | 'spoils'): void {
     const m = this.meta;
     openNemesisBoard(m, { hunt: (army) => this.openArmies(army), ...(this.hooks.onMuster ? { muster: () => this.go(this.hooks.onMuster!) } : {}), musterSaved: !!this.hooks.musterSaved?.(), day: todayKey(), save: () => (saveMeta(m), this.refresh()) }, tab);
+    // (PAUSE-TIPS: the Council's own explanations, the first time it is opened with them due)
+    offerPageTutorials('council');
   }
 
   get isOpen(): boolean {
@@ -476,6 +479,9 @@ export class Home {
     // (the Heroes tab opens the tavern itself: its All heroes button opens the list; QUESTS)
     closeGiverCard();
     this.refresh();
+    // (PAUSE-TIPS: the tavern's and the Recruit tab's own explanations, the first time each is opened)
+    if (tab === 'heroes') offerPageTutorials('tavern');
+    else if (tab === 'recruit') offerPageTutorials('recruit');
   }
 
   /** The quests' state changed (taken, handed in, pinned): save, and redraw the home screen. */
@@ -1363,6 +1369,8 @@ export class Home {
     );
     // (the cards a new army lit have been seen now: they glow no more the next time)
     if (markSeen(this.meta)) saveMeta(this.meta);
+    // (PAUSE-TIPS: the War Room's own explanations, the harder tiers and the Assault, the first time it is opened with them due)
+    offerPageTutorials('armies');
   }
 
   /** The Assault (docs/notes/assault-1.md): the muster for an army's hold, then the battle over everything, then its result, and back to the

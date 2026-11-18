@@ -268,6 +268,8 @@ function pageUp(page: TipDef['page']): boolean {
   if (up('gacha')) return false;
   // (a game tip waits while a sheet, a card or a film is over the board: the party picker, Settings, an unlock or a cutscene)
   if (page === 'game' && (up('party') || up('settings') || document.querySelector('.rvCard, .unlock, #cutscene:not([hidden])'))) return false;
+  // (PAUSE-TIPS: nor over a paused fight's card or a wave's tutorial)
+  if (page === 'game' && document.body.classList.contains('gamePaused')) return false;
   if (page === 'any') return true;
   if (page === 'result') return !up('home') && up('result');
   return page === 'home' ? up('home') : !up('home') && !up('result');

@@ -8,7 +8,7 @@ import { ASC_MAX } from '../src/sim/ascension';
 import { ARMIES } from '../src/sim/armies';
 import { newMeta, type Meta } from '../src/sim/meta';
 
-const ANNOUNCERS: readonly Announcer[] = ['card', 'binding', 'heroReveal', 'burst', 'toast', 'recap'];
+const ANNOUNCERS: readonly Announcer[] = ['card', 'binding', 'heroReveal', 'burst', 'toast', 'recap', 'tutorial'];
 
 test('every kind of unlock has exactly one announcer', () => {
   assert.ok(UNLOCK_KINDS.length >= 10);
