@@ -40,10 +40,38 @@ function fill(parent: HTMLElement, t: Tutorial): void {
 export function showTutorial(id: TutorialId, at: { index: number; count: number }, done: () => void, asked = false): void {
   const t = tutorialOf(id);
   if (!t) return done();
-  const menu = ornateMenu({ id: 'tutorialCard', eyebrow: t.at === 'wave' ? 'Before the wave' : 'A word of advice', title: t.title, onClose: done, asked });
+  // (a deploy screen's tutorial lights what it talks about, while that is on show: the tips' own glow)
+  const lit = t.point && !asked ? document.querySelector<HTMLElement>(t.point) : null;
+  const lights = !!lit && lit.getClientRects().length > 0 && !lit.closest('[hidden]');
+  if (lights) lit!.classList.add('tipLit');
+  const menu = ornateMenu({
+    id: 'tutorialCard',
+    eyebrow: t.at === 'deploy' || t.at === 'fight' ? 'Before the wave' : 'A word of advice',
+    title: t.title,
+    asked,
+    onClose: () => {
+      if (lights) lit!.classList.remove('tipLit');
+      done();
+    },
+  });
+  if (lights) spotlight(menu.root, lit!);
   fill(menu.body, t);
   if (at.count > 1) menuNote(menu.body, `${at.index + 1} of ${at.count}`).classList.add('tuCount');
   menuFoot(menu, { primary: { label: at.index + 1 < at.count ? 'Got it · next' : 'Got it', onClick: () => menu.close() } });
+}
+
+/** The lit thing kept in sight: the veil's dim opens round it (a spotlight), and a thing in the lower half has the card set above it. */
+function spotlight(veil: HTMLElement, lit: HTMLElement): void {
+  const r = lit.getBoundingClientRect();
+  const cx = r.left + r.width / 2;
+  const cy = r.top + r.height / 2;
+  const rad = Math.max(r.width, r.height) / 2 + 14;
+  veil.classList.add('tuSpot');
+  veil.style.background = `radial-gradient(circle at ${cx}px ${cy}px, transparent 0 ${rad}px, rgba(5, 7, 5, 0.6) ${rad + 24}px)`;
+  if (cy > window.innerHeight / 2) {
+    veil.classList.add('tuAbove');
+    veil.style.setProperty('--tu-room', `${Math.max(240, r.top - 10)}px`);
+  }
 }
 
 /** A page's own tutorials, the first time it is opened with them due: one after another, each seen once it is closed. */
@@ -78,8 +106,9 @@ export function openTutorialsPage(onClose?: () => void): void {
   const m = metaOf?.();
   const menu = ornateMenu({ id: 'tutorials', eyebrow: 'Settings', title: 'Tutorials', sub: 'Every explanation the game gives, to read again', kind: 'sheet', asked: true, onClose });
   const groups: [string, (t: Tutorial) => boolean][] = [
-    ['In battle', (t) => t.at === 'wave'],
-    ['Around the keep', (t) => t.at !== 'wave'],
+    ['On the deploy screen', (t) => t.at === 'deploy'],
+    ['As the fight begins', (t) => t.at === 'fight'],
+    ['Around the keep', (t) => t.at !== 'deploy' && t.at !== 'fight'],
   ];
   for (const [name, pick] of groups) {
     const grid = menuSection(menu.body, name, 'tap one to read it', 2);

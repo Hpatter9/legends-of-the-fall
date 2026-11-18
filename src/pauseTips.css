@@ -33,3 +33,6 @@ body[data-phase='fight'] #top #gold { min-width: 0; overflow: hidden; text-overf
   body[data-phase='fight'] #top #mute, body[data-phase='fight'] #top #gear, body[data-phase='fight'] #top #speed, body[data-phase='fight'] #top #pause { width: 40px; height: 40px; min-width: 40px; min-height: 40px; }
   body[data-phase='fight'] #top #gold, body[data-phase='fight'] #top #clock { font-size: 14px; }
 }
+/* (a deploy tutorial's lit button kept in sight: the card set above it when it is low on the screen, `spotlight` in tutorialView.ts) */
+.omVeil.tuAbove { align-items: flex-start; }
+.omVeil.tuAbove .om { max-height: calc(var(--tu-room, 100vh) - env(safe-area-inset-top) - 14px); }

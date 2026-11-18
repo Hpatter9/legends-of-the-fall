@@ -128,7 +128,7 @@ import { initPhoneBack } from './phoneBack';
 import { DuelShow } from './duelShow';
 import { noteWar } from './sim/council';
 import { menuChoice, menuFoot, menuNote, menuSection, ornateMenu, type OrnateMenu } from './ornateMenu';
-import { dueAtWave, markTutorialSeen, settleTutorials, tutorialSeen, WAVE_CAP, type TutorialId } from './tutorialRules';
+import { dueAt, markTutorialSeen, settleTutorials, tutorialSeen, WAVE_CAP, type TutorialId } from './tutorialRules';
 import { bindTutorials, showTutorial } from './tutorialView';
 import { warmGearTextures } from './render/gearTex';
 import { tauntFor, wavesTaunts } from './tauntCutRules';
@@ -1675,7 +1675,7 @@ class Game {
     this.refresh();
     reclearQuip();
     // (PAUSE-TIPS: what has opened since the last wave is explained before this one's first tick; an auto-replay explains nothing)
-    this.waveTips = this.auto ? [] : dueAtWave(this.meta).slice(0, WAVE_CAP);
+    this.waveTips = this.auto ? [] : dueAt(this.meta, 'fight').slice(0, WAVE_CAP);
   }
 
   /** Where to point a speech bubble at a hero of this kind on the board: above the head of one of their sprites (page pixels), or null. */
@@ -1880,6 +1880,8 @@ class Game {
     const held = this.sceneHold > 0 || this.hud.holding || this.eid.sheetOpen || this.duelShow.holding;
     // (PAUSE-TIPS: the wave's unlock tutorials, before its first tick, once nothing else has the screen: never over an ultimate, a call,
     // a cut-in, the boss's card or a duel's walk-in)
+    // (and the deploy screen's own, once a wave, as its deploy opens and nothing else is over it: Auto merge, Auto place, the trait perks)
+    if (b.phase === 'deploy' && this.deployTipsFor !== b && !this.auto && !this.homeUp && !held && !this.intro) this.deployTips();
     if (this.waveTips.length && b.phase === 'fight') {
       if (b.t > 0) this.waveTips = [];
       else if (!held && !this.intro && !this.ultm.queue.current && !this.eid.long && !this.taunts.busy && $('bossCard').hidden) return this.showWaveTips();
@@ -3141,7 +3143,7 @@ class Game {
   /** Why the fight is held, or null while it runs: the player's pause (the medallion, or the page hidden), or a wave's tutorials. */
   private paused: 'player' | 'tips' | null = null;
   private pauseCard: OrnateMenu | null = null;
-  /** The tutorials due as this wave's fight begins (`dueAtWave`: at most `WAVE_CAP`), shown before its first tick. */
+  /** The tutorials due as this wave's fight begins (`dueAt`: at most `WAVE_CAP`), shown before its first tick. */
   private waveTips: TutorialId[] = [];
 
   /** Hold the fight where it is: the renderer stops stepping the battle (the sim is never touched), the shows and effects stand still,
@@ -3203,6 +3205,27 @@ class Game {
       },
     });
     menuFoot(menu, { primary: { label: 'Resume', onClick: () => menu.close() } });
+  }
+
+  /** The board whose deploy screen has had its tutorials (or had none due). */
+  private deployTipsFor: Battle | null = null;
+
+  /** The deploy screen's tutorials (at most `WAVE_CAP`), once nothing else is over the board: no card, film, event, march, taunt or
+   *  challenge. Nothing runs on a deploy screen, so nothing is held; Fight! waits under the card. */
+  private deployTips(): void {
+    if (!$('home').hidden || !$('result').hidden || !$('bossCard').hidden || this.taunts.busy || this.duelWait || this.duelCard || this.chain.active) return;
+    if (document.body.classList.contains('towerUp') || document.querySelector('.omVeil, .rvCard, .unlock, .earnedArrival, .chestShow, #events:not([hidden]), #cutscene:not([hidden]), #party:not([hidden]), #settings:not([hidden])')) return;
+    this.deployTipsFor = this.b;
+    const ids = dueAt(this.meta, 'deploy').slice(0, WAVE_CAP);
+    const next = (i: number): void => {
+      if (i >= ids.length) return;
+      showTutorial(ids[i], { index: i, count: ids.length }, () => {
+        markTutorialSeen(this.meta, ids[i]);
+        saveMeta(this.meta);
+        next(i + 1);
+      });
+    };
+    next(0);
   }
 
   /** The wave's tutorials, one after another (at most `WAVE_CAP`), the fight held until the last is closed. Each is seen once a save. */

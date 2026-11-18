@@ -1,8 +1,9 @@
 // PAUSE-TIPS (docs/notes/pause-tips.md): the unlock tutorials. The owner: "more tutorial explanations. A popup that pauses the game when you
 // start a wave but now you have auto merge unlocked, so it explains that kind of thing." Each feature that opens during play has a short
-// explanation, shown once a save the first time it matters: most at the start of the first wave's fight after it opens (the fight held until
-// the card is closed, `WAVE_CAP` a wave and the rest the wave after), a few the first time their page is opened (the tavern, the Dark
-// Council, the War Room). What has been seen is kept in `Meta.tutorials`. Pure: no Pixi, no DOM; the cards are `tutorialView.ts`.
+// explanation, shown once a save the first time it matters: at the first wave after it opens, on that wave's deploy screen for what is
+// done there (Auto merge, Auto place, the trait perks, Rune Auto: the button lit while the card is up) and as its fight begins for the
+// rest (the fight held until the card is closed); `WAVE_CAP` a moment and the rest the wave after. A few wait for their page instead (the
+// tavern, the Recruit tab, the Dark Council, the War Room). What has been seen is kept in `Meta.tutorials`. Pure: no Pixi, no DOM; the cards are `tutorialView.ts`.
 
 import { ULT_LEVEL } from './sim/abilities';
 import { ARMIES, armyCleared, tierOpen, totalStars } from './sim/armies';
@@ -18,7 +19,9 @@ import { slotsAtStars } from './sim/spellSlots';
 import { pointsEarned } from './sim/talents';
 import { hornHeld } from './sim/warHorn';
 
-/** Where a tutorial is shown: at a wave's start (the fight held), or the first time a page is opened. */
+/** The two moments of a wave a tutorial can hold: its deploy screen opening, or its fight beginning (the fight held). */
+export type TutorialMoment = 'deploy' | 'fight';
+/** The pages a tutorial can wait for instead, the first time each is opened. */
 export type TutorialPage = 'tavern' | 'recruit' | 'council' | 'armies';
 
 export interface Tutorial {
@@ -28,8 +31,10 @@ export interface Tutorial {
   lines: readonly string[];
   /** A picture from the game's own art (a served path), where one fits. */
   art?: string;
-  /** 'wave', or the page it waits for. */
-  at: 'wave' | TutorialPage;
+  /** A wave's deploy screen, its fight's start, or the page it waits for. */
+  at: TutorialMoment | TutorialPage;
+  /** What it lights on the deploy screen while its card is up (a selector), if that is on show. */
+  point?: string;
   /** What opens it, read from the save. */
   open: (m: Meta) => boolean;
   /** What opens it, in words (the Tutorials page). */
@@ -49,7 +54,7 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'Pause the fight',
     lines: ['The pause button beside the speed holds the fight where it stands.', 'Nothing moves until you tap Resume, and the fight pauses by itself if you leave the game.'],
     art: 'ui/buttons/pause.webp',
-    at: 'wave',
+    at: 'fight',
     open: firstArmy,
     when: 'Your first army beaten',
     newer: true,
@@ -57,18 +62,20 @@ export const TUTORIALS: readonly Tutorial[] = [
   {
     id: 'autoMerge',
     title: 'Auto merge unlocked',
-    lines: ['Tap Auto merge on the deploy screen to merge every ready pair at once.', 'Two heroes of the same kind and grade still make one of the next grade, up to grade four.'],
+    lines: ['When a pair is ready, Auto merge shows on the bench: tap it to merge every pair at once.', 'Two heroes of the same kind and grade still make one of the next grade, up to grade four.'],
     art: 'ui/buttons/auto-merge.webp',
-    at: 'wave',
+    at: 'deploy',
+    point: '#mergeAll',
     open: autoMergeOpen,
     when: 'The second army beaten',
   },
   {
     id: 'traitPerks',
     title: 'Trait perks',
-    lines: ['Heroes who share a trait fight better together.', 'Two, three and four of a trait on the board each open a stronger tier.', 'Tap a trait chip on the deploy row to read its perks.'],
+    lines: ['Heroes who share a trait fight better together.', 'Two, three and four of a trait on the board each open a stronger tier.', 'Tap a trait chip above the bench to read its perks.'],
     art: 'ui/buttons/formations.webp',
-    at: 'wave',
+    at: 'deploy',
+    point: '#traits',
     open: firstArmy,
     when: 'Your first army beaten',
     newer: true,
@@ -78,7 +85,7 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'A second spell slot',
     lines: ['Army stars open more of your king\'s spell slots: four in all.', 'Each slot holds a spell to cast in the fight; the Spell switch casts them for you.'],
     art: 'ui/buttons/spells.webp',
-    at: 'wave',
+    at: 'fight',
     open: (m) => slotsAtStars(totalStars(m)) >= 2,
     when: '3 army stars',
   },
@@ -87,7 +94,7 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'The daily battle',
     lines: ['Each day the camp has a battle of ten waves that ends with the boss of the day.', 'Every player meets the same day. Find it on the Battle tab.'],
     art: 'ui/buttons/daily.webp',
-    at: 'wave',
+    at: 'fight',
     open: firstArmy,
     when: 'Your first army beaten',
   },
@@ -96,7 +103,7 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'The Eidolons',
     lines: ['A summoner waits in the Recruit tab with a pact to fulfil.', 'Finish its chain of tasks and an Eidolon is bound to you: a great being your War Horn can call into a fight.'],
     art: 'ui/buttons/tab-recruit.webp',
-    at: 'wave',
+    at: 'fight',
     open: (m) => !!offeredChain(m),
     when: 'Your first army beaten',
   },
@@ -105,16 +112,17 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'The Castle opens',
     lines: ['The Castle tab is open: raise buildings that strengthen every run.', 'A build takes real time and goes on while the game is closed; the builders do one at a time.'],
     art: 'ui/buttons/tab-castle.webp',
-    at: 'wave',
+    at: 'fight',
     open: (m) => modeOpen(m, 'castle'),
     when: '6 army stars',
   },
   {
     id: 'autoRunes',
     title: 'Rune Auto unlocked',
-    lines: ['On the rune bench, Auto sets your runes into your heroes and merges the spares with one tap.', 'Drag a rune by hand whenever you would rather choose.'],
+    lines: ['Pull the Runes bar across: on the rune bench, Auto sets your runes into your heroes and merges the spares with one tap.', 'Drag a rune by hand whenever you would rather choose.'],
     art: 'ui/rune-bench/rune-auto.webp',
-    at: 'wave',
+    at: 'deploy',
+    point: '#benchGrip',
     open: autoRunesOpen,
     when: '6 army stars',
   },
@@ -123,7 +131,7 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'The Nemesis War',
     lines: ['The foe remembers you now. A captain who beats your heroes, or escapes them, earns a name and climbs the Dark Council.', 'Meet them again and they will be stronger, and they will know you.'],
     art: 'ui/buttons/council.webp',
-    at: 'wave',
+    at: 'fight',
     open: (m) => !!m.war,
     when: 'The second army beaten',
   },
@@ -132,7 +140,7 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'The Chapel',
     lines: ['The Chapel can be raised in the Castle now.', 'Once it stands, the Spells tab opens: choose your king\'s spells and rank them up.'],
     art: 'ui/buttons/spells.webp',
-    at: 'wave',
+    at: 'fight',
     open: chapelOpen,
     when: '10 army stars',
   },
@@ -141,7 +149,7 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'Talent points',
     lines: ['A hero earns a talent point every few levels.', 'Spend them on the hero\'s tree, on its Progression page in the tavern, to change how it fights.'],
     art: 'ui/buttons/upgrades.webp',
-    at: 'wave',
+    at: 'fight',
     open: (m) => owned(m).some((k) => pointsEarned(m, k) > 0),
     when: 'A hero at level 3',
   },
@@ -150,7 +158,7 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'A second skill',
     lines: ['A hero at level 10 opens a second skill, and at level 20 a third.', 'They cast on their own in the fight; their levels grow the more they are used.'],
     art: 'ui/buttons/sword.webp',
-    at: 'wave',
+    at: 'fight',
     open: (m) => anyLevel(m, SKILL2_LEVEL),
     when: 'A hero at level 10',
   },
@@ -159,7 +167,7 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'Duels',
     lines: ['A nemesis you have met twice may call one of your heroes out.', 'Accept and the two fight alone in a ring for a minute: win and the nemesis falls for good and its wave breaks; lose and it fights the wave stronger.'],
     art: 'ui/buttons/sword.webp',
-    at: 'wave',
+    at: 'fight',
     open: (m) => !!m.war?.members.some((n) => n.met >= FATE_MEETINGS),
     when: 'A nemesis met twice',
   },
@@ -168,7 +176,7 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'The War Horn',
     lines: ['An Eidolon is bound to you, and the War Horn sits by the board.', 'It fills as the fight goes on: when it glows, tap it to call your Eidolon\'s strike.'],
     art: 'ui/buttons/horn-lit.webp',
-    at: 'wave',
+    at: 'fight',
     open: hornHeld,
     when: 'Your first Eidolon bound',
   },
@@ -177,16 +185,17 @@ export const TUTORIALS: readonly Tutorial[] = [
     title: 'Ultimates',
     lines: ['A hero at level 30 has its ultimate.', 'Its portrait glows when the ultimate is ready: tap it to fire, or let Auto ultimates fire them for you.'],
     art: 'ui/buttons/ultimate.webp',
-    at: 'wave',
+    at: 'fight',
     open: (m) => anyLevel(m, ULT_LEVEL),
     when: 'A hero at level 30',
   },
   {
     id: 'autoPlace',
     title: 'Auto place unlocked',
-    lines: ['Tap Auto on the deploy screen to set your heroes out in one go.', 'They stand in the formation you picked; move any of them by hand after.'],
+    lines: ['Tap Auto to set your heroes out in one go.', 'They stand in the formation you picked; move any of them by hand after.'],
     art: 'ui/buttons/auto-place.webp',
-    at: 'wave',
+    at: 'deploy',
+    point: '#auto',
     open: autoPlaceOpen,
     when: 'The fourth army beaten',
   },
@@ -258,15 +267,15 @@ export const TUTORIALS: readonly Tutorial[] = [
 
 export type TutorialId = string;
 
-/** At most this many tutorials hold one wave's start; the rest wait for the next wave. */
+/** At most this many tutorials hold one moment of a wave (its deploy, its fight's start); the rest wait for the next wave. */
 export const WAVE_CAP = 2;
 
 export const tutorialOf = (id: TutorialId): Tutorial | undefined => TUTORIALS.find((t) => t.id === id);
 export const tutorialSeen = (m: Meta, id: TutorialId): boolean => !!m.tutorials?.includes(id);
 
-/** The tutorials due as a wave's fight begins, in order (open, unseen), at most `WAVE_CAP`. */
-export function dueAtWave(m: Meta): TutorialId[] {
-  return TUTORIALS.filter((t) => t.at === 'wave' && !tutorialSeen(m, t.id) && t.open(m))
+/** The tutorials due at a moment of a wave (its deploy screen, or its fight's start), in order (open, unseen), at most `WAVE_CAP`. */
+export function dueAt(m: Meta, moment: TutorialMoment): TutorialId[] {
+  return TUTORIALS.filter((t) => t.at === moment && !tutorialSeen(m, t.id) && t.open(m))
     .slice(0, WAVE_CAP)
     .map((t) => t.id);
 }

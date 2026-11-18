@@ -2,7 +2,8 @@
 //   ROOT=out/web node tools/pause-tips/shots.mjs
 // At 393x852, 360x780 and 412x915 (`SIZES=393` for one): the pause medallion mid-fight; the paused card (and the battle's clock checked
 // still under it, and still after the page is hidden and shown, and the loop watch never loading it again); an unlock tutorial at a wave's
-// start (Auto merge), two queued, and Settings › Tutorials. Writes docs/samples/pause-tips/<scene>-<w>.png.
+// screen (Auto merge, its button lit), two queued as a fight begins, and Settings › Tutorials. The 393 shots are kept, as JPEG, in
+// docs/samples/pause-tips/<scene>-393.jpg; the other widths' go to SCRATCH (default /tmp/pause-tips) to be looked at.
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { readFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -19,7 +20,9 @@ const srv = createServer((q, r) => {
 }).listen(PORT);
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const OUT = 'docs/samples/pause-tips';
+const SCRATCH = process.env.SCRATCH ?? '/tmp/pause-tips';
 mkdirSync(OUT, { recursive: true });
+mkdirSync(SCRATCH, { recursive: true });
 const IDS = [...readFileSync('src/tutorialRules.ts', 'utf8').matchAll(/^    id: '(\w+)',$/gm)].map((m) => m[1]);
 const PARTY = ['knight', 'cleric', 'wizard', 'archer', 'samurai'];
 const cleared = { best: 15, won: 15, clears: 1, stars: {} };
@@ -28,7 +31,7 @@ const fails = [];
 const check = (ok, what) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) fails.push(what); };
 
 /** A save with the first two armies beaten and every tutorial seen but `unseen`; a run on its deploy, heroes set out. */
-async function open(w, h, unseen) {
+async function open(w, h, unseen, pair = false) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: true });
   const page = await ctx.newPage();
   page.setDefaultTimeout(120000);
@@ -45,18 +48,18 @@ async function open(w, h, unseen) {
   await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 240000 });
   await page.waitForTimeout(1200);
   await page.addStyleTag({ content: '.duchess, .say, [class*=bubble], [class*=Bubble], #quip { display: none !important; }' });
-  await page.evaluate((party) => {
+  await page.evaluate(([party, pair]) => {
     const g = window.__game;
     const r = JSON.parse(JSON.stringify(g.run));
-    Object.assign(r, { seed: 4242, mode: { kind: 'army', army: 'beasts' }, stage: 3, over: false, cleared: false, gold: 1240, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+    Object.assign(r, { seed: 4242, mode: { kind: 'army', army: 'beasts' }, stage: 3, over: false, cleared: false, gold: 1240, event: undefined, roster: [...party, ...(pair ? ['knight'] : [])].map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
     document.getElementById('home').hidden = true;
     g.startRun(r);
-    g.autoArrange(true);
-  }, PARTY);
-  await page.waitForTimeout(800);
+    if (!document.getElementById('tutorialCard')) g.autoArrange(true);
+  }, [PARTY, pair]);
+  await page.waitForTimeout(1200);
   return { ctx, page };
 }
-const shot = (page, name, w) => page.screenshot({ path: `${OUT}/${name}-${w}.png` });
+const shot = (page, name, w) => (w === 393 ? page.screenshot({ path: `${OUT}/${name}-${w}.jpg`, type: 'jpeg', quality: 72 }) : page.screenshot({ path: `${SCRATCH}/${name}-${w}.png` }));
 const clockOf = (page) => page.evaluate(() => window.__game.b.t);
 
 for (const [w, h] of SIZES) {
@@ -105,8 +108,27 @@ for (const [w, h] of SIZES) {
     check((await clockOf(page)) === t1 && (await page.evaluate(() => !!document.getElementById('fightPause'))), `${w}: a hidden page pauses the fight, and it stays paused on return`);
     await ctx.close();
   }
-  // 2. an unlock tutorial at the wave's start: Auto merge alone, then two queued
-  for (const [name, unseen] of [['tutorial-auto-merge', ['autoMerge']], ['tutorial-two-queued', ['pause', 'autoMerge']]]) {
+  // 2. Auto merge on the deploy screen, its button lit; the fight begins with no card
+  {
+    const { ctx, page } = await open(w, h, ['autoMerge'], true);
+    await page.waitForFunction(() => !!document.getElementById('tutorialCard'), null, { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(700);
+    await shot(page, 'deploy-auto-merge', w);
+    check(await page.evaluate(() => window.__game.b.phase === 'deploy' && !!document.getElementById('tutorialCard')), `${w}: Auto merge's card is up on the deploy screen`);
+    check(await page.evaluate(() => document.getElementById('mergeAll').classList.contains('tipLit')), `${w}: the Auto merge button is lit under it`);
+    await page.locator('#tutorialCard .omPrimary').click();
+    await page.waitForTimeout(400);
+    check(await page.evaluate(() => !document.getElementById('mergeAll').classList.contains('tipLit')), `${w}: the light goes with the card`);
+    await page.evaluate(() => window.__game.autoArrange(true));
+    await page.waitForTimeout(400);
+    await page.evaluate(() => document.getElementById('fight').click());
+    await page.waitForTimeout(1500);
+    check(await page.evaluate(() => !document.getElementById('tutorialCard') && window.__game.b.t > 0), `${w}: the fight begins with no card of its own`);
+    check(await page.evaluate(() => JSON.parse(localStorage.getItem('legends.meta')).tutorials.includes('autoMerge')), `${w}: Auto merge saved as seen`);
+    await ctx.close();
+  }
+  // 3. two queued as a fight begins: the pause and a second skill
+  for (const [name, unseen] of [['tutorial-two-queued', ['pause', 'secondSkill']]]) {
     const { ctx, page } = await open(w, h, unseen);
     await page.evaluate(() => document.getElementById('fight').click());
     await page.waitForTimeout(1200);
@@ -122,7 +144,7 @@ for (const [w, h] of SIZES) {
     check((await clockOf(page)) > 0, `${w}: ${name}: the fight starts once the last card is closed`);
     const seen = await page.evaluate(() => JSON.parse(localStorage.getItem('legends.meta')).tutorials);
     check(unseen.every((id) => seen.includes(id)), `${w}: ${name}: saved as seen`);
-    // 3. the Tutorials page (once, from this page)
+    // 4. the Tutorials page (once, from this page)
     if (name === 'tutorial-two-queued') {
       await page.evaluate(() => document.getElementById('gear').click());
       await page.waitForTimeout(400);

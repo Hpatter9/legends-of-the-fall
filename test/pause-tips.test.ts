@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { ARMIES } from '../src/sim/armies';
 import { newMeta, type Meta } from '../src/sim/meta';
-import { dueAtWave, dueOnPage, markTutorialSeen, resetTutorials, settleTutorials, tutorialSeen, TUTORIALS, WAVE_CAP } from '../src/tutorialRules';
+import { dueAt, dueOnPage, markTutorialSeen, resetTutorials, settleTutorials, tutorialSeen, TUTORIALS, WAVE_CAP } from '../src/tutorialRules';
 import { LOOP, loopCure } from '../src/loopRules';
 
 const beat = (m: Meta, n: number): void => {
@@ -26,36 +26,53 @@ describe('PAUSE-TIPS: the unlock tutorials', () => {
   });
 
   it('a new save has nothing due at its first wave', () => {
-    assert.deepEqual(dueAtWave(fresh()), []);
+    assert.deepEqual(dueAt(fresh(), 'deploy'), []);
+    assert.deepEqual(dueAt(fresh(), 'fight'), []);
   });
 
-  it('Auto merge is explained at the first wave after the second army falls', () => {
+  /** Every tutorial due at either moment, seen. */
+  const seeAll = (m: Meta): void => {
+    for (let i = 0; i < 30; i++) for (const id of [...dueAt(m, 'deploy'), ...dueAt(m, 'fight')]) markTutorialSeen(m, id);
+  };
+
+  it('Auto merge is explained on the deploy screen of the first wave after the second army falls, not as its fight begins', () => {
     const m = fresh();
     beat(m, 1);
-    for (const id of dueAtWave(m)) markTutorialSeen(m, id);
-    while (dueAtWave(m).length) for (const id of dueAtWave(m)) markTutorialSeen(m, id);
-    assert.ok(!dueAtWave(m).includes('autoMerge'));
+    seeAll(m);
+    assert.ok(!dueAt(m, 'deploy').includes('autoMerge'));
     beat(m, 2);
-    assert.ok(dueAtWave(m).includes('autoMerge'));
+    assert.ok(dueAt(m, 'deploy').includes('autoMerge'));
+    assert.ok(!dueAt(m, 'fight').includes('autoMerge'));
   });
 
-  it('at most two hold a wave; the rest wait, in order, for the next waves', () => {
-    const m = fresh();
-    beat(m, 4);
-    const all = TUTORIALS.filter((t) => t.at === 'wave' && t.open(m)).map((t) => t.id);
-    assert.ok(all.length > WAVE_CAP);
-    assert.equal(WAVE_CAP, 2);
-    const shown: string[] = [];
-    for (let wave = 0; wave < 20 && dueAtWave(m).length; wave++) {
-      const due = dueAtWave(m);
-      assert.ok(due.length <= WAVE_CAP);
-      for (const id of due) {
-        shown.push(id);
-        markTutorialSeen(m, id);
-      }
+  it("the deploy screen's tutorials are the ones done there, and point at their button; the fight's are the fight's", () => {
+    const at = (id: string) => TUTORIALS.find((t) => t.id === id)!;
+    for (const id of ['autoMerge', 'autoPlace', 'traitPerks', 'autoRunes']) {
+      assert.equal(at(id).at, 'deploy', id);
+      assert.ok(at(id).point, id);
     }
-    assert.deepEqual(shown, all);
+    for (const id of ['pause', 'warHorn', 'ultimates', 'duels', 'nemesis', 'secondSkill']) assert.equal(at(id).at, 'fight', id);
   });
+
+  for (const moment of ['deploy', 'fight'] as const)
+    it(`at most two hold a wave's ${moment}; the rest wait, in order, for the next waves`, () => {
+      const m = fresh();
+      beat(m, 4);
+      m.armies[ARMIES[0].id].stars = { 0: 3, 1: 3, 2: 3 } as never;
+      const all = TUTORIALS.filter((t) => t.at === moment && t.open(m)).map((t) => t.id);
+      assert.ok(all.length > WAVE_CAP, `${moment}: ${all}`);
+      assert.equal(WAVE_CAP, 2);
+      const shown: string[] = [];
+      for (let wave = 0; wave < 20 && dueAt(m, moment).length; wave++) {
+        const due = dueAt(m, moment);
+        assert.ok(due.length <= WAVE_CAP);
+        for (const id of due) {
+          shown.push(id);
+          markTutorialSeen(m, id);
+        }
+      }
+      assert.deepEqual(shown, all);
+    });
 
   it('each is shown once a save, and the page ones wait for their page', () => {
     const m = fresh();
@@ -64,17 +81,18 @@ describe('PAUSE-TIPS: the unlock tutorials', () => {
     markTutorialSeen(m, 'tavern');
     assert.deepEqual(m.tutorials, ['tavern']);
     assert.deepEqual(dueOnPage(m, 'tavern'), []);
-    assert.ok(!dueAtWave(m).includes('tavern'));
+    assert.ok(!dueAt(m, 'fight').includes('tavern') && !dueAt(m, 'deploy').includes('tavern'));
     assert.deepEqual(dueOnPage(m, 'council'), []);
   });
 
   it('Show tips again makes every one due again', () => {
     const m = fresh();
     beat(m, 2);
-    for (const id of dueAtWave(m)) markTutorialSeen(m, id);
+    seeAll(m);
     resetTutorials(m);
     assert.equal(tutorialSeen(m, 'pause'), false);
-    assert.equal(dueAtWave(m)[0], 'pause');
+    assert.equal(dueAt(m, 'fight')[0], 'pause');
+    assert.equal(dueAt(m, 'deploy')[0], 'autoMerge');
   });
 
   it("a veteran's first load marks what it already has open as seen, but for the newer ones", () => {
@@ -87,7 +105,8 @@ describe('PAUSE-TIPS: the unlock tutorials', () => {
     assert.ok(tutorialSeen(m, 'tavern'));
     assert.ok(!tutorialSeen(m, 'pause'));
     assert.ok(!tutorialSeen(m, 'traitPerks'));
-    assert.deepEqual(dueAtWave(m), ['pause', 'traitPerks']);
+    assert.deepEqual(dueAt(m, 'deploy'), ['traitPerks']);
+    assert.deepEqual(dueAt(m, 'fight'), ['pause']);
     // (what opens later is still explained in its turn)
     assert.ok(!tutorialSeen(m, 'ultimates'));
     // (settled once: a second load changes nothing)
