@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.613.0',
+    date: '2026-11-18',
+    title: 'A pause button, and tutorials',
+    notes: ['A pause button beside the speed holds the fight where it stands; the fight also pauses if you leave the game.', 'When something new unlocks, a short card explains it on the deploy screen or as the fight begins.', 'Settings, Tutorials lists every explanation to read again.'],
+  },
+  {
     version: '0.612.0',
     date: '2026-11-16',
     title: 'The Shattered Crown returns',
