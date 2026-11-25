@@ -359,3 +359,22 @@ test('the page’s clock: the day and the week’s turn are Mountain time’s, M
   assert.equal(timeLeftWords(5 * 3600_000 + 12 * 60_000), '5 h 12 min left');
   assert.equal(timeLeftWords(30_000), '1 min left');
 });
+
+test('the Hall of Heroes counts in the trial, for the save’s own heroes and the lent ones alike (as in an army run)', async () => {
+  const { HALL } = await import('../src/sim/hall');
+  const { heroStats } = await import('../src/sim/talents');
+  const { runKitStats } = await import('../src/sim/runGear');
+  const m = owning(['knight', 'samurai', 'archer']);
+  const run = startTrial(m, mondayOf(weekWith('wildKin')))!;
+  const lent = run.roster[0].kind;
+  HALL.force = { hp: 0.05, atk: 0.04, crit: 0, charge: 0 };
+  try {
+    // (the page's kit for a hero of the run: the lasting stats, the Hall among them, and the run's finds)
+    assert.equal(runKitStats(m, run, lent, heroStats)?.hp, 0.05);
+    assert.equal(runKitStats(m, run, lent, heroStats)?.atk, 0.04);
+    const own = startTrial(owning(['werewolf', 'druid'], 8), mondayOf(weekWith('wildKin')))!;
+    assert.equal(runKitStats(m, own, 'werewolf', heroStats)?.hp, 0.05);
+  } finally {
+    delete HALL.force;
+  }
+});

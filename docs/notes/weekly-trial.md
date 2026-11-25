@@ -67,6 +67,12 @@ a second team and summon. It took the director's design, with the changes below 
 - **The foes answer the five's lasting power** as the daily's do (`trialScale`, the daily's `DAILY_ANSWER`), so a strong save meets as hard a
   trial as a new one.
 
+- **The Hall of Heroes** (0.624, `docs/notes/hall-of-heroes.md`) counts in the trial as in an army run or the daily: it is part of every
+  hero's lasting stats (`heroStats`), which a trial hero's kit is read through (`runKitStats`), and that includes a lent hero, since the
+  Hall is lent to every hero by the ones the save owns. A lent hero has no skill levels, talents or equipment of the save's (it owns
+  none for that kind), which is what `LOAN_EASE` answers. A rested hero's extra XP stays an army run's alone, as the Hall made it, and a lent
+  hero earns no lasting XP at all.
+
 ## Rewards
 
 Paid once a week, by the furthest wave (`TRIAL_TIERS`, `settleTrial`): **3 waves**: 80 crowns; **5 waves**: 80 crowns and 1 stone; **all 7**:

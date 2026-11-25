@@ -8,6 +8,7 @@
 import { ULT_LEVEL } from './sim/abilities';
 import { ARMIES, armyCleared, tierOpen, totalStars } from './sim/armies';
 import { ARMY_WEAKNESS, RESIST_MULT, WEAK_MULT } from './sim/armyWeakness';
+import { HALL, HALL_STATS, hallBonus } from './sim/hall';
 import { offeredChain } from './sim/eidolonChains';
 import { autoMergeOpen, autoPlaceOpen, autoRunesOpen } from './sim/featureUnlocks';
 import { SKILL2_LEVEL } from './sim/heroKits';
@@ -257,6 +258,22 @@ export const TUTORIALS: readonly Tutorial[] = [
     at: 'armies',
     open: (m) => ARMIES.some((a) => tierOpen(m, a, 1)),
     when: 'Three stars on an army',
+  },
+  {
+    // (HALL-OF-HEROES, docs/notes/hall-of-heroes.md: told on the Heroes tab the first time the Hall lends anything, a hero owned at rank 1)
+    id: 'hall',
+    title: 'The Hall of Heroes',
+    lines: [
+      'Every hero you own lends all your heroes a little strength for each rank it has: Guardians health, Blades attack, Assassins crit, Casters skill charge.',
+      'Own every hero of a trait to complete its set, for a title and a reward.',
+      'A hero who sits out three army runs comes back Rested, with half again the XP.',
+    ],
+    art: 'ui/buttons/all-heroes.webp',
+    at: 'tavern',
+    point: '.hallDoor',
+    open: (m) => HALL.on && HALL_STATS.some((s) => hallBonus(m)[s] > 0),
+    when: 'A hero ranks up',
+    newer: true,
   },
   {
     // (ARMY-WEAKNESS, docs/notes/army-weakness.md: told the first time the War Room shows an army's weaknesses; `newer`, so a save from

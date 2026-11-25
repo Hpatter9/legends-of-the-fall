@@ -8,6 +8,11 @@ import { ALL_HEROES } from '../src/sim/units';
 import { buyPoint, canBuyPoint, heroStats, shardsToSpend } from '../src/sim/talents';
 import { AWAKENED_SHEETS_LATER, lookSheet, stepOfRank } from '../src/render/awakenLook';
 import { ORE_TRAITS } from '../src/sim/awakenMats';
+import { HALL } from '../src/sim/hall';
+
+// (HALL-OF-HEROES: the Hall lends every hero a share of the ranks owned, `hall.ts`; these tests are of the talents and the awakening
+//  alone, so it is off here. What the Hall does is held by its own test, `hall`.)
+HALL.on = false;
 
 const store = () => {
   let v = '';

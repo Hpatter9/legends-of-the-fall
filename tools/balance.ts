@@ -54,6 +54,8 @@ import { WAR_BOT } from './autoplay';
 import { DUEL_ARMY, DUEL_BOSS, DUEL_LENGTH, DUEL_MASTERED, DUEL_ROLE, DUEL_SHARE, duelOutcome, startDuel } from '../src/sim/duel';
 import { giveMastery } from './skills/mastery';
 import { weaknessTable } from './armyWeaknessTable';
+import { hallTable, HALL_DAYS } from './hallTable';
+import { HALL, withoutHall } from '../src/sim/hall';
 import { roleOf, type PartyRole } from '../src/sim/suggest';
 import { armyRun, recruit } from '../src/sim/run';
 import { snapOf, type Nemesis } from '../src/sim/nemesis';
@@ -753,7 +755,7 @@ function duelTable(): void {
               run.stage = wave;
               const n: Nemesis = { id: 1, base: shape.base!, army: army.id, name: 'Duellist', epithet: '', rank: shape.rank!, ...(shape.boss ? { boss: true as const } : {}), loyalty: 60, might, scars: 0, traits: ['scarred'], weak: dread ? [`dread:${kind}`] : ['dread:knight'], known: [], memory: [], met: 1, lost: 0, born: 0 };
               run.nemesis = { members: [snapOf(n)], waves: { [String(wave)]: [1] } };
-              const b = startDuel(run, { id: 1 }, h.id, boostOf(h, heroRank(meta, kind), levelOfKind(meta, kind), heroStats(meta, kind)));
+              const b = startDuel(run, { id: 1 }, h.id, withoutHall(meta, boostOf(h, heroRank(meta, kind), levelOfKind(meta, kind), heroStats(meta, kind))));
               fight(b);
               playOut(b);
               const won = duelOutcome(b) === 'won' ? 1 : 0;
@@ -848,7 +850,11 @@ if (process.argv.includes('--nemesis')) {
   nemesisTable();
   WAR_BOT.duels = false;
 }
+// (HALL-OF-HEROES: `--hall-day 180` measures with a daily player's Hall on that day, `HALL_DAYS`)
+if (process.argv.includes('--hall-day')) HALL.force = HALL_DAYS.find((d) => d.day === Number(flag('--hall-day')))?.hall;
 if (process.argv.includes('--duel')) duelTable();
 // (ARMY-WEAKNESS: every army and tier, the auto team against a team built for the army and one built against it, the rule off and on)
 if (process.argv.includes('--weakness')) weaknessTable();
+// (HALL-OF-HEROES: the Hall a daily player has at day 30, 90 and 180, off and on)
+if (process.argv.includes('--hall-table')) hallTable();
 console.log('');
