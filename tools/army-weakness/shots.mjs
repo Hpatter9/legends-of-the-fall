@@ -1,5 +1,5 @@
 // Screenshots of ARMY-WEAKNESS: node tools/army-weakness/shots.mjs  (run `npm run web` first; SIZES=393,360,412 by default)
-// Writes docs/samples/army-weakness/<scene>-<w>.png: the War Room's card on the Golem Forge ("Weak to", "Resists"), the tutorial card the
+// Writes docs/samples/army-weakness/<scene>-<w>.png (kept in the repository as .webp, quality 82): the War Room's card on the Golem Forge ("Weak to", "Resists"), the tutorial card the
 // first time it shows, the deploy chips and arrows with a team built for the army and one built against it, the chip's card, and the fight
 // with its "Weak!" and "Resisted" (a few frames, `fight-<w>-<n>.png`).
 import * as esbuild from 'esbuild';
