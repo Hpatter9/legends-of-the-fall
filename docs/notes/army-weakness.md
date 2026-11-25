@@ -93,11 +93,11 @@ resisted classes). Each cell is clear % / mean stars of a clear / mean waves won
 | Ogre Clans | Elite (45) | 84% (2.6★, 14.2w) → 84% (2.6★, 14.2w) | 3% (2.0★, 5.0w) → 16% (2.0★, 8.1w) | 19% (2.0★, 9.2w) → 3% (2.0★, 7.1w) |
 | Ogre Clans | Legendary (65) | 66% (0.3★, 11.3w) → 66% (0.3★, 11.3w) | 9% (0.7★, 5.7w) → 25% (0.3★, 9.5w) | 13% (0.5★, 7.9w) → 3% (1.0★, 8.0w) |
 | Ogre Clans | Mythic (85) ¹ | 47% (0.1★, 11.2w) → 47% (0.1★, 11.2w) | 0% (2.8w) → 0% (4.2w) | 0% (4.1w) → 0% (3.9w) |
-| Infernal Host | Normal (58) | 25% (2.3★, 8.3w) → 22% (2.4★, 8.0w) | 0% (5.3w) → 3% (2.0★, 5.6w) | 47% (3.0★, 10.7w) → 38% (2.8★, 9.8w) |
-| Infernal Host | Hard (58) | 19% (2.7★, 11.2w) → 19% (2.5★, 10.7w) | 0% (10.1w) → 6% (2.0★, 11.7w) | 63% (2.9★, 13.4w) → 47% (2.7★, 12.0w) |
-| Infernal Host | Elite (58) | 13% (2.8★, 9.4w) → 6% (2.5★, 10.1w) | 0% (7.2w) → 0% (8.8w) | 41% (2.8★, 11.9w) → 34% (2.9★, 10.5w) |
-| Infernal Host | Legendary (65) | 31% (0.2★, 9.9w) → 19% (0.0★, 9.1w) | 0% (5.7w) → 0% (6.8w) | 53% (0.4★, 11.4w) → 34% (0.4★, 9.8w) |
-| Infernal Host | Mythic (85) ¹ | 0% (5.8w) → 9% (0.0★, 6.3w) | 0% (3.1w) → 0% (3.5w) | 19% (0.0★, 6.1w) → 13% (0.3★, 4.7w) |
+| Infernal Host | Normal (58) ² | 25% (2.3★, 8.3w) → 25% (2.4★, 8.6w) | 0% (5.3w) → 19% (2.0★, 8.0w) | 47% (3.0★, 10.7w) → 44% (2.7★, 11.2w) |
+| Infernal Host | Hard (58) ² | 19% (2.7★, 11.2w) → 16% (2.8★, 10.5w) | 0% (10.1w) → 0% (12.3w) | 63% (2.9★, 13.4w) → 56% (2.8★, 12.7w) |
+| Infernal Host | Elite (58) ² | 13% (2.8★, 9.4w) → 16% (2.6★, 9.5w) | 0% (7.2w) → 0% (8.4w) | 41% (2.8★, 11.9w) → 28% (2.8★, 10.8w) |
+| Infernal Host | Legendary (65) ² | 31% (0.2★, 9.9w) → 31% (0.1★, 11.2w) | 0% (5.7w) → 0% (8.1w) | 53% (0.4★, 11.4w) → 47% (0.2★, 10.9w) |
+| Infernal Host | Mythic (85) ² | 0% (5.8w) → 3% (0.0★, 6.4w) | 0% (3.1w) → 0% (4.4w) | 19% (0.0★, 6.1w) → 16% (0.0★, 6.3w) |
 | Yokai Night Parade | Normal (65) ¹ | 9% (2.0★, 5.3w) → 9% (2.0★, 5.3w) | 0% (3.9w) → 0% (5.6w) | 0% (7.4w) → 0% (7.6w) |
 | Yokai Night Parade | Hard (65) ¹ | 3% (2.0★, 6.8w) → 3% (2.0★, 6.8w) | 0% (5.2w) → 0% (7.5w) | 0% (9.0w) → 0% (7.2w) |
 | Yokai Night Parade | Elite (65) ¹ | 0% (4.8w) → 0% (4.8w) | 0% (2.4w) → 0% (3.7w) | 0% (5.4w) → 0% (4.9w) |
@@ -109,6 +109,8 @@ resisted classes). Each cell is clear % / mean stars of a clear / mean waves won
 | Golem Forge | Legendary (74) ¹ | 0% (7.1w) → 3% (0.0★, 6.6w) | 6% (0.5★, 6.9w) → 19% (0.5★, 7.4w) | 0% (6.3w) → 0% (4.4w) |
 | Golem Forge | Mythic (85) ¹ | 0% (7.7w) → 3% (0.0★, 6.8w) | 13% (0.5★, 6.0w) → 25% (0.5★, 8.0w) | 0% (4.2w) → 0% (3.2w) |
 
+² The Infernal Host's rows: "off" is the Host as it was with no rule, "on" the Host nudged 3% easier (below) with the rule at x0.9.
+
 ¹ Measured with the resistances at x0.85; the rows without the mark were measured again at x0.9, the final value (the cells where a
 mismatched team had lost most). At x0.85 those rows' mismatched teams lost more: Ogre Clans Hard 66 → 34%, the Labyrinth Elite 69 → 38%,
 the Infernal Host Hard 63 → 34%; at x0.75 the Ogres' Hard was the same 34% and the brief's start was eased. The unmarked rows' auto and
@@ -118,12 +120,14 @@ Mean stars count the clears only; the stars of Legendary and Mythic are one a ti
 late armies' own levels are walls by design (`docs/notes/difficulty.md`), so many cells clear rarely either way: the waves won show the
 rule's pull there (the Yokai's matched team 3.9 → 5.6 waves on Normal).
 
-**Left for the owner's call:**
-- the **Infernal Host's auto team** (its Warlock a Caster, which the Host resists) clears a little less: Elite 13 → 6%, Legendary
-  31 → 19%. The in-game Auto now benches a resisted hero when it has another, so a player's own team loses less; nudging the Host's
-  strength down about 3% would give the measure's auto team its rate back, at the cost of every other team finding the Host easier;
-- a **deliberately mismatched team** still loses ground on a knife-edge cell (the Wildwood's Legendary, three Wardens: 78 → 44%). x0.9 is
-  the gentlest a resistance can be and still read on the card; making it purely a weakness system (no resistances) is the other way.
+**The owner's calls** (the director, relaying them):
+- **The Infernal Host is nudged 3% easier** (`start` 24.75 to 24.0, `tierStart` 1.64 to 1.59), so the auto team, whose Warlock the Host
+  resists, clears as it did: 25, 16, 16, 31 and 3% against 25, 19, 13, 31 and 0% before (rows marked ²). The nudge is the army's own and
+  not behind the switch; the recorded fights that meet the Host still play as recorded (the full suite).
+- **Resistances stay at x0.9**: they are the counterweight that makes matching matter, and Auto benches a resisted hero when it can. A
+  deliberately mismatched team still loses ground on a knife-edge cell (the Wildwood's Legendary, three Wardens: 78 → 44%).
+- **Every text reads the figures from the constants** (`WEAK_MULT`, `RESIST_MULT`): the card, the rows' titles and the tutorial, held by a
+  test, so they cannot drift.
 
 ## What it changes
 

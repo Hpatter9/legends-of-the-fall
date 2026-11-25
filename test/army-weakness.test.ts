@@ -205,3 +205,15 @@ test('auto place ranks a hero on the army’s weakness higher, and one it resist
     ARMY_WEAKNESS.on = true;
   }
 });
+
+test('every text names the rule’s real figures, read from its constants', async () => {
+  const { MATCH_WORDS, RESIST_WORDS, WEAK_WORDS } = await import('../src/armyWeaknessRules');
+  const { TUTORIALS } = await import('../src/tutorialRules');
+  const up = `${Math.round((WEAK_MULT - 1) * 100)}%`;
+  const down = `${Math.round((1 - RESIST_MULT) * 100)}%`;
+  assert.equal(down, '10%');
+  for (const words of [MATCH_WORDS, TUTORIALS.find((t) => t.id === 'armyWeakness')!.lines.join(' ')]) {
+    assert.ok(words.includes(`${up} more`) && words.includes(`${down} less`), words);
+  }
+  assert.ok(WEAK_WORDS.includes(`${up} more`) && RESIST_WORDS.includes(`${down} less`));
+});
