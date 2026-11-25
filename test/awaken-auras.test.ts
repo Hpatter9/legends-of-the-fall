@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { AURAS, AURA_KEYS, auraKey, auraOf, auraParts, FALLBACK_AURA, FOE_AURA } from '../src/render/auraStyles';
+import { AURAS, AURA_KEYS, PLAIN_KEYS, auraKey, auraOf, auraParts, gradeParts, levelParts, markParts, FALLBACK_AURA, FOE_AURA } from '../src/render/auraStyles';
 import { newPose, poseAura } from '../src/render/auraPlace';
 import { HERO_TRAITS, TRAITS } from '../src/sim/traits';
 import { ALL_HEROES } from '../src/sim/units';
@@ -20,7 +20,7 @@ test('the rendered aura strips are small soft-edged transparent cells and fit wi
   const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
   assert.ok(width <= 4096 && height <= 4096, 'fits mobile texture limits');
   const occupied = new Set<string>();
-  assert.deepEqual(Object.keys(atlas.parts).sort(), [...AURA_KEYS].sort());
+  assert.deepEqual(Object.keys(atlas.parts).sort(), [...AURA_KEYS, ...PLAIN_KEYS].sort());
   for (const [key, [x, y, frames]] of Object.entries(atlas.parts)) {
     assert.equal(frames, 8, `${key} has a complete animation loop`);
     assert.ok((x + frames) * atlas.cell <= width && (y + 1) * atlas.cell <= height, key);
@@ -107,6 +107,30 @@ test('AURAS-BLENDER: nothing of an aura is drawn in front of the body, and the s
   }
   // (a hero that wears a rendered aura has no code-drawn halo behind it and no code-drawn sparkles over it)
   const view = readFileSync('src/render/unitView.ts', 'utf8');
-  assert.match(view, /if \(!this\.awakenAura\) for \(let i = 5; i >= 1; i--\) this\.glow\.ellipse\(/);
-  assert.match(view, /const sparkle = this\.grade > 2 && !this\.awakenAura;/);
+  assert.ok(!/this\.glow\.ellipse|this\.aura\.ellipse|this\.mark\.ellipse|g\.star\(x, -this\.tall/.test(view), 'no halo, ring or rising star is drawn in code');
+});
+
+test('AURAS-BLENDER: a level\'s rings, a summon\'s ring and a higher grade\'s glow are plain rendered strips, tinted, under or behind the body', () => {
+  const all = [...levelParts(3, true, 0xffb878), ...markParts(0x6cd060), ...gradeParts(4, 0xb06aff)];
+  for (const part of all) {
+    assert.ok(PLAIN_KEYS.includes(part.key), part.key);
+    assert.ok(!part.front, `${part.key} is never in front of the body`);
+    assert.ok(part.tint !== undefined, `${part.key} takes its colour`);
+    assert.ok(['ground', 'wrap', 'rise'].includes(part.place));
+  }
+  // (none below the first milestone or the second grade; more rings higher up, a glow only from the halo's tier)
+  assert.deepEqual(levelParts(0, false, 0), []);
+  assert.deepEqual(gradeParts(1, 0xffffff), []);
+  assert.equal(levelParts(1, false, 1).length, 1);
+  assert.equal(levelParts(1, false, 1)[0].key, 'plain.ring1');
+  assert.equal(levelParts(3, true, 1)[0].key, 'plain.ring3');
+  assert.equal(levelParts(3, true, 1).length, 2);
+  // (a summon of grade 2 glows; from grade 3 its motes rise, behind it, and are dropped on battery saver)
+  assert.deepEqual(gradeParts(2, 1).map((x) => x.key), ['plain.shell']);
+  assert.deepEqual(gradeParts(3, 1).map((x) => x.key), ['plain.shell', 'plain.rise']);
+  assert.deepEqual(gradeParts(3, 1, true).map((x) => x.key), ['plain.shell']);
+  assert.ok(gradeParts(4, 1)[0].alpha > gradeParts(2, 1)[0].alpha);
+  const view = readFileSync('src/render/unitView.ts', 'utf8');
+  assert.match(view, /\.\.\.\(this\.awakenAura \? \[\] : gradeParts\(/);
+  assert.match(view, /this\.plainAura\.update\(t, this\.tall \/ this\.sizeNow, dx, !!this\.reduced\?\.matches\)/);
 });

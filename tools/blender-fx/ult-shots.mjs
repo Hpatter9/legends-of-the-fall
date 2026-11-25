@@ -55,7 +55,7 @@ async function open(eidolons) {
     localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 1200, unlocked: owned, party: owned.slice(0, 5), pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 1, barracks: 1, armoury: 0, mageTower: 0, stable: 0, library: 0 }, shards: {}, stars: {}, xp: Object.fromEntries(owned.map((k) => [k, xp])), bestStage: 14, tower: 9, daily: {}, bosses: [], achievements: [], armies: {}, armySeen: [], stash: [], opened: ['undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems', 'tower', 'castle', 'calamity'], ...(first ? {} : { ultSeen: Object.fromEntries(owned.map((k) => [k, 1])) }), ...(eid ? { eidolons: eid } : {}) }));
     localStorage.setItem('lotf-tips-off', '1');
     localStorage.setItem('legends.settings', JSON.stringify({ cinematics: false, speed: 2, quips: false }));
-  }, [ALL, xpAt(32), eidolons ?? null, FIRST]);
+  }, [ALL, process.env.XP ? Number(process.env.XP) : xpAt(Number(process.env.LEVEL ?? 32)), eidolons ?? null, FIRST]);
   await page.goto(`http://localhost:${PORT}/`, { timeout: 240000 });
   await page.waitForFunction(() => !!window.__game?.home, null, { timeout: 240000 });
   await page.waitForTimeout(1500);
@@ -139,15 +139,16 @@ async function gotIt(page) {
 }
 
 async function army(page, party, army = 'beasts', stage = 3) {
-  await page.evaluate(([party, army, stage, grade]) => {
+  // (LEVEL=<n>: the run does not level its own heroes, so each fights at its kind's lasting level, n)
+  await page.evaluate(([party, army, stage, grade, level]) => {
     const g = window.__game;
     const r = JSON.parse(JSON.stringify(g.run));
-    Object.assign(r, { seed: 4242, mode: { kind: 'army', army }, stage, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade, paid: 30 })), squad: [], nextId: 200 });
+    Object.assign(r, { seed: 4242, mode: { kind: 'army', army }, stage, ...(level ? { local: false } : {}), over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade, paid: 30 })), squad: [], nextId: 200 });
     document.getElementById('home').hidden = true;
     g.startRun(r);
     g.autoArrange(true);
     g.setSpeed(2);
-  }, [party, army, stage, Number(process.env.GRADE ?? 1)]);
+  }, [party, army, stage, Number(process.env.GRADE ?? 1), !!process.env.LEVEL]);
   await page.waitForTimeout(700);
   await gotIt(page);
   await page.evaluate(() => document.getElementById('fight').click());
@@ -198,19 +199,24 @@ if (process.env.WATCH) {
   if (process.env.AURA) {
     // (the camera closes in on the lines as the fight opens: the photographs are taken once it has)
     await page.evaluate(() => { window.__game.app.ticker.stop(); window.__step(900); });
+    // (SUMMONS=1: the fight is stepped on until a summon stands on the board (20 s at most), and summons are photographed too:
+    // for the ring under a summon and the glow of one of a higher grade. LEVEL=<n>: the save's heroes at that lasting level, for
+    // the rings of a deep milestone)
+    if (process.env.SUMMONS) console.log('summon:', await page.evaluate(() => { const g = window.__game; for (const u of g.b.units) { u.maxHp *= 1000; u.hp = u.maxHp; } for (let t = 0; t < 20000 && !g.b.units.some((u) => u.side === "hero" && u.alive && u.owner !== undefined); t += 16) window.__step(16); window.__step(600); return g.b.units.filter((u) => u.side === "hero" && u.owner !== undefined).map((u) => u.def + " g" + u.grade); }));
     for (let n = 0; n < 4; n++) {
       await page.evaluate(() => window.__step(260));
-      const at = await page.evaluate(() => { const g = window.__game; return g.b.units.filter((u) => u.side === 'hero' && u.alive && !u.summon).map((u) => { const sp = g.sprites.get(u.id); const p = g.fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 }); return [u.def, Math.round(p.x), Math.round(p.y)]; }); });
+      const at = await page.evaluate((summons) => { const g = window.__game; return g.b.units.filter((u) => u.side === 'hero' && u.alive && (summons || u.owner === undefined)).map((u) => { const sp = g.sprites.get(u.id); const p = g.fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 }); return [u.def, Math.round(p.x), Math.round(p.y), u.owner !== undefined]; }); }, !!process.env.SUMMONS);
       // (the fight's camera follows the clash, and most of a party is off the screen's edge: the board is slid so each hero in turn
       // stands at the middle of the field, photographed, and slid back; nothing of the fight is stepped meanwhile)
-      for (const [def, x, y] of at) {
-        if (!PICKS.includes(def)) continue;
+      for (const [def, x, y, summon] of at) {
+        if (!PICKS.includes(def) && !summon) continue;
         await page.evaluate(([dx, dy]) => { const g = window.__game; g.world.x += dx; g.world.y += dy; g.app.render(); }, [W / 2 - x, 520 - y]);
         await page.screenshot({ path: `${OUT}/aura-${def}-g${process.env.GRADE}-${n}.png`, clip: { x: W / 2 - 75, y: 520 - 105, width: 150, height: 170 } });
         await page.evaluate(([dx, dy]) => { const g = window.__game; g.world.x -= dx; g.world.y -= dy; g.app.render(); }, [W / 2 - x, 520 - y]);
       }
       if (n === 1) await page.screenshot({ path: `${OUT}/aura-screen-${PICKS[0]}-g${process.env.GRADE}.png` });
       if (n === 1) console.log('AURA', JSON.stringify(at));
+      if (n === 1 && process.env.LEVEL) console.log('levels', await page.evaluate(() => window.__game.b.units.filter((u) => u.side === 'hero').map((u) => u.def + ' ' + u.level)));
     }
     console.log('page errors:', errors);
     await ctx.close();

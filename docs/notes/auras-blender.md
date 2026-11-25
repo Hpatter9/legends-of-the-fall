@@ -99,7 +99,6 @@ Not yet started over (the next steps, in the order I would take them):
 | The ailments' body parts (burn, poison, freeze and the rest: eleven) and their chips | `ailmentLayer.ts`, `statusStyles.ts` | painted atlas `src/art/fx/status/atlas.png`, 1,007,371 bytes |
 | The guard ring (a raised guard) | `unitView.ts` | a painted strip (`VFX.earthShield`) |
 | Stand marks on a fighter (time stop, hunter's mark, bane, rage, siege) and the moves' ground loops (War Banner, Rally Cry) | `fx.ts` `paintStand`, `movePaints.ts` | painted spell atlases |
-| Level-milestone rings and halo | `unitView.ts`, `levelLook.ts` | code-drawn `Graphics` |
 | The halo and sparkles of a foe or summon of a higher grade; a summon's ring; the Nemesis rim | `unitView.ts` | code-drawn |
 | Haste's gold dust and slow's ice puffs | `fx.ts` | painted particles |
 | The Last Stand's rings | `standView.ts` | code-drawn |
@@ -186,3 +185,37 @@ What I did not look at: a field cast by its real owner in an ordinary fight (eac
 the reach its ability gives); the Dirge's violet tint of the song; 360 x 780 and 412 x 915; reduced motion in a picture. The
 large fields (the slow field is eight tiles across, the font seven) are drawn three to four times their pixels' size, so their
 hoops are broad soft bands and their marks coarse; the small ones (the daggers, the spikes) are the crispest.
+
+## Group 5: what was drawn in code round a fighter
+
+- **The sparkles over the body are gone.** A fighter of combat grade 3 or 4 rose in gold (or violet) stars drawn in code in front
+  of its body, on the wall clock, taking no notice of reduced motion. Heroes lost them in the first step (their class aura's
+  motes); the only fighters still wearing them were **summons** of a higher grade (a foe is never above grade 1 on the board, so
+  there was no foe halo to replace). A summon's are now soft motes rising at its sides, behind its body (`gradeParts`), held
+  still for reduced motion and dropped on battery saver.
+- **A summon's glow** (the stacked ellipses behind a summon of grade 2 and up) is the rendered shell, in the same colour.
+- **The level-milestone rings** (a hero of lasting level 40 and up, in a run that does not level its own heroes: one, two or
+  three thin ellipses in the badge's colour, and from the Gold badge stacked ellipses behind the body) are rendered hoops with a
+  soft pool, set wide of the class's own ring, and a faint shell of the badge's colour (`levelParts`). They turn slowly and
+  breathe; reduced motion holds them.
+- **The ring under a summon** that says whose it is (an ellipse in its caller's colour) is a rendered ring (`markParts`).
+
+All four come from six **plain strips** in the class aura's atlas (`plain.ring1`, `ring2`, `ring3`, `mark`, `shell`, `rise`:
+white, and tinted to their colour by the game), drawn by the same `AwakenAura` class from a list of parts, under the feet or
+behind the body. The three `Graphics` they were drawn on are removed from the fighter.
+
+**Left as they are:** the Nemesis rim and the grade rim. Each is the fighter's own body drawn again in one flat colour a pixel
+out each way, an outline that follows its pose frame by frame; a rendered sheet cannot give a fighter's outline, and it lies
+behind the body already. The Last Stand's rings were skipped (the mode is hidden).
+
+| | Before this group | After |
+| --- | --- | --- |
+| `src/art/fx/aura/atlas.png` | 215,762 bytes, 768 x 2544 | 226,998 bytes, 768 x 2688 |
+
+Pictures: `docs/samples/auras/plain/plain-before-after.jpg`: the Druid's treant at grade 3 (the stars over its body, then the
+motes beside it), and the Knight at lasting levels 44, 61 and 100, before over after, at 393 x 852 and twice the size.
+`SUMMONS=1` and `XP=<n>` with `LEVEL=1` on the tool's `AURA=1` mode take them.
+
+What I did not look at: the ring under the treant is hidden by a plant in its crop, and the Beastmaster's wolf was buried in
+the melee in every frame, so a summon's ring is not shown in a picture; a summon of grade 2 and of grade 4; the other two phone
+sizes; reduced motion in a picture.

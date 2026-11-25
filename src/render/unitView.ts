@@ -11,7 +11,7 @@ import { formOf, UNITS } from '../sim/units';
 import { REVIVE_MS } from '../sim/lives';
 import { RANK_BADGE } from '../expansionArt';
 import { AwakenAura } from './awakenAura';
-import { auraOf } from './auraStyles';
+import { auraOf, gradeParts, levelParts, markParts } from './auraStyles';
 import { awakenedSheet, battleSheet, combatAuraStep } from './awakenLook';
 import { summonLook, summonMark, summonSheet } from './summonArt';
 import { facesRightOf, framesOf, figureOf, hasSheet, type Anim } from './sheets';
@@ -61,7 +61,6 @@ const GRADE4_SIZE = 1.14;
 /** Rank 4's colours: a violet halo and rim, and violet sparks (grade 3's are gold). */
 const GRADE4_HALO = 0xb06aff;
 const GRADE4_RIM = 0xd49aff;
-const GRADE4_SPARK = 0xe6c2ff;
 /** The ultimate's meter under the skill's: violet while it fills, gold when ready. */
 const ULT_FILL = 0xb06aff;
 const ULT_READY = 0xffd24a;
@@ -139,8 +138,6 @@ export class UnitSprite {
   readonly root = new Container();
   private body = new Sprite();
   private shadow = new Graphics();
-  /** SUMMON-ART: a summon's ring under its feet, in its caller's element colour (empty for the rest). */
-  private mark = new Graphics();
   private bar = new Graphics();
   /** SUMMON-TIMERS: a small ring by the health bar of a summon or a shifted hero, emptying as its timer runs out (`timerOf`, carry.ts). */
   private clock = new Graphics();
@@ -163,9 +160,6 @@ export class UnitSprite {
   private kx = 0;
   private ky = 0;
   private flash = 0;
-  private glow = new Graphics();
-  /** The rings (and, higher up, the halo) of a deep level milestone, drawn once. */
-  private aura = new Graphics();
   /** Four flat-coloured copies of the body, a pixel out each way: a rim behind the sprite. */
   private rim = new Container();
   private sparks = new Graphics();
@@ -183,6 +177,8 @@ export class UnitSprite {
   private perkMark = new Sprite();
   /** An awakened hero's class aura (null for the rest). */
   private awakenAura: AwakenAura | null;
+  /** The plain strips round it (a level's rings, a summon's ring, a higher grade's glow), or none. */
+  private plainAura: AwakenAura | null = null;
   private burstAt = -1;
   /** When a life raised this fighter (Date.now ms; -1 when it is not getting up), and how it fell (for its tint going back). */
   private riseAt = -1;
@@ -237,12 +233,8 @@ export class UnitSprite {
     this.root.scale.set(size);
     this.baseSize = size;
     if (this.grade > 1) {
-      // a halo of stacked ellipses behind the body (silver-blue, then gold), drawn once, and a rim of the body's own shape
+      // a rim of the body's own shape (the glow behind it is its aura's: `AwakenAura`, or `gradeParts` for a summon)
       const col = this.grade > 3 ? GRADE4_HALO : auraOf(unit.def).colour;
-      const h = this.tall * 0.62;
-      // (AURAS-BLENDER: a hero's glow behind its body is its aura's own rendered shell now; only a fighter with no class aura, a foe
-      // or a summon of a higher grade, keeps the stacked ellipses)
-      if (!this.awakenAura) for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: this.grade > 3 ? 0.16 : this.grade > 2 ? 0.12 : 0.1 });
       for (const [dx, dy] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6]]) {
         const r = new Sprite();
         r.anchor.set(0.5, 1);
@@ -254,15 +246,18 @@ export class UnitSprite {
       if (tone.length) this.body.filters = tone;
     }
     this.shadow.ellipse(0, 0, 13, 5).fill({ color: 0x000000, alpha: 0.32 });
+    // (AURAS-BLENDER: what was drawn in code round a fighter is rendered now, from the aura atlas's plain strips, each in its colour:
+    // the ring under a summon that says whose it is, the rings (and from the Gold badge a faint glow) a hero past a deep milestone
+    // stands in, and the glow and rising motes of a summon of a higher combat grade. All of it under the feet or behind the body:
+    // the stars a higher grade rose in were in front of it. Reduced motion holds each on one frame)
     const markColour = summon ? summonMark(unit.def) : undefined;
-    if (markColour !== undefined) this.mark.ellipse(0, 0, 12, 4.6).fill({ color: markColour, alpha: 0.16 }).stroke({ color: markColour, width: 1.2, alpha: 0.75 });
-    // a hero past a deep milestone (lasting level 40 and up) stands in steady rings of the badge's colour
     const tier = unit.side === 'hero' ? badgeOf(unit.level ?? 1) : 0;
-    if (tier) {
-      const col = AURA_COLOURS[tier];
-      for (let i = 0; i < auraRings(tier); i++) this.aura.ellipse(0, 0, 15 + i * 4, 6.5 + i * 1.7).stroke({ color: col, width: 1.5, alpha: 0.85 - i * 0.2 });
-      if (auraHalo(tier)) for (let i = 3; i >= 1; i--) this.aura.ellipse(0, -this.tall * 0.4, (10 + i * 5) / size, (this.tall * (0.28 + i * 0.12)) / size).fill({ color: col, alpha: 0.07 });
-    }
+    const plainParts = [
+      ...(markColour !== undefined ? markParts(markColour) : []),
+      ...levelParts(auraRings(tier), auraHalo(tier), AURA_COLOURS[tier] ?? 0),
+      ...(this.awakenAura ? [] : gradeParts(this.grade, this.grade > 3 ? GRADE4_HALO : auraOf(unit.def).colour, settings().saver)),
+    ];
+    this.plainAura = plainParts.length ? new AwakenAura(plainParts) : null;
     this.body.anchor.set(0.5, 1);
     this.shield.anchor.set(0.5);
     this.shield.visible = false;
@@ -280,7 +275,7 @@ export class UnitSprite {
     this.mergeRim.filters = [flatFilter(MERGE_RIM)];
     this.mergeRim.visible = false;
     this.drawPickRing();
-    this.root.addChild(this.shadow, this.pickRing, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.mergeRim, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []), this.perkMark, this.pickMark);
+    this.root.addChild(this.shadow, this.pickRing, ...(this.plainAura ? [this.plainAura.back] : []), ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.mergeRim, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []), this.perkMark, this.pickMark);
   }
 
   /** A nemesis's look (`sim/nemesis.ts`): its rank's rim round the body, a darker tone, and its name plate. Drawn once; nothing in it moves. */
@@ -501,6 +496,10 @@ export class UnitSprite {
     this.body.x = (facesRight(u.facing) ? 1 : -1) * motion.offset;
     this.body.scale.x *= 1 + motion.stretch;
     this.body.scale.y *= 1 - motion.stretch * 0.5;
+    if (this.plainAura) {
+      this.plainAura.back.visible = u.alive;
+      if (u.alive) this.plainAura.update(t, this.tall / this.sizeNow, dx, !!this.reduced?.matches);
+    }
     if (this.awakenAura) {
       this.awakenAura.back.visible = this.awakenAura.front.visible = u.alive;
       if (u.alive) this.awakenAura.update(t, this.tall / this.sizeNow, dx, !!this.reduced?.matches);
@@ -512,7 +511,6 @@ export class UnitSprite {
     this.shadow.alpha = def.flies ? 0.5 : 1;
     // (in a launch's arc the shadow stays on the ground)
     this.shadow.y = arcLift;
-    this.mark.visible = u.alive;
     this.pickRing.visible = this.picked;
     this.pickMark.visible = this.picked && u.alive;
     if (this.picked) {
@@ -852,26 +850,15 @@ export class UnitSprite {
   private drawSparks(alive: boolean): void {
     const g = this.sparks;
     const burst = this.burstAt >= 0 ? (Date.now() - this.burstAt) / BURST_MS : 2;
-    // (AURAS-BLENDER: a hero that wears a rendered aura has its motes from it, behind its body; the sparkles drawn here rose over
-    // the body, and took no notice of reduced motion. They are left to a fighter with no class aura)
-    const sparkle = this.grade > 2 && !this.awakenAura;
-    if (!alive || (!sparkle && burst > 1)) {
+    // (AURAS-BLENDER: the sparkles a grade 3 fighter rose in were drawn here, over its body, and took no notice of reduced motion.
+    // They are the aura's own motes now, behind the body: a hero's from its class aura, a summon's from `gradeParts`.)
+    if (!alive || burst > 1) {
       if (g.visible) g.clear();
       g.visible = false;
       return;
     }
     g.visible = true;
     g.clear();
-    const now = Date.now();
-    const gold = this.grade > 3 ? GRADE4_SPARK : this.grade > 2 ? 0xffe27a : 0xdce8ff;
-    // (rank 4 rises in more sparks, and violet ones)
-    const n = this.grade > 3 ? 9 : 6;
-    if (sparkle)
-      for (let i = 0; i < n; i++) {
-        const f = ((now / 1500 + i / n) % 1);
-        const x = Math.sin(i * 2.4 + now / 900) * 14;
-        g.star(x, -this.tall * 0.1 - f * this.tall * 0.95, 4, 3.4, 1.3).fill({ color: gold, alpha: Math.sin(Math.PI * f) });
-      }
     if (burst <= 1) {
       g.ellipse(0, -this.tall * 0.4, 8 + burst * 34, 4 + burst * 20).stroke({ color: 0xfff2b0, width: 3 * (1 - burst) + 0.5, alpha: 1 - burst });
       g.ellipse(0, -this.tall * 0.45, 12 + burst * 10, this.tall * 0.6).fill({ color: 0xffffff, alpha: 0.55 * (1 - burst) });

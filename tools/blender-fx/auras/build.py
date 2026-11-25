@@ -30,7 +30,9 @@ TAU = math.tau
 # Each class's colour (the same as `auraStyles.ts`), as a palette: deep, mid, bright, hot.
 COLOURS = dict(guardian=0xffd24a, bulwark=0xf0b860, blade=0xe0304a, marksman=0xdbe8f4, gunner=0xf2d35a, caster=0xb06cff,
                arcanist=0x7a86ff, support=0xfff0b8, beast=0xff6a2a, assassin=0x6a46a8, trickster=0xc6d2ff, warden=0x6cd060,
-               vanguard=0xffa040)
+               vanguard=0xffa040,
+               # (the plain strips: white, and given their colour by the game: a level's rings, a summon's ring, a higher grade's glow)
+               plain=0xffffff)
 
 
 def palette(hexc):
@@ -403,6 +405,17 @@ RECIPES = dict(
     vanguard=klass(dict(rings=1, points=3, skip=1, glow=1.2), dict(rings=2, points=3, skip=1, dots=3, glow=1.3), R('flames', UP, n=6, h=0.45, fat=0.13), R('flames', UP, n=9, h=0.6, fat=0.14),
                    R('ember', UP, h=0.55), {'1.trail': R('streaks', MID, n=2), '2.trail': R('streaks', MID, n=3, length=1.0)}),
 )
+# The plain strips (`PLAIN_KEYS` in auraStyles.ts): white, tinted by the game. The rings a hero of a deep level stands in (one,
+# two, three hoops), the ring under a summon that says whose it is, and the glow and rising motes of a fighter of a higher combat
+# grade that has no class aura (a summon). They took the place of ellipses and stars drawn in code.
+RECIPES['plain'] = {
+    'ring1': R('ground', FLAT, rings=1, thick=0.034, glow=0.5),
+    'ring2': R('ground', FLAT, rings=2, thick=0.03, glow=0.5),
+    'ring3': R('ground', FLAT, rings=3, dots=6, thick=0.028, glow=0.6),
+    'mark': R('ground', FLAT, rings=1, thick=0.03, glow=1.1, r=0.5),
+    'shell': R('shell', MID),
+    'rise': R('bits', UP, n=7, h=1.2, size=0.085, spin=0.3),
+}
 KEYS = [f'{k}.{part}' for k, parts in RECIPES.items() for part in parts]
 
 
