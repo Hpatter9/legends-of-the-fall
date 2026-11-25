@@ -1006,7 +1006,6 @@ export class Home {
     cdx.append(medal('stall-books'), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
     if (codexWaiting(m).length > 0) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
-    // (Build Town is in Settings › Developer now: a testing tool, not a castle door)
     // (UX-FIXES: Achievements is the trophy in the top bar and Reset tips is in Settings: one door each)
     void ach;
     row.append(cdx);
@@ -1016,7 +1015,7 @@ export class Home {
     this.castleShut.hidden = up;
     if (!up) {
       // (FIRST-HOUR: the "Open Castle Gate (Preview)" button that stood here was a testing door on every new player's Castle tab: it
-      // opened the gate and gave 3000 crowns and six buildings. Testing goes through Settings › Developer › Build Town, which opens the gate too.)
+      // opened the gate and gave 3000 crowns and six buildings; its later home, Settings › Developer, went before release too, RELEASE-TRIM.)
       this.castleShut.replaceChildren(
         el('b', '', 'The castle is shut'),
         el('p', '', `${opensAt(MODE_NEED.castle)} · ${progressLine(m, MODE_NEED.castle)}`),
