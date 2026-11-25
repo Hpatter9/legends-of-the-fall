@@ -19,9 +19,10 @@ export function armyTags(army: string | undefined): { weak: ClassTag[]; resist: 
   return { weak: m.weak.map(tag), resist: m.resist.map(tag), why: m.why };
 }
 
-/** The share each makes, in words for the card (from `WEAK_MULT` and `RESIST_MULT`). */
-export const WEAK_WORDS = `Their foes take ${Math.round((WEAK_MULT - 1) * 100)}% more harm from these heroes`;
-export const RESIST_WORDS = `and ${Math.round((1 - RESIST_MULT) * 100)}% less from these`;
+/** What a weakness and a resistance make, in words: a row's title ("Its foes take 30% more harm from these heroes") and the card's line. */
+export const WEAK_WORDS = `Its foes take ${Math.round((WEAK_MULT - 1) * 100)}% more harm from these heroes`;
+export const RESIST_WORDS = `Its foes take ${Math.round((1 - RESIST_MULT) * 100)}% less harm from these heroes`;
+export const MATCH_WORDS = `Its foes take ${Math.round((WEAK_MULT - 1) * 100)}% more harm from the classes it is weak to, and ${Math.round((1 - RESIST_MULT) * 100)}% less from those it resists.`;
 
 /** A hero's arrow against an army: up for a weakness it hits, down for a resistance, none else. */
 export const arrowOf = (army: string | undefined, kind: string): '▲' | '▼' | '' => {

@@ -1,7 +1,7 @@
 // ARMY-WEAKNESS's block on the page (docs/notes/army-weakness.md): an army's "Weak to" and "Resists" rows with the classes' sigils, and why;
 // the War Room's card and the deploy chip's card show it. The words are `armyWeaknessRules.ts`'s.
 
-import { armyTags, facedArmy, RESIST_WORDS, strongFlag, WEAK_WORDS } from './armyWeaknessRules';
+import { armyTags, facedArmy, MATCH_WORDS, RESIST_WORDS, strongFlag, WEAK_WORDS } from './armyWeaknessRules';
 import { ARMIES, armyUnlocked } from './sim/armies';
 import type { Meta } from './sim/meta';
 import { loadRun } from './sim/run';
@@ -45,7 +45,7 @@ export function matchBlock(army: string, why = true): HTMLElement | undefined {
 
 /** The deploy chip's card: the army's block and the heroes placed that hit a weakness or a resistance (a standard card, "Close"). */
 export function openArmyMatchCard(army: string, placed: readonly string[], name: (k: string) => string, armyName: string): void {
-  const menu = ornateMenu({ id: 'armyMatchCard', eyebrow: 'The army you face', title: armyName, sub: `${WEAK_WORDS}, ${RESIST_WORDS}.`, asked: true });
+  const menu = ornateMenu({ id: 'armyMatchCard', eyebrow: 'The army you face', title: armyName, sub: MATCH_WORDS, asked: true });
   const grid = menuSection(menu.body, 'Weaknesses and resistances', undefined, 2);
   const sec = grid.parentElement!;
   grid.remove();
