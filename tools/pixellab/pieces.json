@@ -1,0 +1,199 @@
+{
+  "alpha_werewolf": {
+    "source": "werewolf_black",
+    "out": "alpha_werewolf",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 101,
+    "key": "the pack alpha werewolf: heavier and more muscular, a grizzled silver-grey ruff of fur round the neck and shoulders, pale scars across the muzzle, a broken iron chain collar, longer claws, glowing amber eyes; same pose, same facing, same black fur"
+  },
+  "nine_tails": {
+    "source": "kitsune",
+    "out": "nine_tails",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 251,
+    "key": "the Nine-Tailed Fox, a fox spirit queen: white and gold fur, a layered white and crimson shrine robe with gold trim, a fanned crown of many white fox tails tipped with blue foxfire, a white fox mask pushed up on the head, blue foxfire wisps; same pose, same facing",
+    "keepSource": [
+      "dead_06",
+      "dead_07",
+      "dead_08",
+      "dead_09"
+    ],
+    "extra": "keep each frame's pose, size and position exactly; side view facing right; every frame is the white and gold nine-tailed fox in the white robe, never golden tails or a red robe"
+  },
+  "summon_grave_warrior": {
+    "source": "skeleton_warrior",
+    "out": "summon_grave_warrior",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 331,
+    "key": "a friendly risen skeleton warrior: clean bone-white bones, pale green grave-light glowing in the eye sockets and joints, a torn grey grave shroud over one shoulder, wisps of pale green mist, a sword and round shield; no red; same pose, same facing"
+  },
+  "summon_grave_spear": {
+    "source": "skeleton_spearman",
+    "out": "summon_grave_spear",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 311,
+    "key": "a friendly risen skeleton spearman: clean bone-white bones, pale green grave-light glowing in the eye sockets and joints, a torn grey grave shroud, wisps of pale green mist, a long spear; no red; same pose, same facing"
+  },
+  "summon_grave_archer": {
+    "source": "skeleton_archer",
+    "out": "summon_grave_archer",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 321,
+    "key": "a friendly risen skeleton archer: clean bone-white bones, pale green grave-light glowing in the eye sockets and joints, a torn grey grave shroud, wisps of pale green mist, a pale bone bow; no red; same pose, same facing"
+  },
+  "elite_gorrak": {
+    "source": "hk_orc_brute",
+    "out": "elite_gorrak",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 701,
+    "key": "Gorrak, an orc berserker champion: a bloodied iron half-mask over the lower face, two heavy cleavers, red war paint stripes, scarred bare muscular arms, same pose, same facing, same size"
+  },
+  "elite_ysolde": {
+    "source": "werewolf_white",
+    "out": "elite_ysolde",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 702,
+    "key": "Ysolde, a lean white she-wolf werewolf champion: frost-blue glowing eyes, a torn red hunter's hood and cape about her shoulders, same pose, same facing, same size"
+  },
+  "elite_hollow": {
+    "source": "skeleton_warrior",
+    "out": "elite_hollow",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 703,
+    "key": "the Hollow Knight, a skeleton champion: a rusted full knight's great helm and breastplate, a tall kite shield with faded blue and gold heraldry, a longsword, same pose, same facing, same size"
+  },
+  "elite_sethra": {
+    "source": "gorgon_2",
+    "out": "elite_sethra",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 704,
+    "key": "Sethra, a gorgon matriarch champion: emerald green scales, a hood of hissing snakes, a gold serpent circlet, glowing yellow eyes, same pose, same facing, same size"
+  },
+  "elite_brakka": {
+    "source": "minotaur_1",
+    "out": "elite_brakka",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 705,
+    "key": "Brakka, a hulking minotaur champion: a spiked bronze yoke across the shoulders, one horn capped in iron, a double-bladed battle axe, same pose, same facing, same size"
+  },
+  "elite_cindra": {
+    "source": "hk_demon",
+    "out": "elite_cindra",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 706,
+    "key": "Cindra, a she-demon champion wreathed in hellfire: burning flame hair, cracked black obsidian skin with glowing orange seams, a flaming whip, same pose, same facing, same size"
+  },
+  "elite_vexor": {
+    "source": "hk_demon",
+    "out": "elite_vexor",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 707,
+    "key": "Vexor, a hunched demon summoner: tattered violet robes, a staff topped with a small caged imp, small horns, many glowing eyes, same pose, same facing, same size"
+  },
+  "elite_thrum": {
+    "source": "hk_ogre",
+    "out": "elite_thrum",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 708,
+    "key": "Thrum, a broad grey-skinned ogre champion: a great tree-trunk club bound in iron bands, a necklace of small round shields, same pose, same facing, same size"
+  },
+  "elite_nyssa": {
+    "source": "kitsune",
+    "out": "elite_nyssa",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 709,
+    "key": "Nyssa, a fox witch: a dark green robe, a lantern of poison-green foxfire, a dark veil over her face, dark grey fox tails, same pose, same facing, same size"
+  },
+  "elite_warden": {
+    "source": "golem_iron",
+    "out": "elite_warden",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 710,
+    "key": "the Iron Warden, an iron golem plated like a fortress gate: a portcullis grille for a face, heavy rivets, a glowing white core in the chest, same pose, same facing, same size"
+  },
+  "elite_kuro": {
+    "source": "karasu_tengu",
+    "out": "elite_kuro",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 711,
+    "key": "Kuro, a black crow tengu champion: a long red-lacquered nodachi sword, a torn straw hat, glossy black feathers, same pose, same facing, same size"
+  },
+  "elite_silenus": {
+    "source": "satyr_3",
+    "out": "elite_silenus",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 712,
+    "key": "Silenus, an old satyr champion: a long grey beard, curling ram's horns, a green vine wreath, long reed pan pipes, same pose, same facing, same size"
+  },
+  "yokai_witch": {
+    "source": "kitsune",
+    "out": "yokai_witch",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 713,
+    "key": "the Fox Witch, a fox spirit: a black and violet robe, white paper talismans hanging from her sleeves, black fox tails with violet tips, same pose, same facing, same size"
+  },
+  "yokai_seer": {
+    "source": "karasu_tengu",
+    "out": "yokai_seer",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 714,
+    "key": "the Crow Seer, a white-feathered crow tengu: a grey monk's robe, prayer beads, a third eye glowing violet on its brow, same pose, same facing, same size"
+  }
+}

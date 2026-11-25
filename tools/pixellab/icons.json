@@ -1,0 +1,14 @@
+{
+  "wanted_mark": {
+    "size": [64, 64], "seed": 501, "style": "src/art/ui/combat-icon-pistol.png",
+    "prompt": "a small floating bounty mark icon: a torn parchment wanted notice nailed with a single iron nail, a red wax seal, a thin red crosshair ring around it, bold simple shape, centred, no text, no letters"
+  },
+  "crown_mark": {
+    "size": [64, 64], "seed": 502, "style": "src/art/ui/combat-icon-pistol.png",
+    "prompt": "a small floating gold royal crown icon with five points and one red gem in the middle, bright rim light, bold simple shape, centred, no text"
+  },
+  "status_curse": {
+    "size": [96, 96], "seed": 503, "style": "src/art/fx/status/atlas.png", "styleCrop": [1152, 96, 1248, 192],
+    "prompt": "a status effect icon for cursed: a glowing violet hexed eye inside a cracked purple sigil ring, purple smoke wisps, painted glossy game icon, centred, no text"
+  }
+}

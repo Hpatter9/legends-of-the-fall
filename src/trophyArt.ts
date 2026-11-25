@@ -17,10 +17,19 @@ import nineTails from './art/trophies/nineTails.webp';
 import boneCaptain from './art/trophies/boneCaptain.webp';
 import hornedOgre from './art/trophies/hornedOgre.webp';
 import shamanKing from './art/trophies/shamanKing.webp';
+// PIXELLAB-ART: the army bosses and mid-bosses who had none (tools/pixellab/trophies.py)
+import boarKing from './art/trophies/boarKing.webp';
+import alphaWolf from './art/trophies/alphaWolf.webp';
+import orcChieftain from './art/trophies/orcChieftain.webp';
+import forestBoss1 from './art/trophies/forestBoss1.webp';
+import forestBoss2 from './art/trophies/forestBoss2.webp';
+import forestBoss3 from './art/trophies/forestBoss3.webp';
+import devilLeader from './art/trophies/devilLeader.webp';
 import locked from './art/trophies/locked.webp';
 
 export const TROPHY_ART: Record<string, string> = {
-  calBoss1, calBoss2, calBoss3, calBoss4, calBoss5, calBoss6, lichKing, oniKing, demonLord, sapphireColossus, forgeTitan, gorgonQueen, orcWarlord, minotaurChampion, nineTails, boneCaptain, hornedOgre, shamanKing, locked
+  calBoss1, calBoss2, calBoss3, calBoss4, calBoss5, calBoss6, lichKing, oniKing, demonLord, sapphireColossus, forgeTitan, gorgonQueen, orcWarlord, minotaurChampion, nineTails, boneCaptain, hornedOgre, shamanKing,
+  boarKing, alphaWolf, orcChieftain, forestBoss1, forestBoss2, forestBoss3, devilLeader, locked
 };
 
 /** A complete mounted keepsake; locked entries use an empty plaque without revealing the spoil. */

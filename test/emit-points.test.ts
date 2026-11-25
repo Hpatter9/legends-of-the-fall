@@ -120,7 +120,8 @@ test('every foe that shoots has a measured point on its sheet, read on the frame
     assert.ok(!L.rear && L.facesRight !== false, f.id);
     assert.deepEqual(emitOffset(f.sheet, f.sheet, f.sheet), e.at);
   }
-  const used = new Set(shooters.map((f) => f.sheet));
+  // (PIXELLAB-ART: the Undead's risen archer shoots from its own grave sheet, reskinned from the skeleton archer's, so its point too)
+  const used = new Set([...shooters, ...Object.values(UNITS).filter((u) => u.summon && u.shot)].map((f) => f.sheet));
   for (const sheet of Object.keys(FOE_EMIT)) assert.ok(used.has(sheet) && !EMIT[sheet] && !CAST[sheet], sheet);
 });
 

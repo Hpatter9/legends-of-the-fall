@@ -6628,5 +6628,110 @@
   },
   "figure": 79,
   "facesRight": true
+ },
+ "alpha_werewolf": {
+  "w": 114,
+  "h": 90,
+  "perRow": 11,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 11,
+   "attack": 6,
+   "idle": 8,
+   "hurt": 2,
+   "dead": 2
+  },
+  "figure": 61,
+  "facesRight": true
+ },
+ "nine_tails": {
+  "w": 146,
+  "h": 83,
+  "perRow": 10,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 10,
+   "idle": 8,
+   "hurt": 2,
+   "dead": 10
+  },
+  "figure": 83,
+  "facesRight": true
+ },
+ "summon_grave_warrior": {
+  "w": 108,
+  "h": 78,
+  "perRow": 7,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 7,
+   "attack": 5,
+   "idle": 7,
+   "hurt": 2,
+   "dead": 4
+  },
+  "figure": 62,
+  "facesRight": true
+ },
+ "summon_grave_spear": {
+  "w": 126,
+  "h": 94,
+  "perRow": 7,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 7,
+   "attack": 4,
+   "idle": 7,
+   "hurt": 3,
+   "dead": 5
+  },
+  "figure": 82,
+  "facesRight": true
+ },
+ "summon_grave_archer": {
+  "w": 90,
+  "h": 75,
+  "perRow": 15,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 15,
+   "idle": 7,
+   "hurt": 2,
+   "dead": 5
+  },
+  "figure": 65,
+  "facesRight": true
  }
 }

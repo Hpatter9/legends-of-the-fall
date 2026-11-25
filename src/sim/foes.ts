@@ -99,7 +99,7 @@ export const FOES: Record<string, UnitDef> = {
   // (RELEASE-ART: the four bosses below wear their own sheets now; each scale keeps the height on the board they had in their soldier's)
   orcChieftain: { ...MID, id: 'orcChieftain', name: 'Orc Chieftain', sheet: 'orc_chieftain', scale: 0.73, role: 'Rallies the warband with a banner' },
   boneCaptain: { ...MID, id: 'boneCaptain', name: 'Bone Captain', sheet: 'bone_captain', scale: 0.82, hp: 1400, atk: 44, role: 'Rallies the dead with a banner' },
-  alphaWolf: { ...MID, id: 'alphaWolf', name: 'Alpha Werewolf', sheet: 'werewolf_black', scale: 1.05, hp: 1200, atk: 42, def: 6, moveMs: 420, atkMs: 800, jump: 3, role: 'Leader of the pack, rends the weak' },
+  alphaWolf: { ...MID, id: 'alphaWolf', name: 'Alpha Werewolf', sheet: 'alpha_werewolf', scale: 1.05, hp: 1200, atk: 42, def: 6, moveMs: 420, atkMs: 800, jump: 3, role: 'Leader of the pack, rends the weak' },
   gorgonQueen: { ...MID, id: 'gorgonQueen', name: 'Gorgon Queen', sheet: 'gorgon_queen', scale: 1.02, hp: 1300, atk: 44, def: 7, range: 4, shot: 'bone', moveMs: 700, atkMs: 1500, role: 'Her gaze turns heroes to stone' },
   lichKing: { ...LICH_KING, id: 'lichKing', name: 'Lich King', sheet: 'lich_king', scale: 0.45 },
   minotaurChampion: { ...CHAMPION, id: 'minotaurChampion', name: 'Minotaur Champion', sheet: 'minotaur_champion', scale: 0.94 },
@@ -109,7 +109,7 @@ export const FOES: Record<string, UnitDef> = {
   yokaiCrow: { ...YOKAI, id: 'yokaiCrow', name: 'Karasu Tengu', sheet: 'karasu_tengu', scale: 0.53, hp: 210, atk: 28, moveMs: 420, atkMs: 900, jump: 9, flies: true, role: 'Flies, dives on shooters' },
   yokaiSeer: { ...YOKAI, id: 'yokaiSeer', name: 'Crow Seer', sheet: 'karasu_tengu', scale: 0.53, hp: 200, atk: 24, def: 3, moveMs: 450, atkMs: 900, jump: 9, flies: true, role: 'Possesses the strongest hero' },
   yokaiMonk: { ...YOKAI, id: 'yokaiMonk', name: 'Yamabushi Monk', sheet: 'yamabushi_tengu', scale: 0.48, hp: 320, atk: 22, def: 9, moveMs: 760, atkMs: 1200, jump: 2, role: 'Wind that shoves heroes off ledges' },
-  nineTails: { ...MID, id: 'nineTails', name: 'Nine-Tailed Fox', sheet: 'kitsune', scale: 0.95, hp: 1500, atk: 46, def: 6, range: 3, shot: 'fire', moveMs: 600, atkMs: 1300, role: 'Foxfire, and heroes turn on their own' },
+  nineTails: { ...MID, id: 'nineTails', name: 'Nine-Tailed Fox', sheet: 'nine_tails', scale: 0.95, hp: 1500, atk: 46, def: 6, range: 3, shot: 'fire', moveMs: 600, atkMs: 1300, role: 'Foxfire, and heroes turn on their own' },
   oniKing: { side: 'foe', id: 'oniKing', name: 'Oni King', sheet: 'oni_king', scale: 0.5, hp: 3200, atk: 80, def: 11, range: 1, moveMs: 850, atkMs: 1300, jump: 2, role: 'Smashes the line, roars heroes down' },
   // the Golem Forge
   stoneGolem: { ...GOLEM, id: 'stoneGolem', name: 'Stone Golem', sheet: 'golem_stone', scale: 0.45, role: 'Crushing blows' },
@@ -134,7 +134,10 @@ const TRIAL_BOSSES: ReadonlySet<string> = new Set(TRIALS.map((t) => t.boss.id));
 /** The bosses' ids: the first foe of a boss band is one of these. */
 /** RELEASE-ART: the four bosses who wore a soldier's sheet now wear their own; the rules that read a look (a foe's family, its home army,
  *  a quest's family of foes) read the soldier's, their kin, so every fight plays as it did. */
-export const KIN_SHEET: Readonly<Record<string, string>> = { orc_chieftain: 'hk_orc_brute', bone_captain: 'skeleton_warrior', minotaur_champion: 'minotaur_1', gorgon_queen: 'gorgon_1' };
+export const KIN_SHEET: Readonly<Record<string, string>> = { orc_chieftain: 'hk_orc_brute', bone_captain: 'skeleton_warrior', minotaur_champion: 'minotaur_1', gorgon_queen: 'gorgon_1',
+  // PIXELLAB-ART: the sheets reskinned from a soldier's, frame by frame (tools/pixellab/reskin.py)
+  alpha_werewolf: 'werewolf_black', nine_tails: 'kitsune', summon_grave_warrior: 'skeleton_warrior', summon_grave_spear: 'skeleton_spearman',
+  summon_grave_archer: 'skeleton_archer' };
 /** The look a rule reads for `sheet`: its kin's, for those four, else its own. */
 export const kinSheet = (sheet: string): string => KIN_SHEET[sheet] ?? sheet;
 

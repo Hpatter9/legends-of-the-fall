@@ -2,6 +2,7 @@
 // A weapon's reach on the frame on show as a melee blow lands: the forward-most thing drawn, in the sheet's pixels from the middle of
 // the frame's bottom edge (x towards the way the figure faces, y up), for the look from the front and, where a sheet has one, from behind.
 export const REACH: Readonly<Record<string, { front: readonly [number, number]; back?: readonly [number, number] }>> = {
+  alpha_werewolf: { front: [18, 71] },
   boar_king: { front: [45, 70] },
   bone_captain: { front: [25, 18] },
   cls_barbarian_1: { front: [25, 23] },
@@ -165,6 +166,7 @@ export const REACH: Readonly<Record<string, { front: readonly [number, number]; 
   mythic_nyxara: { front: [48, 69], back: [49, 68] },
   mythic_orrun: { front: [69, 59], back: [57, 41] },
   mythic_vael: { front: [61, 59], back: [61, 64] },
+  nine_tails: { front: [16, 39] },
   ninja_monk: { front: [15, 57] },
   ninja_peasant: { front: [20, 10] },
   oni_king: { front: [43, 36] },
@@ -185,6 +187,9 @@ export const REACH: Readonly<Record<string, { front: readonly [number, number]; 
   stand_king: { front: [32, 63] },
   summon_decoy: { front: [42, 51] },
   summon_direwolf: { front: [52, 36] },
+  summon_grave_archer: { front: [41, 52] },
+  summon_grave_spear: { front: [61, 26] },
+  summon_grave_warrior: { front: [41, 73] },
   summon_standard: { front: [26, 41] },
   summon_wolf: { front: [58, 33] },
   summon_wolf_white: { front: [57, 39] },

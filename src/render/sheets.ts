@@ -180,6 +180,11 @@ import HeroResHarpooner from '../art/units/hero_res_harpooner.png';
 import HeroResHarpoonerBack from '../art/units/hero_res_harpooner_back.png';
 import HeroResSeaReaver from '../art/units/hero_res_sea_reaver.png';
 import HeroResSeaReaverBack from '../art/units/hero_res_sea_reaver_back.png';
+import plAlphaWerewolf from '../art/units/alpha_werewolf.png';
+import plNineTails from '../art/units/nine_tails.png';
+import plSummonGraveWarrior from '../art/units/summon_grave_warrior.png';
+import plSummonGraveSpear from '../art/units/summon_grave_spear.png';
+import plSummonGraveArcher from '../art/units/summon_grave_archer.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -198,6 +203,11 @@ interface Layout {
 }
 
 const URLS: Record<string, string> = {
+  summon_grave_archer: plSummonGraveArcher,
+  summon_grave_spear: plSummonGraveSpear,
+  summon_grave_warrior: plSummonGraveWarrior,
+  nine_tails: plNineTails,
+  alpha_werewolf: plAlphaWerewolf,
   ...RESONANCE_URLS,
   ...MYTHIC_URLS,
   ...AWAKENED_URLS,
