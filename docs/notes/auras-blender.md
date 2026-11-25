@@ -101,7 +101,7 @@ Not yet started over (the next steps, in the order I would take them):
 | Level-milestone rings and halo | `unitView.ts`, `levelLook.ts` | code-drawn `Graphics` |
 | The halo and sparkles of a foe or summon of a higher grade; a summon's ring; the Nemesis rim | `unitView.ts` | code-drawn |
 | Haste's gold dust and slow's ice puffs | `fx.ts` | painted particles |
-| The Last Stand's rings and the Assault's team rings | `standView.ts`, `fieldView.ts` | code-drawn |
+| The Last Stand's rings | `standView.ts` | code-drawn |
 
 Drawn on no fighter at all today (a gap, not an aura to replace): a taunt, the cleanse's ward, an aura's buff on a fighter
 (`auraGuard`, `auraAtk`), and a charm beyond its small heart.
