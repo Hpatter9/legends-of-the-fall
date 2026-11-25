@@ -1,0 +1,39 @@
+# IAP-2: a one-off build check of claude/iap-2 (the shop on 0.613): builds the APK and the AAB on a push to this branch only, and publishes
+# nothing (no release, no upload, no secrets). Deleted with the branch once it has passed.
+name: IAP Gradle check
+
+on:
+  push:
+    branches: [claude/iap-2-gradle-check]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+      - run: npm ci
+      - name: The GitHub APK, as android.yml builds it
+        run: |
+          npm run web
+          npx cap sync android
+          (cd android && ./gradlew assembleRelease -PappVersionName=0.0.0 -PappVersionCode=1)
+      - name: The Play bundle, as android.yml builds it (debug-signed here)
+        run: |
+          npm run web:play
+          npx cap sync android
+          node tools/play-size/pack.mjs
+          (cd android && ./gradlew bundleRelease -PappVersionName=0.0.0 -PappVersionCode=1)
