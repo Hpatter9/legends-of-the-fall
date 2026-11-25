@@ -44,6 +44,7 @@ import { fillMana, freshSpells, settleFalls, speedOf, type SpellId, type SpellSt
 import { autoCast } from './autoCast';
 import type { SetHooks } from './relicSets';
 import { kindsOf, legacyFeatured, traitsOf, traitEffects, TRAIT_PERKS, type TraitEffects } from './traits';
+import { fightMatch, matchMult, type Match } from './armyWeakness';
 import { perkBlow, perkCrit, perkDamage, perkDeath, perkFoot, perkGuard, perkSpare, perkStruck, startPerks, tickPerks, type PerkEvent, type PerkState, type PerkUnit } from './traitPerks';
 import { fxHurt, fxKill, fxRevive, fxStart, hidden } from './equipFx';
 import { powerFell, powerSpare, powersOn } from './setPowers';
@@ -335,7 +336,7 @@ export type BattleEvent =
   /** DEPTH-BUILD: a boss's weakness was used (`weakness.ts`): the page's "Weakness!" over it. */
   | { kind: 'weakness'; by: number; def: string }
   | { kind: 'shot'; by: number; to: number; shot: Shot; ms: number }
-  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean; /** A glancing blow (STATS batch 4): the page shows its number smaller and grey. */ glance?: true; ail?: AilmentKey | 'shatter'; /** The Eidolon's strike (`eidolons.ts`; `by` is 0). */ eidolon?: true }
+  | { kind: 'hit'; by: number; to: number; dmg: number; heavy: boolean; splash: boolean; killed: boolean; src: HitSrc; high?: boolean; /** A glancing blow (STATS batch 4): the page shows its number smaller and grey. */ glance?: true; ail?: AilmentKey | 'shatter'; /** The Eidolon's strike (`eidolons.ts`; `by` is 0). */ eidolon?: true; /** ARMY-WEAKNESS: a blow on the army's weakness or its resistance (`armyWeakness.ts`): the page shows "Weak!" or "Resisted". */ match?: Match }
   /** An Eidolon answers the War Horn (`eidolons.ts`): its strike begins (`call`) and has struck, the rider laid (`done`). */
   | { kind: 'eidolon'; id: string; phase: 'call' | 'done' }
   /** An ailment shrugged off (resisted, a boss's ladder, a ward): the page shows "Immune". */
@@ -497,6 +498,8 @@ export interface Battle {
   featured?: string;
   /** TRAIT-PERKS (`traitPerks.ts`): the perks the placed heroes woke, and what their rules count; absent with none awake. */
   perk?: PerkState;
+  /** ARMY-WEAKNESS: the army this wave is of (an army run's), whose weaknesses and resistances its foes keep (`armyWeakness.ts`). */
+  foeArmy?: string;
   /** How long a fallen hero lies before a life raises it, when not `REVIVE_MS` (Support III's Rallying Cry). */
   reviveMs?: number;
   /** Time still to hold the fight for a boss changing form (ms); nothing moves while it runs down. */
@@ -660,6 +663,8 @@ export interface Stage {
   vigil?: VigilId;
   /** DEPTH-BUILD (`bonds.ts`): the run's snapshot of the bonds (each pair's level, -1 rivals), read as the fight starts. */
   bonds?: Record<string, number>;
+  /** ARMY-WEAKNESS: the army an army run's wave is of, whose weaknesses and resistances the fight keeps (`armyWeakness.ts`). */
+  foeArmy?: string;
   /** Whether Duchess the goat may join (`duchessFight.ts`): rolled on the seed, always, or never (the default, so a fight made outside a run never has her). */
   duchess?: DuchessWish;
   /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
@@ -745,6 +750,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (stage.rites) b.rites = {};
   if (stage.lives !== undefined && LIVES_RULE.on) b.lives = fightLives(stage.lives, stage.vigil);
   if (stage.bonds && Object.keys(stage.bonds).length) b.bondSnap = stage.bonds;
+  if (stage.foeArmy) b.foeArmy = stage.foeArmy;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
   const rng = new Rng(mixSeed(seed, 0xf0e5));
@@ -1229,6 +1235,9 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   if (mythicMult !== 1) dmg = Math.max(1, Math.round(dmg * mythicMult));
   // (DEPTH-BUILD: a boss whose guard cracks to one calling's blows, `weakness.ts`)
   if (to.side === 'foe' && by !== to) dmg = weakHurt(b, by, to, dmg, src === 'dot', out);
+  // (ARMY-WEAKNESS: the army's foes take more from a class it is weak to, less from one it resists; never in a duel, `armyWeakness.ts`)
+  const match = b.foeArmy && by !== to ? fightMatch(b, creditOf(b, by), to) : undefined;
+  if (match) dmg = Math.max(1, Math.round(dmg * matchMult(match)));
   // (the Nemesis War: a nemesis's traits and weaknesses, on a blow it deals or takes, `nemesisTraits.ts`)
   if ((to.nem || by.nem) && by !== to) {
     dmg = nemHurt(b, by, to, creditOf(b, by), dmg, src, splash, out);
@@ -1397,7 +1406,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   }
   // (a blow struck from higher ground than its target's is tagged, for the page to mark)
   const high = src === 'blow' && !splash && tileOf(b, by).h > tileOf(b, to).h;
-  out.push({ kind: 'hit', by: by.id, to: to.id, dmg, heavy, splash, killed, src, ...(high ? { high } : {}) });
+  out.push({ kind: 'hit', by: by.id, to: to.id, dmg, heavy, splash, killed, src, ...(high ? { high } : {}), ...(match ? { match } : {}) });
   if (shatter && to.alive) {
     out.push({ kind: 'shatter', to: to.id });
     tagged(out, 'shatter', () => hurt(b, by, to, shatter, true, true, out, 'skill'));

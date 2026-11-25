@@ -1,5 +1,6 @@
 // Painted War Room campaign selection. Battle rules, rewards and tier gates remain in sim/.
 import { menuWell } from './ornateMenu';
+import { matchBlock } from './armyMatchView';
 import { trophyPicture } from './trophyArt';
 import { armyChallenge, suggestedArmyTier } from './sim/armyChallenge';
 import { FADE_MS, SLIDE_MS, arrowsAt, dragShift, infoArmy, settleOn, stepTo, swipeAxis } from './armySwipeRules';
@@ -255,6 +256,9 @@ function infoOf(a: Army, m: Meta, hooks: ArmiesHooks, host: HTMLElement): HTMLEl
     info.append(el('h3', 'wrArmyName', open ? a.name : 'Sealed campaign'), summary, el('p', 'asHint', 'Challenge estimate · review your party before marching'));
     const bosses = bossesOf(a);
     info.append(el('p', 'asBlurb', a.blurb), el('p', 'asMeta', `${a.waves.length} waves · led by ${open ? `the ${boss.name}` : 'a hidden boss'}${bosses.length > 2 ? ` · ${bosses.length} bosses` : ''}${open ? ` · best wave ${Math.min(rec.best, a.waves.length)}` : ` · ${landsOf(a).map((l) => AREA_NAMES[l]).join(' and ')}`}`));
+    // (ARMY-WEAKNESS: the classes the army is weak to and resists, with their sigils, `armyMatchView.ts`)
+    const match = matchBlock(a.id);
+    if (match) info.append(match);
     // the tier picks
     const picks = el('div', 'asTiers');
     TIERS.forEach((t, ti) => {

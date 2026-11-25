@@ -7,6 +7,7 @@
 
 import { ULT_LEVEL } from './sim/abilities';
 import { ARMIES, armyCleared, tierOpen, totalStars } from './sim/armies';
+import { ARMY_WEAKNESS, RESIST_MULT, WEAK_MULT } from './sim/armyWeakness';
 import { offeredChain } from './sim/eidolonChains';
 import { autoMergeOpen, autoPlaceOpen, autoRunesOpen } from './sim/featureUnlocks';
 import { SKILL2_LEVEL } from './sim/heroKits';
@@ -255,6 +256,23 @@ export const TUTORIALS: readonly Tutorial[] = [
     at: 'armies',
     open: (m) => ARMIES.some((a) => tierOpen(m, a, 1)),
     when: 'Three stars on an army',
+  },
+  {
+    // (ARMY-WEAKNESS, docs/notes/army-weakness.md: told the first time the War Room shows an army's weaknesses; `newer`, so a save from
+    //  before sees it once)
+    id: 'armyWeakness',
+    title: 'Weaknesses',
+    lines: [
+      'Every army is weak to some classes of hero and resists others: see "Weak to" and "Resists" on its card.',
+      `Its foes take ${Math.round((WEAK_MULT - 1) * 100)}% more harm from a hero it is weak to, and ${Math.round((1 - RESIST_MULT) * 100)}% less from one it resists.`,
+      'On the deploy screen, ▲ marks a hero that hits a weakness and ▼ one that is resisted.',
+    ],
+    art: 'ui/buttons/armies.webp',
+    at: 'armies',
+    point: '.asMatch',
+    open: () => ARMY_WEAKNESS.on,
+    when: 'The War Room opens',
+    newer: true,
   },
   {
     // (IAP, docs/notes/iap.md: told the first time the Shop opens; a build without a Shop never opens it, and the Tutorials page leaves it

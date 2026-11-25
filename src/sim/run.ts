@@ -586,6 +586,8 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     ...(march.night ? { night: true } : {}),
     // (DEPTH-BUILD: the bonds, in an army run, from its snapshot)
     ...(run.mode?.kind === 'army' && run.bonds ? { bonds: run.bonds } : {}),
+    // (ARMY-WEAKNESS: an army run's waves keep its army's weaknesses and resistances, `armyWeakness.ts`)
+    ...(army && run.mode?.kind === 'army' && !node ? { foeArmy: army.id } : {}),
     ...(named?.place.length ? { nemesis: named.place } : {}),
     // (DEPTH-BUILD: the Chapel's Last Rites, in an army run that has not spent it)
     ...(army && run.mode?.kind === 'army' && !run.ritesUsed && roomOpen(run.castle, 'lastRites') ? { rites: true } : {}),

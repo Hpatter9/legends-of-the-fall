@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.623.0',
+    date: '2026-11-25',
+    title: 'Every army has a weakness',
+    notes: ['Each army is weak to some classes of hero and resists others: weak foes take 30% more harm, resisted ones 10% less.', 'See it on the War Room card and the deploy screen; Auto now picks heroes that suit the army you face.', 'Recruit flags the heroes strong against your next army.'],
+  },
+  {
     version: '0.622.0',
     date: '2026-11-25',
     title: 'Fairer duels, and Natsu in action',

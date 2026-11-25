@@ -1,3 +1,5 @@
+import { facedNow } from './armyMatchView';
+import { pickedFor } from './armyWeaknessRules';
 import { mythicFits, MYTHIC_LIMIT_WORDS } from './sim/mythicRules';
 // The party screen: a cinematic tableau of the draft, its removable hero selectors, role coverage and trait bonds.
 // The searchable hero grid below lets the player add or take out heroes from the summons pool (a
@@ -185,14 +187,17 @@ export class Party {
   private suggest(): void {
     // (a quest's cast stays in; the rest are suggested from those who may fight in it)
     const q = this.quest;
+    // (ARMY-WEAKNESS: the army faced is preferred, `ARMY_SCORE`; the hint names the heroes picked for it)
+    const faced = q ? undefined : facedNow(this.meta);
     this.picked = q
       ? [...q.cast, ...suggestParty(this.meta.unlocked.filter((k) => !q.cast.includes(k) && q.fits(k)), this.slots - q.cast.length, (k) => kindPower(this.meta, k))]
-      : suggestParty(this.meta.unlocked.filter((k) => !retired(this.meta, k)), this.slots, (k) => kindPower(this.meta, k));
+      : suggestParty(this.meta.unlocked.filter((k) => !retired(this.meta, k)), this.slots, (k) => kindPower(this.meta, k), faced);
     const traits = countTraits(this.picked).filter((c) => c.active).map((c) => c.trait.name);
     const roles = [...new Set(this.picked.map(roleOf))].map((r) => ROLE_NAMES[r]);
     this.note = '';
     this.draw();
-    $('ptHint').textContent = `Suggested: ${traits.length ? `wakes ${traits.join(', ')}; ` : ''}${roles.join(', ')}`;
+    const forArmy = pickedFor(faced, this.picked, heroName);
+    $('ptHint').textContent = `Suggested: ${traits.length ? `wakes ${traits.join(', ')}; ` : ''}${roles.join(', ')}${forArmy ? `. ${forArmy}` : ''}`;
   }
 
   /** Add a hero to the party, or take it out. A full party asks for one out first. */

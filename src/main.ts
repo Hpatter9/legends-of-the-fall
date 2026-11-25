@@ -44,6 +44,10 @@ import { drawOreGain } from './oreView';
 import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
+import { arrowOf, deployChip } from './armyWeaknessRules';
+import { openArmyMatchCard } from './armyMatchView';
+import { classSigil } from './classSigil';
+import { ARMY_MATCH } from './sim/armyWeakness';
 import { risenLine } from './sim/wounds';
 import { trialShardsLine } from './sim/mythicEcho';
 import { assaultGoneLine } from './sim/assaultGone';
@@ -4516,6 +4520,9 @@ class Game {
       // (the Nemesis War: a skull on the hero a nemesis in this wave dreads, so the player sees the answer)
       const dreads = this.b.units.filter((u) => u.alive && u.nem && dreadOf(u.nem.weak) === h.kind);
       if (dreads.length) card.append(Object.assign(document.createElement('span'), { className: 'dreadMark', textContent: '☠', title: `${dreads.map((u) => u.nem!.name).join(' and ')} ${dreads.length > 1 ? 'dread' : 'dreads'} ${heroName(h.kind)}` }));
+      // (ARMY-WEAKNESS: an arrow on the hero that hits the army's weakness (up) or its resistance (down))
+      const arrow = arrowOf(this.run.mode?.kind === 'army' ? this.run.mode.army : undefined, h.kind);
+      if (arrow) card.append(Object.assign(document.createElement('span'), { className: `matchMark ${arrow === '▲' ? 'up' : 'down'}`, textContent: arrow, title: arrow === '▲' ? `${heroName(h.kind)} hits this army's weakness` : `This army resists ${heroName(h.kind)}` }));
       if (ready.has(h.id)) card.append(Object.assign(document.createElement('span'), { className: 'mergeMark', textContent: '⇧', title: 'A match is ready: drag one onto the other to merge' }));
       // (the last hero cannot be recycled)
       if (castHero) card.append(Object.assign(document.createElement('span'), { className: 'questLock', title: `${heroName(h.kind)} must fight in this quest`, innerHTML: QUEST_LOCK }));
@@ -5117,13 +5124,29 @@ class Game {
     const counts = countTraits(kindsOf(this.b.units), lead).sort((a, b) => Number(b.trait.id === lead) - Number(a.trait.id === lead));
     // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot, as a Bonds chip at the end)
     const pairs = placedPairs(this.run.bonds, kindsOf(this.b.units));
-    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick + pairs.map((p) => p.key).join();
+    // (ARMY-WEAKNESS: the army faced leads the strip, its weaknesses and resistances counted among the heroes placed)
+    const facing = this.run.mode?.kind === 'army' ? this.run.mode.army : undefined;
+    const chip = deployChip(facing, kindsOf(this.b.units), heroName);
+    const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick + pairs.map((p) => p.key).join() + (chip ? chip.head + chip.line : '');
     if (strip.dataset.key === key) return;
     strip.dataset.key = key;
     const featured = lead;
     this.showTheme();
     strip.replaceChildren();
     const woke: string[] = [];
+    if (chip && facing) {
+      const pill = document.createElement('button');
+      pill.className = `trait armyMatch on${chip.up ? ' up' : ''}${chip.down && !chip.up ? ' down' : ''}`;
+      const head = document.createElement('span');
+      head.className = 'thead';
+      for (const c of ARMY_MATCH[facing].weak) head.append(classSigil(c, 16));
+      head.append(document.createTextNode(chip.head));
+      const fx = document.createElement('small');
+      fx.textContent = chip.line;
+      pill.append(head, fx);
+      pill.addEventListener('click', () => openArmyMatchCard(facing, kindsOf(this.b.units), heroName, armyById(facing)?.name ?? facing));
+      strip.append(pill);
+    }
     for (const c of counts) {
       const was = this.traitTiers.get(c.trait.id) ?? -1;
       const lit = c.tier > was && strip.dataset.drawn === '1';
