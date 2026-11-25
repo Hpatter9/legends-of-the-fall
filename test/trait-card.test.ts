@@ -47,6 +47,8 @@ test('what a perk raised is tinted for what it is; a plain fighter is not', () =
 // PIXELLAB-ART: the risen skeletons wear their own grave sheets, and the crowned and the Wanted a painted mark over the head, not a tint
 test('the grave skeletons, the crowned and the Wanted are not tinted; the crowned and the Wanted wear a mark', () => {
   assert.equal(perkTint({ raised: 'grave' }), undefined);
+  // (ROUND4-WIRE: the sentry turret's own sheet)
+  assert.equal(perkTint({ raised: 'sentry' }), undefined);
   assert.equal(perkTint({ crowned: true }), undefined);
   assert.equal(perkTint({ wanted: true }), undefined);
   assert.equal(perkMark({ crowned: true }), 'crown');

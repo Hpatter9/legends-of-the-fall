@@ -321,6 +321,12 @@ export function drawDuchessCosmetic(
   const s = scale;
   const fl = Math.round(frameLeft);
   const ft = Math.round(frameTop);
+  // (ROUND4-WIRE: the Wizard Hat is a painted strip laid over her (`duchessHats.ts`), from her standing frame for the way she faces (her
+  // steps move it a pixel at most); the pixels below draw it only until the strip loads, and draw the crown and the quiver)
+  if (HAT_ART.draw?.(ctx, cosmetic, face === 1 ? 3 : 0, fl, ft + Math.round(bob * s), s)) {
+    ctx.restore();
+    return;
+  }
 
   if (cosmetic === 'crown') {
     // Tiny Tin Crown: perched right between the goat's horns!
@@ -482,3 +488,7 @@ export function untilVisit(v: Visit | null, t: number): number | null {
   if (t < v.arrive) return v.arrive - t;
   return visitAt(v, t).phase === 'away' ? null : 0;
 }
+
+/** ROUND4-WIRE: the painted hats' drawer, set by `duchessHats.ts` on the page (this file stays free of the DOM): it draws a cosmetic's
+ *  strip frame at her frame's place and scale and says whether it did (false for the crown, still drawn by hand, or a strip not loaded). */
+export const HAT_ART: { draw?: (ctx: CanvasRenderingContext2D, id: DuchessCosmeticId, frame: number, left: number, top: number, scale: number) => boolean } = {};
