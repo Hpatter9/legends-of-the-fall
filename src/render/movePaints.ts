@@ -227,7 +227,9 @@ export const MOVE_PAINT: Readonly<Record<string, MovePaint>> = {
 
 /** How opaque an aura's painted ground is drawn (it lies over the fighters in it, so it is kept see-through): `AURA_ALPHA` unless named
  *  here. (The Aura of Protection was drawn at 0.42 while it was painted as a dome; its repaint lies flat, docs/notes/spell-art-repaint.md.) */
-export const AURA_ALPHA = 0.7;
+// (AURAS-BLENDER: 0.7 to 0.9. The ground is laid on the tiles under the fighters now (`GroundPaint`), not over them, and the
+// rendered field is light with soft edges, not a painted fill: at 0.7 it was lost against the tiles.)
+export const AURA_ALPHA = 0.9;
 export const AURA_ALPHA_OF: Readonly<Record<string, number>> = { 'storm-cloud': 1 };
 /** What circles in an aura (its painted `motes`), where the default (three small ones close in) loses the ability's meaning. Spirit
  *  Guardians IS its guardians: four spirits about the height of a fighter, circling the Cleric a tile and a bit out, at the height of her

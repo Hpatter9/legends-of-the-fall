@@ -96,11 +96,9 @@ Not yet started over (the next steps, in the order I would take them):
 
 | What | Where | How it is drawn |
 | --- | --- | --- |
-| Area auras on the ground (Aura of Protection, Healing Mist, Spirit Guardians' ground, Circle of Death, Cloud of Daggers, rot, mana font, storm cloud, slow field, spike growth, the bard's song): eleven looks | `fx.ts` `paintAura`, `toolkitLooks.ts` `auraLook` | painted spell atlas (`b-auras.webp`, 257,824 bytes; `d-casters.webp`) |
 | The ailments' body parts (burn, poison, freeze and the rest: eleven) and their chips | `ailmentLayer.ts`, `statusStyles.ts` | painted atlas `src/art/fx/status/atlas.png`, 1,007,371 bytes |
 | The guard ring (a raised guard) | `unitView.ts` | a painted strip (`VFX.earthShield`) |
 | Stand marks on a fighter (time stop, hunter's mark, bane, rage, siege) and the moves' ground loops (War Banner, Rally Cry) | `fx.ts` `paintStand`, `movePaints.ts` | painted spell atlases |
-| Level-milestone rings and halo | `unitView.ts`, `levelLook.ts` | code-drawn `Graphics` |
 | The halo and sparkles of a foe or summon of a higher grade; a summon's ring; the Nemesis rim | `unitView.ts` | code-drawn |
 | Haste's gold dust and slow's ice puffs | `fx.ts` | painted particles |
 | The Last Stand's rings | `standView.ts` | code-drawn |
@@ -147,3 +145,77 @@ castle's scene draws a picture before it has loaded. It is on main's own build t
 The cinematics' aura was not photographed (it is the fight's own class, reading the same atlas). Reduced motion was not
 photographed (its rule is unchanged and tested). At 360 x 780, 412 x 915 and grade 4 three classes were looked at, not all
 thirteen.
+
+## Group 1: the area auras on the ground
+
+The eleven auras that lie on the ground round a fighter (the Aura of Protection and every ward that takes its look, Spirit
+Guardians' ground, rot, the storm cloud, the font of magic, the healing mist, the cloud of daggers, the slow field, spike growth,
+the bard's song, the circle of death) are rendered in Blender: `tools/blender-fx/auras/area.py`.
+
+- **What each is:** a soft pool of its colour out to its rim, hoops round it and its own mark inside, turning and breathing: the
+  protection's eight-pointed seal, the font's six-pointed one with a ring of beads turning the other way, the circle of death's
+  five-pointed star turned backwards, the daggers' steel whirl, the slow field's dial of two rings of twelve, the spikes' ring of
+  thorns, the song's staves ringing outward, the mist's hoops breathing out, rot's blotched pool. The storm cloud hangs over its
+  caster as before, a dark bank of cloud lit from inside twice a loop.
+- **What drifts in a field is in its ground's picture** (soft points, notes, crescents, runes, going round just over the
+  ground). Before, three painted motes circled in the air over the field and passed in front of the fighters; they are no longer
+  drawn (`paintAura`). Only Spirit Guardians, whose motes are the spirits themselves, still has them.
+- **Under the fighters:** the ground is laid on the tiles of its reach by `GroundPaint`, as before; nothing of a field is over
+  a body. It is drawn at 0.9 (`AURA_ALPHA`, was 0.7): it is light with soft edges now, not a painted fill.
+- **The strikes** (the cloud's bolt, the spikes' jab, the circle's flare) are rendered too, and land in the reach as before.
+  They play over the fighters for half a second, thinned by the game's own over-a-fighter rule, as every strike is.
+- **Reduced motion:** as before: the ground holds its first frame and no strike lands.
+- **The same seam:** the same keys, sizes and frame counts as the brief (`tools/spell-fx/spell-parts.json`), packed as the
+  spell atlases' `b-auras` session, so `spellArt.ts` reads it unchanged. The circle of death, which was in `d-casters`, is packed
+  here with the rest. The painted importer leaves this session alone (`RENDERED_SESSIONS`), and its four fixes to the painted
+  area auras are gone with their paintings. The painted sources stay in `art-source/` as the record.
+
+| | Before | After |
+| --- | --- | --- |
+| `src/art/fx/spells/b-auras.webp` | 257,824 bytes, 1536 x 960 | 123,654 bytes, 1536 x 1056 |
+| Decoded (RGBA) | 5,898,240 bytes | 6,488,064 bytes (one more row: the circle of death's) |
+
+`d-casters.webp` is unchanged on disk (the circle of death's old cells are still in it, unread).
+
+Pictures: `docs/samples/auras/area/area-<aura>.jpg` (each laid round the Knight in a held fight by the game's own drawing, at
+393 x 852 and twice the size: the old one at two moments, then the new), `area-all-1.jpg`, `area-all-2.jpg`, `contact-sheet.png`.
+`AREA=1` with `WATCH=1` on `tools/blender-fx/ult-shots.mjs` takes them; `area_strips.py` lays them out.
+
+What I did not look at: a field cast by its real owner in an ordinary fight (each was laid by the tool through `paintAura`, at
+the reach its ability gives); the Dirge's violet tint of the song; 360 x 780 and 412 x 915; reduced motion in a picture. The
+large fields (the slow field is eight tiles across, the font seven) are drawn three to four times their pixels' size, so their
+hoops are broad soft bands and their marks coarse; the small ones (the daggers, the spikes) are the crispest.
+
+## Group 5: what was drawn in code round a fighter
+
+- **The sparkles over the body are gone.** A fighter of combat grade 3 or 4 rose in gold (or violet) stars drawn in code in front
+  of its body, on the wall clock, taking no notice of reduced motion. Heroes lost them in the first step (their class aura's
+  motes); the only fighters still wearing them were **summons** of a higher grade (a foe is never above grade 1 on the board, so
+  there was no foe halo to replace). A summon's are now soft motes rising at its sides, behind its body (`gradeParts`), held
+  still for reduced motion and dropped on battery saver.
+- **A summon's glow** (the stacked ellipses behind a summon of grade 2 and up) is the rendered shell, in the same colour.
+- **The level-milestone rings** (a hero of lasting level 40 and up, in a run that does not level its own heroes: one, two or
+  three thin ellipses in the badge's colour, and from the Gold badge stacked ellipses behind the body) are rendered hoops with a
+  soft pool, set wide of the class's own ring, and a faint shell of the badge's colour (`levelParts`). They turn slowly and
+  breathe; reduced motion holds them.
+- **The ring under a summon** that says whose it is (an ellipse in its caller's colour) is a rendered ring (`markParts`).
+
+All four come from six **plain strips** in the class aura's atlas (`plain.ring1`, `ring2`, `ring3`, `mark`, `shell`, `rise`:
+white, and tinted to their colour by the game), drawn by the same `AwakenAura` class from a list of parts, under the feet or
+behind the body. The three `Graphics` they were drawn on are removed from the fighter.
+
+**Left as they are:** the Nemesis rim and the grade rim. Each is the fighter's own body drawn again in one flat colour a pixel
+out each way, an outline that follows its pose frame by frame; a rendered sheet cannot give a fighter's outline, and it lies
+behind the body already. The Last Stand's rings were skipped (the mode is hidden).
+
+| | Before this group | After |
+| --- | --- | --- |
+| `src/art/fx/aura/atlas.png` | 215,762 bytes, 768 x 2544 | 226,998 bytes, 768 x 2688 |
+
+Pictures: `docs/samples/auras/plain/plain-before-after.jpg`: the Druid's treant at grade 3 (the stars over its body, then the
+motes beside it), and the Knight at lasting levels 44, 61 and 100, before over after, at 393 x 852 and twice the size.
+`SUMMONS=1` and `XP=<n>` with `LEVEL=1` on the tool's `AURA=1` mode take them.
+
+What I did not look at: the ring under the treant is hidden by a plant in its crop, and the Beastmaster's wolf was buried in
+the melee in every frame, so a summon's ring is not shown in a picture; a summon of grade 2 and of grade 4; the other two phone
+sizes; reduced motion in a picture.
