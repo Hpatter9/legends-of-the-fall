@@ -97,7 +97,6 @@ Not yet started over (the next steps, in the order I would take them):
 | What | Where | How it is drawn |
 | --- | --- | --- |
 | The ailments' body parts (burn, poison, freeze and the rest: eleven) and their chips | `ailmentLayer.ts`, `statusStyles.ts` | painted atlas `src/art/fx/status/atlas.png`, 1,007,371 bytes |
-| The guard ring (a raised guard) | `unitView.ts` | a painted strip (`VFX.earthShield`) |
 | Stand marks on a fighter (time stop, hunter's mark, bane, rage, siege) and the moves' ground loops (War Banner, Rally Cry) | `fx.ts` `paintStand`, `movePaints.ts` | painted spell atlases |
 | The halo and sparkles of a foe or summon of a higher grade; a summon's ring; the Nemesis rim | `unitView.ts` | code-drawn |
 | Haste's gold dust and slow's ice puffs | `fx.ts` | painted particles |
@@ -219,3 +218,18 @@ motes beside it), and the Knight at lasting levels 44, 61 and 100, before over a
 What I did not look at: the ring under the treant is hidden by a plant in its crop, and the Beastmaster's wolf was buried in
 the melee in every frame, so a summon's ring is not shown in a picture; a summon of grade 2 and of grade 4; the other two phone
 sizes; reduced motion in a picture.
+
+## Group 3: the guard ring
+
+A raised guard was one painted ring laid behind the body's middle (a faint dome). It is two hoops of pale gold at the feet and
+a shell of that light behind the body (`guardParts`), from the plain strips already in the atlas: **no new art, no bytes**. Held
+still for reduced motion; shown only while the guard is up. Picture: `docs/samples/auras/plain/guard-before-after.jpg` (the
+Knight and the Wizard with their guard held up by the tool, before over after).
+
+## Group 4 is not small: measured, not started
+
+The stand marks and the moves' ground loops are 31 strips spread over four painted atlases (`g-spells` 19, `f-martial` 8,
+`d-casters` 3, `e-moves` 1). Rendered as these were and packed beside the area auras they would be 31 more rows of 96 px cells:
+about 18.3 MB more decoded, on top of the painted copies still held in their own atlases (which hold many other parts and
+cannot be dropped). To do it without that cost, each of the four sessions would have to be repacked without its replaced parts,
+which touches the painted importer's whole output. That is a job of its own, for the director to order or not.

@@ -11,7 +11,7 @@ import { formOf, UNITS } from '../sim/units';
 import { REVIVE_MS } from '../sim/lives';
 import { RANK_BADGE } from '../expansionArt';
 import { AwakenAura } from './awakenAura';
-import { auraOf, gradeParts, levelParts, markParts } from './auraStyles';
+import { auraOf, gradeParts, guardParts, levelParts, markParts } from './auraStyles';
 import { awakenedSheet, battleSheet, combatAuraStep } from './awakenLook';
 import { summonLook, summonMark, summonSheet } from './summonArt';
 import { facesRightOf, framesOf, figureOf, hasSheet, type Anim } from './sheets';
@@ -143,7 +143,8 @@ export class UnitSprite {
   private clock = new Graphics();
   private clockKey = '';
   /** The shield's ring round a raised guard, the status icon over the head, and the light pillar of an evolve. */
-  private shield = new Sprite();
+  /** AURAS-BLENDER: a raised guard's light (`guardParts`): hoops at the feet and a shell behind the body, shown while the guard is up. */
+  private guardAura = new AwakenAura(guardParts());
   private badge = new Sprite();
   private pillar = new Sprite();
   /** The loops of the buffs on it (up to three, made as needed); `stars` only marks where they go in the drawing order. */
@@ -259,8 +260,7 @@ export class UnitSprite {
     ];
     this.plainAura = plainParts.length ? new AwakenAura(plainParts) : null;
     this.body.anchor.set(0.5, 1);
-    this.shield.anchor.set(0.5);
-    this.shield.visible = false;
+    this.guardAura.back.visible = false;
     this.badge.anchor.set(0.5);
     this.badge.visible = false;
     this.pillar.anchor.set(0.5, 1);
@@ -275,7 +275,7 @@ export class UnitSprite {
     this.mergeRim.filters = [flatFilter(MERGE_RIM)];
     this.mergeRim.visible = false;
     this.drawPickRing();
-    this.root.addChild(this.shadow, this.pickRing, ...(this.plainAura ? [this.plainAura.back] : []), ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.mergeRim, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []), this.perkMark, this.pickMark);
+    this.root.addChild(this.shadow, this.pickRing, ...(this.plainAura ? [this.plainAura.back] : []), ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.guardAura.back, this.ail.back, this.mergeRim, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []), this.perkMark, this.pickMark);
   }
 
   /** A nemesis's look (`sim/nemesis.ts`): its rank's rim round the body, a darker tone, and its name plate. Drawn once; nothing in it moves. */
@@ -473,15 +473,10 @@ export class UnitSprite {
     }
     const list = rowFrames(this.sheet, row ?? anim);
     this.body.texture = row || anim === 'dead' || anim === 'attack' || anim === 'hurt' ? list[Math.min(list.length - 1, Math.max(0, frame))] : list[frame % list.length];
-    // a raised guard is wrapped in the earth shield's ring; a status shows as a small icon over the left shoulder
-    this.shield.visible = guarded;
-    if (guarded) {
-      const ring = VFX.earthShield;
-      this.shield.texture = ring[Math.floor(t / 90) % ring.length];
-      this.shield.scale.set(this.tall / 26);
-      this.shield.position.set(0, -this.tall * 0.45);
-      paintSprite(this.shield, 500, 1000, this.tall / 26, 0, 0.65, true, true);
-    }
+    // a raised guard stands in hoops of pale gold with a shell of that light behind it (rendered: `guardParts`), held still for
+    // reduced motion; a status shows as a small icon over the left shoulder
+    this.guardAura.back.visible = guarded;
+    if (guarded) this.guardAura.update(t, this.tall / this.sizeNow, 1, !!this.reduced?.matches);
     this.drawBadge(u, t);
     // (most sheets face right, the forest and boss ones left; the board's +u runs down to the right, +v down to the left)
     const dx = (facesRight(u.facing) ? 1 : -1) * (facesRightOf(this.sheet) ? 1 : -1);
