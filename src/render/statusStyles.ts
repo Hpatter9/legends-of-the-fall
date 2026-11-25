@@ -108,7 +108,7 @@ export const STATUS_STYLES: Record<AilmentKey, StatusStyle> = {
   curse: { name: 'Cursed', tint: 0xd8b8ff, rim: 0xbb70ff, number: 0xc07aff, parts: {
     ground: { place: 'ground', size: 1.05, at: 0, alpha: 0.85, frameMs: 130 },
     motes: { place: 'motes', size: 0.4, at: 0.6, alpha: 0.7, frameMs: 130, n: 2, saver: true },
-    icon: icon(130, 0xc79aff),
+    icon: icon(130), // (PIXELLAB-ART: its own violet hexed eye now, not the skull tinted)
   } },
   silence: { name: 'Silenced', rim: 0xcdd5ff, parts: {
     ground: { place: 'ground', size: 0.95, at: 0, alpha: 0.6, frameMs: 130, saver: true },

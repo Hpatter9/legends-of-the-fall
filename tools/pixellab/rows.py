@@ -1,20 +1,24 @@
-# Submit and collect extra PixelLab clips from a picked base frame (used for the Lich King's new walk and hurt rows and the
-# treant forms; see docs/notes/hero-art.md). Run from the repo root; scratch frames go in tools/w/ (ignored by git).
-#   python3 tools/pixellab/rows.py anim <pick.png> <name> <row> <seed> "<prompt>" [frames]    submit one job (id saved first)
-#   python3 tools/pixellab/rows.py collect <name> <row> <seed>                                poll it, save tools/w/anim/<name>_<row>_s<seed>_<n>.png
-import sys,os,json,io,base64;sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
-from api import *
+"""Every frame of a sheet, each row on its own line, at 2x on a mid grey: the view for checking that gear, weapon, colours and size hold
+frame to frame (PIXELLAB-ART's audit). Frames are cropped to the sheet's drawn band so the rows sit close.
+
+  python3 tools/pixellab/rows.py <sheet> <out.png>
+"""
+import json, os, sys
 from PIL import Image
-W=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))+'/w/'
-os.makedirs(W+'anim',exist_ok=True)
-cmd=sys.argv[1]
-if cmd=='anim':
-    pick,name,row,seed,prompt=sys.argv[2:7];n=int(sys.argv[7]) if len(sys.argv)>7 else 4
-    img=Image.open(pick).convert('RGBA')
-    body={'first_frame':{'type':'base64','base64':b64(img),'format':'png'},'action':prompt,'frame_count':n,'no_background':True,'seed':int(seed)}
-    r=post('/animate-with-text-v3',body,W+'job_%s_%s_s%s.json'%(name,row,seed));print(name,row,seed,r['background_job_id'])
-elif cmd=='collect':
-    name,row,seed=sys.argv[2:5]
-    r=poll(json.load(open(W+'job_%s_%s_s%s.json'%(name,row,seed)))['background_job_id']);ims=(r.get('last_response') or {}).get('images',[])
-    print(name,row,seed,r['status'],len(ims))
-    for i,m in enumerate(ims):Image.open(io.BytesIO(base64.b64decode(m['base64']))).convert('RGBA').save(W+'anim/%s_%s_s%s_%d.png'%(name,row,seed,i))
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
+SHEETS = json.load(open(os.path.join(ROOT, 'src/art/units/sheets.json')))
+name, out = sys.argv[1], sys.argv[2]
+L = SHEETS[name]; sh = Image.open(os.path.join(ROOT, 'src/art/units', name + '.png')).convert('RGBA')
+w, h, per = L['w'], L['h'], L['perRow']
+rows = []
+for r, row in enumerate(L['rows']):
+    fr = [sh.crop(((i % per) * w, (r + i // per) * h, (i % per + 1) * w, (r + i // per + 1) * h)) for i in range(L['counts'][row])]
+    if fr: rows.append(fr)
+n = max(len(x) for x in rows)
+c = Image.new('RGBA', (n * w * 2, len(rows) * h * 2), (92, 96, 108, 255))
+for y, fr in enumerate(rows):
+    for x, f in enumerate(fr):
+        f2 = f.resize((w * 2, h * 2), Image.NEAREST); c.paste(f2, (x * w * 2, y * h * 2), f2)
+if c.width > 2400: c = c.resize((2400, round(c.height * 2400 / c.width)), Image.NEAREST)
+c.save(out)

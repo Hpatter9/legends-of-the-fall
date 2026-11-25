@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { countLine, ladderRows, tierPips, traitHeroes } from '../src/traitCardRules';
 import { PERK_LOOKS, TRAIT_BEATS, perkClips } from '../src/render/perkFxRules';
-import { perkTint, PERK_TINTS } from '../src/render/perkLookRules';
+import { markFrame, MARK_FRAME_MS, perkMark, perkTint, PERK_TINTS } from '../src/render/perkLookRules';
 import { TRAITS } from '../src/sim/traits';
 import { BFX_CLIPS } from '../src/render/blenderFxData';
 import { beatBfx } from '../src/render/blenderFxRules';
@@ -41,7 +41,19 @@ test('every perk a trait can show has a look, and its beat clip is one the game 
 
 test('what a perk raised is tinted for what it is; a plain fighter is not', () => {
   assert.equal(perkTint({ raised: 'thrall' }), PERK_TINTS.thrall);
-  assert.equal(perkTint({ crowned: true }), PERK_TINTS.crowned);
-  assert.equal(perkTint({ wanted: true }), PERK_TINTS.wanted);
   assert.equal(perkTint({}), undefined);
+});
+
+// PIXELLAB-ART: the risen skeletons wear their own grave sheets, and the crowned and the Wanted a painted mark over the head, not a tint
+test('the grave skeletons, the crowned and the Wanted are not tinted; the crowned and the Wanted wear a mark', () => {
+  assert.equal(perkTint({ raised: 'grave' }), undefined);
+  assert.equal(perkTint({ crowned: true }), undefined);
+  assert.equal(perkTint({ wanted: true }), undefined);
+  assert.equal(perkMark({ crowned: true }), 'crown');
+  assert.equal(perkMark({ wanted: true }), 'wanted');
+  assert.equal(perkMark({}), undefined);
+  assert.equal(perkMark(undefined), undefined);
+  assert.equal(markFrame(0, false), 0);
+  assert.equal(markFrame(MARK_FRAME_MS, false), 1);
+  assert.equal(markFrame(MARK_FRAME_MS, true), 0);
 });

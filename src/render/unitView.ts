@@ -1,8 +1,10 @@
 // The fighters drawn: an animated sprite from the unit's sheet, mirrored to face the way it's going, a shadow under it
 // and a health bar over its head. A step is drawn as a glide between the two tiles with a hop (higher for a climb).
 
-import { perkTint } from './perkLookRules';
-import { ColorMatrixFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
+import { markFrame, perkMark, perkTint, type PerkMark } from './perkLookRules';
+import { ColorMatrixFilter, Container, Graphics, Rectangle, Sprite, Text, Texture } from 'pixi.js';
+import crownMarkUrl from '../art/fx/marks/crown.png';
+import wantedMarkUrl from '../art/fx/marks/wanted.png';
 import { tileAt, type Board } from '../sim/board';
 import { defOf, type Unit } from '../sim/battle';
 import { formOf, UNITS } from '../sim/units';
@@ -116,6 +118,23 @@ function mixTint(a: number, b: number, k: number): number {
   return (ch(16) << 16) | (ch(8) << 8) | ch(0);
 }
 
+/** PIXELLAB-ART: the painted marks over a crowned hero and a Wanted foe, each two 64 px frames side by side, loaded once. */
+const MARK_URLS: Record<PerkMark, string> = { crown: crownMarkUrl, wanted: wantedMarkUrl };
+const markTextures = new Map<PerkMark, Texture[] | null>();
+function markTexturesOf(m: PerkMark): Texture[] | undefined {
+  if (!markTextures.has(m)) {
+    markTextures.set(m, null);
+    const img = new Image();
+    img.onload = () => {
+      const base = Texture.from(img);
+      const w = img.width / 2;
+      markTextures.set(m, [0, 1].map((i) => new Texture({ source: base.source, frame: new Rectangle(i * w, 0, w, img.height) })));
+    };
+    img.src = MARK_URLS[m];
+  }
+  return markTextures.get(m) ?? undefined;
+}
+
 export class UnitSprite {
   readonly root = new Container();
   private body = new Sprite();
@@ -160,6 +179,8 @@ export class UnitSprite {
   private pickRing = new Graphics();
   /** HERO-LIVE-STATS: a gold chevron over the picked hero's bar: the ring under its feet is hidden when foes stand in front of it. */
   private pickMark = new Graphics();
+  /** PIXELLAB-ART: the crown or bounty mark over the head (`perkMark`). */
+  private perkMark = new Sprite();
   /** An awakened hero's class aura (null for the rest). */
   private awakenAura: AwakenAura | null;
   private burstAt = -1;
@@ -259,7 +280,7 @@ export class UnitSprite {
     this.mergeRim.filters = [flatFilter(MERGE_RIM)];
     this.mergeRim.visible = false;
     this.drawPickRing();
-    this.root.addChild(this.shadow, this.pickRing, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.mergeRim, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []), this.pickMark);
+    this.root.addChild(this.shadow, this.pickRing, this.mark, this.aura, this.glow, ...(this.awakenAura ? [this.awakenAura.back] : []), this.pillar, this.shield, this.ail.back, this.mergeRim, this.rim, this.body, ...(this.awakenAura ? [this.awakenAura.front] : []), this.sparks, this.stars, this.bar, this.clock, this.badge, this.ail.front, ...(this.plate ? [this.plate] : []), this.perkMark, this.pickMark);
   }
 
   /** A nemesis's look (`sim/nemesis.ts`): its rank's rim round the body, a darker tone, and its name plate. Drawn once; nothing in it moves. */
@@ -521,6 +542,7 @@ export class UnitSprite {
       const tint = perkTint(u.pk);
       if (tint !== undefined) this.body.tint = tint;
     }
+    this.drawPerkMark(u.alive ? perkMark(u.pk) : undefined, t, bob - lift);
     // (the fallen go dark as they burn away, or grey as they turn to stone)
     if (!u.alive || rising < 1) {
       const kind = deathKind(def.name, u.side);
@@ -917,6 +939,18 @@ export class UnitSprite {
 
   /** What the health bar last showed (a fighter with no skill meter, which is most of a crowd's foes, redraws it only when this changes). */
   private barKey = '';
+
+  /** PIXELLAB-ART: the Royal crown over the crowned hero, the bounty notice over the Wanted foe, above the bar (above a nemesis's plate),
+   *  its two frames glinting slowly (still for reduced motion). */
+  private drawPerkMark(m: PerkMark | undefined, t: number, lift: number): void {
+    const frames = m ? markTexturesOf(m) : undefined;
+    this.perkMark.visible = !!frames;
+    if (!frames) return;
+    this.perkMark.texture = frames[markFrame(t, !!this.reduced?.matches)];
+    this.perkMark.anchor.set(0.5, 1);
+    this.perkMark.scale.set(22 / this.sizeNow / frames[0].height);
+    this.perkMark.position.set(0, -this.tall - (this.plate ? 30 : 11) + lift);
+  }
 
   private drawBar(alive: boolean, t: number): void {
     const u = this.unit;

@@ -11,19 +11,20 @@ const from = (id: string, base: UnitDef, name: string, role: string, tweak: Part
 
 const SKELETON: UnitDef = { id: 'skeleton', name: 'Skeleton', side: 'foe', sheet: 'skeleton_warrior', scale: 0.79, hp: 320, atk: 26, def: 7, range: 1, moveMs: 650, atkMs: 1100, jump: 2, role: 'Sword and shield' };
 
+// (PIXELLAB-ART: each wears its own sheet now, its common foe's redrawn frame by frame, so `KIN_SHEET` reads the common foe's for the rules)
 export const ELITE_FOES: Record<string, UnitDef> = {
-  eliteGorrak: from('eliteGorrak', FOES.orcBrute, 'Gorrak', 'Enrages as he falls'),
-  eliteYsolde: from('eliteYsolde', FOES.wolfWhite, 'Ysolde', 'Quickens with every kill, hunts shooters'),
-  eliteHollow: from('eliteHollow', SKELETON, 'The Hollow Knight', 'Raises a shield wall, guards', { scale: 0.9 }),
-  eliteSethra: from('eliteSethra', FOES.gorgon2, 'Sethra', 'Turns the strongest hero to stone'),
-  eliteBrakka: from('eliteBrakka', FOES.minotaur1, 'Brakka', 'Charges, and will not be shoved'),
-  eliteCindra: from('eliteCindra', FOES.demon, 'Cindra', 'Hellfire and burning blows'),
-  eliteVexor: from('eliteVexor', FOES.demon, 'Vexor', 'Calls imps to his side', { scale: 0.42 }),
-  eliteThrum: from('eliteThrum', FOES.ogre, 'Thrum', 'Shoves heroes back'),
-  eliteNyssa: from('eliteNyssa', FOES.yokaiWitch, 'Nyssa', 'Poisons the toughest heroes'),
-  eliteWarden: from('eliteWarden', FOES.ironGolem, 'The Iron Warden', 'Plated, slams the line'),
-  eliteKuro: from('eliteKuro', FOES.yokaiCrow, 'Kuro', 'Dives on shooters, flanks'),
-  eliteSilenus: from('eliteSilenus', FOES.satyr3, 'Silenus', 'Pipes the pack faster'),
+  eliteGorrak: from('eliteGorrak', FOES.orcBrute, 'Gorrak', 'Enrages as he falls', { sheet: 'elite_gorrak' }),
+  eliteYsolde: from('eliteYsolde', FOES.wolfWhite, 'Ysolde', 'Quickens with every kill, hunts shooters', { sheet: 'elite_ysolde' }),
+  eliteHollow: from('eliteHollow', SKELETON, 'The Hollow Knight', 'Raises a shield wall, guards', { sheet: 'elite_hollow', scale: 0.9 }),
+  eliteSethra: from('eliteSethra', FOES.gorgon2, 'Sethra', 'Turns the strongest hero to stone', { sheet: 'elite_sethra' }),
+  eliteBrakka: from('eliteBrakka', FOES.minotaur1, 'Brakka', 'Charges, and will not be shoved', { sheet: 'elite_brakka' }),
+  eliteCindra: from('eliteCindra', FOES.demon, 'Cindra', 'Hellfire and burning blows', { sheet: 'elite_cindra' }),
+  eliteVexor: from('eliteVexor', FOES.demon, 'Vexor', 'Calls imps to his side', { sheet: 'elite_vexor', scale: 0.42 }),
+  eliteThrum: from('eliteThrum', FOES.ogre, 'Thrum', 'Shoves heroes back', { sheet: 'elite_thrum' }),
+  eliteNyssa: from('eliteNyssa', FOES.yokaiWitch, 'Nyssa', 'Poisons the toughest heroes', { sheet: 'elite_nyssa' }),
+  eliteWarden: from('eliteWarden', FOES.ironGolem, 'The Iron Warden', 'Plated, slams the line', { sheet: 'elite_warden' }),
+  eliteKuro: from('eliteKuro', FOES.yokaiCrow, 'Kuro', 'Dives on shooters, flanks', { sheet: 'elite_kuro' }),
+  eliteSilenus: from('eliteSilenus', FOES.satyr3, 'Silenus', 'Pipes the pack faster', { sheet: 'elite_silenus' }),
 };
 
 /** The elites' kits, built from the others' skills: the table `KITS` is passed in (this file cannot import it). */
