@@ -265,8 +265,8 @@ export function drawDuchessCosmetic(
   const s = scale;
   const fl = Math.round(frameLeft);
   const ft = Math.round(frameTop);
-  // (ROUND4-WIRE: the Wizard Hat and the Archery Quiver are painted strips laid over her (`duchessHats.ts`), from her standing frame for
-  // the way she faces (her steps move them a pixel at most); the pixels below draw them only until the strips load, and draw the crown)
+  // (ROUND4-WIRE: the Wizard Hat is a painted strip laid over her (`duchessHats.ts`), from her standing frame for the way she faces (her
+  // steps move it a pixel at most); the pixels below draw it only until the strip loads, and draw the crown and the quiver)
   if (HAT_ART.draw?.(ctx, cosmetic, face === 1 ? 3 : 0, fl, ft + Math.round(bob * s), s)) {
     ctx.restore();
     return;

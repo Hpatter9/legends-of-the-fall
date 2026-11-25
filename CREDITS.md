@@ -282,7 +282,7 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
 - **ROUND4-WIRE** (`docs/notes/round4-wire.md`): original art made for this game from the round-4 prompt (`art-source/round4/`,
   PR #686). It covers the five quest guests' front and back sheets (`src/art/units/guest_*`), the Machine's sentry turret
   (`summon_sentry.png`), the Pirate's ghost ship (`src/art/ult-show/pirate-ghost-ship*.webp`), Voltara's aftermath
-  (`src/art/eidolons/fx/voltara-after.webp`), and Duchess's Wizard Hat and Archery Quiver (`src/art/duchess/hat-*.png`).
+  (`src/art/eidolons/fx/voltara-after.webp`), and Duchess's Wizard Hat (`src/art/duchess/hat-wizard.png`).
 
 ## Castle courtyard (`src/art/castle/`)
 

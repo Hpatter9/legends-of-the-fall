@@ -1,11 +1,10 @@
-// ROUND4-WIRE: two of Duchess's free cosmetics painted at last (art-source/round4/): the Wizard Hat and the Archery Quiver, each a strip of
-// six 48 px frames laid over her own walking frames (`art/duchess/goat.png`'s layout). The Tiny Tin Crown's painting did not read as a crown
-// at her size, so it is still drawn by hand (`drawDuchessCosmetic`). Bundled for offline play; loaded once, on the page only.
+// ROUND4-WIRE: one of Duchess's free cosmetics painted at last (art-source/round4/): the Wizard Hat, a strip of six 48 px frames laid over
+// her own walking frames (`art/duchess/goat.png`'s layout). The Tiny Tin Crown's and the Archery Quiver's paintings did not read at her size
+// (a grey lump; a wooden frame across her), so they are still drawn by hand (`drawDuchessCosmetic`) until their redo. Bundled for offline play; loaded once, on the page only.
 import { HAT_ART, type DuchessCosmeticId } from './render/duchessRules';
 import wizardUrl from './art/duchess/hat-wizard.png';
-import quiverUrl from './art/duchess/hat-quiver.png';
 
-const URLS: Partial<Record<DuchessCosmeticId, string>> = { wizard: wizardUrl, quiver: quiverUrl };
+const URLS: Partial<Record<DuchessCosmeticId, string>> = { wizard: wizardUrl };
 const FRAME = 48;
 const strips = new Map<DuchessCosmeticId, HTMLImageElement>();
 
