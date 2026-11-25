@@ -47,17 +47,6 @@ for (const [w, h] of SIZES) {
   await page.locator('.costumeChoice.locked').first().click({ force: true });
   assert.ok(await shown(page), 'a locked costume does not pick');
   await page.keyboard.press('Escape');
-  // the developer row: six buttons, the stones among them
-  const dev = page.locator('.devGrant');
-  await dev.scrollIntoViewIfNeeded();
-  assert.equal(await dev.locator('button').count(), 6);
-  const over = await dev.evaluate((g) => [...g.querySelectorAll('button')].some((b) => b.scrollWidth > b.clientWidth + 1 || b.getBoundingClientRect().right > innerWidth));
-  assert.ok(!over, 'the six fit');
-  const before = await page.evaluate(() => JSON.parse(localStorage.getItem('legends.meta')).stones ?? 0);
-  await dev.getByText('+1000 stones').click();
-  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('legends.meta')).stones), before + 1000);
-  await page.locator('.setting', { has: dev }).screenshot({ path: `docs/samples/settings-menus-dev-${w}x${h}.png` });
-  await page.screenshot({ path: `docs/samples/settings-menus-devpage-${w}x${h}.png` });
   if (errors.length) { bad++; console.log('errors', errors); }
   console.log('PASS', w, h);
   await ctx.close();

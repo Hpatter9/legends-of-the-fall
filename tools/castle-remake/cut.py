@@ -27,7 +27,8 @@ OUT = sys.argv[2] if len(sys.argv) > 2 else 'src/art/castle-remake'
 # The sheets' cells, left to right, top row then bottom row (the prompt's order).
 SHEETS = {
     'buildings-a.png': ['treasury', 'armoury', 'barracks', 'mageTower', 'stable', 'library'],
-    'buildings-b.png': ['chapel', 'smithy', 'watchtower', 'hall', 'drillYard', 'site'],
+    # (the fifth cell is the Assault's Drill Yard, gone with the Assault (RELEASE-TRIM): None, so it is skipped)
+    'buildings-b.png': ['chapel', 'smithy', 'watchtower', 'hall', None, 'site'],
 }
 CELL = 512
 
@@ -123,10 +124,12 @@ def main() -> int:
     for sheet, names in SHEETS.items():
         src = f'{SRC}/{sheet}'
         if not os.path.exists(src):
-            painted += [n for n in names if n in prior and os.path.exists(f'{OUT}/{n}.webp')]
+            painted += [n for n in names if n and n in prior and os.path.exists(f'{OUT}/{n}.webp')]
             continue
         im = fit(Image.open(src).convert('RGBA'), CELL * 3, CELL * 2)
         for i, name in enumerate(names):
+            if name is None:
+                continue
             x, y = (i % 3) * CELL, (i // 3) * CELL
             cut = trim(im.crop((x, y, x + CELL, y + CELL)))
             # (the buildings stand about 110 css px wide on a phone: 360 px is sharp at a device ratio of 3)

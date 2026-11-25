@@ -30,6 +30,7 @@ import haloIcon from './art/talent/halo.png';
 import { openScreen } from './screens';
 import { roman } from './sim/roman';
 import { HeroShow, summonFxReady } from './summonFx';
+import { toolHook } from './toolHooks';
 
 /** The rows of the arcana atlas, by the Pixel Effects element. */
 const ELEMENTS = ['light', 'earth', 'blood', 'wind', 'lightning', 'crystal', 'star', 'fire', 'dark', 'moon', 'forest', 'sand'] as const;
@@ -491,4 +492,4 @@ style.textContent = css;
 document.head.append(style);
 
 // (the screenshot tools reach the reveal here, as they reach the hall by `__hall`)
-(window as unknown as { __tarot?: object }).__tarot = { firstReveal, queueReveal, revealUnseen };
+toolHook('__tarot', { firstReveal, queueReveal, revealUnseen });

@@ -1,5 +1,5 @@
 // SWEEP-1110, offline: the first visit fills the service worker's cache, then the network is cut and the page reloaded; the Castle tab, the
-// Summoning collection, an army's fight and an assault on the Elder Root are opened with no network. Any request that fails is a file the
+// Summoning collection and an army's fight are opened with no network. Any request that fails is a file the
 // cache missed.   npm run web && node tools/sweep-1110/offline.mjs
 import { serve, launch, open, wait, out } from './lib.mjs';
 const PORT = 8916;
@@ -25,16 +25,6 @@ await wait(page, 1500);
 await page.evaluate(() => { window.__game.autoArrange(true); document.getElementById('fight').click(); });
 await wait(page, 4000);
 await page.screenshot({ path: `${dir}/fight-offline.png` });
-await page.evaluate(() => { window.__game.home.open(); window.__game.home.openAssault('wildwood'); });
-await wait(page, 1200);
-for (let i = 0; i < 4; i++) {
-  const ok = await page.evaluate(() => { const bs = [...document.querySelectorAll('button')].filter((x) => x.offsetParent); const m = bs.find((x) => /^March/.test(x.textContent.trim())); if (m) { m.click(); return true; } bs.find((x) => x.textContent.trim() === 'Close')?.click(); return false; });
-  if (ok) break;
-  await wait(page, 800);
-}
-await wait(page, 8000);
-await page.screenshot({ path: `${dir}/assault-offline.png` });
-console.log('field up', await page.evaluate(() => !!document.querySelector('#assaultScene .asTop')));
 console.log('failed requests', failed.length, failed.slice(0, 10));
 console.log('errors', log.errors.length, log.errors.slice(0, 3));
 await ctx.close();

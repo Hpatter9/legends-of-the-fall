@@ -183,8 +183,7 @@ const knownHeroes = (m: Meta): string[] => (m.party.length ? [...m.party] : m.un
  */
 export function recruit(war: War, m: Meta, rng: Rng): Nemesis | undefined {
   if (war.end || ofRank(war, 'lieutenant').length >= SEATS.lieutenant) return undefined;
-  // (a conquered army sends the Council no one: the Assault, docs/notes/assault-1.md)
-  const opened = ARMIES.filter((a) => armyUnlocked(m, a.id) && !m.assault?.conquered[a.id]).map((a) => a.id);
+  const opened = ARMIES.filter((a) => armyUnlocked(m, a.id)).map((a) => a.id);
   if (!opened.length) return undefined;
   const taken = new Set(war.members.map((n) => n.base));
   const elites = Object.keys(ELITE_FOES).filter((k) => !taken.has(k) && opened.includes(homeArmy(k) ?? ''));
@@ -545,9 +544,7 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   const quarry = war.hunt?.id;
   if (quarry !== undefined && b.units.some((u) => u.nem?.id === quarry && u.nem.hunted)) avenged.add(quarry);
   const cheated = new Map<number, string>();
-  // (the Assault: a member slain on the attempt that conquers its hold dies for good)
-  const conquest = won && run.mode?.kind === 'army' && !!run.mode.assault;
-  if (CHEAT_DEATH.on && !muster && !conquest) lines.push(...cheatDeath(war, m, run, wave, note, was, avenged, cheated));
+  if (CHEAT_DEATH.on && !muster) lines.push(...cheatDeath(war, m, run, wave, note, was, avenged, cheated));
   // (NEMESIS-DEPTH: one dragged off the field remembers the fight that brought it down, as one that lived does)
   for (const id of cheated.keys()) {
     const n = war.members.find((x) => x.id === id);
@@ -569,9 +566,9 @@ export function noteWar(m: Meta, run: Run, b: Battle, tally: NemesisTally | unde
   const knelt = new Set<number>();
   for (const x of note.slain) {
     // (NEMESIS-DEPTH, idea 6: an old foe beaten in single combat, or brought down with its loyalty low, may kneel: its pay is held back while
-    // the player chooses to slay or spare it; never the hunt's quarry or Vengeance's mark, at the Muster or at a conquest)
+    // the player chooses to slay or spare it; never the hunt's quarry or Vengeance's mark or at the Muster)
     const wasN = was.get(x.id);
-    if (wasN && !muster && !conquest && war.hunt?.id !== x.id && (x.id === duel.won || !avenged.has(x.id)) && mayKneel(war, wasN, x.id === duel.won)) {
+    if (wasN && !muster && war.hunt?.id !== x.id && (x.id === duel.won || !avenged.has(x.id)) && mayKneel(war, wasN, x.id === duel.won)) {
       knelt.add(x.id);
       m.crowns -= x.crowns;
       note.crowns -= x.crowns;

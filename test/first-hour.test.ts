@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import { roman } from '../src/sim/roman';
 import { modesHidden, namesHiddenMode, setModesHidden } from '../src/sim/hiddenModes';
 import { LOADING_TIPS } from '../src/quipData';
-import { devGrant } from '../src/sim/devGrant';
 import { modeOpen } from '../src/sim/modeUnlock';
 import { newMeta } from '../src/sim/meta';
 import { sceneList, sceneOfHiddenMode } from '../src/sim/sceneRules';
@@ -33,15 +32,6 @@ test('while the modes are hidden no loading tip names them, and plenty of tips a
   setModesHidden(false);
   assert.equal(namesHiddenMode('the Last Stand never ends'), false, 'nothing is held back once the modes are shown');
   setModesHidden(true);
-});
-
-test('Build Town opens the castle gate (the Castle tab has no testing door of its own)', () => {
-  const m = newMeta(5);
-  assert.equal(modeOpen(m, 'castle'), false);
-  devGrant(m, 'town', 0);
-  assert.equal(modeOpen(m, 'castle'), true);
-  devGrant(m, 'town', 0);
-  assert.equal(m.opened?.filter((k) => k === 'castle').length, 1, 'written once');
 });
 
 test('the Scenes list of a new save shows no scene of a hidden mode', () => {
@@ -264,12 +254,14 @@ test('the Castle opens at 6 stars; the Chapel, and the spellbook with it, still 
   assert.equal(chapelOpen({ ...newMeta(7), works: { id: 'chapel', level: 1, doneAt: 1 } }), true);
 });
 
-test('the hidden modes\' stones are moved to the daily and the Assault, and go back as a mode is shown: the total never doubles', async () => {
+test('the hidden modes\' stones are moved to the daily and the Legendary first clear, and go back as a mode is shown: the total never doubles', async () => {
   const { MOVED_SHARE, MOVED_STONES, hiddenStoneShare, movedStones, setStonesMoved } = await import('../src/sim/hiddenModes');
   const { chestStones, CONQUEST_SHARE, FIRST_CLEAR_CHEST, openChest } = await import('../src/sim/armyStars');
   const { CHEST_STONES, DAILY_CHEST_STONES } = await import('../src/sim/unlockRules');
-  assert.deepEqual(MOVED_STONES, { daily: 1, conquest: 8, restorm: 1 });
-  assert.ok(MOVED_STONES.restorm < MOVED_STONES.conquest, 'a repeat conquest pays at a lower rate');
+  // (RELEASE-TRIM: the Conquest chest's share moved to an army's Legendary first-clear chest; the regrouped Warband's is in the daily
+  //  chest's weekly Warband share, `release-trim.test.ts`)
+  assert.deepEqual(MOVED_STONES, { daily: 1, legend: 8, warband: 1 });
+  assert.ok(MOVED_STONES.warband < MOVED_STONES.legend, 'a Warband beaten again pays at a lower rate');
   assert.equal(MOVED_SHARE.tower + MOVED_SHARE.calamity, 1);
   // both hidden: the whole share
   assert.equal(hiddenStoneShare(), 1);
@@ -282,20 +274,22 @@ test('the hidden modes\' stones are moved to the daily and the Assault, and go b
   };
   const gold = CHEST_STONES[FIRST_CLEAR_CHEST[3]];
   const first = Math.ceil(gold * CONQUEST_SHARE);
+  assert.equal(open({ at: FIRST_CLEAR_CHEST[3], tier: 3, first: true }), first + MOVED_STONES.legend, 'an army\'s Legendary first clear pays what a hold\'s first fall did');
+  assert.equal(open({ at: FIRST_CLEAR_CHEST[3], tier: 3, conquest: true }), first + MOVED_STONES.legend, 'a Conquest chest won before still opens as it did');
   const again = Math.ceil(Math.ceil(CHEST_STONES[FIRST_CLEAR_CHEST[4]] / 2) * CONQUEST_SHARE);
-  assert.equal(open({ at: FIRST_CLEAR_CHEST[3], tier: 3, conquest: true }), first + MOVED_STONES.conquest, 'a hold\'s first Conquest chest');
-  assert.equal(open({ at: FIRST_CLEAR_CHEST[4], tier: 4, conquest: true, half: true }), again + MOVED_STONES.restorm, 'a regrouped Warband\'s');
-  assert.equal(open({ at: 10, tier: 3 }), gold, 'an army\'s own chest is untouched');
+  assert.equal(open({ at: FIRST_CLEAR_CHEST[4], tier: 4, conquest: true, half: true }), again + MOVED_STONES.warband, 'a Warband\'s chest');
+  assert.equal(open({ at: 10, tier: 3 }), gold, 'an army\'s own star chest is untouched');
+  assert.equal(open({ at: FIRST_CLEAR_CHEST[2], tier: 2, first: true }), CHEST_STONES[FIRST_CLEAR_CHEST[2]], 'and so is another tier\'s first clear');
   // the modes shown again: nothing is added anywhere
   setModesHidden(false);
   assert.equal(hiddenStoneShare(), 0);
-  for (const k of ['daily', 'conquest', 'restorm'] as const) assert.equal(movedStones(k), 0, k);
+  for (const k of ['daily', 'legend', 'warband'] as const) assert.equal(movedStones(k), 0, k);
   assert.equal(chestStones({ at: 3, daily: 20261110, bonus: 1 }), DAILY_CHEST_STONES + 1);
-  assert.equal(open({ at: FIRST_CLEAR_CHEST[3], tier: 3, conquest: true }), first);
+  assert.equal(open({ at: FIRST_CLEAR_CHEST[3], tier: 3, first: true }), first);
   assert.equal(open({ at: FIRST_CLEAR_CHEST[4], tier: 4, conquest: true, half: true }), again);
   setModesHidden(true);
   // each mode's part is its own: the parts of the two add up to the whole, so one mode back takes only its part away
-  for (const k of ['daily', 'conquest', 'restorm'] as const) assert.equal(Math.round(MOVED_STONES[k] * MOVED_SHARE.tower) + Math.round(MOVED_STONES[k] * MOVED_SHARE.calamity), MOVED_STONES[k], k);
+  for (const k of ['daily', 'legend', 'warband'] as const) assert.equal(Math.round(MOVED_STONES[k] * MOVED_SHARE.tower) + Math.round(MOVED_STONES[k] * MOVED_SHARE.calamity), MOVED_STONES[k], k);
   // the tools' switch
   setStonesMoved(false);
   assert.equal(movedStones('daily'), 0);

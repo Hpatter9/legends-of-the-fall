@@ -1,5 +1,7 @@
 # The Assault, phase 0: the engine spike and bench
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 0 of `docs/design/assault-mode.md` (branch `claude/assault-design`, section 10, "Phase 0: The engine spike"), built to its
 section 7 (the engine). It plays as nothing in the game. It proves the engine's budget before any content is built:
 **3 ms a sim tick and 60 fps on a mid-range phone** (design 7.2).

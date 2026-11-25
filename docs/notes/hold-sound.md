@@ -1,5 +1,7 @@
 # HOLD-SOUND: fitting sound for everything added lately
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Branch `claude/hold-sound`, from main 0.452.0. The ask: make sure the Assault's nine holds, the new scenes, the battle changes and the new
 menus all have fitting sound; audit what plays, fill the gaps with the game's own engine, and list what needs a call. The Calamity and the
 Last Stand are hidden (`src/sim/hiddenModes.ts`) and were skipped.

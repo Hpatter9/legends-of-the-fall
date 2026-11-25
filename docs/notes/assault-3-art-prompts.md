@@ -1,5 +1,7 @@
 # Prompts for the Assault's phase 3 art (the Drill Yard)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 The owner's rule: new art is painted from ChatGPT image prompts, never drawn in code; a plain stand-in is fine until it lands. Phase 3
 (`docs/notes/assault-3.md`) needs one new building picture and two room icons. Everything else it shows is art the game already has:
 

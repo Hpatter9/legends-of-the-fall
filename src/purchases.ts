@@ -1,5 +1,5 @@
 // IAP (docs/notes/iap.md): the purchases provider, one interface with two makers. RevenueCat (on Google Play Billing) in the Play build inside
-// the app, and a fake store for the tests and the web build behind `?shop=fake`, so the whole flow can be played and photographed without Play.
+// the app, and a fake store for the tests and the web build behind `?shop=fake` (under automation only, RELEASE-TRIM), so the whole flow can be played and photographed without Play.
 // No other build has a provider, so no other build can sell anything (`providerFor` in `iapRules.ts`). The provider only talks to the store:
 // granting is `iapRules.ts`, saving is the page's.
 

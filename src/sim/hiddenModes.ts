@@ -68,12 +68,14 @@ export const legendShown = (id: string, found: boolean): boolean => !hidden || f
 // ---- the hidden modes' summoning stones, moved (FIRST-HOUR 3, the owner's call) ----
 // The Last Stand's chests and the Calamity's clears and chests paid a daily player about a quarter of a year's stones. While a mode is
 // hidden its share is paid elsewhere, so the pace of collecting heroes stays where it was (`npm run unlock-pace`): in the daily chest, and
-// in the Assault's Conquest chests (a hold's first fall, and at a lower rate each time its Warband is beaten again). Each amount is scaled
+// in an army's Legendary first-clear chest (its tenth star; the Assault's Conquest chest held it until the Assault was withdrawn,
+// RELEASE-TRIM, `docs/notes/release-trim.md`). Each amount is scaled
 // by the share of the hidden modes' stones that is hidden just now, so showing a mode again takes its part of the added stones away as its
 // own stones come back, and the year's total does not double. Crowns are not moved.
 
-/** The stones added where, while both modes are hidden: to each daily chest, to a hold's first Conquest chest, to a regrouped Warband's. */
-export const MOVED_STONES = { daily: 1, conquest: 8, restorm: 1 } as const;
+/** The stones added where, while both modes are hidden: to each daily chest, to an army's Legendary first-clear chest (a hold's first
+ *  Conquest chest's 8 before RELEASE-TRIM), and to a Warband's chest (the regrouped Warband's, `warbandChests`). */
+export const MOVED_STONES = { daily: 1, legend: 8, warband: 1 } as const;
 export type MovedTo = keyof typeof MOVED_STONES;
 
 /** Each hidden mode's share of the stones the two paid (a year of `unlock-pace` before they were hidden: the spire's chests 158, the
@@ -87,5 +89,5 @@ export const setStonesMoved = (on: boolean): void => void (moving = on);
 /** The share of the hidden modes' stones that is hidden just now: 1 with both hidden, 0 with both shown. */
 export const hiddenStoneShare = (): number => (moving ? (modeShown('tower') ? 0 : MOVED_SHARE.tower) + (modeShown('calamity') ? 0 : MOVED_SHARE.calamity) : 0);
 
-/** The stones added to a daily chest, a Conquest chest or a regrouped Warband's chest just now. */
+/** The stones added to a daily chest, a Legendary first-clear chest or a Warband's chest just now. */
 export const movedStones = (to: MovedTo): number => Math.round(MOVED_STONES[to] * hiddenStoneShare());

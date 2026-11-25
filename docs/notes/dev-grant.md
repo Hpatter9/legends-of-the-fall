@@ -1,5 +1,7 @@
 # Developer grant and the chaos level
 
+**Gone before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Developer page is in no build now, the web's and the GitHub app's included; this note is kept as the record.
+
 ## Developer grant (the owner's testing tool)
 
 Settings has a **Developer** row (`devRow` in `src/settings.ts`) with four buttons: +100 crowns, +1000 crowns, +100 shards,

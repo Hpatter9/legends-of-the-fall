@@ -1,5 +1,7 @@
 # The holds retuned against the realistic force (ASSAULT-RETUNE)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 The owner's call ("Yes, retune them"), on the first balance read of Try an Assault (`docs/notes/assault-dev.md`): with the force a player
 really has when they reach a hold, every storming was won, most of them trivially. The holds had been tuned for a bare party: the level
 alone, rank 0, no talents and skills at Level 1 (`npm run balance -- --assault`).

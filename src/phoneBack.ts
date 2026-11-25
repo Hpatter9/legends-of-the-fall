@@ -5,7 +5,7 @@
 // How Back reaches it:
 // - The browser and the installed app: a history guard. The page keeps one entry pushed over its own (`GUARD_KEY`); Back pops it, the page
 //   hears `popstate`, handles it, and pushes the guard again, so there is always one to pop and the history never grows past two. The
-//   address is kept as it is (its query, as `?bench=assault`, and any hash). Chrome skips an entry pushed without a touch when Back is
+//   address is kept as it is (its query and any hash). Chrome skips an entry pushed without a touch when Back is
 //   pressed, so the guard is pushed again at the next touch or key too.
 // - The Android app (Capacitor): `MainActivity` takes the system Back itself and calls `window.__phoneBack()`; the app never finishes on it.
 // - Escape on a desktop: the same handler, before any menu's own Escape, so one press closes one thing.
@@ -41,7 +41,7 @@ function openLayers(): { l: BackLayer; e: HTMLElement }[] {
 }
 
 /** The topmost open layer: the one holding what is uppermost on the screen at one of a few points (the screen's own hit-test, so the stacking
- *  order decides, whatever made it). A layer under something that is not one (a layer left under the Assault's field) is not on top. */
+ *  order decides, whatever made it). A layer under something that is not one (a layer left under another screen) is not on top. */
 export function topLayer(): { l: BackLayer; e: HTMLElement } | null {
   const open = openLayers();
   if (!open.length) return null;

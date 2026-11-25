@@ -6,6 +6,7 @@
 
 import { SUMMON_FX, type SummonPiece, type SummonPieceId } from './render/summonFxData';
 import { decodedBytes, flourishAt, heroShowAt, skipShowTo, type ShowFrame } from './render/summonRules';
+import { toolHook } from './toolHooks';
 
 type Pic = ImageBitmap | HTMLImageElement;
 const pics = new Map<string, Pic>();
@@ -206,4 +207,4 @@ style.textContent = `
 document.head.append(style);
 
 // (the screenshot and timing tools read the costs here)
-(window as unknown as { __summonFx?: object }).__summonFx = { stats: summonFxStats, load: loadSummonFx, pin: (t: number | null) => (pinned = t) };
+toolHook('__summonFx', { stats: summonFxStats, load: loadSummonFx, pin: (t: number | null) => (pinned = t) });

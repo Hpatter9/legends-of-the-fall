@@ -1,6 +1,6 @@
 // IAP (docs/notes/iap.md): the Shop, a standard ornate sheet reached by the coin medallion beside the trophy on the home screen. Four sections
 // (Stones, Crowns, Bundles and Starter, Cosmetics), each item with its picture, contents and the local price the store reports; "Restore
-// purchases" in the foot. Only a build with a provider shows it (`providerFor`: the Play app, or the web build with `?shop=fake`); the web
+// purchases" in the foot. Only a build with a provider shows it (`providerFor`: the Play app, or the web build with `?shop=fake` under the tools' automation); the web
 // page and the GitHub release's app have no Shop at all. Offline, it says it needs a connection; the game itself plays on.
 //
 // A purchase is granted here, in the page: `grantPurchase` adds to the meta (once per transaction) and the guarded save keeps it at once.
@@ -47,13 +47,16 @@ import {
   type Product,
 } from './iapRules';
 import { fakeProvider, RC_KEY, revenueCatProvider, type Customer, type PurchasesProvider, type StoreItem } from './purchases';
+import { toolsOn } from './toolHooks';
 
 let provider: PurchasesProvider | null | undefined;
 
 /** This build's provider, made once (null: no Shop in this build). */
 export function shopProvider(): PurchasesProvider | null {
   if (provider === undefined) {
-    const which = providerFor(STORE, inApp(), typeof location === 'undefined' ? '' : location.search, RC_KEY);
+    // (RELEASE-TRIM: the fake store, `?shop=fake`, where every purchase succeeds, answers only under automation, as the test page's other
+    //  flags do: a player's address bar cannot open it, `toolHooks.ts`)
+    const which = providerFor(STORE, inApp(), typeof location === 'undefined' || !toolsOn() ? '' : location.search, RC_KEY);
     provider = which === 'revenuecat' ? revenueCatProvider() : which === 'fake' ? fakeProvider({ delay: 250 }) : null;
   }
   return provider;

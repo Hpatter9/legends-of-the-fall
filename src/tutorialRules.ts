@@ -7,7 +7,6 @@
 
 import { ULT_LEVEL } from './sim/abilities';
 import { ARMIES, armyCleared, tierOpen, totalStars } from './sim/armies';
-import { assaultOpen } from './sim/assault/economy';
 import { offeredChain } from './sim/eidolonChains';
 import { autoMergeOpen, autoPlaceOpen, autoRunesOpen } from './sim/featureUnlocks';
 import { SKILL2_LEVEL } from './sim/heroKits';
@@ -256,15 +255,6 @@ export const TUTORIALS: readonly Tutorial[] = [
     at: 'armies',
     open: (m) => ARMIES.some((a) => tierOpen(m, a, 1)),
     when: 'Three stars on an army',
-  },
-  {
-    id: 'assault',
-    title: 'Assaults',
-    lines: ['Ten stars on an army open the Assault on its hold.', 'Lead your heroes and their troops across a great field, storm the gates and bring down the hold\'s lord.'],
-    art: 'ui/buttons/assault.webp',
-    at: 'armies',
-    open: assaultOpen,
-    when: 'Ten stars on an army',
   },
   {
     // (IAP, docs/notes/iap.md: told the first time the Shop opens; a build without a Shop never opens it, and the Tutorials page leaves it

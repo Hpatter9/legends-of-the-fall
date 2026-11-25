@@ -1,5 +1,7 @@
 # The Assault, phase 5: the Last Hold and the War's end
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 5 of `docs/design/assault-mode.md` (on `claude/assault-design`): whichever hold stands last is where the warchief makes his last
 stand with every Council member left, and its fall ends the Dark Council with a scene. The War's record and the codex note the ending.
 The new game-plus seed is left out (the owner is asked first), and the Last Stand and the Calamity stay hidden as they are, not folded in.

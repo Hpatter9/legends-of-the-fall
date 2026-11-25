@@ -26,7 +26,6 @@ function ownerSave({ quest = true } = {}) {
   const cleared = { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 1 } };
   s.armies = { orcs: cleared, undead: cleared, beasts: { ...cleared, met: { 0: 7, 1: 1 } } };
   s.armySeen = ['orcs', 'undead', 'beasts', 'wildwood'];
-  s.assault = { v: 1, troops: {}, conquered: {}, tries: {} };
   s.war = { v: 1, turn: 6, members: [], fallen: [], nextId: 1, news: [], musterSince: 0, trophies: 0 };
   if (quest) s.quests = { active: [{ id: 'lostHungerWood', progress: 0, took: 20261110 }], tracked: 'lostHungerWood', done: [] };
   return s;

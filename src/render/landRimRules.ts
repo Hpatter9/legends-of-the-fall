@@ -10,7 +10,7 @@
 // - LIGHT: how dark a land is, and what lights it. One dark layer over the board with a pool cut out round each light.
 
 import { type Area, type Board, type Tile } from '../sim/board';
-import { hash, noise } from './fieldLooks';
+import { hash, noise } from './tileNoise';
 import type { Role } from './floorRules';
 
 /** A set piece: a standing sprite of the land's hold sheet (`src/art/assault/<hold>/sprites.webp`, by its name in the atlas). */

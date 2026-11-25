@@ -7,6 +7,7 @@
 // key, and both close a popup at once. A cinematic is not in the list, so a tap skips one as before.
 
 import { GUARD_MS, GUARDED, tapVerdict, type GuardedPopup } from './popupGuardRules';
+import { toolHook } from './toolHooks';
 
 interface Open {
   l: GuardedPopup;
@@ -129,5 +130,5 @@ export function installPopupGuard(): void {
   const touches = (r: MutationRecord): boolean => (r.type === 'attributes' ? holds(r.target) : [...r.addedNodes, ...r.removedNodes].some(holds));
   new MutationObserver((records) => records.some(touches) && later()).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['hidden', 'class', 'open'] });
   later();
-  (window as unknown as { __popupGuard: unknown }).__popupGuard = { log, open: () => open.map((o) => ({ sel: o.l.sel, id: o.e.id, age: Math.round(performance.now() - o.at) })), ms: GUARD_MS };
+  toolHook('__popupGuard', { log, open: () => open.map((o) => ({ sel: o.l.sel, id: o.e.id, age: Math.round(performance.now() - o.at) })), ms: GUARD_MS });
 }

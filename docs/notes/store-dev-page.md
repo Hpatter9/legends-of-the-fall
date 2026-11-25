@@ -1,5 +1,7 @@
 # No Developer page in the Play build, and one way back (STORE-DEV)
 
+**Gone before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Developer page is in no build now, the web's and the GitHub app's included; this note is kept as the record.
+
 From the art audit, for the store: the Developer page and its row were in every build. That page gives free crowns, hero shards and
 summoning stones, and holds Build Town and Try an Assault. A Play reviewer could find free currency two taps from the camp.
 

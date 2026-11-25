@@ -44,9 +44,7 @@ const CAL_TITLES: Record<string, string> = {
   calBoss6: 'The End of All Roads',
 };
 
-/** Whether a fighter of `UNITS` has a bestiary entry: a foe, not a summoned one. The Assault's own pieces (its troops, the War-wolf, the
- *  ram) are marked `summon` and join `UNITS` only when its module is first imported, so without this guard the order the modules load in
- *  could slip them into the bestiary. */
+/** Whether a fighter of `UNITS` has a bestiary entry: a foe, not a summoned one. */
 export const inBestiary = (u: { side: string; summon?: boolean }): boolean => u.side === 'foe' && !u.summon;
 
 function buildEntries(): FoeEntry[] {

@@ -28,8 +28,6 @@ import { LAYOUT_LIST, TERRAIN_INFO } from './sim/terrainInfo';
 import { portrait, sprite, figureOf } from './render/sheets';
 import { COMBOS, COMBO_NAME } from './sim/combos';
 import { slotBrief } from './fightHudRules';
-import { holdPages } from './sim/assault/holdCodex';
-import { assaultOpen } from './sim/assault/economy';
 import { legendShown } from './sim/hiddenModes';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -42,7 +40,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
 const CLASS_LABEL: Record<FoeEntry['class'], string> = { common: 'Foe', boss: 'Boss', elite: 'Calamity elite', calamity: 'Calamity herald' };
 
 /** The page's state that outlives a redraw: the tab it was on. */
-let tabNow: Collection | 'scenes' | 'combos' | 'terrain' | 'legends' | 'holds' = 'bestiary';
+let tabNow: Collection | 'scenes' | 'combos' | 'terrain' | 'legends' = 'bestiary';
 
 /** A speed word for a step time. */
 const paceOf = (ms: number): string => (ms >= 900 ? 'Slow' : ms >= 650 ? 'Steady' : ms >= 450 ? 'Quick' : 'Very quick');
@@ -294,23 +292,10 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
   const grid = el('div', 'cxGrid');
   const fill = () => {
     grid.replaceChildren();
-    // (the Holds tab goes with the Assault: back to the Bestiary if a save without it was on it)
-    if (tabNow === 'holds' && !assaultOpen(m)) tabNow = 'bestiary';
-    const listed = tabNow === 'scenes' || tabNow === 'combos' || tabNow === 'terrain' || tabNow === 'legends' || tabNow === 'holds';
+    const listed = tabNow === 'scenes' || tabNow === 'combos' || tabNow === 'terrain' || tabNow === 'legends';
     grid.classList.toggle('scList', listed);
     grid.classList.toggle('cxGrid', !listed);
-    if (tabNow === 'holds') {
-      // (the Assault's holds, phase 3: each built one's page, the others locked lines naming their army)
-      for (const p of holdPages(m)) {
-        const row = el('div', `scRow${p.built ? '' : ' locked'}`);
-        const text = el('div');
-        text.append(el('b', '', `${p.name} · ${p.armyName}`), el('small', '', p.record));
-        for (const f of p.facts) text.append(el('small', '', f));
-        for (const t of p.tips) text.append(el('small', 'cxVerse', t));
-        row.append(text);
-        grid.append(row);
-      }
-    } else if (tabNow === 'legends') {
+    if (tabNow === 'legends') {
       // (SEVEN-SLOT GEAR: the named legends, with the verses their renown has opened; one not yet found shows where it waits)
       for (const l of LEGEND_LIST) {
         const id = m.legends?.[l.id];
@@ -402,9 +387,9 @@ export function drawCodex(body: HTMLElement, m: Meta, claim: (id: string) => voi
       }
     }
   };
-  const buttons = new Map<Collection | 'scenes' | 'combos' | 'terrain' | 'legends' | 'holds', HTMLButtonElement>();
-  for (const c of [...COLLECTIONS, 'combos' as const, 'scenes' as const, 'terrain' as const, 'legends' as const, ...(assaultOpen(m) ? ['holds' as const] : [])]) {
-    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : c === 'terrain' ? 'Terrain' : c === 'combos' ? `${COMBO_NAME}s` : c === 'legends' ? 'Legends' : c === 'holds' ? 'Holds' : COLLECTION_NAMES[c]);
+  const buttons = new Map<Collection | 'scenes' | 'combos' | 'terrain' | 'legends', HTMLButtonElement>();
+  for (const c of [...COLLECTIONS, 'combos' as const, 'scenes' as const, 'terrain' as const, 'legends' as const]) {
+    const t = el('button', `cxTab${c === tabNow ? ' on' : ''}`, c === 'scenes' ? 'Scenes' : c === 'terrain' ? 'Terrain' : c === 'combos' ? `${COMBO_NAME}s` : c === 'legends' ? 'Legends' : COLLECTION_NAMES[c]);
     t.addEventListener('click', () => {
       tabNow = c;
       for (const [k, b] of buttons) b.classList.toggle('on', k === c);

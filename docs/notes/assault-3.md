@@ -1,5 +1,7 @@
 # The Assault, phase 3: veterans, the Drill Yard and the Iron Gate duel
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Built on phase 2 (`docs/notes/assault-2.md`), on `claude/assault-2`. The director scoped this round to three of the design's phase-3 items
 (`docs/design/assault-mode.md` on `claude/assault-design`, sections 4.2, 6.3 and 10): the Elite tricks, the design's "Barracks", and the
 Vain captain's duel at the Iron Gate. The second round (released after 0.420.0) finished the phase: the warchief's flight, the taunts as

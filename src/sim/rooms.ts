@@ -21,9 +21,7 @@ export type RoomId =
   | 'mentorSeat2'
   | 'mentorSeat3'
   | 'mentorSeat4'
-  | 'spellLectern'
-  | 'bloodedDrill'
-  | 'veteranDrill';
+  | 'spellLectern';
 
 export interface Room {
   id: RoomId;
@@ -57,8 +55,6 @@ export const ROOMS: readonly Room[] = [
   R('mentorSeat2', 'hall', 2, 'Second Seat', 'A second mentor, of another calling.', 'plinth'),
   R('mentorSeat3', 'hall', 3, 'Third Seat', 'A third mentor, of another calling.', 'plinth'),
   R('mentorSeat4', 'hall', 4, 'Fourth Seat', 'All four callings can have a mentor.', 'plinth'),
-  R('bloodedDrill', 'drillYard', 1, 'Blooded Drill', 'The Assault\'s new recruits join Blooded (one mark: +8% health and attack).', 'drill-blooded'),
-  R('veteranDrill', 'drillYard', 2, 'Veteran Drill', 'The Assault\'s new recruits join as Veterans (three marks: +16% health and attack).', 'drill-veteran'),
   R('spellLectern', 'mageTower', 3, 'Spell Lectern', 'Carry a spare spell into an army run and swap it in at the mid-boss camp.', 'lectern'),
 ];
 

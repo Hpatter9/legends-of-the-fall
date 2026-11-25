@@ -1,5 +1,7 @@
 # The Assault, phase 1: the Orc assault, playable
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 ## Phase 1a and 1b (the owner's tactics direction)
 
 Mid-build, the owner set the tactics direction: plan plus key orders, siege tools and a reactive enemy, with morale and routing left out.

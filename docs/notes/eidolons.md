@@ -8,8 +8,8 @@ Copper Goddess (lightning), Gorm the Quarry Titan (earth) and Vaelkhar the Drago
 
 **Unlocking, for now.** The design binds the Eidolons through the quest chains (batch 5 and on), so in normal play **no Eidolon is bound
 yet**: the horn fills from today, and a tap on it (in a fight or at the camp) says "No Eidolon has answered you yet" and points to the
-Summoner. A hidden dev flag, **`?eidolons=all`** on the page's address, binds all six and fills the horn (on each load with the flag), so
-the owner can try the call. `bindEidolon` is the call the chains will make.
+Summoner. A hidden dev flag, **`?eidolons=all`** on the page's address, bound all six and filled the horn, so the owner could try the
+call; it went before release (RELEASE-TRIM, `release-trim.md`). `bindEidolon` is the call the chains will make.
 
 ## The rules (batch 3)
 

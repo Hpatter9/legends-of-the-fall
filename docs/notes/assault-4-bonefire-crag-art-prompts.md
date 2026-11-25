@@ -1,5 +1,7 @@
 # The Assault: ChatGPT prompts for the Ogre Clans' hold (Bonefire Crag)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 4's fifth hold (`docs/design/assault-mode.md` on `claude/assault-design`, phase 4; the owner's name for it). The owner gave no look for
 it, so it follows the camp's overlook, which already paints the Ogre Clans' "Bonefire clan camp" (`src/art/camp/camp-wild.png`, its bottom
 row): a war camp on a rocky highland plateau at night, a great hall framed by mammoth tusks, hide domes, bone heaps and fires, waterfalls down
