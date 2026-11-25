@@ -38,6 +38,7 @@ import { crownsTotal, FOE_ENTRIES, shownEntries, stonesTotal } from '../src/sim/
 import { achievementShown, modesHidden, questShown, setModesHidden, setStonesMoved } from '../src/sim/hiddenModes';
 import { grantClearHero } from '../src/sim/clearHero';
 import { QUESTS } from '../src/sim/questData';
+import { claimSets, HALL, hallBonus, HALL_STATS, type HallBonus } from '../src/sim/hall';
 import { ACHIEVEMENTS, stonesOfAchievement } from '../src/sim/achievements';
 
 const arg = (name: string, fallback: number): number => {
@@ -123,7 +124,7 @@ for (const t of [SHARD_CHANCE, TOME_CHANCE] as Record<string, number>[]) for (co
 const WAR_SHARDS = arg('--war', 0) > 0;
 const EXTRA_STONES = arg('--nobadges', 0) > 0 ? 0 : Math.round((BADGE_STONES * Math.min(1, EXTRA_CROWNS / BADGE_CROWNS)));
 
-interface Report { ledger: Record<string, number>; aw: { shards1: number; shards2: number; ore1: number; ore2: number; all1: number; all2: number; n1: Record<number, number>; n2: Record<number, number>; s1: Record<number, number>; s2: Record<number, number>; top5: Record<number, number>; src: { army: number; chest: number; calamity: number; cache: number } }; tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; drops: { shards: number; tomes: number } }
+interface Report { hall: Record<number, HallBonus>; sets: Record<number, number>; ledger: Record<string, number>; aw: { shards1: number; shards2: number; ore1: number; ore2: number; all1: number; all2: number; n1: Record<number, number>; n2: Record<number, number>; s1: Record<number, number>; s2: Record<number, number>; top5: Record<number, number>; src: { army: number; chest: number; calamity: number; cache: number } }; tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; drops: { shards: number; tomes: number } }
 const MARKS = [5, 10, 15, 20, 30, 40, 45];
 /** The pullable heroes owned (the starter's three count): the 4th is the first after the starter. */
 const PULL_MARKS = [4, 5, 6, 10, 15, 20, 30, 35];
@@ -141,6 +142,8 @@ function simulate(seed: number): Report {
   let castleLeft = CASTLE_TOTAL;
   let pulls = 0;
   const drops = { shards: 0, tomes: 0 };
+  const hall: Record<number, HallBonus> = {};
+  const sets: Record<number, number> = {};
   // (the best army and tier cleared, which the farm replays; and its crowns a run)
   const bestPick = (): { crowns: number; army?: string; tier: number } => {
     let best: { crowns: number; army?: string; tier: number } = { crowns: 0, tier: 0 };
@@ -308,6 +311,12 @@ function simulate(seed: number): Report {
       note('Chest shop', (m.stones ?? 0) - was);
       left -= shopPrice(m, c.kind);
     }
+    // (HALL-OF-HEROES: every trait set the save has completed is claimed, once; its stones go to the pulls with the rest, its crowns wait)
+    {
+      const was = m.stones ?? 0;
+      claimSets(m);
+      if ((m.stones ?? 0) > was) note('Trait sets (Hall of Heroes)', (m.stones ?? 0) - was);
+    }
     while (stonesOf(m) > 0) {
       const n = stonesOf(m) >= 10 ? 10 : 1;
       pulls += useStones(m, n)!.length;
@@ -336,6 +345,9 @@ function simulate(seed: number): Report {
       aw.n2[day] = m.unlocked.filter((k) => awakenedOf(m, k) >= 2).length;
       // (ASSAULT-DEV: the whole rank, awakenings in it, of the five best-ranked heroes owned: a party's rank on that day, `--ranks`)
       aw.top5[day] = [...m.unlocked].map((k) => heroRank(m, k)).sort((a, b) => b - a).slice(0, 5).reduce((n, r) => n + r, 0) / 5;
+      // (HALL-OF-HEROES: the Hall's bonus on the day, `--hall`)
+      hall[day] = hallBonus(m);
+      sets[day] = m.hallSets?.length ?? 0;
     }
     // (the tries before the first clear: the bosses beaten pay their ores; and extra clears a week with `--calweek`)
     if (day >= CAL_TRY_DAY && day < CALAMITY_DAY && (day - CAL_TRY_DAY) % 7 === 0) {
@@ -359,9 +371,11 @@ function simulate(seed: number): Report {
     spent += 0;
   }
   void spent;
-  return { ledger, aw, tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, drops };
+  return { ledger, aw, tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, drops, hall, sets };
 }
 
+// (HALL-OF-HEROES: `--nohall 1` plays the save without the Hall: no trait sets claimed, for the stones before)
+if (arg('--nohall', 0) > 0) HALL.on = false;
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
 const mean = (xs: number[]) => xs.reduce((n, x) => n + x, 0) / xs.length;
 const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
@@ -418,4 +432,13 @@ if (process.argv.includes('--awaken')) {
 if (process.argv.includes('--ranks')) {
   console.log('\nday   the five best-ranked heroes\' mean rank (median of the seeds; ranks 5 and 6 are awakened)');
   for (const d of CHECKS) if (d <= DAYS) console.log(`${String(d).padStart(3)}   ${med(reports.map((r) => r.aw.top5[d] ?? 0)).toFixed(1)}`);
+}
+
+// (HALL-OF-HEROES, `docs/notes/hall-of-heroes.md`: the Hall's bonus by day, the median of the seeds, and the trait sets claimed; `--hall`)
+if (process.argv.includes('--hall')) {
+  console.log('\nday   the Hall (median: HP, ATK, crit, skill charge)   trait sets claimed (median)');
+  for (const d of CHECKS) if (d <= DAYS) {
+    const at = (s: (typeof HALL_STATS)[number]) => `${(med(reports.map((r) => r.hall[d]?.[s] ?? 0)) * 100).toFixed(1)}%`;
+    console.log(`${String(d).padStart(3)}   ${HALL_STATS.map(at).join(' / ').padEnd(40)} ${String(med(reports.map((r) => r.sets[d] ?? 0))).padStart(4)}`);
+  }
 }

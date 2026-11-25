@@ -2,6 +2,8 @@
 // skills. Reads the meta only.
 
 import { facedNow, strongTag } from './armyMatchView';
+import { openHall } from './hallView';
+import { hallBonus, hallLine } from './sim/hall';
 import { glyphWord } from './paintedButton';
 import { releaseIcon, RELEASE_ICON } from './ornateMenu';
 import { filterCount, rosterRows, viewActive, viewRows, type RosterRow, type RosterView } from './heroFilterRules';
@@ -541,6 +543,12 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     bag.append(el('small', '', 'Open a hero to use one.'));
     head.append(bag);
   }
+  // (HALL-OF-HEROES: the Hall's door, with what it lends now)
+  const hall = el('button', 'hallDoor');
+  hall.type = 'button';
+  hall.append(el('b', '', 'Hall of Heroes'), el('small', '', hallLine(hallBonus(meta))));
+  hall.addEventListener('click', () => openHall(meta, () => saveMeta(meta), () => drawRoster(box, meta, pick, close, lastViewed)));
+  head.append(hall);
   box.append(head);
   const label = el('label', 'rosterSearch');
   label.append(el('span', '', 'Find a hero'));

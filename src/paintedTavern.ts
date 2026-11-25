@@ -1,6 +1,8 @@
 // A painted room with five interchangeable guests. Character illustrations stay
 // separate from the background so every save shows its own strongest company.
-import type { Meta } from './sim/meta';
+import { saveMeta, type Meta } from './sim/meta';
+import { openHall } from './hallView';
+import { hallBonus, hallLine } from './sim/hall';
 import type { TavernQuests, TavernShop, TavernUpgrades } from './tavern';
 import { tavernCompany, tavernGuestArt, TAVERN_SEATS, TAVERN_ACTIVITIES, tavernPlaces } from './render/tavernCompany';
 import { heroArtwork } from './heroArtwork';
@@ -36,6 +38,7 @@ export class PaintedTavern {
   private stallBtn: HTMLButtonElement;
   private trophy = new TrophyWallModal();
   private meta?: Meta;
+  private readonly hallDoor = el('button', 'hallDoor');
   private active = false;
 
   constructor(
@@ -98,7 +101,11 @@ export class PaintedTavern {
     company.setAttribute('aria-label', 'Your strongest heroes');
     const heading = el('div', 'ptHeading');
     heading.append(el('h3', '', 'Your strongest heroes'), this.count);
-    company.append(heading, el('p', 'ptHint', 'Ranked by Power · select a hero to manage them'), this.list);
+    // (HALL-OF-HEROES: the Hall's door, with what it lends now: `update` fills its line)
+    this.hallDoor.type = 'button';
+    this.hallDoor.append(el('b', '', 'Hall of Heroes'), el('small', '', ''));
+    this.hallDoor.addEventListener('click', () => { if (this.meta) openHall(this.meta, () => saveMeta(this.meta!), () => this.meta && this.update(this.meta)); });
+    company.append(heading, this.hallDoor, el('p', 'ptHint', 'Ranked by Power · select a hero to manage them'), this.list);
     const actions = el('nav', 'ptActions');
     actions.setAttribute('aria-label', 'Tavern services');
     this.upgradeBtn = this.button('Upgrades', 'upgrades', () => this.upgrades?.onUpgrades());
@@ -160,6 +167,7 @@ export class PaintedTavern {
 
   update(meta: Meta): void {
     this.meta = meta;
+    this.hallDoor.querySelector('small')!.textContent = hallLine(hallBonus(meta));
     const company = tavernCompany(meta);
     const owned = ALL_HEROES.filter((kind) => meta.unlocked.includes(kind));
     this.count.textContent = `${owned.length} recruited`;

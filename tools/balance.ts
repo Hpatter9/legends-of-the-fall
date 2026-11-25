@@ -54,6 +54,7 @@ import { WAR_BOT } from './autoplay';
 import { DUEL_ARMY, DUEL_BOSS, DUEL_LENGTH, DUEL_MASTERED, DUEL_ROLE, DUEL_SHARE, duelOutcome, startDuel } from '../src/sim/duel';
 import { giveMastery } from './skills/mastery';
 import { weaknessTable } from './armyWeaknessTable';
+import { hallTable } from './hallTable';
 import { roleOf, type PartyRole } from '../src/sim/suggest';
 import { armyRun, recruit } from '../src/sim/run';
 import { snapOf, type Nemesis } from '../src/sim/nemesis';
@@ -851,4 +852,6 @@ if (process.argv.includes('--nemesis')) {
 if (process.argv.includes('--duel')) duelTable();
 // (ARMY-WEAKNESS: every army and tier, the auto team against a team built for the army and one built against it, the rule off and on)
 if (process.argv.includes('--weakness')) weaknessTable();
+// (HALL-OF-HEROES: the Hall a daily player has at day 30, 90 and 180, off and on)
+if (process.argv.includes('--hall-table')) hallTable();
 console.log('');

@@ -45,6 +45,7 @@ import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { arrowOf, deployChip } from './armyWeaknessRules';
+import { isRested, RESTED_RUNS, RESTED_XP, restedXp } from './sim/hall';
 import { openArmyMatchCard } from './armyMatchView';
 import { classSigil } from './classSigil';
 import { ARMY_MATCH } from './sim/armyWeakness';
@@ -4520,6 +4521,8 @@ class Game {
       // (the Nemesis War: a skull on the hero a nemesis in this wave dreads, so the player sees the answer)
       const dreads = this.b.units.filter((u) => u.alive && u.nem && dreadOf(u.nem.weak) === h.kind);
       if (dreads.length) card.append(Object.assign(document.createElement('span'), { className: 'dreadMark', textContent: '☠', title: `${dreads.map((u) => u.nem!.name).join(' and ')} ${dreads.length > 1 ? 'dread' : 'dreads'} ${heroName(h.kind)}` }));
+      // (HALL-OF-HEROES: a hero who sat out the last army runs earns half again the XP in this one)
+      if (this.run.mode?.kind === 'army' && isRested(this.meta, h.kind)) card.append(Object.assign(document.createElement('span'), { className: 'restMark', textContent: 'Rested', title: `${heroName(h.kind)} sat out the last ${RESTED_RUNS} army runs: +${Math.round(RESTED_XP * 100)}% XP this run` }));
       // (ARMY-WEAKNESS: an arrow on the hero that hits the army's weakness (up) or its resistance (down))
       const arrow = arrowOf(this.run.mode?.kind === 'army' ? this.run.mode.army : undefined, h.kind);
       if (arrow) card.append(Object.assign(document.createElement('span'), { className: `matchMark ${arrow === '▲' ? 'up' : 'down'}`, textContent: arrow, title: arrow === '▲' ? `${heroName(h.kind)} hits this army's weakness` : `This army resists ${heroName(h.kind)}` }));
@@ -4903,7 +4906,8 @@ class Game {
       const fielded = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def)).map((u) => u.def);
       // (HERO-RISE: the fielded heroes of the save as they stood before this wave's XP and skill use, for the plates over them after)
       const riseBefore = new Map(run.local ? [] : [...new Set(fielded)].map((k) => [k, shotOfHero(this.meta, k, () => startBattle(1, []))] as const));
-      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }));
+      // (HALL-OF-HEROES: in an army run, a rested hero earns half again, `restedXp`)
+      const ups = own ? own.ups : gainXp(this.meta, (run.mode?.kind === 'army' ? (x: Record<string, number>) => restedXp(this.meta, x) : (x: Record<string, number>) => x)(mentoredXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench })));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (QUEST-COMPLETE 2: a quest battle's record, once its last fight is in the run's books)
       if (won && noteBattleHow(this.meta, run)) saveMeta(this.meta);
