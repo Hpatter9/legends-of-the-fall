@@ -10,7 +10,9 @@ import { ESCORT_CLUE, WEAKNESS, knownClues } from './sim/weakness';
 import { roomOpen } from './sim/rooms';
 import { hasSkill, KITS, type Kit } from './sim/abilities';
 import { HERO_KITS, SKILL2_LEVEL, SKILL3_LEVEL } from './sim/heroKits';
-import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, shownEntries, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, type Collection, type FoeEntry } from './sim/codex';
+import { codexLine } from './armyWeaknessRules';
+import { armyById } from './sim/armies';
+import { codexWaiting, COLLECTIONS, COLLECTION_NAMES, crownsClaimed, crownsTotal, crownsWaiting, shownEntries, gotOf, heroKnown, isMet, killsOf, milestoneClaimed, milestoneReached, milestonesOf, progressLine, stonesClaimed, stonesTotal, stonesWaiting, tipsOf, totalOf, whereMet, armiesOfEntry, type Collection, type FoeEntry } from './sim/codex';
 import { FOE_LORE, HERO_STORY } from './sim/codexLore';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
@@ -169,6 +171,9 @@ function openFoe(root: HTMLElement, m: Meta, e: FoeEntry): void {
     section(box, 'Weaknesses and tips', tipsOf(def, KITS[e.defs[0]]));
     weakBlock(box, m, e.defs.find((d) => WEAKNESS[d]));
     section(box, 'Where it is met', whereMet(e));
+    // (ARMY-WEAKNESS: a line for each army it marches with: what that army is weak to and resists)
+    const lines = armiesOfEntry(e).map((id) => `${armyById(id)?.name ?? id}: ${codexLine(id) ?? ''}`).filter((l) => !l.endsWith(': '));
+    if (lines.length) section(box, 'Its army’s weaknesses', lines);
   }
   box.append(closeButton(close));
 }

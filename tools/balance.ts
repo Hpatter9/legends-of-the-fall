@@ -53,6 +53,7 @@ import { fullCouncil, growWar, harshen } from './nemesis/warBot';
 import { WAR_BOT } from './autoplay';
 import { DUEL_ARMY, DUEL_BOSS, DUEL_LENGTH, DUEL_MASTERED, DUEL_ROLE, DUEL_SHARE, duelOutcome, startDuel } from '../src/sim/duel';
 import { giveMastery } from './skills/mastery';
+import { weaknessTable } from './armyWeaknessTable';
 import { roleOf, type PartyRole } from '../src/sim/suggest';
 import { armyRun, recruit } from '../src/sim/run';
 import { snapOf, type Nemesis } from '../src/sim/nemesis';
@@ -848,4 +849,6 @@ if (process.argv.includes('--nemesis')) {
   WAR_BOT.duels = false;
 }
 if (process.argv.includes('--duel')) duelTable();
+// (ARMY-WEAKNESS: every army and tier, the auto team against a team built for the army and one built against it, the rule off and on)
+if (process.argv.includes('--weakness')) weaknessTable();
 console.log('');

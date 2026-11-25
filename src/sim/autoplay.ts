@@ -1,3 +1,4 @@
+import { ARMY_WEAKNESS, matchMult, matchOf } from './armyWeakness';
 import { mythicFits, oneMythic } from './mythicRules';
 // The greedy player, shared by the Auto button, the auto-replay of cleared armies, the balance tool and the tests: it
 // picks the squad, summons while the gold lasts (merging every pair, as the Auto merge button does), takes the safe picks of an event, dresses the squad in the pack's gear
@@ -54,7 +55,10 @@ export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): O
   // (a quest battle's required cast must fight: they are always kept, ahead of the strongest)
   const must = run.mode?.kind === 'quest' ? run.roster.filter((h) => !h.guest && !sitsOut(run, h.id) && run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind)).map((h) => h.id) : [];
   const kept = [...must, ...keep.filter((id) => !must.includes(id))].map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id) && !h.guest);
-  const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id) && !h.guest).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
+  // (ARMY-WEAKNESS: in an army run, a hero's strength as the army sees it: x1.3 on a class it is weak to, x0.85 on one it resists: `matchMult`)
+  const army = run.mode?.kind === 'army' ? run.mode.army : undefined;
+  const seen = (h: Owned): number => strengthOf(meta, h, run) * (ARMY_WEAKNESS.on ? matchMult(matchOf(army, h.kind)) : 1);
+  const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id) && !h.guest).sort((a, b) => seen(b) - seen(a) || a.id - b.id);
   const five = oneMythic(oneOfEach([...kept, ...rest]), h => h.kind).slice(0, squadLimit(run));
   const guest = run.roster.find((h) => h.guest);
   return guest && mythicFits(five.map(h => h.kind), guest.kind) && !five.some((h) => h.kind === guest.kind) ? [...five, guest] : five;

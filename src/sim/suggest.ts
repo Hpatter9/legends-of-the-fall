@@ -7,6 +7,7 @@ import { mythicFits, oneMythic } from './mythicRules';
 
 import { UNITS } from './units';
 import { countTraits, traitsOf } from './traits';
+import { ARMY_WEAKNESS, matchScore } from './armyWeakness';
 
 export type PartyRole = 'front' | 'striker' | 'back' | 'support';
 
@@ -24,8 +25,13 @@ export function roleOf(kind: string): PartyRole {
 
 
 
-/** How good a party is: each active tier is worth more the higher it is, and each role covered is worth more than a trait. */
-export function partyScore(kinds: readonly string[]): number {
+/** ARMY-WEAKNESS: what a hero on the army's weakness adds to a party's score (and one it resists takes off): less than a role covered, about
+ *  a trait's first tier, so a party built for the army still holds its roles. */
+export const ARMY_SCORE = 8;
+
+/** How good a party is: each active tier is worth more the higher it is, and each role covered is worth more than a trait. Against an army
+ *  (`army`), each hero on its weakness adds `ARMY_SCORE` and each it resists takes it off. */
+export function partyScore(kinds: readonly string[], army?: string): number {
   let score = 0;
   for (const c of countTraits(kinds)) {
     if (c.active) score += 10 * (c.tier + 1) + c.trait.tiers[c.tier].need;
@@ -33,6 +39,7 @@ export function partyScore(kinds: readonly string[]): number {
   }
   const roles = new Set(kinds.map(roleOf));
   score += 14 * roles.size;
+  if (army && ARMY_WEAKNESS.on) for (const k of kinds) score += ARMY_SCORE * matchScore(army, k);
   return score;
 }
 
@@ -40,7 +47,7 @@ export function partyScore(kinds: readonly string[]): number {
  * The best party of up to `size` heroes from `owned` (ties are broken by `power` of a kind, when
  * given, in favour of the stronger, then by name). Fewer owned than `size`: all of them.
  */
-export function suggestParty(owned: readonly string[], size = 5, power: (kind: string) => number = () => 0): string[] {
+export function suggestParty(owned: readonly string[], size = 5, power: (kind: string) => number = () => 0, army?: string): string[] {
   const pool = [...new Set(owned)].filter((k) => UNITS[k]).sort();
   if (pool.length <= size) return oneMythic(pool, k => k);
   let best: string[] = [];
@@ -54,7 +61,7 @@ export function suggestParty(owned: readonly string[], size = 5, power: (kind: s
       let pickPower = -1;
       for (const k of pool) {
         if (party.includes(k) || !mythicFits(party, k)) continue;
-        const s = partyScore([...party, k]);
+        const s = partyScore([...party, k], army);
         const p = power(k);
         if (s > pickScore || (s === pickScore && p > pickPower)) {
           pick = k;
@@ -65,7 +72,7 @@ export function suggestParty(owned: readonly string[], size = 5, power: (kind: s
       if (!pick) break;
       party.push(pick);
     }
-    const s = partyScore(party);
+    const s = partyScore(party, army);
     const p = party.reduce((n, k) => n + power(k), 0);
     if (s > bestScore || (s === bestScore && p > bestPower)) {
       best = party;

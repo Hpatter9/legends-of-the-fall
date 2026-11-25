@@ -1,6 +1,7 @@
 // The recruiting screen (#gacha): the stones, the pull buttons and rates, a tarot card for each pull (`summonTarot.ts`; a hero
 // who joins then has its first-time reveal), and the list of every hero with the locked ones shaded. It only reads and changes the Meta through the sim's own functions.
 
+import { facedNow, strongTag } from './armyMatchView';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
@@ -115,6 +116,8 @@ export class Gacha {
     const row = $('nearRow');
     const kinds = nearestBegun(m, NEAR_ROW);
     row.hidden = !kinds.length;
+    // (ARMY-WEAKNESS: a hero strong against the army faced is flagged)
+    const faced = facedNow(m);
     const cells = kinds.map((kind) => {
       const cell = document.createElement('div');
       cell.className = 'hero';
@@ -122,6 +125,8 @@ export class Gacha {
       const name = document.createElement('b');
       name.textContent = heroName(kind);
       cell.append(portrait(UNITS[kind].sheet, NEAR_PX), name, unlockBar(m, kind));
+      const strong = strongTag(faced, kind);
+      if (strong) cell.append(strong);
       return cell;
     });
     const head = document.createElement('h3');
