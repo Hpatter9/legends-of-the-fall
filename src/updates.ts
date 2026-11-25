@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.621.0',
+    date: '2026-11-25',
+    title: 'Guests, a ghost ship and Natsu restored',
+    notes: ['The quest guests, the Machine trait\'s sentry turret and the Pirate\'s ghost ship have art of their own.', 'Voltara\'s storm leaves scorched ground behind it, and Duchess\'s wizard hat is painted.', 'Natsu\'s painting is redone with both legs.'],
+  },
+  {
     version: '0.620.0',
     date: '2026-11-25',
     title: 'New looks: costumes, rulers and Starfall',
