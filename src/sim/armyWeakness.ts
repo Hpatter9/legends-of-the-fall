@@ -1,5 +1,5 @@
 // ARMY-WEAKNESS (docs/notes/army-weakness.md): every army of the War Room is weak to one or two hero classes and resists one or two. Its foes
-// take more harm from a hero of a class it is weak to (x1.3) and less from one it resists (x0.85), so each army calls for a different team.
+// take more harm from a hero of a class it is weak to (x1.3) and less from one it resists (x0.9), so each army calls for a different team.
 //
 // - What it touches: damage only, every kind a hero is credited with (its blows, its skills, its ailments' ticks, its summons' blows, read
 //   through `creditOf`). Not ailments' chances, not crowd control, not healing.
@@ -16,7 +16,7 @@ export const ARMY_WEAKNESS: { on: boolean } = { on: true };
 
 /** What a weakness and a resistance do to the harm a hero's side deals the army's foes. */
 export const WEAK_MULT = 1.3;
-export const RESIST_MULT = 0.85;
+export const RESIST_MULT = 0.9;
 
 export interface ArmyMatch {
   /** The classes it is weak to, and why (a short line for the card and the codex). */

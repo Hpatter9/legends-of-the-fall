@@ -55,7 +55,7 @@ export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): O
   // (a quest battle's required cast must fight: they are always kept, ahead of the strongest)
   const must = run.mode?.kind === 'quest' ? run.roster.filter((h) => !h.guest && !sitsOut(run, h.id) && run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind)).map((h) => h.id) : [];
   const kept = [...must, ...keep.filter((id) => !must.includes(id))].map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id) && !h.guest);
-  // (ARMY-WEAKNESS: in an army run, a hero's strength as the army sees it: x1.3 on a class it is weak to, x0.85 on one it resists: `matchMult`)
+  // (ARMY-WEAKNESS: in an army run, a hero's strength as the army sees it: x1.3 on a class it is weak to, x0.9 on one it resists: `matchMult`)
   const army = run.mode?.kind === 'army' ? run.mode.army : undefined;
   const seen = (h: Owned): number => strengthOf(meta, h, run) * (ARMY_WEAKNESS.on ? matchMult(matchOf(army, h.kind)) : 1);
   const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id) && !h.guest).sort((a, b) => seen(b) - seen(a) || a.id - b.id);
