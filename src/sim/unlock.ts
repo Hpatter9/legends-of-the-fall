@@ -24,10 +24,15 @@ export const toCollect = (m: Meta): string[] => PULL_HEROES.filter((k) => !owns(
 
 /** The hero not owned that is closest to joining (most shards; the first of equals in roster order, or `rng`'s pick among them). Undefined when all are owned. */
 export function closest(m: Meta, rng?: Rng): string | undefined {
+  const best = closestTied(m);
+  return rng ? rng.pick(best) : best[0];
+}
+
+/** IAP (the odds table, docs/notes/iap.md): every hero not owned tied for the most shards, in roster order (empty when all are owned). */
+export function closestTied(m: Meta): string[] {
   const left = toCollect(m);
   const top = Math.max(0, ...left.map((k) => haveOf(m, k)));
-  const best = left.filter((k) => haveOf(m, k) === top);
-  return rng ? rng.pick(best) : best[0];
+  return left.filter((k) => haveOf(m, k) === top);
 }
 
 /** BATTLE-POLISH (docs/notes/battle-polish.md): the heroes begun (some shards, not yet joined), the nearest to joining first (equals in
@@ -88,11 +93,16 @@ export function giveShards(m: Meta, kind: string, n: number): Given {
   return out;
 }
 
+/** IAP (the odds table): whether the next pull is the pity's (its count of pulls without unlock shards has reached `pityAt`). With every hero owned there is none to steer to, and the even draw stands. */
+export const pityDue = (m: Meta): boolean => (m.unlockDry ?? 0) + 1 >= pityAt(ownedCount(m)) && toCollect(m).length > 0;
+/** IAP (the odds table): the heroes an even pull draws from, each as likely as any other: every pullable hero, and the content heroes owned (never a Mythic). */
+export const drawPool = (m: Meta): string[] => [...PULL_HEROES, ...m.unlocked.filter((k) => isContent(k) && !isMythic(k))];
+
 /** The kind a pull draws: any pullable hero or owned content hero, each as likely as any other (FAIR-SUMMONS); every `PITY_PULLS` pulls without unlock shards, the hero closest to joining.
  *  A Mythic never comes from a pull, owned or not (docs/notes/mythic-heroes.md). */
 export function drawKind(m: Meta, rng: Rng): { kind: string; pity: boolean } {
-  const near = (m.unlockDry ?? 0) + 1 >= pityAt(ownedCount(m)) ? closest(m, Rng.from(m.seed, PITY_SALT, m.pulls)) : undefined;
+  const near = pityDue(m) ? closest(m, Rng.from(m.seed, PITY_SALT, m.pulls)) : undefined;
   if (near) return { kind: near, pity: true };
-  const pool = [...PULL_HEROES, ...m.unlocked.filter((k) => isContent(k) && !isMythic(k))];
+  const pool = drawPool(m);
   return { kind: pool[Math.min(pool.length - 1, Math.floor(rng.next() * pool.length))], pity: false };
 }

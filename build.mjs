@@ -16,6 +16,8 @@ const out = process.argv.indexOf('--out') >= 0 ? process.argv[process.argv.index
 // (STORE-READY: `--store play` builds the Google Play version, which never looks for updates outside Play: `src/appUpdate.ts`,
 //  `docs/notes/store-readiness.md`. With no flag the build is the web page and the GitHub release's app, as before)
 const storeArg = process.argv.indexOf('--store') >= 0 ? process.argv[process.argv.indexOf('--store') + 1] : '';
+// (IAP, docs/notes/iap.md: the Play build reads RevenueCat's public Android key from REVENUECAT_ANDROID_KEY, which the workflow passes from a
+//  GitHub secret; no other build carries it, and none is committed. Without it the Play build's Shop says it is not set up)
 const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 let commit = 'dev';
 try {
@@ -51,7 +53,7 @@ const options = {
   loader: { '.png': 'dataurl', '.webp': 'dataurl' },
   assetNames: '[dir]/[name]-[hash]',
   metafile: true,
-  define: { __GAME_VERSION__: JSON.stringify(version), __TACTIC_ART__: JSON.stringify(TACTIC_ART), __STORE__: JSON.stringify(storeArg), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
+  define: { __GAME_VERSION__: JSON.stringify(version), __TACTIC_ART__: JSON.stringify(TACTIC_ART), __STORE__: JSON.stringify(storeArg), __RC_KEY__: JSON.stringify(storeArg === 'play' ? process.env.REVENUECAT_ANDROID_KEY ?? '' : ''), ...(boardArg ? { __BOARD__: JSON.stringify(boardArg) } : {}) },
 };
 
 // (PLAY-SIZE, docs/notes/play-size.md: game.js held every picture the code imports as base64, 208 MB of script that the page, and the
@@ -332,7 +334,7 @@ const writeIndexHtml = () => {
             readFileSync('src/eidolonChains.css', 'utf8') +
             readFileSync('src/stall.css', 'utf8'),
         )
-        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/jrpgRecap.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8') + readFileSync('src/oneEach.css', 'utf8') + readFileSync('src/easyMerge.css', 'utf8') + readFileSync('src/guest.css', 'utf8') + readFileSync('src/secret.css', 'utf8') + readFileSync('src/relicCard.css', 'utf8') + readFileSync('src/stats.css', 'utf8') + readFileSync('src/tactics.css', 'utf8') + readFileSync('src/ornateMenus.css', 'utf8') + readFileSync('src/nemesis.css', 'utf8') + readFileSync('src/paintedCombat.css', 'utf8') + readFileSync('src/paintedBattlePopups.css', 'utf8') + readFileSync('src/paintedBattleReports.css', 'utf8') + readFileSync('src/paintedDeployment.css', 'utf8') + readFileSync('src/runeBench.css', 'utf8') + readFileSync('src/runeBenchArt.css', 'utf8') + readFileSync('src/paintedTavern.css', 'utf8') + readFileSync('src/paintedSpells.css', 'utf8') + readFileSync('src/alive.css', 'utf8') + readFileSync('src/castleRemake.css', 'utf8') + readFileSync('src/duelShow.css', 'utf8') + readFileSync('src/warRoom.css', 'utf8') + readFileSync('src/paintedButtonsSlices.css', 'utf8') + readFileSync('src/pauseTips.css', 'utf8') + readFileSync('src/paintedButtons.css', 'utf8'))
+        .replace('/*__KEEP_KINGDOM_CSS__*/', () => readFileSync('src/keepKingdom.css', 'utf8') + readFileSync('src/battleCommand.css', 'utf8') + readFileSync('src/fightHud.css', 'utf8') + readFileSync('src/unitInfo.css', 'utf8') + readFileSync('src/battleReports.css', 'utf8') + readFileSync('src/jrpgRecap.css', 'utf8') + readFileSync('src/trophyWall.css', 'utf8') + readFileSync('src/heroArtwork.css', 'utf8') + readFileSync('src/settingsMenu.css', 'utf8') + readFileSync('src/bossBig.css', 'utf8') + readFileSync('src/questBattles.css', 'utf8') + readFileSync('src/oneEach.css', 'utf8') + readFileSync('src/easyMerge.css', 'utf8') + readFileSync('src/guest.css', 'utf8') + readFileSync('src/secret.css', 'utf8') + readFileSync('src/relicCard.css', 'utf8') + readFileSync('src/stats.css', 'utf8') + readFileSync('src/tactics.css', 'utf8') + readFileSync('src/ornateMenus.css', 'utf8') + readFileSync('src/shop.css', 'utf8') + readFileSync('src/nemesis.css', 'utf8') + readFileSync('src/paintedCombat.css', 'utf8') + readFileSync('src/paintedBattlePopups.css', 'utf8') + readFileSync('src/paintedBattleReports.css', 'utf8') + readFileSync('src/paintedDeployment.css', 'utf8') + readFileSync('src/runeBench.css', 'utf8') + readFileSync('src/runeBenchArt.css', 'utf8') + readFileSync('src/paintedTavern.css', 'utf8') + readFileSync('src/paintedSpells.css', 'utf8') + readFileSync('src/alive.css', 'utf8') + readFileSync('src/castleRemake.css', 'utf8') + readFileSync('src/duelShow.css', 'utf8') + readFileSync('src/warRoom.css', 'utf8') + readFileSync('src/paintedButtonsSlices.css', 'utf8') + readFileSync('src/pauseTips.css', 'utf8') + readFileSync('src/paintedButtons.css', 'utf8'))
         .replace('__VERSION__', version),
     ),
   );
