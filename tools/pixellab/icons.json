@@ -1,14 +1,271 @@
 {
   "wanted_mark": {
-    "size": [64, 64], "seed": 501, "style": "src/art/ui/combat-icon-pistol.png",
+    "size": [
+      64,
+      64
+    ],
+    "seed": 501,
+    "style": "src/art/ui/combat-icon-pistol.png",
     "prompt": "a small floating bounty mark icon: a torn parchment wanted notice nailed with a single iron nail, a red wax seal, a thin red crosshair ring around it, bold simple shape, centred, no text, no letters"
   },
   "crown_mark": {
-    "size": [64, 64], "seed": 502, "style": "src/art/ui/combat-icon-pistol.png",
+    "size": [
+      64,
+      64
+    ],
+    "seed": 502,
+    "style": "src/art/ui/combat-icon-pistol.png",
     "prompt": "a small floating gold royal crown icon with five points and one red gem in the middle, bright rim light, bold simple shape, centred, no text"
   },
   "status_curse": {
-    "size": [96, 96], "seed": 503, "style": "src/art/fx/status/atlas.png", "styleCrop": [1152, 96, 1248, 192],
+    "size": [
+      96,
+      96
+    ],
+    "seed": 503,
+    "style": "src/art/fx/status/atlas.png",
+    "styleCrop": [
+      1152,
+      96,
+      1248,
+      192
+    ],
     "prompt": "a status effect icon for cursed: a glowing violet hexed eye inside a cracked purple sigil ring, purple smoke wisps, painted glossy game icon, centred, no text"
+  },
+  "council_hunt": {
+    "size": [
+      96,
+      96
+    ],
+    "seed": 520,
+    "style": "src/art/council/duel.png",
+    "prompt": "a game icon: a hunting horn with a red tassel over a single paw print, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "council_plot": {
+    "size": [
+      96,
+      96
+    ],
+    "seed": 521,
+    "style": "src/art/council/duel.png",
+    "prompt": "a game icon: a rolled scroll sealed with black wax, a thin dagger thrust through it, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "council_spared": {
+    "size": [
+      96,
+      96
+    ],
+    "seed": 522,
+    "style": "src/art/council/duel.png",
+    "prompt": "a game icon: a knight's helm laid down on the ground, a broken sword beside it, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "temper_brute": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 523,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a spiked iron gauntlet fist, clenched, cracking the ground beneath it, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "temper_schemer": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 524,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a hooded half-closed eye, a thin dagger hidden behind it, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "temper_glory": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 525,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a raised golden trophy cup with a laurel wreath, a single drop of blood on its rim, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "temper_coward": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 526,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a fleeing boot heel trailing dust, a dropped broken spear, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "temper_zealot": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 527,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a burning candle in an iron holder, its flame tall and straight, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "temper_oathbound": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 528,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: two clasped hands bound in a red cord knot, a drop of blood between them, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "temper_trickster": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 529,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a grinning jester's mask split in two halves, one light and one dark, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "temper_veteran": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 530,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a battered much-dented iron helm with a healed scar across it, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "weak_dread": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 531,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a wide-eyed skull with a single tear of cold sweat, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "weak_fire": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 532,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a flame with a cracked shield shying away from it, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "weak_frost": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 533,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: an icicle shard with frost creeping over an iron gauntlet, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "weak_storm": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 534,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a lightning bolt splitting an iron helm, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "weak_venom": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 535,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a green dripping fang over a small glass vial, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "weak_heights": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 536,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a cliff edge with crumbling stones and a dizzy spiral, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "weak_glutton": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 537,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a gnawed meat drumstick and an overturned tankard, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "weak_craven": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 538,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a white rag of surrender tied to a broken spear, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "weak_vain": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 539,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a gold-framed hand mirror with cracked glass, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "hunted_mark": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 540,
+    "style": "src/art/nemesis-traits/fearless.png",
+    "prompt": "a game icon: a red hunter's crosshair over a wax-sealed bounty tag, one bold symbol, muted gothic colours with violet, iron and blood-red accents, dark outline, centred with clear space round it, no text, no letters"
+  },
+  "calmap_floor": {
+    "size": [
+      64,
+      64
+    ],
+    "seed": 560,
+    "style": "src/art/stand/floor1.png",
+    "transparent": false,
+    "prompt": "a seamless top-down dungeon floor tile: worn dark flagstones with grey ash in the cracks and a faint orange ember glow, fills the whole tile edge to edge, no text"
+  },
+  "calmap_walltop": {
+    "size": [
+      64,
+      64
+    ],
+    "seed": 561,
+    "style": "src/art/stand/walltop.png",
+    "transparent": false,
+    "prompt": "a seamless top-down tile of the top of a dungeon wall: black basalt blocks with a rim of dull red light, fills the whole tile edge to edge, no text"
+  },
+  "quest_duchess": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 562,
+    "style": "src/art/quests/gwen-face.png",
+    "prompt": "a small white nanny goat in a three-quarter portrait, short curved horns, a little beard, a tiny gold court ribbon at her neck, dignified and a little smug, painted head and shoulders portrait, warm candlelight, centred, no text"
+  },
+  "quest_spoils": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 563,
+    "style": "src/art/quests/gwen-face.png",
+    "prompt": "a torn parchment war map pinned with a dagger, a red cross marked on a fortress, by candlelight, painted, centred, no text, no letters"
+  },
+  "quest_rift": {
+    "size": [
+      128,
+      128
+    ],
+    "seed": 564,
+    "style": "src/art/quests/gwen-face.png",
+    "prompt": "a jagged cracked violet rift crystal floating, bright light pouring out of its cracks, painted, centred, no text"
   }
 }
