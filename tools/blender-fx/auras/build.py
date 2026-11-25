@@ -4,6 +4,7 @@
     python3 tools/blender-fx/auras/build.py --all           render everything again
     python3 tools/blender-fx/auras/build.py --only guardian,caster
     python3 tools/blender-fx/auras/build.py --sheet out/auras.png      a contact sheet of every strip (after a build)
+    python3 tools/blender-fx/auras/build.py --pack          pack again from the frames already rendered
 
 An aura is a soft, layered, living field of light round a fighter: a ring or sigil on the ground under its feet, wisps rising
 at its rim, a shimmering shell behind it that is hollow where the body stands, and a few motes at its sides. Each piece is a
@@ -11,7 +12,8 @@ loop of FRAMES frames in a square cell of CELL px, seen by the game's own camera
 a modelled object: light, rings, lines of light, sparks, flame, smoke and streaks only (the pipeline's rule).
 
 The pieces are the parts `src/render/auraStyles.ts` names (`<class>.<step>.<role>`): `RECIPES` here gives each its scene. The
-frames are rendered to out/blender-fx/auras/<key>/, cut to the game's pixels and palette by pixelate.py, and packed as
+frames are rendered to out/blender-fx/auras/<key>/ at twice the cell, shrunk with their soft edges kept (`soften`: graded alpha, not
+the hard cut the battle clips take: an aura is soft light), and packed as
 `src/art/fx/aura/atlas.png` with `atlas.json` (the cell, and each key's strip: column, row, frames), the same seam the
 painted atlas used, so the fight's aura and the menus' read it with no other change.
 """
@@ -85,6 +87,18 @@ def _rim(c, n, r, back=0.0):
     for i in range(n):
         a = i * TAU / n + c.rnd.uniform(-0.25, 0.25)
         out.append((math.cos(a) * r, math.sin(a) * r, (i / n + c.rnd.uniform(0, 0.08)) % 1.0, c.rnd.uniform(0.75, 1.0)))
+    return out
+
+
+def _glows(c, n, strength=1.6):
+    """`n` soft points of light: each a small round patch facing the camera, hot at its heart and fading out to nothing (a ball of
+    light renders as a hard disc, and at this size a hard disc is a square)."""
+    out = []
+    for _ in range(n):
+        o, a = c.disc('ramp', strength, 1.0)
+        o.rotation_euler = (math.radians(60), 0, math.radians(45))
+        a.inputs[1].default_value = 2.2
+        out.append(o)
     return out
 
 
@@ -164,14 +178,14 @@ def bits(c, n=8, r=0.62, h=1.3, size=0.085, leaf=False, spin=0.6):
         m, v = c.flat('bright', 1.5)
         obs = [c.ribbon([((-0.5, 0, 0), (0, 0, 1)), ((0, 0, 0), (0, 0, 1)), ((0.5, 0, 0), (0, 0, 1))], lambda u: 0.02 + 0.3 * math.sin(u * math.pi), m) for _ in range(n)]
     else:
-        obs = c.sparks(n, 'spark', 1.0, 1.9)
+        obs = _glows(c, n)
     places = _rim(c, n, r)
 
     def step(t):
         for o, (x, y, ph, s) in zip(obs, places):
             g = (t + ph) % 1.0
             a = math.atan2(y, x) + spin * g
-            put(o, (math.cos(a) * r, math.sin(a) * r, 0.1 + g * h), size * s * bell(g) ** 0.5 * (3.2 if leaf else 1), (g * 5, g * 3, a) if leaf else None)
+            put(o, (math.cos(a) * r, math.sin(a) * r, 0.1 + g * h), size * s * bell(g) ** 0.5 * (3.2 if leaf else 1.5), (g * 5, g * 3, a) if leaf else None)
     return step
 
 
@@ -194,14 +208,14 @@ def halo(c, r=0.5, z=0.0, n=4, thick=0.035):
     from lib import put
     ring, rv = c.ring('bright', thick / r, 1.6)
     glow, ga = c.disc('mid', 0.7, r * 0.9, hole=0.5)
-    obs = c.sparks(n, 'hot', 0.05, 2.0)
+    obs = _glows(c, n)
 
     def step(t):
         put(ring, (0, 0, z), (r, r, 1))
         put(glow, (0, 0, z - 0.01))
         for i, o in enumerate(obs):
             a = TAU * (i + t) / n
-            put(o, (math.cos(a) * r, math.sin(a) * r, z), 1 + 0.4 * math.sin(TAU * t + i))
+            put(o, (math.cos(a) * r, math.sin(a) * r, z), 0.1 * (1 + 0.3 * math.sin(TAU * t + i)))
     return step
 
 
@@ -218,7 +232,10 @@ def glint(c, arms=4, r=0.42, z=0.0, turn=0.0):
         side = (-d[2], 0, d[0])
         o = c.ribbon([((-d[0], 0, -d[2]), side), ((0, 0, 0), side), (d, side)], lambda u: 0.02 + 0.2 * math.sin(u * math.pi) ** 3, m)
         o.parent = root
-    heart = c.sparks(1, 'hot', 0.16, 2.2)[0]
+    # (its heart is a soft round glow, wider than its arms are thick)
+    heart = _glows(c, 1, 2.0)[0]
+    heart.rotation_euler = (math.radians(60) , 0, 0)
+    heart.scale = (0.55, 0.55, 0.55)
     heart.parent = root
 
     def step(t):
@@ -335,7 +352,10 @@ def R(scene, oy, **opt):
 
 def klass(g1, g2, rise1, rise2, mote, own=None, shell_opt=None):
     """A class's parts: its ring at each step, its wisps at each step, its shell and mote at step 2, and its own piece."""
-    # (the light aura's shell is smaller and fainter than the strong one's)
+    # (the light aura's shell is smaller and fainter than the strong one's; its ring is drawn a little heavier and its wisps are
+    # two fifths more than first made, so it is plainly an aura, and still plainly less than the strong one)
+    g1 = {**g1, 'thick': g1.get('thick', 0.024) * 1.35, 'glow': g1.get('glow', 1.0) * 1.3}
+    rise1 = dict(rise1, opt={**rise1['opt'], 'n': round(rise1['opt']['n'] * 1.4)})
     out = {'1.ground': R('ground', FLAT, **g1), '1.shell': R('shell', MID, **{'w': 0.42, 'h': 0.6, 'strength': 6.0, **(shell_opt or {})}), '1.rise': rise1, '2.ground': R('ground', FLAT, **g2), '2.shell': R('shell', MID, **(shell_opt or {})),
            '2.rise': rise2, '2.motes': mote}
     out.update(own or {})
@@ -421,26 +441,44 @@ def render(key):
     open(os.path.join(out, 'stamp'), 'w').write(stamp(key))
 
 
+def soften(path):
+    """One rendered frame (twice the cell, straight alpha) as the game's frame: shrunk by a box filter with its colour weighted by its
+    alpha (so a faint edge keeps its colour and does not darken), its alpha kept graded, not cut hard: an aura is soft light that
+    fades out. Alpha is kept in 16 steps and colour in 32 a channel, which is what lets the picture pack small; a frame's outermost
+    pixels are cleared, so a smoothed frame never takes colour from its neighbour in the atlas."""
+    import numpy as np
+    from PIL import Image
+    a = np.asarray(Image.open(path).convert('RGBA')).astype(np.float32) / 255
+    pm = a.copy()
+    pm[..., :3] *= a[..., 3:4]
+    h, w = pm.shape[0] // 2, pm.shape[1] // 2
+    pm = pm.reshape(h, 2, w, 2, 4).mean(axis=(1, 3))
+    al = pm[..., 3:4]
+    rgb = np.where(al > 1e-4, pm[..., :3] / np.maximum(al, 1e-4), 0)
+    al = np.round(np.clip(al, 0, 1) * 15) / 15
+    rgb = np.round(np.clip(rgb, 0, 1) * 31) / 31
+    out = np.concatenate([rgb * (al > 0), al], axis=2)
+    out[0, :], out[-1, :], out[:, 0], out[:, -1] = 0, 0, 0, 0
+    return (out * 255 + 0.5).astype(np.uint8)
+
+
 def pack():
     import numpy as np
     from PIL import Image
-    import lib
-    from pixelate import pixelate
-    for k, hexc in COLOURS.items():
-        lib.PALETTES[f'aura-{k}'] = palette(hexc)
     rows = -(-len(KEYS) * FRAMES // COLS)
     atlas = np.zeros((rows * CELL, COLS * CELL, 4), dtype=np.uint8)
     parts = {}
     for n, key in enumerate(KEYS):
-        frames, _, _ = pixelate(RAW, spec_of(key))
         col, row = (n * FRAMES) % COLS, (n * FRAMES) // COLS
-        for i, fr in enumerate(frames):
-            a = np.asarray(fr)
+        for i in range(FRAMES):
+            a = soften(os.path.join(RAW, key, f'{i:02d}.png'))
             assert a.shape[:2] == (CELL, CELL), (key, a.shape)
             atlas[row * CELL:(row + 1) * CELL, (col + i) * CELL:(col + i + 1) * CELL] = a
         parts[key] = [col, row, FRAMES]
     os.makedirs(ART, exist_ok=True)
-    Image.fromarray(atlas, 'RGBA').save(os.path.join(ART, 'atlas.png'), optimize=True)
+    # (one palette of 256 colours, each with its own alpha, for the whole atlas: a third of the size of the same picture in full
+    # colour, and its soft edges are kept)
+    Image.fromarray(atlas, 'RGBA').quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE).save(os.path.join(ART, 'atlas.png'), optimize=True)
     json.dump(dict(cell=CELL, parts=dict(sorted(parts.items()))), open(os.path.join(ART, 'atlas.json'), 'w'), separators=(',', ':'))
     print(f'{len(KEYS)} strips, atlas {atlas.shape[1]}x{atlas.shape[0]}, {os.path.getsize(os.path.join(ART, "atlas.png"))} bytes')
 
@@ -472,6 +510,8 @@ def main(argv):
         return
     if '--sheet' in argv:
         return sheet(argv[argv.index('--sheet') + 1], int(os.environ.get('ZOOM', 2)))
+    if '--pack' in argv:
+        return pack()
     only = argv[argv.index('--only') + 1].split(',') if '--only' in argv else None
     todo = []
     for key in KEYS:

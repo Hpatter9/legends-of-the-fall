@@ -40,19 +40,21 @@ python3 tools/blender-fx/auras/strips.py <before dir> <after dir> docs/samples/a
   sparks, flame and smoke. **Nothing is a modelled object** (the pipeline's rule).
 - `RECIPES` gives each part of each class (`<class>.<step>.<role>`, the keys `src/render/auraStyles.ts` names) its scene and
   options; each class's palette is made from its one colour.
-- Each part is a loop of 8 frames in a 48 px cell, seen by the game's own camera, rendered at twice the size and cut to the
-  game's pixels and a palette of 10 colours by `pixelate.py`. A loop's last frame runs into its first: what rises is carried on
+- Each part is a loop of 8 frames in a 48 px cell, seen by the game's own camera, rendered at twice the size and shrunk with
+  its **soft edges kept** (`soften`: colour weighted by alpha, alpha graded and not cut hard, as the battle clips' is: an aura
+  is soft light that fades out). The atlas is packed with one palette of 256 colours, each with its own alpha, which is a third
+  of the size of the same picture in full colour. The game samples it smoothly (`AURA_PIXEL` is false for it), so a part drawn
+  larger than its pixels stays soft. A loop's last frame runs into its first: what rises is carried on
   a phase that wraps, what turns turns one step of its symmetry, and the noise walks a circle.
 - The whole set (106 strips, 848 frames) renders in about 30 seconds on four cores and is packed as
   `src/art/fx/aura/atlas.png` with `atlas.json`: **the same seam the painted atlas used**, so the fight's aura
-  (`awakenAura.ts`), the menus' and scenes' (`auraCanvas.ts`) and the cinematics' read it with no other change. Cells of 48 px
-  or less are drawn sharp (`AURA_PIXEL`).
+  (`awakenAura.ts`), the canvas one (`auraCanvas.ts`) and the cinematics' read it with no other change.
 
 ## The sizes
 
 | | Before | After |
 | --- | --- | --- |
-| `src/art/fx/aura/atlas.png` | 6,298,225 bytes, 1536 x 3840 | 375,068 bytes, 768 x 2544 |
+| `src/art/fx/aura/atlas.png` | 6,298,225 bytes, 1536 x 3840 | 215,762 bytes, 768 x 2544 |
 | Decoded (RGBA) | 23,592,960 bytes | 7,815,168 bytes |
 | The built game (`out/web`) | 299,547,800 bytes | about 5.5 MB less |
 
@@ -112,9 +114,36 @@ Drawn on no fighter at all today (a gap, not an aura to replace): a taunt, the c
 the top row the light aura, the bottom the strong one; in each row the old aura, then the new at two moments of its loop.
 `aura-all-g2.jpg` and `aura-all-g3.jpg` are all thirteen together; `contact-sheet.png` is every strip of the atlas.
 
+## The second pass (the director's four)
+
+1. **Soft alpha.** The first cut took the battle clips' finish (hard alpha, a palette of 10): the shell was a hard-edged oval.
+   The frames now keep their graded alpha and the shell is a glow that fades out.
+2. **Sparks and motes** are soft round points with a glow (a small patch of light facing the camera, hot at its heart), where
+   they were balls of light, which at this size were white squares (the Gunner's, the Arcanist's, the Caster's).
+3. **The Beast's and the Vanguard's flames** are soft licks: the same flames with their soft edges kept, sampled smoothly.
+4. **The light aura is louder**: its ring is a third heavier and brighter and drawn larger, its wisps are two fifths more, its
+   shell brighter (0.5 to 0.65). The strong aura was raised with it (a fuller shell and ring), so it stays plainly the stronger.
+
+What is light is added to what is behind it (`add`: the shell, the motes, a halo, what circles or streams, the extra sparks);
+the ring and the wisps are laid over with their own soft edges, so they read on pale ground as well as dark.
+
+## The menus, the other sizes, grade 4
+
+- **The menus draw no aura today.** The tavern, the hall and the camp ask `menuAuraStep`, which is 0 for every hero ("Home
+  scenes have no combat tier, so do not wear a combat aura"), the party page's tableau takes a step only for the equipment a
+  hero wears, and `wearAura` has no caller. So there is nothing of the canvas aura on any menu to look at. The cinematics use
+  the fight's own `AwakenAura`.
+- **360 x 780 and 412 x 915** and **grade 4** (which wears the strong aura, with its violet rim): the Knight, the Wizard and the
+  Werewolf at each, `docs/samples/auras/aura-sizes-and-grade4.jpg`.
+
+## A fault seen in main, not in this work
+
+The photographing runs log a page error in about one run in three since 0.615 (one in thirteen before): `Failed to execute
+'drawImage' on 'CanvasRenderingContext2D'`, from `CastleScene.paintGreatHall` (called from `CastleScene.terrace`): the home
+castle's scene draws a picture before it has loaded. It is on main's own build too, and is nothing of the aura's.
+
 ## What I did not look at
 
-The menus' canvas aura (the tavern, the hall, the camp) and the cinematics' were not photographed: they read the same atlas
-through the same poses, and only the fight was looked at. 360 x 780 and 412 x 915 were not photographed (the aura is drawn in
-the fighter's own space, so it scales with the fighter). Reduced motion was not photographed (its rule is unchanged and
-tested). Grade 4 was not photographed (it wears the strong aura, as grade 3).
+The cinematics' aura was not photographed (it is the fight's own class, reading the same atlas). Reduced motion was not
+photographed (its rule is unchanged and tested). At 360 x 780, 412 x 915 and grade 4 three classes were looked at, not all
+thirteen.

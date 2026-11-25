@@ -6,12 +6,16 @@ import { newPose, poseAura } from '../src/render/auraPlace';
 import { HERO_TRAITS, TRAITS } from '../src/sim/traits';
 import { ALL_HEROES } from '../src/sim/units';
 import atlas from '../src/art/fx/aura/atlas.json';
+import { AURA_PIXEL } from '../src/render/auraArt';
 
-test('the rendered aura strips are small transparent pixel cells and fit without overlap', () => {
+test('the rendered aura strips are small soft-edged transparent cells and fit without overlap', () => {
   const png = readFileSync('src/art/fx/aura/atlas.png');
-  assert.equal(png[25], 6, 'RGBA artwork preserves transparency');
-  // (AURAS-BLENDER: the atlas is rendered in Blender as pixel art, drawn sharp; the painted one it replaced had 96 px cells and was 6.3 MB)
-  assert.equal(atlas.cell, 48, 'pixel cells, drawn sharp in both renderers');
+  // (colour type 3 with its own alpha for each colour, or 6: either keeps graded transparency; the builder packs the first, a third the size)
+  assert.ok(png[25] === 3 || png[25] === 6, 'the artwork keeps its transparency');
+  assert.ok(png[25] !== 3 || png.includes(Buffer.from('tRNS')), 'a paletted atlas carries its alpha');
+  // (AURAS-BLENDER: the atlas is rendered in Blender with soft edges and sampled smoothly; the painted one it replaced had 96 px cells and was 6.3 MB)
+  assert.equal(atlas.cell, 48, 'small cells');
+  assert.equal(AURA_PIXEL, false, 'soft-edged strips are sampled smoothly in both renderers');
   assert.ok(png.length < 400_000, 'the whole atlas stays small');
   const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
   assert.ok(width <= 4096 && height <= 4096, 'fits mobile texture limits');
