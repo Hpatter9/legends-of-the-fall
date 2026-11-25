@@ -276,8 +276,7 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   `nine_tails`, `summon_grave_*`, `elite_*` and `yokai_witch`/`yokai_seer` are their soldiers' sheets reskinned frame by frame
   (`reskin.py`: a key frame by `/edit-images-v2`, every frame by `/transfer-outfit-v2` with it as the reference, slips mended by
   `/edit-animation-v2`; a few fade-out frames are the source's own wisps, recoloured). The Wanted and crown marks, the Cursed icon,
-  the Council's hunt, plot and spared, the eight temperaments, the nine weaknesses, the hunted badge, the Calamity's floor and wall
-  top and three quest faces are `/generate-image-v2` with the game's icons as the style image (`icons.py`, picks in `place.py`).
+  the Council's hunt, plot and spared, the eight temperaments, the nine weaknesses, the hunted badge and three quest faces are `/generate-image-v2` with the game's icons as the style image (`icons.py`, picks in `place.py`).
   PixelLab's terms leave the output's ownership with us.
 
 ## Castle courtyard (`src/art/castle/`)

@@ -30,8 +30,7 @@ PICKS = {
     'weak_glutton': ('cand01', 'src/art/nemesis-traits/weak-glutton.png'),
     'weak_craven': ('cand00', 'src/art/nemesis-traits/weak-craven.png'),
     'weak_vain': ('cand03', 'src/art/nemesis-traits/weak-vain.png'),
-    'calmap_floor': ('cand00', 'src/art/calmap-dungeon/floor.png'),
-    'calmap_walltop': ('cand00', 'src/art/calmap-dungeon/walltop.png'),
+    # (the Calamity's floor and wall top were made, cand00 of each, but are not wired: the Calamity is hidden for the release)
     'quest_duchess': ('cand00', 'src/art/quests/duchess-face.png'),
     'quest_spoils': ('cand00', 'src/art/quests/spoils-face.png'),
     'quest_rift': ('cand03', 'src/art/quests/rift-face.png'),

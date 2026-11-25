@@ -13,9 +13,8 @@ import { settings } from './settings';
 import encounterUrl from './art/calmap-dungeon/encounters.webp';
 import portalUrl from './art/calmap-dungeon/arrival-portal.webp';
 import frames from './art/calmap-dungeon/manifest.json';
-// (PIXELLAB-ART: the dungeon's own floor and wall top, in place of the retired Last Stand's tiles)
-import floorUrl from './art/calmap-dungeon/floor.png';
-import wallUrl from './art/calmap-dungeon/walltop.png';
+import floorUrl from './art/stand/floor1.png';
+import wallUrl from './art/stand/walltop.png';
 import torchUrl from './art/tower/torch.png';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {

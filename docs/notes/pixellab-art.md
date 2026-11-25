@@ -40,7 +40,6 @@ reference files), and the raw frames and candidates are kept in `art-source/pixe
 | Council News: hunt, plot, spared | `src/art/council/*.png` | `NEWS_ICON` |
 | The eight temperaments | `src/art/nemesis-traits/temper-*.png` | `TEMPER_ICON` |
 | The nine weaknesses, the hunted badge | `weak-*.png`, `hunted.png` | `weakIcon` (the card's Weaknesses well), `.nmHuntMark` on the quarry's seat |
-| Calamity floor and wall top | `src/art/calmap-dungeon/floor.png`, `walltop.png` | `calMap.ts` |
 | Quest faces: spoils, rift, Duchess | `src/art/quests/*-face.png` | `FACES`, `PAINTED` |
 | The pause medallion | `src/art/ui/buttons/pause.webp` | as it was |
 
@@ -51,7 +50,9 @@ is loaded by a hand-written URL.
 
 - **The twenty awakened forms (round 5): 40 sheets.** A reskin costs about 110 generations a sheet, about 4,400 in all, more than
   the plan had left. The director's call: they stay with the round-5 prompt.
-- **The assault icons**: skipped, because the Assault is being removed.
+- **The assault icons**: skipped, because the Assault has been removed (0.615).
+- **The Calamity's floor and wall top**: made (`art-source/pixellab/icons/calmap_*`) but not wired. The Calamity is hidden for the
+  release, and the director's call is not to wire its art.
 - **The ghost ship, the sentry turret, Voltara's aftermath, the king's tent, Duchess's costumes and Natsu's portrait**: not tried in
   this round. Their prompts in [art-gaps-prompt.md](art-gaps-prompt.md) stand.
 
