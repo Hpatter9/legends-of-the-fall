@@ -28,3 +28,20 @@ export const NEMESIS_TRAIT_ICON: Readonly<Record<string, string>> = { ironSkull,
   fireproof, rime, venom, thick, grounded, fearless, elusive,
   'bane:martial': baneMartial, 'bane:arcane': baneArcane, 'bane:devout': baneDevout, 'bane:wild': baneWild,
 };
+
+// PIXELLAB-ART: a weakness's symbol beside its words on the card, and the hunted quarry's badge on its seat (tools/pixellab/icons.json)
+import weakDread from './art/nemesis-traits/weak-dread.png';
+import weakFire from './art/nemesis-traits/weak-fire.png';
+import weakFrost from './art/nemesis-traits/weak-frost.png';
+import weakStorm from './art/nemesis-traits/weak-storm.png';
+import weakVenom from './art/nemesis-traits/weak-venom.png';
+import weakHeights from './art/nemesis-traits/weak-heights.png';
+import weakGlutton from './art/nemesis-traits/weak-glutton.png';
+import weakCraven from './art/nemesis-traits/weak-craven.png';
+import weakVain from './art/nemesis-traits/weak-vain.png';
+import hunted from './art/nemesis-traits/hunted.png';
+
+const WEAK_ICON: Readonly<Record<string, string>> = { 'fears:fire': weakFire, 'fears:frost': weakFrost, 'fears:storm': weakStorm, 'fears:venom': weakVenom, hatesHeights: weakHeights, glutton: weakGlutton, craven: weakCraven, vain: weakVain };
+/** A weakness's symbol: a dread of a hero (`dread:<kind>`) is one skull whoever the hero. */
+export const weakIcon = (w: string): string | undefined => (w.startsWith('dread:') ? weakDread : WEAK_ICON[w]);
+export const HUNTED_ICON = hunted;

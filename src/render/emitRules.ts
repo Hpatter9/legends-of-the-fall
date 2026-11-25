@@ -80,9 +80,11 @@ export const FOE_EMIT: Readonly<Record<string, { kind: EmitKind; at: readonly [n
   hk_orc_archer: { kind: 'bowHand', at: [20, 28], frame: 3 },
   skeleton_archer: { kind: 'bowHand', at: [25, 52], frame: 10 },
   lich_king: { kind: 'staffTip', at: [48, 40], frame: 3 },
-  kitsune: { kind: 'hand', at: [15, 42], frame: 6 },
-  // (PIXELLAB-ART: sheets reskinned frame by frame from these two keep their poses, so their shots leave where theirs do)
+  // (PIXELLAB-ART: sheets reskinned frame by frame from the kitsune's, the gorgon's and the skeleton archer's keep their poses, so their shots leave where theirs do)
   nine_tails: { kind: 'hand', at: [15, 42], frame: 6 },
+  yokai_witch: { kind: 'hand', at: [15, 42], frame: 6 },
+  elite_nyssa: { kind: 'hand', at: [15, 42], frame: 6 },
+  elite_sethra: { kind: 'mouth', at: [5, 45], frame: 10 },
   summon_grave_archer: { kind: 'bowHand', at: [25, 52], frame: 10 },
   shaman_king: { kind: 'staffTip', at: [40, 42], frame: 3 },
   eidolon_voltara: { kind: 'hand', at: [55, 112], frame: 3 },

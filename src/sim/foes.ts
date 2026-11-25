@@ -105,9 +105,9 @@ export const FOES: Record<string, UnitDef> = {
   minotaurChampion: { ...CHAMPION, id: 'minotaurChampion', name: 'Minotaur Champion', sheet: 'minotaur_champion', scale: 0.94 },
   // the Yokai Night Parade (kitsune and tengu sheets of the heroes; the Oni King is generated)
   yokaiFox: { ...YOKAI, id: 'yokaiFox', name: 'Fox Spirit', sheet: 'kitsune', scale: 0.59, role: 'Slips away, leaves decoys, flanks' },
-  yokaiWitch: { ...YOKAI, id: 'yokaiWitch', name: 'Fox Witch', sheet: 'kitsune', scale: 0.59, hp: 190, atk: 26, def: 3, range: 3, shot: 'curse', moveMs: 650, atkMs: 1500, role: 'Curses the toughest heroes, backs off' },
+  yokaiWitch: { ...YOKAI, id: 'yokaiWitch', name: 'Fox Witch', sheet: 'yokai_witch', scale: 0.59, hp: 190, atk: 26, def: 3, range: 3, shot: 'curse', moveMs: 650, atkMs: 1500, role: 'Curses the toughest heroes, backs off' },
   yokaiCrow: { ...YOKAI, id: 'yokaiCrow', name: 'Karasu Tengu', sheet: 'karasu_tengu', scale: 0.53, hp: 210, atk: 28, moveMs: 420, atkMs: 900, jump: 9, flies: true, role: 'Flies, dives on shooters' },
-  yokaiSeer: { ...YOKAI, id: 'yokaiSeer', name: 'Crow Seer', sheet: 'karasu_tengu', scale: 0.53, hp: 200, atk: 24, def: 3, moveMs: 450, atkMs: 900, jump: 9, flies: true, role: 'Possesses the strongest hero' },
+  yokaiSeer: { ...YOKAI, id: 'yokaiSeer', name: 'Crow Seer', sheet: 'yokai_seer', scale: 0.53, hp: 200, atk: 24, def: 3, moveMs: 450, atkMs: 900, jump: 9, flies: true, role: 'Possesses the strongest hero' },
   yokaiMonk: { ...YOKAI, id: 'yokaiMonk', name: 'Yamabushi Monk', sheet: 'yamabushi_tengu', scale: 0.48, hp: 320, atk: 22, def: 9, moveMs: 760, atkMs: 1200, jump: 2, role: 'Wind that shoves heroes off ledges' },
   nineTails: { ...MID, id: 'nineTails', name: 'Nine-Tailed Fox', sheet: 'nine_tails', scale: 0.95, hp: 1500, atk: 46, def: 6, range: 3, shot: 'fire', moveMs: 600, atkMs: 1300, role: 'Foxfire, and heroes turn on their own' },
   oniKing: { side: 'foe', id: 'oniKing', name: 'Oni King', sheet: 'oni_king', scale: 0.5, hp: 3200, atk: 80, def: 11, range: 1, moveMs: 850, atkMs: 1300, jump: 2, role: 'Smashes the line, roars heroes down' },
@@ -137,7 +137,10 @@ const TRIAL_BOSSES: ReadonlySet<string> = new Set(TRIALS.map((t) => t.boss.id));
 export const KIN_SHEET: Readonly<Record<string, string>> = { orc_chieftain: 'hk_orc_brute', bone_captain: 'skeleton_warrior', minotaur_champion: 'minotaur_1', gorgon_queen: 'gorgon_1',
   // PIXELLAB-ART: the sheets reskinned from a soldier's, frame by frame (tools/pixellab/reskin.py)
   alpha_werewolf: 'werewolf_black', nine_tails: 'kitsune', summon_grave_warrior: 'skeleton_warrior', summon_grave_spear: 'skeleton_spearman',
-  summon_grave_archer: 'skeleton_archer' };
+  summon_grave_archer: 'skeleton_archer',
+  elite_gorrak: 'hk_orc_brute', elite_ysolde: 'werewolf_white', elite_hollow: 'skeleton_warrior', elite_sethra: 'gorgon_2', elite_brakka: 'minotaur_1',
+  elite_cindra: 'hk_demon', elite_vexor: 'hk_demon', elite_thrum: 'hk_ogre', elite_nyssa: 'kitsune', elite_warden: 'golem_iron', elite_kuro: 'karasu_tengu',
+  elite_silenus: 'satyr_3', yokai_witch: 'kitsune', yokai_seer: 'karasu_tengu' };
 /** The look a rule reads for `sheet`: its kin's, for those four, else its own. */
 export const kinSheet = (sheet: string): string => KIN_SHEET[sheet] ?? sheet;
 

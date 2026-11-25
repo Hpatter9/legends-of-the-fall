@@ -185,6 +185,20 @@ import plNineTails from '../art/units/nine_tails.png';
 import plSummonGraveWarrior from '../art/units/summon_grave_warrior.png';
 import plSummonGraveSpear from '../art/units/summon_grave_spear.png';
 import plSummonGraveArcher from '../art/units/summon_grave_archer.png';
+import plEliteGorrak from '../art/units/elite_gorrak.png';
+import plEliteYsolde from '../art/units/elite_ysolde.png';
+import plEliteCindra from '../art/units/elite_cindra.png';
+import plEliteVexor from '../art/units/elite_vexor.png';
+import plEliteThrum from '../art/units/elite_thrum.png';
+import plEliteNyssa from '../art/units/elite_nyssa.png';
+import plEliteKuro from '../art/units/elite_kuro.png';
+import plEliteSilenus from '../art/units/elite_silenus.png';
+import plYokaiSeer from '../art/units/yokai_seer.png';
+import plEliteHollow from '../art/units/elite_hollow.png';
+import plEliteBrakka from '../art/units/elite_brakka.png';
+import plEliteSethra from '../art/units/elite_sethra.png';
+import plEliteWarden from '../art/units/elite_warden.png';
+import plYokaiWitch from '../art/units/yokai_witch.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -203,6 +217,20 @@ interface Layout {
 }
 
 const URLS: Record<string, string> = {
+  yokai_witch: plYokaiWitch,
+  elite_warden: plEliteWarden,
+  elite_sethra: plEliteSethra,
+  elite_brakka: plEliteBrakka,
+  elite_hollow: plEliteHollow,
+  yokai_seer: plYokaiSeer,
+  elite_silenus: plEliteSilenus,
+  elite_kuro: plEliteKuro,
+  elite_nyssa: plEliteNyssa,
+  elite_thrum: plEliteThrum,
+  elite_vexor: plEliteVexor,
+  elite_cindra: plEliteCindra,
+  elite_ysolde: plEliteYsolde,
+  elite_gorrak: plEliteGorrak,
   summon_grave_archer: plSummonGraveArcher,
   summon_grave_spear: plSummonGraveSpear,
   summon_grave_warrior: plSummonGraveWarrior,

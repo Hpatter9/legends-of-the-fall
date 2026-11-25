@@ -191,6 +191,9 @@ body.inDuel #hudSpells, body.inDuel .ehHorn, body.inDuel #mana { visibility: hid
 .omChoice.nmSeat.nmBig .nmTemper { left: 62px; top: auto; bottom: 6px; width: 22px; height: 22px; }
 /* NEMESIS-DEPTH, idea 4: the hunt's quarry, ringed in blood red on its seat */
 .omChoice.nmSeat.nmHunted { box-shadow: 0 0 0 2px #b8322a, 0 0 10px 2px rgba(184, 50, 42, 0.55); }
+/* PIXELLAB-ART: the quarry's crosshair badge on the seat's right side, across from the temperament */
+.nmHuntMark { position: absolute; right: 3px; top: 22px; z-index: 2; width: 20px; height: 20px; image-rendering: pixelated; pointer-events: none; filter: drop-shadow(0 1px 1px #000); }
+.omChoice.nmSeat.nmBig .nmHuntMark { right: 8px; top: auto; bottom: 6px; width: 24px; height: 24px; }
 /* NEMESIS-DEPTH, idea 7: a rivalry's line (violet, beside the blood-oath's red) and a plot's words */
 .nmRivalLine { margin: 0; padding: 6px 0 6px 10px; border-left: 3px solid #8a5ad0; color: #e3d6f5; font-size: 14px; line-height: 1.35; }
 .nmPlotLine { margin: 0 0 6px; padding: 6px 0 6px 10px; border-left: 3px solid #b8322a; color: #f0dcc8; font-size: 14px; line-height: 1.35; }

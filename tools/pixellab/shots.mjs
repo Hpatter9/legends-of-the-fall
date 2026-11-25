@@ -50,7 +50,7 @@ try {
       await shot(`warroom-${a}`);
     }
     // (a fight: the army's mid-boss wave, the foes held a moment so the picture shows the lines before they meet)
-    for (const [army, boss] of [['beasts', 'alphaWolf'], ['yokai', 'nineTails']]) {
+    for (const [army, boss] of [['beasts', 'alphaWolf'], ['yokai', 'nineTails'], ['yokai', 'yokaiSeer']]) {
       await page.evaluate((a) => { const g = window.__game; g.home.go(() => g.home.hooks.onArmy(a, 0)); }, army);
       await page.locator('#ptGo').waitFor({ state: 'visible', timeout: 60000 });
       await page.click('#ptGo');
@@ -59,7 +59,7 @@ try {
         const g = window.__game;
         g.run.gold = 500; g.run.roster = party.map((kind, i) => ({ id: i + 1, kind, grade: 1, paid: 5 }));
         g.run.squad = party.map((_, i) => i + 1); g.run.nextId = 6; g.run.event = undefined;
-        for (const s of [8, 7, 9]) { g.run.stage = s; g.newBattle(); if (g.b.units.some((u) => u.def === boss)) break; }
+        for (const s of [8, 7, 9, 5, 4, 6, 3]) { g.run.stage = s; g.newBattle(); if (g.b.units.some((u) => u.def === boss)) break; }
         g.refresh(); document.getElementById('events')?.setAttribute('hidden', ''); g.autoArrange(true);
         return g.b.units.filter((u) => u.side === 'foe').map((u) => u.def);
       }, [PARTY, boss]);

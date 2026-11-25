@@ -35,6 +35,20 @@ def clean(img):
     return img
 
 
+def hue(img, deg):
+    """A kept source frame turned round the colour wheel (a wisp of blue foxfire made green, say); grey and alpha kept."""
+    import colorsys
+    out = img.copy(); px = out.load()
+    for y in range(img.height):
+        for x in range(img.width):
+            r, g, b, a = px[x, y]
+            if not a: continue
+            h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            r2, g2, b2 = colorsys.hsv_to_rgb((h + deg / 360) % 1, s, v)
+            px[x, y] = (round(r2 * 255), round(g2 * 255), round(b2 * 255), a)
+    return out
+
+
 def frames_of(name, lay):
     sh = Image.open(os.path.join(ROOT, 'src/art/units', name + '.png')).convert('RGBA')
     w, h, per = lay['w'], lay['h'], lay['perRow']
@@ -73,6 +87,7 @@ def run(piece):
     # (a frame the source draws as no figure, only its effect, e.g. the last of a fade, is kept as the source drew it)
     for (row, i, f) in frames:
         if f'{row}_{i:02d}' in p.get('keepSource', []):
+            if 'keepHue' in p: f = hue(f, p['keepHue'])
             f.save(os.path.join(d, f'{row}_{i:02d}.png'))
 
     def do(b):

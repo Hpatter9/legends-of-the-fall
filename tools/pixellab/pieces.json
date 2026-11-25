@@ -83,8 +83,9 @@
       "idle",
       0
     ],
-    "seed": 703,
-    "key": "the Hollow Knight, a skeleton champion: a rusted full knight's great helm and breastplate, a tall kite shield with faded blue and gold heraldry, a longsword, same pose, same facing, same size"
+    "seed": 753,
+    "key": "the Hollow Knight, a skeleton champion: a rusted full knight's great helm and breastplate, a tall kite shield with faded blue and gold heraldry, a longsword, same pose, same facing, same size",
+    "extra": "keep each frame's pose, size and position exactly; side view facing right; he always carries the tall kite shield and the longsword; only one figure in each frame"
   },
   "elite_sethra": {
     "source": "gorgon_2",
@@ -144,7 +145,14 @@
       0
     ],
     "seed": 709,
-    "key": "Nyssa, a fox witch: a dark green robe, a lantern of poison-green foxfire, a dark veil over her face, dark grey fox tails, same pose, same facing, same size"
+    "key": "Nyssa, a fox witch: a dark green robe, a lantern of poison-green foxfire, a dark veil over her face, dark grey fox tails, same pose, same facing, same size",
+    "keepSource": [
+      "dead_06",
+      "dead_07",
+      "dead_08",
+      "dead_09"
+    ],
+    "keepHue": -80
   },
   "elite_warden": {
     "source": "golem_iron",
@@ -184,7 +192,14 @@
       0
     ],
     "seed": 713,
-    "key": "the Fox Witch, a fox spirit: a black and violet robe, white paper talismans hanging from her sleeves, black fox tails with violet tips, same pose, same facing, same size"
+    "key": "the Fox Witch, a fox spirit: a black and violet robe, white paper talismans hanging from her sleeves, black fox tails with violet tips, same pose, same facing, same size",
+    "keepSource": [
+      "dead_06",
+      "dead_07",
+      "dead_08",
+      "dead_09"
+    ],
+    "keepHue": 90
   },
   "yokai_seer": {
     "source": "karasu_tengu",

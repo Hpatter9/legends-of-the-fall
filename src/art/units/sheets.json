@@ -6733,5 +6733,305 @@
   },
   "figure": 65,
   "facesRight": true
+ },
+ "elite_gorrak": {
+  "w": 98,
+  "h": 95,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "dead",
+   "hurt"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
+  },
+  "figure": 92,
+  "facesRight": true,
+  "lies": true
+ },
+ "elite_ysolde": {
+  "w": 114,
+  "h": 90,
+  "perRow": 11,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 11,
+   "attack": 6,
+   "idle": 8,
+   "hurt": 2,
+   "dead": 2
+  },
+  "figure": 62,
+  "facesRight": true
+ },
+ "elite_cindra": {
+  "w": 124,
+  "h": 123,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "dead",
+   "hurt"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
+  },
+  "figure": 119,
+  "facesRight": true,
+  "lies": true
+ },
+ "elite_vexor": {
+  "w": 124,
+  "h": 123,
+  "perRow": 5,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "dead",
+   "hurt"
+  ],
+  "counts": {
+   "walk": 5,
+   "attack": 5,
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
+  },
+  "figure": 118,
+  "facesRight": true,
+  "lies": true
+ },
+ "elite_thrum": {
+  "w": 136,
+  "h": 122,
+  "perRow": 8,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "dead",
+   "hurt"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "dead": 5,
+   "hurt": 3
+  },
+  "figure": 121,
+  "facesRight": true,
+  "lies": true
+ },
+ "elite_nyssa": {
+  "w": 146,
+  "h": 83,
+  "perRow": 10,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 10,
+   "idle": 8,
+   "hurt": 2,
+   "dead": 10
+  },
+  "figure": 79,
+  "facesRight": true
+ },
+ "elite_kuro": {
+  "w": 134,
+  "h": 91,
+  "perRow": 8,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 6,
+   "idle": 6,
+   "hurt": 3,
+   "dead": 6
+  },
+  "figure": 90,
+  "facesRight": true
+ },
+ "elite_silenus": {
+  "w": 88,
+  "h": 67,
+  "perRow": 8,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5
+  },
+  "figure": 66,
+  "facesRight": true,
+  "lies": true
+ },
+ "yokai_seer": {
+  "w": 134,
+  "h": 91,
+  "perRow": 8,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 6,
+   "idle": 6,
+   "hurt": 3,
+   "dead": 6
+  },
+  "figure": 88,
+  "facesRight": true
+ },
+ "elite_hollow": {
+  "w": 108,
+  "h": 78,
+  "perRow": 7,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 7,
+   "attack": 5,
+   "idle": 7,
+   "hurt": 2,
+   "dead": 4
+  },
+  "figure": 62,
+  "facesRight": true
+ },
+ "elite_brakka": {
+  "w": 144,
+  "h": 95,
+  "perRow": 12,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 12,
+   "attack": 5,
+   "idle": 10,
+   "hurt": 3,
+   "dead": 5
+  },
+  "figure": 94,
+  "facesRight": true
+ },
+ "elite_sethra": {
+  "w": 140,
+  "h": 94,
+  "perRow": 16,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 13,
+   "attack": 16,
+   "idle": 7,
+   "hurt": 3,
+   "dead": 3
+  },
+  "figure": 85,
+  "facesRight": true
+ },
+ "elite_warden": {
+  "w": 132,
+  "h": 129,
+  "perRow": 8,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 5,
+   "idle": 4,
+   "hurt": 3,
+   "dead": 5
+  },
+  "figure": 119,
+  "facesRight": true,
+  "lies": true
+ },
+ "yokai_witch": {
+  "w": 146,
+  "h": 83,
+  "perRow": 10,
+  "rows": [
+   "walk",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "walk": 8,
+   "attack": 10,
+   "idle": 8,
+   "hurt": 2,
+   "dead": 10
+  },
+  "figure": 80,
+  "facesRight": true
  }
 }

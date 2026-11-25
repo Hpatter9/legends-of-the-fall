@@ -25,15 +25,16 @@ import pimFace from './art/quests/pim-face.png';
 import widowFace from './art/quests/widow-face.png';
 import sorrelFace from './art/quests/sorrel-face.png';
 import lostFace from './art/quests/lost-face.png';
-import spoilsFace from './art/items/star_chart.png';
-import riftFace from './art/items/rift_shard.png';
+// (PIXELLAB-ART: the found map, the rift shard and Duchess painted, in place of two gear tiles and a pixel crop)
+import spoilsFace from './art/quests/spoils-face.png';
+import riftFace from './art/quests/rift-face.png';
 import gwenSheet from './art/quests/gwen.png';
 import boardUrl from './art/quests/board.png';
 import noticeFace from './art/quests/notice-face.png';
 
 /** A giver's portrait for their card and the log's rows (square; drawn at 64 px or less). A patron's is the hero's own and the ruler's
  *  the chosen ruler's (put in by `questCard.ts`); theirs here are fallbacks. Spoils and the rift show a thing, not a face: a found map
- *  and a rift shard, from the gear icons. */
+ *  and a rift shard, painted (PIXELLAB-ART). */
 export const FACES: Record<GiverId, string> = {
   gwen: gwenFace,
   notice: noticeFace,
@@ -75,4 +76,4 @@ export const GWEN = { url: gwenSheet, cell: 64, stand: 1, talk: 5 } as const;
 export const BOARD = boardUrl;
 
 /** The givers whose face is a painting (drawn smooth, not as the pixel placeholders are). */
-export const PAINTED = new Set(['gwen', 'pedlar', 'pilgrim', 'messenger', 'hunter', 'notice', 'patron', 'shepherd', 'gaoler', 'smith', 'sexton', 'pawnbroker', 'lantern', 'herald', 'clock', 'falconer', 'archivist', 'oswy', 'teal', 'pim', 'widow', 'sorrel', 'lost']);
+export const PAINTED = new Set(['gwen', 'pedlar', 'pilgrim', 'messenger', 'hunter', 'notice', 'patron', 'shepherd', 'gaoler', 'smith', 'sexton', 'pawnbroker', 'lantern', 'herald', 'clock', 'falconer', 'archivist', 'oswy', 'teal', 'pim', 'widow', 'sorrel', 'lost', 'spoils', 'rift', 'duchess']);

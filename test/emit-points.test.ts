@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { breathes, CAST, EMIT, FOE_EMIT, ULT_EMIT, ultEmitOffset, strokeLands, STROKE_AT, emitOffset, emitWorld, reachOffset, strokeLay } from '../src/render/emitRules';
 import { REACH } from '../src/render/reachData';
 import { FOES } from '../src/sim/foes';
+import { ELITE_FOES } from '../src/sim/eliteFoes';
 import { MOUTH_RUN, TAIL_MIN, lineLight, mouthRun, streamSpot, tailShare, ultLinked } from '../src/render/blenderFxRules';
 import { SHOW } from '../src/ultShowRules';
 import { UNITS } from '../src/sim/units';
@@ -106,7 +107,8 @@ test('every hero that casts without shooting has a measured point on its sheet, 
 });
 
 test('every foe that shoots has a measured point on its sheet, read on the frame on show as its shot leaves', () => {
-  const shooters = Object.values(FOES).filter((f) => f.shot);
+  // (PIXELLAB-ART: the named elites wear their own sheets, so the ones that shoot are read here too)
+  const shooters = [...Object.values(FOES), ...Object.values(ELITE_FOES)].filter((f) => f.shot);
   assert.ok(shooters.length >= 15);
   for (const f of shooters) {
     const e = FOE_EMIT[f.sheet];
