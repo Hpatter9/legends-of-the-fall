@@ -48,11 +48,11 @@ const clearCards = async (page) => {
   }
 };
 
-// 1. Duchess in the Knight (redrawn whole, on sale): the camp, and a fight she joins (`?duchess=1` brings her into every fight)
-{
-  const { ctx, page } = await open(393, 852, { owned: ['look_duchess_knight'], settings: { duchessHat: 'knight', cinematics: false }, query: '&duchess=1' });
+// 1. Duchess in each costume (redrawn whole, on sale): the camp, and a fight she joins (`?duchess=1` brings her into every fight)
+for (const costume of ['regalia', 'knight', 'lantern']) {
+  const { ctx, page } = await open(393, 852, { owned: ['bundle_wardrobe'], settings: { duchessHat: costume, cinematics: false }, query: '&duchess=1' });
   await clearCards(page);
-  await shot(page, 'knight-camp');
+  await shot(page, `${costume}-camp`);
   await page.evaluate(() => {
     const g = window.__game;
     const r = JSON.parse(JSON.stringify(g.run));
@@ -67,9 +67,7 @@ const clearCards = async (page) => {
   await page.waitForFunction(() => window.__game.b?.units.some((u) => u.def === 'duchess'), null, { timeout: 15000 }).catch(() => errors.push('Duchess did not join the fight'));
   await page.waitForTimeout(2500);
   await clearCards(page);
-  await shot(page, 'knight-fight');
-  await page.waitForTimeout(2500);
-  await shot(page, 'knight-fight-2');
+  await shot(page, `${costume}-fight`);
   await ctx.close();
 }
 

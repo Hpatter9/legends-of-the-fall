@@ -7,6 +7,10 @@
 import { entitledHere } from '../iapRules';
 import knightWalkUrl from '../art/duchess/duchess_knight_walk.png';
 import knightBattleUrl from '../art/duchess/duchess_knight.png';
+import regaliaWalkUrl from '../art/duchess/duchess_regalia_walk.png';
+import regaliaBattleUrl from '../art/duchess/duchess_regalia.png';
+import lanternWalkUrl from '../art/duchess/duchess_lantern_walk.png';
+import lanternBattleUrl from '../art/duchess/duchess_lantern.png';
 
 export type GoatMode = 'graze' | 'walk' | 'nibble' | 'hop' | 'nest';
 
@@ -254,8 +258,11 @@ export interface DressedSheets {
   terrace?: boolean;
 }
 export const DRESSED: Partial<Record<PaidCostume, DressedSheets>> = {
-  // (the Knight, redrawn whole and approved: claude/duchess-costumes; her Crown Terrace poses are not painted yet, so there she is plain)
+  // (the three, redrawn whole and approved: the Knight (claude/duchess-costumes), the Regalia and the Lantern (PR #683); their Crown Terrace
+  //  poses are not painted yet, so there she is plain)
+  regalia: { walk: regaliaWalkUrl, battle: regaliaBattleUrl },
   knight: { walk: knightWalkUrl, battle: knightBattleUrl },
+  lantern: { walk: lanternWalkUrl, battle: lanternBattleUrl },
 };
 
 /** The dressed sheet of a kind for a costume, or undefined (her plain sheet then). */

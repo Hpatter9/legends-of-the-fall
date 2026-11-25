@@ -47,7 +47,7 @@ test('a costume is worn only while it is hers: a refund takes it off by itself; 
   assert.ok(DUCHESS_COSMETICS.some((c) => c.id === 'none' && c.unlocked()));
 });
 
-test('the Shop sells Starfall; Duchess’s costumes and her wardrobe wait, Coming soon, for their redrawn sheets', () => {
+test('the Shop sells Starfall, and each of Duchess’s costumes and her wardrobe once fully dressed', () => {
   const ents = new Set(DUCHESS_COSMETICS.flatMap((c) => (c.entitlement ? [c.entitlement] : [])));
   for (const id of ['look_duchess_regalia', 'look_duchess_knight', 'look_duchess_lantern']) {
     const p = productById(id)!;
@@ -55,7 +55,7 @@ test('the Shop sells Starfall; Duchess’s costumes and her wardrobe wait, Comin
     assert.ok(ents.has(p.entitlements![0]), id);
   }
   assert.deepEqual([...productById('bundle_wardrobe')!.entitlements!].sort(), [...ents].sort());
-  // (a costume is sold only when every place she is drawn has its dressed sheet: the owner turned the cut-down overlays down)
+  // (a costume is sold only when it has its dressed sheets: the owner turned the cut-down overlays down)
   for (const c of PAID_COSTUMES) assert.equal(productById(`look_duchess_${c}`)!.ready, fullyDressed(c), c);
   assert.equal(productById('bundle_wardrobe')!.ready, PAID_COSTUMES.every(fullyDressed));
   assert.equal(productById('look_starfall')!.ready, true);
@@ -84,13 +84,16 @@ test('a costume with no dressed sheet is drawn in her plain sheets: nothing is l
   assert.ok(!existsSync('src/art/duchess/costumes-walk.png') && !existsSync('src/art/duchess/costumes-battle.png'));
 });
 
-test('the Knight is whole dressed sheets on her own sheets\u2019 layouts, and is sold; the Regalia and the Lantern wait for theirs', () => {
-  assert.ok(DRESSED.knight?.walk && DRESSED.knight?.battle);
-  assert.deepEqual(size('src/art/duchess/duchess_knight_walk.png'), size('src/art/duchess/goat.png'));
-  assert.deepEqual(size('src/art/duchess/duchess_knight.png'), size('src/art/units/duchess_goat.png'));
-  assert.ok(fullyDressed('knight') && productById('look_duchess_knight')!.ready);
-  for (const c of ['regalia', 'lantern'] as const) assert.ok(!fullyDressed(c) && !productById(`look_duchess_${c}`)!.ready, c);
-  assert.equal(productById('bundle_wardrobe')!.ready, false);
+test('each costume is whole dressed sheets on her own sheets\u2019 layouts, each walk frame facing as hers does, and all are sold', () => {
+  const mask = (path: string): void => assert.ok(existsSync(path), path);
+  for (const c of PAID_COSTUMES) {
+    assert.ok(DRESSED[c]?.walk && DRESSED[c]?.battle, c);
+    mask(`src/art/duchess/duchess_${c}_walk.png`);
+    assert.deepEqual(size(`src/art/duchess/duchess_${c}_walk.png`), size('src/art/duchess/goat.png'), c);
+    assert.deepEqual(size(`src/art/duchess/duchess_${c}.png`), size('src/art/units/duchess_goat.png'), c);
+    assert.ok(fullyDressed(c) && productById(`look_duchess_${c}`)!.ready, c);
+  }
+  assert.equal(productById('bundle_wardrobe')!.ready, true);
 });
 
 test('costumes are looks only: nothing in the fight reads them', () => {
