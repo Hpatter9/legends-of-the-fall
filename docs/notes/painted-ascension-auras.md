@@ -1,5 +1,7 @@
 # Painted ascension auras
 
+> AURAS-BLENDER (`docs/notes/auras-blender.md`) replaced this painted atlas with one rendered in Blender; this note is kept as the record of what shipped before.
+
 Owner approved the [generated concept](../samples/painted-auras/approved-concept.png) and asked to apply that direction.
 Branch: `art/painted-ascension-auras`. Owner: Codex. No merge, release or deployment requested.
 

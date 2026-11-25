@@ -27,6 +27,9 @@ function courtLife(id: RulerId): SceneLife {
   };
 }
 
+/** How many pictures the goat has (each loads in its own time: ask `framesReady`, not the list's length). */
+export const DUCHESS_FRAMES = 8;
+
 export class CrownTerracePainter {
   readonly backgrounds = new Map<RulerId, HTMLImageElement>();
   readonly buildings = new Map<string, HTMLImageElement>();
@@ -45,7 +48,7 @@ export class CrownTerracePainter {
     const names = [...TERRACE_LANDMARKS.map(p => p.id), 'works'];
     this.ready = Promise.all([
       loadImage(hayUrl).then(image => { this.buildings.set('nest',image); }),
-      ...Array.from({length:8},async (_,i) => { this.duchess[i] = await loadImage(terraceArtUrl(`duchess-${i}`)); }),
+      ...Array.from({length:DUCHESS_FRAMES},async (_,i) => { this.duchess[i] = await loadImage(terraceArtUrl(`duchess-${i}`)); }),
       ...RULERS.map(async ({id}) => {
         const image = await loadImage(terraceArtUrl(id));
         this.backgrounds.set(id, image);
