@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.615.0',
+    date: '2026-11-24',
+    title: 'Ready for release',
+    notes: ['The Assault is withdrawn for now; anything you had put into it is paid back in crowns, once.', 'Its summoning stones now come from an army\'s first Legendary clear and a fortnightly daily chest, so you earn as many as before.', 'The Developer page and every cheat are gone from the game.'],
+  },
+  {
     version: '0.614.0',
     date: '2026-11-24',
     title: 'The Treasury shop',
