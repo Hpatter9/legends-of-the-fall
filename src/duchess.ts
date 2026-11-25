@@ -33,6 +33,8 @@ import { goatSays, type GoatKind } from './quips';
 import { settings } from './settings';
 import goatUrl from './art/duchess/goat.png';
 import goatHalfUrl from './art/duchess/goat-half.png';
+// (ROUND4-WIRE: the painted Wizard Hat and Archery Quiver register their drawer with `drawDuchessCosmetic`)
+import './duchessHats';
 
 const CSS = `
 .duchess { position: fixed; z-index: 3; width: 48px; height: 48px; touch-action: manipulation; image-rendering: pixelated; cursor: pointer; -webkit-tap-highlight-color: transparent; }

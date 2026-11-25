@@ -19,6 +19,9 @@ import buccaneerDieRolling from '../art/ult-show/buccaneer-die-rolling.webp';
 import buccaneerGrapplingHook from '../art/ult-show/buccaneer-grappling-hook.webp';
 import demonSwordsmanHellfireChains from '../art/ult-show/demon-swordsman-hellfire-chains.webp';
 import dreadPirateGhostShip from '../art/ult-show/dread-pirate-ghost-ship.webp';
+// (ROUND4-WIRE: the Pirate trait's Broadside, the ghost ship at rest and with its guns flashing, art-source/round4/ghost_ship.png)
+import pirateGhostShip from '../art/ult-show/pirate-ghost-ship.webp';
+import pirateGhostShipFire from '../art/ult-show/pirate-ghost-ship-fire.webp';
 import gunslingerClockNoon from '../art/ult-show/gunslinger-clock-noon.webp';
 import kitsuneSmallFox from '../art/ult-show/kitsune-small-fox.webp';
 import kunoichiKneelingFinish from '../art/ult-show/kunoichi-kneeling-finish.webp';
@@ -60,6 +63,8 @@ const URLS = {
   'buccaneer-grappling-hook': buccaneerGrapplingHook,
   'demon-swordsman-hellfire-chains': demonSwordsmanHellfireChains,
   'dread-pirate-ghost-ship': dreadPirateGhostShip,
+  'pirate-ghost-ship': pirateGhostShip,
+  'pirate-ghost-ship-fire': pirateGhostShipFire,
   'gunslinger-clock-noon': gunslingerClockNoon,
   'kitsune-small-fox': kitsuneSmallFox,
   'kunoichi-kneeling-finish': kunoichiKneelingFinish,

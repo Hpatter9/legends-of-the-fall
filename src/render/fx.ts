@@ -3879,6 +3879,14 @@ export class Fx {
       const [x, y] = look.on === 'party' || look.on === 'file' ? shown[Math.floor(shown.length / 2)] : shown[0];
       this.label(word, x, y - 26, look.tint, 13, 1200, true);
     }
+    // (ROUND4-WIRE: the Broadside's ghost ship rides over the middle of the raked file, above its word (the file's far end can be off the
+    // screen), at rest, then with every gun port flashing as the shot lands; it drifts a little, still for reduced motion)
+    if (e.what === 'broadside' && shown.length) {
+      const [x, y] = shown[Math.floor(shown.length / 2)];
+      const still = this.reduced;
+      this.showProp('pirate-ghost-ship', x, y - 120, { h: 110, life: 700, alpha: 0.82, ...(still ? {} : { vx: 0.012 }) });
+      this.showProp('pirate-ghost-ship-fire', x + (still ? 0 : 6), y - 120, { h: 110, life: 1400, delay: 700, alpha: 0.85, ...(still ? {} : { vx: 0.012 }) });
+    }
     if (e.what === 'stampede' || e.what === 'broadside' || e.what === 'onslaught' || e.what === 'kegBoom' || e.what === 'boom' || e.what === 'regicide') this.trauma = Math.min(1, this.trauma + 0.25);
     // (a keg stands where it was rolled until it goes off)
     if (e.what === 'keg' && e.at && spellFrames(SNARE.ground).length) {

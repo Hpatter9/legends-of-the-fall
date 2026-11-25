@@ -86,6 +86,8 @@ export const FOE_EMIT: Readonly<Record<string, { kind: EmitKind; at: readonly [n
   elite_nyssa: { kind: 'hand', at: [15, 42], frame: 6 },
   elite_sethra: { kind: 'mouth', at: [5, 45], frame: 10 },
   summon_grave_archer: { kind: 'bowHand', at: [25, 52], frame: 10 },
+  // (ROUND4-WIRE: the Machine's sentry turret fires from its barrel's mouth)
+  summon_sentry: { kind: 'muzzle', at: [42, 64], frame: 3 },
   shaman_king: { kind: 'staffTip', at: [40, 42], frame: 3 },
   eidolon_voltara: { kind: 'hand', at: [55, 112], frame: 3 },
   eidolon_vaelkhar: { kind: 'mouth', at: [52, 62], frame: 3 },
