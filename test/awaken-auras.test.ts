@@ -3,21 +3,22 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { AURAS, AURA_KEYS, auraKey, auraOf, auraParts, FALLBACK_AURA, FOE_AURA } from '../src/render/auraStyles';
 import { newPose, poseAura } from '../src/render/auraPlace';
-import pack from '../tools/awaken/aura-pack.json';
 import { HERO_TRAITS, TRAITS } from '../src/sim/traits';
 import { ALL_HEROES } from '../src/sim/units';
 import atlas from '../src/art/fx/aura/atlas.json';
 
-test('painted aura strips use smooth transparent cells and fit without overlap', () => {
+test('the rendered aura strips are small transparent pixel cells and fit without overlap', () => {
   const png = readFileSync('src/art/fx/aura/atlas.png');
   assert.equal(png[25], 6, 'RGBA artwork preserves transparency');
-  assert.equal(atlas.cell, 96, 'painted cells enable smooth sampling in both renderers');
+  // (AURAS-BLENDER: the atlas is rendered in Blender as pixel art, drawn sharp; the painted one it replaced had 96 px cells and was 6.3 MB)
+  assert.equal(atlas.cell, 48, 'pixel cells, drawn sharp in both renderers');
+  assert.ok(png.length < 400_000, 'the whole atlas stays small');
   const width = png.readUInt32BE(16), height = png.readUInt32BE(20);
   assert.ok(width <= 4096 && height <= 4096, 'fits mobile texture limits');
   const occupied = new Set<string>();
   assert.deepEqual(Object.keys(atlas.parts).sort(), [...AURA_KEYS].sort());
   for (const [key, [x, y, frames]] of Object.entries(atlas.parts)) {
-    assert.equal(frames, 6, `${key} has a complete animation loop`);
+    assert.equal(frames, 8, `${key} has a complete animation loop`);
     assert.ok((x + frames) * atlas.cell <= width && (y + 1) * atlas.cell <= height, key);
     for (let i = 0; i < frames; i++) {
       const at = `${x + i}:${y}`;
@@ -57,12 +58,13 @@ test('battery saver only drops the extra parts, and every strip is in the atlas'
     assert.deepEqual(saver, full.filter((p) => !p.extra));
     assert.ok(saver.length >= 2, kind);
   }
-  // (the art seam: every part's key is in the atlas, with frames, and in the pack's map that built it)
+  // (the art seam: every part's key is in the atlas, with frames, and has a recipe in the builder that rendered it)
+  const builder = readFileSync('tools/blender-fx/auras/build.py', 'utf8');
   const parts = (atlas as { cell: number; parts: Record<string, number[]> }).parts;
   assert.ok((atlas as { cell: number }).cell > 0);
   for (const k of AURA_KEYS) {
     assert.ok(parts[k] && parts[k].length === 3 && parts[k][2] > 0, k);
-    assert.ok(k in pack, k);
+    assert.ok(builder.includes(`${k.split('.')[0]}=klass(`), k);
   }
   assert.equal(new Set(AURA_KEYS).size, AURA_KEYS.length, 'part names are unique within a step');
   assert.equal(auraParts('knight', 1)[0].key, auraKey('guardian', 1, 'ground'));
@@ -83,4 +85,24 @@ test('placing a part reuses the caller\'s pose, stays in its strip, and holds st
       }
     }
   }
+});
+
+test('AURAS-BLENDER: nothing of an aura is drawn in front of the body, and the shell behind it is added light', () => {
+  // (the owner's rule: an effect never hides a hero. The ring lies under the feet; the rest stands behind the body and shows round it)
+  for (const [id, a] of Object.entries(AURAS)) {
+    for (const part of [...a.steps[1], ...a.steps[2]]) assert.ok(!part.front, `${id} ${part.role}`);
+    for (const step of [1, 2] as const) {
+      assert.equal(a.steps[step][0].place, 'ground', `${id} step ${step} begins with its ring on the ground`);
+      assert.ok(a.steps[step].some((p) => p.place === 'rise'), `${id} step ${step} has wisps rising`);
+    }
+    for (const step of [1, 2] as const) {
+      const shell = a.steps[step].find((p) => p.role === 'shell');
+      assert.ok(shell?.add && shell.place === 'wrap', `${id} wears a shell of added light at step ${step}`);
+    }
+    assert.ok(a.steps[2].find((p) => p.role === 'shell')!.alpha > a.steps[1].find((p) => p.role === 'shell')!.alpha, `${id}'s strong shell is the brighter`);
+  }
+  // (a hero that wears a rendered aura has no code-drawn halo behind it and no code-drawn sparkles over it)
+  const view = readFileSync('src/render/unitView.ts', 'utf8');
+  assert.match(view, /if \(!this\.awakenAura\) for \(let i = 5; i >= 1; i--\) this\.glow\.ellipse\(/);
+  assert.match(view, /const sparkle = this\.grade > 2 && !this\.awakenAura;/);
 });

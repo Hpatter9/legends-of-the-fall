@@ -1,5 +1,7 @@
 # Class auras for awakened heroes (AWAKEN-002)
 
+> AURAS-BLENDER (`docs/notes/auras-blender.md`) started the aura's art over: the parts and where they sit are in that note now; what follows is the design as it first shipped.
+
 **Artwork update:** the pack strips described below have been replaced by generated painted class effects.
 See [painted ascension auras](painted-ascension-auras.md) for the current artwork, provenance and validation.
 The original implementation and approval record below remains for reference.

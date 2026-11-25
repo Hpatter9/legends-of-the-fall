@@ -219,7 +219,9 @@ export class UnitSprite {
       // a halo of stacked ellipses behind the body (silver-blue, then gold), drawn once, and a rim of the body's own shape
       const col = this.grade > 3 ? GRADE4_HALO : auraOf(unit.def).colour;
       const h = this.tall * 0.62;
-      for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: this.grade > 3 ? 0.16 : this.grade > 2 ? 0.12 : 0.1 });
+      // (AURAS-BLENDER: a hero's glow behind its body is its aura's own rendered shell now; only a fighter with no class aura, a foe
+      // or a summon of a higher grade, keeps the stacked ellipses)
+      if (!this.awakenAura) for (let i = 5; i >= 1; i--) this.glow.ellipse(0, -this.tall * 0.45, (12 + i * 5) / size, (h * (0.5 + i * 0.13)) / size).fill({ color: col, alpha: this.grade > 3 ? 0.16 : this.grade > 2 ? 0.12 : 0.1 });
       for (const [dx, dy] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6]]) {
         const r = new Sprite();
         r.anchor.set(0.5, 1);
@@ -828,7 +830,10 @@ export class UnitSprite {
   private drawSparks(alive: boolean): void {
     const g = this.sparks;
     const burst = this.burstAt >= 0 ? (Date.now() - this.burstAt) / BURST_MS : 2;
-    if (!alive || (this.grade < 3 && burst > 1)) {
+    // (AURAS-BLENDER: a hero that wears a rendered aura has its motes from it, behind its body; the sparkles drawn here rose over
+    // the body, and took no notice of reduced motion. They are left to a fighter with no class aura)
+    const sparkle = this.grade > 2 && !this.awakenAura;
+    if (!alive || (!sparkle && burst > 1)) {
       if (g.visible) g.clear();
       g.visible = false;
       return;
@@ -839,7 +844,7 @@ export class UnitSprite {
     const gold = this.grade > 3 ? GRADE4_SPARK : this.grade > 2 ? 0xffe27a : 0xdce8ff;
     // (rank 4 rises in more sparks, and violet ones)
     const n = this.grade > 3 ? 9 : 6;
-    if (this.grade > 2)
+    if (sparkle)
       for (let i = 0; i < n; i++) {
         const f = ((now / 1500 + i / n) % 1);
         const x = Math.sin(i * 2.4 + now / 900) * 14;

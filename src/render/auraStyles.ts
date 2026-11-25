@@ -2,11 +2,10 @@
 // not its origin) picks the aura's style. Combat tier 2 wears a light aura; combat tier 3 a
 // bigger, brighter one with more parts.
 //
-// The art seam: this table names each step's parts (`ground`, `back`, `rise`, `halo`, `orbit`, `motes`, `trail`...)
+// The art seam: this table names each step's parts (`ground`, `shell`, `rise`, `halo`, `orbit`, `motes`, `trail`...)
 // and says where and how they sit; the frames of a part come only from the aura atlas, by the part's key
-// (`<class>.<step>.<part>`, `auraKey`), through `auraArt.ts`. Today the atlas holds strips of the 5000 Pixel Effects pack
-// (`tools/awaken/aura-sheets.py` packs them, by `tools/awaken/aura-pack.json`); a painted atlas with the same keys
-// replaces it with no code change (`docs/notes/awaken-auras-art-brief.md`).
+// (`<class>.<step>.<part>`, `auraKey`), through `auraArt.ts`. AURAS-BLENDER: the atlas is rendered in Blender, every
+// class's parts in its own shapes and colours (`tools/blender-fx/auras/build.py`; `docs/notes/auras-blender.md`).
 //
 // Pure data and rules: no Pixi, no DOM.
 
@@ -61,127 +60,36 @@ export const auraKey = (trait: string, step: number, role: string): string => `$
 
 const p = (role: string, place: AuraPlace, size: number, alpha: number, more: Partial<AuraPart> = {}): AuraPart => ({ role, key: '', place, size, alpha, frameMs: 130, ...more });
 
-/** Every class trait's aura. */
+/** AURAS-BLENDER: the parts every class wears, the same at heart for each. Step 1, the light aura: the ring on the ground under
+ *  the feet, a faint shell behind the body and the wisps rising at its rim. Step 2, the strong one: a fuller ring, a shimmering shell behind the body (hollow
+ *  where the body stands, and added light), more wisps and a few motes at the sides. None of it is in front of the body: the
+ *  ring lies under the feet, the rest stands behind and shows round the edges (the owner's rule: an effect never hides a hero). */
+const light = (...own: AuraPart[]): AuraPart[] => [p('ground', 'ground', 1.0, 0.95), p('shell', 'wrap', 1.25, 0.5, { add: true }), p('rise', 'rise', 1.7, 1), ...own];
+const strong = (low: boolean, ...own: AuraPart[]): AuraPart[] => [
+  p('ground', 'ground', 1.25, 0.95),
+  p('shell', 'wrap', 1.45, 0.75, { add: true }),
+  p('rise', 'rise', 1.9, 1),
+  ...own,
+  p('motes', 'motes', 0.7, 1, { count: 3, extra: true, ...(low ? { low: true } : {}) }),
+];
+
+/** Every class trait's aura: its name, its colour and its own pieces beyond the shared ones. The frames are rendered in Blender,
+ *  each class's in its own shapes (`tools/blender-fx/auras/build.py`, `RECIPES`): the Guardian's six-sided seal and shafts of
+ *  light, the Beast's burning ring and tongues of flame, the Assassin's dark pool and smoke. */
 const TABLE: Record<string, AuraStyle> = {
-  guardian: { trait: 'guardian', name: 'Golden shield shimmer', colour: 0xffd24a, steps: [[], [
-    p('ground', 'ground', 0.95, 0.85),
-    p('back', 'wrap', 1.05, 0.38, { add: true }),
-  ], [
-    p('ground', 'ground', 1.2, 0.95),
-    p('back', 'wrap', 1.25, 0.5, { add: true }),
-    p('rise', 'rise', 1.0, 0.75, { add: true }),
-    p('motes', 'motes', 0.5, 0.95, { count: 3, extra: true, front: true }),
-  ]] },
-  bulwark: { trait: 'bulwark', name: 'Bronze bastion', colour: 0xf0b860, steps: [[], [
-    p('ground', 'ground', 1.0, 0.9),
-    p('back', 'wrap', 1.1, 0.55, { add: true }),
-  ], [
-    p('ground', 'ground', 1.25, 1),
-    p('ground2', 'ground', 1.6, 0.7, { add: true, ring: true }),
-    p('back', 'wrap', 1.3, 0.65, { add: true }),
-    p('rise', 'rise', 1.05, 0.7, { add: true, extra: true }),
-  ]] },
-  blade: { trait: 'blade', name: 'Crimson streaks', colour: 0xe0304a, steps: [[], [
-    p('ground', 'ground', 0.95, 0.8),
-    p('motes', 'motes', 0.4, 0.95, { count: 2, front: true, frameMs: 110 }),
-  ], [
-    p('ground', 'ground', 1.2, 0.95),
-    p('rise', 'rise', 1.0, 0.7),
-    p('orbit', 'orbit', 0.42, 0.95, { count: 2, front: true, frameMs: 100, turn: true }),
-    p('motes', 'motes', 0.45, 1, { count: 2, front: true, frameMs: 100, extra: true }),
-  ]] },
-  marksman: { trait: 'marksman', name: 'Wind wisps', colour: 0xdbe8f4, steps: [[], [
-    p('ground', 'ground', 0.95, 0.8),
-    p('trail', 'trail', 0.6, 0.75, { count: 2 }),
-  ], [
-    p('ground', 'ground', 1.2, 0.95),
-    p('back', 'wrap', 1.2, 0.4),
-    p('rise', 'rise', 1.0, 0.7),
-    p('trail', 'trail', 0.7, 0.85, { count: 3, front: true }),
-    p('motes', 'motes', 0.5, 0.9, { count: 2, front: true, extra: true }),
-  ]] },
-  gunner: { trait: 'gunner', name: 'Gunsmoke and sparks', colour: 0xf2d35a, steps: [[], [
-    p('ground', 'ground', 0.95, 0.8),
-    p('motes', 'motes', 0.5, 0.55, { count: 2, low: true }),
-  ], [
-    p('ground', 'ground', 1.2, 0.95),
-    p('rise', 'rise', 1.0, 0.75, { add: true }),
-    p('motes', 'motes', 0.6, 0.6, { count: 3, low: true }),
-    p('motes2', 'motes', 0.5, 1, { count: 2, front: true, extra: true }),
-  ]] },
-  caster: { trait: 'caster', name: 'Orbiting arcane runes', colour: 0xb06cff, steps: [[], [
-    p('ground', 'ground', 1.05, 0.85, { ring: true }),
-    p('orbit', 'orbit', 0.32, 1, { count: 2, front: true }),
-  ], [
-    p('ground', 'ground', 1.35, 0.95, { ring: true }),
-    p('back', 'wrap', 1.2, 0.42, { add: true }),
-    p('rise', 'rise', 1.0, 0.7, { extra: true }),
-    p('orbit', 'orbit', 0.36, 1, { count: 3, front: true }),
-  ]] },
-  arcanist: { trait: 'arcanist', name: 'Starlit sigils', colour: 0x7a86ff, steps: [[], [
-    p('ground', 'ground', 1.05, 0.85, { ring: true }),
-    p('motes', 'motes', 0.5, 1, { count: 2, front: true }),
-  ], [
-    p('ground', 'ground', 1.4, 0.9, { ring: true }),
-    p('back', 'wrap', 1.25, 0.45),
-    p('halo', 'halo', 0.55, 0.95),
-    p('orbit', 'orbit', 0.3, 1, { count: 2, front: true }),
-    p('motes', 'motes', 0.5, 1, { count: 3, front: true, extra: true }),
-  ]] },
-  support: { trait: 'support', name: 'Radiant motes and halo', colour: 0xfff0b8, steps: [[], [
-    p('halo', 'halo', 0.45, 0.9, { add: true }),
-    p('motes', 'motes', 0.5, 0.95, { count: 2, front: true }),
-  ], [
-    p('back', 'wrap', 1.15, 0.35, { add: true }),
-    p('halo', 'halo', 0.55, 1, { add: true }),
-    p('rise', 'rise', 1.0, 0.6, { add: true }),
-    p('motes', 'motes', 0.5, 1, { count: 4, front: true, extra: true }),
-  ]] },
-  beast: { trait: 'beast', name: 'Feral flame', colour: 0xff6a2a, steps: [[], [
-    p('ground', 'ground', 0.95, 0.8),
-    p('motes', 'motes', 0.5, 0.85, { count: 2, low: true }),
-  ], [
-    p('ground', 'ground', 1.2, 0.95),
-    p('rise', 'rise', 1.0, 0.75),
-    p('motes', 'motes', 0.62, 0.9, { count: 3, low: true }),
-    p('motes2', 'motes', 0.5, 1, { count: 2, front: true, extra: true }),
-  ]] },
-  assassin: { trait: 'assassin', name: 'Shadow smoke', colour: 0x6a46a8, steps: [[], [
-    p('ground', 'ground', 0.95, 0.85),
-    p('motes', 'motes', 0.5, 0.7, { count: 2, low: true }),
-  ], [
-    p('ground', 'ground', 1.2, 0.95),
-    p('rise', 'rise', 1.0, 0.8),
-    p('motes', 'motes', 0.62, 0.75, { count: 4, low: true }),
-    p('motes2', 'motes', 0.5, 1, { count: 2, front: true, extra: true }),
-  ]] },
-  trickster: { trait: 'trickster', name: 'Moonlit mist', colour: 0xc6d2ff, steps: [[], [
-    p('ground', 'ground', 0.95, 0.8),
-    p('motes', 'motes', 0.5, 0.6, { count: 2, low: true }),
-  ], [
-    p('ground', 'ground', 1.2, 0.95),
-    p('back', 'wrap', 1.2, 0.4),
-    p('motes', 'motes', 0.6, 0.65, { count: 3, low: true }),
-    p('motes2', 'motes', 0.5, 1, { count: 3, front: true, extra: true }),
-  ]] },
-  warden: { trait: 'warden', name: 'Living green', colour: 0x6cd060, steps: [[], [
-    p('ground', 'ground', 0.95, 0.85),
-    p('motes', 'motes', 0.5, 1, { count: 2, front: true }),
-  ], [
-    p('ground', 'ground', 1.35, 0.95, { ring: true }),
-    p('back', 'wrap', 1.2, 0.38),
-    p('rise', 'rise', 1.0, 0.7),
-    p('motes', 'motes', 0.5, 1, { count: 4, front: true, extra: true }),
-  ]] },
-  vanguard: { trait: 'vanguard', name: 'Heat-haze charge', colour: 0xffa040, steps: [[], [
-    p('rise', 'rise', 0.95, 0.6, { add: true }),
-    p('trail', 'trail', 0.65, 0.95, { count: 2, front: true }),
-  ], [
-    p('ground', 'ground', 1.2, 0.9),
-    p('rise', 'rise', 1.1, 0.6, { add: true }),
-    p('trail', 'trail', 0.7, 0.9, { count: 3, front: true }),
-    p('motes', 'motes', 0.45, 1, { count: 2, front: true, extra: true }),
-  ]] },
+  guardian: { trait: 'guardian', name: 'Golden ward', colour: 0xffd24a, steps: [[], light(), strong(false)] },
+  bulwark: { trait: 'bulwark', name: 'Bronze bastion', colour: 0xf0b860, steps: [[], light(), strong(false, p('ground2', 'ground', 1.7, 0.8, { add: true }))] },
+  blade: { trait: 'blade', name: 'Crimson edge', colour: 0xe0304a, steps: [[], light(), strong(false, p('orbit', 'orbit', 0.42, 0.95, { count: 2, frameMs: 100, turn: true }))] },
+  marksman: { trait: 'marksman', name: 'Wind wisps', colour: 0xdbe8f4, steps: [[], light(p('trail', 'trail', 0.6, 0.8, { count: 2 })), strong(false, p('trail', 'trail', 0.7, 0.9, { count: 3 }))] },
+  gunner: { trait: 'gunner', name: 'Gunsmoke and sparks', colour: 0xf2d35a, steps: [[], light(), strong(false, p('sparks', 'rise', 1.8, 1, { extra: true }))] },
+  caster: { trait: 'caster', name: 'Arcane seal and runes', colour: 0xb06cff, steps: [[], light(p('orbit', 'orbit', 0.3, 0.95, { count: 2 })), strong(false, p('orbit', 'orbit', 0.34, 1, { count: 3 }))] },
+  arcanist: { trait: 'arcanist', name: 'Starlit sigil', colour: 0x7a86ff, steps: [[], light(), strong(false, p('halo', 'halo', 0.55, 0.95))] },
+  support: { trait: 'support', name: 'Radiance and halo', colour: 0xfff0b8, steps: [[], light(p('halo', 'halo', 0.45, 0.9)), strong(false, p('halo', 'halo', 0.55, 1))] },
+  beast: { trait: 'beast', name: 'Feral flame', colour: 0xff6a2a, steps: [[], light(), strong(true, p('embers', 'rise', 1.8, 1, { extra: true }))] },
+  assassin: { trait: 'assassin', name: 'Shadow smoke', colour: 0x6a46a8, steps: [[], light(), strong(true)] },
+  trickster: { trait: 'trickster', name: 'Moonlit mist', colour: 0xc6d2ff, steps: [[], light(), strong(false, p('stars', 'rise', 1.8, 1, { extra: true }))] },
+  warden: { trait: 'warden', name: 'Living green', colour: 0x6cd060, steps: [[], light(), strong(false, p('sparks', 'rise', 1.8, 1, { extra: true }))] },
+  vanguard: { trait: 'vanguard', name: 'Heat of the charge', colour: 0xffa040, steps: [[], light(p('trail', 'trail', 0.6, 0.85, { count: 2 })), strong(true, p('trail', 'trail', 0.7, 0.9, { count: 3 }))] },
 };
 
 /** Every class trait's aura, each part given its atlas key. */

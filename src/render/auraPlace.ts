@@ -20,6 +20,9 @@ export interface AuraPose {
   ay: number;
 }
 
+/** How far up a rising part's frame, from its bottom edge, the ground's middle is (`UP` in tools/blender-fx/auras/build.py: 1 - 0.86). */
+export const RISE_GROUND = 0.14;
+
 export const newPose = (): AuraPose => ({ x: 0, y: 0, sx: 1, sy: 1, rot: 0, alpha: 1, frame: 0, ay: 0.5 });
 
 /** Lay copy `i` of a part with `frames` frames, at time `t` (ms), round a hero `tall` px high facing `dir` (1 right,
@@ -49,10 +52,12 @@ export function poseAura(part: AuraPart, i: number, frames: number, t: number, t
       break;
     case 'rise': {
       const w = (part.size * Math.max(26, tall * 0.8)) / cell;
+      // (the rendered frame is kept square, not stretched; its ground's middle sits `RISE_GROUND` of the way up the frame from its
+      // bottom edge, and that is put on the feet)
       out.x = 0;
-      out.y = 3;
+      out.y = RISE_GROUND * cell * w;
       out.sx = w;
-      out.sy = w * 1.15;
+      out.sy = w;
       out.ay = 1;
       break;
     }

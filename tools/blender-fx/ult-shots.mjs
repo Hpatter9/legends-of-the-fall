@@ -45,7 +45,7 @@ async function open(eidolons) {
   const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: Number(process.env.DSF ?? 1), hasTouch: true, reducedMotion: REDUCED ? 'reduce' : 'no-preference' });
   const page = await ctx.newPage();
   if (process.env.TRACE) page.on('console', (m) => { if (m.text().startsWith('TRACE')) console.log(m.text()); });
-  page.on('pageerror', (e) => { errors++; console.log('PAGE ERROR', e.message); });
+  page.on('pageerror', (e) => { errors++; console.log('PAGE ERROR', e.message, process.env.STACK ? String(e.stack).split('\n').slice(0, 6).join(' | ') : ''); });
   await page.addInitScript(([owned, xp, eid, first]) => {
     let z = 0x2545f491;
     Math.random = () => ((z = (Math.imul(z ^ (z >>> 15), 0x2c1b3c6d) + 0x6d2b79f5) | 0) >>> 0) / 4294967296;
@@ -129,18 +129,32 @@ async function open(eidolons) {
   return { ctx, page };
 }
 
+// (PAUSE-TIPS: a tutorial's card holds the wave until "Got it" is pressed; the tools press it, as often as a card is up)
+async function gotIt(page) {
+  for (let i = 0; i < 12; i++) {
+    const had = await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /^Got it/.test(x.textContent ?? '') && x.offsetParent); b?.click(); return !!b; });
+    if (!had) break;
+    await page.waitForTimeout(450);
+  }
+}
+
 async function army(page, party, army = 'beasts', stage = 3) {
-  await page.evaluate(([party, army, stage]) => {
+  await page.evaluate(([party, army, stage, grade]) => {
     const g = window.__game;
     const r = JSON.parse(JSON.stringify(g.run));
-    Object.assign(r, { seed: 4242, mode: { kind: 'army', army }, stage, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+    Object.assign(r, { seed: 4242, mode: { kind: 'army', army }, stage, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade, paid: 30 })), squad: [], nextId: 200 });
     document.getElementById('home').hidden = true;
     g.startRun(r);
     g.autoArrange(true);
     g.setSpeed(2);
-  }, [party, army, stage]);
+  }, [party, army, stage, Number(process.env.GRADE ?? 1)]);
   await page.waitForTimeout(700);
+  await gotIt(page);
   await page.evaluate(() => document.getElementById('fight').click());
+  await page.waitForTimeout(500);
+  await gotIt(page);
+  // (AURA=1: the fight's first moments, the heroes still on their own tiles, each seen whole)
+  if (process.env.AURA) return;
   await page.waitForFunction(() => {
     const u = window.__game.b.units.filter((x) => x.alive);
     return u.some((h) => h.side === 'hero' && u.some((f) => f.side === 'foe' && Math.max(Math.abs(f.u - h.u), Math.abs(f.v - h.v)) <= 2));
@@ -161,6 +175,32 @@ const FRAMES = process.env.AT ? [['windup', 0.55], ['windup', 0.95], ...process.
 if (process.env.WATCH) {
   const { ctx, page } = await open();
   await army(page, PICKS.slice(0, 5), process.env.ARMY ?? 'beasts', Number(process.env.STAGE ?? 3));
+  // (AURA=1 with WATCH and GRADE=2 or 3: AURAS-BLENDER's proof. The party fights at that combat grade, so each hero wears its class's
+  // aura (the light one at 2, the strong one at 3), and each hero is photographed, 150 by 170 px round it, at four moments 260 ms
+  // apart: out/<OUT>/aura-<hero>-g<grade>-<n>.png. Then the whole screen once.)
+  if (process.env.AURA) {
+    // (the camera closes in on the lines as the fight opens: the photographs are taken once it has)
+    await page.evaluate(() => { window.__game.app.ticker.stop(); window.__step(900); });
+    for (let n = 0; n < 4; n++) {
+      await page.evaluate(() => window.__step(260));
+      const at = await page.evaluate(() => { const g = window.__game; return g.b.units.filter((u) => u.side === 'hero' && u.alive && !u.summon).map((u) => { const sp = g.sprites.get(u.id); const p = g.fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 }); return [u.def, Math.round(p.x), Math.round(p.y)]; }); });
+      // (the fight's camera follows the clash, and most of a party is off the screen's edge: the board is slid so each hero in turn
+      // stands at the middle of the field, photographed, and slid back; nothing of the fight is stepped meanwhile)
+      for (const [def, x, y] of at) {
+        if (!PICKS.includes(def)) continue;
+        await page.evaluate(([dx, dy]) => { const g = window.__game; g.world.x += dx; g.world.y += dy; g.app.render(); }, [W / 2 - x, 520 - y]);
+        await page.screenshot({ path: `${OUT}/aura-${def}-g${process.env.GRADE}-${n}.png`, clip: { x: W / 2 - 75, y: 520 - 105, width: 150, height: 170 } });
+        await page.evaluate(([dx, dy]) => { const g = window.__game; g.world.x -= dx; g.world.y -= dy; g.app.render(); }, [W / 2 - x, 520 - y]);
+      }
+      if (n === 1) await page.screenshot({ path: `${OUT}/aura-screen-${PICKS[0]}-g${process.env.GRADE}.png` });
+      if (n === 1) console.log('AURA', JSON.stringify(at));
+    }
+    console.log('page errors:', errors);
+    await ctx.close();
+    await browser.close();
+    srv.close();
+    process.exit(0);
+  }
   // (FRAIL=gorgon,knight: those heroes begin the fight at one health, so a hero's fall can be caught)
   if (process.env.FRAIL) await page.evaluate((who) => { for (const u of window.__game.b.units) if (u.side === 'hero' && who.includes(u.def)) u.hp = 1; }, process.env.FRAIL.split(','));
   // (TOUGH=<n>: the foes are given n times their health, so the fight lasts and the heroes' heals and wards are seen)
