@@ -273,7 +273,9 @@ export interface StashChest {
   dry?: boolean;
   /** QUESTS-3: a chest that holds half its stones, rounded up (a Calamity clear's). */
   half?: boolean;
-  /** The Assault: the Conquest chest a hold's first fall pays (a gold chest's size, half again its crowns and stones; one a hold). */
+  /** The Assault: the Conquest chest a hold's first fall paid (a gold chest's size, half again its crowns and stones; one a hold). None is
+   *  given since the Assault was withdrawn (RELEASE-TRIM); one won before still opens. With `half`, a regrouped Warband's chest: the
+   *  Assault's weekly re-storm paid it, and since RELEASE-TRIM the week's first daily clear does (`warbandChests`). */
   conquest?: boolean;
 }
 

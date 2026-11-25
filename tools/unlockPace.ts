@@ -13,6 +13,7 @@
 import { payClear } from '../src/sim/calReward';
 import { ARMIES, armyFoes, replayTotal, firstClearTotal } from '../src/sim/armies';
 import { chestSeed, firstClearSeed, FIRST_CLEAR_CHEST, openChest } from '../src/sim/armyStars';
+import { WARBAND_SALT } from '../src/sim/modes';
 import { grantContent, CONTENT_HEROES } from '../src/sim/contentHeroes';
 import { totalQuestStones } from '../src/sim/questPay';
 import { newMeta, pickStarter, stageCrowns, stonesOf, useStones, type Meta } from '../src/sim/meta';
@@ -100,7 +101,12 @@ const WITH_MODES = !modesHidden() || arg('--with-modes', 0) > 0;
 // flag itself is lifted, so `movedStones` reads 0. `--nomoved 1` keeps the modes hidden and pays no moved stones, to see the gap.)
 if (WITH_MODES) setModesHidden(false);
 if (arg('--nomoved', 0) > 0) setStonesMoved(false);
-// (The Assault's Conquest chests were in this model from FIRST-HOUR 3 until the Assault was withdrawn before release, RELEASE-TRIM.)
+// The Legendary clear (the tenth star). The model has no Legendary days, so an army's comes `LEGEND_AFTER` days after its Elite clear (the
+// first army's ten stars come at about level 45, day 39 to 45: `docs/notes/army-pace.md`), as the Assault's first conquest did. RELEASE-TRIM:
+// its first-clear chest pays what the hold's first fall paid (`legendFirstStones`), and from then on the week's first daily clear brings
+// the army's regrouped Warband's chest every second week (`warbandChests`). The Assault's own Conquest chests were in this model from
+// FIRST-HOUR 3 until the Assault was withdrawn (with `--noassault`, which is gone with them).
+const LEGEND_AFTER = 20;
 const BADGES = ACHIEVEMENTS.filter((a) => WITH_MODES || achievementShown(a.id, []));
 const BADGE_CROWNS = BADGES.reduce((n, a) => n + a.crowns, 0) + crownsTotal('bestiary') + crownsTotal('heroes');
 const BADGE_STONES = BADGES.reduce((n, a) => n + stonesOfAchievement(a), 0) + stonesTotal('bestiary') + stonesTotal('heroes');
@@ -167,6 +173,8 @@ function simulate(seed: number): Report {
   // (QUESTS-3: the stones each source paid, by day windows, for the report's ledger)
   const ledger: Record<string, number> = {};
   const note = (src: string, n: number) => void (ledger[src] = (ledger[src] ?? 0) + n);
+  const legendDays: [number, number][] = [];
+  const clearedWeeks = new Set<number>();
   let pullable = Infinity;
   const by: Record<number, number> = {};
   for (let day = 1; day <= DAYS; day++) {
@@ -174,6 +182,12 @@ function simulate(seed: number): Report {
     const clears = new Rng(mixSeed(seed, 0xda1c, day)).chance(DAILY_CLEAR);
     let today = dailyCrowns(clears ? DAILY_WAVES : DAILY_FALL_WAVES);
     if (clears) m.stash.push({ army: 'daily', at: 3, tier: 0, seed: dailyChestSeed(m.seed, 20260000 + day), daily: 20260000 + day, bonus: new Rng(mixSeed(seed, 0xda1d, day)).int(0, 2) });
+    // (the week's first cleared daily brings the Warbands' chests: as `warbandChests`, on the model's own weeks and Legendary days)
+    const wk = Math.floor(day / 7);
+    if (clears && !clearedWeeks.has(wk)) {
+      clearedWeeks.add(wk);
+      for (const [i, d] of legendDays) if (d <= day && (wk + i) % 2 === 0) m.stash.push({ army: ARMIES[i].id, at: FIRST_CLEAR_CHEST[4], tier: 4, seed: mixSeed(m.seed, WARBAND_SALT, i + 1, wk), conquest: true, half: true });
+    }
     // the armies' first clears and their chests
     ARMIES.forEach((a, i) => {
       if (NORMAL_DAY[i] === day) {
@@ -197,6 +211,13 @@ function simulate(seed: number): Report {
       m.stash.push({ army: a.id, at: FIRST_CLEAR_CHEST[t], tier: t, seed: firstClearSeed(m.seed, a, t), first: true });
       armyGain(settleArmyOres(m, a.id, 'final', t, true, true, mixSeed(seed, 0x0e56, day, i), a.waves.length));
       if (t === 1) m.stash.push({ army: a.id, at: 5, tier: t, seed: chestSeed(m.seed, a, 5) });
+    }
+    // the Legendary clears (the tenth star): their first-clear chest
+    for (const [i, t, d] of HARDER) {
+      if (t !== 2 || d + LEGEND_AFTER !== day) continue;
+      const a = ARMIES[i];
+      legendDays.push([i, day]);
+      m.stash.push({ army: a.id, at: FIRST_CLEAR_CHEST[3], tier: 3, seed: firstClearSeed(m.seed, a, 3), first: true });
     }
     // the farm: the best tier cleared, thirteen runs
     today += FARM_RUNS * bestFarm();
@@ -263,7 +284,7 @@ function simulate(seed: number): Report {
       const c = m.stash[0];
       const was = m.stones ?? 0;
       openChest(m, 0);
-      note(c.conquest ? (c.half ? 'Assault: a Warband beaten again' : 'Assault: first conquests') : c.daily !== undefined ? 'Daily chest' : c.half ? 'Calamity chest' : c.tower ? 'Spire chests' : 'Army first-clear and star chests', (m.stones ?? 0) - was);
+      note(c.conquest ? 'Warbands\' chests (with the daily)' : c.daily !== undefined ? 'Daily chest' : c.half ? 'Calamity chest' : c.tower ? 'Spire chests' : c.first && c.tier === 3 ? 'Legendary first clears' : 'Army first-clear and star chests', (m.stones ?? 0) - was);
     }
     aw.src.chest += held() - before;
     for (const k of grantContent(m)) at[k] = at[k] ?? day;

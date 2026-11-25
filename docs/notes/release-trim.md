@@ -47,9 +47,36 @@ room icons and Crown Terrace landmark are gone, and the castle has ten plots. Th
 **What changes in play:**
 - A conquered army's waves and its Council seats come back to the War: no army is "conquered" any more.
 - The Informant no longer hands over the scouts' report.
-- The stones the hidden modes had moved into the Conquest chests (`MOVED_STONES.conquest` and `.restorm`) no longer come in. Only the
-  daily chest's share is still paid.
-- `tools/unlockPace.ts` no longer counts the Conquest chests.
+- What the Assault paid is paid elsewhere, at the rate it came at (the owner keeps the earn rates unchanged): see the next section.
+
+## What the Assault paid, paid elsewhere
+
+The Assault paid about a fifth of a daily player's summoning stones, and much of their XP tomes: a hold's first Conquest chest (a gold
+chest with half again its stones, and the 8 stones the hidden modes moved there), and the regrouped Warband's chest each week the hold was
+stormed again at Mythic (a gold chest of the army at Mythic: half again its stones, half its crowns, with its tomes, gear, scrolls and ores,
+and 1 moved stone). They are paid where every player reaches, at the same stage:
+
+- **An army's Legendary first clear** (its tenth star, the moment its hold opened) pays the stones the hold's first fall paid: the
+  Legendary first-clear chest holds 13 stones in place of 3 (`legendFirstStones`, `MOVED_STONES.legend`).
+- **The regrouped Warband's chest** comes with the first daily cleared in a week (`warbandChests` in `modes.ts`): for each army at its tenth
+  star, every second week (the army's turn by its place), the same chest the re-storm paid, as the model had it won one week in two.
+  `MOVED_STONES.warband` (1) is its moved stone, as `restorm`'s was.
+- A Conquest chest won before still opens exactly as it did.
+
+`npm run unlock-pace` (20 seeds, 365 days, a daily player; the model now has the Legendary clear on the day it had the first conquest):
+
+| a year | main (0.613, with the Assault) | the Assault removed, nothing moved | this branch |
+|---|---|---|---|
+| stones | 2,855 (54.8 a week) | 2,222 (42.6 a week) | 2,927 (56.1 a week) |
+| of which the first conquests / Legendary first clears | 117 | 0 | 117 |
+| of which the regrouped Warbands' chests | 519 | 0 | 594 |
+| XP in tomes by day 365 | 2,134,000 | 718,000 | 2,264,250 |
+| heroes owned on day 180 / 365 | 31 / 47 | | 31 / 49 |
+| day the 30th / 45th hero joins | 162 / 336 | | 156 / 325 |
+
+The Warbands' chests run about 2.5% of the year's stones above the old rate: they come from the tenth star, where the model had a player
+storm the regrouped Warband only from day 90 and a month after the fall. That is within the model's spread between seeds (the 45th hero joins
+between days 261 and 357).
 
 ## 2. Old saves
 

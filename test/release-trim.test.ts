@@ -105,3 +105,54 @@ test('the tools\' hooks are put on the page only under automation, and no page h
   assert.match(readFileSync('src/main.ts', 'utf8'), /toolsOn\(\) \? \(window as unknown as \{ __forceDrop/);
   assert.match(readFileSync('src/main.ts', 'utf8'), /new URLSearchParams\(toolsOn\(\) \? location\.search : ''\)/);
 });
+
+test('the Assault\'s stones are paid where every player reaches: a Legendary first clear pays what a hold\'s first fall did', async () => {
+  const { openChest, chestStones, CONQUEST_SHARE, FIRST_CLEAR_CHEST, legendFirstStones } = await import('../src/sim/armyStars');
+  const { MOVED_STONES } = await import('../src/sim/hiddenModes');
+  const open = (c: Record<string, unknown>): number => {
+    const m = startedMeta(3);
+    m.stash.push({ army: 'orcs', seed: 77, ...c } as never);
+    openChest(m, 0);
+    return m.stones ?? 0;
+  };
+  const gold = chestStones({ at: FIRST_CLEAR_CHEST[3] });
+  // (a hold's first Conquest chest held a gold chest's stones half again, and the hidden modes' moved stones)
+  const conquest = Math.ceil(gold * CONQUEST_SHARE) + MOVED_STONES.legend;
+  assert.equal(open({ at: FIRST_CLEAR_CHEST[3], tier: 3, first: true }), conquest);
+  assert.equal(legendFirstStones({ at: FIRST_CLEAR_CHEST[3], tier: 3, first: true }), conquest - gold);
+  assert.equal(legendFirstStones({ at: FIRST_CLEAR_CHEST[4], tier: 4, first: true }), 0, 'the Mythic first clear is as it was');
+});
+
+test('the regrouped Warbands\' chests come with the week\'s first daily clear, every second week for each army at its tenth star', async () => {
+  const { warbandChests } = await import('../src/sim/modes');
+  const { ARMIES } = await import('../src/sim/armies');
+  const { weekOf } = await import('../src/sim/council');
+  const ten = { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
+  const m = startedMeta(4);
+  const monday = 20261123;
+  assert.deepEqual(warbandChests(m, monday), [], 'no army at its tenth star: nothing');
+  for (const a of ARMIES.slice(0, 4)) m.armies[a.id] = { ...ten } as never;
+  m.armies[ARMIES[4].id] = { ...ten, met: { 0: 7, 1: 7, 2: 7 } } as never;
+  const days = [monday, monday + 1, monday + 2, monday + 3, monday + 4, monday + 5, monday + 6, 20261130, 20261201, 20261207];
+  const weeks = new Map<number, number[]>();
+  for (const d of days) (weeks.get(weekOf(d)) ?? weeks.set(weekOf(d), []).get(weekOf(d))!).push(d);
+  let paid = 0;
+  for (const [wk, ds] of weeks) {
+    const first = warbandChests(m, ds[0]);
+    // (each army on its own turn: half of the four, by its place)
+    assert.deepEqual(first.map((c) => c.army).sort(), ARMIES.slice(0, 4).filter((_, i) => (wk + i) % 2 === 0).map((a) => a.id).sort());
+    for (const c of first) assert.deepEqual({ at: c.at, tier: c.tier, conquest: c.conquest, half: c.half }, { at: 10, tier: 4, conquest: true, half: true }, 'the regrouped Warband\'s own chest');
+    paid += first.length;
+    m.daily[String(ds[0])] = { best: 0, plays: 1, cleared: true };
+    for (const d of ds.slice(1)) assert.deepEqual(warbandChests(m, d), [], 'once a week');
+  }
+  assert.equal(paid, 2 * weeks.size, 'four armies at ten stars: two chests a week');
+  // (and the daily's own settle gives them, in the stash beside the daily chest)
+  const { settleDaily } = await import('../src/sim/modes');
+  const m2 = startedMeta(5);
+  for (const a of ARMIES.slice(0, 4)) m2.armies[a.id] = { ...ten } as never;
+  const run = { mode: { kind: 'daily', date: 20261209, practice: false }, cleared: true, over: true, stage: 10, roster: [], squad: [] } as never;
+  settleDaily(m2, run, { won: true, stage: 10 });
+  assert.ok(m2.stash.some((c) => c.daily === 20261209));
+  assert.equal(m2.stash.filter((c) => c.conquest && c.half).length, 2);
+});

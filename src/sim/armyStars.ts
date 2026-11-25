@@ -305,8 +305,9 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   const crowns = c.conquest ? Math.round(roll.crowns * CONQUEST_SHARE * (c.half ? 0.5 : 1)) : roll.crowns;
   const items: LootItem[] = [{ type: 'crowns', text: `${crowns} crowns`, n: crowns }];
   if (apply) m.crowns += crowns;
-  // (FIRST-HOUR 3: and a Conquest chest the hidden modes' moved stones: more for a hold's first fall, fewer for a regrouped Warband's)
-  const stones = c.conquest ? Math.ceil(chestStones(c) * CONQUEST_SHARE) + movedStones(c.half ? 'restorm' : 'conquest') : chestStones(c);
+  // (a Conquest chest, a hold's first fall's won before the Assault was withdrawn or a Warband's: half again its stones and the hidden modes'
+  //  moved stones; and an army's Legendary first-clear chest the stones a hold's first fall paid, RELEASE-TRIM: `legendFirstStones`)
+  const stones = c.conquest ? Math.ceil(chestStones(c) * CONQUEST_SHARE) + movedStones(c.half ? 'warband' : 'legend') : chestStones(c) + legendFirstStones(c);
   if (apply) m.stones = (m.stones ?? 0) + stones;
   items.push(...stoneItems(stones, 0));
   // (XP tomes: on top of the rest, from a side stream of the chest's seed, so the crowns and gear roll as they always did)
@@ -339,6 +340,17 @@ function lootOf(m: Meta, c: StashChest, apply: boolean): Loot {
   }
   return { at: c.at, kind: daily ? 'daily' : chestKind(c.at), army: c.army, items };
 }
+
+/** RELEASE-TRIM (`docs/notes/release-trim.md`): what the Assault paid, moved where every player reaches, at the rate it came at. An army's
+ *  Legendary first clear (its tenth star, when its hold opened) adds the stones the hold's first fall paid on top of a gold chest's own:
+ *  half again its stones and the hidden modes' moved stones (`MOVED_STONES.legend`). And the regrouped Warband's chest, which a re-storm at
+ *  Mythic won about one week in two, comes with the week's first daily clear, every second week, for each army at its tenth star
+ *  (`warbandChests`). */
+export const LEGEND_TIER = 3;
+/** The stars an army has with its Legendary clear: its tenth (Normal, Hard and Elite three each, Legendary one). */
+export const TENTH_STAR = 10;
+export const legendFirstStones = (c: Pick<StashChest, 'first' | 'tier' | 'at' | 'dry' | 'half' | 'daily' | 'bonus'>): number =>
+  c.first && c.tier === LEGEND_TIER && c.daily === undefined ? Math.ceil(chestStones(c) * CONQUEST_SHARE) - chestStones(c) + movedStones('legend') : 0;
 
 /** The Conquest chest pays this many times a gold chest's crowns and stones (the Assault, docs/notes/assault-1.md). */
 export const CONQUEST_SHARE = 1.5;
