@@ -13,7 +13,7 @@ test('the armies whose walls were tuned for mastered skills are the three last o
 test('every army has its own duel factor; the three last ones are eased below the plain share', () => {
   for (const a of ARMIES) assert.ok(DUEL_ARMY[a.id] > 0, `${a.id} has a factor`);
   for (const id of DUEL_MASTERED) assert.ok(DUEL_ARMY[id] < 1, `${id} eased`);
-  assert.deepEqual({ infernal: DUEL_ARMY.infernal, yokai: DUEL_ARMY.yokai, golems: DUEL_ARMY.golems }, { infernal: 0.42, yokai: 0.55, golems: 0.44 });
+  assert.deepEqual({ infernal: DUEL_ARMY.infernal, yokai: DUEL_ARMY.yokai, golems: DUEL_ARMY.golems }, { infernal: 0.37, yokai: 0.47, golems: 0.4 });
 });
 
 test('the other armies keep the factors they had', () => {

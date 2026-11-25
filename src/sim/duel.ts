@@ -45,7 +45,7 @@ export const DUEL_ROLE: Record<PartyRole, { hp: number; atk: number }> = { front
  *  measured with the mastered hero their walls were tuned for (`DUEL_MASTERED`): with the plain share they won 2 to 15% of their duels. */
 // (DUEL-SHOW: the Undead Legion's and the Beast Packs' re-tuned for the longer duel, `DUEL_LENGTH`: a longer fight helped the Undead's
 // nemeses and, with its signatures slowed, hurt the Beast Packs' bosses; these give each army back its win rate of before)
-export const DUEL_ARMY: Record<string, number> = { orcs: 0.6, undead: 0.8, beasts: 1.46, wildwood: 1.35, labyrinth: 0.95, ogres: 0.78, infernal: 0.42, yokai: 0.55, golems: 0.44 };
+export const DUEL_ARMY: Record<string, number> = { orcs: 0.6, undead: 0.8, beasts: 1.46, wildwood: 1.35, labyrinth: 0.95, ogres: 0.78, infernal: 0.37, yokai: 0.47, golems: 0.4 };
 /** DUEL-FAIR (docs/notes/duel-fair.md): the armies whose walls were tuned for a hero with every skill mastered (SKILLS-10: the Infernal Host,
  *  the Yokai and the Golem Forge, `docs/notes/skills-10.md`). Their duels are measured with the hero their walls were built for
  *  (`npm run balance -- --duel` gives it its mastered skills), and their factors set by it. */
