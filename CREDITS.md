@@ -269,6 +269,16 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   walk, attack, idle, hurt, dead (and cast) clips with `/animate-with-text-v3`, cropped and padded only (native pixels, hard alpha), and a lying last
   death frame by an exact 90-degree turn. Prompts and steps: `tools/pixellab/heroes/`; see `docs/notes/hero-art.md`.
 
+- **PIXELLAB-ART** (`docs/notes/pixellab-art.md`): made with **PixelLab** from the game's own art, every request (prompt, seed,
+  references) logged in `tools/pixellab/requests.jsonl`, the raw frames and candidates in `art-source/pixellab/`. The seven trophies
+  (`src/art/trophies/boarKing`, `alphaWolf`, `orcChieftain`, `forestBoss1-3`, `devilLeader`) are the empty mount `locked.webp` edited
+  (`tools/pixellab/trophies.py`); the pause medallion is `speed-1.webp` edited (`pause.py`). The battle sheets `alpha_werewolf`,
+  `nine_tails`, `summon_grave_*`, `elite_*` and `yokai_witch`/`yokai_seer` are their soldiers' sheets reskinned frame by frame
+  (`reskin.py`: a key frame by `/edit-images-v2`, every frame by `/transfer-outfit-v2` with it as the reference, slips mended by
+  `/edit-animation-v2`; a few fade-out frames are the source's own wisps, recoloured). The Wanted and crown marks, the Cursed icon,
+  the Council's hunt, plot and spared, the eight temperaments, the nine weaknesses, the hunted badge and three quest faces are `/generate-image-v2` with the game's icons as the style image (`icons.py`, picks in `place.py`).
+  PixelLab's terms leave the output's ownership with us.
+
 ## Castle courtyard (`src/art/castle/`)
 
 - Every building, wall, gate, prop and ground tile is a single piece of Chronos Settlement's isometric kits (`hpatter9/little-town`,

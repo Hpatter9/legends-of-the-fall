@@ -85,6 +85,14 @@ export const PLAYER_CREDITS: Readonly<Record<CreditGroup, readonly PlayerCredit[
     { work: '5000 Pixel Effects', author: 'blueberry', licence: 'Free for games, credit appreciated', link: 'https://blueberry-assets.itch.io' },
     { work: 'Super Pixel Effects Gigapack (Free Version)', author: 'unTied Games', licence: 'Free version' },
     { work: 'PVFX Foundry: the rift portal and landing dust', author: 'Pixel VFX Studio', licence: 'CC0 1.0' },
+    {
+      // (PIXELLAB-ART: PixelLab is a tool, not a pack: the pictures are the game's own, made with it from the game's art)
+      work: 'Pixel art made for the game with PixelLab',
+      author: 'PixelLab (pixellab.ai)',
+      licence: 'PixelLab terms: the output is ours to use',
+      link: 'https://www.pixellab.ai',
+      includes: ['The class heroes, the remade heroes and many foes and bosses', 'The Alpha Werewolf, the Nine-Tailed Fox and the risen skeletons', 'The Boar King’s, the Grove Spearlord’s and five more trophies', 'The Wanted and crown marks, the curse icon and the pause button'],
+    },
   ],
   'Characters and monsters': [
     {

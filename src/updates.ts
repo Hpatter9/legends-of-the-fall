@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.616.0',
+    date: '2026-11-25',
+    title: 'Trophies, elites and new faces',
+    notes: ['The Beast Packs and the Wildwood show their bosses\' trophies at last, and five mid-bosses join the trophy wall.', 'The Alpha Werewolf, the Nine-Tailed Fox, the twelve named elites, the Fox Witch and the Crow Seer each have a look of their own.', 'New icons for temperaments, weaknesses and Council news; the Undead\'s risen skeletons, the wanted mark and the crown are drawn.'],
+  },
+  {
     version: '0.615.0',
     date: '2026-11-24',
     title: 'Ready for release',

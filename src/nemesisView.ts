@@ -27,7 +27,7 @@ import { avengersOf, awayRuns, grudgesOn, trophyWords } from './sim/revenge';
 import { paintGearIcon } from './gearIcons';
 import { UNITS } from './sim/units';
 import { menuBackdrop } from './menuBackdrops';
-import { NEMESIS_TRAIT_ICON } from './nemesisTraitArt';
+import { HUNTED_ICON, NEMESIS_TRAIT_ICON, weakIcon } from './nemesisTraitArt';
 import { RANK_BADGE, SCAR_FRAME } from './expansionArt';
 import { NEWS_ICON, TROPHY_ICON, SMOOTH_COUNCIL_ART } from './councilArt';
 import { endLine, holdName } from './sim/warEndLines';
@@ -183,7 +183,11 @@ function seat(grid: HTMLElement, war: War, n: Nemesis | undefined, m: Meta, hook
     b.append(chip);
   }
   if (awayRuns(war, n.id)) b.classList.add('nmAway');
-  if (war.hunt?.id === n.id) b.classList.add('nmHunted');
+  // (PIXELLAB-ART: the quarry's crosshair badge beside the ring)
+  if (war.hunt?.id === n.id) {
+    b.classList.add('nmHunted');
+    b.append(icon(HUNTED_ICON, 'nmHuntMark'));
+  }
   b.setAttribute('aria-label', `${rankWord(n.rank)} ${fullName(n)}, Might ${n.might}, of the ${army}${n.oath !== undefined ? ', sworn in blood' : ''}${awayRuns(war, n.id) ? ', licking its wounds' : ''}${n.temper ? `, a ${TEMPER[n.temper].name}` : ''}${war.hunt?.id === n.id ? ', hunted' : ''}${settler ? `, ${heroName(settler)} has a score to settle` : ''}. Open its card`);
   return b;
 }
@@ -519,16 +523,17 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void, save?: (
     for (const [k, fallen] of avengers) well.append(heroLine(k, `Avenger of ${heroName(fallen)} · +15% attack on it, skills 10% quicker; a killing blow is Vengeance`));
   }
   // (its secrets: a trait or weakness not yet learned shows as "?")
-  const secrets = (title: string, list: readonly string[], words: (s: string) => { name: string; text: string }, art?: Readonly<Record<string, string>>) => {
+  const secrets = (title: string, list: readonly string[], words: (s: string) => { name: string; text: string }, art?: (s: string) => string | undefined) => {
     const well = sectionWell(menu.body, title, `${list.filter((s) => n.known.includes(s)).length} of ${list.length} known`);
     for (const s of list) {
       const p = el('p', 'nmSecret');
       if (n.known.includes(s)) {
         const w = words(s);
         p.append(el('b', '', w.name), el('small', '', w.text));
-        if (art?.[s]) {
+        const pic = art?.(s);
+        if (pic) {
           p.classList.add('nmWithTrait');
-          p.prepend(icon(art[s], 'nmTraitIcon'));
+          p.prepend(icon(pic, 'nmTraitIcon'));
         }
       } else {
         p.classList.add('hidden');
@@ -537,8 +542,8 @@ export function openNemesisCard(m: Meta, n: Nemesis, hunt?: () => void, save?: (
       well.append(p);
     }
   };
-  secrets('Traits', n.traits, (t) => ({ name: TRAITS[t]?.name ?? t, text: TRAITS[t]?.text ?? '' }), NEMESIS_TRAIT_ICON);
-  secrets('Weaknesses', n.weak, (w) => weakWords(w, heroName));
+  secrets('Traits', n.traits, (t) => ({ name: TRAITS[t]?.name ?? t, text: TRAITS[t]?.text ?? '' }), (t) => NEMESIS_TRAIT_ICON[t]);
+  secrets('Weaknesses', n.weak, (w) => weakWords(w, heroName), weakIcon);
   // (NEMESIS-DEPTH, idea 5: the heroes it has studied, shown as soon as it learns them: the player saw it happen)
   if (n.studied?.length) {
     const well = sectionWell(menu.body, 'Studied', 'it knows these heroes’ tricks');

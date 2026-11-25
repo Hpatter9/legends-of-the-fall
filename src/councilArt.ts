@@ -17,6 +17,9 @@ import vengeance from './art/council/vengeance.png';
 import reclaimed from './art/council/reclaimed.png';
 import duel from './art/council/duel.png';
 import token from './art/council/token.png';
+import hunt from './art/council/hunt.png';
+import plot from './art/council/plot.png';
+import spared from './art/council/spared.png';
 import named from './art/relics/bookOfNames.webp';
 import muster from './art/relics/warDrum.webp';
 
@@ -26,12 +29,8 @@ export const NEWS_ICON: Readonly<Record<NewsKind, string>> = {
   cheated, recruit, promotion, feud, betrayal, feast, trial, oath, desertion,
   claim: RANK_BADGE.warchief, crowned: RANK_BADGE.warchief, named, slain, muster,
   fled, humiliated, vengeance, reclaimed, duel, conquest: RANK_BADGE.warchief,
-  // (NEMESIS-DEPTH: a hunt wears the duel's crossed blades until a symbol of its own is painted)
-  hunt: duel,
-  // (NEMESIS-DEPTH, idea 7: a plot wears the betrayal's dagger)
-  plot: betrayal,
-  // (idea 6: one spared, kneeling or turned Informant, wears the blood-oath's clasped hands)
-  spared: oath,
+  // (PIXELLAB-ART: a hunt's horn, a plot's stabbed scroll and the spared's laid-down helm, their own at last)
+  hunt, plot, spared,
 };
 export const TROPHY_ICON = token;
 export const SMOOTH_COUNCIL_ART = new Set([named, muster]);
