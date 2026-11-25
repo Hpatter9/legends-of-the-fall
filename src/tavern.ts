@@ -6,6 +6,7 @@
 // `render/tavernLife.ts`, drawn by `tavernLifeDraw.ts`), the same every time. It only draws (Math.random, for Duchess, is fine here:
 // nothing that is played depends on it) and runs only while the tab is showing.
 
+import { walkArt } from './duchessDress';
 import { countDuchessTap } from './sim/duchessTaps';
 import { saveMeta } from './sim/meta';
 import { tok } from './render/tok';
@@ -678,7 +679,8 @@ export class Tavern {
     const lift = Math.round(hopLift(goat, this.now) / 2);
     const bob = chewBob(goat, this.now, this.reduced);
     const dy = foot - f - lift - bob;
-    g.drawImage(this.goatArt!, goatFrame(goat) * f, 0, f, f, x - f / 2, dy, f, f);
+    // (COSMETICS: her dressed strip at half size, when the costume she wears has one)
+    g.drawImage(walkArt(this.goatArt!, true), goatFrame(goat) * f, 0, f, f, x - f / 2, dy, f, f);
     drawDuchessCosmetic(g, settings().duchessHat, x - f / 2, dy, 0.5, goat.face, 0);
     const mark = this.quests && this.meta ? giverMark(this.meta, 'duchess') : null;
     if (mark) this.bubbleAt(mark === 'ready' ? 'ready' : 'quest', x, dy - 14);

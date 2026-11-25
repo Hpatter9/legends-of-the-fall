@@ -1,4 +1,6 @@
 import { modeShown, namesHiddenMode } from './sim/hiddenModes';
+import { rulerOf } from './rulerRules';
+import { OWNED_CHANGED } from './iapView';
 import { heraldPortrait } from './heraldArt';
 // Legends of the Last Keep: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
@@ -201,7 +203,7 @@ import { heartFades, heartFull, heartRows, heartsLabel, HEART_FADE_MS } from './
 import { reviveIn, REVIVE_MS } from './sim/lives';
 import { Fx, loadFx } from './render/fx';
 import { lookSheet } from './render/awakenLook';
-import { framesOf, loadAwakenedSheets, loadSheets, portrait, sheetInfo, wholeFigure } from './render/sheets';
+import { framesOf, loadAwakenedSheets, loadSheets, portrait, redressDuchess, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS, settle, type Spot, type View } from './render/cameraRules';
 import { spellGlance, spellView, ULT_CAM, type Room } from './ultCameraRules';
 import { bfxClip, spellBfx } from './render/blenderFxRules';
@@ -697,8 +699,10 @@ class Game {
     // (KING-SPELLS batch 2: the loadout follows the ruler's school, on load and whenever the ruler is changed)
     let school = '';
     const fit = () => {
-      if (school === settings().ruler && this.meta.spellbook.school === school) return;
-      school = settings().ruler;
+      // (COSMETICS: the ruler held, a bought one no longer held reads as the default; a bought ruler leads a free ruler's school)
+      const ruler = rulerOf(settings().ruler).id;
+      if (school === ruler && this.meta.spellbook.school === schoolOf(ruler).id) return;
+      school = ruler;
       // (SPELL-SLOTS: a new school fills no more slots than the save has open)
       fitSchool(this.meta.spellbook, school, spellSlots(this.meta));
       saveMeta(this.meta);
@@ -807,6 +811,15 @@ class Game {
     const lowPower = (on: boolean) => document.documentElement.classList.toggle('lowPower', on);
     lowPower(settings().saver);
     onSettings((s) => lowPower(s.saver));
+    // (COSMETICS: Duchess's battle sheet is dressed again when her costume changes)
+    let costume = settings().duchessHat;
+    onSettings((s) => {
+      if (s.duchessHat === costume) return;
+      costume = s.duchessHat;
+      redressDuchess();
+    });
+    // (and when the store's word on what is owned changes: a costume bought, restored or refunded)
+    window.addEventListener(OWNED_CHANGED, () => redressDuchess());
     window.addEventListener('resize', () => this.layout());
     this.watchTopHud();
     // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)

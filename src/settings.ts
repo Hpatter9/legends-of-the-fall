@@ -3,13 +3,17 @@
 // and the gear in the top bar. The choices are kept in localStorage (legends.settings, the same keys as before the
 // submenus); `settings()` is what the rest of the page reads, and `onSettings` tells a module when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
+import { shopOn } from './iapView';
+import { entitledHere, productById, PRODUCTS } from './iapRules';
+/** COSMETICS: Starfall summons' entitlement. */
+const STARFALL = 'starfall_summons';
 import { diagClear, diagCopy, diagShown } from './diag';
 import { glyphWord } from './paintedButton';
 import { tips } from './tips';
 import { onShowTipsAgain, openTutorialsPage } from './tutorialView';
-import { DEFAULT_RULER, RULERS, rulerOf, type RulerId } from './rulerRules';
+import { DEFAULT_RULER, PAID_RULERS, RULERS, rulerOf, rulerOwned, type RulerId } from './rulerRules';
 import { RULER_URLS } from './rulerUrls';
-import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
+import { DUCHESS_COSMETICS, wornCostume, type DuchessCosmeticId } from './render/duchessRules';
 import { closePicker, openPicker } from './settingsPicker';
 import { appUpdate, STORE } from './appUpdate';
 import { openCredits } from './credits';
@@ -59,6 +63,8 @@ export interface Settings {
   eidolonFull: boolean;
   /** Duchess's equipped unlockable cosmetic accessory. */
   duchessHat: DuchessCosmeticId;
+  /** COSMETICS: the summoning in Starfall's look (its card back and burst), when it is owned; missing or off is the classic look. */
+  starfall?: boolean;
   /** The Nemesis War's taunt cut-ins (`tauntCutRules.ts`): full, short (the name plate only) or off. A nemesis's first meeting plays in full
    *  unless they are off. */
   nemesisCut: CutMode;
@@ -111,6 +117,7 @@ export function parseSettings(raw: string | null): Settings {
     ultShort: flag(saved.ultShort, DEFAULTS.ultShort),
     eidolonFull: flag(saved.eidolonFull, DEFAULTS.eidolonFull),
     duchessHat: validHat(saved.duchessHat),
+    ...(saved.starfall === true ? { starfall: true } : {}),
     nemesisCut: CUT_MODES.includes(saved.nemesisCut as CutMode) ? (saved.nemesisCut as CutMode) : DEFAULTS.nemesisCut,
     ...(viewActive(cleanView(saved.roster)) ? { roster: cleanView(saved.roster) } : {}),
     ...(saved.planChosen === true ? { planChosen: true } : {}),
@@ -253,7 +260,8 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
         resetTipsRow(),
       ];
     case 'ruler':
-      return [rulerRow(s.ruler), duchessHatRow(s.duchessHat)];
+      // (COSMETICS: Starfall's row where the Shop sells it, or once it is owned)
+      return [rulerRow(s.ruler), duchessHatRow(s.duchessHat), ...(entitledHere(STARFALL) || shopOn() ? [starfallRow(s.starfall === true)] : [])];
     case 'data':
       return [startOverRow()];
     case 'diag':
@@ -475,7 +483,7 @@ function row(title: string, hint: string): [HTMLElement, HTMLElement] {
   return [r, text];
 }
 
-/** The ruler: one compact row with the current ruler's portrait and name; its button opens the picker of all nine
+/** The ruler: one compact row with the current ruler's portrait and name; its button opens the picker of them all
  *  (`settingsPicker.ts`), which saves to the same `ruler` setting. */
 function rulerRow(value: RulerId): HTMLElement {
   const ruler = rulerOf(value);
@@ -496,20 +504,22 @@ function rulerRow(value: RulerId): HTMLElement {
       $('settings'),
       {
         title: 'Choose your ruler',
-        hint: 'Nine crowns, nine characters. Choose who rules your keep.',
+        hint: 'Choose who rules your keep. Each leads a school of the king\u2019s spells.',
         listClass: 'rulerChoices',
-        options: RULERS.map((x) => ({
+        // (COSMETICS: a bought ruler is listed once owned, or while the Shop sells it, locked until bought; a build with no Shop never shows one)
+        options: RULERS.filter((x) => !PAID_RULERS[x.id] || rulerOwned(x.id) || (shopOn() && PRODUCTS.some((p) => p.entitlements?.includes(PAID_RULERS[x.id]!) && p.ready))).map((x) => ({
           id: x.id,
           on: x.id === value,
+          locked: !rulerOwned(x.id),
           className: 'rulerChoice',
           fill: (c) => {
             c.style.setProperty('--ruler-colour', x.colour);
-            c.setAttribute('aria-label', `${x.name}, ${x.role}`);
+            c.setAttribute('aria-label', `${x.name}, ${x.role}${rulerOwned(x.id) ? '' : ', in the Shop'}`);
             c.title = x.detail;
             const name = document.createElement('b');
             name.textContent = x.name;
             const role = document.createElement('small');
-            role.textContent = x.role;
+            role.textContent = rulerOwned(x.id) ? x.role : 'In the Shop';
             c.append(rulerPortrait(x.id), name, role);
           },
         })),
@@ -619,10 +629,34 @@ function getDuchessMeta(): { duchessTaps?: number; duchessLucky?: boolean; duche
   return {};
 }
 
+/** COSMETICS: the summoning's look, Classic or Starfall (bought in the Shop); Classic is always there to turn it off. */
+function starfallRow(on: boolean): HTMLElement {
+  const owned = entitledHere(STARFALL);
+  const [r] = row('Summoning look', owned ? 'Starfall: the summoning cards and their burst in violet and gold' : 'Starfall summons: in the Shop');
+  const pair = document.createElement('div');
+  pair.className = 'pair';
+  for (const [label, value] of [['Classic', false], ['Starfall', true]] as const) {
+    const b = document.createElement('button');
+    b.textContent = label;
+    const chosen = owned ? on === value : !value;
+    b.setAttribute('aria-pressed', String(chosen));
+    b.classList.toggle('on', chosen);
+    b.disabled = value && !owned;
+    b.addEventListener('click', () => {
+      setSetting('starfall', value);
+      draw();
+    });
+    pair.append(b);
+  }
+  r.append(pair);
+  return r;
+}
+
 /** Duchess's costume: one row with the one she wears; its button opens a picker of them all (locked ones say how to unlock). */
 function duchessHatRow(value: DuchessCosmeticId): HTMLElement {
   const meta = getDuchessMeta();
-  const worn = DUCHESS_COSMETICS.find((c) => c.id === value) ?? DUCHESS_COSMETICS[0];
+  // (COSMETICS: what she wears now: a bought costume no longer hers shows as none)
+  const worn = DUCHESS_COSMETICS.find((c) => c.id === wornCostume(value, meta)) ?? DUCHESS_COSMETICS[0];
   const [r] = row('Duchess costume', worn.name);
   const b = document.createElement('button');
   b.type = 'button';
@@ -637,7 +671,9 @@ function duchessHatRow(value: DuchessCosmeticId): HTMLElement {
         title: 'Duchess’s costume',
         hint: 'An unlocked hat or accessory for Duchess.',
         listClass: 'costumeChoices',
-        options: DUCHESS_COSMETICS.map((c) => {
+        // (COSMETICS: a bought costume is listed once it is owned, or while the Shop sells it; a build with no Shop, or a costume not yet on
+        //  sale, never shows one it can't buy)
+        options: DUCHESS_COSMETICS.filter((c) => !c.entitlement || c.unlocked(meta) || (shopOn() && !!productById(`look_duchess_${c.id}`)?.ready)).map((c) => {
           const unlocked = c.unlocked(meta);
           return {
             id: c.id,
@@ -648,7 +684,7 @@ function duchessHatRow(value: DuchessCosmeticId): HTMLElement {
               const name = document.createElement('b');
               name.textContent = unlocked ? c.name : `${c.name} 🔒`;
               const desc = document.createElement('small');
-              desc.textContent = unlocked ? c.desc : `To unlock: ${c.hint}`;
+              desc.textContent = unlocked ? c.desc : c.entitlement ? 'In the Shop' : `To unlock: ${c.hint}`;
               o.append(name, desc);
             },
           };

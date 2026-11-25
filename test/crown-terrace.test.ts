@@ -9,7 +9,7 @@ import { RULER_COURTS, TERRACE_LANDMARKS, TERRACE_GUARDS, courtGuardKinds, chang
 
 test('every ruler has a distinct complete court painting and every site has three landmark stages', () => {
   assert.deepEqual(Object.keys(RULER_COURTS).sort(), RULERS.map(r=>r.id).sort());
-  assert.equal(new Set(Object.values(RULER_COURTS).map(t=>t.name)).size,8);
+  assert.equal(new Set(Object.values(RULER_COURTS).map(t=>t.name)).size,RULERS.length);
   assert.deepEqual(TERRACE_LANDMARKS.map(p=>p.id).sort(),[...BUILDING_IDS,...ROOM_BUILDING_IDS,'chapel'].sort());
   for (const name of [...RULERS.flatMap(r=>[r.id,`ruler-${r.id}`]),...ALL_HEROES.map(k=>`hero-${k}`),...Array.from({length:8},(_,i)=>`duchess-${i}`),...TERRACE_LANDMARKS.flatMap(p=>[1,2,3].map(s=>`${p.id}-${s}`)),'works-1','works-2','works-3']) {
     const path = `src/art/crown-terrace/${name}.webp`;

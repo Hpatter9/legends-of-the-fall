@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.620.0',
+    date: '2026-11-25',
+    title: 'New looks: costumes, rulers and Starfall',
+    notes: ['Dress Duchess as royalty, a little knight or a lantern-bearer, from Settings, Ruler and Duchess.', 'Two new rulers, the Ember Sovereign and the Starlit Empress, each with a domain of their own.', 'Starfall summons: a starry card back and a burst as each card turns. Looks only; nothing changes your strength.'],
+  },
+  {
     version: '0.619.0',
     date: '2026-11-25',
     title: 'A guard you can see',

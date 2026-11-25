@@ -34,6 +34,8 @@ export const RULER_COURTS: Record<RulerId, { name: string; detail: string; light
   moon_oracle: { name: 'The Star Observatory', detail: 'Silver constellations above a moonlit kingdom.', light: 0xb5bdff, shade: '#56618c', weather: 'stars' },
   storm_corsair: { name: 'The Tempest Quarterdeck', detail: 'Salt-worn stone, compass banners and a harbour realm.', light: 0x8fdce9, shade: '#608b91', weather: 'rain' },
   gilded_necromancer: { name: 'The Gilded Necropolis', detail: 'Black marble, gilded bones and a spectral valley.', light: 0xa8edb4, shade: '#657c62', weather: 'stars' },
+  ember_sovereign: { name: 'The Basalt Throne', detail: 'Black basalt over a sea of cooling lava, iron braziers and ember-red standards.', light: 0xff7a3a, shade: '#5e2e22', weather: 'embers' },
+  starlit_empress: { name: 'The Comet Observatory', detail: 'Pale marble under a sky thick with stars, brass orreries and blue lanterns.', light: 0xa9b8ff, shade: '#4d5a8f', weather: 'stars' },
 };
 export const terraceArtUrl = (name: string): string => `ui/crown-terrace/${name}.webp`;
 

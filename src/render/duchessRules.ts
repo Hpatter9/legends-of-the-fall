@@ -4,6 +4,14 @@
 // for the game in ROUND2-WIRE) is 48-pixel frames: three steps walking left, then three walking right; frame 1 (or 4) is standing.
 // Everything is a one-shot or a slow amble: nothing blinks or flashes.
 
+import { entitledHere } from '../iapRules';
+import knightWalkUrl from '../art/duchess/duchess_knight_walk.png';
+import knightBattleUrl from '../art/duchess/duchess_knight.png';
+import regaliaWalkUrl from '../art/duchess/duchess_regalia_walk.png';
+import regaliaBattleUrl from '../art/duchess/duchess_regalia.png';
+import lanternWalkUrl from '../art/duchess/duchess_lantern_walk.png';
+import lanternBattleUrl from '../art/duchess/duchess_lantern.png';
+
 export type GoatMode = 'graze' | 'walk' | 'nibble' | 'hop' | 'nest';
 
 export interface Goat {
@@ -233,13 +241,47 @@ export function rollDailyTreat(rand: () => number = Math.random): DuchessTreat {
 
 /* ---- unlockable hats & costumes ---- */
 
-export type DuchessCosmeticId = 'none' | 'crown' | 'wizard' | 'quiver';
+export type DuchessCosmeticId = 'none' | 'crown' | 'wizard' | 'quiver' | 'regalia' | 'knight' | 'lantern';
+/** The costumes bought in the Shop (owned by an entitlement; see `DUCHESS_COSMETICS`). */
+export const PAID_COSTUMES = ['regalia', 'knight', 'lantern'] as const;
+export type PaidCostume = (typeof PAID_COSTUMES)[number];
+export const isPaidCostume = (id: string): id is PaidCostume => (PAID_COSTUMES as readonly string[]).includes(id);
+
+/** COSMETICS (docs/notes/cosmetics.md): a bought costume is drawn as whole sheets of Duchess wearing it, swapped in for hers, never laid over
+ *  her: `walk`, her walking strip in `goat.png`'s layout (`src/art/duchess/duchess_<costume>_walk.png`, 288 x 48: three frames facing left, three facing right; the tavern's half size
+ *  is cut from it); `battle`, her battle sheet in `duchess_goat.png`'s layout (`duchess_<costume>.png`); `terrace`, true when the Crown Terrace's eight poses are in
+ *  `src/art/crown-terrace/` as `duchess-<costume>-0.webp` to `-7.webp`. Each is the URL its import gives. A costume missing one is drawn
+ *  there in her plain sheet. Empty until the redrawn art lands (the owner turned down the cut-down overlays). */
+export interface DressedSheets {
+  walk?: string;
+  battle?: string;
+  terrace?: boolean;
+}
+export const DRESSED: Partial<Record<PaidCostume, DressedSheets>> = {
+  // (the three, redrawn whole and approved: the Knight (claude/duchess-costumes), the Regalia and the Lantern (PR #683); their Crown Terrace
+  //  poses are not painted yet, so there she is plain)
+  regalia: { walk: regaliaWalkUrl, battle: regaliaBattleUrl },
+  knight: { walk: knightWalkUrl, battle: knightBattleUrl },
+  lantern: { walk: lanternWalkUrl, battle: lanternBattleUrl },
+};
+
+/** The dressed sheet of a kind for a costume, or undefined (her plain sheet then). */
+export function dressedOf(costume: DuchessCosmeticId, kind: 'walk' | 'battle'): string | undefined {
+  return isPaidCostume(costume) ? DRESSED[costume]?.[kind] : undefined;
+}
+/** Whether a costume has its Crown Terrace poses. */
+export const dressedTerrace = (costume: DuchessCosmeticId): boolean => isPaidCostume(costume) && DRESSED[costume]?.terrace === true;
+/** Whether a costume can be sold: it has her walking strip and her battle sheet (the camp, the tavern, the cutscenes, her card and the fight).
+ *  The Crown Terrace's eight painted poses are a set of their own: until a costume has them she stands there plain. */
+export const fullyDressed = (costume: PaidCostume): boolean => !!DRESSED[costume]?.walk && !!DRESSED[costume]?.battle;
 
 export interface DuchessCosmeticDef {
   id: DuchessCosmeticId;
   name: string;
   desc: string;
   hint: string;
+  /** COSMETICS: a costume bought in the Shop: the RevenueCat entitlement that owns it (on any phone, restored, through a fresh start). */
+  entitlement?: string;
   unlocked(meta?: { duchessTaps?: number; duchessLucky?: boolean; duchessHay?: boolean }): boolean;
 }
 
@@ -248,7 +290,19 @@ export const DUCHESS_COSMETICS: readonly DuchessCosmeticDef[] = [
   { id: 'crown', name: 'Tiny Tin Crown', desc: 'A slightly crooked tin coronet perched with sovereign grace.', hint: 'Tap Duchess 5 times', unlocked: (m) => (m?.duchessTaps ?? 0) >= 5 },
   { id: 'wizard', name: 'Wizard Hat', desc: 'A pointy star-speckled hat smelling faintly of cabbages and mana.', hint: 'Trigger Lucky Bleat in battle', unlocked: (m) => !!m?.duchessLucky },
   { id: 'quiver', name: 'Archery Quiver', desc: 'A miniature leather quiver slung diagonally across her back.', hint: 'Find her daily haystack treat', unlocked: (m) => !!m?.duchessHay },
+  // (COSMETICS: the Shop's three; owned by the store's entitlement, never by play)
+  { id: 'regalia', name: 'Royal Regalia', desc: 'An ermine cape and a jewelled crown, as befits Her Grace.', hint: 'In the Shop', entitlement: 'duchess_regalia', unlocked: () => entitledHere('duchess_regalia') },
+  { id: 'knight', name: 'Little Knight', desc: 'A plumed steel helm, polished for the charge.', hint: 'In the Shop', entitlement: 'duchess_knight', unlocked: () => entitledHere('duchess_knight') },
+  { id: 'lantern', name: 'Lantern', desc: 'A little brass lantern hung from her horns, its candle lit.', hint: 'In the Shop', entitlement: 'duchess_lantern', unlocked: () => entitledHere('duchess_lantern') },
 ];
+
+/** COSMETICS: the costume she wears now: the one chosen, if it is still hers (a refunded costume comes off by itself), else none. */
+export function wornCostume(chosen: DuchessCosmeticId, meta?: { duchessTaps?: number; duchessLucky?: boolean; duchessHay?: boolean }): DuchessCosmeticId {
+  const c = DUCHESS_COSMETICS.find((x) => x.id === chosen);
+  if (!c) return 'none';
+  // (the free ones keep their old rule: chosen is worn; a bought one needs its entitlement)
+  return c.entitlement && !c.unlocked(meta) ? 'none' : chosen;
+}
 
 /** Draw Duchess's equipped cosmetic accessory onto a 2D canvas, aligned to her frame, facing, and bob. */
 export function drawDuchessCosmetic(
@@ -261,6 +315,8 @@ export function drawDuchessCosmetic(
   bob = 0,
 ): void {
   if (!cosmetic || cosmetic === 'none') return;
+  // (COSMETICS: a bought costume is drawn by swapping in her dressed sheet (`DRESSED`, `duchessDress.ts`), not over her here)
+  if (isPaidCostume(cosmetic)) return;
   ctx.save();
   const s = scale;
   const fl = Math.round(frameLeft);

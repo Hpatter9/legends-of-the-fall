@@ -54,8 +54,8 @@ test('the products are the owner’s: ids, contents and prices', () => {
     const p = productById(id)!;
     assert.equal(p.usd, usd, id);
     assert.equal(p.consumable, false, id);
-    // (a cosmetic is "Coming soon" until its art is in the game)
-    assert.equal(p.ready, false, id);
+    // (COSMETICS: a cosmetic is on sale once it can be worn: all seven are)
+    assert.equal(p.ready, true, id);
     assert.ok(p.entitlements?.length, id);
   }
   // (Play's product ids: lowercase letters, digits, underscores and dots, starting with a letter or digit; each one once)
