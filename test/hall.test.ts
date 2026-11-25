@@ -155,3 +155,21 @@ test('the page’s hero rows: owned first, each with what it lends', () => {
   assert.equal(rows[rows.length - 1].owned, false);
   assert.equal(rows[rows.length - 1].lends, 'Not yet joined');
 });
+
+test('a duel’s champion fights without the Hall: its stats as with the Hall off', async () => {
+  const { withoutHall } = await import('../src/sim/hall');
+  const { boostOf } = await import('../src/sim/run');
+  const m = withRanks({ knight: 4, samurai: 4, kunoichi: 3, wizard: 3 });
+  const h = { id: 1, kind: 'archer', grade: 1 };
+  const on = boostOf(h, heroRank(m, 'archer'), 30, heroStats(m, 'archer'));
+  HALL.on = false;
+  let off;
+  try {
+    off = boostOf(h, heroRank(m, 'archer'), 30, heroStats(m, 'archer'));
+  } finally {
+    HALL.on = true;
+  }
+  const duel = withoutHall(m, on);
+  for (const k of ['hp', 'atk', 'crit', 'charge'] as const) assert.ok(Math.abs((duel.equip?.[k] ?? 0) - (off.equip?.[k] ?? 0)) < 1e-9, k);
+  assert.ok((on.equip?.hp ?? 0) > (off.equip?.hp ?? 0), 'the Hall was there');
+});

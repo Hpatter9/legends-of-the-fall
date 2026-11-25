@@ -3,6 +3,7 @@
 // behind, on high ground; see `src/sim/autoplay.ts`, which the Auto button and the auto-replay share) and plays an army's waves from wave 1 until a fight is lost or the last boss falls. Hero levels come from, and
 // XP goes into, the save's meta, as the page does.
 
+import { withoutHall } from '../src/sim/hall';
 import { PROVISIONS, oathOffer, provisionsOf, swearOath } from '../src/sim/calJourney';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
@@ -164,7 +165,7 @@ export function playWaves(meta: Meta, run: Run, castle: Castle = run.castle ?? n
       const id = championFor(run, offer)!;
       const h = run.roster.find((x) => x.id === id)!;
       acceptDuel(run, offer, id);
-      const d = startDuel(run, offer, id, boostFor?.(h) ?? botBoost(meta, h, run));
+      const d = startDuel(run, offer, id, withoutHall(meta, boostFor?.(h) ?? botBoost(meta, h, run)));
       fight(d);
       const dt = WAR_BOT.settle && meta.war ? playOutTallied(d) : (playOut(d), undefined);
       const out = settleDuelRun(run, d)!;

@@ -4,7 +4,8 @@
 //   awakened steps): the Guardians, Bulwarks, Wardens and Supports health; the Blades, Vanguards, Beasts and Gunners attack; the Assassins,
 //   Marksmen and Tricksters crit; the Casters and Arcanists skill charge. Each stat is capped (`HALL_CAP`), so a full collection gives about
 //   +9% health, +8% attack, +3% crit and +6% charge (the measure took them down a quarter from the first draft). It is added to every hero's lasting stats (`heroStats`), so it counts wherever those do:
-//   the army runs, the daily, the Last Stand, the quests and duels (a run whose heroes start bare, the Calamity's, reads none of it).
+//   the army runs, the daily, the Last Stand and the quests, but not a duel (`withoutHall`: it would lift the duels past their band); a run
+//   whose heroes start bare, the Calamity's, reads none of it.
 // - TRAIT SETS: every hero of a trait owned completes its set, once: stones, crowns and a title (`claimSets`).
 // - RESTED HEROES: a hero who sat out the last three army runs earns half again the XP in its next one (`restedXp`), a nudge to rotate.
 //
@@ -70,6 +71,14 @@ export function withHall(m: Meta, stats: EquipStats | undefined, empty: () => Eq
   t.crit += h.crit;
   t.charge += h.charge;
   return t;
+}
+
+/** A duel's champion fights without the Hall (its ~60% band was measured without it, DUEL-FAIR): the Hall's shares taken back out of its
+ *  lasting stats, exactly as `withHall` put them in. */
+export function withoutHall<T extends { equip?: EquipStats }>(m: Meta, boost: T): T {
+  const h = hallBonus(m);
+  if (!boost.equip || (!h.hp && !h.atk && !h.crit && !h.charge)) return boost;
+  return { ...boost, equip: { ...boost.equip, hp: boost.equip.hp - h.hp, atk: boost.equip.atk - h.atk, crit: boost.equip.crit - h.crit, charge: boost.equip.charge - h.charge } };
 }
 
 /** The Hall in words: "Your Hall: +6% HP, +4% ATK, +1% Crit" (the stats it lends; "nothing yet" with none). */

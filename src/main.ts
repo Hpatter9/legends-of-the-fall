@@ -45,7 +45,7 @@ import { TIERS, tierOf } from './sim/tiers';
 import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { arrowOf, deployChip } from './armyWeaknessRules';
-import { isRested, RESTED_RUNS, RESTED_XP, restedXp } from './sim/hall';
+import { isRested, RESTED_RUNS, RESTED_XP, restedXp, withoutHall } from './sim/hall';
 import { openArmyMatchCard } from './armyMatchView';
 import { classSigil } from './classSigil';
 import { ARMY_MATCH } from './sim/armyWeakness';
@@ -1052,7 +1052,8 @@ class Game {
     // (DUEL-SHOW: the rest of the party as placed and the rest of the wave watch from outside the ring)
     const before = this.b.units.slice();
     // (the duel's own fight: the wave's board with the two in its middle ring, `startDuel`)
-    this.b = startDuel(this.run, o, heroId, this.boostFor(h));
+    // (HALL-OF-HEROES: the champion fights without the Hall, `withoutHall`)
+    this.b = startDuel(this.run, o, heroId, withoutHall(this.meta, this.boostFor(h)));
     const section = chainOf(this.run)?.[this.run.stage - 1];
     this.boardView.build(this.b.board, { boss: !!waveArmyOf(this.run) && isBossRun(this.run) }, section?.rot ?? 0);
     this.life.build(this.b.board, weatherOf(this.b.board));
