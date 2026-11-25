@@ -145,3 +145,9 @@ export function gradeParts(grade: number, colour: number, saver = false): AuraPa
   if (grade < 2) return [];
   return [plain('shell', 'wrap', 1.35, grade > 3 ? 0.8 : grade > 2 ? 0.65 : 0.5, colour, { add: true }), ...(grade > 2 && !saver ? [plain('rise', 'rise', 1.7, 1, colour, { add: true, extra: true })] : [])];
 }
+
+/** The colour of a raised guard's light: pale gold. */
+export const GUARD_COLOUR = 0xf2e2a8;
+/** A raised guard: two hoops of pale gold on the ground at the feet and a shell of that light behind the body, for as long as the
+ *  guard is up. (It was one painted ring laid behind the body's middle.) */
+export const guardParts = (): AuraPart[] => [plain('ring2', 'ground', 1.25, 0.95, GUARD_COLOUR), plain('shell', 'wrap', 1.45, 0.85, GUARD_COLOUR, { add: true })];
