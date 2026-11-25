@@ -1,4 +1,4 @@
-// COSMETICS (docs/notes/cosmetics.md): pictures of each bought look worn, at 393 x 852 (the Shop at all three sizes), into
+// COSMETICS (docs/notes/cosmetics.md): pictures of each look on sale worn (Starfall), at 393 x 852 (the Shop at all three sizes), into
 // docs/samples/cosmetics/. The fake store (`?shop=fake`) stands in for Google Play; ownership is the store's entitlements, cached as the game
 // caches them (`legends.purchases`). Fails on a page error.
 //
@@ -17,7 +17,7 @@ const base = `http://localhost:${srv.address().port}/?shop=fake`;
 const errors = [];
 const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'peasant', 'ninjaMonk', 'wanderer'];
 // (what the fake store's account has bought: it is the store, read at start, that says what is owned)
-const ALL = ['bundle_wardrobe', 'look_starfall'];
+const ALL = ['look_starfall'];
 
 /** A page with a save, the fake store's purchases (`owned`, product ids) and the settings given. */
 async function open(w, h, { owned = ALL, settings = {}, stones = 40 } = {}) {
@@ -45,45 +45,11 @@ const clearCards = async (page) => {
   }
 };
 
-// 1. Duchess in each costume: the camp, the tavern, and her dressed sheets (the cutscenes' strip and the fight's sheet) drawn large
-for (const costume of ['regalia', 'knight', 'lantern']) {
-  const { ctx, page } = await open(393, 852, { settings: { duchessHat: costume } });
-  await clearCards(page);
-  await shot(page, `${costume}-camp`);
-  await page.locator('.hmTab').nth(1).click();
-  await page.waitForTimeout(1500);
-  await clearCards(page);
-  await shot(page, `${costume}-tavern`);
-  await page.evaluate(async () => {
-    const d = window.__duchessDress;
-    const walk = d.dressWalk(await d.walkSheet());
-    const battle = await d.dressBattle(await d.battleSheet());
-    const box = document.createElement('div');
-    box.id = 'proof';
-    box.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#3c4a3a;display:flex;flex-direction:column;gap:12px;padding:16px;align-items:center;overflow:hidden';
-    const put = (src, w) => {
-      const c = document.createElement('canvas');
-      c.width = src.width;
-      c.height = src.height;
-      c.getContext('2d').drawImage(src, 0, 0);
-      c.style.cssText = `width:${w}px;image-rendering:pixelated`;
-      box.append(c);
-    };
-    const label = (t) => { const p = document.createElement('p'); p.textContent = t; p.style.cssText = 'margin:0;color:#f2dc9f;font:14px sans-serif'; box.append(p); };
-    label('Her walking strip (home, castle, camp, cutscenes)');
-    put(walk, 360);
-    label('Her battle sheet (when she fights)');
-    put(battle, 360);
-    document.body.append(box);
-  });
-  await page.waitForTimeout(300);
-  await shot(page, `${costume}-sheets`);
-  await ctx.close();
-}
+// (Duchess's costumes are not shown: the owner turned the cut-down overlays down, and they wait, Coming soon, for their redrawn sheets)
 
 // 2. Settings, Ruler and Duchess: the costume picker and the summoning look
 {
-  const { ctx, page } = await open(393, 852, { settings: { duchessHat: 'knight', starfall: true } });
+  const { ctx, page } = await open(393, 852, { settings: { starfall: true } });
   await page.locator('#hmGear').click();
   await page.waitForTimeout(500);
   await page.locator('.setMenu[data-page="ruler"]').click();
@@ -144,14 +110,14 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await page.waitForTimeout(300);
   await shot(page, `shop-cosmetics-${w}`);
   if (w === 393) {
-    await page.locator('#iapShop [data-product="look_duchess_knight"]').click();
+    await page.locator('#iapShop [data-product="look_starfall"]').click();
     await page.waitForTimeout(900);
-    await shot(page, 'shop-bought-knight');
+    await shot(page, 'shop-bought-starfall');
     await page.locator('#iapDone .omPrimary').click();
     await page.waitForTimeout(300);
-    const hat = await page.evaluate(() => JSON.parse(localStorage.getItem('legends.settings')).duchessHat);
-    console.log('worn after "Wear it now":', hat);
-    if (hat !== 'knight') errors.push('Wear it now did not put the helm on');
+    const on = await page.evaluate(() => JSON.parse(localStorage.getItem('legends.settings')).starfall);
+    console.log('Starfall on after "Wear it now":', on);
+    if (on !== true) errors.push('Wear it now did not turn Starfall on');
     await page.locator('#iapShop .omSection').nth(3).evaluate((s) => s.scrollIntoView({ block: 'start' }));
     await page.waitForTimeout(300);
     await shot(page, 'shop-cosmetics-after-buying');

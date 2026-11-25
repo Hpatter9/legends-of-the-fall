@@ -848,7 +848,7 @@ The stone piles, crown chests, the starter pack's and the bundles' banners, Duch
 Starlit Empress) and the Starfall card back: original art made for this game (IAP-2, from `art-source/round2/`, the owner's PR #666), cut
 and resized by `tools/iap/art.py`.
 
-## Wearable cosmetics (`src/art/duchess/costumes-walk.png`, `costumes-battle.png`, `src/art/starfall/`)
+## Starfall summons (`src/art/starfall/`)
 
-Duchess's three bought costumes laid on her sheets, and the Starfall card back and burst: original art made for this game (COSMETICS, from
-`art-source/round2/`, the owner's PR #666), cut and placed by `tools/cosmetics/costumes.py` and `tools/cosmetics/starfall.py`.
+The Starfall card back and burst: original art made for this game (COSMETICS, from `art-source/round2/`, the owner's PR #666), cut by
+`tools/cosmetics/starfall.py`.

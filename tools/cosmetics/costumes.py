@@ -1,9 +1,11 @@
-"""COSMETICS (docs/notes/cosmetics.md): Duchess's three bought costumes, cut from the round-2 art (art-source/round2/costume_*.png, the
-owner's PR #666) into pieces at her own scale and laid, frame by frame, into two overlay sheets the game draws over her:
+"""COSMETICS (docs/notes/cosmetics.md): the anchoring reference for Duchess's costumes. The owner turned the cut-down overlays down (the
+costumes are to be redrawn as whole dressed sheets, `DRESSED` in src/render/duchessRules.ts), so this no longer makes game art: it lays the
+round-2 pieces (art-source/round2/costume_*.png) on her frames by her head and body found in each frame, into out/costume-preview/, as a
+guide for where a redrawn costume sits. Its head finder (`head_of`) and anchors are what a redraw can be checked against.
 
-  src/art/duchess/costumes-walk.png    96 x 144: a row per costume (regalia, knight, lantern), her walking strip's two facings (left,
+  out/costume-preview/costumes-walk.png    96 x 144: a row per costume (regalia, knight, lantern), her walking strip's two facings (left,
                                         right), 48 px each; drawn over her wherever her walking strip is (home, castle, camp, cutscenes)
-  src/art/duchess/costumes-battle.png  512 x 1920: per costume, her battle sheet's grid (src/art/units/duchess_goat.png, 128 px cells),
+  out/costume-preview/costumes-battle.png  512 x 1920: per costume, her battle sheet's grid (src/art/units/duchess_goat.png, 128 px cells),
                                         each frame dressed at her head and back found in that frame (the two fall frames left bare)
 
     python3 tools/cosmetics/costumes.py
@@ -12,11 +14,13 @@ The pieces: the regalia's crown on her skull and its cape over her back, the kni
 her horns. Every piece is drawn for her facing right and mirrored for left. Pure pixels: each piece is scaled down on its own palette and its alpha cut
 hard (no soft halo), as her sprite is.
 """
+import os
 import numpy as np
 from PIL import Image
 
 SRC = 'art-source/round2/'
-OUT = 'src/art/duchess/'
+OUT = 'out/costume-preview/'
+os.makedirs(OUT, exist_ok=True)
 COSTUMES = ['regalia', 'knight', 'lantern']
 
 
@@ -88,7 +92,7 @@ def mirror(im):
     return im.transpose(Image.FLIP_LEFT_RIGHT)
 
 
-walk = Image.open(OUT + 'goat.png').convert('RGBA')
+walk = Image.open('src/art/duchess/goat.png').convert('RGBA')
 ref = head_of(walk.crop((3 * 48, 0, 4 * 48, 48)))
 p1 = pieces(1)
 sheet = Image.new('RGBA', (96, 48 * len(COSTUMES)))

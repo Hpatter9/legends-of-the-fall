@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { DUCHESS_COSMETICS, hasOverlay, OVERLAY_COSTUMES, PAID_COSTUMES, wornCostume } from '../src/render/duchessRules';
+import { existsSync, readFileSync } from 'node:fs';
+import { DRESSED, dressedOf, dressedTerrace, DUCHESS_COSMETICS, fullyDressed, PAID_COSTUMES, wornCostume } from '../src/render/duchessRules';
 import { entitledHere, OWNED_KEY, ownedFrom, PRODUCTS, productById } from '../src/iapRules';
 
 // (a stand-in for the page's storage: what the store last said is owned, under OWNED_KEY)
@@ -11,11 +11,6 @@ const own = (ents: string[]): void => {
 };
 const none = (): void => void delete (globalThis as { localStorage?: unknown }).localStorage;
 
-/** A PNG's width and height, read from its header. */
-const size = (path: string): [number, number] => {
-  const b = readFileSync(path);
-  return [b.readUInt32BE(16), b.readUInt32BE(20)];
-};
 
 test('each bought costume is owned by its entitlement alone, never by play', () => {
   for (const id of PAID_COSTUMES) {
@@ -46,15 +41,18 @@ test('a costume is worn only while it is hers: a refund takes it off by itself; 
   assert.ok(DUCHESS_COSMETICS.some((c) => c.id === 'none' && c.unlocked()));
 });
 
-test('the Shop sells each costume, the wardrobe and Starfall against the very entitlements the game reads', () => {
+test('the Shop sells Starfall; Duchess’s costumes and her wardrobe wait, Coming soon, for their redrawn sheets', () => {
   const ents = new Set(DUCHESS_COSMETICS.flatMap((c) => (c.entitlement ? [c.entitlement] : [])));
   for (const id of ['look_duchess_regalia', 'look_duchess_knight', 'look_duchess_lantern']) {
     const p = productById(id)!;
-    assert.ok(p.ready, id);
     assert.equal(p.entitlements!.length, 1);
     assert.ok(ents.has(p.entitlements![0]), id);
   }
   assert.deepEqual([...productById('bundle_wardrobe')!.entitlements!].sort(), [...ents].sort());
+  // (a costume is sold only when every place she is drawn has its dressed sheet: the owner turned the cut-down overlays down)
+  for (const c of PAID_COSTUMES) assert.equal(productById(`look_duchess_${c}`)!.ready, fullyDressed(c), c);
+  assert.equal(productById('bundle_wardrobe')!.ready, PAID_COSTUMES.every(fullyDressed));
+  assert.equal(productById('look_starfall')!.ready, true);
   assert.deepEqual(productById('look_starfall')!.entitlements, ['starfall_summons']);
   assert.match(readFileSync('src/starfall.ts', 'utf8'), /STARFALL_ENTITLEMENT = 'starfall_summons'/);
   // (nothing sold changes a stat: a cosmetic gives no stones, crowns or tomes)
@@ -64,16 +62,20 @@ test('the Shop sells each costume, the wardrobe and Starfall against the very en
   assert.equal(productById('ruler_starlit')!.ready, false);
 });
 
-test('the costume overlays are on her sheets’ own grids', () => {
-  // (her walking strip: 48 px frames; a row a costume, a column a facing)
-  assert.deepEqual(size('src/art/duchess/costumes-walk.png'), [96, 48 * OVERLAY_COSTUMES.length]);
-  // (her battle sheet: the whole sheet again for each costume)
-  const [w, h] = size('src/art/units/duchess_goat.png');
-  assert.deepEqual(size('src/art/duchess/costumes-battle.png'), [w, h * OVERLAY_COSTUMES.length]);
-  // (the tool's rows are the game's, in the same order)
-  assert.match(readFileSync('tools/cosmetics/costumes.py', 'utf8'), new RegExp(`COSTUMES = \\[${OVERLAY_COSTUMES.map((c) => `'${c}'`).join(', ')}\\]`));
-  assert.ok(hasOverlay('lantern') && !hasOverlay('crown'));
-  for (const c of PAID_COSTUMES) assert.ok(hasOverlay(c), c);
+test('a costume with no dressed sheet is drawn in her plain sheets: nothing is laid over her', () => {
+  for (const c of PAID_COSTUMES) {
+    assert.equal(dressedOf(c, 'walk'), DRESSED[c]?.walk);
+    assert.equal(dressedOf(c, 'battle'), DRESSED[c]?.battle);
+    if (!DRESSED[c]) {
+      assert.equal(dressedOf(c, 'walk'), undefined);
+      assert.equal(dressedTerrace(c), false);
+    }
+  }
+  // (the free costumes have no dressed sheets: they are still drawn over her walking strip)
+  assert.equal(dressedOf('crown', 'walk'), undefined);
+  assert.equal(dressedOf('none', 'battle'), undefined);
+  // (the cut-down overlays are gone from the game)
+  assert.ok(!existsSync('src/art/duchess/costumes-walk.png') && !existsSync('src/art/duchess/costumes-battle.png'));
 });
 
 test('costumes are looks only: nothing in the fight reads them', () => {

@@ -4,7 +4,6 @@
 // for the game in ROUND2-WIRE) is 48-pixel frames: three steps walking left, then three walking right; frame 1 (or 4) is standing.
 // Everything is a one-shot or a slow amble: nothing blinks or flashes.
 
-import costumesWalkUrl from '../art/duchess/costumes-walk.png';
 import { entitledHere } from '../iapRules';
 
 export type GoatMode = 'graze' | 'walk' | 'nibble' | 'hop' | 'nest';
@@ -237,16 +236,31 @@ export function rollDailyTreat(rand: () => number = Math.random): DuchessTreat {
 /* ---- unlockable hats & costumes ---- */
 
 export type DuchessCosmeticId = 'none' | 'crown' | 'wizard' | 'quiver' | 'regalia' | 'knight' | 'lantern';
-/** COSMETICS (docs/notes/cosmetics.md): the costumes drawn from the painted overlay sheets (`src/art/duchess/costumes-walk.png`,
- *  `costumes-battle.png`, made by `tools/cosmetics/costumes.py`), in the order of their rows. Today the Shop's three; the free ones join
- *  when their painted overlays land (round 4: add each to `COSTUMES` in the tool and here, in the same order, and its old drawing goes). */
-export const OVERLAY_COSTUMES = ['regalia', 'knight', 'lantern'] as const;
 /** The costumes bought in the Shop (owned by an entitlement; see `DUCHESS_COSMETICS`). */
 export const PAID_COSTUMES = ['regalia', 'knight', 'lantern'] as const;
 export type PaidCostume = (typeof PAID_COSTUMES)[number];
-/** Whether a costume is drawn from the overlay sheets (rather than drawn in code). */
-export const hasOverlay = (id: string): id is (typeof OVERLAY_COSTUMES)[number] => (OVERLAY_COSTUMES as readonly string[]).includes(id);
 export const isPaidCostume = (id: string): id is PaidCostume => (PAID_COSTUMES as readonly string[]).includes(id);
+
+/** COSMETICS (docs/notes/cosmetics.md): a bought costume is drawn as whole sheets of Duchess wearing it, swapped in for hers, never laid over
+ *  her: `walk`, her walking strip in `goat.png`'s layout (288 x 48: three frames facing left, three facing right; the tavern's half size
+ *  is cut from it); `battle`, her battle sheet in `duchess_goat.png`'s layout; `terrace`, true when the Crown Terrace's eight poses are in
+ *  `src/art/crown-terrace/` as `duchess-<costume>-0.webp` to `-7.webp`. Each is the URL its import gives. A costume missing one is drawn
+ *  there in her plain sheet. Empty until the redrawn art lands (the owner turned down the cut-down overlays). */
+export interface DressedSheets {
+  walk?: string;
+  battle?: string;
+  terrace?: boolean;
+}
+export const DRESSED: Partial<Record<PaidCostume, DressedSheets>> = {};
+
+/** The dressed sheet of a kind for a costume, or undefined (her plain sheet then). */
+export function dressedOf(costume: DuchessCosmeticId, kind: 'walk' | 'battle'): string | undefined {
+  return isPaidCostume(costume) ? DRESSED[costume]?.[kind] : undefined;
+}
+/** Whether a costume has its Crown Terrace poses. */
+export const dressedTerrace = (costume: DuchessCosmeticId): boolean => isPaidCostume(costume) && DRESSED[costume]?.terrace === true;
+/** Whether a costume can be fully worn: every place she is drawn has it (sold only then). */
+export const fullyDressed = (costume: PaidCostume): boolean => !!DRESSED[costume]?.walk && !!DRESSED[costume]?.battle && DRESSED[costume]?.terrace === true;
 
 export interface DuchessCosmeticDef {
   id: DuchessCosmeticId;
@@ -277,16 +291,6 @@ export function wornCostume(chosen: DuchessCosmeticId, meta?: { duchessTaps?: nu
   return c.entitlement && !c.unlocked(meta) ? 'none' : chosen;
 }
 
-/** The walking overlay sheet, loaded the first time a bought costume is drawn (none in the tests). */
-let walkOverlay: HTMLImageElement | null = null;
-function costumeSheet(): HTMLImageElement | null {
-  if (!walkOverlay && typeof Image !== 'undefined') {
-    walkOverlay = new Image();
-    walkOverlay.src = costumesWalkUrl;
-  }
-  return walkOverlay?.complete && walkOverlay.naturalWidth ? walkOverlay : null;
-}
-
 /** Draw Duchess's equipped cosmetic accessory onto a 2D canvas, aligned to her frame, facing, and bob. */
 export function drawDuchessCosmetic(
   ctx: CanvasRenderingContext2D,
@@ -298,18 +302,8 @@ export function drawDuchessCosmetic(
   bob = 0,
 ): void {
   if (!cosmetic || cosmetic === 'none') return;
-  // (COSMETICS: a painted costume is its row of the walking overlay, her facing's 48 px frame, drawn over her whole frame; it comes off by
-  //  itself if it is no longer hers)
-  if (hasOverlay(cosmetic)) {
-    const img = wornCostume(cosmetic) === cosmetic ? costumeSheet() : null;
-    if (!img) return;
-    const row = OVERLAY_COSTUMES.indexOf(cosmetic);
-    ctx.save();
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, face === 1 ? FRAME : 0, row * FRAME, FRAME, FRAME, Math.round(frameLeft), Math.round(frameTop + bob * scale), FRAME * scale, FRAME * scale);
-    ctx.restore();
-    return;
-  }
+  // (COSMETICS: a bought costume is drawn by swapping in her dressed sheet (`DRESSED`, `duchessDress.ts`), not over her here)
+  if (isPaidCostume(cosmetic)) return;
   ctx.save();
   const s = scale;
   const fl = Math.round(frameLeft);

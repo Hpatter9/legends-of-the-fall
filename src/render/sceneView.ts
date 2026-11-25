@@ -160,8 +160,8 @@ const goatFrames = (): Promise<Texture[]> => {
   const costume = costumeNow();
   if (goat && goatDressed !== costume) goat = null;
   goatDressed = costume;
-  return (goat ??= goatSheet().then((img) => {
-    const base = Texture.from(dressWalk(img, costume));
+  return (goat ??= goatSheet().then(async (img) => {
+    const base = Texture.from(await dressWalk(img, costume));
     return Array.from({ length: 6 }, (_, i) => new Texture({ source: base.source, frame: new Rectangle(i * GOAT_FRAME, 0, GOAT_FRAME, GOAT_FRAME) }));
   }));
 };

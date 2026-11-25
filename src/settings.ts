@@ -4,7 +4,7 @@
 // submenus); `settings()` is what the rest of the page reads, and `onSettings` tells a module when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
 import { shopOn } from './iapView';
-import { entitledHere } from './iapRules';
+import { entitledHere, productById } from './iapRules';
 /** COSMETICS: Starfall summons' entitlement. */
 const STARFALL = 'starfall_summons';
 import { diagClear, diagCopy, diagShown } from './diag';
@@ -669,8 +669,9 @@ function duchessHatRow(value: DuchessCosmeticId): HTMLElement {
         title: 'Duchess’s costume',
         hint: 'An unlocked hat or accessory for Duchess.',
         listClass: 'costumeChoices',
-        // (COSMETICS: a bought costume is listed where the Shop sells it, or once it is owned; a build with no Shop never shows one it can't buy)
-        options: DUCHESS_COSMETICS.filter((c) => !c.entitlement || c.unlocked(meta) || shopOn()).map((c) => {
+        // (COSMETICS: a bought costume is listed once it is owned, or while the Shop sells it; a build with no Shop, or a costume not yet on
+        //  sale, never shows one it can't buy)
+        options: DUCHESS_COSMETICS.filter((c) => !c.entitlement || c.unlocked(meta) || (shopOn() && !!productById(`look_duchess_${c.id}`)?.ready)).map((c) => {
           const unlocked = c.unlocked(meta);
           return {
             id: c.id,
