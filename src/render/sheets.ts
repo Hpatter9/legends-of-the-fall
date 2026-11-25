@@ -199,6 +199,18 @@ import plEliteBrakka from '../art/units/elite_brakka.png';
 import plEliteSethra from '../art/units/elite_sethra.png';
 import plEliteWarden from '../art/units/elite_warden.png';
 import plYokaiWitch from '../art/units/yokai_witch.png';
+// (ROUND4-WIRE: the quest guests' own front and back sheets, art-source/round4/)
+import summonSentry from '../art/units/summon_sentry.png';
+import guestCarter from '../art/units/guest_carter.png';
+import guestCarterBack from '../art/units/guest_carter_back.png';
+import guestPilgrim from '../art/units/guest_pilgrim.png';
+import guestPilgrimBack from '../art/units/guest_pilgrim_back.png';
+import guestBosun from '../art/units/guest_bosun.png';
+import guestBosunBack from '../art/units/guest_bosun_back.png';
+import guestEnvoy from '../art/units/guest_envoy.png';
+import guestEnvoyBack from '../art/units/guest_envoy_back.png';
+import guestPrisoner from '../art/units/guest_prisoner.png';
+import guestPrisonerBack from '../art/units/guest_prisoner_back.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -217,6 +229,17 @@ interface Layout {
 }
 
 const URLS: Record<string, string> = {
+  summon_sentry: summonSentry,
+  guest_carter: guestCarter,
+  guest_carter_back: guestCarterBack,
+  guest_pilgrim: guestPilgrim,
+  guest_pilgrim_back: guestPilgrimBack,
+  guest_bosun: guestBosun,
+  guest_bosun_back: guestBosunBack,
+  guest_envoy: guestEnvoy,
+  guest_envoy_back: guestEnvoyBack,
+  guest_prisoner: guestPrisoner,
+  guest_prisoner_back: guestPrisonerBack,
   yokai_witch: plYokaiWitch,
   elite_warden: plEliteWarden,
   elite_sethra: plEliteSethra,

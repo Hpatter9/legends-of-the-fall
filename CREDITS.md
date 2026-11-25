@@ -279,6 +279,11 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   the Council's hunt, plot and spared, the eight temperaments, the nine weaknesses, the hunted badge and three quest faces are `/generate-image-v2` with the game's icons as the style image (`icons.py`, picks in `place.py`).
   PixelLab's terms leave the output's ownership with us.
 
+- **ROUND4-WIRE** (`docs/notes/round4-wire.md`): original art made for this game from the round-4 prompt (`art-source/round4/`,
+  PR #686). It covers the five quest guests' front and back sheets (`src/art/units/guest_*`), the Machine's sentry turret
+  (`summon_sentry.png`), the Pirate's ghost ship (`src/art/ult-show/pirate-ghost-ship*.webp`), Voltara's aftermath
+  (`src/art/eidolons/fx/voltara-after.webp`), and Duchess's Wizard Hat and Archery Quiver (`src/art/duchess/hat-*.png`).
+
 ## Castle courtyard (`src/art/castle/`)
 
 - Every building, wall, gate, prop and ground tile is a single piece of Chronos Settlement's isometric kits (`hpatter9/little-town`,

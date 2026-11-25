@@ -1,14 +1,14 @@
 // TRAIT-PERKS: the tint of a fighter a perk has marked or raised (`UnitView` reads it; pure, so the tests read it): a blood thrall red, a
 // mirror image or a foxfire twin pale spirit light, a sentry steel.
 // PIXELLAB-ART: a risen skeleton wears its own grave sheet now (summon_grave_*), so it is not tinted; the crowned and the Wanted carry a
-// painted mark over their heads (`perkMark`) in place of their tints.
+// painted mark over their heads (`perkMark`) in place of their tints. ROUND4-WIRE: the sentry turret wears its own sheet too (summon_sentry).
 
 import type { PerkUnit } from '../sim/traitPerks';
 
 export const PERK_TINTS = { thrall: 0xff8080, image: 0xbfe8ff, twin: 0xffc890, grave: 0xc8f0c8, sentry: 0xd8e4f0, standard: 0xffffff, crowned: 0xfff0b8, wanted: 0xffd090 } as const;
 
 /** What a perk raised is drawn tinted for, and what wears art of its own is not. */
-const OWN_ART: ReadonlySet<string> = new Set(['grave']);
+const OWN_ART: ReadonlySet<string> = new Set(['grave', 'sentry']);
 
 export function perkTint(p: PerkUnit): number | undefined {
   if (p.raised) return OWN_ART.has(p.raised) ? undefined : PERK_TINTS[p.raised];
