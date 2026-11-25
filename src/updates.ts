@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.617.0',
+    date: '2026-11-25',
+    title: 'Auras that glow',
+    notes: ['Every class\'s aura is remade: a glowing seal on the ground, light rising round the hero, and a soft glow behind, never in front.', 'Fixed a rare error on the home screen when Duchess\'s pictures loaded out of order.'],
+  },
+  {
     version: '0.616.0',
     date: '2026-11-25',
     title: 'Trophies, elites and new faces',
