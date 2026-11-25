@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+
+/** A PNG's width and height, read from its header. */
+const size = (path: string): [number, number] => {
+  const b = readFileSync(path);
+  return [b.readUInt32BE(16), b.readUInt32BE(20)];
+};
 import { DRESSED, dressedOf, dressedTerrace, DUCHESS_COSMETICS, fullyDressed, PAID_COSTUMES, wornCostume } from '../src/render/duchessRules';
 import { entitledHere, OWNED_KEY, ownedFrom, PRODUCTS, productById } from '../src/iapRules';
 
@@ -76,6 +82,15 @@ test('a costume with no dressed sheet is drawn in her plain sheets: nothing is l
   assert.equal(dressedOf('none', 'battle'), undefined);
   // (the cut-down overlays are gone from the game)
   assert.ok(!existsSync('src/art/duchess/costumes-walk.png') && !existsSync('src/art/duchess/costumes-battle.png'));
+});
+
+test('the Knight is whole dressed sheets on her own sheets\u2019 layouts, and is sold; the Regalia and the Lantern wait for theirs', () => {
+  assert.ok(DRESSED.knight?.walk && DRESSED.knight?.battle);
+  assert.deepEqual(size('src/art/duchess/duchess_knight_walk.png'), size('src/art/duchess/goat.png'));
+  assert.deepEqual(size('src/art/duchess/duchess_knight.png'), size('src/art/units/duchess_goat.png'));
+  assert.ok(fullyDressed('knight') && productById('look_duchess_knight')!.ready);
+  for (const c of ['regalia', 'lantern'] as const) assert.ok(!fullyDressed(c) && !productById(`look_duchess_${c}`)!.ready, c);
+  assert.equal(productById('bundle_wardrobe')!.ready, false);
 });
 
 test('costumes are looks only: nothing in the fight reads them', () => {

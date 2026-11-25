@@ -5,6 +5,8 @@
 // Everything is a one-shot or a slow amble: nothing blinks or flashes.
 
 import { entitledHere } from '../iapRules';
+import knightWalkUrl from '../art/duchess/duchess_knight_walk.png';
+import knightBattleUrl from '../art/duchess/duchess_knight.png';
 
 export type GoatMode = 'graze' | 'walk' | 'nibble' | 'hop' | 'nest';
 
@@ -242,8 +244,8 @@ export type PaidCostume = (typeof PAID_COSTUMES)[number];
 export const isPaidCostume = (id: string): id is PaidCostume => (PAID_COSTUMES as readonly string[]).includes(id);
 
 /** COSMETICS (docs/notes/cosmetics.md): a bought costume is drawn as whole sheets of Duchess wearing it, swapped in for hers, never laid over
- *  her: `walk`, her walking strip in `goat.png`'s layout (288 x 48: three frames facing left, three facing right; the tavern's half size
- *  is cut from it); `battle`, her battle sheet in `duchess_goat.png`'s layout; `terrace`, true when the Crown Terrace's eight poses are in
+ *  her: `walk`, her walking strip in `goat.png`'s layout (`src/art/duchess/duchess_<costume>_walk.png`, 288 x 48: three frames facing left, three facing right; the tavern's half size
+ *  is cut from it); `battle`, her battle sheet in `duchess_goat.png`'s layout (`duchess_<costume>.png`); `terrace`, true when the Crown Terrace's eight poses are in
  *  `src/art/crown-terrace/` as `duchess-<costume>-0.webp` to `-7.webp`. Each is the URL its import gives. A costume missing one is drawn
  *  there in her plain sheet. Empty until the redrawn art lands (the owner turned down the cut-down overlays). */
 export interface DressedSheets {
@@ -251,7 +253,10 @@ export interface DressedSheets {
   battle?: string;
   terrace?: boolean;
 }
-export const DRESSED: Partial<Record<PaidCostume, DressedSheets>> = {};
+export const DRESSED: Partial<Record<PaidCostume, DressedSheets>> = {
+  // (the Knight, redrawn whole and approved: claude/duchess-costumes; her Crown Terrace poses are not painted yet, so there she is plain)
+  knight: { walk: knightWalkUrl, battle: knightBattleUrl },
+};
 
 /** The dressed sheet of a kind for a costume, or undefined (her plain sheet then). */
 export function dressedOf(costume: DuchessCosmeticId, kind: 'walk' | 'battle'): string | undefined {
@@ -259,8 +264,9 @@ export function dressedOf(costume: DuchessCosmeticId, kind: 'walk' | 'battle'): 
 }
 /** Whether a costume has its Crown Terrace poses. */
 export const dressedTerrace = (costume: DuchessCosmeticId): boolean => isPaidCostume(costume) && DRESSED[costume]?.terrace === true;
-/** Whether a costume can be fully worn: every place she is drawn has it (sold only then). */
-export const fullyDressed = (costume: PaidCostume): boolean => !!DRESSED[costume]?.walk && !!DRESSED[costume]?.battle && DRESSED[costume]?.terrace === true;
+/** Whether a costume can be sold: it has her walking strip and her battle sheet (the camp, the tavern, the cutscenes, her card and the fight).
+ *  The Crown Terrace's eight painted poses are a set of their own: until a costume has them she stands there plain. */
+export const fullyDressed = (costume: PaidCostume): boolean => !!DRESSED[costume]?.walk && !!DRESSED[costume]?.battle;
 
 export interface DuchessCosmeticDef {
   id: DuchessCosmeticId;

@@ -20,7 +20,7 @@ const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'peasant', 
 const ALL = ['look_starfall'];
 
 /** A page with a save, the fake store's purchases (`owned`, product ids) and the settings given. */
-async function open(w, h, { owned = ALL, settings = {}, stones = 40 } = {}) {
+async function open(w, h, { owned = ALL, settings = {}, stones = 40, query = '' } = {}) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, hasTouch: true });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(`${w}: ${e.message}`));
@@ -28,11 +28,14 @@ async function open(w, h, { owned = ALL, settings = {}, stones = 40 } = {}) {
     try {
       localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 4000, stones, unlocked: heroes, party: heroes.slice(0, 5), pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 5, barracks: 5, armoury: 5, mageTower: 4, stable: 5, library: 5 }, shards: {}, stars: {}, xp: {}, bestStage: 30, tower: 0, daily: {}, bosses: [], achievements: [], armies: {}, armySeen: [], tutorials: ['shop', 'summoning', 'tavern', 'recruit'], duchessTaps: 5 }));
       localStorage.setItem('lotf-tips-off', '1');
+      // (what this device last heard from the store, as a returning player's would hold it; the store's answer at start keeps it so)
+      const ents = { look_starfall: ['starfall_summons'], look_duchess_knight: ['duchess_knight'], look_duchess_regalia: ['duchess_regalia'], look_duchess_lantern: ['duchess_lantern'], bundle_wardrobe: ['duchess_regalia', 'duchess_knight', 'duchess_lantern'] };
+      localStorage.setItem('legends.purchases', JSON.stringify({ entitlements: [...new Set(owned.flatMap((p) => ents[p] ?? []))].sort() }));
       localStorage.setItem('legends.fakeStore', JSON.stringify({ txns: owned.map((product, i) => ({ id: `FAKE.${i + 1}`, product, at: 1 })), next: owned.length + 1 }));
       localStorage.setItem('legends.settings', JSON.stringify(settings));
     } catch {}
   }, [HEROES, owned, settings, stones]);
-  await page.goto(base);
+  await page.goto(base + query);
   await page.waitForSelector('#home:not([hidden])', { timeout: 20000 });
   await page.waitForTimeout(1800);
   return { ctx, page };
@@ -45,7 +48,30 @@ const clearCards = async (page) => {
   }
 };
 
-// (Duchess's costumes are not shown: the owner turned the cut-down overlays down, and they wait, Coming soon, for their redrawn sheets)
+// 1. Duchess in the Knight (redrawn whole, on sale): the camp, and a fight she joins (`?duchess=1` brings her into every fight)
+{
+  const { ctx, page } = await open(393, 852, { owned: ['look_duchess_knight'], settings: { duchessHat: 'knight', cinematics: false }, query: '&duchess=1' });
+  await clearCards(page);
+  await shot(page, 'knight-camp');
+  await page.evaluate(() => {
+    const g = window.__game;
+    const r = JSON.parse(JSON.stringify(g.run));
+    const party = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard'];
+    Object.assign(r, { seed: 4242, mode: { kind: 'army', army: 'orcs' }, stage: 1, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 1, paid: 30 })), squad: [], nextId: 200 });
+    document.getElementById('home').hidden = true;
+    g.startRun(r);
+    g.autoArrange(true);
+  });
+  await page.waitForTimeout(800);
+  await page.evaluate(() => document.getElementById('fight').click());
+  await page.waitForFunction(() => window.__game.b?.units.some((u) => u.def === 'duchess'), null, { timeout: 15000 }).catch(() => errors.push('Duchess did not join the fight'));
+  await page.waitForTimeout(2500);
+  await clearCards(page);
+  await shot(page, 'knight-fight');
+  await page.waitForTimeout(2500);
+  await shot(page, 'knight-fight-2');
+  await ctx.close();
+}
 
 // 2. Settings, Ruler and Duchess: the costume picker and the summoning look
 {

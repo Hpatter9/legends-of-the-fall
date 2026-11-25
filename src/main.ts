@@ -1,4 +1,5 @@
 import { modeShown, namesHiddenMode } from './sim/hiddenModes';
+import { OWNED_CHANGED } from './iapView';
 import { heraldPortrait } from './heraldArt';
 // Legends of the Last Keep: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
@@ -814,6 +815,8 @@ class Game {
       costume = s.duchessHat;
       redressDuchess();
     });
+    // (and when the store's word on what is owned changes: a costume bought, restored or refunded)
+    window.addEventListener(OWNED_CHANGED, () => redressDuchess());
     window.addEventListener('resize', () => this.layout());
     this.watchTopHud();
     // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)

@@ -852,3 +852,8 @@ and resized by `tools/iap/art.py`.
 
 The Starfall card back and burst: original art made for this game (COSMETICS, from `art-source/round2/`, the owner's PR #666), cut by
 `tools/cosmetics/starfall.py`.
+
+## Duchess's Knight costume (`src/art/duchess/duchess_knight_walk.png`, `duchess_knight.png`)
+
+Her walking strip and battle sheet redrawn whole in the Little Knight's plumed helm: generated for this game with **PixelLab** from her own
+round-2 sheets (DUCHESS-COSTUMES, `docs/notes/duchess-costumes-prompt.md`, `tools/pixellab/duchess_strip.py`).

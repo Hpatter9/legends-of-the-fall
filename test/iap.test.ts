@@ -54,9 +54,9 @@ test('the products are the owner’s: ids, contents and prices', () => {
     const p = productById(id)!;
     assert.equal(p.usd, usd, id);
     assert.equal(p.consumable, false, id);
-    // (COSMETICS: a cosmetic is on sale once it can be worn: Starfall today; Duchess's three and her wardrobe wait for their redrawn
-    //  dressed sheets, the two rulers for their Crown Terrace art, "Coming soon")
-    assert.equal(p.ready, id === 'look_starfall', id);
+    // (COSMETICS: a cosmetic is on sale once it can be worn: Starfall and the Knight today; the Regalia, the Lantern and the wardrobe wait
+    //  for their redrawn dressed sheets, the two rulers for their Crown Terrace art, "Coming soon")
+    assert.equal(p.ready, id === 'look_starfall' || id === 'look_duchess_knight', id);
     assert.ok(p.entitlements?.length, id);
   }
   // (Play's product ids: lowercase letters, digits, underscores and dots, starting with a letter or digit; each one once)

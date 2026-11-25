@@ -1,6 +1,5 @@
 // The Keep: an animated royal terrace and a separate building ledger. Presentation only; upgrades use the castle simulation.
 
-import { terracePoses } from './duchessDress';
 import { frameAt, framesReady } from './render/framesReadyRules';
 import { countDuchessTap, treatFoundToday } from './sim/duchessTaps';
 import { saveMeta } from './sim/meta';
@@ -892,8 +891,7 @@ export class CastleScene {
       g.save(); g.translate(x,y-lift+bob);
       if (goat.face === -1) g.scale(-1,1);
       const frame = goat.mode === 'nest' ? 7 : this.reduced ? 4 : goat.mode === 'hop' ? 6 : goat.mode === 'walk' ? Math.floor(goat.steps/8)%4 : goat.mode === 'graze' || goat.mode === 'nibble' ? 5 : 4;
-      // (COSMETICS: her Crown Terrace poses in the costume she wears, when it has them)
-      const pose = frameAt(terracePoses() ?? this.terrace.duchess, frame);
+      const pose = frameAt(this.terrace.duchess, frame);
       if (pose) g.drawImage(pose,-size*.375,-size*.79,size*.75,size);
       drawDuchessCosmetic(g,settings().duchessHat,-44,-88,1.8);
       g.restore();

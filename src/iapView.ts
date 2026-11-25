@@ -73,12 +73,18 @@ export function ownedNow(): Owned {
     return { entitlements: [] };
   }
 }
+/** COSMETICS: the event the page hears when what is owned for good changes (a purchase, a restore, a refund): Duchess's battle sheet is
+ *  dressed again for it (`main.ts`). */
+export const OWNED_CHANGED = 'legends-owned';
 function keepOwned(c: Customer): void {
+  const was = ownedNow().entitlements.join();
+  const now = ownedFrom(c.entitlements);
   try {
-    localStorage.setItem(OWNED_KEY, JSON.stringify(ownedFrom(c.entitlements)));
+    localStorage.setItem(OWNED_KEY, JSON.stringify(now));
   } catch {
     /* (a full storage: the store tells us again next time) */
   }
+  if (now.entitlements.join() !== was) window.dispatchEvent(new Event(OWNED_CHANGED));
 }
 
 const online = (): boolean => typeof navigator === 'undefined' || navigator.onLine !== false;
