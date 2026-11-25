@@ -27,7 +27,7 @@ Data and the measuring tool only; ordinary fights are untouched.
 - The duel's stakes, outcomes, ring, clock, roles and the boss's cut are unchanged; the other six armies keep their factors.
 
 **The band chosen:** 55 to 65% at the army's own level in all (the duel table's own band), 50 to 75% accepted; the other six sit 55 to 71%.
-A duel stays a real risk: at Might 10 the three are near or under half.
+A duel stays a real risk: by Might (1, 5, 10) the three run 64, 61, 57% (Infernal), 66, 62, 57% (Yokai) and 68, 61, 52% (Golems); with the Dread 68, 71 and 74%.
 
 ## Measured
 
@@ -42,9 +42,9 @@ Might 1, 5 and 10), split by `--only`:
 | The Wildwood | 70.8% | 70.8% |
 | The Labyrinth | 68.4% | 68.4% |
 | Ogre Clans | 59.2% | 59.2% |
-| Infernal Host | 6.5% | AFTER_INF |
-| Yokai | 5.9% | AFTER_YOK |
-| Golem Forge | 2.7% | AFTER_GOL |
+| Infernal Host | 6.5% | 60.8% |
+| Yokai | 5.9% | 61.8% |
+| Golem Forge | 2.7% | 60.0% |
 
 ("Before" is the unmastered hero at the plain share, as measured before; the six armies' factors and hero are unchanged, so their duels
 play out the same.)
@@ -52,8 +52,8 @@ play out the same.)
 The first try (x0.42, x0.55, x0.44, set from the twelve-kind sample) came to 53.2%, 48.9% and 50.0% over every kind at 32 seeds, so they
 were eased to the factors above (60.6%, 60.4% and 61.3% at 8 seeds).
 
-`npm run war-sim`: identical before and after, line for line (46 duels, 89% won): its bot's duels do not fall in the three armies at
-their own level.
+`npm run war-sim`: identical before and after, line for line (46 duels, 89% won). Its bot reaches the three armies late (the
+Golem Forge from day 99) and none of its duels' outcomes changed; it does not give its heroes mastered skills.
 
 ## Worth knowing
 
