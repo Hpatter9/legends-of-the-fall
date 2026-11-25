@@ -81,3 +81,41 @@
 /* ARMY-WEAKNESS: a hero list's flag over a hero strong against the army faced */
 .strongTag { display: block; margin-top: 2px; font: 700 9px/1.2 var(--body, sans-serif); color: #9be38a; text-shadow: 0 1px 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hcard .strongTag { position: absolute; left: 4px; right: 4px; bottom: 2px; z-index: 2; text-align: center; background: rgba(10, 30, 8, 0.7); border-radius: 3px; }
+/* HALL-OF-HEROES: the bench's "Rested" mark on a hero who sat out the last army runs */
+.card .restMark { position: absolute; left: 3px; bottom: 30px; z-index: 1; padding: 1px 5px; font: 700 9px/14px var(--body, sans-serif); letter-spacing: 0.03em; color: #0e1f2a; background: #9fd4f0; border: 1px solid #e2f4ff; border-radius: 7px; box-shadow: 0 1px 3px #000a; }
+
+/* HALL-OF-HEROES: the Hall's door on the roster, and its page (`hallView.ts`) */
+.hallDoor { display: grid; gap: 1px; width: 100%; margin: 8px 0 2px; padding: 8px 12px; text-align: left; color: #f1e4c8; background: linear-gradient(180deg, rgba(70, 48, 20, 0.9), rgba(38, 26, 12, 0.95)); border: 1px solid #c9a45e; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4); }
+.hallDoor b { font: 700 14px/1.2 var(--display, serif); letter-spacing: 0.03em; }
+.hallDoor small { font: 600 11px/1.3 var(--body); color: #9be38a; }
+.hallTitles { grid-column: 1 / -1; margin: 0 0 4px; font: italic 12px/1.3 var(--body); color: #f0d48a; }
+.hallStats { display: grid; gap: 6px; }
+.hallStat { display: grid; grid-template-columns: auto auto 1fr; gap: 0 8px; align-items: baseline; min-width: 0; }
+.hallStat b { font: 700 13px/1.2 var(--body); color: #f1e4c8; }
+.hallStat strong { font: 700 14px/1.2 var(--body); color: #9be38a; }
+.hallStat small { font: 11px/1.2 var(--body); color: #c1baa5; }
+.hallStat.full strong { color: #f0d48a; }
+.hallStat em { grid-column: 1 / -1; font: italic 11px/1.3 var(--body); color: #a99f88; }
+.hallSets { display: grid; gap: 8px; }
+.hallSet { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; min-width: 0; }
+.hallSetHead { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.hallSetHead b { flex: 0 0 auto; font: 700 12px/1.2 var(--body); color: #f1e4c8; }
+.hallBar { position: relative; flex: 1 1 auto; height: 6px; min-width: 40px; background: rgba(0, 0, 0, 0.5); border-radius: 3px; overflow: hidden; }
+.hallBar::after { content: ''; position: absolute; inset: 0; width: calc(var(--p, 0) * 100%); background: linear-gradient(90deg, #8a6a2e, #f0d48a); }
+.hallSet small { grid-column: 1; font: 11px/1.3 var(--body); color: #c1baa5; overflow: hidden; text-overflow: ellipsis; }
+.hallSet.done small { color: #9be38a; }
+.hallSet.paid { opacity: 0.75; }
+.hallClaim { grid-column: 2; grid-row: 1 / span 2; padding: 6px 12px; font: 700 12px/1 var(--body); color: #2a1a06; background: linear-gradient(180deg, #f6d98c, #c9963a); border: 1px solid #fff2c4; border-radius: 6px; }
+.hallHeroes { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+.hallHero { display: grid; justify-items: center; gap: 1px; padding: 4px 2px; text-align: center; background: rgba(0, 0, 0, 0.25); border-radius: 6px; min-width: 0; }
+.hallHero.shut { opacity: 0.45; filter: grayscale(0.8); }
+.hallHero b { font: 700 11px/1.15 var(--body); color: #f1e4c8; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hallHero small { font: 10px/1.15 var(--body); color: #c1baa5; }
+.hallHero em { font: 600 10px/1.15 var(--body); font-style: normal; color: #9be38a; }
+.hallHero.shut em { color: #a99f88; }
+.hallPips { font-size: 8px; letter-spacing: 1px; color: #f0d48a; font-style: normal; min-height: 9px; }
+.hallPic { width: 40px; height: 40px; }
+/* HALL-OF-HEROES: Recruit's flag on a hero that would complete a trait set */
+.setTag { display: block; margin-top: 2px; font: 700 9px/1.2 var(--body, sans-serif); color: #f0d48a; text-shadow: 0 1px 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hallIntro { grid-column: 1 / -1; margin: 0 0 4px; font: 12px/1.35 var(--body); color: #e3d3b6; }
+#nearRow .setTag, #nearRow .strongTag { white-space: normal; overflow: visible; line-height: 1.15; font-size: 9px; text-align: center; }

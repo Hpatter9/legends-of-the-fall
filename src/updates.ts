@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.624.0',
+    date: '2026-11-25',
+    title: 'The Hall of Heroes',
+    notes: ['Every hero you own lends your whole roster a little of its class\'s strength for each rank: health, attack, crit or skill charge.', 'Complete a trait\'s set of heroes for a title and a reward, once.', 'A hero who sits out three army runs comes back Rested, with half again the XP.'],
+  },
+  {
     version: '0.623.0',
     date: '2026-11-25',
     title: 'Every army has a weakness',

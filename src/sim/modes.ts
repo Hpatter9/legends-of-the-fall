@@ -5,6 +5,7 @@
 // (`tower.ts`) that opens once a run has fought stage 10; its floors are the run's own stages. Pure rules: no Pixi, no DOM; the
 // date is passed in as yyyymmdd.
 
+import { noteRest } from './hall';
 import { endHunt } from './hunt';
 import { endInformant } from './spare';
 import { newRunes } from './runes';
@@ -275,6 +276,8 @@ export function settleRun(m: Meta, run: Run, fight: { won: boolean; stage: numbe
   // (idea 6: a run of the Informant's army counts down its runs; at the last it leaves, or betrays you)
   const informed = run.over && run.mode?.kind === 'army' ? endInformant(m, run.mode.army, run.seed) : undefined;
   if (informed && fight.war) fight.war.council = [...(fight.war.council ?? []), informed];
+  // (HALL-OF-HEROES: an army run has ended: its heroes' rest starts again, the others have sat out one more, `hall.ts`)
+  if (run.over && run.mode?.kind === 'army') noteRest(m, run.roster.filter((h) => !h.guest).map((h) => h.kind));
   if (fight.day !== undefined && run.over) {
     const turn = endOfRun(m, run, fight.day);
     if (turn?.length && fight.war) fight.war.council = [...(fight.war.council ?? []), ...turnLines(turn)];
