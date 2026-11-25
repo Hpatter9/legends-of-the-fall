@@ -237,10 +237,15 @@ export function rollDailyTreat(rand: () => number = Math.random): DuchessTreat {
 /* ---- unlockable hats & costumes ---- */
 
 export type DuchessCosmeticId = 'none' | 'crown' | 'wizard' | 'quiver' | 'regalia' | 'knight' | 'lantern';
-/** COSMETICS (docs/notes/cosmetics.md): the three costumes bought in the Shop, in the order of their rows in the overlay sheets
- *  (`src/art/duchess/costumes-walk.png`, `costumes-battle.png`, made by `tools/cosmetics/costumes.py` from the round-2 art). */
+/** COSMETICS (docs/notes/cosmetics.md): the costumes drawn from the painted overlay sheets (`src/art/duchess/costumes-walk.png`,
+ *  `costumes-battle.png`, made by `tools/cosmetics/costumes.py`), in the order of their rows. Today the Shop's three; the free ones join
+ *  when their painted overlays land (round 4: add each to `COSTUMES` in the tool and here, in the same order, and its old drawing goes). */
+export const OVERLAY_COSTUMES = ['regalia', 'knight', 'lantern'] as const;
+/** The costumes bought in the Shop (owned by an entitlement; see `DUCHESS_COSMETICS`). */
 export const PAID_COSTUMES = ['regalia', 'knight', 'lantern'] as const;
 export type PaidCostume = (typeof PAID_COSTUMES)[number];
+/** Whether a costume is drawn from the overlay sheets (rather than drawn in code). */
+export const hasOverlay = (id: string): id is (typeof OVERLAY_COSTUMES)[number] => (OVERLAY_COSTUMES as readonly string[]).includes(id);
 export const isPaidCostume = (id: string): id is PaidCostume => (PAID_COSTUMES as readonly string[]).includes(id);
 
 export interface DuchessCosmeticDef {
@@ -293,12 +298,12 @@ export function drawDuchessCosmetic(
   bob = 0,
 ): void {
   if (!cosmetic || cosmetic === 'none') return;
-  // (COSMETICS: a bought costume is its row of the walking overlay, her facing's 48 px frame, drawn over her whole frame; it comes off by
+  // (COSMETICS: a painted costume is its row of the walking overlay, her facing's 48 px frame, drawn over her whole frame; it comes off by
   //  itself if it is no longer hers)
-  if (isPaidCostume(cosmetic)) {
+  if (hasOverlay(cosmetic)) {
     const img = wornCostume(cosmetic) === cosmetic ? costumeSheet() : null;
     if (!img) return;
-    const row = PAID_COSTUMES.indexOf(cosmetic);
+    const row = OVERLAY_COSTUMES.indexOf(cosmetic);
     ctx.save();
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(img, face === 1 ? FRAME : 0, row * FRAME, FRAME, FRAME, Math.round(frameLeft), Math.round(frameTop + bob * scale), FRAME * scale, FRAME * scale);

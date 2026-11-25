@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { DUCHESS_COSMETICS, isPaidCostume, PAID_COSTUMES, wornCostume } from '../src/render/duchessRules';
+import { DUCHESS_COSMETICS, hasOverlay, OVERLAY_COSTUMES, PAID_COSTUMES, wornCostume } from '../src/render/duchessRules';
 import { entitledHere, OWNED_KEY, ownedFrom, PRODUCTS, productById } from '../src/iapRules';
 
 // (a stand-in for the page's storage: what the store last said is owned, under OWNED_KEY)
@@ -66,11 +66,14 @@ test('the Shop sells each costume, the wardrobe and Starfall against the very en
 
 test('the costume overlays are on her sheets’ own grids', () => {
   // (her walking strip: 48 px frames; a row a costume, a column a facing)
-  assert.deepEqual(size('src/art/duchess/costumes-walk.png'), [96, 48 * PAID_COSTUMES.length]);
+  assert.deepEqual(size('src/art/duchess/costumes-walk.png'), [96, 48 * OVERLAY_COSTUMES.length]);
   // (her battle sheet: the whole sheet again for each costume)
   const [w, h] = size('src/art/units/duchess_goat.png');
-  assert.deepEqual(size('src/art/duchess/costumes-battle.png'), [w, h * PAID_COSTUMES.length]);
-  assert.ok(isPaidCostume('lantern') && !isPaidCostume('crown'));
+  assert.deepEqual(size('src/art/duchess/costumes-battle.png'), [w, h * OVERLAY_COSTUMES.length]);
+  // (the tool's rows are the game's, in the same order)
+  assert.match(readFileSync('tools/cosmetics/costumes.py', 'utf8'), new RegExp(`COSTUMES = \\[${OVERLAY_COSTUMES.map((c) => `'${c}'`).join(', ')}\\]`));
+  assert.ok(hasOverlay('lantern') && !hasOverlay('crown'));
+  for (const c of PAID_COSTUMES) assert.ok(hasOverlay(c), c);
 });
 
 test('costumes are looks only: nothing in the fight reads them', () => {

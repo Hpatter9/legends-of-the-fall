@@ -33,6 +33,14 @@ also needs its Crown Terrace figure, its domain painting and a throne; the promp
   "In the Shop" while not owned), or by tapping her in the tavern (it cycles through the costumes she has). **None** is always there.
 - **Worn only while hers** (`wornCostume`): a refunded costume comes off by itself.
 
+### Adding a costume's painted overlay (round 4: the tin crown, the wizard hat, the quiver)
+
+The anchoring is general: `tools/cosmetics/costumes.py` finds her head (horn top, face front) and her body (rump, hooves) in every frame of
+both sheets, and lays a costume's pieces at offsets from those. To add one: give it its pieces in `pieces()` and its anchors in `dress()`,
+add its name to `COSTUMES`, and add it to `OVERLAY_COSTUMES` (`duchessRules.ts`) in the same row order (a test holds them together). Its
+code drawing in `drawDuchessCosmetic` is then never reached (an overlay costume is drawn from the sheet first) and can go. It is drawn
+everywhere the three are, the fight included; a free one keeps its own unlock rule (no entitlement).
+
 ## Starfall summons
 
 - `tools/cosmetics/starfall.py` cuts `starfall_cardback.png` and `starfall_burst.png` (eight frames) into `src/art/starfall/`.

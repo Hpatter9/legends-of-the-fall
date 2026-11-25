@@ -4,7 +4,7 @@
 // hat, the quiver) drawn as the camp draws it. Looks only: nothing here touches a fight's rules.
 
 import costumesBattleUrl from './art/duchess/costumes-battle.png';
-import { drawDuchessCosmetic, FRAME, isPaidCostume, PAID_COSTUMES, wornCostume, type DuchessCosmeticId } from './render/duchessRules';
+import { drawDuchessCosmetic, FRAME, hasOverlay, OVERLAY_COSTUMES, wornCostume, type DuchessCosmeticId } from './render/duchessRules';
 import { loadImage } from './render/loadImage';
 import { settings } from './settings';
 import { goatSheet } from './duchess';
@@ -29,10 +29,10 @@ export function dressWalk(img: HTMLImageElement, costume: DuchessCosmeticId = co
 
 let battleOverlay: Promise<HTMLImageElement> | null = null;
 
-/** Her battle sheet (`duchess_goat.png`) with a bought costume laid over each frame (its block of the battle overlay); the free costumes
- *  are not drawn in the fight. The sheet itself when she wears none. */
+/** Her battle sheet (`duchess_goat.png`) with a painted costume laid over each frame (its block of the battle overlay); the code-drawn
+ *  free costumes are not drawn in the fight until their painted overlays land. The sheet itself when she wears none. */
 export async function dressBattle(img: HTMLImageElement, costume: DuchessCosmeticId = costumeNow()): Promise<HTMLImageElement | HTMLCanvasElement> {
-  if (!isPaidCostume(costume)) return img;
+  if (!hasOverlay(costume)) return img;
   const over = await (battleOverlay ??= loadImage(costumesBattleUrl));
   const c = document.createElement('canvas');
   c.width = img.naturalWidth;
@@ -40,7 +40,7 @@ export async function dressBattle(img: HTMLImageElement, costume: DuchessCosmeti
   const g = c.getContext('2d')!;
   g.imageSmoothingEnabled = false;
   g.drawImage(img, 0, 0);
-  const row = PAID_COSTUMES.indexOf(costume);
+  const row = OVERLAY_COSTUMES.indexOf(costume);
   g.drawImage(over, 0, row * c.height, c.width, c.height, 0, 0, c.width, c.height);
   return c;
 }
