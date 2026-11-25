@@ -198,10 +198,13 @@ test('the starter pack: offered for 72 hours from the second army, once', () => 
 });
 
 test('the Shop is only in the Play app (or the web build with ?shop=fake), never the web page or the GitHub app', () => {
-  assert.equal(providerFor('play', true, ''), 'revenuecat');
-  assert.equal(providerFor('play', true, '?shop=fake'), 'revenuecat');
+  assert.equal(providerFor('play', true, '', 'goog_key'), 'revenuecat');
+  assert.equal(providerFor('play', true, '?shop=fake', 'goog_key'), 'revenuecat');
+  // (a Play build made without RevenueCat's key fails safe: no Shop, not one that cannot reach the store)
+  assert.equal(providerFor('play', true, ''), null);
+  assert.equal(providerFor('play', true, '', '  '), null);
   // (the Play build in a browser, the store's pictures: none)
-  assert.equal(providerFor('play', false, ''), null);
+  assert.equal(providerFor('play', false, '', 'goog_key'), null);
   assert.equal(providerFor('play', false, '?shop=fake'), null);
   // (the web page and the GitHub release's app)
   assert.equal(providerFor('', false, ''), null);

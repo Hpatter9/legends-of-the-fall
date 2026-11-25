@@ -6,6 +6,23 @@
 // A purchase is granted here, in the page: `grantPurchase` adds to the meta (once per transaction) and the guarded save keeps it at once.
 // Nothing here touches a fight.
 
+import stones1 from './art/treasury/shop_stones_1.webp';
+import stones2 from './art/treasury/shop_stones_2.webp';
+import stones3 from './art/treasury/shop_stones_3.webp';
+import stones4 from './art/treasury/shop_stones_4.webp';
+import crowns1 from './art/treasury/shop_crowns_1.webp';
+import crowns2 from './art/treasury/shop_crowns_2.webp';
+import crowns3 from './art/treasury/shop_crowns_3.webp';
+import starterArt from './art/treasury/shop_starter.webp';
+import recruitArt from './art/treasury/shop_bundle_recruit.webp';
+import warlordArt from './art/treasury/shop_bundle_warlord.webp';
+import regaliaArt from './art/treasury/costume_regalia.png';
+import knightArt from './art/treasury/costume_knight.png';
+import lanternArt from './art/treasury/costume_lantern.png';
+import emberArt from './art/treasury/ruler_ember.webp';
+import starlitArt from './art/treasury/ruler_starlit.webp';
+import starfallArt from './art/treasury/starfall_cardback.webp';
+import { offerPageTutorials } from './tutorialView';
 import { menuChoice, menuFoot, menuNote, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
 import { saveMeta, type Meta } from './sim/meta';
 import { STORE, inApp } from './appUpdate';
@@ -29,14 +46,14 @@ import {
   type Owned,
   type Product,
 } from './iapRules';
-import { fakeProvider, revenueCatProvider, type Customer, type PurchasesProvider, type StoreItem } from './purchases';
+import { fakeProvider, RC_KEY, revenueCatProvider, type Customer, type PurchasesProvider, type StoreItem } from './purchases';
 
 let provider: PurchasesProvider | null | undefined;
 
 /** This build's provider, made once (null: no Shop in this build). */
 export function shopProvider(): PurchasesProvider | null {
   if (provider === undefined) {
-    const which = providerFor(STORE, inApp(), typeof location === 'undefined' ? '' : location.search);
+    const which = providerFor(STORE, inApp(), typeof location === 'undefined' ? '' : location.search, RC_KEY);
     provider = which === 'revenuecat' ? revenueCatProvider() : which === 'fake' ? fakeProvider({ delay: 250 }) : null;
   }
   return provider;
@@ -99,13 +116,28 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''):
   return e;
 };
 
-/** The item's picture: a plain stand-in from the menu icons until the Shop's own art lands (`art` in the catalogue: the director's batch on `art/round-2`). */
+/** The item's picture, from the round-2 art (`art-source/round2/`, cut by `tools/iap/art.py` into `src/art/treasury/`): a pile, a chest, a
+ *  costume, a ruler; the starter and the bundles are wide banners behind their card (`bannerOf`). */
+const ART: Record<string, string> = {
+  shop_stones_1: stones1, shop_stones_2: stones2, shop_stones_3: stones3, shop_stones_4: stones4,
+  shop_crowns_1: crowns1, shop_crowns_2: crowns2, shop_crowns_3: crowns3,
+  shop_starter: starterArt, shop_bundle_recruit: recruitArt, shop_bundle_warlord: warlordArt,
+  costume_regalia: regaliaArt, costume_knight: knightArt, costume_lantern: lanternArt,
+  ruler_ember: emberArt, ruler_starlit: starlitArt, starfall_cardback: starfallArt,
+};
+/** The wide banners: the starter pack and the bundles. */
+const bannerOf = (p: Product): string | undefined => (p.kind === 'starter' || p.kind === 'bundle' ? ART[p.art] : undefined);
+
 function pictureOf(p: Product): HTMLElement {
   const box = el('span', `iapPic iap-${p.kind}`);
-  if (p.kind === 'stones') box.append(icon(ICONS.stones, 'iapIco'));
-  else if (p.kind === 'crowns') box.append(icon(ICONS.crowns, 'iapIco'));
-  else if (p.kind === 'cosmetic') box.append(el('span', 'iapGlyph', p.id.startsWith('ruler') ? '♛' : p.id === 'look_starfall' ? '✶' : '❦'));
-  else box.append(icon(ICONS.gold, 'iapIco'));
+  const url = ART[p.art];
+  if (url) {
+    const im = el('img', `iapArt${/^costume_/.test(p.art) ? ' pixel' : ''}`);
+    im.src = url;
+    im.alt = '';
+    im.draggable = false;
+    box.append(im);
+  } else box.append(icon(p.kind === 'crowns' ? ICONS.crowns : p.kind === 'stones' ? ICONS.stones : ICONS.gold, 'iapIco'));
   return box;
 }
 
@@ -148,7 +180,16 @@ export function openTreasury(m: Meta, changed: () => void): OrnateMenu | null {
     const b = menuChoice(grid, { title: pr.name, lines, disabled: busy || !pr.ready || owned || sold || !prices?.has(pr.id) });
     b.classList.add('iapItem');
     b.dataset.product = pr.id;
-    b.prepend(pictureOf(pr));
+    const banner = bannerOf(pr);
+    if (banner) {
+      // (a whole row: the banner across its top, the words under it)
+      b.classList.add('iapWide');
+      const im = el('img', 'iapBanner');
+      im.src = banner;
+      im.alt = '';
+      im.draggable = false;
+      b.prepend(im);
+    } else b.prepend(pictureOf(pr));
     if (pr.ready && !owned && !sold) b.append(el('span', 'iapPrice', priceOf(pr.id)));
     b.addEventListener('click', () => void buy(pr));
   }
@@ -240,5 +281,7 @@ export function openTreasury(m: Meta, changed: () => void): OrnateMenu | null {
 
   draw();
   if (online()) void load();
+  // (the Shop's tutorial, the first time it opens: fixed contents, the odds, Restore)
+  offerPageTutorials('shop');
   return menu;
 }

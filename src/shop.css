@@ -15,10 +15,17 @@
 #hmTop #hmShop[hidden] { display: none; }
 #hmTop #hmShop .hmShopIco { width: 26px; height: 26px; image-rendering: pixelated; }
 /* the Shop's items: a picture, the name and contents, and the price at the foot */
-.iapShop .omChoice.iapItem { position: relative; padding-left: 52px; min-height: 74px; }
-.iapPic { position: absolute; left: 8px; top: 10px; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid #6b5c40; border-radius: 4px; background: radial-gradient(circle, #2e3326, #12140e); }
+.iapShop .omChoice.iapItem { position: relative; padding-left: 70px; min-height: 84px; }
+.iapPic { position: absolute; left: 6px; top: 10px; width: 58px; height: 58px; display: grid; place-items: center; border: 1px solid #6b5c40; border-radius: 4px; background: radial-gradient(circle, #2e3326, #12140e); }
 .iapPic .iapIco { width: 28px; height: 28px; image-rendering: pixelated; }
 .iapGlyph { font: 400 22px/1 var(--display); color: var(--ornate-brass); }
 .iap-cosmetic { background: radial-gradient(circle, #392c47, #140f1b); }
 .iap-starter, .iap-bundle { background: radial-gradient(circle, #4a3a1c, #17120a); }
 .iapPrice { margin-top: auto; align-self: stretch; padding-top: 4px; font: 400 16px var(--display); color: #f2dc9f; text-align: right; }
+/* the round-2 pictures: a pile, a chest, a costume (pixel art, never smoothed), a ruler, the Starfall card */
+.iapPic .iapArt { width: 100%; height: 100%; object-fit: contain; }
+.iapPic .iapArt.pixel { image-rendering: pixelated; }
+.iapPic:has(.iapArt) { border-color: transparent; background: none; }
+/* the starter pack and the bundles: a whole row, their banner across the top and the words under it */
+.iapShop .omChoice.iapItem.iapWide { grid-column: 1 / -1; padding: 10px 14px 12px; min-height: 0; }
+.iapShop .iapBanner { display: block; align-self: stretch; width: 100%; aspect-ratio: 768 / 320; margin-bottom: 4px; object-fit: contain; }

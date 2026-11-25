@@ -210,10 +210,11 @@ export function starterLeft(m: Meta, now: number): string {
 
 /* ---------------------------------------------------------------- where the Shop shows */
 
-/** Which store provider a build uses, if any: RevenueCat in the Play build inside the app, the fake store on the web build with `?shop=fake`
+/** Which store provider a build uses, if any: RevenueCat in the Play build inside the app, when the build carries RevenueCat's key, the fake store on the web build with `?shop=fake`
  *  (tests and pictures), and none anywhere else: the web page and the GitHub release's app never offer a purchase. */
-export function providerFor(store: string, app: boolean, search: string): 'revenuecat' | 'fake' | null {
-  if (store === 'play') return app ? 'revenuecat' : null;
+export function providerFor(store: string, app: boolean, search: string, key = ''): 'revenuecat' | 'fake' | null {
+  // (a Play build made without REVENUECAT_ANDROID_KEY fails safe: no Shop at all, rather than one that cannot reach the store)
+  if (store === 'play') return app && key.trim() !== '' ? 'revenuecat' : null;
   if (store === '' && new URLSearchParams(search).get('shop') === 'fake') return 'fake';
   return null;
 }

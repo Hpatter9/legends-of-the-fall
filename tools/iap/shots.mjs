@@ -19,7 +19,15 @@ const srv = serve('out/web');
 const base = `http://localhost:${srv.address().port}/`;
 const errors = [];
 let failed = false;
+const TUTORIAL_ID = 'tutorialCard';
 const FEW = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'peasant'];
+// (a page's own tutorial card, the Recruit tab's say, closed so the pictures show what is under it)
+const clearTutorials = async (page) => {
+  for (let i = 0; i < 4 && (await page.locator(`#${TUTORIAL_ID} .omPrimary`).isVisible()); i++) {
+    await page.locator(`#${TUTORIAL_ID} .omPrimary`).click();
+    await page.waitForTimeout(400);
+  }
+};
 const shot = (page, name, w) => page.screenshot({ path: `${dir}/${name}-${w}.png` });
 
 for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
@@ -33,6 +41,7 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     await page.waitForTimeout(1500);
     await page.locator('.hmTab').first().click();
     await page.waitForTimeout(1200);
+    await clearTutorials(page);
     await shot(page, 'sanctum', w);
     await page.locator('.hlOddsBtn').click();
     await page.waitForTimeout(500);
@@ -59,7 +68,16 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     } else {
       await shot(page, 'home-shop-button', w);
       await shop.click();
-      await page.waitForTimeout(800);
+      await page.waitForTimeout(1200);
+      // (the Shop's tutorial, the first time it opens)
+      if (await page.locator(`#${TUTORIAL_ID} .omPrimary`).isVisible()) {
+        await shot(page, 'shop-tutorial', w);
+        await page.locator(`#${TUTORIAL_ID} .omPrimary`).click();
+        await page.waitForTimeout(400);
+      } else {
+        console.log(w, 'no Shop tutorial on the first opening');
+        failed = true;
+      }
       await shot(page, 'shop', w);
       for (const [i, sec] of ['crowns', 'bundles', 'cosmetics'].entries()) {
         await page.locator('#iapShop .omSection').nth(i + 1).evaluate((s) => s.scrollIntoView({ block: 'start' }));
@@ -99,7 +117,9 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
     await p2.waitForTimeout(1500);
     await shot(p2, 'home-starter-pip', w);
     await p2.locator('#hmShop').click();
-    await p2.waitForTimeout(800);
+    await p2.waitForTimeout(1200);
+    await p2.locator(`#${TUTORIAL_ID} .omPrimary`).click().catch(() => {});
+    await p2.waitForTimeout(400);
     await p2.locator('#iapShop .omSection').nth(2).evaluate((s) => s.scrollIntoView({ block: 'start' }));
     await p2.waitForTimeout(200);
     await shot(p2, 'shop-starter', w);

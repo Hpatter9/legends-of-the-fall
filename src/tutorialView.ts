@@ -2,6 +2,7 @@
 // ornate menu (UI-STANDARD): the feature's picture, its few lines, and "Got it". A card the game raises is guarded (`popupGuardRules.ts`):
 // its first moment is deaf to taps, and no tap outside it closes it. The rules (what is due, what is seen) are `tutorialRules.ts`.
 
+import { shopOn } from './iapView';
 import { menuChoice, menuFoot, menuNote, menuSection, menuWell, ornateMenu } from './ornateMenu';
 import { dueOnPage, resetTutorials, tutorialOf, tutorialSeen, TUTORIALS, markTutorialSeen, type Tutorial, type TutorialId, type TutorialPage } from './tutorialRules';
 import type { Meta } from './sim/meta';
@@ -112,7 +113,7 @@ export function openTutorialsPage(onClose?: () => void): void {
   ];
   for (const [name, pick] of groups) {
     const grid = menuSection(menu.body, name, 'tap one to read it', 2);
-    for (const t of TUTORIALS.filter(pick)) {
+    for (const t of TUTORIALS.filter((t) => pick(t) && (!t.shopOnly || shopOn()))) {
       const seen = !m || tutorialSeen(m, t.id);
       const b = menuChoice(grid, { title: t.title, lines: [t.when], onPick: () => showTutorial(t.id, { index: 0, count: 1 }, () => undefined, true) });
       b.classList.add('tuRow');

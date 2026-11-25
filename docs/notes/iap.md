@@ -171,8 +171,8 @@ no hero it does not list), the pity case, the every-hero-owned case, and the che
 - **Offline**: the Shop says "The Shop needs a connection. Everything else in the game plays offline as ever", with Restore greyed; it
   redraws itself when the connection comes or goes. Nothing else changes offline.
 - **The key**: `build.mjs` defines `__RC_KEY__` from `REVENUECAT_ANDROID_KEY` for `--store play` alone (empty in every other build).
-  `android.yml`'s Play bundle step passes it from the secret `REVENUECAT_ANDROID_KEY`. Without it the Play build's Shop says it could not
-  reach the store. Nothing is committed.
+  `android.yml`'s Play bundle step passes it from the secret `REVENUECAT_ANDROID_KEY`. Without it the Play build fails safe: it has no Shop at all
+  (`providerFor` asks for a non-empty key; tested), no crash. Nothing is committed.
 - **Android**: `npx cap sync android` added the plugin's Gradle module (`capacitor.settings.gradle`, `capacitor.build.gradle`). The plugin
   brings Play Billing, which adds the `com.android.vending.BILLING` permission to the merged manifest.
 
@@ -197,3 +197,22 @@ medallion's pip and the starter pack with its hours left). It fails if the web b
 1. Prices: pricier, as above. 2. The starter's window: 72 hours from the second army. 3. Rulers: yes, both, with ChatGPT art; each
 cosmetic "Coming soon" until its art lands. 4. Belgium: excluded in Play's country targeting; the Netherlands worth checking (see
 `docs/notes/store-readiness.md`).
+
+## Release round (IAP-2, `claude/iap-2`, on 0.613)
+
+The owner chose to sell this week. The shop was brought onto 0.613 (merged from `claude/iap`; the conflicts were `build.mjs`'s CSS list and
+the lockfile, re-made by `npm install`).
+
+- **The round-2 art is in.** `tools/iap/art.py` cuts `art-source/round2/` (PR #666) into `src/art/treasury/`: the four stone piles and three
+  crown chests on their cards, the starter's and the bundles' banners across the top of a whole-row card with the words under it, and the
+  costumes, the two rulers' first idle frames and the Starfall card back as the cosmetics' pictures. Each product names its picture (`art`).
+- **The cosmetics stay "Coming soon"** (not on sale) this release: the pictures exist, but wearing them is not built yet. A new ruler also
+  needs its Crown Terrace figure and domain (round 2 painted only the atlases), a costume needs laying on Duchess's frames, and Starfall
+  its place in the summoning's show. Selling them before they can be worn is not on.
+- **The web build hides the Shop** (no medallion, no Shop tutorial on the Tutorials page). The Play build in the app shows it.
+- **A missing `REVENUECAT_ANDROID_KEY` fails safe**: no Shop at all in that Play build, nothing to crash.
+- **The Shop's tutorial** (`tutorialRules.ts`, `shop`, a page tutorial told the first time the Shop opens): fixed contents, where the odds
+  are, and Restore. `newer`, so a veteran save meets it once too; `shopOnly`, so builds without a Shop leave it off the Tutorials page.
+- **The privacy policy's contact** is the owner's, as the release branch has it.
+- The Gradle check (the director's `claude/iap-gradle-check`, the APK and the Play bundle with the plugin) passed on GitHub on 14 November;
+  `claude/iap-2-gradle-check` repeats it for this branch.
