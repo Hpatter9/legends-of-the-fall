@@ -1,4 +1,4 @@
-// NATSU-FIX (docs/notes/natsu-fix.md): Natsu's hero card and her full painting at 393 x 852, into docs/samples/natsu-fix/. `npm run web` first.
+// NATSU-FIX (docs/notes/natsu-fix.md): Natsu's hero card, her full painting, the summoning's tarot reveal and an earned hero's arrival at 393 x 852, into docs/samples/natsu-fix/. `npm run web` first.
 import { createRequire } from 'node:module';
 import { serve } from '../audit/lib.mjs';
 const { chromium } = createRequire(import.meta.url)('playwright');
@@ -31,5 +31,19 @@ const fit = await page.evaluate(async () => {
 });
 await page.waitForTimeout(400);
 await page.screenshot({ path: `${out}/natsu-painting.png` });
+await page.keyboard.press('Escape');
+await page.waitForTimeout(400);
+// (the tarot reveal, held on its last stage, and the arrival, held on its last beat: both show her full painting)
+await page.evaluate(() => { void window.__tarot.firstReveal(window.__game.meta, 'archer', { hold: 4 }); });
+await page.waitForFunction(() => document.querySelector('.tarotReveal')?.dataset.stage === '4', null, { timeout: 20000 });
+await page.locator('.tarotReveal .trArtwork').evaluate((i) => i.decode().catch(() => 0));
+await page.waitForTimeout(1200);
+await page.screenshot({ path: `${out}/natsu-tarot.png` });
+await page.evaluate(() => document.querySelectorAll('.tarotReveal').forEach((e) => e.remove()));
+await page.evaluate(() => { void window.__earned.earnedArrival(window.__game.meta, 'archer', { hold: 4 }); });
+await page.waitForSelector('.earnedArrival .eaArtwork', { timeout: 20000 });
+await page.locator('.earnedArrival .eaArtwork').evaluate((i) => i.decode().catch(() => 0));
+await page.waitForTimeout(3500);
+await page.screenshot({ path: `${out}/natsu-arrival.png` });
 console.log(JSON.stringify(fit), errors.length ? `PAGE ERRORS ${errors}` : 'no page errors');
 await browser.close(); srv.close();

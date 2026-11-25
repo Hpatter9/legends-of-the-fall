@@ -41,11 +41,15 @@ export const DUEL_BOSS = { hp: 0.15, atk: 0.4 };
  *  40 to 75% has its own). 1 is the plain share. */
 export const DUEL_ROLE: Record<PartyRole, { hp: number; atk: number }> = { front: { hp: 1, atk: 1 }, striker: { hp: 1.15, atk: 1.05 }, back: { hp: 1, atk: 1 }, support: { hp: 0.85, atk: 0.9 } };
 /** Each army's own factor on the nemesis's duel share (health and attack alike), so a duel at the army's own level sits in the band whatever
- *  the army: the armies' walls differ more than the champions' roles do (`npm run balance -- --duel`). The three last armies are out of the
- *  bot's reach at their own level, so they keep the plain share until they can be measured. */
+ *  the army: the armies' walls differ more than the champions' roles do (`npm run balance -- --duel`). The three last armies (DUEL-FAIR) are
+ *  measured with the mastered hero their walls were tuned for (`DUEL_MASTERED`): with the plain share they won 2 to 15% of their duels. */
 // (DUEL-SHOW: the Undead Legion's and the Beast Packs' re-tuned for the longer duel, `DUEL_LENGTH`: a longer fight helped the Undead's
 // nemeses and, with its signatures slowed, hurt the Beast Packs' bosses; these give each army back its win rate of before)
-export const DUEL_ARMY: Record<string, number> = { orcs: 0.6, undead: 0.8, beasts: 1.46, wildwood: 1.35, labyrinth: 0.95, ogres: 0.78 };
+export const DUEL_ARMY: Record<string, number> = { orcs: 0.6, undead: 0.8, beasts: 1.46, wildwood: 1.35, labyrinth: 0.95, ogres: 0.78, infernal: 0.37, yokai: 0.47, golems: 0.4 };
+/** DUEL-FAIR (docs/notes/duel-fair.md): the armies whose walls were tuned for a hero with every skill mastered (SKILLS-10: the Infernal Host,
+ *  the Yokai and the Golem Forge, `docs/notes/skills-10.md`). Their duels are measured with the hero their walls were built for
+ *  (`npm run balance -- --duel` gives it its mastered skills), and their factors set by it. */
+export const DUEL_MASTERED: readonly string[] = ['infernal', 'yokai', 'golems'];
 /**
  * DUEL-SHOW (the owner: "the duels are so short"; docs/notes/duel-show.md): how a duel is made longer without changing who wins.
  * - `soften`: every blow in the ring lands this many times softer (`Battle.duel.soften`, in `hurt`), and a boss's great blows come that much
