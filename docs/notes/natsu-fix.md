@@ -1,11 +1,21 @@
 # NATSU-FIX: Natsu's painting with both legs
 
 The owner: Natsu's full painting showed only one leg. ChatGPT repainted it (PR #687, `art-source/fix/natsu-archer.png`, 1024 x 2048,
-opaque). Her pose changed: the bow is lowered and she reaches back for an arrow.
+opaque). In that repaint the bow is lowered and she reaches back for an arrow (0.621).
+
+**NATSU-ACTION** (the owner's second repaint, the `art/natsu-fix` branch's "Paint Natsu in a new action pose", for PR #691): she stands
+at full draw, bow raised, the arrow pointing LEFT, both legs planted, a torii shrine behind her. Her painting is re-cut from it in the
+same way. Her facing matters nowhere it is shown:
+- the viewer, the tarot reveal and the arrival show the painting as it is;
+- their own facing-right figure is her battle sprite, drawn separately below it;
+- nothing mirrors the painting.
+
+So nothing is mirrored. The pictures (`node tools/natsu-fix/shots.mjs`) are `natsu-painting.png`, `natsu-tarot.png`,
+`natsu-arrival.png` and `natsu-card.png`.
 
 ## What changed
 
-- **`src/art/heroes/archer.webp`**: her full painting, shown by "View full artwork" on her hero card, the summoning's tarot reveal
+- **`src/art/heroes/archer.webp`** (re-cut again from the action pose): her full painting, shown by "View full artwork" on her hero card, the summoning's tarot reveal
   and an earned hero's arrival. It is re-cut from the new picture as the whole figure, at 512 x 1024 and WebP quality 88, as before.
   - The old painting was the whole figure too. Her face lands in the same column and about 35 px higher at that size.
   - Zooming in to put the face exactly where it was would crop her legs off again, which is the fault this fixes, so it is not zoomed.
@@ -44,6 +54,8 @@ no ground, no shadow). She is in exactly the pose, outfit, colours and painted s
 - the red and gold samurai armour with its crescent helm crest, and her long dark hair blowing.
 
 The whole figure is in frame, from the crest of her helm to her feet, centred, filling the height.
+(Since NATSU-ACTION the pose is her action pose instead: at full draw, bow raised, the arrow pointing left, both legs planted, as in
+the newest art-source/fix/natsu-archer.png. The owner's own prompt follows that file.)
 The canvas is 1024 x 1536 (2:3, upright). No text, letters, logos or signatures.
 Match: art-source/fix/natsu-archer.png (her pose and look) and src/art/heroes/knight-portrait.webp and samurai-portrait.webp (how the
 other heroes' cut-outs are framed: the whole figure, cleanly edged, on transparency).
