@@ -812,7 +812,6 @@ test('spared, it turns Informant: its brothers’ secrets told, its captain’s 
     assert.equal(war.informant?.n.id, n.id);
     assert.deepEqual([...cap.known].sort(), [...new Set([...cap.traits, ...cap.weak])].sort(), 'its captain’s secrets told');
     assert.equal(other.loyalty, 60 + SPARE.sworn);
-    assert.ok(m.assault?.scouted?.undead, 'the scouts’ report on its hold');
     for (let r = 1; r < SPARE.runs; r++) assert.equal(endInformant(m, 'undead', s * 10 + r), undefined);
     assert.equal(endInformant(m, 'orcs', 1), undefined, 'only its own army’s runs count');
     const line = endInformant(m, 'undead', s * 10 + 9)!;

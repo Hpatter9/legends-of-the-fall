@@ -1717,7 +1717,7 @@ export const kitOf = (u: Unit): Kit | undefined => (u.kitRef ? kitOfRef(u.kitRef
 
 /** A kit a fighter carries in place of its kind's, as plain data: its skill and its ultimate named by the kit and the slot they come
  *  from, and its passive (numbers and flags). A battle holds only this (never the kit itself, whose skills are functions), so it can be
- *  cloned whole: posted from the Assault's worker and kept for a resume (`test/assault-clone.test.ts`). */
+ *  cloned whole. */
 export interface SkillRef {
   of: string;
   slot: 'skill' | 'ultimate';

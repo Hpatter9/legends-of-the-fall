@@ -100,16 +100,7 @@ const WITH_MODES = !modesHidden() || arg('--with-modes', 0) > 0;
 // flag itself is lifted, so `movedStones` reads 0. `--nomoved 1` keeps the modes hidden and pays no moved stones, to see the gap.)
 if (WITH_MODES) setModesHidden(false);
 if (arg('--nomoved', 0) > 0) setStonesMoved(false);
-// The Assault (it was not in this model before FIRST-HOUR 3). A hold can be stormed at ten stars on its army, which is its Legendary
-// clear; the model has no Legendary days, so a hold falls `CONQUEST_AFTER` days after its army's Elite clear (the first army's ten
-// stars come at about level 45, day 39 to 45: `docs/notes/army-pace.md`). Its Warband regroups each week and is stormed again at
-// Mythic, the wall: from `RESTORM_FROM` (and `RESTORM_WAIT` days after the fall) a daily player wins `--restorm` of those weeks.
-// Only the Conquest chests are counted: the Spoils of the Hold and the daily tribute are crowns, and are left out as they always were.
-const NO_ASSAULT = arg('--noassault', 0) > 0;
-const CONQUEST_AFTER = 20;
-const RESTORM_FROM = 90;
-const RESTORM_WAIT = 30;
-const RESTORM_WIN = process.argv.includes('--restorm') ? Number(process.argv[process.argv.indexOf('--restorm') + 1]) : 0.5;
+// (The Assault's Conquest chests were in this model from FIRST-HOUR 3 until the Assault was withdrawn before release, RELEASE-TRIM.)
 const BADGES = ACHIEVEMENTS.filter((a) => WITH_MODES || achievementShown(a.id, []));
 const BADGE_CROWNS = BADGES.reduce((n, a) => n + a.crowns, 0) + crownsTotal('bestiary') + crownsTotal('heroes');
 const BADGE_STONES = BADGES.reduce((n, a) => n + stonesOfAchievement(a), 0) + stonesTotal('bestiary') + stonesTotal('heroes');
@@ -207,15 +198,6 @@ function simulate(seed: number): Report {
       armyGain(settleArmyOres(m, a.id, 'final', t, true, true, mixSeed(seed, 0x0e56, day, i), a.waves.length));
       if (t === 1) m.stash.push({ army: a.id, at: 5, tier: t, seed: chestSeed(m.seed, a, 5) });
     }
-    // the Assault: a hold's first fall and its Conquest chest, then the regrouped Warband's each week it is beaten
-    if (!NO_ASSAULT)
-      for (const [i, t, d] of HARDER) {
-        if (t !== 2) continue;
-        const fell = d + CONQUEST_AFTER;
-        const a = ARMIES[i];
-        if (day === fell) m.stash.push({ army: a.id, at: FIRST_CLEAR_CHEST[3], tier: 3, seed: mixSeed(seed, 0xc0a1, i), conquest: true });
-        else if (day > fell && day >= Math.max(RESTORM_FROM, fell + RESTORM_WAIT) && day % 7 === 0 && new Rng(mixSeed(seed, 0xc0a2, day, i)).chance(RESTORM_WIN)) m.stash.push({ army: a.id, at: FIRST_CLEAR_CHEST[4], tier: 4, seed: mixSeed(seed, 0xc0a3, day, i), conquest: true, half: true });
-      }
     // the farm: the best tier cleared, thirteen runs
     today += FARM_RUNS * bestFarm();
     // (the farm's boss waves now and then drop the army's ores)

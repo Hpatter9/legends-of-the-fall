@@ -1,5 +1,5 @@
 // SWEEP-1110's shared set-up (docs/notes/sweep-1110.md): serves out/web, opens the game at an upright phone size on a well-off save
-// (every army at ten stars, so the Assault is open at each hold), and the checks every scene runs: page errors, 404s, anything that runs
+// (every army at ten stars), and the checks every scene runs: page errors, 404s, anything that runs
 // past the screen's right edge.
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
@@ -24,16 +24,14 @@ const xpAt = (level) => Math.round(30 * (level - 1) * level * (level > 20 ? 4 : 
 export const ALL = ['knight', 'cleric', 'wizard', 'archer', 'samurai', 'lightningMage', 'paladin', 'kraken', 'kitsune', 'minotaur', 'warlock', 'barbarian', 'druid', 'ranger'];
 export const ARMY_IDS = ['orcs', 'undead', 'beasts', 'wildwood', 'labyrinth', 'ogres', 'infernal', 'yokai', 'golems'];
 
-/** The save: fourteen heroes at level 32, every army cleared with ten stars, crowns and stones to spend. `conquered` lists holds fallen. */
-export function saveOf({ conquered = [], level = 32 } = {}) {
-  const day = 20261110;
+/** The save: fourteen heroes at level 32, every army cleared with ten stars, crowns and stones to spend. */
+export function saveOf({ level = 32 } = {}) {
   return {
     seed: 7, crowns: 50000, stones: 500, unlocked: ALL, party: ALL.slice(0, 5), pulls: 0, dry: 0, dryMythic: 0,
     castle: { treasury: 2, barracks: 2, armoury: 1, mageTower: 1, stable: 1, library: 1 },
     shards: {}, stars: {}, xp: Object.fromEntries(ALL.map((k) => [k, xpAt(level)])), bestStage: 14, tower: 9, daily: {}, bosses: [], achievements: [],
     armies: Object.fromEntries(ARMY_IDS.map((id) => [id, { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } }])),
     armySeen: ARMY_IDS, stash: [], opened: [...ARMY_IDS, 'tower', 'castle', 'calamity'],
-    assault: { v: 1, troops: {}, conquered: Object.fromEntries(conquered.map((id) => [id, { day, tier: 3, wins: 1 }])), tries: {} },
   };
 }
 

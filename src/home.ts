@@ -8,12 +8,6 @@ import { offerPageTutorials } from './tutorialView';
 import { heroesTabMark } from './heroesTabMark';
 import { glyphWord, medal, pbUrl } from './paintedButton';
 import { menuFoot, menuNote, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
-import { openMuster, openAssaultResult } from './assaultView';
-import type { AssaultResult } from './sim/assault/assaultMode';
-import { runAssault } from './assaultScene';
-import { claimTribute } from './sim/assault/economy';
-import { abandonLive } from './sim/assault/snapshot';
-import { clearBattle, loadBattle } from './assaultSave';
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
 import { roomOpen, roomsOf } from './sim/rooms';
@@ -32,7 +26,7 @@ import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { claimAchievement, shownAchievements, unclaimed } from './sim/achievements';
-import { play, setHold } from './render/sound';
+import { play } from './render/sound';
 import { playStandGate } from './standGate';
 import type { HomeSpot } from './render/audioRules';
 import { ALL_HEROES, UNITS } from './sim/units';
@@ -1336,8 +1330,6 @@ export class Home {
 
   /** The Armies screen, over the home screen (the Battle button, and the unlock moment's way on). */
   openArmies(focus?: string): void {
-    // (HOLD-SOUND: back from an Assault's war table or result by any way: the page's own music and air again)
-    setHold(null);
     $('home').hidden = false;
     this.openSub(
       'Armies',
@@ -1348,83 +1340,14 @@ export class Home {
           onFight: (id, tier, auto) => this.go(() => this.hooks.onArmy(id, tier, auto)),
           focus,
           onBack: () => this.closeSub(),
-          onAssault: (id, restorm) => this.openAssault(id, restorm),
-          onResume: (id) => this.resumeAssault(id),
-          onAbandon: () => {
-            abandonLive(this.meta);
-            void clearBattle();
-            saveMeta(this.meta);
-          },
-          onTribute: () => {
-            const n = claimTribute(this.meta, todayKey());
-            if (n) {
-              saveMeta(this.meta);
-              play('coinClaim');
-            }
-            return n;
-          },
         }),
       false,
       true,
     );
     // (the cards a new army lit have been seen now: they glow no more the next time)
     if (markSeen(this.meta)) saveMeta(this.meta);
-    // (PAUSE-TIPS: the War Room's own explanations, the harder tiers and the Assault, the first time it is opened with them due)
+    // (PAUSE-TIPS: the War Room's own explanations, the harder tiers, the first time it is opened with them due)
     offerPageTutorials('armies');
-  }
-
-  /** The Assault (docs/notes/assault-1.md): the muster for an army's hold, then the battle over everything, then its result, and back to the
-   *  army card. */
-  openAssault(army: string, restorm = false): void {
-    const save = () => saveMeta(this.meta);
-    openMuster(this.meta, army, {
-      save,
-      restorm,
-      onBack: () => this.openArmies(army),
-      onMarch: (plan) => {
-        void runAssault(this.meta, army, plan, {
-          save,
-          onEnd: (result) => openAssaultResult(this.meta, result, { onBack: () => this.openArmies(army), onFill: () => this.openAssault(army, restorm) }),
-        });
-      },
-    });
-  }
-
-  /** ASSAULT-DEV (`docs/notes/assault-dev.md`): a developer's trial of an assault on `m`, a throwaway copy of the save (`trialMeta`): the
-   *  same muster, battle and result as a real one, but nothing is saved (the save hook does nothing, and no snapshot is kept for a resume).
-   *  The result's way back is `done`; its "storm again" a fresh copy (`again`). */
-  openTrial(m: Meta, army: string, restorm: boolean, hooks: { done(result?: AssaultResult): void; again(): void }): void {
-    const save = () => undefined;
-    openMuster(m, army, {
-      save,
-      restorm,
-      onBack: () => hooks.done(),
-      onMarch: (plan) => {
-        void runAssault(m, army, plan, {
-          save,
-          trial: true,
-          onEnd: (result) => openAssaultResult(m, result, { onBack: () => hooks.done(result), onFill: () => hooks.again(), trial: true }),
-        });
-      },
-    });
-  }
-
-  /** Resume the assault under way (phase 2) from its last snapshot; with none to be had, it is abandoned (a withdrawal). */
-  private resumeAssault(army: string): void {
-    const save = () => saveMeta(this.meta);
-    void loadBattle().then((b) => {
-      if (!b || b.field?.hold?.input.army !== army || b.phase !== 'fight') {
-        abandonLive(this.meta);
-        void clearBattle();
-        save();
-        this.openArmies(army);
-        return;
-      }
-      void runAssault(this.meta, army, { approaches: {} }, {
-        save,
-        onEnd: (result) => openAssaultResult(this.meta, result, { onBack: () => this.openArmies(army), onFill: () => this.openAssault(army) }),
-      }, b.seed, b);
-    });
   }
 
   /** The achievements page; a Claim takes the crowns and stones, saves, and draws the page again. */

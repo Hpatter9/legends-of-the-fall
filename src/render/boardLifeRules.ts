@@ -13,7 +13,7 @@
 
 import { DEPLOY_ROWS, LAVA_LANDS, standable, type Area, type Board, type HazardKind, type Trap } from '../sim/board';
 import type { Weather } from '../sim/weather';
-import { hash } from './fieldLooks';
+import { hash } from './tileNoise';
 import { RIMS } from './landRimRules';
 
 export type Critter = 'bird' | 'butterfly' | 'frog' | 'firefly' | 'fish' | 'rabbit' | 'dragonfly';

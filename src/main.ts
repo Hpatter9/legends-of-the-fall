@@ -4,7 +4,6 @@ import { heraldPortrait } from './heraldArt';
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
-import { isAssaultBench, startAssaultBench } from './assaultBench';
 import { socketStrip } from './runeTray';
 import { checkAppUpdate, inApp } from './appUpdate';
 import { Application, Container, Sprite, TextureSource, UPDATE_PRIORITY } from 'pixi.js';
@@ -45,6 +44,7 @@ import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { risenLine } from './sim/wounds';
 import { trialShardsLine } from './sim/mythicEcho';
+import { assaultGoneLine } from './sim/assaultGone';
 import { settleStudy, studyWords } from './sim/books';
 import { fightUse, levelUpWords, settleSkillUse, useOf, useShare } from './sim/skillLevels';
 import { settleWear, wearWords } from './sim/wear';
@@ -214,7 +214,7 @@ import { deployBox, deployFit, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
-import { bindDuck, bindMute, endFight, endVictory, endWave, holdSound, play, playEvents, setAct, setHold, setScene, setup, startFight } from './render/sound';
+import { bindDuck, bindMute, endFight, endVictory, endWave, holdSound, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
@@ -223,10 +223,7 @@ import { installTapGuard } from './tapGuard';
 import { guardRuns, installPopupGuard } from './popupGuard';
 import { CHAINS } from './sim/eidolonChainData';
 import { readMs } from './popupGuardRules';
-import { closeSettings, onDevAssault, onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
-import { openTrialPicker } from './devAssaultView';
-import { trialMeta, type TrialPick } from './sim/assault/devTrial';
-import type { AssaultResult } from './sim/assault/assaultMode';
+import { onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
 import { devGrant } from './sim/devGrant';
 import { PageGoat } from './duchess';
 import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
@@ -518,6 +515,18 @@ class Game {
       toastStones(this.meta.stoneGift);
       delete this.meta.stoneGift;
       saveMeta(this.meta);
+    }
+    // (RELEASE-TRIM: a save that played the Assault, now withdrawn, was paid back as it loaded: it says so once, and the stored battle of a
+    // storming left under way is dropped from the browser, `assaultGone.ts`)
+    if (this.meta.assaultGone) {
+      toastLines([assaultGoneLine(this.meta.assaultGone)]);
+      delete this.meta.assaultGone;
+      saveMeta(this.meta);
+      try {
+        indexedDB.deleteDatabase('legends.assault');
+      } catch {
+        // (no store to drop: a private window)
+      }
     }
     // (a spire climb saved by an older version is closed and paid: the Tower is the Last Stand now)
     const closed = migrateOldClimb(this.meta, localStorage);
@@ -813,12 +822,6 @@ class Game {
       this.home.refresh();
       return said;
     });
-    // (ASSAULT-DEV: Try an Assault, the picker over Settings; the trial is fought on a throwaway copy of the save)
-    // (only from the home screen: a run under the page would be left running beneath it)
-    onDevAssault(() => {
-      if (!this.home.isOpen || document.getElementById('assaultScene')) return 'Open Settings from the home screen to try an Assault: a run is under way';
-      openTrialPicker(this.meta, (pick) => this.tryAssault(pick));
-    });
     window.addEventListener('resize', () => this.layout());
     this.watchTopHud();
     // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)
@@ -842,7 +845,6 @@ class Game {
     // (UPDATE-READY: a new version's worker that has taken over is offered as a reload, on the home screen only: `updateReady.ts`)
     watchUpdate(() => ({
       home: this.homeUp,
-      assault: !!document.getElementById('assaultScene'),
       fighting: this.b.phase === 'fight',
       covered: openScreens().length > 0 || !!document.querySelector('.omVeil, #hmSheet:not([hidden]), #hmSub:not([hidden]), #settings:not([hidden]), #gacha:not([hidden]), #result:not([hidden])'),
     }));
@@ -863,11 +865,10 @@ class Game {
     (window as unknown as { __screens: () => string[] }).__screens = openScreens;
     // (PHONE-BACK: the phone's Back and Escape close the topmost thing open, else go to the Battle tab, else open the place's own leave or
     // pause control; they never leave the game, `phoneBack.ts`)
-    // (POPUP-GUARD: a run is going anywhere but on the home screen: a deploy, a fight, a result, the Last Stand, an Assault)
-    guardRuns(() => !this.home.isOpen || !!document.getElementById('assaultScene'));
+    // (POPUP-GUARD: a run is going anywhere but on the home screen: a deploy, a fight, a result, the Last Stand)
+    guardRuns(() => !this.home.isOpen);
     initPhoneBack({
       place: () => {
-        if (document.getElementById('assaultScene')) return { place: 'assault' };
         if (this.home.isOpen) return { place: 'home', tab: this.home.currentTab };
         if (this.standOn) return { place: 'other' };
         if (this.b.phase === 'deploy') return { place: 'deploy' };
@@ -875,10 +876,9 @@ class Game {
         return { place: 'other' };
       },
       battleTab: () => this.home.show('battle'),
-      // (an Assault's pause card; a deploy's Home, which keeps the run to carry on; a fight's Settings, its one menu)
+      // (a deploy's Home, which keeps the run to carry on; a fight's Settings, its one menu)
       pause: (p) => {
-        if (p === 'assault') document.querySelector<HTMLElement>('#assaultScene .asTop button[aria-label="Pause"]')?.click();
-        else if (p === 'deploy') $('homeBtn').click();
+        if (p === 'deploy') $('homeBtn').click();
         else openSettings();
       },
     });
@@ -1289,25 +1289,6 @@ class Game {
     if (to.to === 'armies') return this.home.openArmies(to.army);
     if (to.to === 'heroes') return this.home.goTo({ to: 'heroes', hero: to.hero });
     this.home.show(to.to);
-  }
-
-  /** ASSAULT-DEV (`docs/notes/assault-dev.md`): a developer's trial of an assault (Settings, Developer, Try an Assault), on a throwaway
-   *  copy of the save made with the force `trialMeta` builds: its muster, battle and result as a real one's, nothing saved. Back from the
-   *  result (or the muster), Settings opens again on its Developer page; a Last Hold won plays the War's end from the copy's own ending
-   *  first, shown and not recorded. Public for the tools (`__game.tryAssault({ army: 'orcs', kind: 'last', ... })`). */
-  tryAssault(pick: TrialPick): void {
-    const m = trialMeta(this.meta, pick);
-    closeSettings();
-    const back = () => {
-      setHold(null);
-      openSettings('dev');
-    };
-    const done = (result?: AssaultResult) => {
-      const end = m.war?.end;
-      if (result?.warEnded && end) void this.scenes.play(warEndScene(end, armyById(end.army)?.area), { ...this.players(), party: [...m.party] }).then(back, back);
-      else back();
-    };
-    this.home.openTrial(m, pick.army, pick.kind === 'regroup', { done, again: () => this.tryAssault(pick) });
   }
 
   /** Every cinematic's id, and the frames of one worth a screenshot (previews: `tools/cinematics/shots.mjs`). */
@@ -5306,15 +5287,9 @@ function overBench(x: number, y: number): boolean {
 // (POPUP-GUARD: first in line, before the ghost-click guard and the page's own listeners)
 installPopupGuard();
 installTapGuard();
-// (ASSAULT-0: `?bench=assault` is the Assault's engine bench, `assaultBench.ts`; it plays instead of the game and touches no save)
-if (isAssaultBench())
-  startAssaultBench().catch((err) => {
-    $('loading').textContent = `Could not start the bench: ${err}`;
-  });
-else
-  new Game().start().catch((err) => {
-    $('loading').textContent = `Could not start: ${err}`;
-  });
+new Game().start().catch((err) => {
+  $('loading').textContent = `Could not start: ${err}`;
+});
 
 // (the app bundles every file itself, so its page skips the service worker; the web page keeps it)
 checkAppUpdate(__GAME_VERSION__);

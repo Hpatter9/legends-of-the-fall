@@ -49,7 +49,7 @@ export const BIRTH = { slew: { boss: 1, elite: 1, escort: 0.35 }, maimed: { boss
 export const LIEUTENANT = { from: 3, chance: 0.25, most: 2 };
 /** NEMESIS-DEPTH, staying power: a member brought down in its first `FATE_MEETINGS` meetings is always dragged off the field (fate spares it,
  *  `council.ts`), so a nemesis is met three times or more before it can fall; and only one met that often calls a champion out (`duel.ts`).
- *  Vengeance, the Muster and a hold's conquest still slay it outright, so the player can always finish one on purpose. */
+ *  Vengeance and the Muster still slay it outright, so the player can always finish one on purpose. */
 export const FATE_MEETINGS = 2;
 /** NEMESIS-DEPTH: a lieutenant the heroes have never met (a Recruit) is placed at this many times the chance, and before the others. */
 export const STRANGER_CHANCE = 2;
@@ -232,7 +232,8 @@ export interface War {
   reclaimed?: number[];
   /** Vengeance scenes waiting to play at the camp: "avenger>fallen" pairs. */
   vengeance?: string[];
-  /** Phase 5 of the Assault: the War is over. The last hold standing fell, and the Dark Council with it (`lastHold.ts`). */
+  /** Phase 5 of the Assault: the War is over. The last hold standing fell, and the Dark Council with it. (The Assault was withdrawn before
+   *  release, RELEASE-TRIM: nothing ends the War now, but a save that ended it keeps its end, its card and its scene.) */
   end?: WarEnd;
 }
 
@@ -690,8 +691,8 @@ function settle(war: War, m: Meta, run: Run, b: Battle, tally: NemesisTally, won
     const deeds = deedsOf(f, u, b, won);
     if (!deeds.length) continue;
     const home = cls === 'escort' ? army : homeArmy(u.def) ?? army;
-    // (a conquered army births no nemeses: the Assault, docs/notes/assault-1.md; and none at all once the War is over, phase 5)
-    if (!home || m.assault?.conquered[home] || war.end) continue;
+    // (none at all once the War is over: a save that ended it at the Assault's Last Hold, before the Assault was withdrawn)
+    if (!home || war.end) continue;
     // (a boss already a nemesis of the War does not have a twin)
     if (cls === 'boss' && war.members.some((n) => n.boss && n.base === u.def)) continue;
     const deed = deeds.find((d) => rng.next() < BIRTH[d][cls]);

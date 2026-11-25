@@ -6,7 +6,7 @@ import { oneMythic, validMythicSquad } from './mythicRules';
 // every pull draws from a side stream of the meta seed and the pull counter, so it replays exactly.
 
 import { guardedSave } from './saveGuard';
-import { readAssault } from './assault/economy';
+import { settleAssaultGone, type AssaultGone } from './assaultGone';
 import { newCastle, readCastle, readChapel, readWorks, type Castle, type Works } from './castle';
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { spellSlots } from './spellSlots';
@@ -192,9 +192,9 @@ export interface Meta {
   tomes?: TomeCounts;
   /** Chests earned from the armies' star milestones and not yet opened, oldest first (`armyStars.ts`). */
   stash: StashChest[];
-  /** The Assault (`src/sim/assault/economy.ts`, docs/notes/assault-1.md): the platoons, the holds conquered, the tries, the tribute. Saves from
-   *  before have none: nothing bought, nothing conquered. */
-  assault?: import('./assault/economy').AssaultMeta;
+  /** RELEASE-TRIM: what a save that played the Assault (now gone) was paid back on load, for the page to say once (then it is deleted;
+   *  `assaultGone.ts`). */
+  assaultGone?: AssaultGone;
   /** The cinematics seen (`sceneRules.ts`, by id): each plays once at its moment, and the codex's Scenes list plays a seen one again. Saves from before have none. */
   scenes?: string[];
   /** Number of times Duchess has been tapped (unlocks Tiny Tin Crown at 5). */
@@ -527,6 +527,11 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.sinceNew = Math.max(0, (m.sinceNew ?? 0) | 0);
       m.unlock = readUnlock(m.unlock, m.unlocked);
       m.unlockDry = Math.max(0, (m.unlockDry ?? 0) | 0);
+      // (RELEASE-TRIM: a save that played the Assault is paid back once for its soldiers, scouts, holds and Drill Yard, and what is left
+      // of it dropped, before the castle and the builders are read: `assaultGone.ts`)
+      const gone = settleAssaultGone(m as unknown as { crowns: number });
+      if (gone) m.assaultGone = gone;
+      else if (m.assaultGone && !(m.assaultGone.crowns >= 0)) delete m.assaultGone;
       m.castle = readCastle(m.castle);
       m.spellbook = readLoadout(m.spellbook);
       m.chapel = readChapel(m.chapel, m.castle, m.spellbook, STARTER_SPELLS);
@@ -599,9 +604,6 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.talents = readTalents(m.talents, m);
       // (saves from before the army chests have an empty stash; a chest given but not opened by an earlier format goes into it)
       m.stash = readStash(m.stash, rawArmies, m.seed);
-      // (saves from before the Assault have none)
-      m.assault = readAssault(m.assault);
-      if (!m.assault) delete m.assault;
       // (saves from before the XP tomes have none)
       m.tomes = readTomes(m.tomes);
       if (!m.tomes) delete m.tomes;

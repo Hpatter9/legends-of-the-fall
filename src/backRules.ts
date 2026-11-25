@@ -7,11 +7,11 @@
 //   closes the topmost, exactly as its own Close or "‹ Back" would (the page presses that button, so any confirm it has comes too).
 // - A cinematic or cut-in on top: Back skips it, as a tap does.
 // - On a main tab other than Battle: Back goes to the Battle tab.
-// - In a fight, a deploy or an Assault: Back opens what the game's own leave or pause control opens; it never drops the run.
+// - In a fight or a deploy: Back opens what the game's own leave or pause control opens; it never drops the run.
 // - On the Battle tab with nothing open: Back does nothing, and the game stays.
 
 /** Where the player is, with nothing open on top. */
-export type BackPlace = 'home' | 'deploy' | 'fight' | 'assault' | 'other';
+export type BackPlace = 'home' | 'deploy' | 'fight' | 'other';
 
 /** The page as Back sees it: what is on top (a cinematic, an overlay, or nothing), where the player is, and the home screen's tab. */
 export interface BackState {
@@ -27,7 +27,7 @@ export type BackAction =
   | { do: 'close' }
   /** Go to the Battle tab. */
   | { do: 'battleTab' }
-  /** Open the place's own leave or pause control (a fight's Settings, a deploy's Home, an Assault's pause). */
+  /** Open the place's own leave or pause control (a fight's Settings, a deploy's Home). */
   | { do: 'pause' }
   /** Nothing: the game stays where it is. */
   | { do: 'none' };
@@ -37,7 +37,7 @@ export function backAction(s: BackState): BackAction {
   if (s.top === 'cinematic') return { do: 'skip' };
   if (s.top === 'overlay') return { do: 'close' };
   if (s.place === 'home') return s.tab && s.tab !== 'battle' ? { do: 'battleTab' } : { do: 'none' };
-  if (s.place === 'deploy' || s.place === 'fight' || s.place === 'assault') return { do: 'pause' };
+  if (s.place === 'deploy' || s.place === 'fight') return { do: 'pause' };
   return { do: 'none' };
 }
 

@@ -4,16 +4,13 @@
 // - SLAY: it falls for good, and pays what it would have.
 // - SPARE: it leaves the Council and becomes the player's Informant for five of its army's runs. It tells every secret of its old superior and
 //   its sworn brothers at once; its old captain's lieutenants lose 20 loyalty; the wave card names the nemeses in the next wave of its army's
-//   runs; and the scouts' report on its army's hold is the player's for nothing. When the five runs are done, it goes: half the time with
+//   runs. When the five runs are done, it goes: half the time with
 //   thanks (a War Trophy), else back to the Council as a lieutenant, a Betrayer, Vengeful against the hero who spared it, a Might stronger.
 //   Each of its brothers the heroes slay while it informs makes the betrayal likelier.
 //
-// One kneels at a time; while one waits, the others fall as ever. Never the warchief, a hunt's quarry, Vengeance's mark, nor at the Muster
-// or a hold's conquest. The choice's draws come from their own stream (`SPARE_SALT`). Pure rules: no Pixi, no DOM.
+// One kneels at a time; while one waits, the others fall as ever. Never the warchief, a hunt's quarry, Vengeance's mark, nor at the Muster. The choice's draws come from their own stream (`SPARE_SALT`). Pure rules: no Pixi, no DOM.
 
 import { armyById } from './armies';
-import { assaultOf } from './assault/economy';
-import { HOLDS } from './assault/holds';
 import { news } from './council';
 import { heroName } from './heroNames';
 import type { Meta } from './meta';
@@ -88,11 +85,6 @@ export function spareKneeler(m: Meta): string | undefined {
   const cap = n.rank === 'captain' ? undefined : war.members.find((x) => x.id === n.sworn);
   for (const x of war.members) if (cap ? x.sworn === cap.id : x.sworn === n.id) x.loyalty = Math.max(0, x.loyalty + SPARE.sworn);
   war.informant = { n, by: k.by, runs: SPARE.runs, brothers: told.map((x) => x.id), betrayed: 0 };
-  // (the scouts' report on its army's hold, for nothing: it knows the posts)
-  if (HOLDS[n.army] && !m.assault?.conquered?.[n.army]) {
-    const a = assaultOf(m);
-    a.scouted = { ...a.scouted, [n.army]: true };
-  }
   remember(n, `Spared by ${heroName(k.by)}, and turned Informant`);
   const line = `${fullName(n)} is spared by ${heroName(k.by)}, and turns Informant: ${told.length ? `it tells all it knows of ${told.map((x) => x.name).join(', ')}` : 'it has no brothers left to sell'}`;
   news(war, 'spared', line);

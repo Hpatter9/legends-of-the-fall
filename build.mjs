@@ -94,9 +94,6 @@ const artFiles = {
 };
 options.plugins = [artFiles];
 
-// (the Assault's simulation in a Web Worker, phase 2: its own small bundle beside game.js, `src/assaultWorker.ts`; it imports no pictures)
-const workerOptions = { ...options, plugins: [], metafile: false, entryPoints: ['src/assaultWorker.ts'], outfile: `${out}/assault-worker.js` };
-
 copyFileSync('src/art/icon-192.png', `${out}/icon-192.png`);
 copyFileSync('src/art/icon-512.png', `${out}/icon-512.png`);
 for (let k = 1; k <= 5; k++) copyFileSync(`src/art/backdrop/m1_${k}.png`, `${out}/bg${k}.png`);
@@ -217,14 +214,15 @@ for (const f of readdirSync('src/art/heroes').filter(f => f.endsWith('.webp'))) 
   copyFileSync(`src/art/heroes/${f}`, `${out}/heroes/${f}`);
   HERO_ART_FILES.push(`heroes/${f}`);
 }
-// (the Assault's holds' own art, phase 1b: `tools/assault/cut-sheets.py` cuts them into src/art/assault/<army>/; loaded by URL when an
-// assault first opens, so game.js stays small; the service worker keeps them for offline play)
-const ASSAULT_ART_FILES = [];
+// (the nine painted hold sheets, cut by `tools/assault/cut-sheets.py` into src/art/assault/<army>/: every land's floor, decals and set pieces
+// on the ordinary battlefields (LIVING-FIELDS, LAND-IDENTITY: `floorArt.ts`, `holdSprites.ts`); loaded by URL when a board of the land is
+// first shown, so game.js stays small; the service worker keeps them for offline play. They were the Assault's, and outlived it.)
+const HOLD_ART_FILES = [];
 for (const army of readdirSync('src/art/assault')) {
   mkdirSync(`${out}/assault/${army}`, { recursive: true });
   for (const f of readdirSync(`src/art/assault/${army}`).filter((f) => f.endsWith('.webp'))) {
     copyFileSync(`src/art/assault/${army}/${f}`, `${out}/assault/${army}/${f}`);
-    ASSAULT_ART_FILES.push(`assault/${army}/${f}`);
+    HOLD_ART_FILES.push(`assault/${army}/${f}`);
   }
 }
 // (RPG-SPELLS: the painted spell effects' atlases, one a session (tools/spell-fx/import-spell-art.py), load by URL when a fight
@@ -367,7 +365,7 @@ writeFileSync(
 const writeServiceWorker = () => writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'assault-worker.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${BLENDER_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${SUMMON_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ASSAULT_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ART_FILES.map((f) => `'${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${BLENDER_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${SUMMON_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${HOLD_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ART_FILES.map((f) => `'${f}'`).join(', ')}];
 const OWN = new Set(FILES.map((f) => new URL(f, self.registration.scope).href));
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: 'reload' }))))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
@@ -398,11 +396,9 @@ self.addEventListener('fetch', (e) => {
 if (serve) {
   const ctx = await esbuild.context(options);
   await ctx.watch();
-  await (await esbuild.context(workerOptions)).watch();
   const { port } = await ctx.serve({ servedir: out, port: 8000 });
   console.log(`Serving ${out} at http://localhost:${port}`);
 } else {
   await esbuild.build(options);
-  await esbuild.build(workerOptions);
   console.log(`Built ${out} (version ${version}${storeArg ? `, for the ${storeArg} store` : ''})`);
 }

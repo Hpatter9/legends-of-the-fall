@@ -2,7 +2,6 @@
 //
 //   npm run balance                  the default number of fights
 //   npm run balance -- --games 800   fewer fights, quicker and noisier
-//   npm run balance -- --assault orcs   the Assault's table (tools/assault/balance.ts)
 import * as esbuild from 'esbuild';
 import { spawnSync } from 'node:child_process';
 import { rmSync } from 'node:fs';
@@ -11,7 +10,7 @@ import { rmSync } from 'node:fs';
 const outdir = `out/balance-${process.pid}`;
 rmSync(outdir, { recursive: true, force: true });
 await esbuild.build({
-  entryPoints: [process.argv.includes('--assault') ? 'tools/assault/balance.ts' : 'tools/balance.ts'],
+  entryPoints: ['tools/balance.ts'],
   outfile: `${outdir}/balance.cjs`,
   bundle: true,
   platform: 'node',

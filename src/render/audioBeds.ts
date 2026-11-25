@@ -8,8 +8,10 @@
 
 import { AudioProcessor } from '@audiorective/core';
 import { BEDS, BED_FADE_S, BED_LEVEL_MAX, ShotClock, bedOf, pickShot, type BedId, type BedLayer, type BedSpec, type Scene, type ShotKind } from './audioRules';
-import { DRUM_SCALE } from './holdSound';
 import type { Area } from '../sim/board';
+
+/** A drum beat's level against a bed's own one-shots: heard over the air, still under the music. */
+const DRUM_SCALE = 2;
 
 /** How often the one-shot timer looks at the clock (ms). */
 const TICK_MS = 500;

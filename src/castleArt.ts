@@ -7,7 +7,7 @@ import manifest from './art/castle-remake/manifest.json';
 import type { SiteId } from './sim/castle';
 
 /** Every picture the remake asks for (docs/notes/castle-remake-art-prompts.md), by its file name. */
-export const CASTLE_ART_NAMES = ['courtyard', 'throne-hall', 'treasury', 'armoury', 'barracks', 'mageTower', 'stable', 'library', 'chapel', 'smithy', 'watchtower', 'hall', 'drillYard', 'site'] as const;
+export const CASTLE_ART_NAMES = ['courtyard', 'throne-hall', 'treasury', 'armoury', 'barracks', 'mageTower', 'stable', 'library', 'chapel', 'smithy', 'watchtower', 'hall', 'site'] as const;
 export type CastleArtName = (typeof CASTLE_ART_NAMES)[number];
 
 const painted = new Set<string>((manifest as { painted: string[] }).painted);
@@ -30,8 +30,8 @@ export interface Plot {
   w: number;
 }
 
-/** The eleven plots: the two corner bastions, then three rows of three down to the gate (the Drill Yard is the parade ground in the
- *  middle of the last row). Read top to bottom, so the nearer (lower) buildings are drawn over the farther. */
+/** The ten plots: the two corner bastions, then three rows of three down to the gate, the last row's middle left open (the Assault's
+ *  Drill Yard stood there; it went with the Assault, RELEASE-TRIM). Read top to bottom, so the nearer (lower) buildings are drawn over the farther. */
 export const PLOTS: readonly Plot[] = [
   { id: 'watchtower', x: 0.15, y: 0.2, w: 0.22 },
   { id: 'mageTower', x: 0.85, y: 0.2, w: 0.22 },
@@ -42,7 +42,6 @@ export const PLOTS: readonly Plot[] = [
   { id: 'barracks', x: 0.5, y: 0.54, w: 0.24 },
   { id: 'armoury', x: 0.82, y: 0.54, w: 0.24 },
   { id: 'smithy', x: 0.18, y: 0.71, w: 0.24 },
-  { id: 'drillYard', x: 0.5, y: 0.71, w: 0.3 },
   { id: 'stable', x: 0.82, y: 0.71, w: 0.24 },
 ];
 

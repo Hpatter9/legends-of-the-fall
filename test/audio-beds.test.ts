@@ -5,7 +5,6 @@ import {
   type BedId, type HomeSpot, type Scene,
 } from '../src/render/audioRules';
 import { AmbientBeds } from '../src/render/audioBeds';
-import { HOLD_VOICE } from '../src/render/holdSound';
 import { CUES } from '../src/render/soundRules';
 import { FakeContext, FakeNode, installFakeAudio } from './audioFake';
 import { AREAS } from '../src/sim/board';
@@ -44,8 +43,7 @@ test('every scene maps to a bed, the Spells study has its own, the three tower a
   assert.equal(BED_OF.spells, 'library');
   assert.notEqual(BED_OF.castle, BED_OF.spells);
   assert.deepEqual([BED_OF.tower1, BED_OF.tower2, BED_OF.tower3], ['crypt', 'halls', 'storm']);
-  // (HOLD-SOUND: the Assault's holds have beds of their own too, `HOLD_VOICE`)
-  const used = new Set([...Object.values(BED_OF), ...Object.values(LAND_BED), ...Object.values(HOLD_VOICE).map((v) => v.bed)]);
+  const used = new Set([...Object.values(BED_OF), ...Object.values(LAND_BED)]);
   assert.equal(used.size, BED_IDS.length, 'no bed goes unused');
 });
 
