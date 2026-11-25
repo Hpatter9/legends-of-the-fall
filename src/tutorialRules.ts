@@ -21,7 +21,8 @@ import { hornHeld } from './sim/warHorn';
 /** The two moments of a wave a tutorial can hold: its deploy screen opening, or its fight beginning (the fight held). */
 export type TutorialMoment = 'deploy' | 'fight';
 /** The pages a tutorial can wait for instead, the first time each is opened. */
-export type TutorialPage = 'tavern' | 'recruit' | 'council' | 'armies';
+/** (IAP: 'shop', the Shop's first opening, only in a build that has one: the Play app) */
+export type TutorialPage = 'tavern' | 'recruit' | 'council' | 'armies' | 'shop';
 
 export interface Tutorial {
   id: string;
@@ -40,6 +41,8 @@ export interface Tutorial {
   when: string;
   /** Newer than its unlock: a save that already had the feature open before the tutorials still sees it once. */
   newer?: boolean;
+  /** IAP: only in a build with a Shop (left off the Tutorials page elsewhere). */
+  shopOnly?: boolean;
 }
 
 const owned = (m: Meta): readonly string[] => m.unlocked ?? [];
@@ -252,6 +255,19 @@ export const TUTORIALS: readonly Tutorial[] = [
     at: 'armies',
     open: (m) => ARMIES.some((a) => tierOpen(m, a, 1)),
     when: 'Three stars on an army',
+  },
+  {
+    // (IAP, docs/notes/iap.md: told the first time the Shop opens; a build without a Shop never opens it, and the Tutorials page leaves it
+    //  out there, `shopOnly`)
+    id: 'shop',
+    title: 'The Shop',
+    lines: ['Stones, crowns and bundles can be bought here; everything in the game can still be earned by playing.', 'Every item has fixed contents. The chance of each summon is on the Odds button in the Summoning Sanctum.', 'A purchase on another phone or after a fresh start comes back with Restore purchases.'],
+    art: 'ui/buttons/coin.webp',
+    at: 'shop',
+    open: () => true,
+    when: 'The Shop opened',
+    newer: true,
+    shopOnly: true,
   },
 ];
 

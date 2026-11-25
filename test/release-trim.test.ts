@@ -156,3 +156,15 @@ test('the regrouped Warbands\' chests come with the week\'s first daily clear, e
   assert.ok(m2.stash.some((c) => c.daily === 20261209));
   assert.equal(m2.stash.filter((c) => c.conquest && c.half).length, 2);
 });
+
+test('the Shop\'s fake store, where every purchase succeeds, opens only under automation, never from a player\'s address bar', () => {
+  const src = readFileSync('src/iapView.ts', 'utf8');
+  assert.match(src, /providerFor\(STORE, inApp\(\), typeof location === 'undefined' \|\| !toolsOn\(\) \? '' : location\.search, RC_KEY\)/);
+  // (and every reading of the page's address in the game goes through the same gate)
+  for (const f of ['src/main.ts', 'src/iapView.ts']) {
+    const s = readFileSync(f, 'utf8');
+    const reads = [...s.matchAll(/location\.search/g)].length;
+    const gated = [...s.matchAll(/toolsOn\(\)[^;]{0,40}location\.search/g)].length;
+    assert.equal(reads, gated, f);
+  }
+});

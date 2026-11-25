@@ -15,3 +15,6 @@ declare const __TACTIC_ART__: string[];
 declare const __BOARD__: string | undefined;
 /** The store this build is for (`node build.mjs --store play`), or '' for the web page and the GitHub release's app; read with `typeof`, as `__BOARD__` is. */
 declare const __STORE__: string | undefined;
+/** IAP (docs/notes/iap.md): RevenueCat's public Android SDK key, from `REVENUECAT_ANDROID_KEY` at build time, in the Play build only ('' in every other
+ *  build, and in the tests). Never committed: the workflow passes it from a GitHub secret. */
+declare const __RC_KEY__: string | undefined;

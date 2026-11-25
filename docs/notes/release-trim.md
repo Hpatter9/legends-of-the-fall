@@ -112,6 +112,8 @@ Settings and the castle show nothing of the Assault (`docs/samples/release-trim/
   `__summonFx`, `__popupGuard`, `__audioDebug` and `__audioApi`. The forcing hooks, `__forceLucky` (lucky summons) and `__forceDrop`
   (a wave's drop), are honoured only then too, as are the test page's flags `?seed`, `?scenario` and `?duchess`. So every tool works as
   before, and a player's console finds no helper.
+- **The Shop's fake store** (0.614: `?shop=fake` on the web build, where every purchase succeeds) answers only under automation too
+  (`iapView.ts`); the tools' shop pictures keep it.
 - The Android app's Back (`window.__phoneBack`) stays as it is: the app calls it.
 - The save itself is plain JSON in the browser's storage, as it always was; a player who edits it by hand is not something the page can
   stop.

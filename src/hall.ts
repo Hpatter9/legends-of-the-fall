@@ -1,6 +1,7 @@
 // The royal arcane sanctum: a painted chamber with live ritual light and hero arrivals.
 // Artwork and controls only; recruiting and saving remain in the gacha.
 
+import { openOdds } from './oddsView';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroClassLabel } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
@@ -71,6 +72,8 @@ const CSS = `
 .hlCorner > button { pointer-events: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; width: 54px; min-height: 52px; padding: 3px 2px; font: 700 11px var(--body); color: #ffe3a2; border: 1px solid #b28a45; border-radius: 3px; box-shadow: inset 0 0 0 1px #2e251c, 0 2px 6px #000b; }
 .hlShop { background: linear-gradient(#244e3ae6, #122b22f2); }
 .hlCorner > button:disabled { opacity: .5; }
+.hlOddsBtn { background: linear-gradient(#3b3550e6, #1d1a2bf2); }
+.hlOddsBtn i { font: 900 19px/24px var(--display); font-style: normal; color: #f2dc9f; }
 .hlShopIco { width: 24px; height: 24px; image-rendering: pixelated; }
 .hlScroll .odds.lucky { margin-top: 2px; font-size: 12px; color: #ffe3a2; }
 .hlBar { display: flex; gap: 10px; width: 100%; max-width: 390px; }
@@ -304,6 +307,8 @@ export class SummoningHall {
   /** EIDOLON-CHAINS: the Summoner's plaque over the shards' scroll, and the Pact Gallery beside the chest shop. */
   private chain = el('button', 'hlChain');
   private gallery = el('button', 'hlGallery');
+  /** IAP (docs/notes/iap.md): the odds of every outcome, as Play asks where stones can be bought; always shown. */
+  private oddsBtn = el('button', 'hlOddsBtn');
   private pull1 = el('button', '');
   private pull10 = el('button', 'primary');
   private still: HTMLCanvasElement | null = null;
@@ -351,13 +356,16 @@ export class SummoningHall {
     ledger.append(this.count, odds);
     // (SANCTUM-TIDY: the chest shop and the Pact Gallery are small buttons in the corner under the ledger, so the room shows)
     const corner = el('div', 'hlCorner');
-    corner.append(this.shop, this.gallery);
+    corner.append(this.shop, this.oddsBtn, this.gallery);
     head.append(title, ledger, corner);
     odds.addEventListener('click', () => this.hooks.onCollection());
     const bar = el('div', 'hlBar');
     bar.append(this.pull1, this.pull10);
     const low = el('div', 'hlLow');
     this.shop.addEventListener('click', () => this.hooks.onShop());
+    this.oddsBtn.addEventListener('click', () => this.meta && openOdds(this.meta));
+    this.oddsBtn.title = this.oddsBtn.ariaLabel = 'Odds: the chance of every summoning outcome';
+    this.oddsBtn.replaceChildren(el('i', '', '%'), el('span', '', 'Odds'));
     this.chain.addEventListener('click', () => this.hooks.onChain?.());
     this.gallery.addEventListener('click', () => this.hooks.onGallery?.());
     this.chain.hidden = this.gallery.hidden = true;
@@ -403,7 +411,7 @@ export class SummoningHall {
     const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k)).length;
     this.count.textContent = `${have} / ${ALL_HEROES.length} Heroes`;
     const busy = !!this.show;
-    this.shop.disabled = busy;
+    this.shop.disabled = this.oddsBtn.disabled = busy;
     for (const [b, n] of [[this.pull1, 1], [this.pull10, 10]] as const) {
       b.replaceChildren(`Use ${stoneCost(n)} stone${n === 1 ? '' : 's'}`, el('small', '', `◆ ${stonesOf(meta)} held`));
       b.disabled = busy || stonesOf(meta) < stoneCost(n);
