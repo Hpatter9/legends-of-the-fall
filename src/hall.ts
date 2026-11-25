@@ -24,6 +24,7 @@ import { summoner } from './summoner';
 import { loadSummonFx } from './summonFx';
 import { chainsShown, hallPlaque } from './sim/eidolonChains';
 import lightPillarUrl from './art/hall/fx_light-pillar.png';
+import { toolHook } from './toolHooks';
 
 const ART: Record<string, string> = { sanctum: sanctumUrl, lightPillar: lightPillarUrl };
 let art: Record<string, HTMLImageElement> | null = null;
@@ -390,7 +391,7 @@ export class SummoningHall {
     });
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
     // (a test page reaches the hall as `window.__hall`, to play a made-up pull)
-    (window as unknown as { __hall?: SummoningHall }).__hall = this;
+    toolHook('__hall', this);
     this.watch = new ResizeObserver(() => this.fit());
     this.watch.observe(this.root);
     document.addEventListener('visibilitychange', () => (document.hidden ? this.halt() : this.running && this.start()));

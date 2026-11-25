@@ -70,3 +70,38 @@ test('the Drill Yard and its rooms are gone from the castle', () => {
   assert.ok(!(ROOM_BUILDING_IDS as string[]).includes('drillYard'));
   assert.ok(!ROOMS.some((r) => (r.building as string) === 'drillYard'));
 });
+
+test('the tools\' hooks are put on the page only under automation, and no page hook is set past them', async () => {
+  const { toolHook, toolsOn } = await import('../src/toolHooks');
+  const g = globalThis as unknown as Record<string, unknown>;
+  const had = g.window;
+  g.window = {};
+  try {
+    // (a player's browser: no `navigator.webdriver`)
+    assert.equal(toolsOn(), false);
+    toolHook('__game', { meta: {} });
+    assert.equal((g.window as Record<string, unknown>).__game, undefined);
+  } finally {
+    g.window = had;
+  }
+  // (every `window.__*` the page sets goes through `toolHook`, but the Android app's Back and the Back log beside it)
+  const { readdirSync, statSync } = await import('node:fs');
+  const files: string[] = [];
+  const walk = (d: string) => {
+    for (const f of readdirSync(d)) {
+      const p = `${d}/${f}`;
+      if (statSync(p).isDirectory()) walk(p);
+      else if (p.endsWith('.ts')) files.push(p);
+    }
+  };
+  walk('src');
+  const set = /\(window as unknown as \{[^}]*\}\)\.(__\w+)\s*=|\bw\.(__\w+)\s*=(?!=)/g;
+  for (const f of files) {
+    const src = readFileSync(f, 'utf8');
+    for (const m of src.matchAll(set)) assert.ok(['__phoneBack', '__backLog'].includes(m[1] ?? m[2]), `${f} sets ${m[1] ?? m[2]} outside toolHook`);
+  }
+  // (the forcing hooks are honoured only under automation)
+  assert.match(readFileSync('src/gacha.ts', 'utf8'), /toolsOn\(\) && \(window as unknown as \{ __forceLucky/);
+  assert.match(readFileSync('src/main.ts', 'utf8'), /toolsOn\(\) \? \(window as unknown as \{ __forceDrop/);
+  assert.match(readFileSync('src/main.ts', 'utf8'), /new URLSearchParams\(toolsOn\(\) \? location\.search : ''\)/);
+});

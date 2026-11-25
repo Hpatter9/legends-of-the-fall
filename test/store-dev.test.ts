@@ -1,23 +1,29 @@
-// STORE-DEV (docs/notes/store-dev-page.md): a store's build has no Developer page (free crowns, shards and stones, Build Town, Try an
-// Assault); the web page and the GitHub release's app keep it for the owner's testing. And each Settings screen has one way back.
+// STORE-DEV (docs/notes/store-dev-page.md) and RELEASE-TRIM (docs/notes/release-trim.md): no build has a Developer page (free crowns,
+// shards and stones, Build Town, Try an Assault), the web's and the GitHub app's included. And each Settings screen has one way back.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { devToolsOn, settingsPages } from '../src/settings';
+import { existsSync, readFileSync } from 'node:fs';
+import { settingsPages } from '../src/settings';
 import { STORE } from '../src/appUpdate';
 
-test('the Play build lists no Developer page; the web and the GitHub app do', () => {
+// (RELEASE-TRIM, docs/notes/release-trim.md, the owner's call before release: the Developer page is gone from every build, the web's and
+// the GitHub app's too, not only the store's)
+test('no build lists a Developer page: the store\'s, the web\'s and the GitHub app\'s are the same list', () => {
   const play: string[] = settingsPages('play').map((p) => p.id);
-  assert.ok(!play.includes('dev'), play.join(', '));
-  assert.equal(devToolsOn('play'), false);
   for (const keep of ['diag', 'about', 'credits', 'updates', 'data']) assert.ok(play.includes(keep), keep);
-  const web: string[] = settingsPages('').map((p) => p.id);
-  assert.ok(web.includes('dev'));
-  assert.equal(devToolsOn(''), true);
-  assert.equal(web.length, play.length + 1);
-  // (the tests build with no store: the developer's tools are on, as on the web)
-  assert.equal(STORE, '');
-  assert.ok(settingsPages(STORE).some((p) => p.id === 'dev'));
+  for (const store of ['', 'play', 'github', STORE]) {
+    const ids: string[] = settingsPages(store).map((p) => p.id);
+    assert.ok(!ids.includes('dev'), `${store || 'web'}: ${ids.join(', ')}`);
+    assert.deepEqual(ids, play);
+  }
+});
+
+test('no grant is left for a player to reach: the developer grant, Build Town and Try an Assault are gone from the code', () => {
+  assert.ok(!existsSync('src/sim/devGrant.ts'), 'the grant\'s rules');
+  for (const f of ['src/settings.ts', 'src/main.ts', 'src/index.html']) {
+    const src = readFileSync(f, 'utf8');
+    assert.doesNotMatch(src, /devGrant|onDevGrant|Build Town|Try an Assault|devTrial|eidolons=all/, f);
+  }
 });
 
 test('the Settings header’s “‹ Back” stays hidden on a sub-page, so each screen has one way back', () => {

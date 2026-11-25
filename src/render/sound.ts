@@ -26,6 +26,7 @@ import { SpellBank } from './spellBank';
 import { CueBank } from './cueBank';
 import { coveredBySpells, spellParts } from './spellSfx';
 import { AMBIENCE_LEVEL, MOMENT_CUES, MUSIC_LEVEL, SFX_LEVEL, UI_LEVEL, busOf } from './audioMix';
+import { toolHook } from '../toolHooks';
 
 const SAVE_KEY = 'legends.sound';
 
@@ -110,9 +111,8 @@ export function setup(): void {
   window.addEventListener('pagehide', hush);
   window.addEventListener('pageshow', () => !document.hidden && wake());
   // (for the tests and the owner: `window.__audioDebug()` says what the engine is doing)
-  const w = window as unknown as { __audioDebug?: () => unknown; __audioApi?: unknown };
-  w.__audioDebug = debugState;
-  w.__audioApi = { setAct, setMusic, playSting, duck, setScene, playScene, endScene, probe, bake: bakeTrack, renderCue, play };
+  toolHook('__audioDebug', debugState);
+  toolHook('__audioApi', { setAct, setMusic, playSting, duck, setScene, playScene, endScene, probe, bake: bakeTrack, renderCue, play });
 }
 
 /** Lets the game's sound mix with whatever else the phone is playing (a music app), and never take the audio focus: the

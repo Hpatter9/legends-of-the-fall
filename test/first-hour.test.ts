@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import { roman } from '../src/sim/roman';
 import { modesHidden, namesHiddenMode, setModesHidden } from '../src/sim/hiddenModes';
 import { LOADING_TIPS } from '../src/quipData';
-import { devGrant } from '../src/sim/devGrant';
 import { modeOpen } from '../src/sim/modeUnlock';
 import { newMeta } from '../src/sim/meta';
 import { sceneList, sceneOfHiddenMode } from '../src/sim/sceneRules';
@@ -33,15 +32,6 @@ test('while the modes are hidden no loading tip names them, and plenty of tips a
   setModesHidden(false);
   assert.equal(namesHiddenMode('the Last Stand never ends'), false, 'nothing is held back once the modes are shown');
   setModesHidden(true);
-});
-
-test('Build Town opens the castle gate (the Castle tab has no testing door of its own)', () => {
-  const m = newMeta(5);
-  assert.equal(modeOpen(m, 'castle'), false);
-  devGrant(m, 'town', 0);
-  assert.equal(modeOpen(m, 'castle'), true);
-  devGrant(m, 'town', 0);
-  assert.equal(m.opened?.filter((k) => k === 'castle').length, 1, 'written once');
 });
 
 test('the Scenes list of a new save shows no scene of a hidden mode', () => {

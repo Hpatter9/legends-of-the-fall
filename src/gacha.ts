@@ -14,6 +14,7 @@ import { heroCard, pullInfo, queueReveal, revealUnseen, tarotBack, tarotFace } f
 import { cardTimes, drawOrder, HERO_ONWARD_MS, shardTotals } from './render/summonRules';
 import { cardFlourish, loadSummonFx } from './summonFx';
 import { modesHidden } from './sim/hiddenModes';
+import { toolsOn } from './toolHooks';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -23,8 +24,8 @@ const COLLECTION_PX = 48;
 const NEAR_ROW = 5;
 const NEAR_PX = 48;
 
-/** The debug hook for the lucky roll: a page (or a screenshot script) sets `window.__forceLucky = true` to make the next summons lucky. The sim's own odds are untouched. */
-const forced = (): { lucky?: boolean } => ((window as unknown as { __forceLucky?: boolean }).__forceLucky ? { lucky: true } : {});
+/** The debug hook for the lucky roll: a screenshot script sets `window.__forceLucky = true` to make the next summons lucky (under automation only, RELEASE-TRIM: `toolHooks.ts`). The sim's own odds are untouched. */
+const forced = (): { lucky?: boolean } => (toolsOn() && (window as unknown as { __forceLucky?: boolean }).__forceLucky ? { lucky: true } : {});
 
 export class Gacha {
   private busy = false;
