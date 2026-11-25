@@ -88,16 +88,17 @@ Settings and the castle show nothing of the Assault (`docs/samples/release-trim/
 - The Android app's Back (`window.__phoneBack`) stays as it is: the app calls it.
 - The save itself is plain JSON in the browser's storage, as it always was; a player who edits it by hand is not something the page can
   stop.
+- The Updates and notes page still tells of the Assault and the Developer page in its old entries: that is the history, left as it was.
 
 ## Size
 
 | | before (0.613) | after |
 |---|---|---|
-| `out/web`, what ships (no source maps; the APK keeps maps out) | 274,404,802 bytes | 272,421,502 bytes |
-| saved | | **1,983,300 bytes (1.98 MB)** |
-| with the source maps | 299,525,048 bytes | 290,925,220 bytes (8.6 MB saved) |
+| `out/web`, what ships (no source maps; the APK keeps maps out) | 274,404,802 bytes | 272,419,586 bytes |
+| saved | | **1,985,216 bytes (1.99 MB)** |
+| with the source maps | 299,525,048 bytes | 290,915,027 bytes (8.6 MB saved) |
 
-The saving: `assault-worker.js` (1.52 MB), 392 KB of `game.js`, and the Drill Yard's two pictures (71 KB). The Play build's numbers are
+The saving: `assault-worker.js` (1.52 MB), about 394 KB of `game.js`, and the Drill Yard's two pictures (71 KB). The Play build's numbers are
 the same, give or take four bytes. The hold sheets stay, since the battlefields draw from them.
 
 ## Checked
