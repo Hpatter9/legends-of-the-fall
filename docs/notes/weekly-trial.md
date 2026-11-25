@@ -53,7 +53,17 @@ a second team and summon. It took the director's design, with the changes below 
   on whatever the day (the card's Continue). My call, over a few a week: a daily try is the daily habit the trial should sit beside.
 - **The five who start** are the save's best for the week (`trialFive`: lasting power, a quarter more for a class the rules favour, and the
   army's weakness or resistance), one of each class on a one-of-each week; Hire draws from every hero the week admits. A save with no hero the
-  week admits cannot enter, and the card says what to summon ("Summon Beasts and Wardens to take it on").
+  week admits is lent some (below).
+- **The loan** (the director's call, so no week locks a player out: "a taste", and the best advert for summoning). When a week's rules shut
+  out any of the save's own heroes and leave it fewer than five to start with, heroes of the classes the week admits fill the five
+  (`trialLoans`): summonable heroes only, no Mythic, none the save owns, drawn in an order fixed by the week's seed (`LOAN_SALT`), so every
+  save is lent the same heroes that week bar those it owns. They are kept on the run's mode (`TrialMode.loan`: the kinds, so a hire or a
+  merge of one is lent too, and the level and rank they fight at: the save's typical standing, the mean of its five highest-levelled heroes,
+  `loanStanding`). They fight with the run's gear like any hero, but nothing lasting of the save's is for them (no talents, equipment,
+  awakening or skill levels) and they earn no lasting XP (`dropLoanXp`). As they come without the save's skill levels, the foes are eased by
+  `LOAN_EASE` (25% with all five lent, a share of it for each), and answer the save's own best five rather than the lent ones. Hire draws
+  from the admitted heroes the save owns and the lent ones. They are marked "On loan" on the card and the bench, and the run's end card names
+  them with **Summon to keep**, which opens Recruit. A week that shuts out none of a save's heroes lends nothing, however few it has.
 - **The foes answer the five's lasting power** as the daily's do (`trialScale`, the daily's `DAILY_ANSWER`), so a strong save meets as hard a
   trial as a new one.
 
@@ -65,9 +75,9 @@ crowns and a daily chest of about 3 stones). The laurels are counted (`Meta.tria
 Trial Master (5), Trial Legend (12). A run begun last week and finished after the week turned pays nothing. Earn rates elsewhere are
 unchanged.
 
-**The pace** (`npm run unlock-pace`, which now plays the trial: its tiers at the greedy player's rates, a clear 75% of weeks, nothing in a
-week no hero may enter; `-- --no-trial` leaves it out): stones a year **2,927 → 3,068** (+141, +4.8%; the trial pays 153 a year, about 2.9 a
-week; the chest shop's share moves by a few). The heroes' pace barely moves.
+**The pace** (`npm run unlock-pace`, which now plays the trial: its tiers at the greedy player's rates, a clear 75% of weeks; no week shuts a
+save out, as a week that bars its heroes lends some; `-- --no-trial` leaves it out): stones a year **2,927 → 3,080** (+153, +5.2%; the trial
+pays 166 a year, about 3.2 a week; the chest shop's share moves by a few). The heroes' pace barely moves.
 
 ## On the page
 
@@ -77,8 +87,9 @@ week; the chest shop's share moves by a few). The heroes' pace barely moves.
 - **The card** (`src/trialView.ts`, the standard ornate menu, a sheet): this week's rules and the classes they favour, the army with its
   "Weak to" and "Resists" rows, your heroes for it, the rewards ticked as paid, your best and laurels, the time left, and Fight! (Tried
   today, Continue).
+- **On the bench**, a lent hero's card wears "On loan".
 - **In the fight**, the week's rules in the banner over the board (`showTrialBanner`), in the deploy and through the fight.
-- **At the run's end**, the reward card (`showTrialRewards`) lists the tiers it paid this week.
+- **At the run's end**, the reward card (`showTrialRewards`) lists the tiers it paid this week, and the heroes lent with **Summon to keep** (to Recruit).
 - **The tutorial**: "The Weekly Trial", told the first time the card opens (`at: 'trial'`, `newer`), and listed in Settings, Tutorials.
 - **Offline**: nothing new is loaded by URL (the medallion is one of the painted buttons the service worker caches already).
 - **Save-compatible**: `Meta.trial` is optional; `readTrial` (`src/sim/trialSave.ts`) reads a bad one safely, and a save from before has none.
@@ -105,17 +116,17 @@ of the time and most about two times in three or more. Clears (all seven waves),
 | Fog v Wildwood | 80% | 90% | 60% | 90% |
 | Spellstorm v Ogres | 100% | 40% | 60% | 80% |
 | No Healers v Undead | 90% | 80% | 70% | 60% |
-| The Wild Kin v Beasts | no entrants | no entrants | no entrants | 100% |
+| The Wild Kin v Beasts | 80% (all lent) | 70% (all lent) | 70% (all lent) | 100% |
 | Last Light v Infernal | 30% | 90% | 40% | 50% |
 | One of Each + Moonless Night v Labyrinth | 80% | 70% | 80% | 100% |
 | The Horde v Yokai | 80% | 60% | 40% | 70% |
 | Moonless Night + Fog v Orcs | 100% | 90% | 100% | 60% |
 | The Charge v Ogres | 90% | 70% | 50% | 100% |
 | The Horde + Powder and String v Golems | 80% | 100% | 30% | 100% |
-| **All weeks entered** | **84%** | **81%** | **62%** | **83%** |
+| **All weeks** | **83%** | **80%** | **63%** | **83%** |
 
-Three waves are reached in every run measured, five in 50% to 100% by week. The Wild Kin is the week a new save cannot enter (no Beast or
-Warden among the starters): the week that asks the player to summon.
+Three waves are reached in every run measured, five in 50% to 100% by week. The Wild Kin is the week a new save's heroes are all shut out
+(no Beast or Warden among the starters), so its five are all lent: 10% cleared before the loan was eased (`LOAN_EASE`), 70% to 80% after.
 
 ## Checked
 
@@ -123,8 +134,9 @@ Warden among the starters): the week that asks the player to summon.
   rule and army in it; the rules' words; the starter heroes favoured; the seven waves; who may enter (only, barred, one of each, Hire's pool,
   `canJoin`); a class's harder blows and Shield Wall's turned blow, exactly; the twists, healing and the Horde laid by a trial's stage; a fight
   outside the trial untouched; one try a day; rewards paid once a week, again the next week, never for a past week's run; the pay's size;
-  the pip and the save.
+  the pip and the save; the loan (who is lent, the same for every save bar what it owns, at the save's level, in Hire's pool, no lasting
+  XP, none on a week that shuts out nobody).
 - `test/pause-tips.test.ts` (the tutorial's lines), `test/ui-standard.test.ts` (the card is the standard menu).
 - `node tools/weekly-trial/shots.mjs` (after `npm run web`): the camp, the tutorial, the card (top and foot), the deploy and a fight under
-  Powder and String, and the reward card at 393 x 852, 360 x 780 and 412 x 915; the card of a week the save has nobody for, and Settings,
-  Tutorials, at 393. Pictures in `docs/samples/weekly-trial/`.
+  Powder and String, and the reward card at 393 x 852, 360 x 780 and 412 x 915; a week that lends heroes (the card, the bench, and the end
+  card's Summon to keep) at 393 and 360; and Settings, Tutorials, at 393. Pictures in `docs/samples/weekly-trial/`.

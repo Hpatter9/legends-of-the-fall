@@ -9,9 +9,12 @@ import { classOf } from '../src/sim/armyWeakness';
 import { loadMeta, newMeta, pickStarter, saveMeta, startedMeta, type Meta } from '../src/sim/meta';
 import { FIXED_PACKS } from '../src/sim/starter';
 import { armyRun, canJoin, finish, startStage, type Run } from '../src/sim/run';
+import { botBoost } from '../src/sim/autoplay';
+import { xpFor } from '../src/sim/levels';
+import { isMythic } from '../src/sim/mythicRules';
 import { TRAITS } from '../src/sim/traits';
 import { mergedRule, trialAllows, trialArmy, trialHost, trialRulesOf, trialSeed, trialWeek, TRIAL_MID, TRIAL_RULE_IDS, TRIAL_RULES, TRIAL_SWARM_HP, TRIAL_WAVES, TRIAL_WEEKS } from '../src/sim/trialRules';
-import { markTrialSeen, readTrial, settleTrial, startTrial, trialBlock, trialEntrants, trialFive, trialIsNew, trialRecord, trialStatus, trialTitle, trialTriesLeft, trialWeekOf, TRIAL_TIERS, TRIAL_WEEK_PAY } from '../src/sim/trial';
+import { dropLoanXp, isLent, lentStanding, trialLoans, markTrialSeen, readTrial, settleTrial, startTrial, trialBlock, trialEntrants, trialFive, trialIsNew, trialRecord, trialStatus, trialTitle, trialTriesLeft, trialWeekOf, TRIAL_TIERS, TRIAL_WEEK_PAY } from '../src/sim/trial';
 
 const CLASSES = Object.values(TRAITS).filter((t) => t.kind === 'class').map((t) => t.id);
 /** A Monday, and the week it starts. */
@@ -212,10 +215,51 @@ test('one try a day; the next day another; a save with no hero the week admits c
   // (a new week: a fresh record, its tries anew)
   const next = mondayOf(WEEK + 1);
   assert.equal(trialTriesLeft(m, next), 1);
-  // (the Wild Kin's week, and a save of only the first five: nobody may enter)
+  // (the Wild Kin's week, and a save of only the first five: none of its own may enter, but heroes are lent, so it can still take part)
   const plain = owning(['knight', 'samurai', 'kunoichi', 'archer', 'wizard']);
-  assert.equal(trialBlock(plain, mondayOf(weekWith('wildKin'))), 'nobody');
-  assert.equal(startTrial(plain, mondayOf(weekWith('wildKin'))), null);
+  assert.equal(trialBlock(plain, mondayOf(weekWith('wildKin'))), null);
+  assert.ok(startTrial(plain, mondayOf(weekWith('wildKin'))));
+});
+
+test('the loan: a week that shuts out the save’s heroes lends heroes of the classes it admits, the same for everyone, at the save’s level', () => {
+  const kin = weekWith('wildKin');
+  const starters = ['knight', 'samurai', 'archer'];
+  const m = owning(starters);
+  for (const k of starters) m.xp[k] = xpFor(12);
+  const lent = trialLoans(m, kin);
+  assert.equal(lent.length, 5, 'the five filled');
+  for (const k of lent) {
+    assert.ok(['beast', 'warden'].includes(classOf(k)!), k);
+    assert.ok(!m.unlocked.includes(k), 'never one the save owns');
+    assert.ok(!isMythic(k));
+  }
+  // (from the week's seed: another save is lent the same, bar what it owns)
+  assert.deepEqual(trialLoans(owning(['peasant', 'kunoichi', 'wizard'], 9), kin), lent);
+  const withOne = owning([...starters, lent[0]]);
+  assert.deepEqual(trialLoans(withOne, kin).slice(0, 4), lent.slice(1, 5));
+  // (the run: the lent heroes in the squad, marked in its mode, at the save's typical level; Hire may draw them too)
+  const run = startTrial(m, mondayOf(kin))!;
+  assert.deepEqual(run.roster.map((h) => h.kind), lent);
+  assert.equal(run.mode?.kind, 'trial');
+  const loan = run.mode?.kind === 'trial' ? run.mode.loan! : undefined!;
+  assert.deepEqual(loan.kinds, lent);
+  assert.equal(loan.level, 12);
+  assert.ok(lent.every((k) => isLent(run, k) && run.pool!.includes(k)));
+  const h = run.roster[0];
+  assert.deepEqual(lentStanding(run, h.kind), { level: 12, rank: loan.rank });
+  assert.equal(lentStanding(run, 'knight'), undefined);
+  // (it fights at the loan's level: stronger than the same kind at the save's own level for it, which is 1)
+  assert.ok(botBoost(m, h, run).atk! > botBoost(m, h).atk!);
+  // (they earn nothing lasting)
+  assert.deepEqual(dropLoanXp(run, { [lent[0]]: 50, knight: 7 }), { knight: 7 });
+  // (a normal week: a save's own heroes, however few, and nothing lent; nor when the rules shut out none of them)
+  assert.deepEqual(trialLoans(m, weekWith('powder')), []);
+  assert.equal(startTrial(owning(starters, 4), mondayOf(weekWith('powder')))!.mode?.kind === 'trial' && 'loan' in startTrial(owning(starters, 4), mondayOf(weekWith('powder')) + 1)!.mode!, false);
+  // (No Healers with a cleric among four: the rules shut it out, so the five are filled by a loan)
+  const four = owning(['knight', 'samurai', 'archer', 'cleric']);
+  const nh = trialLoans(four, weekWith('noHealers'));
+  assert.equal(nh.length, 2);
+  assert.ok(nh.every((k) => trialAllows(weekWith('noHealers'), k)));
 });
 
 /** Finish the run's waves: `won` of them won, then a loss (or the clear, when all are won). */

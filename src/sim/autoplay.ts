@@ -1,4 +1,5 @@
 import { trialHost, trialSquadOk } from './trialRules';
+import { lentStanding } from './trial';
 import { ARMY_WEAKNESS, matchMult, matchOf } from './armyWeakness';
 import { mythicFits, oneMythic } from './mythicRules';
 // The greedy player, shared by the Auto button, the auto-replay of cleared armies, the balance tool and the tests: it
@@ -36,9 +37,11 @@ export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
 /** The bot's boost for a hero of a run that brings the lasting kit: its grade, rank and level and its awakening, as ever, and in a real-gear
  *  run (RUN-GEAR) the equipment its kind fights in: the lasting pieces with the run's finds in their slots, fresh (`botKitStats`). */
 export function botBoost(meta: Meta, h: Owned, run?: Run): Boost {
+  // (WEEKLY-TRIAL: a lent hero fights at the loan's level and rank, `lentStanding`)
+  const lent = lentStanding(run, h.kind);
   const awake = awakenStats(meta, h.kind);
   // (DEPTH-BUILD: a mentor's legacy perk from the run's snapshot, `legacy.ts`)
-  const boost = journeyBoost(run?.tower?.journey, h.id, legacyBoost(run?.legacy, h.kind, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake)));
+  const boost = journeyBoost(run?.tower?.journey, h.id, legacyBoost(run?.legacy, h.kind, boostOf(h, lent?.rank ?? heroRank(meta, h.kind), lent?.level ?? levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake)));
   // (SEVEN-SLOT GEAR batch 6: a hero risen at half after a won wave starts the next so, as the page's does)
   const share = run && !run.tower ? hpShare(run, h.id) : 1;
   return share < 1 ? { ...boost, carry: share } : boost;

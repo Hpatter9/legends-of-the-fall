@@ -1,7 +1,7 @@
 // WEEKLY-TRIAL (docs/notes/weekly-trial.md): pictures of the Weekly Trial at the three upright sizes, into docs/samples/weekly-trial/: the
-// camp with the Trial beside the Daily (a new week's red dot), its tutorial the first time, the card, a fight under the week's rule (its
-// banner over the board), and the reward card at a run's end; and at 393 the card of a week the save has no hero for, and Settings,
-// Tutorials. The page's clock is set to a week of the rotation (Powder and String against the Golem Forge) so the pictures are the same
+// camp with the Trial over the Daily (a new week’s red dot), its tutorial the first time, the card, a fight under the week's rule (its
+// banner over the board), and the reward card at a run's end; at 393 and 360 a week that lends heroes (the card, the bench and the end card's
+// "Summon to keep"); and at 393 Settings, Tutorials. The page's clock is set to a week of the rotation (Powder and String against the Golem Forge) so the pictures are the same
 // whenever they are taken. Fails on a page error.
 //
 //   npm run web && node tools/weekly-trial/shots.mjs
@@ -91,13 +91,36 @@ for (const [w, h] of [[393, 852], [360, 780], [412, 915]]) {
   await ctx.close();
 }
 
-// (a week no hero of this save may enter: the card says what to summon)
-{
-  const { ctx, page } = await open(393, 852, { when: WILD, heroes: HEROES.slice(0, 5), seen: ['weeklyTrial'] });
+// (a week whose rules shut out every hero of this save: heroes of the classes it admits are lent, "On loan" on the card and the bench, and
+// the run's end card offers "Summon to keep")
+for (const [w, h] of [[393, 852], [360, 780]]) {
+  const { ctx, page } = await open(w, h, { when: WILD, heroes: HEROES.slice(0, 5), seen: ['weeklyTrial'] });
   await clearCards(page);
   await page.locator('#hmTrial').click();
   await page.waitForTimeout(800);
-  await shot(page, 'card-nobody-393');
+  await shot(page, `card-loan-${w}`);
+  await page.locator('#trialCard .omBody').evaluate((e) => e.scrollTo(0, e.scrollHeight));
+  await page.waitForTimeout(300);
+  await shot(page, `card-loan-${w}-end`);
+  await page.locator('#trialCard .omPrimary').click();
+  await page.waitForTimeout(1500);
+  await clearCards(page);
+  // (the five stand on the board as the deploy opens; a hire waits on the bench, and a lent kind's card wears "On loan")
+  await page.locator('#summon').click();
+  await page.waitForTimeout(1500);
+  await clearCards(page);
+  await shot(page, `deploy-loan-${w}`);
+  await page.evaluate(() => {
+    const g = window.__game;
+    g.run.over = true;
+    g.run.best = 5;
+    g.run.stage = 5;
+    g.run.trialPaid = [3];
+    localStorage.removeItem('legends.run');
+    g.afterResult();
+  });
+  await page.waitForTimeout(1200);
+  await shot(page, `result-loan-${w}`);
   await ctx.close();
 }
 // (Settings, Tutorials: the Trial's entry among those around the keep)

@@ -68,11 +68,10 @@ const FARM_RUNS = arg('--runs', 13);
 /** The daily challenge (`daily.ts`): the player clears it this share of days (the greedy player's 69% with the hearts, `npm run daily-rate`; a stronger player later does better, so this is a floor), and a fall comes at about wave 8. A clear pays the waves' crowns and a daily chest (about one bonus star in two), a fall the waves' crowns before it. */
 const DAILY_CLEAR = 0.7;
 const DAILY_FALL_WAVES = 7;
-/** WEEKLY-TRIAL: the share of weeks the greedy player clears all seven waves (`npm run trial-rate`, about 75% over the rosters), of the rest
- *  the share that reach five, and the share of weeks no hero of the save may enter. */
+/** WEEKLY-TRIAL: the share of weeks the greedy player clears all seven waves (`npm run trial-rate`, about 75% over the rosters), and of the
+ *  rest the share that reach five. (No week shuts a save out: a week whose rules bar its heroes lends it some.) */
 const TRIAL_CLEAR = 0.75;
 const TRIAL_FIVE = 0.8;
-const TRIAL_SHUT = 1 / 12;
 const WITH_TRIAL = !process.argv.includes('--no-trial');
 /** A tower climb a day: floors reached grow from `TOWER_START` with the days, at `TOWER_GROWTH` floors a day, to a ceiling. */
 const TOWER_START = 6;
@@ -196,16 +195,14 @@ function simulate(seed: number): Report {
       for (const [i, d] of legendDays) if (d <= day && (wk + i) % 2 === 0) m.stash.push({ army: ARMIES[i].id, at: FIRST_CLEAR_CHEST[4], tier: 4, seed: mixSeed(m.seed, WARBAND_SALT, i + 1, wk), conquest: true, half: true });
     }
     // (WEEKLY-TRIAL: the week's trial, tried on its first day: each reward tier reached pays once (`TRIAL_TIERS`), at the greedy player's
-    // rates, `npm run trial-rate`: three waves nearly always, five 95% of weeks, all seven `TRIAL_CLEAR`; a week no hero of the save may
-    // enter pays nothing (one in twelve for a new collection, `TRIAL_SHUT`). `--no-trial` leaves it out, to read the change.)
+    // rates, `npm run trial-rate`: three waves always, five 95% of weeks, all seven `TRIAL_CLEAR`. `--no-trial` leaves it out, to read
+    // the change.)
     if (WITH_TRIAL && day % 7 === 1) {
       const rng = new Rng(mixSeed(seed, 0x7a1b, day));
-      if (!rng.chance(TRIAL_SHUT)) {
-        const reach = rng.chance(TRIAL_CLEAR) ? 7 : rng.chance(TRIAL_FIVE) ? 5 : 3;
-        const was = m.stones ?? 0;
-        for (const t of TRIAL_TIERS) if (reach >= t.waves) (today += t.crowns), (m.stones = (m.stones ?? 0) + (t.stones ?? 0));
-        note('Weekly Trial', (m.stones ?? 0) - was);
-      }
+      const reach = rng.chance(TRIAL_CLEAR) ? 7 : rng.chance(TRIAL_FIVE) ? 5 : 3;
+      const was = m.stones ?? 0;
+      for (const t of TRIAL_TIERS) if (reach >= t.waves) (today += t.crowns), (m.stones = (m.stones ?? 0) + (t.stones ?? 0));
+      note('Weekly Trial', (m.stones ?? 0) - was);
     }
     // the armies' first clears and their chests
     ARMIES.forEach((a, i) => {

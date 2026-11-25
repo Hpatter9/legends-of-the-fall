@@ -8,7 +8,7 @@ import { bossOf } from './sim/armies';
 import { classOf } from './sim/armyWeakness';
 import { LIVES } from './sim/lives';
 import type { Meta } from './sim/meta';
-import { trialBlock, trialFive, trialRecord, trialTitle, trialTriesLeft, trialWeekOf, TRIAL_TIERS, type TrialTier } from './sim/trial';
+import { trialBlock, trialFive, trialLoans, trialRecord, trialTitle, trialTriesLeft, trialWeekOf, TRIAL_TIERS, type TrialTier } from './sim/trial';
 import { mergedRule, trialHost, trialRulesOf, TRIAL_MID, TRIAL_WAVES } from './sim/trialRules';
 import { TRAITS } from './sim/traits';
 import { UNITS } from './sim/units';
@@ -80,18 +80,22 @@ export function openTrialCard(m: Meta, day: number, hooks: TrialHooks): void {
 
   // (the five who start: the save's best for the week; none, and what to summon)
   const five = trialFive(m, week);
-  const fs = menuSection(menu.body, 'Your heroes', five.length ? 'the best you have for this week; Hire brings more of them' : undefined, 2).parentElement!;
+  // (the director's call: a week that shuts out the save's heroes lends some of the classes it admits, at the save's usual level)
+  const lent = trialLoans(m, week, five);
+  const fs = menuSection(menu.body, 'Your heroes', five.length + lent.length ? (lent.length ? 'the best you have for this week, and heroes lent to fill the five' : 'the best you have for this week; Hire brings more of them') : undefined, 2).parentElement!;
   const fw = menuWell(fs);
-  if (five.length) {
+  if (five.length + lent.length) {
     const row = el('div', 'trFive');
-    for (const k of five) {
-      const chip = el('span', 'trHero');
+    for (const k of [...five, ...lent]) {
+      const chip = el('span', `trHero${lent.includes(k) ? ' trLent' : ''}`);
       const c = classOf(k);
       if (c) chip.append(classSigil(c, 18));
       chip.append(document.createTextNode(UNITS[k]?.name ?? k));
+      if (lent.includes(k)) chip.append(el('small', 'trLoanTag', 'On loan'));
       row.append(chip);
     }
     fw.append(row);
+    if (lent.length) fw.append(el('p', 'trLoanNote', `${five.length ? 'This week’s rules shut out some of your heroes' : 'None of your heroes may enter this week'}, so ${lent.length === 1 ? 'one is' : `${lent.length} are`} lent to you for the trial, at your heroes’ usual level. Summon one to keep it.`));
   } else fw.append(el('p', 'trNobody', `None of your heroes may enter this week. ${rule.only ? `Summon ${andList(rule.only.map(plural))} to take it on.` : ''}`.trim()));
   if (rule.oneClass) menuNote(fs, 'One hero of each class in the field.');
 
@@ -122,21 +126,37 @@ export function openTrialCard(m: Meta, day: number, hooks: TrialHooks): void {
 }
 
 /** The reward card at the end of a trial run: each tier it reached for the first time this week, and what it paid. */
-export function showTrialRewards(m: Meta, tiers: readonly TrialTier[], cleared: boolean, onDone: () => void): void {
-  const menu = ornateMenu({ id: 'trialRewards', eyebrow: 'The Weekly Trial', title: cleared ? 'Trial cleared!' : 'Trial rewards', sub: cleared ? 'every wave of this week’s trial' : 'your best this week', onClose: onDone });
+export function showTrialRewards(m: Meta, tiers: readonly TrialTier[], cleared: boolean, onDone: () => void, lent: readonly string[] = [], onRecruit?: () => void): void {
+  const menu = ornateMenu({ id: 'trialRewards', eyebrow: 'The Weekly Trial', title: cleared ? 'Trial cleared!' : tiers.length ? 'Trial rewards' : 'Trial over', sub: cleared ? 'every wave of this week’s trial' : 'your best this week counts', onClose: onDone });
   menu.card.classList.add('trCard');
-  const sec = menuSection(menu.body, 'Paid', undefined, 2).parentElement!;
-  const w = menuWell(sec);
-  for (const t of tiers) {
-    const p = el('p', 'trTier got');
-    p.append(el('b', '', `✓ ${t.waves === TRIAL_WAVES ? `All ${t.waves} waves` : `${t.waves} waves`}`), el('span', '', tierWords(t)));
-    w.append(p);
+  if (tiers.length) {
+    const sec = menuSection(menu.body, 'Paid', undefined, 2).parentElement!;
+    const w = menuWell(sec);
+    for (const t of tiers) {
+      const p = el('p', 'trTier got');
+      p.append(el('b', '', `✓ ${t.waves === TRIAL_WAVES ? `All ${t.waves} waves` : `${t.waves} waves`}`), el('span', '', tierWords(t)));
+      w.append(p);
+    }
+    if (tiers.some((t) => t.laurel)) {
+      const laurels = m.trial?.laurels ?? 1;
+      menuNote(sec, `Trial Laurels: ${laurels}${trialTitle(laurels) ? `. Your title: ${trialTitle(laurels)}.` : ''}`).classList.add('trLaurel');
+    }
   }
-  if (tiers.some((t) => t.laurel)) {
-    const laurels = m.trial?.laurels ?? 1;
-    menuNote(sec, `Trial Laurels: ${laurels}${trialTitle(laurels) ? `. Your title: ${trialTitle(laurels)}.` : ''}`).classList.add('trLaurel');
+  // (the heroes lent for the trial go home with it: summoning is how to keep one)
+  if (lent.length) {
+    const sec = menuSection(menu.body, 'On loan', 'they leave with the trial', 2).parentElement!;
+    const w = menuWell(sec);
+    const row = el('div', 'trFive');
+    for (const k of lent) {
+      const chip = el('span', 'trHero trLent');
+      const c = classOf(k);
+      if (c) chip.append(classSigil(c, 18));
+      chip.append(document.createTextNode(UNITS[k]?.name ?? k));
+      row.append(chip);
+    }
+    w.append(row, el('p', 'trLoanNote', `Liked fighting beside them? Summon in the Recruit tab to keep heroes like these.`));
   }
-  menuFoot(menu, { primary: { label: 'Collect', onClick: () => menu.close() } });
+  menuFoot(menu, lent.length && onRecruit ? { back: { word: 'Close' }, primary: { label: 'Summon to keep', onClick: () => (menu.close(), onRecruit()) } } : { primary: { label: 'Collect', onClick: () => menu.close() } });
 }
 
 /** The banner over a trial fight's board (`#twistBanner`, as a floor's twist and a themed daily have it): the week's rules, named, with the

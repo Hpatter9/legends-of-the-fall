@@ -108,7 +108,7 @@ import { hpShare } from './sim/health';
 import { Home } from './home';
 import { Party } from './party';
 import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
-import { TRIAL_TIERS, markTrialSeen, settleTrial, startTrial, trialCleared, trialInProgress, trialWeekOf } from './sim/trial';
+import { TRIAL_TIERS, dropLoanXp, isLent, lentStanding, markTrialSeen, settleTrial, startTrial, trialCleared, trialInProgress, trialWeekOf } from './sim/trial';
 import { mergedRule, trialWeek, TRIAL_WAVES } from './sim/trialRules';
 import { openTrialCard, showTrialBanner, showTrialRewards } from './trialView';
 import { trialDayKey } from './trialClock';
@@ -3624,9 +3624,11 @@ class Game {
     if (this.run.local) return { ...localBoost(h, this.run), carry: hpShare(this.run, h.id) };
     // (GUEST-HERO: a guest fights as `guestBoost` says: its own lasting strength when the player owns it, else the party's level and rank)
     if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
+    // (WEEKLY-TRIAL: a hero the trial lent fights at the loan's level and rank, `lentStanding`; the save has nothing lasting for it)
+    const lent = lentStanding(this.run, h.kind);
     // (RUN-GEAR: the kit as it fights this run, the found pieces in their slots and fresh from the field)
     // (DEPTH-BUILD: a mentor's legacy perk, from the run's snapshot, `legacy.ts`)
-    return journeyBoost(this.run.tower?.journey, h.id, legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) }));
+    return journeyBoost(this.run.tower?.journey, h.id, legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, lent?.rank ?? heroRank(this.meta, h.kind), lent?.level ?? levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) }));
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */
@@ -3802,7 +3804,9 @@ class Game {
       const got = trialCleared(r);
       this.home.open(r.cleared ? 'Weekly Trial cleared! A Trial Laurel is yours.' : `Weekly Trial over at wave ${got + 1}/${TRIAL_WAVES}. Another try tomorrow.`);
       const paid = (r.trialPaid ?? []).map((w) => TRIAL_TIERS.find((t) => t.waves === w)!).filter(Boolean);
-      if (paid.length) showTrialRewards(this.meta, paid, !!r.cleared, () => undefined);
+      // (the heroes it lent are named, with "Summon to keep", which opens Recruit)
+      const lent = r.mode?.kind === 'trial' ? (r.mode.loan?.kinds ?? []) : [];
+      if (paid.length || lent.length) showTrialRewards(this.meta, paid, !!r.cleared, () => undefined, lent, () => this.gacha.open());
       return;
     }
     if (this.run.cleared && this.run.mode?.kind === 'daily') {
@@ -4478,7 +4482,7 @@ class Game {
 
   /** A hero's level: its own in a run that levels its heroes, else its kind's lasting level. */
   private levelOf(h: Owned): number {
-    return this.run.local ? heroLevel(h) : h.guest ? guestLevel(this.run, this.meta, h) : levelOfKind(this.meta, h.kind);
+    return this.run.local ? heroLevel(h) : h.guest ? guestLevel(this.run, this.meta, h) : this.run.mode?.kind === 'trial' && this.run.mode.loan?.kinds.includes(h.kind) ? this.run.mode.loan.level : levelOfKind(this.meta, h.kind);
   }
 
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
@@ -4566,6 +4570,8 @@ class Game {
       if (castHero) card.append(Object.assign(document.createElement('span'), { className: 'questLock', title: `${heroName(h.kind)} must fight in this quest`, innerHTML: QUEST_LOCK }));
       // (GUEST-HERO: a guest wears a GUEST badge, and is not the party's to recycle)
       if (h.guest) card.append(Object.assign(document.createElement('span'), { className: 'guestMark', textContent: 'Guest', title: `${heroName(h.kind)} is a guest: a sixth hero for this run only` }));
+      // (WEEKLY-TRIAL: a hero the trial lent is marked so; summoning one keeps it)
+      if (isLent(this.run, h.kind)) card.append(Object.assign(document.createElement('span'), { className: 'guestMark loanMark', textContent: 'On loan', title: `${heroName(h.kind)} is on loan for this trial: summon one to keep it` }));
       if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id && !isCastHero(this.run, h) && !h.guest) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.addEventListener('pointerdown', (e) => {
@@ -4943,7 +4949,7 @@ class Game {
       const fielded = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def)).map((u) => u.def);
       // (HERO-RISE: the fielded heroes of the save as they stood before this wave's XP and skill use, for the plates over them after)
       const riseBefore = new Map(run.local ? [] : [...new Set(fielded)].map((k) => [k, shotOfHero(this.meta, k, () => startBattle(1, []))] as const));
-      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench }));
+      const ups = own ? own.ups : gainXp(this.meta, mentoredXp(this.meta, dropLoanXp(run, { ...splitGuestXp(run, gains).lasting, ...bench })));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (QUEST-COMPLETE 2: a quest battle's record, once its last fight is in the run's books)
       if (won && noteBattleHow(this.meta, run)) saveMeta(this.meta);

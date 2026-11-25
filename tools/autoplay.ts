@@ -30,7 +30,7 @@ import { UNITS } from '../src/sim/units';
 import { takeRelic } from '../src/sim/elites';
 import { buy, hire, choices, sideChoices, clearNode, enterNode, finishMystery, finishTower, mapFor, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
 import { calamityRun, dailyBonus, dailyRun, towerRun } from '../src/sim/modes';
-import { trialCleared, trialEntrants, trialRun } from '../src/sim/trial';
+import { dropLoanXp, trialCleared, trialLoans, trialEntrants, trialRun } from '../src/sim/trial';
 import { chooseAltar, pendingAltar } from '../src/sim/rift';
 import { squadHealth } from '../src/sim/health';
 import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
@@ -236,7 +236,7 @@ export function playDaily(meta: Meta, date: number, hearts = true, gear = true):
  * when the save has no hero the week admits.
  */
 export function playTrial(meta: Meta, week: number, hearts = true, gear = true): { won: number; cleared: boolean; five: string[] } | null {
-  if (!trialEntrants(meta, week).length) return null;
+  if (!trialEntrants(meta, week).length && !trialLoans(meta, week).length) return null;
   const was = LIVES_RULE.on;
   LIVES_RULE.on = hearts;
   const run: Run = trialRun(meta, week);
@@ -250,7 +250,7 @@ export function playTrial(meta: Meta, week: number, hearts = true, gear = true):
     playOut(b);
     noteFight(run, b);
     finish(run, b.phase === 'won', ratingOf(b, isBossRun(run)).stars);
-    gainXp(meta, fightXp(b, xpRate(newCastle())));
+    gainXp(meta, dropLoanXp(run, fightXp(b, xpRate(newCastle()))));
   }
   settleFinds(meta, run);
   LIVES_RULE.on = was;

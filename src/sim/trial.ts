@@ -15,14 +15,18 @@ import type { Meta } from './meta';
 import { kindPower, powerOf } from './power';
 import { levelOfKind } from './levels';
 import { ULT_LEVEL } from './abilities';
-import { gradeBoost, START_GOLD, type Run } from './run';
+import { gradeBoost, START_GOLD, type Run, type TrialLoan } from './run';
+import { heroRank } from './meta';
+import { mixSeed, Rng } from './rng';
+import { isMythic } from './mythicRules';
+import { PULL_HEROES } from './unlockRules';
 import { newRunes } from './runes';
 import { shopArmyIndex } from './chestShop';
 import { weekOf } from './traders';
 import { DAILY_ANSWER } from './modes';
 import { ARMY_WEAKNESS, classOf, matchMult, matchOf } from './armyWeakness';
 import { UNITS } from './units';
-import { mergedRule, trialEligible, trialHost, trialSeed, trialSquadOk, TRIAL_WAVES } from './trialRules';
+import { mergedRule, trialAllows, trialEligible, trialHost, trialSeed, trialSquadOk, TRIAL_WAVES } from './trialRules';
 import type { TrialRecord } from './trialSave';
 export { readTrial, type TrialMeta, type TrialRecord } from './trialSave';
 
@@ -56,7 +60,7 @@ export const trialTriesLeft = (m: Pick<Meta, 'trial'>, day: number): number => M
 
 /** The heroes a save owns that the week admits (secret heroes not yet found are not owned). */
 export function trialEntrants(m: Pick<Meta, 'unlocked'>, week: number): string[] {
-  return trialEligible(week, m.unlocked.filter((k) => UNITS[k] && UNITS[k].side === 'hero' && !UNITS[k].summon && classOf(k)));
+  return trialEligible(week, ownedHeroes(m));
 }
 
 /** What a hero is worth to a week's trial: its lasting power, a quarter more when the week's rules favour its class, and the army's weakness or
@@ -77,6 +81,61 @@ export function trialFive(m: Meta, week: number): string[] {
   return out;
 }
 
+// ---- the loan (the director's call: a week that shuts out a save's heroes lends it some, a taste of what summoning brings) ----
+
+/** The salt of the loan's draw (with the week's seed: every save is offered the same heroes that week, bar the ones it owns). */
+export const LOAN_SALT = 0x10a2;
+/** How much easier the foes are with the whole five lent (a share of it for each hero lent): set by `npm run trial-rate` so a new save's lent
+ *  party clears about as often as its own heroes do in another week. */
+export const LOAN_EASE = 0.25;
+/** The save's heroes a hero may be: owned, a hero (no summon), with a class. */
+const ownedHeroes = (m: Pick<Meta, 'unlocked'>): string[] => m.unlocked.filter((k) => UNITS[k] && UNITS[k].side === 'hero' && !UNITS[k].summon && classOf(k));
+
+/** The save's typical standing, which a lent hero fights at: the mean level and rank of its five highest-levelled heroes, rounded down. */
+export function loanStanding(m: Meta): { level: number; rank: number } {
+  const top = ownedHeroes(m).sort((a, b) => levelOfKind(m, b) - levelOfKind(m, a) || a.localeCompare(b)).slice(0, 5);
+  if (!top.length) return { level: 1, rank: 0 };
+  const mean = (f: (k: string) => number) => Math.floor(top.reduce((n, k) => n + f(k), 0) / top.length);
+  return { level: Math.max(1, mean((k) => levelOfKind(m, k))), rank: mean((k) => heroRank(m, k)) };
+}
+
+/** The heroes a week lends a save: when its rules shut out any of the save's own heroes and leave it fewer than five to start with, heroes the
+ *  week admits that the save does not own fill the five, drawn from the week's seed (summonable heroes only, no Mythic), one of each class on
+ *  a one-of-each week. None otherwise. */
+export function trialLoans(m: Meta, week: number, five: readonly string[] = trialFive(m, week)): string[] {
+  const owned = ownedHeroes(m);
+  if (five.length >= 5 || trialEntrants(m, week).length >= owned.length) return [];
+  const rng = new Rng(mixSeed(trialSeed(week), LOAN_SALT));
+  const pool = PULL_HEROES.filter((k) => UNITS[k] && UNITS[k].side === 'hero' && !UNITS[k].summon && !isMythic(k) && classOf(k) && trialAllows(week, k));
+  const order = [...pool];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = rng.int(0, i);
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  const out: string[] = [];
+  // (the order is the week's, whatever the save owns; the save's own are passed over)
+  for (const k of order) if (!owned.includes(k) && five.length + out.length < 5 && trialSquadOk(week, [...five, ...out], k)) out.push(k);
+  return out;
+}
+
+/** Whether a hero of a trial run is lent (its kind is one the trial lent). */
+export const isLent = (run: Run, kind: string): boolean => run.mode?.kind === 'trial' && !!run.mode.loan?.kinds.includes(kind);
+
+/** The level and rank a hero fights at when the trial lent it (the loan's: the save's typical standing as the trial began), or undefined for
+ *  any other hero. Everything else of its boost is as for any hero of the run: its grade, the gear the run finds; nothing lasting of the
+ *  save's is for it, as the save does not own it (no talents, equipment or awakening). */
+export function lentStanding(run: Run | undefined, kind: string): { level: number; rank: number } | undefined {
+  const loan = run?.mode?.kind === 'trial' ? run.mode.loan : undefined;
+  return loan?.kinds.includes(kind) ? { level: loan.level, rank: loan.rank } : undefined;
+}
+
+/** A fight's XP by kind with the lent heroes' taken out: they earn nothing lasting (the save does not own them). */
+export function dropLoanXp(run: Run, gains: Readonly<Record<string, number>>): Record<string, number> {
+  const out = { ...gains };
+  if (run.mode?.kind === 'trial') for (const k of run.mode.loan?.kinds ?? []) delete out[k];
+  return out;
+}
+
 /** How much the trial's foes answer a save's five (as the daily's, `dailyScale`): their lasting power over a fresh hero's, and a share more for each
  *  ultimate open. 1 for a fresh save, never less. */
 export function trialScale(m: Meta, five: readonly string[]): number {
@@ -89,14 +148,21 @@ export function trialScale(m: Meta, five: readonly string[]): number {
 /** Why a save cannot start the trial today, or null when it can. */
 export function trialBlock(m: Meta, day: number): 'tried' | 'nobody' | null {
   if (trialTriesLeft(m, day) <= 0) return 'tried';
-  if (!trialEntrants(m, trialWeekOf(day)).length) return 'nobody';
+  const week = trialWeekOf(day);
+  if (!trialEntrants(m, week).length && !trialLoans(m, week).length) return 'nobody';
   return null;
 }
 
 /** A week's trial run for a save: its five in the squad, the starting gold, Hire drawing from the heroes it admits, on the army's land. */
 export function trialRun(m: Meta, week: number): Run {
-  const five = trialFive(m, week);
-  const scale = trialScale(m, five);
+  const own = trialFive(m, week);
+  const lent = trialLoans(m, week, own);
+  const five = [...own, ...lent];
+  // (with heroes lent, the foes answer the save's own best five, its typical strength, which the lent heroes fight at)
+  // (and ease by the share of the five lent, `LOAN_EASE`: a lent hero comes with none of the save's skill levels, talents or kit for it)
+  const answer = trialScale(m, lent.length ? ownedHeroes(m).sort((a, b) => kindPower(m, b) - kindPower(m, a) || a.localeCompare(b)).slice(0, 5) : five);
+  const scale = Math.round(answer * (1 - (LOAN_EASE * lent.length) / 5) * 100) / 100;
+  const loan: TrialLoan | undefined = lent.length ? { kinds: lent, ...loanStanding(m) } : undefined;
   const run: Run = {
     seed: trialSeed(week),
     gold: START_GOLD,
@@ -107,9 +173,9 @@ export function trialRun(m: Meta, week: number): Run {
     squad: [],
     over: false,
     best: 1,
-    pool: trialEntrants(m, week),
+    pool: [...trialEntrants(m, week), ...lent],
     area: trialHost(week).area,
-    mode: { kind: 'trial', week, ...(scale > 1 ? { scale } : {}) },
+    mode: { kind: 'trial', week, ...(scale !== 1 ? { scale } : {}), ...(loan ? { loan } : {}) },
     stars: 0,
     real: true,
     runes: newRunes(),
