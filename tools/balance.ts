@@ -51,7 +51,8 @@ import { TIERS } from '../src/sim/tiers';
 import { eidolonAt, maybeSpells, playArmy, savedAt, climbMeta } from './autoplay';
 import { fullCouncil, growWar, harshen } from './nemesis/warBot';
 import { WAR_BOT } from './autoplay';
-import { DUEL_ARMY, DUEL_BOSS, DUEL_LENGTH, DUEL_ROLE, DUEL_SHARE, duelOutcome, startDuel } from '../src/sim/duel';
+import { DUEL_ARMY, DUEL_BOSS, DUEL_LENGTH, DUEL_MASTERED, DUEL_ROLE, DUEL_SHARE, duelOutcome, startDuel } from '../src/sim/duel';
+import { giveMastery } from './skills/mastery';
 import { roleOf, type PartyRole } from '../src/sim/suggest';
 import { armyRun, recruit } from '../src/sim/run';
 import { snapOf, type Nemesis } from '../src/sim/nemesis';
@@ -741,6 +742,8 @@ function duelTable(): void {
           for (const dread of [false, true]) {
             for (let seed = 1; seed <= seeds; seed++) {
               const meta = savedAt(army.level, [kind], mixSeed(seed, 0xd0e1));
+              // (DUEL-FAIR: an army whose wall was tuned for mastered skills is duelled by the hero it was tuned for, `DUEL_MASTERED`)
+              if (DUEL_MASTERED.includes(army.id) && !process.argv.includes('--duel-unmastered')) giveMastery(meta, [kind], army.level);
               for (const t of [1, 2, 3, 4, 5, 6, 7] as const) for (const node of tierNodes(kind, t)) learn(meta, kind, node.id);
               const run = armyRun(mixSeed(seed, 0xd0e1, ARMIES.indexOf(army), might, wave), army.id, [kind], castleAt(army.level), 0);
               run.roster = [];
