@@ -1,5 +1,7 @@
 # Try an Assault (ASSAULT-DEV)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 The owner's ask: "one thing i havent tested is the final assault on the army camp. make it so i can try them all in a developer mode with
 leveled units so it's accurate".
 

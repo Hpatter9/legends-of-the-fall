@@ -409,10 +409,7 @@ export const MIN_SHOT_GAP_S = 2.5;
 
 /** The one-shots a bed can sprinkle in. */
 export type ShotKind =
-  | 'pop' | 'clink' | 'twinkle' | 'bird' | 'drum' | 'drip' | 'thunder' | 'gust' | 'frog' | 'crow' | 'anvil' | 'page'
-  // (the holds' own: a wolf's howl, a tolling bell, a shrine's small bell, a hiss of steam, a far low horn, a piper's phrase, a great
-  //  taiko, a steam hammer's fall, a flare of fire)
-  | 'howl' | 'bell' | 'chime' | 'steam' | 'lowHorn' | 'pipe' | 'taiko' | 'hammer' | 'flare';
+  | 'pop' | 'clink' | 'twinkle' | 'bird' | 'drum' | 'drip' | 'thunder' | 'gust' | 'frog' | 'crow' | 'anvil' | 'page';
 
 /** A continuous layer of a bed: filtered noise or a held tone, with slow movement. */
 export interface BedLayer {

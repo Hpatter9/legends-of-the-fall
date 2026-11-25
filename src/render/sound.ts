@@ -493,7 +493,6 @@ function debugState(): unknown {
     sceneMusic,
     act: player.act,
     scene: engine.beds.scene,
-    drums: engine.beds.drumming,
     bed: engine.beds.bed,
     beds: engine.beds.live,
     ducked: ducks.reasons,

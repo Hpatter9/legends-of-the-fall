@@ -262,8 +262,8 @@ test('every one-shot kind can be made', () => {
     const beds = new AmbientBeds(ctx as unknown as AudioContext, walker([0.3, 0.7, 0.1]));
     beds.setScene('camp');
     const kinds = new Set(BED_IDS.flatMap((id) => BEDS[id].shots.map((s) => s.kind)));
-    // (HOLD-SOUND: twelve, and the six the holds' beds added: a howl, a bell, a chime, steam, a low horn, a flare)
-    assert.equal(kinds.size, 18);
+    // (twelve: the holds' own six went with the Assault, RELEASE-TRIM)
+    assert.equal(kinds.size, 12);
     const bus = new FakeNode(ctx as unknown as FakeContext);
     for (const kind of kinds) {
       const before = FakeContext.made.length;
