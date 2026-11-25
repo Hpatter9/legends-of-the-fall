@@ -1,6 +1,7 @@
 // The Battle tab: the company scouts its current enemy army from a cliffside command post.
 // All troop ranks, animation and atmosphere are decorative; they never step the battle.
 
+import { walkArt } from './duchessDress';
 import { countDuchessTap, treatFoundToday } from './sim/duchessTaps';
 import { saveMeta } from './sim/meta';
 import { modeShown } from './sim/hiddenModes';
@@ -824,7 +825,8 @@ export class CampScene {
     const lift = Math.round(hopLift(goat, this.now));
     const bob = chewBob(goat, this.now, this.reduced);
     const dy = foot - FRAME - lift - bob;
-    g.drawImage(this.goatArt!, goatFrame(goat) * FRAME, 0, FRAME, FRAME, x - FRAME / 2, dy, FRAME, FRAME);
+    // (COSMETICS: her dressed strip, when the costume she wears has one)
+    g.drawImage(walkArt(this.goatArt!), goatFrame(goat) * FRAME, 0, FRAME, FRAME, x - FRAME / 2, dy, FRAME, FRAME);
     drawDuchessCosmetic(g, settings().duchessHat, x - FRAME / 2, dy, 1, goat.face, 0);
   }
 

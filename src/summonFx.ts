@@ -4,6 +4,7 @@
 // and the service worker keeps them for offline play (build.mjs). Until they are in (or if they fail), the reveal plays its older
 // look. Each show draws into two small canvases of its own: the hard pixels, and the soft glow under them, smoothed.
 
+import { starfallBurst, starfallWorn } from './starfall';
 import { SUMMON_FX, type SummonPiece, type SummonPieceId } from './render/summonFxData';
 import { decodedBytes, flourishAt, heroShowAt, skipShowTo, type ShowFrame } from './render/summonRules';
 import { toolHook } from './toolHooks';
@@ -176,6 +177,8 @@ export class HeroShow {
 
 /** A shard card's flourish as it turns: a canvas laid over `card`, played once and taken away. */
 export function cardFlourish(card: HTMLElement): void {
+  // (COSMETICS: with Starfall worn, its painted burst takes the classic flourish's place as the card turns, within the card's own bounds)
+  if (starfallWorn()) return starfallBurst(card);
   if (!summonFxStats.ready) return;
   const p = SUMMON_FX.flourish;
   const pair = new Pair(p.fw, p.fh);

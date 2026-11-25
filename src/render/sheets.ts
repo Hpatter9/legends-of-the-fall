@@ -1,6 +1,7 @@
 // The fighters' sprite sheets (cut by Chronos's tools/compose-sheets.cjs from the Craftpix packs): one row per
 // animation, frames `w` x `h`, the figure centred with its feet on the frame's bottom, facing right.
 
+import { dressBattle } from '../duchessDress';
 import { SOFT } from './softCanvas';
 import { Rectangle, Texture } from 'pixi.js';
 import { loadRulers } from './rulerArt';
@@ -412,7 +413,8 @@ function loadSheet(id: string): Promise<void> {
   if (pending) return pending;
   const task = (async () => {
     const img = await loadImage(URLS[id]);
-    const base = Texture.from(img);
+    // (COSMETICS: Duchess's battle sheet in the costume she wears, `redressDuchess` when it changes)
+    const base = Texture.from(id === DUCHESS_SHEET ? await dressBattle(img) : img);
     const l = LAYOUT[id];
     l.rows.forEach((row, r) => {
       const list: Texture[] = [];
@@ -426,6 +428,14 @@ function loadSheet(id: string): Promise<void> {
   loading.set(id, task);
   void task.finally(() => loading.delete(id)).catch(() => {});
   return task;
+}
+
+const DUCHESS_SHEET = 'duchess_goat';
+/** COSMETICS: Duchess's costume changed: her battle sheet is made again (a fight already on the board keeps hers until the next). */
+export function redressDuchess(): void {
+  if (!images.has(DUCHESS_SHEET) || loading.has(DUCHESS_SHEET)) return;
+  images.delete(DUCHESS_SHEET);
+  void loadSheet(DUCHESS_SHEET);
 }
 
 /** Newly awakened equipment is decoded for owned awakened heroes and previews,

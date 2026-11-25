@@ -4,10 +4,10 @@ import assert from 'node:assert/strict';
 import { bareBoard } from './bare';
 import { addUnit, startBattle, stepBattle, TICK_MS, type Battle, type BattleEvent } from '../src/sim/battle';
 import { castSpell, fillMana, MANA_MAX, MANA_PER_SEC, SPELLS, SPELL_IDS } from '../src/sim/spells';
-import { firstSpells, SCHOOLS, SCHOOL_IDS } from '../src/sim/schools';
+import { firstSpells, schoolOf, SCHOOLS, SCHOOL_IDS, SHARED_SCHOOL } from '../src/sim/schools';
 import { armDecree, autoDecree, castDecree, DECREE_FULL, DECREE_PER_SEC, DECREE_PER_SPENT, DECREES, STAND_FAST_SHARE } from '../src/sim/decrees';
 import { replayLog } from '../src/sim/orders';
-import { RULERS } from '../src/rulerRules';
+import { PAID_RULERS, RULERS } from '../src/rulerRules';
 
 function arena(): Battle {
   const b = startBattle(3);
@@ -22,7 +22,13 @@ const still = (b: Battle) => {
 };
 
 test('every ruler leads a school with its own Decree, every school spell is a real spell, and every spell but one has a school', () => {
-  assert.deepEqual([...SCHOOL_IDS].sort(), RULERS.map((r) => r.id).sort());
+  // (each free ruler leads a school of their own; COSMETICS: each ruler bought in the Shop leads a free ruler's school, the same spells and
+  //  Decree, so buying one changes the look alone)
+  assert.deepEqual([...SCHOOL_IDS].sort(), RULERS.filter((r) => !PAID_RULERS[r.id]).map((r) => r.id).sort());
+  for (const r of RULERS.filter((x) => PAID_RULERS[x.id])) {
+    assert.ok(SHARED_SCHOOL[r.id] && SCHOOL_IDS.includes(SHARED_SCHOOL[r.id]), r.id);
+    assert.equal(schoolOf(r.id), SCHOOLS[SHARED_SCHOOL[r.id]], r.id);
+  }
   const decrees = new Set(SCHOOL_IDS.map((id) => SCHOOLS[id].decree));
   assert.equal(decrees.size, SCHOOL_IDS.length);
   for (const id of SCHOOL_IDS) {
