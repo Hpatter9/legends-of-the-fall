@@ -246,7 +246,7 @@ export interface Run {
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic'; /** The Assault on the army's hold (its War settles as an army run's, `assaultMode.ts`). */ assault?: true } | MusterMode | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number } | QuestMode;
+export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic'} | MusterMode | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number } | QuestMode;
 /** The Nemesis War's Warchief's Muster (`muster.ts`): three waves on the warchief's army's land; `chief` is the warchief's id and `base`
  *  his fighter, fixed as it began. */
 export type MusterMode = { kind: 'muster'; army: string; tier?: number; chief: number; base: string };
@@ -432,7 +432,7 @@ export function recycle(run: Run, heroId: number): number | null {
 export const isCastHero = (run: Run, h: Owned): boolean => run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind) && run.roster.filter((x) => x.kind === h.kind).length <= 1;
 
 /** TEN-LIVES: whether a run has lives at all: every run but the tower's and the Calamity's, which fail their own way (the Last Stand
- *  and the Assault are not runs of this kind). */
+ *  is not a run of this kind). */
 export const hasLives = (run: Run): boolean => !run.tower;
 /** The lives a run starts with: `LIVES`, less a cursed march's price. */
 export const livesMax = (run: Run): number => Math.max(0, LIVES - heartsLost(run.orders) * HEART_LIVES);

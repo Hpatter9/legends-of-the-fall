@@ -148,7 +148,7 @@ export function chooseEidolon(m: HornMeta, id: string): boolean {
   return true;
 }
 
-/** Bind an Eidolon (the Summoner's binding, `eidolonChains.ts` `bindChain`; the page's dev flag `?eidolons=all` binds all six): the first
+/** Bind an Eidolon (the Summoner's binding, `eidolonChains.ts` `bindChain`; the old dev flag that bound all six went before release, RELEASE-TRIM): the first
  *  bound is chosen. The first binding of all also gives the War Horn, full (HORN-GIFT): the page tells it by `hornHeld` before and after. */
 export function bindEidolon(m: HornMeta, id: string): boolean {
   if (!EIDOLON_IDS.includes(id)) return false;

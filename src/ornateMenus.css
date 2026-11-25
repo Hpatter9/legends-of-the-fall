@@ -619,15 +619,6 @@ button.danger:active:not(:disabled) {
   transform: scale(1.15);
 }
 
-/* Developer grants */
-.devGrant button {
-  min-height: 40px;
-  font-size: 13px;
-  border: 1px solid #75664a;
-}
-/* (Build Town, moved here from the Castle tab: the whole row under the grants) */
-.devGrant .devTown { grid-column: 1 / -1; }
-
 /* Picker Overlay and Sheet (.spOverlay, .spCard) */
 .spOverlay {
   background: radial-gradient(circle at center, rgba(16, 20, 15, 0.78), rgba(5, 7, 5, 0.94));

@@ -22,10 +22,13 @@ import { ascRules, ascUnlocked } from './ascension';
 import { RIFT_ROWS } from './rift';
 import { noteHeart } from './vaelkharHeart';
 import { CAL_SCALE, CAL_START_GOLD } from './calamity';
-import { armyUnlocked, ARMIES } from './armies';
+import { armyStars, armyUnlocked, ARMIES } from './armies';
+import { FIRST_CLEAR_CHEST, TENTH_STAR } from './armyStars';
+import { mixSeed } from './rng';
+import { weekOf } from './council';
 import { modeOpen, MODE_NEED, opensAt } from './modeUnlock';
 import { HEROES } from './units';
-import type { Meta } from './meta';
+import type { Meta, StashChest } from './meta';
 import { mapFor, newTower } from './tower';
 import { noteFoes } from './codex';
 import { noteWeakness, type WeakNote } from './weakness';
@@ -151,6 +154,21 @@ export interface DailyPay {
   bonus: number;
 }
 
+/** The salt of a Warband's chest's seed (with the army and the week, so each is its own chest). */
+export const WARBAND_SALT = 0x3a7b;
+
+/** RELEASE-TRIM (`docs/notes/release-trim.md`): the regrouped Warbands' chests the first daily cleared in a week brings (none if another
+ *  was cleared before it that week): for each army whose tenth star (its Legendary clear) is won, every second week (the army's own turn,
+ *  by its place), the chest a re-storm of its hold at Mythic paid: a gold chest of the army at Mythic, half again its stones, half its
+ *  crowns, as the Assault's weekly re-storm paid it about one week in two. */
+export function warbandChests(m: Meta, date: number): StashChest[] {
+  const wk = weekOf(date);
+  if (Object.entries(m.daily).some(([k, e]) => Number(k) !== date && e.cleared && weekOf(Number(k)) === wk)) return [];
+  return ARMIES.map((a, i) => ({ a, i }))
+    .filter(({ a, i }) => (wk + i) % 2 === 0 && armyStars(m, a).got >= TENTH_STAR)
+    .map(({ a, i }) => ({ army: a.id, at: FIRST_CLEAR_CHEST[4], tier: 4, seed: mixSeed(m.seed, WARBAND_SALT, i + 1, wk), conquest: true, half: true }));
+}
+
 /**
  * Settle a fought wave of a daily in the meta: the furthest wave, the crowns the wave pays, and for the boss of the day the clear and
  * its chest. A practice run (a replay of the date) pays nothing and changes no record. Call before `settleRun` (the achievements read
@@ -174,7 +192,9 @@ export function settleDaily(m: Meta, run: Run, fight: { won: boolean; stage: num
     entry.cleared = true;
     bonus = dailyBonus(run).filter((r) => r.earned).length;
     entry.stars = bonus;
-    m.stash.push({ army: 'daily', at: 3, tier: 0, seed: dailyChestSeed(m.seed, date), daily: date, bonus });
+    // (RELEASE-TRIM: the week's first daily clear brings the regrouped Warbands' chests, `warbandChests`)
+    const warband = warbandChests(m, date);
+    m.stash.push({ army: 'daily', at: 3, tier: 0, seed: dailyChestSeed(m.seed, date), daily: date, bonus }, ...warband);
     chest = true;
     // (SEVEN-SLOT GEAR batch 6: a cleared daily gives a Bandage Roll)
     grantRemedy(m, 'bandage');

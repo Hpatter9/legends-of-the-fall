@@ -1,5 +1,7 @@
 # The Assault: ChatGPT prompts for the Yokai Night Parade's hold (the Moonlit Shrine)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 4's seventh hold (`docs/design/assault-mode.md` on `claude/assault-design`, phase 4; the owner's name for it). The owner gave no look for
 it, so it follows the camp's overlook, which already paints the Yokai's "Haunted shrine" (`src/art/camp/camp-arcane.png`, its middle row): a
 mountain shrine under a full moon, vermilion halls and gates among blossoming trees and lanterns, a pond under a red arched bridge,

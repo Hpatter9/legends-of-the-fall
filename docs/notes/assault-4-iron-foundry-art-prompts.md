@@ -1,5 +1,7 @@
 # The Assault: ChatGPT prompts for the Golem Forge's hold (the Iron Foundry)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 4's eighth and last hold (`docs/design/assault-mode.md` on `claude/assault-design`, phase 4; the owner's name for it). The owner gave no
 look for it, so it follows the camp's overlook, which already paints the Golem Forge's "War foundry" (`src/art/camp/camp-arcane.png`, its
 bottom row): a foundry on cliffs at night, dark stone works and smokestacks, furnaces glowing orange, teal crystal growths, aqueduct bridges

@@ -1,5 +1,5 @@
 // UPDATE-READY (docs/notes/release-fixes-3.md, the rules in `updateReadyRules.ts`): a small standard card on the home screen once a new
-// version has installed, "A new version is ready", with Reload. Never in a fight or an assault: the page asks again whenever the home
+// version has installed, "A new version is ready", with Reload. Never in a fight: the page asks again whenever the home
 // screen comes up, and the next cold start is the new version in any case.
 
 import { menuFoot, menuWell, ornateMenu } from './ornateMenu';
@@ -14,7 +14,7 @@ export const UPDATE_WORDS = {
 
 let ready = false;
 let shown = false;
-let look: () => { home: boolean; assault: boolean; fighting: boolean; covered: boolean } = () => ({ home: false, assault: true, fighting: true, covered: true });
+let look: () => { home: boolean; fighting: boolean; covered: boolean } = () => ({ home: false, fighting: true, covered: true });
 
 /** Start listening for a new version's worker (the web build only: the app has none). `where` says where the player is. */
 export function watchUpdate(where: typeof look): void {

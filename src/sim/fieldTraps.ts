@@ -93,7 +93,7 @@ const bite = (b: Battle, x: Unit, share: number, out: BattleEvent[]) => hurt(b, 
 const TIMED: readonly Piece[] = ['geyser', 'rockfall', 'grasp', 'blades', 'lightning'];
 const isTimed = (p: Piece): p is Extract<Piece, HazardKind> => TIMED.includes(p);
 
-/** Whether a board is one of the ordinary battlefields this set is laid on: not the Assault's field or the Last Stand's keep (too big),
+/** Whether a board is one of the ordinary battlefields this set is laid on: not the Last Stand's keep (too big),
  *  not a Calamity zone (its own things, `Board.props`), not a rift's court. */
 export const fieldOk = (b: Board): boolean => b.w * b.d <= 400 && !b.props?.length && !b.riftWorld;
 
@@ -110,7 +110,7 @@ export function layFieldHazards(b: Board, seed: number, level: number): void {
   // (plain open ground of the middle rows: nothing on it already, not a bridge, a ramp, a perch or the road's own paving)
   const plain = (i: number) => {
     const t = b.tiles[i];
-    return mid(i) && standable(t) && !t.ground && !t.bridge && !t.trap && !t.ramp && !t.perch && !t.ladder && !taken.has(i);
+    return mid(i) && standable(t) && !t.ground && !t.bridge && !t.trap && !t.ramp && !t.perch && !taken.has(i);
   };
   const open = () => b.tiles.flatMap((_, i) => (plain(i) ? [i] : []));
   // (a bigger board, an army's road, is given more, in step with its open middle ground)

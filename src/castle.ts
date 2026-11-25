@@ -60,7 +60,6 @@ import watchtowerGrandUrl from './art/castle/watchtower_grand.png';
 import hallUrl from './art/castle/hall_of_legends.png';
 
 // Hall props & treasures that appear as you upgrade your kingdom
-import drillYardUrl from './art/castle/drill_yard.png';
 
 // Sacred Relic emblems
 import crownUrl from './art/items/jewel_crown.png';
@@ -196,18 +195,6 @@ export const CHAMBERS: ChamberDef[] = [
     statName: 'Mentor seats',
     perLevelShort: 'One seat / Lv',
     lore: 'Where retired heroes stand and teach the young of their calling.',
-  },
-  {
-    // (the Assault's Drill Yard, phase 3: the owner's painting, art-source/drill-yard/, cut by tools/castle/import-room-art.py)
-    id: 'drillYard',
-    name: 'Drill Yard',
-    relicName: 'Sergeant\'s Baton',
-    edificeUrl: drillYardUrl,
-    icon: shieldUrl,
-    glow: '#fca5a5',
-    statName: 'Recruits\' rank',
-    perLevelShort: 'Blooded, then Veteran',
-    lore: 'A parade ground and its sergeants: the Assault\'s new recruits come to their platoons already drilled.',
   },
 ];
 

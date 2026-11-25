@@ -1,5 +1,5 @@
 // PHONE-BACK's browser check (docs/notes/phone-back.md): the phone's Back, as the browser sends it (`page.goBack()`, and `history.back()`
-// from the page), and Escape, at 393 x 852. From every tab, from three menus stacked, from a deploy and a fight, from an Assault, from a
+// from the page), and Escape, at 393 x 852. From every tab, from three menus stacked, from a deploy and a fight, from a
 // cinematic, and from the Battle tab with nothing open. Each Back must do what `backAction` says, the page must never unload or leave its
 // address, and the history must stay short. Exits 1 on a failed check.
 //   npm run web && node tools/phone-back/check.mjs [--size 393x852]
@@ -40,8 +40,6 @@ const state = () => page.evaluate(() => ({
   picker: !!document.querySelector('.spOverlay:not([hidden])'),
   menus: [...document.querySelectorAll('.omVeil')].map((e) => e.id),
   phase: window.__game.b.phase,
-  assault: !!document.getElementById('assaultScene'),
-  paused: !!document.getElementById('assaultPause'),
   cut: !!document.querySelector('#cutscene:not([hidden])'),
   url: location.href,
 }));
@@ -186,44 +184,6 @@ if (played && s.cut) {
   check(!(await state()).cut, '  ... and the film is gone');
 } else console.log('note: no cinematic came up (cinematics may be off or the scene already seen)');
 await settle(page);
-
-// ---- the Assault: the war table, the muster, the field; Back opens the pause card, then closes it, the assault still on
-await page.evaluate(() => {
-  const g = window.__game;
-  for (const id of ['orcs']) g.meta.armies[id] = { waves: 15, best: 15, won: 15, clears: 1, stars: {}, met: { 0: 7, 1: 7, 2: 7, 3: 1 } };
-  g.home.open();
-  g.home.openAssault('orcs');
-});
-await wait(page, 1500);
-s = await state();
-check(s.menus.length > 0, 'the Assault’s war table or muster is up', JSON.stringify(s.menus));
-await back();
-s = await stays('the Assault’s first card');
-await wait(page, 600);
-// (the scouts' report closes onto the muster; Back again leaves the muster to the armies)
-s = await state();
-if (s.menus.includes('assaultTold') || s.menus.length) {
-  await back();
-  s = await stays('the muster');
-}
-check(!s.assault, '  ... Back closed the muster without marching');
-await page.evaluate(() => window.__game.home.openAssault('orcs'));
-await wait(page, 1200);
-for (let i = 0; i < 4; i++) {
-  const marched = await page.evaluate(() => { const bs = [...document.querySelectorAll('button')].filter((x) => x.offsetParent); const m = bs.find((x) => /^March/.test(x.textContent.trim())); if (m) { m.click(); return true; } bs.find((x) => x.textContent.trim() === 'Close')?.click(); return false; });
-  if (marched) break;
-  await wait(page, 700);
-}
-await page.waitForFunction(() => document.querySelector('#assaultScene .asTop'), null, { timeout: 60000 }).catch(() => {});
-await wait(page, 2500);
-// (its opening cut-in, if one plays, is skipped by Back first)
-for (let i = 0; i < 3 && (await page.evaluate(() => !!document.querySelector('.tcLayer:not([hidden])'))); i++) await back();
-await back();
-s = await stays('the Assault’s field');
-check(s.assault && s.paused, '  ... Back opened the pause card', JSON.stringify(s.last));
-await back('history');
-s = await stays('the Assault, paused');
-check(s.assault && !s.paused, '  ... Back closed the pause card, the assault still on');
 
 // ---- the history stays short, whatever was pressed
 s = await state();

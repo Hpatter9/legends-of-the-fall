@@ -121,6 +121,9 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # (IAP, docs/notes/iap.md: RevenueCat's public Android SDK key, read by `build.mjs` into the Play build alone. Unset, the Play
+          #  build's Shop says it is not set up; nothing else changes)
+          REVENUECAT_ANDROID_KEY: ${{ secrets.REVENUECAT_ANDROID_KEY }}
         run: |
           npm run web:play
           npx cap sync android

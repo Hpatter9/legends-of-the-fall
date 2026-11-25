@@ -3,8 +3,7 @@
 // at the end of the wave only and dont cost hearts"; docs/notes/trait-perks.md). Every trait has three tiers, at 2, 3 and 4 different heroes
 // of it (`TRAITS`, `traits.ts`, holds their names and words); this is what each tier does in a fight.
 //
-// The fight calls a few hooks: the wave's start (`startPerks` from `fight`, `perkWave` from the Last Stand's waves and every minute of an
-// Assault), each tick (`tickPerks`), a blow about to land (`perkGuard`), its damage (`perkDamage`), what it did (`perkStruck`), a fall
+// The fight calls a few hooks: the wave's start (`startPerks` from `fight`, `perkWave` from the Last Stand's waves), each tick (`tickPerks`), a blow about to land (`perkGuard`), its damage (`perkDamage`), what it did (`perkStruck`), a fall
 // held off (`perkSpare`), a death (`perkDeath`), a blow that landed (`perkBlow`), a crit (`perkCrit`), a skill cast (`perkCast`, `perkUlt`),
 // a king's spell (`perkSpell`, `spellCost`, `spellPower`), speed (`perkSpeed`) and the ground (`perkFoot`). A fight with no perk awake has
 // no `Battle.perk`, and each hook is one check. What the perks raise (skeletons, turrets, thralls, images, the standard) are summon kinds,
@@ -204,10 +203,6 @@ export const PERK = {
   FIRM_MS: 2000,
   FIRM_TAKEN: 0.85,
   FIRM_NEAR: 0.95,
-  // The Assault (no waves): the wave-start perks come round again this often (the owner's answer)
-  ASSAULT_WAVE_MS: 60000,
-  /** On the Assault's field, how far from the party's middle a perk reaches for foes. */
-  FIELD_REACH: 16,
 } as const;
 
 /** What a perk shows: a beat for the page to draw (looks only; the rule has already happened). */
@@ -330,12 +325,9 @@ export const perkAt = (b: Battle, id: string, k: number): boolean => tierOf(b, i
 const isOf = (u: Unit, id: string): boolean => real(u) && traitsOf(u.def).includes(id);
 const heroes = (b: Battle): Unit[] => b.units.filter((u) => u.alive && real(u));
 const allHeroes = (b: Battle): Unit[] => b.units.filter((u) => real(u));
-/** The foes a perk can reach: every one standing, or on the Assault's big field those within `FIELD_REACH` of the party's middle. */
+/** The foes a perk can reach: every one standing. */
 function foesOn(b: Battle): Unit[] {
-  const all = b.units.filter((u) => u.alive && u.side === 'foe' && !u.under);
-  if (!b.field) return all;
-  const mid = partyMid(b);
-  return all.filter((u) => apart(u, mid) <= PERK.FIELD_REACH);
+  return b.units.filter((u) => u.alive && u.side === 'foe' && !u.under);
 }
 const membersUp = (b: Battle, id: string): Unit[] => heroes(b).filter((u) => isOf(u, id));
 const pk = (u: Unit): PerkUnit => (u.pk ??= {});
@@ -454,7 +446,7 @@ export function perkWaveSoon(b: Battle, ms: number): void {
   b.perk?.later.push({ at: b.t + ms, k: 'wave' });
 }
 
-/** A wave begins (the fight's start, each of the Last Stand's waves, each minute of an Assault): the once-a-wave rules come round, and what
+/** A wave begins (the fight's start, each of the Last Stand's waves): the once-a-wave rules come round, and what
  *  the perks raise and lay at a wave's start is raised and laid. */
 export function perkWave(b: Battle, out: BattleEvent[]): void {
   const s = b.perk;
@@ -540,8 +532,8 @@ export function perkWave(b: Battle, out: BattleEvent[]): void {
   if (perkAt(b, 'pirate', 1)) tide(b, out);
   // Gunner II: the kegs
   if (perkAt(b, 'gunner', 1)) rollKegs(b, out);
-  // Bulwark II: the earthworks (not on the Assault's field, whose narrow ways a wall raised every minute would jam for the heroes too)
-  if (perkAt(b, 'bulwark', 1) && !b.field)
+  // Bulwark II: the earthworks
+  if (perkAt(b, 'bulwark', 1))
     for (const w of membersUp(b, 'bulwark')) {
       const laid = raiseWall(b, w, [{ u: w.u, v: w.v - 2 }], 'stone', PERK.EARTH_MS, out);
       if (laid.length) perkEv(out, { trait: 'bulwark', what: 'earthworks', to: w.id, tiles: laid });
@@ -692,8 +684,6 @@ function shadowStep(b: Battle, a: Unit, reach: number, out: BattleEvent[]): void
 export function tickPerks(b: Battle, out: BattleEvent[]): void {
   const s = b.perk;
   if (!s) return;
-  // (the Assault has no waves: its wave-start perks come round every minute, the owner's answer)
-  if (b.field && b.t - s.waveAt >= PERK.ASSAULT_WAVE_MS) perkWave(b, out);
   if (s.later.length) {
     const due = s.later.filter((x) => x.at <= b.t);
     s.later = s.later.filter((x) => x.at > b.t);

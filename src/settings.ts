@@ -1,5 +1,5 @@
 // The settings page (#settings): a short list of submenus (Sound, Display and motion, Gameplay, Ruler and Duchess, Save
-// and data, Developer, Updates and notes, About), each opening on a tap with a back button. Opened from the home screen
+// and data, Diagnostics, Updates and notes, About), each opening on a tap with a back button. Opened from the home screen
 // and the gear in the top bar. The choices are kept in localStorage (legends.settings, the same keys as before the
 // submenus); `settings()` is what the rest of the page reads, and `onSettings` tells a module when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
@@ -11,7 +11,6 @@ import { DEFAULT_RULER, RULERS, rulerOf, type RulerId } from './rulerRules';
 import { RULER_URLS } from './rulerUrls';
 import { DUCHESS_COSMETICS, type DuchessCosmeticId } from './render/duchessRules';
 import { closePicker, openPicker } from './settingsPicker';
-import type { DevGift } from './sim/devGrant';
 import { appUpdate, STORE } from './appUpdate';
 import { openCredits } from './credits';
 import { EARLIER, UPDATES, releaseOf, updatesUnseen } from './updates';
@@ -156,7 +155,7 @@ const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as 
 let wired = false;
 
 /** The submenus of the page (the owner's ask: the options condensed into a short list of menus that open on a tap). */
-export type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'dev' | 'diag' | 'updates' | 'about' | 'credits' | 'tutorials';
+export type Page = 'sound' | 'display' | 'gameplay' | 'ruler' | 'data' | 'diag' | 'updates' | 'about' | 'credits' | 'tutorials';
 
 /** Each submenu's name and its one-line hint on the top list, in the order shown. */
 const PAGES: readonly { id: Page; title: string; hint: string }[] = [
@@ -167,7 +166,6 @@ const PAGES: readonly { id: Page; title: string; hint: string }[] = [
   { id: 'tutorials', title: 'Tutorials', hint: 'Every explanation the game gives, to read again; show tips again' },
   { id: 'ruler', title: 'Ruler and Duchess', hint: 'Who rules your keep, and Duchess’s costume' },
   { id: 'data', title: 'Save and data', hint: 'Start over' },
-  { id: 'dev', title: 'Developer', hint: 'Crowns, shards, stones, Build Town and Try an Assault for testing' },
   { id: 'diag', title: 'Diagnostics', hint: 'The stops of half a second or more the game has seen on this device' },
   { id: 'updates', title: 'Updates and notes', hint: 'What changed in each version' },
   { id: 'about', title: 'About', hint: 'Version and credits' },
@@ -175,21 +173,16 @@ const PAGES: readonly { id: Page; title: string; hint: string }[] = [
   { id: 'credits', title: 'Credits', hint: 'The artists and composers, and the licences their work is under' },
 ];
 
-/** STORE-DEV (docs/notes/store-dev-page.md): the Developer page (free crowns, shards and stones, Build Town, Try an Assault) is a testing
- *  tool for the owner, on the web and in the GitHub release's app. A store's build has none: a reviewer must not find free currency. */
-export function devToolsOn(store: string): boolean {
-  return store === '';
-}
-
-/** The submenus a build lists, in order: all of them, less the Developer page in a store's build. */
-export function settingsPages(store: string): readonly (typeof PAGES)[number][] {
-  return PAGES.filter((p) => p.id !== 'dev' || devToolsOn(store));
+/** The submenus a build lists, in order. RELEASE-TRIM (docs/notes/release-trim.md): every build lists the same ones; the Developer page
+ *  (free crowns, shards and stones, the town raised a level, the Assault's trial), once the web's and the GitHub app's only (STORE-DEV), is gone from all. */
+export function settingsPages(_store: string): readonly (typeof PAGES)[number][] {
+  return PAGES;
 }
 
 /** The submenu showing, or null for the top list. */
 let page: Page | null = null;
 
-/** Opens the settings page over whatever is showing, at its top list (or at one submenu: ASSAULT-DEV comes back to the Developer page). */
+/** Opens the settings page over whatever is showing, at its top list (or at one submenu). */
 export function openSettings(at: Page | null = null): void {
   if (!wired) {
     wired = true;
@@ -263,8 +256,6 @@ function pageRows(id: Page, s: Settings): HTMLElement[] {
       return [rulerRow(s.ruler), duchessHatRow(s.duchessHat)];
     case 'data':
       return [startOverRow()];
-    case 'dev':
-      return devToolsOn(STORE) ? [devRow(), trialRow()] : [];
     case 'diag':
       return diagRows();
     case 'updates':
@@ -671,61 +662,6 @@ function duchessHatRow(value: DuchessCosmeticId): HTMLElement {
       b,
     ),
   );
-  r.append(b);
-  return r;
-}
-
-/** The page's handler for the developer grant (`main.ts` sets it: it holds the meta). Returns a line saying what was given. */
-let devGrantFn: ((what: DevGift, n: number) => string) | null = null;
-export function onDevGrant(fn: (what: DevGift, n: number) => string): void {
-  devGrantFn = fn;
-}
-
-/** The owner's developer option, for testing: crowns, shards of every hero, or summoning stones, a hundred or a thousand a
- *  tap. Six buttons in two columns (a hundred, a thousand) and three rows, so they fit at 360 wide. */
-function devRow(): HTMLElement {
-  const [r, text] = row('Developer', 'For testing: crowns, shards of every hero, or summoning stones, a hundred or a thousand a tap; Build Town raises every castle upgrade a level');
-  const group = document.createElement('div');
-  group.className = 'devGrant';
-  for (const [what, n] of [['crowns', 100], ['crowns', 1000], ['shards', 100], ['shards', 1000], ['stones', 100], ['stones', 1000]] as const) {
-    const b = document.createElement('button');
-    b.textContent = `+${n} ${what}`;
-    b.addEventListener('click', () => {
-      const said = devGrantFn?.(what, n);
-      if (said) text.querySelector('em')!.textContent = said;
-    });
-    group.append(b);
-  }
-  // (Build Town, moved here from the Castle tab: every upgrade one level up, the Chapel built, at least 5000 crowns)
-  const town = document.createElement('button');
-  town.textContent = 'Build Town';
-  town.className = 'small devTown';
-  town.addEventListener('click', () => {
-    const said = devGrantFn?.('town', 0);
-    if (said) text.querySelector('em')!.textContent = said;
-  });
-  group.append(town);
-  r.append(group);
-  return r;
-}
-
-/** ASSAULT-DEV (`docs/notes/assault-dev.md`): the page's handler for Try an Assault (`main.ts` sets it: it holds the save, and opens the
- *  picker, `devAssaultView.ts`). */
-let devAssaultFn: (() => string | void) | null = null;
-export function onDevAssault(fn: () => string | void): void {
-  devAssaultFn = fn;
-}
-
-/** Try an Assault: any hold, its Last Hold or its Warband regrouped, with the force a player has there, on a throwaway copy of the save. */
-function trialRow(): HTMLElement {
-  const [r, text] = row('Try an Assault', 'Storm any hold, its Last Hold or its Warband regrouped, with the levelled force a player has there; on a throwaway copy, so nothing carries over to your save');
-  const b = document.createElement('button');
-  b.textContent = 'Try an Assault';
-  b.className = 'devTrial';
-  b.addEventListener('click', () => {
-    const said = devAssaultFn?.();
-    if (said) text.querySelector('em')!.textContent = said;
-  });
   r.append(b);
   return r;
 }

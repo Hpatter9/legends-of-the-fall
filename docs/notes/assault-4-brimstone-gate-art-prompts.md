@@ -1,5 +1,7 @@
 # The Assault: ChatGPT prompts for the Infernal Host's hold (Brimstone Gate)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 4's sixth hold (`docs/design/assault-mode.md` on `claude/assault-design`, phase 4; the owner's name for it). The owner gave no look for
 it, so it follows the camp's overlook, which already paints the Infernal Host's "Infernal mustering grounds" (`src/art/camp/camp-arcane.png`,
 its top row): a fortress of the pit among volcanic crags, rivers of lava, spiked black walls and towers, a glowing horned gate and circles of

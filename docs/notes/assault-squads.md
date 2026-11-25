@@ -1,5 +1,7 @@
 # Squads that move as one, the river, and foes who come to you (ASSAULT-SQUADS)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 The owner, on 0.609: "The assault still doesn't play well. The hero and its troops form a group so they need to travel closely together.
 The troops always get stuck before crossing the river. The enemies in the area should be coming to the heroes if they're within
 distance." Three fixes, in that order, on `claude/assault-squads`; the rules are in `src/sim/assault/assault.ts` (the squads),

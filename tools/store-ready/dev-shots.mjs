@@ -1,5 +1,5 @@
-// STORE-DEV (docs/notes/store-dev-page.md): Settings in the web build (with its Developer page) and in the Play build (without), and a
-// sub-page with its one way back, at the three upright phone sizes, into docs/samples/store-dev/.
+// STORE-DEV (docs/notes/store-dev-page.md): Settings in the web build and in the Play build, both without a Developer page since
+// RELEASE-TRIM (docs/notes/release-trim.md), and a sub-page with its one way back, at the three upright phone sizes, into docs/samples/store-dev/.
 //
 //   npm run web && node build.mjs --store play --out out/web-play && node tools/store-ready/dev-shots.mjs
 import { createRequire } from 'node:module';
@@ -28,10 +28,10 @@ for (const [build, root] of [['web', 'out/web'], ['play', 'out/web-play']]) {
     const rows = await page.evaluate(() => [...document.querySelectorAll('#settingsBody .setMenu')].map((b) => b.dataset.page));
     const hasDev = rows.includes('dev');
     console.log(build, w, 'rows:', rows.join(','));
-    if (hasDev !== (build === 'web')) failed = true;
+    if (hasDev) failed = true;
     await page.screenshot({ path: `${dir}/${build}-settings-${w}.png` });
     // (a sub-page: the one visible way back)
-    await page.locator(`.setMenu[data-page="${build === 'web' ? 'dev' : 'diag'}"]`).click();
+    await page.locator('.setMenu[data-page="diag"]').click();
     await page.waitForTimeout(400);
     const backs = await page.evaluate(() => [...document.querySelectorAll('#settings button')].filter((b) => b.offsetParent && /back/i.test(b.textContent)).length);
     console.log(build, w, 'visible Back buttons on the sub-page:', backs);

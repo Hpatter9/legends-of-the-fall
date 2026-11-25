@@ -314,10 +314,9 @@ body[data-phase='deploy'] #buttons #homeBtn::before { background-image: url(ui/b
 .wrBody .asArrow.right:active:not(:disabled) { background-image: url(ui/buttons/g-right.webp); }
 .wrBody .asArrow:disabled { opacity: 0.32; filter: grayscale(1) drop-shadow(0 2px 3px #000c); }
 @media (prefers-reduced-motion: reduce) { .wrBody .asArrow:active:not(:disabled) { transform: none; } .asArrow, .wrBody .asArrow { transition: none; } }
-button.asFight.primary::before, button.asAssault::before {
+button.asFight.primary::before {
   content: ''; display: inline-block; width: 30px; height: 30px; margin-right: 6px; vertical-align: middle; background: url(ui/buttons/fight.webp) center / contain no-repeat;
 }
-button.asAssault::before { background-image: url(ui/buttons/assault.webp); }
 .asCont::before { content: ''; display: inline-block; width: 24px; height: 24px; margin-right: 4px; vertical-align: middle; background: url(ui/buttons/continue.webp) center / contain no-repeat; }
 .asBack, .heroBack, .ulClose, .twCloseBtn, .shopClose, .qlShut, .ecnShut { white-space: nowrap; }
 

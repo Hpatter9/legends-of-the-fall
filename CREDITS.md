@@ -842,3 +842,9 @@ The Crown Terrace environments, eight seated ruler cutouts, seventy companion cu
 ## Blender-rendered battle effects
 `src/art/fx/blender/*.webp`: original effect sheets rendered for this game with Blender (Cycles, as the `bpy` Python module) from the scene scripts in `tools/blender-fx/`, then cut to pixel art by the same tools (`npm run blender-fx` makes them again from nothing). No pack's or third party's art is in them. So far: the king's thirty-five spells and the ground loops of all ten elements (`docs/notes/blender-fx.md`). The ground loops take the place of the painted living-ground sheets (`src/art/fx/alive/`, removed).
 `src/art/fx/blender/*.webp`: original effect sheets rendered for this game with Blender (Cycles, as the `bpy` Python module) from the scene scripts in `tools/blender-fx/`, then cut to pixel art by the same tools (`npm run blender-fx` makes them again from nothing). No pack's or third party's art is in them. So far: the king's thirty-five spells, the ground loops of all ten elements and every hero's ultimate (its wind-up, strike and aftermath) (`docs/notes/blender-fx.md`). The ground loops take the place of the painted living-ground sheets (`src/art/fx/alive/`, removed).
+
+## The Shop's pictures (`src/art/treasury/`)
+
+The stone piles, crown chests, the starter pack's and the bundles' banners, Duchess's three new costumes, the two new rulers (Ember Sovereign,
+Starlit Empress) and the Starfall card back: original art made for this game (IAP-2, from `art-source/round2/`, the owner's PR #666), cut
+and resized by `tools/iap/art.py`.

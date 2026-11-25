@@ -4,7 +4,6 @@ import { heraldPortrait } from './heraldArt';
 // page elements over it. Before the fight the heroes are dragged (or tapped, then a tile tapped) from the bench onto
 // the blue tiles; then the fight plays itself, a fixed tick at a time.
 
-import { isAssaultBench, startAssaultBench } from './assaultBench';
 import { socketStrip } from './runeTray';
 import { checkAppUpdate, inApp } from './appUpdate';
 import { Application, Container, Sprite, TextureSource, UPDATE_PRIORITY } from 'pixi.js';
@@ -45,6 +44,8 @@ import { UNITS } from './sim/units';
 import { heroName } from './sim/heroNames';
 import { risenLine } from './sim/wounds';
 import { trialShardsLine } from './sim/mythicEcho';
+import { assaultGoneLine } from './sim/assaultGone';
+import { toolHook, toolsOn } from './toolHooks';
 import { settleStudy, studyWords } from './sim/books';
 import { fightUse, levelUpWords, settleSkillUse, useOf, useShare } from './sim/skillLevels';
 import { settleWear, wearWords } from './sim/wear';
@@ -214,7 +215,7 @@ import { deployBox, deployFit, deployView, type Top } from './render/deployCam';
 import { pinchZoom, wheelZoom, zoomAbout, zoomLimits } from './render/fightCam';
 import { titleOf } from './render/bossTitles';
 import { at, depth, FOOT, HH, landmarkBounds, rawAt, setFrame, TH, TW } from './render/iso';
-import { bindDuck, bindMute, endFight, endVictory, endWave, holdSound, play, playEvents, setAct, setHold, setScene, setup, startFight } from './render/sound';
+import { bindDuck, bindMute, endFight, endVictory, endWave, holdSound, play, playEvents, setAct, setScene, setup, startFight } from './render/sound';
 import type { MapKind } from './render/epicMusic';
 import { endOfFight, trackOfRun } from './render/battleMusic';
 import { sceneOf } from './render/audioRules';
@@ -223,11 +224,7 @@ import { installTapGuard } from './tapGuard';
 import { guardRuns, installPopupGuard } from './popupGuard';
 import { CHAINS } from './sim/eidolonChainData';
 import { readMs } from './popupGuardRules';
-import { closeSettings, onDevAssault, onDevGrant, onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
-import { openTrialPicker } from './devAssaultView';
-import { trialMeta, type TrialPick } from './sim/assault/devTrial';
-import type { AssaultResult } from './sim/assault/assaultMode';
-import { devGrant } from './sim/devGrant';
+import { onSettings, openSettings, refreshUpdatesDot, setSetting, settings } from './settings';
 import { PageGoat } from './duchess';
 import { duchessFightSays, hideDuchessCard, showDuchessCard } from './duchessFightView';
 import type { DuchessWish } from './sim/duchessFight';
@@ -251,9 +248,8 @@ import { chainById } from './sim/eidolonChainData';
 import { trialOfBattle } from './sim/eidolonTrials';
 import { hornLine } from './eidolonRules';
 import { hornFightOf, midBossWave } from './sim/hornFill';
-import { addHorn, bindEidolon, chosenOf, hornGain, HORN_FULL } from './sim/warHorn';
+import { addHorn, chosenOf, hornGain } from './sim/warHorn';
 import { hornEcho } from './sim/relicSets';
-import { EIDOLON_IDS } from './sim/eidolons';
 import { openScreen, openScreens } from './screens';
 import { offerUpdate, watchUpdate } from './updateReady';
 import { TacticsView } from './tacticsView';
@@ -478,7 +474,8 @@ class Game {
     this.ghost.alpha = 0.85;
     this.ghost.visible = false;
     this.app.stage.addChild(this.world, this.weather.root, this.ghost, this.fx.flashLayer);
-    const query = new URLSearchParams(location.search);
+    // (RELEASE-TRIM: the test page's flags, `?seed`, `?scenario`, `?duchess`, are the tools' alone: read only under automation, `toolHooks.ts`)
+    const query = new URLSearchParams(toolsOn() ? location.search : '');
     const seed = Number(query.get('seed'));
     // (GUARDED-SAVES: a save that fails from here on is caught and told once; a save that cannot be read is kept aside, and the player
     // told, before the Keep begins afresh: `saveNotice.ts`)
@@ -488,12 +485,6 @@ class Game {
     if (unreadable !== null) await tellUnreadable(keepUnreadable(unreadable));
     // (DUCHESS-TAPS: a tap on her by the panel counts on this meta)
     this.goat.metaOf = () => this.meta;
-    // (EIDOLONS: a hidden dev flag, `?eidolons=all`, binds all six Eidolons and fills the War Horn, to try the call before the quest chains
-    // bind them; in normal play the horn fills but no Eidolon answers it yet)
-    if (query.get('eidolons') === 'all') {
-      for (const id of EIDOLON_IDS) bindEidolon(this.meta, id);
-      addHorn(this.meta, HORN_FULL);
-    }
     await loadAwakenedSheets(Object.keys(this.meta.awakened ?? {}));
     // (PAUSE-TIPS: a save's first load with the tutorials marks what it already has open as seen, so a veteran is not flooded)
     settleTutorials(this.meta);
@@ -518,6 +509,18 @@ class Game {
       toastStones(this.meta.stoneGift);
       delete this.meta.stoneGift;
       saveMeta(this.meta);
+    }
+    // (RELEASE-TRIM: a save that played the Assault, now withdrawn, was paid back as it loaded: it says so once, and the stored battle of a
+    // storming left under way is dropped from the browser, `assaultGone.ts`)
+    if (this.meta.assaultGone) {
+      toastLines([assaultGoneLine(this.meta.assaultGone)]);
+      delete this.meta.assaultGone;
+      saveMeta(this.meta);
+      try {
+        indexedDB.deleteDatabase('legends.assault');
+      } catch {
+        // (no store to drop: a private window)
+      }
     }
     // (a spire climb saved by an older version is closed and paid: the Tower is the Last Stand now)
     const closed = migrateOldClimb(this.meta, localStorage);
@@ -804,21 +807,6 @@ class Game {
     const lowPower = (on: boolean) => document.documentElement.classList.toggle('lowPower', on);
     lowPower(settings().saver);
     onSettings((s) => lowPower(s.saver));
-    // (the developer grant in Settings: crowns, or shards of every hero, for testing; saved and shown at once)
-    onDevGrant((what, n) => {
-      const said = devGrant(this.meta, what, n);
-      saveMeta(this.meta);
-      this.syncPool();
-      this.refresh();
-      this.home.refresh();
-      return said;
-    });
-    // (ASSAULT-DEV: Try an Assault, the picker over Settings; the trial is fought on a throwaway copy of the save)
-    // (only from the home screen: a run under the page would be left running beneath it)
-    onDevAssault(() => {
-      if (!this.home.isOpen || document.getElementById('assaultScene')) return 'Open Settings from the home screen to try an Assault: a run is under way';
-      openTrialPicker(this.meta, (pick) => this.tryAssault(pick));
-    });
     window.addEventListener('resize', () => this.layout());
     this.watchTopHud();
     // (the home screen covers the board, so the board is not drawn while it is up: the canvas cost nothing but heat and battery behind it)
@@ -842,7 +830,6 @@ class Game {
     // (UPDATE-READY: a new version's worker that has taken over is offered as a reload, on the home screen only: `updateReady.ts`)
     watchUpdate(() => ({
       home: this.homeUp,
-      assault: !!document.getElementById('assaultScene'),
       fighting: this.b.phase === 'fight',
       covered: openScreens().length > 0 || !!document.querySelector('.omVeil, #hmSheet:not([hidden]), #hmSub:not([hidden]), #settings:not([hidden]), #gacha:not([hidden]), #result:not([hidden])'),
     }));
@@ -859,15 +846,14 @@ class Game {
     // (the camp's pictures are in before the loading screen goes, so the first look at the home screen is never an empty field; a slow load gives up after a moment)
     if (this.home.isOpen) await Promise.race([campArtReady().then(() => new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)))), new Promise((ok) => setTimeout(ok, 2500))]).catch(() => undefined);
     $('loading').remove();
-    (window as unknown as { __game: Game }).__game = this;
-    (window as unknown as { __screens: () => string[] }).__screens = openScreens;
+    toolHook('__game', this);
+    toolHook('__screens', openScreens);
     // (PHONE-BACK: the phone's Back and Escape close the topmost thing open, else go to the Battle tab, else open the place's own leave or
     // pause control; they never leave the game, `phoneBack.ts`)
-    // (POPUP-GUARD: a run is going anywhere but on the home screen: a deploy, a fight, a result, the Last Stand, an Assault)
-    guardRuns(() => !this.home.isOpen || !!document.getElementById('assaultScene'));
+    // (POPUP-GUARD: a run is going anywhere but on the home screen: a deploy, a fight, a result, the Last Stand)
+    guardRuns(() => !this.home.isOpen);
     initPhoneBack({
       place: () => {
-        if (document.getElementById('assaultScene')) return { place: 'assault' };
         if (this.home.isOpen) return { place: 'home', tab: this.home.currentTab };
         if (this.standOn) return { place: 'other' };
         if (this.b.phase === 'deploy') return { place: 'deploy' };
@@ -875,33 +861,32 @@ class Game {
         return { place: 'other' };
       },
       battleTab: () => this.home.show('battle'),
-      // (an Assault's pause card; a deploy's Home, which keeps the run to carry on; a fight's Settings, its one menu)
+      // (a deploy's Home, which keeps the run to carry on; a fight's Settings, its one menu)
       pause: (p) => {
-        if (p === 'assault') document.querySelector<HTMLElement>('#assaultScene .asTop button[aria-label="Pause"]')?.click();
-        else if (p === 'deploy') $('homeBtn').click();
+        if (p === 'deploy') $('homeBtn').click();
         else openSettings();
       },
     });
     // (the toasts' queue, for the screenshot tools to raise one: `tools/sweep-1110/toasts.mjs`; the game never calls it from here)
-    (window as unknown as { __toastLines: typeof toastLines }).__toastLines = toastLines;
+    toolHook('__toastLines', toastLines);
     // (POPUP-GUARD: two cards the game raises, for the check to raise at will: `tools/popup-guard/check.mjs`; the game never calls it from here)
-    (window as unknown as { __popups: Record<string, () => void> }).__popups = {
+    toolHook('__popups', {
       anvil: () => showAnvil(2, 40, true, () => undefined),
       piece: () => {
         const p = pieceInfo(CHAINS[0].parts[0].piece.id);
         if (p) showPieceCard(p);
       },
-    };
+    });
     // (the movement toolkit's sim functions, for the screenshot tools to stage its moves in a real fight: `tools/spells/shots.mjs`; the game never calls it from here)
-    (window as unknown as { __toolkit: typeof toolkit }).__toolkit = toolkit;
+    toolHook('__toolkit', toolkit);
     // (BLENDER-FX: the king's spells' own cast, for `tools/blender-fx/shots.mjs` to stage each spell in a real fight; the game never calls it from here)
-    (window as unknown as { __castSpell: typeof castSpell }).__castSpell = castSpell;
+    toolHook('__castSpell', castSpell);
     // (BLENDER-FX: what the effect atlases hold now, for the memory measure: `tools/blender-fx/memory.mjs`)
-    (window as unknown as { __bfxMem: typeof bfxMem }).__bfxMem = bfxMem;
+    toolHook('__bfxMem', bfxMem);
     // (RUN-GEAR: bringing a run's finds home, for `tools/run-gear/shots.mjs` to stage a result card's Found row)
-    (window as unknown as { __settleFinds: typeof settleFinds }).__settleFinds = settleFinds;
+    toolHook('__settleFinds', settleFinds);
     // (the screenshot tool draws the wave card's lines from given moments)
-    (window as unknown as { __waveNotes: (m: WaveMoments) => void }).__waveNotes = (m) => drawWaveNotes($('waveNotes'), waveNotes(m), []);
+    toolHook('__waveNotes', (m: WaveMoments) => drawWaveNotes($('waveNotes'), waveNotes(m), []));
     // (a hero's first awakening has its cinematic)
     this.goat.onLuckyBleat = (effect) => this.handleDuchessLuckyBleat(effect);
     onAwakened((kind, step) => {
@@ -1144,7 +1129,7 @@ class Game {
 
   /** Whether this page's fights may bring Duchess: rolled on the seed, or always (never) on the test page's `?duchess=1` (`?duchess=0`). */
   private duchessWish(): DuchessWish {
-    const q = new URLSearchParams(location.search).get('duchess');
+    const q = new URLSearchParams(toolsOn() ? location.search : '').get('duchess');
     return q === '1' ? 'always' : q === '0' ? 'never' : 'roll';
   }
 
@@ -1289,25 +1274,6 @@ class Game {
     if (to.to === 'armies') return this.home.openArmies(to.army);
     if (to.to === 'heroes') return this.home.goTo({ to: 'heroes', hero: to.hero });
     this.home.show(to.to);
-  }
-
-  /** ASSAULT-DEV (`docs/notes/assault-dev.md`): a developer's trial of an assault (Settings, Developer, Try an Assault), on a throwaway
-   *  copy of the save made with the force `trialMeta` builds: its muster, battle and result as a real one's, nothing saved. Back from the
-   *  result (or the muster), Settings opens again on its Developer page; a Last Hold won plays the War's end from the copy's own ending
-   *  first, shown and not recorded. Public for the tools (`__game.tryAssault({ army: 'orcs', kind: 'last', ... })`). */
-  tryAssault(pick: TrialPick): void {
-    const m = trialMeta(this.meta, pick);
-    closeSettings();
-    const back = () => {
-      setHold(null);
-      openSettings('dev');
-    };
-    const done = (result?: AssaultResult) => {
-      const end = m.war?.end;
-      if (result?.warEnded && end) void this.scenes.play(warEndScene(end, armyById(end.army)?.area), { ...this.players(), party: [...m.party] }).then(back, back);
-      else back();
-    };
-    this.home.openTrial(m, pick.army, pick.kind === 'regroup', { done, again: () => this.tryAssault(pick) });
   }
 
   /** Every cinematic's id, and the frames of one worth a screenshot (previews: `tools/cinematics/shots.mjs`). */
@@ -4889,8 +4855,8 @@ class Game {
       this.runStars = settleArmyRun(this.meta, run);
       // (an army's boss waves now and then drop rift ores of its kinds, and a tier's first clear always: `awakenMats.ts`)
       this.oreGain = army ? settleArmyOres(this.meta, army.id, army.waves[stage - 1]?.boss, tierOfRun(run), won, !!this.runStars?.firstClear, run.seed, stage) : null;
-      // (ARMY-DROPS: a won army wave now and then drops shards or a tome, from a side stream of the run's seed and the wave; `window.__forceDrop` = 'shards' | 'tome' | 'both' forces one for screenshots)
-      this.dropGain = army ? settleArmyDrop(this.meta, won, army.waves[stage - 1]?.boss, tierOfRun(run), run.seed, stage, (window as unknown as { __forceDrop?: 'shards' | 'tome' | 'both' }).__forceDrop) : null;
+      // (ARMY-DROPS: a won army wave now and then drops shards or a tome, from a side stream of the run's seed and the wave; `window.__forceDrop` = 'shards' | 'tome' | 'both' forces one for the screenshot tools, under automation only: `toolHooks.ts`)
+      this.dropGain = army ? settleArmyDrop(this.meta, won, army.waves[stage - 1]?.boss, tierOfRun(run), run.seed, stage, toolsOn() ? (window as unknown as { __forceDrop?: 'shards' | 'tome' | 'both' }).__forceDrop : undefined) : null;
       // (the stars this run won may have opened an army: its banner rises when the run's result is left)
       if (this.pay) this.pay.unlocked = ARMIES.find((a) => !openBefore.includes(a.id) && armyUnlocked(this.meta, a.id));
       // (a milestone this fight reached may bring in a hero: its reveal tells it, UNLOCK-ONCE, as the result is left)
@@ -5306,15 +5272,9 @@ function overBench(x: number, y: number): boolean {
 // (POPUP-GUARD: first in line, before the ghost-click guard and the page's own listeners)
 installPopupGuard();
 installTapGuard();
-// (ASSAULT-0: `?bench=assault` is the Assault's engine bench, `assaultBench.ts`; it plays instead of the game and touches no save)
-if (isAssaultBench())
-  startAssaultBench().catch((err) => {
-    $('loading').textContent = `Could not start the bench: ${err}`;
-  });
-else
-  new Game().start().catch((err) => {
-    $('loading').textContent = `Could not start: ${err}`;
-  });
+new Game().start().catch((err) => {
+  $('loading').textContent = `Could not start: ${err}`;
+});
 
 // (the app bundles every file itself, so its page skips the service worker; the web page keeps it)
 checkAppUpdate(__GAME_VERSION__);

@@ -9,7 +9,7 @@
 
 import { DEPLOY_ROWS, DIRS, LAVA_LANDS, RAMP, canStep, standable, type Area, type Board, type Tile } from '../sim/board';
 import { mixSeed, Rng } from '../sim/rng';
-import { hash, noise } from './fieldLooks';
+import { hash, noise } from './tileNoise';
 import { wetLow } from './landRimRules';
 
 /** The painted hold sheets, by their folder under `src/art/assault/`. */

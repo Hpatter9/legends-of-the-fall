@@ -244,7 +244,7 @@ export interface Unit {
   kit?: Kit;
   /** The same as plain data (`KitRef` in `abilities.ts`): which kits its skill and its ultimate come from, and its passive. A boss's second
    *  form and a Sure-footed nemesis are given this, never `kit`, whose skills are functions: a battle with a function in it cannot be
-   *  posted from the Assault's worker or kept for a resume. `kitOf` reads it. */
+   *  cloned whole. `kitOf` reads it. */
   kitRef?: KitRef;
   /** A hero's chosen skills for its slots, when not its own (`books.ts`; from `Boost.equip.book`). */
   book?: string[];
@@ -434,9 +434,6 @@ export type BattleEvent =
   | { kind: 'end'; won: boolean };
 
 export interface Battle {
-  /** The Assault's big field (`src/sim/assault/field.ts`, `docs/notes/assault-0.md`): its occupancy grid, buckets and sector graph.
-   *  Absent on every other fight; nothing outside `src/sim/assault/` reads it, so no existing fight changes. */
-  field?: import('./assault/field').FieldState;
   rift?: Rift;
   riftBoss?: boolean;
   /** GUARDIAN-PULSE: the corrupted guardian's own unit id, fixed as the fight starts; its Calamity pulse comes from it alone (`riftBattle.ts`). */
@@ -679,7 +676,7 @@ export interface Stage {
 }
 export const apart = (a: At, b: At) => Math.abs(a.u - b.u) + Math.abs(a.v - b.v);
 export const tileOf = (b: Battle, a: At) => tileAt(b.board, a.u, a.v)!;
-export const unitAt = (b: Battle, u: number, v: number): Unit | undefined => (b.field && fieldHooks.unitAt ? fieldHooks.unitAt(b, u, v) : b.units.find((x) => x.alive && x.u === u && x.v === v && !x.under));
+export const unitAt = (b: Battle, u: number, v: number): Unit | undefined => b.units.find((x) => x.alive && x.u === u && x.v === v && !x.under);
 /** Whether a tile is on the heroes' rows. */
 export const isDeployTile = (v: number, depth = D) => v >= depth - DEPLOY_ROWS;
 
@@ -938,8 +935,7 @@ export const creditOf = (b: Battle, u: Unit): Unit => (u.owner !== undefined ? b
 
 /** Start the fight, if at least one hero is placed. */
 export function fight(b: Battle): boolean {
-  // (the Assault's field is checked by its own `fieldOk`, as its blueprint is built and tested)
-  if (b.phase !== 'deploy' || !heroesPlaced(b) || !(b.field || boardOk(b.board))) return false;
+  if (b.phase !== 'deploy' || !heroesPlaced(b) || !boardOk(b.board)) return false;
   b.phase = 'fight';
   applyTraits(b);
   // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot)
@@ -1043,39 +1039,6 @@ export function strikeDef(b: Battle, me: Unit): UnitDef {
 /** A listener on every tick's events (tools and tests only: `tools/status-fx/logs.ts` fingerprints whole fights with it). The game never sets it. */
 export const battleTap: { fn?: (b: Battle, events: BattleEvent[]) => void } = {};
 
-/** The Assault's field (`src/sim/assault/assault.ts`, `docs/notes/assault-1.md`) fills these in as it is first imported. Every one is read
- *  only on a fight with `Battle.field`, which no other fight has, so no existing fight changes. */
-export interface FieldHooks {
-  /** The field's own work each tick, before anyone decides: the occupancy grid and buckets, the hold's mind, the platoons, the forts. */
-  tick?: (b: Battle, out: BattleEvent[]) => void;
-  /** The cheap minds of the field's soldiers and rank-and-file foes: true when it decided for `me` (or left it asleep). */
-  decide?: (b: Battle, me: Unit, rng: Rng, out: BattleEvent[]) => boolean;
-  /** A hero's (or an officer's) orders before its own mind: a long walk to its order point, a fall back, a gate to strike. True when done. */
-  lead?: (b: Battle, me: Unit, rng: Rng, out: BattleEvent[]) => boolean;
-  /** The foes a fighter's own mind looks at on the field: those within sight, the platoon's focus first. */
-  sight?: (b: Battle, me: Unit, foes: Unit[]) => Unit[];
-  /** A blow's share on the field (the troops' tricks, the drums' beat, a leaderless platoon). */
-  blow?: (b: Battle, me: Unit, to: Unit) => number;
-  /** Armour a blow ignores on the field (the Gunners' pierce). */
-  pierce?: (b: Battle, me: Unit) => number;
-  /** A splash's share on the field (an Elite Battlemage's fire spreads further). */
-  splash?: (b: Battle, me: Unit) => number;
-  /** Who stands on a tile, read from the occupancy grid. */
-  unitAt?: (b: Battle, u: number, v: number) => Unit | undefined;
-  /** A fighter stepped off tile `from` (the grid follows it). */
-  moved?: (b: Battle, me: Unit, from: number) => void;
-  /** A powder barrel went off at tile `i` (the forts within a tile take its blast). */
-  blast?: (b: Battle, i: number, out: BattleEvent[]) => void;
-  /** Run a whole mind's decision on the field with `b.units` cut to the fighters near it (its kits and skills then pick only from those). */
-  around?: (b: Battle, me: Unit, run: () => void) => void;
-  /** The field's own end: the lord's fall, the host's, night. */
-  end?: (b: Battle, out: BattleEvent[]) => void;
-  /** ASSAULT-AI: a hero that can get a blow at no foe closes in on `to` by the field's own walk (round its friends, through them where they
-   *  make way), not the board's; true when it stepped. */
-  closeIn?: (b: Battle, me: Unit, to: Unit, out: BattleEvent[]) => boolean;
-}
-export const fieldHooks: FieldHooks = {};
-
 export function stepBattle(b: Battle): BattleEvent[] {
   const out = stepOnce(b);
   // (AUTO-CAST: with Auto on, a spell worth casting is cast now, between this tick and the next, where a tap would land)
@@ -1120,22 +1083,13 @@ function stepOnce(b: Battle): BattleEvent[] {
   if (b.trapFx && b.t % 1000 === 0) trapSecond(b, out);
   if (b.board.hazards) tickHazards(b, out);
   if (b.tactic) tickTactic(b, out);
-  // (the Assault's field: its own tick, and the cheap minds of its soldiers and rank and file)
-  if (b.field) fieldHooks.tick?.(b, out);
   for (const me of b.units) {
     if (!me.alive || me.busyUntil > b.t) continue;
-    if (!b.field) decide(b, me, rng, out);
-    // (on the field, a whole mind looks at the world round it: `around` lets it see only the fighters near it while it decides)
-    else if (!fieldHooks.decide?.(b, me, rng, out)) fieldHooks.around ? fieldHooks.around(b, me, () => decide(b, me, rng, out)) : decide(b, me, rng, out);
+    decide(b, me, rng, out);
   }
   b.rng = rng.state;
   tickCombo(b, out);
   for (const u of b.units) if (u.alive && u.phase && !u.phase.done && u.hp <= u.maxHp * u.phase.at) enterPhase(b, u, out);
-  // (the Assault ends by its own rules: the lord's fall, the host's, night)
-  if (b.field) {
-    fieldHooks.end?.(b, out);
-    return out;
-  }
   // (the Last Stand goes on until the king falls)
   if (b.stand) {
     if (!b.units.some((x) => x.id === b.stand!.king && x.alive)) {
@@ -1256,7 +1210,7 @@ function settle(b: Battle, p: Pending, out: BattleEvent[]): void {
   }
   if (def.splash)
     for (const n of b.units)
-      if (n.alive && n.side === target.side && n !== target && apart(n, target) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE * (b.field && fieldHooks.splash ? fieldHooks.splash(b, by) : 1))), false, true, out);
+      if (n.alive && n.side === target.side && n !== target && apart(n, target) === 1) hurt(b, by, n, Math.max(1, Math.round(p.dmg * SPLASH_SHARE)), false, true, out);
 }
 
 /** Apply a hit; return whether it reached health, including a lethal hit or revival. */
@@ -1473,7 +1427,6 @@ export function blast(b: Battle, i: number, out: BattleEvent[]): void {
   const v = Math.floor(i / w);
   delete b.board.tiles[i].barrel;
   out.push({ kind: 'boom', u, v });
-  if (b.field) fieldHooks.blast?.(b, i, out);
   for (const x of b.units) if (x.alive && Math.max(Math.abs(x.u - u), Math.abs(x.v - v)) <= 1) hurt(b, x, x, Math.max(1, Math.round(x.maxHp * BARREL_BLAST)), false, true, out, 'dot');
   for (const j of [...(b.barrels ?? [])]) if (Math.max(Math.abs((j % w) - u), Math.abs(Math.floor(j / w) - v)) <= 1) blast(b, j, out);
 }
@@ -1653,15 +1606,11 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   }
   // (and a boss lets its own go when one is due, `bossAttacks.ts`)
   if (me.side === 'foe' && trySignature(b, me, out)) return;
-  // (the Assault's field: a hero's orders come first, a long walk to its order point, a fall back, a gate to strike)
-  if (b.field && fieldHooks.lead?.(b, me, rng, out)) return;
   // (the Last Stand has its own mind for heroes and foes; every other fight goes on below as it always did)
   if (b.stand && standDecide(b, me, rng, out)) return;
   const def = strikeDef(b, me);
   me.step = undefined;
   let foes = b.units.filter((x) => x.alive && x.side !== me.side && !hidden(b, x));
-  // (the Assault's field: only the foes within sight, the platoon's focus first)
-  if (b.field && fieldHooks.sight) foes = fieldHooks.sight(b, me, foes);
   // (QUESTS-3, Q5: a foe the battle asks to be spared is not struck by the heroes' own mind: they go for the others)
   if (b.spared?.length && me.side === 'hero') {
     const rest = foes.filter((x) => !b.spared!.includes(x.id));
@@ -1764,9 +1713,8 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   // (BATTLE-FEEL: a foe that is near as the crow flies but a long walk round is passed over for one that can be struck sooner, `FAR_WALK`;
   // it was the nearest by air that had any free tile at all, and as friends filled and freed its tiles a fighter paced back and forth.
   // Melee heroes only: a shooter has tiles enough to choose from, and the foes keep their minds, as with `unjam` (on the foes too it cost the
-  // heroes two points of the sweep, and on the shooters it left the Gorgon behind, docs/notes/battle-feel.md).
-  // Not on the Assault's field, which picks its own way.)
-  const soonest = b.field || me.side !== 'hero' || def.shot || !FEEL.on || !FEEL.walk ? Infinity : Math.min(...reach.map((r) => r.nearest));
+  // heroes two points of the sweep, and on the shooters it left the Gorgon behind, docs/notes/battle-feel.md).)
+  const soonest = me.side !== 'hero' || def.shot || !FEEL.on || !FEEL.walk ? Infinity : Math.min(...reach.map((r) => r.nearest));
   for (let k = 0; k < byDistance.length; k++) {
     const f = byDistance[k];
     const hf = tileOf(b, f).h;
@@ -1789,8 +1737,6 @@ function decide(b: Battle, me: Unit, rng: Rng, out: BattleEvent[]): void {
   }
   // nobody can be got at from here: close in on the nearest anyway, round the others if the way is free
   const near = byDistance[0];
-  // (the Assault's field: by its own walk, round and through the friends in the way, ASSAULT-AI)
-  if (b.field && fieldHooks.closeIn?.(b, me, near, out)) return;
   const open = walkFrom(b.board, me, def.jump, new Set(), me.side);
   const next = firstStep(open, near.v * b.board.w + near.u);
   if (next !== null && !blocked.has(next)) return stepTo(b, me, next, out);
@@ -1805,10 +1751,9 @@ export const STILL_MS = 1000;
 export const UNJAM_MS = 4000;
 
 /** A melee hero that can get at no foe, its way blocked by a friend that strikes from afar (a shooter or a caster) and has stood still for
- *  `STILL_MS`, changes places with that friend (the toolkit's `swap`), at most once in `UNJAM_MS` for either. Not in the Assault's field, the
- *  Last Stand or a duel, and never onto lava or coals. True when it did. */
+ *  `STILL_MS`, changes places with that friend (the toolkit's `swap`), at most once in `UNJAM_MS` for either. Not in the Last Stand or a duel, and never onto lava or coals. True when it did. */
 export function unjam(b: Battle, me: Unit, def: UnitDef, f: Unit | undefined, out: BattleEvent[]): boolean {
-  if (!FEEL.on || !FEEL.swap || !f || f.side !== me.side || me.side !== 'hero' || def.shot || b.field || b.stand || b.duel) return false;
+  if (!FEEL.on || !FEEL.swap || !f || f.side !== me.side || me.side !== 'hero' || def.shot || b.stand || b.duel) return false;
   if (!strikeDef(b, f).shot || f.busyUntil > b.t + WAIT_MS || (b.kits && kitStill(b, f))) return false;
   if (b.t - (f.movedAt ?? 0) < STILL_MS) return false;
   if ((me.swapAt !== undefined && b.t - me.swapAt < UNJAM_MS) || (f.swapAt !== undefined && b.t - f.swapAt < UNJAM_MS)) return false;
@@ -1840,7 +1785,7 @@ export function swing(b: Battle, me: Unit, to: Unit, rng: Rng, out: BattleEvent[
   // (FOE-STYLES: a charger's blow at the end of its run, a pack's bite with friends round the prey)
   const rush = chargeOf(me);
   if (rush > 1) out.push({ kind: 'style', by: me.id, what: 'Charge!' });
-  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me) - (b.field && fieldHooks.pierce ? fieldHooks.pierce(b, me) : 0))) * mult * rush * gangOf(b, me, to) * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1) * (b.formation && r.res !== 'miss' ? formationBlow(b, me) : 1) * (b.tactic?.edgeAt !== undefined && r.res !== 'miss' ? chargeBlow(b, me, to) : 1) * (b.field && fieldHooks.blow ? fieldHooks.blow(b, me, to) : 1)));
+  const dmg = Math.max(1, Math.round(Math.max(1, atkOf(me) - Math.max(0, defenceOf(to) - pierceOf(me))) * mult * rush * gangOf(b, me, to) * crit * preyOf(me, to) * farOf(me, to) * finishOf(me, to) * relicBlow(b, me, to, crit, !!def.shot && hMe > hTo) * rng.range(0.9, 1.1) * BLOW_SCALE * blowFit(b, me, to) * (r.res === 'glance' ? GLANCE_SHARE : 1) * (b.formation && r.res !== 'miss' ? formationBlow(b, me) : 1) * (b.tactic?.edgeAt !== undefined && r.res !== 'miss' ? chargeBlow(b, me, to) : 1)));
   const quick = speedOf(b, me) * frenzyOf(b, me) * (1 + (me.eq?.atkSpeed ?? 0)) * (me.kx ? kitQuick(b, me) : 1) * blowStatsOf(b, me).quick;
   const atkMs = Math.round(def.atkMs / quick);
   const windup = Math.min(def.shot ? 500 : 400, Math.round(atkMs * 0.4));
@@ -1886,12 +1831,10 @@ export function stepTo(b: Battle, me: Unit, i: number, out: BattleEvent[]): void
   const ms = Math.round((def.moveMs * cost) / (speedOf(b, me) * (me.kx ? kitQuick(b, me, true) : 1) * (1 + (me.eq?.moveSpeed ?? 0)) * (me.side === 'hero' ? b.heroMove ?? 1 : 1) * (b.twist?.chill ?? 1) * (b.formation ? formationMove(b, me) : 1) * (b.tactic?.edgeAt !== undefined ? chargeMove(b, me) : 1) * (me.nem ? nemMove(me) : 1)) * (b.walk ?? 1));
   me.step = { u: me.u, v: me.v, h: from.h, at: b.t, ms };
   me.facing = wayTo(me, next);
-  const was = me.v * b.board.w + me.u;
   me.u = next.u;
   me.v = next.v;
   me.busyUntil = b.t + ms;
   me.movedAt = b.t;
-  if (b.field) fieldHooks.moved?.(b, me, was);
   noteStep(me);
   // lava and hot coals burn whoever ends a step on them (fliers pass over)
   // (with the ailments on, lava's sear is half what it was and it sets the walker burning, `groundStep`)

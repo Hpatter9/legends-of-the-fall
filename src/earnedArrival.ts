@@ -18,6 +18,7 @@ import { duck, play as playSfx } from './render/sound';
 import { SKIP_GUARD_MS } from './render/summonRules';
 import overlookUrl from './art/camp/overlook.png';
 import { openScreen } from './screens';
+import { toolHook } from './toolHooks';
 
 /** The arrival's beats (ms): the deed and the road, the hero walking in, the hero arriving (its art, one strike), the plate. */
 export const ARRIVAL_BEATS = [0, 600, 2300, 3100] as const;
@@ -155,4 +156,4 @@ style.textContent = css;
 document.head.append(style);
 
 // (the screenshot tools reach the arrival here, as they reach the summoning's by `__tarot`)
-(window as unknown as { __earned?: object }).__earned = { earnedArrival };
+toolHook('__earned', { earnedArrival });
