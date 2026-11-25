@@ -11,6 +11,7 @@ import { newCastle, readCastle, readChapel, readWorks, type Castle, type Works }
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { spellSlots } from './spellSlots';
 import { DAILY_WAVES } from './daily';
+import { readTrial, type TrialMeta } from './trialSave';
 import { dailyStarsMax } from './dailyThemes';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES } from './units';
@@ -118,6 +119,8 @@ export interface Meta {
   calTitles?: number[];
   /** The daily challenge per date (yyyymmdd): the plays (the first counts) and how the counted run went: cleared, the furthest wave, the bonus stars. */
   daily: Record<string, DailyEntry>;
+  /** WEEKLY-TRIAL (`trial.ts`): this week's trial record, the Trial Laurels and the week the camp's pip was cleared for. Missing in a save from before. */
+  trial?: TrialMeta;
   /** The bosses beaten (`foes.ts`, by id). */
   bosses: string[];
   /** Each army's record: furthest wave, wins, clears and stars (`armies.ts`; missing is none). */
@@ -558,6 +561,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.stand = Math.max(0, (m.stand ?? 0) | 0);
       if (m.standAct !== undefined) m.standAct = Math.max(0, Math.min(3, m.standAct | 0));
       m.daily = readDaily(m.daily);
+      m.trial = readTrial(m.trial);
+      if (!m.trial) delete m.trial;
       // (the party's tactics: saves from before have none)
       const tactics = readTactics(m.tactics);
       if (tactics) m.tactics = tactics;

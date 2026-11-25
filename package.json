@@ -17,6 +17,7 @@
     "talent-balance": "node tools/talent-balance.mjs",
     "unlock-pace": "node tools/unlockPace.mjs",
     "daily-rate": "node tools/dailyRate.mjs",
+    "trial-rate": "node tools/trialRate.mjs",
     "quest-rate": "node tools/quest-battles/rate.mjs",
     "quest-stars": "node tools/quest-stars/stars.mjs",
     "quest-bands": "node tools/quest-battles/bands.mjs",

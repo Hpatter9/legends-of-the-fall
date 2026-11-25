@@ -130,8 +130,10 @@ export class CampScene {
   /** The Daily board's plaque below the company, the Last Stand's watchtower on the left (OVERLOOK-STAND) and the distant Calamity landmark. */
   readonly dailySlot = el('div', 'cpSlot cpDailySlot');
   readonly towerSlot = el('div', 'cpSlot cpTowerSlot');
-  /** The Nemesis War's Dark Council (`nemesisView.ts`): above the Daily, once the War is open. */
+  /** The Nemesis War's Dark Council (`nemesisView.ts`): above the Daily and the Weekly Trial, once the War is open. */
   readonly councilSlot = el('div', 'cpSlot cpCouncilSlot');
+  /** WEEKLY-TRIAL (`trialView.ts`): the Weekly Trial, over the Daily (the Council over it), dressed as the Daily is. */
+  readonly trialSlot = el('div', 'cpSlot cpDailySlot cpTrialSlot');
   /** The watchtower's lights, embers and crows (OVERLOOK-STAND). */
   private towerLife = new TowerLife();
   /** ALIVE: the painting's own life: its clouds, lake, river and falls, its pines and banners, its lights and birds (`ambientPaint.ts`). */
@@ -185,7 +187,7 @@ export class CampScene {
     this.canvas.setAttribute('role', 'img');
     this.canvas.setAttribute('aria-label', 'Your company on a cliff overlooking the enemy army.');
     // (CLIFF-ROAM: Hester's Stall, and the front ground drawn over it, left the ledge for the tavern; one canvas holds the whole scene again)
-    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.councilSlot, this.towerSlot, this.calamitySlot, this.plate, this.heading);
+    this.root.append(this.canvas, this.stashMount, this.dailySlot, this.trialSlot, this.councilSlot, this.towerSlot, this.calamitySlot, this.plate, this.heading);
     this.ctx.imageSmoothingEnabled = false;
     onSettings((s) => (this.saver = s.saver));
     window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => (this.reduced = e.matches));
@@ -372,10 +374,12 @@ export class CampScene {
     box(this.dailySlot, camp.places.daily.box);
     // (the Dark Council stands over the Daily, the same size, a little gap between)
     const d = camp.places.daily.box;
-    box(this.councilSlot, { ...d, y: d.y - d.h - 14 });
+    // (WEEKLY-TRIAL: the Weekly Trial stands over the Daily, and the Council over the Trial; the army's plate keeps the Daily's left clear)
+    box(this.trialSlot, { ...d, y: d.y - d.h - 14 });
+    box(this.councilSlot, { ...d, y: d.y - 2 * (d.h + 14) });
     box(this.towerSlot, camp.places.tower.box);
     box(this.calamitySlot, camp.places.calamity.box);
-    for (const e of [this.dailySlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', `${e === this.towerSlot ? camp.places.tower.plate.h : 44}px`);
+    for (const e of [this.dailySlot, this.trialSlot, this.towerSlot, this.calamitySlot]) e.style.setProperty('--plateH', `${e === this.towerSlot ? camp.places.tower.plate.h : 44}px`);
     this.layPlate();
   }
 

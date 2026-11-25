@@ -23,6 +23,7 @@ import { armyById, armyIndex, armyWaveBand, landOf, waveBoost, waveFoes, type Ar
 import { readRunNemesis, type RunNemesis } from './nemesis';
 import { readRunDuel, type RunDuel } from './duel';
 import { dailyArmy } from './daily';
+import { mergedRule, trialArmy, trialHost, trialSquadOk, TRIAL_SWARM_HP } from './trialRules';
 import { questArmy, questBattleById } from './questBattles';
 import { musterArmy } from './muster';
 import { SWARM_HP, themeById, themeFx, themeGoalMet, type DailyTheme } from './dailyThemes';
@@ -241,12 +242,16 @@ export interface Run {
   recap?: RunRecap;
   /** A themed daily's goal was met when the boss of the day fell (`dailyThemes.ts`). */
   themeMet?: boolean;
+  /** WEEKLY-TRIAL: the reward tiers this trial run has paid (the waves of each: 3, 5, 7), for the reward card at its end. */
+  trialPaid?: number[];
   /** The road's memory for the events between waves (MID-EVENTS, `midEvents.ts`): the kinds seen this run, and debts and favours that come back later. Absent in an older save. */
   road?: RoadState;
 }
 
 /** A run that is not an ordinary one: an army's campaign (its stages are the army's waves), today's daily challenge (`practice` for a replay that does not count), or the endless tower. */
-export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic'} | MusterMode | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | { kind: 'tower' } | { kind: 'calamity'; ascension?: number } | QuestMode;
+export type RunMode = { kind: 'army'; army: string; tier?: number; scenario?: ScenarioId | 'classic'} | MusterMode | { kind: 'daily'; date: number; practice: boolean; scale?: number; theme?: string } | TrialMode | { kind: 'tower' } | { kind: 'calamity'; ascension?: number } | QuestMode;
+/** WEEKLY-TRIAL (`trial.ts`): the week's trial, by the game's week number; `scale` answers the entrants' lasting power as the daily's does. */
+export type TrialMode = { kind: 'trial'; week: number; scale?: number };
 /** The Nemesis War's Warchief's Muster (`muster.ts`): three waves on the warchief's army's land; `chief` is the warchief's id and `base`
  *  his fighter, fixed as it began. */
 export type MusterMode = { kind: 'muster'; army: string; tier?: number; chief: number; base: string };
@@ -339,7 +344,7 @@ export const relicCtx = (run: { relicMarks?: RelicMarks; gold?: number }): Relic
 export const armyOfRun = (run: Run): Army | undefined => (run.mode?.kind === 'army' ? armyById(run.mode.army) : undefined);
 /** The fixed run of waves a run is fighting: an army's, or a date's daily (`daily.ts`, an army in shape that is in no list and keeps no army record). */
 export const waveArmyOf = (run: Run): Army | undefined =>
-  run.mode?.kind === 'daily' ? dailyArmy(run.mode.date, runTheme(run)) : run.mode?.kind === 'quest' ? questArmy(run.mode.quest) : run.mode?.kind === 'muster' ? musterArmy(run.mode.army, run.mode.base) : armyOfRun(run);
+  run.mode?.kind === 'daily' ? dailyArmy(run.mode.date, runTheme(run)) : run.mode?.kind === 'trial' ? trialArmy(run.mode.week) : run.mode?.kind === 'quest' ? questArmy(run.mode.quest) : run.mode?.kind === 'muster' ? musterArmy(run.mode.army, run.mode.base) : armyOfRun(run);
 /** A themed daily run's theme (DAILY-BUILDS: named in its mode when it began), or null for any other run, a daily before the themes among them. */
 export const runTheme = (run: Run): DailyTheme | null => (run.mode?.kind === 'daily' ? themeById(run.mode.theme) : null);
 /** Whether stage n of the run (its current one by default) has a boss. */
@@ -570,24 +575,28 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
   const foes = run.buff?.foes ?? 1;
   // (the spire and the Calamity: the foes answer the castle's hp and attack, the one lasting power that reaches those runs; the daily's answer the squad's lasting power, `dailyScale`)
   const calAns = run.mode?.kind === 'calamity' ? heroBoost(run.castle) : undefined;
-  const ans = run.local ? (calAns ? { hp: foeAnswer(run.castle).hp! * calAns.hp! ** CAL_CASTLE_EXTRA, atk: foeAnswer(run.castle).atk! * calAns.atk! ** CAL_CASTLE_EXTRA } : foeAnswer(run.castle)) : run.mode?.kind === 'daily' && run.mode.scale ? { hp: run.mode.scale, atk: run.mode.scale } : undefined;
+  const ans = run.local ? (calAns ? { hp: foeAnswer(run.castle).hp! * calAns.hp! ** CAL_CASTLE_EXTRA, atk: foeAnswer(run.castle).atk! * calAns.atk! ** CAL_CASTLE_EXTRA } : foeAnswer(run.castle)) : (run.mode?.kind === 'daily' || run.mode?.kind === 'trial') && run.mode.scale ? { hp: run.mode.scale, atk: run.mode.scale } : undefined;
   const { atk, hp, mana, relics } = fightRelics(rl);
   const section = chainOf(run)?.[run.stage - 1];
   // (a themed daily: its twist on every wave, its featured trait, and a swarm's thin foes)
   const theme = runTheme(run);
-  const thin = theme?.swarm && army && !army.waves[run.stage - 1]?.boss ? SWARM_HP : 1;
+  // (WEEKLY-TRIAL: the week's rules, laid as one: its twist, its healing, its blows, and a horde's thin foes, `trialRules.ts`)
+  const trial = run.mode?.kind === 'trial' ? mergedRule(run.mode.week) : undefined;
+  const thin = (theme?.swarm || trial?.swarm) && army && !army.waves[run.stage - 1]?.boss ? (trial?.swarm ? TRIAL_SWARM_HP : SWARM_HP) : 1;
   // (the Nemesis War: an army run's nemeses take their places in the wave's band, from the run's snapshot)
   const named = !node && army && (run.mode?.kind === 'army' || run.mode?.kind === 'muster') ? armyWaveBand(army, run.stage, tierOfRun(run), run.nemesis) : undefined;
   return startBattle(boardSeedOf(run, run.stage), node ? node.band : named ? named.band : army ? waveFoes(army, run.stage, tierOfRun(run)) : bandFor(run.stage), {
     ...base,
     ...marchBoss,
-    ...(march.heroHeal !== 1 ? { heal: march.heroHeal } : {}),
+    ...(march.heroHeal !== 1 || trial?.heal ? { heal: march.heroHeal * (trial?.heal ?? 1) } : {}),
     ...(march.foeHeal !== 1 ? { foeHeal: march.foeHeal } : {}),
     ...(march.night ? { night: true } : {}),
     // (DEPTH-BUILD: the bonds, in an army run, from its snapshot)
     ...(run.mode?.kind === 'army' && run.bonds ? { bonds: run.bonds } : {}),
     // (ARMY-WEAKNESS: an army run's waves keep its army's weaknesses and resistances, `armyWeakness.ts`)
     ...(army && run.mode?.kind === 'army' && !node ? { foeArmy: army.id } : {}),
+    // (WEEKLY-TRIAL: the week's army keeps its weaknesses in the trial too, and the rules' blows)
+    ...(run.mode?.kind === 'trial' ? { foeArmy: trialHost(run.mode.week).id, ...(trial?.fx ? { trial: { fx: trial.fx } } : {}) } : {}),
     ...(named?.place.length ? { nemesis: named.place } : {}),
     // (DEPTH-BUILD: the Chapel's Last Rites, in an army run that has not spent it)
     ...(army && run.mode?.kind === 'army' && !run.ritesUsed && roomOpen(run.castle, 'lastRites') ? { rites: true } : {}),
@@ -606,8 +615,9 @@ export function startStage(run: Run, duchess: DuchessWish = 'never'): Battle {
     move: moveRate(run.castle) * (run.buff?.speed ?? 1),
     relics,
     ...(theme ? { twist: themeFx(theme), featured: theme.trait } : {}),
+    ...(trial?.twist ? { twist: trial.twist } : {}),
     // (a road event's twist for this fight, laid over a themed daily's own: MID-EVENTS)
-    ...(run.buff?.twist && TWISTS[run.buff.twist] ? { twist: { ...(theme ? themeFx(theme) : {}), ...TWISTS[run.buff.twist].fx } } : {}),
+    ...(run.buff?.twist && TWISTS[run.buff.twist] ? { twist: { ...(theme ? themeFx(theme) : {}), ...trial?.twist, ...TWISTS[run.buff.twist].fx } } : {}),
     // (a quest battle's own rules, if it has any: `questRules.ts`)
     ...(run.mode?.kind === 'quest' && questBattleById(run.mode.quest)?.rules ? { rules: questBattleById(run.mode.quest)!.rules } : {}),
     // (a quest battle has Duchess every time its story has her, and never otherwise: no roll)
@@ -687,6 +697,8 @@ export const squadUsed = (run: Run): number => run.squad.filter((id) => !heroOf(
  *  (ONE-OF-EACH). A guest always has room: its place is an extra one beyond the five (GUEST-HERO). */
 export function canJoin(run: Run, id: number): boolean {
   const h = heroOf(run, id);
+  // (WEEKLY-TRIAL: the week's rules on who may stand: a class barred, or a second of a class on a one-of-each week)
+  if (h && run.mode?.kind === 'trial' && !trialSquadOk(run.mode.week, run.squad.filter((x) => x !== id).map((x) => heroOf(run, x)?.kind ?? ''), h.kind)) return false;
   return !!h && mythicFits(run.squad.map(id => heroOf(run, id)?.kind ?? ''), h.kind) && !run.squad.includes(id) && (h.guest || squadUsed(run) < squadLimit(run)) && !squadTwin(run, h.kind, id) && !sitsOut(run, id);
 }
 

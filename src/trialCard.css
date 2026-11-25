@@ -1,0 +1,19 @@
+/* WEEKLY-TRIAL (docs/notes/weekly-trial.md): the Weekly Trial's card and reward card (both the standard ornate menu), and the camp's Trial
+   medallion beside the Daily. */
+.trCard .omGrid:empty { display: none; }
+.trCard .trRule { margin: 0 0 6px; font: 400 var(--om-text)/1.35 var(--body); color: #e8dcc0; overflow-wrap: normal; }
+.trCard .trRule b { display: block; color: #f2dc9f; }
+.trCard .trShine, .trCard .trFive { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 4px 0 0; font: 400 var(--om-small)/1.3 var(--body); color: #c4ba9f; }
+.trCard .trShine > span:first-child { font: 700 11px/1.2 var(--body); letter-spacing: 0.04em; text-transform: uppercase; color: #9be38a; }
+.trCard .trClass, .trCard .trHero { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px 2px 3px; border: 1px solid rgba(214, 178, 110, 0.4); border-radius: 12px; background: rgba(20, 14, 8, 0.5); color: #efe3c4; white-space: nowrap; }
+.trCard .trArmy, .trCard .trNobody { margin: 0 0 4px; font: 400 var(--om-text)/1.35 var(--body); color: #e8dcc0; }
+.trCard .trNobody { color: #e0a090; }
+.trCard .trTier { display: flex; justify-content: space-between; gap: 8px; margin: 0; padding: 4px 0; border-bottom: 1px solid rgba(214, 178, 110, 0.18); font: 400 var(--om-small)/1.3 var(--body); color: #c4ba9f; }
+.trCard .trTier:last-child { border-bottom: 0; }
+.trCard .trTier b { color: #efe3c4; white-space: nowrap; }
+.trCard .trTier span { text-align: right; color: #9be38a; }
+.trCard .trTier.got b { color: #9be38a; }
+.trCard .trTries { text-align: center; color: #f2dc9f; }
+.trCard .trLaurel { color: #f2dc9f; }
+@media (max-width: 380px) { .trCard .trTier { flex-direction: column; gap: 0; } .trCard .trTier span { text-align: left; } }
+#twistBanner.trial .twIco { image-rendering: auto; }

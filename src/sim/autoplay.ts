@@ -1,3 +1,4 @@
+import { trialHost, trialSquadOk } from './trialRules';
 import { ARMY_WEAKNESS, matchMult, matchOf } from './armyWeakness';
 import { mythicFits, oneMythic } from './mythicRules';
 // The greedy player, shared by the Auto button, the auto-replay of cleared armies, the balance tool and the tests: it
@@ -56,10 +57,13 @@ export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): O
   const must = run.mode?.kind === 'quest' ? run.roster.filter((h) => !h.guest && !sitsOut(run, h.id) && run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind)).map((h) => h.id) : [];
   const kept = [...must, ...keep.filter((id) => !must.includes(id))].map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id) && !h.guest);
   // (ARMY-WEAKNESS: in an army run, a hero's strength as the army sees it: x1.3 on a class it is weak to, x0.9 on one it resists: `matchMult`)
-  const army = run.mode?.kind === 'army' ? run.mode.army : undefined;
+  const army = run.mode?.kind === 'army' ? run.mode.army : run.mode?.kind === 'trial' ? trialHost(run.mode.week).id : undefined;
   const seen = (h: Owned): number => strengthOf(meta, h, run) * (ARMY_WEAKNESS.on ? matchMult(matchOf(army, h.kind)) : 1);
   const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id) && !h.guest).sort((a, b) => seen(b) - seen(a) || a.id - b.id);
-  const five = oneMythic(oneOfEach([...kept, ...rest]), h => h.kind).slice(0, squadLimit(run));
+  // (WEEKLY-TRIAL: on a one-of-each week, the strongest of each class; a hero the week bars never stands, `trialSquadOk`)
+  const mode = run.mode;
+  const fits = mode?.kind === 'trial' ? (hs: Owned[]) => hs.reduce<Owned[]>((acc, h) => (trialSquadOk(mode.week, acc.map((x) => x.kind), h.kind) ? [...acc, h] : acc), []) : (hs: Owned[]) => hs;
+  const five = fits(oneMythic(oneOfEach([...kept, ...rest]), h => h.kind)).slice(0, squadLimit(run));
   const guest = run.roster.find((h) => h.guest);
   return guest && mythicFits(five.map(h => h.kind), guest.kind) && !five.some((h) => h.kind === guest.kind) ? [...five, guest] : five;
 }
