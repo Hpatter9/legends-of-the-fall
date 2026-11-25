@@ -4,6 +4,9 @@
 // for the game in ROUND2-WIRE) is 48-pixel frames: three steps walking left, then three walking right; frame 1 (or 4) is standing.
 // Everything is a one-shot or a slow amble: nothing blinks or flashes.
 
+import costumesWalkUrl from '../art/duchess/costumes-walk.png';
+import { entitledHere } from '../iapRules';
+
 export type GoatMode = 'graze' | 'walk' | 'nibble' | 'hop' | 'nest';
 
 export interface Goat {
@@ -233,13 +236,20 @@ export function rollDailyTreat(rand: () => number = Math.random): DuchessTreat {
 
 /* ---- unlockable hats & costumes ---- */
 
-export type DuchessCosmeticId = 'none' | 'crown' | 'wizard' | 'quiver';
+export type DuchessCosmeticId = 'none' | 'crown' | 'wizard' | 'quiver' | 'regalia' | 'knight' | 'lantern';
+/** COSMETICS (docs/notes/cosmetics.md): the three costumes bought in the Shop, in the order of their rows in the overlay sheets
+ *  (`src/art/duchess/costumes-walk.png`, `costumes-battle.png`, made by `tools/cosmetics/costumes.py` from the round-2 art). */
+export const PAID_COSTUMES = ['regalia', 'knight', 'lantern'] as const;
+export type PaidCostume = (typeof PAID_COSTUMES)[number];
+export const isPaidCostume = (id: string): id is PaidCostume => (PAID_COSTUMES as readonly string[]).includes(id);
 
 export interface DuchessCosmeticDef {
   id: DuchessCosmeticId;
   name: string;
   desc: string;
   hint: string;
+  /** COSMETICS: a costume bought in the Shop: the RevenueCat entitlement that owns it (on any phone, restored, through a fresh start). */
+  entitlement?: string;
   unlocked(meta?: { duchessTaps?: number; duchessLucky?: boolean; duchessHay?: boolean }): boolean;
 }
 
@@ -248,7 +258,29 @@ export const DUCHESS_COSMETICS: readonly DuchessCosmeticDef[] = [
   { id: 'crown', name: 'Tiny Tin Crown', desc: 'A slightly crooked tin coronet perched with sovereign grace.', hint: 'Tap Duchess 5 times', unlocked: (m) => (m?.duchessTaps ?? 0) >= 5 },
   { id: 'wizard', name: 'Wizard Hat', desc: 'A pointy star-speckled hat smelling faintly of cabbages and mana.', hint: 'Trigger Lucky Bleat in battle', unlocked: (m) => !!m?.duchessLucky },
   { id: 'quiver', name: 'Archery Quiver', desc: 'A miniature leather quiver slung diagonally across her back.', hint: 'Find her daily haystack treat', unlocked: (m) => !!m?.duchessHay },
+  // (COSMETICS: the Shop's three; owned by the store's entitlement, never by play)
+  { id: 'regalia', name: 'Royal Regalia', desc: 'An ermine cape and a jewelled crown, as befits Her Grace.', hint: 'In the Shop', entitlement: 'duchess_regalia', unlocked: () => entitledHere('duchess_regalia') },
+  { id: 'knight', name: 'Little Knight', desc: 'A plumed steel helm, polished for the charge.', hint: 'In the Shop', entitlement: 'duchess_knight', unlocked: () => entitledHere('duchess_knight') },
+  { id: 'lantern', name: 'Lantern', desc: 'A little brass lantern hung from her horns, its candle lit.', hint: 'In the Shop', entitlement: 'duchess_lantern', unlocked: () => entitledHere('duchess_lantern') },
 ];
+
+/** COSMETICS: the costume she wears now: the one chosen, if it is still hers (a refunded costume comes off by itself), else none. */
+export function wornCostume(chosen: DuchessCosmeticId, meta?: { duchessTaps?: number; duchessLucky?: boolean; duchessHay?: boolean }): DuchessCosmeticId {
+  const c = DUCHESS_COSMETICS.find((x) => x.id === chosen);
+  if (!c) return 'none';
+  // (the free ones keep their old rule: chosen is worn; a bought one needs its entitlement)
+  return c.entitlement && !c.unlocked(meta) ? 'none' : chosen;
+}
+
+/** The walking overlay sheet, loaded the first time a bought costume is drawn (none in the tests). */
+let walkOverlay: HTMLImageElement | null = null;
+function costumeSheet(): HTMLImageElement | null {
+  if (!walkOverlay && typeof Image !== 'undefined') {
+    walkOverlay = new Image();
+    walkOverlay.src = costumesWalkUrl;
+  }
+  return walkOverlay?.complete && walkOverlay.naturalWidth ? walkOverlay : null;
+}
 
 /** Draw Duchess's equipped cosmetic accessory onto a 2D canvas, aligned to her frame, facing, and bob. */
 export function drawDuchessCosmetic(
@@ -261,6 +293,18 @@ export function drawDuchessCosmetic(
   bob = 0,
 ): void {
   if (!cosmetic || cosmetic === 'none') return;
+  // (COSMETICS: a bought costume is its row of the walking overlay, her facing's 48 px frame, drawn over her whole frame; it comes off by
+  //  itself if it is no longer hers)
+  if (isPaidCostume(cosmetic)) {
+    const img = wornCostume(cosmetic) === cosmetic ? costumeSheet() : null;
+    if (!img) return;
+    const row = PAID_COSTUMES.indexOf(cosmetic);
+    ctx.save();
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, face === 1 ? FRAME : 0, row * FRAME, FRAME, FRAME, Math.round(frameLeft), Math.round(frameTop + bob * scale), FRAME * scale, FRAME * scale);
+    ctx.restore();
+    return;
+  }
   ctx.save();
   const s = scale;
   const fl = Math.round(frameLeft);

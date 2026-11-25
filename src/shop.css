@@ -29,3 +29,10 @@
 /* the starter pack and the bundles: a whole row, their banner across the top and the words under it */
 .iapShop .omChoice.iapItem.iapWide { grid-column: 1 / -1; padding: 10px 14px 12px; min-height: 0; }
 .iapShop .iapBanner { display: block; align-self: stretch; width: 100%; aspect-ratio: 768 / 320; margin-bottom: 4px; object-fit: contain; }
+/* (COSMETICS: an item's name never breaks inside a word; on a narrow phone the picture and the name are a little smaller so it fits) */
+.iapShop .omChoice.iapItem b { overflow-wrap: normal; word-break: normal; hyphens: manual; }
+@media (max-width: 380px) {
+  .iapShop .omChoice.iapItem:not(.iapWide) { padding-left: 58px; padding-right: 16px; }
+  .iapShop .iapItem .iapPic { left: 5px; width: 48px; height: 48px; }
+  .iapShop .omChoice.iapItem b { font-size: 14px; }
+}

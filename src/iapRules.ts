@@ -52,13 +52,13 @@ export const PRODUCTS: readonly Product[] = [
   { id: 'starter_pack', kind: 'starter', name: 'Starter pack', stones: 100, crowns: 20000, tomes: { large: 2 }, entitlements: ['starter'], consumable: false, usd: 2.99, blurb: 'Once only, for 72 hours', art: 'shop_starter', ready: true },
   { id: 'bundle_recruit', kind: 'bundle', name: 'Recruit’s bundle', stones: 45, crowns: 7500, consumable: true, usd: 4.99, art: 'shop_bundle_recruit', ready: true },
   { id: 'bundle_warlord', kind: 'bundle', name: 'Warlord’s bundle', stones: 210, crowns: 37500, tomes: { large: 4 }, consumable: true, usd: 19.99, art: 'shop_bundle_warlord', ready: true },
-  { id: 'look_duchess_regalia', kind: 'cosmetic', name: 'Duchess: Royal Regalia', entitlements: ['duchess_regalia'], consumable: false, usd: 1.99, blurb: 'An ermine cape and a jewelled crown', art: 'costume_regalia', ready: false },
-  { id: 'look_duchess_knight', kind: 'cosmetic', name: 'Duchess: Little Knight', entitlements: ['duchess_knight'], consumable: false, usd: 1.99, blurb: 'A plumed steel helm and a tabard', art: 'costume_knight', ready: false },
-  { id: 'look_duchess_lantern', kind: 'cosmetic', name: 'Duchess: Lantern', entitlements: ['duchess_lantern'], consumable: false, usd: 1.99, blurb: 'A little lantern on her horns, with a ghost-light', art: 'costume_lantern', ready: false },
-  { id: 'bundle_wardrobe', kind: 'cosmetic', name: 'Duchess’s wardrobe', entitlements: ['duchess_regalia', 'duchess_knight', 'duchess_lantern'], consumable: false, usd: 3.99, blurb: 'All three of her new costumes', art: 'costume_regalia', ready: false },
-  { id: 'ruler_ember', kind: 'cosmetic', name: 'Ruler: the Ember Sovereign', entitlements: ['ruler_ember'], consumable: false, usd: 6.99, blurb: 'Blackened gold armour and a mantle of embers', art: 'ruler_ember', ready: false },
-  { id: 'ruler_starlit', kind: 'cosmetic', name: 'Ruler: the Starlit Empress', entitlements: ['ruler_starlit'], consumable: false, usd: 6.99, blurb: 'Night-blue robes sewn with stars', art: 'ruler_starlit', ready: false },
-  { id: 'look_starfall', kind: 'cosmetic', name: 'Starfall summons', entitlements: ['starfall_summons'], consumable: false, usd: 3.99, blurb: 'The summoning’s cards and burst in violet and gold', art: 'starfall_cardback', ready: false },
+  { id: 'look_duchess_regalia', kind: 'cosmetic', name: 'Duchess: Royal Regalia', entitlements: ['duchess_regalia'], consumable: false, usd: 1.99, blurb: 'An ermine cape and a jewelled crown', art: 'costume_regalia', ready: true },
+  { id: 'look_duchess_knight', kind: 'cosmetic', name: 'Duchess: Little Knight', entitlements: ['duchess_knight'], consumable: false, usd: 1.99, blurb: 'A plumed steel helm, polished for the charge', art: 'costume_knight', ready: true },
+  { id: 'look_duchess_lantern', kind: 'cosmetic', name: 'Duchess: Lantern', entitlements: ['duchess_lantern'], consumable: false, usd: 1.99, blurb: 'A little brass lantern hung from her horns', art: 'costume_lantern', ready: true },
+  { id: 'bundle_wardrobe', kind: 'cosmetic', name: 'Duchess: Wardrobe', entitlements: ['duchess_regalia', 'duchess_knight', 'duchess_lantern'], consumable: false, usd: 3.99, blurb: 'All three of her new costumes', art: 'costume_regalia', ready: true },
+  { id: 'ruler_ember', kind: 'cosmetic', name: 'Ember Sovereign', entitlements: ['ruler_ember'], consumable: false, usd: 6.99, blurb: 'A new ruler: blackened gold armour and a mantle of embers', art: 'ruler_ember', ready: false },
+  { id: 'ruler_starlit', kind: 'cosmetic', name: 'Starlit Empress', entitlements: ['ruler_starlit'], consumable: false, usd: 6.99, blurb: 'A new ruler: night-blue robes sewn with stars', art: 'ruler_starlit', ready: false },
+  { id: 'look_starfall', kind: 'cosmetic', name: 'Starfall summons', entitlements: ['starfall_summons'], consumable: false, usd: 3.99, blurb: 'The summoning’s cards and burst in violet and gold', art: 'starfall_cardback', ready: true },
 ];
 
 export const productById = (id: string): Product | undefined => PRODUCTS.find((p) => p.id === id);
@@ -167,6 +167,16 @@ export function readOwned(raw: string | null): Owned {
     return { entitlements: Array.isArray(o?.entitlements) ? [...new Set(o!.entitlements.filter((x): x is string => typeof x === 'string'))].sort() : [] };
   } catch {
     return { entitlements: [] };
+  }
+}
+
+/** COSMETICS: whether the store last said this entitlement is owned on this device (the cache under `OWNED_KEY`); false with no storage
+ *  (the tests, a blocked storage). Read when a cosmetic is drawn or listed, so a purchase or a restore shows at once. */
+export function entitledHere(entitlement: string): boolean {
+  try {
+    return readOwned(typeof localStorage === 'undefined' ? null : localStorage.getItem(OWNED_KEY)).entitlements.includes(entitlement);
+  } catch {
+    return false;
   }
 }
 

@@ -273,10 +273,11 @@ Australia now rates games with paid random items M or higher (from September 202
 
 1. **Play Console, Monetise, Products, In-app products**: create each product with the exact ID, name, description and price in
    `docs/notes/iap.md`: `stones_pouch`, `stones_satchel`, `stones_coffer`, `stones_hoard`, `crowns_purse`, `crowns_chest`, `crowns_vault`,
-   `starter_pack`, `bundle_recruit`, `bundle_warlord`, and the cosmetics (`look_duchess_regalia`, `look_duchess_knight`,
-   `look_duchess_lantern`, `bundle_wardrobe`, `ruler_ember`, `ruler_starlit`, `look_starfall`; these may be made later, when their art
-   lands). An app needs the BILLING permission in an uploaded build before products can be made: upload this branch's AAB to internal
-   testing first. Activate each product.
+   `starter_pack`, `bundle_recruit`, `bundle_warlord`, and the cosmetics that are on sale (COSMETICS, `docs/notes/cosmetics.md`):
+   `look_duchess_regalia` $1.99, `look_duchess_knight` $1.99, `look_duchess_lantern` $1.99, `bundle_wardrobe` $3.99 and `look_starfall`
+   $3.99, each a one-time (non-consumable) product. **Not yet:** `ruler_ember` and `ruler_starlit` ($6.99 each) stay "Coming soon" until
+   their Crown Terrace and throne art lands (`docs/notes/cosmetics-art-prompts.md`); make them then. An app needs the BILLING permission
+   in an uploaded build before products can be made: upload a Play AAB to internal testing first. Activate each product.
 2. **Play Console, Setup, API access**: link a Google Cloud project and make a **service account** with the Play Console permissions
    RevenueCat lists (View app information, View financial data, Manage orders and subscriptions); download its JSON key.
 3. **RevenueCat**: make a project and an Android app with package `com.hpatter9.lastkeep`; upload the service account JSON; turn on

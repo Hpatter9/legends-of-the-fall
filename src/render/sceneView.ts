@@ -25,6 +25,7 @@ import { actorsAt, cameraAt, keepInside, lineNow, lineStart, lookAt, next, shotL
 import { barsOf, blipsBetween, cutVeil, emphasis, frame, HIT_CUTS, outVeil, PORTRAIT_ANGLES, pressOf, sharpScale, typedCount, typeLength, VOICE_CUE, weightOf, type Aim, type Voice } from './cineShots';
 import { duck, endScene, play, playScene } from './sound';
 import { goatSheet } from '../duchess';
+import { costumeNow, dressWalk } from '../duchessDress';
 import { AwakenAura } from './awakenAura';
 import { FRAME as GOAT_FRAME } from './duchessRules';
 import { settings } from '../settings';
@@ -153,11 +154,17 @@ function portraitOf(kind: string, look: number): Promise<Portrait | null> {
 
 /** Duchess's six frames (48 px: three steps walking left, then three walking right; the middle one of each is standing), cut once. */
 let goat: Promise<Texture[]> | null = null;
-const goatFrames = (): Promise<Texture[]> =>
-  (goat ??= goatSheet().then((img) => {
-    const base = Texture.from(img);
+// (COSMETICS: her strip in the costume she wears, made again when the costume changes)
+let goatDressed = '';
+const goatFrames = (): Promise<Texture[]> => {
+  const costume = costumeNow();
+  if (goat && goatDressed !== costume) goat = null;
+  goatDressed = costume;
+  return (goat ??= goatSheet().then((img) => {
+    const base = Texture.from(dressWalk(img, costume));
     return Array.from({ length: 6 }, (_, i) => new Texture({ source: base.source, frame: new Rectangle(i * GOAT_FRAME, 0, GOAT_FRAME, GOAT_FRAME) }));
   }));
+};
 
 /** A soft dark ring round the picture's edges, painted once. */
 let vignetteTex: Texture | null = null;

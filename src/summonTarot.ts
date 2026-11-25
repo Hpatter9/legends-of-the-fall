@@ -3,6 +3,7 @@
 // The existing seen-hero queue covers stone pulls, earned heroes (who walk in instead: `earnedArrival.ts`) and interrupted reveals.
 // Atlas effects are from the credited Pixel Effects pack; reduced motion uses a calm fade.
 
+import { starfallBack, starfallBurst, starfallWorn } from './starfall';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { titleLine } from './heroTitleView';
@@ -147,6 +148,8 @@ export function tarotBack(): HTMLElement {
   const heart = el('div', 'tarotHeart');
   heart.append(strip(0, 'glyph', '72cqw', 'glyph'), el('b', 'tarotQ', '?'));
   card.append(heart);
+  // (COSMETICS: Starfall summons, when owned and chosen)
+  if (starfallWorn()) starfallBack(card);
   return card;
 }
 
@@ -257,6 +260,8 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
     root.dataset.stage = `${n}`;
     actor.dataset.pose = n === 1 ? 'cast' : n < 4 ? 'shield' : 'idle';
     if (n >= 3) showcase.start(n === 3);
+    // (COSMETICS: Starfall's burst as the hero arrives)
+    if (n === 3 && starfallWorn()) starfallBurst(stage, 'sfBurstHero');
     if (n === 4) {
       hint.textContent = 'Tap to continue';
       at = performance.now();
