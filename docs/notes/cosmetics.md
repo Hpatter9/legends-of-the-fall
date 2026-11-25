@@ -20,7 +20,8 @@ also needs its Crown Terrace figure, its domain painting and a throne; the promp
 ## Duchess's costumes
 
 - **The pieces** (`tools/cosmetics/costumes.py`, from `art-source/round2/costume_*.png`): the regalia's crown and its cape cut apart, the
-  knight's helm, the lantern; each scaled down to her own size with a hard alpha cut (no halo), drawn facing right and mirrored for left.
+  knight's helm, the lantern; each scaled down to her own size on its own painted palette (so the crown stays gold, its highlight kept)
+  with a hard alpha cut (no halo), drawn facing right and mirrored for left.
 - **Anchored per frame.** The tool finds her head in each frame (the top of her horns, and the front of her face under them) and lays the
   crown, the helm and the lantern there; the cape is anchored to her body (her rump and her hooves), so it stays on her back when her head
   goes down to butt. Two overlay sheets, on her sheets' own grids:
@@ -44,8 +45,8 @@ everywhere the three are, the fight included; a free one keeps its own unlock ru
 ## Starfall summons
 
 - `tools/cosmetics/starfall.py` cuts `starfall_cardback.png` and `starfall_burst.png` (eight frames) into `src/art/starfall/`.
-- `src/starfall.ts`: every summoning card shows the Starfall back before it turns (`tarotBack`), and the burst goes off as a card turns
-  (`cardFlourish`) and as a new hero arrives (`firstReveal`, its arrival). None of the burst under reduced motion.
+- `src/starfall.ts`: every summoning card shows the Starfall back before it turns (`tarotBack`), and its painted burst goes off as a card turns, in place of
+  the classic flourish and within the card's own bounds (`cardFlourish`) and as a new hero arrives (`firstReveal`, its arrival). None of the burst under reduced motion.
 - Chosen in Settings, Ruler and Duchess, "Summoning look": Classic or Starfall. Classic is always there; Starfall is greyed until it is owned.
 
 ## The Shop

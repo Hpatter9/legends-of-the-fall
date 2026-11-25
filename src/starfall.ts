@@ -19,7 +19,8 @@ export function starfallBack(card: HTMLElement): void {
   card.classList.add('starfall');
 }
 
-/** The burst over `parent` (a turning card, or the reveal's stage), played once and taken away. None under reduced motion. */
+/** The burst over `parent` (a turning card, in place of the classic flourish; or the reveal's stage), played once and taken away. None
+ *  under reduced motion. */
 export function starfallBurst(parent: HTMLElement, cls = 'sfBurstCard'): void {
   if (reduced()) return;
   const b = document.createElement('div');
@@ -36,7 +37,8 @@ style.textContent = `
 .tarotCard.back.starfall::after, .tarotCard.back.starfall .tarotHeart { display: none; }
 .sfBurst { position: absolute; pointer-events: none; z-index: 4; aspect-ratio: 1; background: url("${burstUrl}") 0 0 / 800% 100% no-repeat; animation: sfBurst .72s steps(7) forwards; mix-blend-mode: screen; }
 @keyframes sfBurst { from { background-position-x: 0; } to { background-position-x: 100%; } }
-.sfBurstCard { left: -40%; width: 180%; top: 50%; transform: translateY(-50%); }
+/* (a turning card's burst stays on its card: a little past its sides, never down over the name under it) */
+.sfBurstCard { left: -8%; width: 116%; top: 50%; transform: translateY(-50%); }
 .sfBurstHero { left: 50%; bottom: 18%; width: min(90vw, 360px); transform: translateX(-50%); z-index: 6; }
 `;
 if (typeof document !== 'undefined') document.head.append(style);

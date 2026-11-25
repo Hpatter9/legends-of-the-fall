@@ -9,9 +9,10 @@ owner's PR #666) into pieces at her own scale and laid, frame by frame, into two
     python3 tools/cosmetics/costumes.py
 
 The pieces: the regalia's crown on her skull and its cape over her back, the knight's plumed helm over her head, the lantern hung from
-her horns. Every piece is drawn for her facing right and mirrored for left. Pure pixels: each piece is scaled down and its alpha cut hard
-(no soft halo), as her sprite is.
+her horns. Every piece is drawn for her facing right and mirrored for left. Pure pixels: each piece is scaled down on its own palette and its alpha cut
+hard (no soft halo), as her sprite is.
 """
+import numpy as np
 from PIL import Image
 
 SRC = 'art-source/round2/'
@@ -19,12 +20,19 @@ OUT = 'src/art/duchess/'
 COSTUMES = ['regalia', 'knight', 'lantern']
 
 
-def hard(im):
-    """Alpha cut at half: pixel art keeps hard edges."""
-    a = im.getchannel('A').point(lambda v: 255 if v >= 110 else 0)
-    im = im.copy()
-    im.putalpha(a)
-    return im
+def shrink(im, size):
+    """Scale a piece down without losing its colours: resized premultiplied (so the clear pixels round it do not darken its edges), then each
+    pixel snapped to the nearest colour the painter used in it (so the crown keeps its gold and its highlight instead of going brown), and
+    its alpha cut hard."""
+    arr = np.asarray(im).astype(float)
+    pm = np.concatenate([arr[..., :3] * arr[..., 3:] / 255, arr[..., 3:]], -1).astype('uint8')
+    s = np.asarray(Image.fromarray(pm, 'RGBA').resize(size, Image.LANCZOS)).astype(float)
+    a = s[..., 3:]
+    rgb = np.clip(s[..., :3] / np.maximum(a, 1) * 255, 0, 255)
+    pal = np.unique(arr[arr[..., 3] > 200][:, :3], axis=0)
+    flat = rgb.reshape(-1, 3)
+    snap = pal[((flat[:, None, :] - pal[None, :, :]) ** 2).sum(-1).argmin(1)].reshape(rgb.shape)
+    return Image.fromarray(np.concatenate([snap, np.where(a >= 110, 255, 0)], -1).astype('uint8'), 'RGBA')
 
 
 def piece(name, box, height):
@@ -32,13 +40,13 @@ def piece(name, box, height):
     im = Image.open(SRC + f'costume_{name}.png').convert('RGBA').crop(box)
     im = im.crop(im.getbbox())
     w = max(1, round(im.width * height / im.height))
-    return hard(im.resize((w, height), Image.LANCZOS))
+    return shrink(im, (w, height))
 
 
 def pieces(k):
     """The pieces at scale `k` (1: her walking strip, about 2: her battle sheet), facing right."""
     return {
-        'crown': piece('regalia', (40, 6, 62, 19), round(6 * k)),
+        'crown': piece('regalia', (40, 6, 62, 19), round(7 * k)),
         'cape': piece('regalia', (0, 19, 64, 64), round(13 * k)),
         'helm': piece('knight', (0, 0, 64, 64), round(17 * k)),
         'lantern': piece('lantern', (0, 0, 64, 64), round(20 * k)),
@@ -68,7 +76,7 @@ def dress(frame, name, ps, k, ref):
         #  the top of her neck in the walking frame: 21 px in from her rump, 18 px above her hooves)
         out.alpha_composite(cape, (round(left + 21 * k) - cape.width, round(bottom - 18 * k)))
         crown = ps['crown']
-        out.alpha_composite(crown, at(-12, 0))
+        out.alpha_composite(crown, at(-12, -1))
     elif name == 'knight':
         out.alpha_composite(ps['helm'], at(-13, -2))
     elif name == 'lantern':

@@ -177,8 +177,8 @@ export class HeroShow {
 
 /** A shard card's flourish as it turns: a canvas laid over `card`, played once and taken away. */
 export function cardFlourish(card: HTMLElement): void {
-  // (COSMETICS: Starfall's burst as the card turns, whether or not the Blender sheets are in)
-  if (starfallWorn()) starfallBurst(card);
+  // (COSMETICS: with Starfall worn, its painted burst takes the classic flourish's place as the card turns, within the card's own bounds)
+  if (starfallWorn()) return starfallBurst(card);
   if (!summonFxStats.ready) return;
   const p = SUMMON_FX.flourish;
   const pair = new Pair(p.fw, p.fh);
