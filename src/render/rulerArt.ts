@@ -4,8 +4,8 @@ import { loadImage } from './loadImage';
 import { BREATH_PX, RULERS, RULER_ACTIONS, SEAT_BREATH, rulerFrame, seatFrame, type RulerAction, type RulerId } from '../rulerRules';
 import { RULER_URLS } from '../rulerUrls';
 import thronesUrl from '../art/rulers/thrones.png';
-/** Each ruler's cell in thrones.png (four by two, in the eight rulers' order).  */
-const THRONE_CELL: Record<RulerId, number> = { sun_viper: 0, frost_witch: 1, ash_empress: 2, rose_duchess: 3, moon_oracle: 4, iron_stag: 5, storm_corsair: 6, gilded_necromancer: 7 };
+/** Each ruler's cell in thrones.png (four across, 224 px cells, in the rulers' order; the bought two on a third row, `tools/cosmetics/rulers.py`).  */
+const THRONE_CELL: Record<RulerId, number> = { sun_viper: 0, frost_witch: 1, ash_empress: 2, rose_duchess: 3, moon_oracle: 4, iron_stag: 5, storm_corsair: 6, gilded_necromancer: 7, ember_sovereign: 8, starlit_empress: 9 };
 const images = new Map<RulerId, HTMLImageElement>();
 const frames = new Map<string, Texture[]>();
 const thrones = new Map<RulerId, Texture>();
@@ -17,7 +17,8 @@ export function loadRulers(): Promise<void> {
     const base = Texture.from(img);
     for (const ruler of RULERS) {
       const i = THRONE_CELL[ruler.id];
-      thrones.set(ruler.id, new Texture({ source: base.source, frame: new Rectangle((i % 4) * img.width / 4, Math.floor(i / 4) * img.height / 2, img.width / 4, img.height / 2) }));
+      const cell = img.width / 4;
+      thrones.set(ruler.id, new Texture({ source: base.source, frame: new Rectangle((i % 4) * cell, Math.floor(i / 4) * cell, cell, cell) }));
     }
   }), ...Object.entries(RULER_URLS).map(async ([key, url]) => {
     const id = key as RulerId;

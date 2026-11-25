@@ -4,14 +4,14 @@
 // submenus); `settings()` is what the rest of the page reads, and `onSettings` tells a module when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
 import { shopOn } from './iapView';
-import { entitledHere, productById } from './iapRules';
+import { entitledHere, productById, PRODUCTS } from './iapRules';
 /** COSMETICS: Starfall summons' entitlement. */
 const STARFALL = 'starfall_summons';
 import { diagClear, diagCopy, diagShown } from './diag';
 import { glyphWord } from './paintedButton';
 import { tips } from './tips';
 import { onShowTipsAgain, openTutorialsPage } from './tutorialView';
-import { DEFAULT_RULER, RULERS, rulerOf, type RulerId } from './rulerRules';
+import { DEFAULT_RULER, PAID_RULERS, RULERS, rulerOf, rulerOwned, type RulerId } from './rulerRules';
 import { RULER_URLS } from './rulerUrls';
 import { DUCHESS_COSMETICS, wornCostume, type DuchessCosmeticId } from './render/duchessRules';
 import { closePicker, openPicker } from './settingsPicker';
@@ -483,7 +483,7 @@ function row(title: string, hint: string): [HTMLElement, HTMLElement] {
   return [r, text];
 }
 
-/** The ruler: one compact row with the current ruler's portrait and name; its button opens the picker of all nine
+/** The ruler: one compact row with the current ruler's portrait and name; its button opens the picker of them all
  *  (`settingsPicker.ts`), which saves to the same `ruler` setting. */
 function rulerRow(value: RulerId): HTMLElement {
   const ruler = rulerOf(value);
@@ -504,20 +504,22 @@ function rulerRow(value: RulerId): HTMLElement {
       $('settings'),
       {
         title: 'Choose your ruler',
-        hint: 'Nine crowns, nine characters. Choose who rules your keep.',
+        hint: 'Choose who rules your keep. Each leads a school of the king\u2019s spells.',
         listClass: 'rulerChoices',
-        options: RULERS.map((x) => ({
+        // (COSMETICS: a bought ruler is listed once owned, or while the Shop sells it, locked until bought; a build with no Shop never shows one)
+        options: RULERS.filter((x) => !PAID_RULERS[x.id] || rulerOwned(x.id) || (shopOn() && PRODUCTS.some((p) => p.entitlements?.includes(PAID_RULERS[x.id]!) && p.ready))).map((x) => ({
           id: x.id,
           on: x.id === value,
+          locked: !rulerOwned(x.id),
           className: 'rulerChoice',
           fill: (c) => {
             c.style.setProperty('--ruler-colour', x.colour);
-            c.setAttribute('aria-label', `${x.name}, ${x.role}`);
+            c.setAttribute('aria-label', `${x.name}, ${x.role}${rulerOwned(x.id) ? '' : ', in the Shop'}`);
             c.title = x.detail;
             const name = document.createElement('b');
             name.textContent = x.name;
             const role = document.createElement('small');
-            role.textContent = x.role;
+            role.textContent = rulerOwned(x.id) ? x.role : 'In the Shop';
             c.append(rulerPortrait(x.id), name, role);
           },
         })),

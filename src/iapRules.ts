@@ -56,8 +56,8 @@ export const PRODUCTS: readonly Product[] = [
   { id: 'look_duchess_knight', kind: 'cosmetic', name: 'Duchess: Little Knight', entitlements: ['duchess_knight'], consumable: false, usd: 1.99, blurb: 'A plumed steel helm, polished for the charge', art: 'costume_knight', ready: true },
   { id: 'look_duchess_lantern', kind: 'cosmetic', name: 'Duchess: Lantern', entitlements: ['duchess_lantern'], consumable: false, usd: 1.99, blurb: 'A little brass lantern hung from her horns', art: 'costume_lantern', ready: true },
   { id: 'bundle_wardrobe', kind: 'cosmetic', name: 'Duchess: Wardrobe', entitlements: ['duchess_regalia', 'duchess_knight', 'duchess_lantern'], consumable: false, usd: 3.99, blurb: 'All three of her new costumes', art: 'costume_regalia', ready: true },
-  { id: 'ruler_ember', kind: 'cosmetic', name: 'Ember Sovereign', entitlements: ['ruler_ember'], consumable: false, usd: 6.99, blurb: 'A new ruler: blackened gold armour and a mantle of embers', art: 'ruler_ember', ready: false },
-  { id: 'ruler_starlit', kind: 'cosmetic', name: 'Starlit Empress', entitlements: ['ruler_starlit'], consumable: false, usd: 6.99, blurb: 'A new ruler: night-blue robes sewn with stars', art: 'ruler_starlit', ready: false },
+  { id: 'ruler_ember', kind: 'cosmetic', name: 'Ember Sovereign', entitlements: ['ruler_ember'], consumable: false, usd: 6.99, blurb: 'A new ruler: blackened gold armour and a mantle of embers', art: 'ruler_ember', ready: true },
+  { id: 'ruler_starlit', kind: 'cosmetic', name: 'Starlit Empress', entitlements: ['ruler_starlit'], consumable: false, usd: 6.99, blurb: 'A new ruler: night-blue robes sewn with stars', art: 'ruler_starlit', ready: true },
   { id: 'look_starfall', kind: 'cosmetic', name: 'Starfall summons', entitlements: ['starfall_summons'], consumable: false, usd: 3.99, blurb: 'The summoning’s cards and burst in violet and gold', art: 'starfall_cardback', ready: true },
 ];
 

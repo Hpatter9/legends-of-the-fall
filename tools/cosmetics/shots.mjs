@@ -20,21 +20,21 @@ const HEROES = ['knight', 'samurai', 'kunoichi', 'archer', 'wizard', 'peasant', 
 const ALL = ['look_starfall'];
 
 /** A page with a save, the fake store's purchases (`owned`, product ids) and the settings given. */
-async function open(w, h, { owned = ALL, settings = {}, stones = 40, query = '' } = {}) {
+async function open(w, h, { owned = ALL, settings = {}, stones = 40, query = '', meta = {} } = {}) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, hasTouch: true });
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(`${w}: ${e.message}`));
-  await page.addInitScript(([heroes, owned, settings, stones]) => {
+  await page.addInitScript(([heroes, owned, settings, stones, meta]) => {
     try {
-      localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 4000, stones, unlocked: heroes, party: heroes.slice(0, 5), pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 5, barracks: 5, armoury: 5, mageTower: 4, stable: 5, library: 5 }, shards: {}, stars: {}, xp: {}, bestStage: 30, tower: 0, daily: {}, bosses: [], achievements: [], armies: {}, armySeen: [], tutorials: ['shop', 'summoning', 'tavern', 'recruit'], duchessTaps: 5 }));
+      localStorage.setItem('legends.meta', JSON.stringify({ seed: 7, crowns: 4000, stones, unlocked: heroes, party: heroes.slice(0, 5), pulls: 0, dry: 0, dryMythic: 0, castle: { treasury: 5, barracks: 5, armoury: 5, mageTower: 4, stable: 5, library: 5 }, shards: {}, stars: {}, xp: {}, bestStage: 30, tower: 0, daily: {}, bosses: [], achievements: [], armies: {}, armySeen: [], tutorials: ['shop', 'summoning', 'tavern', 'recruit'], duchessTaps: 5, ...meta }));
       localStorage.setItem('lotf-tips-off', '1');
       // (what this device last heard from the store, as a returning player's would hold it; the store's answer at start keeps it so)
-      const ents = { look_starfall: ['starfall_summons'], look_duchess_knight: ['duchess_knight'], look_duchess_regalia: ['duchess_regalia'], look_duchess_lantern: ['duchess_lantern'], bundle_wardrobe: ['duchess_regalia', 'duchess_knight', 'duchess_lantern'] };
+      const ents = { ruler_ember: ['ruler_ember'], ruler_starlit: ['ruler_starlit'], look_starfall: ['starfall_summons'], look_duchess_knight: ['duchess_knight'], look_duchess_regalia: ['duchess_regalia'], look_duchess_lantern: ['duchess_lantern'], bundle_wardrobe: ['duchess_regalia', 'duchess_knight', 'duchess_lantern'] };
       localStorage.setItem('legends.purchases', JSON.stringify({ entitlements: [...new Set(owned.flatMap((p) => ents[p] ?? []))].sort() }));
       localStorage.setItem('legends.fakeStore', JSON.stringify({ txns: owned.map((product, i) => ({ id: `FAKE.${i + 1}`, product, at: 1 })), next: owned.length + 1 }));
       localStorage.setItem('legends.settings', JSON.stringify(settings));
     } catch {}
-  }, [HEROES, owned, settings, stones]);
+  }, [HEROES, owned, settings, stones, meta]);
   await page.goto(base + query);
   await page.waitForSelector('#home:not([hidden])', { timeout: 20000 });
   await page.waitForTimeout(1800);
@@ -68,6 +68,39 @@ for (const costume of ['regalia', 'knight', 'lantern']) {
   await page.waitForTimeout(2500);
   await clearCards(page);
   await shot(page, `${costume}-fight`);
+  await ctx.close();
+}
+
+// 1b. The two bought rulers: the Castle tab's Crown Terrace (their figure and domain), the castle's ruler picker, and the Last Stand's hall
+//     with them seated on their throne
+for (const [product, ruler] of [['ruler_ember', 'ember_sovereign'], ['ruler_starlit', 'starlit_empress']]) {
+  const { ctx, page } = await open(393, 852, { owned: [product], settings: { ruler, rulerPicked: true, cinematics: false, saver: true }, meta: { opened: ['tower', 'castle'], xp: Object.fromEntries(HEROES.map((h) => [h, 104400])), tower: 9, bestStage: 14, stash: [] } });
+  await clearCards(page);
+  await page.locator('.hmTab').nth(3).click();
+  await page.waitForTimeout(2500);
+  await clearCards(page);
+  await shot(page, `${ruler}-terrace`);
+  if (ruler === 'ember_sovereign') {
+    await page.evaluate(() => window.__game?.home?.castle?.openRulerPicker?.());
+    await page.waitForTimeout(800);
+    await shot(page, 'castle-ruler-picker');
+    await page.keyboard.press('Escape');
+  }
+  // (the Last Stand is hidden from players for now, so its place is not on the camp: opened through the game's own hook)
+  await page.evaluate(() => { window.__game.app.ticker.maxFPS = 10; void window.__game.stand.open(); });
+  const stand = await page.waitForSelector('.stPick:not([hidden])', { timeout: 15000 }).catch(() => null);
+  if (!stand) errors.push(`${ruler}: the Last Stand did not open`);
+  else {
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.stPick button')].find((b) => b.textContent === 'Auto fill')?.click();
+      document.querySelector('.stPick .primary').click();
+    });
+    await page.waitForFunction(() => window.__game.stand?.hall?.king && window.__game.stand.hall.emptyThrone, null, { timeout: 20000 }).catch(() => errors.push(`${ruler}: no hall`));
+    await page.evaluate(() => { document.getElementById('home').hidden = true; window.__game.stand.debugHall('hall'); });
+    await page.waitForTimeout(1500);
+    await page.addStyleTag({ content: '#quip, #tip, .stCount { display: none !important; }' });
+    await shot(page, `${ruler}-throne`);
+  }
   await ctx.close();
 }
 

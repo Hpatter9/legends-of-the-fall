@@ -1,10 +1,10 @@
-# Cosmetics art prompts: what the two new rulers still need
+# Cosmetics art prompts: what the two new rulers needed (landed: PR #685, wired in COSMETICS)
 
 The Ember Sovereign and the Starlit Empress (`ruler_ember`, `ruler_starlit`, $6.99 each in the Shop) have their action atlases from round 2
 (`art-source/round2/ruler_ember.png`, `ruler_starlit.png`: 4 x 8 cells of 224 px, rows idle, walk, strike, cast, hurt, dead, seated,
 command, as `src/art/rulers/provenance.json`). A ruler in the game also stands on the Crown Terrace (a full-length figure over its own
 domain painting) and sits a throne in the castle and the Last Stand (a cell of `src/art/rulers/thrones.png`). Round 2 painted none of
-those, so **both rulers stay "Coming soon" in the Shop until these land** (`docs/notes/cosmetics.md`).
+those, so both rulers stayed "Coming soon" in the Shop until these landed (PR #685); they are wired and on sale now (`docs/notes/cosmetics.md`).
 
 All for `hpatter9/legends-of-the-fall`, branch `art/cosmetics`, files under `art-source/cosmetics/`. Style: the game's dark-fantasy painted
 pixel art, matching the eight rulers already in the game (`src/art/crown-terrace/ruler-*.webp`, `src/art/crown-terrace/<ruler>.webp`,

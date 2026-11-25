@@ -1,4 +1,5 @@
 import { modeShown, namesHiddenMode } from './sim/hiddenModes';
+import { rulerOf } from './rulerRules';
 import { OWNED_CHANGED } from './iapView';
 import { heraldPortrait } from './heraldArt';
 // Legends of the Last Keep: the phone page. The board is drawn with Pixi; the bench, the buttons and the banners are plain
@@ -698,8 +699,10 @@ class Game {
     // (KING-SPELLS batch 2: the loadout follows the ruler's school, on load and whenever the ruler is changed)
     let school = '';
     const fit = () => {
-      if (school === settings().ruler && this.meta.spellbook.school === school) return;
-      school = settings().ruler;
+      // (COSMETICS: the ruler held, a bought one no longer held reads as the default; a bought ruler leads a free ruler's school)
+      const ruler = rulerOf(settings().ruler).id;
+      if (school === ruler && this.meta.spellbook.school === schoolOf(ruler).id) return;
+      school = ruler;
       // (SPELL-SLOTS: a new school fills no more slots than the save has open)
       fitSchool(this.meta.spellbook, school, spellSlots(this.meta));
       saveMeta(this.meta);

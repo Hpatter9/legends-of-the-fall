@@ -9,6 +9,8 @@ const size = (path: string): [number, number] => {
 };
 import { DRESSED, dressedOf, dressedTerrace, DUCHESS_COSMETICS, fullyDressed, PAID_COSTUMES, wornCostume } from '../src/render/duchessRules';
 import { entitledHere, OWNED_KEY, ownedFrom, PRODUCTS, productById } from '../src/iapRules';
+import { DEFAULT_RULER, PAID_RULERS, RULERS, rulerOf, rulerOwned, SEAT_BREATH } from '../src/rulerRules';
+import { RULER_COURTS } from '../src/crownTerrace';
 
 // (a stand-in for the page's storage: what the store last said is owned, under OWNED_KEY)
 const own = (ents: string[]): void => {
@@ -63,9 +65,6 @@ test('the Shop sells Starfall, and each of Duchess’s costumes and her wardrobe
   assert.match(readFileSync('src/starfall.ts', 'utf8'), /STARFALL_ENTITLEMENT = 'starfall_summons'/);
   // (nothing sold changes a stat: a cosmetic gives no stones, crowns or tomes)
   for (const p of PRODUCTS.filter((x) => x.kind === 'cosmetic')) assert.ok(!p.stones && !p.crowns && !p.tomes, p.id);
-  // (the rulers wait for their art)
-  assert.equal(productById('ruler_ember')!.ready, false);
-  assert.equal(productById('ruler_starlit')!.ready, false);
 });
 
 test('a costume with no dressed sheet is drawn in her plain sheets: nothing is laid over her', () => {
@@ -99,4 +98,30 @@ test('each costume is whole dressed sheets on her own sheets\u2019 layouts, each
 test('costumes are looks only: nothing in the fight reads them', () => {
   const battle = readFileSync('src/sim/battle.ts', 'utf8') + readFileSync('src/sim/duchessFight.ts', 'utf8');
   assert.ok(!/duchessHat|costume|starfall/i.test(battle));
+});
+
+test('the two bought rulers: owned by their entitlement, read as the default while not held, fully dressed in the game\u2019s art', () => {
+  for (const [id, ent, product] of [['ember_sovereign', 'ruler_ember', 'ruler_ember'], ['starlit_empress', 'ruler_starlit', 'ruler_starlit']] as const) {
+    assert.ok(RULERS.some((r) => r.id === id), id);
+    assert.equal(PAID_RULERS[id], ent);
+    assert.deepEqual(productById(product)!.entitlements, [ent]);
+    assert.ok(productById(product)!.ready);
+    none();
+    assert.equal(rulerOwned(id), false);
+    assert.equal(rulerOf(id).id, DEFAULT_RULER);
+    own([ent]);
+    assert.equal(rulerOwned(id), true);
+    assert.equal(rulerOf(id).id, id);
+    // (their art, at the eight rulers' sizes: the action atlas, the Crown Terrace figure and domain)
+    assert.deepEqual(size(`src/art/rulers/${id}.png`), size('src/art/rulers/iron_stag.png'), id);
+    assert.ok(existsSync(`src/art/crown-terrace/ruler-${id}.webp`) && existsSync(`src/art/crown-terrace/${id}.webp`), id);
+    assert.ok(RULER_COURTS[id] && SEAT_BREATH[id], id);
+  }
+  none();
+  // (a free ruler is always owned)
+  assert.ok(RULERS.filter((r) => !PAID_RULERS[r.id]).every((r) => rulerOwned(r.id)));
+  // (the thrones sheet holds a cell for every ruler: four across, 224 px)
+  const [w, h] = size('src/art/rulers/thrones.png');
+  assert.equal(w, 4 * 224);
+  assert.ok((h / 224) * 4 >= RULERS.length);
 });

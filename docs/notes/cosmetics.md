@@ -13,14 +13,32 @@ Turning a look off is always possible. Nothing changes a stat.
 | `look_duchess_knight` ($1.99) | `duchess_knight` | Duchess as the Little Knight: a steel helm with a red plume |
 | `look_duchess_lantern` ($1.99) | `duchess_lantern` | Duchess with her Lantern: a brass lantern hung from her horns |
 | `bundle_wardrobe` ($3.99) | all three | all three costumes |
+| `ruler_ember` ($6.99) | `ruler_ember` | A ruler of your own, the Ember Sovereign: his atlas, his Crown Terrace (the Basalt Throne) and his throne |
+| `ruler_starlit` ($6.99) | `ruler_starlit` | A ruler of your own, the Starlit Empress: her atlas, her Crown Terrace (the Comet Observatory) and her throne |
 
 Each costume is her whole walking strip and battle sheet redrawn in it (the Knight on `claude/duchess-costumes`, the Regalia and the
 Lantern in PR #683), swapped in for hers; a first version that laid small cut-down pieces over her was turned down by the owner. Each walk
 strip's frames face as hers do (1 to 3 left, 4 to 6 right: checked against her plain strip by the shape of each frame; none needed flipping).
 
-**Waiting on art ("Coming soon", not sold):**
-- `ruler_ember` and `ruler_starlit`: round 2 painted their action atlases, but a ruler also needs its Crown Terrace figure, its domain
-  painting and a throne; the prompts are in `docs/notes/cosmetics-art-prompts.md`.
+Nothing is waiting on art: every cosmetic in the catalogue is on sale.
+
+## The two rulers
+
+- **In the game as any ruler is** (`tools/cosmetics/rulers.py` puts the art in): `RULERS` (`rulerRules.ts`), their atlases in
+  `RULER_URLS`, a head box each in `SEAT_BREATH` (their seated frames are painted afresh, as the eight's are), their courts in
+  `RULER_COURTS` (`crownTerrace.ts`), their figures and domains in `src/art/crown-terrace/`, and their thrones as the third row of
+  `thrones.png` (`THRONE_CELL` 8 and 9; the loader now cuts 224 px cells by the sheet's width).
+- **Owned by their entitlement** (`PAID_RULERS`, `rulerOwned`): `rulerOf` reads a bought ruler not held (refunded, say) as the default, as it
+  reads a retired one, so everything drawn from the ruler setting shows the default then. Both pickers (Settings, Ruler and Duchess; the
+  castle's Crown Terrace) list a bought ruler once owned, or while the Shop sells it, locked "In the Shop" until bought; a build with no
+  Shop never shows one.
+- **Looks only, nothing more**: each ruler leads a school of the king's spells and a Decree. A bought ruler leads **a free ruler's school**
+  (`SHARED_SCHOOL` in `sim/schools.ts`): the Ember Sovereign leads Fire, as the Ash Empress does, and the Starlit Empress the Stars, as the
+  Moon Oracle does. The same spells and the same Decree, so buying one gives no spell or Decree a free ruler does not. (`test/king-spells-b2.test.ts`.)
+- **Where they are seen**: everywhere the ruler is (the Crown Terrace, the cutscenes, the quest cards, the Crown's herald, the spellbook's
+  school). Their throne is the Last Stand's hall's, and **the Last Stand is hidden from players for now** (`hiddenModes.ts`), so the seated
+  ruler is seen there once it returns; the picture was taken by opening it directly.
+- "Wear it now" after a purchase seats the ruler (and the spells re-fit to the school, as on any change of ruler).
 
 ## Duchess's costumes: whole dressed sheets
 
@@ -61,9 +79,9 @@ strip's frames face as hers do (1 to 3 left, 4 to 6 right: checked against her p
 
 ## The Shop
 
-- Starfall, the three costumes and the wardrobe have `ready: true` in `PRODUCTS`; the two rulers are "Coming soon". An owned look reads "Owned · wear it in Settings, Ruler and Duchess", and a purchase's
+- Every cosmetic has `ready: true` in `PRODUCTS`. An owned look reads "Owned · wear it in Settings, Ruler and Duchess", and a purchase's
   card offers **Wear it now** (the wardrobe puts on the regalia first).
-- `docs/notes/store-readiness.md` §7: the five on sale are made in Play Console now; the rulers when they are.
+- `docs/notes/store-readiness.md` §7 lists every product to make in Play Console.
 
 ## Checked
 
@@ -71,7 +89,8 @@ strip's frames face as hers do (1 to 3 left, 4 to 6 right: checked against her p
   none always there; the Shop's products and the game read the same entitlements; a costume is sold only once it is fully dressed (none
   today: all three), Starfall is; nothing sold gives a stat; a costume with no dressed sheet is drawn in her plain sheets, and the cut-down overlays
   are gone; the fight never reads a costume. `test/iap.test.ts`: only Starfall of the cosmetics on sale.
-- `node tools/cosmetics/shots.mjs` (after `npm run web`): Duchess in each costume in the camp and in a fight she joins
+- `node tools/cosmetics/shots.mjs` (after `npm run web`): each ruler on the Crown Terrace (`<ruler>-terrace`) and seated on the Last Stand's
+  throne (`<ruler>-throne`), the castle's ruler picker, Duchess in each costume in the camp and in a fight she joins
   (`<costume>-camp`, `<costume>-fight`; `costumes-closeup.png` puts the six side by side), the Settings page and the costume picker (owned and not), a ten-summon in Starfall
   and in Classic, a new hero's Starfall arrival, the Shop's cosmetics at the three sizes, and a purchase of Starfall with "Wear it now"
   (Starfall on after it). Pictures in `docs/samples/cosmetics/`.

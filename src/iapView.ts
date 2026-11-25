@@ -169,6 +169,11 @@ function wearOf(id: string): (() => void) | undefined {
   const costume = ({ look_duchess_regalia: 'regalia', look_duchess_knight: 'knight', look_duchess_lantern: 'lantern', bundle_wardrobe: 'regalia' } as const)[id as 'look_duchess_regalia'];
   if (costume) return () => setSetting('duchessHat', costume);
   if (id === 'look_starfall') return () => setSetting('starfall', true);
+  // (COSMETICS: a bought ruler takes the throne; their school is a free ruler's, so the spells re-fit as on any change of ruler)
+  if (id === 'ruler_ember' || id === 'ruler_starlit') return () => {
+    setSetting('rulerPicked', true);
+    setSetting('ruler', id === 'ruler_ember' ? 'ember_sovereign' : 'starlit_empress');
+  };
   return undefined;
 }
 

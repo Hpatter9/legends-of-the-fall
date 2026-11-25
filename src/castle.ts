@@ -38,7 +38,9 @@ import { TrophyWallModal } from './trophyWall';
 
 // Bespoke Castle Throne Room background and Seated King sprite sheets
 import { settings, setSetting, onSettings } from './settings';
-import { RULERS, rulerOf, rulerWords } from './rulerRules';
+import { PAID_RULERS, RULERS, rulerOf, rulerOwned, rulerWords } from './rulerRules';
+import { shopOn } from './iapView';
+import { PRODUCTS } from './iapRules';
 import { CrownTerracePainter, DUCHESS_FRAMES } from './render/crownTerracePaint';
 import { RULER_COURTS, TERRACE_WIDTH, TERRACE_HEIGHT, TERRACE_KING as KING_SPOT, TERRACE_GUARDS as GUARD_SPOTS, TERRACE_GOAT, TERRACE_LANDMARKS, courtGuardKinds, changeCourtGuard, landmarkState, terraceArtUrl, terraceCharacterAt } from './crownTerrace';
 import { ornateMenu, menuSection, menuChoice, menuNote, menuFoot, type OrnateMenu } from './ornateMenu';
@@ -937,10 +939,13 @@ export class CastleScene {
 
   private openRulerPicker(): void {
     const menu = this.makeCourtMenu('Choose your ruler','Each ruler brings an entirely different court and kingdom.');
-    const grid = menuSection(menu.body,'Eight royal domains',undefined,2);
-    for (const ruler of RULERS) {
+    // (COSMETICS: a bought ruler is listed once owned, or while the Shop sells it, locked until bought; a build with no Shop never shows one)
+    const shown = RULERS.filter((r) => !PAID_RULERS[r.id] || rulerOwned(r.id) || (shopOn() && PRODUCTS.some((p) => p.ready && p.entitlements?.includes(PAID_RULERS[r.id]!))));
+    const grid = menuSection(menu.body,'Royal domains',`${shown.length} kingdoms`,2);
+    for (const ruler of shown) {
       const theme = RULER_COURTS[ruler.id];
-      const button = menuChoice(grid,{title:ruler.name,lines:[theme.name],on:settings().ruler===ruler.id,onPick:() => {
+      const owned = rulerOwned(ruler.id);
+      const button = menuChoice(grid,{title:ruler.name,lines:owned ? [theme.name] : [theme.name, ['In the Shop','lock']],on:settings().ruler===ruler.id,disabled:!owned,onPick:() => {
         setSetting('ruler',ruler.id); setSetting('rulerPicked',true); menu.close();
       }});
       const image = el('img','crCourtPreview'); image.src = terraceArtUrl(ruler.id); image.alt = ''; image.loading = 'lazy';
