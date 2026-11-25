@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.622.0',
+    date: '2026-11-25',
+    title: 'Fairer duels, and Natsu in action',
+    notes: ['A duel against the Infernal Host, the Yokai Night Parade or the Golem Forge is now a fair fight at your own level.', 'Natsu\'s painting is redone in an action pose, bow drawn.'],
+  },
+  {
     version: '0.621.0',
     date: '2026-11-25',
     title: 'Guests, a ghost ship and Natsu restored',
