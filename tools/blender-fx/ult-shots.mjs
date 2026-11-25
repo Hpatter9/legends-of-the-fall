@@ -169,6 +169,23 @@ const speedNow = (page) => page.evaluate(() => `${document.getElementById('speed
 // (AT=0.18,0.22,0.26,0.3: four moments of the strike by how far through it, to catch a clip that is over between the usual frames)
 const FRAMES = process.env.AT ? [['windup', 0.55], ['windup', 0.95], ...process.env.AT.split(',').map((x) => ['strike', Number(x)])] : process.env.SHOW ? [['windup', 0.55], ['windup', 0.95], ['strike', 0.05], ['strike', 0.15], ['strike', 0.3], ['strike', 0.45]] : process.env.EARLY ? [['windup', 0.55], ['windup', 0.95], ['blow', 60], ['blow', 200], ['blow', 400], ['blow', 700]] : [['windup', 0.55], ['windup', 0.95], ['strike', 0.5], ['strike', 0.9], ['aftermath', 0.12], ['aftermath', 0.5]];
 
+// (LOADS=<n>: the page is loaded n times, each in a fresh context with nothing kept, and left on its home screen for LOADS_MS (3000):
+// how many of the loads threw a page error, and each error's first lines. For a fault of loading, which shows in some loads only.)
+if (process.env.LOADS) {
+  let bad = 0;
+  for (let i = 0; i < Number(process.env.LOADS); i++) {
+    const was = errors;
+    const { ctx, page } = await open();
+    await page.waitForTimeout(Number(process.env.LOADS_MS ?? 3000));
+    await ctx.close();
+    if (errors > was) bad++;
+  }
+  console.log(`LOADS ${process.env.LOADS}: ${bad} with a page error, ${errors} errors in all`);
+  await browser.close();
+  srv.close();
+  process.exit(0);
+}
+
 // (WATCH=1: no ultimate is fired. The party named by --picks (all of them together) fights the wave on its own, and the field is
 // photographed every WATCH_MS of the fight (600) for WATCH_N frames (40), and once more as the wave ends: for what stands or plays
 // on the fighters in an ordinary fight, a heal over time, a ward, an aura)

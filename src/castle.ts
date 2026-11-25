@@ -1,5 +1,6 @@
 // The Keep: an animated royal terrace and a separate building ledger. Presentation only; upgrades use the castle simulation.
 
+import { frameAt, framesReady } from './render/framesReadyRules';
 import { countDuchessTap, treatFoundToday } from './sim/duchessTaps';
 import { saveMeta } from './sim/meta';
 import {
@@ -38,7 +39,7 @@ import { TrophyWallModal } from './trophyWall';
 // Bespoke Castle Throne Room background and Seated King sprite sheets
 import { settings, setSetting, onSettings } from './settings';
 import { RULERS, rulerOf, rulerWords } from './rulerRules';
-import { CrownTerracePainter } from './render/crownTerracePaint';
+import { CrownTerracePainter, DUCHESS_FRAMES } from './render/crownTerracePaint';
 import { RULER_COURTS, TERRACE_WIDTH, TERRACE_HEIGHT, TERRACE_KING as KING_SPOT, TERRACE_GUARDS as GUARD_SPOTS, TERRACE_GOAT, TERRACE_LANDMARKS, courtGuardKinds, changeCourtGuard, landmarkState, terraceArtUrl, terraceCharacterAt } from './crownTerrace';
 import { ornateMenu, menuSection, menuChoice, menuNote, menuFoot, type OrnateMenu } from './ornateMenu';
 
@@ -878,7 +879,10 @@ export class CastleScene {
     });
     const hay = this.terrace.buildings.get('nest');
     if (hay) g.drawImage(hay,TERRACE_GOAT.nestX-38,TERRACE_GOAT.y-35,76,44);
-    if (this.goat && this.terrace.duchess.length === 8) {
+    // (the goat's eight pictures arrive each in its own time: the list is eight long as soon as its last one is in, with earlier
+    // ones still missing, and drawing a missing one threw. She is painted once all eight are in: `framesReady`; the painter
+    // paints the hall again when its loading is done)
+    if (this.goat && framesReady(this.terrace.duchess, DUCHESS_FRAMES)) {
       const goat = this.goat, x = Math.round(goat.x), y = TERRACE_GOAT.y;
       const size = 128;
       const lift = this.reduced ? 0 : hopLift(goat,this.now)*1.8;
@@ -887,7 +891,8 @@ export class CastleScene {
       g.save(); g.translate(x,y-lift+bob);
       if (goat.face === -1) g.scale(-1,1);
       const frame = goat.mode === 'nest' ? 7 : this.reduced ? 4 : goat.mode === 'hop' ? 6 : goat.mode === 'walk' ? Math.floor(goat.steps/8)%4 : goat.mode === 'graze' || goat.mode === 'nibble' ? 5 : 4;
-      g.drawImage(this.terrace.duchess[frame],-size*.375,-size*.79,size*.75,size);
+      const pose = frameAt(this.terrace.duchess, frame);
+      if (pose) g.drawImage(pose,-size*.375,-size*.79,size*.75,size);
       drawDuchessCosmetic(g,settings().duchessHat,-44,-88,1.8);
       g.restore();
     }

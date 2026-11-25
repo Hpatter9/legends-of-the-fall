@@ -140,7 +140,7 @@ the ring and the wisps are laid over with their own soft edges, so they read on 
 
 The photographing runs log a page error in about one run in three since 0.615 (one in thirteen before): `Failed to execute
 'drawImage' on 'CanvasRenderingContext2D'`, from `CastleScene.paintGreatHall` (called from `CastleScene.terrace`): the home
-castle's scene draws a picture before it has loaded. It is on main's own build too, and is nothing of the aura's.
+castle's scene draws a picture before it has loaded. It is on main's own build too, and is nothing of the aura's. It is fixed in its own commit: `docs/notes/castle-goat-frames.md`.
 
 ## What I did not look at
 
