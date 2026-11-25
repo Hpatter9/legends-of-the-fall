@@ -1,5 +1,7 @@
 # The Assault: ChatGPT prompts for the Beasts' hold (the Howling Den)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 4's second hold (`docs/design/assault-mode.md` on `claude/assault-design`, phase 4; the owner's name for it, and the owner's look: an
 autumn moor that climbs to a snowbound den). It is built like Bloodtusk Hold and the Barrow Necropolis, on the same engine and the same
 kinds of sheet, so these 13 prompts mirror the Orc set sheet for sheet: the same canvases, grids, foot points, angles and formats, so the

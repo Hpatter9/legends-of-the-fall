@@ -12,8 +12,7 @@ test('Back: a cinematic is skipped, the top overlay closed, another tab goes to 
   assert.deepEqual(backAction({ top: 'cinematic', place: 'home', tab: 'battle' }), { do: 'skip' });
   for (const tab of ['recruit', 'heroes', 'castle', 'spells']) assert.deepEqual(backAction({ top: null, place: 'home', tab }), { do: 'battleTab' }, tab);
   assert.deepEqual(backAction({ top: null, place: 'home', tab: 'battle' }), { do: 'none' }, 'never out of the game');
-  for (const place of ['deploy', 'fight', 'assault'] as const) assert.deepEqual(backAction({ top: null, place }), { do: 'pause' }, place);
-  assert.deepEqual(backAction({ top: 'overlay', place: 'assault' }), { do: 'close' }, 'the pause card open: Back closes it');
+  for (const place of ['deploy', 'fight'] as const) assert.deepEqual(backAction({ top: null, place }), { do: 'pause' }, place);
   assert.deepEqual(backAction({ top: null, place: 'other' }), { do: 'none' });
 });
 

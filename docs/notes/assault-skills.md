@@ -1,5 +1,7 @@
 # Skills, effects and the heroes' movement in the Assault (ASSAULT-SKILLS, ASSAULT-AI)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Two asks from the owner, on one branch (`claude/assault-skills`):
 
 - "skills and effects should be used and visible in the assaults";

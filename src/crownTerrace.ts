@@ -49,7 +49,6 @@ export const TERRACE_LANDMARKS: readonly { id: SiteId; x: number; y: number; w: 
   { id: 'barracks', x: 171, y: 580, w: 85 },
   { id: 'smithy', x: 83, y: 600, w: 72 },
   { id: 'stable', x: 263, y: 613, w: 82 },
-  { id: 'drillYard', x: 172, y: 622, w: 91 },
 ];
 
 /** Art tiers change at actual completed levels; every level also grows the silhouette, including levels within one art tier. */

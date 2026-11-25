@@ -17,7 +17,6 @@ export function siteBenefit(id: SiteId, level: number): string {
     case 'smithy': return 'Camp repairs & gear care';
     case 'watchtower': return 'March orders & scouting';
     case 'hall': return `${level} mentor ${level === 1 ? 'seat' : 'seats'}`;
-    case 'drillYard': return level >= 2 ? 'Veteran Assault recruits' : level ? 'Blooded Assault recruits' : 'Train Assault recruits';
   }
 }
 export function sitePresentation(meta: Meta, id: SiteId, now: number) {

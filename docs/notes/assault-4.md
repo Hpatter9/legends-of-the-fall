@@ -1,5 +1,7 @@
 # The Assault, phase 4: the other holds
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 4 of `docs/design/assault-mode.md` (on `claude/assault-design`) builds the other eight holds one at a time, in the order of `ARMIES`.
 Their names are the owner's: Barrow Necropolis, Howling Den, Elder Root, Heart of the Maze, Bonefire Crag, Brimstone Gate, Moonlit Shrine and
 Iron Foundry. Each hold is written up below as it lands.

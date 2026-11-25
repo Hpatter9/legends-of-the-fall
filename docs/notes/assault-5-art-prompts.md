@@ -1,5 +1,7 @@
 # The Last Hold and the War's end: art prompts
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 5 of the Assault (`docs/notes/assault-5.md`) needs no new art to play. The War's-end scene plays on the Last Hold's land's painted
 backdrop, with the warchief's and the party's own sheets. The Council board's end card uses the Council backdrop and the fallen lord's
 portrait. One optional painting would give the end its own look on the Council board: the Council's hall with its seats burning. Until it

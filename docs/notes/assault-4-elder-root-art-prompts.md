@@ -1,5 +1,7 @@
 # The Assault: ChatGPT prompts for the Wildwood's hold (Elder Root)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 4's third hold (`docs/design/assault-mode.md` on `claude/assault-design`, phase 4; the owner's name for it). The owner gave no look for
 it, so it follows the camp's overlook, which already paints the Wildwood's "Elder-root stronghold" (`src/art/camp/camp-wild.png`, its top
 row): an ancient forest grown into a fortress at dusk, its heart a vast hollow tree with a lit door. It is built like the other holds, on

@@ -1,5 +1,7 @@
 # The Assault: ChatGPT prompts for the Labyrinth's hold (the Heart of the Maze)
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Phase 4's fourth hold (`docs/design/assault-mode.md` on `claude/assault-design`, phase 4; the owner's name for it). The owner gave no look for
 it, so it follows the camp's overlook, which already paints the Labyrinth's "stone labyrinth" (`src/art/camp/camp-wild.png`, its middle row):
 a sandstone maze at evening, braziers and red banners on its walls, and a horned temple at its heart. It is built like the other holds, on the

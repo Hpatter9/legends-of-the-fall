@@ -8,12 +8,6 @@ import { offerPageTutorials } from './tutorialView';
 import { heroesTabMark } from './heroesTabMark';
 import { glyphWord, medal, pbUrl } from './paintedButton';
 import { menuFoot, menuNote, menuSection, menuWell, ornateMenu, type OrnateMenu } from './ornateMenu';
-import { openMuster, openAssaultResult } from './assaultView';
-import type { AssaultResult } from './sim/assault/assaultMode';
-import { runAssault } from './assaultScene';
-import { claimTribute } from './sim/assault/economy';
-import { abandonLive } from './sim/assault/snapshot';
-import { clearBattle, loadBattle } from './assaultSave';
 import { ACT_HALLS, ROOM_NAMES } from './sim/standActs';
 import { BUILDING_IDS, BUILDINGS, ROOM_BUILDINGS, buildMs, nextCost, startBuild, canBuildChapel, CHAPEL_COST, CHAPEL_MS, chapelBuilt, clockText, isRoomBuilding, maxLevel, settleWorks, siteLevel, siteName, siteNextCost, siteTop, startChapel, startSite, worksLeft, type BuildSite, type SiteId } from './sim/castle';
 import { roomOpen, roomsOf } from './sim/rooms';
@@ -25,6 +19,7 @@ import { CastleScene, lookPicture } from './castle';
 import { BLURB, effectText } from './render/castleSpots';
 import { saveMeta, stonesOf, type Meta, type Pull } from './sim/meta';
 import { openStall } from './stallView';
+import { lookStarter, openTreasury, shopOn, starterOnOffer, startPurchases } from './iapView';
 import { closeFinished } from './screens';
 import { dailyBossName } from './sim/daily';
 import { dailyTheme } from './sim/dailyThemes';
@@ -32,7 +27,7 @@ import { dailyLine, dailyStatus, towerOpen } from './sim/modes';
 
 import { ARMIES, armyById, armyCleared, armyIsNew, armyStars, armyUnlocked, bossOf, clearedCount, markSeen } from './sim/armies';
 import { claimAchievement, shownAchievements, unclaimed } from './sim/achievements';
-import { play, setHold } from './render/sound';
+import { play } from './render/sound';
 import { playStandGate } from './standGate';
 import type { HomeSpot } from './render/audioRules';
 import { ALL_HEROES, UNITS } from './sim/units';
@@ -288,6 +283,15 @@ export class Home {
     this.pages.get('battle')!.append(this.camp.root);
     $('hmTrophy').addEventListener('click', () => this.openAchievements());
     $('hmGear').addEventListener('click', () => openSettings());
+    // (IAP: the Shop's coin medallion, only in a build that sells (the Play app, or the web build with ?shop=fake under the tools' automation); the store's record is read
+    //  once at start, so a purchase the app closed before granting arrives)
+    if (shopOn()) {
+      const shop = $('hmShop');
+      shop.hidden = false;
+      shop.replaceChildren(icon(ICONS.gold, 'hmShopIco'));
+      shop.addEventListener('click', () => openTreasury(this.meta, () => this.refresh()));
+      void startPurchases(this.meta, () => this.refresh());
+    }
     $('hmSubBack').addEventListener('click', () => this.closeSub());
     glyphWord($('hmSubBack'));
     $('hmSheet').addEventListener('click', (e) => e.target === $('hmSheet') && this.closeSheet());
@@ -690,6 +694,11 @@ export class Home {
     // (PAINTED-BUTTONS: the painted crown and stone medallions on the chips)
     chipCount('hmCrowns', pbUrl('crowns'), m.crowns);
     chipCount('hmStones', pbUrl('stones'), stonesOf(m));
+    // (IAP: the starter pack's 72 hours begin with the second army cleared; the Shop's medallion wears the pip while it is on offer)
+    if (shopOn()) {
+      lookStarter(m);
+      $('hmShop').classList.toggle('new', starterOnOffer(m));
+    }
     this.hooks.onTopBar?.();
     const stars = ARMIES.reduce((n, a) => n + armyStars(m, a).got, 0);
     const best = $('hmBest');
@@ -1012,7 +1021,6 @@ export class Home {
     cdx.append(medal('stall-books'), el('b', '', 'Codex'), el('small', '', `${gotOf(m, 'bestiary') + gotOf(m, 'heroes')}/${totalOf('bestiary') + totalOf('heroes')}`));
     if (codexWaiting(m).length > 0) cdx.append(el('i', 'badge'));
     cdx.addEventListener('click', () => this.openCodex());
-    // (Build Town is in Settings › Developer now: a testing tool, not a castle door)
     // (UX-FIXES: Achievements is the trophy in the top bar and Reset tips is in Settings: one door each)
     void ach;
     row.append(cdx);
@@ -1022,7 +1030,7 @@ export class Home {
     this.castleShut.hidden = up;
     if (!up) {
       // (FIRST-HOUR: the "Open Castle Gate (Preview)" button that stood here was a testing door on every new player's Castle tab: it
-      // opened the gate and gave 3000 crowns and six buildings. Testing goes through Settings › Developer › Build Town, which opens the gate too.)
+      // opened the gate and gave 3000 crowns and six buildings; its later home, Settings › Developer, went before release too, RELEASE-TRIM.)
       this.castleShut.replaceChildren(
         el('b', '', 'The castle is shut'),
         el('p', '', `${opensAt(MODE_NEED.castle)} · ${progressLine(m, MODE_NEED.castle)}`),
@@ -1336,8 +1344,6 @@ export class Home {
 
   /** The Armies screen, over the home screen (the Battle button, and the unlock moment's way on). */
   openArmies(focus?: string): void {
-    // (HOLD-SOUND: back from an Assault's war table or result by any way: the page's own music and air again)
-    setHold(null);
     $('home').hidden = false;
     this.openSub(
       'Armies',
@@ -1348,83 +1354,14 @@ export class Home {
           onFight: (id, tier, auto) => this.go(() => this.hooks.onArmy(id, tier, auto)),
           focus,
           onBack: () => this.closeSub(),
-          onAssault: (id, restorm) => this.openAssault(id, restorm),
-          onResume: (id) => this.resumeAssault(id),
-          onAbandon: () => {
-            abandonLive(this.meta);
-            void clearBattle();
-            saveMeta(this.meta);
-          },
-          onTribute: () => {
-            const n = claimTribute(this.meta, todayKey());
-            if (n) {
-              saveMeta(this.meta);
-              play('coinClaim');
-            }
-            return n;
-          },
         }),
       false,
       true,
     );
     // (the cards a new army lit have been seen now: they glow no more the next time)
     if (markSeen(this.meta)) saveMeta(this.meta);
-    // (PAUSE-TIPS: the War Room's own explanations, the harder tiers and the Assault, the first time it is opened with them due)
+    // (PAUSE-TIPS: the War Room's own explanations, the harder tiers, the first time it is opened with them due)
     offerPageTutorials('armies');
-  }
-
-  /** The Assault (docs/notes/assault-1.md): the muster for an army's hold, then the battle over everything, then its result, and back to the
-   *  army card. */
-  openAssault(army: string, restorm = false): void {
-    const save = () => saveMeta(this.meta);
-    openMuster(this.meta, army, {
-      save,
-      restorm,
-      onBack: () => this.openArmies(army),
-      onMarch: (plan) => {
-        void runAssault(this.meta, army, plan, {
-          save,
-          onEnd: (result) => openAssaultResult(this.meta, result, { onBack: () => this.openArmies(army), onFill: () => this.openAssault(army, restorm) }),
-        });
-      },
-    });
-  }
-
-  /** ASSAULT-DEV (`docs/notes/assault-dev.md`): a developer's trial of an assault on `m`, a throwaway copy of the save (`trialMeta`): the
-   *  same muster, battle and result as a real one, but nothing is saved (the save hook does nothing, and no snapshot is kept for a resume).
-   *  The result's way back is `done`; its "storm again" a fresh copy (`again`). */
-  openTrial(m: Meta, army: string, restorm: boolean, hooks: { done(result?: AssaultResult): void; again(): void }): void {
-    const save = () => undefined;
-    openMuster(m, army, {
-      save,
-      restorm,
-      onBack: () => hooks.done(),
-      onMarch: (plan) => {
-        void runAssault(m, army, plan, {
-          save,
-          trial: true,
-          onEnd: (result) => openAssaultResult(m, result, { onBack: () => hooks.done(result), onFill: () => hooks.again(), trial: true }),
-        });
-      },
-    });
-  }
-
-  /** Resume the assault under way (phase 2) from its last snapshot; with none to be had, it is abandoned (a withdrawal). */
-  private resumeAssault(army: string): void {
-    const save = () => saveMeta(this.meta);
-    void loadBattle().then((b) => {
-      if (!b || b.field?.hold?.input.army !== army || b.phase !== 'fight') {
-        abandonLive(this.meta);
-        void clearBattle();
-        save();
-        this.openArmies(army);
-        return;
-      }
-      void runAssault(this.meta, army, { approaches: {} }, {
-        save,
-        onEnd: (result) => openAssaultResult(this.meta, result, { onBack: () => this.openArmies(army), onFill: () => this.openAssault(army) }),
-      }, b.seed, b);
-    });
   }
 
   /** The achievements page; a Claim takes the crowns and stones, saves, and draws the page again. */

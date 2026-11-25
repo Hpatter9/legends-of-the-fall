@@ -1,5 +1,7 @@
 # The Assault, phase 2: the polish round
 
+**Withdrawn before release (RELEASE-TRIM, [release-trim.md](release-trim.md)):** the Assault and everything here that only it used are gone from the game; this note is kept as the record of what was built. The nine hold sheets (`src/art/assault/`) stay, as every battlefield's floor and set pieces.
+
 Built on 1b (`docs/notes/assault-1.md`), on `claude/assault-2`. The director's notes from the screenshots, after 1b was released as 0.409.0:
 
 - **Tall grass** (`fieldView.ts`, the bake's low pass). The tufts are dried to the ground's straw (a darker tint), fewer (two a tile inside a
