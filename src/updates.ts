@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.619.0',
+    date: '2026-11-25',
+    title: 'A guard you can see',
+    notes: ['A raised guard now shows as gold rings at the feet and a glow behind the body, instead of a faint dome.'],
+  },
+  {
     version: '0.618.0',
     date: '2026-11-25',
     title: 'Spell fields and softer glows',
