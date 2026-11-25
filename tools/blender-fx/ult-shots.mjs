@@ -203,6 +203,8 @@ if (process.env.WATCH) {
     // for the ring under a summon and the glow of one of a higher grade. LEVEL=<n>: the save's heroes at that lasting level, for
     // the rings of a deep milestone)
     if (process.env.SUMMONS) console.log('summon:', await page.evaluate(() => { const g = window.__game; for (const u of g.b.units) { u.maxHp *= 1000; u.hp = u.maxHp; } for (let t = 0; t < 20000 && !g.b.units.some((u) => u.side === "hero" && u.alive && u.owner !== undefined); t += 16) window.__step(16); window.__step(600); return g.b.units.filter((u) => u.side === "hero" && u.owner !== undefined).map((u) => u.def + " g" + u.grade); }));
+    // (GUARD=1: every hero's guard is held up for the photographs, for what a raised guard looks like)
+    if (process.env.GUARD) await page.evaluate(() => { for (const u of window.__game.b.units) if (u.side === 'hero') u.guardUntil = 1e9; });
     for (let n = 0; n < 4; n++) {
       await page.evaluate(() => window.__step(260));
       const at = await page.evaluate((summons) => { const g = window.__game; return g.b.units.filter((u) => u.side === 'hero' && u.alive && (summons || u.owner === undefined)).map((u) => { const sp = g.sprites.get(u.id); const p = g.fx.root.toGlobal({ x: sp.x, y: sp.y - sp.tall * 0.5 }); return [u.def, Math.round(p.x), Math.round(p.y), u.owner !== undefined]; }); }, !!process.env.SUMMONS);

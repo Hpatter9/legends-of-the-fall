@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { AURAS, AURA_KEYS, PLAIN_KEYS, auraKey, auraOf, auraParts, gradeParts, levelParts, markParts, FALLBACK_AURA, FOE_AURA } from '../src/render/auraStyles';
+import { AURAS, AURA_KEYS, PLAIN_KEYS, auraKey, auraOf, auraParts, gradeParts, guardParts, levelParts, markParts, FALLBACK_AURA, FOE_AURA } from '../src/render/auraStyles';
 import { newPose, poseAura } from '../src/render/auraPlace';
 import { HERO_TRAITS, TRAITS } from '../src/sim/traits';
 import { ALL_HEROES } from '../src/sim/units';
@@ -133,4 +133,13 @@ test('AURAS-BLENDER: a level\'s rings, a summon\'s ring and a higher grade\'s gl
   const view = readFileSync('src/render/unitView.ts', 'utf8');
   assert.match(view, /\.\.\.\(this\.awakenAura \? \[\] : gradeParts\(/);
   assert.match(view, /this\.plainAura\.update\(t, this\.tall \/ this\.sizeNow, dx, !!this\.reduced\?\.matches\)/);
+});
+
+test('AURAS-BLENDER: a raised guard is hoops at the feet and a shell behind the body, from the plain strips, shown only while it is up', () => {
+  const parts = guardParts();
+  assert.deepEqual(parts.map((x) => [x.key, x.place]), [['plain.ring2', 'ground'], ['plain.shell', 'wrap']]);
+  for (const part of parts) assert.ok(!part.front && part.tint !== undefined);
+  const view = readFileSync('src/render/unitView.ts', 'utf8');
+  assert.match(view, /this\.guardAura\.back\.visible = guarded;\n\s+if \(guarded\) this\.guardAura\.update\(t, this\.tall \/ this\.sizeNow, 1, !!this\.reduced\?\.matches\);/);
+  assert.ok(!/VFX\.earthShield/.test(view), 'the painted ring is not drawn on a fighter any more');
 });
