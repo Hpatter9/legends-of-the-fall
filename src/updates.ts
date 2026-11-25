@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.618.0',
+    date: '2026-11-25',
+    title: 'Spell fields and softer glows',
+    notes: ['Every area spell\'s ground is remade: a soft glowing field under the fighters, with nothing floating over them.', 'Summons and high-level heroes glow softly behind them now, instead of sparkles drawn across their bodies.'],
+  },
+  {
     version: '0.617.0',
     date: '2026-11-25',
     title: 'Auras that glow',

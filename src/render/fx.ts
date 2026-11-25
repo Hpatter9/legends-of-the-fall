@@ -2669,6 +2669,10 @@ export class Fx {
       const [hx, hy] = centre();
       if (this.bfxRound(own.bfx, this.bodyAt(hx, hy - 10, 8), centre, live)) return true;
     }
+    // (AURAS-BLENDER: an aura's own small motes are in its ground's picture now, adrift just over the ground and under whoever
+    // stands in it. Circling in the air here they passed in front of the fighters. Only a sheet with motes of its own to say
+    // (`AURA_MOTES`: Spirit Guardians' spirits, when their rendered loop has not loaded) still circles them)
+    if (!own) return true;
     const n = own ? (settings().saver ? own.saver : own.n) : settings().saver ? 1 : 3;
     const r = own ? own.r * TW : (reach + 0.5) * TW * 0.35;
     const born = performance.now();

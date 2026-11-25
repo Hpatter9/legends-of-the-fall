@@ -42,6 +42,8 @@ export interface AuraPart {
   low?: boolean;
   /** Orbiting pieces turned along their path (arcs, blades). */
   turn?: boolean;
+  /** A plain (white) strip's colour: a level's rings, a summon's ring, a higher grade's glow. */
+  tint?: number;
 }
 
 export interface AuraStyle {
@@ -120,3 +122,26 @@ export function auraParts(kind: string, step: number, saver = false): readonly A
 
 /** Every part's atlas key, in order (what an atlas must hold: the pack's today, a painted one later). */
 export const AURA_KEYS: readonly string[] = Object.values(AURAS).flatMap((a) => a.steps.flatMap((s) => s.map((x) => x.key)));
+
+/** AURAS-BLENDER, the plain strips: white in the atlas and given their colour here (`tint`). They took the place of ellipses and
+ *  stars drawn in code: the rings a hero of a deep level stands in, the ring under a summon that says whose it is, and the glow and
+ *  rising motes of a fighter of a higher combat grade that has no class aura (a summon). */
+export const PLAIN_KEYS: readonly string[] = ['plain.ring1', 'plain.ring2', 'plain.ring3', 'plain.mark', 'plain.shell', 'plain.rise'];
+const plain = (role: string, place: AuraPlace, size: number, alpha: number, tint: number, more: Partial<AuraPart> = {}): AuraPart => ({ ...p(role, place, size, alpha, more), key: `plain.${role}`, tint });
+
+/** The rings a hero past a deep milestone stands in (`badgeOf`), `rings` hoops of the badge's colour, set wide of its class's own
+ *  ring; with `halo`, a faint glow of that colour behind the body. */
+export function levelParts(rings: number, halo: boolean, colour: number): AuraPart[] {
+  if (rings <= 0) return [];
+  return [plain(`ring${Math.min(3, rings)}`, 'ground', 1.55 + rings * 0.1, 0.9, colour), ...(halo ? [plain('shell', 'wrap', 1.2, 0.35, colour, { add: true })] : [])];
+}
+
+/** The ring under a summon, in its caller's colour. */
+export const markParts = (colour: number): AuraPart[] => [plain('mark', 'ground', 0.95, 0.9, colour)];
+
+/** A fighter of combat grade 2 and up with no class aura (a summon): a glow of the colour behind its body, and from grade 3 motes
+ *  of it rising at its sides. Behind the body, as every aura is: the stars this replaced rose in front of it. */
+export function gradeParts(grade: number, colour: number, saver = false): AuraPart[] {
+  if (grade < 2) return [];
+  return [plain('shell', 'wrap', 1.35, grade > 3 ? 0.8 : grade > 2 ? 0.65 : 0.5, colour, { add: true }), ...(grade > 2 && !saver ? [plain('rise', 'rise', 1.7, 1, colour, { add: true, extra: true })] : [])];
+}

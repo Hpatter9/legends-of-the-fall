@@ -106,7 +106,16 @@ def check(key: str, rows: list, path: Path):
 
 failed: list[str] = []
 packed: dict[str, list[tuple[str, list, float, bool]]] = {}
+# (AURAS-BLENDER: the area auras are rendered in Blender now, not painted: `tools/blender-fx/auras/area.py` packs the whole of
+# b-auras, and the Circle of Death with it. Their painted sheets stay in art-source as the record; this importer leaves that
+# session's atlas alone and packs no painted copy of a rendered aura into another's.)
+RENDERED_SESSIONS = {'b-auras'}
+RENDERED_KEYS = {'circle-of-death'}
 for session, keys in SESSIONS.items():
+    if session in RENDERED_SESSIONS:
+        print(f'{session}: rendered in Blender (tools/blender-fx/auras/area.py); left as it is')
+        continue
+    keys = {k: v for k, v in keys.items() if k not in RENDERED_KEYS}
     folder = src / session
     if not folder.is_dir():
         print(f'{session}: not painted yet ({len(keys)} sheets to come); the placeholders stay')
@@ -186,9 +195,11 @@ if total > CAP:
 
 OUT.mkdir(parents=True, exist_ok=True)
 for old in OUT.glob('*.webp'):
-    if old.stem not in atlases:
+    if old.stem not in atlases and old.stem not in RENDERED_SESSIONS:
         old.unlink()
-index = {}
+# (a rendered session keeps its atlas and its entry in the index as they are)
+kept = json.loads((OUT / 'index.json').read_text()) if (OUT / 'index.json').exists() else {}
+index = {s: kept[s] for s in RENDERED_SESSIONS if s in kept}
 for session, (data, meta, _img) in atlases.items():
     (OUT / f'{session}.webp').write_bytes(data)
     index[session] = meta

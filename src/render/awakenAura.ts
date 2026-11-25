@@ -7,7 +7,7 @@
 import { Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import { AURA_CELL, AURA_PIXEL, auraImage, auraStrip, loadAuraImage } from './auraArt';
 import { newPose, poseAura } from './auraPlace';
-import { AURA_KEYS, auraParts, type AuraPart } from './auraStyles';
+import { AURA_KEYS, PLAIN_KEYS, auraParts, type AuraPart } from './auraStyles';
 
 const STRIPS = new Map<string, Texture[]>();
 let ready = false;
@@ -21,7 +21,7 @@ export async function loadAuraArt(): Promise<void> {
   base.source.style.scaleMode = AURA_PIXEL ? 'nearest' : 'linear';
   // (parts that share a strip share its frames)
   const rows = new Map<string, Texture[]>();
-  for (const key of AURA_KEYS) {
+  for (const key of [...AURA_KEYS, ...PLAIN_KEYS]) {
     const s = auraStrip(key);
     if (!s) continue;
     const at = `${s[0]}:${s[1]}`;
@@ -54,8 +54,9 @@ export class AwakenAura {
   private built = false;
   private readonly parts: readonly AuraPart[];
 
-  constructor(kind: string, step: number, saver: boolean) {
-    this.parts = auraParts(kind, step, saver);
+  /** A hero's class aura at a step; or (`parts` given outright) the plain strips of a level, a summon or a higher grade. */
+  constructor(kind: string | readonly AuraPart[], step = 0, saver = false) {
+    this.parts = typeof kind === 'string' ? auraParts(kind, step, saver) : kind;
   }
 
   private build(): void {
@@ -67,6 +68,7 @@ export class AwakenAura {
       for (let i = 0; i < n; i++) {
         const sp = new Sprite(frames[0]);
         sp.blendMode = part.add ? 'add' : 'normal';
+        if (part.tint !== undefined) sp.tint = part.tint;
         (part.front ? this.front : this.back).addChild(sp);
         this.bits.push({ sp, part, frames, i });
       }
