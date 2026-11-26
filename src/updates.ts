@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.628.0',
+    date: '2026-11-25',
+    title: 'Smoother Heroes screens',
+    notes: ['The tavern, roster, hero page and Hall no longer animate behind the art, so scrolling there is smoother.'],
+  },
+  {
     version: '0.627.0',
     date: '2026-11-25',
     title: 'A sturdier app build',
