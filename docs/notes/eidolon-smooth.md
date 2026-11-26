@@ -80,3 +80,80 @@ the pieces are the same). `reduced-and-saver.webp`: Askel with reduced motion, V
   58 ms of a throttled frame each. A fight's matter, not the call's; it could join the kept sheets.
 - **Worst frames** are down by a quarter to a third (Gorm's hardly: one 883 ms frame at its strike), not gone.
 - Not measured on a real phone or a real graphics card; the mask and draw counts are exact, the times are this machine's.
+
+# EIDOLON-SMOOTH 2: the call's strips drawn on canvases
+
+The director: move the call's ~250 strips (page elements stepped by CSS, 45 to 95 with filters) off the page's style and layout.
+
+## Where they went, and why not into the board's drawing
+
+The call's layer lies over the whole page, HUD included (`.ecLayer`, z-index 55): its dim darkens everything and its pieces stand
+bright over that dim and rise across the top bar. The board's own canvas lies under the HUD, so pieces drawn in it would pass under
+the bar and be darkened with the board. So (the director's choice) the pieces are drawn on **2D canvases laid in the call's layer**,
+among the elements that stay, in the order the elements had. No second WebGL context.
+
+- **`callPieceRules.ts`** (pure): the stylesheet's animations as sums of a time: which frame a strip shows (`steps(5)`,
+  `steps(n, jump-none)`, rows of a staged sheet), how solid it is (waits, fades, the reduced-motion hold), where its mover has
+  carried it (debris, drifts, boulders, embers, the wake), CSS's cubic-beziers and keyframes eased between each two stops, and the
+  CSS colour filters as matrices.
+- **`callPieces.ts`** (pure): each piece as its look and its place at a time; one maker for each element kind it replaces.
+- **`callCanvas.ts`**: the pictures held decoded; the drawing. A canvas is the page's size at the screen's sharpness up to 2
+  (1.5 on battery saver), takes its pixels when it first has a piece and gives them back when it has none.
+- **What covers what.** A piece goes on the host's last canvas unless the page has since put a *breaker* after it: a run, the
+  great burst, an aftershock's burst, the Eidolon's sprite or its breath. Then it takes a new canvas over that. Other elements
+  (soft lights and gradients) stay over the strips before them. A call uses up to seven canvases, a few at a time.
+- **Glows and tints, made once.** A strip's `drop-shadow` is a picture of every frame's shadow alone (half size, with room
+  round it), made as the Eidolon is warmed and drawn under the strip; the small strips' colour filters are worked into copies
+  of their pixels; a staged glow sheet's `brightness(1.2)` likewise.
+- **The clock.** The pieces run on the page's own time as the CSS animations did, stand still through the freeze on the blow
+  (taking hold a frame after the blow, as the class that held the animations did) and run on while the call goes. The fight's
+  speed is neither read nor written here.
+
+**What stays elements** (about 80 at the most, where there were 225 to 265): the lights blended with the board (`mix-blend-mode:
+screen`: pools, the gate, the charge, the bloom, shafts, mists, the dome and rays, the great burst, the aftershocks' bursts, the
+shock ring), which a canvas cannot blend with the page under it; the plain gradients moved only by transform and opacity (scars,
+dust, the maw); the two SVG lines; the words, bars, painting, sprite and breath; and the runs, whose heads must lie under later
+runs' streaks. Of these only the burst, the ring, the eight aftershock bursts and the runs' heads still step a sheet by CSS.
+
+## The look
+
+`tools/blender-fx/eidolons/shots.mjs` now photographs on a clock wholly its own (the page's loop watch stood down, the freeze
+held, a new animation shown at its start), so two builds can be held against each other frame by frame. Every strip was checked
+to show the same frame in both builds (`CLOCK=1 WHAT=<sheet>`), and the pictures compared for all six, and for reduced motion and
+battery saver: the same but for edge pixels (a canvas smooths a scaled edge a little differently) and the fight's own moving
+parts. `docs/samples/eidolon-smooth/<eidolon>-canvas.webp` and `reduced-and-saver-canvas.webp`: 0.631 over this.
+
+Three things found on the way and kept as they were: a strip that waited comes on fully solid whatever its own opacity (the smoke
+is not see-through, nor the firestorm); the smoke and embers are cut at once when the call goes (measured on the page: the
+stylesheet's 1.1 s fade never took hold); with reduced motion a flare stands on its first frame.
+
+**Known differences.** On a screen sharper than 2x the strips are drawn at 2x and scaled (they were at the screen's own
+sharpness). A glow's width does not follow a strip's own small scaling (a tile's fire at 0.7 to 1.05 of its size has the glow of
+one at 1). The staged glow sheet's 3 px blur is left out (it is a quarter-size sheet shown smoothed already).
+
+## Before and after
+
+As above: headless, software renderer, 4x CPU, 393x852, one run each, against 0.631 (which has EIDOLON-SMOOTH's first fixes).
+
+| Eidolon | elements at most | style work in a call | elements a style pass | frame, mean | 95th | worst |
+| --- | --- | --- | --- | --- | --- | --- |
+| Askel | 230 → 78 | 5.0 → 3.5 s | 185 → 120 | 206 → 213 ms | 300 → 333 | 533 → 450 |
+| Nivra | 262 → 84 | 5.1 → 2.9 | 195 → 105 | 210 → 189 | 350 → 350 | 767 → 450 |
+| Gorm | 262 → 83 | 4.3 → 2.6 | 180 → 92 | 182 → 158 | 317 → 267 | 617 → 550 |
+| Voltara | 258 → 108 | 4.7 → 2.5 | 191 → 104 | 201 → 174 | 317 → 250 | 633 → 467 |
+| Aurelan | 225 → 84 | 5.1 → 2.7 | 194 → 106 | 208 → 152 | 333 → 233 | 933 → 500 |
+| Vaelkhar | 265 → 86 | 4.6 → 2.4 | 200 → 86 | 172 → 144 | 300 → 250 | 733 → 500 |
+
+The board's own draws a frame are as they were (19 to 41 in a call). Style work is down by a third to a half, the worst frame by
+a tenth to nearly a half; Askel's mean frame is no better (213 against 206, inside one run's noise). The 2.4 to 3.5 s of style
+left is mostly the fight's own HUD (its rows are restyled every frame, call or no call), not the call. On this machine the 2D
+canvases are drawn by the processor, which a phone's graphics card does: the frame times here undersell or oversell that, and
+nothing was measured on a phone.
+
+## The fighters' sheets
+
+`render/texReadyRules.ts` (`fighterSheets`, `regroup`), `texReady.ts` (`keepGroup`): each fighter's sheet and its view from behind
+are among the kept sheets, named afresh for each fight (the last fight's are let go). A fighter turning its back for the first
+time no longer has that sheet handed to the graphics card mid-fight. Memory: about 2.1 MB a sheet; five heroes and four kinds of
+foe with their views from behind are 18 sheets, 38 MB, all of which the fight would come to hold anyway once each had turned. Not
+covered: a fighter that arrives mid-fight (a summon, a hero's other form): its sheet still goes up when it is first drawn.
