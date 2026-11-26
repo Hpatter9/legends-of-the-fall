@@ -18,6 +18,7 @@ import { cloneBoard } from './chain';
 import { weatherOf } from './weather';
 import type { LayoutId } from './layouts';
 import { twistBoard, type TwistFx } from './twists';
+import { trialHurt, type TrialFight } from './trialRules';
 import { firstStep, walkFrom } from './path';
 import { mixSeed, Rng } from './rng';
 import { standDecide } from './standAi';
@@ -500,6 +501,8 @@ export interface Battle {
   perk?: PerkState;
   /** ARMY-WEAKNESS: the army this wave is of (an army run's), whose weaknesses and resistances its foes keep (`armyWeakness.ts`). */
   foeArmy?: string;
+  /** WEEKLY-TRIAL: the week's rules on the fight's blows (`trialRules.ts`); absent outside the trial. */
+  trial?: TrialFight;
   /** How long a fallen hero lies before a life raises it, when not `REVIVE_MS` (Support III's Rallying Cry). */
   reviveMs?: number;
   /** Time still to hold the fight for a boss changing form (ms); nothing moves while it runs down. */
@@ -665,6 +668,8 @@ export interface Stage {
   bonds?: Record<string, number>;
   /** ARMY-WEAKNESS: the army an army run's wave is of, whose weaknesses and resistances the fight keeps (`armyWeakness.ts`). */
   foeArmy?: string;
+  /** WEEKLY-TRIAL: the week's rules on the fight's blows (`trialRules.ts`); none outside the trial. */
+  trial?: TrialFight;
   /** Whether Duchess the goat may join (`duchessFight.ts`): rolled on the seed, always, or never (the default, so a fight made outside a run never has her). */
   duchess?: DuchessWish;
   /** A layout to lay the land in (`layouts.ts`), instead of the seed's own pick; ignored when `board` is given. */
@@ -751,6 +756,7 @@ export function startBattle(seed: number, band: string | readonly string[] = 'sk
   if (stage.lives !== undefined && LIVES_RULE.on) b.lives = fightLives(stage.lives, stage.vigil);
   if (stage.bonds && Object.keys(stage.bonds).length) b.bondSnap = stage.bonds;
   if (stage.foeArmy) b.foeArmy = stage.foeArmy;
+  if (stage.trial) b.trial = stage.trial;
   // the foes: fighters in the front row (v = DEPLOY_ROWS - 1), shooters at the back, by a side stream of the seed; each takes the
   // higher ground its row offers, and a shooter will take a perch in a row nearer the front for it
   const rng = new Rng(mixSeed(seed, 0xf0e5));
@@ -1238,6 +1244,9 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   // (ARMY-WEAKNESS: the army's foes take more from a class it is weak to, less from one it resists; never in a duel, `armyWeakness.ts`)
   const match = b.foeArmy && by !== to ? fightMatch(b, creditOf(b, by), to) : undefined;
   if (match) dmg = Math.max(1, Math.round(dmg * matchMult(match)));
+  // (WEEKLY-TRIAL: the week's rules: a class's harder blows, and a blow turned back on its striker, `trialRules.ts`; none outside the trial)
+  let back = 0;
+  if (b.trial && by !== to) ({ dmg, back } = trialHurt(b.trial, by, creditOf(b, by), to, dmg, src, splash));
   // (the Nemesis War: a nemesis's traits and weaknesses, on a blow it deals or takes, `nemesisTraits.ts`)
   if ((to.nem || by.nem) && by !== to) {
     dmg = nemHurt(b, by, to, creditOf(b, by), dmg, src, splash, out);
@@ -1284,6 +1293,7 @@ export function hurt(b: Battle, by: Unit, to: Unit, dmg: number, heavy: boolean,
   mythicWound(to, Math.min(to.hp, dmg));
   to.hp = Math.max(0, to.hp - dmg);
   to.hurtAt = b.t;
+  if (back > 0 && by.alive && by.side !== to.side) hurt(b, to, by, back, false, true, out, 'skill');
   let killed = to.hp <= 0;
   // (RELICS-3: the Mane-Gold Thread rescues the first hero to fall low)
   if (!killed && to.side === 'hero' && b.relics?.hooks?.rescue) relicHurt(b, to, out);

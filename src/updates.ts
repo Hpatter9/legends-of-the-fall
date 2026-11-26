@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.625.0',
+    date: '2026-11-25',
+    title: 'The Weekly Trial',
+    notes: ['A new trial every Monday: seven waves against one army, under rules that change each week. One try a day; your best counts.', 'Reach 3, 5 or all 7 waves for crowns, stones and a Trial Laurel, with titles to earn.', 'If the week\'s rules leave you short, heroes are lent to you for the trial.'],
+  },
+  {
     version: '0.624.0',
     date: '2026-11-25',
     title: 'The Hall of Heroes',

@@ -109,6 +109,11 @@ import { hpShare } from './sim/health';
 import { Home } from './home';
 import { Party } from './party';
 import { dailyBonus, dailyCleared, dailyInProgress, modeNote, settleDaily, settleRun, startDaily, type DailyPay } from './sim/modes';
+import { TRIAL_TIERS, dropLoanXp, isLent, lentStanding, markTrialSeen, settleTrial, startTrial, trialCleared, trialInProgress, trialWeekOf } from './sim/trial';
+import { mergedRule, trialWeek, TRIAL_WAVES } from './sim/trialRules';
+import { openTrialCard, showTrialBanner, showTrialRewards } from './trialView';
+import { trialDayKey } from './trialClock';
+import { offerPageTutorials as offerTrialTutorial } from './tutorialView';
 import { dailyCrowns, DAILY_WAVES } from './sim/daily';
 import { showDailyStart } from './dailyView';
 import { showBuilt } from './builtCard';
@@ -562,7 +567,7 @@ class Game {
         const r = loadRun();
         if (!r || r.over) return null;
         const army = armyOfRun(r);
-        const label = army ? `${army.name} · wave ${r.stage}/${army.waves.length}` : r.mode?.kind === 'daily' ? `daily · wave ${r.stage}/${DAILY_WAVES}` : r.mode?.kind === 'tower' ? `tower · act ${r.tower?.act ?? 1}, floor ${r.stage}` : `stage ${r.stage}`;
+        const label = army ? `${army.name} · wave ${r.stage}/${army.waves.length}` : r.mode?.kind === 'daily' ? `daily · wave ${r.stage}/${DAILY_WAVES}` : r.mode?.kind === 'trial' ? `trial · wave ${r.stage}/${TRIAL_WAVES}` : r.mode?.kind === 'tower' ? `tower · act ${r.tower?.act ?? 1}, floor ${r.stage}` : `stage ${r.stage}`;
         return { stage: r.stage, gold: r.gold, army: army?.id, label };
       },
       onContinue: () => this.resume(),
@@ -613,6 +618,24 @@ class Game {
           this.startRun(startDaily(this.meta, todayKey()));
           if (auto) this.beginAuto({ daily: todayKey() }, auto);
         }, () => this.home.open());
+      },
+      onTrial: () => {
+        // (WEEKLY-TRIAL: the card; the week's pip goes once it is seen, and its tutorial is told the first time)
+        const day = trialDayKey();
+        const week = trialWeekOf(day);
+        markTrialSeen(this.meta, week);
+        saveMeta(this.meta);
+        const going = trialInProgress(loadRun(), week);
+        openTrialCard(this.meta, day, {
+          fight: () => {
+            const run = startTrial(this.meta, day);
+            if (run) this.startRun(run);
+            else this.home.open();
+          },
+          ...(going ? { resume: () => this.resume() } : {}),
+          onClose: () => this.home.open(),
+        });
+        offerTrialTutorial('trial');
       },
       onTower: () => this.openStand(),
       onCalamity: () => this.openMode('calamity'),
@@ -3603,9 +3626,11 @@ class Game {
     if (this.run.local) return { ...localBoost(h, this.run), carry: hpShare(this.run, h.id) };
     // (GUEST-HERO: a guest fights as `guestBoost` says: its own lasting strength when the player owns it, else the party's level and rank)
     if (h.guest) return { ...guestBoost(this.run, this.meta, h), carry: hpShare(this.run, h.id) };
+    // (WEEKLY-TRIAL: a hero the trial lent fights at the loan's level and rank, `lentStanding`; the save has nothing lasting for it)
+    const lent = lentStanding(this.run, h.kind);
     // (RUN-GEAR: the kit as it fights this run, the found pieces in their slots and fresh from the field)
     // (DEPTH-BUILD: a mentor's legacy perk, from the run's snapshot, `legacy.ts`)
-    return journeyBoost(this.run.tower?.journey, h.id, legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, heroRank(this.meta, h.kind), levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) }));
+    return journeyBoost(this.run.tower?.journey, h.id, legacyBoost(this.run.legacy, h.kind, { ...boostOf(h, lent?.rank ?? heroRank(this.meta, h.kind), lent?.level ?? levelOfKind(this.meta, h.kind), runKitStats(this.meta, this.run, h.kind, heroStats)), ...(awakenedOf(this.meta, h.kind) ? { awaken: awakenedOf(this.meta, h.kind) } : {}), carry: hpShare(this.run, h.id) }));
   }
 
   /** Begin a tower run: its map first, the fights as they are picked. */
@@ -3670,7 +3695,8 @@ class Game {
     // (a calamity hires from every hero owned; a tower run's pool is the party)
     if (this.run.mode?.kind === 'calamity') this.run.pool = [...this.meta.unlocked];
     // (a quest battle keeps the party picked for it: QUEST-BATTLES)
-    else if (this.run.mode?.kind !== 'daily' && this.run.mode?.kind !== 'quest') this.run.pool = [...this.meta.party];
+    // (WEEKLY-TRIAL: a trial keeps the heroes its week admits)
+    else if (this.run.mode?.kind !== 'daily' && this.run.mode?.kind !== 'quest' && this.run.mode?.kind !== 'trial') this.run.pool = [...this.meta.party];
     // (SECRET-HEROES: the heroes still secret are never offered as a guest or a Calamity hire)
     const hide = secretsOf(this.meta);
     if (hide.length) this.run.hide = hide;
@@ -3773,6 +3799,18 @@ class Game {
     // (a won battle's victory music ends with its results)
     endVictory();
     // (an army's last boss has fallen: the next army's unlock moment, if it opened one, then the armies)
+    // (WEEKLY-TRIAL: a trial run that has ended goes home, and its reward card shows what it paid this week)
+    if (this.run.over && this.run.mode?.kind === 'trial') {
+      this.closeResult();
+      const r = this.run;
+      const got = trialCleared(r);
+      this.home.open(r.cleared ? 'Weekly Trial cleared! A Trial Laurel is yours.' : `Weekly Trial over at wave ${got + 1}/${TRIAL_WAVES}. Another try tomorrow.`);
+      const paid = (r.trialPaid ?? []).map((w) => TRIAL_TIERS.find((t) => t.waves === w)!).filter(Boolean);
+      // (the heroes it lent are named, with "Summon to keep", which opens Recruit)
+      const lent = r.mode?.kind === 'trial' ? (r.mode.loan?.kinds ?? []) : [];
+      if (paid.length || lent.length) showTrialRewards(this.meta, paid, !!r.cleared, () => undefined, lent, () => this.gacha.open());
+      return;
+    }
     if (this.run.cleared && this.run.mode?.kind === 'daily') {
       this.closeResult();
       return this.home.open(this.dailyPay?.counted ? 'Daily cleared! The daily chest is on the cart.' : 'Daily cleared in practice.');
@@ -3939,6 +3977,10 @@ class Game {
       ? won
         ? { title: 'The Warchief falls!', tone: 'won' as const, line: `The Dark Council’s Muster is broken in ${run.recap?.fights ?? 0} fights` }
         : { title: 'The Muster holds', tone: 'lost' as const, line: `The Warchief’s Council stopped you at wave ${run.best} of 3. Losing costs nothing: call the Muster again.` }
+      : run.mode?.kind === 'trial'
+      ? won
+        ? { title: 'Trial cleared!', tone: 'won' as const, line: `${mergedRule(run.mode.week).name}: all ${TRIAL_WAVES} waves in ${run.recap?.fights ?? 0} fights` }
+        : { title: `Trial over · wave ${trialCleared(run) + 1}/${TRIAL_WAVES}`, tone: 'lost' as const, line: `${mergedRule(run.mode.week).name}: ${trialCleared(run)} waves cleared` }
       : daily
       ? won
         ? { title: 'Daily cleared!', tone: 'won' as const, line: `The ${this.dailyBossOf(run)} has fallen in ${run.recap?.fights ?? 0} fights` }
@@ -4442,7 +4484,7 @@ class Game {
 
   /** A hero's level: its own in a run that levels its heroes, else its kind's lasting level. */
   private levelOf(h: Owned): number {
-    return this.run.local ? heroLevel(h) : h.guest ? guestLevel(this.run, this.meta, h) : levelOfKind(this.meta, h.kind);
+    return this.run.local ? heroLevel(h) : h.guest ? guestLevel(this.run, this.meta, h) : this.run.mode?.kind === 'trial' && this.run.mode.loan?.kinds.includes(h.kind) ? this.run.mode.loan.level : levelOfKind(this.meta, h.kind);
   }
 
   /** The bench: a card for every hero owned, rebuilt when the roster changes. */
@@ -4532,6 +4574,8 @@ class Game {
       if (castHero) card.append(Object.assign(document.createElement('span'), { className: 'questLock', title: `${heroName(h.kind)} must fight in this quest`, innerHTML: QUEST_LOCK }));
       // (GUEST-HERO: a guest wears a GUEST badge, and is not the party's to recycle)
       if (h.guest) card.append(Object.assign(document.createElement('span'), { className: 'guestMark', textContent: 'Guest', title: `${heroName(h.kind)} is a guest: a sixth hero for this run only` }));
+      // (WEEKLY-TRIAL: a hero the trial lent is marked so; summoning one keeps it)
+      if (isLent(this.run, h.kind)) card.append(Object.assign(document.createElement('span'), { className: 'guestMark loanMark', textContent: 'On loan', title: `${heroName(h.kind)} is on loan for this trial: summon one to keep it` }));
       if (this.run.roster.length > 1 && this.run.rift?.starter !== h.id && !isCastHero(this.run, h) && !h.guest) card.append(sell);
       card.title = `${def.role} · Power ${powerText(powerOf(h.kind, this.boostFor(h)))}`;
       card.addEventListener('pointerdown', (e) => {
@@ -4849,9 +4893,11 @@ class Game {
       else anvil();
       // (a daily pays by wave and its boss a chest; a practice run pays nothing)
       this.dailyPay = daily ? settleDaily(this.meta, run, { won, stage }) : null;
+      // (WEEKLY-TRIAL: the week's reward tiers this wave reached for the first time; its card comes at the run's end)
+      const trialPay = run.mode?.kind === 'trial' ? settleTrial(this.meta, run) : null;
       // (a quest battle pays no crowns by the wave: its quest pays, QUEST-BATTLES)
       const quest = run.mode?.kind === 'quest';
-      this.crownGain = this.pay ? this.pay.crowns : this.dailyPay ? this.dailyPay.crowns : quest ? 0 : earn(this.meta, stage, won, rating.stars);
+      this.crownGain = this.pay ? this.pay.crowns : this.dailyPay ? this.dailyPay.crowns : trialPay ? trialPay.crowns : quest ? 0 : earn(this.meta, stage, won, rating.stars);
       if (run.tower) run.tower.crowns += this.crownGain;
       if (run.tower && run.over) settleTower(this.meta, run);
       // (RUN-GEAR: a run that has ended brings its finds home, once: worn for real, to the stash, the cart or sold)
@@ -4907,8 +4953,8 @@ class Game {
       const fielded = b.units.filter((u) => u.side === 'hero' && u.owner === undefined && !UNITS[u.def].summon && this.meta.unlocked.includes(u.def)).map((u) => u.def);
       // (HERO-RISE: the fielded heroes of the save as they stood before this wave's XP and skill use, for the plates over them after)
       const riseBefore = new Map(run.local ? [] : [...new Set(fielded)].map((k) => [k, shotOfHero(this.meta, k, () => startBattle(1, []))] as const));
-      // (HALL-OF-HEROES: in an army run, a rested hero earns half again, `restedXp`)
-      const ups = own ? own.ups : gainXp(this.meta, (run.mode?.kind === 'army' ? (x: Record<string, number>) => restedXp(this.meta, x) : (x: Record<string, number>) => x)(mentoredXp(this.meta, { ...splitGuestXp(run, gains).lasting, ...bench })));
+      // (HALL-OF-HEROES: in an army run, a rested hero earns half again, `restedXp`; WEEKLY-TRIAL: a lent hero earns nothing lasting, `dropLoanXp`)
+      const ups = own ? own.ups : gainXp(this.meta, (run.mode?.kind === 'army' ? (x: Record<string, number>) => restedXp(this.meta, x) : (x: Record<string, number>) => x)(mentoredXp(this.meta, dropLoanXp(run, { ...splitGuestXp(run, gains).lasting, ...bench }))));
       this.noteRecap(gains, ups.filter((u) => !(u.kind in bench)), won);
       // (QUEST-COMPLETE 2: a quest battle's record, once its last fight is in the run's books)
       if (won && noteBattleHow(this.meta, run)) saveMeta(this.meta);
@@ -5054,7 +5100,7 @@ class Game {
       const daily = run.mode?.kind === 'daily';
       const practice = run.mode?.kind === 'daily' && run.mode.practice;
       const qrun = run.mode?.kind === 'quest';
-      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : qrun ? 'Quest battle won!' : run.mode?.kind === 'muster' ? 'The Warchief falls!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
+      $('banner').textContent = daily && run.cleared ? 'Daily cleared!' : daily && run.over ? 'Daily over' : run.cleared ? (cal ? 'Calamity ended!' : qrun ? 'Quest battle won!' : run.mode?.kind === 'muster' ? 'The Warchief falls!' : run.mode?.kind === 'trial' ? 'Trial cleared!' : 'Army defeated!') : this.bossDown ? `${cal ? 'Map' : 'Act'} ${run.tower!.act - 1} cleared!` : b.phase === 'won' ? (run.tower ? (cal ? 'Spot cleared!' : 'Floor cleared!') : 'Victory!') : 'Defeat';
       $('banner').className = `${b.phase}${daily ? ' daily' : ''}`;
       // (a daily's fall names the wave under its heading: "Daily over · wave 6/10")
       // (WAVE-RECAP: a short card's heading names the wave and how it went, "Wave 4 of 15 won", bar the end of a cleared run)
@@ -5068,6 +5114,8 @@ class Game {
       $('summary').textContent =
         b.phase === 'won'
           ? `${run.tower && !cal ? `Floor ${run.stage - 1} done · ` : ''}${left} of ${heroesPlaced(b)} heroes standing · +${this.gain} gold · +${this.crownGain} crowns${share}${clear} · ${clock(b.t)}${run.found?.length ? ` · found: ${run.found.join(', ')}` : ''}`
+          : run.mode?.kind === 'trial'
+            ? `The trial holds at wave ${run.best} of ${TRIAL_WAVES} · ${trialCleared(run)} waves cleared · your best this week counts`
           : daily
             ? `The ${this.dailyBossOf(run)} holds at wave ${run.best} of ${DAILY_WAVES} · ${dailyCleared(run)} waves cleared · ${practice ? 'practice, no reward' : `+${dailyCrowns(dailyCleared(run))} crowns`}`
           : run.tower
@@ -5114,6 +5162,8 @@ class Game {
   private showTheme(): void {
     const t = this.theme();
     if (t && this.b.phase === 'deploy') showThemeBanner(t, kindsOf(this.b.units), isBossRun(this.run));
+    // (WEEKLY-TRIAL: the week's rules over the board, in the deploy and through the fight)
+    if (this.run.mode?.kind === 'trial') showTrialBanner(this.run.mode.week);
   }
 
   /** The trait strip: the traits of the heroes placed, lit when their bonus is on; a tap says what one does. */
@@ -5130,7 +5180,7 @@ class Game {
     // (DEPTH-BUILD: the bonded and rival pairs placed, from the run's snapshot, as a Bonds chip at the end)
     const pairs = placedPairs(this.run.bonds, kindsOf(this.b.units));
     // (ARMY-WEAKNESS: the army faced leads the strip, its weaknesses and resistances counted among the heroes placed)
-    const facing = this.run.mode?.kind === 'army' ? this.run.mode.army : undefined;
+    const facing = this.run.mode?.kind === 'army' ? this.run.mode.army : this.run.mode?.kind === 'trial' ? trialWeek(this.run.mode.week).army : undefined;
     const chip = deployChip(facing, kindsOf(this.b.units), heroName);
     const key = counts.map((c) => `${c.trait.id}${c.count}`).join() + this.traitPick + pairs.map((p) => p.key).join() + (chip ? chip.head + chip.line : '');
     if (strip.dataset.key === key) return;

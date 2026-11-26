@@ -24,7 +24,8 @@ import { hornHeld } from './sim/warHorn';
 export type TutorialMoment = 'deploy' | 'fight';
 /** The pages a tutorial can wait for instead, the first time each is opened. */
 /** (IAP: 'shop', the Shop's first opening, only in a build that has one: the Play app) */
-export type TutorialPage = 'tavern' | 'recruit' | 'council' | 'armies' | 'shop';
+/** (WEEKLY-TRIAL: 'trial', the Weekly Trial's card the first time it opens) */
+export type TutorialPage = 'tavern' | 'recruit' | 'council' | 'armies' | 'shop' | 'trial';
 
 export interface Tutorial {
   id: string;
@@ -289,6 +290,21 @@ export const TUTORIALS: readonly Tutorial[] = [
     point: '.asMatch',
     open: () => ARMY_WEAKNESS.on,
     when: 'The War Room opens',
+    newer: true,
+  },
+  {
+    // (WEEKLY-TRIAL, docs/notes/weekly-trial.md: told the first time the Trial's card opens; `newer`, so a save from before sees it once)
+    id: 'weeklyTrial',
+    title: 'The Weekly Trial',
+    lines: [
+      'A new trial every Monday: seven waves against one army, under rules that change each week.',
+      'One try a day, and your best of the week counts. Rewards at 3, 5 and all 7 waves, paid once a week.',
+      'Each week favours some classes and may bar others: a reason to build a second team.',
+    ],
+    art: 'ui/buttons/trophies.webp',
+    at: 'trial',
+    open: () => true,
+    when: 'The Weekly Trial opened',
     newer: true,
   },
   {
