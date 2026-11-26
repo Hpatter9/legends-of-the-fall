@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.627.0',
+    date: '2026-11-25',
+    title: 'A sturdier app build',
+    notes: ['The Android app\'s build now names any missing signing setting and retries slow downloads.'],
+  },
+  {
     version: '0.626.0',
     date: '2026-11-25',
     title: 'See what new gear does',

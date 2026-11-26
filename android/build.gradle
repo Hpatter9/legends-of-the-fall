@@ -1,9 +1,14 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
+// AAB-FIX (docs/notes/aab-fix.md): Maven Central answers GitHub's runners with 429 Too Many Requests at busy times, which failed a
+// build. Google's public mirror of Maven Central (the same artifacts) is tried first, Maven Central itself after it.
+ext.mavenCentralMirror = 'https://maven-central.storage-download.googleapis.com/maven2/'
+
 buildscript {
     
     repositories {
         google()
+        maven { url 'https://maven-central.storage-download.googleapis.com/maven2/' }
         mavenCentral()
     }
     dependencies {
@@ -18,8 +23,14 @@ buildscript {
 apply from: "variables.gradle"
 
 allprojects {
+    // (the mirror first for every module, the plugins' own too: Capacitor's and RevenueCat's build files name mavenCentral() after it, for
+    //  their build scripts and for their libraries)
+    buildscript.repositories {
+        maven { url rootProject.ext.mavenCentralMirror }
+    }
     repositories {
         google()
+        maven { url rootProject.ext.mavenCentralMirror }
         mavenCentral()
     }
 }
