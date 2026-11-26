@@ -44,5 +44,8 @@ await page.evaluate(() => window.__game.home.openRoster());
 await page.waitForTimeout(800);
 await page.evaluate(() => [...document.querySelectorAll('button')].find((b) => /Hall/.test(b.textContent) && b.offsetParent)?.click());
 await shot('hall');
+// (HALL-LIGHT: the Hall scrolled to its heroes, their portraits)
+await page.evaluate(() => document.querySelector('.hallHeroes')?.scrollIntoView({ block: 'start' }));
+await shot('hall-heroes');
 await browser.close();
 srv.close();
