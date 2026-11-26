@@ -367,8 +367,22 @@ body .sbSlot { min-height: 44px; }
 /* (and the screens a full-screen reveal covers, the chest's or a hero's first summoning, are not drawn under it: the phone has the
    memory for the reveal alone. A page that sets its own visibility, the home tab showing, is hidden too. An Eidolon's binding
    fades out at its end, so what it covers comes back as it starts to fade) */
-body:has(> :is(.chestShow, .tarotReveal, .ebLayer:not(.out))) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView),
-body:has(> :is(.chestShow, .tarotReveal, .ebLayer:not(.out))) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView) * { visibility: hidden !important; }
+body:has(> :is(.chestShow, .ebLayer:not(.out))) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView),
+body:has(> :is(.chestShow, .ebLayer:not(.out))) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView) * { visibility: hidden !important; }
+/* (SUMMON-SMOOTH: a hero's first summoning hides the same screens, but not by a rule on every element in them, and not by asking
+   the body what its children are. That rule gave each of the page's thousands of elements a new style as a reveal opened and again
+   as it closed, 90 to 180 ms of a slow phone's time each way, ten times over in a ten-stone draw; and `body:has(> …)` is asked
+   again whenever anything is put on the body or taken off it. The reveal stands in a holder of its own (`#revealHost`,
+   summonTarot.ts) and says it is up by a class on the body, which is a new style for these few screens alone; and
+   `content-visibility: hidden` leaves their contents out of style, layout and paint in one step. A browser without it hides every
+   element, as before.) */
+@supports (content-visibility: hidden) {
+  body.revealUp > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView) { visibility: hidden !important; content-visibility: hidden; }
+}
+@supports not (content-visibility: hidden) {
+  body.revealUp > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView),
+  body.revealUp > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView) * { visibility: hidden !important; }
+}
 /* (MENU-GLITCH: the same for the hero's full artwork, a modal dialog over the hero sheet) */
 body:has(> dialog.heroArtViewer[open]) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView),
 body:has(> dialog.heroArtViewer[open]) > :is(#stage, #home, #top, #panel, #gacha, #party, .stallView, .shopView) * { visibility: hidden !important; }

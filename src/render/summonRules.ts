@@ -293,3 +293,23 @@ export const flourishAt = (t: number, clip: ShowClip): number => (t < 0 || t >= 
 
 /** How much a hero's show weighs once decoded (bytes: four to a pixel of every sheet), for the memory budget. */
 export const decodedBytes = (sheets: readonly { w: number; h: number }[]): number => sheets.reduce((n, s) => n + s.w * s.h * 4, 0);
+
+// ---- SUMMON-SMOOTH (docs/notes/summon-smooth.md): the same show, spread so a slow phone keeps its frames ----
+
+/** "Reveal all" turns the cards one after another this far apart, not all in one step: ten cards in under a second, and the page
+ *  never has ten turns and ten flourishes to begin in the same frame. */
+export const REVEAL_ALL_GAP_MS = 90;
+/** When each of `n` cards still face down turns after "Reveal all" is pressed (ms). */
+export const revealAllTimes = (n: number): number[] => Array.from({ length: Math.max(0, n) }, (_, i) => i * REVEAL_ALL_GAP_MS);
+
+/** How many card flourishes play at once: the rest wait their turn (`flourishWait`), so every card still has its flourish. Fewer on
+ *  battery saver. */
+export const FLOURISH_CAP = { full: 5, saver: 3 } as const;
+export const flourishCap = (saver: boolean): number => (saver ? FLOURISH_CAP.saver : FLOURISH_CAP.full);
+
+/** How long a flourish asked for at `now` waits before it starts, given when each flourish already playing or waiting ends (`ends`,
+ *  ms) and how many may play at once: none while there is room, else until enough of them are over. */
+export function flourishWait(ends: readonly number[], now: number, cap: number): number {
+  const live = ends.filter((e) => e > now).sort((a, b) => a - b);
+  return live.length < cap ? 0 : live[live.length - cap] - now;
+}

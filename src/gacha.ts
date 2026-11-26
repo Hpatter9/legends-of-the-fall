@@ -12,9 +12,9 @@ import { closest, haveOf, nearestBegun, needOf, ownedCount } from './sim/unlock'
 import { pityAt } from './sim/unlockRules';
 import { isSecret } from './sim/secretHeroes';
 import { secretFigure } from './secretView';
-import { portrait } from './render/sheets';
-import { heroCard, pullInfo, queueReveal, revealUnseen, tarotBack, tarotFace } from './summonTarot';
-import { cardTimes, drawOrder, HERO_ONWARD_MS, shardTotals } from './render/summonRules';
+import { portrait, sheetDecoded } from './render/sheets';
+import { heroCard, pullInfo, queueReveal, revealUnseen, tarotBack, tarotFace, warmReveal } from './summonTarot';
+import { cardTimes, drawOrder, HERO_ONWARD_MS, revealAllTimes, shardTotals } from './render/summonRules';
 import { cardFlourish, loadSummonFx } from './summonFx';
 import { modesHidden } from './sim/hiddenModes';
 import { toolsOn } from './toolHooks';
@@ -46,7 +46,14 @@ export class Gacha {
     $('gachaClose').addEventListener('click', () => this.close());
     $('rates').textContent = ratesText();
     // (turns every card at once; the joins' reveals follow as usual)
-    $('revealAll').addEventListener('click', () => this.revealCards.forEach(card => card.click()));
+    // (SUMMON-SMOOTH: "Reveal all" turns the cards still face down one after another, a moment apart (`revealAllTimes`), not all in
+    // one step; the timers are the draw's own, so they go when it does)
+    $('collectionPanel').addEventListener('toggle', () => { if (($('collectionPanel') as HTMLDetailsElement).open) this.drawCollection(); });
+    $('revealAll').addEventListener('click', () => {
+      const down = this.revealCards.filter(card => !card.parentElement?.classList.contains('up'));
+      $('revealAll').hidden = true;
+      revealAllTimes(down.length).forEach((ms, i) => (ms ? this.revealTimers.push(window.setTimeout(() => down[i].click(), ms)) : down[i].click()));
+    });
   }
 
   open(): void {
@@ -91,6 +98,19 @@ export class Gacha {
     }
     $('pity').textContent = pityLine(m);
     this.nearRow();
+    // (SUMMON-SMOOTH: the collection is a portrait for every hero there is, drawn from every hero's sheet; it was drawn afresh at
+    // each refresh, so at the start and the end of every draw, with its panel shut and no one to see it: most of the two seconds a
+    // ten-stone draw stood still for on a slow phone. It is drawn when its panel is open, or as it is opened)
+    this.collectionStale = true;
+    if (($('collectionPanel') as HTMLDetailsElement).open) this.drawCollection();
+  }
+
+  private collectionStale = true;
+  /** The hero collection's grid, drawn again only when something may have changed since it was last drawn. */
+  private drawCollection(): void {
+    if (!this.collectionStale) return;
+    this.collectionStale = false;
+    const m = this.meta;
     const list = $('collection');
     list.replaceChildren();
     for (const kind of ALL_HEROES) {
@@ -187,7 +207,7 @@ export class Gacha {
     if (!got) return;
     saveMeta(this.meta);
     this.busy = true;
-    this.refresh();
+    // (SUMMON-SMOOTH: `reveal` ends on the page's refresh; it was done here too, twice over in the turn the draw begins in)
     this.reveal(got);
   }
 
@@ -245,6 +265,8 @@ export class Gacha {
       // (a moment to read the spread and its totals, then each new hero in turn)
       this.revealTimers.push(window.setTimeout(() => void this.playJoins(got, batch), order.heroesAfter));
     };
+    // (SUMMON-SMOOTH: and the new heroes' own sheets and paintings are decoded while the cards are read, ahead of their reveals)
+    for (const i of order.heroes) warmReveal(got[i].kind);
     for (const p of shards) {
       const res = document.createElement('div');
       res.className = `tarotResult${p.lucky ? ' lucky' : ''}${got.length > 1 && p.crowns ? ' dupe' : ''}`;
@@ -259,11 +281,21 @@ export class Gacha {
       back.append(tarotBack());
       const front = document.createElement('div');
       front.className = 'tarotSide front';
-      front.append(tarotFace(p.kind, px));
+      // (SUMMON-SMOOTH: the face is drawn from the hero's sheet once that is decoded, off the page's own thread; the card lies face
+      // down meanwhile, as it does anyway, and a turn asked for before its face is in waits for it)
+      let faced = false;
+      const ready = sheetDecoded(UNITS[p.kind].sheet).then(() => {
+        front.append(tarotFace(p.kind, px));
+        faced = true;
+      });
       turn.append(back, front);
       res.append(turn, pullInfo(this.meta, p));
       const up = (): void => {
         if (res.classList.contains('up') || batch !== this.batch) return;
+        if (!faced) {
+          void ready.then(up);
+          return;
+        }
         res.classList.add('up');
         // (SUMMON-SHOW: the card's own flourish as it turns; reduced motion has the fade alone)
         if (!matchMedia('(prefers-reduced-motion: reduce)').matches) cardFlourish(turn);
@@ -314,7 +346,10 @@ export class Gacha {
       }
       row.append(joinedCard(this.meta, p, single ? 230 : 110));
       // (the new allies sit below the shards and their totals: brought into view as each joins)
-      row.scrollIntoView?.({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      // (SUMMON-SMOOTH: in the next frame, with that frame's own layout: asked here, in the turn the reveal closes in, it had the
+      // whole page laid out at once, the screens the reveal hid just back)
+      const into = row;
+      requestAnimationFrame(() => into.scrollIntoView?.({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }));
     }
     if (batch !== this.batch) return;
     this.busy = false;
@@ -330,6 +365,16 @@ export class Gacha {
       : `${got.length} cards drawn${fresh ? ` · ${fresh} new ${fresh === 1 ? 'ally' : 'allies'}` : ''}`;
     this.refresh();
   }
+}
+
+/** SUMMON-SMOOTH: a portrait that takes its place once its sheet is decoded (off the page's own thread): a blank of its size stands in
+ *  meanwhile. For what a draw builds before it is seen (the totals, hidden until the cards are turned): drawn at once, each was
+ *  a sheet decoded on the page's thread in the frame the draw began in. */
+function portraitSoon(sheet: string, px: number): HTMLElement {
+  const blank = document.createElement('span');
+  blank.style.cssText = `display:inline-block;width:${px}px;height:${px}px;flex:none`;
+  void sheetDecoded(sheet).then(() => blank.replaceWith(portrait(sheet, px)));
+  return blank;
 }
 
 /** A new hero's card in the spread once its reveal has played: its figure in the gold frame, its name and "Joined your company". */
@@ -367,7 +412,7 @@ function shardTotalsList(m: Meta, got: Pull[]): HTMLElement {
     }
     if (t.crowns) parts.push(`+${t.crowns} crowns`);
     what.textContent = parts.join(' · ');
-    li.append(portrait(UNITS[t.kind].sheet, 28), name, what);
+    li.append(portraitSoon(UNITS[t.kind].sheet, 28), name, what);
     if (t.joins) {
       const joins = document.createElement('em');
       joins.textContent = 'joins!';
