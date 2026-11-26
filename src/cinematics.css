@@ -33,7 +33,10 @@
 .scRow small { font: 400 12px/1.5 var(--body); font-weight: 400; color: var(--dim); overflow-wrap: anywhere; }
 .scRow button { flex: none; min-width: 72px; min-height: 40px; margin: 0; font: 400 12px var(--display); font-weight: 400; }
 /* (the heroes' and Duchess's passing remarks wait while a scene is up: they would float over the film) */
-body:has(#cutscene:not([hidden])) #quip { display: none !important; }
+/* (SUMMON-SMOOTH: `> #cutscene`, which is the body's own child. Asked of every descendant, this rule had the whole page given its
+   style anew whenever any element anywhere was shown or hidden by its `hidden` attribute: 1,400 elements, about 110 ms of a slow
+   phone's time, sixteen times through a ten-stone draw) */
+body:has(> #cutscene:not([hidden])) #quip { display: none !important; }
 /* UX-FIXES (the audit's #7): the film's words are 15-16 px, in a foot tied to the bottom of the picture */
 .csText { font-size: 15px; line-height: 1.5; }
 .csWho { font-size: 14px; }

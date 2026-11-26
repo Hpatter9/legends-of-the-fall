@@ -12,8 +12,8 @@ import { heroSeen, markHeroSeen, unseenHeroes } from './sim/heroesSeen';
 import { traitsOf, TRAITS } from './sim/traits';
 import { CLASS_OF, type StarterClass } from './sim/starter';
 import { auraOf } from './render/auraStyles';
-import { portrait } from './render/sheets';
-import { revealSprite } from './render/revealSprite';
+import { portrait, sheetDecoded } from './render/sheets';
+import { revealCrop, revealSprite } from './render/revealSprite';
 import { heroArtwork } from './heroArtwork';
 import { duck, hushSummon, play as playSfx } from './render/sound';
 import { SKIP_GUARD_MS } from './render/summonRules';
@@ -196,6 +196,35 @@ export function pullInfo(m: Meta, p: Pull): HTMLElement {
 
 const reducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/** SUMMON-SMOOTH: where a reveal stands: a holder of its own on the body, made once (it lays nothing out itself), so a reveal opening
+ *  and closing puts nothing on the body and takes nothing off it. The page's rules that ask the body what its children are
+ *  (`body:has(> …)`, pixel.css) were asked again at each, and every element under the screens they name was given its style anew.
+ *  The body says a reveal is up by its class `revealUp`. */
+function revealHost(): HTMLElement {
+  let host = document.getElementById('revealHost');
+  if (!host) {
+    host = el('div');
+    host.id = 'revealHost';
+    host.style.display = 'contents';
+    document.body.append(host);
+  }
+  return host;
+}
+
+/** SUMMON-SMOOTH: a hero's painting and battle sheet decoded ahead of its reveal (a draw knows who is coming while its cards are still
+ *  being read), so the reveal opens on pictures that are ready and does not decode them as it starts. The painting is kept for the
+ *  reveal to use; a few at most. */
+const warmed = new Map<string, HTMLImageElement>();
+export function warmReveal(kind: string): void {
+  const def = UNITS[kind];
+  if (!def || warmed.has(kind) || warmed.size >= 10) return;
+  // (and its sprite's crop found, a moment after the sheet is in, in a turn of its own)
+  void sheetDecoded(def.sheet).then(() => window.setTimeout(() => revealCrop(def.sheet), 0));
+  const art = heroArtwork(kind, true);
+  warmed.set(kind, art);
+  void art.decode?.().catch(() => undefined);
+}
+
 /** The first-time reveal of a hero: a full-screen scene over everything but a cinematic. A tap (after the first moments, so a
  *  double tap cannot pass it) goes to the hero in full view with its name; a tap then closes it, and the hero is marked seen.
  *  `hold` (the screenshot tools) stops the scene at a beat. `onward` (SUMMON-SHOW: a hero of a draw with another still to come) closes
@@ -223,7 +252,8 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   const burst = strip(a.row, 'burst', '240px', 'trBurst once');
   const ring = strip(a.row, 'circle', '200px', 'trRing');
   const halo = strip(a.row, 'glyph', '210px', 'trHalo');
-  const artwork = heroArtwork(kind, true);
+  const artwork = warmed.get(kind) ?? heroArtwork(kind, true);
+  warmed.delete(kind);
   artwork.className = 'trArtwork';
   // The art decodes during the charge; the battle sprite remains available if the illustration cannot load.
   void artwork.decode().catch(() => { artwork.hidden = true; });
@@ -249,7 +279,8 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
   root.append(rays, actor, heading, lead, stage, plate, flash, hint);
   // (CLOSE-SCREENS: a moment, laid over whatever is up; it is the player's to dismiss)
   const leave = openScreen('tarot', () => undefined, { kind: 'moment' });
-  document.body.append(root);
+  revealHost().append(root);
+  document.body.classList.add('revealUp');
   if (fx) {
     fx.fit(stage.clientWidth, stage.clientHeight);
     fx.start();
@@ -292,6 +323,7 @@ export function firstReveal(meta: Meta, kind: string, opts: { lucky?: boolean; h
       showcase.stop();
       fx?.stop();
       root.remove();
+      if (!revealHost().childElementCount) document.body.classList.remove('revealUp');
       leave();
       done();
     };
