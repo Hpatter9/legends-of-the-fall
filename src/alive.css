@@ -103,3 +103,15 @@
 
 /* (a home page not on show keeps its life paused: its cards' glows and motes run only while it can be seen) */
 .hmPage:not(.on) .ctCardDiorama::before, .hmPage:not(.on) .ctCardDiorama::after, .hmPage:not(.on) .heroCardMotes, .hmPage:not(.on) .heroCardHalo { animation-play-state: paused; }
+
+/* HEROES-STILL (docs/notes/heroes-still.md; the owner: "The heroes overview screens don't need a moving animation behind the art. It
+   slows the game down when scrolling there."): the Heroes tab's screens hold still. The tavern's room (its guests, the keeper, the hearth's
+   warmth, the dice and the steam), the roster's and the Hall's cards' motes, a hero page's halo and motes, and its atmosphere's currents and
+   drifting lights all rest where they start: the same pictures, nothing moving behind them. Its light layer is drawn once at rest
+   (`paintedTavern.ts`). A tap's press, a sheet opening, the upgrade chevrons and the plates still move. */
+.ptTavern .ptScene *,
+.heroRoster .hcard .heroCardMotes,
+.heroDetail .hpic .heroCardHalo,
+.heroDetail .hpic .heroCardMotes,
+.dossierAtmosphere::before,
+.dossierAtmosphere::after { animation: none !important; }

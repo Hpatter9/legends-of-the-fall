@@ -5,7 +5,8 @@
 //
 // Every layer shares one loop, which runs only while a layer is on the screen and the page is in sight: a layer scrolled away,
 // on a page that is shut, or in a hidden tab costs nothing. With reduced motion asked for, a layer is drawn once, its lights lit at
-// rest, and nothing moves; on a battery saver it draws at most thirty frames a second, with half the particles.
+// rest, and nothing moves; on a battery saver it draws at most thirty frames a second, with half the particles. A layer made `still`
+// (HEROES-STILL) is always drawn as with reduced motion: once, at rest.
 
 import { motionPlan, placeIn, type Fit, type MotionPlan } from './ambient';
 import { LifePainter, type Place } from './ambientPaint';
@@ -90,7 +91,7 @@ export class AmbientLayer {
     this.inView = e.some((x) => x.isIntersecting);
     this.placed ||= this.root.isConnected;
     if (this.placed && !this.root.isConnected) return this.dispose();
-    this.showing = this.inView && !!this.place;
+    this.showing = !this.still && this.inView && !!this.place;
     if (this.inView) this.paintStill();
     wake();
   });
@@ -101,6 +102,9 @@ export class AmbientLayer {
     url: string,
     private fit: Fit = { fit: 'fill' },
     cls = '',
+    /** HEROES-STILL: a layer that never moves: its light is painted at rest, as with reduced motion, and it never joins the loop (the
+     *  Heroes tab's tavern: the owner, "the heroes overview screens don't need a moving animation behind the art"). */
+    private readonly still = false,
   ) {
     hook();
     // (layers whose cards have been thrown away go now)
@@ -161,7 +165,7 @@ export class AmbientLayer {
     this.place = placeIn(this.base.width, this.base.height, im.naturalWidth, im.naturalHeight, this.fit);
     this.painter.layout(im, im.naturalWidth, im.naturalHeight, this.place);
     this.lit.layout(im, im.naturalWidth, im.naturalHeight, placeIn(w, h, im.naturalWidth, im.naturalHeight, this.fit));
-    this.showing = this.inView;
+    this.showing = !this.still && this.inView;
     this.paintStill();
     wake();
   }
@@ -187,6 +191,6 @@ export class AmbientLayer {
    *  reduced motion. */
   paintStill(): void {
     const p = plan();
-    this.paint(performance.now() / 1000, p.run ? p : { ...p, run: false });
+    this.paint(performance.now() / 1000, p.run && !this.still ? p : { ...p, run: false });
   }
 }
