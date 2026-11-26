@@ -7,7 +7,10 @@ import { gearText, SLOTS, type Gear } from './sim/gear';
 import { relicName, RELICS } from './sim/relics';
 import { setOf } from './sim/relicSets';
 import { openRelicCard } from './relicCard';
-import { equip, unequip, type Owned, type Run } from './sim/run';
+import { equip, heroOf, unequip, type Owned, type Run } from './sim/run';
+import type { Boost } from './sim/battle';
+import { shotOfBoost } from './gearRules';
+import { watchGear, type GearAnchor } from './gearPlates';
 import { equipBestRun, FIELD_BOOST, foundIn, isReal, spareFinds, takeOffFound, wearFound } from './sim/runGear';
 import { EQUIP_BASES, EQUIP_SLOTS, SLOT_NAMES, spareEquipment, STASH_MAX, wornIn, type EquipSlot, type Equipment } from './sim/equipment';
 import { pieceGear } from './sim/gear';
@@ -66,6 +69,19 @@ export class Events {
 
   /** RUN-GEAR: the save, for a real-gear run's lasting kit and the stash's count (the page sets it). */
   metaOf: () => Meta | undefined = () => undefined;
+  /** GEAR-POPUP: the boost a run's hero fights with (the page's own, with the run's gear), for the plate over a hero whose gear changed. */
+  boostOf: (h: Owned) => Boost | undefined = () => undefined;
+
+  /** GEAR-POPUP: the heroes `ids` before a change of their gear; `show` after it puts a plate over each one's picture in the hero row. */
+  private gearWatch(ids: readonly number[]) {
+    const heroes = ids.map((id) => heroOf(this.run, id)).filter((h): h is Owned => !!h && !h.guest);
+    const byKind = new Map(heroes.map((h) => [h.kind, h]));
+    return watchGear([...byKind.keys()], (kind) => shotOfBoost(kind, this.boostOf(byKind.get(kind)!) ?? {}));
+  }
+  private gearAt = (kind: string): GearAnchor => {
+    const r = this.root.querySelector<HTMLElement>(`.pick[data-kind="${kind}"]`)?.getBoundingClientRect();
+    return r && r.width ? { x: r.left + r.width / 2, y: r.top + 2 } : null;
+  };
 
   constructor(private equipmentStep: (kind: string) => number = () => 0) {
     this.root.id = 'events';
@@ -224,6 +240,7 @@ export class Events {
     const heroes = el('div', 'heroes');
     for (const h of this.listed()) {
       const b = el('button', h.id === this.hero ? 'pick on' : 'pick');
+      b.dataset.kind = h.kind;
       b.append(portrait(battleSheet(h.kind, this.equipmentStep(h.kind), h.grade), 48, h.grade));
       b.addEventListener('click', () => {
         this.hero = h.id;
@@ -253,7 +270,11 @@ export class Events {
     best.disabled = !this.canEquip || !this.listed().length;
     best.title = this.canEquip ? 'Give the heroes on the field the best gear in the pack' : 'Gear changes before a fight';
     best.addEventListener('click', () => {
-      if (equipBestRun(run, this.listed().map((h) => h.id), this.metaOf())) this.changed();
+      const w = this.gearWatch(this.listed().map((h) => h.id));
+      if (equipBestRun(run, this.listed().map((h) => h.id), this.metaOf())) {
+        this.changed();
+        w.show(this.gearAt);
+      }
     });
     card.append(best);
     // (RUN-GEAR: a real-gear run's pack holds real pieces, worn by the kinds)
@@ -267,7 +288,11 @@ export class Events {
         b.append(g ? iconImg(gearIcon(s, g.tier), g.name) : el('i', '', s === 'weapon' ? 'W' : s === 'armour' ? 'A' : 'C'), el('small', '', g ? `${g.name} ${gearText(g)}` : `no ${s}`));
         b.disabled = !g || !this.canEquip;
         b.addEventListener('click', () => {
-          if (unequip(run, hero.id, s)) this.changed();
+          const w = this.gearWatch([hero.id]);
+          if (unequip(run, hero.id, s)) {
+            this.changed();
+            w.show(this.gearAt);
+          }
         });
         slots.append(b);
       }
@@ -297,7 +322,11 @@ export class Events {
         b.append(this.pieceIcon(found ?? home, s, !!found), el('small', '', found ? `${pieceGear(found).name} ${gearText(pieceGear(found))}` : home ? `${pieceGear(home).name} (lasting)` : `no ${SLOT_NAMES[s].toLowerCase()}`));
         b.disabled = !found || !this.canEquip;
         b.addEventListener('click', () => {
-          if (takeOffFound(run, hero.kind, s)) this.changed();
+          const w = this.gearWatch([hero.id]);
+          if (takeOffFound(run, hero.kind, s)) {
+            this.changed();
+            w.show(this.gearAt);
+          }
         });
         slots.append(b);
       }
@@ -331,7 +360,12 @@ export class Events {
     b.append(this.pieceIcon(it, EQUIP_BASES[it.base].slot, true), words);
     b.disabled = !this.canEquip || !hero || !!hero.guest;
     b.addEventListener('click', () => {
-      if (hero && wearFound(this.run, hero.kind, it.id)) this.changed();
+      if (!hero) return;
+      const w = this.gearWatch([hero.id]);
+      if (wearFound(this.run, hero.kind, it.id)) {
+        this.changed();
+        w.show(this.gearAt);
+      }
     });
     return b;
   }
@@ -343,7 +377,11 @@ export class Events {
     b.append(iconImg(gearIcon(g.slot, g.tier), g.name), words);
     b.disabled = !this.canEquip || !this.hero;
     b.addEventListener('click', () => {
-      if (equip(this.run, this.hero, g.id)) this.changed();
+      const w = this.gearWatch([this.hero]);
+      if (equip(this.run, this.hero, g.id)) {
+        this.changed();
+        w.show(this.gearAt);
+      }
     });
     return b;
   }

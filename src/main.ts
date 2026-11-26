@@ -376,7 +376,7 @@ class Game {
   private run!: Run;
   private meta!: Meta;
   private gacha!: Gacha;
-  private events = Object.assign(new Events((kind) => awakenedOf(this.meta, kind)), { metaOf: () => this.meta as Meta | undefined });
+  private events = Object.assign(new Events((kind) => awakenedOf(this.meta, kind)), { metaOf: () => this.meta as Meta | undefined, boostOf: (h: Owned) => this.boostFor(h) as Boost | undefined });
   private towerView!: TowerView;
   /** The Last Stand (`standView.ts`): while it is up the ordinary board is hidden and this page's own frame does nothing. */
   private stand!: StandView;
