@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.629.0',
+    date: '2026-11-25',
+    title: 'Smoother summoning',
+    notes: ['Summoning no longer stalls: a ten-stone draw and its reveals run smoothly, and Reveal all turns the cards in a quick run.'],
+  },
+  {
     version: '0.628.0',
     date: '2026-11-25',
     title: 'Smoother Heroes screens',
