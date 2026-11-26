@@ -118,7 +118,7 @@
   @keyframes mergeBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
   @media (prefers-reduced-motion: reduce) { .card .mergeMark { animation: none; } }
   /* (the Auto merge button: a gold pill just over the bench, at the right of the synergy hint's line, shown while a pair is ready, MERGE-TWO) */
-  #panel:has(#mergeAll:not([hidden])) #traitHint { padding-right: 118px; }
+  #panel.canMerge #traitHint { padding-right: 118px; }
   #benchWrap #mergeAll {
     min-height: 0; border-image: none; box-sizing: border-box;
     position: absolute; bottom: calc(100% + 1px); right: 2px; z-index: 3; height: 22px; padding: 0 9px; font-size: 11px; line-height: 18px; font-weight: 700; white-space: nowrap; border-radius: 11px;

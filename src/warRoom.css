@@ -123,5 +123,6 @@ span.hallPic { display: block; }
 .hallIntro { grid-column: 1 / -1; margin: 0 0 4px; font: 12px/1.35 var(--body); color: #e3d3b6; }
 #nearRow .setTag, #nearRow .strongTag { white-space: normal; overflow: visible; line-height: 1.15; font-size: 9px; text-align: center; }
 /* (HALL-LIGHT: while the Hall is open, what moves on the roster under its sheet waits: under the veil its upgrade chevrons cannot be seen
-   bobbing, and they cost the Hall's scrolling) */
-body:has(#hallOfHeroes) #hmSheet * { animation-play-state: paused !important; }
+   bobbing, and they cost the Hall's scrolling. EIDOLON-SMOOTH: asked of the page's own children only, `> #hallOfHeroes`: asked of every
+   descendant, each thing put on the page anywhere, a strip of an Eidolon's call among them, had the whole page's styles worked out afresh) */
+body:has(> #hallOfHeroes) #hmSheet * { animation-play-state: paused !important; }

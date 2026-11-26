@@ -15,6 +15,9 @@ test('the Hall\'s hero cells show a cached picture, not a canvas each', () => {
 
 test('the roster under the Hall holds its animations while the Hall is open', () => {
   const css = readFileSync('src/warRoom.css', 'utf8');
-  assert.match(css, /body:has\(#hallOfHeroes\) #hmSheet \* \{ animation-play-state: paused !important; \}/);
+  // (EIDOLON-SMOOTH: asked of the page's own children, where the Hall's sheet is put (`ornateMenu` appends it to the body): asked of every
+  //  descendant, the rule had the whole page restyled for each piece of an Eidolon's call)
+  assert.match(css, /body:has\(> #hallOfHeroes\) #hmSheet \* \{ animation-play-state: paused !important; \}/);
+  assert.match(readFileSync('src/ornateMenu.ts', 'utf8'), /document\.body\.append\(root\)/);
   assert.match(readFileSync('src/hallView.ts', 'utf8'), /id: 'hallOfHeroes'/);
 });

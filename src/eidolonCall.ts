@@ -56,13 +56,14 @@ import dustWhite from './art/fx/vfx/dust_white.png';
 import smokeDark from './art/fx/vfx/smoke_dark.png';
 import darkCircle from './art/fx/magic/dark_circle.png';
 import { pictureFrame, ULT_CAM, zoomAboutPt } from './ultCameraRules';
+import { fxUrl, groundSheets, pageSheets, warmDue } from './eidolonWarmRules';
 import { faultLine, fxBudget, FX_CELL, jagged, pillarOrder, RING, spreadShocks, STRIKE_FX, type FxStrip, type StrikeLook } from './eidolonFx';
 import type { Fx } from './render/fx';
 import type { Sprite as GroundSprite } from 'pixi.js';
 import { at as tileTop, depth as tileDepth, TW } from './render/iso';
 import { tileAt } from './sim/board';
 import { GroundSheet, groundDecal, groundFrames, loadGroundSheet, type GroundTile } from './render/groundSheet';
-import { BLOW, BLOW_FEEL, cracksFrame, DETONATIONS, glowUrl, SMOKE_SPOTS, stageUrl, pillarAt, pillarMs, riseIn, risePass, scorchFrame, sigilEnd, sigilFrame, sigilSpot, stageBudget, STAGED, wavePlan, WAVE_MS, type StagedLook, type StageTile, type WaveTile } from './eidolonStage';
+import { BLOW, BLOW_FEEL, cracksFrame, DETONATIONS, SMOKE_SPOTS, pillarAt, pillarMs, riseIn, risePass, scorchFrame, sigilEnd, sigilFrame, sigilSpot, stageBudget, STAGED, wavePlan, WAVE_MS, type StagedLook, type StageTile, type WaveTile } from './eidolonStage';
 import { stageEl, stageEls, stageScale } from './stageSheet';
 import { play, duck } from './render/sound';
 import { settings } from './settings';
@@ -125,7 +126,7 @@ const strip = (kind: Sprite, cls: string, x: number, y: number, o: { scale?: num
 /** EIDOLON-FX: an effect strip of the strike (`eidolonFx.ts`), loaded by URL (the service worker keeps them), at a point (client px): it
  *  plays its frames once (or on, `loop`) after `delay` ms, so a whole strike is laid out at the blow and rolls on by itself, frozen with
  *  the rest in the hit-stop. A negative delay starts it part-way, so the frozen frame is already the bright one. */
-const FX_URL = (sheet: string) => (sheet === RING.sheet ? `eidolons/fx/${sheet}.png` : `eidolons/fx/${sheet}.webp`);
+const FX_URL = fxUrl;
 function fxEl(st: FxStrip, x: number, y: number, o: { delay?: number; mul?: number; cls?: string; filter?: string } = {}): HTMLElement {
   const d = el('i', `ecFx${st.foot ? ' foot' : ''}${o.cls ? ` ${o.cls}` : ''}`);
   const size = Math.round(FX_CELL * st.scale * (o.mul ?? 1));
@@ -323,19 +324,32 @@ export class EidolonCall {
     const id = chosenOf(m);
     if (hornReady(m) && id) armEidolon(b, id, { mid, trial, drainBonus: drainBonus(m) });
     this.refresh(b);
-    // (the figure loaded before it is needed, so the cinematic never waits on it)
-    if (id && hornReady(m)) new Image().src = figureUrl(id);
-    // (EIDOLON-BLENDER: and its staged sheets: the ground's for the board, the standing ones for the page)
-    const st = id && hornReady(m) ? STAGED[id] : undefined;
-    if (st) {
-      void loadGroundSheet(st.sigil);
-      void loadGroundSheet(st.scorch);
-      void loadGroundSheet(st.cracks);
-      for (const sh of [st.pillar, st.explosion, st.fire, st.smoke, st.embers]) {
-        new Image().src = stageUrl(sh);
-        if (sh.lit) new Image().src = glowUrl(sh);
-      }
-    }
+    // (the figure, the sheets and the ground's pictures made ready before they are needed, so the cinematic never waits on them)
+    this.warm(id);
+  }
+
+  /** EIDOLON-SMOOTH: the chosen Eidolon's pictures made ready ahead of its call, whether or not the horn is full yet (it may fill in the
+   *  fight): each fetched and decoded now and held, so none is decoded on the frame it first shows, and the ground's sheets loaded for
+   *  the board (which hands them to the graphics card before the fight: `texReady.ts`). Once for each Eidolon chosen. */
+  private warmed: string | null = null;
+  private readonly held: HTMLImageElement[] = [];
+  private warm(id: string | null | undefined): void {
+    if (!warmDue(id, this.warmed)) return;
+    this.warmed = id;
+    const mon = MONS[id];
+    const urls = [figureUrl(id), cardUrl(id), ...pageSheets(id)];
+    if (mon) urls.push(MON_SHEETS[mon.sheet], MON_BREATHS[mon.sheet] ?? askelBreath);
+    // (the last Eidolon's are let go; these are held, so their decoded pictures stay)
+    this.held.length = 0;
+    this.held.push(...urls.map((src) => {
+      const i = new Image();
+      i.decoding = 'async';
+      i.src = src;
+      // (a picture that will not decode is no fault of the fight's: it is decoded when it is first drawn, as it always was)
+      if (typeof i.decode === 'function') i.decode().catch(() => undefined);
+      return i;
+    }));
+    for (const sh of groundSheets(id)) void loadGroundSheet(sh);
   }
 
   /** Each frame: the page's battle (a new wave's deploy shows the horn as the save holds it, not the last fight's blown one). */
@@ -351,6 +365,8 @@ export class EidolonCall {
     }
     this.b = b;
     this.closeSheet();
+    // (EIDOLON-SMOOTH: a new board, its heroes still being placed: the chosen Eidolon's pictures are made ready now)
+    this.warm(chosenOf(this.opts.meta()));
     // (a fight already going, as a Last Stand carried on from its save: armed now)
     if (b.phase === 'fight' && !b.eidolon) {
       const id = chosenOf(this.opts.meta());

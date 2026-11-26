@@ -24,7 +24,7 @@ const HORN = args.includes('--horn');
 const TAG = `${SIZE === '393x852' ? '' : `-${W}`}${SHORT ? '-short' : ''}${REDUCED ? '-reduced' : ''}${SAVER ? '-saver' : ''}`;
 mkdirSync(OUT, { recursive: true });
 
-const root = 'out/web';
+const root = process.env.ROOT ?? 'out/web';
 const types = { html: 'text/html', js: 'text/javascript', png: 'image/png', webp: 'image/webp', woff2: 'font/woff2', json: 'application/json', webmanifest: 'application/json', ogg: 'audio/ogg', opus: 'audio/ogg', css: 'text/css' };
 const srv = createServer((q, r) => {
   const p = `${root}/` + (q.url.split('?')[0].slice(1) || 'index.html');
@@ -99,6 +99,8 @@ async function intoFight(page, party) {
   await page.waitForTimeout(800);
 }
 
+// (the cards a new save is told things with, each sent away, so none stands over the fight)
+const gotIt = async (page) => { for (let i = 0; i < 10; i++) { const had = await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /^Got it/.test(x.textContent ?? '') && x.offsetParent); b?.click(); return !!b; }); if (!had) break; await page.waitForTimeout(450); } };
 const shot = (page, name) => page.screenshot({ path: `${OUT}/today-${name}${TAG}.png`, timeout: 180000 });
 
 // (a frame every 150 ms across the whole call, and a little of the fight running again)
@@ -109,8 +111,11 @@ for (const pick of PICKS) {
   try {
     const { ctx, page } = await open({ horn: 1000, bound: [pick], chosen: pick, confirmed: true, ...(SHORT ? { seen: [pick] } : {}) }, true);
     await intoFight(page, PARTY);
+    await gotIt(page);
     await page.evaluate(() => document.getElementById('fight').click());
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(600);
+    await gotIt(page);
+    await page.waitForTimeout(900);
     await page.evaluate(() => { window.__game.app.ticker.stop(); window.__step(2400); });
     // (the plate: the fight as it stands when the horn is blown, and where its tiles and fighters are on the screen)
     await page.waitForTimeout(120);

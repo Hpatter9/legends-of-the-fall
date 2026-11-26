@@ -5086,6 +5086,9 @@ class Game {
     if (b.phase === 'deploy' && !this.auto && !this.homeUp && $('home').hidden) this.tellUnlocks();
     const mergeAll = $('mergeAll') as HTMLButtonElement;
     mergeAll.hidden = pairs === 0;
+    // (EIDOLON-SMOOTH: the hint's room for the button is a class on the panel, not `#panel:has(#mergeAll…)`: that rule had the whole panel's
+    //  styles worked out afresh at every change inside it, the fight's rows through a call among them)
+    $('panel').classList.toggle('canMerge', pairs > 0);
     mergeAll.textContent = `Auto merge · ${pairs}`;
     mergeAll.title = pairs ? `Merge every pair ready (${pairs}), and the pairs those make, up to rank 4` : '';
     ($('fight') as HTMLButtonElement).disabled = b.phase !== 'deploy' || n === 0 || !!this.questBlock();
