@@ -21,6 +21,8 @@ export const PB_ICONS = {
   // (single medallions painted later, one file each: the fight's Auto ultimates button off and lit, UI-ART-WIRE; PAUSE-TIPS's pause, a
   // stand-in made from the speed medallion until its painting lands: docs/notes/pause-tips-art-prompts.md)
   singles: ['auto-ult', 'auto-ult-lit', 'badge-count-red', 'pause'],
+  // (ART-FINAL: the Weekly Trial's own medallion, in place of the trophies' it borrowed: docs/notes/weekly-trial-art-prompts.md)
+  trialMedal: ['trial'],
   glyphs: ['g-back', 'g-close', 'g-right', 'g-plus', 'g-minus', 'g-lock', 'g-star', 'g-star-empty', 'g-tick', 'g-cross', 'g-info', 'g-search', 'g-up', 'g-down', 'g-alert', 'g-help'],
 } as const;
 export type PbIcon = (typeof PB_ICONS)[keyof typeof PB_ICONS][number];

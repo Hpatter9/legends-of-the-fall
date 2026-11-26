@@ -469,5 +469,185 @@
     "design": "The existing highest tier druid living tree form, preserve original bark colour, foliage and compact hulking tree identity.",
     "gear": "NEW ornate bronze-gold leaf plate fitted over bark, bright emerald heart crystal, rune-etched gold-bound branch fists and compact antler crown. Glowing green eyes.",
     "figure": 124
+  },
+  {
+    "id": "vampireLord",
+    "name": "vampireLord",
+    "base": "hero_res_vampire_lord",
+    "rear": "hero_res_vampire_lord_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "hemomancer",
+    "name": "hemomancer",
+    "base": "hero_res_hemomancer",
+    "rear": "hero_res_hemomancer_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "nightstalker",
+    "name": "nightstalker",
+    "base": "hero_res_nightstalker",
+    "rear": "hero_res_nightstalker_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "bloodGargoyle",
+    "name": "bloodGargoyle",
+    "base": "hero_res_blood_gargoyle",
+    "rear": "hero_res_blood_gargoyle_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "dhampir",
+    "name": "dhampir",
+    "base": "hero_res_dhampir",
+    "rear": "hero_res_dhampir_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "warDrummer",
+    "name": "warDrummer",
+    "base": "hero_res_war_drummer",
+    "rear": "hero_res_war_drummer_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "banneret",
+    "name": "banneret",
+    "base": "hero_res_banneret",
+    "rear": "hero_res_banneret_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "geomancer",
+    "name": "geomancer",
+    "base": "hero_res_geomancer",
+    "rear": "hero_res_geomancer_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "bellWarden",
+    "name": "bellWarden",
+    "base": "hero_res_bell_warden",
+    "rear": "hero_res_bell_warden_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "falconer",
+    "name": "falconer",
+    "base": "hero_res_falconer",
+    "rear": "hero_res_falconer_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "astralSphinx",
+    "name": "astralSphinx",
+    "base": "hero_res_astral_sphinx",
+    "rear": "hero_res_astral_sphinx_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "mirageDancer",
+    "name": "mirageDancer",
+    "base": "hero_res_mirage_dancer",
+    "rear": "hero_res_mirage_dancer_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "plagueDoctor",
+    "name": "plagueDoctor",
+    "base": "hero_res_plague_doctor",
+    "rear": "hero_res_plague_doctor_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "bombardier",
+    "name": "bombardier",
+    "base": "hero_res_bombardier",
+    "rear": "hero_res_bombardier_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "astrologer",
+    "name": "astrologer",
+    "base": "hero_res_astrologer",
+    "rear": "hero_res_astrologer_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "inquisitor",
+    "name": "inquisitor",
+    "base": "hero_res_inquisitor",
+    "rear": "hero_res_inquisitor_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "seraph",
+    "name": "seraph",
+    "base": "hero_res_seraph",
+    "rear": "hero_res_seraph_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "corsairSurgeon",
+    "name": "corsairSurgeon",
+    "base": "hero_res_corsair_surgeon",
+    "rear": "hero_res_corsair_surgeon_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "harpooner",
+    "name": "harpooner",
+    "base": "hero_res_harpooner",
+    "rear": "hero_res_harpooner_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
+  },
+  {
+    "id": "seaReaver",
+    "name": "seaReaver",
+    "base": "hero_res_sea_reaver",
+    "rear": "hero_res_sea_reaver_back",
+    "figure": 96,
+    "keepArt": true,
+    "note": "ROUND5-WIRE: art-source/round5 (the round-5 prompt in docs/notes/art-remaining-prompt.md)"
   }
 ]

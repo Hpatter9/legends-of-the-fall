@@ -301,7 +301,7 @@ export const TUTORIALS: readonly Tutorial[] = [
       'One try a day, and your best of the week counts. Rewards at 3, 5 and all 7 waves, paid once a week.',
       'Each week favours some classes and may bar others: a reason to build a second team.',
     ],
-    art: 'ui/buttons/trophies.webp',
+    art: 'ui/buttons/trial.webp',
     at: 'trial',
     open: () => true,
     when: 'The Weekly Trial opened',

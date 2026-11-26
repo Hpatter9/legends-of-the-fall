@@ -937,7 +937,7 @@ export class Home {
     trial.title = `${mergedRule(tweek).name} · ${trialStatus(m, tweek)}`;
     trial.querySelector('small')?.remove();
     // (a stand-in medallion, the painted cup, until the Trial's own lands: docs/notes/weekly-trial-art-prompts.md)
-    trial.prepend(icon(pbUrl('trophies'), 'ico cpDailyIcon'));
+    trial.prepend(icon(pbUrl('trial'), 'ico cpDailyIcon'));
     if (tdone) {
       const tick = el('i', 'dailyDone');
       tick.setAttribute('role', 'img');
