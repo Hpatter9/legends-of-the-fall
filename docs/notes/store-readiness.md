@@ -7,7 +7,7 @@ branch changed.
 
 ## The short version
 
-*(Brought up to date on 26 November 2026, STORE-KIT, on 0.632; the audit below is the record of 14 November, with its rows marked as each
+*(Brought up to date on 26 November 2026, STORE-KIT, on 0.633; the audit below is the record of 14 November, with its rows marked as each
 was done.)*
 
 **Done: the game side is ready for Play.**
@@ -143,7 +143,7 @@ link, the fonts' OFL among them; `test/store-credits.test.ts` holds it to CREDIT
 
 ## 5. Store listing
 
-The pictures, taken from the built game by `node tools/store-ready/shots.mjs` (after `npm run web`; STORE-KIT retook them on 0.632, 26
+The pictures, taken from the built game by `node tools/store-ready/shots.mjs` (after `npm run web`; STORE-KIT retook them on 0.633, 26
 November 2026), in `docs/store/`:
 
 - `icon-512.png`: 512 x 512, 32-bit PNG, fully opaque (the tool checks it). **pass**
