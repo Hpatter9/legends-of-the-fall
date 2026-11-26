@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.634.0',
+    date: '2026-11-26',
+    title: 'A privacy policy link',
+    notes: ['Settings, About and Credits now link to the game\'s privacy policy.'],
+  },
+  {
     version: '0.633.0',
     date: '2026-11-26',
     title: 'Twenty heroes awaken',

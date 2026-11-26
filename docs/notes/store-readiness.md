@@ -7,38 +7,46 @@ branch changed.
 
 ## The short version
 
-**Fails (each blocks a Play release):**
+*(Brought up to date on 26 November 2026, STORE-KIT, on 0.633; the audit below is the record of 14 November, with its rows marked as each
+was done.)*
 
-1. **Size.** The release AAB is **318 MB compressed**; Play's limit for the base module is **200 MB**. Play rejects the upload. Plan below.
-2. **In-app credits** (now done on `claude/store-credits`: Settings, Credits, `docs/notes/store-credits.md`). Several licences (CC-BY 3.0/4.0 music and DawnLike tiles, the LPC sprite's CC-BY-SA) need attribution where players
-   can see it. The app's About row says "every source is named in the game's credits list", but no such list is in the app. (CREDITS.md
-   is in a private repo.)
-3. **Unknown-licence assets ship.** The Golem Forge golems and the Druid's treant (batareya's pack), Duchess the goat and the
-   Beastmaster's wolves (whtdragon's RPG Maker MV animals), and eight recorded combat sounds (PR #150, source not recorded). CREDITS.md
-   itself says "check the author's terms before any public release". (LICENCE-REPLACE: the owner's answer was "Replace them"; the
-   sounds are replaced by the game's own synth, and the art is being repainted: `docs/notes/licence-replace.md`.)
+**Done: the game side is ready for Play.**
 
-**Fixed on this branch:** target API 36 (it was 35, and Play has refused 35 for new apps and updates since 31 August 2026; the
-extension window closed 1 November); the update check is off in a Play build (`--store play`); the save is now backed up and moves to a
-new phone; the app is marked a game so Android 16 keeps it upright on tablets.
+- **Size.** The Play bundle (AAB) is built by `.github/workflows/android.yml` on every release, signed with the release key: 272.9 MB in all,
+  with the web files in an install-time asset pack, so the base module is about 5.5 MB, far under Play's 200 MB
+  (PLAY-SIZE, `docs/notes/play-size.md`). The workflow checks the base module's size with bundletool before anything is released.
+- **Credits and licences.** Settings, Credits lists every creator and pack with its licence, the CC-BY and CC-BY-SA ones with their
+  credit (STORE-CREDITS, `docs/notes/store-credits.md`). Every unknown-licence asset is gone: the golems, the treant, Duchess and the
+  wolves were repainted for the game, and the eight unsourced sounds replaced by the game's own (LICENCE-REPLACE).
+- **The Android project.** Target API 36, portrait, one permission, the release key, no update check in the Play build, the save backed up.
+- **Purchases.** The Shop (Google Play Billing through RevenueCat) and its seventeen products, with odds shown and every cosmetic wearable
+  (section 7); without RevenueCat's key a Play build has no Shop, rather than a broken one.
+- **The privacy policy is online** (once this branch is published): **https://hpatter9.github.io/legends-of-the-fall/privacy.html**,
+  dated 26 November 2026, and linked from Settings, About and from the foot of Settings, Credits. Its words match the game as it is today:
+  no accounts, ads or analytics; the Shop's purchases through Google Play and RevenueCat; the save on the device.
+- **The listing's pictures** (section 5): eight phone screenshots at 1080 x 1920 and the 512 x 512 icon (checked: square and fully
+  opaque, as Play asks), in `docs/store/`. The **feature graphic** is still a stand-in: a ChatGPT prompt for a painted one, with its
+  references, is in `docs/notes/store-art-prompt.md`.
 
-**Owner actions:** a Play developer account and its **12-tester, 14-day closed test** (required of new personal accounts before
-production); enrol in Play App Signing with the existing release key as the upload key; a privacy policy URL (draft in
-`docs/store/privacy-policy.html`); the Data safety, content rating and target audience forms (answers below); the listing (draft text,
-screenshots and a feature graphic below); exclude low-memory phones in the device catalogue.
+**Left: the owner's Play steps** (section 7's action list has the detail):
 
-**Verdict:** not ready to submit today, but close. The Android project itself is in good shape (one permission, portrait, release key
-in use, no cleartext, phone Back handled). Three things stand between this and a Play release: the size (a day or two of build work,
-with a clear route), the in-app credits screen (a small UI job), and the owner settling the four unknown-licence assets (decide, or
-replace them). The account's 14-day closed test can start on an internal build while those are done, so it does not have to add to the
-wait.
+1. Finish the Play developer account's verification; then run the **closed test: 12 testers opted in for 14 days in a row** (required of
+   new personal accounts before production). Upload the latest AAB from the GitHub release to internal testing, then the closed track.
+2. **Play App Signing**: enrol, with the existing release key as the upload key.
+3. **App content**: the privacy policy URL above; Data safety, content rating (IARC) and target audience, with the answers in section 7.
+4. **Store listing**: title, short and full description (section 5), the eight screenshots, the icon and the feature graphic (once painted),
+   category Strategy, contact email; declare "Contains in-app purchases".
+5. **Products and RevenueCat**: create the seventeen products, the service account, RevenueCat's project, entitlements and the
+   `REVENUECAT_ANDROID_KEY` secret (section 7, items 1 to 6).
+6. **Countries**: exclude Belgium; review the Netherlands. **Devices**: exclude low-memory phones in the device catalogue.
+7. **On a phone from the test track**: the checks in section 6 and section 7, item 9.
 
 ## 1. Package format and size
 
 | Item | Result |
 | --- | --- |
-| Format: Play needs an Android App Bundle (AAB) for new apps | **owner action**: the workflow builds only an APK (`assembleRelease`). `bundleRelease` works: it was built here (below). A Play job needs a step that builds the AAB with the `--store play` web build. |
-| Base module ≤ 200 MB compressed | **fail**: 318 MB |
+| Format: Play needs an Android App Bundle (AAB) for new apps | **pass**: `android.yml` builds the AAB from the `--store play` web build beside the APK, signed with the release key, and attaches it to each GitHub release (was an owner action) |
+| Base module ≤ 200 MB compressed | **pass** (PLAY-SIZE): about 5.5 MB, the web files in an install-time asset pack; 272.9 MB in all (was a **fail**, 318 MB) |
 
 Measured here (Android SDK 35/36, the project's own Gradle, debug-signed, nothing published): `npm run web`, `cap sync android`,
 `./gradlew bundleRelease assembleRelease`.
@@ -84,7 +92,7 @@ both are signed by the same key and carry the same files); (3) the data URLs to 
 | minSdk | **pass**: 23 (Android 6), Capacitor 7's floor. The bundle is ES2022 and needs a WebView from about Chrome 94; Android 7+ updates its WebView from Play, so in practice only never-updated phones fall short. |
 | App id | **pass**: `com.hpatter9.lastkeep`. It is permanent on Play once uploaded. |
 | versionCode | **pass**: `major*1000000 + minor*1000 + patch` (0.590.0 → 590000), always rising, far below Play's 2,100,000,000 cap. Each upload needs a new one; a daily build fits. |
-| Release signing | **pass**: the workflow's latest build (run 232, 0.579.0) logged "Signing with the release key": the four secrets are set. It still falls back to the debug key silently when they are missing; a Play job should fail instead. |
+| Release signing | **pass**: the workflow's latest build (run 232, 0.579.0) logged "Signing with the release key": the four secrets are set. Since AAB-FIX the workflow names any of the three that is empty and stops, rather than failing in the bundle's signing (`docs/notes/aab-fix.md`). |
 | Play App Signing | **owner action**: new apps must use it. When enrolling, **choose to upload the existing release key** (Play Console offers a tool for exporting it) rather than letting Google make a new one: then the Play build and the GitHub APK carry the same signature, and the owner's installed app can be updated from Play without uninstalling (which would lose the save). Keep the keystore backed up. |
 | Permissions | **pass**: `INTERNET`, and since IAP `com.android.vending.BILLING` (Play Billing, brought in by the RevenueCat plugin; `docs/notes/iap.md`). The Play build talks only to Google Play and RevenueCat, for the Shop. |
 | Cleartext traffic | **pass**: not allowed (the default at target 28+; `allowMixedContent: false`). |
@@ -119,30 +127,42 @@ both are signed by the same key and carry the same files); (3) the data URLs to 
 | --- | --- | --- | --- |
 | Craftpix free packs (most sprites, backdrops, tiles) | Craftpix free licence: use in commercial games allowed, raw files may not be redistributed | allowed; files are cut and bundled, not offered as a pack | **pass** |
 | 5000 Pixel Effects (blueberry) | games, commercial included; credit appreciated | allowed | **pass** |
-| DawnLike (DragonDePlatino): items, relic and equipment icons | CC-BY 4.0 | allowed **with attribution** | **fail until the in-app credits exist** |
-| Music by Matthew Pablo (CC-BY 3.0) and Alexandr Zhelanov (CC-BY 4.0) | CC-BY | allowed **with attribution** | **fail until the in-app credits exist** |
+| DawnLike (DragonDePlatino): items, relic and equipment icons | CC-BY 4.0 | allowed **with attribution** | **pass**: credited in Settings, Credits (STORE-CREDITS) |
+| Music by Matthew Pablo (CC-BY 3.0) and Alexandr Zhelanov (CC-BY 4.0) | CC-BY | allowed **with attribution** | **pass**: credited in Settings, Credits (STORE-CREDITS) |
 | Music by nene, cynicmusic, Cleyton Kauffman, others | CC0 | allowed | **pass** |
-| Universal LPC Spritesheet (Gwen behind the bar, `src/art/quests/gwen.png`, still bundled) | CC-BY-SA 3.0 / GPL 3.0 (dual) | allowed under CC-BY-SA: credit the LPC authors, and that one derived sprite stays CC-BY-SA | **owner action**: credit it in the app, or replace the placeholder (it was meant to be) |
+| Universal LPC Spritesheet (Gwen behind the bar, `src/art/quests/gwen.png`, still bundled) | CC-BY-SA 3.0 / GPL 3.0 (dual) | allowed under CC-BY-SA: credit the LPC authors, and that one derived sprite stays CC-BY-SA | **pass**: credited in Settings, Credits under CC-BY-SA |
 | Fonts (Pixelify Sans, Press Start 2P, Cinzel Decorative, Alegreya Sans) | SIL OFL 1.1 | bundling allowed | **pass** (the licence text should travel with them: one line and a link in the credits) |
-| Golems and elementals (batareya): golems and the treant | no licence file in the pack | unknown | **fail / owner action**: find the author's terms or replace |
-| whtdragon's RPG Maker MV animals: Duchess and the wolves | no licence file | unknown; RPG Maker resources are often limited to games made with RPG Maker | **fail / owner action**: check the terms or replace |
+| Golems and elementals (batareya): golems and the treant | no licence file in the pack | unknown | **pass** (LICENCE-REPLACE): repainted for the game; batareya's figures are gone |
+| whtdragon's RPG Maker MV animals: Duchess and the wolves | no licence file | unknown; RPG Maker resources are often limited to games made with RPG Maker | **pass** (LICENCE-REPLACE): repainted for the game; whtdragon's sprites are gone |
 | Eight recorded combat sounds (PR #150, "given as CC0") | source not recorded | unknown | **pass** (LICENCE-REPLACE): removed; the game's own synthesised cues play in their place, as loud |
 | Pixel Champions v3 (no licence file) | — | — | **pass**: no longer in the game (no `pc_*` sheet is in `src/art/units`) |
 | Art made with image models (OpenAI, Gemini, Dreamina, PixelLab) | the services' terms | generally allowed for the account holder; PixelLab and Dreamina tie commercial rights to the plan | **owner action**: confirm the plans used allow commercial use |
 
-**In-app credits screen:** there is none (Settings, About has one summary sentence). A small job should add a Credits page (the
-standard ornate menu) listing at least every CC-BY / CC-BY-SA author with the work, licence and a link, and the fonts' OFL.
+**In-app credits screen:** done (STORE-CREDITS): Settings, Credits, a standard sheet listing every creator and pack with its work, licence and
+link, the fonts' OFL among them; `test/store-credits.test.ts` holds it to CREDITS.md.
 
 ## 5. Store listing
 
-Proposed pictures, taken from the built game by `node tools/store-ready/shots.mjs` (in `docs/store/`):
+The pictures, taken from the built game by `node tools/store-ready/shots.mjs` (after `npm run web`; STORE-KIT retook them on 0.633, 26
+November 2026), in `docs/store/`:
 
-- `icon-512.png`: 512 x 512, 32-bit PNG (the game's icon). **pass**
-- `feature-graphic.png`: 1024 x 500, the war camp's painting with the title. A stand-in: a painted one would be better.
-- `phone-1-battle.png` to `phone-7-fight.png`: 1080 x 1920 (9:16; Play takes 320–3840 px with sides at most 2:1, and wants 1080 px or
-  more on a game's screenshots to show them large). The camp, the tavern, the summoning sanctum, the keep, the War Room, a deploy and a
-  boss fight. Taken in a desktop browser at 360 x 640; the fight is small at that size, so a fight shot from the phone itself would be
-  stronger. The version line shows top right; crop or hide it if wanted.
+- `icon-512.png`: 512 x 512, 32-bit PNG, fully opaque (the tool checks it). **pass**
+- **Phone screenshots, 1080 x 1920** (9:16; Play takes 320 to 3840 px with sides at most 2:1, and wants 1080 px or more on a game's
+  screenshots to show them large), taken at 360 x 640 x3 with the version line hidden, from a level-70 collector's save with the Nemesis
+  War's Council (`tools/store-ready/saves.ts`). The eight for the listing, in order (the first two are what a store page shows before a swipe):
+  1. `phone-1-eidolon.png`: a big fight, Askel the Cinderhound's wall of fire over the Golem Forge's wave.
+  2. `phone-2-summon.png`: a ten-summon's reveal: Cyra, Keeper of the Astrolabe, joins.
+  3. `phone-3-ultimate.png`: Kenji's ultimate, Issen, its cut-in over the fight.
+  4. `phone-4-warroom.png`: the War Room, the Golem Forge's card with its weaknesses and resistances.
+  5. `phone-5-hero.png`: a hero's page: Kwame, Shield of the Dawn.
+  6. `phone-6-trial.png`: the Weekly Trial's card: Powder and String against the Golem Forge.
+  7. `phone-7-hall.png`: the Hall of Heroes: what every ranked hero lends the roster.
+  8. `phone-8-council.png`: the Nemesis War's Dark Council, its captains.
+
+  The other frames each scene was caught in (`store-*.png`, smaller files) are kept beside them to choose from; the camp (`store-camp.png`)
+  was left out of the eight.
+- `feature-graphic.png`: 1024 x 500, a stand-in (the war camp's painting with the title). A painted one: the prompt and its references are in
+  `docs/notes/store-art-prompt.md`.
 
 **Title (30):** Legends of the Last Keep
 
@@ -159,7 +179,7 @@ Proposed pictures, taken from the built game by `node tools/store-ready/shots.mj
 > - March on armies across seventeen lands, from frozen snowfields to burning ashlands, each with its own ground and hazards.
 > - Call on six Eidolons, ancient spirits of fire, ice, stone, storm, light and shadow.
 > - Face foes who remember you: a nemesis who beat you once will return with a grudge and a new name.
-> - Hold the Last Stand against endless waves, take on the daily battle, and build up your keep.
+> - Take on the daily battle and the Weekly Trial, whose rules change every Monday, and build up your keep.
 > - Plays fully offline. No ads. Optional purchases; everything can be earned by playing.
 
 **Contains in-app purchases:** yes (Play adds the label once in-app products are set up; declare it in the listing).
@@ -226,7 +246,7 @@ once the Play build is stable and option C has landed.
 
 ## 7. In-app purchases (IAP, `docs/notes/iap.md`)
 
-The Play build sells summoning stones, crowns, a one-time starter pack, bundles and (once their art lands) cosmetics, through Google Play
+The Play build sells summoning stones, crowns, a one-time starter pack, bundles and cosmetics, through Google Play
 Billing with RevenueCat. The web page and the GitHub release's app have no Shop.
 
 ### Data safety (Play Console, App content, Data safety): the new answers
@@ -247,8 +267,12 @@ as it may list further device data its SDK sends.
 
 ### Privacy policy
 
-`docs/store/privacy-policy.html` now says what RevenueCat and Google receive for a purchase, why, and how to ask for deletion; the
-network section says the Play build talks to Google Play and RevenueCat for the Shop. Fill in the date and contact, then host it.
+**https://hpatter9.github.io/legends-of-the-fall/privacy.html** (STORE-KIT): `docs/store/privacy-policy.html`, which `build.mjs` copies into
+out/web as `privacy.html`, so GitHub Pages serves it with the game (outside the service worker's cache: it is read online). Dated 26
+November 2026, with the owner's contact. It says what RevenueCat and Google receive for a purchase, why, and how to ask for deletion; what the
+Shop sells (cosmetics change looks only); and that the Play build talks to Google Play and RevenueCat for the Shop, the GitHub app to GitHub
+for its update check, and the web version to GitHub Pages for its files. Settings, About and the foot of Settings, Credits link to it (the
+address is `PRIVACY_URL` in `src/storeLinks.ts`). Put the address in Play Console, App content, Privacy policy.
 
 ### Content rating (IARC)
 
@@ -291,7 +315,7 @@ Australia now rates games with paid random items M or higher (from September 202
    so their purchases are free test purchases. Testers install from the internal or closed testing track (not a sideloaded APK) for
    Billing to work. In RevenueCat these show as sandbox purchases.
 7. **Country targeting**: exclude Belgium; review the Netherlands (above).
-8. **Forms**: Data safety, content rating and the listing's "Contains in-app purchases", as above; the privacy policy hosted with its new text.
+8. **Forms**: Data safety, content rating and the listing's "Contains in-app purchases", as above; the privacy policy's address above.
 9. **Before release, on a phone from the test track**: buy one of each kind with a licence tester; force-close the app during a purchase
    and reopen (it should arrive with "A purchase from before has arrived"); "Start over" and Restore (cosmetics back, consumables not); a
    second phone on the same Google account and Restore; airplane mode (the Shop says it needs a connection, the game plays).
