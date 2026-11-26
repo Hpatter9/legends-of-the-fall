@@ -3,6 +3,7 @@
 // monsters, Music, Sound and Fonts, each with its licence (tagged "credit required" where the licence asks for it) and, where the
 // licence asks, a link to the source. CREDITS.md stays the developers' record; the test keeps the two in step.
 import { CREDIT_GROUPS, PLAYER_CREDITS, type PlayerCredit } from './data/credits';
+import { PRIVACY_URL } from './storeLinks';
 import { menuFoot, menuNote, menuSection, menuWell, ornateMenu } from './ornateMenu';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -43,5 +44,13 @@ export function openCredits(onClose?: () => void): void {
     const well = menuWell(menuSection(menu.body, group));
     for (const c of PLAYER_CREDITS[group]) well.append(entryOf(c));
   }
+  // (STORE-KIT: the privacy policy, at the foot of the page, as the store listing names it)
+  const note = menuNote(menu.body, 'The game\u2019s privacy policy: ');
+  const a = document.createElement('a');
+  a.href = PRIVACY_URL;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  a.textContent = 'read it here';
+  note.append(a, document.createTextNode('.'));
   menuFoot(menu, { back: { word: 'back' } });
 }

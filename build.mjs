@@ -98,6 +98,10 @@ options.plugins = [artFiles];
 
 copyFileSync('src/art/icon-192.png', `${out}/icon-192.png`);
 copyFileSync('src/art/icon-512.png', `${out}/icon-512.png`);
+// (STORE-KIT, docs/notes/store-readiness.md: the privacy policy the Play listing points to, served by GitHub Pages at
+//  https://hpatter9.github.io/legends-of-the-fall/privacy.html. It is not part of the game, so it is not in the service worker's FILES: it is
+//  read online, as a page of its own)
+copyFileSync('docs/store/privacy-policy.html', `${out}/privacy.html`);
 for (let k = 1; k <= 5; k++) copyFileSync(`src/art/backdrop/m1_${k}.png`, `${out}/bg${k}.png`);
 // (the other areas' backdrops, as files too: areas/<area>/bgN.png)
 const AREA_BGS = [];

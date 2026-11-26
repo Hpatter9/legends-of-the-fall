@@ -3,6 +3,7 @@
 // and the gear in the top bar. The choices are kept in localStorage (legends.settings, the same keys as before the
 // submenus); `settings()` is what the rest of the page reads, and `onSettings` tells a module when one changes (the sound's volumes, the frame cap). Nothing here touches the battle.
 
+import { PRIVACY_URL } from './storeLinks';
 import { shopOn } from './iapView';
 import { entitledHere, productById, PRODUCTS } from './iapRules';
 /** COSMETICS: Starfall summons' entitlement. */
@@ -433,7 +434,15 @@ function aboutRows(): HTMLElement[] {
   open.textContent = 'Credits';
   open.addEventListener('click', () => showCredits(open));
   credits.append(open);
-  const rows = [name, credits];
+  // (STORE-KIT: the privacy policy, the page the store listing points to; it opens in the phone's browser)
+  const [privacy, privacyText] = row('Privacy policy', 'No accounts, no ads, no analytics: your progress stays on this phone. The Play version\u2019s Shop uses Google Play and RevenueCat for purchases. ');
+  const pa = document.createElement('a');
+  pa.href = PRIVACY_URL;
+  pa.target = '_blank';
+  pa.rel = 'noopener';
+  pa.textContent = 'Read the privacy policy';
+  privacyText.lastElementChild?.append(pa);
+  const rows = [name, credits, privacy];
   const up = appUpdate(); // (the app only: a newer release was found at start)
   if (up) {
     const [r, text] = row('Update available', `Version ${up.version} is out. `);
