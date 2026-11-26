@@ -4,11 +4,24 @@
 
 import { heroRows, setRows, statRows, titlesOf } from './hallRules';
 import { menuFoot, menuSection, menuWell, ornateMenu } from './ornateMenu';
-import { portrait } from './render/sheets';
+import { hasSheet, portrait } from './render/sheets';
 import { claimSet, hallBonus, hallLine, HALL_RANK_MAX } from './sim/hall';
 import { heroName } from './sim/heroNames';
 import type { Meta } from './sim/meta';
 import { UNITS } from './sim/units';
+
+/** HALL-LIGHT (docs/notes/hall-light.md): each hero's portrait as a picture made once from its sheet's canvas and kept, by sheet: a cell
+ *  shows an <img> of it, never a canvas of its own (seventy canvases, each its own layer, made the Hall the heaviest screen to scroll). */
+const PICS = new Map<string, string>();
+const picOf = (sheet: string): string | null => {
+  const had = PICS.get(sheet);
+  if (had) return had;
+  // (a sheet not loaded yet draws a blank: nothing is kept, and the next look tries again)
+  if (!hasSheet(sheet)) return null;
+  const url = portrait(sheet, 40).toDataURL();
+  PICS.set(sheet, url);
+  return url;
+};
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -62,14 +75,20 @@ export function openHall(m: Meta, save: () => void, onClose?: () => void): void 
       }
       sets.append(row);
     }
-    // (every hero, owned first, by what it lends)
+    // (every hero, owned first, by what it lends; HALL-LIGHT: each portrait a cached picture, not a canvas of its own)
     const grid = section('Every hero');
     grid.classList.add('hallHeroes');
     for (const r of heroRows(m, heroName)) {
       const cell = el('div', `hallHero${r.owned ? '' : ' shut'}`);
       cell.dataset.kind = r.kind;
-      const pic = portrait(UNITS[r.kind].sheet, 40);
-      pic.classList.add('hallPic');
+      const pic = el('span', 'hallPic');
+      const url = picOf(UNITS[r.kind].sheet);
+      if (url) {
+        const img = el('img');
+        img.src = url;
+        img.alt = '';
+        pic.append(img);
+      }
       const pips = el('i', 'hallPips', r.owned ? '◆'.repeat(Math.min(HALL_RANK_MAX, r.rank)) + '◇'.repeat(Math.max(0, HALL_RANK_MAX - r.rank)) : '');
       cell.append(pic, el('b', '', r.name), el('small', '', `${r.cls}${r.owned ? ` · rank ${r.rank}` : ''}`), pips, el('em', '', r.lends));
       grid.append(cell);
