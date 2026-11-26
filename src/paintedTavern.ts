@@ -90,9 +90,9 @@ export class PaintedTavern {
     barFront.src = backdrop.src;
     barFront.alt = '';
     barFront.draggable = false;
-    // (ALIVE: the room's own life over its painting: the hearth licks and breathes, the candles and lanterns gutter, the herbs, ivy
-    //  and banner stir, embers and dust drift; `render/ambientLayer.ts`)
-    const life = new AmbientLayer(SCENE_LIFE.tavern, backdrop.src, { fit: 'fill' }, 'ptLife');
+    // (ALIVE: the room's light over its painting, its candles, lanterns and hearth lit; HEROES-STILL: drawn once, at rest, and never moving:
+    //  the owner, "the heroes overview screens don't need a moving animation behind the art. It slows the game down when scrolling there")
+    const life = new AmbientLayer(SCENE_LIFE.tavern, backdrop.src, { fit: 'fill' }, 'ptLife', true);
     this.scene.append(backdrop, life.root, warmth, gwenArt, barFront, this.guests, rearTable, frontTable, dice, steam, caption);
     document.addEventListener('visibilitychange', () => this.syncMotion());
     onSettings(({ saver }) => this.root.classList.toggle('ptSaver', saver));
