@@ -1,11 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BREATH_MS, DEFAULT_RULER, RULERS, SEAT_BREATH, rulerFrame, rulerOf, rulerWords, seatFrame } from '../src/rulerRules';
+import { BREATH_MS, DEFAULT_RULER, RULERS, SEAT_BREATH, rulerFrame, rulerOf, rulerWords, seatFrame, PAID_RULERS } from '../src/rulerRules';
 
-test('the roster contains eight distinct appearances: five women and three men', () => {
-  assert.equal(new Set(RULERS.map((r) => r.id)).size, 8);
-  assert.equal(RULERS.filter((r) => r.female).length, 5);
-  assert.equal(RULERS.filter((r) => !r.female).length, 3);
+test('the roster contains eight distinct free appearances, five women and three men, and two bought ones, a woman and a man', () => {
+  const free = RULERS.filter((r) => !PAID_RULERS[r.id]);
+  assert.equal(new Set(free.map((r) => r.id)).size, 8);
+  assert.equal(free.filter((r) => r.female).length, 5);
+  assert.equal(free.filter((r) => !r.female).length, 3);
+  // (COSMETICS: the Ember Sovereign and the Starlit Empress, in the Shop)
+  const bought = RULERS.filter((r) => PAID_RULERS[r.id]);
+  assert.deepEqual(bought.map((r) => r.id).sort(), ['ember_sovereign', 'starlit_empress']);
+  assert.equal(bought.filter((r) => r.female).length, 1);
+  assert.equal(new Set(RULERS.map((r) => r.id)).size, RULERS.length);
 });
 
 test('the Iron Stag is the default ruler, first in the picker, and anything unknown falls back to him; The King is retired but still read', () => {

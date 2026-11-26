@@ -175,6 +175,10 @@ export const readCodexClaimed = (raw: unknown): string[] | undefined => (Array.i
 
 /* ------------------------------------------------------------------ where a foe is met, and how to meet it */
 
+/** ARMY-WEAKNESS: the armies an entry marches with (the codex's line for each: what the army is weak to and resists). */
+export const armiesOfEntry = (e: FoeEntry): string[] =>
+  e.class === 'elite' || e.class === 'calamity' || e.id.startsWith('trial_') ? [] : ARMIES.filter((a) => a.waves.some((w) => w.foes.some((f) => e.defs.includes(f)))).map((a) => a.id);
+
 /** Where an entry is met, in plain words. */
 export function whereMet(e: FoeEntry): string[] {
   if (e.id.startsWith('trial_')) return ['Beyond the veil of an ancient rumour'];

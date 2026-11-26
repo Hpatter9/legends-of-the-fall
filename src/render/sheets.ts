@@ -1,6 +1,7 @@
 // The fighters' sprite sheets (cut by Chronos's tools/compose-sheets.cjs from the Craftpix packs): one row per
 // animation, frames `w` x `h`, the figure centred with its feet on the frame's bottom, facing right.
 
+import { dressBattle } from '../duchessDress';
 import { SOFT } from './softCanvas';
 import { Rectangle, Texture } from 'pixi.js';
 import { loadRulers } from './rulerArt';
@@ -199,6 +200,18 @@ import plEliteBrakka from '../art/units/elite_brakka.png';
 import plEliteSethra from '../art/units/elite_sethra.png';
 import plEliteWarden from '../art/units/elite_warden.png';
 import plYokaiWitch from '../art/units/yokai_witch.png';
+// (ROUND4-WIRE: the quest guests' own front and back sheets, art-source/round4/)
+import summonSentry from '../art/units/summon_sentry.png';
+import guestCarter from '../art/units/guest_carter.png';
+import guestCarterBack from '../art/units/guest_carter_back.png';
+import guestPilgrim from '../art/units/guest_pilgrim.png';
+import guestPilgrimBack from '../art/units/guest_pilgrim_back.png';
+import guestBosun from '../art/units/guest_bosun.png';
+import guestBosunBack from '../art/units/guest_bosun_back.png';
+import guestEnvoy from '../art/units/guest_envoy.png';
+import guestEnvoyBack from '../art/units/guest_envoy_back.png';
+import guestPrisoner from '../art/units/guest_prisoner.png';
+import guestPrisonerBack from '../art/units/guest_prisoner_back.png';
 
 export type Anim = 'idle' | 'walk' | 'attack' | 'hurt' | 'dead';
 
@@ -217,6 +230,17 @@ interface Layout {
 }
 
 const URLS: Record<string, string> = {
+  summon_sentry: summonSentry,
+  guest_carter: guestCarter,
+  guest_carter_back: guestCarterBack,
+  guest_pilgrim: guestPilgrim,
+  guest_pilgrim_back: guestPilgrimBack,
+  guest_bosun: guestBosun,
+  guest_bosun_back: guestBosunBack,
+  guest_envoy: guestEnvoy,
+  guest_envoy_back: guestEnvoyBack,
+  guest_prisoner: guestPrisoner,
+  guest_prisoner_back: guestPrisonerBack,
   yokai_witch: plYokaiWitch,
   elite_warden: plEliteWarden,
   elite_sethra: plEliteSethra,
@@ -412,7 +436,8 @@ function loadSheet(id: string): Promise<void> {
   if (pending) return pending;
   const task = (async () => {
     const img = await loadImage(URLS[id]);
-    const base = Texture.from(img);
+    // (COSMETICS: Duchess's battle sheet in the costume she wears, `redressDuchess` when it changes)
+    const base = Texture.from(id === DUCHESS_SHEET ? await dressBattle(img) : img);
     const l = LAYOUT[id];
     l.rows.forEach((row, r) => {
       const list: Texture[] = [];
@@ -426,6 +451,14 @@ function loadSheet(id: string): Promise<void> {
   loading.set(id, task);
   void task.finally(() => loading.delete(id)).catch(() => {});
   return task;
+}
+
+const DUCHESS_SHEET = 'duchess_goat';
+/** COSMETICS: Duchess's costume changed: her battle sheet is made again (a fight already on the board keeps hers until the next). */
+export function redressDuchess(): void {
+  if (!images.has(DUCHESS_SHEET) || loading.has(DUCHESS_SHEET)) return;
+  images.delete(DUCHESS_SHEET);
+  void loadSheet(DUCHESS_SHEET);
 }
 
 /** Newly awakened equipment is decoded for owned awakened heroes and previews,

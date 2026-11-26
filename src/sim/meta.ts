@@ -11,6 +11,7 @@ import { newCastle, readCastle, readChapel, readWorks, type Castle, type Works }
 import { newLoadout, readLoadout, STARTER_SPELLS, type Loadout } from './spells';
 import { spellSlots } from './spellSlots';
 import { DAILY_WAVES } from './daily';
+import { readTrial, type TrialMeta } from './trialSave';
 import { dailyStarsMax } from './dailyThemes';
 import { Rng } from './rng';
 import { ALL_HEROES, HEROES } from './units';
@@ -50,6 +51,7 @@ import { readCards, readScenes } from './sceneRules';
 import { readQuests, type QuestState } from './quests';
 import { readEidolons, type EidolonMeta } from './warHorn';
 import { readFormations, readTactics } from './tacticPick';
+import { readHallSets, readRest } from './hall';
 
 export { DUPLICATE_SHARDS, LUCKY_ODDS, LUCKY_RANK_SHARDS };
 /** Shards each rank needs in all: rank 1 at 1, rank 2 at 3, rank 3 at 6, rank 4 at 10. */
@@ -118,6 +120,8 @@ export interface Meta {
   calTitles?: number[];
   /** The daily challenge per date (yyyymmdd): the plays (the first counts) and how the counted run went: cleared, the furthest wave, the bonus stars. */
   daily: Record<string, DailyEntry>;
+  /** WEEKLY-TRIAL (`trial.ts`): this week's trial record, the Trial Laurels and the week the camp's pip was cleared for. Missing in a save from before. */
+  trial?: TrialMeta;
   /** The bosses beaten (`foes.ts`, by id). */
   bosses: string[];
   /** Each army's record: furthest wave, wins, clears and stars (`armies.ts`; missing is none). */
@@ -159,6 +163,10 @@ export interface Meta {
   cart?: CartPiece[];
   /** The rank the player has taken for each hero kind (`rankUp.ts`): shards earn a rank, a tap on "Rank up" takes it. Missing means every earned rank counts (the tests' and tools' saves); a save from before is read with the ranks it had. */
   ranked?: Record<string, number>;
+  /** HALL-OF-HEROES: the trait sets whose reward has been paid (`hall.ts`; missing is none). */
+  hallSets?: string[];
+  /** HALL-OF-HEROES: the army runs in a row each hero owned has sat out, up to three (`hall.ts`, `noteRest`; missing is none). */
+  rest?: Record<string, number>;
   /** The steps each hero kind has awakened above its top rank, 1 or 2 (`awaken.ts`; missing is none). */
   awakened?: Record<string, number>;
   /** The rift ores held, by class trait (`awakenMats.ts`): an awakening step asks for its class's on top of the shards. Missing is none. */
@@ -558,6 +566,8 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       m.stand = Math.max(0, (m.stand ?? 0) | 0);
       if (m.standAct !== undefined) m.standAct = Math.max(0, Math.min(3, m.standAct | 0));
       m.daily = readDaily(m.daily);
+      m.trial = readTrial(m.trial);
+      if (!m.trial) delete m.trial;
       // (the party's tactics: saves from before have none)
       const tactics = readTactics(m.tactics);
       if (tactics) m.tactics = tactics;
@@ -598,6 +608,11 @@ export function loadMeta(seed: number, store: Pick<Storage, 'getItem'> = localSt
       if (m.autoRemedies !== true) delete m.autoRemedies;
       // (saves from before ranking up was a choice keep the ranks they had; the shards beyond them wait for the player's tap)
       m.ranked = readRanked(m.ranked, m);
+      // (HALL-OF-HEROES: the sets paid and the heroes' rest; saves from before have neither)
+      m.hallSets = readHallSets(m.hallSets);
+      if (!m.hallSets) delete m.hallSets;
+      m.rest = readRest(m.rest);
+      if (!m.rest) delete m.rest;
       // (saves from before awakening have none)
       m.awakened = readAwakened(m.awakened, m.shards);
       if (!Object.keys(m.awakened).length) delete m.awakened;

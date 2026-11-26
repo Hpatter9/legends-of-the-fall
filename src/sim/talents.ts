@@ -23,6 +23,7 @@ import { awakenSpent } from './awakenRules';
 import { awakenStats } from './awaken';
 import { ALL_HEROES, COMING_HEROES } from './units';
 import { deepNodes } from './talentsDeep';
+import { withHall } from './hall';
 import { ABILITIES, ABILITY_SHORT, profileOf, type Scores } from './stats';
 
 /** One point for every this many levels (3, 6, 9, ... 99), and one more at each deep milestone (levels 40 to 100: `levelPoints`). */
@@ -1078,7 +1079,8 @@ export function heroStats(m: Meta, kind: string): EquipStats | undefined {
   // (and the levels its skills have reached by use, `skillLevels.ts`; a run whose heroes start bare, the spire's and the Calamity's, never reads this)
   const lv = fightLevels(m, kind);
   if (lv) (total ??= emptyStats()).skillLv = lv;
-  return total;
+  // (HALL-OF-HEROES: the Hall's share of every hero's strength, by the ranks of the heroes owned, `hall.ts`)
+  return withHall(m, total, emptyStats);
 }
 
 /** Saved talents that are sane: a kind with a tree, nodes of it that exist, each once, a legal order (the rules of `whyNot`) and no more than the points allow. */

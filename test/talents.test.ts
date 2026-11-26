@@ -24,6 +24,11 @@ import {
 } from '../src/sim/talents';
 import { EQUIP_ICONS } from '../src/equipArt';
 import { dotOf } from '../src/sim/ailments';
+import { HALL } from '../src/sim/hall';
+
+// (HALL-OF-HEROES: the Hall lends every hero a share of the ranks owned, `hall.ts`; these tests are of the talents and the awakening
+//  alone, so it is off here. What the Hall does is held by its own test, `hall`.)
+HALL.on = false;
 
 const stats = (p: Partial<EquipStats>): EquipStats => ({ ...emptyStats(), ...p });
 /** A meta with `kind` unlocked, at `level` (by its XP) and with `shards` shards. */

@@ -5,7 +5,8 @@
 
 import { goatSheet } from './duchess';
 import { DUCHESS_FIGHT_LINES, type DuchessFightLine } from './duchessFightLines';
-import { FRAME } from './render/duchessRules';
+import { drawDuchessCosmetic, FRAME } from './render/duchessRules';
+import { costumeNow, walkArt } from './duchessDress';
 import { hideQuip, showQuip, type Anchor } from './quipView';
 import { settings } from './settings';
 import { DUCHESS_LEVEL } from './sim/duchessFight';
@@ -62,7 +63,9 @@ function portrait(): HTMLCanvasElement {
   void goatSheet().then((im) => {
     const g = c.getContext('2d')!;
     g.imageSmoothingEnabled = false;
-    g.drawImage(im, 4 * FRAME, 0, FRAME, FRAME, 0, 2, FRAME, FRAME);
+    g.drawImage(walkArt(im), 4 * FRAME, 0, FRAME, FRAME, 0, 2, FRAME, FRAME);
+    // (COSMETICS: in the costume she wears)
+    drawDuchessCosmetic(g, costumeNow(), 0, 2, 1, 1, 0);
   });
   return c;
 }

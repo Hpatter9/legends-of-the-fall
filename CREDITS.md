@@ -279,6 +279,11 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   the Council's hunt, plot and spared, the eight temperaments, the nine weaknesses, the hunted badge and three quest faces are `/generate-image-v2` with the game's icons as the style image (`icons.py`, picks in `place.py`).
   PixelLab's terms leave the output's ownership with us.
 
+- **ROUND4-WIRE** (`docs/notes/round4-wire.md`): original art made for this game from the round-4 prompt (`art-source/round4/`,
+  PR #686). It covers the five quest guests' front and back sheets (`src/art/units/guest_*`), the Machine's sentry turret
+  (`summon_sentry.png`), the Pirate's ghost ship (`src/art/ult-show/pirate-ghost-ship*.webp`), Voltara's aftermath
+  (`src/art/eidolons/fx/voltara-after.webp`), and Duchess's Wizard Hat (`src/art/duchess/hat-wizard.png`).
+
 ## Castle courtyard (`src/art/castle/`)
 
 - Every building, wall, gate, prop and ground tile is a single piece of Chronos Settlement's isometric kits (`hpatter9/little-town`,
@@ -514,6 +519,10 @@ The Grand Scenario prototype reuses the already credited camp gate and Knights w
 ## Player rulers (October 2026)
 
 - `src/art/rulers/{sun_viper,frost_witch,ash_empress,rose_duchess,moon_oracle,iron_stag,storm_corsair,gilded_necromancer}.png`: original fantasy pixel character artwork generated with OpenAI image generation from the owner-approved roster and personality concepts (`docs/samples/ruler-roster-personalities.png`). Eight rulers, each with four frames for idle, walk, strike, cast, hurt, fall, seated idle and seated command. Tattoos, jewellery, personal objects and costumes follow those approved concepts. `tools/rulers/prepare.sh` and `bounds.mjs` mechanically slice and pad generated frames; `src/art/rulers/provenance.json` records the source files.
+- `src/art/rulers/{ember_sovereign,starlit_empress}.png` (the two rulers sold in the Shop, COSMETICS): original art made for this game with
+  ChatGPT image generation (round 2, the owner's PR #666), the same atlas layout; their Crown Terrace figures and domains
+  (`src/art/crown-terrace/ruler-{ember_sovereign,starlit_empress}.webp`, `{ember_sovereign,starlit_empress}.webp`) and their thrones (the
+  third row of `thrones.png`) likewise (PR #685, `art-source/cosmetics/`), placed by `tools/cosmetics/rulers.py`.
 - `src/art/rulers/thrones.png`: original empty throne sprites generated with OpenAI image generation for the same eight rulers. The seat remains visible when a ruler stands to cast, recoils or falls in Last Stand. Source: `exec-4085424b-b2af-4831-8f90-7e91b12f2437.png` in the generation workspace; normalised to a four-by-two atlas.
 - These replace the player's earlier Himeko Sutori king and three-frame seated king in the live castle, Last Stand and cinematics. Earlier entries above retain the provenance of those historical assets. Enemy kings retain their existing artwork and credits.
 
@@ -847,3 +856,15 @@ The Crown Terrace environments, eight seated ruler cutouts, seventy companion cu
 The stone piles, crown chests, the starter pack's and the bundles' banners, Duchess's three new costumes, the two new rulers (Ember Sovereign,
 Starlit Empress) and the Starfall card back: original art made for this game (IAP-2, from `art-source/round2/`, the owner's PR #666), cut
 and resized by `tools/iap/art.py`.
+
+## Starfall summons (`src/art/starfall/`)
+
+The Starfall card back and burst: original art made for this game (COSMETICS, from `art-source/round2/`, the owner's PR #666), cut by
+`tools/cosmetics/starfall.py`.
+
+## Duchess's three costumes (`src/art/duchess/duchess_<costume>_walk.png`, `duchess_<costume>.png`)
+
+Her walking strip and battle sheet redrawn whole in each costume: original art made for this game. The Knight (the plumed helm) was
+generated with **PixelLab** from her own round-2 sheets (DUCHESS-COSTUMES, `docs/notes/duchess-costumes-prompt.md`,
+`tools/pixellab/duchess_strip.py`); the Regalia (the crown and the ermine-trimmed cape) and the Lantern are the owner's (PR #683,
+`art-source/duchess-costumes/`).

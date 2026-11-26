@@ -38,6 +38,9 @@ import { drawAchievements } from './achievementsView';
 import { drawCodex, stopCodex } from './codexView';
 import { claimCodex, codexWaiting, gotOf, totalOf } from './sim/codex';
 import { todayKey } from './modes';
+import { trialDayKey } from './trialClock';
+import { trialIsNew, trialRecord, trialStatus, trialWeekOf } from './sim/trial';
+import { mergedRule, TRIAL_WAVES } from './sim/trialRules';
 import { openSettings, settings } from './settings';
 import { slotWaiting } from './sim/spellSlots';
 import { modeShown } from './sim/hiddenModes';
@@ -110,6 +113,8 @@ export interface HomeHooks {
   /** Does a pull of `count`, calling `play` with the heroes it gave so the hall can show them, then opens the card reveal. */
   onSummon?(count: 1 | 10, play: (got: Pull[], skip?: boolean) => Promise<void>): void;
   onDaily(): void;
+  /** WEEKLY-TRIAL: opens the Weekly Trial's card. */
+  onTrial(): void;
   onTower(): void;
   /** Opens the calamity: the saved run's map, or the choice of a starting hero. */
   onCalamity(): void;
@@ -651,6 +656,7 @@ export class Home {
         return this.openArmies(dest.army);
       case 'daily':
         return this.go(this.hooks.onDaily);
+
       case 'stand':
         // (shut until the stars open it: the camp's own rule)
         return modeShown('tower') && (towerOpen(this.meta) || this.hooks.slotInfo?.('tower')) ? this.go(this.hooks.onTower) : this.openArmies();
@@ -923,6 +929,21 @@ export class Home {
       tick.setAttribute('aria-label', 'Cleared today');
       daily.append(tick);
     } else if (!today?.plays) daily.append(el('i', 'badge'));
+    // (WEEKLY-TRIAL: the Weekly Trial on the Daily's left, dressed as it is: a new week's trial wears the red dot, a cleared one the green check)
+    const tday = trialDayKey();
+    const tweek = trialWeekOf(tday);
+    const tdone = trialRecord(m, tweek).best >= TRIAL_WAVES;
+    const trial = place('hmTrial', tdone ? 'daily trial done' : 'daily trial', 'Trial', '', `Weekly Trial: ${mergedRule(tweek).name} · ${trialStatus(m, tweek)}`, () => this.go(this.hooks.onTrial));
+    trial.title = `${mergedRule(tweek).name} · ${trialStatus(m, tweek)}`;
+    trial.querySelector('small')?.remove();
+    // (a stand-in medallion, the painted cup, until the Trial's own lands: docs/notes/weekly-trial-art-prompts.md)
+    trial.prepend(icon(pbUrl('trophies'), 'ico cpDailyIcon'));
+    if (tdone) {
+      const tick = el('i', 'dailyDone');
+      tick.setAttribute('role', 'img');
+      tick.setAttribute('aria-label', 'Cleared this week');
+      trial.append(tick);
+    } else if (trialIsNew(m, tweek)) trial.append(el('i', 'badge'));
     // (the Last Stand's watchtower and the Calamity's citadel are hidden for now (`hiddenModes.ts`): their plates are not built and their slots
     // are taken out, so nothing on the overlook can be tapped; the painted scene stays as it is. A run begun in either stays in its slot, untouched.)
     const showTower = modeShown('tower');
@@ -958,7 +979,7 @@ export class Home {
       calamity.disabled = !calUp;
       this.camp.calamitySlot.classList.toggle('shut', !calUp);
     }
-    // (the Nemesis War's Dark Council, over the Daily once the War is open: the warchief's face once there is one (the mightiest member's
+    // (the Nemesis War’s Dark Council, over the Daily and the Weekly Trial once the War is open: the warchief's face once there is one (the mightiest member's
     // until then), the seats filled on its plate, and the Muster's mark when it is open)
     const war = m.war;
     this.camp.councilSlot.hidden = !war;
@@ -981,6 +1002,7 @@ export class Home {
     }
     // (each piece is put in only when it reads differently from the one showing: a redraw that changes nothing replaces no picture, so nothing blinks)
     swapIn(this.camp.dailySlot, this.camp.dailySlot.querySelector('.cpPlace'), daily);
+    swapIn(this.camp.trialSlot, this.camp.trialSlot.querySelector('.cpPlace'), trial);
     if (tower) swapIn(this.camp.towerSlot, this.camp.towerSlot.querySelector('.cpPlace'), tower);
     if (calamity) swapIn(this.camp.calamitySlot, this.camp.calamitySlot.querySelector('.cpPlace'), calamity);
     // (CLIFF-ROAM: Hester's Stall left the cliff for a corner of the tavern's hearth hall; its marks moved to the Heroes tab and the tavern)

@@ -1,6 +1,9 @@
 // The hero detail sheet (opened from a tap on a hero in the tavern): portrait, rank stars, level, XP bar, role, stats and
 // skills. Reads the meta only.
 
+import { facedNow, strongTag } from './armyMatchView';
+import { openHall } from './hallView';
+import { hallBonus, hallLine } from './sim/hall';
 import { glyphWord } from './paintedButton';
 import { releaseIcon, RELEASE_ICON } from './ornateMenu';
 import { filterCount, rosterRows, viewActive, viewRows, type RosterRow, type RosterView } from './heroFilterRules';
@@ -517,6 +520,7 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
   box.className = 'hsheet heroRoster';
   box.replaceChildren();
   const have = ALL_HEROES.filter((k) => meta.unlocked.includes(k));
+  const faced = facedNow(meta);
   const earned = CONTENT_HEROES.filter((c) => meta.unlocked.includes(c.kind)).length;
   // (SECRET-HEROES: the heroes earned in play are secrets until they join, counted but not named)
   const head = el('div');
@@ -539,6 +543,12 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
     bag.append(el('small', '', 'Open a hero to use one.'));
     head.append(bag);
   }
+  // (HALL-OF-HEROES: the Hall's door, with what it lends now)
+  const hall = el('button', 'hallDoor');
+  hall.type = 'button';
+  hall.append(el('b', '', 'Hall of Heroes'), el('small', '', hallLine(hallBonus(meta))));
+  hall.addEventListener('click', () => openHall(meta, () => saveMeta(meta), () => drawRoster(box, meta, pick, close, lastViewed)));
+  head.append(hall);
   box.append(head);
   const label = el('label', 'rosterSearch');
   label.append(el('span', '', 'Find a hero'));
@@ -596,6 +606,9 @@ export function drawRoster(box: HTMLElement, meta: Meta, pick: (kind: string) =>
       card.append(seal);
       card.setAttribute('aria-description', 'Last viewed hero');
     }
+    // (ARMY-WEAKNESS: a hero strong against the army faced is flagged)
+    const strong = strongTag(faced, kind);
+    if (strong) card.append(strong);
     if (readyToRise(meta, kind)) card.append(el('small', 'rankTag', 'Rank up'), upMark('upCorner'));
     // (TALENT-ARROWS: talent points to spend wear the chevron too)
     else if (talentPointsReady(meta, kind)) card.append(el('small', 'rankTag', 'Talents'), upMark('upCorner'));

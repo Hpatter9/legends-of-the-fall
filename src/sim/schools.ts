@@ -46,7 +46,10 @@ export const OPEN_START: SpellId = FIRST_SPELL;
 /** The loadout's slots, all told: the three school slots and the open slot. How many a save may fill is `spellSlots` (SPELL-SLOTS). */
 export const LOADOUT_SLOTS = SCHOOL_SLOTS + 1;
 
-export const schoolOf = (id: string | undefined): School => SCHOOLS[(id && id in SCHOOLS ? id : DEFAULT_SCHOOL) as SchoolId];
+/** COSMETICS (docs/notes/cosmetics.md): the rulers bought in the Shop lead a school a free ruler leads, the same spells and the same Decree, so
+ *  buying one changes only the look: the Ember Sovereign leads Fire (as the Ash Empress), the Starlit Empress the Stars (as the Moon Oracle). */
+export const SHARED_SCHOOL: Readonly<Record<string, SchoolId>> = { ember_sovereign: 'ash_empress', starlit_empress: 'moon_oracle' };
+export const schoolOf = (id: string | undefined): School => SCHOOLS[(id && id in SCHOOLS ? id : id && SHARED_SCHOOL[id] ? SHARED_SCHOOL[id] : DEFAULT_SCHOOL) as SchoolId];
 /** The two spells of a school every save knows. */
 export const firstSpells = (s: School): SpellId[] => s.spells.slice(0, 2);
 /** Which schools a spell belongs to. */

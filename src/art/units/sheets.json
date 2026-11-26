@@ -7033,5 +7033,300 @@
   },
   "figure": 80,
   "facesRight": true
+ },
+ "guest_carter": {
+  "w": 160,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 104,
+  "facesRight": true,
+  "lies": true,
+  "rear": "guest_carter_back"
+ },
+ "guest_carter_back": {
+  "w": 160,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 104,
+  "facesRight": true,
+  "lies": true,
+  "front": "guest_carter"
+ },
+ "guest_pilgrim": {
+  "w": 160,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 105,
+  "facesRight": true,
+  "lies": true,
+  "rear": "guest_pilgrim_back"
+ },
+ "guest_pilgrim_back": {
+  "w": 160,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 105,
+  "facesRight": true,
+  "lies": true,
+  "front": "guest_pilgrim"
+ },
+ "guest_bosun": {
+  "w": 160,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 104,
+  "facesRight": true,
+  "lies": true,
+  "rear": "guest_bosun_back"
+ },
+ "guest_bosun_back": {
+  "w": 160,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 104,
+  "facesRight": true,
+  "lies": true,
+  "front": "guest_bosun"
+ },
+ "guest_envoy": {
+  "w": 160,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 104,
+  "facesRight": true,
+  "lies": true,
+  "rear": "guest_envoy_back"
+ },
+ "guest_envoy_back": {
+  "w": 160,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 104,
+  "facesRight": true,
+  "lies": true,
+  "front": "guest_envoy"
+ },
+ "guest_prisoner": {
+  "w": 160,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 105,
+  "facesRight": true,
+  "lies": true,
+  "rear": "guest_prisoner_back"
+ },
+ "guest_prisoner_back": {
+  "w": 160,
+  "h": 120,
+  "perRow": 4,
+  "rows": [
+   "idle",
+   "walk",
+   "_walk",
+   "attack",
+   "hurt",
+   "dead",
+   "attack2"
+  ],
+  "counts": {
+   "idle": 4,
+   "walk": 8,
+   "_walk": 0,
+   "attack": 4,
+   "hurt": 4,
+   "dead": 4,
+   "attack2": 4
+  },
+  "figure": 105,
+  "facesRight": true,
+  "lies": true,
+  "front": "guest_prisoner"
+ },
+ "summon_sentry": {
+  "w": 128,
+  "h": 96,
+  "perRow": 6,
+  "rows": [
+   "deploy",
+   "attack",
+   "idle",
+   "hurt",
+   "dead"
+  ],
+  "counts": {
+   "deploy": 6,
+   "attack": 5,
+   "idle": 6,
+   "hurt": 4,
+   "dead": 5
+  },
+  "aliases": {
+   "walk": "idle"
+  },
+  "figure": 65,
+  "facesRight": true,
+  "lies": true
  }
 }

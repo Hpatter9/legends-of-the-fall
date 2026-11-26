@@ -28,5 +28,11 @@
     "columns": 4,
     "rows": 2,
     "cell": 224
+  },
+  "bought": {
+    "note": "COSMETICS (docs/notes/cosmetics.md): the two rulers sold in the Shop, by tools/cosmetics/rulers.py",
+    "ember_sovereign": "art-source/round2/ruler_ember.png (PR #666)",
+    "starlit_empress": "art-source/round2/ruler_starlit.png (PR #666)",
+    "thrones": "art-source/cosmetics/thrones-new.png (PR #685): the third row of thrones.png, cells 8 and 9"
   }
 }

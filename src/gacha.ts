@@ -1,6 +1,9 @@
 // The recruiting screen (#gacha): the stones, the pull buttons and rates, a tarot card for each pull (`summonTarot.ts`; a hero
 // who joins then has its first-time reveal), and the list of every hero with the locked ones shaded. It only reads and changes the Meta through the sim's own functions.
 
+import { facedNow, strongTag } from './armyMatchView';
+import { setTarget } from './sim/hall';
+import { TRAITS } from './sim/traits';
 import { ALL_HEROES, UNITS } from './sim/units';
 import { heroClassLabel, heroName, heroTitle } from './sim/heroNames';
 import { awakenedOf, AWAKEN_SHARDS } from './sim/awaken';
@@ -115,6 +118,8 @@ export class Gacha {
     const row = $('nearRow');
     const kinds = nearestBegun(m, NEAR_ROW);
     row.hidden = !kinds.length;
+    // (ARMY-WEAKNESS: a hero strong against the army faced is flagged)
+    const faced = facedNow(m);
     const cells = kinds.map((kind) => {
       const cell = document.createElement('div');
       cell.className = 'hero';
@@ -122,6 +127,11 @@ export class Gacha {
       const name = document.createElement('b');
       name.textContent = heroName(kind);
       cell.append(portrait(UNITS[kind].sheet, NEAR_PX), name, unlockBar(m, kind));
+      const strong = strongTag(faced, kind);
+      if (strong) cell.append(strong);
+      // (HALL-OF-HEROES: a hero missing from a set begun is a summon target: "Completes the Undead" or "Undead: 2 left")
+      const target = setTarget(m, kind);
+      if (target) cell.append(Object.assign(document.createElement('small'), { className: 'setTag', textContent: target.left === 1 ? `◆ Completes ${TRAITS[target.trait]?.name ?? target.trait}` : `◆ ${TRAITS[target.trait]?.name ?? target.trait} −${target.left}`, title: target.left === 1 ? `Completes the ${TRAITS[target.trait]?.name ?? target.trait} set` : `${target.left} heroes left of the ${TRAITS[target.trait]?.name ?? target.trait} set` }));
       return cell;
     });
     const head = document.createElement('h3');

@@ -66,7 +66,7 @@ none, Tiny Tin Crown, Wizard Hat, Archery Quiver), each earned in play. **All of
 | Play product ID | Entitlement | What it is | USD |
 | --- | --- | --- | --- |
 | `look_duchess_regalia` | `duchess_regalia` | Duchess's Royal Regalia: an ermine cape and a jewelled crown | 1.99 |
-| `look_duchess_knight` | `duchess_knight` | Duchess's Little Knight: a plumed steel helm and a tabard | 1.99 |
+| `look_duchess_knight` | `duchess_knight` | Duchess's Little Knight: a plumed steel helm | 1.99 |
 | `look_duchess_lantern` | `duchess_lantern` | Duchess's Lantern: a little lantern on her horns with a ghost-light | 1.99 |
 | `bundle_wardrobe` | all three above | Duchess's wardrobe | 3.99 |
 | `ruler_ember` | `ruler_ember` | A ninth ruler, the Ember Sovereign (male): blackened gold armour, a mantle of embers | 6.99 |

@@ -3,6 +3,7 @@
 // behind, on high ground; see `src/sim/autoplay.ts`, which the Auto button and the auto-replay share) and plays an army's waves from wave 1 until a fight is lost or the last boss falls. Hero levels come from, and
 // XP goes into, the save's meta, as the page does.
 
+import { withoutHall } from '../src/sim/hall';
 import { PROVISIONS, oathOffer, provisionsOf, swearOath } from '../src/sim/calJourney';
 import { DEPLOY_ROWS, standable, tileAt } from '../src/sim/board';
 import { fight, place, playOut, type Battle, type Boost } from '../src/sim/battle';
@@ -30,6 +31,7 @@ import { UNITS } from '../src/sim/units';
 import { takeRelic } from '../src/sim/elites';
 import { buy, hire, choices, sideChoices, clearNode, enterNode, finishMystery, finishTower, mapFor, openTreasure, rest, takeXp, train, type MapNode, type NodeKind } from '../src/sim/tower';
 import { calamityRun, dailyBonus, dailyRun, towerRun } from '../src/sim/modes';
+import { dropLoanXp, trialCleared, trialLoans, trialEntrants, trialRun } from '../src/sim/trial';
 import { chooseAltar, pendingAltar } from '../src/sim/rift';
 import { squadHealth } from '../src/sim/health';
 import { CAL_MAPS, CAL_ROWS } from '../src/sim/calamity';
@@ -164,7 +166,7 @@ export function playWaves(meta: Meta, run: Run, castle: Castle = run.castle ?? n
       const id = championFor(run, offer)!;
       const h = run.roster.find((x) => x.id === id)!;
       acceptDuel(run, offer, id);
-      const d = startDuel(run, offer, id, boostFor?.(h) ?? botBoost(meta, h, run));
+      const d = startDuel(run, offer, id, withoutHall(meta, boostFor?.(h) ?? botBoost(meta, h, run)));
       fight(d);
       const dt = WAR_BOT.settle && meta.war ? playOutTallied(d) : (playOut(d), undefined);
       const out = settleDuelRun(run, d)!;
@@ -227,6 +229,33 @@ export function playDaily(meta: Meta, date: number, hearts = true, gear = true):
   settleFinds(meta, run);
   LIVES_RULE.on = was;
   return { won, cleared: !!run.cleared, hearts: partyFalls(run), bonus: dailyBonus(run).filter((r) => r.earned).length, stars: dailyBonus(run).map((r) => r.earned), ms: run.tally?.ms ?? 0, lost: run.tally?.lost ?? 0, bossFell: run.tally?.bossFell ?? 0, bossLost: run.tally?.bossLost ?? 0 };
+}
+
+/**
+ * A week's trial as a greedy player (WEEKLY-TRIAL, `src/sim/trial.ts`): the five the week admits from the save's heroes, summoning and fielding
+ * as `playDaily` does, with the run's lives (when `hearts`, as the page plays it). Returns the waves cleared and whether the boss fell; null
+ * when the save has no hero the week admits.
+ */
+export function playTrial(meta: Meta, week: number, hearts = true, gear = true): { won: number; cleared: boolean; five: string[] } | null {
+  if (!trialEntrants(meta, week).length && !trialLoans(meta, week).length) return null;
+  const was = LIVES_RULE.on;
+  LIVES_RULE.on = hearts;
+  const run: Run = trialRun(meta, week);
+  const five = run.roster.map((h) => h.kind);
+  while (!run.over) {
+    autoRound(run, meta, gear);
+    const b = startStage(run);
+    autoDeploy(b, run, meta);
+    fight(b);
+    maybeSpells(b, meta);
+    playOut(b);
+    noteFight(run, b);
+    finish(run, b.phase === 'won', ratingOf(b, isBossRun(run)).stars);
+    gainXp(meta, dropLoanXp(run, fightXp(b, xpRate(newCastle()))));
+  }
+  settleFinds(meta, run);
+  LIVES_RULE.on = was;
+  return { won: trialCleared(run), cleared: !!run.cleared, five };
 }
 
 /** An army's last wave (its final boss) alone, as a greedy player with a party at the level of `meta`: whether it was won. The waves before it are walked over (their foes made frail), so the gold they pay and the heroes it buys are the campaign's. For tuning the final bosses. */

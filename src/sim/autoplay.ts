@@ -1,3 +1,6 @@
+import { trialHost, trialSquadOk } from './trialRules';
+import { lentStanding } from './trial';
+import { ARMY_WEAKNESS, matchMult, matchOf } from './armyWeakness';
 import { mythicFits, oneMythic } from './mythicRules';
 // The greedy player, shared by the Auto button, the auto-replay of cleared armies, the balance tool and the tests: it
 // picks the squad, summons while the gold lasts (merging every pair, as the Auto merge button does), takes the safe picks of an event, dresses the squad in the pack's gear
@@ -34,9 +37,11 @@ export function strengthOf(meta: Meta, h: Owned, run?: Run): number {
 /** The bot's boost for a hero of a run that brings the lasting kit: its grade, rank and level and its awakening, as ever, and in a real-gear
  *  run (RUN-GEAR) the equipment its kind fights in: the lasting pieces with the run's finds in their slots, fresh (`botKitStats`). */
 export function botBoost(meta: Meta, h: Owned, run?: Run): Boost {
+  // (WEEKLY-TRIAL: a lent hero fights at the loan's level and rank, `lentStanding`)
+  const lent = lentStanding(run, h.kind);
   const awake = awakenStats(meta, h.kind);
   // (DEPTH-BUILD: a mentor's legacy perk from the run's snapshot, `legacy.ts`)
-  const boost = journeyBoost(run?.tower?.journey, h.id, legacyBoost(run?.legacy, h.kind, boostOf(h, heroRank(meta, h.kind), levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake)));
+  const boost = journeyBoost(run?.tower?.journey, h.id, legacyBoost(run?.legacy, h.kind, boostOf(h, lent?.rank ?? heroRank(meta, h.kind), lent?.level ?? levelOfKind(meta, h.kind), run && isReal(run) ? botKitStats(meta, run, h.kind, awake) : awake)));
   // (SEVEN-SLOT GEAR batch 6: a hero risen at half after a won wave starts the next so, as the page's does)
   const share = run && !run.tower ? hpShare(run, h.id) : 1;
   return share < 1 ? { ...boost, carry: share } : boost;
@@ -54,8 +59,14 @@ export function pickSquad(run: Run, meta: Meta, keep: readonly number[] = []): O
   // (a quest battle's required cast must fight: they are always kept, ahead of the strongest)
   const must = run.mode?.kind === 'quest' ? run.roster.filter((h) => !h.guest && !sitsOut(run, h.id) && run.mode?.kind === 'quest' && run.mode.cast.includes(h.kind)).map((h) => h.id) : [];
   const kept = [...must, ...keep.filter((id) => !must.includes(id))].map((id) => run.roster.find((h) => h.id === id)).filter((h): h is Owned => !!h && !sitsOut(run, h.id) && !h.guest);
-  const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id) && !h.guest).sort((a, b) => strengthOf(meta, b, run) - strengthOf(meta, a, run) || a.id - b.id);
-  const five = oneMythic(oneOfEach([...kept, ...rest]), h => h.kind).slice(0, squadLimit(run));
+  // (ARMY-WEAKNESS: in an army run, a hero's strength as the army sees it: x1.3 on a class it is weak to, x0.9 on one it resists: `matchMult`)
+  const army = run.mode?.kind === 'army' ? run.mode.army : run.mode?.kind === 'trial' ? trialHost(run.mode.week).id : undefined;
+  const seen = (h: Owned): number => strengthOf(meta, h, run) * (ARMY_WEAKNESS.on ? matchMult(matchOf(army, h.kind)) : 1);
+  const rest = run.roster.filter((h) => !kept.includes(h) && !sitsOut(run, h.id) && !h.guest).sort((a, b) => seen(b) - seen(a) || a.id - b.id);
+  // (WEEKLY-TRIAL: on a one-of-each week, the strongest of each class; a hero the week bars never stands, `trialSquadOk`)
+  const mode = run.mode;
+  const fits = mode?.kind === 'trial' ? (hs: Owned[]) => hs.reduce<Owned[]>((acc, h) => (trialSquadOk(mode.week, acc.map((x) => x.kind), h.kind) ? [...acc, h] : acc), []) : (hs: Owned[]) => hs;
+  const five = fits(oneMythic(oneOfEach([...kept, ...rest]), h => h.kind)).slice(0, squadLimit(run));
   const guest = run.roster.find((h) => h.guest);
   return guest && mythicFits(five.map(h => h.kind), guest.kind) && !five.some((h) => h.kind === guest.kind) ? [...five, guest] : five;
 }

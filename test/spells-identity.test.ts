@@ -104,6 +104,7 @@ import { CAL_SCALE } from '../src/sim/calamity';
 import { FIELD_HAZARDS } from '../src/sim/fieldTraps';
 import { LAND_TERRAIN } from '../src/sim/landTerrain';
 import { TRAIT_PERKS } from '../src/sim/traits';
+import { ARMY_WEAKNESS } from '../src/sim/armyWeakness';
 
 // (LIVING-FIELDS: these fights were recorded before the land's traps and hazards, `fieldTraps.ts`; the set's one switch is off here, so every
 // fight is laid as it was and plays as recorded)
@@ -114,6 +115,9 @@ LAND_TERRAIN.on = false;
 // (TRAIT-PERKS: nor had the traits their perks, `traitPerks.ts`: with the switch off they are the old small bonuses, so every fight plays as
 //  recorded. What the perks do is held by their own tests, `trait-perks` and `traits`.)
 TRAIT_PERKS.on = false;
+// (ARMY-WEAKNESS: nor had the armies their weaknesses and resistances, `armyWeakness.ts`: off here, so every army fight plays as recorded.
+//  What the rule does is held by its own test, `army-weakness`.)
+ARMY_WEAKNESS.on = false;
 
 // (ONE-OF-EACH, the owner's rule of one unit of a hero on the field, docs/notes/one-of-each.md, re-recorded `army` and `daily`: the greedy player
 // fields one of each kind, where it fielded two of a kind before; `daily` again for its foes' new start, `DAILY_START` 0.565; every other

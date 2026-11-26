@@ -7,6 +7,8 @@
 
 import { ULT_LEVEL } from './sim/abilities';
 import { ARMIES, armyCleared, tierOpen, totalStars } from './sim/armies';
+import { ARMY_WEAKNESS, RESIST_MULT, WEAK_MULT } from './sim/armyWeakness';
+import { HALL, HALL_STATS, hallBonus } from './sim/hall';
 import { offeredChain } from './sim/eidolonChains';
 import { autoMergeOpen, autoPlaceOpen, autoRunesOpen } from './sim/featureUnlocks';
 import { SKILL2_LEVEL } from './sim/heroKits';
@@ -22,7 +24,8 @@ import { hornHeld } from './sim/warHorn';
 export type TutorialMoment = 'deploy' | 'fight';
 /** The pages a tutorial can wait for instead, the first time each is opened. */
 /** (IAP: 'shop', the Shop's first opening, only in a build that has one: the Play app) */
-export type TutorialPage = 'tavern' | 'recruit' | 'council' | 'armies' | 'shop';
+/** (WEEKLY-TRIAL: 'trial', the Weekly Trial's card the first time it opens) */
+export type TutorialPage = 'tavern' | 'recruit' | 'council' | 'armies' | 'shop' | 'trial';
 
 export interface Tutorial {
   id: string;
@@ -255,6 +258,54 @@ export const TUTORIALS: readonly Tutorial[] = [
     at: 'armies',
     open: (m) => ARMIES.some((a) => tierOpen(m, a, 1)),
     when: 'Three stars on an army',
+  },
+  {
+    // (HALL-OF-HEROES, docs/notes/hall-of-heroes.md: told on the Heroes tab the first time the Hall lends anything, a hero owned at rank 1)
+    id: 'hall',
+    title: 'The Hall of Heroes',
+    lines: [
+      'Every hero you own lends all your heroes a little strength for each rank it has: Guardians health, Blades attack, Assassins crit, Casters skill charge.',
+      'Own every hero of a trait to complete its set, for a title and a reward.',
+      'A hero who sits out three army runs comes back Rested, with half again the XP.',
+    ],
+    art: 'ui/buttons/all-heroes.webp',
+    at: 'tavern',
+    point: '.hallDoor',
+    open: (m) => HALL.on && HALL_STATS.some((s) => hallBonus(m)[s] > 0),
+    when: 'A hero ranks up',
+    newer: true,
+  },
+  {
+    // (ARMY-WEAKNESS, docs/notes/army-weakness.md: told the first time the War Room shows an army's weaknesses; `newer`, so a save from
+    //  before sees it once)
+    id: 'armyWeakness',
+    title: 'Weaknesses',
+    lines: [
+      'Every army is weak to some classes of hero and resists others: see "Weak to" and "Resists" on its card.',
+      `Its foes take ${Math.round((WEAK_MULT - 1) * 100)}% more harm from a hero it is weak to, and ${Math.round((1 - RESIST_MULT) * 100)}% less from one it resists.`,
+      'On the deploy screen, ▲ marks a hero that hits a weakness and ▼ one that is resisted.',
+    ],
+    art: 'ui/buttons/armies.webp',
+    at: 'armies',
+    point: '.asMatch',
+    open: () => ARMY_WEAKNESS.on,
+    when: 'The War Room opens',
+    newer: true,
+  },
+  {
+    // (WEEKLY-TRIAL, docs/notes/weekly-trial.md: told the first time the Trial's card opens; `newer`, so a save from before sees it once)
+    id: 'weeklyTrial',
+    title: 'The Weekly Trial',
+    lines: [
+      'A new trial every Monday: seven waves against one army, under rules that change each week.',
+      'One try a day, and your best of the week counts. Rewards at 3, 5 and all 7 waves, paid once a week.',
+      'Each week favours some classes and may bar others: a reason to build a second team.',
+    ],
+    art: 'ui/buttons/trophies.webp',
+    at: 'trial',
+    open: () => true,
+    when: 'The Weekly Trial opened',
+    newer: true,
   },
   {
     // (IAP, docs/notes/iap.md: told the first time the Shop opens; a build without a Shop never opens it, and the Tutorials page leaves it

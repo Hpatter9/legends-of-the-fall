@@ -27,6 +27,48 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.625.0',
+    date: '2026-11-25',
+    title: 'The Weekly Trial',
+    notes: ['A new trial every Monday: seven waves against one army, under rules that change each week. One try a day; your best counts.', 'Reach 3, 5 or all 7 waves for crowns, stones and a Trial Laurel, with titles to earn.', 'If the week\'s rules leave you short, heroes are lent to you for the trial.'],
+  },
+  {
+    version: '0.624.0',
+    date: '2026-11-25',
+    title: 'The Hall of Heroes',
+    notes: ['Every hero you own lends your whole roster a little of its class\'s strength for each rank: health, attack, crit or skill charge.', 'Complete a trait\'s set of heroes for a title and a reward, once.', 'A hero who sits out three army runs comes back Rested, with half again the XP.'],
+  },
+  {
+    version: '0.623.0',
+    date: '2026-11-25',
+    title: 'Every army has a weakness',
+    notes: ['Each army is weak to some classes of hero and resists others: weak foes take 30% more harm, resisted ones 10% less.', 'See it on the War Room card and the deploy screen; Auto now picks heroes that suit the army you face.', 'Recruit flags the heroes strong against your next army.'],
+  },
+  {
+    version: '0.622.0',
+    date: '2026-11-25',
+    title: 'Fairer duels, and Natsu in action',
+    notes: ['A duel against the Infernal Host, the Yokai Night Parade or the Golem Forge is now a fair fight at your own level.', 'Natsu\'s painting is redone in an action pose, bow drawn.'],
+  },
+  {
+    version: '0.621.0',
+    date: '2026-11-25',
+    title: 'Guests, a ghost ship and Natsu restored',
+    notes: ['The quest guests, the Machine trait\'s sentry turret and the Pirate\'s ghost ship have art of their own.', 'Voltara\'s storm leaves scorched ground behind it, and Duchess\'s wizard hat is painted.', 'Natsu\'s painting is redone with both legs.'],
+  },
+  {
+    version: '0.620.0',
+    date: '2026-11-25',
+    title: 'New looks: costumes, rulers and Starfall',
+    notes: ['Dress Duchess as royalty, a little knight or a lantern-bearer, from Settings, Ruler and Duchess.', 'Two new rulers, the Ember Sovereign and the Starlit Empress, each with a domain of their own.', 'Starfall summons: a starry card back and a burst as each card turns. Looks only; nothing changes your strength.'],
+  },
+  {
+    version: '0.619.0',
+    date: '2026-11-25',
+    title: 'A guard you can see',
+    notes: ['A raised guard now shows as gold rings at the feet and a glow behind the body, instead of a faint dome.'],
+  },
+  {
     version: '0.618.0',
     date: '2026-11-25',
     title: 'Spell fields and softer glows',

@@ -6,6 +6,7 @@
 // A purchase is granted here, in the page: `grantPurchase` adds to the meta (once per transaction) and the guarded save keeps it at once.
 // Nothing here touches a fight.
 
+import { setSetting } from './settings';
 import stones1 from './art/treasury/shop_stones_1.webp';
 import stones2 from './art/treasury/shop_stones_2.webp';
 import stones3 from './art/treasury/shop_stones_3.webp';
@@ -72,12 +73,18 @@ export function ownedNow(): Owned {
     return { entitlements: [] };
   }
 }
+/** COSMETICS: the event the page hears when what is owned for good changes (a purchase, a restore, a refund): Duchess's battle sheet is
+ *  dressed again for it (`main.ts`). */
+export const OWNED_CHANGED = 'legends-owned';
 function keepOwned(c: Customer): void {
+  const was = ownedNow().entitlements.join();
+  const now = ownedFrom(c.entitlements);
   try {
-    localStorage.setItem(OWNED_KEY, JSON.stringify(ownedFrom(c.entitlements)));
+    localStorage.setItem(OWNED_KEY, JSON.stringify(now));
   } catch {
     /* (a full storage: the store tells us again next time) */
   }
+  if (now.entitlements.join() !== was) window.dispatchEvent(new Event(OWNED_CHANGED));
 }
 
 const online = (): boolean => typeof navigator === 'undefined' || navigator.onLine !== false;
@@ -152,7 +159,22 @@ function showGranted(gs: Grant[], title = 'Thank you'): void {
     const lines = contentsOf(g.product);
     well.append(el('p', '', `${g.product.name}: ${lines.length ? lines.join(', ') : 'yours for good'}`));
   }
-  menuFoot(menu, { back: { word: 'close' } });
+  // (COSMETICS: a look bought can be put on at once; it can always be taken off in Settings, Ruler and Duchess)
+  const wear = gs.map((g) => wearOf(g.product.id)).find((w) => w);
+  menuFoot(menu, { back: { word: 'close' }, ...(wear ? { primary: { label: 'Wear it now', onClick: () => { wear(); menu.close(); } } } : {}) });
+}
+
+/** What putting on a bought look does (the wardrobe puts on its first costume); none for anything else. */
+function wearOf(id: string): (() => void) | undefined {
+  const costume = ({ look_duchess_regalia: 'regalia', look_duchess_knight: 'knight', look_duchess_lantern: 'lantern', bundle_wardrobe: 'regalia' } as const)[id as 'look_duchess_regalia'];
+  if (costume) return () => setSetting('duchessHat', costume);
+  if (id === 'look_starfall') return () => setSetting('starfall', true);
+  // (COSMETICS: a bought ruler takes the throne; their school is a free ruler's, so the spells re-fit as on any change of ruler)
+  if (id === 'ruler_ember' || id === 'ruler_starlit') return () => {
+    setSetting('rulerPicked', true);
+    setSetting('ruler', id === 'ruler_ember' ? 'ember_sovereign' : 'starlit_empress');
+  };
+  return undefined;
 }
 
 /** Open the Shop over the home screen. `changed` is told after a purchase (the page redraws its top bar). */
@@ -179,7 +201,8 @@ export function openTreasury(m: Meta, changed: () => void): OrnateMenu | null {
     if (bonus) lines.push([`+${bonus}% more`, 'pay']);
     lines.push(...extra);
     if (!pr.ready) lines.push(['Coming soon', 'lock']);
-    else if (owned || sold) lines.push(['Owned', 'pay']);
+    // (COSMETICS: a look bought is worn from Settings, Ruler and Duchess)
+    else if (owned || sold) lines.push([pr.kind === 'cosmetic' ? 'Owned · wear it in Settings, Ruler and Duchess' : 'Owned', 'pay']);
     const b = menuChoice(grid, { title: pr.name, lines, disabled: busy || !pr.ready || owned || sold || !prices?.has(pr.id) });
     b.classList.add('iapItem');
     b.dataset.product = pr.id;

@@ -91,6 +91,7 @@ import { BODY_COVER } from './bodyCover';
 import { overAlpha, PAINT_OVER, UNDER, rowsUnder, behindRow, rowCut, ROW_PAINT, ROW_CLIP, amongPicture, throughAlpha } from './onFighterRules';
 import { BossFx } from './bossFx';
 import type { Element, Family } from './fxRules';
+import { hitLabel, MATCH_LABEL_MS } from '../armyWeaknessRules';
 
 /** Shapes for the legacy named skill cues; their scale and release timing remain the skill's own. */
 const MAGIC: Record<MagicKey, readonly [Element, Family]> = {
@@ -176,6 +177,8 @@ interface Item {
 
 export class Fx {
   readonly root = new Container();
+  /** ARMY-WEAKNESS: when each foe last showed "Weak!" or "Resisted" (the battle's clock). */
+  private matchShown = new Map<number, number>();
   /** FIXES-4: a tile's ground layer (over its top, under its props and every fighter: `BoardView.groundAt`), where the tile marks are laid
    *  so the fighters standing in them show; null off the board. Unset (the Last Stand's baked hall), marks go on `ground`. */
   groundAt: (u: number, v: number) => Container | null = () => null;
@@ -616,6 +619,13 @@ export class Fx {
         this.flesh(target, hx, hy, e.dmg / target.maxHp);
         // (a glancing blow, STATS batch 4: the word, and a smaller grey number)
         if (e.glance && settings().numbers) this.label('Glance', to.x, to.y - to.tall - 22, 0xb4b4b4, 10, 600);
+        // (ARMY-WEAKNESS: a blow on the army's weakness says "Weak!", on its resistance "Resisted": once in a while for each foe struck, so a
+        // crowd of blows stays readable on the phone)
+        const ml = hitLabel(e.match);
+        if (ml && settings().numbers && b.t - (this.matchShown.get(e.to) ?? -1e9) >= MATCH_LABEL_MS) {
+          this.matchShown.set(e.to, b.t);
+          this.label(ml.text, to.x, to.y - to.tall - (e.glance ? 34 : 22), ml.colour, e.match === 'weak' ? 12 : 10, 700);
+        }
         // (a quiet utility skill's tiny blow shows no number, `numberShown`)
         if (numberShown(castName, e.dmg)) this.number(e.dmg, to.x, to.y - to.tall - 10, e.heavy, target.side === 'hero', e.high, e.ail, e.glance);
         this.trauma = Math.min(1, this.trauma + traumaFor(e.dmg / target.maxHp, e.killed) * 0.5);
@@ -3878,6 +3888,14 @@ export class Fx {
     if (word && shown.length) {
       const [x, y] = look.on === 'party' || look.on === 'file' ? shown[Math.floor(shown.length / 2)] : shown[0];
       this.label(word, x, y - 26, look.tint, 13, 1200, true);
+    }
+    // (ROUND4-WIRE: the Broadside's ghost ship rides over the middle of the raked file, above its word (the file's far end can be off the
+    // screen), at rest, then with every gun port flashing as the shot lands; it drifts a little, still for reduced motion)
+    if (e.what === 'broadside' && shown.length) {
+      const [x, y] = shown[Math.floor(shown.length / 2)];
+      const still = this.reduced;
+      this.showProp('pirate-ghost-ship', x, y - 120, { h: 110, life: 700, alpha: 0.82, ...(still ? {} : { vx: 0.012 }) });
+      this.showProp('pirate-ghost-ship-fire', x + (still ? 0 : 6), y - 120, { h: 110, life: 1400, delay: 700, alpha: 0.85, ...(still ? {} : { vx: 0.012 }) });
     }
     if (e.what === 'stampede' || e.what === 'broadside' || e.what === 'onslaught' || e.what === 'kegBoom' || e.what === 'boom' || e.what === 'regicide') this.trauma = Math.min(1, this.trauma + 0.25);
     // (a keg stands where it was rolled until it goes off)

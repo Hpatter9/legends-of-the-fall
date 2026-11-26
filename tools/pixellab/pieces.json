@@ -210,5 +210,16 @@
     ],
     "seed": 714,
     "key": "the Crow Seer, a white-feathered crow tengu: a grey monk's robe, prayer beads, a third eye glowing violet on its brow, same pose, same facing, same size"
+  },
+  "duchess_knight": {
+    "source": "duchess_goat",
+    "out": "duchess_knight",
+    "keyFrame": [
+      "idle",
+      0
+    ],
+    "seed": 1101,
+    "key": "the same small white goat wearing a little bold steel knight's helm with an open face and a tall bright red plume on top; simple bold shapes; same pose, same facing, same size, same white fur",
+    "extra": "keep each frame's pose, size and position exactly; side view facing right; the same steel helm and red plume in every frame"
   }
 }

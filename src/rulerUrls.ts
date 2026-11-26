@@ -7,5 +7,7 @@ import moon from './art/rulers/moon_oracle.png';
 import stag from './art/rulers/iron_stag.png';
 import corsair from './art/rulers/storm_corsair.png';
 import necromancer from './art/rulers/gilded_necromancer.png';
+import ember from './art/rulers/ember_sovereign.png';
+import starlit from './art/rulers/starlit_empress.png';
 
-export const RULER_URLS: Record<RulerId, string> = { sun_viper: sun, frost_witch: frost, ash_empress: ash, rose_duchess: rose, moon_oracle: moon, iron_stag: stag, storm_corsair: corsair, gilded_necromancer: necromancer };
+export const RULER_URLS: Record<RulerId, string> = { sun_viper: sun, frost_witch: frost, ash_empress: ash, rose_duchess: rose, moon_oracle: moon, iron_stag: stag, storm_corsair: corsair, gilded_necromancer: necromancer, ember_sovereign: ember, starlit_empress: starlit };

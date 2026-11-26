@@ -32,12 +32,14 @@ import { settleArmyDrop, SHARD_CHANCE, TOME_CHANCE } from '../src/sim/armyDrops'
 import { closest, giveShards } from '../src/sim/unlock';
 import { SHARD_WEEK } from '../src/sim/council';
 import { dailyChestSeed, dailyCrowns, DAILY_WAVES } from '../src/sim/daily';
+import { TRIAL_TIERS } from '../src/sim/trial';
 import { MAP_CROWNS } from '../src/sim/tower';
 import { BUILDINGS } from '../src/sim/castle';
 import { crownsTotal, FOE_ENTRIES, shownEntries, stonesTotal } from '../src/sim/codex';
 import { achievementShown, modesHidden, questShown, setModesHidden, setStonesMoved } from '../src/sim/hiddenModes';
 import { grantClearHero } from '../src/sim/clearHero';
 import { QUESTS } from '../src/sim/questData';
+import { claimSets, HALL, hallBonus, HALL_STATS, type HallBonus } from '../src/sim/hall';
 import { ACHIEVEMENTS, stonesOfAchievement } from '../src/sim/achievements';
 
 const arg = (name: string, fallback: number): number => {
@@ -67,6 +69,11 @@ const FARM_RUNS = arg('--runs', 13);
 /** The daily challenge (`daily.ts`): the player clears it this share of days (the greedy player's 69% with the hearts, `npm run daily-rate`; a stronger player later does better, so this is a floor), and a fall comes at about wave 8. A clear pays the waves' crowns and a daily chest (about one bonus star in two), a fall the waves' crowns before it. */
 const DAILY_CLEAR = 0.7;
 const DAILY_FALL_WAVES = 7;
+/** WEEKLY-TRIAL: the share of weeks the greedy player clears all seven waves (`npm run trial-rate`, about 75% over the rosters), and of the
+ *  rest the share that reach five. (No week shuts a save out: a week whose rules bar its heroes lends it some.) */
+const TRIAL_CLEAR = 0.75;
+const TRIAL_FIVE = 0.8;
+const WITH_TRIAL = !process.argv.includes('--no-trial');
 /** A tower climb a day: floors reached grow from `TOWER_START` with the days, at `TOWER_GROWTH` floors a day, to a ceiling. */
 const TOWER_START = 6;
 const TOWER_GROWTH = 0.18;
@@ -123,7 +130,7 @@ for (const t of [SHARD_CHANCE, TOME_CHANCE] as Record<string, number>[]) for (co
 const WAR_SHARDS = arg('--war', 0) > 0;
 const EXTRA_STONES = arg('--nobadges', 0) > 0 ? 0 : Math.round((BADGE_STONES * Math.min(1, EXTRA_CROWNS / BADGE_CROWNS)));
 
-interface Report { ledger: Record<string, number>; aw: { shards1: number; shards2: number; ore1: number; ore2: number; all1: number; all2: number; n1: Record<number, number>; n2: Record<number, number>; s1: Record<number, number>; s2: Record<number, number>; top5: Record<number, number>; src: { army: number; chest: number; calamity: number; cache: number } }; tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; drops: { shards: number; tomes: number } }
+interface Report { hall: Record<number, HallBonus>; sets: Record<number, number>; ledger: Record<string, number>; aw: { shards1: number; shards2: number; ore1: number; ore2: number; all1: number; all2: number; n1: Record<number, number>; n2: Record<number, number>; s1: Record<number, number>; s2: Record<number, number>; top5: Record<number, number>; src: { army: number; chest: number; calamity: number; cache: number } }; tomeXp: Record<number, number>; pdays: Record<number, number>; by: Record<number, number>; pullable: number; days: Record<number, number>; at: Record<string, number>; pulls: number; crowns: number; drops: { shards: number; tomes: number } }
 const MARKS = [5, 10, 15, 20, 30, 40, 45];
 /** The pullable heroes owned (the starter's three count): the 4th is the first after the starter. */
 const PULL_MARKS = [4, 5, 6, 10, 15, 20, 30, 35];
@@ -141,6 +148,8 @@ function simulate(seed: number): Report {
   let castleLeft = CASTLE_TOTAL;
   let pulls = 0;
   const drops = { shards: 0, tomes: 0 };
+  const hall: Record<number, HallBonus> = {};
+  const sets: Record<number, number> = {};
   // (the best army and tier cleared, which the farm replays; and its crowns a run)
   const bestPick = (): { crowns: number; army?: string; tier: number } => {
     let best: { crowns: number; army?: string; tier: number } = { crowns: 0, tier: 0 };
@@ -187,6 +196,16 @@ function simulate(seed: number): Report {
     if (clears && !clearedWeeks.has(wk)) {
       clearedWeeks.add(wk);
       for (const [i, d] of legendDays) if (d <= day && (wk + i) % 2 === 0) m.stash.push({ army: ARMIES[i].id, at: FIRST_CLEAR_CHEST[4], tier: 4, seed: mixSeed(m.seed, WARBAND_SALT, i + 1, wk), conquest: true, half: true });
+    }
+    // (WEEKLY-TRIAL: the week's trial, tried on its first day: each reward tier reached pays once (`TRIAL_TIERS`), at the greedy player's
+    // rates, `npm run trial-rate`: three waves always, five 95% of weeks, all seven `TRIAL_CLEAR`. `--no-trial` leaves it out, to read
+    // the change.)
+    if (WITH_TRIAL && day % 7 === 1) {
+      const rng = new Rng(mixSeed(seed, 0x7a1b, day));
+      const reach = rng.chance(TRIAL_CLEAR) ? 7 : rng.chance(TRIAL_FIVE) ? 5 : 3;
+      const was = m.stones ?? 0;
+      for (const t of TRIAL_TIERS) if (reach >= t.waves) (today += t.crowns), (m.stones = (m.stones ?? 0) + (t.stones ?? 0));
+      note('Weekly Trial', (m.stones ?? 0) - was);
     }
     // the armies' first clears and their chests
     ARMIES.forEach((a, i) => {
@@ -308,6 +327,12 @@ function simulate(seed: number): Report {
       note('Chest shop', (m.stones ?? 0) - was);
       left -= shopPrice(m, c.kind);
     }
+    // (HALL-OF-HEROES: every trait set the save has completed is claimed, once; its stones go to the pulls with the rest, its crowns wait)
+    {
+      const was = m.stones ?? 0;
+      claimSets(m);
+      if ((m.stones ?? 0) > was) note('Trait sets (Hall of Heroes)', (m.stones ?? 0) - was);
+    }
     while (stonesOf(m) > 0) {
       const n = stonesOf(m) >= 10 ? 10 : 1;
       pulls += useStones(m, n)!.length;
@@ -336,6 +361,9 @@ function simulate(seed: number): Report {
       aw.n2[day] = m.unlocked.filter((k) => awakenedOf(m, k) >= 2).length;
       // (ASSAULT-DEV: the whole rank, awakenings in it, of the five best-ranked heroes owned: a party's rank on that day, `--ranks`)
       aw.top5[day] = [...m.unlocked].map((k) => heroRank(m, k)).sort((a, b) => b - a).slice(0, 5).reduce((n, r) => n + r, 0) / 5;
+      // (HALL-OF-HEROES: the Hall's bonus on the day, `--hall`)
+      hall[day] = hallBonus(m);
+      sets[day] = m.hallSets?.length ?? 0;
     }
     // (the tries before the first clear: the bosses beaten pay their ores; and extra clears a week with `--calweek`)
     if (day >= CAL_TRY_DAY && day < CALAMITY_DAY && (day - CAL_TRY_DAY) % 7 === 0) {
@@ -359,9 +387,11 @@ function simulate(seed: number): Report {
     spent += 0;
   }
   void spent;
-  return { ledger, aw, tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, drops };
+  return { ledger, aw, tomeXp, pdays, by, pullable, days, at, pulls, crowns: income, drops, hall, sets };
 }
 
+// (HALL-OF-HEROES: `--nohall 1` plays the save without the Hall: no trait sets claimed, for the stones before)
+if (arg('--nohall', 0) > 0) HALL.on = false;
 const reports = Array.from({ length: SEEDS }, (_, i) => simulate(i * 7919 + 13));
 const mean = (xs: number[]) => xs.reduce((n, x) => n + x, 0) / xs.length;
 const med = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
@@ -418,4 +448,13 @@ if (process.argv.includes('--awaken')) {
 if (process.argv.includes('--ranks')) {
   console.log('\nday   the five best-ranked heroes\' mean rank (median of the seeds; ranks 5 and 6 are awakened)');
   for (const d of CHECKS) if (d <= DAYS) console.log(`${String(d).padStart(3)}   ${med(reports.map((r) => r.aw.top5[d] ?? 0)).toFixed(1)}`);
+}
+
+// (HALL-OF-HEROES, `docs/notes/hall-of-heroes.md`: the Hall's bonus by day, the median of the seeds, and the trait sets claimed; `--hall`)
+if (process.argv.includes('--hall')) {
+  console.log('\nday   the Hall (median: HP, ATK, crit, skill charge)   trait sets claimed (median)');
+  for (const d of CHECKS) if (d <= DAYS) {
+    const at = (s: (typeof HALL_STATS)[number]) => `${(med(reports.map((r) => r.hall[d]?.[s] ?? 0)) * 100).toFixed(1)}%`;
+    console.log(`${String(d).padStart(3)}   ${HALL_STATS.map(at).join(' / ').padEnd(40)} ${String(med(reports.map((r) => r.sets[d] ?? 0))).padStart(4)}`);
+  }
 }

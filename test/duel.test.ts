@@ -210,6 +210,8 @@ test('a Vain nemesis takes a tenth more in a duel, and only in a duel', () => {
   const hp = nem.hp;
   const plain = structuredClone(b);
   delete plain.duel;
+  // (ARMY-WEAKNESS: the same blow outside a duel would meet the army's weakness or resistance; left out here, the Vain trait alone is compared)
+  delete plain.foeArmy;
   const pn = plain.units.find((u) => u.side === 'foe')!;
   hurt(b, champ, nem, 100, false, false, [], 'skill');
   hurt(plain, plain.units.find((u) => u.side === 'hero')!, pn, 100, false, false, [], 'skill');
