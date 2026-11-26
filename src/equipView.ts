@@ -30,6 +30,9 @@ import { takeGearNote } from './sim/gearMigrate';
 import { GLYPHS, patchBlock, patchCost, patchItem } from './sim/enchant';
 import { SEASON_CAP, seasonNeed } from './sim/wear';
 import { claimLegends, nextVerseAt, takeLegendNews, versesOpen } from './sim/legends';
+import { heroGearShot, touched } from './gearRules';
+import { wearerOf } from './sim/equipment';
+import { watchGear, type GearAnchor } from './gearPlates';
 import { reclaimed } from './sim/revenge';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
@@ -231,6 +234,17 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     changed();
   };
 
+  // (GEAR-POPUP: the plate for a change of gear stands over the top of the gear panel, clear of the pieces and the buttons below it; every
+  // hero a change touched gets one, laid one above another when several do)
+  const shot = (k: string) => heroGearShot(meta, k);
+  const gearAt = (): GearAnchor => {
+    const p = panel.isConnected ? panel : document.querySelector<HTMLElement>('.eqPanel');
+    const r = p?.getBoundingClientRect();
+    return r && r.width ? { x: r.left + r.width / 2, y: r.top + 2 } : null;
+  };
+  const watch = (kinds: readonly string[]) => watchGear(kinds, shot);
+  const owned = () => meta.unlocked.filter((k) => UNITS[k]);
+
   let takeOthers = false;
   const overview = () => {
     panel.replaceChildren(el('h4', '', 'Equipment'));
@@ -274,8 +288,16 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     const toggle = el('button', 'eqTake', takeOthers ? 'Taking from other heroes' : 'From the bag only');
     const note = el('small', 'eqDim', takeOthers ? 'Pieces other heroes wear may be moved to a stronger fit.' : 'Pieces other heroes wear stay where they are.');
     for (const b of [best, all, toggle]) b.type = 'button';
-    best.addEventListener('click', () => done(`${equipBest(meta, kind, takeOthers)} slot(s) changed`));
-    all.addEventListener('click', () => done(`${equipAll(meta, takeOthers)} slot(s) changed across the heroes`));
+    best.addEventListener('click', () => {
+      const w = watch(takeOthers ? owned() : [kind]);
+      done(`${equipBest(meta, kind, takeOthers)} slot(s) changed`);
+      w.show(gearAt);
+    });
+    all.addEventListener('click', () => {
+      const w = watch(owned());
+      done(`${equipAll(meta, takeOthers)} slot(s) changed across the heroes`);
+      w.show(gearAt);
+    });
     toggle.addEventListener('click', () => {
       takeOthers = !takeOthers;
       overview();
@@ -376,10 +398,12 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     b.append(icon(shopArt('repair'), 'eqRepairIco'), `Repair · ${cost}`);
     b.disabled = meta.crowns < cost;
     b.addEventListener('click', () => {
+      const w = watch(touched(kind, wearerOf(meta, it.id)));
       if (!stallRepair(meta, it.id, todayKey())) return;
       play('coin');
       commit();
       then();
+      w.show(gearAt);
     });
     // (SEVEN-SLOT GEAR batch 3: or a patch, here at camp: cheaper, but it scars the piece for good)
     if (patchBlock(it)) return b;
@@ -389,10 +413,12 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
     p.append(`Patch · ${pc}`);
     p.disabled = meta.crowns < pc;
     p.addEventListener('click', () => {
+      const w = watch(touched(kind, wearerOf(meta, it.id)));
       if (!patchItem(meta, it.id)) return;
       play('coin');
       commit();
       then();
+      w.show(gearAt);
     });
     const both = el('div', 'eqMend');
     both.append(b, p, el('small', 'eqDim', 'A patch mends to 60% for less, but costs 2 durability for good.'));
@@ -410,9 +436,11 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       const off = el('button', '', 'Unequip');
       off.type = 'button';
       off.addEventListener('click', () => {
+        const w = watch([kind]);
         unequipItem(meta, kind, slot);
         commit();
         picker(slot);
+        w.show(gearAt);
       });
       worn.append(off);
       if (cur.wear) worn.append(repairButton(cur, () => picker(slot)));
@@ -437,9 +465,12 @@ export function drawEquipment(meta: Meta, kind: string, changed: () => void = ()
       const on = el('button', 'primary', cur ? 'Swap' : 'Equip');
       on.type = 'button';
       on.addEventListener('click', () => {
+        // (a piece another hero wore changes that hero too)
+        const w = watch(touched(kind, wearerOf(meta, it.id)));
         equipItem(meta, kind, it.id);
         commit();
         overview();
+        w.show(gearAt);
       });
       // (Sell took Salvage's place: the same crowns for a full piece, less for a worn one; an Epic or the last of a base asks first, by a
       // second tap; the piece waits on the stall's Sold today shelf until midnight)
