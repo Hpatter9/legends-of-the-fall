@@ -1,16 +1,18 @@
 // EIDOLON-BLENDER (docs/notes/eidolon-blender.md): a frame sheet laid on the board's ground, under every fighter. Two shapes:
 //
 // - `GroundSheet`: one large picture over many tiles (an Eidolon's sigil). As `GroundPaint` does (`groundMarks.ts`), it is drawn once for
-//   each diagonal row of tiles it covers, cut to that row's tile tops and drawn just after them, so the fighters on the row stand over it
-//   and the nearer rows' columns cover it as they cover the ground. Unlike it, tiles of another height take their own copy, moved up or
-//   down by their height, so the picture follows a hill or a pit instead of floating over it.
+//   each diagonal row of tiles it covers, cut to that row's tile tops (as shapes: `groundCutRules.ts`) and drawn just after them, so the
+//   fighters on the row stand over it and the nearer rows' columns cover it as they cover the ground. Unlike it, tiles of another height
+//   take their own copy, moved up or down by their height, so the picture follows a hill or a pit instead of floating over it.
 // - `groundDecal`: one small picture on one tile's own ground layer (a patch of scorched ground).
 //
 // The frames are the heroes' pixels (`STAGE_PX` of the board's), drawn unsmoothed. Only the page's renderer uses this; the rules of what
 // plays when are `eidolonStage.ts`.
-import { Assets, Container, Graphics, Rectangle, Sprite, Texture } from 'pixi.js';
+import { Assets, Container, Mesh, MeshGeometry, Rectangle, Sprite, Texture } from 'pixi.js';
 import { HH, TH, TW } from './iso';
 import { frameAt, STAGE_PX, stageUrl, type StageSheet } from '../eidolonStage';
+import { rowShapes } from './groundCutRules';
+import { keepReady } from './texReady';
 
 const loaded = new Map<string, Texture[]>();
 const loading = new Map<string, Promise<void>>();
@@ -22,6 +24,8 @@ export function loadGroundSheet(s: StageSheet): Promise<void> {
   const job = Assets.load<Texture>(stageUrl(s))
     .then((base) => {
       base.source.scaleMode = 'nearest';
+      // (EIDOLON-SMOOTH: handed to the graphics card ahead of the fight and held there through it, not on the frame the sigil first shows)
+      keepReady(`eidolon-ground-${s.sheet}`, base.source);
       loaded.set(s.sheet, Array.from({ length: s.n }, (_, i) => {
         const { x, y } = frameAt(s, i);
         return new Texture({ source: base.source, frame: new Rectangle(x, y, s.fw, s.fh) });
@@ -44,7 +48,7 @@ export interface GroundTile {
 }
 
 export class GroundSheet {
-  private pieces: { box: Container; sp: Sprite }[] = [];
+  private pieces: Mesh[] = [];
   destroyed = false;
 
   /** Lay the sheet with its ground point at (x, y) in world px, on ground `h` steps high, over `tiles`; `row(depth)` is the layer just
@@ -60,20 +64,16 @@ export class GroundSheet {
     for (const tops of groups.values()) {
       const layer = row(tops[0].depth);
       if (!layer) continue;
-      const box = new Container();
-      const mask = new Graphics();
-      // (a little over the tile's own top, so no seam shows between two rows' copies)
-      for (const t of tops) mask.poly([t.x, t.y - TH / 2 - 1, t.x + TW / 2 + 1, t.y, t.x, t.y + TH / 2 + 1, t.x - TW / 2 - 1, t.y]);
-      mask.fill(0xffffff);
-      const sp = new Sprite(frames[0]);
-      sp.anchor.set(0.5, sheet.foot / sheet.fh);
-      sp.scale.set(STAGE_PX);
       // (a tile standing higher is drawn higher up the screen: its copy of the picture goes with it)
-      sp.position.set(x, y - (tops[0].h - h) * HH);
-      box.addChild(mask, sp);
-      box.mask = mask;
-      layer.addChild(box);
-      this.pieces.push({ box, sp });
+      const py = y - (tops[0].h - h) * HH;
+      const box = { left: x - (sheet.fw * STAGE_PX) / 2, top: py - sheet.foot * STAGE_PX, w: sheet.fw * STAGE_PX, h: sheet.fh * STAGE_PX };
+      // (EIDOLON-SMOOTH: the row's tile tops as shapes carrying the picture's own parts, a little over each top so no seam shows between
+      //  two rows' copies: one plain drawing a row, where a mask for every row was a stencil pass each, every frame: `groundCutRules.ts`)
+      const cut = rowShapes(tops, TW, TH, box);
+      if (!cut.indices.length) continue;
+      const mesh = new Mesh({ geometry: new MeshGeometry({ positions: new Float32Array(cut.positions), uvs: new Float32Array(cut.uvs), indices: new Uint32Array(cut.indices) }), texture: frames[0] });
+      layer.addChild(mesh);
+      this.pieces.push(mesh);
     }
   }
 
@@ -81,16 +81,16 @@ export class GroundSheet {
   show(i: number, alpha = 1): void {
     const tex = this.frames[Math.max(0, Math.min(this.frames.length - 1, i))];
     for (const p of this.pieces) {
-      if (p.box.destroyed) continue;
-      p.sp.texture = tex;
-      p.box.alpha = alpha;
+      if (p.destroyed) continue;
+      if (p.texture !== tex) p.texture = tex;
+      p.alpha = alpha;
     }
   }
 
   destroy(): void {
     if (this.destroyed) return;
     this.destroyed = true;
-    for (const p of this.pieces) if (!p.box.destroyed) p.box.destroy({ children: true });
+    for (const p of this.pieces) if (!p.destroyed) p.destroy();
     this.pieces = [];
   }
 }

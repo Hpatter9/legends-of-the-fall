@@ -8,6 +8,7 @@ import { Container, Rectangle, Sprite, Texture } from 'pixi.js';
 import { AURA_CELL, AURA_PIXEL, auraImage, auraStrip, loadAuraImage } from './auraArt';
 import { newPose, poseAura } from './auraPlace';
 import { AURA_KEYS, PLAIN_KEYS, auraParts, type AuraPart } from './auraStyles';
+import { keepReady } from './texReady';
 
 const STRIPS = new Map<string, Texture[]>();
 let ready = false;
@@ -19,6 +20,9 @@ export async function loadAuraArt(): Promise<void> {
   const img = auraImage()!;
   const base = Texture.from(img);
   base.source.style.scaleMode = AURA_PIXEL ? 'nearest' : 'linear';
+  // (EIDOLON-SMOOTH: handed to the graphics card while the heroes are placed and held there through the fight (`texReady.ts`); it used to
+  //  go up on the frame the first aura showed, in the middle of a fight, the whole atlas decoded there and then)
+  keepReady('aura-atlas', base.source);
   // (parts that share a strip share its frames)
   const rows = new Map<string, Texture[]>();
   for (const key of [...AURA_KEYS, ...PLAIN_KEYS]) {

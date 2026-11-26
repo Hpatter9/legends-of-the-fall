@@ -52,7 +52,7 @@ body[data-phase='deploy'] #benchWrap #mergeAll {
 }
 body[data-phase='deploy'] #mergeAll:not([hidden]) { display: inline-flex; align-items: center; gap: 6px; }
 body[data-phase='deploy'] #mergeAll::before { content: ''; width: 20px; height: 20px; background: url(ui/combat-icon-merge.png) center / contain no-repeat; }
-body[data-phase='deploy'] #panel:has(#mergeAll:not([hidden])) #traitHint { padding-right: 0; }
+body[data-phase='deploy'] #panel.canMerge #traitHint { padding-right: 0; }
 body[data-phase='deploy'] #bench .card {
   border: 2px solid transparent; border-image: url(ui/combat-skill.png) 28 fill / 4px / 0 stretch;
   background: #24170f; border-radius: 0;
