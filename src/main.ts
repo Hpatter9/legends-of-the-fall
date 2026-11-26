@@ -186,7 +186,9 @@ import { fightRanks } from './sim/spellRanks';
 import { bindDecree, refreshDecree } from './decreeHud';
 import { setBackdrop, panBackdrop } from './render/backdrop';
 import { BoardView, loadBoardArt } from './render/boardView';
-import { readyStep } from './render/texReady';
+import { keepGroup, readyStep } from './render/texReady';
+import { fighterSheets } from './render/texReadyRules';
+import { rearView } from './render/heroFacing';
 import { warmNow } from './render/boardWarmRules';
 import { diagEvent, diagFrame, diagMark, diagRest, diagStep, diagTimed } from './diag';
 import { loopCure, reloadSafe } from './loopRules';
@@ -213,7 +215,7 @@ import { heartFades, heartFull, heartRows, heartsLabel, HEART_FADE_MS } from './
 import { reviveIn, REVIVE_MS } from './sim/lives';
 import { Fx, loadFx } from './render/fx';
 import { lookSheet } from './render/awakenLook';
-import { framesOf, loadAwakenedSheets, loadSheets, portrait, redressDuchess, sheetInfo, wholeFigure } from './render/sheets';
+import { framesOf, hasSheet, loadAwakenedSheets, loadSheets, portrait, redressDuchess, sheetInfo, wholeFigure } from './render/sheets';
 import { easeTo, EASE_MOVE_MS, EASE_ZOOM_MS, PAUSE_MS, settle, type Spot, type View } from './render/cameraRules';
 import { spellGlance, spellView, ULT_CAM, type Room } from './ultCameraRules';
 import { bfxClip, spellBfx } from './render/blenderFxRules';
@@ -2292,6 +2294,9 @@ class Game {
       this.chain.release();
       this.marchedFrom = null;
     }
+    // (EIDOLON-SMOOTH: the fighters' sheets, and their views from behind, are kept ready for the fight (`texReady.ts`): a fighter turning
+    //  its back for the first time used to have that sheet handed to the graphics card in the middle of the fight)
+    keepGroup('fighter', new Map(fighterSheets([...this.sprites.values()].map((s) => s.own), rearView, hasSheet).map((sh) => [sh, framesOf(sh, 'idle')[0].source])));
   }
 
   /* -------------------------------------------------------------- the camera */

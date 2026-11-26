@@ -344,6 +344,11 @@ export class UnitSprite {
     this.plateTrophies = null;
   }
 
+  /** EIDOLON-SMOOTH: the sheet this fighter is drawn from as itself (the page keeps it, and its view from behind, ready for the fight). */
+  get own(): string {
+    return this.ownSheet;
+  }
+
   /** Whether the hero this nemesis dreads is on the field (the plate's skull shows it). */
   setDread(on: boolean): void {
     if (this.plateSkull) this.plateSkull.visible = on;

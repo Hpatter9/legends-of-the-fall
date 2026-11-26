@@ -267,7 +267,7 @@ over the fight after it; nothing in its beats, the sim or the speed rule changed
 **Two layers, following the board.** The sigil and the cracks are laid like the game's painted ground loops (`GroundPaint`): once for
 each diagonal row of tiles they cover, cut to that row's tile tops and drawn just after them, so the fighters stand over them. New
 here (`render/groundSheet.ts`): tiles of another height take their own copy, moved by their height, so they bend over a hill or a pit.
-Each scorch patch lies on its tile's own ground layer. The standing pieces are strips on the call's own layer (`stageSheet.ts`), each
+Each scorch patch lies on its tile's own ground layer. The standing pieces are strips on the call's own layer (`stageSheet.ts`; since EIDOLON-SMOOTH 2 pieces drawn on its canvases, `callPieces.ts` `stagePieces`), each
 on its tile's place on the page. Nothing has a facing baked in: the wall runs across the screen, the fire crosses whichever way the
 foes lie.
 

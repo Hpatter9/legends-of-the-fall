@@ -1,7 +1,7 @@
 // WAVE-DELAY (docs/notes/wave-delay.md): the sheets kept ready for a fight (`texReadyRules.ts` has the rules). The loaders name their
 // sheets here (`keepReady`); the page calls `readyStep` each frame with its renderer.
 import type { TextureSource } from 'pixi.js';
-import { mayRelease, mayWarm, nextToWarm } from './texReadyRules';
+import { mayRelease, mayWarm, nextToWarm, regroup } from './texReadyRules';
 import { diagMark, diagTimed } from '../diag';
 
 const KEPT = new Map<string, TextureSource>();
@@ -10,6 +10,19 @@ let released: boolean | null = null;
 /** Name a sheet to be kept ready (once is enough; a sheet named again under the same id takes the place of the old one). */
 export function keepReady(id: string, source: TextureSource): void {
   KEPT.set(id, source);
+  released = null;
+}
+
+/** EIDOLON-SMOOTH: name a whole group of sheets afresh (a fight's fighters): the group's earlier sheets that are not among these are
+ *  kept no longer, and may be taken back by the graphics memory's own tidying again. */
+export function keepGroup(group: string, sheets: ReadonlyMap<string, TextureSource>): void {
+  const { drop } = regroup([...KEPT.keys()], group, [...sheets.keys()]);
+  for (const k of drop) {
+    const s = KEPT.get(k);
+    if (s && !s.destroyed) s.autoGarbageCollect = true;
+    KEPT.delete(k);
+  }
+  for (const [name, source] of sheets) KEPT.set(`${group}:${name}`, source);
   released = null;
 }
 

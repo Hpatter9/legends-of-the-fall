@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { cutToBox, rowShapes } from '../src/render/groundCutRules';
 import { fxUrl, groundSheets, pageSheets, warmDue } from '../src/eidolonWarmRules';
 import { EIDOLONS } from '../src/sim/eidolons';
+import { fighterSheets, regroup } from '../src/render/texReadyRules';
 import { STAGED } from '../src/eidolonStage';
 import { RING, STRIKE_FX } from '../src/eidolonFx';
 
@@ -77,7 +78,9 @@ test('the warming is done once for the chosen Eidolon, whether or not the horn i
   // (asked for when a new board is seen, its heroes still being placed, and again as the fight is armed; never only with a full horn)
   assert.match(call, /this\.warm\(chosenOf\(this\.opts\.meta\(\)\)\)/);
   assert.match(call, /this\.warm\(id\);/);
-  assert.match(call, /i\.decode\(\)/, 'decoded ahead, not on the frame it first shows');
+  // (EIDOLON-SMOOTH 2: held where the call's canvases draw from)
+  assert.match(call, /urls\.map\(holdImage\)/);
+  assert.match(readFileSync('src/callCanvas.ts', 'utf8'), /i\.decode\(\)/, 'decoded ahead, not on the frame it first shows');
 });
 
 test('the ground sheets draw with no mask, and they and the aura atlas are handed to the graphics card ahead of the fight', () => {
@@ -95,4 +98,17 @@ test('no rule of the page asks `:has()` of every descendant of the page or of th
   assert.doesNotMatch(css, /#panel:has\(/);
   assert.match(css, /#panel\.canMerge #traitHint/);
   assert.match(readFileSync('src/main.ts', 'utf8'), /classList\.toggle\('canMerge', pairs > 0\)/);
+});
+
+test("a fight's fighters' sheets are kept ready, their views from behind too, and only for that fight", () => {
+  const rear = (s: string) => (s === 'knight' ? 'knight_back' : s === 'orc' ? 'orc_back' : s);
+  const has = (s: string) => s !== 'orc_back';
+  // (each once; a view the game has no sheet for is left out; a fighter with no view from behind gives its own sheet once)
+  assert.deepEqual(fighterSheets(['knight', 'orc', 'knight', 'wisp'], rear, has), ['knight', 'knight_back', 'orc', 'wisp']);
+  assert.deepEqual(fighterSheets([], rear, has), []);
+  // (named afresh for the next fight: the last fight's are let go, every other kept sheet stays)
+  const next = regroup(['spell-sheet-a', 'fighter:knight', 'fighter:orc', 'aura-atlas'], 'fighter', ['knight', 'wolf']);
+  assert.deepEqual(next.drop, ['fighter:orc']);
+  assert.deepEqual(next.keep.sort(), ['aura-atlas', 'fighter:knight', 'fighter:wolf', 'spell-sheet-a']);
+  assert.match(readFileSync('src/main.ts', 'utf8'), /keepGroup\('fighter', /);
 });

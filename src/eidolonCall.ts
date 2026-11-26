@@ -57,6 +57,8 @@ import smokeDark from './art/fx/vfx/smoke_dark.png';
 import darkCircle from './art/fx/magic/dark_circle.png';
 import { pictureFrame, ULT_CAM, zoomAboutPt } from './ultCameraRules';
 import { fxUrl, groundSheets, pageSheets, warmDue } from './eidolonWarmRules';
+import { bakeBright, bakeGlow, CallCanvas, holdImage } from './callCanvas';
+import { boulderPiece, chipPiece, driftPiece, emberPiece, flarePiece, fxPiece, glowBakes, markPiece, pillarGlow, stagePieces, stageScale, wakePiece, type CallEnv } from './callPieces';
 import { faultLine, fxBudget, FX_CELL, jagged, pillarOrder, RING, spreadShocks, STRIKE_FX, type FxStrip, type StrikeLook } from './eidolonFx';
 import type { Fx } from './render/fx';
 import type { Sprite as GroundSprite } from 'pixi.js';
@@ -64,7 +66,6 @@ import { at as tileTop, depth as tileDepth, TW } from './render/iso';
 import { tileAt } from './sim/board';
 import { GroundSheet, groundDecal, groundFrames, loadGroundSheet, type GroundTile } from './render/groundSheet';
 import { BLOW, BLOW_FEEL, cracksFrame, DETONATIONS, SMOKE_SPOTS, pillarAt, pillarMs, riseIn, risePass, scorchFrame, sigilEnd, sigilFrame, sigilSpot, stageBudget, STAGED, wavePlan, WAVE_MS, type StagedLook, type StageTile, type WaveTile } from './eidolonStage';
-import { stageEl, stageEls, stageScale } from './stageSheet';
 import { play, duck } from './render/sound';
 import { settings } from './settings';
 
@@ -112,16 +113,9 @@ const SPRITES: Readonly<Record<Sprite, string>> = {
   sparkLight: sparkleLight, nova: lightNova, bolt: lightningStrike, ring: lightningBurst, sand: puffSand, earth: earthBurst, dust: dustWhite,
   smoke: smokeDark, darkCircle: darkCircle,
 };
-/** A pack strip at a point (client px): `foot` stands it on the point, else it is centred there; `loop` plays its frames on, else once. */
-const strip = (kind: Sprite, cls: string, x: number, y: number, o: { scale?: number; loop?: boolean; foot?: boolean; ms?: number } = {}): HTMLElement => {
-  const d = el('i', `ecSp ${cls}${o.loop ? ' loop' : ' once'}${o.foot ? '' : ' mid'}`);
-  d.style.backgroundImage = `url(${SPRITES[kind]})`;
-  d.style.left = `${Math.round(x)}px`;
-  d.style.top = `${Math.round(y)}px`;
-  if (o.scale) d.style.setProperty('--sc', String(o.scale));
-  if (o.ms) d.style.setProperty('--ms', `${o.ms}ms`);
-  return d;
-};
+/** EIDOLON-SMOOTH 2: the debris' colour filter by element (the stylesheet's `.el-dark .ecChip` and `.el-lightning .ecChip`), worked into
+ *  the strip's pixels once. */
+const CHIP_TINT: Readonly<Partial<Record<string, string>>> = { dark: 'hue-rotate(235deg) saturate(1.4)', lightning: 'sepia(1) saturate(3.2) hue-rotate(-18deg) brightness(1.1)' };
 
 /** EIDOLON-FX: an effect strip of the strike (`eidolonFx.ts`), loaded by URL (the service worker keeps them), at a point (client px): it
  *  plays its frames once (or on, `loop`) after `delay` ms, so a whole strike is laid out at the blow and rolls on by itself, frozen with
@@ -229,7 +223,7 @@ interface Playing {
   /** The ground line the pass runs along (a share of the screen's height: the foes' rows). */
   ground: number;
   /** The trail it leaves, each mark's time and its elements (laid down as it passes). */
-  marks: { mark: Mark; at: number; els: HTMLElement[]; on: boolean }[];
+  marks: { mark: Mark; at: number; els: HTMLElement[]; sp: { set: (on: boolean, lit: boolean, now: number) => void }; on: boolean }[];
   /** The point at the edge or in the sky it left by (client px). */
   exit: { x: number; y: number };
   fig: HTMLElement;
@@ -337,18 +331,19 @@ export class EidolonCall {
     if (!warmDue(id, this.warmed)) return;
     this.warmed = id;
     const mon = MONS[id];
-    const urls = [figureUrl(id), cardUrl(id), ...pageSheets(id)];
+    const urls = [figureUrl(id), cardUrl(id), ...pageSheets(id), ...Object.values(SPRITES)];
     if (mon) urls.push(MON_SHEETS[mon.sheet], MON_BREATHS[mon.sheet] ?? askelBreath);
-    // (the last Eidolon's are let go; these are held, so their decoded pictures stay)
+    // (the last Eidolon's are let go; these are held, so their decoded pictures stay. EIDOLON-SMOOTH 2: held where the call's canvases
+    //  draw from (`callCanvas.ts`); and the glows under its strips are made now, each as its sheet is decoded)
     this.held.length = 0;
-    this.held.push(...urls.map((src) => {
-      const i = new Image();
-      i.decoding = 'async';
-      i.src = src;
-      // (a picture that will not decode is no fault of the fight's: it is decoded when it is first drawn, as it always was)
-      if (typeof i.decode === 'function') i.decode().catch(() => undefined);
-      return i;
-    }));
+    this.held.push(...urls.map(holdImage));
+    const e = eidolonById(id);
+    if (e) for (const g of glowBakes(id, LOOKS[e.element].glow, e.element === 'dark')) {
+      const img = holdImage(g.src);
+      const bake = () => (g.glow ? bakeGlow(g.src, g.cols, g.rows, g.glow, g.scale) : bakeBright(g.src));
+      if (typeof img.decode === 'function') img.decode().then(bake, () => undefined);
+      else img.addEventListener('load', bake, { once: true });
+    }
     for (const sh of groundSheets(id)) void loadGroundSheet(sh);
   }
 
@@ -527,6 +522,14 @@ export class EidolonCall {
   private front: HTMLElement = el('div', 'ecBoard ecFront');
   /** The staged show playing, or still cooling under the fight after its call. */
   private stageRun: StageRun | null = null;
+  /** EIDOLON-SMOOTH 2: the call's strips are pieces drawn on canvases in its layer (`callCanvas.ts`), by a clock of the call's own: it
+   *  runs with the page's frames, stands still through the freeze on the blow, and runs on while the call goes. */
+  private cc = new CallCanvas();
+  private pieceClock = 0;
+  private outAt: number | null = null;
+  private env: CallEnv = { reduced: false, out: () => this.outAt };
+  /** The element's glow colour (the glows under the call's strips are made in it). */
+  private glowHex = '#ffd66e';
 
   private start(e: Eidolon, first: boolean): void {
     // (ULT-CAMERA: the picture's place on the page is read afresh for each call)
@@ -551,6 +554,11 @@ export class EidolonCall {
     // (the ground line it runs along: the foes' rows on the board, so its prints fall among them)
     const ground = this.foeGround();
     this.board = el('div', 'ecBoard');
+    this.cc.begin(settings().saver);
+    this.pieceClock = 0;
+    this.outAt = null;
+    this.env.reduced = this.reduced;
+    this.glowHex = look.glow;
     // (EIDOLON-BLENDER: a staged Eidolon's sigil lies where its painting comes on, and the painting leaps out of the pillar there)
     this.dropStage();
     const stage = this.stageFor(e, m, ground);
@@ -558,16 +566,18 @@ export class EidolonCall {
     this.stageRun = stage;
     L.classList.toggle('staged', !!stage);
     // (the trail, laid down as it passes: a pool of the element's light and the mark's strip at each)
+    // (EIDOLON-SMOOTH 2: the pools are elements (lights, blended with the board); the marks' strips are pieces on a canvas over them)
     const marks = marksOf(spec, ground).map((mark) => {
       const x = mark.x * W;
       const y = mark.y * H;
       const pool = el('i', 'ecPool');
       pool.style.left = `${Math.round(x)}px`;
       pool.style.top = `${Math.round(y)}px`;
-      const sp = strip(src.mark, 'ecMark', x, y, { loop: true, foot: src.mark !== 'ring' && src.mark !== 'smoke', scale: spec.gait === 'swoop' ? 2.2 : 1.3 });
-      this.board.append(pool, sp);
-      return { mark, at: markTime(m, mark), els: [pool, sp], on: false };
+      this.board.append(pool);
+      const sp = markPiece(SPRITES[src.mark], x, y, src.mark !== 'ring' && src.mark !== 'smoke', spec.gait === 'swoop' ? 2.2 : 1.3, this.pieceClock, this.env);
+      return { mark, at: markTime(m, mark), els: [pool], sp, on: false };
     });
+    if (marks.length) this.cc.add(this.board, ...marks.map((k) => k.sp.piece));
     const ex = exitPoint(spec, ground);
     const exit = { x: ex.x * W, y: ex.y * H };
     if (src.from !== 'trail') {
@@ -689,14 +699,27 @@ export class EidolonCall {
       this.stageRun.t += Math.min(dt, 120);
       this.stepStage(this.stageRun);
     }
+    // (EIDOLON-SMOOTH 2: the call is going: its pieces play on over the fight until its layer is cleared)
+    if (!p && !paused && !this.layer.hidden) {
+      this.pieceClock += Math.min(dt, 250);
+      this.cc.draw(this.pieceClock);
+    }
     if (!p || paused) return;
     let step = Math.min(dt, 120);
     // (the freeze on the first blow: everything of the cinematic stands still)
     if (p.stopLeft > 0) {
+      // (the freeze takes hold of the pieces a frame after the blow laid them, as it did of the stylesheet's animations: the class
+      //  that held those was set here, on the frame after)
+      if (!this.layer.classList.contains('stop')) {
+        this.pieceClock += Math.min(dt, 250);
+        this.cc.draw(this.pieceClock);
+      }
       p.stopLeft -= step;
       this.layer.classList.toggle('stop', p.stopLeft > 0);
       return;
     }
+    // (the pieces' clock: the page's own time, as the stylesheet's animations kept, but for the freeze)
+    this.pieceClock += Math.min(dt, 250);
     // (the strike's tick has not come yet: wait for it on the first beat, so the blow and the falls land together)
     const firstBeat = p.beats[0];
     if (!p.struckDone && p.t + step >= firstBeat) {
@@ -740,6 +763,7 @@ export class EidolonCall {
       if (p.snapLeft <= 0) this.frameShot(p, p.shot as Shot, 260);
     }
     while (p.beatsDone < p.beats.length && p.t >= p.beats[p.beatsDone] && (p.beatsDone > 0 || p.struckDone)) this.beat(p, p.beatsDone++);
+    this.cc.draw(this.pieceClock);
     if (p.t >= p.m.RESUME) this.end();
   }
 
@@ -778,11 +802,7 @@ export class EidolonCall {
         const fx = pose.x * W - dir * size * (0.15 + ((p.t * 7) % 13) / 60);
         const fy = (spec.gait === 'float' || spec.gait === 'swoop' ? pose.y * H - size * 0.35 : pose.y * H - size * 0.12) + (((p.t * 13) % 17) - 8);
         if (fx < -20 || fx > W + 20) continue;
-        const w = strip(p.src.wake, 'ecWake', fx, fy, { scale: 1.2 + ((p.t * 3) % 7) / 10 });
-        w.style.setProperty('--dx', `${-dir * 14}px`);
-        w.style.setProperty('--dy', `${p.src.wake === 'smoke' || p.src.wake === 'sand' ? -10 : -30}px`);
-        w.addEventListener('animationend', (ev) => ev.animationName === 'ecWake' && w.remove());
-        this.board.append(w);
+        this.cc.add(this.board, wakePiece(SPRITES[p.src.wake], fx, fy, 1.2 + ((p.t * 3) % 7) / 10, -dir * 14, p.src.wake === 'smoke' || p.src.wake === 'sand' ? -10 : -30, this.pieceClock));
       }
     }
     // (the marks it has reached: laid down, with a footfall's sound and, for the titan, a thud)
@@ -790,6 +810,7 @@ export class EidolonCall {
       if (k.on || p.t < k.at) continue;
       k.on = true;
       for (const x of k.els) x.classList.add('on');
+      k.sp.set(true, false, this.pieceClock);
       if (was < k.at && k.at <= p.t && p.t < p.m.EXIT) {
         if (p.src.stepSound) play(p.src.stepSound);
         if (spec.gait === 'stomp' && !this.reduced && settings().shake) this.opts.fx?.rumble(0.22);
@@ -893,10 +914,13 @@ export class EidolonCall {
     p.built = true;
     const b = this.b;
     play(p.src.buildSound);
-    for (const k of p.marks) for (const x of k.els) x.classList.add('on', 'lit');
+    for (const k of p.marks) {
+      for (const x of k.els) x.classList.add('on', 'lit');
+      k.sp.set(true, true, this.pieceClock);
+    }
     this.board.querySelector('.ecGate')?.classList.add('on');
     // (the marks flare into the element's own fire, frost, light, sparks, stone or smoke)
-    for (const k of p.marks) this.board.append(strip(p.src.flare, 'ecFlare', k.mark.x * innerWidth, k.mark.y * innerHeight, { scale: 1.4, foot: p.src.flare === 'flame', ms: 450 }));
+    for (const k of p.marks) this.cc.add(this.board, flarePiece(SPRITES[p.src.flare], k.mark.x * innerWidth, k.mark.y * innerHeight, p.src.flare === 'flame', 1.4, 450, this.pieceClock, this.env));
     if (!b) return;
     const left = Math.max(120, p.m.STRIKE - p.t - 30);
     // (EIDOLON-FX: the charge: the element gathers into a ring closing on the foes' middle, arriving as the strike lands)
@@ -911,7 +935,7 @@ export class EidolonCall {
     if (p.mon?.fromSprite) {
       if (!p.monStand) this.placeMon(p, p.mon);
       const mouth = this.monMouth(p);
-      if (mouth) this.board.append(strip(p.src.flare, 'ecFlare', mouth.x, mouth.y, { scale: 1.6, ms: 450 }));
+      if (mouth) this.cc.add(this.board, flarePiece(SPRITES[p.src.flare], mouth.x, mouth.y, false, 1.6, 450, this.pieceClock, this.env));
     }
     const aspect = innerWidth / innerHeight;
     let at = p.t;
@@ -945,7 +969,9 @@ export class EidolonCall {
     }
   }
 
-  /** One run: a streak drawn out from `from` to `to` behind a racing head of the element. */
+  /** One run: a streak drawn out from `from` to `to` behind a racing head of the element. (EIDOLON-SMOOTH 2: a run stays elements, the
+   *  one strip of the call that does: each run's head lies over its own streak and under the streaks of the runs after it, which a
+   *  canvas over them all could not keep; they are a handful, for the half second of the build-up.) */
   private run(p: Playing, from: { x: number; y: number }, to: { x: number; y: number }, ms: number): HTMLElement {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
@@ -957,7 +983,10 @@ export class EidolonCall {
     r.style.setProperty('--len', `${Math.round(len)}px`);
     r.style.setProperty('--ms', `${Math.round(ms)}ms`);
     const head = el('i', 'ecHead');
-    head.append(strip(p.src.head, '', 0, 0, { loop: true }));
+    const sp = el('i', 'ecSp loop mid');
+    sp.style.backgroundImage = `url(${SPRITES[p.src.head]})`;
+    sp.style.left = sp.style.top = '0px';
+    head.append(sp);
     r.append(el('i', 'ecStreak'), head);
     this.board.append(r);
     return r;
@@ -1021,7 +1050,10 @@ export class EidolonCall {
     const b = this.b;
     for (const r of p.runs) r.el?.classList.add('done');
     this.board.querySelector('.ecGate')?.classList.remove('on');
-    for (const k of p.marks) for (const x of k.els) x.classList.remove('on', 'lit');
+    for (const k of p.marks) {
+      for (const x of k.els) x.classList.remove('on', 'lit');
+      k.sp.set(false, false, this.pieceClock);
+    }
     if (!b) return;
     const saver = settings().saver;
     const ids = p.struck.length ? p.struck : b.units.filter((u) => u.side === 'foe').map((u) => u.id);
@@ -1034,14 +1066,7 @@ export class EidolonCall {
       this.board.prepend(scar);
       const drifts = saver ? 1 : 3;
       for (let k = 0; k < drifts; k++) {
-        const d = el('i', 'ecDrift');
-        d.style.left = `${Math.round(s.x + (k - 1) * 14)}px`;
-        d.style.top = `${Math.round(s.y - 6)}px`;
-        d.style.setProperty('--dx', `${(k - 1) * 10}px`);
-        d.style.setProperty('--delay', `${300 + k * 260 + n * 40}ms`);
-        d.style.setProperty('--ms', `${1500 + k * 200}ms`);
-        d.append(strip(p.src.drift, '', 0, 0, { loop: true, scale: 1.3 }));
-        this.board.append(d);
+        this.cc.add(this.board, driftPiece(SPRITES[p.src.drift], s.x + (k - 1) * 14, s.y - 6, 1.3, (k - 1) * 10, 300 + k * 260 + n * 40, 1500 + k * 200, this.pieceClock, this.env));
       }
     });
   }
@@ -1105,7 +1130,10 @@ export class EidolonCall {
       this.stagedBlow(p.stage, mid);
     }
     // (the Eidolon's own extra layers: each is one-shot, and held still with reduced motion)
-    this.signature(p, look, mid, mouth, spots, { W, H, k, put, timed, saver });
+    // (EIDOLON-SMOOTH 2: what a signature lays last of all (Vaelkhar's embers) waits until the pillars are laid, to lie over them)
+    const late: (() => void)[] = [];
+    const dark = p.e.element === 'dark';
+    this.signature(p, look, mid, mouth, spots, { W, H, k, put, timed, saver, late });
     // (the one huge burst on their middle: already blazing in the frozen frame, or late, where the blow is something else coming first)
     L.append(fxEl(look.burst, mid.x, mid.y - 18, { delay: sig.burstAt * k, cls: `ecBurst${solid}` }));
     // (the pillar over each foe, rolling across them in the Eidolon's own order and rhythm; a shaft out of the sky onto each for the light)
@@ -1120,16 +1148,12 @@ export class EidolonCall {
         sh.style.animationDelay = `${Math.round(delay)}ms`;
         L.append(sh);
       }
-      L.append(fxEl(look.pillar, s.x, s.y + 6, { delay, cls: `ecPillar${solid}`, mul: 1 - Math.min(0.25, n * 0.02) }));
-      for (let c = 0; c < budget.debris; c++) {
-        const chip = put(el('i', 'ecChip'), s.x, s.y - 20);
+      this.cc.add(L, fxPiece(look.pillar, s.x, s.y + 6, { delay, mul: 1 - Math.min(0.25, n * 0.02), glow: pillarGlow(this.glowHex, dark, sig.solid) }, this.pieceClock, this.env));
+      // (debris: none with reduced motion)
+      for (let c = 0; c < (this.reduced ? 0 : budget.debris); c++) {
         const side = c % 2 ? 1 : -1;
-        chip.style.setProperty('--dx', `${side * (36 + ((c * 37 + n * 23) % 70))}px`);
-        chip.style.setProperty('--up', `${-(70 + ((c * 53 + n * 19) % 80))}px`);
-        chip.style.setProperty('--dn', `${10 + ((c * 29) % 24)}px`);
-        chip.style.animationDelay = `${Math.round(Math.max(0, delay) + 40 + c * 25)}ms`;
-        chip.append(strip(look.debris, '', 0, 0, { loop: true, scale: 1.4 + (c % 3) * 0.3 }));
-        L.append(chip);
+        this.cc.add(L, chipPiece(SPRITES[look.debris], CHIP_TINT[p.e.element], s.x, s.y - 20, 1.4 + (c % 3) * 0.3, side * (36 + ((c * 37 + n * 23) % 70)), -(70 + ((c * 53 + n * 19) % 80)), 10 + ((c * 29) % 24),
+          Math.round(Math.max(0, delay) + 40 + c * 25), this.pieceClock));
       }
     });
     // (the aftershocks, by the Eidolon's own spread)
@@ -1139,11 +1163,9 @@ export class EidolonCall {
     }
     // (what lingers on their ground, from the aftermath on)
     spots.slice(0, budget.linger).forEach((s, n) => {
-      const w = put(el('i', 'ecLinger'), s.x, s.y + 6);
-      w.style.animationDelay = `${Math.round(span * 0.75 + n * 40)}ms`;
-      w.append(fxEl(look.after, 0, 0, { delay: -n * 90 }));
-      L.prepend(w);
+      this.cc.under(L, fxPiece(look.after, s.x, s.y + 6, { delay: -n * 90, carrier: { kind: 'linger', delay: Math.round(span * 0.75 + n * 40) } }, this.pieceClock, this.env));
     });
+    for (const lay of late) lay();
     // (the board shaken as the freeze lets go: the cinematic's layer with the board's picture, which the fight's own shake moves; Gorm's
     // is deep and long, Nivra's light)
     // (EIDOLON-BLENDER: the staged blow shakes harder)
@@ -1230,12 +1252,12 @@ export class EidolonCall {
       const late = t - pillarAt(m);
       if (late < ms * 0.6) {
         const sc = stageScale(run.k);
-        this.board.append(...stageEls(look.pillar, run.spot.x, run.spot.y + 6, sc, { ms, delay: -late, cls: 'ecPillarUp' }));
+        this.cc.add(this.board, ...stagePieces(look.pillar, run.spot.x, run.spot.y + 6, sc, { ms, delay: -late }, this.glowHex, this.pieceClock, this.env));
         // (the ground bursts under it)
         this.layCracks(run, run.spot.u, run.spot.v);
         // (flames at its foot, in front of the painting, so the hound comes out of the fire and not from before it)
         if (!this.reduced) {
-          for (const dx of [-0.9, 0, 0.9]) this.front.append(stageEl(look.fire, run.spot.x + dx * 30 * run.k, run.spot.y + 10 + Math.abs(dx) * 4, sc, { delay: 60 + Math.abs(dx) * 90 - late, mul: 0.7, flip: dx < 0 }));
+          for (const dx of [-0.9, 0, 0.9]) this.cc.add(this.front, ...stagePieces(look.fire, run.spot.x + dx * 30 * run.k, run.spot.y + 10 + Math.abs(dx) * 4, sc, { delay: 60 + Math.abs(dx) * 90 - late, mul: 0.7, flip: dx < 0 }, this.glowHex, this.pieceClock, this.env));
         }
         if (!this.reduced && settings().shake) this.opts.fx?.rumble(0.55);
       }
@@ -1258,7 +1280,7 @@ export class EidolonCall {
       const n = settings().saver ? 1 : 3;
       for (let i = 0; i < n; i++) {
         const dx = n === 1 ? 0 : (i - 1) * 0.34;
-        this.board.append(stageEl(look.embers, run.mid.x + dx * innerWidth, run.mid.y + 30, sc, { loop: true, delay: i * 130, ms: look.embers.ms + i * 170, mul: 1.15, flip: i === 1, cls: 'ecEmbers' }));
+        this.cc.add(this.board, ...stagePieces(look.embers, run.mid.x + dx * innerWidth, run.mid.y + 30, sc, { loop: true, delay: i * 130, ms: look.embers.ms + i * 170, mul: 1.15, flip: i === 1, kind: 'embers' }, this.glowHex, this.pieceClock, this.env));
       }
     }
     // (an aftershock as the aftermath begins: the ground heaves once more under the foes, from the far tiles back to the near)
@@ -1267,7 +1289,7 @@ export class EidolonCall {
       const sc = stageScale(run.k);
       const order = [...run.plan].sort((a, c) => c.delay - a.delay);
       order.forEach((tl, i) => {
-        this.board.append(stageEl(look.fire, tl.x, tl.y + 5, sc, { delay: i * 55, mul: tl.foe ? 1.05 : 0.8, flip: (tl.u + tl.v) % 2 === 0, cls: 'ecTileFire' }));
+        this.cc.add(this.board, ...stagePieces(look.fire, tl.x, tl.y + 5, sc, { delay: i * 55, mul: tl.foe ? 1.05 : 0.8, flip: (tl.u + tl.v) % 2 === 0 }, this.glowHex, this.pieceClock, this.env));
       });
       const far = order[0];
       if (far) this.layCracks(run, far.u, far.v);
@@ -1325,7 +1347,7 @@ export class EidolonCall {
       const delay = (t.delay / WAVE_MS) * span;
       const odd = (t.u * 7 + t.v * 13) % 2 === 1;
       // (each burns on through the blow and dies under the walls)
-      this.board.append(stageEl(look.fire, t.x, t.y + 5, sc, { delay, ms: Math.max(look.fire.ms, left - delay + 520), mul: t.foe ? 0.95 : 0.7 + ((t.u * 5 + t.v * 3) % 3) * 0.08, flip: odd, cls: 'ecTileFire' }));
+      this.cc.add(this.board, ...stagePieces(look.fire, t.x, t.y + 5, sc, { delay, ms: Math.max(look.fire.ms, left - delay + 520), mul: t.foe ? 0.95 : 0.7 + ((t.u * 5 + t.v * 3) % 3) * 0.08, flip: odd }, this.glowHex, this.pieceClock, this.env));
     }
   }
 
@@ -1379,14 +1401,14 @@ export class EidolonCall {
     if (this.reduced) return;
     const smokes = stageBudget(settings().saver, !run.m.BARS).smokes;
     SMOKE_SPOTS.slice(0, smokes).forEach((dx, i) => {
-      this.board.append(stageEl(look.smoke, mid.x + dx * innerWidth, mid.y + 6 + (i % 2) * 8, sc, { delay: (STRIKE_FX_SPAN * 0.75 + i * 150) * k, mul: 1.35 - (i % 3) * 0.12, flip: i % 2 === 1, cls: 'ecSmokeUp' }));
+      this.cc.add(this.board, ...stagePieces(look.smoke, mid.x + dx * innerWidth, mid.y + 6 + (i % 2) * 8, sc, { delay: (STRIKE_FX_SPAN * 0.75 + i * 150) * k, mul: 1.35 - (i % 3) * 0.12, flip: i % 2 === 1, kind: 'smoke' }, this.glowHex, this.pieceClock, this.env));
     });
   }
 
   /** The staged blow itself, laid just under the painted strike: a white-hot core (already blown out in the frozen frame) that throws a wall
    *  of fire wider than the screen, with its glow under it. */
   private stagedBlow(run: StageRun, mid: { x: number; y: number }): void {
-    this.board.append(...stageEls(run.look.explosion, mid.x, mid.y + 16, stageScale(run.k), { delay: -BLOW.lead, mul: BLOW.mul, cls: 'ecBlow' }));
+    this.cc.add(this.board, ...stagePieces(run.look.explosion, mid.x, mid.y + 16, stageScale(run.k), { delay: -BLOW.lead, mul: BLOW.mul }, this.glowHex, this.pieceClock, this.env));
   }
 
   /** A later beat's detonation: the same explosion, smaller, to one side of the first, with a thud. */
@@ -1394,7 +1416,7 @@ export class EidolonCall {
     const d = DETONATIONS[i - 1];
     if (!d || !run.mid) return;
     const x = Math.max(innerWidth * 0.12, Math.min(innerWidth * 0.88, run.mid.x + d.dx * innerWidth));
-    this.board.append(...stageEls(run.look.explosion, x, run.mid.y + 14 + d.dy * innerHeight, stageScale(run.k), { delay: -60, ms: run.look.explosion.ms * 0.85, mul: d.mul, flip: i % 2 === 1, cls: 'ecBlow' }));
+    this.cc.add(this.board, ...stagePieces(run.look.explosion, x, run.mid.y + 14 + d.dy * innerHeight, stageScale(run.k), { delay: -60, ms: run.look.explosion.ms * 0.85, mul: d.mul, flip: i % 2 === 1 }, this.glowHex, this.pieceClock, this.env));
     if (!this.reduced && settings().shake) this.opts.fx?.rumble(0.7);
   }
 
@@ -1407,20 +1429,24 @@ export class EidolonCall {
     mid: { x: number; y: number },
     mouth: { x: number; y: number } | null,
     spots: readonly { x: number; y: number }[],
-    c: { W: number; H: number; k: number; put: <T extends HTMLElement>(d: T, x: number, y: number, w?: number, h?: number) => T; timed: <T extends HTMLElement>(d: T, delay: number, ms?: number) => T; saver: boolean },
+    c: { W: number; H: number; k: number; put: <T extends HTMLElement>(d: T, x: number, y: number, w?: number, h?: number) => T; timed: <T extends HTMLElement>(d: T, delay: number, ms?: number) => T; saver: boolean; late: (() => void)[] },
   ): void {
     const L = this.board;
-    const { W, H, k, put, timed, saver } = c;
+    const { W, H, k, put, timed, saver, late } = c;
     const sig = look.sig;
+    const dark = _p.e.element === 'dark';
+    // (the painted pillar again at another size (the firestorm, the wave's flames, the fault's spikes), with the pillar's glow)
+    const pillarOf = (st: FxStrip, x: number, y: number, o: { delay: number; mul?: number; base?: number }, solid: boolean) =>
+      this.cc.add(L, fxPiece(st, x, y, { ...o, glow: pillarGlow(this.glowHex, dark, solid) }, this.pieceClock, this.env));
     switch (sig.special) {
       case 'wave': {
         // the firestorm column, rising on their middle after the wave has passed, then the smoulder (the aftermath)
-        L.append(fxEl({ ...look.pillar, scale: 3.6, ms: 1300 }, mid.x, mid.y + 24, { delay: 520 * k, cls: 'ecPillar ecStorm' }));
+        pillarOf({ ...look.pillar, scale: 3.6, ms: 1300 }, mid.x, mid.y + 24, { delay: 520 * k, base: 0.95 }, false);
         const fromRight = (mouth?.x ?? 0) >= W / 2;
         for (let i = 0; i < (saver ? 4 : 7); i++) {
           const t = i / (saver ? 3 : 6);
           const x = W * (fromRight ? 0.95 - 0.9 * t : 0.05 + 0.9 * t);
-          L.append(fxEl({ ...look.pillar, scale: 1.25, ms: 900 }, x, mid.y + 14 + (i % 2) * 12, { delay: (30 + i * 55) * k, cls: 'ecPillar ecWaveFlame' }));
+          pillarOf({ ...look.pillar, scale: 1.25, ms: 900 }, x, mid.y + 14 + (i % 2) * 12, { delay: (30 + i * 55) * k }, false);
         }
         break;
       }
@@ -1430,10 +1456,8 @@ export class EidolonCall {
         for (let i = 0; i < cells; i++) {
           const ring = 1 + Math.floor(i / 5);
           const a = i * 2.39996;
-          const hold = put(el('i', 'ecFrostHold'), mid.x + Math.cos(a) * W * 0.11 * ring, mid.y + 12 + Math.sin(a) * H * 0.045 * ring);
-          timed(hold, 40 + i * 42, 1500 + (sig.burstAt - 40 - i * 42));
-          hold.append(fxEl({ ...look.after, ms: 620 }, 0, 0, { delay: -i * 70 }));
-          L.prepend(hold);
+          this.cc.under(L, fxPiece({ ...look.after, ms: 620 }, mid.x + Math.cos(a) * W * 0.11 * ring, mid.y + 12 + Math.sin(a) * H * 0.045 * ring,
+            { delay: -i * 70, carrier: { kind: 'hold', delay: Math.round((40 + i * 42) * k), ms: Math.round(1500 + (sig.burstAt - 40 - i * 42)) } }, this.pieceClock, this.env));
         }
         for (let i = 0; i < (saver ? 2 : 5); i++) {
           const mist = put(el('i', 'ecMist'), mid.x + (i - 2) * W * 0.2, mid.y + 20 - (i % 2) * H * 0.04, W * 0.55, W * 0.28);
@@ -1500,15 +1524,12 @@ export class EidolonCall {
         for (let i = 0; i < spikes; i++) {
           const q = line[Math.min(line.length - 1, Math.round(((i + 0.5) / spikes) * (line.length - 1)))];
           const x = Math.max(W * 0.05, Math.min(W * 0.95, q.x));
-          L.append(fxEl({ ...look.pillar, scale: 1.3, ms: 1000 }, x, q.y + 12, { delay: (90 + i * 105) * k, cls: 'ecPillar solid', mul: 0.8 + (i % 3) * 0.2 }));
+          pillarOf({ ...look.pillar, scale: 1.3, ms: 1000 }, x, q.y + 12, { delay: (90 + i * 105) * k, mul: 0.8 + (i % 3) * 0.2 }, true);
         }
-        const rocks = saver ? 3 : 7;
+        // (boulders: none with reduced motion)
+        const rocks = this.reduced ? 0 : saver ? 3 : 7;
         for (let i = 0; i < rocks; i++) {
-          const b = put(el('i', 'ecBoulder'), W * (0.12 + 0.76 * ((i * 0.618) % 1)), mid.y + (((i * 41) % 7) - 3) * H * 0.03);
-          b.style.setProperty('--fall', `${Math.round(H * 0.45)}px`);
-          b.style.animationDelay = `${Math.round((330 + i * 120) * k)}ms`;
-          b.append(strip('sand', '', 0, 0, { loop: true, scale: 1.7 + (i % 3) * 0.4 }));
-          L.append(b);
+          this.cc.add(L, boulderPiece(SPRITES.sand, W * (0.12 + 0.76 * ((i * 0.618) % 1)), mid.y + (((i * 41) % 7) - 3) * H * 0.03, 1.7 + (i % 3) * 0.4, Math.round(H * 0.45), Math.round((330 + i * 120) * k), this.pieceClock));
         }
         for (let i = 0; i < (saver ? 3 : 6); i++) {
           const dust = put(el('i', 'ecDust'), mid.x + (i - 2.5) * W * 0.17, mid.y + 22 - (i % 3) * H * 0.03, W * 0.5, W * 0.34);
@@ -1534,13 +1555,12 @@ export class EidolonCall {
           timed(stream, 40 + i * 80, 760);
           L.append(stream);
         }
-        for (let i = 0; i < (saver ? 3 : 8); i++) {
-          const chip = put(el('i', 'ecEmber'), mid.x + (((i * 61) % 9) - 4) * W * 0.09, mid.y + 10 + (i % 3) * 10);
-          chip.style.setProperty('--rise', `${-Math.round(H * (0.1 + (i % 4) * 0.04))}px`);
-          timed(chip, 900 + i * 90, 1800);
-          chip.append(strip('embers', '', 0, 0, { loop: true, scale: 1.6 + (i % 3) * 0.3 }));
-          L.append(chip);
-        }
+        // (embers: none with reduced motion; laid after the pillars, over them)
+        late.push(() => {
+          for (let i = 0; i < (this.reduced ? 0 : saver ? 3 : 8); i++) {
+            this.cc.add(L, emberPiece(SPRITES.embers, mid.x + (((i * 61) % 9) - 4) * W * 0.09, mid.y + 10 + (i % 3) * 10, -Math.round(H * (0.1 + (i % 4) * 0.04)), Math.round((900 + i * 90) * k), 1800, this.pieceClock));
+          }
+        });
         break;
       }
     }
@@ -1661,11 +1681,13 @@ export class EidolonCall {
     }
     // (the wash and the aftermath fade out over the board running again)
     this.layer.dataset.stage = 'out';
+    this.outAt = this.pieceClock;
     const L = this.layer;
     setTimeout(() => {
       if (!this.p) {
         L.hidden = true;
         L.replaceChildren();
+        this.cc.drop();
       }
     }, this.reduced ? 1100 : 1400);
     if (p && this.b) this.opts.cheer?.(this.b, reactionOf(p.e.element, p.calls));

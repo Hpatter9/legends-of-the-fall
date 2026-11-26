@@ -67,7 +67,10 @@ async function open(eidolons, confirmed) {
         // would never start; one the page has cancelled (idle) is left alone)
         for (const a of new Set([...seen.keys(), ...document.getAnimations()])) {
           if (!a.effect?.target?.isConnected || a.playState === "idle") continue;
-          const at = (seen.get(a) ?? 0) + 16;
+          // (the freeze on the blow holds the call's own animations, as the page's stylesheet does: `.ecLayer.stop`)
+          if (a.effect.target.closest?.('.ecLayer.stop')) { if (a.playbackRate !== 0) a.playbackRate = 0; continue; }
+          // (an animation begun in this frame is shown at its start in it, as the page shows it; it moves on from the next)
+          const at = seen.has(a) ? seen.get(a) + 16 : 0;
           seen.set(a, at);
           if (a.playbackRate !== 0) a.playbackRate = 0;
           a.currentTime = at;
@@ -101,6 +104,7 @@ async function intoFight(page, party) {
 
 // (the cards a new save is told things with, each sent away, so none stands over the fight)
 const gotIt = async (page) => { for (let i = 0; i < 10; i++) { const had = await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((x) => /^Got it/.test(x.textContent ?? '') && x.offsetParent); b?.click(); return !!b; }); if (!had) break; await page.waitForTimeout(450); } };
+const WHAT_ENV = process.env.WHAT ?? 'explosion.';
 const shot = (page, name) => page.screenshot({ path: `${OUT}/today-${name}${TAG}.png`, timeout: 180000 });
 
 // (a frame every 150 ms across the whole call, and a little of the fight running again)
@@ -112,11 +116,17 @@ for (const pick of PICKS) {
     const { ctx, page } = await open({ horn: 1000, bound: [pick], chosen: pick, confirmed: true, ...(SHORT ? { seen: [pick] } : {}) }, true);
     await intoFight(page, PARTY);
     await gotIt(page);
-    await page.evaluate(() => document.getElementById('fight').click());
-    await page.waitForTimeout(600);
-    await gotIt(page);
-    await page.waitForTimeout(900);
-    await page.evaluate(() => { window.__game.app.ticker.stop(); window.__step(2400); });
+    // (the fight is begun and the page's own ticker stopped in one step, so every frame of the fight is one of ours: two runs of a
+    //  build then show the same picture at the same moment, and two builds can be held against each other frame by frame)
+    // (the page's watch on its own loop would start the ticker again within a second: it is told to stand down for the photographs)
+    await page.evaluate(() => { document.getElementById('fight').click(); window.__game.watchLoop = () => {}; window.__game.app.ticker.stop(); });
+    // (a card the fight brings up is shown by a frame of ours, and sent away before the fight goes on)
+    for (let i = 0; i < 4; i++) {
+      await page.evaluate(() => window.__step(64));
+      await page.waitForTimeout(250);
+      await gotIt(page);
+    }
+    await page.evaluate(() => window.__step(3900));
     // (the plate: the fight as it stands when the horn is blown, and where its tiles and fighters are on the screen)
     await page.waitForTimeout(120);
     await page.screenshot({ path: `${OUT}/plate.png`, timeout: 180000 });
@@ -144,6 +154,10 @@ for (const pick of PICKS) {
       at = t;
       await page.waitForTimeout(120);
       await shot(page, `${pick}-${name}`);
+      if (process.env.CLOCK) console.log('clock', name, await page.evaluate((WHAT) => JSON.stringify({ call: window.__game.eid.clock, stage: document.querySelector('.ecLayer')?.dataset.stage, stop: document.querySelector('.ecLayer')?.classList.contains('stop'),
+        // (WHAT=<part of a sheet's name>: the frames its strips show, as page elements and as pieces of the call's canvases)
+        els: [...document.querySelectorAll('.ecFx')].filter((e) => e.style.backgroundImage.includes(WHAT)).map((e) => getComputedStyle(e).backgroundPosition + ' a' + getComputedStyle(e).opacity),
+        pieces: (window.__game.eid.cc?.layers ?? []).flatMap((l) => l.pieces).filter((q) => q.look.src.includes(WHAT)).map((q) => { const at = q.pose(window.__game.eid.pieceClock); return at && `${at.col},${at.row ?? 0} a${at.alpha.toFixed(2)}`; }) }), WHAT_ENV));
       if (process.env.TRACE) console.log('t', name, await page.evaluate(() => JSON.stringify({ phase: window.__game.b.phase, foes: window.__game.b.units.filter((u) => u.side === 'foe' && u.alive).length, stage: document.querySelector('.ecLayer')?.dataset.stage, hidden: document.querySelector('.ecLayer')?.hidden, card: [...document.querySelectorAll('#waveCard, .waveCard, #result, .result')].filter((e) => !e.hidden && e.getBoundingClientRect().height > 0).length })));
       // (what of the cinematic's own layer shows: the elements by class, solid enough to see)
       if (process.env.DEBUG) console.log(name, await page.evaluate(() => { const n = {}; for (const e of document.querySelectorAll('.ecBoard > *')) { const cs = getComputedStyle(e); if (cs.visibility !== 'hidden' && Number(cs.opacity) > 0.05 && e.getBoundingClientRect().width > 0) { const k = e.className.split(' ').filter((c) => c !== 'ecSp' && c !== 'once' && c !== 'loop' && c !== 'mid').join('.') || e.className; n[k] = (n[k] ?? 0) + 1; } } const br = document.querySelector('.ecBreath'); return JSON.stringify({ n, breath: br && { w: br.style.width, h: br.style.height, t: br.style.transform, v: br.style.visibility } }); }));

@@ -9,7 +9,7 @@
 // that is turned or not flat, and in two layers: the sigil and the scorch lie on the tiles' ground, under every fighter; the pillar, the
 // fire and the smoke stand over them. This file is the rules: each sheet's shape, what plays when in a full call and a short one, which
 // tiles the strike crosses and when, and what holds still with reduced motion. Pure: no DOM, no Pixi, so the tests read it;
-// `eidolonCall.ts` plays the standing pieces as strips (`stageSheet.ts`) and `render/groundSheet.ts` lays the ground's.
+// `eidolonCall.ts` plays the standing pieces as strips (pieces on the call's canvases: `callPieces.ts` `stagePieces`) and `render/groundSheet.ts` lays the ground's.
 
 import type { MomentTimes } from './eidolonRules';
 import type { PassSpec } from './eidolonPass';
