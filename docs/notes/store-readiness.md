@@ -150,17 +150,21 @@ November 2026), in `docs/store/`:
 - **Phone screenshots, 1080 x 1920** (9:16; Play takes 320 to 3840 px with sides at most 2:1, and wants 1080 px or more on a game's
   screenshots to show them large), taken at 360 x 640 x3 with the version line hidden, from a level-70 collector's save with the Nemesis
   War's Council (`tools/store-ready/saves.ts`). The eight for the listing, in order (the first two are what a store page shows before a swipe):
-  1. `phone-1-eidolon.png`: a big fight, Askel the Cinderhound's wall of fire over the Golem Forge's wave.
-  2. `phone-2-summon.png`: a ten-summon's reveal: Cyra, Keeper of the Astrolabe, joins.
-  3. `phone-3-ultimate.png`: Kenji's ultimate, Issen, its cut-in over the fight.
-  4. `phone-4-warroom.png`: the War Room, the Golem Forge's card with its weaknesses and resistances.
-  5. `phone-5-hero.png`: a hero's page: Kwame, Shield of the Dawn.
+  1. `phone-1-battle.png`: a clear mid-fight frame on the autumn land: five heroes against the Beast Packs' wave, damage numbers and two
+     skills called (Sacred Flame, Shield Rush), the HUD rows below.
+  2. `phone-2-eidolon.png`: a boss's wave in the Golem Forge, the Forge Titan's bar up, Askel the Cinderhound running across the board,
+     caught before its fire fills the screen.
+  3. `phone-3-deploy.png`: the deploy screen: the heroes placed on the crystal land, the army's weakness chip ("vs Golem Forge ▲1 ▼2") and a
+     trait chip.
+  4. `phone-4-summon.png`: a ten-summon's reveal: Cyra, Keeper of the Astrolabe, joins.
+  5. `phone-5-warroom.png`: the War Room, the Golem Forge's card with its weaknesses and resistances.
   6. `phone-6-trial.png`: the Weekly Trial's card: Powder and String against the Golem Forge.
-  7. `phone-7-hall.png`: the Hall of Heroes: what every ranked hero lends the roster.
+  7. `phone-7-hero.png`: a hero's page: Kwame, Shield of the Dawn.
   8. `phone-8-council.png`: the Nemesis War's Dark Council, its captains.
 
-  The other frames each scene was caught in (`store-*.png`, smaller files) are kept beside them to choose from; the camp (`store-camp.png`)
-  was left out of the eight.
+  The first three are gameplay, as a store page shows them before a swipe. The ninth option is the Hall of Heroes (`store-hall.png`). A
+  hero's ultimate was left out: its show dims the board to near black, so no frame of it reads as the fight. The other frames each scene
+  was caught in (`store-*.png`, 256 colours) are kept beside them to choose from; the eight are kept lossless for the upload.
 - `feature-graphic.png`: 1024 x 500, a stand-in (the war camp's painting with the title). A painted one: the prompt and its references are in
   `docs/notes/store-art-prompt.md`.
 

@@ -26,15 +26,16 @@ const errors = [];
 const only = process.argv.slice(2);
 const want = (n) => !only.length || only.includes(n);
 /** The listing's eight, in order (the first two are what a store page shows before a swipe). */
-// (each a scene's picture, by its file: the frame of a strike or a reveal that reads best, chosen by eye)
+// (each a scene's picture, by its file: the frame of a strike or a reveal that reads best, chosen by eye; the first three are gameplay, as a
+//  store shows them before a swipe. The Hall of Heroes, `store-hall.png`, is the ninth, for a swap)
 const PICKS = [
-  ['eidolon', 'store-eidolon-3600'],
+  ['battle', 'store-battle-autumn-5200'],
+  ['eidolon', 'store-eidolonboss-2600'],
+  ['deploy', 'store-deploy'],
   ['summon', 'store-summon-c'],
-  ['ultimate', 'store-ultimate-0600'],
   ['warroom', 'store-warroom'],
-  ['hero', 'store-hero'],
   ['trial', 'store-trial'],
-  ['hall', 'store-hall'],
+  ['hero', 'store-hero'],
   ['council', 'store-council'],
 ];
 /** A Wednesday morning in Denver: the Weekly Trial's week of Powder and String against the Golem Forge. */
@@ -106,17 +107,18 @@ const stepper = (page) =>
     };
   });
 /** Into a fight of an army's wave with a party at level 70. */
-async function fightOf(page, army, stage, party, tier = 0) {
-  await page.evaluate(([army, stage, party, tier]) => {
+async function fightOf(page, army, stage, party, tier = 0, land = undefined, deployOnly = false) {
+  await page.evaluate(([army, stage, party, tier, land]) => {
     const g = window.__game;
     const r = JSON.parse(JSON.stringify(g.run));
-    Object.assign(r, { seed: 4242, mode: tier ? { kind: 'army', army, tier } : { kind: 'army', army }, stage, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 3, paid: 30 })), squad: [], nextId: 200 });
+    Object.assign(r, { seed: 4242, ...(land ? { area: land } : {}), mode: tier ? { kind: 'army', army, tier } : { kind: 'army', army }, stage, over: false, cleared: false, gold: 0, event: undefined, roster: party.map((kind, i) => ({ id: 100 + i, kind, grade: 3, paid: 30 })), squad: [], nextId: 200 });
     document.getElementById('home').hidden = true;
     g.startRun(r);
     g.autoArrange(true);
-  }, [army, stage, party, tier]);
+  }, [army, stage, party, tier, land]);
   await page.waitForTimeout(1200);
   await clear(page);
+  if (deployOnly) return;
   await stepper(page);
   await page.evaluate(() => { document.getElementById('fight').click(); window.__game.watchLoop = () => {}; window.__game.app.ticker.stop(); });
   for (let i = 0; i < 4; i++) {
@@ -165,12 +167,57 @@ if (want('ultimate')) {
   });
   console.log('ultimate', JSON.stringify(fired));
   let at = 0;
-  for (const t of [600, 1200, 1800, 2400, 3000, 3600]) {
+  for (const t of [100, 200, 300, 450, 600, 1200, 1800, 2400]) {
     await page.evaluate((ms) => window.__step(ms), t - at);
     at = t;
     await page.waitForTimeout(150);
     await shot(page, `ultimate-${String(t).padStart(4, '0')}`);
   }
+  await ctx.close();
+}
+
+// 2b. A clear mid-fight frame: five heroes and a wave of foes on a scenic land, numbers and skills going off, the HUD rows in sight (the
+//     listing's first picture: gameplay at a glance). Each land a few moments in, to choose from.
+if (want('battle')) {
+  const party = ['knight', 'samurai', 'wizard', 'archer', 'priestess'];
+  for (const [army, land, stage, tier] of [['beasts', 'autumn', 6, 3], ['yokai', 'shrine', 6, 3], ['wildwood', 'forest', 6, 3]]) {
+    const { ctx, page } = await open({ party });
+    await fightOf(page, army, stage, party, tier, land);
+    let at = 0;
+    for (const t of [1600, 2400, 3200, 4000, 5200]) {
+      await page.evaluate((ms) => window.__step(ms), t - at);
+      at = t;
+      await page.waitForTimeout(150);
+      await shot(page, `battle-${land}-${String(t).padStart(4, '0')}`);
+    }
+    await ctx.close();
+  }
+}
+
+// 2c. An Eidolon's strike on a boss's wave, caught at its pillar and explosion, before the fire fills the screen
+if (want('eidolonboss')) {
+  const party = ['knight', 'paladin', 'archer', 'wizard', 'cleric'];
+  const { ctx, page } = await open({ party, eidolons: { horn: 1000, bound: ['askel'], chosen: 'askel', confirmed: true, seen: [] } });
+  await fightOf(page, 'golems', 15, party, 2, 'forge');
+  await page.evaluate(() => window.__step(3500));
+  await page.evaluate(() => document.querySelector('.ehFight')?.click());
+  let at = 0;
+  for (const t of [2000, 2200, 2400, 2600, 2800, 3000, 3200]) {
+    await page.evaluate((ms) => window.__step(ms), t - at);
+    at = t;
+    await page.waitForTimeout(150);
+    await shot(page, `eidolonboss-${String(t).padStart(4, '0')}`);
+  }
+  await ctx.close();
+}
+
+// 2d. The deploy screen: the heroes placed, the trait chips and the army's weakness chip
+if (want('deploy')) {
+  const party = ['knight', 'samurai', 'wizard', 'archer', 'priestess'];
+  const { ctx, page } = await open({ party });
+  await fightOf(page, 'golems', 6, party, 1, 'crystal', true);
+  await page.waitForTimeout(800);
+  await shot(page, 'deploy');
   await ctx.close();
 }
 
