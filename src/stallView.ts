@@ -32,6 +32,8 @@ import { GLYPHS, REFORGE_STANDING, clearGlyphs, enchantOffers, glyphPrice, patch
 
 import { menuFoot, menuNote, menuWell, ornateMenu } from './ornateMenu';
 import { AmbientLayer } from './render/ambientLayer';
+import { heroGearShot } from './gearRules';
+import { watchGear, type GearAnchor } from './gearPlates';
 import { SCENE_LIFE } from './render/ambientScenes';
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text = ''): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -429,6 +431,14 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
 
   // ---- mending ----
 
+  // (GEAR-POPUP: mending, reforging or enchanting a piece a hero wears changes that hero: a plate over its first row says how; a spare piece
+  // changes no one and shows none)
+  const gearWatch = (who: readonly (string | undefined)[]) => watchGear([...new Set(who.filter((k): k is string => !!k))], (k) => heroGearShot(m, k));
+  const gearRowAt = (kind: string): GearAnchor => {
+    const r = document.querySelector<HTMLElement>(`.hsRow[data-who="${kind}"]`)?.getBoundingClientRect();
+    return r && r.width ? { x: r.left + r.width / 2, y: r.top + 2 } : null;
+  };
+
   const repairTab = (body: HTMLElement, day: number): void => {
     const all = needingRepair(m);
     if (!all.length) {
@@ -447,9 +457,11 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
           return;
         }
         sure = '';
+        const w = gearWatch(items.map((x) => wearerOf(m, x.id)));
         if (!stallRepairAll(m, day)) return;
         play('coin');
         after('Good as new. Better, actually. Don’t tell the smith.');
+        w.show(gearRowAt);
       });
       body.append(b);
     }
@@ -458,6 +470,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     for (const it of all) {
       const who = wearerOf(m, it.id);
       const row = el('div', `hsRow r${it.rarity}`);
+      if (who) row.dataset.who = who;
       const face = el('span', 'hsWho');
       if (who) face.append(img(`heroes/${who}-portrait.webp`, '', heroName(who)));
       else face.append(el('small', '', 'spare'));
@@ -469,9 +482,11 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
       b.append(img(shopArt('repair'), 'hsBtnIco'), `Repair · ${price}`);
       b.disabled = m.crowns < price;
       b.addEventListener('click', () => {
+        const w = gearWatch([who]);
         if (!stallRepair(m, it.id, day)) return;
         play('coin');
         after(hesterLine(m, day + it.id, 'repair'));
+        w.show(gearRowAt);
       });
       // (SEVEN-SLOT GEAR batch 3: or a patch, cheaper but scarring; and the scars reforged away from standing 2)
       const btns = el('div', 'hsBtns');
@@ -483,9 +498,11 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
         p.title = 'Back to 60%, but 2 points of durability lost for good';
         p.disabled = m.crowns < pc;
         p.addEventListener('click', () => {
+          const w = gearWatch([who]);
           if (!patchItem(m, it.id)) return;
           play('coin');
           after('A patch. It’ll hold. Mostly.');
+          w.show(gearRowAt);
         });
         btns.append(p);
       }
@@ -496,9 +513,11 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
         r.append(`Reforge · ${rc}`);
         r.disabled = m.crowns < rc;
         r.addEventListener('click', () => {
+          const w = gearWatch([who]);
           if (!stallReforge(m, it.id, day)) return;
           play('coin');
           after('Melted, hammered, quenched. Not a stitch left.');
+          w.show(gearRowAt);
         });
         btns.append(r);
       }
@@ -524,6 +543,7 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
     for (const it of pieces) {
       const who = wearerOf(m, it.id);
       const row = el('div', `hsRow hsEnchant r${it.rarity}`);
+      if (who) row.dataset.who = who;
       const words = el('div', 'hsRowWords');
       words.append(el('b', '', itemName(it)), el('small', '', `${who ? `${heroName(who)} · ` : 'spare · '}${RARITY_NAMES[it.rarity]} Lv ${it.level}`));
       (it.glyphs ?? []).forEach((g, i) => {
@@ -540,9 +560,11 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
           b.title = g.text;
           b.disabled = m.crowns < price;
           b.addEventListener('click', () => {
+            const w = gearWatch([who]);
             if (!stallEnchant(m, it.id, g.id, day)) return;
             play('coin');
             after(hesterLine(m, day + it.id, 'enchant'));
+            w.show(gearRowAt);
           });
           btns.append(b);
         }
@@ -550,8 +572,10 @@ export function openStall(m: Meta, onChange: () => void, first: AnyTab = 'books'
         const c = el('button', 'hsSell');
         c.append('Clear');
         c.addEventListener('click', () => {
+          const w = gearWatch([who]);
           if (!clearGlyphs(m, it.id)) return;
           after('Wiped clean. You paid for the ink, mind.');
+          w.show(gearRowAt);
         });
         btns.append(c);
       }

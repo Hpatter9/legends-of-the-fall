@@ -488,3 +488,31 @@ body[data-phase='fight'] #hudSpells #spellCards .spell.armed { border-color: #ff
   .rsPlate { animation-name: rsFade; }
 }
 @keyframes rsFade { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---- GEAR-POPUP (docs/notes/gear-popup.md, `gearPlates.ts`): the plate over a hero whose gear changed, in the rise plates' dress: each
+   number old → new, green with ▲ when it rose, red with ▼ when it fell, and the Power in gold. In, held about 1.8 s, out (2.3 s in all);
+   with reduced motion it only fades. ---- */
+.gpPlate { animation: gpShow 2.3s ease-out both; }
+.gpLine { display: block; font-family: 'Pixelify Sans', var(--body); }
+.gpLine em { font-style: normal; }
+.gpLine i { font-style: normal; margin-left: 2px; }
+.gpLine.up { color: #9cf08a; }
+.gpLine.down { color: #ff9a8a; }
+.gpPower { font: 400 13px/16px var(--body); color: #ffe7b0; }
+.gpPower.up i { color: #9cf08a; }
+.gpPower.down i { color: #ff9a8a; }
+.gpMore { color: #d8c8a0; }
+.gpPlate.compact { max-width: min(300px, calc(100vw - 16px)); }
+.gpShort { white-space: normal; }
+.gpShort .up { color: #9cf08a; }
+.gpShort .down { color: #ff9a8a; }
+@keyframes gpShow {
+  0% { opacity: 0; transform: translateY(6px); }
+  10% { opacity: 1; transform: translateY(0); }
+  82% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gpPlate { animation-name: gpFade; }
+}
+@keyframes gpFade { 0% { opacity: 0; } 8% { opacity: 1; } 82% { opacity: 1; } 100% { opacity: 0; } }
