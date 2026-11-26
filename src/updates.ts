@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.630.0',
+    date: '2026-11-25',
+    title: 'A lighter Hall of Heroes',
+    notes: ['The Hall of Heroes scrolls more smoothly: its portraits are drawn once and kept.'],
+  },
+  {
     version: '0.629.0',
     date: '2026-11-25',
     title: 'Smoother summoning',
