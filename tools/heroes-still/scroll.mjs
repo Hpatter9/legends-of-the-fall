@@ -40,6 +40,9 @@ const label = process.argv[2] ?? 'now';
 // (`--no-grey`: the Hall's unowned heroes without their grey filter; `--hide-under`: the home page under a sheet hidden; experiments only)
 if (process.argv.includes('--no-grey')) await page.addStyleTag({ content: '.hallHero.shut { filter: none !important; }' });
 if (process.argv.includes('--hide-under')) await page.addStyleTag({ content: 'body:has(#hmSheet:not([hidden])) .ptTavern, body:has(.omVeil) .ptTavern { visibility: hidden !important; }' });
+// (`--hide-roster`: the roster under the Hall's sheet hidden while the Hall is open; an experiment)
+if (process.argv.includes('--hide-roster')) await page.addStyleTag({ content: 'body:has(#hallOfHeroes) #hmSheet { visibility: hidden !important; }' });
+if (process.argv.includes('--pause-under')) await page.addStyleTag({ content: 'body:has(#hallOfHeroes) #hmSheet * { animation-play-state: paused !important; }' });
 if (process.argv.includes('--still-frames')) await page.addStyleTag({ content: '.om, .omHead, .omRule, .om *, .omHead *, .omRule * { animation: none !important; }' });
 const cdp = await ctx.newCDPSession(page);
 /** Scroll whatever is under the middle of the screen, down then back, for `ms`, and time the frames. */

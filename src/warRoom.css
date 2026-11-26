@@ -115,7 +115,13 @@
 .hallHero.shut em { color: #a99f88; }
 .hallPips { font-size: 8px; letter-spacing: 1px; color: #f0d48a; font-style: normal; min-height: 9px; }
 .hallPic { width: 40px; height: 40px; }
+/* (HALL-LIGHT: the portrait is a cached picture put in as its cell nears the screen; its holder keeps the canvas's place either way) */
+span.hallPic { display: block; }
+.hallPic img { display: block; width: 40px; height: 40px; }
 /* HALL-OF-HEROES: Recruit's flag on a hero that would complete a trait set */
 .setTag { display: block; margin-top: 2px; font: 700 9px/1.2 var(--body, sans-serif); color: #f0d48a; text-shadow: 0 1px 2px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hallIntro { grid-column: 1 / -1; margin: 0 0 4px; font: 12px/1.35 var(--body); color: #e3d3b6; }
 #nearRow .setTag, #nearRow .strongTag { white-space: normal; overflow: visible; line-height: 1.15; font-size: 9px; text-align: center; }
+/* (HALL-LIGHT: while the Hall is open, what moves on the roster under its sheet waits: under the veil its upgrade chevrons cannot be seen
+   bobbing, and they cost the Hall's scrolling) */
+body:has(#hallOfHeroes) #hmSheet * { animation-play-state: paused !important; }
