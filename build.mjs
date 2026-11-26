@@ -98,6 +98,8 @@ options.plugins = [artFiles];
 
 copyFileSync('src/art/icon-192.png', `${out}/icon-192.png`);
 copyFileSync('src/art/icon-512.png', `${out}/icon-512.png`);
+// (NEW-ICON: the maskable one keeps the emblem inside the safe circle a launcher may crop to, tools/icon/build.py)
+copyFileSync('src/art/icon-maskable-512.png', `${out}/icon-maskable-512.png`);
 // (STORE-KIT, docs/notes/store-readiness.md: the privacy policy the Play listing points to, served by GitHub Pages at
 //  https://hpatter9.github.io/legends-of-the-fall/privacy.html. It is not part of the game, so it is not in the service worker's FILES: it is
 //  read online, as a page of its own)
@@ -356,6 +358,7 @@ writeFileSync(
       icons: [
         { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
         { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+        { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
       ],
     },
     null,
@@ -371,7 +374,7 @@ writeFileSync(
 const writeServiceWorker = () => writeFileSync(
   `${out}/sw.js`,
   `const CACHE = 'legends-${version}';
-const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${BLENDER_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${SUMMON_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${HOLD_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ART_FILES.map((f) => `'${f}'`).join(', ')}];
+const FILES = ['.', 'index.html', 'game.js', 'bg1.png', 'bg2.png', 'bg3.png', 'bg4.png', 'bg5.png', ${AREA_BGS.map((f) => `'${f}'`).join(', ')}, 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', ${FONTS.map(([, f]) => `'fonts/${f}'`).join(', ')}, ${UI_FILES.map((f) => `'${f}'`).join(', ')}, ${AUDIO_FILES.map((f) => `'${f}'`).join(', ')}, ${HERO_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${AWAKENED_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${SPELL_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${BLENDER_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${SUMMON_FX_FILES.map((f) => `'${f}'`).join(', ')}, ${GEAR_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${EIDOLON_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${HOLD_ART_FILES.map((f) => `'${f}'`).join(', ')}, ${ART_FILES.map((f) => `'${f}'`).join(', ')}];
 const OWN = new Set(FILES.map((f) => new URL(f, self.registration.scope).href));
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: 'reload' }))))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });

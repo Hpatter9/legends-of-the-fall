@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.635.0',
+    date: '2026-11-26',
+    title: 'A new game icon',
+    notes: ['The game has a new icon: a cracked golden crown over the last keep, on a blood-red sky.'],
+  },
+  {
     version: '0.634.0',
     date: '2026-11-26',
     title: 'A privacy policy link',
