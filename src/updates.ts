@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.631.0',
+    date: '2026-11-25',
+    title: 'Lighter Eidolon calls',
+    notes: ['An Eidolon\'s strike weighs much less on the phone: its ground is drawn without masks and its pictures are ready before you sound the horn.', 'Fixed: an Eidolon called mid-fight now lays its sigil and cracks on the ground too.'],
+  },
+  {
     version: '0.630.0',
     date: '2026-11-25',
     title: 'A lighter Hall of Heroes',
