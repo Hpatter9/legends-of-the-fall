@@ -171,7 +171,7 @@ export function showTrialBanner(week: number): void {
   const words = el('span');
   words.append(el('b', '', `Weekly Trial · ${rule.name}`), el('small', '', rule.text));
   const ico = el('img', 'twIco');
-  ico.src = 'ui/buttons/trophies.webp';
+  ico.src = 'ui/buttons/trial.webp';
   ico.alt = '';
   box.append(ico, words);
 }

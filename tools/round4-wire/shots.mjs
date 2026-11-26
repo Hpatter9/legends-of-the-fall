@@ -10,7 +10,7 @@ import { serve } from '../audit/lib.mjs';
 const { chromium } = createRequire(import.meta.url)('playwright');
 const exe = ['/opt/pw-browsers/chromium'].find((p) => existsSync(p));
 const browser = await chromium.launch({ ...(exe ? { executablePath: exe } : {}), args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
-const dir = 'docs/samples/round4-wire';
+const dir = process.env.OUT ?? 'docs/samples/round4-wire';
 mkdirSync(dir, { recursive: true });
 const srv = serve('out/web');
 const base = `http://localhost:${srv.address().port}/`;

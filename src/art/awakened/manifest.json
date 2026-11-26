@@ -48,7 +48,27 @@
   "hero_res_samurai_commander": "awakened_samuraiCommander",
   "hero_res_treant": "awakened_treant",
   "hero_res_werewolf_brute": "awakened_werewolfBrute",
-  "hero_res_peasant": "awakened_peasant"
+  "hero_res_peasant": "awakened_peasant",
+  "hero_res_vampire_lord": "awakened_vampireLord",
+  "hero_res_hemomancer": "awakened_hemomancer",
+  "hero_res_nightstalker": "awakened_nightstalker",
+  "hero_res_blood_gargoyle": "awakened_bloodGargoyle",
+  "hero_res_dhampir": "awakened_dhampir",
+  "hero_res_war_drummer": "awakened_warDrummer",
+  "hero_res_banneret": "awakened_banneret",
+  "hero_res_geomancer": "awakened_geomancer",
+  "hero_res_bell_warden": "awakened_bellWarden",
+  "hero_res_falconer": "awakened_falconer",
+  "hero_res_astral_sphinx": "awakened_astralSphinx",
+  "hero_res_mirage_dancer": "awakened_mirageDancer",
+  "hero_res_plague_doctor": "awakened_plagueDoctor",
+  "hero_res_bombardier": "awakened_bombardier",
+  "hero_res_astrologer": "awakened_astrologer",
+  "hero_res_inquisitor": "awakened_inquisitor",
+  "hero_res_seraph": "awakened_seraph",
+  "hero_res_corsair_surgeon": "awakened_corsairSurgeon",
+  "hero_res_harpooner": "awakened_harpooner",
+  "hero_res_sea_reaver": "awakened_seaReaver"
  },
  "layouts": {
   "awakened_knight": {
@@ -2702,6 +2722,1086 @@
    "facesRight": true,
    "lies": true,
    "front": "awakened_peasant"
+  },
+  "awakened_vampireLord": {
+   "w": 132,
+   "h": 116,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_vampireLord_back"
+  },
+  "awakened_vampireLord_back": {
+   "w": 132,
+   "h": 116,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_vampireLord"
+  },
+  "awakened_hemomancer": {
+   "w": 124,
+   "h": 114,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_hemomancer_back"
+  },
+  "awakened_hemomancer_back": {
+   "w": 124,
+   "h": 114,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_hemomancer"
+  },
+  "awakened_nightstalker": {
+   "w": 146,
+   "h": 113,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_nightstalker_back"
+  },
+  "awakened_nightstalker_back": {
+   "w": 146,
+   "h": 113,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_nightstalker"
+  },
+  "awakened_bloodGargoyle": {
+   "w": 140,
+   "h": 101,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_bloodGargoyle_back"
+  },
+  "awakened_bloodGargoyle_back": {
+   "w": 140,
+   "h": 101,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_bloodGargoyle"
+  },
+  "awakened_dhampir": {
+   "w": 126,
+   "h": 102,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_dhampir_back"
+  },
+  "awakened_dhampir_back": {
+   "w": 126,
+   "h": 102,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_dhampir"
+  },
+  "awakened_warDrummer": {
+   "w": 134,
+   "h": 108,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_warDrummer_back"
+  },
+  "awakened_warDrummer_back": {
+   "w": 134,
+   "h": 108,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_warDrummer"
+  },
+  "awakened_banneret": {
+   "w": 142,
+   "h": 105,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_banneret_back"
+  },
+  "awakened_banneret_back": {
+   "w": 142,
+   "h": 105,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_banneret"
+  },
+  "awakened_geomancer": {
+   "w": 122,
+   "h": 103,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_geomancer_back"
+  },
+  "awakened_geomancer_back": {
+   "w": 122,
+   "h": 103,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_geomancer"
+  },
+  "awakened_bellWarden": {
+   "w": 130,
+   "h": 108,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_bellWarden_back"
+  },
+  "awakened_bellWarden_back": {
+   "w": 130,
+   "h": 108,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_bellWarden"
+  },
+  "awakened_falconer": {
+   "w": 122,
+   "h": 116,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_falconer_back"
+  },
+  "awakened_falconer_back": {
+   "w": 122,
+   "h": 116,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_falconer"
+  },
+  "awakened_astralSphinx": {
+   "w": 150,
+   "h": 128,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_astralSphinx_back"
+  },
+  "awakened_astralSphinx_back": {
+   "w": 150,
+   "h": 128,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_astralSphinx"
+  },
+  "awakened_mirageDancer": {
+   "w": 138,
+   "h": 106,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_mirageDancer_back"
+  },
+  "awakened_mirageDancer_back": {
+   "w": 138,
+   "h": 106,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_mirageDancer"
+  },
+  "awakened_plagueDoctor": {
+   "w": 132,
+   "h": 102,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_plagueDoctor_back"
+  },
+  "awakened_plagueDoctor_back": {
+   "w": 132,
+   "h": 102,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_plagueDoctor"
+  },
+  "awakened_bombardier": {
+   "w": 120,
+   "h": 104,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_bombardier_back"
+  },
+  "awakened_bombardier_back": {
+   "w": 120,
+   "h": 104,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_bombardier"
+  },
+  "awakened_astrologer": {
+   "w": 126,
+   "h": 110,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_astrologer_back"
+  },
+  "awakened_astrologer_back": {
+   "w": 126,
+   "h": 110,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_astrologer"
+  },
+  "awakened_inquisitor": {
+   "w": 130,
+   "h": 107,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_inquisitor_back"
+  },
+  "awakened_inquisitor_back": {
+   "w": 130,
+   "h": 107,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_inquisitor"
+  },
+  "awakened_seraph": {
+   "w": 140,
+   "h": 105,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_seraph_back"
+  },
+  "awakened_seraph_back": {
+   "w": 140,
+   "h": 105,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_seraph"
+  },
+  "awakened_corsairSurgeon": {
+   "w": 126,
+   "h": 111,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_corsairSurgeon_back"
+  },
+  "awakened_corsairSurgeon_back": {
+   "w": 126,
+   "h": 111,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_corsairSurgeon"
+  },
+  "awakened_harpooner": {
+   "w": 138,
+   "h": 105,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_harpooner_back"
+  },
+  "awakened_harpooner_back": {
+   "w": 138,
+   "h": 105,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_harpooner"
+  },
+  "awakened_seaReaver": {
+   "w": 152,
+   "h": 115,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "rear": "awakened_seaReaver_back"
+  },
+  "awakened_seaReaver_back": {
+   "w": 152,
+   "h": 115,
+   "perRow": 4,
+   "rows": [
+    "idle",
+    "walk",
+    "_walk",
+    "attack",
+    "hurt",
+    "dead",
+    "attack2"
+   ],
+   "counts": {
+    "idle": 4,
+    "walk": 8,
+    "_walk": 0,
+    "attack": 4,
+    "hurt": 4,
+    "dead": 4,
+    "attack2": 4
+   },
+   "figure": 96,
+   "facesRight": true,
+   "lies": true,
+   "front": "awakened_seaReaver"
   }
  }
 }

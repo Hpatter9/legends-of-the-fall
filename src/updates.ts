@@ -27,6 +27,12 @@ export interface EarlierUpdates {
 /** Every release since 0.189.0, newest first. */
 export const UPDATES: readonly Update[] = [
   {
+    version: '0.633.0',
+    date: '2026-11-26',
+    title: 'Twenty heroes awaken',
+    notes: ['The twenty newer heroes now take their awakened forms in battle, front and back.', 'Natsu\'s card shows her new action pose; Duchess has a tin crown; the Weekly Trial has its own medallion.'],
+  },
+  {
     version: '0.632.0',
     date: '2026-11-25',
     title: 'Eidolon calls, lighter still',

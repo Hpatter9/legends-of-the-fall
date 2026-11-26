@@ -128,7 +128,8 @@ async function pack(spec) {
   const figure = spec.figure;
   // Menu illustrations use the same new equipment as the battle sprite. This
   // is an extracted idle pose, enlarged without smoothing or repainting.
-  if (!spec.id.startsWith('treant') && spec.id !== 'werewolfBrute') {
+  // (ROUND5-WIRE: a hero whose awakened portrait is painted, `keepArt`, keeps it)
+  if (!spec.id.startsWith('treant') && spec.id !== 'werewolfBrute' && !spec.keepArt) {
     const f = frames[0];
     await sharp(f.raw, { raw: { width: f.w, height: f.h, channels: 4 } }).resize(f.w * 4, f.h * 4, { kernel: 'nearest' }).webp({ lossless: true }).toFile(`src/art/heroes/awakened-${spec.id}.webp`);
   }

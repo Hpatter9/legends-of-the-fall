@@ -51,6 +51,7 @@ PLATES = [
 # Single medallions painted later, one file each: BATTLE-POLISH's Auto ultimates, off and lit (`art/battle-polish`); the red count seal, the Council's
 # number on the Battle tab in the Daily's red wax (`art/ui-extras`, docs/notes/council-button.md).
 SINGLES = ['auto-ult', 'auto-ult-lit', 'badge-count-red']
+# (ART-FINAL: the Weekly Trial's medallion, art-source/weekly-trial/trial-medallion.png, was cut the same way, by hand, to trial.webp)
 MEDAL = 96
 GLYPH = 48
 SWITCH_W = 120

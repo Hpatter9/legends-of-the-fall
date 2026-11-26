@@ -284,6 +284,12 @@ These owner-approved ascension effects are reused for combat tier-ups by ART-ASC
   (`summon_sentry.png`), the Pirate's ghost ship (`src/art/ult-show/pirate-ghost-ship*.webp`), Voltara's aftermath
   (`src/art/eidolons/fx/voltara-after.webp`), and Duchess's Wizard Hat (`src/art/duchess/hat-wizard.png`).
 
+- **ART-FINAL** (`docs/notes/art-final.md`): original art made for this game (PR #704). It covers:
+  - the twenty newer heroes' awakened battle sheets (`art-source/round5/`, packed to `src/art/awakened/`);
+  - Natsu's action-pose cut-out (`src/art/heroes/archer-portrait.webp`);
+  - Duchess's Tiny Tin Crown (`src/art/duchess/hat-crown.png`);
+  - the Weekly Trial's medallion (`src/art/ui/buttons/trial.webp`).
+
 ## Castle courtyard (`src/art/castle/`)
 
 - Every building, wall, gate, prop and ground tile is a single piece of Chronos Settlement's isometric kits (`hpatter9/little-town`,

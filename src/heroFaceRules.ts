@@ -17,7 +17,7 @@ export const HUD_FACES: Readonly<Record<string, { art: FaceBox; awakened: FaceBo
   knight: { art: [0.57, 0.115, 0.26], awakened: [0.57, 0.2, 0.34] },
   samurai: { art: [0.68, 0.33, 0.42], awakened: [0.54, 0.39, 0.3] },
   kunoichi: { art: [0.59, 0.22, 0.3], awakened: [0.669, 0.338, 0.437] },
-  archer: { art: [0.46, 0.265, 0.38], awakened: [0.55, 0.327, 0.319] },
+  archer: { art: [0.49, 0.155, 0.32], awakened: [0.55, 0.327, 0.319] }, // (NATSU-CUTOUT: her action-pose cut-out, re-measured)
   wizard: { art: [0.57, 0.22, 0.26], awakened: [0.455, 0.386, 0.484] },
   peasant: { art: [0.41, 0.185, 0.25], awakened: [0.47, 0.403, 0.426] },
   ninjaMonk: { art: [0.53, 0.21, 0.4], awakened: [0.58, 0.24, 0.45] },
