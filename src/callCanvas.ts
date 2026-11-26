@@ -199,10 +199,10 @@ interface Layer {
   shown: boolean;
 }
 
-/** The elements that end a canvas when the page has put them after it: what must cover the strips before it or be covered by those
- *  after (the great burst; the Eidolon's sprite and its breath). Everything else the page puts in the layer is a light or a soft
- *  gradient, and stays over the strips. */
-const BREAKERS = '.ecBurst, .ecMon, .ecBreath';
+/** The elements that end a canvas when the page has put them after it: what must cover the strips before it and be covered by those
+ *  after (the runs; the great burst and the aftershocks' bursts, which a later detonation's fire stands in front of; the Eidolon's
+ *  sprite and its breath). Everything else the page puts in the layer is a soft light or gradient, and stays over the strips. */
+const BREAKERS = '.ecRun, .ecBurst, .ecExtra, .ecMon, .ecBreath';
 
 export class CallCanvas {
   private layers: Layer[] = [];
@@ -223,6 +223,8 @@ export class CallCanvas {
   drop(): void {
     for (const l of this.layers) {
       l.el.remove();
+      // (its pixels are given back: a canvas the page's size at twice its sharpness is some 5 MB)
+      l.el.width = l.el.height = 0;
       this.spare.push(l.el);
     }
     this.layers = [];
@@ -236,20 +238,12 @@ export class CallCanvas {
   private make(host: HTMLElement): Layer {
     const el = this.spare.pop() ?? document.createElement('canvas');
     el.className = 'ecCanvas';
-    el.width = Math.round(this.w * this.scale);
-    el.height = Math.round(this.h * this.scale);
+    // (it takes its pixels when it first has a piece to show, and gives them back when it has none: `draw`)
+    el.width = el.height = 0;
     el.style.display = 'none';
     const l: Layer = { el, ctx: el.getContext('2d')!, pieces: [], host, shown: false };
     this.layers.push(l);
     return l;
-  }
-
-  /** A new canvas at the end of a host, for pieces that must lie over everything in it so far (the runs' heads: the runs' own elements
-   *  are then put in before it). */
-  over(host: HTMLElement): HTMLCanvasElement {
-    const l = this.make(host);
-    host.append(l.el);
-    return l.el;
   }
 
   /** Put a piece at the end of a host (over what is there): on the host's last canvas when only lights lie after it, else on a new one. */
@@ -286,10 +280,15 @@ export class CallCanvas {
         if (l.shown) {
           l.shown = false;
           l.el.style.display = 'none';
+          l.el.width = l.el.height = 0;
         }
         continue;
       }
       const c = l.ctx;
+      if (!l.el.width) {
+        l.el.width = Math.round(this.w * S);
+        l.el.height = Math.round(this.h * S);
+      }
       c.setTransform(1, 0, 0, 1, 0, 0);
       c.clearRect(0, 0, l.el.width, l.el.height);
       let kept = 0;
@@ -311,7 +310,10 @@ export class CallCanvas {
         c.globalAlpha = Math.min(1, at.alpha);
         const row = at.row ?? 0;
         if (k.glow) {
-          const a = ATLASES.get(atlasKey(k.src, k.glow, k.glowScale ?? 1));
+          // (made ahead as the Eidolon is warmed; one that was not is made now, once, rather than go without)
+          const key = atlasKey(k.src, k.glow, k.glowScale ?? 1);
+          if (!ATLASES.has(key)) bakeGlow(k.src, k.cols, k.rows ?? 1, k.glow, k.glowScale ?? 1);
+          const a = ATLASES.get(key);
           if (a) {
             // (the glow's frame is the strip's with room round it: drawn that much wider, soft)
             const cw = a.c.width / k.cols, ch = a.c.height / (k.rows ?? 1);

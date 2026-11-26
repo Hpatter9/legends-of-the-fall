@@ -113,7 +113,14 @@ async function take(pick) {
   const blown = await page.evaluate(() => { const b = document.querySelector('.ehFight'); b?.click(); return !!b; });
   // (until the call is over: its layer gone from the page; twelve seconds at most; then a second of the fight after it)
   await page.waitForTimeout(1200);
-  for (let i = 0; i < 110; i++) { if (!(await page.evaluate(() => !!document.querySelector('.ecLayer, .ecBoard, .ecPass')))) break; await page.waitForTimeout(100); }
+  // (PROBE=<selector>: how solid the first such element of the call is, with the call's stage, every tenth of a second)
+  const probe = [];
+  for (let i = 0; i < 110; i++) {
+    if (!(await page.evaluate(() => !!document.querySelector('.ecLayer, .ecBoard, .ecPass')))) break;
+    if (process.env.PROBE) probe.push(await page.evaluate((sel) => { const e = document.querySelector(sel); return `${document.querySelector('.ecLayer')?.dataset.stage}:${e ? Number(getComputedStyle(e).opacity).toFixed(2) : '-'}`; }, process.env.PROBE));
+    await page.waitForTimeout(100);
+  }
+  if (probe.length) console.log('  probe ' + probe.join(' '));
   const over = await now();
   await page.waitForTimeout(1000);
   const t1 = await now();

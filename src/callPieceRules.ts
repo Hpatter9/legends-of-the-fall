@@ -33,7 +33,6 @@ export const EASE_OUT = bezier(0, 0, 0.58, 1);
 /** The curves the stylesheet gave its movers by name. */
 export const CHIP_EASE = bezier(0.2, 0.7, 0.5, 1);
 export const BOULDER_EASE = bezier(0.5, 0, 0.9, 0.4);
-export const RUN_EASE = bezier(0.5, 0, 0.8, 0.6);
 
 /** A keyframed value at share `p` (0 to 1) of its animation: `stops` are [share, value] in order; as CSS does, the easing is applied
  *  anew between each two stops. */

@@ -128,6 +128,9 @@ body[data-phase='fight'] #panel > .ehFight { display: flex; }
 /* the board's layer: the trail, the runs, the walls and the aftermath, framed with the board's picture so they stay on their tiles */
 .ecBoard { inset: 0; }
 .ecBoard > * { position: absolute; pointer-events: none; }
+/* (EIDOLON-SMOOTH 2: the call's strips are pieces drawn on canvases laid among the layer's elements, each the layer's own size:
+   `callCanvas.ts`. No strip is an element any more, so the page works out no style for one) */
+.ecCanvas { left: 0; top: 0; width: 100%; height: 100%; }
 
 /* the figure crossing: placed each frame (its feet at its point), its glow in the element's colour, a soft shadow on the ground under it */
 .ecFig { left: 0; top: 0; aspect-ratio: 1; display: flex; align-items: flex-end; justify-content: center; will-change: transform; transform-origin: 50% 100%; }
