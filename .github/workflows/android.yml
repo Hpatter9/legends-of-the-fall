@@ -88,9 +88,28 @@ jobs:
       - name: Use the release key, if the secrets are set
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          # (AAB-FIX: checked here so a missing one is named, by name only, rather than failing deep in the bundle's signing with a bare
+          #  NullPointerException, docs/notes/aab-fix.md)
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
+            missing=""
+            for name in ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+              value="${!name}"
+              # (empty, or only spaces and newlines, counts as missing)
+              if [ -z "${value//[[:space:]]/}" ]; then missing="$missing $name"; fi
+            done
+            if [ -n "$missing" ]; then
+              echo "::error::ANDROID_KEYSTORE_BASE64 is set, but these secrets are empty or missing:$missing. Set them (Settings, Secrets and variables, Actions) and run again."
+              exit 1
+            fi
             echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            if [ ! -s "$RUNNER_TEMP/release.keystore" ]; then
+              echo "::error::ANDROID_KEYSTORE_BASE64 did not decode to a keystore file."
+              exit 1
+            fi
             echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
             echo "Signing with the release key."
           else
@@ -104,7 +123,7 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: >
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --stacktrace
           -PappVersionName=${{ steps.ver.outputs.version }}
           -PappVersionCode=${{ steps.ver.outputs.code }}
 
@@ -128,7 +147,7 @@ jobs:
           npm run web:play
           npx cap sync android
           node tools/play-size/pack.mjs
-          (cd android && ./gradlew bundleRelease -PappVersionName=${{ steps.ver.outputs.version }} -PappVersionCode=${{ steps.ver.outputs.code }})
+          (cd android && ./gradlew bundleRelease --stacktrace -PappVersionName=${{ steps.ver.outputs.version }} -PappVersionCode=${{ steps.ver.outputs.code }})
           cp android/app/build/outputs/bundle/release/app-release.aab "legends-of-the-last-keep-${{ steps.ver.outputs.version }}.aab"
       - name: No release key, so no Play bundle
         if: env.ANDROID_KEYSTORE_FILE == ''
