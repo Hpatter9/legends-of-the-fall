@@ -6,7 +6,8 @@
 
 import { starfallBurst, starfallWorn } from './starfall';
 import { SUMMON_FX, type SummonPiece, type SummonPieceId } from './render/summonFxData';
-import { decodedBytes, flourishAt, heroShowAt, skipShowTo, type ShowFrame } from './render/summonRules';
+import { decodedBytes, flourishAt, flourishCap, flourishWait, heroShowAt, skipShowTo, type ShowFrame } from './render/summonRules';
+import { settings } from './settings';
 import { toolHook } from './toolHooks';
 
 type Pic = ImageBitmap | HTMLImageElement;
@@ -89,6 +90,13 @@ class Pair {
     this.g.imageSmoothingEnabled = false;
     this.el.setAttribute('aria-hidden', 'true');
     this.el.append(this.glow, this.px);
+  }
+
+  /** Wiped, to be used again for another show of the same size (SUMMON-SMOOTH: a card's flourish takes its canvases from a few kept ones). */
+  clear(): void {
+    this.key = '';
+    this.g.clearRect(0, 0, this.px.width, this.px.height);
+    this.gg.clearRect(0, 0, this.glow.width, this.glow.height);
   }
 
   /** Draw these frames (under first); nothing is drawn again while they are the same. */
@@ -175,28 +183,57 @@ export class HeroShow {
   }
 }
 
+// (SUMMON-SMOOTH: at most `flourishCap` flourishes play at once and the rest wait their turn, so "Reveal all" on ten cards is not ten
+// canvases made and ten sheets drawn in one frame; a flourish's canvases are kept and used again, not made anew for each card)
+const ends: number[] = [];
+const spare: Pair[] = [];
+/** How long a flourish of `len` ms asked for now must wait for a place, which it then holds. */
+function place(len: number): number {
+  const now = performance.now();
+  for (let i = ends.length - 1; i >= 0; i--) if (ends[i] <= now) ends.splice(i, 1);
+  const wait = flourishWait(ends, now, flourishCap(!!settings().saver));
+  ends.push(now + wait + len);
+  return wait;
+}
+const STARFALL_MS = 720;
+
 /** A shard card's flourish as it turns: a canvas laid over `card`, played once and taken away. */
 export function cardFlourish(card: HTMLElement): void {
   // (COSMETICS: with Starfall worn, its painted burst takes the classic flourish's place as the card turns, within the card's own bounds)
-  if (starfallWorn()) return starfallBurst(card);
+  if (starfallWorn()) {
+    const wait = place(STARFALL_MS);
+    if (wait <= 0) return starfallBurst(card);
+    window.setTimeout(() => card.isConnected && starfallBurst(card), wait);
+    return;
+  }
   if (!summonFxStats.ready) return;
   const p = SUMMON_FX.flourish;
-  const pair = new Pair(p.fw, p.fh);
-  pair.el.classList.add('sfxCard');
-  card.append(pair.el);
-  const t0 = performance.now();
-  run({
-    tick(now: number): boolean {
-      const f = flourishAt(now - t0, p);
-      if (f < 0 || !pair.el.isConnected) {
-        pair.el.remove();
-        return false;
-      }
-      pair.draw([{ piece: 'flourish', frame: f, alpha: 1 }]);
-      return true;
-    },
-  });
+  const begin = (): void => {
+    if (!card.isConnected) return;
+    const pair = spare.pop() ?? new Pair(p.fw, p.fh);
+    pair.el.classList.add('sfxCard');
+    card.append(pair.el);
+    const t0 = performance.now();
+    run({
+      tick(now: number): boolean {
+        const f = flourishAt(now - t0, p);
+        if (f < 0 || !pair.el.isConnected) {
+          pair.el.remove();
+          pair.clear();
+          if (spare.length < FLOURISH_KEPT) spare.push(pair);
+          return false;
+        }
+        pair.draw([{ piece: 'flourish', frame: f, alpha: 1 }]);
+        return true;
+      },
+    });
+  };
+  const wait = place(p.n * p.ms);
+  if (wait <= 0) begin();
+  else window.setTimeout(begin, wait);
 }
+/** How many flourish canvases are kept for the next cards. */
+const FLOURISH_KEPT = 5;
 
 const style = document.createElement('style');
 style.textContent = `
@@ -204,6 +241,9 @@ style.textContent = `
 .sfxPair canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .sfxPair .sfxPx { image-rendering: pixelated; }
 .sfxPair .sfxGlow { mix-blend-mode: screen; opacity: .9; filter: blur(2px); }
+/* (SUMMON-SMOOTH: a card's small glow is a quarter the pixels' size and smoothed as it is drawn larger: it has no blur of its own.
+   Ten blurred, blended layers at once was the dearest thing a turn asked of a phone's graphics) */
+.sfxCard .sfxGlow { filter: none; }
 /* (a card's flourish: centred on the card, a little wider than it, over it) */
 .sfxCard { left: -30%; top: -18.5%; width: 160%; height: 137%; z-index: 3; }
 `;

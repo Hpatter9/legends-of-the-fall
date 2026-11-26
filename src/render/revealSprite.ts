@@ -3,6 +3,44 @@ import { sheetInfo } from './sheets';
 
 // (RECAP-REVEAL: `opts.walk` lets an earned hero's arrival, `earnedArrival.ts`, show it walking in first: the walk frames join the
 //  crop, and `walk()` loops them until `start`. The summoning reveal does not ask, and is cropped and played as before)
+/** The one box round every drawn pixel of a sheet's idle and attack frames (and its walk's, with `walk`), in the frame: the crop the
+ *  reveal shows its sprite by. Found once a sheet and kept (SUMMON-SMOOTH: it was read from the pixels at the start of every reveal,
+ *  in the reveal's first frame; a draw now finds it ahead, while its cards are being read: `warmReveal`). Null for a sheet not loaded. */
+const crops = new Map<string, { x0: number; y0: number; x1: number; y1: number }>();
+export function revealCrop(sheet: string, walk = false): { x0: number; y0: number; x1: number; y1: number } | null {
+  const info = sheetInfo(sheet);
+  if (!info) return null;
+  const { img, w, h, perRow, rows, counts } = info;
+  const hasAttack = rows.includes('attack') && counts.attack > 0;
+  const hasWalk = walk && rows.includes('walk') && counts.walk > 0;
+  const key = `${sheet}:${hasWalk ? 1 : 0}`;
+  const known = crops.get(key);
+  if (known) return known;
+  let x0 = w, y0 = h, x1 = 0, y1 = 0;
+  // (SUMMON-SHOW: the frames are read on a scratch canvas kept in memory, `willReadFrequently`: reading back the shown canvas, which
+  //  lives on the graphics card, took seconds a hero on a slow phone and held up a ten-draw's run of reveals)
+  const scan = document.createElement('canvas');
+  scan.width = w;
+  scan.height = h;
+  const sg = scan.getContext('2d', { willReadFrequently: true })!;
+  for (const anim of [...(hasAttack ? ['idle', 'attack'] : ['idle']), ...(hasWalk ? ['walk'] : [])]) {
+    for (let n = 0; n < counts[anim]; n++) {
+      sg.clearRect(0, 0, w, h);
+      sg.drawImage(img, (n % perRow) * w, (rows.indexOf(anim) + Math.floor(n / perRow)) * h, w, h, 0, 0, w, h);
+      const data = sg.getImageData(0, 0, w, h).data;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] <= 8) continue;
+        x0 = Math.min(x0, x); y0 = Math.min(y0, y);
+        x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+      }
+    }
+  }
+  if (x0 > x1 || y0 > y1) { x0 = y0 = 0; x1 = w - 1; y1 = h - 1; }
+  const box = { x0, y0, x1, y1 };
+  crops.set(key, box);
+  return box;
+}
+
 export function revealSprite(sheet: string, reduced: boolean, opts: { walk?: boolean } = {}): { canvas: HTMLCanvasElement; start(attack: boolean): void; stop(): void; walk(): void; facesRight: boolean } {
   const canvas = document.createElement('canvas');
   canvas.className = 'trFigure';
@@ -23,27 +61,7 @@ export function revealSprite(sheet: string, reduced: boolean, opts: { walk?: boo
   // Find one crop across both animations, so the attack's reach fits and the figure never jumps between frames.
   canvas.width = w;
   canvas.height = h;
-  let x0 = w, y0 = h, x1 = 0, y1 = 0;
-  // (SUMMON-SHOW: the frames are read on a scratch canvas kept in memory, `willReadFrequently`: reading back the shown canvas, which
-  //  lives on the graphics card, took seconds a hero on a slow phone and held up a ten-draw's run of reveals)
-  const scan = document.createElement('canvas');
-  scan.width = w;
-  scan.height = h;
-  const sg = scan.getContext('2d', { willReadFrequently: true })!;
-  for (const anim of [...(hasAttack ? ['idle', 'attack'] : ['idle']), ...(hasWalk ? ['walk'] : [])]) {
-    for (let n = 0; n < counts[anim]; n++) {
-      const s = source(anim, n);
-      sg.clearRect(0, 0, w, h);
-      sg.drawImage(img, s.x, s.y, w, h, 0, 0, w, h);
-      const data = sg.getImageData(0, 0, w, h).data;
-      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-        if (data[(y * w + x) * 4 + 3] <= 8) continue;
-        x0 = Math.min(x0, x); y0 = Math.min(y0, y);
-        x1 = Math.max(x1, x); y1 = Math.max(y1, y);
-      }
-    }
-  }
-  if (x0 > x1 || y0 > y1) { x0 = y0 = 0; x1 = w - 1; y1 = h - 1; }
+  const { x0, y0, x1, y1 } = revealCrop(sheet, hasWalk)!;
   const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
   canvas.width = cw + 4;
   canvas.height = ch + 4;

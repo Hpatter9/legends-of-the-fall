@@ -3,6 +3,7 @@
 
 import { dressBattle } from '../duchessDress';
 import { SOFT } from './softCanvas';
+import { idleBoxOf } from './idleBoxRules';
 import { Rectangle, Texture } from 'pixi.js';
 import { loadRulers } from './rulerArt';
 import { loadImage } from './loadImage';
@@ -545,6 +546,16 @@ export function portrait(sheet: string, size: number, grade = 1): HTMLCanvasElem
   return c;
 }
 
+/** SUMMON-SMOOTH: resolves once a sheet's picture is decoded, off the page's own thread, so the first drawing from it does not stop
+ *  the page to decode it there (a ten-stone draw built ten card faces from ten sheets never drawn before: about a second and a half of
+ *  a slow phone's main thread in one frame). Resolves at once for a sheet that is not loaded or a browser that cannot be asked, and
+ *  after `most` ms whatever happens, so nothing ever waits on it for long. */
+export function sheetDecoded(sheet: string, most = 1200): Promise<void> {
+  const img = images.get(sheet);
+  if (!img || typeof img.decode !== 'function') return Promise.resolve();
+  return Promise.race([img.decode().then(() => undefined, () => undefined), new Promise<void>((r) => setTimeout(r, most))]);
+}
+
 /** Where a sheet's idle figure really lies in its frame (the box round every pixel of every idle frame), found once. */
 const bounds = new Map<string, { x: number; y: number; w: number; h: number }>();
 function idleBounds(sheet: string): { x: number; y: number; w: number; h: number } | null {
@@ -553,6 +564,13 @@ function idleBounds(sheet: string): { x: number; y: number; w: number; h: number
   if (!img || !l) return null;
   const known = bounds.get(sheet);
   if (known) return known;
+  // (SUMMON-SMOOTH: the box is the art's own, found when the game is built (`idleBoxData.ts`), where the sheet is the one it was found
+  // from. Reading every sheet's pixels back here was most of the time a ten-stone draw's cards took to come up on a slow phone.)
+  const made = idleBoxOf(sheet, img.naturalWidth, img.naturalHeight, l.w, l.h);
+  if (made) {
+    bounds.set(sheet, made);
+    return made;
+  }
   const row = Math.max(0, l.rows.indexOf('idle'));
   const count = l.counts.idle ?? 1;
   const c = document.createElement('canvas');
