@@ -11,6 +11,23 @@ export function nextToWarm<T>(kept: readonly T[], onCard: (x: T) => boolean): T 
   return null;
 }
 
+/** EIDOLON-SMOOTH: the sheets a fight's fighters draw from: each one's own sheet and its view from behind (a fighter that turned its
+ *  back for the first time had that sheet handed to the graphics card there and then, in the middle of the fight), each once, and only
+ *  those the game has. */
+export function fighterSheets(own: readonly string[], rear: (sheet: string) => string, has: (sheet: string) => boolean): string[] {
+  const out = new Set<string>();
+  for (const s of own) for (const x of [s, rear(s)]) if (has(x)) out.add(x);
+  return [...out];
+}
+
+/** The kept names of a group after it is named afresh: every name of another group stays, the group's own are only the new ones (a
+ *  fight's fighters are the next fight's no longer: their sheets are let go, not kept for good). Names are `group:name`. */
+export function regroup(kept: readonly string[], group: string, names: readonly string[]): { keep: string[]; drop: string[] } {
+  const mine = new Set(names.map((n) => `${group}:${n}`));
+  const drop = kept.filter((k) => k.startsWith(`${group}:`) && !mine.has(k));
+  return { keep: [...kept.filter((k) => !k.startsWith(`${group}:`)), ...mine], drop };
+}
+
 /** Whether the kept sheets may be taken back by the graphics memory's own tidying now: never while a fight is on (one may be needed
  *  again at any moment of it), freely otherwise (the next deploy hands back what the next fight needs). */
 export const mayRelease = (fighting: boolean): boolean => !fighting;
